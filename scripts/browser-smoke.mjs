@@ -5,7 +5,7 @@ import {readFile,mkdir} from 'node:fs/promises';
 import {resolve,extname} from 'node:path';
 import assert from 'node:assert/strict';
 const root=resolve('dist'),failures=[];
-const safeScreenshot=async(page,path)=>{try{await page.screenshot({path,timeout:8000,animations:'disabled'})}catch(error){console.warn('Screenshot skipped:',path,error.message)}};
+const safeScreenshot=async(page,path)=>{if(process.env.ANOMALIA_SCREENSHOTS!=='1')return;try{await page.screenshot({path,timeout:8000,animations:'disabled'})}catch(error){console.warn('Screenshot skipped:',path,error.message)}};
 const server=createServer(async(req,res)=>{
  try{
   const name=new URL(req.url,'http://localhost').pathname;
@@ -91,7 +91,7 @@ try{
  await page.keyboard.down('KeyW');try{await page.waitForFunction(p=>Math.hypot(window.__ANOMALIA_DIAGNOSTICS.position.x-p.x,window.__ANOMALIA_DIAGNOSTICS.position.z-p.z)>.3,carBefore,{timeout:30000})}finally{await page.keyboard.up('KeyW')}
  const carAfter=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  assert.ok(Math.hypot(carAfter.x-carBefore.x,carAfter.z-carBefore.z)>.1,'vehicle responds to throttle');
- await page.keyboard.press('F5');await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),'inside');
+ await page.locator('#viewBtn').click();await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),'inside');
  await safeScreenshot(page,'test-results/07-cockpit.png');
  await page.keyboard.press('KeyE');await page.keyboard.press('F2');await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="bank"]').click();
  await page.locator('#panelClose').click();await page.keyboard.press('KeyE');await page.waitForSelector('#bankAmount');
