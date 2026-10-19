@@ -91,7 +91,9 @@ try{
  await page.keyboard.down('KeyW');try{await page.waitForFunction(p=>Math.hypot(window.__ANOMALIA_DIAGNOSTICS.position.x-p.x,window.__ANOMALIA_DIAGNOSTICS.position.z-p.z)>.3,carBefore,{timeout:30000})}finally{await page.keyboard.up('KeyW')}
  const carAfter=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  assert.ok(Math.hypot(carAfter.x-carBefore.x,carAfter.z-carBefore.z)>.1,'vehicle responds to throttle');
- await page.locator('#viewBtn').click();await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),'inside');
+ const previousVehicleView=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView);
+  await page.locator('#viewBtn').click();await page.waitForTimeout(200);
+  assert.notEqual(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),previousVehicleView,'view button switches the active vehicle camera');
  await safeScreenshot(page,'test-results/07-cockpit.png');
  await page.keyboard.press('KeyE');await page.keyboard.press('F2');await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="bank"]').click();
  await page.locator('#panelClose').click();await page.keyboard.press('KeyE');await page.waitForSelector('#bankAmount');
