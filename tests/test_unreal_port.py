@@ -39,6 +39,20 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("DOREPLIFETIME", pawn)
         self.assertIn("ServerSetControls_Implementation", pawn)
 
+    def test_vehicle_interaction_is_server_authoritative(self):
+        survivor = (SOURCE / "AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
+        vehicle = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        inputs = (ROOT / "unreal" / "Config" / "DefaultInput.ini").read_text(encoding="utf-8")
+        self.assertIn('ActionName="Interact",Key=E', inputs)
+        self.assertIn("ServerTryEnterVehicle_Implementation", survivor)
+        self.assertIn("Candidate->HasDriver()", survivor)
+        self.assertIn("FVector::DistSquared", survivor)
+        self.assertIn("DriverController->Possess(this)", vehicle)
+        self.assertIn("ServerExitVehicle_Implementation", vehicle)
+        self.assertIn("DriverController->Possess(Survivor)", vehicle)
+        self.assertIn("Survivor->SetActorHiddenInGame(false)", vehicle)
+        self.assertNotIn("Survivor->Destroy()", vehicle)
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
