@@ -27,6 +27,13 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 
 **Limites actuelles :** la conduite est une première base `UFloatingPawnMovement` générique. La physique des roues Chaos, les remorques articulées, la flottabilité des navires, la plongée des sous-marins, les vols, le carburant, les armes, les passagers et la persistance des véhicules **ne sont pas encore implémentés**. Les 27 définitions ne sont pas 27 véhicules finis ou photoréalistes. La compilation Unreal Engine 5 sur Windows reste indispensable.
 
+## Nouveau lot — interaction véhicule (19 octobre 2026)
+
+- **E** à pied : demande d'entrée dans le véhicule libre le plus proche, à **4,5 mètres maximum**. Le serveur vérifie la distance, l'état du personnage et la disponibilité de la place conducteur.
+- **E** au volant : sortie du véhicule et reprise du **même personnage**, sans réinitialiser sa santé ni ses références de progression.
+- Les demandes utilisent des RPC serveur fiables ; un client ne peut pas prendre le volant d'un véhicule déjà occupé. Les mouvements restent calculés côté serveur.
+- Ce système est une **implémentation C++ à compiler et tester sous UE5**, pas une fonctionnalité vérifiée dans un exécutable. Il reste à créer des Blueprints de véhicules avec collisions adaptées, animations d'entrée/sortie, passagers et placement sûr du personnage à la sortie.
+
 ## Démarrage
 1. Installer Unreal Engine 5 et les composants C++ Visual Studio 2022 sur Windows.
 2. Ouvrir `AnomaliaPrimeval.uproject` avec Unreal Engine 5 et générer les fichiers Visual Studio si demandé.
