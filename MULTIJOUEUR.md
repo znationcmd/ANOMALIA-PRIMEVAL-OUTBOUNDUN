@@ -1,4 +1,22 @@
-# ANOMALIA — connexion multijoueur expérimentale (0.5)
+# ANOMALIA — Multijoueur RP / PVP / PVE / Mixte et ANOMALIA Editor (pré-alpha)
+
+## Modes de serveur
+
+Depuis **Multijoueur → Mode du serveur → Héberger en réseau local**, le propriétaire peut choisir :
+
+- **RP** : jeu de rôle sans dégâts entre joueurs ; bâtiments RP et règles propres aux communautés.
+- **PVP** : tirs et dégâts entre joueurs autorisés par le serveur (prototype balistique avec angle/portée et limitation de cadence).
+- **PVE** : coopératif ; tous les tirs entre joueurs sont rejetés par le serveur.
+- **Mixte** : PVP hors des zones protégées ; les centres urbains RP (Hélion, hôpitaux, ports) bloquent les dégâts entre joueurs.
+
+Le serveur contrôle ces règles : **un joueur ne peut pas activer le PVP en modifiant uniquement son client**. Ce premier combat PVP n'a pas encore de balistique, collisions, inventaire et anti-triche complets.
+
+### ANOMALIA Editor (F4)
+
+ANOMALIA Editor permet de placer et déplacer les bâtiments, sélectionner, dupliquer, supprimer, annuler/rétablir et exporter/importer le plan JSON. En solo, le code local d'activation continue de fonctionner ; **ce code n'octroie aucun privilège multijoueur**. Sur un serveur, seul le propriétaire connecté avec un jeton privé émis par l'hôte Windows peut ouvrir ANOMALIA Editor et publier la carte. Les joueurs ordinaires reçoivent la carte et les modifications automatiquement, mais leurs tentatives d'édition sont refusées. Les placements validés et le mode sont sauvegardés dans `world-server.json` dans les données de l'application de l'hôte Windows ; un serveur Node autonome utilise le fichier spécifié par `SERVER_DATA_FILE`, ou `server-data/world.json` par défaut.
+
+La carte du serveur partage actuellement les constructions de **l'éditeur**. Les abris individuels, véhicules, créatures, banque et inventaires ne sont pas encore synchronisés ou persistés côté serveur ; ne pas annoncer un monde multijoueur complet. Le serveur autonome accepte `GAME_MODE=rp|pvp|pve|mixed` et `SERVER_ADMIN_KEY`. Il faut protéger le jeton propriétaire, qui ne doit jamais être partagé avec les joueurs.
+
 
 Le menu affiche ANOMALIA PRIMEVAL OUTBOUNDUN et propose Solo, Multijoueur et Paramètres. Le menu de démarrage est traduit en français (par défaut), allemand, russe, italien, anglais, japonais, chinois simplifié et espagnol. La langue et la qualité graphique sont conservées. Les interfaces historiques de survie et d’administration restent en français : la traduction intégrale du jeu est encore à réaliser.
 
@@ -28,7 +46,7 @@ Connexion réelle par WebSocket, identifiant unique, présence des autres surviv
 
 ## Limites actuelles
 
-Il s’agit d’une première couche réseau de présence, pas encore d’un serveur de survie complet. Les inventaires, le loot, la banque, les véhicules, l’IA, les dinosaures, les constructions et les événements restent locaux. Il n’y a pas encore de dégâts entre joueurs, de persistance serveur, de comptes ou d’autorité serveur sur ces systèmes. Les outils admin sont ceux du prototype solo. Ils ne constituent pas une administration sécurisée pour un serveur public RP/PvP.
+Il s’agit d’une première couche réseau de présence, pas encore d’un serveur de survie complet. Les inventaires, le loot, la banque, les véhicules, l’IA, les dinosaures, les abris individuels et les événements restent locaux. Les plans de bâtiments ANOMALIA Editor sont désormais synchronisés avec contrôle d’accès et sauvegarde sur l'hôte. Le PVP expérimental dispose de tirs/dégâts vérifiés côté serveur, mais pas encore d'inventaire de munitions autoritaire, de collision balistique exhaustive, de comptes persistants ni d'une économie synchronisée. ANOMALIA Editor partagé est protégé par un jeton de propriétaire côté serveur, mais le panneau admin solo, les commandes de modération avancées, la persistance des survivants et les protections anti-triche restent à développer pour des serveurs publics RP/PVP.
 
 Le serveur est livré dans le dépôt source et se lance séparément. L’installateur Windows est le client du jeu.
 
@@ -36,7 +54,7 @@ Le serveur est livré dans le dépôt source et se lance séparément. L’insta
 
 Hôpital, police, gendarmerie, caserne de pompiers, caserne militaire, armurerie, boutique et maison possèdent des intérieurs avec des entrées ouvertes. Un héliport et des pontons complètent les emplacements. Ils utilisent des modèles procéduraux originaux, pas les ressources graphiques de DayZ. Les façades des grandes tours générées restent décoratives.
 
-L’éditeur est accessible depuis le menu de démarrage ou avec F4 en solo. Code de cette version : `ANOMALIA-EDITOR-2026`. C’est un verrou local de confort, pas un système de droits serveur. Sélectionner le catalogue, cliquer « Placer au clic », puis sur le terrain. Les coordonnées et la rotation se modifient dans le panneau ; duplication, suppression, annulation/rétablissement et import/export JSON sont disponibles. La composition est conservée dans la sauvegarde locale. Les positions importées sont limitées à la carte et à 300 objets.
+ANOMALIA Editor est accessible depuis le menu de démarrage, ou avec F4 en solo et pour le propriétaire du serveur multijoueur. Code de cette version : `ANOMALIA-EDITOR-2026`. C’est un verrou local de confort, pas un système de droits serveur. Sélectionner le catalogue, cliquer « Placer au clic », puis sur le terrain. Les coordonnées et la rotation se modifient dans le panneau ; duplication, suppression, annulation/rétablissement et import/export JSON sont disponibles. La composition est conservée dans la sauvegarde locale. Les positions importées sont limitées à la carte et à 300 objets.
 
 Déplacement de caméra : ZQSD/WASD, Maj pour accélérer, Espace/Ctrl pour monter/descendre, clic droit maintenu pour regarder. L’import/export produit un fichier ANOMALIA ; il ne charge pas directement les projets DayZ Editor ni les PBO.
 
