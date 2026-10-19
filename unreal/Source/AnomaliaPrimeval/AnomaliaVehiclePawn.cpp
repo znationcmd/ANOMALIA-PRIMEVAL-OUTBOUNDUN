@@ -31,6 +31,12 @@ AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
     AutoPossessPlayer = EAutoReceiveInput::Disabled;
 }
 
+void AAnomaliaVehiclePawn::BeginPlay()
+{
+    Super::BeginPlay();
+    ApplyDefinition();
+}
+
 bool AAnomaliaVehiclePawn::ConfigureVehicle(FName NewVehicleId)
 {
     if (!HasAuthority()) return false;
