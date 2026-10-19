@@ -1,6 +1,6 @@
 {
   "name": "anomalia-primeval-outboundun",
-  "version": "0.6.0",
+  "version": "0.7.0",
   "private": true,
   "type": "module",
   "description": "Prototype original d'un monde ouvert 3D procedural de survie",
@@ -12,7 +12,8 @@
     "package:offline": "node scripts/package-offline.mjs",
     "package:windows": "electron-builder --win nsis --x64 --publish never",
     "test:browser": "node scripts/browser-smoke.mjs",
-    "server": "node server/server.mjs"
+    "server": "node server/server.mjs",
+    "measure:land": "node scripts/measure-land.mjs 25"
   },
   "dependencies": {
     "fast-xml-parser": "5.11.2",

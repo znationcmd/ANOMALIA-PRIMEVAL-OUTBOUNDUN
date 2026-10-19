@@ -1,10 +1,12 @@
 import {inJungle} from "./ecology.js";
 /** Pure, deterministic world rules. Coordinates are in metres. No copyrighted game assets. */
-export const WORLD_HALF=10240;
+export const WORLD_HALF=24000;
 export const CHUNK_SIZE=256;
 export const SEA_LEVEL=0;
 export const WORLD_SEED=28041996;
 export const CONTINENTS=[
+ {id:"north",name:"Terres de Borée",cx:-11500,cz:-11500,rx:7500,rz:7500},
+ {id:"south",name:"Continent Austral",cx:11000,cz:12500,rx:8000,rz:6500},
  {id:"prime",name:"Continent Primeval",cx:-600,cz:0,rx:5450,rz:4250},
  {id:"island-a",name:"Île Sentinelle",cx:6350,cz:0,rx:1080,rz:1420},
  {id:"island-b",name:"Archipel du Néant",cx:7400,cz:3650,rx:1050,rz:900},
@@ -13,6 +15,10 @@ export const CONTINENTS=[
  {id:"island-e",name:"Atoll Oublié",cx:8100,cz:-4200,rx:1200,rz:950}
 ];
 export const CITIES=[
+ {id:"nordheim",name:"Nordheim — Capitale de Borée",x:-11500,z:-11500,radius:1050,density:.67},
+ {id:"australis",name:"Australis — Cité des plaines",x:11000,z:12500,radius:950,density:.64},
+ {id:"valbrume",name:"Valbrume — Ville des montagnes",x:-14000,z:-10000,radius:550,density:.50},
+ {id:"meridia",name:"Méridia — Ville australe",x:13000,z:14000,radius:650,density:.56},
  {id:"helion",name:"Hélion — Métropole oubliée",x:0,z:0,radius:1000,density:0.83},
  {id:"borealis",name:"Boréalis — Cité industrielle",x:-2400,z:850,radius:820,density:0.63},
  {id:"caldera",name:"Caldera — Forteresse",x:1500,z:-1800,radius:620,density:0.57},
@@ -22,6 +28,10 @@ export const CITIES=[
  {id:"keros",name:"Kéros — Village volcanique",x:3200,z:-6000,radius:410,density:0.40}
 ];
 export const PEAKS=[
+ {x:-14000,z:-13500,height:1250,radius:1800},
+ {x:-10000,z:-15500,height:980,radius:1450},
+ {x:12500,z:11000,height:1100,radius:1700},
+ {x:15000,z:14500,height:820,radius:1500},
  {x:-3200,z:-2200,height:680,radius:880},
  {x:1400,z:2700,height:980,radius:1150},
  {x:-500,z:-3700,height:650,radius:750},

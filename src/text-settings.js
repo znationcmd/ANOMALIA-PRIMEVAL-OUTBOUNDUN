@@ -1,3 +1,4 @@
+import {WORLD_HALF} from "./mechanics.js";
 export function parseIni(text=''){
  const sections=Object.create(null);let section='';sections[section]=Object.create(null);
  if(text.length>1e6)throw Error('INI trop grand.');
@@ -11,5 +12,5 @@ export function parseTextSettings(docs){
  const disableThird=!!Number(cfg.match(/^\s*disable3rdPerson\s*=\s*([01])\s*;/m)?.[1]||0);
  let world;try{world=JSON.parse(docs['world-settings.json']||'{}')}catch{throw Error('world-settings.json invalide.')}
  if(world.schemaVersion!==1||!Number.isFinite(world.playerSpawn?.x)||!Number.isFinite(world.playerSpawn?.z))throw Error('world-settings.json: schéma ou position invalide.');
- return {lootMultiplier:value(advanced.LootMultiplier,1,0,10),followDistance:value(advanced.CompanionFollowDistance,3,1,20),tamingSpeed:value(advanced.TamingSpeedMultiplier,1,.1,20),aiDamage:value(advanced.AiDamageMultiplier,1,0,10),foodDrain:value(server.PlayerCharacterFoodDrainMultiplier,1,0,10),waterDrain:value(server.PlayerCharacterWaterDrainMultiplier,1,0,10),resolution:value(graphics['sg.ResolutionQuality'],100,50,200),shadows:value(graphics['sg.ShadowQuality'],2,0,3)>0,thirdPersonAllowed:!disableThird&&server.ServerThirdPersonPlayer?.toLowerCase()!=='false',spawn:{x:value(world.playerSpawn.x,0,-10240,10240),z:value(world.playerSpawn.z,180,-10240,10240)},startingItems:world.startingItems&&typeof world.startingItems==='object'?world.startingItems:{}};
+ return {lootMultiplier:value(advanced.LootMultiplier,1,0,10),followDistance:value(advanced.CompanionFollowDistance,3,1,20),tamingSpeed:value(advanced.TamingSpeedMultiplier,1,.1,20),aiDamage:value(advanced.AiDamageMultiplier,1,0,10),foodDrain:value(server.PlayerCharacterFoodDrainMultiplier,1,0,10),waterDrain:value(server.PlayerCharacterWaterDrainMultiplier,1,0,10),resolution:value(graphics['sg.ResolutionQuality'],100,50,200),shadows:value(graphics['sg.ShadowQuality'],2,0,3)>0,thirdPersonAllowed:!disableThird&&server.ServerThirdPersonPlayer?.toLowerCase()!=='false',spawn:{x:value(world.playerSpawn.x,0,-WORLD_HALF,WORLD_HALF),z:value(world.playerSpawn.z,180,-WORLD_HALF,WORLD_HALF)},startingItems:world.startingItems&&typeof world.startingItems==='object'?world.startingItems:{}};
 }

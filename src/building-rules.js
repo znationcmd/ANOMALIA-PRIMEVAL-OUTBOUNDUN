@@ -1,3 +1,4 @@
+import {WORLD_HALF} from "./mechanics.js";
 export const BUILDING_TYPES={
  hospital:{label:'Hôpital',width:36,depth:26,color:0xc7c8b6},
  police:{label:'Poste de police',width:28,depth:22,color:0x899d9e},
@@ -32,4 +33,4 @@ export const RP_SITES=[
 export function localPoint(object,x,z){const a=object.yaw||0,dx=x-object.x,dz=z-object.z;return {x:dx*Math.cos(a)-dz*Math.sin(a),z:dx*Math.sin(a)+dz*Math.cos(a)}}
 export function transformPoint(object,x,z){const a=object.yaw||0;return {x:object.x+x*Math.cos(a)+z*Math.sin(a),z:object.z-x*Math.sin(a)+z*Math.cos(a)}}
 export function reserveBuilding(x,z,objects=RP_SITES){return objects.some(o=>{const d=BUILDING_TYPES[o.type];if(!d)return false;const p=localPoint(o,x,z);return Math.abs(p.x)<d.width/2+32&&Math.abs(p.z)<d.depth/2+32})}
-export function validatePlacements(value){if(!value||value.schemaVersion!==1||!Array.isArray(value.objects)||value.objects.length>300)throw Error('Plan ANOMALIA invalide (300 objets maximum).');const ids=new Set(RP_SITES.map(o=>o.id));return value.objects.map((o,i)=>{if(!Object.hasOwn(BUILDING_TYPES,o.type)||![o.x,o.z,o.yaw||0].every(Number.isFinite)||Math.abs(o.x)>10240||Math.abs(o.z)>10240)throw Error('Objet de carte invalide : '+i);const id=typeof o.id==='string'?o.id:'placed-'+i;if(ids.has(id))throw Error('Identifiant d’objet dupliqué');ids.add(id);return {id,type:o.type,x:o.x,z:o.z,yaw:o.yaw||0}})}
+export function validatePlacements(value){if(!value||value.schemaVersion!==1||!Array.isArray(value.objects)||value.objects.length>300)throw Error('Plan ANOMALIA invalide (300 objets maximum).');const ids=new Set(RP_SITES.map(o=>o.id));return value.objects.map((o,i)=>{if(!Object.hasOwn(BUILDING_TYPES,o.type)||![o.x,o.z,o.yaw||0].every(Number.isFinite)||Math.abs(o.x)>WORLD_HALF||Math.abs(o.z)>WORLD_HALF)throw Error('Objet de carte invalide : '+i);const id=typeof o.id==='string'?o.id:'placed-'+i;if(ids.has(id))throw Error('Identifiant d’objet dupliqué');ids.add(id);return {id,type:o.type,x:o.x,z:o.z,yaw:o.yaw||0}})}

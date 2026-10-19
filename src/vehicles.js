@@ -1,3 +1,4 @@
+import {WORLD_HALF} from "./mechanics.js";
 import {moveWithCollisions,groundHeight} from './movement.js';
 export const VEHICLES={
  car:{name:'Berline',mode:'land',speed:30,accel:7,turn:1.4,length:4.4,width:2,eye:1.5},
@@ -17,7 +18,7 @@ export function enterVehicle(s,id){const v=(s.vehicles||[]).find(v=>v.id===id);i
 export function exitVehicle(s,heightAt,solids=[]){const v=(s.vehicles||[]).find(v=>v.id===s.activeVehicle);if(!v)return {ok:false,message:'Aucun véhicule.'};const ground=groundHeight(v.x,v.z,heightAt);if(v.y>Math.max(0,ground)+4)return {ok:false,message:'Pose le véhicule avant de sortir.'};
  const positions=[1,-1,2,-2].map(n=>({x:v.x+Math.cos(v.yaw)*n*(VEHICLES[v.type].width+1),z:v.z-Math.sin(v.yaw)*n*(VEHICLES[v.type].width+1)}));
  const p=positions.find(p=>!solids.some(b=>Math.abs(p.x-b.x)<b.width/2+.7&&Math.abs(p.z-b.z)<b.depth/2+.7));if(!p)return {ok:false,message:'La sortie est bloquée.'};s.position=p;s.activeVehicle=null;v.speed=0;return {ok:true,message:'Véhicule quitté.'}}
-export function tickVehicle(v,input,dt,{heightAt,solids=[],fuelRate=.03,bounds=10240}){
+export function tickVehicle(v,input,dt,{heightAt,solids=[],fuelRate=.03,bounds=WORLD_HALF}){
  const d=VEHICLES[v.type];if(!d)return;dt=Math.min(.1,Math.max(0,dt));const throttle=v.fuel>0?Math.max(-1,Math.min(1,input.forward||0)):0;
  v.speed=Math.max(-d.speed*.25,Math.min(d.speed,v.speed+throttle*d.accel*dt));
  if(!throttle)v.speed*=Math.max(0,1-dt*.7);if(input.brake)v.speed*=Math.max(0,1-dt*4);

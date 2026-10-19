@@ -1,3 +1,7 @@
+import worldMetrics from "./world-metrics.json";
+import {createConstructionUI} from "./construction-ui.js";
+import {createConstructionWorld} from "./construction-world.js";
+import {validateConstruction} from "./construction.js";
 import {spawnVehicle} from "./vehicles.js";
 import {startBeachJourney,beachObjective,reserveBeach} from "./beach-journey.js";
 import {createMapEditor} from "./map-editor.js";
@@ -62,11 +66,12 @@ state.quickbar=Array.isArray(saved?.quickbar)?saved.quickbar:undefined;
 state.inventoryMigration=!!saved?.inventoryMigration;
 if(!state.inventoryMigration){state.inventory.pistol=Math.max(1,state.inventory.pistol||0);state.inventoryMigration=true;syncInventory(state);const weapon=state.inventoryStacks.find(t=>t.id===state.weapon);if(weapon)takeInHands(state,weapon.uid)}
 syncInventory(state);
-for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs','editorObjects','beachJourney','beachCarCreated'])if(saved?.[key]!==undefined)state[key]=saved[key];
+for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs','editorObjects','beachJourney','beachCarCreated','constructionSequence','materialNodes','diving','oxygen'])if(saved?.[key]!==undefined)state[key]=saved[key];
 if(!saved){startBeachJourney(state);syncInventory(state);}
+state.construction=validateConstruction(saved?.construction);state.playerFeet=Number.isFinite(saved?.playerFeet)?saved.playerFeet:heightAt(state.position.x,state.position.z);
 window.addEventListener('error',event=>{state.runtimeLogs??=[];state.runtimeLogs.push(String(event.message));state.runtimeLogs=state.runtimeLogs.slice(-50)});
-let worldRuntime,buildings,mapEditor;
-function walkHeight(x,z){return buildings?.floorAt(x,z)??groundHeight(x,z,heightAt)}
+let worldRuntime,buildings,mapEditor,constructionWorld,constructionUI;
+function walkHeight(x,z){const base=buildings?.floorAt(x,z)??groundHeight(x,z,heightAt),floor=constructionWorld?.floorAt(x,z,state.playerFeet??base);return floor!==null&&floor!==undefined&&(floor>=.5||state.diving)?Math.max(base,floor):base;}
 let tranquilizerMode=false,fishingCooldown=0,forageCooldown=0;
 const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],wildlife=[],resources=[],siteObjects=new Map();
 const dynamic=new THREE.Group();outside.add(dynamic);
@@ -292,6 +297,8 @@ function exitInterior(){
 }
 function interaction(){
  if(!started||paused)return;
+ if(constructionUI?.active){constructionUI.place();return;}
+ if(constructionUI?.doorInteract())return;
  if(worldRuntime?.interact())return;
  if(state.underground){
   if(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z+2))<7){exitInterior();return}
@@ -376,13 +383,9 @@ function toggleTranqMode(){
  const result={ok:true,message:tranquilizerMode?"Fléchettes tranquillisantes prêtes · V ou R3 pour changer.":"Arme à feu réactivée."};
  notice(result.message);return result;
 }
-function openPanel(){if(mapEditor?.opened)mapEditor.exit();paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
+function openPanel(){constructionUI?.cancel();if(mapEditor?.opened)mapEditor.exit();paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
 function closePanel(){inventoryUI?.cleanup();worldRuntime?.cleanup();paused=false;$("panel").classList.add("hidden")}
-function buildShelter(){
- if(state.underground){notice("Construction impossible sous terre.");return}
- const result=buildStructure(state,"shelter",state.position.x-Math.sin(yaw)*8,state.position.z-Math.cos(yaw)*8);
- notice(result.message);if(result.ok){updateStructures();save()}
-}
+function buildShelter(){if(state.underground)return notice('Construction disponible en surface.');constructionUI.show();}
 function reload(){
  const available=state.inventory.ammo||0,need=state.magazine-state.ammo;
  if(need<=0){notice("Chargeur plein.");return}
@@ -391,6 +394,7 @@ function reload(){
 }
 function shoot(){
  if(!started||paused||shootCooldown>0||state.health<=0)return;
+ if(constructionUI?.active){constructionUI.place();return;}
  if(!["pistol","rifle"].includes(state.hands)&&!tranquilizerMode){notice("Prends une arme dans tes mains depuis l’inventaire.");return;}
  if(state.underground&&tranquilizerMode){notice("Les fléchettes sont réservées aux animaux en surface.");return}
  if(!tranquilizerMode&&!state.ammo){notice("Chargeur vide : R pour recharger.");return}
@@ -419,7 +423,6 @@ function shoot(){
   notice(result.message);return;
  }
  state.ammo--;
- if(network?.connected)network.shoot();
  if(chosen?.kind==="infected"){
   const enemy=chosen.target;enemy.hp-=42;
   if(enemy.hp<=0){enemy.alive=false;enemy.mesh.visible=false;state.kills++;state.inventory.scrap=(state.inventory.scrap||0)+1;notice("Infecté neutralisé · pièces récupérées.")}
@@ -463,6 +466,7 @@ function mapScreen(){
   ctx.fillStyle="#008b5252";ctx.fill();ctx.strokeStyle="#39f09bcc";ctx.lineWidth=1.7;ctx.stroke();
   ctx.font="bold 12px sans-serif";ctx.fillStyle="#a5ffd7";ctx.fillText("🌴 "+zone.name,p.x-radius*.5,p.y-6);
  }
+ for(const continent of CONTINENTS){const p=to(continent.cx,continent.cz);ctx.fillStyle="#dce9d2";ctx.font="bold 13px sans-serif";ctx.fillText(continent.name,p.x-40,p.y-14);}
  for(const city of CITIES){const p=to(city.x,city.z);ctx.fillStyle="#ffe1a2";ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.font="11px sans-serif";ctx.fillText(city.name,p.x+8,p.y+3)}
  for(const o of RP_SITES){const p=to(o.x,o.z);ctx.fillStyle="#b4f1da";ctx.fillRect(p.x-2,p.y-2,4,4);}
  for(const site of SITES){const p=to(site.x,site.z);ctx.fillStyle=site.type==="bunker"?"#e88f80":site.type==="boat"?"#7fe7e4":"#dfc18b";ctx.fillRect(p.x-2,p.y-2,4,4)}
@@ -473,6 +477,7 @@ function mapScreen(){
  }
  const player=to(state.position.x,state.position.z);ctx.fillStyle="#ff4d55";ctx.beginPath();ctx.arc(player.x,player.y,6,0,Math.PI*2);ctx.fill();
  $("panelBody").replaceChildren(canvas);
+ const area=document.createElement("p");area.textContent="Terres émergées : ≈ "+worldMetrics.dryLandKm2.toFixed(1)+" km² hors mer · Carte : 48 × 48 km";$("panelBody").append(area);
  const p=document.createElement("p");p.textContent="● Rouge : joueur · Jaune : villes · Rouge clair : bunkers · Turquoise : bateaux · 🌴 Vert clair : jungles · R : tes repères persistants. Clique sur la carte pour ajouter un repère, clic droit pour supprimer le plus proche."; $("panelBody").append(p);
  canvas.style.cursor="crosshair";
  canvas.addEventListener("click",event=>{
@@ -502,7 +507,7 @@ function updateHud(dt){
  const closestDino=dinos.find(d=>Math.hypot(d.x-state.position.x,d.z-state.position.z)<12);
  const dist=Math.hypot(state.position.x,state.position.z);
  $("region").textContent=state.underground?"SOUS-SOL : "+state.underground.toUpperCase():(distance<city.radius?city.name:biomeAt(state.position.x,state.position.z).toUpperCase());
- $("coordText").textContent="X "+Math.round(state.position.x)+" · Z "+Math.round(state.position.z)+(state.boat?" · BATEAU":"")+(state.mounted?" · SELLE":"");
+ $("coordText").textContent="X "+Math.round(state.position.x)+" · Z "+Math.round(state.position.z)+(state.boat?" · BATEAU":"")+(state.mounted?" · SELLE":"")+(state.diving?" · O₂ "+Math.ceil(state.oxygen??100)+"%":"");
  $("equipmentText").textContent=(tranquilizerMode?"FLÉCHETTES ×"+(state.inventory.tranq_dart||0):(state.weapon==="pistol"?"PISTOLET":"FUSIL")+" · "+state.ammo+" / "+(state.inventory.ammo||0))+" · SAC "+weight(state).toFixed(0)+"/"+capacity(state).toFixed(0)+"KG"+(state.illness?" · MALADE":"");
  const hint=$("interaction");
  let text="";
@@ -533,12 +538,19 @@ function updatePlayer(dt){
  else if(state.underground){const origin=state.entrySite;if(origin){state.position.x=clamp(nx,origin.x-9,origin.x+9);state.position.z=clamp(nz,origin.z-75,origin.z+8)}}
  else if(state.boat){state.position.x=nx;state.position.z=nz}
  else{
-  const solids=[...chunkSolids.values()].flat().concat(buildings?.solids()||[]);
+  const solids=[...chunkSolids.values()].flat().concat(buildings?.solids()||[],constructionWorld?.solids(state.playerFeet)||[]);
   for(const build of state.structures||[])if(build.type==="shelter")solids.push({x:build.x,z:build.z,width:9,depth:8});
   state.position=moveWithCollisions(state.position,nx-state.position.x,nz-state.position.z,solids,(x,z,tx,tz)=>Math.abs(walkHeight(tx,tz)-walkHeight(x,z))<5+speed*.3);
  }
- let y=state.underground?-26.25:state.boat?2.5:Math.max(walkHeight(state.position.x,state.position.z),0)+1.85;
- if(!driving&&!state.boat&&!state.underground&&walkHeight(state.position.x,state.position.z)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
+ let feet=Math.max(walkHeight(state.position.x,state.position.z),0),eye=1.85;
+ if(!driving&&state.diving&&heightAt(state.position.x,state.position.z)<.5&&!state.boat&&!state.underground){
+  const bottom=heightAt(state.position.x,state.position.z)+.25;state.swimDepth=clamp((state.swimDepth??-2)+((keys.has('Space')?1:0)-(keys.has('ControlLeft')||keys.has('ControlRight')?1:0))*dt*3,bottom,-.2);
+  const deck=constructionWorld.floorAt(state.position.x,state.position.z,state.swimDepth);if(deck!==null&&state.swimDepth<deck+.2)state.swimDepth=deck;
+  feet=state.swimDepth;eye=1;state.oxygen=clamp((state.oxygen??100)+(feet+eye<.5?-3:12)*dt,0,100);if(state.oxygen===0)state.health=Math.max(0,state.health-dt*5);
+ }else{state.diving=false;state.swimDepth=null;state.oxygen=Math.min(100,(state.oxygen??100)+dt*15);}
+ if(!driving)state.playerFeet=feet;
+ let y=state.underground?-26.25:state.boat?2.5:feet+eye;
+ if(!driving&&!state.diving&&!state.boat&&!state.underground&&walkHeight(state.position.x,state.position.z)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
  else underwaterNotice=false;
  camera.position.set(state.position.x,y,state.position.z);
  camera.rotation.order="YXZ";camera.rotation.set(-pitch,yaw,0);
@@ -583,13 +595,13 @@ function start(lockPointer=true){
  updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
  if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
-const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show(),onMapChanged:()=>{buildings?.update();notice('ANOMALIA Editor : carte du serveur mise à jour')},onModeChanged:({mode,role})=>notice('Serveur '+mode.toUpperCase()+' · rôle '+role)});
-const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),newGame:()=>{try{localStorage.setItem(STORAGE+'-before-new-game',JSON.stringify(state));localStorage.removeItem(STORAGE);location.reload();}catch{notice('Impossible de conserver la sauvegarde actuelle.')}} ,onMenu:()=>{mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
+const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show()});
+const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),newGame:()=>{try{localStorage.setItem(STORAGE+'-before-new-game',JSON.stringify(state));localStorage.removeItem(STORAGE);location.reload();}catch{notice('Impossible de conserver la sauvegarde actuelle.')}} ,onMenu:()=>{constructionUI?.cancel();mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
 const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
-$("helpBtn").onclick=()=>{inventoryUI?.cleanup();worldRuntime?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer · F2 : admin · F3 : groupe · F5 : vues · chiffres : raccourcis</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
+$("helpBtn").onclick=()=>{inventoryUI?.cleanup();worldRuntime?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construction modulaire · J : plongée · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer · F2 : admin · F3 : groupe · F5 : vues · chiffres : raccourcis</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
 $("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position=state.beachJourney?{x:435,z:90}:{x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
@@ -605,10 +617,11 @@ window.addEventListener("keydown",event=>{
   case "KeyH":$("helpBtn").click();break;
   case "KeyI":$("panel").classList.contains("hidden")?displayInventory():closePanel();break;
   case "KeyM":$("panel").classList.contains("hidden")?mapScreen():closePanel();break;
-  case "Escape":if(!$("panel").classList.contains("hidden"))closePanel();break;
+  case "Escape":constructionUI?.cancel();if(!$("panel").classList.contains("hidden"))closePanel();break;
   case "KeyE":interaction();break;
   case "KeyB":buildShelter();break;
-  case "KeyR":reload();break;
+  case "KeyR":if(constructionUI?.active)constructionUI.rotate();else reload();break;
+  case "KeyJ":if(heightAt(state.position.x,state.position.z)<.5&&!worldRuntime.vehicle()){state.diving=!state.diving;state.swimDepth=state.diving?-2:null;notice(state.diving?"Plongée : Espace monter · Ctrl descendre · oxygène limité":"Retour vers la surface");}else notice("Approche de l’eau pour plonger.");break;
   case "KeyT":mountNear();break;
   case "KeyY":breedNear();break;
   case "KeyF":headlamp=!headlamp;hemi.intensity=headlamp?2:.95;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
@@ -714,7 +727,8 @@ window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camer
 camera.position.set(state.position.x,heightAt(state.position.x,state.position.z)+1.85,state.position.z);
 camera.rotation.order="YXZ";camera.rotation.set(0,yaw,0);
 buildings=createBuildings({scene,state,heightAt,materials:{concrete:graphics.concrete,wood:graphics.wood,dark:m.roof}});
-worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight,solids:()=>[...chunkSolids.values()].flat().concat(buildings.solids()),yaw:()=>yaw,save,notice,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),open:openPanel,close:closePanel,
+constructionWorld=createConstructionWorld({scene,state,heightAt,materials:m});
+worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight,solids:()=>[...chunkSolids.values()].flat().concat(buildings.solids(),constructionWorld.solids(state.playerFeet)),yaw:()=>yaw,save,notice,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),open:openPanel,close:closePanel,
  cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup()},enemies:()=>[...zombies,...wildlife.filter(a=>WILDLIFE[a.type].hostile),...(worldRuntime?.hostiles()||[])],
  spawnDino:(d,created)=>{
   if(dinos.some(n=>n.id===d.id))return;
@@ -724,15 +738,16 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight
   if(d.tamed&&!state.tamed.some(p=>p.id===d.id))state.tamed.push({id:d.id,type:d.type,name:DINO_TYPES.find(p=>p.id===d.type)?.label||d.type,hasSaddle:true});
  }
 });
-mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
+constructionUI=createConstructionUI({state,scene,camera,heightAt,world:constructionWorld,save,notice,panel:$('panel'),body:$('panelBody'),title:$('panelTitle'),open:openPanel,close:closePanel,cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup();}});
+mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
-for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+for(const [id,label,handler]of [["editorBtn","ÉDITEUR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
  pollController(dt,now);
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
- buildings.update();
+ buildings.update();constructionWorld.root.visible=!state.underground;constructionWorld.update();constructionUI.update();
  worldRuntime?.update(dt,now/1000,started&&!paused&&state.health>0);
  if(!mapEditor.active)worldRuntime?.applyCamera(pitch);
  mapEditor.update(dt);
@@ -740,6 +755,6 @@ function loop(now){
  for(const d of dinos)if(state.mounted===d.id){d.x=state.position.x;d.z=state.position.z;d.mesh.position.set(d.x,heightAt(d.x,d.z),d.z);d.mesh.rotation.y=yaw+Math.PI;}
  graphics.update(now/1000);
  renderer.render(scene,camera);
- if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
 }
 requestAnimationFrame(loop);

@@ -98,6 +98,10 @@ try{
  await page.screenshot({path:'test-results/08-bank.png'});await page.locator('#panelClose').click();
  await page.keyboard.press('F3');await page.waitForSelector('[data-pet="follow"]');await page.screenshot({path:'test-results/09-companion.png'});await page.locator('#panelClose').click();
  assert.ok(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.events>=1),'XML crash events are running');
+ await page.keyboard.press('KeyB');await page.waitForSelector('#buildType');await page.selectOption('#buildType','foundation');await page.selectOption('#buildMaterial','wood');await page.locator('#harvestBuild').click();await page.locator('#beginBuild').click();await page.keyboard.press('KeyE');await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.construction.count>=1);await page.keyboard.press('Escape');
+ assert.ok(await page.evaluate(()=>JSON.parse(localStorage.getItem('anomalia-primeval-outboundun-save-v1')).construction.length>=1),'placed modular foundation is saved');
+ await page.screenshot({path:'test-results/10-construction.png'});
+
  assert.deepEqual(failures,[],'no page errors or shader compilation errors');
  console.log('Actual WebGL render, forward movement, inventory split/merge/drop/pickup/search/crafting, map, save and reload passed.');
 }finally{await browser?.close();await multiplayerServer.close();server.closeAllConnections();await new Promise(r=>server.close(r))}
