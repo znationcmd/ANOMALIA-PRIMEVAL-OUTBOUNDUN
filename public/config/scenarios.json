@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "active": "main",
+  "scenarios": [
+    {
+      "id": "main",
+      "name": "ANOMALIA World",
+      "map": "procedural-48km",
+      "enabled": true,
+      "modes": [
+        "rp",
+        "pvp",
+        "pve",
+        "mixed"
+      ]
+    }
+  ],
+  "notes": "Scenarios describe modes and map selection; additional map loading is not implemented."
+}
