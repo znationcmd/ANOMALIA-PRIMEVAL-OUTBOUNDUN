@@ -41,6 +41,11 @@ try{
  await page.waitForTimeout(1800);
  await page.evaluate(()=>document.exitPointerLock?.());
  await page.screenshot({path:'test-results/01-city.png'});
+ await page.keyboard.press('F4');await page.fill('#editorCode','ANOMALIA-EDITOR-2026');await page.click('#editorUnlock');
+ await page.setInputFiles('#editorImport',{name:'test-map.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({schemaVersion:1,objects:[{id:'test-house',type:'house',x:1000,z:180,yaw:0}]}))});
+ await page.waitForFunction(()=>document.querySelectorAll('#editorObject option').length===2);await page.selectOption('#editorObject','0');await page.fill('#editorYaw','90');await page.click('#editorApply');await page.click('#editorDuplicate');assert.equal(await page.locator('#editorObject option').count(),3);await page.click('#editorUndo');assert.equal(await page.locator('#editorObject option').count(),2);await page.click('#editorRedo');assert.equal(await page.locator('#editorObject option').count(),3);
+ await page.screenshot({path:'test-results/00-map-editor.png'});await page.click('#editorExit');
+
  const before=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  await page.keyboard.down('KeyW');await page.waitForTimeout(1000);await page.keyboard.up('KeyW');
  const after=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);

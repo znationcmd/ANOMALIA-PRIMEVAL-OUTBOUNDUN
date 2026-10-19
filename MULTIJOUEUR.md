@@ -31,3 +31,11 @@ Connexion réelle par WebSocket, identifiant unique, présence des autres surviv
 Il s’agit d’une première couche réseau de présence, pas encore d’un serveur de survie complet. Les inventaires, le loot, la banque, les véhicules, l’IA, les dinosaures, les constructions et les événements restent locaux. Il n’y a pas encore de dégâts entre joueurs, de persistance serveur, de comptes ou d’autorité serveur sur ces systèmes. Les outils admin sont ceux du prototype solo. Ils ne constituent pas une administration sécurisée pour un serveur public RP/PvP.
 
 Le serveur est livré dans le dépôt source et se lance séparément. L’installateur Windows est le client du jeu.
+
+## Bâtiments et éditeur local
+
+Hôpital, police, gendarmerie, caserne de pompiers, caserne militaire, armurerie, boutique et maison possèdent des intérieurs avec des entrées ouvertes. Un héliport et des pontons complètent les emplacements. Ils utilisent des modèles procéduraux originaux, pas les ressources graphiques de DayZ. Les façades des grandes tours générées restent décoratives.
+
+L’éditeur est accessible depuis le menu de démarrage ou avec F4 en solo. Code de cette version : `ANOMALIA-EDITOR-2026`. C’est un verrou local de confort, pas un système de droits serveur. Sélectionner le catalogue, cliquer « Placer au clic », puis sur le terrain. Les coordonnées et la rotation se modifient dans le panneau ; duplication, suppression, annulation/rétablissement et import/export JSON sont disponibles. La composition est conservée dans la sauvegarde locale. Les positions importées sont limitées à la carte et à 300 objets.
+
+Déplacement de caméra : ZQSD/WASD, Maj pour accélérer, Espace/Ctrl pour monter/descendre, clic droit maintenu pour regarder. L’import/export produit un fichier ANOMALIA ; il ne charge pas directement les projets DayZ Editor ni les PBO.

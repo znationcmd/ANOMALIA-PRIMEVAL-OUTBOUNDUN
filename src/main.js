@@ -1,3 +1,6 @@
+import {createMapEditor} from "./map-editor.js";
+import {createBuildings} from "./rp-buildings.js";
+import {reserveBuilding,RP_SITES} from "./building-rules.js";
 import {createStartMenu} from "./start-menu.js";
 import {createMultiplayer} from "./multiplayer.js";
 import {createWorldRuntime} from "./world-runtime.js";
@@ -57,9 +60,10 @@ state.quickbar=Array.isArray(saved?.quickbar)?saved.quickbar:undefined;
 state.inventoryMigration=!!saved?.inventoryMigration;
 if(!state.inventoryMigration){state.inventory.pistol=Math.max(1,state.inventory.pistol||0);state.inventoryMigration=true;syncInventory(state);const weapon=state.inventoryStacks.find(t=>t.id===state.weapon);if(weapon)takeInHands(state,weapon.uid)}
 syncInventory(state);
-for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs'])if(saved?.[key]!==undefined)state[key]=saved[key];
+for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs','editorObjects'])if(saved?.[key]!==undefined)state[key]=saved[key];
 window.addEventListener('error',event=>{state.runtimeLogs??=[];state.runtimeLogs.push(String(event.message));state.runtimeLogs=state.runtimeLogs.slice(-50)});
-let worldRuntime;
+let worldRuntime,buildings,mapEditor;
+function walkHeight(x,z){return buildings?.floorAt(x,z)??groundHeight(x,z,heightAt)}
 let tranquilizerMode=false,fishingCooldown=0,forageCooldown=0;
 const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],wildlife=[],resources=[],siteObjects=new Map();
 const dynamic=new THREE.Group();outside.add(dynamic);
@@ -108,6 +112,7 @@ function makeTerrain(cx,cz){
    const x=gx*76+14,z=gz*76+14;
    if(x<group.position.x-CHUNK_SIZE/2||x>=group.position.x+CHUNK_SIZE/2||z<group.position.z-CHUNK_SIZE/2||z>=group.position.z+CHUNK_SIZE/2)continue;
    if(Math.hypot(x-city.x,z-city.z)>city.radius||hash2(gx,gz)<1-city.density)continue;
+   if(reserveBuilding(x,z,buildings?.objects()))continue;
    const y=heightAt(x,z);if(y<2)continue;
    const width=25+hash2(gx+7,gz)*25,depth=25+hash2(gx,gz+8)*23;
    if(Math.abs(x)<width/2+3&&Math.abs(z-180)<depth/2+3)continue;
@@ -221,7 +226,8 @@ function unloadChunk(id){
 }
 function updateChunks(force=false){
  if(state.underground)return;
- const ccx=Math.floor(state.position.x/CHUNK_SIZE),ccz=Math.floor(state.position.z/CHUNK_SIZE);
+ const center=mapEditor?.active?camera.position:state.position;
+ const ccx=Math.floor(center.x/CHUNK_SIZE),ccz=Math.floor(center.z/CHUNK_SIZE);
  const range=matchMedia("(pointer:coarse)").matches?1:2,wanted=new Set();
  for(let x=ccx-range;x<=ccx+range;x++)for(let z=ccz-range;z<=ccz+range;z++){
   const key=x+","+z;wanted.add(key);if(!chunks.has(key)){const group=makeTerrain(x,z);outside.add(group);chunks.set(key,group)}
@@ -365,7 +371,7 @@ function toggleTranqMode(){
  const result={ok:true,message:tranquilizerMode?"Fléchettes tranquillisantes prêtes · V ou R3 pour changer.":"Arme à feu réactivée."};
  notice(result.message);return result;
 }
-function openPanel(){paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
+function openPanel(){if(mapEditor?.opened)mapEditor.exit();paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
 function closePanel(){inventoryUI?.cleanup();worldRuntime?.cleanup();paused=false;$("panel").classList.add("hidden")}
 function buildShelter(){
  if(state.underground){notice("Construction impossible sous terre.");return}
@@ -398,6 +404,8 @@ function shoot(){
   for(const a of wildlife)if(a.alive)consider("wildlife",a);
   for(const npc of worldRuntime?.hostiles()||[])consider("npc",npc);
  }
+ const obstacles=[];scene.traverse(o=>{if(o.isMesh&&o.userData.cameraSolid)obstacles.push(o)});
+ const ray=new THREE.Raycaster(origin,direction,0,best);if(ray.intersectObjects(obstacles,false).length)chosen=null;
  shootCooldown=tranquilizerMode?.65:.23;
  if(tranquilizerMode){
   if(!chosen){notice("Vise un dinosaure sauvage pour l'endormir.");return}
@@ -450,6 +458,7 @@ function mapScreen(){
   ctx.font="bold 12px sans-serif";ctx.fillStyle="#a5ffd7";ctx.fillText("🌴 "+zone.name,p.x-radius*.5,p.y-6);
  }
  for(const city of CITIES){const p=to(city.x,city.z);ctx.fillStyle="#ffe1a2";ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.font="11px sans-serif";ctx.fillText(city.name,p.x+8,p.y+3)}
+ for(const o of RP_SITES){const p=to(o.x,o.z);ctx.fillStyle="#b4f1da";ctx.fillRect(p.x-2,p.y-2,4,4);}
  for(const site of SITES){const p=to(site.x,site.z);ctx.fillStyle=site.type==="bunker"?"#e88f80":site.type==="boat"?"#7fe7e4":"#dfc18b";ctx.fillRect(p.x-2,p.y-2,4,4)}
  for(const [i,pin] of (state.mapPins||[]).entries()){
   const p=to(pin.x,pin.z);ctx.strokeStyle="#101d28";ctx.lineWidth=3;ctx.fillStyle="#f8d064";
@@ -517,12 +526,12 @@ function updatePlayer(dt){
  else if(state.underground){const origin=state.entrySite;if(origin){state.position.x=clamp(nx,origin.x-9,origin.x+9);state.position.z=clamp(nz,origin.z-75,origin.z+8)}}
  else if(state.boat){state.position.x=nx;state.position.z=nz}
  else{
-  const solids=[...chunkSolids.values()].flat();
+  const solids=[...chunkSolids.values()].flat().concat(buildings?.solids()||[]);
   for(const build of state.structures||[])if(build.type==="shelter")solids.push({x:build.x,z:build.z,width:9,depth:8});
-  state.position=moveWithCollisions(state.position,nx-state.position.x,nz-state.position.z,solids,(x,z,tx,tz)=>Math.abs(groundHeight(tx,tz,heightAt)-groundHeight(x,z,heightAt))<5+speed*.3);
+  state.position=moveWithCollisions(state.position,nx-state.position.x,nz-state.position.z,solids,(x,z,tx,tz)=>Math.abs(walkHeight(tx,tz)-walkHeight(x,z))<5+speed*.3);
  }
- let y=state.underground?-26.25:state.boat?2.5:Math.max(groundHeight(state.position.x,state.position.z,heightAt),0)+1.85;
- if(!driving&&!state.boat&&!state.underground&&groundHeight(state.position.x,state.position.z,heightAt)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
+ let y=state.underground?-26.25:state.boat?2.5:Math.max(walkHeight(state.position.x,state.position.z),0)+1.85;
+ if(!driving&&!state.boat&&!state.underground&&walkHeight(state.position.x,state.position.z)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
  else underwaterNotice=false;
  camera.position.set(state.position.x,y,state.position.z);
  camera.rotation.order="YXZ";camera.rotation.set(-pitch,yaw,0);
@@ -562,13 +571,13 @@ function updatePlayer(dt){
  forageCooldown=Math.max(0,forageCooldown-dt);
  if(state.health<=0){$("deathScreen").classList.remove("hidden");paused=true;save();if(document.pointerLockElement)document.exitPointerLock()}
 }
-function start(){
+function start(lockPointer=true){
  started=true;paused=false;$("startScreen").classList.add("hidden");$("hud").classList.remove("hidden");
  updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
- if(!matchMedia("(pointer:coarse)").matches)renderer.domElement.requestPointerLock?.();
+ if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
-const network=createMultiplayer({scene,state,heightAt,notice,onDisconnect:()=>menu.show()});
-const menu=createStartMenu({state,renderer,start,network,onMenu:()=>{save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
+const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show()});
+const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),onMenu:()=>{mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
 const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
@@ -697,7 +706,8 @@ window.addEventListener("gamepaddisconnected",event=>{if(event.gamepad?.id===con
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 camera.position.set(state.position.x,heightAt(state.position.x,state.position.z)+1.85,state.position.z);
 camera.rotation.order="YXZ";camera.rotation.set(0,yaw,0);
-worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt,solids:()=>[...chunkSolids.values()].flat(),yaw:()=>yaw,save,notice,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),open:openPanel,close:closePanel,
+buildings=createBuildings({scene,state,heightAt,materials:{concrete:graphics.concrete,wood:graphics.wood,dark:m.roof}});
+worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight,solids:()=>[...chunkSolids.values()].flat().concat(buildings.solids()),yaw:()=>yaw,save,notice,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),open:openPanel,close:closePanel,
  cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup()},enemies:()=>[...zombies,...wildlife.filter(a=>WILDLIFE[a.type].hostile),...(worldRuntime?.hostiles()||[])],
  spawnDino:(d,created)=>{
   if(dinos.some(n=>n.id===d.id))return;
@@ -707,14 +717,18 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt,solids:()=
   if(d.tamed&&!state.tamed.some(p=>p.id===d.id))state.tamed.push({id:d.id,type:d.type,name:DINO_TYPES.find(p=>p.id===d.type)?.label||d.type,hasSaddle:true});
  }
 });
-for(const [id,label,handler]of [["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
+window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
+for(const [id,label,handler]of [["editorBtn","ÉDITEUR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
  pollController(dt,now);
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
+ buildings.update();
  worldRuntime?.update(dt,now/1000,started&&!paused&&state.health>0);
- worldRuntime?.applyCamera(pitch);
+ if(!mapEditor.active)worldRuntime?.applyCamera(pitch);
+ mapEditor.update(dt);
  network.update(dt,yaw,started&&!paused);
  for(const d of dinos)if(state.mounted===d.id){d.x=state.position.x;d.z=state.position.z;d.mesh.position.set(d.x,heightAt(d.x,d.z),d.z);d.mesh.rotation.y=yaw+Math.PI;}
  graphics.update(now/1000);

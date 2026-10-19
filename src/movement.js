@@ -24,7 +24,7 @@ export function bridgeSurface(x,z,heightAt){
 export function groundHeight(x,z,heightAt){return Math.max(heightAt(x,z),bridgeSurface(x,z,heightAt)??-Infinity)}
 export function moveWithCollisions(position,dx,dz,solids,canStep=()=>true,radius=.65){
  let {x,z}=position;
- const blocked=(px,pz)=>solids.some(b=>px>b.x-b.width/2-radius&&px<b.x+b.width/2+radius&&pz>b.z-b.depth/2-radius&&pz<b.z+b.depth/2+radius);
+ const blocked=(px,pz)=>solids.some(b=>{const a=b.yaw||0,dx=px-b.x,dz=pz-b.z,x=dx*Math.cos(a)-dz*Math.sin(a),z=dx*Math.sin(a)+dz*Math.cos(a);return Math.abs(x)<b.width/2+radius&&Math.abs(z)<b.depth/2+radius});
  const steps=Math.max(1,Math.ceil(Math.hypot(dx,dz)/.4));
  for(let i=0;i<steps;i++){
   const nx=x+dx/steps;if(!blocked(nx,z)&&canStep(x,z,nx,z))x=nx;
