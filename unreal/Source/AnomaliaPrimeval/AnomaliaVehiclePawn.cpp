@@ -61,13 +61,34 @@ void AAnomaliaVehiclePawn::ApplyDefinition()
 {
     const FAnomaliaVehicleDefinition Definition = GetVehicleDefinition();
     // Data speeds are in km/h; UE movement is in cm/s.
-    Movement->MaxSpeed = Definition.MaxSpeedKmh * (100000.f / 3600.f);
+    Movement->MaxSpeed = Definition.MaxSpeedKmh * SpeedMultiplier * (100000.f / 3600.f);
     Movement->Acceleration = FMath::Max(150.f, Movement->MaxSpeed * 0.55f);
     Movement->Deceleration = Movement->Acceleration * 1.4f;
     OnVehicleConfigured(Definition);
 }
 
 void AAnomaliaVehiclePawn::OnRep_VehicleId()
+{
+    ApplyDefinition();
+}
+
+bool AAnomaliaVehiclePawn::ConfigureRuntimeTuning(float InitialFuelPercent, float ConsumptionPerSecond, float NewSpeedMultiplier)
+{
+    if (!HasAuthority() || !FMath::IsFinite(InitialFuelPercent) ||
+        !FMath::IsFinite(ConsumptionPerSecond) || !FMath::IsFinite(NewSpeedMultiplier) ||
+        InitialFuelPercent < 0.f || InitialFuelPercent > 100.f ||
+        ConsumptionPerSecond < 0.f || ConsumptionPerSecond > 10.f ||
+        NewSpeedMultiplier < 0.1f || NewSpeedMultiplier > 3.f) return false;
+    FuelPercent = InitialFuelPercent;
+    FuelConsumptionPerSecond = ConsumptionPerSecond;
+    SpeedMultiplier = NewSpeedMultiplier;
+    ApplyDefinition();
+    OnFuelChanged(FuelPercent);
+    ForceNetUpdate();
+    return true;
+}
+
+void AAnomaliaVehiclePawn::OnRep_Tuning()
 {
     ApplyDefinition();
 }
@@ -187,4 +208,5 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
 }
