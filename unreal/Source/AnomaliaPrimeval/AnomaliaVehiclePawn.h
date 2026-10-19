@@ -36,7 +36,7 @@ public:
     TObjectPtr<UFloatingPawnMovement> Movement;
 
     UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
-    FName VehicleId = TEXT("car");
+    FName VehicleId = FName(TEXT("car"));
 
     /** Only the server may select a vehicle type. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Vehicle")
