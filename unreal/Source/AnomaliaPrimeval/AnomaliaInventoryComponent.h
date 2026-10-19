@@ -58,10 +58,10 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_Stacks, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TArray<FAnomaliaInventoryStack> Stacks;
 
-    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    UPROPERTY(ReplicatedUsing=OnRep_Compartments, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TArray<FAnomaliaInventoryCompartment> Compartments;
 
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(ClampMin="0.1", ClampMax="500"))
+    UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(ClampMin="0.1", ClampMax="500"))
     float WeightCapacityKg = 14.f;
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
@@ -90,6 +90,9 @@ public:
 protected:
     UFUNCTION()
     void OnRep_Stacks();
+
+    UFUNCTION()
+    void OnRep_Compartments();
 
 private:
     int32 NextStackId = 1;

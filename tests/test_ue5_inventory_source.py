@@ -34,6 +34,9 @@ class UE5InventorySourceTests(unittest.TestCase):
         self.assertIn("Width > 12", SOURCE)
         self.assertIn("Height > 20", SOURCE)
         self.assertIn("Compartments.Add(Pockets)", SOURCE)
+        self.assertIn("ReplicatedUsing=OnRep_Compartments", HEADER)
+        self.assertIn("DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments)", SOURCE)
+        self.assertIn("Width < Existing->Width", SOURCE)
 
     def test_every_legacy_item_definition_has_a_weight_entry(self):
         systems = (ROOT / "src/systems.js").read_text(encoding="utf-8")

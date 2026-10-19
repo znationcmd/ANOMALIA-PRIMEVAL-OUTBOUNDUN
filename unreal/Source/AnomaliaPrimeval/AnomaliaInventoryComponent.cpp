@@ -76,6 +76,7 @@ bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, in
     if (!GetOwner() || !GetOwner()->HasAuthority() || Id.IsNone() || Id == TEXT("hands") ||
         Width < 1 || Width > 12 || Height < 1 || Height > 20) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
+    if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
     if (!Existing) Existing = &Compartments.AddDefaulted_GetRef();
     Existing->Id = Id;
     Existing->Width = Width;
@@ -208,9 +209,12 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
 }
 
 void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); }
+void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); }
 
 void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UAnomaliaInventoryComponent, Stacks);
+    DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments);
+    DOREPLIFETIME(UAnomaliaInventoryComponent, WeightCapacityKg);
 }
