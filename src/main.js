@@ -744,6 +744,19 @@ constructionUI=createConstructionUI({state,scene,camera,heightAt,world:construct
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
 for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+let lastAtmosphereUpdate=-10000;
+function updateAtmosphere(now){
+ if(now-lastAtmosphereUpdate<1000)return;
+ lastAtmosphereUpdate=now;
+ const elapsed=Number(state.elapsed)||0,phase=(elapsed%1200)/1200;
+ const daylight=Math.max(.12,Math.sin(phase*Math.PI*2)*.82+.22);
+ const mist=state.weatherEnabled!==false&&Math.sin(elapsed/145)>.58;
+ scene.background.setRGB(.055+daylight*.54,.075+daylight*.61,.13+daylight*.63);
+ scene.fog.color.copy(scene.background);
+ scene.fog.density=mist?.0018:.00055;
+ sun.intensity=.2+daylight*1.9;
+ hemi.intensity=headlamp?Math.max(1.2,.25+daylight*.85):.25+daylight*.85;
+}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
@@ -756,6 +769,7 @@ function loop(now){
  network.update(dt,yaw,started&&!paused);
  for(const d of dinos)if(state.mounted===d.id){d.x=state.position.x;d.z=state.position.z;d.mesh.position.set(d.x,heightAt(d.x,d.z),d.z);d.mesh.rotation.y=yaw+Math.PI;}
  graphics.update(now/1000);
+ updateAtmosphere(now);
  renderer.render(scene,camera);
  if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
 }
