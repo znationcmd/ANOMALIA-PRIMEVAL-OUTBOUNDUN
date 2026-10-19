@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "ownerIds": [],
+  "admins": [],
+  "permissions": {
+    "owner": [
+      "*"
+    ],
+    "admin": [
+      "editor",
+      "kick",
+      "view-logs"
+    ],
+    "player": [
+      "play",
+      "build"
+    ]
+  },
+  "notes": "Server owner is authenticated with SERVER_ADMIN_KEY. Account IDs are reserved for a future verified identity system."
+}
