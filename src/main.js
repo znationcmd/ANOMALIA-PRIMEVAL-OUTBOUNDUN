@@ -1,6 +1,6 @@
 
 import * as THREE from "three";
-import {readGamepad,selectGamepad,GAMEPAD_LABELS} from "./gamepad.js";
+import {readGamepad,selectGamepad,controllerFamily,GAMEPAD_LABELS} from "./gamepad.js";
 import {WORLD_HALF,CHUNK_SIZE,SEA_LEVEL,CITIES,CONTINENTS,PEAKS,SITES,ITEM_NAMES,hash2,heightAt,biomeAt,nearestCity,nearestSite,initialState,normalizeState,unlockSite,buildStructure,tickSurvival,clamp} from "./mechanics.js";
 import {ITEM_DEFS,EQUIPMENT_SLOTS,capacity,weight,protection,warmth,equip,consume,rewardLoot,tame,saddleMount,breed,survivalTick,DINO_TYPES,hasItem} from "./systems.js";
 
@@ -472,7 +472,7 @@ function pollController(dt,now){
   controller=null;previousPadButtons=[];controllerMove.x=controllerMove.y=0;
   controllerLook.x=controllerLook.y=0;controllerSprint=controllerFire=false;controllerFireLast=false;return;
  }
- if(pad.id!==controllerId){controllerId=pad.id;previousPadButtons=[];notice("Manette reconnue : "+( /dualsense|dualshock|playstation|wireless controller|sony|054c/i.test(pad.id)?"PS5 / PlayStation":"Xbox / compatible")+" · Options/Menu pour les commandes.")}
+ if(pad.id!==controllerId){controllerId=pad.id;previousPadButtons=[];notice("Manette reconnue : "+(controllerFamily(pad.id)==="playstation"?"PS5 / PlayStation":"Xbox / compatible")+" · Options/Menu pour les commandes.")}
  controller=readGamepad(pad,previousPadButtons);
  if(!controller)return;
  previousPadButtons=controller.buttons;
