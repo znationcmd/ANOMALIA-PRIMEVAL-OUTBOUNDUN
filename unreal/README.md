@@ -1,5 +1,12 @@
 # ANOMALIA PRIMEVAL OUTBOUNDUN — migration Unreal Engine 5
 
+## Lot UE5 — réglages de carburant et vitesse par véhicule (19 octobre 2026)
+
+Chaque entrée de `Saved/Servers/<id>/vehicles.json` peut maintenant préciser `fuelPercent` (0 à 100), `fuelConsumptionPerSecond` (0 à 10) et `speedMultiplier` (0,1 à 3). Ces paramètres sont **validés côté serveur**, appliqués à l'apparition et propres au dossier du serveur. Les entrées invalides sont ignorées sans écraser le fichier. La jauge de carburant et le multiplicateur de vitesse sont répliqués ; aucun RPC client ne permet de modifier ces valeurs. Le modèle de configuration est `Config/Anomalia/vehicles.example.json`.
+
+Ce lot reste un **prototype de conduite générique** : il n'ajoute pas la physique Chaos, les modèles 3D finaux, la plongée, le vol ni un installateur UE5. Les tests automatiques sont des contrôles statiques, pas une compilation Unreal Engine.
+
+
 Ce dossier est un **socle de projet C++ UE5**, pas une version jouable du jeu.
 La version JavaScript / Three.js / Electron à la racine reste inchangée et disponible.
 
