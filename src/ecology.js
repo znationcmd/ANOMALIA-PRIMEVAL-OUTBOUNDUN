@@ -59,6 +59,14 @@ export function huntAnimal(s,animal){
  for(const [id,n] of Object.entries(drops))add(s,id,n);
  return {ok:true,message:"Chasse : "+WILDLIFE[animal.type].name+" · "+Object.entries(drops).map(([id,n])=>id+" ×"+n).join(", "),drops};
 }
+/** Search natural nests and plants. Eggs are needed for species-specific kibble. */
+export function forageSupplies(s,{jungle=false,roll=0}={}){
+ const r=Math.max(0,Math.min(.99999,Number(roll)||0));
+ const item=r< (jungle?.38:.18)?"egg":r<.70?"berry":"fiber";
+ const quantity=item==="egg"?1:item==="berry"?4:3;
+ add(s,item,quantity);
+ return {ok:true,item,quantity,message:"Récolte : "+item+" ×"+quantity};
+}
 export function fishAt(s,{nearWater,roll=0}){
  if(!nearWater)return {ok:false,message:"Approche-toi d'une rivière, d'une plage ou utilise un bateau."};
  if(count(s,"fishing_rod")<1)return {ok:false,message:"Il te faut une canne à pêche (dans l'inventaire)."};
@@ -93,7 +101,7 @@ export function tranquilize(s,dino){
  dino.torpor=Math.min(140,(Number(dino.torpor)||0)+42);
  dino.unconscious=dino.torpor>=100;
  dino.unconsciousTime=dino.unconscious?110:0;
- return {ok:true,unconscious:dino.unconscious,torpor:dino.torpor,message:dino.unconscious?"Dinosaure endormi ! Approche-toi et donne-lui des croquettes.":"Torp eur : "+Math.round(dino.torpor)+"/100. Continue les fléchettes."};
+ return {ok:true,unconscious:dino.unconscious,torpor:dino.torpor,message:dino.unconscious?"Dinosaure endormi ! Approche-toi et donne-lui des croquettes.":"Torpeur : "+Math.round(dino.torpor)+"/100. Continue les fléchettes."};
 }
 export function tickTorpor(dino,dt){
  if(!dino||dino.tamed)return;
