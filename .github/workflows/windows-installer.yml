@@ -1,16 +1,5 @@
 name: ANOMALIA PRIMEVAL OUTBOUNDUN — Installateur Windows EXE
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'desktop/**'
-      - 'src/**'
-      - 'public/**'
-      - 'tests/**'
-      - 'package.json'
-      - 'vite.config.js'
-      - 'index.html'
-      - '.github/workflows/windows-installer.yml'
   workflow_dispatch:
   push:
     branches: [main]
