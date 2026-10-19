@@ -27,6 +27,21 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 
 ## Nouveau lot — catalogue et conduite UE5 (19 octobre 2026)
 
+### Catalogue des réglages
+
+`Config/Anomalia/settings-catalog.json` recense les réglages UE5 avec type,
+plage, valeur par défaut, portée, mécanisme de code et état vérifié. `functional`
+signale un raccordement source explicite au runtime, `partial` un raccordement
+incomplet, `not_implemented` un réglage sans mécanisme actif et `migration_only`
+un ancien fichier conservé sans adaptateur UE5. Les lignes `server.port`,
+`server.maxPlayers`, `server.mode`, `server.thirdPerson` et `server.timeMultiplier`
+ne prouvent pas l'ouverture réseau, la capacité, les règles de mode, une caméra
+à la première personne ou une horloge de jeu : leur statut reste partiel. Les
+fichiers DayZ/ARK et formats `.pbo`, `.paa`, `.edds`, `.ark`, `.c`, `.uasset` et
+`.umap` sont explicitement conservés comme sources de migration, jamais déclarés
+exécutables par UE5. Les contrôles `tests/test_ue5_config_catalog.py` vérifient
+les valeurs de configuration contre les modèles et chemins de code présents.
+
 - `UAnomaliaVehicleCatalog` : **27 définitions uniques** accessibles dans les Blueprints, couvrant camions/remorques, quads, buggys, motoneiges, motos, karting, F1, SUV, fourgons, police/gendarmerie, pompiers, ambulance, blindés, monster trucks, jet-skis, zodiaques, porte-avions, navires de guerre, sous-marins, avions de chasse et hélicoptères. Les valeurs de vitesse, places et stockage sont des valeurs initiales **ajustables**, pas des performances simulées.
 - `AAnomaliaVehiclePawn` : prototype C++ **possédable et répliqué**, caméra troisième personne, commandes avant/arrière/direction, validation de l'identifiant de véhicule par le serveur, déplacements calculés côté serveur. Il faut créer des Blueprints enfants, attribuer les vrais modèles 3D, collisions et animations, et programmer la montée/descente.
 - `AAnomaliaGameMode::SpawnServerVehicle` : création d'un véhicule par **logique serveur de confiance** ; pas de RPC public autorisant n'importe quel joueur à créer un véhicule.
