@@ -3,6 +3,21 @@
 Ce dossier est un **socle de projet C++ UE5**, pas une version jouable du jeu.
 La version JavaScript / Three.js / Electron à la racine reste inchangée et disponible.
 
+## État du portage C++ (19 octobre 2026)
+
+**Implémenté dans le dépôt UE5 (code source, non compilé dans Unreal Editor) :**
+- `AAnomaliaGameMode` sélectionné dans `Config/DefaultEngine.ini`.
+- `AAnomaliaSurvivor` : personnage 3D de base, caméra à la troisième personne, clavier ZQSD/WASD à configurer selon le clavier, déplacement/saut, faim/soif/santé répliqués et calculés côté serveur.
+- `UAnomaliaConfigLibrary` : API accessible aux Blueprints pour charger/sauvegarder `config.json` par serveur et les profils joueurs sous `Saved/Servers/<id>/userProfile/<id>.json`. Les identifiants sont validés, les JSON contrôlés et les écritures passent par un fichier temporaire. Les champs inconnus de `config.json` sont conservés.
+- `Config/Anomalia/config.json` : modèle UE5 du fichier principal, avec port, nom, places, mode RP/PVP/PVE/mixte et multiplicateur de temps.
+- `scripts/migrate-to-ue5.py` : copie non destructive de **tous** les fichiers `public/config` dans `unreal/Config/Anomalia/Legacy`. Les doublons identiques sont ignorés, les conflits sont signalés sans écraser les données. Commande à la racine : `python scripts/migrate-to-ue5.py`.
+
+**Non terminé :** aucune carte `.umap` n'a été construite ; il reste à porter les 48 × 48 km en World Partition, la géométrie des routes, les zombies, dinosaures, véhicules terrestres/navals/aériens, ANOMALIA Editor, les constructions, l'inventaire, le combat, l'authentification des administrateurs, le réseau dédié complet, CMD Hosting et le système de mises à jour du futur exécutable UE5. Les modèles 3D procéduraux Three.js ne se convertissent pas automatiquement en assets Nanite/Chaos UE5.
+
+**Sécurité :** la bibliothèque de profils doit être appelée par du code serveur autorisé ; les fonctions Blueprint ne constituent pas un système d'authentification. Ne jamais exposer des écritures de profils à des clients non vérifiés.
+
+**Vérification :** compiler dans Unreal Engine 5 sur Windows avec Visual Studio et exécuter les tests multijoueurs. Les tests GitHub de la version JS ne prouvent pas la compilation du projet UE5.
+
 ## Démarrage
 1. Installer Unreal Engine 5 et les composants C++ Visual Studio 2022 sur Windows.
 2. Ouvrir `AnomaliaPrimeval.uproject` avec Unreal Engine 5 et générer les fichiers Visual Studio si demandé.
