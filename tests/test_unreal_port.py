@@ -91,6 +91,23 @@ class UnrealPortTests(unittest.TestCase):
         parsed = json.loads(template.read_text(encoding="utf-8"))
         self.assertTrue(parsed["vehicles"])
 
+    def test_survival_rates_are_per_server_and_authoritative(self):
+        import json
+        template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "config.json").read_text(encoding="utf-8"))
+        self.assertEqual(template["survival"]["hungerDrainPerSecond"], 0.015)
+        self.assertEqual(template["survival"]["thirstDrainPerSecond"], 0.025)
+        header = (SOURCE / "AnomaliaConfigLibrary.h").read_text(encoding="utf-8")
+        loader = (SOURCE / "AnomaliaConfigLibrary.cpp").read_text(encoding="utf-8")
+        survivor = (SOURCE / "AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
+        for name in ("HungerDrainPerSecond", "ThirstDrainPerSecond", "StarvationDamagePerSecond"):
+            self.assertIn(name, header)
+            self.assertIn(name, loader)
+            self.assertIn("ActiveServerSettings." + name, survivor)
+        self.assertIn("GetAuthGameMode()", survivor)
+        self.assertIn("if (!HasAuthority()) return;", survivor)
+        self.assertIn('Root->SetObjectField(TEXT("survival"), Survival)', loader)
+        self.assertIn('Root->TryGetObjectField(TEXT("survival")', loader)
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
