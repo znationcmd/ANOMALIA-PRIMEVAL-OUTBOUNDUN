@@ -75,7 +75,7 @@ export function createGraphics(renderer,scene,camera,sun,hemi,cities){
  sun.color.set(0xffe3b0);sun.intensity=3;hemi.color.set(0xa7c7de);hemi.groundColor.set(0x494d38);hemi.intensity=.95;
  sun.castShadow=!low;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-95;sun.shadow.camera.right=95;sun.shadow.camera.top=95;sun.shadow.camera.bottom=-95;sun.shadow.camera.near=1;sun.shadow.camera.far=450;sun.shadow.bias=-.0003;sun.shadow.normalBias=.15;
  scene.add(sun.target);scene.fog.color.set(0xa7b1ae);scene.fog.density=.00085;
- const sky=new THREE.Mesh(new THREE.SphereGeometry(4000,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{sunDir:{value:new THREE.Vector3(-.55,.7,.3).normalize()}},vertexShader:'varying vec3 dir;void main(){dir=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:`varying vec3 dir;uniform vec3 sunDir;
+ const sky=new THREE.Mesh(new THREE.SphereGeometry(1500,32,16),new THREE.ShaderMaterial({side:THREE.BackSide,depthWrite:false,uniforms:{sunDir:{value:new THREE.Vector3(-.55,.7,.3).normalize()}},vertexShader:'varying vec3 dir;void main(){dir=position;gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0);}',fragmentShader:`varying vec3 dir;uniform vec3 sunDir;
  float noise(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
  float smoothNoise(vec2 p){vec2 i=floor(p),f=fract(p);f=f*f*(3.0-2.0*f);return mix(mix(noise(i),noise(i+vec2(1,0)),f.x),mix(noise(i+vec2(0,1)),noise(i+vec2(1,1)),f.x),f.y);}
  void main(){vec3 d=normalize(dir);float h=max(d.y,0.0);vec3 color=mix(vec3(.66,.72,.72),vec3(.19,.37,.54),pow(h,.45));float glow=pow(max(0.0,dot(d,sunDir)),64.0);color+=vec3(1.0,.67,.3)*glow*.4;

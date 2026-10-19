@@ -78,7 +78,7 @@ test("sleeping dinos eventually awaken and lose incomplete taming progress",()=>
 });
 test("world client has actual ecology hooks, clickable map markers and console/gamepad shortcuts",()=>{
  const main=readFileSync(new URL("../src/main.js",import.meta.url),"utf8");
- for(const term of ["wildlifeSpawn(","huntAnimal(","tranquilize(","tameWithKibble(","fishNow()","cookFood(","JUNGLE_ZONES","state.mapPins.push","data-cook=","case \"KeyP\"","case \"KeyV\"",'case "focus":toggleTranqMode()']){
+ for(const term of ["wildlifeSpawn(","huntAnimal(","tranquilize(","tameWithKibble(","fishNow()","cookFood(","JUNGLE_ZONES","state.mapPins.push",'"cook-meat":()=>cookNear("raw_meat")',"case \"KeyP\"","case \"KeyV\"",'case "focus":toggleTranqMode()']){
   assert.ok(main.includes(term),"missing gameplay hook: "+term);
  }
 });

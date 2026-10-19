@@ -31,7 +31,25 @@ try{
  await page.keyboard.down('KeyW');await page.waitForTimeout(1000);await page.keyboard.up('KeyW');
  const after=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  assert.ok(after.z<before.z,'forward must move towards the camera view');
- await page.keyboard.press('KeyI');await page.waitForSelector('#panel:not(.hidden)');await page.screenshot({path:'test-results/02-inventory.png'});
+ await page.keyboard.press('KeyI');await page.waitForSelector('.survival-inventory');await page.waitForTimeout(800);
+ await page.screenshot({path:'test-results/02-inventory.png'});
+ await page.locator('.cargo-item').filter({hasText:'Bois'}).first().click();
+ await page.locator('#inventoryAmount').fill('2');await page.locator('[data-action="split"]').click();
+ assert.equal(await page.locator('.cargo-item').filter({hasText:'Bois'}).count(),2,'split creates a second wood stack');
+ await page.locator('[data-action="merge"]').click();
+ assert.equal(await page.locator('.cargo-item').filter({hasText:'Bois'}).count(),1,'merge restores wood stack');
+ await page.locator('.cargo-item').filter({hasText:'Bois'}).first().click();
+ await page.locator('[data-action="transfer"]').click();
+ assert.equal(await page.locator('.ground-grid .cargo-item').filter({hasText:'Bois'}).count(),1,'drop appears in vicinity');
+ await page.locator('.ground-grid .cargo-item').filter({hasText:'Bois'}).first().click();
+ await page.locator('[data-action="transfer"]').click();
+ assert.equal(await page.locator('.ground-grid .cargo-item').filter({hasText:'Bois'}).count(),0,'pickup removes ground pile');
+ await page.locator('#inventorySearch').fill('eau');
+ assert.equal(await page.locator('.cargo-item').count(),1,'search filters cargo');
+ await page.locator('#inventorySearch').fill('');
+ await page.locator('[data-tab="craft"]').click();await page.waitForSelector('.recipe-card');
+ await page.screenshot({path:'test-results/05-crafting.png'});
+ await page.locator('[data-tab="inventory"]').click();
  await page.locator('#panelClose').click();
  await page.keyboard.press('KeyM');await page.waitForSelector('#panel:not(.hidden)');await page.screenshot({path:'test-results/03-map.png'});
  await page.locator('#panelClose').click();
@@ -41,5 +59,5 @@ try{
  await page.evaluate(()=>document.exitPointerLock?.());
  await page.screenshot({path:'test-results/04-reloaded.png'});
  assert.deepEqual(failures,[],'no page errors or shader compilation errors');
- console.log('Actual WebGL render, forward movement, inventory, map, save and reload passed.');
-}finally{await browser?.close();await new Promise(r=>server.close(r))}
+ console.log('Actual WebGL render, forward movement, inventory split/merge/drop/pickup/search/crafting, map, save and reload passed.');
+}finally{await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r))}

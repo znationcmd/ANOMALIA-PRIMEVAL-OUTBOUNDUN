@@ -3,6 +3,11 @@
  * All game state is local; no in-game payments or third party credentials.
  */
 export const ITEM_DEFS={
+ key_alpha:{label:"Clé Alpha",weight:.03,kind:"key"},
+ key_red:{label:"Clé rouge",weight:.03,kind:"key"},
+ key_omega:{label:"Clé Omega",weight:.03,kind:"key"},
+ key_abyss:{label:"Clé Abysse",weight:.03,kind:"key"},
+ key_blue:{label:"Clé bleue",weight:.03,kind:"key"},
  scrap:{label:"Ferraille",weight:.55,kind:"material"},
  ammo:{label:"Munitions de pistolet",weight:.025,kind:"ammo"},
  medkit:{label:"Kit médical",weight:.6,kind:"medical"},
@@ -102,6 +107,7 @@ export function consume(s,id){
   case "food":case "meat":case "cooked_meat":case "cooked_fish":s.hunger=Math.min(100,s.hunger+(id==="food"?27:id==="cooked_fish"?29:34));break;
   case "berry":s.hunger=Math.min(100,s.hunger+7);s.thirst=Math.min(100,s.thirst+3);break;
   case "water":s.thirst=Math.min(100,s.thirst+38);break;
+  case "medkit":s.health=Math.min(100,s.health+50);break;
   case "bandage":s.health=Math.min(100,s.health+19);break;
   case "medicine":s.illness=null;s.infection=Math.max(0,s.infection-75);s.health=Math.min(100,s.health+7);break;
   default:return {ok:false,message:"Cet objet n'est pas consommable."};

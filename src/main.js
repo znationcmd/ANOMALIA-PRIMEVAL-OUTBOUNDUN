@@ -1,3 +1,5 @@
+import {inventoryInterface} from "./inventory-ui.js";
+import {syncInventory,takeInHands,nearbyDrops} from "./inventory.js";
 import {createGraphics} from "./graphics.js";
 import {BRIDGES,movementVector,bridgeSurface,groundHeight,moveWithCollisions} from "./movement.js";
 
@@ -45,6 +47,13 @@ if(!state.ecologyStarterKit){
  state.equipment.back||="bag";
  state.ecologyStarterKit=true;
 }
+state.inventoryStacks=Array.isArray(saved?.inventoryStacks)?saved.inventoryStacks:[];
+state.inventorySequence=Number(saved?.inventorySequence)||0;
+state.groundDrops=Array.isArray(saved?.groundDrops)?saved.groundDrops:[];
+state.quickbar=Array.isArray(saved?.quickbar)?saved.quickbar:undefined;
+state.inventoryMigration=!!saved?.inventoryMigration;
+if(!state.inventoryMigration){state.inventory.pistol=Math.max(1,state.inventory.pistol||0);state.inventoryMigration=true;syncInventory(state);const weapon=state.inventoryStacks.find(t=>t.id===state.weapon);if(weapon)takeInHands(state,weapon.uid)}
+syncInventory(state);
 let tranquilizerMode=false,fishingCooldown=0,forageCooldown=0;
 const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],wildlife=[],resources=[],siteObjects=new Map();
 const dynamic=new THREE.Group();outside.add(dynamic);
@@ -299,45 +308,20 @@ function interaction(){
  const reward=forageSupplies(state,{jungle:biomeAt(state.position.x,state.position.z)==="jungle",roll:hash2(Math.floor(state.position.x+Date.now()/6000),Math.floor(state.position.z),91)});
  notice(reward.message);save();
 }
+let inventoryUI;
 function displayInventory(){
- const html=[],cap=capacity(state),wt=weight(state);
- html.push('<p>Poids : <strong>'+wt.toFixed(1)+' / '+cap.toFixed(1)+' kg</strong> · Chaleur : '+warmth(state)+' · Protection : '+protection(state)+'</p>');
- html.push('<h3>Vêtements équipés</h3><div class="slots">');
- for(const slot of EQUIPMENT_SLOTS){const id=state.equipment[slot],label=ITEM_DEFS[id]?.label||"Vide";html.push('<div class="slot"><b>'+slot.toUpperCase()+'</b> · '+label+' '+(id?'<button data-unequip="'+slot+'">Retirer</button>':'')+'</div>')}
- html.push('</div><h3>Inventaire</h3><div class="grid-inventory">');
- for(const [id,n] of Object.entries(state.inventory).filter(x=>x[1]>0)){const def=ITEM_DEFS[id],name=def?.label||ITEM_NAMES[id]||id;
-  let cmd='';if(def?.kind==="clothing")cmd='<button data-equip="'+id+'">Porter</button>';
-  else if(["water","food","meat","cooked_meat","cooked_fish","berry","bandage","medicine"].includes(id))cmd='<button data-use="'+id+'">Utiliser</button>';
-  html.push('<div class="slot">'+name+' × '+n+' '+cmd+'</div>')}
- html.push('</div><p>Froid et humidité peuvent provoquer des maladies. Cherche des médicaments dans les bunkers.</p>');
- html.push('<p>Maladie : '+(state.illness||"Aucune")+' · Température : '+Number(state.temperature).toFixed(1)+' °C</p>');
- html.push('<h3>Animaux apprivoisés</h3><p>'+(state.tamed.length?state.tamed.map(p=>p.name+" ("+(p.hasSaddle?"sellé":"sans selle")+")").join(", "):"Aucun, nourris les dinosaures avec E.")+'</p>');
- html.push('<button data-craft="saddle">Fabriquer une selle : 6 fibres + 4 tissus</button>');
- html.push('<h3>Chasse, pêche et cuisson</h3>');
- html.push('<p>La chasse donne de la viande crue, des peaux et parfois des œufs. Approche une rive pour pêcher. Un feu de camp est indispensable pour cuire.</p>');
- html.push('<button data-ecology="fish">🎣 Pêcher</button> <button data-ecology="campfire">🔥 Construire un feu de camp</button>');
- html.push('<button data-cook="raw_meat">Cuire la viande</button> <button data-cook="raw_fish">Cuire le poisson</button>');
- html.push('<h3>Apprivoisement des dinosaures</h3><p>Active les fléchettes (V ou R3). Tire pour endormir, puis nourris avec E et des croquettes adaptées.</p>');
- html.push('<button data-ecology="tranq">Mode fléchettes : '+(tranquilizerMode?"ACTIVÉ":"DÉSACTIVÉ")+'</button>');
- html.push('<button data-recipe="tranq_dart">3 fléchettes : ferraille + tissu + 2 baies</button>');
- html.push('<button data-recipe="kibble_herbivore">Croquettes herbivores : 6 baies + 1 œuf + 1 poisson cuit</button>');
- html.push('<button data-recipe="kibble_carnivore">Croquettes carnivores : 2 viandes cuites + 1 œuf + 2 baies</button>');
- html.push('<button data-recipe="fishing_rod">Canne à pêche : 3 bois + 2 fibres</button>');
- $("panelTitle").textContent="INVENTAIRE ET SURVIE";$("panelBody").innerHTML=html.join("");
- $("panelBody").onclick=e=>{
-  const b=e.target.closest("button");if(!b)return;let msg="";
-  if(b.dataset.equip)msg=equip(state,b.dataset.equip).message;
-  if(b.dataset.unequip){const id=state.equipment[b.dataset.unequip];state.equipment[b.dataset.unequip]=null;if(id)state.inventory[id]=(state.inventory[id]||0)+1;msg="Retiré : "+(ITEM_DEFS[id]?.label||id)}
-  if(b.dataset.use)msg=consume(state,b.dataset.use).message;
-  if(b.dataset.craft){const result=importedCraft(b.dataset.craft);msg=result.message}
-  if(b.dataset.cook)msg=cookNear(b.dataset.cook).message;
-  if(b.dataset.recipe)msg=craftSurvival(state,b.dataset.recipe).message;
-  if(b.dataset.ecology==="fish")msg=fishNow().message;
-  if(b.dataset.ecology==="campfire")msg=buildCampfire().message;
-  if(b.dataset.ecology==="tranq")msg=toggleTranqMode().message;
-  notice(msg);save();displayInventory()
- };
- openPanel();
+ inventoryUI??=inventoryInterface({state,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),save,notice,open:openPanel,
+  recipes:[
+   {id:"saddle",label:"Selle renforcée",cost:{fiber:6,cloth:4}},
+   {id:"tranq_dart",label:"3 fléchettes tranquillisantes",cost:{scrap:1,cloth:1,berry:2}},
+   {id:"fishing_rod",label:"Canne à pêche",cost:{wood:3,fiber:2}},
+   {id:"kibble_herbivore",label:"Croquettes herbivores",cost:{berry:6,egg:1,cooked_fish:1}},
+   {id:"kibble_carnivore",label:"Croquettes carnivores",cost:{cooked_meat:2,egg:1,berry:2}}
+  ],
+  actions:{craft:id=>id==="saddle"?importedCraft(id):craftSurvival(state,id),fish:fishNow,campfire:buildCampfire,"cook-meat":()=>cookNear("raw_meat"),"cook-fish":()=>cookNear("raw_fish"),tranq:toggleTranqMode,site:()=>{paused=false;interaction();paused=true}},
+  siteInfo:()=>{const near=nearestSite(state.position.x,state.position.z,20);if(!near)return null;const site=near.site;return {label:site.label,locked:site.required&&!hasItem(state,site.required),collected:state.collected.includes(site.id)}}
+ });
+ inventoryUI.show();
 }
 function importedCraft(type){
  if(type!=="saddle")return {ok:false,message:"Recette inconnue"};
@@ -373,7 +357,7 @@ function toggleTranqMode(){
  notice(result.message);return result;
 }
 function openPanel(){paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
-function closePanel(){paused=false;$("panel").classList.add("hidden")}
+function closePanel(){inventoryUI?.cleanup();paused=false;$("panel").classList.add("hidden")}
 function buildShelter(){
  if(state.underground){notice("Construction impossible sous terre.");return}
  const result=buildStructure(state,"shelter",state.position.x-Math.sin(yaw)*8,state.position.z-Math.cos(yaw)*8);
@@ -387,6 +371,7 @@ function reload(){
 }
 function shoot(){
  if(!started||paused||shootCooldown>0||state.health<=0)return;
+ if(!["pistol","rifle"].includes(state.hands)&&!tranquilizerMode){notice("Prends une arme dans tes mains depuis l’inventaire.");return;}
  if(state.underground&&tranquilizerMode){notice("Les fléchettes sont réservées aux animaux en surface.");return}
  if(!tranquilizerMode&&!state.ammo){notice("Chargeur vide : R pour recharger.");return}
  if(tranquilizerMode&&!hasItem(state,"tranq_dart")){notice("Fabrique des fléchettes tranquillisantes dans le sac.");return}
@@ -436,6 +421,7 @@ function breedNear(){
  const result=breed(state,close[0].id,close[1].id);notice(result.message);save();
 }
 function mapScreen(){
+ inventoryUI?.cleanup();
  $("panelTitle").textContent="CARTE · ARCHIPELS ET CITÉS";
  const canvas=document.createElement("canvas");canvas.width=850;canvas.height=620;canvas.className="mapCanvas";
  const ctx=canvas.getContext("2d"),W=canvas.width,H=canvas.height;
@@ -571,7 +557,7 @@ $("startBtn").onclick=start;
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
-$("helpBtn").onclick=()=>{ $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
+$("helpBtn").onclick=()=>{inventoryUI?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
 $("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position={x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
@@ -579,6 +565,7 @@ window.addEventListener("keydown",event=>{
  if(["Tab","Space","ArrowUp","ArrowDown"].includes(event.code))event.preventDefault();
  if(!started)return;
  if(event.repeat)return;
+ if(!paused&&/^Digit[0-9]$/.test(event.code)){syncInventory(state);const index=(Number(event.code.slice(-1))+9)%10,id=state.quickbar[index],stack=state.inventoryStacks.find(t=>t.id===id);if(stack){const result=takeInHands(state,stack.uid);notice(result.message);save()}return;}
  switch(event.code){
   case "KeyI":$("panel").classList.contains("hidden")?displayInventory():closePanel();break;
   case "KeyM":$("panel").classList.contains("hidden")?mapScreen():closePanel();break;
