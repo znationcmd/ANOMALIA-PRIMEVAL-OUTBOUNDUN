@@ -160,3 +160,22 @@ constituent pas une preuve de compilation. Le lancement d'Editor sans rendu
 ne valide ni la carte, ni les graphismes, ni une partie jouable.
 
 Référence Epic : https://dev.epicgames.com/documentation/unreal-engine/run-automation-tests-in-unreal-engine
+
+
+## Lot 2 — source topographique vérifié, import UE encore requis
+
+`scripts/ue5/generate-terrain.py` génère 144 heightmaps RAW 16 bits, tuiles
+contiguës 4 × 4 km avec bord partagé, échantillonnées à environ 3,97 m. Le calcul
+à 25 m de résolution estime **422,669 km² de terres émergées** sur une emprise
+de 48 × 48 km (2 304 km² mer comprise). Trois tests vérifient la superficie,
+l’encodage et la continuité exacte des bords. Commande :
+
+```sh
+python scripts/ue5/generate-terrain.py unreal/TerrainSource
+```
+
+Les fichiers sont une **source de heightmaps**, pas des niveaux `.umap`. Leur
+import, la création des paysages World Partition, des matériaux, des collisions,
+des routes, du point d’apparition et le parcours dans Unreal Editor restent à
+effectuer et tester sur une installation UE5. La superficie est estimée par
+échantillonnage, pas mesurée sur un paysage Unreal final.

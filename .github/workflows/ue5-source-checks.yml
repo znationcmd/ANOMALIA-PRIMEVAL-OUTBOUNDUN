@@ -27,6 +27,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)
         run: python -m unittest discover -s tests -p test_ue5_build_driver.py -v
+      - name: Test deterministic terrain source
+        run: python -m unittest discover -s tests -p test_ue5_terrain_source.py -v
       - name: Verify config migration is non-destructive
         run: |
           python scripts/migrate-to-ue5.py
