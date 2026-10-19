@@ -32,9 +32,9 @@ try{
  for(const [language,label] of [['de','Solo spielen'],['ru','Одиночная игра'],['it','Gioca da solo'],['en','Play solo'],['ja','ソロプレイ'],['zh','单人游戏'],['es','Jugar solo'],['fr','Jouer en solo']]){await page.selectOption('#menuLanguage',language);assert.equal(await page.locator('#startBtn').textContent(),label);}
  await page.locator('#menuSettings .menu-back').click();
  await page.click('#multiBtn');
- await page.fill('#survivorName','Alice');await page.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await page.fill('#serverPassword','browser-test');await page.click('#joinBtn');
+ await page.fill('#survivorName','Alice');await page.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await page.fill('#serverPassword','browser-test');await page.locator('#joinBtn').click({noWaitAfter:true});
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS?.network.connected);
- const second=await browser.newPage({viewport:{width:960,height:720}});second.on('pageerror',e=>failures.push(e.message));await second.goto(base);await second.click('#multiBtn');await second.fill('#survivorName','Bob');await second.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await second.fill('#serverPassword','browser-test');await second.click('#joinBtn');
+ const second=await browser.newPage({viewport:{width:960,height:720}});second.on('pageerror',e=>failures.push(e.message));await second.goto(base);await second.click('#multiBtn');await second.fill('#survivorName','Bob');await second.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await second.fill('#serverPassword','browser-test');await second.locator('#joinBtn').click({noWaitAfter:true});
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===2);await second.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===2);
  await page.screenshot({path:'test-results/00-multiplayer.png'});await second.close();await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===1);await page.evaluate(()=>document.exitPointerLock?.());await page.click('#menuBtn');await page.click('#startBtn');
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS?.started&&window.__ANOMALIA_DIAGNOSTICS?.triangles>1000);
