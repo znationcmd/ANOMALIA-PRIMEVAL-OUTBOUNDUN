@@ -30,12 +30,12 @@ export function vehicleModel(type,wreck=false){
   const hull=part(new THREE.CylinderGeometry(1.25,.8,5.7,8),0,.1,0,paint);hull.rotation.x=Math.PI/2;hull.scale.z=.5;
   box(0,.5,0,2.1,.2,4.4);cabin(1.1);box(0,.9,2.5,.5,.7,.4,rubber);
  }else if(type==='helicopter'){
-  const body=part(new THREE.SphereGeometry(1,20,14),0,1.2,.5,paint);body.scale.set(1.05,.9,1.7);cabin(.8);
+  const body=part(new THREE.SphereGeometry(1,20,14),0,1.2,.5,paint);body.scale.set(1.05,.9,1.7);body.userData.hideInCockpit=true;cabin(.8);
   const tail=part(new THREE.ConeGeometry(.6,5,12),0,1.1,3.9,paint);tail.rotation.x=Math.PI/2;
   box(0,1.6,6,.12,1.8,1.2);for(const x of [-1,1]){box(x,.12,0,.12,.12,4,metal);for(const z of [-.8,.8])box(x,.45,z,.08,.7,.08,metal)}
   const rotor=new THREE.Group();root.add(rotor);rotor.position.y=2.6;for(const a of [0,Math.PI/2]){const blade=new THREE.Mesh(new THREE.BoxGeometry(11,.06,.22),rubber);blade.rotation.y=a;rotor.add(blade)}moving.push({mesh:rotor,kind:'rotor'});
  }else if(type==='airplane'){
-  const fuselage=part(new THREE.CylinderGeometry(.65,.55,7.5,18),0,1.15,0,paint);fuselage.rotation.x=Math.PI/2;cabin(.75);
+  const fuselage=part(new THREE.CylinderGeometry(.65,.55,7.5,18),0,1.15,0,paint);fuselage.rotation.x=Math.PI/2;fuselage.userData.hideInCockpit=true;cabin(.75);
   box(0,1.15,.3,10,.16,1.8);box(0,1.6,3.2,3.8,.1,1);box(0,2.15,3.2,.13,1.6,1.2);
   for(const x of [-1.2,1.2])wheel(x,.35,.5,.3);wheel(0,.35,-2.5,.25);
   const prop=box(0,1.15,-3.85,.12,3,.12,rubber);moving.push({mesh:prop,kind:'propeller'});
@@ -47,5 +47,5 @@ export function vehicleModel(type,wreck=false){
   box(0,.43,-2.3,1.8,.18,.2,rubber);
  }
  if(wreck){root.rotation.z=.25;root.rotation.x=.12;}
- return {root,update(speed,turn,time){for(const p of moving){if(p.kind==='rotor')p.mesh.rotation.y=time*25;else if(p.kind==='propeller')p.mesh.rotation.z=time*35;else if(p.kind==='wheel')p.mesh.rotation.x+=speed*.02;else if(p.kind==='steering')p.mesh.rotation.z=turn*.4}},dispose(){const materials=new Set();root.traverse(o=>{o.geometry?.dispose();if(o.material)materials.add(o.material)});for(const m of materials){m.map?.dispose();m.dispose()}}};
+ return {root,setCockpit(inside){root.traverse(o=>{if(o.userData.hideInCockpit)o.visible=!inside})},update(speed,turn,time){for(const p of moving){if(p.kind==='rotor')p.mesh.rotation.y=time*25;else if(p.kind==='propeller')p.mesh.rotation.z=time*35;else if(p.kind==='wheel')p.mesh.rotation.x+=speed*.02;else if(p.kind==='steering')p.mesh.rotation.z=turn*.4}},dispose(){const materials=new Set();root.traverse(o=>{o.geometry?.dispose();if(o.material)materials.add(o.material)});for(const m of materials){m.map?.dispose();m.dispose()}}};
 }
