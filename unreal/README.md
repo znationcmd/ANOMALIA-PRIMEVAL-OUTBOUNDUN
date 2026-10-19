@@ -166,7 +166,7 @@ Référence Epic : https://dev.epicgames.com/documentation/unreal-engine/run-aut
 
 `scripts/ue5/generate-terrain.py` génère 144 heightmaps RAW 16 bits, tuiles
 contiguës 4 × 4 km avec bord partagé, échantillonnées à environ 3,97 m. Le calcul
-à 25 m de résolution estime **422,669 km² de terres émergées** sur une emprise
+à 25 m de résolution estime **354,687 km² au-dessus du niveau de la mer** sur une emprise
 de 48 × 48 km (2 304 km² mer comprise). Trois tests vérifient la superficie,
 l’encodage et la continuité exacte des bords. Commande :
 
@@ -178,4 +178,12 @@ Les fichiers sont une **source de heightmaps**, pas des niveaux `.umap`. Leur
 import, la création des paysages World Partition, des matériaux, des collisions,
 des routes, du point d’apparition et le parcours dans Unreal Editor restent à
 effectuer et tester sur une installation UE5. La superficie est estimée par
-échantillonnage, pas mesurée sur un paysage Unreal final.
+échantillonnage du champ de hauteur avec le niveau marin fixé à 0 m, pas mesurée
+sur un paysage Unreal final.
+
+Pour l’import manuel dans UE5 : générer le dossier, créer un nouveau niveau vide
+avec World Partition, passer en mode Landscape > Import from File et sélectionner
+`height_x0_y0.r16`. Régler l’échelle de paysage à environ X/Y `396.8254` et Z
+`200`, vérifier l’assemblage des 144 tuiles, l’orientation nord/sud et le niveau
+de la mer, puis enregistrer sous `/Game/Maps/AnomaliaWorld`. Cette opération
+reste à effectuer dans l’éditeur ; elle n’est pas exécutée par le générateur.

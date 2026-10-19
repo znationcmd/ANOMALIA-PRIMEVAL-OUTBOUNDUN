@@ -44,21 +44,23 @@ def height_at(x: np.ndarray, y: np.ndarray) -> np.ndarray:
     return height, land
 
 def encode_height(height: np.ndarray) -> np.ndarray:
-    # Maps -256..+256 m to unsigned 16-bit centered at Unreal sea level (32768).
-    normalized = np.clip((height + 256.0) / 512.0, 0.0, 1.0)
+    # Maps -512..+512 m to unsigned 16-bit centered at Unreal sea level (32768).
+    normalized = np.clip((height + 512.0) / 1024.0, 0.0, 1.0)
     return np.rint(normalized * 65535).astype("<u2")
 
 def generate(output: Path, measure_only: bool = False) -> dict:
     # Independently verify dry land at 25 m resolution before producing tiles.
     axis = np.arange(-HALF + 12.5, HALF, 25, dtype=np.float32)
     xx, yy = np.meshgrid(axis, axis)
-    heights, dry = height_at(xx, yy)
-    area_km2 = float(dry.sum() * .025 * .025)
+    heights, _ = height_at(xx, yy)
+    # Emergent land is strictly above the authored sea surface (0 m).
+    area_km2 = float(np.count_nonzero(heights > 0.0) * .025 * .025)
     result = {"worldWidthKm": 48, "worldDepthKm": 48, "totalAreaKm2": 2304,
               "dryLandKm2SampledAt25m": round(area_km2, 3),
               "sampleSpacingMeters": STEP, "tileMeters": TILE_METERS,
               "heightmapResolution": SAMPLES_PER_TILE,
-              "heightEncoding": "unsigned little-endian 16-bit RAW; -256m..+256m; sea level 0m",
+              "heightEncoding": "unsigned little-endian 16-bit RAW; -512m..+512m; sea level 0m",
+              "suggestedLandscapeScaleCm": {"x": 396.8254, "y": 396.8254, "z": 200},
               "islands": [{"centerMeters": [i[0], i[1]], "radiiMeters": [i[2], i[3]]} for i in ISLANDS]}
     if area_km2 <= 300:
         raise ValueError(f"Dry land target failed: {area_km2:.2f} km2 <= 300 km2")
@@ -72,7 +74,7 @@ def generate(output: Path, measure_only: bool = False) -> dict:
             east = -HALF + col * TILE_METERS + coordinates
             tx, ty = np.meshgrid(east, north)
             tile_height, _ = height_at(tx, ty)
-            filename = output / f"height_x{col:02d}_y{row:02d}.r16"
+            filename = output / f"height_x{col}_y{row}.r16"
             encode_height(tile_height).tofile(filename)
     (output / "terrain-manifest.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
     return result

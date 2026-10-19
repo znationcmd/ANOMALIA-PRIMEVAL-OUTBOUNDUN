@@ -27,6 +27,6 @@ class TerrainSourceTests(unittest.TestCase):
         self.assertEqual(int(a[0, -1]), int(b[0, 0]))
 
     def test_raw_encoding_is_little_endian_unsigned_16_bit(self):
-        encoded = terrain.encode_height(np.array([-256.0, 0.0, 256.0]))
+        encoded = terrain.encode_height(np.array([-512.0, 0.0, 512.0]))
         self.assertEqual(encoded.dtype, np.dtype("<u2"))
         self.assertEqual(encoded.tolist(), [0, 32768, 65535])
