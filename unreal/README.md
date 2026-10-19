@@ -34,6 +34,13 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 - Les demandes utilisent des RPC serveur fiables ; un client ne peut pas prendre le volant d'un véhicule déjà occupé. Les mouvements restent calculés côté serveur.
 - Ce système est une **implémentation C++ à compiler et tester sous UE5**, pas une fonctionnalité vérifiée dans un exécutable. Il reste à créer des Blueprints de véhicules avec collisions adaptées, animations d'entrée/sortie, passagers et placement sûr du personnage à la sortie.
 
+## Lot suivant — carburant et paramètres isolés (19 octobre 2026)
+
+- `AAnomaliaVehiclePawn` : jauge `FuelPercent` répliquée, consommation uniquement sur le serveur quand le conducteur accélère, arrêt de la propulsion et de la direction lorsque le carburant est épuisé. Le taux `FuelConsumptionPerSecond` est personnalisable dans les Blueprints enfants.
+- `RefuelOnServer` : API de ravitaillement réservée à une logique serveur de confiance ; aucun RPC client public permettant de s'attribuer du carburant. Il reste à développer les stations-service, réservoirs, consommation propre à chaque véhicule et sauvegarde du carburant.
+- `AAnomaliaGameMode::InitGame` : lit les paramètres propres au serveur via l'option de lancement `?AnomaliaServerId=rp-corse` et `Saved/Servers/rp-corse/config.json`. Les identifiants sont validés ; aucune modification automatique d'un fichier malformé.
+- Les tests `tests/test_unreal_port.py` contrôlent ces garanties **statiquement**. La compilation, la physique, le multijoueur et l'exécution sous UE5 restent à vérifier dans Unreal Editor sur Windows.
+
 ## Démarrage
 1. Installer Unreal Engine 5 et les composants C++ Visual Studio 2022 sur Windows.
 2. Ouvrir `AnomaliaPrimeval.uproject` avec Unreal Engine 5 et générer les fichiers Visual Studio si demandé.
