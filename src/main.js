@@ -1,3 +1,4 @@
+import {BRIDGES,movementVector,bridgeSurface,groundHeight,moveWithCollisions} from "./movement.js";
 
 import * as THREE from "three";
 import {JUNGLE_ZONES,WILDLIFE,wildlifeSpawn,huntAnimal,forageSupplies,fishAt,cookFood,craftSurvival,tranquilize,tickTorpor,tameWithKibble} from "./ecology.js";
@@ -67,7 +68,9 @@ function terrainColor(biome,height){
  const colors={plage:[.70,.63,.43],prairie:[.28,.42,.29],"forêt":[.18,.31,.23],jungle:[.08,.30,.19],"hautes-terres":[.33,.35,.30],montagne:[.40,.39,.35],neiges:[.82,.84,.83]};
  return colors[biome]||[.28,.38,.27];
 }
+const chunkSolids=new Map();
 function makeTerrain(cx,cz){
+ const solids=[];chunkSolids.set(cx+","+cz,solids);
  const group=new THREE.Group();group.position.set(cx*CHUNK_SIZE,0,cz*CHUNK_SIZE);
  const verts=18,geo=new THREE.PlaneGeometry(CHUNK_SIZE,CHUNK_SIZE,verts,verts);geo.rotateX(-Math.PI/2);
  const arr=geo.attributes.position,colors=[];
@@ -89,7 +92,9 @@ function makeTerrain(cx,cz){
    if(Math.hypot(x-city.x,z-city.z)>city.radius||hash2(gx,gz)<1-city.density)continue;
    const y=heightAt(x,z);if(y<2)continue;
    const width=25+hash2(gx+7,gz)*25,depth=25+hash2(gx,gz+8)*23;
+   if(Math.abs(x)<width/2+3&&Math.abs(z-180)<depth/2+3)continue;
    const height=9+Math.pow(hash2(gx+3,gz+3),1.65)*(city.id==="helion"?112:70);
+   solids.push({x,z,width,depth});
    const building=meshBox(group,x-group.position.x,y+height/2,z-group.position.z,width,height,depth,m.wall);
    const roof=meshBox(group,x-group.position.x,y+height+.45,z-group.position.z,width+1,1,depth+1,m.roof);
    if(height>30){
@@ -124,7 +129,7 @@ function makeTerrain(cx,cz){
    marker=meshBox(group,site.x-group.position.x,Math.max(y,0)+1,site.z-group.position.z,12,2,5,m.boat);
    meshBox(group,site.x-group.position.x-1,Math.max(y,0)+4,site.z-group.position.z,1,5,1,m.wood);
   }else if(site.type==="village"){
-   for(let n=0;n<5;n++){const dx=(n-2)*16,dy=heightAt(site.x+dx,site.z+8);meshBox(group,site.x+dx-group.position.x,dy+4,site.z+8-group.position.z,12,8,10,m.wood)}
+   for(let n=0;n<5;n++){const dx=(n-2)*16,dy=heightAt(site.x+dx,site.z+8);solids.push({x:site.x+dx,z:site.z+8,width:12,depth:10});meshBox(group,site.x+dx-group.position.x,dy+4,site.z+8-group.position.z,12,8,10,m.wood)}
    marker=meshBox(group,site.x-group.position.x,y+2,site.z-group.position.z,4,4,4,m.open);
   }else{
    marker=meshBox(group,site.x-group.position.x,y+2,site.z-group.position.z,site.type==="bunker"?16:5,4,site.type==="bunker"?13:5,material);
@@ -189,7 +194,7 @@ function unloadChunk(id){
  const group=chunks.get(id);if(!group)return;
  outside.remove(group);
  group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==m.wall&&o.material!==m.rock&&!Object.values(m).includes(o.material))o.material.dispose()});
- chunks.delete(id);
+ chunks.delete(id);chunkSolids.delete(id);
  for(let i=zombies.length-1;i>=0;i--)if(zombies[i].chunk===id)zombies.splice(i,1);
  for(let i=dinos.length-1;i>=0;i--)if(dinos[i].chunk===id){const d=dinos[i];state.dinoEffects[d.id]={torpor:d.torpor||0,unconscious:!!d.unconscious,unconsciousTime:d.unconsciousTime||0,tameProgress:d.tameProgress||0};dinos.splice(i,1)}
  for(let i=wildlife.length-1;i>=0;i--)if(wildlife[i].chunk===id)wildlife.splice(i,1);
@@ -213,11 +218,20 @@ function updateStructures(){
  }
 }
 function renderBridge(){
- for(const bridge of [{x1:4800,z1:0,x2:5850,z2:0},{x1:-5100,z1:3300,x2:-6000,z2:3600}]){
+ for(const bridge of BRIDGES){
   const dx=bridge.x2-bridge.x1,dz=bridge.z2-bridge.z1,len=Math.hypot(dx,dz);
-  const y=7,deck=meshBox(outside,(bridge.x1+bridge.x2)/2,y,(bridge.z1+bridge.z2)/2,22,2,len,m.road);
-  deck.rotation.y=-Math.atan2(dx,dz);
-  for(let n=0;n<10;n++){const t=n/9;meshBox(outside,bridge.x1+dx*t,-1,bridge.z1+dz*t,3,16,3,m.wall)}
+  const geometry=new THREE.PlaneGeometry(bridge.width,len,1,40);geometry.rotateX(-Math.PI/2);
+  const arr=geometry.attributes.position;
+  for(let i=0;i<arr.count;i++){
+   const t=(arr.getZ(i)+len/2)/len,side=arr.getX(i);
+   const x=bridge.x1+dx*t+side*dz/len,z=bridge.z1+dz*t-side*dx/len;
+   arr.setXYZ(i,x,bridgeSurface(bridge.x1+dx*t,bridge.z1+dz*t,heightAt)??8,z);
+  }
+  geometry.computeVertexNormals();outside.add(new THREE.Mesh(geometry,m.road));
+  for(let n=0;n<10;n++){
+   const t=n/9,x=bridge.x1+dx*t,z=bridge.z1+dz*t,bottom=heightAt(x,z),top=bridgeSurface(x,z,heightAt)??8;
+   if(top>bottom)meshBox(outside,x,(top+bottom)/2,z,3,top-bottom,3,m.wall);
+  }
  }
 }
 renderBridge();
@@ -339,7 +353,7 @@ function fishNow(){
 }
 function buildCampfire(){
  if(state.underground)return {ok:false,message:"Impossible de construire ici."};
- const x=state.position.x+Math.sin(yaw)*5,z=state.position.z+Math.cos(yaw)*5;
+ const x=state.position.x-Math.sin(yaw)*5,z=state.position.z-Math.cos(yaw)*5;
  const result=buildStructure(state,"fire",x,z);
  if(result.ok){updateStructures();save()}notice(result.message);return result;
 }
@@ -357,7 +371,7 @@ function openPanel(){paused=true;$("panel").classList.remove("hidden");if(docume
 function closePanel(){paused=false;$("panel").classList.add("hidden")}
 function buildShelter(){
  if(state.underground){notice("Construction impossible sous terre.");return}
- const result=buildStructure(state,"shelter",state.position.x+Math.sin(yaw)*8,state.position.z+Math.cos(yaw)*8);
+ const result=buildStructure(state,"shelter",state.position.x-Math.sin(yaw)*8,state.position.z-Math.cos(yaw)*8);
  notice(result.message);if(result.ok){updateStructures();save()}
 }
 function reload(){
@@ -480,7 +494,7 @@ function updateHud(dt){
  else if(state.boat)text="BATEAU · navigue vers les îles sans pont";
  else text="E · Récolter œufs/baies · P Pêcher · G Feu de camp · K Cuisiner · V Fléchettes · M Carte";
  hint.textContent=text;hint.classList.toggle("hidden",!text);
- $("compass").textContent=["N","NE","E","SE","S","SO","O","NO"][Math.round((((yaw%(Math.PI*2))+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
+ $("compass").textContent=["N","NE","E","SE","S","SO","O","NO"][Math.round((((-yaw%(Math.PI*2))+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
  $("questTitle").textContent=state.unlocked?.includes("bunker-alpha")?"Au-delà des frontières":"Le mystère du bunker Alpha";
  $("questDesc").textContent=state.unlocked?.includes("bunker-alpha")?"Explore le métro, apprivoise les dinosaures, rejoins les îles.":"Trouve la clé Alpha et ouvre le bunker à l'extérieur d'Hélion.";
 }
@@ -488,8 +502,8 @@ function updatePlayer(dt){
  if(paused||!started||state.health<=0)return;
  const forward=(keys.has("KeyW")||keys.has("ArrowUp")||keys.has("KeyZ")||touchState.w?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")||touchState.s?1:0)+controllerMove.y;
  const strafe=(keys.has("KeyD")||keys.has("ArrowRight")||touchState.d?1:0)-(keys.has("KeyA")||keys.has("ArrowLeft")||keys.has("KeyQ")||touchState.a?1:0)+controllerMove.x;
- let fx=Math.sin(yaw)*forward+Math.cos(yaw)*strafe,fz=Math.cos(yaw)*forward-Math.sin(yaw)*strafe;
- const mag=Math.hypot(fx,fz);if(mag){fx/=mag;fz/=mag}
+ const vector=movementVector(forward,strafe,yaw),fx=vector.x,fz=vector.z;
+ const mag=Math.hypot(fx,fz);
  currentlySprinting=(keys.has("ShiftLeft")||keys.has("ShiftRight")||controllerSprint)&&state.stamina>3&&!state.underground&&!state.boat;
  const speed=state.boat?30:state.mounted?16:currentlySprinting?8.4:4.6;
  state.stamina=clamp(state.stamina+(currentlySprinting?-dt*17:dt*10),0,100);
@@ -498,12 +512,12 @@ function updatePlayer(dt){
  if(state.underground){const origin=state.entrySite;if(origin){state.position.x=clamp(nx,origin.x-9,origin.x+9);state.position.z=clamp(nz,origin.z-75,origin.z+8)}}
  else if(state.boat){state.position.x=nx;state.position.z=nz}
  else{
-  const current=heightAt(state.position.x,state.position.z),next=heightAt(nx,nz);
-  if(next>SEA_LEVEL-1&&Math.abs(next-current)<5+speed*.3){state.position.x=nx;state.position.z=nz}
-  else if(next<=SEA_LEVEL-1&&Math.abs(next-current)<6){state.position.x=nx;state.position.z=nz}
+  const solids=[...chunkSolids.values()].flat();
+  for(const build of state.structures||[])if(build.type==="shelter")solids.push({x:build.x,z:build.z,width:9,depth:8});
+  state.position=moveWithCollisions(state.position,nx-state.position.x,nz-state.position.z,solids,(x,z,tx,tz)=>Math.abs(groundHeight(tx,tz,heightAt)-groundHeight(x,z,heightAt))<5+speed*.3);
  }
- let y=state.underground?-26.25:state.boat?2.5:Math.max(heightAt(state.position.x,state.position.z),0)+1.85;
- if(!state.boat&&!state.underground&&heightAt(state.position.x,state.position.z)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
+ let y=state.underground?-26.25:state.boat?2.5:Math.max(groundHeight(state.position.x,state.position.z,heightAt),0)+1.85;
+ if(!state.boat&&!state.underground&&groundHeight(state.position.x,state.position.z,heightAt)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
  else underwaterNotice=false;
  camera.position.set(state.position.x,y,state.position.z);
  camera.rotation.order="YXZ";camera.rotation.set(-pitch,yaw,0);
@@ -578,6 +592,7 @@ window.addEventListener("keydown",event=>{
  }
 });
 window.addEventListener("keyup",event=>keys.delete(event.code));
+window.addEventListener("blur",()=>keys.clear());
 renderer.domElement.addEventListener("click",()=>{if(!started||paused)return;if(document.pointerLockElement!==renderer.domElement&&!matchMedia("(pointer:coarse)").matches)renderer.domElement.requestPointerLock?.();else shoot()});
 document.addEventListener("pointerlockchange",()=>{isPointer=document.pointerLockElement===renderer.domElement});
 document.addEventListener("mousemove",event=>{if(!isPointer||paused)return;yaw-=event.movementX*.00225;pitch=clamp(pitch+event.movementY*.00225,-1.43,1.43)});
