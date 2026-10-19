@@ -87,6 +87,7 @@ function notice(message){
  clearTimeout(notificationTimeout);notificationTimeout=setTimeout(()=>toast.classList.add("hidden"),3200);
 }
 function save(){try{
+ if(network?.connected)return; // Never write multiplayer state into the solo save.
  state.yaw=yaw;
  for(const d of dinos)state.dinoEffects[d.id]={torpor:d.torpor||0,unconscious:!!d.unconscious,unconsciousTime:d.unconsciousTime||0,tameProgress:d.tameProgress||0};
  localStorage.setItem(STORAGE,JSON.stringify(state))
@@ -595,7 +596,7 @@ function start(lockPointer=true){
  updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
  if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
-const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show()});
+const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show(),onMapChanged:()=>{buildings?.update();for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();}});
 const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),newGame:()=>{try{localStorage.setItem(STORAGE+'-before-new-game',JSON.stringify(state));localStorage.removeItem(STORAGE);location.reload();}catch{notice('Impossible de conserver la sauvegarde actuelle.')}} ,onMenu:()=>{constructionUI?.cancel();mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
 const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
@@ -741,7 +742,7 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight
 constructionUI=createConstructionUI({state,scene,camera,heightAt,world:constructionWorld,save,notice,panel:$('panel'),body:$('panelBody'),title:$('panelTitle'),open:openPanel,close:closePanel,cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup();}});
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
-for(const [id,label,handler]of [["editorBtn","ÉDITEUR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
