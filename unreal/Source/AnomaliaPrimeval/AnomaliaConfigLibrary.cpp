@@ -109,6 +109,18 @@ bool UAnomaliaConfigLibrary::LoadServerSettings(const FString& ServerId, FAnomal
     if (Server->TryGetNumberField(TEXT("timeMultiplier"), Number)) OutSettings.TimeMultiplier = FMath::Clamp(static_cast<float>(Number), 0.1f, 24.0f);
     bool bValue = false;
     if (Server->TryGetBoolField(TEXT("thirdPerson"), bValue)) OutSettings.bThirdPerson = bValue;
+    // Missing survival fields preserve the original gameplay defaults.
+    const TSharedPtr<FJsonObject>* SurvivalPtr = nullptr;
+    if (Root->TryGetObjectField(TEXT("survival"), SurvivalPtr) && SurvivalPtr && SurvivalPtr->IsValid())
+    {
+        const TSharedPtr<FJsonObject>& Survival = *SurvivalPtr;
+        if (Survival->TryGetNumberField(TEXT("hungerDrainPerSecond"), Number) && FMath::IsFinite(Number))
+            OutSettings.HungerDrainPerSecond = FMath::Clamp(static_cast<float>(Number), 0.f, 10.f);
+        if (Survival->TryGetNumberField(TEXT("thirstDrainPerSecond"), Number) && FMath::IsFinite(Number))
+            OutSettings.ThirstDrainPerSecond = FMath::Clamp(static_cast<float>(Number), 0.f, 10.f);
+        if (Survival->TryGetNumberField(TEXT("starvationDamagePerSecond"), Number) && FMath::IsFinite(Number))
+            OutSettings.StarvationDamagePerSecond = FMath::Clamp(static_cast<float>(Number), 0.f, 10.f);
+    }
     return true;
 }
 
@@ -117,6 +129,9 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
     if (!ValidId(ServerId)) { OutError = TEXT("Invalid server identifier"); return false; }
     if (Settings.Name.IsEmpty() || Settings.Name.Len() > 96 || Settings.Port < 1024 || Settings.Port > 65535 ||
         Settings.MaxPlayers < 1 || Settings.MaxPlayers > 64 || Settings.TimeMultiplier < 0.1f || Settings.TimeMultiplier > 24.f ||
+        !FMath::IsFinite(Settings.HungerDrainPerSecond) || Settings.HungerDrainPerSecond < 0.f || Settings.HungerDrainPerSecond > 10.f ||
+        !FMath::IsFinite(Settings.ThirstDrainPerSecond) || Settings.ThirstDrainPerSecond < 0.f || Settings.ThirstDrainPerSecond > 10.f ||
+        !FMath::IsFinite(Settings.StarvationDamagePerSecond) || Settings.StarvationDamagePerSecond < 0.f || Settings.StarvationDamagePerSecond > 10.f ||
         !(Settings.Mode == TEXT("rp") || Settings.Mode == TEXT("pvp") || Settings.Mode == TEXT("pve") || Settings.Mode == TEXT("mixed")))
     {
         OutError = TEXT("Invalid server settings");
@@ -141,7 +156,14 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
     Server->SetStringField(TEXT("mode"), Settings.Mode);
     Server->SetBoolField(TEXT("thirdPerson"), Settings.bThirdPerson);
     Server->SetNumberField(TEXT("timeMultiplier"), Settings.TimeMultiplier);
-    Root->SetNumberField(TEXT("schemaVersion"), 1);
+    const TSharedPtr<FJsonObject>* PreviousSurvival = nullptr;
+    TSharedPtr<FJsonObject> Survival = (Root->TryGetObjectField(TEXT("survival"), PreviousSurvival) && PreviousSurvival && PreviousSurvival->IsValid())
+        ? *PreviousSurvival : MakeShared<FJsonObject>();
+    Survival->SetNumberField(TEXT("hungerDrainPerSecond"), Settings.HungerDrainPerSecond);
+    Survival->SetNumberField(TEXT("thirstDrainPerSecond"), Settings.ThirstDrainPerSecond);
+    Survival->SetNumberField(TEXT("starvationDamagePerSecond"), Settings.StarvationDamagePerSecond);
+    Root->SetObjectField(TEXT("survival"), Survival);
+        Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("server"), Server);
     return WriteJsonSafely(File, SerializeObject(Root.ToSharedRef()), OutError);
 }
