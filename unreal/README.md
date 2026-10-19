@@ -65,3 +65,25 @@ Le GameMode UE5 lit désormais **uniquement** `Saved/Servers/<identifiant>/vehic
 - Les véhicules restent des **prototypes sans modèles 3D finalisés**. Les collisions du niveau, la flottabilité, le vol et les points de spawn sûrs doivent être mis au point dans Unreal Editor.
 - `vehicles.xml` appartient encore au prototype JavaScript ; l'importation automatique de ce format dans le GameMode UE5 n'est **pas** implémentée. Ne pas considérer les deux fichiers comme interchangeables.
 - Les contrôles automatisés GitHub inspectent le code source ; ils ne remplacent pas la compilation et les tests Unreal Engine sur Windows.
+
+## Lot supplémentaire — survie paramétrable par serveur (19 octobre 2026)
+
+- Le fichier `Saved/Servers/<id>/config.json` accepte maintenant une section `survival` : `hungerDrainPerSecond`, `thirstDrainPerSecond`, `starvationDamagePerSecond`.
+- Les valeurs sont bornées entre 0 et 10, avec conservation des valeurs historiques si la section est absente. Les propriétés inconnues sont conservées lors d'un enregistrement : pas de fusion destructrice.
+- `AAnomaliaSurvivor::Tick` lit les règles du `AAnomaliaGameMode` **côté serveur uniquement** et réplique la faim, la soif et la santé aux joueurs. Deux serveurs avec des identifiants différents peuvent donc appliquer des règles de survie distinctes.
+- Le modèle est dans `Config/Anomalia/config.json`. Ne pas modifier les fichiers d'un autre serveur ni effacer les sauvegardes existantes.
+- Les tests GitHub vérifient statiquement ce raccordement ; **aucune compilation UE5 native ni test de partie multijoueur n'a été exécuté ici**.
+
+### Exemple de réglage par serveur
+
+```json
+{
+  "survival": {
+    "hungerDrainPerSecond": 0.015,
+    "thirstDrainPerSecond": 0.025,
+    "starvationDamagePerSecond": 0.25
+  }
+}
+```
+
+Ajouter cette section au `config.json` du serveur concerné, sans supprimer les autres clés.
