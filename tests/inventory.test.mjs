@@ -32,3 +32,9 @@ test('removing a loaded backpack retains overflow items instead of deleting them
  for(const [id,n]of Object.entries(before))assert.equal(totals(s)[id],n);
  assert.ok(s.inventoryStacks.some(t=>t.container==='overflow'));assert.ok(weight(s)>0);
 });
+test('starter fishing rod fits the equipped bag and dropped starter resources can be recovered',()=>{
+ const s=state();s.equipment.back='bag';s.inventory={wood:15,scrap:4,food:2,water:2,medkit:1,ammo:48,pistol:1,fishing_rod:1,tranq_dart:8,kibble_herbivore:3,kibble_carnivore:3,cooked_fish:2,medicine:1};
+ syncInventory(s);assert.equal(s.inventoryStacks.some(t=>t.container==='overflow'),false);
+ const wood=s.inventoryStacks.find(t=>t.id==='wood');splitStack(s,wood.uid,2);mergeStacks(s);const stack=s.inventoryStacks.find(t=>t.id==='wood');dropStack(s,stack.uid,1);
+ assert.equal(pickupDrop(s,s.groundDrops[0].uid).ok,true);assert.equal(s.groundDrops.length,0);assert.equal(s.inventory.wood,15);
+});

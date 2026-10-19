@@ -8,7 +8,7 @@ export function itemSize(id,rotated=false){
 export function maxStack(id){return ['clothing','weapon','tool','saddle'].includes(ITEM_DEFS[id]?.kind)?1:['ammo','material'].includes(ITEM_DEFS[id]?.kind)?50:20}
 export function compartments(s){
  const out=[{id:'pockets',label:'Poches',width:6,height:4}];
- for(const [slot,id] of Object.entries(s.equipment||{}))if((ITEM_DEFS[id]?.capacity||0)>1)out.push({id:slot,label:ITEM_DEFS[id].label,width:6,height:Math.max(2,Math.ceil(ITEM_DEFS[id].capacity*2/6))});
+ for(const [slot,id] of Object.entries(s.equipment||{}))if((ITEM_DEFS[id]?.capacity||0)>1)out.push({id:slot,label:ITEM_DEFS[id].label,width:6,height:Math.max(slot==='back'?6:2,Math.ceil(ITEM_DEFS[id].capacity*2/6))});
  return out;
 }
 export function fits(s,stack,container,x,y,ignore=null){
@@ -84,8 +84,9 @@ export function pickupDrop(s,id){
  const count=Math.min(t.count,Math.max(0,Math.floor((capacity(s)-weight(s)+1e-7)/itemWeight)));
  if(!count)return {ok:false,message:'Poids maximal atteint.'};
  const before=structuredClone({inventory:s.inventory,inventoryStacks:s.inventoryStacks});
+ const overflowBefore=s.inventoryStacks.filter(x=>x.id===t.id&&x.container==='overflow').reduce((n,x)=>n+x.count,0);
  s.inventory[t.id]=(s.inventory[t.id]||0)+count;syncInventory(s);
- if(s.inventoryStacks.some(t=>t.container==='overflow')){Object.assign(s,before);return {ok:false,message:'Aucun emplacement libre.'}}
+ if(s.inventoryStacks.filter(x=>x.id===t.id&&x.container==='overflow').reduce((n,x)=>n+x.count,0)>overflowBefore){Object.assign(s,before);return {ok:false,message:'Aucun emplacement libre.'}}
  t.count-=count;s.groundDrops=s.groundDrops.filter(t=>t.count>0);return {ok:true,message:count+' objet(s) récupéré(s).'};
 }
 export function sortInventory(s,by='name'){
