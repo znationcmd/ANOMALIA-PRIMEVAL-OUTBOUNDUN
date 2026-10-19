@@ -47,13 +47,13 @@ app.whenReady().then(()=>{
  ipcMain.handle('anomalia:connect',async(event,token,address)=>{
   validSender(event);if(typeof token!=='string'||token.length>64)throw Error('Invalid socket token');const url=new URL(address);if(!['ws:','wss:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid server address');
   const owner=event.sender.id,previous=clientSockets.get(owner);previous?.socket.close();
-  const {WebSocket}=require('ws'),socket=new WebSocket(url.href,{maxPayload:65536});clientSockets.set(owner,{token,socket});
+  const {WebSocket}=require('ws'),socket=new WebSocket(url.href,{maxPayload:256*1024});clientSockets.set(owner,{token,socket});
   const emit=data=>{if(!event.sender.isDestroyed())event.sender.send('anomalia:socket',{token,...data});};
   socket.on('message',data=>emit({kind:'message',data:data.toString()}));socket.on('error',()=>emit({kind:'error'}));socket.on('close',()=>{if(clientSockets.get(owner)?.token===token)clientSockets.delete(owner);emit({kind:'close'});});
   event.sender.once('destroyed',()=>{if(clientSockets.get(owner)?.token===token){socket.terminate();clientSockets.delete(owner);}});
   await new Promise((resolve,reject)=>{socket.once('open',resolve);socket.once('error',reject);});return true;
  });
- ipcMain.on('anomalia:send',(event,token,data)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token&&active.socket.readyState===1&&typeof data==='string'&&Buffer.byteLength(data)<=2048)active.socket.send(data);});
+ ipcMain.on('anomalia:send',(event,token,data)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token&&active.socket.readyState===1&&typeof data==='string'&&Buffer.byteLength(data)<=256*1024)active.socket.send(data);});
  ipcMain.on('anomalia:disconnect',(event,token)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token)active.socket.close();});
  ipcMain.handle('anomalia:host',async(event,options={})=>{
   validSender(event);const port=Number(options.port||2303),password=String(options.password||'');if(!Number.isInteger(port)||port<1024||port>65535||password.length>128)throw Error('Invalid server options');
