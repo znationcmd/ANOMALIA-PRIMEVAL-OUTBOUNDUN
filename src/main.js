@@ -1,5 +1,6 @@
 
 import * as THREE from "three";
+import {JUNGLE_ZONES,WILDLIFE,wildlifeSpawn,huntAnimal,forageSupplies,fishAt,cookFood,craftSurvival,tranquilize,tickTorpor,tameWithKibble} from "./ecology.js";
 import {readGamepad,selectGamepad,controllerFamily,GAMEPAD_LABELS} from "./gamepad.js";
 import {WORLD_HALF,CHUNK_SIZE,SEA_LEVEL,CITIES,CONTINENTS,PEAKS,SITES,ITEM_NAMES,hash2,heightAt,biomeAt,nearestCity,nearestSite,initialState,normalizeState,unlockSite,buildStructure,tickSurvival,clamp} from "./mechanics.js";
 import {ITEM_DEFS,EQUIPMENT_SLOTS,capacity,weight,protection,warmth,equip,consume,rewardLoot,tame,saddleMount,breed,survivalTick,DINO_TYPES,hasItem} from "./systems.js";
@@ -31,7 +32,17 @@ state.illness=saved?.illness||null;state.infection=Number(saved?.infection)||0;s
 state.tamed=Array.isArray(saved?.tamed)?saved.tamed:[];state.dinoTrust=saved?.dinoTrust||{};
 state.mounted=saved?.mounted||null;state.weapon=saved?.weapon||"pistol";state.underground=null;
 state.inventory={...state.inventory,...saved?.inventory};
-const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],resources=[],siteObjects=new Map();
+state.hunted=Array.isArray(saved?.hunted)?saved.hunted:[];
+state.mapPins=Array.isArray(saved?.mapPins)?saved.mapPins.slice(0,120):[];
+state.dinoEffects=saved?.dinoEffects||{};
+state.ecologyStarterKit=Boolean(saved?.ecologyStarterKit);
+if(!state.ecologyStarterKit){
+ for(const [id,qty] of Object.entries({fishing_rod:1,tranq_dart:8,kibble_herbivore:3,kibble_carnivore:3,cooked_fish:2,medicine:1}))state.inventory[id]=(state.inventory[id]||0)+qty;
+ state.equipment.back||="bag";
+ state.ecologyStarterKit=true;
+}
+let tranquilizerMode=false,fishingCooldown=0,forageCooldown=0;
+const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],wildlife=[],resources=[],siteObjects=new Map();
 const dynamic=new THREE.Group();outside.add(dynamic);
 let started=false,paused=false,isPointer=false,yaw=Number(state.yaw)||0,pitch=0,lastTime=performance.now(),hudTime=0,chunkTime=0,notificationTimeout=0,shootCooldown=0,currentlySprinting=false;
 let boatMesh=null,interiorEntrance=null,interiorTreasure=null,headlamp=false,underwaterNotice=false;
@@ -49,7 +60,7 @@ setInterval(()=>{if(started)save()},12000);
 window.addEventListener("pagehide",save);
 function terrainColor(biome,height){
  if(height<0)return [0.35,.36,.3];
- const colors={plage:[.70,.63,.43],prairie:[.28,.42,.29],"forêt":[.18,.31,.23],"hautes-terres":[.33,.35,.30],montagne:[.40,.39,.35],neiges:[.82,.84,.83]};
+ const colors={plage:[.70,.63,.43],prairie:[.28,.42,.29],"forêt":[.18,.31,.23],jungle:[.08,.30,.19],"hautes-terres":[.33,.35,.30],montagne:[.40,.39,.35],neiges:[.82,.84,.83]};
  return colors[biome]||[.28,.38,.27];
 }
 function makeTerrain(cx,cz){
@@ -87,11 +98,11 @@ function makeTerrain(cx,cz){
  }
  // Forests and shrubs surrounding the cities; each sector has a bounded draw cost.
  const tx=Math.floor(group.position.x/65),tz=Math.floor(group.position.z/65);
- for(let i=0;i<26;i++){
+ for(let i=0;i<(biomeAt(group.position.x,group.position.z)==="jungle"?46:26);i++){
   const sx=group.position.x-170+hash2(tx*11+i,tz*7)*340;
   const sz=group.position.z-170+hash2(tx*13,tz*3+i)*340;
   const h=heightAt(sx,sz),biome=biomeAt(sx,sz);
-  if(h<3||h>320||!["forêt","prairie","hautes-terres"].includes(biome))continue;
+  if(h<3||h>320||!["forêt","prairie","hautes-terres","jungle"].includes(biome))continue;
   if(CITIES.some(c=>Math.hypot(c.x-sx,c.z-sz)<c.radius+90))continue;
   const trunk=cylinder(.7,1.4,8+hash2(i,tx)*6,m.trunk);trunk.position.set(sx-group.position.x,h+5,sz-group.position.z);group.add(trunk);
   const crown=new THREE.Mesh(new THREE.ConeGeometry(5.6,16,7),m.leaves);crown.position.set(sx-group.position.x,h+15,sz-group.position.z);group.add(crown);
@@ -123,8 +134,16 @@ function makeTerrain(cx,cz){
    const id="dino-"+cx+"-"+cz,variant=Math.floor(hash2(cx,cz,133)*DINO_TYPES.length),type=DINO_TYPES[variant].id;
    const mesh=createDino(group,x-group.position.x,h,z-group.position.z,type);
    const previous=state.tamed.find(p=>p.id===id);
-   dinos.push({id,type,x,z,mesh,chunk:cx+","+cz,trust:state.dinoTrust[id]||0,tamed:!!previous});
+   const effects=state.dinoEffects[id]||{};dinos.push({id,type,x,z,mesh,chunk:cx+","+cz,trust:state.dinoTrust[id]||0,tamed:!!previous,torpor:effects.torpor||0,unconscious:!!effects.unconscious,unconsciousTime:effects.unconsciousTime||0,tameProgress:effects.tameProgress||0});
   }
+ }
+ // Shoreline crocodiles, offshore sharks and land wildlife spawn deterministically.
+ for(const animal of wildlifeSpawn(cx,cz,{chunkSize:CHUNK_SIZE,hash:hash2,heightAt,biomeAt},2)){
+  if(state.hunted.includes(animal.id))continue;
+  if(animal.type!=="shark"&&CITIES.some(c=>Math.hypot(animal.x-c.x,animal.z-c.z)<c.radius*.75))continue;
+  const positionY=animal.type==="shark"?Math.min(-1,Math.max(-5,heightAt(animal.x,animal.z)+2)):Math.max(0,heightAt(animal.x,animal.z));
+  const mesh=createWildAnimal(group,animal.type,animal.x-group.position.x,positionY,animal.z-group.position.z);
+  wildlife.push({...animal,mesh,chunk:cx+","+cz,alive:true,attackCooldown:0});
  }
  if(hash2(cx,cz,444)>.78){
   const x=group.position.x+(hash2(cx,cz,102)-.5)*220,z=group.position.z+(hash2(cx,cz,98)-.5)*220,h=heightAt(x,z);
@@ -145,13 +164,31 @@ function createDino(group,lx,h,lz,type){
  const tail=new THREE.Mesh(new THREE.ConeGeometry(.8*factor,4*factor,5),material);tail.position.set(-3.9*factor,2.0*factor,0);tail.rotation.z=-Math.PI/2;root.add(tail);
  root.position.set(lx,h,lz);group.add(root);return root;
 }
+function createWildAnimal(group,type,x,y,z){
+ const def=WILDLIFE[type],root=new THREE.Group(),shark=type==="shark",croc=type==="crocodile";
+ const material=mat(shark?0x557884:croc?0x546844:type==="deer"?0xa07e57:type==="bird"?0x977e5d:type==="jaguar"?0x93754a:0x676450);
+ const radius=shark?2.7:croc?2.4:type==="deer"?1.35:1.1;
+ const body=new THREE.Mesh(new THREE.SphereGeometry(radius,9,7),material);body.scale.set(shark?1.5:1,shark?.3:croc?.3:.65,shark?.55:1);body.position.y=shark?0:croc?.7:1.8;root.add(body);
+ if(croc||shark){
+  meshBox(root,radius*1.3,croc?.5:0,0,radius,1,radius*.7,material);
+  const tail=new THREE.Mesh(new THREE.ConeGeometry(radius*.45,radius*3,6),material);
+  tail.rotation.z=Math.PI/2;tail.position.x=-radius*1.8;root.add(tail);
+  if(shark){const fin=new THREE.Mesh(new THREE.ConeGeometry(.9,2.2,3),material);fin.position.y=1.2;root.add(fin)}
+ }else{
+  for(const xx of [-.8,.8])for(const zz of [-.5,.5])meshBox(root,xx,0.55,zz,.32,1.2,.3,material);
+  meshBox(root,1.5,2,0,1,.75,.6,material);
+  if(type==="deer"){for(const zz of [-.35,.35]){const antler=cylinder(.07,.13,1.5,m.wood);antler.position.set(1.8,3.2,zz);root.add(antler)}}
+ }
+ root.position.set(x,y,z);group.add(root);return root;
+}
 function unloadChunk(id){
  const group=chunks.get(id);if(!group)return;
  outside.remove(group);
  group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==m.wall&&o.material!==m.rock&&!Object.values(m).includes(o.material))o.material.dispose()});
  chunks.delete(id);
  for(let i=zombies.length-1;i>=0;i--)if(zombies[i].chunk===id)zombies.splice(i,1);
- for(let i=dinos.length-1;i>=0;i--)if(dinos[i].chunk===id)dinos.splice(i,1);
+ for(let i=dinos.length-1;i>=0;i--)if(dinos[i].chunk===id){const d=dinos[i];state.dinoEffects[d.id]={torpor:d.torpor||0,unconscious:!!d.unconscious,unconsciousTime:d.unconsciousTime||0,tameProgress:d.tameProgress||0};dinos.splice(i,1)}
+ for(let i=wildlife.length-1;i>=0;i--)if(wildlife[i].chunk===id)wildlife.splice(i,1);
 }
 function updateChunks(force=false){
  if(state.underground)return;
