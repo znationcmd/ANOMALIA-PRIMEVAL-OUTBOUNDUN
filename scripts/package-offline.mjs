@@ -1,0 +1,42 @@
+/**
+ * Package ANOMALIA PRIMEVAL OUTBOUNDUN as one playable offline browser file.
+ * The compiled JS and CSS are embedded, so users can double-click the file.
+ * No internet service, developer tooling or external assets are required at runtime.
+ */
+import {readFile,writeFile,mkdir} from "node:fs/promises";
+import {dirname,join} from "node:path";
+const root=process.cwd(),dist=join(root,"dist");
+let html=await readFile(join(dist,"index.html"),"utf8");
+const jsTag=html.match(/<script\b[^>]*type="module"[^>]*src="([^"]+)"[^>]*><\/script>/i);
+const cssTag=html.match(/<link\b[^>]*rel="stylesheet"[^>]*href="([^"]+)"[^>]*>/i);
+if(!jsTag||!cssTag)throw new Error("Cannot locate generated JavaScript or CSS assets in dist/index.html");
+const resolveAsset=uri=>join(dist,uri.replace(/^\//,"").replace(/^\.\//,""));
+const js=await readFile(resolveAsset(jsTag[1]),"utf8");
+const css=await readFile(resolveAsset(cssTag[1]),"utf8");
+if(!js.includes("THREE")&&!js.includes("WebGL"))console.warn("3D bundle fingerprint not recognized; verify rendering in a real browser.");
+html=html.replace(jsTag[0],'<script type="module">'+js.replace(/<\/script/gi,'<\\/script')+'</script>');
+html=html.replace(cssTag[0],'<style>'+css.replace(/<\/style/gi,'<\\/style')+'</style>');
+html=html.replace(/<link\b[^>]*rel="modulepreload"[^>]*>/gi,"");
+if(/<script\b[^>]*src=|<link\b[^>]*rel="stylesheet"/i.test(html))throw new Error("Package still includes external JS or stylesheet references");
+const output=join(root,"release","ANOMALIA_PRIMEVAL_OUTBOUNDUN.html");
+await mkdir(dirname(output),{recursive:true});
+await writeFile(output,html);
+const instructions=`ANOMALIA PRIMEVAL OUTBOUNDUN - VERSION PRE-ALPHA WINDOWS / MAC / LINUX
+
+POUR JOUER :
+1. Décompresse le fichier ZIP.
+2. Double-clique sur ANOMALIA_PRIMEVAL_OUTBOUNDUN.html.
+3. Ouvre avec Chrome, Edge ou Firefox récent compatible WebGL2.
+4. Clique sur ENTRER DANS LE MONDE.
+5. ZQSD/WASD : déplacements; souris : regarder; clic gauche : tirer; I : inventaire; M : carte.
+6. Les manettes Xbox et PlayStation standard sont prises en charge si le navigateur les reconnaît.
+
+Ce fichier HTML contient le jeu compilé. Aucun npm, Node.js ni outil de programmation n'est nécessaire pour jouer.
+Ta sauvegarde reste locale à ce navigateur et à ce fichier. Une mise à jour peut changer son identité de stockage.
+Si ton navigateur refuse d'ouvrir un module depuis file://, essaie un autre navigateur ou lance avec un serveur local.
+
+IMPORTANT: Jeu de démonstration PRE-ALPHA. 3D rudimentaire; aucun mode multijoueur ni jeu natif .exe.
+Les animations, les physiques et les performances varient selon le navigateur et l'appareil.
+`;
+await writeFile(join(root,"release","LIRE_AVANT_DE_JOUER.txt"),instructions);
+console.log(JSON.stringify({standalone:"release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html",bytes:Buffer.byteLength(html),embeddedJS:Buffer.byteLength(js),embeddedCSS:Buffer.byteLength(css)}));
