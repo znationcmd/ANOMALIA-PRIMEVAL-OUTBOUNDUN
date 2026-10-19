@@ -15,11 +15,12 @@ bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)
     UGameUserSettings* Settings = GEngine->GetGameUserSettings();
     if (!Settings) return false;
 
-    const FString Ini = FPaths::Combine(FPaths::ProjectConfigDir(), TEXT("Anomalia"), TEXT("PerformanceTargets.ini"));
-    if (!FPaths::FileExists(Ini)) return false; // Never silently override player settings.
+    // Standard Game.ini is included in packaged builds; presets never write to server files.
+    const FString& Ini = GGameIni;
     int32 MinPercent = 50, MaxPercent = 85;
     int32 View = 2, Shadow = 2, Effects = 2, Texture = 3, Foliage = 2;
-    const TCHAR* Section = *PresetName;
+    const FString SectionName = FString(TEXT("Anomalia.")) + PresetName;
+    const TCHAR* Section = *SectionName;
     if (!GConfig->GetInt(Section, TEXT("RenderScaleMin"), MinPercent, Ini) ||
         !GConfig->GetInt(Section, TEXT("RenderScaleMax"), MaxPercent, Ini)) return false;
     GConfig->GetInt(Section, TEXT("ViewDistanceQuality"), View, Ini);
