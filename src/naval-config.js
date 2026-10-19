@@ -1,6 +1,7 @@
 import {XMLParser,XMLValidator} from 'fast-xml-parser';
 import {WORLD_HALF} from './mechanics.js';
-const TYPES=new Set(['carrier','warship','submarine']);
+import {VEHICLES} from './vehicles.js';
+const TYPES=new Set(Object.keys(VEHICLES));
 const num=(v,f,min,max)=>Number.isFinite(Number(v))?Math.max(min,Math.min(max,Number(v))):f;
 export function parseNavalConfig(xml=''){
  if(typeof xml!=='string'||xml.length>200000||/<!DOCTYPE|<!ENTITY/i.test(xml))throw Error('vehicles.xml invalide.');
