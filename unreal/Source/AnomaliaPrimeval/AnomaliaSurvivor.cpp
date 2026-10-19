@@ -33,6 +33,7 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
     if (!HasAuthority()) return;
     const float PreviousHunger = Hunger;
     const float PreviousThirst = Thirst;
+    const float PreviousHealth = Health;
     // Read only this world's authoritative GameMode. Clients cannot change server survival rates.
     const AAnomaliaGameMode* Rules = GetWorld() ? Cast<AAnomaliaGameMode>(GetWorld()->GetAuthGameMode()) : nullptr;
     const float HungerRate = Rules ? Rules->ActiveServerSettings.HungerDrainPerSecond : 0.015f;
@@ -41,7 +42,7 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
     Hunger = FMath::Max(0.f, Hunger - DeltaSeconds * HungerRate);
     Thirst = FMath::Max(0.f, Thirst - DeltaSeconds * ThirstRate);
     if (Hunger <= 0.f || Thirst <= 0.f) Health = FMath::Max(0.f, Health - DeltaSeconds * DamageRate);
-    if (PreviousHunger != Hunger || PreviousThirst != Thirst) OnSurvivalChanged();
+    if (PreviousHunger != Hunger || PreviousThirst != Thirst || PreviousHealth != Health) OnSurvivalChanged();
 }
 
 void AAnomaliaSurvivor::RestoreSurvival(float Food, float Water, float HP)
