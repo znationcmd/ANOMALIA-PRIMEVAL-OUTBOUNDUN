@@ -2,19 +2,20 @@ import {WORLD_HALF} from "../src/mechanics.js";
 import {validatePlacements} from "../src/building-rules.js";
 import {GAME_MODES,validGameMode,canPlayerDamage} from "../src/server-modes.js";
 import {normalizeServerId,readServerDocument,writeServerDocument} from "./server-storage.mjs";
+import {loadServerSettings} from './server-settings.mjs';
 import http from 'node:http';
 import {WebSocketServer,WebSocket} from 'ws';
 import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 const equal=(a,b)=>{const x=Buffer.from(String(a??'')),y=Buffer.from(String(b??''));return x.length===y.length&&timingSafeEqual(x,y)};
-export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
+export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverName='ANOMALIA PRIMEVAL OUTBOUNDUN',serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
  serverId=normalizeServerId(serverId);
  const saved=readServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects:[],mode:'pve',revision:0});
  let objects=[],revision=0,activeMode=validGameMode(mode||saved.mode);
  try{objects=validatePlacements({schemaVersion:1,objects:saved.objects});revision=Math.max(0,Number(saved.revision)||0)}catch{}
  const persist=()=>writeServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects,mode:activeMode,revision});
  const players=new Map();
- const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({game:'ANOMALIA PRIMEVAL OUTBOUNDUN',protocol:2,serverId,mode:activeMode,players:players.size,maxPlayers,revision}));});
+ const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({game:'ANOMALIA PRIMEVAL OUTBOUNDUN',name:serverName,protocol:2,serverId,mode:activeMode,players:players.size,maxPlayers,revision}));});
  const wss=new WebSocketServer({server,maxPayload:256*1024,perMessageDeflate:false});
  const send=(ws,value)=>{if(ws.readyState===WebSocket.OPEN&&ws.bufferedAmount<512*1024)ws.send(JSON.stringify(value))};
  const broadcast=value=>{for(const ws of players.keys())send(ws,value)};
@@ -81,7 +82,9 @@ export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',ma
  return {server,wss,players,serverId,get mode(){return activeMode},get worldMap(){return objects},adminKey,async close(){clearInterval(timer);for(const ws of wss.clients)ws.terminate();await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r))}};
 }
 if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
- const port=Number(process.env.PORT||2303);
- const instance=createMultiplayerServer({port,password:process.env.SERVER_PASSWORD||'',maxPlayers:Math.min(64,Math.max(2,Number(process.env.MAX_PLAYERS)||16)),serverId:process.env.SERVER_ID||'main',dataRoot:process.env.SERVER_DATA_ROOT||'server-data',mode:process.env.GAME_MODE||undefined,adminKey:process.env.SERVER_ADMIN_KEY||randomBytes(32).toString('hex')});
+ const dataRoot=process.env.SERVER_DATA_ROOT||'server-data',serverId=process.env.SERVER_ID||'main';
+ const settings=loadServerSettings({dataRoot,serverId});
+ const instance=createMultiplayerServer({port:settings.port,password:settings.password,maxPlayers:settings.maxPlayers,serverName:settings.name,serverId,dataRoot,mode:settings.mode,adminKey:process.env.SERVER_ADMIN_KEY||randomBytes(32).toString('hex')});
+ const port=settings.port;
  console.log('ANOMALIA server :'+port+' · ID '+instance.serverId+' · '+instance.mode+' · data isolated');
 }
