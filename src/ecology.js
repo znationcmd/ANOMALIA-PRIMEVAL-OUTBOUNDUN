@@ -41,8 +41,8 @@ export function wildlifeSpawn(cx,cz,world,limit=2){
  const {chunkSize,hash,heightAt,biomeAt}=world;
  const result=[];
  for(let n=0;n<limit*6&&result.length<limit;n++){
-  const x=(cx+.13+hash(cx*91+n,cz*31+7)*.72)*chunkSize;
-  const z=(cz+.13+hash(cx*17+n,cz*59+22)*.72)*chunkSize;
+  const x=(cx+(hash(cx*91+n,cz*31+7)-.5)*.82)*chunkSize;
+  const z=(cz+(hash(cx*17+n,cz*59+22)-.5)*.82)*chunkSize;
   const h=heightAt(x,z),biome=biomeAt(x,z);
   const species=habitatSpecies({height:h,biome,roll:hash(cx*77+n,cz*43+n)});
   if(!species)continue;
