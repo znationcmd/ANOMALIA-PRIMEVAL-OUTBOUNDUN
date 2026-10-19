@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "server": {
+    "name": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+    "port": 2303,
+    "maxPlayers": 16,
+    "password": "",
+    "mode": "pve",
+    "thirdPerson": true,
+    "timeMultiplier": 1
+  },
+  "notes": "ANOMALIA server defaults. Secrets must be set with SERVER_PASSWORD and SERVER_ADMIN_KEY environment variables in production."
+}
