@@ -7,6 +7,7 @@ const {app,BrowserWindow,Menu,protocol,net,ipcMain}=require("electron");
 const path=require("node:path");
 const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
+const {createHash}=require("node:crypto");
 
 const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
 const SCHEME="anomalia";
@@ -57,7 +58,7 @@ app.whenReady().then(()=>{
   validSender(event);const port=Number(options.port||2303),password=String(options.password||'');if(!Number.isInteger(port)||port<1024||port>65535||password.length>128)throw Error('Invalid server options');
   const gameMode=String(options.mode||'pve');if(!['rp','pvp','pve','mixed'].includes(gameMode))throw Error('Invalid game mode');
   if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}
-  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16,mode:gameMode,dataFile:path.join(app.getPath('userData'),'world-server.json')});
+  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16,mode:gameMode,serverId:'local-'+port,dataRoot:app.getPath('userData')});
   try{await new Promise((resolve,reject)=>{next.server.once('listening',resolve);next.server.once('error',reject);});}catch(e){await next.close();throw e;}
   multiplayerServer=next;
   const addresses=Object.values(require('node:os').networkInterfaces()).flat().filter(n=>n.family==='IPv4'&&!n.internal).map(n=>`ws://${n.address}:${port}`);
@@ -65,10 +66,15 @@ app.whenReady().then(()=>{
  });
  ipcMain.handle('anomalia:stop',async event=>{validSender(event);if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}return true;});
  const bundleDir=path.resolve(__dirname,"..","dist");
- const configDir=path.join(app.getPath("userData"),"config");
+ let activeProfile="solo";
+ const configRoot=path.join(app.getPath("userData"),"profiles");
+ const configDirFor=id=>path.join(configRoot,id,"config");
+ const configDir=configDirFor("solo");
  fs.mkdirSync(configDir,{recursive:true});
  const configNames=["types.xml","events.xml","cfgeventspawns.xml","cfgspawnabletypes.xml","globals.xml","economy.xml","ai.xml","cfgeconomycore.xml","serverDZ.cfg","Game.ini","GameUserSettings.ini","world-settings.json","creatures.json"];
- for(const name of configNames){const from=path.join(bundleDir,"config",name),to=path.join(configDir,name);if(!fs.existsSync(to)&&fs.existsSync(from))fs.copyFileSync(from,to);}
+ const ensureConfig=id=>{const folder=configDirFor(id);fs.mkdirSync(folder,{recursive:true});for(const name of configNames){const from=path.join(bundleDir,"config",name),to=path.join(folder,name);if(!fs.existsSync(to)&&fs.existsSync(from))fs.copyFileSync(from,to);}return folder;};
+ ensureConfig("solo");
+ ipcMain.handle("anomalia:select-profile",(event,address)=>{validSender(event);if(!address){activeProfile="solo";return activeProfile;}const url=new URL(address);if(!["ws:","wss:"].includes(url.protocol)||url.username||url.password)throw Error("Invalid address");activeProfile="remote-"+createHash("sha256").update(url.host.toLowerCase()+url.pathname).digest("hex").slice(0,24);ensureConfig(activeProfile);return activeProfile;});
 
  protocol.handle(SCHEME,async(request)=>{
   try{
@@ -77,10 +83,10 @@ app.whenReady().then(()=>{
    const pathname=decodeURIComponent(url.pathname);
    if(pathname.includes("\0"))return new Response("Forbidden",{status:403});
    const relative=pathname==="/"?"index.html":pathname.replace(/^\/+/, "");
-   if(relative==="config/location.json")return new Response(JSON.stringify({directory:configDir}),{headers:{"Content-Type":"application/json"}});
+   if(relative==="config/location.json")return new Response(JSON.stringify({directory:ensureConfig(activeProfile),profile:activeProfile}),{headers:{"Content-Type":"application/json"}});
    const isConfig=relative.startsWith("config/");
    if(isConfig&&!configNames.includes(relative.slice(7)))return new Response("Not found",{status:404});
-   const root=isConfig?configDir:bundleDir;
+   const root=isConfig?ensureConfig(activeProfile):bundleDir;
    const target=path.resolve(root,isConfig?relative.slice(7):relative);
    if(target!==root&&!target.startsWith(root+path.sep))
     return new Response("Forbidden",{status:403});
