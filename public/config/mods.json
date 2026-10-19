@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "enabled": false,
+  "provider": "enfusion-workshop",
+  "mods": [],
+  "notes": "Automatic Enfusion Workshop downloads are NOT supported by this Three.js game. This is a reserved configuration file; no mods are downloaded."
+}
