@@ -18,6 +18,15 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 
 **Vérification :** compiler dans Unreal Engine 5 sur Windows avec Visual Studio et exécuter les tests multijoueurs. Les tests GitHub de la version JS ne prouvent pas la compilation du projet UE5.
 
+## Nouveau lot — catalogue et conduite UE5 (19 octobre 2026)
+
+- `UAnomaliaVehicleCatalog` : **27 définitions uniques** accessibles dans les Blueprints, couvrant camions/remorques, quads, buggys, motoneiges, motos, karting, F1, SUV, fourgons, police/gendarmerie, pompiers, ambulance, blindés, monster trucks, jet-skis, zodiaques, porte-avions, navires de guerre, sous-marins, avions de chasse et hélicoptères. Les valeurs de vitesse, places et stockage sont des valeurs initiales **ajustables**, pas des performances simulées.
+- `AAnomaliaVehiclePawn` : prototype C++ **possédable et répliqué**, caméra troisième personne, commandes avant/arrière/direction, validation de l'identifiant de véhicule par le serveur, déplacements calculés côté serveur. Il faut créer des Blueprints enfants, attribuer les vrais modèles 3D, collisions et animations, et programmer la montée/descente.
+- `AAnomaliaGameMode::SpawnServerVehicle` : création d'un véhicule par **logique serveur de confiance** ; pas de RPC public autorisant n'importe quel joueur à créer un véhicule.
+- `tests/test_unreal_port.py` et workflow `ue5-source-checks.yml` : contrôles statiques de la liste des véhicules et de l'importation non destructive. **Ce ne sont pas des tests de compilation UE5.**
+
+**Limites actuelles :** la conduite est une première base `UFloatingPawnMovement` générique. La physique des roues Chaos, les remorques articulées, la flottabilité des navires, la plongée des sous-marins, les vols, le carburant, les armes, les passagers et la persistance des véhicules **ne sont pas encore implémentés**. Les 27 définitions ne sont pas 27 véhicules finis ou photoréalistes. La compilation Unreal Engine 5 sur Windows reste indispensable.
+
 ## Démarrage
 1. Installer Unreal Engine 5 et les composants C++ Visual Studio 2022 sur Windows.
 2. Ouvrir `AnomaliaPrimeval.uproject` avec Unreal Engine 5 et générer les fichiers Visual Studio si demandé.
