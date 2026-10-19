@@ -5,6 +5,8 @@
 #include "AnomaliaGameMode.generated.h"
 
 class AAnomaliaVehiclePawn;
+class AController;
+class APlayerController;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaGameMode : public AGameModeBase
@@ -26,7 +28,13 @@ public:
 protected:
     /** Loads a bounded list of initial vehicles only from this server's own Saved directory. */
     virtual void BeginPlay() override;
+    virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
     void SpawnConfiguredVehicles();
+    void LoadPersistentPlayer(APlayerController* PlayerController);
+    void SavePersistentPlayer(AController* Controller);
+    void SaveAllPlayerProfiles();
+    FString GetPersistentPlayerId(const AController* Controller) const;
+    FTimerHandle ProfileSaveTimer;
     virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 public:
@@ -34,4 +42,5 @@ public:
     /** Called by trusted server logic only. Not a client spawn RPC. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Server|Vehicles")
     AAnomaliaVehiclePawn* SpawnServerVehicle(FName VehicleId, const FTransform& SpawnTransform);
+    virtual void Logout(AController* Exiting) override;
 };

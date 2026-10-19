@@ -7,6 +7,10 @@ Chaque entrée de `Saved/Servers/<id>/vehicles.json` peut maintenant préciser `
 Ce lot reste un **prototype de conduite générique** : il n'ajoute pas la physique Chaos, les modèles 3D finaux, la plongée, le vol ni un installateur UE5. Les tests automatiques sont des contrôles statiques, pas une compilation Unreal Engine.
 
 
+## Lot UE5 — persistance joueur sur le cycle de connexion (20 octobre 2026)
+
+Le GameMode restaure maintenant l'inventaire, la faim, la soif et la santé après l'apparition du personnage. Il enregistre ces données à la déconnexion et toutes les 120 secondes. Le profil reste dans `Saved/Servers/<server-id>/userProfile/` et l'identifiant de profil est dérivé du NetId authentifié reçu par le serveur. Si l'identité réseau est indisponible (par exemple avec un mode hors ligne sans système d'identité), la sauvegarde automatique est ignorée pour éviter les collisions de profils. Cette intégration C++ doit encore être compilée et vérifiée dans UE 5.8; elle ne remplace pas une authentification EOS/Steam configurée.
+
 Ce dossier est un **socle de projet C++ UE5**, pas une version jouable du jeu.
 La version JavaScript / Three.js / Electron à la racine reste inchangée et disponible.
 

@@ -1,5 +1,11 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaInventoryComponent.h"
+#include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerState.h"
+#include "Misc/SecureHash.h"
+#include "TimerManager.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
 #include "Engine/World.h"
@@ -39,6 +45,148 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
     }
 }
 
+
+FString AAnomaliaGameMode::GetPersistentPlayerId(const AController* Controller) const
+{
+    if (!Controller || !Controller->PlayerState) return FString();
+    const FUniqueNetIdRepl& NetId = Controller->PlayerState->GetUniqueId();
+    if (!NetId.IsValid()) return FString();
+    const FString RawIdentity = NetId.ToString();
+    if (RawIdentity.IsEmpty()) return FString();
+    FTCHARToUTF8 EncodedIdentity(*RawIdentity);
+    return FSHA1::HashBuffer(EncodedIdentity.Get(), static_cast<uint64>(EncodedIdentity.Length())).ToString().ToLower();
+}
+
+void AAnomaliaGameMode::HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer)
+{
+    Super::HandleStartingNewPlayer_Implementation(NewPlayer);
+    if (!HasAuthority() || !NewPlayer) return;
+    GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, NewPlayer]()
+    {
+        LoadPersistentPlayer(NewPlayer);
+    }));
+}
+
+void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController)
+{
+    if (!HasAuthority() || !PlayerController) return;
+    AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(PlayerController->GetPawn());
+    const FString PlayerId = GetPersistentPlayerId(PlayerController);
+    if (!Survivor || PlayerId.IsEmpty())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: player profile load skipped (pawn or authenticated network identity unavailable)"));
+        return;
+    }
+
+    FString Raw, Error;
+    if (!UAnomaliaConfigLibrary::LoadPlayerProfile(ServerId, PlayerId, Raw, Error))
+    {
+        if (Error != TEXT("Profile not found"))
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: profile load rejected: %s"), *ServerId, *Error);
+        return;
+    }
+
+    TSharedPtr<FJsonObject> Root;
+    const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Raw);
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid()) return;
+
+    if (Root->HasField(TEXT("inventory")) && Survivor->InventoryComponent)
+    {
+        FString InventoryError;
+        if (!Survivor->InventoryComponent->LoadInventoryFromPlayerProfile(ServerId, PlayerId, InventoryError))
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: inventory load rejected: %s"), *ServerId, *InventoryError);
+    }
+
+    const TSharedPtr<FJsonObject>* SurvivalPtr = nullptr;
+    if (!Root->TryGetObjectField(TEXT("survival"), SurvivalPtr) || !SurvivalPtr || !SurvivalPtr->IsValid()) return;
+    const TSharedPtr<FJsonObject>& Survival = *SurvivalPtr;
+    double Food = Survivor->Hunger, Water = Survivor->Thirst, HP = Survivor->Health;
+    bool bHasValue = false;
+    double Value = 0.0;
+    if (Survival->TryGetNumberField(TEXT("hunger"), Value) && FMath::IsFinite(Value))
+    {
+        Food = FMath::Clamp(Value, 0.0, 100.0);
+        bHasValue = true;
+    }
+    if (Survival->TryGetNumberField(TEXT("thirst"), Value) && FMath::IsFinite(Value))
+    {
+        Water = FMath::Clamp(Value, 0.0, 100.0);
+        bHasValue = true;
+    }
+    if (Survival->TryGetNumberField(TEXT("health"), Value) && FMath::IsFinite(Value))
+    {
+        HP = FMath::Clamp(Value, 0.0, 100.0);
+        bHasValue = true;
+    }
+    if (bHasValue) Survivor->RestoreSurvival(static_cast<float>(Food), static_cast<float>(Water), static_cast<float>(HP));
+}
+
+void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
+{
+    if (!HasAuthority() || !Controller) return;
+    AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(Controller->GetPawn());
+    const FString PlayerId = GetPersistentPlayerId(Controller);
+    if (!Survivor || PlayerId.IsEmpty()) return;
+
+    FString Error;
+    if (Survivor->InventoryComponent &&
+        !Survivor->InventoryComponent->SaveInventoryToPlayerProfile(ServerId, PlayerId, Error))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: inventory save rejected: %s"), *ServerId, *Error);
+        return;
+    }
+
+    FString Raw;
+    TSharedPtr<FJsonObject> Root;
+    if (UAnomaliaConfigLibrary::LoadPlayerProfile(ServerId, PlayerId, Raw, Error))
+    {
+        const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Raw);
+        if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
+        {
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: invalid player profile left untouched"), *ServerId);
+            return;
+        }
+    }
+    else if (Error == TEXT("Profile not found"))
+    {
+        Root = MakeShared<FJsonObject>();
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: player profile save aborted: %s"), *ServerId, *Error);
+        return;
+    }
+
+    TSharedPtr<FJsonObject> Survival = MakeShared<FJsonObject>();
+    const TSharedPtr<FJsonObject>* ExistingSurvival = nullptr;
+    if (Root->TryGetObjectField(TEXT("survival"), ExistingSurvival) && ExistingSurvival && ExistingSurvival->IsValid())
+        Survival = *ExistingSurvival;
+    Survival->SetNumberField(TEXT("hunger"), FMath::Clamp(Survivor->Hunger, 0.f, 100.f));
+    Survival->SetNumberField(TEXT("thirst"), FMath::Clamp(Survivor->Thirst, 0.f, 100.f));
+    Survival->SetNumberField(TEXT("health"), FMath::Clamp(Survivor->Health, 0.f, 100.f));
+    Root->SetNumberField(TEXT("schemaVersion"), 1);
+    Root->SetObjectField(TEXT("survival"), Survival);
+
+    FString Serialized;
+    const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Serialized);
+    FJsonSerializer::Serialize(Root.ToSharedRef(), Writer);
+    if (!UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, Error))
+        UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: profile save failed: %s"), *ServerId, *Error);
+}
+
+void AAnomaliaGameMode::SaveAllPlayerProfiles()
+{
+    if (!HasAuthority() || !GetWorld()) return;
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+        SavePersistentPlayer(It->Get());
+}
+
+void AAnomaliaGameMode::Logout(AController* Exiting)
+{
+    SavePersistentPlayer(Exiting);
+    Super::Logout(Exiting);
+}
+
 AAnomaliaVehiclePawn* AAnomaliaGameMode::SpawnServerVehicle(FName VehicleId, const FTransform& SpawnTransform)
 {
     if (!HasAuthority() || !GetWorld()) return nullptr;
@@ -60,7 +208,11 @@ AAnomaliaVehiclePawn* AAnomaliaGameMode::SpawnServerVehicle(FName VehicleId, con
 void AAnomaliaGameMode::BeginPlay()
 {
     Super::BeginPlay();
-    if (HasAuthority()) SpawnConfiguredVehicles();
+    if (HasAuthority())
+    {
+        SpawnConfiguredVehicles();
+        GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
+    }
 }
 
 void AAnomaliaGameMode::SpawnConfiguredVehicles()
