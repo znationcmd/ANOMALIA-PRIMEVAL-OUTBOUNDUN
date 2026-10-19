@@ -1,5 +1,6 @@
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVehiclePawn.h"
+#include "AnomaliaGameMode.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -32,9 +33,14 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
     if (!HasAuthority()) return;
     const float PreviousHunger = Hunger;
     const float PreviousThirst = Thirst;
-    Hunger = FMath::Max(0.f, Hunger - DeltaSeconds * 0.015f);
-    Thirst = FMath::Max(0.f, Thirst - DeltaSeconds * 0.025f);
-    if (Hunger <= 0.f || Thirst <= 0.f) Health = FMath::Max(0.f, Health - DeltaSeconds * 0.25f);
+    // Read only this world's authoritative GameMode. Clients cannot change server survival rates.
+    const AAnomaliaGameMode* Rules = GetWorld() ? Cast<AAnomaliaGameMode>(GetWorld()->GetAuthGameMode()) : nullptr;
+    const float HungerRate = Rules ? Rules->ActiveServerSettings.HungerDrainPerSecond : 0.015f;
+    const float ThirstRate = Rules ? Rules->ActiveServerSettings.ThirstDrainPerSecond : 0.025f;
+    const float DamageRate = Rules ? Rules->ActiveServerSettings.StarvationDamagePerSecond : 0.25f;
+    Hunger = FMath::Max(0.f, Hunger - DeltaSeconds * HungerRate);
+    Thirst = FMath::Max(0.f, Thirst - DeltaSeconds * ThirstRate);
+    if (Hunger <= 0.f || Thirst <= 0.f) Health = FMath::Max(0.f, Health - DeltaSeconds * DamageRate);
     if (PreviousHunger != Hunger || PreviousThirst != Thirst) OnSurvivalChanged();
 }
 
