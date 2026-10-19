@@ -53,6 +53,18 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("Survivor->SetActorHiddenInGame(false)", vehicle)
         self.assertNotIn("Survivor->Destroy()", vehicle)
 
+    def test_vehicle_fuel_is_server_authoritative_and_replicated(self):
+        header = (SOURCE / "AnomaliaVehiclePawn.h").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        self.assertIn("ReplicatedUsing=OnRep_Fuel", header)
+        self.assertIn("BlueprintAuthorityOnly", header)
+        self.assertIn("FuelConsumptionPerSecond", header)
+        self.assertIn("HasAuthority() || !FMath::IsFinite(AmountPercent)", cpp)
+        self.assertIn("DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent)", cpp)
+        self.assertIn("FuelPercent > KINDA_SMALL_NUMBER", cpp)
+        self.assertIn("OnFuelChanged(FuelPercent)", cpp)
+        self.assertNotIn("ServerRefuel", header)  # no unrestricted client refuel RPC
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
