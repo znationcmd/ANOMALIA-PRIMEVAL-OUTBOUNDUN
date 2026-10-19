@@ -28,3 +28,8 @@ test('large naval ships can be boarded from near their hull but not from far awa
  state.position={x:0,z:36};assert.equal(enterVehicle(state,created.vehicle.id).ok,true);
  state.activeVehicle=null;state.position={x:0,z:75};assert.equal(enterVehicle(state,created.vehicle.id).ok,false);
 });
+
+test('duplicate ship categories are merged without discarding spawn positions',()=>{
+ const rows=parseNavalConfig('<navalVehicles><vehicle type="carrier" nominal="1" respawn="5000"><pos x="100" z="200"/></vehicle><vehicle type="carrier" nominal="2" respawn="3000"><pos x="300" z="400"/></vehicle></navalVehicles>');
+ assert.equal(rows.length,1);assert.equal(rows[0].nominal,3);assert.equal(rows[0].positions.length,2);assert.equal(rows[0].respawn,3000);
+});
