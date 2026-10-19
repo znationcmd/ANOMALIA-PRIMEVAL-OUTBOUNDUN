@@ -1,10 +1,11 @@
+import {createWorldRuntime} from "./world-runtime.js";
 import {inventoryInterface} from "./inventory-ui.js";
 import {syncInventory,takeInHands,nearbyDrops} from "./inventory.js";
 import {createGraphics} from "./graphics.js";
 import {BRIDGES,movementVector,bridgeSurface,groundHeight,moveWithCollisions} from "./movement.js";
 
 import * as THREE from "three";
-import {JUNGLE_ZONES,WILDLIFE,wildlifeSpawn,huntAnimal,forageSupplies,fishAt,cookFood,craftSurvival,tranquilize,tickTorpor,tameWithKibble} from "./ecology.js";
+import {JUNGLE_ZONES,WILDLIFE,KIBBLE_TIERS,KIBBLE_RECIPES,wildlifeSpawn,huntAnimal,forageSupplies,fishAt,cookFood,craftSurvival,tranquilize,tickTorpor,tameWithKibble} from "./ecology.js";
 import {readGamepad,selectGamepad,controllerFamily,GAMEPAD_LABELS} from "./gamepad.js";
 import {WORLD_HALF,CHUNK_SIZE,SEA_LEVEL,CITIES,CONTINENTS,PEAKS,SITES,ITEM_NAMES,hash2,heightAt,biomeAt,nearestCity,nearestSite,initialState,normalizeState,unlockSite,buildStructure,tickSurvival,clamp} from "./mechanics.js";
 import {ITEM_DEFS,EQUIPMENT_SLOTS,capacity,weight,protection,warmth,equip,consume,rewardLoot,tame,saddleMount,breed,survivalTick,DINO_TYPES,hasItem} from "./systems.js";
@@ -54,6 +55,9 @@ state.quickbar=Array.isArray(saved?.quickbar)?saved.quickbar:undefined;
 state.inventoryMigration=!!saved?.inventoryMigration;
 if(!state.inventoryMigration){state.inventory.pistol=Math.max(1,state.inventory.pistol||0);state.inventoryMigration=true;syncInventory(state);const weapon=state.inventoryStacks.find(t=>t.id===state.weapon);if(weapon)takeInHands(state,weapon.uid)}
 syncInventory(state);
+for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs'])if(saved?.[key]!==undefined)state[key]=saved[key];
+window.addEventListener('error',event=>{state.runtimeLogs??=[];state.runtimeLogs.push(String(event.message));state.runtimeLogs=state.runtimeLogs.slice(-50)});
+let worldRuntime;
 let tranquilizerMode=false,fishingCooldown=0,forageCooldown=0;
 const keys=new Set(),chunks=new Map(),zombies=[],dinos=[],wildlife=[],resources=[],siteObjects=new Map();
 const dynamic=new THREE.Group();outside.add(dynamic);
@@ -275,6 +279,7 @@ function exitInterior(){
 }
 function interaction(){
  if(!started||paused)return;
+ if(worldRuntime?.interact())return;
  if(state.underground){
   if(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z+2))<7){exitInterior();return}
   if(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z-69))<9){
@@ -310,8 +315,10 @@ function interaction(){
 }
 let inventoryUI;
 function displayInventory(){
+ worldRuntime?.cleanup();
  inventoryUI??=inventoryInterface({state,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),save,notice,open:openPanel,
   recipes:[
+   ...KIBBLE_TIERS.map(id=>({id,label:ITEM_DEFS[id].label,cost:KIBBLE_RECIPES[id]})),
    {id:"saddle",label:"Selle renforcée",cost:{fiber:6,cloth:4}},
    {id:"tranq_dart",label:"3 fléchettes tranquillisantes",cost:{scrap:1,cloth:1,berry:2}},
    {id:"fishing_rod",label:"Canne à pêche",cost:{wood:3,fiber:2}},
@@ -357,7 +364,7 @@ function toggleTranqMode(){
  notice(result.message);return result;
 }
 function openPanel(){paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
-function closePanel(){inventoryUI?.cleanup();paused=false;$("panel").classList.add("hidden")}
+function closePanel(){inventoryUI?.cleanup();worldRuntime?.cleanup();paused=false;$("panel").classList.add("hidden")}
 function buildShelter(){
  if(state.underground){notice("Construction impossible sous terre.");return}
  const result=buildStructure(state,"shelter",state.position.x-Math.sin(yaw)*8,state.position.z-Math.cos(yaw)*8);
@@ -387,6 +394,7 @@ function shoot(){
  else{
   for(const z of zombies)if(z.alive)consider("infected",z);
   for(const a of wildlife)if(a.alive)consider("wildlife",a);
+  for(const npc of worldRuntime?.hostiles()||[])consider("npc",npc);
  }
  shootCooldown=tranquilizerMode?.65:.23;
  if(tranquilizerMode){
@@ -399,6 +407,8 @@ function shoot(){
  if(chosen?.kind==="infected"){
   const enemy=chosen.target;enemy.hp-=42;
   if(enemy.hp<=0){enemy.alive=false;enemy.mesh.visible=false;state.kills++;state.inventory.scrap=(state.inventory.scrap||0)+1;notice("Infecté neutralisé · pièces récupérées.")}
+ }else if(chosen?.kind==="npc"){
+  const n=chosen.target;n.hp-=42;if(n.hp<=0){n.alive=false;if(!n.rewarded){n.rewarded=true;state.cash=(state.cash||0)+25}notice("Pillard neutralisé · 25 crédits du jeu.");save()}
  }else if(chosen?.kind==="wildlife"){
   const animal=chosen.target;animal.hp-=50;
   if(animal.hp<=0){
@@ -421,7 +431,7 @@ function breedNear(){
  const result=breed(state,close[0].id,close[1].id);notice(result.message);save();
 }
 function mapScreen(){
- inventoryUI?.cleanup();
+ inventoryUI?.cleanup();worldRuntime?.cleanup();
  $("panelTitle").textContent="CARTE · ARCHIPELS ET CITÉS";
  const canvas=document.createElement("canvas");canvas.width=850;canvas.height=620;canvas.className="mapCanvas";
  const ctx=canvas.getContext("2d"),W=canvas.width,H=canvas.height;
@@ -493,14 +503,16 @@ function updatePlayer(dt){
  if(paused||!started||state.health<=0)return;
  const forward=(keys.has("KeyW")||keys.has("ArrowUp")||keys.has("KeyZ")||touchState.w?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")||touchState.s?1:0)+controllerMove.y;
  const strafe=(keys.has("KeyD")||keys.has("ArrowRight")||touchState.d?1:0)-(keys.has("KeyA")||keys.has("ArrowLeft")||keys.has("KeyQ")||touchState.a?1:0)+controllerMove.x;
+ const driving=worldRuntime?.drive(forward,strafe,dt,keys);
  const vector=movementVector(forward,strafe,yaw),fx=vector.x,fz=vector.z;
  const mag=Math.hypot(fx,fz);
- currentlySprinting=(keys.has("ShiftLeft")||keys.has("ShiftRight")||controllerSprint)&&state.stamina>3&&!state.underground&&!state.boat;
+ currentlySprinting=!driving&&(keys.has("ShiftLeft")||keys.has("ShiftRight")||controllerSprint)&&state.stamina>3&&!state.underground&&!state.boat;
  const speed=state.boat?30:state.mounted?16:currentlySprinting?8.4:4.6;
  state.stamina=clamp(state.stamina+(currentlySprinting?-dt*17:dt*10),0,100);
  const nx=clamp(state.position.x+fx*speed*dt,-WORLD_HALF,WORLD_HALF);
  const nz=clamp(state.position.z+fz*speed*dt,-WORLD_HALF,WORLD_HALF);
- if(state.underground){const origin=state.entrySite;if(origin){state.position.x=clamp(nx,origin.x-9,origin.x+9);state.position.z=clamp(nz,origin.z-75,origin.z+8)}}
+ if(driving){}
+ else if(state.underground){const origin=state.entrySite;if(origin){state.position.x=clamp(nx,origin.x-9,origin.x+9);state.position.z=clamp(nz,origin.z-75,origin.z+8)}}
  else if(state.boat){state.position.x=nx;state.position.z=nz}
  else{
   const solids=[...chunkSolids.values()].flat();
@@ -508,7 +520,7 @@ function updatePlayer(dt){
   state.position=moveWithCollisions(state.position,nx-state.position.x,nz-state.position.z,solids,(x,z,tx,tz)=>Math.abs(groundHeight(tx,tz,heightAt)-groundHeight(x,z,heightAt))<5+speed*.3);
  }
  let y=state.underground?-26.25:state.boat?2.5:Math.max(groundHeight(state.position.x,state.position.z,heightAt),0)+1.85;
- if(!state.boat&&!state.underground&&groundHeight(state.position.x,state.position.z,heightAt)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
+ if(!driving&&!state.boat&&!state.underground&&groundHeight(state.position.x,state.position.z,heightAt)<-2&&mag){state.health=clamp(state.health-dt*.12,0,100);if(!underwaterNotice){notice("Eau profonde : cherche un bateau ou une plage.");underwaterNotice=true}}
  else underwaterNotice=false;
  camera.position.set(state.position.x,y,state.position.z);
  camera.rotation.order="YXZ";camera.rotation.set(-pitch,yaw,0);
@@ -517,7 +529,7 @@ function updatePlayer(dt){
   boatMesh.visible=true;boatMesh.position.set(state.position.x,1,state.position.z);boatMesh.rotation.y=yaw;
  }else if(boatMesh)boatMesh.visible=false;
  tickSurvival(state,dt,currentlySprinting);survivalTick(state,dt,biomeAt(state.position.x,state.position.z));
- for(const z of zombies){if(!z.alive||state.underground)continue;z.cooldown=Math.max(0,z.cooldown-dt);const dx=state.position.x-z.x,dz=state.position.z-z.z,d=Math.hypot(dx,dz);
+ for(const z of zombies){if(!z.alive||state.underground||worldRuntime?.isAirborne())continue;z.cooldown=Math.max(0,z.cooldown-dt);const dx=state.position.x-z.x,dz=state.position.z-z.z,d=Math.hypot(dx,dz);
   if(d<30&&d>2){z.x+=dx/d*dt*2;z.z+=dz/d*dt*2;z.mesh.position.x+=dx/d*dt*2;z.mesh.position.z+=dz/d*dt*2;z.mesh.position.y=heightAt(z.x,z.z)+1.7}
   if(d<2.5&&z.cooldown===0){state.health=clamp(state.health-9*(1-protection(state)/100),0,100);z.cooldown=2;notice("Attaque d'infecté !")}
  }
@@ -531,13 +543,13 @@ function updatePlayer(dt){
   a.attackCooldown=Math.max(0,(a.attackCooldown||0)-dt);
   const dx=state.position.x-a.x,dz=state.position.z-a.z,distance=Math.hypot(dx,dz);
   const def=WILDLIFE[a.type];
-  if(def.hostile&&!state.underground&&!state.boat&&distance<22&&distance>2.2){
+  if(def.hostile&&!state.underground&&!worldRuntime?.isAirborne()&&!state.boat&&distance<22&&distance>2.2){
    const vx=dx/distance*dt*def.speed,vz=dz/distance*dt*def.speed;
    const nx=a.x+vx,nz=a.z+vz,h=heightAt(nx,nz);
    const valid=a.type==="shark"?h<1:a.type==="crocodile"?h<14:h>2;
    if(valid){a.x=nx;a.z=nz;a.mesh.position.x+=vx;a.mesh.position.z+=vz;}
   }
-  if(def.hostile&&!state.underground&&!state.boat&&distance<3.8&&a.attackCooldown===0){
+  if(def.hostile&&!state.underground&&!worldRuntime?.isAirborne()&&!state.boat&&distance<3.8&&a.attackCooldown===0){
    state.health=clamp(state.health-(a.type==="shark"?22:a.type==="crocodile"?15:8)*(1-protection(state)/110),0,100);
    a.attackCooldown=2.8;notice("Attaque : "+def.name+" !");
   }
@@ -557,16 +569,20 @@ $("startBtn").onclick=start;
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
-$("helpBtn").onclick=()=>{inventoryUI?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
+$("helpBtn").onclick=()=>{inventoryUI?.cleanup();worldRuntime?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer · F2 : admin · F3 : groupe · F5 : vues · chiffres : raccourcis</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
 $("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position={x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
  keys.add(event.code);
- if(["Tab","Space","ArrowUp","ArrowDown"].includes(event.code))event.preventDefault();
+ if(["Tab","Space","ArrowUp","ArrowDown","F2","F3","F5"].includes(event.code))event.preventDefault();
  if(!started)return;
  if(event.repeat)return;
  if(!paused&&/^Digit[0-9]$/.test(event.code)){syncInventory(state);const index=(Number(event.code.slice(-1))+9)%10,id=state.quickbar[index],stack=state.inventoryStacks.find(t=>t.id===id);if(stack){const result=takeInHands(state,stack.uid);notice(result.message);save()}return;}
  switch(event.code){
+  case "F2":worldRuntime?.show('admin');break;
+  case "F3":worldRuntime?.show('companions');break;
+  case "F5":worldRuntime?.toggleView();break;
+  case "KeyH":$("helpBtn").click();break;
   case "KeyI":$("panel").classList.contains("hidden")?displayInventory():closePanel();break;
   case "KeyM":$("panel").classList.contains("hidden")?mapScreen():closePanel();break;
   case "Escape":if(!$("panel").classList.contains("hidden"))closePanel();break;
@@ -677,13 +693,27 @@ window.addEventListener("gamepaddisconnected",event=>{if(event.gamepad?.id===con
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 camera.position.set(state.position.x,heightAt(state.position.x,state.position.z)+1.85,state.position.z);
 camera.rotation.order="YXZ";camera.rotation.set(0,yaw,0);
+worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt,solids:()=>[...chunkSolids.values()].flat(),yaw:()=>yaw,save,notice,panel:$("panel"),body:$("panelBody"),title:$("panelTitle"),open:openPanel,close:closePanel,
+ cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup()},enemies:()=>[...zombies,...wildlife.filter(a=>WILDLIFE[a.type].hostile),...(worldRuntime?.hostiles()||[])],
+ spawnDino:(d,created)=>{
+  if(dinos.some(n=>n.id===d.id))return;
+  const known=state.tamed.find(p=>p.id===d.id);d={...d,tamed:d.tamed||!!known,...state.dinoEffects[d.id]};
+  const mesh=createDino(outside,d.x,heightAt(d.x,d.z),d.z,d.type);
+  dinos.push({...d,mesh,chunk:"admin",trust:d.tamed?100:0,torpor:0,unconscious:false});
+  if(d.tamed&&!state.tamed.some(p=>p.id===d.id))state.tamed.push({id:d.id,type:d.type,name:DINO_TYPES.find(p=>p.id===d.type)?.label||d.type,hasSaddle:true});
+ }
+});
+for(const [id,label,handler]of [["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
  pollController(dt,now);
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
+ worldRuntime?.update(dt,now/1000,started&&!paused&&state.health>0);
+ worldRuntime?.applyCamera(pitch);
+ for(const d of dinos)if(state.mounted===d.id){d.x=state.position.x;d.z=state.position.z;d.mesh.position.set(d.x,heightAt(d.x,d.z),d.z);d.mesh.rotation.y=yaw+Math.PI;}
  graphics.update(now/1000);
  renderer.render(scene,camera);
- if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started};
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,world:worldRuntime?.debug()};
 }
 requestAnimationFrame(loop);

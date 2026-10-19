@@ -8,6 +8,16 @@ export const ITEM_DEFS={
  key_omega:{label:"Clé Omega",weight:.03,kind:"key"},
  key_abyss:{label:"Clé Abysse",weight:.03,kind:"key"},
  key_blue:{label:"Clé bleue",weight:.03,kind:"key"},
+ kibble_basic:{label:"Croquettes basiques",weight:.3,kind:"taming"},
+ kibble_simple:{label:"Croquettes simples",weight:.3,kind:"taming"},
+ kibble_regular:{label:"Croquettes ordinaires",weight:.3,kind:"taming"},
+ kibble_superior:{label:"Croquettes supérieures",weight:.3,kind:"taming"},
+ kibble_exceptional:{label:"Croquettes exceptionnelles",weight:.3,kind:"taming"},
+ kibble_extraordinary:{label:"Croquettes extraordinaires",weight:.3,kind:"taming"},
+ honey:{label:"Miel sauvage",weight:.3,kind:"material"},
+ rare_flower:{label:"Fleur rare",weight:.05,kind:"material"},
+ sap:{label:"Sève",weight:.1,kind:"material"},
+ vegetable:{label:"Légumes sauvages",weight:.2,kind:"material"},
  scrap:{label:"Ferraille",weight:.55,kind:"material"},
  ammo:{label:"Munitions de pistolet",weight:.025,kind:"ammo"},
  medkit:{label:"Kit médical",weight:.6,kind:"medical"},
@@ -117,8 +127,8 @@ export function consume(s,id){
 export function survivalTick(s,dt,biome="grassland",weather="clear"){
  const f=Math.min(dt,5);
  s.clock=(s.clock+f*.19)%1440;
- s.hunger=Math.max(0,s.hunger-f*.14);
- s.thirst=Math.max(0,s.thirst-f*.27);
+ s.hunger=Math.max(0,s.hunger-f*.14*(s.foodDrain??1));
+ s.thirst=Math.max(0,s.thirst-f*.27*(s.waterDrain??1));
  let environmental=biome==="snow"?-22:biome==="alpine"?-12:biome==="beach"?2:biome==="dry"?7:-2;
  if(weather==="rain")environmental-=8;
  const clothing=warmth(s)*.45;

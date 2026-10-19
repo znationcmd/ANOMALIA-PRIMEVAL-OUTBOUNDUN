@@ -1,0 +1,10 @@
+{
+ "schemaVersion":1,
+ "preferredKibble":{"raptor":"kibble_simple","triceratops":"kibble_simple","stegosaur":"kibble_regular","bront":"kibble_exceptional"},
+ "spawns":[
+  {"id":"configured-raptor","type":"raptor","x":-540,"z":520,"level":15},
+  {"id":"configured-trike","type":"triceratops","x":1520,"z":940,"level":20},
+  {"id":"configured-stego","type":"stegosaur","x":-1700,"z":1450,"level":25},
+  {"id":"configured-bront","type":"bront","x":6350,"z":400,"level":30}
+ ]
+}

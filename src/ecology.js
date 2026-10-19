@@ -15,7 +15,14 @@ export const WILDLIFE={
  crocodile:{name:"Crocodile",habitat:"shore",hp:170,drop:{raw_meat:5,hide:4},speed:3,hostile:true},
  shark:{name:"Requin",habitat:"ocean",hp:190,drop:{raw_fish:6},speed:7,hostile:true}
 };
+export const KIBBLE_TIERS=['kibble_basic','kibble_simple','kibble_regular','kibble_superior','kibble_exceptional','kibble_extraordinary'];
 export const KIBBLE_RECIPES={
+ kibble_basic:{berry:4,fiber:2,egg:1},
+ kibble_simple:{berry:6,egg:1,cooked_fish:1},
+ kibble_regular:{vegetable:2,egg:1,cooked_meat:2},
+ kibble_superior:{vegetable:3,egg:2,sap:2},
+ kibble_exceptional:{rare_flower:2,egg:3,berry:10,cooked_meat:2},
+ kibble_extraordinary:{honey:2,rare_flower:2,egg:4,cooked_meat:3},
  kibble_herbivore:{berry:6,egg:1,cooked_fish:1},
  kibble_carnivore:{cooked_meat:2,egg:1,berry:2}
 };
@@ -62,7 +69,8 @@ export function huntAnimal(s,animal){
 /** Search natural nests and plants. Eggs are needed for species-specific kibble. */
 export function forageSupplies(s,{jungle=false,roll=0}={}){
  const r=Math.max(0,Math.min(.99999,Number(roll)||0));
- const item=r< (jungle?.38:.18)?"egg":r<.70?"berry":"fiber";
+ const extra=jungle?(r>.97?'honey':r>.94?'rare_flower':r>.91?'sap':r>.87?'vegetable':null):null;
+ const item=extra||(r< (jungle?.38:.18)?"egg":r<.70?"berry":"fiber");
  const quantity=item==="egg"?1:item==="berry"?4:3;
  add(s,item,quantity);
  return {ok:true,item,quantity,message:"Récolte : "+item+" ×"+quantity};
@@ -114,9 +122,11 @@ export function tickTorpor(dino,dt){
 export function tameWithKibble(s,dino){
  if(!dino||dino.tamed)return {ok:false,message:"Ce dinosaure est déjà apprivoisé."};
  if(!dino.unconscious)return {ok:false,message:"Endors d'abord le dinosaure avec des fléchettes tranquillisantes."};
- const required=foodPreference[dino.type]||"kibble_herbivore";
+ const preferred=s.dinoKibblePreferences?.[dino.type],rank=KIBBLE_TIERS.indexOf(preferred);
+ const tier=rank>=0?KIBBLE_TIERS.slice(rank).find(id=>count(s,id)>0):null;
+ const required=tier||foodPreference[dino.type]||"kibble_herbivore";
  if(!remove(s,required))return {ok:false,message:"Il faut des croquettes "+(required==="kibble_carnivore"?"carnivores":"herbivores")+". Cuisine et fabrique-les."};
- dino.tameProgress=Math.min(100,(dino.tameProgress||0)+50);
+ dino.tameProgress=Math.min(100,(dino.tameProgress||0)+50*(s.tamingSpeed??1));
  if(dino.tameProgress<100)return {ok:true,tamed:false,progress:dino.tameProgress,message:"Apprivoisement : "+dino.tameProgress+" % · encore des croquettes nécessaires."};
  dino.tamed=true;dino.unconscious=false;
  s.tamed||=[];

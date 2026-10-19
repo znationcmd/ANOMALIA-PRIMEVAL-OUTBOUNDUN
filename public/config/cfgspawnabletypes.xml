@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<spawnabletypes>
+ <type name="HelicopterCrash"><cargo><item name="rifle" count="1"/><item name="rifle_ammo" count="30"/><item name="medicine" count="2"/></cargo></type>
+ <type name="TrainCrash"><cargo><item name="food" count="6"/><item name="water" count="4"/><item name="scrap" count="12"/></cargo></type>
+ <type name="ShipCrash"><cargo><item name="backpack" count="1"/><item name="food" count="4"/><item name="fishing_rod" count="1"/></cargo></type>
+</spawnabletypes>

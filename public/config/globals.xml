@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<variables>
+ <var name="LootEnabled" value="1"/>
+ <var name="LootMultiplier" value="1"/>
+ <var name="VehicleFuelConsumption" value="0.03"/>
+ <var name="CompanionFollowDistance" value="3"/>
+ <var name="CompanionTeleportDistance" value="90"/>
+</variables>

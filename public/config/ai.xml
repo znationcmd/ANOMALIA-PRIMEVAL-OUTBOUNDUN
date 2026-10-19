@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ai>
+ <npc id="ranger-helion" name="Éclaireur Hélion" faction="friendly" x="55" z="175" recruitCost="100"/>
+ <npc id="medic-helion" name="Survivante" faction="friendly" x="-55" z="230" recruitCost="100"/>
+ <npc id="bandit-helion" name="Pillard" faction="hostile" x="210" z="250" recruitCost="0"/>
+ <npc id="bandit-north" name="Pillard du nord" faction="hostile" x="-100" z="-180" recruitCost="0"/>
+ <npc id="ranger-borealis" name="Éclaireur Boréalis" faction="friendly" x="-2350" z="920" recruitCost="100"/>
+</ai>

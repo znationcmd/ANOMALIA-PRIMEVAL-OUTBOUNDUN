@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<eventposdef>
+ <event name="HelicopterCrash"><pos x="180" z="250" a="35"/><pos x="-2300" z="1050" a="80"/><pos x="1700" z="900" a="150"/></event>
+ <event name="TrainCrash"><pos x="450" z="400" a="90"/><pos x="-2100" z="900" a="12"/></event>
+ <event name="ShipCrash"><pos x="4990" z="950" a="135"/><pos x="6200" z="1300" a="20"/></event>
+</eventposdef>

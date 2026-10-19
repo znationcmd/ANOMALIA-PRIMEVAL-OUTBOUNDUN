@@ -3,7 +3,17 @@ export function survivorPreview(host,state){
  const scene=new THREE.Scene(),camera=new THREE.PerspectiveCamera(34,1,.1,30),renderer=new THREE.WebGLRenderer({alpha:true,antialias:true});
  renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;
  host.append(renderer.domElement);scene.add(new THREE.HemisphereLight(0xc7e5ec,0x2b3029,2));const light=new THREE.DirectionalLight(0xffebd2,3);light.position.set(-3,4,4);scene.add(light);
- const root=new THREE.Group();scene.add(root);root.rotation.y=-.2;
+ const avatar=buildSurvivor(state),root=avatar.root;scene.add(root);root.rotation.y=-.2;
+ camera.position.set(0,1.18,3.8);camera.lookAt(0,1.05,0);
+ let dragging=false,last=0;const down=e=>{dragging=true;last=e.clientX;host.setPointerCapture?.(e.pointerId)},move=e=>{if(dragging){root.rotation.y+=(e.clientX-last)*.012;last=e.clientX}},up=()=>dragging=false;
+ host.addEventListener('pointerdown',down);host.addEventListener('pointermove',move);host.addEventListener('pointerup',up);
+ const size=()=>{const w=host.clientWidth||280,h=host.clientHeight||440;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()};const observer=new ResizeObserver(size);observer.observe(host);size();
+ let frame;function render(){frame=requestAnimationFrame(render);renderer.render(scene,camera)}render();
+ return ()=>{cancelAnimationFrame(frame);observer.disconnect();host.removeEventListener('pointerdown',down);host.removeEventListener('pointermove',move);host.removeEventListener('pointerup',up);avatar.dispose();renderer.forceContextLoss();renderer.dispose();renderer.domElement.remove()};
+}
+
+export function buildSurvivor(state){
+ const root=new THREE.Group();
  const fabric=new THREE.MeshStandardMaterial({color:state.equipment.torso==='coat'?0x5d5143:0x56634d,roughness:1});
  const pants=new THREE.MeshStandardMaterial({color:state.equipment.legs==='jeans'?0x3f4a54:0x5a6150,roughness:1});
  const skin=new THREE.MeshStandardMaterial({color:0x9d7860,roughness:.95});const dark=new THREE.MeshStandardMaterial({color:0x272c29,roughness:.8});const gear=new THREE.MeshStandardMaterial({color:0x6f7156,roughness:1});
@@ -24,10 +34,6 @@ export function survivorPreview(host,state){
  if(state.equipment.back){box(0,1.37,-.20,.39,.43,.22,gear);for(const x of [-.17,.17])box(x,1.49,.14,.045,.33,.04,gear)}
  if(state.equipment.head){const helmet=part(new THREE.SphereGeometry(.151,20,14,0,Math.PI*2,0,Math.PI*.58),0,1.82,0,gear);helmet.scale.z=.95;}
  if(state.hands==='pistol'||state.hands==='rifle'){const gun=box(.31,1.02,.23,.06,.09,state.hands==='rifle'?.60:.22,dark);gun.rotation.x=.3;box(.31,.96,.17,.045,.14,.07,dark)}
- camera.position.set(0,1.18,3.8);camera.lookAt(0,1.05,0);
- let dragging=false,last=0;const down=e=>{dragging=true;last=e.clientX;host.setPointerCapture?.(e.pointerId)},move=e=>{if(dragging){root.rotation.y+=(e.clientX-last)*.012;last=e.clientX}},up=()=>dragging=false;
- host.addEventListener('pointerdown',down);host.addEventListener('pointermove',move);host.addEventListener('pointerup',up);
- const size=()=>{const w=host.clientWidth||280,h=host.clientHeight||440;renderer.setSize(w,h);camera.aspect=w/h;camera.updateProjectionMatrix()};const observer=new ResizeObserver(size);observer.observe(host);size();
- let frame;function render(){frame=requestAnimationFrame(render);renderer.render(scene,camera)}render();
- return ()=>{cancelAnimationFrame(frame);observer.disconnect();host.removeEventListener('pointerdown',down);host.removeEventListener('pointermove',move);host.removeEventListener('pointerup',up);scene.traverse(o=>o.geometry?.dispose());for(const m of [fabric,pants,skin,dark,gear])m.dispose();renderer.forceContextLoss();renderer.dispose();renderer.domElement.remove()};
+ root.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+ return {root,dispose(){const mats=new Set();root.traverse(o=>{o.geometry?.dispose();if(o.material)mats.add(o.material)});for(const mat of mats)mat.dispose()}};
 }

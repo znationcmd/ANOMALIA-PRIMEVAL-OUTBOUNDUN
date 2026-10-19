@@ -88,7 +88,7 @@ export function createGraphics(renderer,scene,camera,sun,hemi,cities){
  function building(parent,x,y,z,w,h,d,style,detailed=true){
   const geo=new THREE.BoxGeometry(w,h,d),uv=geo.attributes.uv;
   for(let face=0;face<6;face++)for(let i=0;i<4;i++){const index=face*4+i;uv.setXY(index,uv.getX(index)*(face<2?d:w)/16,uv.getY(index)*(face<4?h:d)/16)}
-  const body=new THREE.Mesh(geo,facadeMaps[style%4]);body.position.set(x,y+h/2,z);body.castShadow=!low;body.receiveShadow=true;parent.add(body);
+  const body=new THREE.Mesh(geo,facadeMaps[style%4]);body.position.set(x,y+h/2,z);body.castShadow=!low;body.receiveShadow=true;body.userData.cameraSolid=true;parent.add(body);
   block(parent,x,y+h+.35,z,w+1,.7,d+1,concreteMaterial);
   if(!detailed)return body;
   block(parent,x,y+.6,z,w+.3,1.2,d+.3,concreteMaterial);

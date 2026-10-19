@@ -5,6 +5,7 @@ on:
     paths:
       - 'desktop/**'
       - 'src/**'
+      - 'public/**'
       - 'tests/**'
       - 'package.json'
       - 'vite.config.js'

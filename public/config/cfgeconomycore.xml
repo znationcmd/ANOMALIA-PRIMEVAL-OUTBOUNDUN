@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<economycore>
+ <defaults><default name="LootEnabled" value="1"/><default name="EventsEnabled" value="1"/></defaults>
+ <ce folder="."><file name="types.xml" type="types"/><file name="events.xml" type="events"/><file name="cfgspawnabletypes.xml" type="spawnabletypes"/></ce>
+</economycore>

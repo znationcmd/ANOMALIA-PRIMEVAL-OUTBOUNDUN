@@ -58,6 +58,26 @@ try{
  await page.click('#startBtn');await page.waitForTimeout(1000);
  await page.evaluate(()=>document.exitPointerLock?.());
  await page.screenshot({path:'test-results/04-reloaded.png'});
+ await page.keyboard.press('F2');await page.waitForSelector('.admin-tabs');
+ await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="god"]').click();
+ await page.locator('[data-admin-tab="creatures"]').click();await page.locator('[data-admin-pet="dog"]').click();
+ await page.locator('[data-admin-tab="vehicles"]').click();await page.locator('[data-vehicle="car"]').click();
+ assert.equal(await page.locator('[data-goto-vehicle]').count(),1,'admin car spawn creates a vehicle');
+ await page.locator('[data-goto-vehicle]').click();await page.screenshot({path:'test-results/06-admin.png'});
+ await page.locator('#panelClose').click();await page.keyboard.press('KeyE');
+ await page.waitForFunction(()=>!!window.__ANOMALIA_DIAGNOSTICS?.world?.activeVehicle);
+ const carBefore=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
+ await page.keyboard.down('KeyW');await page.waitForTimeout(1600);await page.keyboard.up('KeyW');
+ const carAfter=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
+ assert.ok(Math.hypot(carAfter.x-carBefore.x,carAfter.z-carBefore.z)>.1,'vehicle responds to throttle');
+ await page.keyboard.press('F5');await page.waitForTimeout(200);assert.equal(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),'inside');
+ await page.screenshot({path:'test-results/07-cockpit.png'});
+ await page.keyboard.press('KeyE');await page.keyboard.press('F2');await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="bank"]').click();
+ await page.locator('#panelClose').click();await page.keyboard.press('KeyE');await page.waitForSelector('#bankAmount');
+ await page.locator('[data-bank="deposit"]').click();await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.bank),100);
+ await page.screenshot({path:'test-results/08-bank.png'});await page.locator('#panelClose').click();
+ await page.keyboard.press('F3');await page.waitForSelector('[data-pet="follow"]');await page.screenshot({path:'test-results/09-companion.png'});await page.locator('#panelClose').click();
+ assert.ok(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.events>=1),'XML crash events are running');
  assert.deepEqual(failures,[],'no page errors or shader compilation errors');
  console.log('Actual WebGL render, forward movement, inventory split/merge/drop/pickup/search/crafting, map, save and reload passed.');
 }finally{await browser?.close();server.closeAllConnections();await new Promise(r=>server.close(r))}

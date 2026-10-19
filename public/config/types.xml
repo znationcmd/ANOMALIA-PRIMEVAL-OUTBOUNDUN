@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<types>
+ <type name="water"><nominal>18</nominal><min>8</min><lifetime>3600</lifetime><restock>120</restock><quantity>1</quantity><category name="food"/></type>
+ <type name="food"><nominal>16</nominal><min>6</min><lifetime>3600</lifetime><restock>120</restock><quantity>1</quantity><category name="food"/></type>
+ <type name="bandage"><nominal>12</nominal><min>4</min><lifetime>3600</lifetime><restock>180</restock><quantity>2</quantity><category name="medical"/></type>
+ <type name="rifle_ammo"><nominal>12</nominal><min>4</min><lifetime>3600</lifetime><restock>300</restock><quantity>15</quantity><category name="military"/></type>
+ <type name="rifle"><nominal>3</nominal><min>1</min><lifetime>7200</lifetime><restock>600</restock><quantity>1</quantity><category name="military"/></type>
+ <type name="jacket"><nominal>8</nominal><min>3</min><lifetime>7200</lifetime><restock>240</restock><quantity>1</quantity><category name="clothing"/></type>
+ <type name="backpack"><nominal>5</nominal><min>2</min><lifetime>7200</lifetime><restock>300</restock><quantity>1</quantity><category name="clothing"/></type>
+ <type name="wood"><nominal>10</nominal><min>3</min><lifetime>3600</lifetime><restock>120</restock><quantity>3</quantity><category name="material"/></type>
+</types>

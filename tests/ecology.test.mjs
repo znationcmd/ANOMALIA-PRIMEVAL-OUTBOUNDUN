@@ -82,3 +82,8 @@ test("world client has actual ecology hooks, clickable map markers and console/g
   assert.ok(main.includes(term),"missing gameplay hook: "+term);
  }
 });
+test('higher-tier croquettes satisfy configured dinosaur preferences; jungle supplies support recipes',()=>{
+ const s=initialState();s.dinoKibblePreferences={raptor:'kibble_simple'};s.inventory.kibble_superior=2;
+ const d={id:'ranked-pet',type:'raptor',unconscious:true,tamed:false};assert.equal(tameWithKibble(s,d).ok,true);assert.equal(tameWithKibble(s,d).tamed,true);assert.equal(s.inventory.kibble_superior,undefined);
+ assert.equal(forageSupplies(s,{jungle:true,roll:.99}).item,'honey');
+});

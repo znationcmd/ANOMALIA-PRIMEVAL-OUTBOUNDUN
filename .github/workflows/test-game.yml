@@ -2,7 +2,7 @@ name: ANOMALIA PRIMEVAL OUTBOUNDUN — tests et compilation
 on:
   push:
     branches: [main]
-    paths: ["src/**", "tests/**", "index.html", "package.json", "scripts/**", "vite.config.js", ".github/workflows/test-game.yml"]
+    paths: ["src/**", "public/**", "desktop/**", "tests/**", "index.html", "package.json", "scripts/**", "vite.config.js", ".github/workflows/test-game.yml"]
   workflow_dispatch:
 permissions:
   contents: read

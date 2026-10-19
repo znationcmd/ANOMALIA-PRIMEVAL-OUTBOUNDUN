@@ -5,6 +5,7 @@
  */
 const {app,BrowserWindow,Menu,protocol,net}=require("electron");
 const path=require("node:path");
+const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
 
 const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
@@ -39,6 +40,11 @@ function createGameWindow(){
 
 app.whenReady().then(()=>{
  const bundleDir=path.resolve(__dirname,"..","dist");
+ const configDir=path.join(app.getPath("userData"),"config");
+ fs.mkdirSync(configDir,{recursive:true});
+ const configNames=["types.xml","events.xml","cfgeventspawns.xml","cfgspawnabletypes.xml","globals.xml","economy.xml","ai.xml","cfgeconomycore.xml","serverDZ.cfg","Game.ini","GameUserSettings.ini","world-settings.json","creatures.json"];
+ for(const name of configNames){const from=path.join(bundleDir,"config",name),to=path.join(configDir,name);if(!fs.existsSync(to)&&fs.existsSync(from))fs.copyFileSync(from,to);}
+
  protocol.handle(SCHEME,async(request)=>{
   try{
    const url=new URL(request.url);
@@ -46,8 +52,12 @@ app.whenReady().then(()=>{
    const pathname=decodeURIComponent(url.pathname);
    if(pathname.includes("\0"))return new Response("Forbidden",{status:403});
    const relative=pathname==="/"?"index.html":pathname.replace(/^\/+/, "");
-   const target=path.resolve(bundleDir,relative);
-   if(target!==bundleDir&&!target.startsWith(bundleDir+path.sep))
+   if(relative==="config/location.json")return new Response(JSON.stringify({directory:configDir}),{headers:{"Content-Type":"application/json"}});
+   const isConfig=relative.startsWith("config/");
+   if(isConfig&&!configNames.includes(relative.slice(7)))return new Response("Not found",{status:404});
+   const root=isConfig?configDir:bundleDir;
+   const target=path.resolve(root,isConfig?relative.slice(7):relative);
+   if(target!==root&&!target.startsWith(root+path.sep))
     return new Response("Forbidden",{status:403});
    return await net.fetch(pathToFileURL(target).href);
   }catch{return new Response("Asset not found",{status:404})}
