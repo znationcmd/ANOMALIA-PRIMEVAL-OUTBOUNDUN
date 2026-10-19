@@ -14,7 +14,7 @@ class UE5InventorySourceTests(unittest.TestCase):
     def test_replicated_stack_model_and_core_operations_exist(self):
         self.assertIn("USTRUCT(BlueprintType)\nstruct FAnomaliaInventoryStack", HEADER)
         self.assertIn("ReplicatedUsing=OnRep_Stacks", HEADER)
-        for operation in ("TryAddItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks", "GetCurrentWeightKg"):
+        for operation in ("TryAddItem", "TryRemoveItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks", "GetCurrentWeightKg"):
             with self.subTest(operation=operation):
                 self.assertIn(operation, HEADER)
                 self.assertIn(f"UAnomaliaInventoryComponent::{operation}", SOURCE)
@@ -27,6 +27,7 @@ class UE5InventorySourceTests(unittest.TestCase):
                 self.assertIn("GetOwner()->HasAuthority()", body)
         self.assertIn("GetCurrentWeightKg() + ItemWeight * Count > WeightCapacityKg", SOURCE)
         self.assertIn("if (!FindPlacement(Candidate, NewStack)) return false;", SOURCE)
+        self.assertIn("if (Available < Count) return false;", SOURCE)
         self.assertIn("Commit(MoveTemp(Candidate));", SOURCE)
 
     def test_catalogue_matches_existing_item_ids_and_container_bounds(self):

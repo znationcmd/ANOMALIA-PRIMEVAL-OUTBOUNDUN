@@ -207,7 +207,7 @@ reste à effectuer dans l’éditeur ; elle n’est pas exécutée par le géné
 
 `UAnomaliaInventoryComponent` est créé sur chaque survivant UE5. Il ajoute un
 modèle répliqué de piles, compartiments, poids, déplacement avec rotation,
-séparation et fusion. Les mutations refusent
+ajout et retrait atomiques, séparation et fusion. Les mutations refusent
 les appels sans autorité serveur ; les ajouts sont atomiques si le poids ou la
 grille ne permettent pas de tout ranger. Les demandes de déplacement, séparation
 et fusion depuis l'interface du client passent par des RPC serveur fiables; le

@@ -74,6 +74,9 @@ public:
     bool TryAddItem(FName ItemId, int32 Count);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryRemoveItem(FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")

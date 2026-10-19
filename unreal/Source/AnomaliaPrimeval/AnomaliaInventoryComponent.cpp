@@ -163,6 +163,28 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     return true;
 }
 
+bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || ItemId.IsNone() || Count < 1) return false;
+    int32 Available = 0;
+    for (const FAnomaliaInventoryStack& Stack : Stacks)
+        if (Stack.ItemId == ItemId && Stack.Count > 0) Available += Stack.Count;
+    if (Available < Count) return false;
+    TArray<FAnomaliaInventoryStack> Candidate = Stacks;
+    int32 Remaining = Count;
+    for (int32 Index = Candidate.Num() - 1; Index >= 0 && Remaining > 0; --Index)
+    {
+        FAnomaliaInventoryStack& Stack = Candidate[Index];
+        if (Stack.ItemId != ItemId) continue;
+        const int32 Removed = FMath::Min(Remaining, Stack.Count);
+        Stack.Count -= Removed;
+        Remaining -= Removed;
+    }
+    Candidate.RemoveAll([](const FAnomaliaInventoryStack& Stack) { return Stack.Count <= 0; });
+    Commit(MoveTemp(Candidate));
+    return true;
+}
+
 bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority()) return false;
