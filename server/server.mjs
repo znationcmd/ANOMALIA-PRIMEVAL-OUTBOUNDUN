@@ -1,21 +1,69 @@
 import {WORLD_HALF} from "../src/mechanics.js";
+import {validatePlacements} from "../src/building-rules.js";
+import {GAME_MODES,validGameMode} from "../src/server-modes.js";
+import {normalizeServerId,readServerDocument,writeServerDocument} from "./server-storage.mjs";
 import http from 'node:http';
 import {WebSocketServer,WebSocket} from 'ws';
-import {randomUUID,timingSafeEqual} from 'node:crypto';
+import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
-export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16}={}){
- const players=new Map();const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json'});res.end(JSON.stringify({game:'ANOMALIA PRIMEVAL OUTBOUNDUN',protocol:2,players:players.size,maxPlayers}));});
- const wss=new WebSocketServer({server,maxPayload:2048});
- const send=(ws,value)=>{if(ws.readyState===WebSocket.OPEN&&ws.bufferedAmount<65536)ws.send(JSON.stringify(value));};
- wss.on('connection',ws=>{let player;let last=0;let messages=0;let windowAt=Date.now();const authTimeout=setTimeout(()=>ws.close(1008,'Join timeout'),10000);
-  ws.on('message',raw=>{try{const now=Date.now();if(now-windowAt>1000){windowAt=now;messages=0;}if(++messages>40)return ws.close(1008,'Rate limit');const m=JSON.parse(raw.toString());
-   if(!player){if(m.type!=='join'||m.protocol!==2)return ws.close(1008,'Protocol');const given=Buffer.from(String(m.password||'')),expected=Buffer.from(password);if(given.length!==expected.length||!timingSafeEqual(given,expected))return ws.close(1008,'Password');if(players.size>=maxPlayers)return ws.close(1013,'Server full');clearTimeout(authTimeout);player={id:randomUUID(),name:String(m.name||'Survivor').replace(/[<>\x00-\x1f]/g,'').slice(0,24),x:0,z:180,yaw:0};players.set(ws,player);last=now;send(ws,{type:'welcome',id:player.id,position:{x:player.x,z:player.z},mode:'cooperative-presence'});return;}
-   if(m.type==='move'&&[m.x,m.z,m.yaw].every(Number.isFinite)){const elapsed=Math.min(1,(now-last)/1000),distance=Math.hypot(m.x-player.x,m.z-player.z);if(Math.abs(m.x)>WORLD_HALF||Math.abs(m.z)>WORLD_HALF||distance>Math.max(2,elapsed*13)){send(ws,{type:'correction',x:player.x,z:player.z});return;}Object.assign(player,{x:m.x,z:m.z,yaw:m.yaw});last=now;}
-  }catch{ws.close(1008,'Invalid message');}});
-  ws.on('close',()=>{clearTimeout(authTimeout);players.delete(ws);});
+const equal=(a,b)=>{const x=Buffer.from(String(a??'')),y=Buffer.from(String(b??''));return x.length===y.length&&timingSafeEqual(x,y)};
+export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
+ serverId=normalizeServerId(serverId);
+ const saved=readServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects:[],mode:'pve',revision:0});
+ let objects=[],revision=0,activeMode=validGameMode(mode||saved.mode);
+ try{objects=validatePlacements({schemaVersion:1,objects:saved.objects});revision=Math.max(0,Number(saved.revision)||0)}catch{}
+ const persist=()=>writeServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects,mode:activeMode,revision});
+ const players=new Map();
+ const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({game:'ANOMALIA PRIMEVAL OUTBOUNDUN',protocol:2,serverId,mode:activeMode,players:players.size,maxPlayers,revision}));});
+ const wss=new WebSocketServer({server,maxPayload:256*1024,perMessageDeflate:false});
+ const send=(ws,value)=>{if(ws.readyState===WebSocket.OPEN&&ws.bufferedAmount<512*1024)ws.send(JSON.stringify(value))};
+ const broadcast=value=>{for(const ws of players.keys())send(ws,value)};
+ wss.on('connection',ws=>{
+  let player,last=0,lastEdit=0,messages=0,windowAt=Date.now();
+  const authTimeout=setTimeout(()=>ws.close(1008,'Join timeout'),10000);
+  ws.on('message',raw=>{
+   try{
+    const now=Date.now();if(now-windowAt>1000){windowAt=now;messages=0}
+    if(++messages>40)return ws.close(1008,'Rate limit');
+    const m=JSON.parse(raw.toString());
+    if(!player){
+     if(m.type!=='join'||m.protocol!==2)return ws.close(1008,'Protocol');
+     if(!equal(m.password,password))return ws.close(1008,'Password');
+     if(players.size>=maxPlayers)return ws.close(1013,'Server full');
+     clearTimeout(authTimeout);
+     player={id:randomUUID(),name:String(m.name||'Survivor').replace(/[<>\x00-\x1f]/g,'').slice(0,24),x:0,z:180,yaw:0,role:adminKey&&equal(m.adminKey,adminKey)?'owner':'player'};
+     players.set(ws,player);last=now;
+     send(ws,{type:'welcome',id:player.id,position:{x:player.x,z:player.z},mode:activeMode,serverId,role:player.role});
+     send(ws,{type:'world-map',schemaVersion:1,objects,revision});
+     return;
+    }
+    if(m.type==='move'&&[m.x,m.z,m.yaw].every(Number.isFinite)){
+     const elapsed=Math.min(1,(now-last)/1000),distance=Math.hypot(m.x-player.x,m.z-player.z);
+     if(Math.abs(m.x)>WORLD_HALF||Math.abs(m.z)>WORLD_HALF||distance>Math.max(2,elapsed*13)){send(ws,{type:'correction',x:player.x,z:player.z});return}
+     Object.assign(player,{x:m.x,z:m.z,yaw:m.yaw});last=now;
+    }
+    if(m.type==='editor-update'){
+     if(player.role!=='owner')return send(ws,{type:'operation-denied',reason:'ANOMALIA Editor: propriétaire uniquement'});
+     if(now-lastEdit<600)return;
+     lastEdit=now;
+     try{objects=validatePlacements({schemaVersion:1,objects:m.objects});revision++;persist();broadcast({type:'world-map',schemaVersion:1,objects,revision})}
+     catch{send(ws,{type:'operation-denied',reason:'Carte invalide'})}
+    }
+    if(m.type==='set-mode'){
+     if(player.role!=='owner')return send(ws,{type:'operation-denied',reason:'Mode: propriétaire uniquement'});
+     if(!Object.hasOwn(GAME_MODES,m.mode))return;
+     activeMode=m.mode;persist();broadcast({type:'server-mode',mode:activeMode});
+    }
+   }catch{ws.close(1008,'Invalid message')}
+  });
+  ws.on('close',()=>{clearTimeout(authTimeout);players.delete(ws)});
  });
- const timer=setInterval(()=>{const data={type:'snapshot',players:[...players.values()]};for(const ws of players.keys())send(ws,data);},100);
+ const timer=setInterval(()=>{const data={type:'snapshot',players:[...players.values()].map(({id,name,x,z,yaw})=>({id,name,x,z,yaw}))};for(const ws of players.keys())send(ws,data)},100);
  server.listen(port,host);
- return {server,wss,players,async close(){clearInterval(timer);for(const ws of wss.clients)ws.terminate();await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r));}};
+ return {server,wss,players,serverId,get mode(){return activeMode},get worldMap(){return objects},adminKey,async close(){clearInterval(timer);for(const ws of wss.clients)ws.terminate();await new Promise(r=>wss.close(r));await new Promise(r=>server.close(r))}};
 }
-if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){const port=Number(process.env.PORT||2303);createMultiplayerServer({port,password:process.env.SERVER_PASSWORD||'',maxPlayers:Math.min(64,Math.max(2,Number(process.env.MAX_PLAYERS)||16))});console.log(`ANOMALIA cooperative presence server :${port}`);}
+if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
+ const port=Number(process.env.PORT||2303);
+ const instance=createMultiplayerServer({port,password:process.env.SERVER_PASSWORD||'',maxPlayers:Math.min(64,Math.max(2,Number(process.env.MAX_PLAYERS)||16)),serverId:process.env.SERVER_ID||'main',dataRoot:process.env.SERVER_DATA_ROOT||'server-data',mode:process.env.GAME_MODE||undefined,adminKey:process.env.SERVER_ADMIN_KEY||randomBytes(32).toString('hex')});
+ console.log('ANOMALIA server :'+port+' · ID '+instance.serverId+' · '+instance.mode+' · data isolated');
+}
