@@ -3,6 +3,7 @@ import {validatePlacements} from "../src/building-rules.js";
 import {GAME_MODES,validGameMode,canPlayerDamage} from "../src/server-modes.js";
 import {normalizeServerId,readServerDocument,writeServerDocument} from "./server-storage.mjs";
 import {loadServerSettings} from './server-settings.mjs';
+import {appendServerLog} from './server-logs.mjs';
 import http from 'node:http';
 import {WebSocketServer,WebSocket} from 'ws';
 import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto';
@@ -10,6 +11,8 @@ import {pathToFileURL} from 'node:url';
 const equal=(a,b)=>{const x=Buffer.from(String(a??'')),y=Buffer.from(String(b??''));return x.length===y.length&&timingSafeEqual(x,y)};
 export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverName='ANOMALIA PRIMEVAL OUTBOUNDUN',serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
  serverId=normalizeServerId(serverId);
+ const log=(event,details={},file='Server.log')=>{try{appendServerLog({dataRoot,serverId,file,event,details})}catch(error){console.warn('Log write failed:',error.message)}};
+ log('server-start',{port,maxPlayers,mode:mode||'pve'});
  const saved=readServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects:[],mode:'pve',revision:0});
  let objects=[],revision=0,activeMode=validGameMode(mode||saved.mode);
  try{objects=validatePlacements({schemaVersion:1,objects:saved.objects});revision=Math.max(0,Number(saved.revision)||0)}catch{}
@@ -33,7 +36,7 @@ export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',ma
      if(players.size>=maxPlayers)return ws.close(1013,'Server full');
      clearTimeout(authTimeout);
      player={id:randomUUID(),name:String(m.name||'Survivor').replace(/[<>\x00-\x1f]/g,'').slice(0,24),x:0,z:180,yaw:0,hp:100,role:adminKey&&equal(m.adminKey,adminKey)?'owner':'player'};
-     players.set(ws,player);last=now;
+     players.set(ws,player);last=now;log('player-join',{playerId:player.id,name:player.name,role:player.role});
      send(ws,{type:'welcome',id:player.id,position:{x:player.x,z:player.z},mode:activeMode,serverId,role:player.role});
      send(ws,{type:'world-map',schemaVersion:1,objects,revision});
      return;
@@ -47,7 +50,7 @@ export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',ma
      if(player.role!=='owner')return send(ws,{type:'operation-denied',action:'editor',reason:'Admin access required'});
      if(now-lastEdit<600)return;
      lastEdit=now;
-     try{objects=validatePlacements({schemaVersion:1,objects:m.objects});revision++;persist();broadcast({type:'world-map',schemaVersion:1,objects,revision})}
+     try{objects=validatePlacements({schemaVersion:1,objects:m.objects});revision++;persist();log('editor-update',{revision,playerId:player.id,objects:objects.length},'console.log');broadcast({type:'world-map',schemaVersion:1,objects,revision})}
      catch{send(ws,{type:'operation-denied',action:'editor',reason:'Carte invalide'})}
     }
     if(m.type==='shoot'){
@@ -71,11 +74,11 @@ export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',ma
     if(m.type==='set-mode'){
      if(player.role!=='owner')return send(ws,{type:'operation-denied',action:'set-mode',reason:'Owner access required'});
      if(!Object.hasOwn(GAME_MODES,m.mode))return;
-     activeMode=m.mode;persist();broadcast({type:'server-mode',mode:activeMode});broadcast({type:'server-status',mode:activeMode,players:players.size});
+     activeMode=m.mode;persist();log('mode-change',{mode:activeMode,playerId:player.id},'console.log');broadcast({type:'server-mode',mode:activeMode});broadcast({type:'server-status',mode:activeMode,players:players.size});
     }
    }catch{ws.close(1008,'Invalid message')}
   });
-  ws.on('close',()=>{clearTimeout(authTimeout);players.delete(ws)});
+  ws.on('close',()=>{clearTimeout(authTimeout);if(player)log('player-leave',{playerId:player.id});players.delete(ws)});
  });
  const timer=setInterval(()=>{const data={type:'snapshot',players:[...players.values()].map(({id,name,x,z,yaw})=>({id,name,x,z,yaw}))};for(const ws of players.keys())send(ws,data)},100);
  server.listen(port,host);
