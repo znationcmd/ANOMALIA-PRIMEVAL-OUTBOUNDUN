@@ -1,3 +1,4 @@
+import {inJungle} from "./ecology.js";
 /** Pure, deterministic world rules. Coordinates are in metres. No copyrighted game assets. */
 export const WORLD_HALF=10240;
 export const CHUNK_SIZE=256;
@@ -60,7 +61,7 @@ export function noise2(x,z){const ix=Math.floor(x),iz=Math.floor(z),fx=smooth(x-
 export function fBm(x,z){return (noise2(x/120,z/120)-.5)*9+(noise2(x/480,z/480)-.5)*26+(noise2(x/1250,z/1250)-.5)*36}
 export function landMask(x,z){let mask=0;for(const c of CONTINENTS){const nx=(x-c.cx)/c.rx,nz=(z-c.cz)/c.rz;const edge=(noise2(x/650,z/650)-.5)*.068+(noise2(x/150,z/150)-.5)*.013;const r=Math.sqrt(nx*nx+nz*nz)+edge;mask=Math.max(mask,1-smooth((r-.80)/.28))}return clamp(mask,0,1)}
 export function heightAt(x,z){const land=landMask(x,z);let h=-11+land*(23+fBm(x,z)*.55);for(const p of PEAKS){const dx=x-p.x,dz=z-p.z,r2=(dx*dx+dz*dz)/(p.radius*p.radius);h+=p.height*Math.exp(-r2*2.0)*Math.pow(land,1.5)}return h}
-export function biomeAt(x,z){const h=heightAt(x,z);if(h<SEA_LEVEL-1)return "ocean";if(h<5)return "plage";if(h>340)return "neiges";if(h>190)return "montagne";if(h>75)return "hautes-terres";if(noise2(x/900+12,z/900-8)>.61)return "prairie";return "forêt"}
+export function biomeAt(x,z){const h=heightAt(x,z);if(h<SEA_LEVEL-1)return "ocean";if(h<5)return "plage";if(h>340)return "neiges";if(h>190)return "montagne";if(h>75)return "hautes-terres";if(inJungle(x,z,h))return "jungle";if(noise2(x/900+12,z/900-8)>.61)return "prairie";return "forêt"}
 export function nearestCity(x,z){let best=null,dist=Infinity;for(const city of CITIES){const d=Math.hypot(x-city.x,z-city.z);if(d<dist){best=city;dist=d}}return {city:best,distance:dist}}
 export function nearestSite(x,z,maxDistance=Infinity,sites=SITES){let target=null,dist=maxDistance;for(const s of sites){const d=Math.hypot(x-s.x,z-s.z);if(d<dist){target=s;dist=d}}return target?{site:target,distance:dist}:null}
 export function initialState(){return {version:1,position:{x:0,z:180},yaw:0,health:100,stamina:100,hunger:100,thirst:100,ammo:12,magazine:12,inventory:{wood:15,scrap:4,food:2,water:2,medkit:1,ammo:48},collected:[],unlocked:[],structures:[],kills:0,distance:0,day:1,elapsed:0,underground:null,boat:false,boatPosition:{x:4990,z:950},quest:0}}
