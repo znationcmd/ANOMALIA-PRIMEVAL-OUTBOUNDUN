@@ -2,6 +2,7 @@
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
+#include "Engine/World.h"
 
 AAnomaliaGameMode::AAnomaliaGameMode()
 {
