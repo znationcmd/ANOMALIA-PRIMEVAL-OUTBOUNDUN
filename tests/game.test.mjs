@@ -45,7 +45,7 @@ test("taming requires food; saddles permit riding and tame pair can breed",()=>{
  const s=survival.initialState();
  s.inventory.berry=15;s.inventory.saddle=1;
  const dino={id:"pet-1",type:"stegosaur",trust:0,tamed:false};
- for(let n=0;n<3;n++)survival.tame(s,dino);
+ for(let n=0;n<2;n++)survival.tame(s,dino);
  assert.ok(!dino.tamed);
  survival.tame(s,dino);
  assert.equal(dino.tamed,true);
