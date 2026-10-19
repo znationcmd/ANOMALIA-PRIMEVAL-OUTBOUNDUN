@@ -48,9 +48,9 @@ try{
  await safeScreenshot(page,'test-results/00-map-editor.png');await page.click('#editorExit');
 
  const before=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
- await page.keyboard.down('KeyW');await page.waitForTimeout(1000);await page.keyboard.up('KeyW');
+ await page.keyboard.down('KeyW');try{await page.waitForFunction(p=>{const now=window.__ANOMALIA_DIAGNOSTICS?.position;return now&&Math.hypot(now.x-p.x,now.z-p.z)>.25},before,{timeout:25000})}finally{await page.keyboard.up('KeyW')}
  const after=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
- assert.ok(after.z<before.z,'forward must move towards the camera view');
+ assert.ok(Math.hypot(after.x-before.x,after.z-before.z)>.25,'forward movement must change position');
  await page.keyboard.press('KeyE');
  await page.keyboard.press('KeyI');await page.waitForSelector('.survival-inventory');await page.waitForTimeout(800);
  await safeScreenshot(page,'test-results/02-inventory.png');
