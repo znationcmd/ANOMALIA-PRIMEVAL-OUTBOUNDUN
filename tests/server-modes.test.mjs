@@ -20,6 +20,17 @@ const joinClient=async(url,opts)=>{
  return {ws:client,welcome:await welcome};
 };
 
+test('menu and editor expose an authenticated ANOMALIA Editor and host mode presets',async()=>{
+ const {readFileSync}=await import('node:fs');
+ const menu=readFileSync(new URL('../src/start-menu.js',import.meta.url),'utf8');
+ const editor=readFileSync(new URL('../src/map-editor.js',import.meta.url),'utf8');
+ const desktop=readFileSync(new URL('../desktop/main.cjs',import.meta.url),'utf8');
+ for(const item of ['id="serverMode"','value="rp"','value="pvp"','value="pve"','value="mixed"','id="serverAdminKey"','hostedAdminKey'])
+  assert.ok(menu.includes(item),'Missing game mode or private admin key UI: '+item);
+ for(const item of ['ANOMALIA EDITOR','network.canEdit','network.publishEditor(copy())'])
+  assert.ok(editor.includes(item),'Editor missing secure synchronization: '+item);
+ assert.ok(desktop.includes('dataFile:path.join(app.getPath(\'userData\'),\'world-server.json\')'));
+});
 test('RP, PVE and mixed protect players; PVP accepts damage; safe zones do not overlap whole world',()=>{
  assert.deepEqual(Object.keys(GAME_MODES).sort(),['mixed','pve','pvp','rp']);
  assert.equal(canPlayerDamage('rp',{id:1,x:500,z:500},{id:2,x:501,z:500}),false);
