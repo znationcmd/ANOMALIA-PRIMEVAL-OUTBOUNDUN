@@ -116,7 +116,7 @@ export function consume(s,id){
  switch(id){
   case "food":case "meat":case "cooked_meat":case "cooked_fish":s.hunger=Math.min(100,s.hunger+(id==="food"?27:id==="cooked_fish"?29:34));break;
   case "berry":s.hunger=Math.min(100,s.hunger+7);s.thirst=Math.min(100,s.thirst+3);break;
-  case "water":s.thirst=Math.min(100,s.thirst+38);break;
+  case "water":s.thirst=Math.min(100,s.thirst+38);if(s.beachJourney)s.beachJourney.waterDrunk=true;break;
   case "medkit":s.health=Math.min(100,s.health+50);break;
   case "bandage":s.health=Math.min(100,s.health+19);break;
   case "medicine":s.illness=null;s.infection=Math.max(0,s.infection-75);s.health=Math.min(100,s.health+7);break;

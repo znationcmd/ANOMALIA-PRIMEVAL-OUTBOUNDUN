@@ -1,6 +1,7 @@
+import {loadSedan} from "./sedan.js";
 import * as THREE from 'three';
 export function vehicleModel(type,wreck=false){
- const root=new THREE.Group(),moving=[];
+ const root=new THREE.Group(),moving=[];let detailed=null,disposed=false,cockpit=false;
  const paint=new THREE.MeshStandardMaterial({color:wreck?0x514238:type==='tank'?0x4a5540:0x546b65,roughness:.82,metalness:.18});
  const rubber=new THREE.MeshStandardMaterial({color:0x1c211e,roughness:1}),metal=new THREE.MeshStandardMaterial({color:0x59615c,roughness:.6,metalness:.6}),glass=new THREE.MeshStandardMaterial({color:0x8cb9c2,transparent:true,opacity:.19,roughness:.2,metalness:.15,depthWrite:false});
  const lamp=new THREE.MeshStandardMaterial({color:0xd8caa2,emissive:0x665b36,emissiveIntensity:.3});
@@ -8,6 +9,7 @@ export function vehicleModel(type,wreck=false){
  const box=(x,y,z,w,h,d,mat=paint)=>part(new THREE.BoxGeometry(w,h,d),x,y,z,mat);
  const wheel=(x,y,z,r=.4)=>{const o=part(new THREE.CylinderGeometry(r,r,.25,16),x,y,z,rubber);o.rotation.z=Math.PI/2;moving.push({mesh:o,kind:'wheel'});part(new THREE.CylinderGeometry(r*.5,r*.5,.27,12),x,y,z,metal).rotation.z=Math.PI/2};
  const cabin=(y=1)=>{
+  const first=root.children.length;
   for(const x of [-.85,.85])for(const z of [-1,1])box(x,y+.55,z,.08,1.1,.09,metal);
   box(0,y+1.1,0,1.85,.12,2.2);box(0,y+.55,-1.02,1.65,.9,.025,glass);box(0,y+.55,1.02,1.65,.9,.025,glass);
   for(const x of [-.86,.86])box(x,y+.5,0,.025,.85,1.9,glass);
@@ -15,7 +17,7 @@ export function vehicleModel(type,wreck=false){
   const steering=part(new THREE.TorusGeometry(.20,.025,6,24),-.43,y+.28,-.37,rubber);steering.rotation.x=-.35;moving.push({mesh:steering,kind:'steering'});
   const canvas=document.createElement('canvas');canvas.width=256;canvas.height=96;const c=canvas.getContext('2d');c.fillStyle='#121b1d';c.fillRect(0,0,256,96);c.strokeStyle='#a6bfb1';c.fillStyle='#c5d9be';c.lineWidth=3;
   for(const x of [65,180]){c.beginPath();c.arc(x,48,35,0,Math.PI*2);c.stroke();c.beginPath();c.moveTo(x,48);c.lineTo(x+18,24);c.stroke()}c.font='12px monospace';c.fillText('KM/H',45,75);c.fillText('FUEL',164,75);
-  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;const material=new THREE.MeshBasicMaterial({map:tex});const panel=part(new THREE.PlaneGeometry(.65,.24),-.25,y+.15,-.43,material);panel.rotation.x=-.35;
+  const tex=new THREE.CanvasTexture(canvas);tex.colorSpace=THREE.SRGBColorSpace;const material=new THREE.MeshBasicMaterial({map:tex});const panel=part(new THREE.PlaneGeometry(.65,.24),-.25,y+.15,-.43,material);panel.rotation.x=-.35;for(const child of root.children.slice(first))child.userData.cockpitOnly=true;
  };
  if(type==='trainwreck'){
   box(0,1.7,0,3,2.4,8);box(0,3,-2,2.8,1.7,2.6);box(0,3,-3.32,2.2,.8,.03,glass);
@@ -46,6 +48,7 @@ export function vehicleModel(type,wreck=false){
   for(const x of [-.65,.65])box(x,.8,-2.23,.35,.22,.08,lamp);
   box(0,.43,-2.3,1.8,.18,.2,rubber);
  }
+ if(type==='car')loadSedan().then(source=>{if(disposed)return;detailed=source.clone(true);detailed.rotation.y=Math.PI;const bounds=new THREE.Box3().setFromObject(detailed);detailed.position.y-=bounds.min.y;detailed.traverse(o=>{if(o.userData.wheel)moving.push({mesh:o,kind:'wheel'});if(o.isMesh){o.geometry=o.geometry.clone();o.material=o.material.clone();o.castShadow=!wreck;o.receiveShadow=true;o.userData.cameraSolid=false;}});detailed.userData.asset='sedan-cc0';detailed.visible=!cockpit;root.add(detailed);for(const child of root.children)if(child!==detailed)child.visible=!!child.userData.cockpitOnly&&cockpit;}).catch(e=>console.warn('Sedan model unavailable',e.message));
  if(wreck){root.rotation.z=.25;root.rotation.x=.12;}
- return {root,setCockpit(inside){root.traverse(o=>{if(o.userData.hideInCockpit)o.visible=!inside})},update(speed,turn,time){for(const p of moving){if(p.kind==='rotor')p.mesh.rotation.y=time*25;else if(p.kind==='propeller')p.mesh.rotation.z=time*35;else if(p.kind==='wheel')p.mesh.rotation.x+=speed*.02;else if(p.kind==='steering')p.mesh.rotation.z=turn*.4}},dispose(){const materials=new Set();root.traverse(o=>{o.geometry?.dispose();if(o.material)materials.add(o.material)});for(const m of materials){m.map?.dispose();m.dispose()}}};
+ return {root,setCockpit(inside){cockpit=inside;if(detailed){detailed.visible=!inside;for(const child of root.children)if(child!==detailed)child.visible=!!child.userData.cockpitOnly&&inside;}root.traverse(o=>{if(o.userData.hideInCockpit)o.visible=!inside})},update(speed,turn,time){for(const p of moving){if(p.kind==='rotor')p.mesh.rotation.y=time*25;else if(p.kind==='propeller')p.mesh.rotation.z=time*35;else if(p.kind==='wheel')p.mesh.rotation.x+=speed*.02;else if(p.kind==='steering')p.mesh.rotation.z=turn*.4}},dispose(){disposed=true;const materials=new Set();root.traverse(o=>{o.geometry?.dispose();if(o.material)materials.add(o.material)});for(const m of materials){m.map?.dispose();m.dispose()}}};
 }

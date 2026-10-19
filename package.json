@@ -1,6 +1,6 @@
 {
   "name": "anomalia-primeval-outboundun",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "private": true,
   "type": "module",
   "description": "Prototype original d'un monde ouvert 3D procedural de survie",

@@ -1,6 +1,6 @@
 import {moveWithCollisions,groundHeight} from './movement.js';
 export const VEHICLES={
- car:{name:'Voiture tout-terrain',mode:'land',speed:30,accel:7,turn:1.4,length:4.4,width:2,eye:1.5},
+ car:{name:'Berline',mode:'land',speed:30,accel:7,turn:1.4,length:4.4,width:2,eye:1.5},
  truck:{name:'Camion',mode:'land',speed:23,accel:4,turn:.8,length:7.5,width:2.7,eye:2.4},
  motorcycle:{name:'Moto',mode:'land',speed:42,accel:10,turn:1.7,length:2.3,width:.8,eye:1.5},
  tank:{name:'Char',mode:'land',speed:17,accel:4,turn:.8,length:6.5,width:3.6,eye:2.4},

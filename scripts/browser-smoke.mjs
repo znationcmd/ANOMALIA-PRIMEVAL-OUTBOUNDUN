@@ -50,6 +50,7 @@ try{
  await page.keyboard.down('KeyW');await page.waitForTimeout(1000);await page.keyboard.up('KeyW');
  const after=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  assert.ok(after.z<before.z,'forward must move towards the camera view');
+ await page.keyboard.press('KeyE');
  await page.keyboard.press('KeyI');await page.waitForSelector('.survival-inventory');await page.waitForTimeout(800);
  await page.screenshot({path:'test-results/02-inventory.png'});
  await page.locator('.cargo-item').filter({hasText:'Bois'}).first().click();
@@ -81,8 +82,8 @@ try{
  await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="god"]').click();
  await page.locator('[data-admin-tab="creatures"]').click();await page.locator('[data-admin-pet="dog"]').click();
  await page.locator('[data-admin-tab="vehicles"]').click();await page.locator('[data-vehicle="car"]').click();
- assert.equal(await page.locator('[data-goto-vehicle]').count(),1,'admin car spawn creates a vehicle');
- await page.locator('[data-goto-vehicle]').click();await page.screenshot({path:'test-results/06-admin.png'});
+ assert.ok(await page.locator('[data-goto-vehicle]').count()>=2,'admin spawn adds a car alongside the beach vehicle');
+ await page.locator('[data-goto-vehicle]').last().click();await page.screenshot({path:'test-results/06-admin.png'});
  await page.locator('#panelClose').click();await page.keyboard.press('KeyE');
  await page.waitForFunction(()=>!!window.__ANOMALIA_DIAGNOSTICS?.world?.activeVehicle);
  const carBefore=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);

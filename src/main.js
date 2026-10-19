@@ -1,3 +1,5 @@
+import {spawnVehicle} from "./vehicles.js";
+import {startBeachJourney,beachObjective,reserveBeach} from "./beach-journey.js";
 import {createMapEditor} from "./map-editor.js";
 import {createBuildings} from "./rp-buildings.js";
 import {reserveBuilding,RP_SITES} from "./building-rules.js";
@@ -60,7 +62,8 @@ state.quickbar=Array.isArray(saved?.quickbar)?saved.quickbar:undefined;
 state.inventoryMigration=!!saved?.inventoryMigration;
 if(!state.inventoryMigration){state.inventory.pistol=Math.max(1,state.inventory.pistol||0);state.inventoryMigration=true;syncInventory(state);const weapon=state.inventoryStacks.find(t=>t.id===state.weapon);if(weapon)takeInHands(state,weapon.uid)}
 syncInventory(state);
-for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs','editorObjects'])if(saved?.[key]!==undefined)state[key]=saved[key];
+for(const key of ['vehicles','vehicleSequence','activeVehicle','vehicleView','thirdPerson','companion','npcs','cash','bank','bankHistory','adminCreatures','xmlOverrides','groundDrops','lootTimers','eventTimers','worldEvents','godMode','configSpawnInitialized','adminLog','runtimeLogs','editorObjects','beachJourney','beachCarCreated'])if(saved?.[key]!==undefined)state[key]=saved[key];
+if(!saved){startBeachJourney(state);syncInventory(state);}
 window.addEventListener('error',event=>{state.runtimeLogs??=[];state.runtimeLogs.push(String(event.message));state.runtimeLogs=state.runtimeLogs.slice(-50)});
 let worldRuntime,buildings,mapEditor;
 function walkHeight(x,z){return buildings?.floorAt(x,z)??groundHeight(x,z,heightAt)}
@@ -112,14 +115,16 @@ function makeTerrain(cx,cz){
    const x=gx*76+14,z=gz*76+14;
    if(x<group.position.x-CHUNK_SIZE/2||x>=group.position.x+CHUNK_SIZE/2||z<group.position.z-CHUNK_SIZE/2||z>=group.position.z+CHUNK_SIZE/2)continue;
    if(Math.hypot(x-city.x,z-city.z)>city.radius||hash2(gx,gz)<1-city.density)continue;
-   if(reserveBuilding(x,z,buildings?.objects()))continue;
+   if(reserveBuilding(x,z,buildings?.objects())||reserveBeach(x,z))continue;
    const y=heightAt(x,z);if(y<2)continue;
    const width=25+hash2(gx+7,gz)*25,depth=25+hash2(gx,gz+8)*23;
    if(Math.abs(x)<width/2+3&&Math.abs(z-180)<depth/2+3)continue;
    const height=9+Math.pow(hash2(gx+3,gz+3),1.65)*(city.id==="helion"?112:70);
    solids.push({x,z,width,depth});
    graphics.building(group,x-group.position.x,y,z-group.position.z,width,height,depth,Math.floor(hash2(gx,gz,993)*4),Math.hypot(x-state.position.x,z-state.position.z)<220);
-   if(hash2(gx,gz,123)>.48&&Math.hypot(x-state.position.x,z-state.position.z)<220)graphics.car(group,x-group.position.x-width/2-5,heightAt(x-width/2-5,z),z-group.position.z,Math.abs(gx+gz)%3);
+   if(hash2(gx,gz,123)>.48&&Math.hypot(x-state.position.x,z-state.position.z)<220&&(state.vehicles||[]).filter(v=>v.parkedKey).length<8&&!(state.vehicles||[]).some(v=>v.parkedKey===gx+','+gz)){
+    const result=spawnVehicle(state,'car',x-width/2-5,z,heightAt);if(result.ok)result.vehicle.parkedKey=gx+','+gz;
+   }
   }
  }
  // Batched vegetation: a few draw calls per streamed sector.
@@ -509,6 +514,7 @@ function updateHud(dt){
  $("compass").textContent=["N","NE","E","SE","S","SO","O","NO"][Math.round((((-yaw%(Math.PI*2))+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
  $("questTitle").textContent=state.unlocked?.includes("bunker-alpha")?"Au-delà des frontières":"Le mystère du bunker Alpha";
  $("questDesc").textContent=state.unlocked?.includes("bunker-alpha")?"Explore le métro, apprivoise les dinosaures, rejoins les îles.":"Trouve la clé Alpha et ouvre le bunker à l'extérieur d'Hélion.";
+ const beach=beachObjective(state);if(beach){$("questTitle").textContent=beach.title;$("questDesc").textContent=beach.description;}
 }
 function updatePlayer(dt){
  if(paused||!started||state.health<=0)return;
@@ -577,13 +583,13 @@ function start(lockPointer=true){
  if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
 const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show()});
-const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),onMenu:()=>{mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
+const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),newGame:()=>{try{localStorage.setItem(STORAGE+'-before-new-game',JSON.stringify(state));localStorage.removeItem(STORAGE);location.reload();}catch{notice('Impossible de conserver la sauvegarde actuelle.')}} ,onMenu:()=>{mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
 const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
 $("helpBtn").onclick=()=>{inventoryUI?.cleanup();worldRuntime?.cleanup(); $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer · F2 : admin · F3 : groupe · F5 : vues · chiffres : raccourcis</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
-$("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position={x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
+$("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position=state.beachJourney?{x:435,z:90}:{x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
  keys.add(event.code);

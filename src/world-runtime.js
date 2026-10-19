@@ -19,7 +19,7 @@ export function createWorldRuntime({state:s,scene,camera,renderer,heightAt,solid
   s.dinoKibblePreferences=config.creatures.preferredKibble;s.tamingSpeed=config.settings.tamingSpeed;s.aiDamage=config.settings.aiDamage;s.foodDrain=config.settings.foodDrain;s.waterDrain=config.settings.waterDrain;
   s.thirdPersonAllowed=config.settings.thirdPersonAllowed;if(!s.thirdPersonAllowed)s.thirdPerson=false;
  }
- applySettings();if(!s.configSpawnInitialized){s.configSpawnInitialized=true;if(!s.elapsed){s.position={...config.settings.spawn};for(const [id,n]of Object.entries(config.settings.startingItems))if(ITEM_DEFS[id]&&Number.isFinite(n))s.inventory[id]=Math.max(0,Math.min(9999,Math.floor(n)))}}initializeNPCs(s,config.ai);tickEconomy(s,config,Date.now()/1000);
+ applySettings();if(!s.configSpawnInitialized){s.configSpawnInitialized=true;if(!s.elapsed){s.position={...config.settings.spawn};for(const [id,n]of Object.entries(config.settings.startingItems))if(ITEM_DEFS[id]&&Number.isFinite(n))s.inventory[id]=Math.max(0,Math.min(9999,Math.floor(n)))}}if(s.beachJourney&&!s.beachCarCreated){spawnVehicle(s,'car',410,155,heightAt);s.beachCarCreated=true;}initializeNPCs(s,config.ai);tickEconomy(s,config,Date.now()/1000);
  const objects=new Map(),npcModels=new Map(),wrecks=new Map();let avatar=null,avatarSignature='',petModel=null,petSignature='';
  const lootGeometry=new THREE.BoxGeometry(.35,.22,.35),lootMaterial=new THREE.MeshStandardMaterial({color:0xbaac7b,roughness:.8});
  const lootMesh=new THREE.InstancedMesh(lootGeometry,lootMaterial,600);lootMesh.instanceMatrix.setUsage(THREE.DynamicDrawUsage);lootMesh.frustumCulled=false;scene.add(lootMesh);

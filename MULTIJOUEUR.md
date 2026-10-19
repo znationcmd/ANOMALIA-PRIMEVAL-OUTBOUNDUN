@@ -41,3 +41,9 @@ L’éditeur est accessible depuis le menu de démarrage ou avec F4 en solo. Cod
 Déplacement de caméra : ZQSD/WASD, Maj pour accélérer, Espace/Ctrl pour monter/descendre, clic droit maintenu pour regarder. L’import/export produit un fichier ANOMALIA ; il ne charge pas directement les projets DayZ Editor ni les PBO.
 
 Dans la version Windows, le bouton « Héberger en réseau local » lance le serveur intégré sur le port 2303 sans installation de Node.js. Le mot de passe saisi est appliqué à l’hébergement. Les adresses LAN détectées s’affichent pour les communiquer aux invités ; cliquer ensuite sur Rejoindre pour jouer sur son propre serveur. Le serveur s’arrête à la fermeture du jeu. Le pare-feu Windows peut demander l’autorisation réseau lors du premier hébergement. La page HTML seule propose de rejoindre un serveur déjà lancé et ne peut pas en héberger un.
+
+## Version 0.6 — début de survie
+
+Une nouvelle sauvegarde commence sur une plage : soif, froid, très peu de provisions, aucune arme offerte. L’eau et un manteau sont des objets réels au sol ; les objectifs avancent après consommation de l’eau puis équipement du manteau. Une berline conduite en vue extérieure ou intérieure se trouve à proximité. L’extérieur utilise désormais un modèle GLB Innerscene CC0 à l’échelle réelle ; son habitacle reste simplifié et les autres véhicules gardent leurs modèles procéduraux. Le rendu global ne correspond pas encore à celui de DayZ/ARK.
+
+Les sauvegardes existantes continuent à leur ancien emplacement. Le bouton « Nouvelle survie — plage » conserve une copie de la sauvegarde précédente avant de commencer. L’éditeur est directement accessible dans le menu principal par « Éditeur de carte » (ou F4 en jeu). Le code de cette version reste ANOMALIA-EDITOR-2026.
