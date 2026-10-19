@@ -24,8 +24,9 @@ import vehiclesXml from '../public/config/vehicles.xml?raw';
 import legacyArkAdmins from '../public/config/AllowedCheaterSteamIDs.txt?raw';
 import {parseWorldConfig as parseXmlConfig} from './xml-config.js';
 import {parseTextSettings} from './text-settings.js';
+import {parseNavalConfig} from './naval-config.js';
 export const DEFAULT_XML={'types.xml':types,'events.xml':events,'cfgeventspawns.xml':positions,'cfgspawnabletypes.xml':cargo,'globals.xml':globals,'economy.xml':economy,'ai.xml':ai,'cfgeconomycore.xml':core,'serverDZ.cfg':cfg,'Game.ini':game,'GameUserSettings.ini':settings,'world-settings.json':world,'creatures.json':creatures,'config.json':serverJson,'admin_config.json':adminJson,'scenarios.json':scenariosJson,'mods.json':modsJson,'cfggameplay.json':gameplayJson,'cfglootspawn.xml':lootspawnXml,'cfgplayerspawnpoints.xml':playerSpawnXml,'messages.xml':messagesXml,'vehicles.xml':vehiclesXml,'AllowedCheaterSteamIDs.txt':legacyArkAdmins};
-export function parseWorldConfig(docs){const config=parseXmlConfig(docs);config.settings=parseTextSettings(docs);let creatures;try{creatures=JSON.parse(docs['creatures.json'])}catch{throw Error('creatures.json invalide.')}
+export function parseWorldConfig(docs){const config=parseXmlConfig(docs);config.settings=parseTextSettings(docs);config.naval=parseNavalConfig(docs['vehicles.xml']||'<navalVehicles/>');let creatures;try{creatures=JSON.parse(docs['creatures.json'])}catch{throw Error('creatures.json invalide.')}
  if(creatures.schemaVersion!==1||!Array.isArray(creatures.spawns))throw Error('creatures.json: schéma invalide.');
  config.creatures={preferredKibble:creatures.preferredKibble||{},spawns:creatures.spawns.filter(d=>['raptor','stegosaur','triceratops','bront'].includes(d.type)&&Number.isFinite(d.x)&&Number.isFinite(d.z)&&Math.abs(d.x)<=WORLD_HALF&&Math.abs(d.z)<=WORLD_HALF).slice(0,100)};config.globals.LootMultiplier=(config.globals.LootMultiplier??1)*config.settings.lootMultiplier;config.globals.CompanionFollowDistance=config.settings.followDistance;return config}
 export async function readWorldConfig(overrides={}){
