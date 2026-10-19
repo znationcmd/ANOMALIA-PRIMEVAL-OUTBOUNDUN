@@ -8,6 +8,9 @@ HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.h").
 SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp").read_text(encoding="utf-8")
 SURVIVOR_HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.h").read_text(encoding="utf-8")
 SURVIVOR_SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
+WIDGET_HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryWidget.h").read_text(encoding="utf-8")
+WIDGET_SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryWidget.cpp").read_text(encoding="utf-8")
+INPUT_INI = (ROOT / "unreal/Config/DefaultInput.ini").read_text(encoding="utf-8")
 
 
 class UE5InventorySourceTests(unittest.TestCase):
@@ -60,6 +63,16 @@ class UE5InventorySourceTests(unittest.TestCase):
                 self.assertIn(f"ServerRequest{operation}", HEADER)
                 self.assertIn(f"ServerRequest{operation}_Implementation", SOURCE)
         self.assertNotIn("ServerRequestAddItem", HEADER)
+
+    def test_inventory_has_native_umg_screen_and_i_key_toggle(self):
+        self.assertIn("UAnomaliaInventoryWidget : public UUserWidget", WIDGET_HEADER)
+        self.assertIn('Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory)', SURVIVOR_SOURCE)
+        self.assertIn('ActionName="Inventory",Key=I', INPUT_INI)
+        self.assertIn("CreateWidget<UAnomaliaInventoryWidget>", SURVIVOR_SOURCE)
+        for action in ("MoveToHands", "SplitHalf", "Merge"):
+            with self.subTest(action=action):
+                self.assertIn(f"EAnomaliaInventoryAction::{action}", WIDGET_SOURCE)
+        self.assertIn("OnInventoryUpdated.AddDynamic", WIDGET_SOURCE)
 
 
 if __name__ == "__main__":

@@ -214,8 +214,10 @@ et fusion depuis l'interface du client passent par des RPC serveur fiables; le
 ramassage et l'ajout d'objets restent réservés au code serveur. Le catalogue de départ reprend des
 identifiants utilisés par l’ancien jeu JavaScript.
 
-Ce lot fournit le modèle de données et ses opérations, **pas encore** l’interface
-UMG DayZ/ARK, l’équipement, les objets 3D au sol, la sauvegarde persistante ou la
-connexion des actions aux RPC du joueur. Les tests `test_ue5_inventory_source.py`
+Une première fenêtre UMG s'ouvre avec la touche I. Elle liste les compartiments
+et propose déplacer en main, séparer une pile ou fusionner deux piles. Ce lot ne
+fournit pas encore l'affichage 3D du personnage, l'équipement, les objets 3D au
+sol ou la sauvegarde persistante. L'apparence reste provisoire : glisser-déposer,
+icônes et interactions de monde restent à faire. Les tests `test_ue5_inventory_source.py`
 sont des vérifications de source ; compilation UE5 et test en partie restent à
 faire sur un hôte avec Unreal Engine.

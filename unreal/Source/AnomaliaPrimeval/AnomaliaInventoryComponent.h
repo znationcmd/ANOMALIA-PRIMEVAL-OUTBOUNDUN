@@ -4,6 +4,8 @@
 #include "Components/ActorComponent.h"
 #include "AnomaliaInventoryComponent.generated.h"
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
+
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
 {
@@ -63,6 +65,9 @@ public:
 
     UPROPERTY(EditAnywhere, Replicated, BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(ClampMin="0.1", ClampMax="500"))
     float WeightCapacityKg = 14.f;
+
+    UPROPERTY(BlueprintAssignable, Category="ANOMALIA|Inventory")
+    FAnomaliaInventoryUpdated OnInventoryUpdated;
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
     float GetCurrentWeightKg() const;

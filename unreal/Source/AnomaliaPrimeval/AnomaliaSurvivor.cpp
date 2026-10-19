@@ -2,9 +2,12 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaInventoryWidget.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/PlayerController.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -76,6 +79,35 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaSurvivor::InputInteract);
+    Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
+}
+
+void AAnomaliaSurvivor::InputInventory()
+{
+    if (!IsLocallyControlled() || !InventoryComponent) return;
+    APlayerController* PC = Cast<APlayerController>(Controller);
+    if (!PC) return;
+    if (InventoryWidget && InventoryWidget->IsInViewport())
+    {
+        InventoryWidget->RemoveFromParent();
+        InventoryWidget = nullptr;
+        PC->SetInputMode(FInputModeGameOnly());
+        PC->bShowMouseCursor = false;
+        PC->SetIgnoreMoveInput(false);
+        PC->SetIgnoreLookInput(false);
+        return;
+    }
+    InventoryWidget = CreateWidget<UAnomaliaInventoryWidget>(PC, UAnomaliaInventoryWidget::StaticClass());
+    if (!InventoryWidget) return;
+    InventoryWidget->InitializeForInventory(InventoryComponent);
+    InventoryWidget->AddToViewport(80);
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(InputMode);
+    PC->bShowMouseCursor = true;
+    PC->SetIgnoreMoveInput(true);
+    PC->SetIgnoreLookInput(true);
 }
 
 void AAnomaliaSurvivor::MoveForward(float Value)

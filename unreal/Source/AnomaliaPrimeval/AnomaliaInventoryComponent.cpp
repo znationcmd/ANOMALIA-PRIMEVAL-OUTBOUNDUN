@@ -82,6 +82,7 @@ bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, in
     Existing->Width = Width;
     Existing->Height = Height;
     OnInventoryChanged();
+    OnInventoryUpdated.Broadcast();
     return true;
 }
 
@@ -129,6 +130,7 @@ void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candi
     Stacks = MoveTemp(Candidate);
     if (GetOwner()) GetOwner()->ForceNetUpdate();
     OnInventoryChanged();
+    OnInventoryUpdated.Broadcast();
 }
 
 bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
@@ -270,8 +272,8 @@ void UAnomaliaInventoryComponent::ServerRequestMergeStacks_Implementation(int32 
     TryMergeStacks(TargetStackId, SourceStackId);
 }
 
-void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); }
-void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); }
+void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
+void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 
 void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

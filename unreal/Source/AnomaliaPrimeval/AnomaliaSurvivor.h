@@ -7,6 +7,7 @@
 class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
+class UAnomaliaInventoryWidget;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -23,6 +24,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -53,6 +57,7 @@ private:
     void Turn(float Value);
     void LookUp(float Value);
     void InputInteract();
+    void InputInventory();
 
     /** Server checks the closest available vehicle; clients cannot choose an arbitrary target. */
     UFUNCTION(Server, Reliable)
