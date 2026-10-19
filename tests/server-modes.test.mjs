@@ -16,7 +16,7 @@ const waitMessage=(ws,match)=>new Promise((resolve,reject)=>{
 const joinClient=async(url,opts)=>{
  const client=new WebSocket(url);await once(client,'open');
  const welcome=waitMessage(client,m=>m.type==='welcome');
- client.send(JSON.stringify({type:'join',protocol:1,name:opts.name||'Survivant',password:opts.password||'',adminKey:opts.adminKey||''}));
+ client.send(JSON.stringify({type:'join',protocol:2,name:opts.name||'Survivant',password:opts.password||'',adminKey:opts.adminKey||''}));
  return {ws:client,welcome:await welcome};
 };
 
@@ -29,7 +29,7 @@ test('menu and editor expose an authenticated ANOMALIA Editor and host mode pres
   assert.ok(menu.includes(item),'Missing game mode or private admin key UI: '+item);
  for(const item of ['ANOMALIA EDITOR','network.canEdit','network.publishEditor(copy())'])
   assert.ok(editor.includes(item),'Editor missing secure synchronization: '+item);
- assert.ok(desktop.includes('dataFile:path.join(app.getPath(\'userData\'),\'world-server.json\')'));
+ assert.ok(desktop.includes('dataRoot:app.getPath(\'userData\')'));
 });
 test('RP, PVE and mixed protect players; PVP accepts damage; safe zones do not overlap whole world',()=>{
  assert.deepEqual(Object.keys(GAME_MODES).sort(),['mixed','pve','pvp','rp']);
@@ -46,9 +46,9 @@ test('RP, PVE and mixed protect players; PVP accepts damage; safe zones do not o
 });
 
 test('ANOMALIA Editor changes require a private owner credential, sync to guests and persist on restart',async()=>{
- const folder=mkdtempSync(join(tmpdir(),'anomalia-server-test-')),file=join(folder,'world.json');
+ const folder=mkdtempSync(join(tmpdir(),'anomalia-server-test-')),file=join(folder,'servers','main','world.json');
  const secret='an-independent-owner-secret';
- const app=createMultiplayerServer({port:0,host:'127.0.0.1',mode:'pve',adminKey:secret,dataFile:file});
+ const app=createMultiplayerServer({port:0,host:'127.0.0.1',mode:'pve',adminKey:secret,dataRoot:folder,serverId:'main'});
  await once(app.server,'listening');
  const url='ws://127.0.0.1:'+app.server.address().port;
  const clients=[];
