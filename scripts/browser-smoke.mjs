@@ -26,7 +26,7 @@ try{
  page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('favicon'))failures.push(m.text())});
  const base=`http://127.0.0.1:${server.address().port}/?smoke=1`;
  await page.goto(base);
- await page.waitForSelector('#menuLanguage');
+ await page.waitForSelector('#startBtn');
  await page.screenshot({path:'test-results/00-main-menu.png'});
  await page.click('#settingsBtn');
  for(const [language,label] of [['de','Solo spielen'],['ru','Одиночная игра'],['it','Gioca da solo'],['en','Play solo'],['ja','ソロプレイ'],['zh','单人游戏'],['es','Jugar solo'],['fr','Jouer en solo']]){await page.selectOption('#menuLanguage',language);assert.equal(await page.locator('#startBtn').textContent(),label);}
