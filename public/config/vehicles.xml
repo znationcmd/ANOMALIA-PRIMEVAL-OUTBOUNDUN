@@ -17,4 +17,20 @@
     <pos x="-9000" z="2800" yaw="90"/>
     <pos x="7500" z="-3000" yaw="120"/>
   </vehicle>
+  <!-- Shared vehicle configuration for land, sea and air. Set nominal="0" to disable a type. -->
+  <vehicle type="formula1" enabled="1" nominal="2" respawn="3600"><pos x="9000" z="16350" yaw="0"/></vehicle>
+  <vehicle type="kart" enabled="1" nominal="3" respawn="3600"><pos x="9010" z="16370" yaw="0"/></vehicle>
+  <vehicle type="monster_truck" enabled="1" nominal="3" respawn="3600"><pos x="15000" z="17570" yaw="0"/></vehicle>
+  <vehicle type="dirt_bike" enabled="1" nominal="3" respawn="3600"><pos x="8000" z="11210" yaw="0"/></vehicle>
+  <vehicle type="quad" enabled="1" nominal="2" respawn="3600"><pos x="8020" z="11200" yaw="0"/></vehicle>
+  <vehicle type="buggy" enabled="1" nominal="2" respawn="3600"><pos x="8040" z="11200" yaw="0"/></vehicle>
+  <vehicle type="snowmobile" enabled="1" nominal="2" respawn="3600"><pos x="-12400" z="-17100" yaw="0"/></vehicle>
+  <vehicle type="police" enabled="1" nominal="1" respawn="3600"><pos x="400" z="200" yaw="0"/></vehicle>
+  <vehicle type="gendarmerie" enabled="1" nominal="1" respawn="3600"><pos x="420" z="220" yaw="0"/></vehicle>
+  <vehicle type="firetruck" enabled="1" nominal="1" respawn="3600"><pos x="440" z="240" yaw="0"/></vehicle>
+  <vehicle type="ambulance" enabled="1" nominal="1" respawn="3600"><pos x="460" z="260" yaw="0"/></vehicle>
+  <vehicle type="heavy_truck" enabled="1" nominal="1" respawn="3600"><pos x="9000" z="16400" yaw="0"/></vehicle>
+  <vehicle type="fighter_jet" enabled="1" nominal="1" respawn="3600"><pos x="9020" z="16450" yaw="0"/></vehicle>
+  <vehicle type="attack_helicopter" enabled="1" nominal="1" respawn="3600"><pos x="9050" z="16450" yaw="0"/></vehicle>
+  <vehicle type="transport_helicopter" enabled="1" nominal="1" respawn="3600"><pos x="9100" z="16450" yaw="0"/></vehicle>
 </navalVehicles>
