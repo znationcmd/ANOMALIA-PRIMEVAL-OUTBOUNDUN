@@ -110,3 +110,32 @@ Ajouter cette section au `config.json` du serveur concerné, sans supprimer les 
 ### Sélection des réglages depuis l'interface du jeu
 
 Le nouveau `UAnomaliaPerformanceLibrary` expose `GetGraphicsPresets` et `ApplyGraphicsPreset` aux Blueprints. Il lit les sections `[Anomalia.*]` de `Config/DefaultGame.ini` (config standard embarquée dans les builds), puis applique localement les niveaux de qualité, l'échelle de rendu, la résolution dynamique et la limite de 60 FPS. Les préférences sont enregistrées dans `GameUserSettings.ini` **du joueur uniquement**, sans écrire dans `Saved/Servers/<id>`. La fenêtre de paramètres UMG et les contrôles manette restent à réaliser. Les profils PS5/Series X sont des points de départ, non des optimisations validées.
+
+## Lot 1 — compilation native reproductible (19 octobre 2026)
+
+Le pilote `scripts/ue5/validate-build.py` appelle le vrai script UnrealBuildTool
+fourni par l'installation UE5 pour les cibles **Editor puis Game**, en Development.
+Il s'arrête au premier échec et conserve les sorties du compilateur ainsi qu'un
+rapport JSON dans `unreal/Saved/BuildValidation`. Il n'efface ni configurations,
+ni sauvegardes. Une compilation réussie ne valide pas le lancement du jeu :
+`execution` reste `not_run` et `worldPlayable` reste `not_verified`.
+
+Depuis la racine du dépôt sur Windows :
+
+```powershell
+python scripts/ue5/validate-build.py --engine-root "C:\Program Files\Epic Games\UE_5.6"
+```
+
+Le chemin est un exemple : utiliser la véritable installation UE5 et ses outils
+C++ compatibles. Le workflow manuel **UE5 native build (engine host required)**
+utilise un runner Windows portant le label `anomalia-ue5`, avec `UE_ROOT` défini
+sur cette machine et Python disponible. Ce workflow ne provisionne pas Unreal
+Engine et n'a pas encore été exécuté sur un tel hôte. Il n'est pas déclenché par
+les contributions publiques.
+
+**Constat de cette session :** aucun exécutable Unreal Editor ni installation
+UE5 détecté dans l'environnement de travail. Le précontrôle a échoué avec le
+code 2 ; aucune compilation native ni exécution réelle n'a donc eu lieu.
+Les contrôles Python sont distincts de cette preuve manquante. Le projet utilise
+encore `/Engine/Maps/Entry` et ne contient pas de carte de jeu `.umap`.
+Le lot 1 reste **bloqué**, les lots suivants ne sont pas déclarés terminés.

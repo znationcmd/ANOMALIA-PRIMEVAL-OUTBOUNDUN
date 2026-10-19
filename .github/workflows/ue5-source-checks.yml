@@ -6,12 +6,16 @@ on:
       - 'unreal/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
+      - 'tests/test_ue5_build_driver.py'
+      - 'scripts/ue5/**'
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
       - 'unreal/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
+      - 'tests/test_ue5_build_driver.py'
+      - 'scripts/ue5/**'
       - '.github/workflows/ue5-source-checks.yml'
 
 jobs:
@@ -21,6 +25,8 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
+      - name: Test build driver failure reporting (not a native build)
+        run: python -m unittest discover -s tests -p test_ue5_build_driver.py -v
       - name: Verify config migration is non-destructive
         run: |
           python scripts/migrate-to-ue5.py

@@ -1,0 +1,24 @@
+name: UE5 native build (engine host required)
+on:
+  workflow_dispatch:
+jobs:
+  compile:
+    # Explicit dispatch only: public pull requests must not execute on this host.
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Editor and Game with installed Unreal Engine
+        shell: powershell
+        run: |
+          if (-not $env:UE_ROOT) { throw 'Set UE_ROOT on the UE5 build host.' }
+          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT"
+      - name: Retain native compiler evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-native-build-evidence
+          path: unreal/Saved/BuildValidation/
+          if-no-files-found: warn

@@ -1,0 +1,71 @@
+"""Run native UBT builds; never treat source checks as an Unreal compilation."""
+from __future__ import annotations
+import argparse
+import datetime
+import json
+import os
+from pathlib import Path
+import subprocess
+import sys
+
+ROOT = Path(__file__).resolve().parents[2]
+
+
+def validate(engine: Path, output: Path) -> int:
+    output.mkdir(parents=True, exist_ok=True)
+    report = {"startedUtc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
+              "compilation": "not_run", "execution": "not_run", "worldPlayable": "not_verified",
+              "targets": [], "engineRoot": str(engine)}
+    report_file = output / "report.json"
+    def save():
+        report_file.write_text(json.dumps(report, indent=2) + "\n", encoding="utf-8")
+    save()
+    platform = "Win64" if sys.platform == "win32" else "Linux"
+    build = engine / "Engine/Build/BatchFiles" / ("Build.bat" if platform == "Win64" else "Linux/Build.sh")
+    version_file = engine / "Engine/Build/Build.version"
+    if not build.is_file() or not version_file.is_file():
+        report["error"] = "Unreal Engine installation missing: Build script and Build.version are required"
+        save()
+        print(report["error"], file=sys.stderr)
+        return 2
+    version = json.loads(version_file.read_text(encoding="utf-8"))
+    report["engineVersion"] = version
+    if version.get("MajorVersion") != 5:
+        report["error"] = "Unreal Engine 5 is required"
+        save()
+        return 2
+    project = ROOT / "unreal/AnomaliaPrimeval.uproject"
+    report["compilation"] = "running"
+    save()
+    for target in ("AnomaliaPrimevalEditor", "AnomaliaPrimeval"):
+        command = [str(build), target, platform, "Development", f"-Project={project}", "-WaitMutex", "-NoHotReloadFromIDE"]
+        # cmd.exe is required for a Windows batch file; paths remain separate arguments.
+        if platform == "Win64":
+            command = [os.environ.get("COMSPEC", "cmd.exe"), "/d", "/c", *command]
+        log_path = output / f"{target}.log"
+        try:
+            with log_path.open("w", encoding="utf-8") as log:
+                result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, check=False)
+            code = result.returncode
+        except OSError as error:
+            code = 127
+            log_path.write_text(str(error), encoding="utf-8")
+        report["targets"].append({"target": target, "exitCode": code, "log": str(log_path)})
+        if code != 0:
+            report["compilation"] = "failed"
+            save()
+            return 1
+        save()
+    report["compilation"] = "passed"
+    save()
+    print("Native builds passed. Game execution and playable world remain unverified.")
+    return 0
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--engine-root", type=Path, default=os.environ.get("UE_ROOT"))
+    parser.add_argument("--output", type=Path, default=ROOT / "unreal/Saved/BuildValidation")
+    args = parser.parse_args()
+    # Use an explicit missing path to record the failed preflight rather than accidentally using cwd.
+    raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output))
