@@ -27,3 +27,17 @@ jobs:
           test -f src/main.js
           grep -q 'makeTerrain' src/main.js
           grep -q 'interaction()' src/main.js
+      - name: Create self-contained playable HTML for Windows Mac and Linux
+        run: |
+          npm run package:offline
+          test -s release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
+          grep -q 'ANOMALIA' release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
+          test -s release/LIRE_AVANT_DE_JOUER.txt
+      - name: Download playable pre-alpha ZIP from GitHub Actions
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-PRIMEVAL-OUTBOUNDUN-Jouer-PC
+          path: |
+            release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
+            release/LIRE_AVANT_DE_JOUER.txt
+          retention-days: 90
