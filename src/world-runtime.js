@@ -15,7 +15,7 @@ export function createWorldRuntime({state:s,scene,camera,renderer,heightAt,solid
  let docs={...DEFAULT_XML,...s.xmlOverrides},config=parseWorldConfig(docs),time=0,lastEconomy=-99,enterYaw=0,menu='admin',tab='items';
  s.vehicles=Array.isArray(s.vehicles)?s.vehicles.filter(v=>VEHICLES[v.type]&&[v.x,v.z,v.y,v.yaw].every(Number.isFinite)).slice(0,60):[];s.adminCreatures??=[];s.thirdPerson=!!s.thirdPerson;
  function applySettings(){
-  renderer.setPixelRatio(Math.min(2,devicePixelRatio*config.settings.resolution/100));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=config.settings.shadows&&!matchMedia('(pointer:coarse)').matches;
+  renderer.setPixelRatio(Math.min(Number(localStorage.getItem('anomalia-quality'))||2,2,devicePixelRatio*config.settings.resolution/100));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=config.settings.shadows&&!matchMedia('(pointer:coarse)').matches;
   s.dinoKibblePreferences=config.creatures.preferredKibble;s.tamingSpeed=config.settings.tamingSpeed;s.aiDamage=config.settings.aiDamage;s.foodDrain=config.settings.foodDrain;s.waterDrain=config.settings.waterDrain;
   s.thirdPersonAllowed=config.settings.thirdPersonAllowed;if(!s.thirdPersonAllowed)s.thirdPerson=false;
  }
