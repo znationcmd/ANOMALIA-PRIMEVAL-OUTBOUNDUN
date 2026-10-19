@@ -59,7 +59,10 @@ app.whenReady().then(()=>{
   validSender(event);const port=Number(options.port||2303),password=String(options.password||'');if(!Number.isInteger(port)||port<1024||port>65535||password.length>128)throw Error('Invalid server options');
   const gameMode=String(options.mode||'pve');if(!['rp','pvp','pve','mixed'].includes(gameMode))throw Error('Invalid game mode');
   if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}
-  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16,mode:gameMode,serverId:'local-'+port,dataRoot:app.getPath('userData')});
+  const {createMultiplayerServer}=await import('../server/server.mjs');const legacyWorld=path.join(app.getPath('userData'),'world-server.json');
+  const isolatedWorld=path.join(app.getPath('userData'),'servers','local-'+port,'world.json');
+  if(fs.existsSync(legacyWorld)&&!fs.existsSync(isolatedWorld)){fs.mkdirSync(path.dirname(isolatedWorld),{recursive:true});fs.copyFileSync(legacyWorld,isolatedWorld);}
+  const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16,mode:gameMode,serverId:'local-'+port,dataRoot:app.getPath('userData')});
   try{await new Promise((resolve,reject)=>{next.server.once('listening',resolve);next.server.once('error',reject);});}catch(e){await next.close();throw e;}
   multiplayerServer=next;
   const addresses=Object.values(require('node:os').networkInterfaces()).flat().filter(n=>n.family==='IPv4'&&!n.internal).map(n=>`ws://${n.address}:${port}`);
