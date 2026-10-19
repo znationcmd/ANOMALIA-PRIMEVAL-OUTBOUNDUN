@@ -1,4 +1,8 @@
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaVehiclePawn.h"
+#include "EngineUtils.h"
+#include "Engine/World.h"
+#include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -62,6 +66,7 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("LookUp"), this, &AAnomaliaSurvivor::LookUp);
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
+    Input->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaSurvivor::InputInteract);
 }
 
 void AAnomaliaSurvivor::MoveForward(float Value)
@@ -82,3 +87,29 @@ void AAnomaliaSurvivor::MoveRight(float Value)
 }
 void AAnomaliaSurvivor::Turn(float Value) { AddControllerYawInput(Value); }
 void AAnomaliaSurvivor::LookUp(float Value) { AddControllerPitchInput(Value); }
+
+void AAnomaliaSurvivor::InputInteract()
+{
+    if (!IsLocallyControlled()) return;
+    if (HasAuthority()) ServerTryEnterVehicle_Implementation();
+    else ServerTryEnterVehicle();
+}
+
+void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
+{
+    if (!HasAuthority() || !GetController() || Health <= 0.f || !GetWorld()) return;
+    AAnomaliaVehiclePawn* Nearest = nullptr;
+    float NearestDistanceSquared = FMath::Square(450.f);
+    for (TActorIterator<AAnomaliaVehiclePawn> It(GetWorld()); It; ++It)
+    {
+        AAnomaliaVehiclePawn* Candidate = *It;
+        if (!IsValid(Candidate) || Candidate->HasDriver()) continue;
+        const float DistanceSquared = FVector::DistSquared(GetActorLocation(), Candidate->GetActorLocation());
+        if (DistanceSquared < NearestDistanceSquared)
+        {
+            Nearest = Candidate;
+            NearestDistanceSquared = DistanceSquared;
+        }
+    }
+    if (Nearest) Nearest->EnterVehicle(GetController(), this);
+}
