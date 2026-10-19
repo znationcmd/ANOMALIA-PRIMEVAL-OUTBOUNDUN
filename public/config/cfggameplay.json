@@ -1,0 +1,15 @@
+{
+  "schemaVersion": 1,
+  "player": {
+    "staminaMultiplier": 1
+  },
+  "weather": {
+    "enabled": true
+  },
+  "construction": {
+    "allowLand": true,
+    "allowWater": true,
+    "allowUnderwater": true
+  },
+  "notes": "Reserved settings: changes only take effect when connected to gameplay systems."
+}
