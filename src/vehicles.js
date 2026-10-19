@@ -43,7 +43,7 @@ export function exitVehicle(s,heightAt,solids=[]){const v=(s.vehicles||[]).find(
  const positions=[1,-1,2,-2].map(n=>({x:v.x+Math.cos(v.yaw)*n*(VEHICLES[v.type].width+1),z:v.z-Math.sin(v.yaw)*n*(VEHICLES[v.type].width+1)}));
  const p=positions.find(p=>!solids.some(b=>Math.abs(p.x-b.x)<b.width/2+.7&&Math.abs(p.z-b.z)<b.depth/2+.7));if(!p)return {ok:false,message:'La sortie est bloquée.'};s.position=p;s.activeVehicle=null;v.speed=0;return {ok:true,message:'Véhicule quitté.'}}
 export function tickVehicle(v,input,dt,{heightAt,solids=[],fuelRate=.03,bounds=WORLD_HALF}){
- const d=VEHICLES[v.type];if(!d)return;dt=Math.min(.1,Math.max(0,dt));const throttle=v.fuel>0?Math.max(-1,Math.min(1,input.forward||0)):0;
+ const base=VEHICLES[v.type];if(!base)return;const d=v.tuning?{...base,speed:v.tuning.speed??base.speed,accel:v.tuning.accel??base.accel,turn:v.tuning.turn??base.turn}:base;fuelRate=v.tuning?.fuelRate??fuelRate;dt=Math.min(.1,Math.max(0,dt));const throttle=v.fuel>0?Math.max(-1,Math.min(1,input.forward||0)):0;
  v.speed=Math.max(-d.speed*.25,Math.min(d.speed,v.speed+throttle*d.accel*dt));
  if(!throttle)v.speed*=Math.max(0,1-dt*.7);if(input.brake)v.speed*=Math.max(0,1-dt*4);
  v.yaw+=(input.turn||0)*d.turn*dt*(d.mode==='helicopter'||v.type==='tank'?1:Math.max(.15,Math.min(1,Math.abs(v.speed)/8)));
