@@ -23,7 +23,7 @@ let browser;
 try{
  browser=await chromium.launch({headless:true,args:['--no-sandbox','--enable-unsafe-swiftshader','--use-angle=swiftshader']});
  const page=await browser.newPage({viewport:{width:1440,height:900}});
- page.on('pageerror',e=>failures.push(e.message));
+ page.on('pageerror',e=>failures.push(e.message));page.on('crash',()=>failures.push('Chromium renderer crashed'));page.on('framenavigated',frame=>{if(frame===page.mainFrame())console.log('Navigation:',frame.url())});
  page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('favicon'))failures.push(m.text())});
  const base=`http://127.0.0.1:${server.address().port}/?smoke=1`;
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
@@ -32,7 +32,7 @@ try{
  await page.click('#settingsBtn');
  for(const [language,label] of [['de','Solo spielen'],['ru','Одиночная игра'],['it','Gioca da solo'],['en','Play solo'],['ja','ソロプレイ'],['zh','单人游戏'],['es','Jugar solo'],['fr','Jouer en solo']]){await page.selectOption('#menuLanguage',language);assert.equal(await page.locator('#startBtn').textContent(),label);}
  await page.locator('#menuSettings .menu-back').click();
- await page.click('#multiBtn');
+ try{await page.locator('#multiBtn').waitFor({state:'visible',timeout:10000});}catch(error){console.error('Menu diagnostic:',JSON.stringify(await page.evaluate(()=>({url:location.href,title:document.title,ready:document.readyState,screen:!!document.querySelector('#startScreen'),buttons:[...document.querySelectorAll('button')].slice(0,20).map(b=>b.id),body:document.body?.innerText?.slice(0,450)})).catch(e=>({error:e.message}))),failures);throw error}await page.click('#multiBtn');
  await page.fill('#survivorName','Alice');await page.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await page.fill('#serverPassword','browser-test');await page.locator('#joinBtn').evaluate(button=>button.click());
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS?.network.connected);
  const second=await browser.newPage({viewport:{width:960,height:720}});second.on('pageerror',e=>failures.push(e.message));await second.goto(base,{waitUntil:'domcontentloaded',timeout:60000});await second.click('#multiBtn');await second.fill('#survivorName','Bob');await second.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await second.fill('#serverPassword','browser-test');await second.locator('#joinBtn').evaluate(button=>button.click());
