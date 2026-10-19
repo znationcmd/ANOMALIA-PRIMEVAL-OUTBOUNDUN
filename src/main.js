@@ -1,5 +1,6 @@
 
 import * as THREE from "three";
+import {readGamepad,selectGamepad,GAMEPAD_LABELS} from "./gamepad.js";
 import {WORLD_HALF,CHUNK_SIZE,SEA_LEVEL,CITIES,CONTINENTS,PEAKS,SITES,ITEM_NAMES,hash2,heightAt,biomeAt,nearestCity,nearestSite,initialState,normalizeState,unlockSite,buildStructure,tickSurvival,clamp} from "./mechanics.js";
 import {ITEM_DEFS,EQUIPMENT_SLOTS,capacity,weight,protection,warmth,equip,consume,rewardLoot,tame,saddleMount,breed,survivalTick,DINO_TYPES,hasItem} from "./systems.js";
 
@@ -36,6 +37,7 @@ let started=false,paused=false,isPointer=false,yaw=Number(state.yaw)||0,pitch=0,
 let boatMesh=null,interiorEntrance=null,interiorTreasure=null,headlamp=false,underwaterNotice=false;
 let controlsTouch=false,touchYaw=0,touchPitch=0;
 const touchState={w:false,a:false,s:false,d:false};
+let controller=null,previousPadButtons=[],controllerMove={x:0,y:0},controllerLook={x:0,y:0},controllerSprint=false,controllerFire=false,controllerFireLast=false,controllerMenuAt=0,controllerMenuAxis=0,controllerId="";
 const water=new THREE.Mesh(new THREE.PlaneGeometry(WORLD_HALF*2.5,WORLD_HALF*2.5),new THREE.MeshStandardMaterial({color:0x1d667a,roughness:.3,metalness:.05,transparent:true,opacity:.81,depthWrite:false,side:THREE.DoubleSide}));
 water.rotation.x=-Math.PI/2;water.position.y=.5;outside.add(water);
 function notice(message){
@@ -344,11 +346,11 @@ function updateHud(dt){
 }
 function updatePlayer(dt){
  if(paused||!started||state.health<=0)return;
- const forward=(keys.has("KeyW")||keys.has("ArrowUp")||keys.has("KeyZ")||touchState.w?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")||touchState.s?1:0);
- const strafe=(keys.has("KeyD")||keys.has("ArrowRight")||touchState.d?1:0)-(keys.has("KeyA")||keys.has("ArrowLeft")||keys.has("KeyQ")||touchState.a?1:0);
+ const forward=(keys.has("KeyW")||keys.has("ArrowUp")||keys.has("KeyZ")||touchState.w?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")||touchState.s?1:0)+controllerMove.y;
+ const strafe=(keys.has("KeyD")||keys.has("ArrowRight")||touchState.d?1:0)-(keys.has("KeyA")||keys.has("ArrowLeft")||keys.has("KeyQ")||touchState.a?1:0)+controllerMove.x;
  let fx=Math.sin(yaw)*forward+Math.cos(yaw)*strafe,fz=Math.cos(yaw)*forward-Math.sin(yaw)*strafe;
  const mag=Math.hypot(fx,fz);if(mag){fx/=mag;fz/=mag}
- currentlySprinting=(keys.has("ShiftLeft")||keys.has("ShiftRight"))&&state.stamina>3&&!state.underground&&!state.boat;
+ currentlySprinting=(keys.has("ShiftLeft")||keys.has("ShiftRight")||controllerSprint)&&state.stamina>3&&!state.underground&&!state.boat;
  const speed=state.boat?30:state.mounted?16:currentlySprinting?8.4:4.6;
  state.stamina=clamp(state.stamina+(currentlySprinting?-dt*17:dt*10),0,100);
  const nx=clamp(state.position.x+fx*speed*dt,-WORLD_HALF,WORLD_HALF);
@@ -386,7 +388,7 @@ $("startBtn").onclick=start;
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
-$("helpBtn").onclick=()=>{ $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<p>ZQSD/WASD : se déplacer · Souris : regarder · Maj : courir · E : ouvrir/fouiller/nourrir · T : monter un dinosaure sellé · Y : reproduction · B : construire un abri · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
+$("helpBtn").onclick=()=>{ $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
 $("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position={x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
@@ -422,12 +424,87 @@ if(matchMedia("(pointer:coarse)").matches){
  renderer.domElement.addEventListener("touchstart",e=>{if(e.touches.length===1){sx=e.touches[0].clientX;sy=e.touches[0].clientY}},{passive:true});
  renderer.domElement.addEventListener("touchmove",e=>{if(e.touches.length!==1||paused)return;const t=e.touches[0];yaw-=(t.clientX-sx)*.005;pitch=clamp(pitch+(t.clientY-sy)*.004,-1.4,1.4);sx=t.clientX;sy=t.clientY},{passive:true});
 }
+// Read the Web Gamepad API once per render frame. Standard mappings cover Xbox and DualSense.
+function controllerActions(action){
+ if(action==="accept"){
+  if(!started){$("startBtn").click();return}
+  if(!$("deathScreen").classList.contains("hidden")){$("respawnBtn").click();return}
+  if(paused){const focused=document.activeElement;
+   if(focused?.matches?.("#panel button"))focused.click();
+   else $("panel").querySelector("button")?.focus();
+   return;
+  }
+  interaction();return;
+ }
+ if(action==="back"){
+  if(paused)closePanel();
+  else if(started){if(document.pointerLockElement)document.exitPointerLock?.();$("helpBtn").click()}
+  return;
+ }
+ if(action==="menu"){if(!started){$("startBtn").click();return}if(paused)closePanel();else $("helpBtn").click();return}
+ if(!started||state.health<=0)return;
+ if(paused){if(action==="inventory"||action==="map")closePanel();return}
+ switch(action){
+  case "interact":interaction();break;
+  case "inventory":displayInventory();break;
+  case "map":mapScreen();break;
+  case "lamp":headlamp=!headlamp;hemi.intensity=headlamp?3.6:2.3;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
+  case "reload":reload();break;
+  case "mount":mountNear();break;
+  case "boat":if(state.boat){state.boat=false;notice("Bateau quitté")}else interaction();break;
+  case "breed":breedNear();break;
+  case "build":buildShelter();break;
+ }
+}
+function controllerMenuNavigate(direction,now){
+ if(now-controllerMenuAt<190)return;
+ controllerMenuAt=now;
+ const elements=[...$("panel").querySelectorAll("button:not(:disabled),[tabindex='0']")].filter(el=>el.offsetParent!==null);
+ if(!elements.length)return;
+ const current=elements.indexOf(document.activeElement);
+ const next=current<0?0:(current+(direction>0?1:-1)+elements.length)%elements.length;
+ elements[next].focus({preventScroll:true});
+}
+function pollController(dt,now){
+ const pad=selectGamepad(()=>navigator.getGamepads?.());
+ if(!pad){
+  if(controllerId){notice("Manette déconnectée — clavier/souris toujours actifs.");controllerId=""}
+  controller=null;previousPadButtons=[];controllerMove.x=controllerMove.y=0;
+  controllerLook.x=controllerLook.y=0;controllerSprint=controllerFire=false;controllerFireLast=false;return;
+ }
+ if(pad.id!==controllerId){controllerId=pad.id;previousPadButtons=[];notice("Manette reconnue : "+( /dualsense|dualshock|playstation|wireless controller|sony|054c/i.test(pad.id)?"PS5 / PlayStation":"Xbox / compatible")+" · Options/Menu pour les commandes.")}
+ controller=readGamepad(pad,previousPadButtons);
+ if(!controller)return;
+ previousPadButtons=controller.buttons;
+ controllerMove.x=controller.moveX;controllerMove.y=controller.moveY;
+ controllerLook.x=controller.lookX;controllerLook.y=controller.lookY;
+ controllerSprint=controller.sprint;
+ controllerFire=controller.fire;
+ if(started&&!paused&&state.health>0){
+  const sensitivity=2.35;
+  yaw-=controllerLook.x*sensitivity*dt;
+  pitch=clamp(pitch+controllerLook.y*sensitivity*dt,-1.43,1.43);
+  if(controller.fire&&!controllerFireLast)shoot();
+ }else if(paused){
+  const y=controller.moveY;
+  const verticalUp=controller.buttons[12],verticalDown=controller.buttons[13];
+  if(verticalUp||verticalDown||Math.abs(y)>.55){
+   const direction=verticalUp? -1:verticalDown?1:(y>0?-1:1);
+   controllerMenuNavigate(direction,now);
+  }
+ }
+ controllerFireLast=controller.fire;
+ for(const action of controller.justPressed)controllerActions(action);
+}
+window.addEventListener("gamepadconnected",event=>{if(!event.gamepad)return;controllerId="";previousPadButtons=[]});
+window.addEventListener("gamepaddisconnected",event=>{if(event.gamepad?.id===controllerId)controllerId=""});
 window.addEventListener("resize",()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setSize(innerWidth,innerHeight)});
 camera.position.set(state.position.x,heightAt(state.position.x,state.position.z)+1.85,state.position.z);
 camera.rotation.order="YXZ";camera.rotation.set(0,yaw,0);
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
+ pollController(dt,now);
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
  renderer.render(scene,camera);
 }
