@@ -24,6 +24,9 @@ public:
     FString GetActiveServerMode() const { return ActiveServerSettings.Mode; }
 
 protected:
+    /** Loads a bounded list of initial vehicles only from this server's own Saved directory. */
+    virtual void BeginPlay() override;
+    void SpawnConfiguredVehicles();
     virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 public:
