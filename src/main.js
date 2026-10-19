@@ -1,3 +1,5 @@
+import {createStartMenu} from "./start-menu.js";
+import {createMultiplayer} from "./multiplayer.js";
 import {createWorldRuntime} from "./world-runtime.js";
 import {inventoryInterface} from "./inventory-ui.js";
 import {syncInventory,takeInHands,nearbyDrops} from "./inventory.js";
@@ -565,7 +567,9 @@ function start(){
  updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
  if(!matchMedia("(pointer:coarse)").matches)renderer.domElement.requestPointerLock?.();
 }
-$("startBtn").onclick=start;
+const network=createMultiplayer({scene,state,heightAt,notice,onDisconnect:()=>menu.show()});
+const menu=createStartMenu({state,renderer,start,network,onMenu:()=>{save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
+const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
@@ -711,9 +715,10 @@ function loop(now){
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
  worldRuntime?.update(dt,now/1000,started&&!paused&&state.health>0);
  worldRuntime?.applyCamera(pitch);
+ network.update(dt,yaw,started&&!paused);
  for(const d of dinos)if(state.mounted===d.id){d.x=state.position.x;d.z=state.position.z;d.mesh.position.set(d.x,heightAt(d.x,d.z),d.z);d.mesh.rotation.y=yaw+Math.PI;}
  graphics.update(now/1000);
  renderer.render(scene,camera);
- if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,world:worldRuntime?.debug()};
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
 }
 requestAnimationFrame(loop);
