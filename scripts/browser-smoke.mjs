@@ -25,7 +25,7 @@ try{
  page.on('pageerror',e=>failures.push(e.message));
  page.on('console',m=>{if(m.type()==='error'&&!m.text().includes('favicon'))failures.push(m.text())});
  const base=`http://127.0.0.1:${server.address().port}/?smoke=1`;
- await page.goto(base);
+ await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
  await page.waitForSelector('#startBtn');
  await page.screenshot({path:'test-results/00-main-menu.png'});
  await page.click('#settingsBtn');
@@ -34,7 +34,7 @@ try{
  await page.click('#multiBtn');
  await page.fill('#survivorName','Alice');await page.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await page.fill('#serverPassword','browser-test');await page.locator('#joinBtn').evaluate(button=>button.click());
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS?.network.connected);
- const second=await browser.newPage({viewport:{width:960,height:720}});second.on('pageerror',e=>failures.push(e.message));await second.goto(base);await second.click('#multiBtn');await second.fill('#survivorName','Bob');await second.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await second.fill('#serverPassword','browser-test');await second.locator('#joinBtn').evaluate(button=>button.click());
+ const second=await browser.newPage({viewport:{width:960,height:720}});second.on('pageerror',e=>failures.push(e.message));await second.goto(base,{waitUntil:'domcontentloaded',timeout:60000});await second.click('#multiBtn');await second.fill('#survivorName','Bob');await second.fill('#serverAddress',`ws://127.0.0.1:${multiplayerServer.server.address().port}`);await second.fill('#serverPassword','browser-test');await second.locator('#joinBtn').evaluate(button=>button.click());
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===2);await second.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===2);
  await page.screenshot({path:'test-results/00-multiplayer.png'});await second.close();await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS.network.players===1);await page.evaluate(()=>document.exitPointerLock?.());await page.click('#menuBtn');await page.click('#startBtn');
  await page.waitForFunction(()=>window.__ANOMALIA_DIAGNOSTICS?.started&&window.__ANOMALIA_DIAGNOSTICS?.triangles>1000);
