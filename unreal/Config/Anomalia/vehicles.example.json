@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "notes": "Template only. Copy to Saved/Servers/<serverId>/vehicles.json to activate. Positions are Unreal centimetres, relative to your actual level. Do not share this file between servers.",
+  "vehicles": [
+    {
+      "id": "car",
+      "x": 0,
+      "y": 0,
+      "z": 300,
+      "yaw": 0
+    },
+    {
+      "id": "quad",
+      "x": 600,
+      "y": 0,
+      "z": 300,
+      "yaw": 90
+    }
+  ]
+}
