@@ -72,6 +72,20 @@ void AAnomaliaVehiclePawn::OnRep_VehicleId()
     ApplyDefinition();
 }
 
+bool AAnomaliaVehiclePawn::RefuelOnServer(float AmountPercent)
+{
+    if (!HasAuthority() || !FMath::IsFinite(AmountPercent) || AmountPercent <= 0.f) return false;
+    const float Previous = FuelPercent;
+    FuelPercent = FMath::Clamp(FuelPercent + AmountPercent, 0.f, 100.f);
+    if (FuelPercent > Previous) { OnFuelChanged(FuelPercent); ForceNetUpdate(); return true; }
+    return false;
+}
+
+void AAnomaliaVehiclePawn::OnRep_Fuel()
+{
+    OnFuelChanged(FuelPercent);
+}
+
 void AAnomaliaVehiclePawn::ServerSetControls_Implementation(float Forward, float Steering)
 {
     if (!IsPlayerControlled()) return;
@@ -85,13 +99,20 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     if (!HasAuthority()) return;
     const FAnomaliaVehicleDefinition Definition = GetVehicleDefinition();
     if (Definition.Id.IsNone()) return;
-    if (FMath::Abs(ForwardAxis) > KINDA_SMALL_NUMBER)
+    if (FuelPercent > KINDA_SMALL_NUMBER && FMath::Abs(ForwardAxis) > KINDA_SMALL_NUMBER)
     {
         AddMovementInput(GetActorForwardVector(), ForwardAxis);
+        const float OldFuel = FuelPercent;
+        FuelPercent = FMath::Max(0.f, FuelPercent - FMath::Abs(ForwardAxis) * FuelConsumptionPerSecond * DeltaSeconds);
+        if (FMath::FloorToInt(OldFuel) != FMath::FloorToInt(FuelPercent) || FuelPercent <= KINDA_SMALL_NUMBER)
+        {
+            OnFuelChanged(FuelPercent);
+            ForceNetUpdate();
+        }
     }
     const float TurnRate = Definition.Domain == EAnomaliaVehicleDomain::Water ||
         Definition.Domain == EAnomaliaVehicleDomain::Underwater ? 22.f : 65.f;
-    if (FMath::Abs(SteeringAxis) > KINDA_SMALL_NUMBER)
+    if (FuelPercent > KINDA_SMALL_NUMBER && FMath::Abs(SteeringAxis) > KINDA_SMALL_NUMBER)
     {
         AddActorWorldRotation(FRotator(0.f, SteeringAxis * TurnRate * DeltaSeconds, 0.f));
     }
@@ -165,4 +186,5 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
 }
