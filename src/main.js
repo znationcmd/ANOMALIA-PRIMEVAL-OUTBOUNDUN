@@ -368,16 +368,42 @@ function reload(){
 }
 function shoot(){
  if(!started||paused||shootCooldown>0||state.health<=0)return;
- if(!state.ammo){notice("Chargeur vide : R pour recharger");return}
- state.ammo--;shootCooldown=.19;const origin=camera.position.clone(),direction=new THREE.Vector3();camera.getWorldDirection(direction);
- let target=null,best=170;
- for(const z of zombies){if(!z.alive)continue;const to=new THREE.Vector3(z.x-origin.x,0,z.z-origin.z),dist=to.length();if(dist>=best)continue;
- const forward=new THREE.Vector3(direction.x,0,direction.z).normalize();if(to.normalize().dot(forward)>.982){target=z;best=dist}
+ if(state.underground&&tranquilizerMode){notice("Les fléchettes sont réservées aux animaux en surface.");return}
+ if(!tranquilizerMode&&!state.ammo){notice("Chargeur vide : R pour recharger.");return}
+ if(tranquilizerMode&&!hasItem(state,"tranq_dart")){notice("Fabrique des fléchettes tranquillisantes dans le sac.");return}
+ const origin=camera.position.clone(),direction=new THREE.Vector3();
+ camera.getWorldDirection(direction);const forward=new THREE.Vector3(direction.x,0,direction.z).normalize();
+ let chosen=null,best=145;
+ const consider=(kind,target)=>{
+  const delta=new THREE.Vector3(target.x-origin.x,0,target.z-origin.z),distance=delta.length();
+  if(distance>=best||distance<.5||delta.normalize().dot(forward)<.986)return;
+  chosen={kind,target};best=distance;
+ };
+ if(tranquilizerMode){for(const d of dinos)if(!d.tamed)consider("dino",d)}
+ else{
+  for(const z of zombies)if(z.alive)consider("infected",z);
+  for(const a of wildlife)if(a.alive)consider("wildlife",a);
  }
- if(target){
-  target.hp-=42;if(target.hp<=0){target.alive=false;target.mesh.visible=false;state.kills++;notice("Créature hostile neutralisée · + expérience");state.inventory.scrap=(state.inventory.scrap||0)+1}
+ shootCooldown=tranquilizerMode?.65:.23;
+ if(tranquilizerMode){
+  if(!chosen){notice("Vise un dinosaure sauvage pour l'endormir.");return}
+  const result=tranquilize(state,chosen.target);
+  if(result.ok){state.dinoEffects[chosen.target.id]={torpor:chosen.target.torpor,unconscious:chosen.target.unconscious,unconsciousTime:chosen.target.unconsciousTime,tameProgress:chosen.target.tameProgress||0};save()}
+  notice(result.message);return;
  }
- if(state.ammo===0)notice("Chargeur vide · R pour recharger");
+ state.ammo--;
+ if(chosen?.kind==="infected"){
+  const enemy=chosen.target;enemy.hp-=42;
+  if(enemy.hp<=0){enemy.alive=false;enemy.mesh.visible=false;state.kills++;state.inventory.scrap=(state.inventory.scrap||0)+1;notice("Infecté neutralisé · pièces récupérées.")}
+ }else if(chosen?.kind==="wildlife"){
+  const animal=chosen.target;animal.hp-=50;
+  if(animal.hp<=0){
+   animal.alive=false;animal.mesh.visible=false;
+   const result=huntAnimal(state,animal);
+   state.kills++;notice(result.message);save();
+  }else notice("Animal blessé : "+WILDLIFE[animal.type].name+".");
+ }
+ if(state.ammo===0)notice("Chargeur vide · R pour recharger.");
 }
 function mountNear(){
  if(state.mounted){state.mounted=null;notice("Descente de selle.");return}
