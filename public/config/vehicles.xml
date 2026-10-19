@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ANOMALIA: naval vehicle settings. Each server can keep its own vehicles.xml.
+     nominal = number of active ships (0 disables); respawn = seconds after loss;
+     positions must be in the sea. Coordinates are metres on the 48 x 48 km map. -->
+<navalVehicles schemaVersion="1">
+  <vehicle type="carrier" enabled="1" nominal="1" respawn="7200">
+    <pos x="4800" z="1800" yaw="90"/>
+    <pos x="-8500" z="2500" yaw="180"/>
+  </vehicle>
+  <vehicle type="warship" enabled="1" nominal="2" respawn="3600">
+    <pos x="5000" z="2100" yaw="0"/>
+    <pos x="-8000" z="3200" yaw="270"/>
+    <pos x="8000" z="-2500" yaw="45"/>
+  </vehicle>
+  <vehicle type="submarine" enabled="1" nominal="2" respawn="5400">
+    <pos x="5400" z="2400" yaw="90"/>
+    <pos x="-9000" z="2800" yaw="90"/>
+    <pos x="7500" z="-3000" yaw="120"/>
+  </vehicle>
+</navalVehicles>
