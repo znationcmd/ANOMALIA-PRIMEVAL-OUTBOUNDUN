@@ -1,0 +1,30 @@
+{
+  "FileVersion": 3,
+  "Category": "Games",
+  "Description": "ANOMALIA PRIMEVAL OUTBOUNDUN — Unreal Engine 5 migration (C++ foundation)",
+  "Modules": [
+    {
+      "Name": "AnomaliaPrimeval",
+      "Type": "Runtime",
+      "LoadingPhase": "Default"
+    }
+  ],
+  "Plugins": [
+    {
+      "Name": "EnhancedInput",
+      "Enabled": true
+    },
+    {
+      "Name": "ChaosVehiclesPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "Water",
+      "Enabled": true
+    },
+    {
+      "Name": "PCG",
+      "Enabled": true
+    }
+  ]
+}
