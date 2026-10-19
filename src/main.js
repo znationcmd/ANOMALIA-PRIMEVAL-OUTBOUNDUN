@@ -419,6 +419,7 @@ function shoot(){
   notice(result.message);return;
  }
  state.ammo--;
+ if(network?.connected)network.shoot();
  if(chosen?.kind==="infected"){
   const enemy=chosen.target;enemy.hp-=42;
   if(enemy.hp<=0){enemy.alive=false;enemy.mesh.visible=false;state.kills++;state.inventory.scrap=(state.inventory.scrap||0)+1;notice("Infecté neutralisé · pièces récupérées.")}
@@ -582,7 +583,7 @@ function start(lockPointer=true){
  updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
  if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
-const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show()});
+const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show(),onMapChanged:()=>{buildings?.update();notice('ANOMALIA Editor : carte du serveur mise à jour')},onModeChanged:({mode,role})=>notice('Serveur '+mode.toUpperCase()+' · rôle '+role)});
 const menu=createStartMenu({state,renderer,start,network,openEditor:()=>mapEditor.open(),newGame:()=>{try{localStorage.setItem(STORAGE+'-before-new-game',JSON.stringify(state));localStorage.removeItem(STORAGE);location.reload();}catch{notice('Impossible de conserver la sauvegarde actuelle.')}} ,onMenu:()=>{mapEditor?.exit();save();started=false;paused=true;keys.clear();$("hud").classList.add('hidden');$("panel").classList.add('hidden');if(document.pointerLockElement)document.exitPointerLock?.();}});
 const menuButton=document.createElement('button');menuButton.id='menuBtn';menuButton.textContent='MENU';menuButton.onclick=()=>menu.show();document.querySelector('.topbuttons').append(menuButton);
 $("panelClose").onclick=closePanel;
@@ -725,7 +726,7 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight
 });
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
-for(const [id,label,handler]of [["editorBtn","ÉDITEUR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 function loop(now){
  requestAnimationFrame(loop);
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
