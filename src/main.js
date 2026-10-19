@@ -55,7 +55,11 @@ function notice(message){
  const toast=$("toast");toast.textContent=message;toast.classList.remove("hidden");
  clearTimeout(notificationTimeout);notificationTimeout=setTimeout(()=>toast.classList.add("hidden"),3200);
 }
-function save(){try{state.yaw=yaw;localStorage.setItem(STORAGE,JSON.stringify(state))}catch{notice("Sauvegarde locale saturée")}}
+function save(){try{
+ state.yaw=yaw;
+ for(const d of dinos)state.dinoEffects[d.id]={torpor:d.torpor||0,unconscious:!!d.unconscious,unconsciousTime:d.unconsciousTime||0,tameProgress:d.tameProgress||0};
+ localStorage.setItem(STORAGE,JSON.stringify(state))
+}catch{notice("Sauvegarde locale saturée")}}
 setInterval(()=>{if(started)save()},12000);
 window.addEventListener("pagehide",save);
 function terrainColor(biome,height){
@@ -256,7 +260,7 @@ function interaction(){
  const nearby=nearestSite(state.position.x,state.position.z,20);
  const dino=dinos.find(d=>Math.hypot(d.x-state.position.x,d.z-state.position.z)<11);
  if(dino&&(!nearby||nearby.distance>10)){
-  const result=tame(state,dino);state.dinoTrust[dino.id]=dino.trust;notice(result.message);save();return;
+  const result=tameWithKibble(state,dino);state.dinoTrust[dino.id]=dino.trust||0;notice(result.message);save();return;
  }
  if(nearby){
   const site=nearby.site;
@@ -271,9 +275,10 @@ function interaction(){
   if(heightAt(state.position.x,state.position.z)>-3){state.boat=false;notice("Tu as débarqué sur la côte.");return}
   notice("Approche d'une plage avant de quitter le bateau.");return;
  }
- const luck=Math.floor(hash2(Math.floor(state.position.x),Math.floor(state.position.z),Date.now()%233)*1500);
- const reward=rewardLoot(state,luck);
- notice("Fouille du terrain : "+reward.message);save();
+ if(forageCooldown>0){notice("Attends quelques instants avant une nouvelle récolte.");return}
+ forageCooldown=2.5;
+ const reward=forageSupplies(state,{jungle:biomeAt(state.position.x,state.position.z)==="jungle",roll:hash2(Math.floor(state.position.x+Date.now()/6000),Math.floor(state.position.z),91)});
+ notice(reward.message);save();
 }
 function displayInventory(){
  const html=[],cap=capacity(state),wt=weight(state);
@@ -283,12 +288,22 @@ function displayInventory(){
  html.push('</div><h3>Inventaire</h3><div class="grid-inventory">');
  for(const [id,n] of Object.entries(state.inventory).filter(x=>x[1]>0)){const def=ITEM_DEFS[id],name=def?.label||ITEM_NAMES[id]||id;
   let cmd='';if(def?.kind==="clothing")cmd='<button data-equip="'+id+'">Porter</button>';
-  else if(["water","food","meat","berry","bandage","medicine"].includes(id))cmd='<button data-use="'+id+'">Utiliser</button>';
+  else if(["water","food","meat","cooked_meat","cooked_fish","berry","bandage","medicine"].includes(id))cmd='<button data-use="'+id+'">Utiliser</button>';
   html.push('<div class="slot">'+name+' × '+n+' '+cmd+'</div>')}
  html.push('</div><p>Froid et humidité peuvent provoquer des maladies. Cherche des médicaments dans les bunkers.</p>');
  html.push('<p>Maladie : '+(state.illness||"Aucune")+' · Température : '+Number(state.temperature).toFixed(1)+' °C</p>');
  html.push('<h3>Animaux apprivoisés</h3><p>'+(state.tamed.length?state.tamed.map(p=>p.name+" ("+(p.hasSaddle?"sellé":"sans selle")+")").join(", "):"Aucun, nourris les dinosaures avec E.")+'</p>');
  html.push('<button data-craft="saddle">Fabriquer une selle : 6 fibres + 4 tissus</button>');
+ html.push('<h3>Chasse, pêche et cuisson</h3>');
+ html.push('<p>La chasse donne de la viande crue, des peaux et parfois des œufs. Approche une rive pour pêcher. Un feu de camp est indispensable pour cuire.</p>');
+ html.push('<button data-ecology="fish">🎣 Pêcher</button> <button data-ecology="campfire">🔥 Construire un feu de camp</button>');
+ html.push('<button data-cook="raw_meat">Cuire la viande</button> <button data-cook="raw_fish">Cuire le poisson</button>');
+ html.push('<h3>Apprivoisement des dinosaures</h3><p>Active les fléchettes (V ou R3). Tire pour endormir, puis nourris avec E et des croquettes adaptées.</p>');
+ html.push('<button data-ecology="tranq">Mode fléchettes : '+(tranquilizerMode?"ACTIVÉ":"DÉSACTIVÉ")+'</button>');
+ html.push('<button data-recipe="tranq_dart">3 fléchettes : ferraille + tissu + 2 baies</button>');
+ html.push('<button data-recipe="kibble_herbivore">Croquettes herbivores : 6 baies + 1 œuf + 1 poisson cuit</button>');
+ html.push('<button data-recipe="kibble_carnivore">Croquettes carnivores : 2 viandes cuites + 1 œuf + 2 baies</button>');
+ html.push('<button data-recipe="fishing_rod">Canne à pêche : 3 bois + 2 fibres</button>');
  $("panelTitle").textContent="INVENTAIRE ET SURVIE";$("panelBody").innerHTML=html.join("");
  $("panelBody").onclick=e=>{
   const b=e.target.closest("button");if(!b)return;let msg="";
@@ -296,6 +311,11 @@ function displayInventory(){
   if(b.dataset.unequip){const id=state.equipment[b.dataset.unequip];state.equipment[b.dataset.unequip]=null;if(id)state.inventory[id]=(state.inventory[id]||0)+1;msg="Retiré : "+(ITEM_DEFS[id]?.label||id)}
   if(b.dataset.use)msg=consume(state,b.dataset.use).message;
   if(b.dataset.craft){const result=importedCraft(b.dataset.craft);msg=result.message}
+  if(b.dataset.cook)msg=cookNear(b.dataset.cook).message;
+  if(b.dataset.recipe)msg=craftSurvival(state,b.dataset.recipe).message;
+  if(b.dataset.ecology==="fish")msg=fishNow().message;
+  if(b.dataset.ecology==="campfire")msg=buildCampfire().message;
+  if(b.dataset.ecology==="tranq")msg=toggleTranqMode().message;
   notice(msg);save();displayInventory()
  };
  openPanel();
@@ -304,6 +324,34 @@ function importedCraft(type){
  if(type!=="saddle")return {ok:false,message:"Recette inconnue"};
  if((state.inventory.fiber||0)<6||(state.inventory.cloth||0)<4)return {ok:false,message:"6 fibres et 4 tissus nécessaires."};
  state.inventory.fiber-=6;state.inventory.cloth-=4;state.inventory.saddle=(state.inventory.saddle||0)+1;return {ok:true,message:"Selle fabriquée."}
+}
+function nearWater(){
+ if(state.boat)return true;
+ const {x,z}=state.position;
+ return [[0,0],[12,0],[-12,0],[0,12],[0,-12],[18,18],[-18,-18]].some(([dx,dz])=>heightAt(x+dx,z+dz)<7);
+}
+function fishNow(){
+ if(!started||state.underground)return {ok:false,message:"Tu ne peux pas pêcher ici."};
+ if(fishingCooldown>0)return {ok:false,message:"Patiente un instant avant de relancer ta ligne."};
+ fishingCooldown=5.5;
+ const result=fishAt(state,{nearWater:nearWater(),roll:hash2(Math.round(state.position.x+performance.now()/1900),Math.round(state.position.z),33)});
+ notice(result.message);save();return result;
+}
+function buildCampfire(){
+ if(state.underground)return {ok:false,message:"Impossible de construire ici."};
+ const x=state.position.x+Math.sin(yaw)*5,z=state.position.z+Math.cos(yaw)*5;
+ const result=buildStructure(state,"fire",x,z);
+ if(result.ok){updateStructures();save()}notice(result.message);return result;
+}
+function cookNear(raw){
+ const isNear=(state.structures||[]).some(b=>b.type==="fire"&&Math.hypot(b.x-state.position.x,b.z-state.position.z)<13);
+ const result=cookFood(state,raw,isNear);
+ notice(result.message);save();return result;
+}
+function toggleTranqMode(){
+ tranquilizerMode=!tranquilizerMode;
+ const result={ok:true,message:tranquilizerMode?"Fléchettes tranquillisantes prêtes · V ou R3 pour changer.":"Arme à feu réactivée."};
+ notice(result.message);return result;
 }
 function openPanel(){paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
 function closePanel(){paused=false;$("panel").classList.add("hidden")}
