@@ -4,7 +4,7 @@
 export const CONFIG_GROUPS=Object.freeze({
  server:{primary:'config.json',files:['config.json','serverDZ.cfg'],scope:'server'},
  permissions:{primary:'admin_config.json',files:['admin_config.json','AllowedCheaterSteamIDs.txt'],scope:'server'},
- scenarios:{primary:'scenarios.json',files:['scenarios.json','world-settings.json'],scope:'server'},
+ scenarios:{primary:'scenarios.json',files:['scenarios.json','world-settings.json','cfgplayerspawnpoints.xml'],scope:'server'},
  mods:{primary:'mods.json',files:['mods.json'],scope:'server'},
  gameplay:{primary:'cfggameplay.json',files:['cfggameplay.json','Game.ini','GameUserSettings.ini'],scope:'server'},
  loot:{primary:'types.xml',files:['types.xml','cfglootspawn.xml','cfgspawnabletypes.xml'],scope:'server'},
