@@ -1,0 +1,2 @@
+# ANOMALIA does not use ARK Steam/Epic admin authentication.
+# Keep this file for import/reference only. Use SERVER_ADMIN_KEY for owner access.
