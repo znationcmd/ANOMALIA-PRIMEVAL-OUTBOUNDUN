@@ -1,0 +1,56 @@
+name: ANOMALIA PRIMEVAL OUTBOUNDUN — Installateur Windows EXE
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'desktop/**'
+      - 'src/**'
+      - 'tests/**'
+      - 'package.json'
+      - 'vite.config.js'
+      - 'index.html'
+      - '.github/workflows/windows-installer.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-installer:
+    name: Construire et verifier installateur Windows x64
+    runs-on: windows-latest
+    timeout-minutes: 35
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+      ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: "false"
+    steps:
+      - name: Recuperer le code du jeu
+        uses: actions/checkout@v4
+      - name: Installer Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer le moteur et les dependances Windows
+        run: npm install --no-audit --no-fund
+      - name: Verifier les mecanismes et les commandes
+        run: npm test
+      - name: Compiler le vrai jeu 3D
+        run: npm run build
+      - name: Creer le setup Windows EXE avec NSIS
+        run: npm run package:windows
+      - name: Verifier que le setup Windows est genere
+        shell: pwsh
+        run: |
+          $installers = @(Get-ChildItem -Path "release/windows" -Filter "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-*-x64.exe" -File -ErrorAction Stop)
+          if ($installers.Count -eq 0) { throw "Installateur Windows absent" }
+          foreach ($installer in $installers) {
+            if ($installer.Length -lt 10000000) { throw "Installateur suspect: fichier trop petit" }
+            Write-Host "INSTALLATEUR WINDOWS:" $installer.Name
+            Write-Host "TAILLE:" $installer.Length
+          }
+      - name: Publier le telechargement de l'installateur
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-PRIMEVAL-OUTBOUNDUN-Installateur-Windows
+          path: release/windows/ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-*-x64.exe
+          if-no-files-found: error
+          retention-days: 90
+          compression-level: 0
