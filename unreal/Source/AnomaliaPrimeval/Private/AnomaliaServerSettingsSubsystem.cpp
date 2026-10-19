@@ -128,7 +128,7 @@ bool UAnomaliaServerSettingsSubsystem::SaveServerSettings(FString& Error)
     if (IFileManager::Get().FileExists(*File))
     {
         const FString Backup = File + TEXT(".bak");
-        if (!IFileManager::Get().Copy(*Backup, *File, true, true) == COPY_OK)
+        if (IFileManager::Get().Copy(*Backup, *File, true, true) != COPY_OK)
         {
             IFileManager::Get().Delete(*Staged);
             Error = TEXT("Impossible de sauvegarder l'ancien fichier.");
