@@ -108,6 +108,26 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn('Root->SetObjectField(TEXT("survival"), Survival)', loader)
         self.assertIn('Root->TryGetObjectField(TEXT("survival")', loader)
 
+    def test_4k60_console_targets_are_configured_but_not_claimed_certified(self):
+        import configparser
+        root = ROOT / "unreal" / "Config"
+        engine = (root / "DefaultEngine.ini").read_text(encoding="utf-8")
+        for setting in ("r.Nanite.ProjectEnabled=True", "r.AntiAliasingMethod=4",
+                        "r.DynamicRes.FrameTimeBudget=16.6667", "r.Shadow.Virtual.Enable=1"):
+            self.assertIn(setting, engine)
+        presets = configparser.ConfigParser()
+        presets.read(root / "DefaultGame.ini", encoding="utf-8")
+        for name in ("PC_High", "PS5_Target", "XboxSeriesX_Target", "Performance_Fallback"):
+            section = "Anomalia." + name
+            self.assertIn(section, presets)
+            minimum = presets.getint(section, "RenderScaleMin")
+            maximum = presets.getint(section, "RenderScaleMax")
+            self.assertTrue(25 <= minimum <= maximum <= 100)
+        cpp = (SOURCE / "AnomaliaPerformanceLibrary.cpp").read_text(encoding="utf-8")
+        self.assertIn("GGameIni", cpp)
+        self.assertIn("SaveSettings()", cpp)
+        self.assertNotIn("SaveServerSettings", cpp)
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
