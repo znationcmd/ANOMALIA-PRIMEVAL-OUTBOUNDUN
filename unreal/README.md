@@ -55,3 +55,13 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 
 ## Attention
 Les fichiers `serverDZ.cfg`, `Game.ini` et autres formats issus de DayZ/ARK ne deviennent pas automatiquement fonctionnels sous UE5. Le projet UE5 doit implémenter explicitement chaque réglage souhaité. Les plugins activés sont des dépendances de projet, **pas des véhicules ni des cartes déjà intégrés**.
+
+## Lot supplémentaire — apparition des véhicules par serveur (19 octobre 2026)
+
+Le GameMode UE5 lit désormais **uniquement** `Saved/Servers/<identifiant>/vehicles.json` au démarrage de la partie sur le **serveur**. Un modèle non destructif est disponible dans `Config/Anomalia/vehicles.example.json`. Copier ce modèle vers le dossier du serveur voulu puis adapter les identifiants et positions `x,y,z,yaw` en **centimètres UE5**. Le fichier n'est jamais créé ni écrasé automatiquement.
+
+- 27 types autorisés, contrôlés par le catalogue C++ ; maximum **64 véhicules** chargés, taille maximale **256 Kio**, coordonnées finies dans les limites de 48 km.
+- Aucun RPC de spawn libre côté client. Les fichiers et les véhicules d'un serveur ne sont pas chargés depuis un autre serveur.
+- Les véhicules restent des **prototypes sans modèles 3D finalisés**. Les collisions du niveau, la flottabilité, le vol et les points de spawn sûrs doivent être mis au point dans Unreal Editor.
+- `vehicles.xml` appartient encore au prototype JavaScript ; l'importation automatique de ce format dans le GameMode UE5 n'est **pas** implémentée. Ne pas considérer les deux fichiers comme interchangeables.
+- Les contrôles automatisés GitHub inspectent le code source ; ils ne remplacent pas la compilation et les tests Unreal Engine sur Windows.
