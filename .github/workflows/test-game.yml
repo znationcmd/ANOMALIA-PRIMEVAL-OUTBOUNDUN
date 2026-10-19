@@ -2,7 +2,7 @@ name: ANOMALIA PRIMEVAL OUTBOUNDUN — tests et compilation
 on:
   push:
     branches: [main]
-    paths: ["src/**", "tests/**", "index.html", "package.json", ".github/workflows/test-game.yml"]
+    paths: ["src/**", "tests/**", "index.html", "package.json", "scripts/**", "vite.config.js", ".github/workflows/test-game.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -21,6 +21,17 @@ jobs:
         run: npm test
       - name: Compile the 3D browser game
         run: npm run build
+      - name: Install Chromium for visual gameplay checks
+        run: npx playwright install --with-deps chromium
+      - name: Launch actual WebGL game and exercise menus movement and saves
+        run: npm run test:browser
+      - name: Keep gameplay screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Gameplay-Screenshots
+          path: test-results/
+          if-no-files-found: ignore
       - name: Verify entrypoint and 3D chunks
         run: |
           test -s dist/index.html

@@ -1,3 +1,4 @@
+import {createGraphics} from "./graphics.js";
 import {BRIDGES,movementVector,bridgeSurface,groundHeight,moveWithCollisions} from "./movement.js";
 
 import * as THREE from "three";
@@ -24,9 +25,11 @@ const outside=new THREE.Group(),underground=new THREE.Group();
 scene.add(outside,underground);underground.visible=false;
 const mat=(color,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness:.86,metalness});
 const m={rock:mat(0x64696b),wall:mat(0x5b5f61),roof:mat(0x2f383e),wood:mat(0x6b5340),leaves:mat(0x35533b),trunk:mat(0x4c3d2b),road:mat(0x44484a),glass:mat(0x425b64,.2),loot:mat(0xa98b58),locked:mat(0x7e4240),open:mat(0x558a76),dino:mat(0x76905b),hostile:mat(0x934845),boat:mat(0x714b32)};
+const graphics=createGraphics(renderer,scene,camera,sun,hemi,CITIES);
+Object.assign(m,{wall:graphics.concrete,rock:graphics.rock,road:graphics.road,wood:graphics.wood,glass:graphics.glass});
 const box=(w,h,d,material)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material);
 const cylinder=(r1,r2,h,material)=>new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,7),material);
-function meshBox(parent,x,y,z,w,h,d,material){const q=box(w,h,d,material);q.position.set(x,y,z);parent.add(q);return q}
+function meshBox(parent,x,y,z,w,h,d,material){const q=box(w,h,d,material);q.position.set(x,y,z);q.castShadow=!matchMedia("(pointer:coarse)").matches;q.receiveShadow=true;parent.add(q);return q}
 let saved;try{saved=JSON.parse(localStorage.getItem(STORAGE)||"null")}catch{}
 let state=normalizeState(saved);state.equipment={head:null,torso:"shirt",vest:null,legs:"jeans",feet:"boots",back:null,...saved?.equipment};
 state.illness=saved?.illness||null;state.infection=Number(saved?.infection)||0;state.temperature=Number(saved?.temperature)||37;
@@ -50,7 +53,7 @@ let boatMesh=null,interiorEntrance=null,interiorTreasure=null,headlamp=false,und
 let controlsTouch=false,touchYaw=0,touchPitch=0;
 const touchState={w:false,a:false,s:false,d:false};
 let controller=null,previousPadButtons=[],controllerMove={x:0,y:0},controllerLook={x:0,y:0},controllerSprint=false,controllerFire=false,controllerFireLast=false,controllerMenuAt=0,controllerMenuAxis=0,controllerId="";
-const water=new THREE.Mesh(new THREE.PlaneGeometry(WORLD_HALF*2.5,WORLD_HALF*2.5),new THREE.MeshStandardMaterial({color:0x1d667a,roughness:.3,metalness:.05,transparent:true,opacity:.81,depthWrite:false,side:THREE.DoubleSide}));
+const water=new THREE.Mesh(new THREE.PlaneGeometry(WORLD_HALF*2.5,WORLD_HALF*2.5),graphics.water);
 water.rotation.x=-Math.PI/2;water.position.y=.5;outside.add(water);
 function notice(message){
  const toast=$("toast");toast.textContent=message;toast.classList.remove("hidden");
@@ -72,7 +75,7 @@ const chunkSolids=new Map();
 function makeTerrain(cx,cz){
  const solids=[];chunkSolids.set(cx+","+cz,solids);
  const group=new THREE.Group();group.position.set(cx*CHUNK_SIZE,0,cz*CHUNK_SIZE);
- const verts=18,geo=new THREE.PlaneGeometry(CHUNK_SIZE,CHUNK_SIZE,verts,verts);geo.rotateX(-Math.PI/2);
+ const verts=32,geo=new THREE.PlaneGeometry(CHUNK_SIZE,CHUNK_SIZE,verts,verts);geo.rotateX(-Math.PI/2);
  const arr=geo.attributes.position,colors=[];
  for(let i=0;i<arr.count;i++){
   const x=arr.getX(i)+group.position.x,z=arr.getZ(i)+group.position.z;
@@ -80,7 +83,7 @@ function makeTerrain(cx,cz){
   const c=terrainColor(biomeAt(x,z),h);colors.push(...c);
  }
  geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
- geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({vertexColors:true,roughness:1,side:THREE.DoubleSide}));group.add(mesh);
+ geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,graphics.terrain);mesh.receiveShadow=true;group.add(mesh);
  // Buildings are generated deterministically inside the cities, not just decorative labels.
  for(const city of CITIES){
   if(Math.hypot(city.x-group.position.x,city.z-group.position.z)>city.radius+CHUNK_SIZE)continue;
@@ -95,27 +98,29 @@ function makeTerrain(cx,cz){
    if(Math.abs(x)<width/2+3&&Math.abs(z-180)<depth/2+3)continue;
    const height=9+Math.pow(hash2(gx+3,gz+3),1.65)*(city.id==="helion"?112:70);
    solids.push({x,z,width,depth});
-   const building=meshBox(group,x-group.position.x,y+height/2,z-group.position.z,width,height,depth,m.wall);
-   const roof=meshBox(group,x-group.position.x,y+height+.45,z-group.position.z,width+1,1,depth+1,m.roof);
-   if(height>30){
-    for(let f=1;f<Math.min(8,height/9);f++){
-     const yy=y+f*9;
-     meshBox(group,x-group.position.x,y+f*9,z-group.position.z+depth/2+.03,width*.7,1.15,.12,m.glass);
-    }
-   }
+   graphics.building(group,x-group.position.x,y,z-group.position.z,width,height,depth,Math.floor(hash2(gx,gz,993)*4),Math.hypot(x-state.position.x,z-state.position.z)<220);
+   if(hash2(gx,gz,123)>.48&&Math.hypot(x-state.position.x,z-state.position.z)<220)graphics.car(group,x-group.position.x-width/2-5,heightAt(x-width/2-5,z),z-group.position.z,Math.abs(gx+gz)%3);
   }
  }
- // Forests and shrubs surrounding the cities; each sector has a bounded draw cost.
- const tx=Math.floor(group.position.x/65),tz=Math.floor(group.position.z/65);
- for(let i=0;i<(biomeAt(group.position.x,group.position.z)==="jungle"?46:26);i++){
-  const sx=group.position.x-170+hash2(tx*11+i,tz*7)*340;
-  const sz=group.position.z-170+hash2(tx*13,tz*3+i)*340;
+ // Batched vegetation: a few draw calls per streamed sector.
+ const tx=Math.floor(group.position.x/65),tz=Math.floor(group.position.z/65),trees=[],grassPoints=[];
+ for(let i=0;i<54;i++){
+  const sx=group.position.x-CHUNK_SIZE/2+hash2(tx*11+i,tz*7)*CHUNK_SIZE;
+  const sz=group.position.z-CHUNK_SIZE/2+hash2(tx*13,tz*3+i)*CHUNK_SIZE;
   const h=heightAt(sx,sz),biome=biomeAt(sx,sz);
-  if(h<3||h>320||!["forêt","prairie","hautes-terres","jungle"].includes(biome))continue;
-  if(CITIES.some(c=>Math.hypot(c.x-sx,c.z-sz)<c.radius+90))continue;
-  const trunk=cylinder(.7,1.4,8+hash2(i,tx)*6,m.trunk);trunk.position.set(sx-group.position.x,h+5,sz-group.position.z);group.add(trunk);
-  const crown=new THREE.Mesh(new THREE.ConeGeometry(5.6,16,7),m.leaves);crown.position.set(sx-group.position.x,h+15,sz-group.position.z);group.add(crown);
+  if(h<3||h>420||!["forêt","prairie","hautes-terres","jungle"].includes(biome))continue;
+  if(CITIES.some(c=>Math.hypot(c.x-sx,c.z-sz)<c.radius+35))continue;
+  trees.push({x:sx-group.position.x,y:h,z:sz-group.position.z,size:13+hash2(i,tx)*14});
  }
+ graphics.forest(group,trees);
+ for(let i=0;i<(matchMedia("(pointer:coarse)").matches?90:340);i++){
+  const sx=group.position.x-CHUNK_SIZE/2+hash2(cx*91+i,cz*19)*CHUNK_SIZE;
+  const sz=group.position.z-CHUNK_SIZE/2+hash2(cx*7,cz*97+i)*CHUNK_SIZE;
+  const h=heightAt(sx,sz);if(h<3||h>440)continue;
+  if(CITIES.some(c=>Math.hypot(c.x-sx,c.z-sz)<c.radius))continue;
+  grassPoints.push({x:sx-group.position.x,y:h,z:sz-group.position.z});
+ }
+ graphics.groundCover(group,grassPoints);
  for(const site of SITES){
   if(site.x<group.position.x-CHUNK_SIZE/2||site.x>=group.position.x+CHUNK_SIZE/2||site.z<group.position.z-CHUNK_SIZE/2||site.z>=group.position.z+CHUNK_SIZE/2)continue;
   if(state.collected.includes(site.id)&&["key","container"].includes(site.type))continue;
@@ -193,7 +198,7 @@ function createWildAnimal(group,type,x,y,z){
 function unloadChunk(id){
  const group=chunks.get(id);if(!group)return;
  outside.remove(group);
- group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&o.material!==m.wall&&o.material!==m.rock&&!Object.values(m).includes(o.material))o.material.dispose()});
+ group.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material&&!o.material.userData.shared&&o.material!==m.wall&&o.material!==m.rock&&!Object.values(m).includes(o.material))o.material.dispose()});
  chunks.delete(id);chunkSolids.delete(id);
  for(let i=zombies.length-1;i>=0;i--)if(zombies[i].chunk===id)zombies.splice(i,1);
  for(let i=dinos.length-1;i>=0;i--)if(dinos[i].chunk===id){const d=dinos[i];state.dinoEffects[d.id]={torpor:d.torpor||0,unconscious:!!d.unconscious,unconsciousTime:d.unconsciousTime||0,tameProgress:d.tameProgress||0};dinos.splice(i,1)}
@@ -583,7 +588,7 @@ window.addEventListener("keydown",event=>{
   case "KeyR":reload();break;
   case "KeyT":mountNear();break;
   case "KeyY":breedNear();break;
-  case "KeyF":headlamp=!headlamp;hemi.intensity=headlamp?3.6:2.3;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
+  case "KeyF":headlamp=!headlamp;hemi.intensity=headlamp?2:.95;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
   case "KeyP":fishNow();break;
   case "KeyG":buildCampfire();break;
   case "KeyK":cookNear(hasItem(state,"raw_meat")?"raw_meat":"raw_fish");break;
@@ -631,7 +636,7 @@ function controllerActions(action){
   case "interact":if(controller?.aim)fishNow();else interaction();break;
   case "inventory":displayInventory();break;
   case "map":mapScreen();break;
-  case "lamp":headlamp=!headlamp;hemi.intensity=headlamp?3.6:2.3;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
+  case "lamp":headlamp=!headlamp;hemi.intensity=headlamp?2:.95;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
   case "reload":reload();break;
   case "mount":mountNear();break;
   case "boat":if(state.boat){state.boat=false;notice("Bateau quitté")}else interaction();break;
@@ -690,6 +695,8 @@ function loop(now){
  const dt=Math.min(.08,Math.max(0,(now-lastTime)/1000));lastTime=now;
  pollController(dt,now);
  if(started){updatePlayer(dt);chunkTime+=dt;if(chunkTime>.35){chunkTime=0;updateChunks()}updateHud(dt)}
+ graphics.update(now/1000);
  renderer.render(scene,camera);
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started};
 }
 requestAnimationFrame(loop);

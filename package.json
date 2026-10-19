@@ -1,6 +1,6 @@
 {
   "name": "anomalia-primeval-outboundun",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "description": "Prototype original d'un monde ouvert 3D procedural de survie",
@@ -10,7 +10,8 @@
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.mjs",
     "package:offline": "node scripts/package-offline.mjs",
-    "package:windows": "electron-builder --win nsis --x64 --publish never"
+    "package:windows": "electron-builder --win nsis --x64 --publish never",
+    "test:browser": "node scripts/browser-smoke.mjs"
   },
   "dependencies": {
     "three": "^0.172.0"
@@ -18,7 +19,8 @@
   "devDependencies": {
     "vite": "^6.3.5",
     "electron": "^38.0.0",
-    "electron-builder": "^26.0.12"
+    "electron-builder": "^26.0.12",
+    "playwright": "1.51.1"
   },
   "main": "desktop/main.cjs",
   "build": {
