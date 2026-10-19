@@ -40,6 +40,24 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     FName VehicleId = FName(TEXT("car"));
 
+    /** Server-owned fuel percentage. Replicated to passengers/UI and never writable by clients. */
+    UPROPERTY(ReplicatedUsing=OnRep_Fuel, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Fuel")
+    float FuelPercent = 100.f;
+
+    /** Fuel use per second at full throttle. Tunable on each vehicle Blueprint. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Fuel", meta=(ClampMin="0.0", ClampMax="10.0"))
+    float FuelConsumptionPerSecond = 0.045f;
+
+    /** Authoritative refuel; must only be called by trusted server logic. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Vehicle|Fuel")
+    bool RefuelOnServer(float AmountPercent);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle|Fuel")
+    bool HasFuel() const { return FuelPercent > KINDA_SMALL_NUMBER; }
+
+    UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Vehicle|Fuel")
+    void OnFuelChanged(float NewFuelPercent);
+
     /** Only the server may select a vehicle type. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Vehicle")
     bool ConfigureVehicle(FName NewVehicleId);
@@ -65,6 +83,9 @@ protected:
 
     UFUNCTION()
     void OnRep_VehicleId();
+
+    UFUNCTION()
+    void OnRep_Fuel();
 
     UFUNCTION(Server, Unreliable)
     void ServerSetControls(float Forward, float Steering);
