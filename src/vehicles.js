@@ -9,10 +9,31 @@ export const VEHICLES={
  carrier:{name:'Porte-avions',mode:'water',speed:15,accel:1.2,turn:.18,length:85,width:20,eye:12},
  warship:{name:'Navire de guerre',mode:'water',speed:22,accel:2.2,turn:.32,length:42,width:10,eye:8},
  submarine:{name:'Sous-marin',mode:'submarine',speed:18,accel:2,turn:.4,length:32,width:6,eye:4},
- helicopter:{name:'Hélicoptère',mode:'helicopter',speed:38,accel:5,turn:1,length:9,width:2.5,eye:1.8},
+ transport_truck:{name:"Camion de transport",mode:'land',speed:24,accel:3.7,turn:0.65,length:10,width:2.8,eye:2.7},
+ heavy_truck:{name:"Poids lourd avec remorque",mode:'land',speed:20,accel:2.8,turn:0.55,length:17,width:3,eye:3},
+ quad:{name:"Quad",mode:'land',speed:31,accel:9,turn:1.55,length:2.4,width:1.4,eye:1.3},
+ buggy:{name:"Buggy tout-terrain",mode:'land',speed:39,accel:9,turn:1.5,length:3.2,width:1.8,eye:1.4},
+ snowmobile:{name:"Moto-neige",mode:'land',speed:33,accel:8,turn:1.4,length:3.1,width:1.2,eye:1.4},
+ jetski:{name:"Jet-ski",mode:'water',speed:33,accel:10,turn:1.6,length:3,width:1.3,eye:1.4},
+ zodiac:{name:"Zodiac",mode:'water',speed:29,accel:7,turn:1.25,length:5.2,width:2.5,eye:1.5},
+ dirt_bike:{name:"Moto-cross",mode:'land',speed:40,accel:11,turn:1.9,length:2.2,width:0.85,eye:1.45},
+ kart:{name:"Karting",mode:'land',speed:36,accel:12,turn:2.2,length:1.8,width:1.25,eye:1},
+ formula1:{name:"Formule 1",mode:'land',speed:70,accel:16,turn:1.6,length:5.2,width:2,eye:1},
+ suv:{name:"SUV",mode:'land',speed:34,accel:7,turn:1.25,length:5.2,width:2.2,eye:1.8},
+ police:{name:"Police",mode:'land',speed:38,accel:8,turn:1.5,length:4.8,width:2,eye:1.6},
+ gendarmerie:{name:"Gendarmerie",mode:'land',speed:37,accel:8,turn:1.4,length:5,width:2.1,eye:1.8},
+ firetruck:{name:"Camion de pompiers",mode:'land',speed:25,accel:4,turn:0.85,length:9.5,width:2.7,eye:2.8},
+ ambulance:{name:"Ambulance",mode:'land',speed:31,accel:6,turn:1.05,length:6,width:2.3,eye:2.3},
+ armored_van:{name:"Fourgon blindé",mode:'land',speed:25,accel:4,turn:0.85,length:6.5,width:2.5,eye:2.5},
+ van:{name:"Camionnette / fourgon",mode:'land',speed:30,accel:5,turn:1,length:6,width:2.2,eye:2.2},
+ fighter_jet:{name:"Avion de chasse",mode:'airplane',speed:125,accel:15,turn:0.85,length:13,width:9,eye:2},
+ attack_helicopter:{name:"Hélicoptère d'attaque",mode:'helicopter',speed:60,accel:8,turn:1.2,length:12,width:4,eye:2},
+ transport_helicopter:{name:"Hélicoptère de transport",mode:'helicopter',speed:46,accel:6,turn:0.8,length:18,width:5,eye:3},
+ monster_truck:{name:"Monster truck",mode:'land',speed:29,accel:8,turn:1.1,length:6,width:4,eye:3.8},
+  helicopter:{name:'Hélicoptère',mode:'helicopter',speed:38,accel:5,turn:1,length:9,width:2.5,eye:1.8},
  airplane:{name:'Avion',mode:'airplane',speed:65,accel:5,turn:.65,length:9,width:10,eye:1.6}
 };
-export function spawnVehicle(s,type,x,z,heightAt){const def=VEHICLES[type];if(!def)return {ok:false,message:'Véhicule inconnu.'};s.vehicles??=[];if(s.vehicles.length>=60)return {ok:false,message:'60 véhicules maximum.'};
+export function spawnVehicle(s,type,x,z,heightAt){const def=VEHICLES[type];if(!def)return {ok:false,message:'Véhicule inconnu.'};s.vehicles??=[];if(s.vehicles.length>=150)return {ok:false,message:'150 véhicules maximum.'};
  const ground=groundHeight(x,z,heightAt);if((def.mode==='water'||def.mode==='submarine')&&heightAt(x,z)>2)return {ok:false,message:'Place le bateau sur l’eau : téléporte-toi près d’une rive.'};
  if(def.mode==='land'&&ground< -1)return {ok:false,message:'Ce véhicule doit être placé sur terre.'};
  s.vehicleSequence=(Number(s.vehicleSequence)||0)+1;const vehicle={id:'vehicle-'+s.vehicleSequence,type,x,z,y:def.mode==='submarine'?-2:def.mode==='water'?.4:Math.max(ground,0),yaw:0,speed:0,fuel:100,verticalSpeed:0,hp:100};s.vehicles.push(vehicle);return {ok:true,vehicle,message:def.name+' créé.'};
