@@ -442,14 +442,14 @@ function updateHud(dt){
  const dist=Math.hypot(state.position.x,state.position.z);
  $("region").textContent=state.underground?"SOUS-SOL : "+state.underground.toUpperCase():(distance<city.radius?city.name:biomeAt(state.position.x,state.position.z).toUpperCase());
  $("coordText").textContent="X "+Math.round(state.position.x)+" · Z "+Math.round(state.position.z)+(state.boat?" · BATEAU":"")+(state.mounted?" · SELLE":"");
- $("equipmentText").textContent=(state.weapon==="pistol"?"PISTOLET":"FUSIL")+" · "+state.ammo+" / "+(state.inventory.ammo||0)+" · SAC "+weight(state).toFixed(0)+"/"+capacity(state).toFixed(0)+"KG"+(state.illness?" · MALADE":"");
+ $("equipmentText").textContent=(tranquilizerMode?"FLÉCHETTES ×"+(state.inventory.tranq_dart||0):(state.weapon==="pistol"?"PISTOLET":"FUSIL")+" · "+state.ammo+" / "+(state.inventory.ammo||0))+" · SAC "+weight(state).toFixed(0)+"/"+capacity(state).toFixed(0)+"KG"+(state.illness?" · MALADE":"");
  const hint=$("interaction");
  let text="";
  if(state.underground)text="E · "+(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z+2))<7?"REMONTER À LA SURFACE":"EXPLORER / OUVRIR COFFRE");
  else if(site)text="E · "+site.site.label+(site.site.required?" · VERROUILLAGE À CLÉ":"");
- else if(closestDino)text="E · Nourrir "+closestDino.type+" · T Monter avec selle · Y Reproduction";
+ else if(closestDino)text=closestDino.unconscious?"E · Donner des croquettes à "+closestDino.type:"V · Fléchettes pour endormir "+closestDino.type+" · E nourrir une fois endormi";
  else if(state.boat)text="BATEAU · navigue vers les îles sans pont";
- else text="E · Fouiller · B Construire · M Carte · I Inventaire · T Monter";
+ else text="E · Récolter œufs/baies · P Pêcher · G Feu de camp · K Cuisiner · V Fléchettes · M Carte";
  hint.textContent=text;hint.classList.toggle("hidden",!text);
  $("compass").textContent=["N","NE","E","SE","S","SO","O","NO"][Math.round((((yaw%(Math.PI*2))+Math.PI*2)%(Math.PI*2))/(Math.PI/4))%8];
  $("questTitle").textContent=state.unlocked?.includes("bunker-alpha")?"Au-delà des frontières":"Le mystère du bunker Alpha";
@@ -487,7 +487,31 @@ function updatePlayer(dt){
   if(d<30&&d>2){z.x+=dx/d*dt*2;z.z+=dz/d*dt*2;z.mesh.position.x+=dx/d*dt*2;z.mesh.position.z+=dz/d*dt*2;z.mesh.position.y=heightAt(z.x,z.z)+1.7}
   if(d<2.5&&z.cooldown===0){state.health=clamp(state.health-9*(1-protection(state)/100),0,100);z.cooldown=2;notice("Attaque d'infecté !")}
  }
+ for(const d of dinos){
+  if(d.tamed)continue;
+  tickTorpor(d,dt);
+  d.mesh.rotation.z=d.unconscious?-Math.PI/2:0;
+ }
+ for(const a of wildlife){
+  if(!a.alive)continue;
+  a.attackCooldown=Math.max(0,(a.attackCooldown||0)-dt);
+  const dx=state.position.x-a.x,dz=state.position.z-a.z,distance=Math.hypot(dx,dz);
+  const def=WILDLIFE[a.type];
+  if(def.hostile&&!state.underground&&!state.boat&&distance<22&&distance>2.2){
+   const vx=dx/distance*dt*def.speed,vz=dz/distance*dt*def.speed;
+   const nx=a.x+vx,nz=a.z+vz,h=heightAt(nx,nz);
+   const valid=a.type==="shark"?h<1:a.type==="crocodile"?h<14:h>2;
+   if(valid){a.x=nx;a.z=nz;a.mesh.position.x+=vx;a.mesh.position.z+=vz;}
+  }
+  if(def.hostile&&!state.underground&&!state.boat&&distance<3.8&&a.attackCooldown===0){
+   state.health=clamp(state.health-(a.type==="shark"?22:a.type==="crocodile"?15:8)*(1-protection(state)/110),0,100);
+   a.attackCooldown=2.8;notice("Attaque : "+def.name+" !");
+  }
+  if(a.type==="shark"&&a.alive)a.mesh.rotation.y+=dt*.5;
+ }
  shootCooldown=Math.max(0,shootCooldown-dt);
+ fishingCooldown=Math.max(0,fishingCooldown-dt);
+ forageCooldown=Math.max(0,forageCooldown-dt);
  if(state.health<=0){$("deathScreen").classList.remove("hidden");paused=true;save();if(document.pointerLockElement)document.exitPointerLock()}
 }
 function start(){
@@ -499,7 +523,7 @@ $("startBtn").onclick=start;
 $("panelClose").onclick=closePanel;
 $("mapBtn").onclick=mapScreen;
 $("inventoryBtn").onclick=displayInventory;
-$("helpBtn").onclick=()=>{ $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
+$("helpBtn").onclick=()=>{ $("panelTitle").textContent="COMMANDES";$("panelBody").innerHTML="<h3>Clavier / souris</h3><p>ZQSD/WASD : déplacer · Souris : regarder · Maj : courir · E : fouiller/nourrir · T : monter · Y : reproduction · B : construire · R : recharger · I : inventaire · M : carte · F : lampe · C : bateau · clic : tirer</p><h3>Survie, chasse et cuisine</h3><p>P : pêcher près de l’eau · G : feu de camp · K : cuire une viande ou un poisson cru près du feu · V : mode fléchettes tranquillisantes · E : œufs et baies ou nourrir un dinosaure endormi avec les croquettes. Les crocodiles vivent près des berges, les requins au large et les jaguars dans la jungle. Clique sur la carte pour placer un repère.</p><h3>Manette Xbox et PS5 (USB / Bluetooth)</h3><p>"+GAMEPAD_LABELS.xbox+"</p><p>"+GAMEPAD_LABELS.playstation+"</p><p>Dans les menus : stick gauche ou croix directionnelle pour sélectionner, A / ✕ pour valider, B / ○ pour revenir. La prise en charge dépend de la reconnaissance de la manette par le navigateur.</p><p>Les bunkers et les conteneurs nécessitent des clés. Explore les caches avant d'entrer. Les animaux doivent être nourris et sellés.</p>";openPanel() };
 $("respawnBtn").onclick=()=>{state.health=65;state.thirst=Math.max(35,state.thirst);state.hunger=Math.max(35,state.hunger);state.position={x:0,z:180};state.underground=null;outside.visible=true;underground.visible=false;$("deathScreen").classList.add("hidden");paused=false;updateChunks(true);save()};
 window.addEventListener("keydown",event=>{
  if(event.target.matches?.("input,textarea,select"))return;
@@ -517,6 +541,10 @@ window.addEventListener("keydown",event=>{
   case "KeyT":mountNear();break;
   case "KeyY":breedNear();break;
   case "KeyF":headlamp=!headlamp;hemi.intensity=headlamp?3.6:2.3;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
+  case "KeyP":fishNow();break;
+  case "KeyG":buildCampfire();break;
+  case "KeyK":cookNear(hasItem(state,"raw_meat")?"raw_meat":"raw_fish");break;
+  case "KeyV":toggleTranqMode();break;
   case "KeyC":if(state.boat){state.boat=false;notice("Bateau quitté")}else notice("Trouve un port pour embarquer.");break;
  }
 });
@@ -526,10 +554,10 @@ document.addEventListener("pointerlockchange",()=>{isPointer=document.pointerLoc
 document.addEventListener("mousemove",event=>{if(!isPointer||paused)return;yaw-=event.movementX*.00225;pitch=clamp(pitch+event.movementY*.00225,-1.43,1.43)});
 if(matchMedia("(pointer:coarse)").matches){
  const touch=document.createElement("div");touch.id="mobileControls";touch.style.cssText="position:fixed;z-index:7;bottom:24px;left:9px;right:9px;display:flex;justify-content:space-between;pointer-events:none";
- touch.innerHTML='<div style="display:flex;flex-direction:column;gap:5px;align-items:center"><button data-move="w">▲</button><div><button data-move="a">◀</button><button data-move="s">▼</button><button data-move="d">▶</button></div></div><div style="display:grid;grid-template-columns:repeat(2,auto);gap:5px"><button data-act="e">E</button><button data-act="shoot">TIR</button><button data-act="inventory">SAC</button><button data-act="map">CARTE</button></div>';
+ touch.innerHTML='<div style="display:flex;flex-direction:column;gap:5px;align-items:center"><button data-move="w">▲</button><div><button data-move="a">◀</button><button data-move="s">▼</button><button data-move="d">▶</button></div></div><div style="display:grid;grid-template-columns:repeat(2,auto);gap:5px"><button data-act="e">E</button><button data-act="shoot">TIR</button><button data-act="inventory">SAC</button><button data-act="map">CARTE</button><button data-act="fish">PÊCHE</button><button data-act="tranq">FLÉCH.</button></div>';
  document.body.append(touch);for(const b of touch.querySelectorAll("button"))b.style.cssText="pointer-events:auto;background:#122b33c9;border:1px solid #85b7a3;border-radius:12px;color:white;padding:10px;font-weight:800;touch-action:none;min-width:42px";
  for(const b of touch.querySelectorAll("[data-move]")){const k=b.dataset.move;for(const name of ["pointerdown","pointerenter"])b.addEventListener(name,e=>{e.preventDefault();touchState[k]=true});for(const name of ["pointerup","pointercancel","pointerleave"])b.addEventListener(name,e=>{e.preventDefault();touchState[k]=false})}
- const actions={e:interaction,shoot,inventory:displayInventory,map:mapScreen};
+ const actions={e:interaction,shoot,inventory:displayInventory,map:mapScreen,fish:fishNow,tranq:toggleTranqMode};
  for(const b of touch.querySelectorAll("[data-act]"))b.onclick=actions[b.dataset.act];
  let sx=0,sy=0;
  renderer.domElement.addEventListener("touchstart",e=>{if(e.touches.length===1){sx=e.touches[0].clientX;sy=e.touches[0].clientY}},{passive:true});
@@ -556,7 +584,7 @@ function controllerActions(action){
  if(!started||state.health<=0)return;
  if(paused){if(action==="inventory"||action==="map")closePanel();return}
  switch(action){
-  case "interact":interaction();break;
+  case "interact":if(controller?.aim)fishNow();else interaction();break;
   case "inventory":displayInventory();break;
   case "map":mapScreen();break;
   case "lamp":headlamp=!headlamp;hemi.intensity=headlamp?3.6:2.3;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
@@ -565,6 +593,7 @@ function controllerActions(action){
   case "boat":if(state.boat){state.boat=false;notice("Bateau quitté")}else interaction();break;
   case "breed":breedNear();break;
   case "build":buildShelter();break;
+  case "focus":toggleTranqMode();break;
  }
 }
 function controllerMenuNavigate(direction,now){
