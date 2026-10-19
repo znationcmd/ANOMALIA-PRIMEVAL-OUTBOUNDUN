@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {parseNavalConfig} from '../src/naval-config.js';
-import {VEHICLES,spawnVehicle,tickVehicle} from '../src/vehicles.js';
+import {VEHICLES,spawnVehicle,tickVehicle,enterVehicle} from '../src/vehicles.js';
 test('naval XML settings control types, quantity and positions',()=>{
  const rows=parseNavalConfig('<navalVehicles><vehicle type="carrier" enabled="1" nominal="2" respawn="1800"><pos x="120" z="240" yaw="90"/></vehicle><vehicle type="warship" enabled="0" nominal="9"><pos x="50" z="20"/></vehicle><vehicle type="submarine" enabled="1" nominal="1"><pos x="250" z="300"/></vehicle></navalVehicles>');
  assert.equal(rows.length,3);assert.equal(rows[0].nominal,2);assert.equal(rows[0].positions[0].yaw,Math.PI/2);assert.equal(rows[1].enabled,false);assert.equal(rows[2].type,'submarine');
@@ -20,4 +20,11 @@ test('all three naval prototypes are pilotable on sea and reject dry land',()=>{
   assert.ok(v.fuel<100);
   assert.equal(spawnVehicle(state,type,0,0,()=>10).ok,false);
  }
+});
+
+test('large naval ships can be boarded from near their hull but not from far away',()=>{
+ const sea=()=>-30,state={vehicles:[],vehicleSequence:0,position:{x:0,z:0}};
+ const created=spawnVehicle(state,'carrier',0,0,sea);assert.equal(created.ok,true);
+ state.position={x:0,z:36};assert.equal(enterVehicle(state,created.vehicle.id).ok,true);
+ state.activeVehicle=null;state.position={x:0,z:75};assert.equal(enterVehicle(state,created.vehicle.id).ok,false);
 });
