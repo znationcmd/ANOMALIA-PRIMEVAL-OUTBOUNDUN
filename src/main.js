@@ -3,6 +3,7 @@ import {createConstructionUI} from "./construction-ui.js";
 import {createConstructionWorld} from "./construction-world.js";
 import {validateConstruction} from "./construction.js";
 import {spawnVehicle} from "./vehicles.js";
+import {RACE_TRACKS,trackSegments} from "./race-tracks.js";
 import {startBeachJourney,beachObjective,reserveBeach} from "./beach-journey.js";
 import {createMapEditor} from "./map-editor.js";
 import {createBuildings} from "./rp-buildings.js";
@@ -112,6 +113,22 @@ function makeTerrain(cx,cz){
  }
  geo.setAttribute("color",new THREE.Float32BufferAttribute(colors,3));
  geo.computeVertexNormals();const mesh=new THREE.Mesh(geo,graphics.terrain);mesh.receiveShadow=true;group.add(mesh);
+ // Three streamed motorsport venues; segments follow the local terrain.
+ for(const track of RACE_TRACKS){
+  if(Math.abs(track.x-group.position.x)>track.rx*1.25+CHUNK_SIZE||Math.abs(track.z-group.position.z)>track.rz*1.25+CHUNK_SIZE)continue;
+  const trackMat=track.kind==='formula1'?m.road:track.kind==='monster'?m.wood:m.rock;
+  for(const seg of trackSegments(track)){
+   if(Math.abs(seg.x-group.position.x)>CHUNK_SIZE/2||Math.abs(seg.z-group.position.z)>CHUNK_SIZE/2)continue;
+   const ya=heightAt(seg.a.x,seg.a.z),yb=heightAt(seg.b.x,seg.b.z);
+   const bump=track.kind==='motocross'&&seg.index%14<4?1.8*Math.sin(Math.PI*(seg.index%14)/4):track.kind==='monster'&&seg.index%18<5?2*Math.sin(Math.PI*(seg.index%18)/5):0;
+   const y=Math.max(ya,yb)+.12+bump;
+   const surface=meshBox(group,seg.x-group.position.x,y,seg.z-group.position.z,track.width,.28,seg.length+1,trackMat);
+   surface.rotation.y=seg.yaw;
+   if(track.kind==='formula1'&&seg.index%8===0){
+    const stripe=meshBox(group,seg.x-group.position.x,y+.2,seg.z-group.position.z,track.width*.8,.05,1.5,m.wall);stripe.rotation.y=seg.yaw;
+   }
+  }
+ }
  // Buildings are generated deterministically inside the cities, not just decorative labels.
  for(const city of CITIES){
   if(Math.hypot(city.x-group.position.x,city.z-group.position.z)>city.radius+CHUNK_SIZE)continue;
