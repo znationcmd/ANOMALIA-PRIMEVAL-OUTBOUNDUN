@@ -10,6 +10,8 @@ class UStaticMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UFloatingPawnMovement;
+class AAnomaliaSurvivor;
+class AController;
 
 /** Replicated, possessable prototype. Final Chaos wheel/flight/naval physics remain separate work. */
 UCLASS(Blueprintable)
@@ -45,6 +47,12 @@ public:
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle")
     FAnomaliaVehicleDefinition GetVehicleDefinition() const;
 
+    /** Called only on server after range and occupancy checks. */
+    bool EnterVehicle(AController* DriverController, AAnomaliaSurvivor* Survivor);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle")
+    bool HasDriver() const;
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Vehicle")
     void OnVehicleConfigured(const FAnomaliaVehicleDefinition& Definition);
 
@@ -63,8 +71,13 @@ protected:
 
     void InputForward(float Value);
     void InputSteering(float Value);
+    void InputExitVehicle();
+
+    UFUNCTION(Server, Reliable)
+    void ServerExitVehicle();
 
 private:
+    TWeakObjectPtr<AAnomaliaSurvivor> ParkedSurvivor;
     float ForwardAxis = 0.f;
     float SteeringAxis = 0.f;
     void ApplyDefinition();
