@@ -82,7 +82,7 @@ test('ANOMALIA Editor changes require a private owner credential, sync to guests
   for(const ws of clients)ws.terminate();
   await app.close();
  }
- const reloaded=createMultiplayerServer({port:0,host:'127.0.0.1',mode:'pve',dataFile:file});
+ const reloaded=createMultiplayerServer({port:0,host:'127.0.0.1',dataFile:file});
  try{await once(reloaded.server,'listening');assert.equal(reloaded.mode,'mixed');assert.equal(reloaded.worldMap[0].id,'new-hospital')}
  finally{await reloaded.close();rmSync(folder,{recursive:true,force:true})}
 });
