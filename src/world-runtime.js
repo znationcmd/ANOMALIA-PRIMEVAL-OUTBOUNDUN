@@ -132,6 +132,15 @@ export function createWorldRuntime({state:s,scene,camera,renderer,heightAt,solid
    if(act==='credits'){s.cash=(s.cash||0)+1000;return result({message:'1 000 crédits du jeu ajoutés.'})}
    if(act==='bank'){s.activeVehicle=null;s.position={x:52,z:177};return result({message:'Téléportation à la banque.'})}
    if(act==='teleport'){const x=Number(body.querySelector('#teleportX').value),z=Number(body.querySelector('#teleportZ').value);if(!Number.isFinite(x)||!Number.isFinite(z)||Math.abs(x)>WORLD_HALF||Math.abs(z)>WORLD_HALF)return notice('Coordonnées invalides.');s.activeVehicle=null;s.position={x,z};return result({message:'Téléportation effectuée.'})}
+   if(act==='cancel-config'){editingFile='';show('admin');return}
+   if(act==='save-config'){if(!editingFile)return;try{
+     const input=body.querySelector('#configEditorText')?.value;
+     if(typeof input!=='string'||input.length>1000000)throw Error('Fichier trop volumineux ou manquant.');
+     if(editingFile.endsWith('.json'))JSON.parse(input);
+     const next={...docs,[editingFile]:input};
+     configure(next);editingFile='';
+     result({message:'Configuration enregistrée localement et réglages reconnus appliqués.'});
+    }catch(error){notice('Configuration refusée : '+error.message)}return}
    if(act==='import-xml'){try{const next={...docs};for(const file of body.querySelector('#xmlImport').files){if(!Object.hasOwn(DEFAULT_XML,file.name))throw Error('Fichier inconnu : '+file.name);next[file.name]=await file.text()}configure(next);result({message:'Configuration appliquée.'})}catch(error){notice(error.message)}}
   };open();
  }
