@@ -75,6 +75,22 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("LoadServerSettings(ServerId, ActiveServerSettings", cpp)
         self.assertNotIn("SaveServerSettings(ServerId", cpp)
 
+    def test_vehicle_spawns_are_bounded_and_server_scoped(self):
+        cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
+        self.assertIn("SpawnConfiguredVehicles()", header)
+        self.assertIn("if (HasAuthority()) SpawnConfiguredVehicles()", cpp)
+        self.assertIn('TEXT("Servers"), ServerId, TEXT("vehicles.json")', cpp)
+        self.assertIn("Spawned >= 64", cpp)
+        self.assertIn("Bytes > 262144", cpp)
+        self.assertIn("FMath::IsFinite(X)", cpp)
+        self.assertIn("FindVehicleDefinition(VehicleId, Definition)", cpp)
+        self.assertNotIn("ServerSpawnVehicle", cpp)
+        template = ROOT / "unreal" / "Config" / "Anomalia" / "vehicles.example.json"
+        import json
+        parsed = json.loads(template.read_text(encoding="utf-8"))
+        self.assertTrue(parsed["vehicles"])
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
