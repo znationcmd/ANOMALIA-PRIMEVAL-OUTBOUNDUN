@@ -6,13 +6,16 @@ export const VEHICLES={
  motorcycle:{name:'Moto',mode:'land',speed:42,accel:10,turn:1.7,length:2.3,width:.8,eye:1.5},
  tank:{name:'Char',mode:'land',speed:17,accel:4,turn:.8,length:6.5,width:3.6,eye:2.4},
  boat:{name:'Bateau',mode:'water',speed:24,accel:5,turn:.75,length:6,width:2.4,eye:2},
+ carrier:{name:'Porte-avions',mode:'water',speed:15,accel:1.2,turn:.18,length:85,width:20,eye:12},
+ warship:{name:'Navire de guerre',mode:'water',speed:22,accel:2.2,turn:.32,length:42,width:10,eye:8},
+ submarine:{name:'Sous-marin',mode:'submarine',speed:18,accel:2,turn:.4,length:32,width:6,eye:4},
  helicopter:{name:'Hélicoptère',mode:'helicopter',speed:38,accel:5,turn:1,length:9,width:2.5,eye:1.8},
  airplane:{name:'Avion',mode:'airplane',speed:65,accel:5,turn:.65,length:9,width:10,eye:1.6}
 };
 export function spawnVehicle(s,type,x,z,heightAt){const def=VEHICLES[type];if(!def)return {ok:false,message:'Véhicule inconnu.'};s.vehicles??=[];if(s.vehicles.length>=60)return {ok:false,message:'60 véhicules maximum.'};
- const ground=groundHeight(x,z,heightAt);if(def.mode==='water'&&heightAt(x,z)>2)return {ok:false,message:'Place le bateau sur l’eau : téléporte-toi près d’une rive.'};
+ const ground=groundHeight(x,z,heightAt);if((def.mode==='water'||def.mode==='submarine')&&heightAt(x,z)>2)return {ok:false,message:'Place le bateau sur l’eau : téléporte-toi près d’une rive.'};
  if(def.mode==='land'&&ground< -1)return {ok:false,message:'Ce véhicule doit être placé sur terre.'};
- s.vehicleSequence=(Number(s.vehicleSequence)||0)+1;const vehicle={id:'vehicle-'+s.vehicleSequence,type,x,z,y:def.mode==='water'?.4:Math.max(ground,0),yaw:0,speed:0,fuel:100,verticalSpeed:0,hp:100};s.vehicles.push(vehicle);return {ok:true,vehicle,message:def.name+' créé.'};
+ s.vehicleSequence=(Number(s.vehicleSequence)||0)+1;const vehicle={id:'vehicle-'+s.vehicleSequence,type,x,z,y:def.mode==='submarine'?-2:def.mode==='water'?.4:Math.max(ground,0),yaw:0,speed:0,fuel:100,verticalSpeed:0,hp:100};s.vehicles.push(vehicle);return {ok:true,vehicle,message:def.name+' créé.'};
 }
 export function enterVehicle(s,id){const v=(s.vehicles||[]).find(v=>v.id===id);if(!v||Math.hypot(v.x-s.position.x,v.z-s.position.z)>12)return {ok:false,message:'Approche du véhicule.'};s.activeVehicle=id;s.boat=false;s.mounted=null;s.position={x:v.x,z:v.z};s.vehicleView=s.vehicleView||'outside';return {ok:true,message:'Pilotage : ZQSD/WASD · E sortir · F5 vue · Espace monter / Ctrl descendre.'}}
 export function exitVehicle(s,heightAt,solids=[]){const v=(s.vehicles||[]).find(v=>v.id===s.activeVehicle);if(!v)return {ok:false,message:'Aucun véhicule.'};const ground=groundHeight(v.x,v.z,heightAt);if(v.y>Math.max(0,ground)+4)return {ok:false,message:'Pose le véhicule avant de sortir.'};
@@ -31,7 +34,9 @@ export function tickVehicle(v,input,dt,{heightAt,solids=[],fuelRate=.03,bounds=W
   v.verticalSpeed+=(lift-v.verticalSpeed)*dt*2;v.y=Math.max(Math.max(0,ground),v.y+v.verticalSpeed*dt-(input.down?5*dt:0));
  }else if(d.mode==='helicopter')v.y=Math.max(Math.max(0,ground),v.y+((input.up?8:0)-(input.down?6:0))*dt);
  const airborne=(d.mode==='helicopter'||d.mode==='airplane')&&v.y>Math.max(0,ground)+4;
- if(airborne){v.x+=dx;v.z+=dz}else if(d.mode==='water'){
+ if(airborne){v.x+=dx;v.z+=dz}else if(d.mode==='submarine'){
+  if(heightAt(v.x+dx,v.z+dz)<-3){v.x+=dx;v.z+=dz}else v.speed=0;const seabed=heightAt(v.x,v.z)+2;v.y=Math.max(seabed,Math.min(.2,v.y+((input.up?3:0)-(input.down?3:0))*dt));
+ }else if(d.mode==='water'){
   if(heightAt(v.x+dx,v.z+dz)<2){v.x+=dx;v.z+=dz}else v.speed=0;v.y=.4;
  }else{
   const prev={x:v.x,z:v.z};const next=moveWithCollisions(prev,dx,dz,solids,(x,z,nx,nz)=>groundHeight(nx,nz,heightAt)>-1&&Math.abs(groundHeight(nx,nz,heightAt)-groundHeight(x,z,heightAt))<1.3,d.width/2);
