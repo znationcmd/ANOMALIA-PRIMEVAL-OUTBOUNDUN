@@ -65,6 +65,24 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("OnFuelChanged(FuelPercent)", cpp)
         self.assertNotIn("ServerRefuel", header)  # no unrestricted client refuel RPC
 
+    def test_vehicle_tuning_is_scoped_validated_and_replicated(self):
+        import json
+        game_mode = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaVehiclePawn.h").read_text(encoding="utf-8")
+        pawn = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "vehicles.example.json").read_text(encoding="utf-8"))
+        for key in ("fuelPercent", "fuelConsumptionPerSecond", "speedMultiplier"):
+            self.assertIn(key, template["vehicles"][0])
+            self.assertIn('TEXT("' + key + '")', game_mode)
+        self.assertIn('TEXT("Servers"), ServerId, TEXT("vehicles.json")', game_mode)
+        self.assertIn("ConfigureRuntimeTuning(", game_mode)
+        self.assertIn("HasAuthority()", pawn)
+        self.assertIn("FMath::IsFinite(InitialFuelPercent)", pawn)
+        self.assertIn("SpeedMultiplier * (100000.f / 3600.f)", pawn)
+        self.assertIn("DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier)", pawn)
+        self.assertIn("ReplicatedUsing=OnRep_Tuning", header)
+        self.assertNotIn("ServerSetFuel", header)
+
     def test_game_mode_loads_independent_server_config(self):
         header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
         cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
