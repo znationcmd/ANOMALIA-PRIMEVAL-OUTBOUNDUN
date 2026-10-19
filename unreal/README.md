@@ -205,8 +205,9 @@ reste à effectuer dans l’éditeur ; elle n’est pas exécutée par le géné
 
 ## Lot suivant — modèle d’inventaire UE5
 
-`UAnomaliaInventoryComponent` ajoute un modèle répliqué de piles, compartiments,
-poids, déplacement avec rotation, séparation et fusion. Les mutations refusent
+`UAnomaliaInventoryComponent` est créé sur chaque survivant UE5. Il ajoute un
+modèle répliqué de piles, compartiments, poids, déplacement avec rotation,
+séparation et fusion. Les mutations refusent
 les appels sans autorité serveur ; les ajouts sont atomiques si le poids ou la
 grille ne permettent pas de tout ranger. Le catalogue de départ reprend des
 identifiants utilisés par l’ancien jeu JavaScript.

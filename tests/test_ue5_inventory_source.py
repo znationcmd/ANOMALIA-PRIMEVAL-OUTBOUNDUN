@@ -6,6 +6,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.h").read_text(encoding="utf-8")
 SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp").read_text(encoding="utf-8")
+SURVIVOR_HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.h").read_text(encoding="utf-8")
+SURVIVOR_SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
 
 
 class UE5InventorySourceTests(unittest.TestCase):
@@ -45,6 +47,10 @@ class UE5InventorySourceTests(unittest.TestCase):
         weight_table = SOURCE.split("static const TMap<FName, float> Weights = {", 1)[1].split("\n    };", 1)[0]
         ue_ids = set(re.findall(r'TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\)', weight_table))
         self.assertEqual(ue_ids, legacy_ids)
+
+    def test_inventory_component_is_attached_to_every_survivor(self):
+        self.assertIn("TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent", SURVIVOR_HEADER)
+        self.assertIn('CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"))', SURVIVOR_SOURCE)
 
 
 if __name__ == "__main__":

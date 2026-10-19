@@ -1,6 +1,7 @@
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaGameMode.h"
+#include "AnomaliaInventoryComponent.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -16,6 +17,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     bReplicates = true;
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
+    InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 350.f;
