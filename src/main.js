@@ -424,13 +424,42 @@ function mapScreen(){
  const to=(x,z)=>({x:(x+WORLD_HALF)/(WORLD_HALF*2)*W,y:(z+WORLD_HALF)/(WORLD_HALF*2)*H});
  for(let py=0;py<H;py+=5)for(let px=0;px<W;px+=5){
   const x=px/W*WORLD_HALF*2-WORLD_HALF,z=py/H*WORLD_HALF*2-WORLD_HALF,h=heightAt(x,z);
-  ctx.fillStyle=h<0?"#1d5260":h>300?"#d2e0d8":h>135?"#72776b":h<7?"#b0a37e":"#47694c";ctx.fillRect(px,py,5,5);
+  ctx.fillStyle=h<0?"#1d5260":h>300?"#d2e0d8":h>135?"#72776b":h<7?"#b0a37e":biomeAt(x,z)==="jungle"?"#146940":"#47694c";ctx.fillRect(px,py,5,5);
+ }
+ for(const zone of JUNGLE_ZONES){
+  const p=to(zone.x,zone.z),radius=zone.radius/(WORLD_HALF*2)*W;
+  ctx.beginPath();ctx.arc(p.x,p.y,radius,0,Math.PI*2);
+  ctx.fillStyle="#008b5252";ctx.fill();ctx.strokeStyle="#39f09bcc";ctx.lineWidth=1.7;ctx.stroke();
+  ctx.font="bold 12px sans-serif";ctx.fillStyle="#a5ffd7";ctx.fillText("🌴 "+zone.name,p.x-radius*.5,p.y-6);
  }
  for(const city of CITIES){const p=to(city.x,city.z);ctx.fillStyle="#ffe1a2";ctx.beginPath();ctx.arc(p.x,p.y,5,0,Math.PI*2);ctx.fill();ctx.font="11px sans-serif";ctx.fillText(city.name,p.x+8,p.y+3)}
  for(const site of SITES){const p=to(site.x,site.z);ctx.fillStyle=site.type==="bunker"?"#e88f80":site.type==="boat"?"#7fe7e4":"#dfc18b";ctx.fillRect(p.x-2,p.y-2,4,4)}
+ for(const [i,pin] of (state.mapPins||[]).entries()){
+  const p=to(pin.x,pin.z);ctx.strokeStyle="#101d28";ctx.lineWidth=3;ctx.fillStyle="#f8d064";
+  ctx.beginPath();ctx.arc(p.x,p.y,6,0,Math.PI*2);ctx.fill();ctx.stroke();
+  ctx.font="bold 11px sans-serif";ctx.fillText("R"+(i+1),p.x+8,p.y+3);
+ }
  const player=to(state.position.x,state.position.z);ctx.fillStyle="#ff4d55";ctx.beginPath();ctx.arc(player.x,player.y,6,0,Math.PI*2);ctx.fill();
  $("panelBody").replaceChildren(canvas);
- const p=document.createElement("p");p.textContent="• Point rouge : survivant · Jaune : villes · Rouge : bunkers · Bleu : bateaux · Beige : lieux secrets. Monde de démonstration : environ 20 km × 20 km en génération continue."; $("panelBody").append(p);openPanel();
+ const p=document.createElement("p");p.textContent="● Rouge : joueur · Jaune : villes · Rouge clair : bunkers · Turquoise : bateaux · 🌴 Vert clair : jungles · R : tes repères persistants. Clique sur la carte pour ajouter un repère, clic droit pour supprimer le plus proche."; $("panelBody").append(p);
+ canvas.style.cursor="crosshair";
+ canvas.addEventListener("click",event=>{
+  const rect=canvas.getBoundingClientRect();
+  const x=((event.clientX-rect.left)/rect.width)*WORLD_HALF*2-WORLD_HALF;
+  const z=((event.clientY-rect.top)/rect.height)*WORLD_HALF*2-WORLD_HALF;
+  if(!Number.isFinite(x)||!Number.isFinite(z))return;
+  state.mapPins??=[];if(state.mapPins.length>=120){notice("120 repères maximum.");return}
+  state.mapPins.push({x:Math.round(clamp(x,-WORLD_HALF,WORLD_HALF)),z:Math.round(clamp(z,-WORLD_HALF,WORLD_HALF))});
+  save();mapScreen();
+ });
+ canvas.addEventListener("contextmenu",event=>{
+  event.preventDefault();const rect=canvas.getBoundingClientRect();
+  const x=(event.clientX-rect.left)/rect.width*WORLD_HALF*2-WORLD_HALF;
+  const z=(event.clientY-rect.top)/rect.height*WORLD_HALF*2-WORLD_HALF;
+  const i=(state.mapPins||[]).findIndex(pin=>Math.hypot(pin.x-x,pin.z-z)<540);
+  if(i>=0){state.mapPins.splice(i,1);save();mapScreen()}
+ });
+ openPanel();
 }
 function updateHud(dt){
  hudTime+=dt;if(hudTime<.1)return;hudTime=0;
