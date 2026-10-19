@@ -6,6 +6,8 @@ on:
     tags: ['v*']
     paths:
       - 'desktop/**'
+      - 'build/**'
+      - 'scripts/prepare-windows-icon.py'
       - 'src/**'
       - 'public/**'
       - 'tests/**'
@@ -36,6 +38,10 @@ jobs:
         run: npm test
       - name: Compiler le vrai jeu 3D
         run: npm run build
+      - name: Preparer le logo ANOMALIA pour Windows
+        run: |
+          python -m pip install Pillow
+          python scripts/prepare-windows-icon.py
       - name: Creer le setup Windows EXE avec NSIS
         run: npm run package:windows
       - name: Verifier que le setup Windows est genere
