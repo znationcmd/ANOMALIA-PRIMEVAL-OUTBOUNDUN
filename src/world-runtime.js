@@ -18,7 +18,7 @@ export function createWorldRuntime({state:s,scene,camera,renderer,heightAt,solid
  function applySettings(){
   renderer.setPixelRatio(Math.min(Number(localStorage.getItem('anomalia-quality'))||2,2,devicePixelRatio*config.settings.resolution/100));renderer.setSize(innerWidth,innerHeight);renderer.shadowMap.enabled=config.settings.shadows&&!matchMedia('(pointer:coarse)').matches;
   s.dinoKibblePreferences=config.creatures.preferredKibble;s.tamingSpeed=config.settings.tamingSpeed;s.aiDamage=config.settings.aiDamage;s.foodDrain=config.settings.foodDrain;s.waterDrain=config.settings.waterDrain;
-  s.thirdPersonAllowed=config.settings.thirdPersonAllowed;if(!s.thirdPersonAllowed)s.thirdPerson=false;
+  s.staminaMultiplier=config.settings.staminaMultiplier;s.constructionSettings={allowLand:config.settings.construction?.allowLand!==false,allowWater:config.settings.construction?.allowWater!==false,allowUnderwater:config.settings.construction?.allowUnderwater!==false};s.weatherEnabled=config.settings.weatherEnabled;s.timeMultiplier=config.settings.timeMultiplier;s.thirdPersonAllowed=config.settings.thirdPersonAllowed;if(!s.thirdPersonAllowed)s.thirdPerson=false;
  }
  applySettings();if(!s.configSpawnInitialized){s.configSpawnInitialized=true;if(!s.elapsed){s.position={...config.settings.spawn};for(const [id,n]of Object.entries(config.settings.startingItems))if(ITEM_DEFS[id]&&Number.isFinite(n))s.inventory[id]=Math.max(0,Math.min(9999,Math.floor(n)))}}if(s.beachJourney&&!s.beachCarCreated){spawnVehicle(s,'car',410,155,heightAt);s.beachCarCreated=true;}initializeNPCs(s,config.ai);tickEconomy(s,config,Date.now()/1000);
  const objects=new Map(),npcModels=new Map(),wrecks=new Map();let avatar=null,avatarSignature='',petModel=null,petSignature='';
