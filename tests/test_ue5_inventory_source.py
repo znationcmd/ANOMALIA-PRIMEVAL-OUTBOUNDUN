@@ -1,0 +1,48 @@
+import re
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[1]
+HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.h").read_text(encoding="utf-8")
+SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp").read_text(encoding="utf-8")
+
+
+class UE5InventorySourceTests(unittest.TestCase):
+    def test_replicated_stack_model_and_core_operations_exist(self):
+        self.assertIn("USTRUCT(BlueprintType)\nstruct FAnomaliaInventoryStack", HEADER)
+        self.assertIn("ReplicatedUsing=OnRep_Stacks", HEADER)
+        for operation in ("TryAddItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks", "GetCurrentWeightKg"):
+            with self.subTest(operation=operation):
+                self.assertIn(operation, HEADER)
+                self.assertIn(f"UAnomaliaInventoryComponent::{operation}", SOURCE)
+
+    def test_mutations_require_server_authority_and_invalid_add_is_atomic(self):
+        for operation in ("ConfigureCompartment", "TryAddItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks"):
+            with self.subTest(operation=operation):
+                begin = SOURCE.index(f"bool UAnomaliaInventoryComponent::{operation}(")
+                body = SOURCE[begin:SOURCE.find("\n}\n", begin) + 3]
+                self.assertIn("GetOwner()->HasAuthority()", body)
+        self.assertIn("GetCurrentWeightKg() + ItemWeight * Count > WeightCapacityKg", SOURCE)
+        self.assertIn("if (!FindPlacement(Candidate, NewStack)) return false;", SOURCE)
+        self.assertIn("Commit(MoveTemp(Candidate));", SOURCE)
+
+    def test_catalogue_matches_existing_item_ids_and_container_bounds(self):
+        for item_id in ("water", "food", "bandage", "wood", "stone", "rifle_ammo", "pistol", "rifle", "fishing_rod", "saddle"):
+            with self.subTest(item=item_id):
+                self.assertIn(f'TEXT("{item_id}")', SOURCE)
+        self.assertIn("Width > 12", SOURCE)
+        self.assertIn("Height > 20", SOURCE)
+        self.assertIn("Compartments.Add(Pockets)", SOURCE)
+
+    def test_every_legacy_item_definition_has_a_weight_entry(self):
+        systems = (ROOT / "src/systems.js").read_text(encoding="utf-8")
+        definitions = systems.split("export const ITEM_DEFS={", 1)[1].split("\n};", 1)[0]
+        legacy_ids = set(re.findall(r"^\s*([a-zA-Z_][a-zA-Z_0-9]*):\{label:", definitions, re.M))
+        weight_table = SOURCE.split("static const TMap<FName, float> Weights = {", 1)[1].split("\n    };", 1)[0]
+        ue_ids = set(re.findall(r'TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\)', weight_table))
+        self.assertEqual(ue_ids, legacy_ids)
+
+
+if __name__ == "__main__":
+    unittest.main()

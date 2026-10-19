@@ -202,3 +202,17 @@ avec World Partition, passer en mode Landscape > Import from File et sélectionn
 `200`, vérifier l’assemblage des 144 tuiles, l’orientation nord/sud et le niveau
 de la mer, puis enregistrer sous `/Game/Maps/AnomaliaWorld`. Cette opération
 reste à effectuer dans l’éditeur ; elle n’est pas exécutée par le générateur.
+
+## Lot suivant — modèle d’inventaire UE5
+
+`UAnomaliaInventoryComponent` ajoute un modèle répliqué de piles, compartiments,
+poids, déplacement avec rotation, séparation et fusion. Les mutations refusent
+les appels sans autorité serveur ; les ajouts sont atomiques si le poids ou la
+grille ne permettent pas de tout ranger. Le catalogue de départ reprend des
+identifiants utilisés par l’ancien jeu JavaScript.
+
+Ce lot fournit le modèle de données et ses opérations, **pas encore** l’interface
+UMG DayZ/ARK, l’équipement, les objets 3D au sol, la sauvegarde persistante ou la
+connexion des actions aux RPC du joueur. Les tests `test_ue5_inventory_source.py`
+sont des vérifications de source ; compilation UE5 et test en partie restent à
+faire sur un hôte avec Unreal Engine.

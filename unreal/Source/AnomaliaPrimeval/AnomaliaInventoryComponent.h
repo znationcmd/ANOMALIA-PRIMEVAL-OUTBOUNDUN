@@ -1,0 +1,101 @@
+#pragma once
+
+#include "CoreMinimal.h"
+#include "Components/ActorComponent.h"
+#include "AnomaliaInventoryComponent.generated.h"
+
+USTRUCT(BlueprintType)
+struct FAnomaliaInventoryStack
+{
+    GENERATED_BODY()
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 StackId = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    FName ItemId;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 Count = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    FName ContainerId = TEXT("pockets");
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 X = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 Y = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    bool bRotated = false;
+};
+
+USTRUCT(BlueprintType)
+struct FAnomaliaInventoryCompartment
+{
+    GENERATED_BODY()
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    FName Id;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 Width = 0;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    int32 Height = 0;
+};
+
+/** Server-authoritative inventory data model. A UMG screen and item-world actors remain separate tasks. */
+UCLASS(ClassGroup=(ANOMALIA), BlueprintType, Blueprintable, meta=(BlueprintSpawnableComponent))
+class ANOMALIAPRIMEVAL_API UAnomaliaInventoryComponent : public UActorComponent
+{
+    GENERATED_BODY()
+
+public:
+    UAnomaliaInventoryComponent();
+
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    TArray<FAnomaliaInventoryStack> Stacks;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    TArray<FAnomaliaInventoryCompartment> Compartments;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(ClampMin="0.1", ClampMax="500"))
+    float WeightCapacityKg = 14.f;
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    float GetCurrentWeightKg() const;
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool ConfigureCompartment(FName Id, int32 Width, int32 Height);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryAddItem(FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryMergeStacks(int32 TargetStackId, int32 SourceStackId);
+
+    UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Inventory")
+    void OnInventoryChanged();
+
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
+protected:
+    UFUNCTION()
+    void OnRep_Stacks();
+
+private:
+    int32 NextStackId = 1;
+    static bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize);
+    bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
+        FName ContainerId, int32 X, int32 Y, bool bRotate) const;
+    bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const;
+    void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
+};
