@@ -25,6 +25,14 @@ Ouvrir l'URL locale indiquée par Vite. Production : `npm run build`, puis servi
 
 Ce sont des mécaniques **pré-alpha**; les modèles, animations, comportements d'IA, physique des véhicules, intérieurs souterrains et combats restent expérimentaux. Les îles accessibles en bateau ne disposent pas encore d'une navigation maritime réaliste. Aucun mode multijoueur opérationnel à ce stade.
 
+## Compatibilité des commandes
+
+**Clavier et souris PC** : ZQSD/WASD, mouvements de souris, clic, touches d'inventaire et interactions restent fonctionnels.
+
+**Manettes Xbox et PS5 DualSense sur PC/navigateur compatible** (USB ou Bluetooth, API Gamepad standard) : stick gauche pour marcher, stick droit pour regarder, clic stick gauche (L3) pour courir, RT/R2 pour tirer, X/□ pour interagir, Y/△ pour l'inventaire, A/✕ pour valider, B/○ pour revenir, RB/R1 pour recharger, LB/L1 pour la lampe, View/Create pour la carte, Menu/Options pour l'aide, croix directionnelle haut pour monter, bas pour le bateau, gauche pour la reproduction et droite pour construire. Dans les menus, stick gauche ou croix directionnelle pour sélectionner et A/✕ pour activer. La manette peut être branchée/débranchée pendant le jeu sans désactiver le clavier.
+
+**Limite :** compatibilité prévue avec une manette reconnue par le navigateur via une disposition « standard ». Il ne s'agit pas d'un portage natif Xbox ou PlayStation 5. Les vibrations, gâchettes adaptatives et fonctions exclusives DualSense ne sont pas encore implémentées ; les essais physiques sur les deux manettes restent à réaliser.
+
 ## Commandes
 
 | Action | Touche |
