@@ -48,6 +48,13 @@ public:
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Fuel", meta=(ClampMin="0.0", ClampMax="10.0"))
     float FuelConsumptionPerSecond = 0.045f;
 
+    /** Server-only per-instance tuning, never set by an untrusted client. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Vehicle|Tuning")
+    bool ConfigureRuntimeTuning(float InitialFuelPercent, float ConsumptionPerSecond, float NewSpeedMultiplier);
+
+    UPROPERTY(ReplicatedUsing=OnRep_Tuning, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Tuning")
+    float SpeedMultiplier = 1.f;
+
     /** Authoritative refuel; must only be called by trusted server logic. */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Vehicle|Fuel")
     bool RefuelOnServer(float AmountPercent);
@@ -86,6 +93,9 @@ protected:
 
     UFUNCTION()
     void OnRep_Fuel();
+
+    UFUNCTION()
+    void OnRep_Tuning();
 
     UFUNCTION(Server, Unreliable)
     void ServerSetControls(float Forward, float Steering);
