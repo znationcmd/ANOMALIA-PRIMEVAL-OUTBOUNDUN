@@ -28,6 +28,19 @@ export function vehicleModel(type,wreck=false){
  }else if(type==='tank'){
   box(0,1,0,3.3,1.2,5.8);for(const x of [-1.55,1.55]){box(x,.6,0,.65,1.1,5.4,rubber);for(let z=-2;z<=2;z+=.7)wheel(x,.6,z,.44)}
   box(0,1.95,-.3,2.2,.75,2.8);const barrel=part(new THREE.CylinderGeometry(.10,.13,3.8,12),0,2.02,-3,metal);barrel.rotation.x=Math.PI/2;box(0,2.5,.1,1.3,.18,1.4);cabin(1.5);
+ }else if(type==='carrier'){
+  box(0,2,0,20,3,82,metal);box(0,3.7,0,18,.5,78,paint);box(6,6,8,5,5,14,paint);box(6,9,8,2.2,2,5,glass);box(-7,4,-12,.4,1,28,metal);
+  for(let z=-30;z<=28;z+=12)box(0,4.05,z,1,.06,7,new THREE.MeshBasicMaterial({color:0xd8d4b8}));
+  cabin(5.2);
+ }else if(type==='warship'){
+  const hull=part(new THREE.CylinderGeometry(5,3.5,38,8),0,1,0,paint);hull.rotation.x=Math.PI/2;hull.scale.z=.45;
+  box(0,3,1,8,.8,30,metal);box(0,6,5,5,5,10,paint);box(0,9,5,3,2,4,glass);box(0,8,11,.4,8,.4,metal);
+  for(const z of [-11,14]){const turret=part(new THREE.CylinderGeometry(2,2.4,1.2,16),0,4,z,metal);const gun=part(new THREE.CylinderGeometry(.18,.22,7,12),0,4,z-4,metal);gun.rotation.x=Math.PI/2;}
+  cabin(4.5);
+ }else if(type==='submarine'){
+  const hull=part(new THREE.CapsuleGeometry(3,24,12,20),0,0,0,paint);hull.rotation.x=Math.PI/2;hull.scale.z=1.15;
+  box(0,3,1,2.8,3,7,metal);box(0,6,1,.45,5,.45,metal);box(0,7,-.3,2.5,.25,.25,metal);box(0,0,13,9,.25,2,metal);box(0,0,-12,7,.18,3,metal);
+  cabin(2.2);
  }else if(type==='boat'){
   const hull=part(new THREE.CylinderGeometry(1.25,.8,5.7,8),0,.1,0,paint);hull.rotation.x=Math.PI/2;hull.scale.z=.5;
   box(0,.5,0,2.1,.2,4.4);cabin(1.1);box(0,.9,2.5,.5,.7,.4,rubber);
