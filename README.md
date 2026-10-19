@@ -50,7 +50,28 @@ Ce sont des mécaniques **pré-alpha**; les modèles, animations, comportements 
 | Lampe | F |
 | Libérer la souris | Échap |
 
-Les commandes tactiles sont expérimentales. Le stockage utilise `localStorage` dans le navigateur; il ne synchronise pas encore la partie entre appareils.
+### Manettes Xbox, PlayStation et compatibles PC
+
+Le jeu prend en charge simultanément **clavier + souris** (AZERTY : ZQSD / QWERTY : WASD) et **manette** via l'API Gamepad du navigateur. Branchez la manette en **USB** ou associez-la en **Bluetooth**, puis appuyez sur un bouton une fois la page ouverte pour l'activer. Le moteur reconnaît les dispositions standard Xbox et PlayStation (DualShock / DualSense) lorsque le navigateur les expose.
+
+| Action | Manette Xbox | Manette PlayStation |
+| --- | --- | --- |
+| Se déplacer / diriger le bateau | Stick gauche | Stick gauche |
+| Regarder | Stick droit | Stick droit |
+| Tirer | RT | R2 |
+| Interagir / ouvrir un bunker | X | Carré |
+| Courir | L3 | L3 |
+| Inventaire / vêtements | Y | Triangle |
+| Recharger | RB | R1 |
+| Lampe | LB | L1 |
+| Carte | View | Create |
+| Pause / aide | Menu | Options |
+| Valider / retour | A / B | Croix / Rond |
+| Monture / bateau / reproduction / construction | Croix directionnelle ↑ / ↓ / ← / → | Croix directionnelle ↑ / ↓ / ← / → |
+
+Les sticks ont une zone morte pour limiter la dérive ; les boutons d'action ne se déclenchent qu'une fois par pression. Les menus prennent en charge les boutons de validation et le déplacement au stick gauche ou à la croix directionnelle. En cas de déconnexion, le clavier et la souris restent utilisables. Les manettes avec une disposition non standard ou les fonctionnalités propres à certains modèles (gâchettes adaptatives, vibrations, gyroscope) ne sont **pas garanties**.
+
+Le stockage utilise `localStorage` dans le navigateur; il ne synchronise pas encore la partie entre appareils. Les commandes tactiles sont expérimentales.
 
 ## Architecture
 
