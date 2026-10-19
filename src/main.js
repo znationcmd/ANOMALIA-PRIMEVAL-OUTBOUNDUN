@@ -533,7 +533,7 @@ function updatePlayer(dt){
  const mag=Math.hypot(fx,fz);
  currentlySprinting=!driving&&(keys.has("ShiftLeft")||keys.has("ShiftRight")||controllerSprint)&&state.stamina>3&&!state.underground&&!state.boat;
  const speed=state.boat?30:state.mounted?16:currentlySprinting?8.4:4.6;
- state.stamina=clamp(state.stamina+(currentlySprinting?-dt*17:dt*10),0,100);
+ state.stamina=clamp(state.stamina+(currentlySprinting?-dt*17:dt*10)*(Number(state.staminaMultiplier)||1),0,100);
  const nx=clamp(state.position.x+fx*speed*dt,-WORLD_HALF,WORLD_HALF);
  const nz=clamp(state.position.z+fz*speed*dt,-WORLD_HALF,WORLD_HALF);
  if(driving){}
