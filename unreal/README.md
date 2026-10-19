@@ -139,3 +139,24 @@ code 2 ; aucune compilation native ni exécution réelle n'a donc eu lieu.
 Les contrôles Python sont distincts de cette preuve manquante. Le projet utilise
 encore `/Engine/Maps/Entry` et ne contient pas de carte de jeu `.umap`.
 Le lot 1 reste **bloqué**, les lots suivants ne sont pas déclarés terminés.
+
+### Tests natifs après compilation
+
+`--run-tests` lance Unreal Editor en mode automatisé sans rendu (`NullRHI`),
+puis exige un rapport neuf avec les deux tests `Anomalia.Native.VehicleCatalog`
+et `Anomalia.Native.ProfileIsolation` réussis. Un simple code de sortie zéro,
+un rapport absent ou des tests manquants entraînent un échec. Le processus est
+limité à quinze minutes. Le workflow natif utilise désormais cette option.
+
+Ces tests exécutent le catalogue C++ et les API réelles de sauvegarde : aller-retour
+d'un profil avec champs inconnus, refus d'accès depuis un autre serveur, refus
+ de traversée de répertoires et conservation de l'original après écriture invalide.
+Les données de test utilisent des identifiants GUID distincts, conservés sous
+`Saved/Servers/automation-*` ; aucun profil existant n'est effacé.
+
+**État :** tests natifs ajoutés, pas encore compilés ni exécutés sous Unreal.
+Les cinq tests Python du pilote vérifient son comportement par simulation et ne
+constituent pas une preuve de compilation. Le lancement d'Editor sans rendu
+ne valide ni la carte, ni les graphismes, ni une partie jouable.
+
+Référence Epic : https://dev.epicgames.com/documentation/unreal-engine/run-automation-tests-in-unreal-engine

@@ -14,7 +14,7 @@ jobs:
         shell: powershell
         run: |
           if (-not $env:UE_ROOT) { throw 'Set UE_ROOT on the UE5 build host.' }
-          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT"
+          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --run-tests
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4

@@ -11,7 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def validate(engine: Path, output: Path) -> int:
+def validate(engine: Path, output: Path, run_tests: bool = False) -> int:
     output.mkdir(parents=True, exist_ok=True)
     report = {"startedUtc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "compilation": "not_run", "execution": "not_run", "worldPlayable": "not_verified",
@@ -58,6 +58,35 @@ def validate(engine: Path, output: Path) -> int:
         save()
     report["compilation"] = "passed"
     save()
+    if run_tests:
+        editor = engine / "Engine/Binaries" / platform / ("UnrealEditor-Cmd.exe" if platform == "Win64" else "UnrealEditor")
+        # Unique export folder prevents accepting results left over from an earlier run.
+        import uuid
+        export = (output / ("automation-" + uuid.uuid4().hex)).resolve()
+        export.mkdir(parents=True)
+        report["nativeTests"] = "running"
+        report["automationReport"] = str(export)
+        save()
+        command = [str(editor), str(project), "-unattended", "-nopause", "-nosound", "-NullRHI",
+                   "-ExecCmds=Automation RunTests Anomalia.Native.; Quit",
+                   f"-ReportExportPath={export}", f"-abslog={export / 'editor.log'}"]
+        try:
+            with (export / "process.log").open("w", encoding="utf-8") as log:
+                result = subprocess.run(command, stdout=log, stderr=subprocess.STDOUT, timeout=900, check=False)
+            report["nativeTestExitCode"] = result.returncode
+            data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
+            rows = data.get("tests", [])
+            expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation"}
+            passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}
+            if result.returncode != 0 or not expected.issubset(passed) or any(row.get("state") != "Success" for row in rows):
+                raise ValueError("Missing, incomplete or failed native tests")
+            report["nativeTests"] = "passed"
+        except (OSError, ValueError, subprocess.TimeoutExpired) as error:
+            report["nativeTests"] = "failed"
+            report["error"] = str(error)
+            save()
+            return 1
+        save()
     print("Native builds passed. Game execution and playable world remain unverified.")
     return 0
 
@@ -66,6 +95,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--engine-root", type=Path, default=os.environ.get("UE_ROOT"))
     parser.add_argument("--output", type=Path, default=ROOT / "unreal/Saved/BuildValidation")
+    parser.add_argument("--run-tests", action="store_true", help="Launch native UE automation tests after compilation")
     args = parser.parse_args()
     # Use an explicit missing path to record the failed preflight rather than accidentally using cwd.
-    raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output))
+    raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output, args.run_tests))
