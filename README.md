@@ -2,6 +2,15 @@
 
 Projet de **jeu de survie 3D original en monde ouvert**, sur navigateur PC, en cours de développement. **Pré-alpha** — pas encore un jeu complet comparable en production à DayZ, ARK, Red Dead Redemption ou Arma Reforger.
 
+## Installer Windows (PC 64 bits) — Pré-alpha
+
+L'application Windows n'exige pas l'installation de Node.js ni l'ouverture d'un navigateur Web.
+Une compilation GitHub Actions produit un **installateur Windows NSIS** qui installe le jeu, ajoute un raccourci sur le bureau et dans le menu Démarrer, et permet sa désinstallation via les paramètres Windows.
+
+**Télécharger :** [GitHub Actions — installateur Windows](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/workflows/windows-installer.yml). Ouvre la dernière exécution réussie, puis le fichier **ANOMALIA-PRIMEVAL-OUTBOUNDUN-Installateur-Windows** dans la section *Artifacts*. Décompresse l'archive obtenue pour récupérer le fichier `.exe`, puis exécute-le sur Windows 10/11 x64.
+
+**Avertissement :** l'installateur de pré-alpha est actuellement **non signé**. Windows SmartScreen peut afficher une alerte. N'utilise que le fichier issu du dépôt GitHub officiel, et n'ignore pas un avertissement de sécurité si tu ne reconnais pas son origine. Les performances WebGL et la prise en charge des manettes devront être testées sur un véritable PC Windows. Il ne s'agit pas encore d'un jeu achevé.
+
 ## Démarrage local
 
 Installer Node.js 20+ puis :
