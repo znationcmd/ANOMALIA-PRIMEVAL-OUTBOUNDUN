@@ -9,12 +9,49 @@
     "build": "vite build",
     "preview": "vite preview --host 0.0.0.0",
     "test": "node --test tests/*.test.mjs",
-    "package:offline": "node scripts/package-offline.mjs"
+    "package:offline": "node scripts/package-offline.mjs",
+    "package:windows": "electron-builder --win nsis --x64 --publish never"
   },
   "dependencies": {
     "three": "^0.172.0"
   },
   "devDependencies": {
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "electron": "^38.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "main": "desktop/main.cjs",
+  "build": {
+    "appId": "com.cmd.anomalia.primevaloutboundun",
+    "productName": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+    "copyright": "Copyright 2026 ANOMALIA PRIMEVAL OUTBOUNDUN",
+    "asar": true,
+    "directories": {
+      "output": "release/windows"
+    },
+    "files": [
+      "dist/**/*",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+      "artifactName": "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-${version}-${arch}.${ext}"
+    }
   }
 }
