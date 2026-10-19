@@ -65,6 +65,16 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("OnFuelChanged(FuelPercent)", cpp)
         self.assertNotIn("ServerRefuel", header)  # no unrestricted client refuel RPC
 
+    def test_game_mode_loads_independent_server_config(self):
+        header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
+        self.assertIn("FAnomaliaServerSettings ActiveServerSettings", header)
+        self.assertIn("virtual void InitGame(", header)
+        self.assertIn('ParseOption(Options, TEXT("AnomaliaServerId"))', cpp)
+        self.assertIn("RequestedId.Len() <= 64", cpp)
+        self.assertIn("LoadServerSettings(ServerId, ActiveServerSettings", cpp)
+        self.assertNotIn("SaveServerSettings(ServerId", cpp)
+
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
         self.assertIn("if destination.exists():", source)
