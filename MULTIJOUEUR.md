@@ -1,4 +1,22 @@
-# ANOMALIA — connexion multijoueur expérimentale (0.5)
+# ANOMALIA — serveurs indépendants, ANOMALIA Editor et mises à jour Windows (pré-alpha)
+
+## Isolation des serveurs
+
+Chaque serveur dédié dispose de son identifiant stable `SERVER_ID` (exemple `rp-ajaccio`) et d'un répertoire séparé `SERVER_DATA_ROOT/servers/<SERVER_ID>/world.json`. Les plans d'ANOMALIA Editor, le mode RP/PVP/PVE et les futures données du monde sont propres à cet identifiant. Les identifiants sont validés : aucune traversée de dossier n'est acceptée. Deux serveurs différents ne lisent ni n'écrivent le même plan.
+
+Dans le client Windows, les fichiers de configuration personnels sont rangés sous `%APPDATA%/anomalia-primeval-outboundun/profiles/solo/config` ou `profiles/remote-<empreinte de l'adresse>/config`. Un changement de serveur sélectionne un profil distinct. Les paramètres de chaque utilisateur restent locaux ; ils ne modifient pas le serveur d'autrui. Les fichiers de configuration globaux historiques ne sont pas effacés.
+
+La sauvegarde solo n'est pas réécrite pendant une session multijoueur. À la déconnexion, un instantané du personnage et de sa carte solo est restauré. L'éditeur de carte multijoueur est autorisé seulement au propriétaire authentifié avec la clé privée `SERVER_ADMIN_KEY` (ou le jeton fourni par l'hôte Windows) ; les autres joueurs reçoivent les mises à jour sans pouvoir les publier. Le code local `ANOMALIA-EDITOR-2026` n'accorde **aucun** droit réseau.
+
+## Mode RP, PVP, PVE ou mixte
+
+Au moment d'héberger sur Windows, sélectionner le mode. Un serveur Node autonome utilise `GAME_MODE=rp`, `pvp`, `pve` ou `mixed`. Le prototype PVP applique des dégâts décidés côté serveur ; en mode mixte les zones protégées RP ne subissent pas de tirs entre joueurs. Les collisions, le système de factions et la sécurité anticheat ne sont pas encore complets.
+
+## Mise à jour du jeu installé
+
+L'installateur Windows porte l'emblème ANOMALIA. Une fois installée, l'application recherche les **versions officielles publiées dans GitHub Releases** au démarrage et toutes les six heures. Une version plus récente est téléchargée puis installée lors de la fermeture de l'application. Un simple commit GitHub ne déclenche pas une mise à jour des joueurs : il faut créer une version numérotée, un tag GitHub `vX.Y.Z` correspondant à `package.json` et publier le nouvel installateur avec le manifeste `latest.yml`. Les fichiers utilisateurs et les répertoires des serveurs ne font pas partie de l'installateur et ne sont pas supprimés lors de la mise à jour. Les exécutables restent non signés tant qu'aucun certificat de signature n'est configuré.
+
+## Historique — première connexion multijoueur (0.5)
 
 Le menu affiche ANOMALIA PRIMEVAL OUTBOUNDUN et propose Solo, Multijoueur et Paramètres. Le menu de démarrage est traduit en français (par défaut), allemand, russe, italien, anglais, japonais, chinois simplifié et espagnol. La langue et la qualité graphique sont conservées. Les interfaces historiques de survie et d’administration restent en français : la traduction intégrale du jeu est encore à réaliser.
 
