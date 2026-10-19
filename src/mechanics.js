@@ -30,6 +30,8 @@ export const CITIES=[
 export const PEAKS=[
  {x:-14000,z:-13500,height:1250,radius:1800},
  {x:-10000,z:-15500,height:980,radius:1450},
+ {x:-12400,z:-17100,height:1320,radius:1800},
+ {x:-16400,z:-13200,height:1080,radius:1650},
  {x:12500,z:11000,height:1100,radius:1700},
  {x:15000,z:14500,height:820,radius:1500},
  {x:-3200,z:-2200,height:680,radius:880},
@@ -40,6 +42,10 @@ export const PEAKS=[
  {x:3000,z:-6250,height:440,radius:640}
 ];
 export const SITES=[
+ {id:"f1-austral",type:"racetrack",label:"Circuit de Formule 1 Austral",x:9000,z:16000},
+ {id:"monster-arena",type:"racetrack",label:"Circuit Monster Trucks",x:15000,z:17400},
+ {id:"motocross-trail",type:"racetrack",label:"Terrain de motocross",x:8000,z:11000},
+ {id:"snowy-boreal",type:"mountain",label:"Massif enneigé de Borée",x:-12400,z:-17100},
  {id:"alpha-key",type:"key",label:"Cache du veilleur — clé Alpha",x:65,z:-95,item:"key_alpha"},
  {id:"cargo-key",type:"key",label:"Cadavre du contrebandier — clé rouge",x:-90,z:50,item:"key_red"},
  {id:"bunker-alpha",type:"bunker",label:"Bunker ALPHA",x:260,z:-240,required:"key_alpha",loot:{ammo:24,water:2,scrap:12,medkit:1}},
