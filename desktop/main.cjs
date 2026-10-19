@@ -75,7 +75,7 @@ app.whenReady().then(()=>{
  const configDirFor=id=>path.join(configRoot,id,"config");
  const configDir=configDirFor("solo");
  fs.mkdirSync(configDir,{recursive:true});
- const configNames=["types.xml","events.xml","cfgeventspawns.xml","cfgspawnabletypes.xml","globals.xml","economy.xml","ai.xml","cfgeconomycore.xml","serverDZ.cfg","Game.ini","GameUserSettings.ini","world-settings.json","creatures.json"];
+ const configNames=["types.xml","events.xml","cfgeventspawns.xml","cfgspawnabletypes.xml","globals.xml","economy.xml","ai.xml","cfgeconomycore.xml","serverDZ.cfg","Game.ini","GameUserSettings.ini","world-settings.json","creatures.json","config.json","admin_config.json","scenarios.json","mods.json","cfggameplay.json","cfglootspawn.xml","cfgplayerspawnpoints.xml","messages.xml","vehicles.xml","AllowedCheaterSteamIDs.txt"];
  const ensureConfig=id=>{const folder=configDirFor(id);fs.mkdirSync(folder,{recursive:true});for(const name of configNames){const from=path.join(bundleDir,"config",name),to=path.join(folder,name);if(!fs.existsSync(to)&&fs.existsSync(from))fs.copyFileSync(from,to);}return folder;};
  ensureConfig("solo");
  ipcMain.handle("anomalia:select-profile",(event,address)=>{validSender(event);if(!address){activeProfile="solo";return activeProfile;}const url=new URL(address);if(!["ws:","wss:"].includes(url.protocol)||url.username||url.password)throw Error("Invalid address");activeProfile="remote-"+createHash("sha256").update(url.host.toLowerCase()+url.pathname).digest("hex").slice(0,24);ensureConfig(activeProfile);return activeProfile;});
