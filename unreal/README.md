@@ -87,3 +87,15 @@ Le GameMode UE5 lit désormais **uniquement** `Saved/Servers/<identifiant>/vehic
 ```
 
 Ajouter cette section au `config.json` du serveur concerné, sans supprimer les autres clés.
+
+## Cibles graphiques et consoles — PS5 / Xbox Series X (19 octobre 2026)
+
+**Objectif de production, pas certification :** image de sortie 3840 × 2160 à 60 FPS, avec rendu interne dynamique, reconstruction TSR et géométrie Nanite. La sortie 4K n'implique **pas** 4K natif à chaque image. Les scènes complexes (villes, végétation dense, hordes, dinosaures, véhicules, constructions et multijoueur) nécessitent du profilage pour tenir le budget de **16,67 ms/image**.
+
+- `Config/DefaultEngine.ini` active Nanite, Lumen, Virtual Shadow Maps, TSR et configure un budget de résolution dynamique de 16,67 ms avec bornes de 50 à 100 %.
+- `Config/DefaultGameUserSettings.ini` définit des réglages initiaux évolutifs, une limite de 60 FPS et la résolution dynamique ; les joueurs PC pourront personnaliser leurs réglages sans modifier ceux des serveurs.
+- `Config/Anomalia/PerformanceTargets.ini` conserve des **objectifs** distincts PC, PS5, Xbox Series X et un profil de repli. Ce fichier est une **spécification de réglages** : il n'est pas encore chargé automatiquement par le runtime, ni certifié sur console. Les valeurs seront affinées sur matériel réel.
+
+**Ce qu'il reste à faire pour publier sur console :** obtenir les accès développeur officiels PlayStation et Xbox, les SDK/versions UE5 compatibles et les kits de développement ; adapter contrôles manette, comptes, invitations, réseau, sauvegardes, restrictions de mémoire et stockage, performances et certification des plateformes. Le code C++ actuel ne constitue pas un build PS5/Xbox. Les SDK propriétaires ne sont ni inclus ni redistribués dans ce dépôt public.
+
+**Mesure obligatoire avant d'annoncer 4K/60 :** compiler dans Unreal Engine 5, charger la carte World Partition finale et tester sur kits PS5 et Series X avec `stat unit`, `stat gpu`, Unreal Insights, profilage mémoire et tests multijoueurs chargés. Ajuster Nanite/Lumen/TSR, densité de végétation, IA et distance d'affichage jusqu'à atteindre 60 FPS de façon stable, ou réduire les objectifs si nécessaire.
