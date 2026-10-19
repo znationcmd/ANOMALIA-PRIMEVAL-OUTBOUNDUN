@@ -25,7 +25,7 @@ test('configured economy creates unique loot and actual crash cargo, then respec
 });
 test('every vehicle accepts controls, moves, and has persistent inside/outside view switching',()=>{
  for(const [id,def]of Object.entries(VEHICLES)){
-  const s=state(),heightAt=()=>def.mode==='water'?-10:10;const r=spawnVehicle(s,id,0,0,heightAt);assert.ok(r.ok);assert.ok(enterVehicle(s,r.vehicle.id).ok);const v=r.vehicle;
+  const s=state(),heightAt=()=>['water','submarine'].includes(def.mode)?-10:10;const r=spawnVehicle(s,id,0,0,heightAt);assert.ok(r.ok);assert.ok(enterVehicle(s,r.vehicle.id).ok);const v=r.vehicle;
   for(let i=0;i<40;i++)tickVehicle(v,{forward:1,up:1,turn:.1},.1,{heightAt});assert.ok(Math.hypot(v.x,v.z)>1,id+' must move');assert.ok(v.fuel<100);
   assert.equal(togglePerspective(s).ok,true);assert.equal(s.vehicleView,'inside');togglePerspective(s);assert.equal(s.vehicleView,'outside');
  }
