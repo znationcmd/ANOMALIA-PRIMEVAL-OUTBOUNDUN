@@ -1,0 +1,35 @@
+name: Unreal Engine 5 source checks
+
+on:
+  push:
+    paths:
+      - 'unreal/**'
+      - 'scripts/migrate-to-ue5.py'
+      - 'tests/test_unreal_port.py'
+      - '.github/workflows/ue5-source-checks.yml'
+  pull_request:
+    paths:
+      - 'unreal/**'
+      - 'scripts/migrate-to-ue5.py'
+      - 'tests/test_unreal_port.py'
+      - '.github/workflows/ue5-source-checks.yml'
+
+jobs:
+  validate-ue5-source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check migration and vehicle catalog
+        run: python -m unittest discover -s tests -p test_unreal_port.py -v
+      - name: Verify config migration is non-destructive
+        run: |
+          python scripts/migrate-to-ue5.py
+          python scripts/migrate-to-ue5.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('unreal/migration-report.json').read_text())
+          assert not data['conflicts'], data['conflicts']
+          assert not data['copied'], 'second run should not overwrite or recopy'
+          print('Second migration pass is idempotent.')
+          PY
