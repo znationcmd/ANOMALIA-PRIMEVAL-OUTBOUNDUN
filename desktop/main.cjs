@@ -8,6 +8,7 @@ const path=require("node:path");
 const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
 const {createHash}=require("node:crypto");
+const {autoUpdater}=require("electron-updater");
 
 const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
 const SCHEME="anomalia";
@@ -95,6 +96,15 @@ app.whenReady().then(()=>{
  });
  Menu.setApplicationMenu(null);
  createGameWindow();
+ if(app.isPackaged){
+  autoUpdater.autoDownload=true;
+  autoUpdater.autoInstallOnAppQuit=true;
+  autoUpdater.on("error",error=>console.warn("[ANOMALIA] Update unavailable:",error.message));
+  autoUpdater.on("update-downloaded",()=>console.log("[ANOMALIA] New version downloaded; will install on quit"));
+  const checkUpdates=()=>autoUpdater.checkForUpdates().catch(error=>console.warn("[ANOMALIA] Update check:",error.message));
+  setTimeout(checkUpdates,15000).unref?.();
+  setInterval(checkUpdates,6*60*60*1000).unref?.();
+ }
  app.on("activate",()=>{if(!BrowserWindow.getAllWindows().length)createGameWindow()});
 });
 app.on("window-all-closed",()=>{if(multiplayerServer){multiplayerServer.close().catch(()=>{});multiplayerServer=null;}if(process.platform!=="darwin")app.quit()});
