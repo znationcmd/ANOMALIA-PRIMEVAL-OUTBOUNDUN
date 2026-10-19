@@ -215,9 +215,12 @@ ramassage et l'ajout d'objets restent réservés au code serveur. Le catalogue d
 identifiants utilisés par l’ancien jeu JavaScript.
 
 Une première fenêtre UMG s'ouvre avec la touche I. Elle liste les compartiments
-et propose déplacer en main, séparer une pile ou fusionner deux piles. Ce lot ne
-fournit pas encore l'affichage 3D du personnage, l'équipement, les objets 3D au
-sol ou la sauvegarde persistante. L'apparence reste provisoire : glisser-déposer,
-icônes et interactions de monde restent à faire. Les tests `test_ue5_inventory_source.py`
+et propose déplacer en main, séparer une pile ou fusionner deux piles. Les API
+`SaveInventoryToPlayerProfile` et `LoadInventoryFromPlayerProfile` sauvegardent
+les piles dans le profil joueur séparé par serveur, tout en préservant les autres
+champs du profil. Le code appelant doit fournir l'identifiant de joueur validé
+par le serveur ; aucun système de connexion ou appel automatique à la connexion
+n'est encore raccordé. L'apparence reste provisoire : glisser-déposer, équipement,
+affichage 3D du personnage, icônes, objets au sol et interaction de monde restent à faire. Les tests `test_ue5_inventory_source.py`
 sont des vérifications de source ; compilation UE5 et test en partie restent à
 faire sur un hôte avec Unreal Engine.

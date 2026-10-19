@@ -1,5 +1,10 @@
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaConfigLibrary.h"
+#include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
+#include "Serialization/JsonReader.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Net/UnrealNetwork.h"
 
 UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
@@ -153,6 +158,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     while (Remaining > 0)
     {
         FAnomaliaInventoryStack NewStack;
+        if (CandidateNextId >= MAX_int32) return false;
         NewStack.StackId = CandidateNextId++;
         NewStack.ItemId = ItemId;
         NewStack.Count = FMath::Min(Remaining, MaxStack);
@@ -204,7 +210,7 @@ bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int3
     if (!GetOwner() || !GetOwner()->HasAuthority()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
-    if (!Source || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
+    if (!Source || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
     Source->Count -= Count;
     FAnomaliaInventoryStack Piece = *Source;
     Piece.StackId = NextStackId;
@@ -229,6 +235,174 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     Target->Count += Source->Count;
     Candidate.RemoveAll([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
     Commit(MoveTemp(Candidate));
+    return true;
+}
+
+bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError)
+{
+    OutError.Empty();
+    if (!GetOwner() || !GetOwner()->HasAuthority()) { OutError = TEXT("Inventory persistence requires server authority"); return false; }
+
+    FString ExistingJson;
+    FString LoadError;
+    TSharedPtr<FJsonObject> Profile = MakeShared<FJsonObject>();
+    if (UAnomaliaConfigLibrary::LoadPlayerProfile(ServerId, PlayerId, ExistingJson, LoadError))
+    {
+        const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(ExistingJson);
+        if (!FJsonSerializer::Deserialize(Reader, Profile) || !Profile.IsValid())
+        {
+            OutError = TEXT("Existing player profile is malformed; inventory was not saved");
+            return false;
+        }
+    }
+    else if (LoadError != TEXT("Profile not found"))
+    {
+        OutError = LoadError;
+        return false;
+    }
+
+    TSharedPtr<FJsonObject> Inventory = MakeShared<FJsonObject>();
+    Inventory->SetNumberField(TEXT("schemaVersion"), 1);
+    Inventory->SetNumberField(TEXT("weightCapacityKg"), WeightCapacityKg);
+    TArray<TSharedPtr<FJsonValue>> CompartmentRows;
+    for (const FAnomaliaInventoryCompartment& Box : Compartments)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetStringField(TEXT("id"), Box.Id.ToString());
+        Row->SetNumberField(TEXT("width"), Box.Width);
+        Row->SetNumberField(TEXT("height"), Box.Height);
+        CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
+    TArray<TSharedPtr<FJsonValue>> StackRows;
+    for (const FAnomaliaInventoryStack& Stack : Stacks)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetNumberField(TEXT("stackId"), Stack.StackId);
+        Row->SetStringField(TEXT("itemId"), Stack.ItemId.ToString());
+        Row->SetNumberField(TEXT("count"), Stack.Count);
+        Row->SetStringField(TEXT("containerId"), Stack.ContainerId.ToString());
+        Row->SetNumberField(TEXT("x"), Stack.X);
+        Row->SetNumberField(TEXT("y"), Stack.Y);
+        Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
+        StackRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("stacks"), StackRows);
+    Profile->SetObjectField(TEXT("inventory"), Inventory);
+
+    FString Serialized;
+    const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Serialized);
+    if (!FJsonSerializer::Serialize(Profile.ToSharedRef(), Writer))
+    {
+        OutError = TEXT("Could not serialize inventory profile");
+        return false;
+    }
+    return UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, OutError);
+}
+
+bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError)
+{
+    OutError.Empty();
+    if (!GetOwner() || !GetOwner()->HasAuthority()) { OutError = TEXT("Inventory persistence requires server authority"); return false; }
+    FString Raw;
+    if (!UAnomaliaConfigLibrary::LoadPlayerProfile(ServerId, PlayerId, Raw, OutError)) return false;
+    const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Raw);
+    TSharedPtr<FJsonObject> Profile;
+    if (!FJsonSerializer::Deserialize(Reader, Profile) || !Profile.IsValid()) { OutError = TEXT("Malformed player profile"); return false; }
+    const TSharedPtr<FJsonObject>* InventoryPtr = nullptr;
+    if (!Profile->TryGetObjectField(TEXT("inventory"), InventoryPtr) || !InventoryPtr || !InventoryPtr->IsValid())
+    {
+        OutError = TEXT("Player profile has no saved inventory");
+        return false;
+    }
+    const TSharedPtr<FJsonObject>& Inventory = *InventoryPtr;
+    double SchemaVersion = 0.0;
+    double SavedCapacity = 0.0;
+    if (!Inventory->TryGetNumberField(TEXT("schemaVersion"), SchemaVersion) || SchemaVersion != 1.0 ||
+        !Inventory->TryGetNumberField(TEXT("weightCapacityKg"), SavedCapacity) || !FMath::IsFinite(SavedCapacity) || SavedCapacity < 0.1 || SavedCapacity > 500.0)
+    {
+        OutError = TEXT("Invalid inventory capacity in profile");
+        return false;
+    }
+    const TArray<TSharedPtr<FJsonValue>>* CompartmentRows = nullptr;
+    const TArray<TSharedPtr<FJsonValue>>* StackRows = nullptr;
+    if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 64 ||
+        !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > 512)
+    {
+        OutError = TEXT("Invalid inventory arrays in profile");
+        return false;
+    }
+
+    TArray<FAnomaliaInventoryCompartment> LoadedCompartments;
+    TSet<FName> SeenCompartments;
+    for (const TSharedPtr<FJsonValue>& Value : *CompartmentRows)
+    {
+        const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+        if (!Row.IsValid()) { OutError = TEXT("Malformed inventory compartment"); return false; }
+        FString IdText;
+        double Width = 0.0, Height = 0.0;
+        if (!Row->TryGetStringField(TEXT("id"), IdText) || !Row->TryGetNumberField(TEXT("width"), Width) || !Row->TryGetNumberField(TEXT("height"), Height) ||
+            !FMath::IsFinite(Width) || !FMath::IsFinite(Height) || Width < 1 || Width > 12 || Height < 1 || Height > 20 ||
+            !FMath::IsNearlyEqual(Width, static_cast<double>(FMath::RoundToInt(Width))) ||
+            !FMath::IsNearlyEqual(Height, static_cast<double>(FMath::RoundToInt(Height))))
+        { OutError = TEXT("Invalid inventory compartment dimensions"); return false; }
+        const FName Id(*IdText);
+        if (Id.IsNone() || Id == TEXT("hands") || SeenCompartments.Contains(Id)) { OutError = TEXT("Duplicate or reserved inventory compartment"); return false; }
+        SeenCompartments.Add(Id);
+        FAnomaliaInventoryCompartment Box;
+        Box.Id = Id; Box.Width = FMath::RoundToInt(Width); Box.Height = FMath::RoundToInt(Height);
+        LoadedCompartments.Add(Box);
+    }
+
+    TArray<FAnomaliaInventoryStack> LoadedStacks;
+    TSet<int32> SeenStackIds;
+    int32 MaxSeenStackId = 0;
+    double TotalWeight = 0.0;
+    for (const TSharedPtr<FJsonValue>& Value : *StackRows)
+    {
+        const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+        if (!Row.IsValid()) { OutError = TEXT("Malformed inventory stack"); return false; }
+        double StackId = 0.0, Count = 0.0, X = 0.0, Y = 0.0;
+        FString ItemText, ContainerText;
+        bool bRotated = false;
+        if (!Row->TryGetNumberField(TEXT("stackId"), StackId) || !Row->TryGetNumberField(TEXT("count"), Count) ||
+            !Row->TryGetNumberField(TEXT("x"), X) || !Row->TryGetNumberField(TEXT("y"), Y) ||
+            !Row->TryGetStringField(TEXT("itemId"), ItemText) || !Row->TryGetStringField(TEXT("containerId"), ContainerText) ||
+            !Row->TryGetBoolField(TEXT("rotated"), bRotated) || !FMath::IsFinite(StackId) || !FMath::IsFinite(Count) ||
+            !FMath::IsFinite(X) || !FMath::IsFinite(Y) || StackId < 1 || StackId >= MAX_int32 || Count < 1 || Count > 100000 ||
+            X < 0 || X > 12 || Y < 0 || Y > 20 ||
+            !FMath::IsNearlyEqual(StackId, static_cast<double>(FMath::RoundToInt(StackId))) ||
+            !FMath::IsNearlyEqual(Count, static_cast<double>(FMath::RoundToInt(Count))) ||
+            !FMath::IsNearlyEqual(X, static_cast<double>(FMath::RoundToInt(X))) ||
+            !FMath::IsNearlyEqual(Y, static_cast<double>(FMath::RoundToInt(Y))))
+        { OutError = TEXT("Invalid inventory stack fields"); return false; }
+        FAnomaliaInventoryStack Stack;
+        Stack.StackId = FMath::RoundToInt(StackId); Stack.Count = FMath::RoundToInt(Count); Stack.X = FMath::RoundToInt(X); Stack.Y = FMath::RoundToInt(Y);
+        Stack.ItemId = FName(*ItemText); Stack.ContainerId = FName(*ContainerText); Stack.bRotated = bRotated;
+        float ItemWeight = 0.f; int32 MaxStack = 0; FIntPoint Size;
+        if (SeenStackIds.Contains(Stack.StackId) || !GetItemRules(Stack.ItemId, ItemWeight, MaxStack, Size) || Stack.Count > MaxStack)
+        { OutError = TEXT("Duplicate stack or unsupported item in inventory profile"); return false; }
+        SeenStackIds.Add(Stack.StackId); MaxSeenStackId = FMath::Max(MaxSeenStackId, Stack.StackId);
+        TotalWeight += static_cast<double>(ItemWeight) * Stack.Count;
+        LoadedStacks.Add(Stack);
+    }
+    if (TotalWeight > SavedCapacity + KINDA_SMALL_NUMBER)
+    { OutError = TEXT("Saved inventory exceeds its weight limit"); return false; }
+
+    const TArray<FAnomaliaInventoryCompartment> PreviousCompartments = Compartments;
+    Compartments = LoadedCompartments;
+    for (const FAnomaliaInventoryStack& Stack : LoadedStacks)
+    {
+        if (!CanPlace(LoadedStacks, Stack, Stack.ContainerId, Stack.X, Stack.Y, Stack.bRotated))
+        {
+            Compartments = PreviousCompartments;
+            OutError = TEXT("Saved inventory layout overlaps or exceeds its compartments");
+            return false;
+        }
+    }
+    WeightCapacityKg = static_cast<float>(SavedCapacity);
+    NextStackId = MaxSeenStackId + 1;
+    Commit(MoveTemp(LoadedStacks));
     return true;
 }
 

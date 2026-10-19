@@ -23,7 +23,7 @@ class UE5InventorySourceTests(unittest.TestCase):
                 self.assertIn(f"UAnomaliaInventoryComponent::{operation}", SOURCE)
 
     def test_mutations_require_server_authority_and_invalid_add_is_atomic(self):
-        for operation in ("ConfigureCompartment", "TryAddItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks"):
+        for operation in ("ConfigureCompartment", "TryAddItem", "TryRemoveItem", "TryMoveStack", "TrySplitStack", "TryMergeStacks"):
             with self.subTest(operation=operation):
                 begin = SOURCE.index(f"bool UAnomaliaInventoryComponent::{operation}(")
                 body = SOURCE[begin:SOURCE.find("\n}\n", begin) + 3]
@@ -73,6 +73,19 @@ class UE5InventorySourceTests(unittest.TestCase):
             with self.subTest(action=action):
                 self.assertIn(f"EAnomaliaInventoryAction::{action}", WIDGET_SOURCE)
         self.assertIn("OnInventoryUpdated.AddDynamic", WIDGET_SOURCE)
+
+    def test_profile_persistence_is_server_scoped_and_preserves_other_fields(self):
+        for operation in ("SaveInventoryToPlayerProfile", "LoadInventoryFromPlayerProfile"):
+            with self.subTest(operation=operation):
+                self.assertIn(operation, HEADER)
+                start = SOURCE.index(f"bool UAnomaliaInventoryComponent::{operation}(")
+                body = SOURCE[start:SOURCE.find("\n}\n", start) + 3]
+                self.assertIn("GetOwner()->HasAuthority()", body)
+                self.assertIn("UAnomaliaConfigLibrary", body)
+        self.assertIn('Profile->SetObjectField(TEXT("inventory"), Inventory)', SOURCE)
+        self.assertIn("Player profile has no saved inventory", SOURCE)
+        self.assertIn("Saved inventory layout overlaps or exceeds its compartments", SOURCE)
+        self.assertIn("SchemaVersion != 1.0", SOURCE)
 
 
 if __name__ == "__main__":

@@ -90,6 +90,13 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
+    /** Save/load only the inventory field while preserving all other player-profile data. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory|Persistence")
+    bool SaveInventoryToPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory|Persistence")
+    bool LoadInventoryFromPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError);
+
     /** Client UI requests; the owning actor's RPC ownership routes them to the server. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
