@@ -28,7 +28,17 @@ struct FAnomaliaServerSettings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Server")
     float TimeMultiplier = 1.0f;
 
-    // Intentionally no password/admin key in this Blueprint struct.
+    /** Per-server survival tuning, never shared with other server IDs. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="0.0", ClampMax="10.0"))
+    float HungerDrainPerSecond = 0.015f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="0.0", ClampMax="10.0"))
+    float ThirstDrainPerSecond = 0.025f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="0.0", ClampMax="10.0"))
+    float StarvationDamagePerSecond = 0.25f;
+
+        // Intentionally no password/admin key in this Blueprint struct.
 };
 
 UCLASS()
