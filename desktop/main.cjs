@@ -3,7 +3,7 @@
  * Bundled 3D assets use a secure, standard local application origin, allowing
  * offline ES modules and persistent saves without file:// CORS failures.
  */
-const {app,BrowserWindow,Menu,protocol,net}=require("electron");
+const {app,BrowserWindow,Menu,protocol,net,ipcMain}=require("electron");
 const path=require("node:path");
 const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
@@ -20,6 +20,7 @@ function createGameWindow(){
   width:1440,height:900,minWidth:960,minHeight:600,
   backgroundColor:"#111824",show:false,autoHideMenuBar:true,
   webPreferences:{
+   preload:path.join(__dirname,"preload.cjs"),
    nodeIntegration:false,
    contextIsolation:true,
    sandbox:true,
@@ -38,7 +39,19 @@ function createGameWindow(){
  return game;
 }
 
+let multiplayerServer=null;
+const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
+ ipcMain.handle('anomalia:host',async(event,options={})=>{
+  validSender(event);const port=Number(options.port||2303),password=String(options.password||'');if(!Number.isInteger(port)||port<1024||port>65535||password.length>128)throw Error('Invalid server options');
+  if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}
+  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16});
+  try{await new Promise((resolve,reject)=>{next.server.once('listening',resolve);next.server.once('error',reject);});}catch(e){await next.close();throw e;}
+  multiplayerServer=next;
+  const addresses=Object.values(require('node:os').networkInterfaces()).flat().filter(n=>n.family==='IPv4'&&!n.internal).map(n=>`ws://${n.address}:${port}`);
+  return {url:`ws://localhost:${port}`,addresses};
+ });
+ ipcMain.handle('anomalia:stop',async event=>{validSender(event);if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}return true;});
  const bundleDir=path.resolve(__dirname,"..","dist");
  const configDir=path.join(app.getPath("userData"),"config");
  fs.mkdirSync(configDir,{recursive:true});
@@ -66,4 +79,4 @@ app.whenReady().then(()=>{
  createGameWindow();
  app.on("activate",()=>{if(!BrowserWindow.getAllWindows().length)createGameWindow()});
 });
-app.on("window-all-closed",()=>{if(process.platform!=="darwin")app.quit()});
+app.on("window-all-closed",()=>{if(multiplayerServer){multiplayerServer.close().catch(()=>{});multiplayerServer=null;}if(process.platform!=="darwin")app.quit()});
