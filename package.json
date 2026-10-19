@@ -50,7 +50,8 @@
             "x64"
           ]
         }
-      ]
+      ],
+      "icon": "build/icon.ico"
     },
     "nsis": {
       "oneClick": false,
@@ -59,7 +60,9 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "ANOMALIA PRIMEVAL OUTBOUNDUN",
-      "artifactName": "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-${version}-${arch}.${ext}"
+      "artifactName": "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-${version}-${arch}.${ext}",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico"
     },
     "publish": [
       {
