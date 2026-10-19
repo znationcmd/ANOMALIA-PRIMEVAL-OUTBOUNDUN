@@ -1,4 +1,6 @@
 #include "AnomaliaVehiclePawn.h"
+#include "AnomaliaSurvivor.h"
+#include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
 #include "Components/SphereComponent.h"
@@ -95,6 +97,46 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     }
 }
 
+bool AAnomaliaVehiclePawn::HasDriver() const
+{
+    return GetController() != nullptr || ParkedSurvivor.IsValid();
+}
+
+bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomaliaSurvivor* Survivor)
+{
+    if (!HasAuthority() || !IsValid(DriverController) || !IsValid(Survivor) || HasDriver()) return false;
+    if (Survivor->GetController() != DriverController || Survivor->Health <= 0.f) return false;
+    if (FVector::DistSquared(GetActorLocation(), Survivor->GetActorLocation()) > FMath::Square(450.f)) return false;
+    ParkedSurvivor = Survivor;
+    DriverController->Possess(this);
+    if (GetController() != DriverController) { ParkedSurvivor.Reset(); return false; }
+    Survivor->SetActorHiddenInGame(true);
+    Survivor->SetActorEnableCollision(false);
+    return true;
+}
+
+void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
+{
+    if (!HasAuthority() || !IsPlayerControlled() || !ParkedSurvivor.IsValid()) return;
+    AController* DriverController = GetController();
+    AAnomaliaSurvivor* Survivor = ParkedSurvivor.Get();
+    if (!IsValid(DriverController) || !IsValid(Survivor)) return;
+    // Restore the existing character, preserving survival state and inventory references.
+    const FVector ExitLocation = GetActorLocation() + GetActorRightVector() * 350.f + FVector(0.f, 0.f, 120.f);
+    Survivor->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
+    Survivor->SetActorEnableCollision(true);
+    Survivor->SetActorHiddenInGame(false);
+    DriverController->Possess(Survivor);
+    if (GetController() == nullptr) { ParkedSurvivor.Reset(); ForwardAxis = 0.f; SteeringAxis = 0.f; }
+}
+
+void AAnomaliaVehiclePawn::InputExitVehicle()
+{
+    if (!IsLocallyControlled()) return;
+    if (HasAuthority()) ServerExitVehicle_Implementation();
+    else ServerExitVehicle();
+}
+
 void AAnomaliaVehiclePawn::InputForward(float Value)
 {
     if (!IsLocallyControlled()) return;
@@ -116,6 +158,7 @@ void AAnomaliaVehiclePawn::SetupPlayerInputComponent(UInputComponent* PlayerInpu
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AAnomaliaVehiclePawn::InputForward);
     PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AAnomaliaVehiclePawn::InputSteering);
+    PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaVehiclePawn::InputExitVehicle);
 }
 
 void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
