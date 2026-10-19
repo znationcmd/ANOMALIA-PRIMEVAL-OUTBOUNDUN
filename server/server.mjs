@@ -7,12 +7,12 @@ import {dirname} from 'node:path';
 import {validatePlacements} from '../src/building-rules.js';
 import {GAME_MODES,SAFE_ZONES,permissionsFor,canPlayerDamage,validGameMode} from '../src/server-modes.js';
 const sameSecret=(a,b)=>{const one=Buffer.from(String(a||'')),two=Buffer.from(String(b||''));return one.length===two.length&&timingSafeEqual(one,two)};
-export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode='pve',adminKey=randomBytes(32).toString('hex'),dataFile=null}={}){
+export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode=null,adminKey=randomBytes(32).toString('hex'),dataFile=null}={}){
  const players=new Map();
- const selected=validGameMode(mode);
+ const selected=validGameMode(mode||'pve');
  let activeMode=selected,objects=[],mapRevision=0;
  if(dataFile&&existsSync(dataFile)){
-  try{const data=JSON.parse(readFileSync(dataFile,'utf8'));objects=validatePlacements({schemaVersion:1,objects:data.objects||[]});mapRevision=Number.isSafeInteger(data.revision)?Math.max(0,data.revision):0;activeMode=validGameMode(data.mode||mode)}
+  try{const data=JSON.parse(readFileSync(dataFile,'utf8'));objects=validatePlacements({schemaVersion:1,objects:data.objects||[]});mapRevision=Number.isSafeInteger(data.revision)?Math.max(0,data.revision):0;activeMode=validGameMode(mode||data.mode||'pve')}
   catch(e){console.warn('[ANOMALIA] Saved map invalid; starting with current map:',String(e.message).slice(0,120))}
  }
  const persist=()=>{
