@@ -15,7 +15,7 @@ export function parseTextSettings(docs){
  if(world.schemaVersion!==1||!Number.isFinite(world.playerSpawn?.x)||!Number.isFinite(world.playerSpawn?.z))throw Error('world-settings.json: schéma ou position invalide.');
  let gameplay={},canonicalServer={};
  try{gameplay=JSON.parse(docs['cfggameplay.json']||'{}');canonicalServer=JSON.parse(docs['config.json']||'{}')}catch{throw Error('config.json ou cfggameplay.json invalide.')}
- if(gameplay.schemaVersion!==1||canonicalServer.schemaVersion!==1)throw Error('Version de configuration non prise en charge.');
+ if((gameplay.schemaVersion!==undefined&&gameplay.schemaVersion!==1)||(canonicalServer.schemaVersion!==undefined&&canonicalServer.schemaVersion!==1))throw Error('Version de configuration non prise en charge.');
  let playerSpawn={x:world.playerSpawn.x,z:world.playerSpawn.z};
  const spawnXml=docs['cfgplayerspawnpoints.xml'];
  if(spawnXml){
