@@ -55,12 +55,13 @@ app.whenReady().then(()=>{
  ipcMain.on('anomalia:disconnect',(event,token)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token)active.socket.close();});
  ipcMain.handle('anomalia:host',async(event,options={})=>{
   validSender(event);const port=Number(options.port||2303),password=String(options.password||'');if(!Number.isInteger(port)||port<1024||port>65535||password.length>128)throw Error('Invalid server options');
+  const gameMode=String(options.mode||'pve');if(!['rp','pvp','pve','mixed'].includes(gameMode))throw Error('Invalid game mode');
   if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}
-  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16});
+  const {createMultiplayerServer}=await import('../server/server.mjs');const next=createMultiplayerServer({port,host:'0.0.0.0',password,maxPlayers:16,mode:gameMode,dataFile:path.join(app.getPath('userData'),'world-server.json')});
   try{await new Promise((resolve,reject)=>{next.server.once('listening',resolve);next.server.once('error',reject);});}catch(e){await next.close();throw e;}
   multiplayerServer=next;
   const addresses=Object.values(require('node:os').networkInterfaces()).flat().filter(n=>n.family==='IPv4'&&!n.internal).map(n=>`ws://${n.address}:${port}`);
-  return {url:`ws://localhost:${port}`,addresses};
+  return {url:`ws://localhost:${port}`,addresses,adminKey:next.adminKey,mode:next.mode};
  });
  ipcMain.handle('anomalia:stop',async event=>{validSender(event);if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}return true;});
  const bundleDir=path.resolve(__dirname,"..","dist");
