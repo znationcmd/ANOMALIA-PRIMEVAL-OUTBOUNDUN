@@ -82,6 +82,16 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
+    /** Client UI requests; the owning actor's RPC ownership routes them to the server. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestSplitStack(int32 StackId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Inventory")
     void OnInventoryChanged();
 
@@ -93,6 +103,15 @@ protected:
 
     UFUNCTION()
     void OnRep_Compartments();
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestSplitStack(int32 StackId, int32 Count);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
 private:
     int32 NextStackId = 1;

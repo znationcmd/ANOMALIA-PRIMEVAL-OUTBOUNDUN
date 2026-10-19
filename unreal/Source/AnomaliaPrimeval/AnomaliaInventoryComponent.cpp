@@ -208,6 +208,46 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     return true;
 }
 
+bool UAnomaliaInventoryComponent::RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
+{
+    if (!GetOwner()) return false;
+    if (GetOwner()->HasAuthority()) return TryMoveStack(StackId, ContainerId, X, Y, bRotate);
+    ServerRequestMoveStack(StackId, ContainerId, X, Y, bRotate);
+    return true;
+}
+
+bool UAnomaliaInventoryComponent::RequestSplitStack(int32 StackId, int32 Count)
+{
+    if (!GetOwner()) return false;
+    if (GetOwner()->HasAuthority()) { int32 NewStackId = 0; return TrySplitStack(StackId, Count, NewStackId); }
+    ServerRequestSplitStack(StackId, Count);
+    return true;
+}
+
+bool UAnomaliaInventoryComponent::RequestMergeStacks(int32 TargetStackId, int32 SourceStackId)
+{
+    if (!GetOwner()) return false;
+    if (GetOwner()->HasAuthority()) return TryMergeStacks(TargetStackId, SourceStackId);
+    ServerRequestMergeStacks(TargetStackId, SourceStackId);
+    return true;
+}
+
+void UAnomaliaInventoryComponent::ServerRequestMoveStack_Implementation(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
+{
+    TryMoveStack(StackId, ContainerId, X, Y, bRotate);
+}
+
+void UAnomaliaInventoryComponent::ServerRequestSplitStack_Implementation(int32 StackId, int32 Count)
+{
+    int32 NewStackId = 0;
+    TrySplitStack(StackId, Count, NewStackId);
+}
+
+void UAnomaliaInventoryComponent::ServerRequestMergeStacks_Implementation(int32 TargetStackId, int32 SourceStackId)
+{
+    TryMergeStacks(TargetStackId, SourceStackId);
+}
+
 void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); }
 void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); }
 

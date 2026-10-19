@@ -52,6 +52,14 @@ class UE5InventorySourceTests(unittest.TestCase):
         self.assertIn("TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent", SURVIVOR_HEADER)
         self.assertIn('CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"))', SURVIVOR_SOURCE)
 
+    def test_client_reorganization_routes_through_server_rpcs(self):
+        for operation in ("MoveStack", "SplitStack", "MergeStacks"):
+            with self.subTest(operation=operation):
+                self.assertIn(f"Request{operation}", HEADER)
+                self.assertIn(f"ServerRequest{operation}", HEADER)
+                self.assertIn(f"ServerRequest{operation}_Implementation", SOURCE)
+        self.assertNotIn("ServerRequestAddItem", HEADER)
+
 
 if __name__ == "__main__":
     unittest.main()
