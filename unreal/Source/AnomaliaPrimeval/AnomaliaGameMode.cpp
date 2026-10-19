@@ -107,7 +107,25 @@ void AAnomaliaGameMode::SpawnConfiguredVehicles()
         if (!UAnomaliaVehicleCatalog::FindVehicleDefinition(VehicleId, Definition)) continue;
         const FTransform Transform(FRotator(0.f, static_cast<float>(Yaw), 0.f),
             FVector(X, Y, Z));
-        if (SpawnServerVehicle(VehicleId, Transform)) ++Spawned;
+        // Optional server-local tuning. Invalid entries are rejected, not silently clamped.
+        double Fuel = 100.0, Consumption = 0.045, SpeedScale = 1.0;
+        Row->TryGetNumberField(TEXT("fuelPercent"), Fuel);
+        Row->TryGetNumberField(TEXT("fuelConsumptionPerSecond"), Consumption);
+        Row->TryGetNumberField(TEXT("speedMultiplier"), SpeedScale);
+        if (!FMath::IsFinite(Fuel) || Fuel < 0.0 || Fuel > 100.0 ||
+            !FMath::IsFinite(Consumption) || Consumption < 0.0 || Consumption > 10.0 ||
+            !FMath::IsFinite(SpeedScale) || SpeedScale < 0.1 || SpeedScale > 3.0)
+        {
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: invalid vehicle tuning for %s"), *ServerId, *VehicleName);
+            continue;
+        }
+        AAnomaliaVehiclePawn* Vehicle = SpawnServerVehicle(VehicleId, Transform);
+        if (Vehicle)
+        {
+            if (!Vehicle->ConfigureRuntimeTuning(static_cast<float>(Fuel), static_cast<float>(Consumption),
+                static_cast<float>(SpeedScale))) { Vehicle->Destroy(); continue; }
+            ++Spawned;
+        }
     }
     UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: spawned %d initial vehicles"), *ServerId, Spawned);
 }
