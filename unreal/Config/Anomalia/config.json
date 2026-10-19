@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "server": {
+    "name": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+    "port": 2303,
+    "maxPlayers": 16,
+    "password": "",
+    "mode": "pve",
+    "thirdPerson": true,
+    "timeMultiplier": 1
+  }
+}
