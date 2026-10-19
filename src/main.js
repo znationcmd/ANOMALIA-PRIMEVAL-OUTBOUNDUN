@@ -424,6 +424,7 @@ function shoot(){
   notice(result.message);return;
  }
  state.ammo--;
+ if(network?.connected)network.shoot();
  if(chosen?.kind==="infected"){
   const enemy=chosen.target;enemy.hp-=42;
   if(enemy.hp<=0){enemy.alive=false;enemy.mesh.visible=false;state.kills++;state.inventory.scrap=(state.inventory.scrap||0)+1;notice("Infecté neutralisé · pièces récupérées.")}
