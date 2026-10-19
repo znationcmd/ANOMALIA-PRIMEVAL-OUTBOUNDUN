@@ -23,7 +23,7 @@ export const GAMEPAD_LABELS={
   playstation:"PS5 : stick G déplacer · stick D regarder · R2 tirer · □ interagir · △ inventaire · Create carte · ✕ valider · ○ retour · R1 recharger · L3 courir · Croix ↑ monture / ↓ bateau / ← reproduction / → construire"
 };
 export function controllerFamily(id=""){
- return /dualsense|dualshock|playstation|wireless controller|sony|054c/i.test(id)?"playstation":"xbox";
+ return /dualsense|dualshock|playstation|sony|054c|^wireless controller/i.test(id)?"playstation":"xbox";
 }
 export function deadzone(value,threshold=.16){
  const v=Number(value)||0;
