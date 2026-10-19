@@ -3,7 +3,21 @@
  * All game state is local; no in-game payments or third party credentials.
  */
 export const ITEM_DEFS={
- wood:{label:"Bois",weight:1,kind:"material"},
+ scrap:{label:"Ferraille",weight:.55,kind:"material"},
+ ammo:{label:"Munitions de pistolet",weight:.025,kind:"ammo"},
+ medkit:{label:"Kit médical",weight:.6,kind:"medical"},
+ raw_meat:{label:"Viande crue",weight:.6,kind:"raw"},
+ raw_fish:{label:"Poisson cru",weight:.48,kind:"raw"},
+ cooked_meat:{label:"Viande grillée",weight:.55,kind:"food"},
+ cooked_fish:{label:"Poisson grillé",weight:.43,kind:"food"},
+ hide:{label:"Peau animale",weight:.6,kind:"material"},
+ feather:{label:"Plume",weight:.07,kind:"material"},
+ egg:{label:"Œuf sauvage",weight:.22,kind:"food"},
+ fishing_rod:{label:"Canne à pêche",weight:1.2,kind:"tool"},
+ tranq_dart:{label:"Fléchette tranquillisante",weight:.1,kind:"ammo"},
+ kibble_herbivore:{label:"Croquettes herbivores",weight:.35,kind:"taming"},
+ kibble_carnivore:{label:"Croquettes carnivores",weight:.35,kind:"taming"},
+ wood:{label:"Bois",weight:.65,kind:"material"},
  stone:{label:"Pierre",weight:1.5,kind:"material"},
  cloth:{label:"Tissu",weight:.3,kind:"material"},
  water:{label:"Eau potable",weight:.8,kind:"drink"},
@@ -85,7 +99,7 @@ export function unequip(s,slot){
 export function consume(s,id){
  if(!hasItem(s,id))return {ok:false,message:"Objet absent."};
  switch(id){
-  case "food":case "meat":s.hunger=Math.min(100,s.hunger+(id==="food"?27:34));break;
+  case "food":case "meat":case "cooked_meat":case "cooked_fish":s.hunger=Math.min(100,s.hunger+(id==="food"?27:id==="cooked_fish"?29:34));break;
   case "berry":s.hunger=Math.min(100,s.hunger+7);s.thirst=Math.min(100,s.thirst+3);break;
   case "water":s.thirst=Math.min(100,s.thirst+38);break;
   case "bandage":s.health=Math.min(100,s.health+19);break;
