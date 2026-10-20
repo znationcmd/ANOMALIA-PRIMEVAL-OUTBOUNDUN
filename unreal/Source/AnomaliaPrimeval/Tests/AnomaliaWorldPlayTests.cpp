@@ -22,7 +22,7 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
  if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Generated real archipelago map is missing"));return false;}
  if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open generated map"));return false;}
  ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
- struct FProbe { double Deadline=FPlatformTime::Seconds()+120; bool Started=false; bool TerrainPassed=false; bool BridgeStarted=false; float StartTime=0; FVector Origin=FVector::ZeroVector; };
+ struct FProbe { double Deadline=FPlatformTime::Seconds()+120; bool Started=false; bool TerrainPassed=false; bool BridgeStarted=false; bool BridgePaused=false; int32 SpanSamples=0; int32 LastSpan=-1; double LastProgress=0; double FurthestX=0; float StartTime=0; FVector Origin=FVector::ZeroVector; };
  TSharedRef<FProbe> Probe=MakeShared<FProbe>();
  ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
  {
@@ -34,22 +34,47 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
   if(!Pawn)return false;
   if(Probe->TerrainPassed){
    const double H0=AnomaliaArchipelago::Height(13500,-9000),H1=AnomaliaArchipelago::Height(16000,-9000);
-   const double Deck=H0+(H1-H0)*.51+.25;
-   const FVector BridgePoint(1477500,900000,Deck*100+110);
+   const double Deck=H0+(H1-H0)*.01+.25;
+   const FVector BridgePoint(1352500,900000,Deck*100+110);
+   auto DeckHit=[&](const FVector& Point,FHitResult& Hit){
+    FCollisionQueryParams Query;Query.AddIgnoredActor(Pawn);
+    return World->LineTraceSingleByChannel(Hit,Point+FVector(0,0,300),Point-FVector(0,0,500),ECC_Visibility,Query)
+     && Hit.GetActor() && Hit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitBridge_v1"));
+   };
    if(!Probe->BridgeStarted){
-    FHitResult BridgeHit;FCollisionQueryParams Query;Query.AddIgnoredActor(Pawn);
-    const bool Found=World->LineTraceSingleByChannel(BridgeHit,BridgePoint+FVector(0,0,300),BridgePoint-FVector(0,0,500),ECC_Visibility,Query);
-    if(!Found || !BridgeHit.GetActor() || !BridgeHit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitBridge_v1")))return false;
+    FHitResult Hit;if(!DeckHit(BridgePoint,Hit))return false;
     Pawn->SetActorLocation(BridgePoint,false,nullptr,ETeleportType::TeleportPhysics);
+    Pawn->GetCharacterMovement()->MaxWalkSpeed=2500; // Accelerated test pawn only: 25m/s.
     Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
     Probe->BridgeStarted=true;Probe->StartTime=World->GetTimeSeconds();Probe->Origin=BridgePoint;
+    Probe->LastProgress=FPlatformTime::Seconds();Probe->FurthestX=BridgePoint.X;
+    Probe->Deadline=FPlatformTime::Seconds()+420;
    }
-   if(World->GetTimeSeconds()-Probe->StartTime<1.5f){Pawn->AddMovementInput(FVector(1,0,0),1.f);return false;}
-   FHitResult Hit;FCollisionQueryParams Query;Query.AddIgnoredActor(Pawn);
-   const bool OnDeck=World->LineTraceSingleByChannel(Hit,Pawn->GetActorLocation(),Pawn->GetActorLocation()-FVector(0,0,1000),ECC_Visibility,Query);
-   TestTrue(TEXT("Character walks at least 50cm on the real bridge"),(Pawn->GetActorLocation()-Probe->Origin).Size2D()>50);
-   TestTrue(TEXT("Bridge deck actually supports the character"),OnDeck && Hit.GetActor() && Hit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitBridge_v1")) && Pawn->GetCharacterMovement()->IsMovingOnGround());
-   AddInfo(FString::Printf(TEXT("Actual PIE bridge walking distance %.1f cm"),(Pawn->GetActorLocation()-Probe->Origin).Size2D()));
+   const FVector Position=Pawn->GetActorLocation();
+   // Stop before unloaded collision. Resume at the same position; never teleport over seams.
+   const double AheadX=FMath::Min(Position.X+3000.,1597500.);
+   const double AheadDeck=H0+(H1-H0)*(AheadX/100.-13500.)/2500.+.25;
+   FHitResult AheadHit;
+   if(!DeckHit(FVector(AheadX,900000,AheadDeck*100+110),AheadHit)){
+    Pawn->GetCharacterMovement()->DisableMovement();Probe->BridgePaused=true;return false;
+   }
+   if(Probe->BridgePaused){Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);Probe->BridgePaused=false;Probe->LastProgress=FPlatformTime::Seconds();}
+   FHitResult Underfoot;
+   if(!DeckHit(Position,Underfoot) || FMath::Abs(Position.Y-900000)>200){
+    AddError(TEXT("Full bridge traversal lost deck collision or left roadway"));return true;
+   }
+   const int32 Span=FMath::Clamp(FMath::FloorToInt((Position.X/100.-13500.)/50.),0,49);
+   if(Span!=Probe->LastSpan){
+    if(Span!=Probe->LastSpan+1){AddError(TEXT("Bridge traversal skipped a span"));return true;}
+    Probe->LastSpan=Span;Probe->SpanSamples++;
+   }
+   if(Position.X>Probe->FurthestX+10){Probe->FurthestX=Position.X;Probe->LastProgress=FPlatformTime::Seconds();}
+   if(FPlatformTime::Seconds()-Probe->LastProgress>20){AddError(TEXT("Character blocked during full bridge crossing"));return true;}
+   if(Position.X<1597500){Pawn->AddMovementInput(FVector(1,0,0),1.f);return false;}
+   TestEqual(TEXT("All 50 bridge spans crossed in sequence"),Probe->SpanSamples,50);
+   TestTrue(TEXT("Continuous bridge traversal at least 2450 metres"),Position.X-Probe->Origin.X>=245000);
+   TestTrue(TEXT("Character grounded after full crossing"),Pawn->GetCharacterMovement()->IsMovingOnGround());
+   AddInfo(FString::Printf(TEXT("Continuous accelerated PIE bridge crossing %.1f metres, %d spans; test speed 25m/s; no vehicle or multiplayer validation"),(Position.X-Probe->Origin.X)/100.,Probe->SpanSamples));
    return true;
   }
   if(!Probe->Started){
@@ -81,9 +106,9 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
   // Teleport only the PIE character. Freeze movement until the distant bridge collision streams in.
   Probe->TerrainPassed=true;Probe->Deadline=FPlatformTime::Seconds()+120;
   const double H0=AnomaliaArchipelago::Height(13500,-9000),H1=AnomaliaArchipelago::Height(16000,-9000);
-   const double Deck=H0+(H1-H0)*.51+.25;
+   const double Deck=H0+(H1-H0)*.01+.25;
   Pawn->GetCharacterMovement()->DisableMovement();
-  Pawn->SetActorLocation(FVector(1477500,900000,Deck*100+110),false,nullptr,ETeleportType::TeleportPhysics);
+  Pawn->SetActorLocation(FVector(1352500,900000,Deck*100+110),false,nullptr,ETeleportType::TeleportPhysics);
   return false;
  }));
  ADD_LATENT_AUTOMATION_COMMAND(FEndPlayMapCommand());

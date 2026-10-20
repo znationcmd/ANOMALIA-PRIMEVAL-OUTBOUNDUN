@@ -13,7 +13,7 @@ try:
  data=json.loads((export/'index.json').read_text(encoding='utf-8-sig'))
  rows=data.get('tests',[])
  if run.returncode or len(rows)!=1 or rows[0].get('fullTestPath')!='Anomalia.World.ArchipelagoPIE' or rows[0].get('state')!='Success':raise RuntimeError('Native PIE test missing, incomplete or failed')
- report.update(state='TESTED_IN_EDITOR_HEADLESS',checks=['load_real_map','start_PIE','spawn_native_character','stand_on_landscape_collision','walk_on_terrain','inventory_add_remove','bridge_streaming_collision','walk_on_bridge'])
+ report.update(state='TESTED_IN_EDITOR_HEADLESS',checks=['load_real_map','start_PIE','spawn_native_character','stand_on_landscape_collision','walk_on_terrain','inventory_add_remove','bridge_streaming_collision','continuous_bridge_crossing_2450m','all_50_spans_in_sequence'])
 except Exception as error:
  report['error']=str(error)
 finally:
