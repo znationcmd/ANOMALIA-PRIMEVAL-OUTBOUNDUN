@@ -7,5 +7,6 @@ public class AnomaliaPrimeval : ModuleRules
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "Json", "JsonUtilities" });
         // FUniqueNetIdRepl / FUniqueNetIdWrapper::ToString() used for per-player persistence.
         PrivateDependencyModuleNames.Add("CoreOnline");
+        if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
     }
 }

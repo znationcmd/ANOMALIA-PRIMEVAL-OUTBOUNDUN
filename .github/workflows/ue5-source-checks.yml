@@ -91,3 +91,7 @@ jobs:
           /tmp/transport-dynamics
       - name: Verify real vehicle GLB source and non-destructive preparation
         run: python -m unittest discover -s tests -p test_ue5_vehicle_models.py -v
+      - name: Measure original archipelago and validate height encoding (not Unreal)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
+          /tmp/archipelago-height

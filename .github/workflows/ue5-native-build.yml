@@ -49,6 +49,26 @@ jobs:
           if (-not (Test-Path -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT)) { throw 'Vehicle import did not produce a report.' }
           $result = Get-Content -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT -Raw | ConvertFrom-Json
           if ($result.state -ne 'IMPORTED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or @($result.models).Count -ne 1 -or -not $result.models[0].nativePresentationBound) { throw 'Vehicle import or native model binding failed.' }
+      - name: Create original 48km archipelago in Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $map = Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Archipelago_v1.umap'
+          if (Test-Path -LiteralPath $map) {
+            Write-Host 'Existing archipelago map preserved without modifications.'
+          } else {
+            $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            $env:ANOMALIA_WORLD_REPORT = Join-Path $evidence 'archipelago-world.json'
+            $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+            $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+            $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_archipelago_world.py'
+            $logPath = Join-Path $evidence 'archipelago-world.log'
+            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if (-not (Test-Path -LiteralPath $env:ANOMALIA_WORLD_REPORT)) { throw 'No native world report.' }
+            $result = Get-Content -LiteralPath $env:ANOMALIA_WORLD_REPORT -Raw | ConvertFrom-Json
+            if ($result.state -ne 'LEVEL_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.landscapeComponents -ne 576 -or $result.collisionComponents -ne 576) { throw 'World generation failed.' }
+          }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -64,4 +84,15 @@ jobs:
           path: |
             unreal/Content/Anomalia/Vehicles/
             unreal/Content/ThirdPartyNotices/
+          if-no-files-found: error
+      - name: Retain original archipelago map and external actors
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-archipelago-world
+          path: |
+            unreal/Content/Maps/ANOMALIA_Archipelago_v1.umap
+            unreal/Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v1/
+            unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v1/
+            unreal/Content/Anomalia/World/Archipelago_v1/
           if-no-files-found: error
