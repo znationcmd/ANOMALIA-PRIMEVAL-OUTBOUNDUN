@@ -12,6 +12,7 @@
   "survival": {
     "hungerDrainPerSecond": 0.015,
     "thirstDrainPerSecond": 0.025,
-    "starvationDamagePerSecond": 0.25
+    "starvationDamagePerSecond": 0.25,
+    "ambientTemperatureC": 20
   }
 }
