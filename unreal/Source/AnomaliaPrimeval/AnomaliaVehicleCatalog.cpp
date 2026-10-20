@@ -49,6 +49,7 @@ TArray<FAnomaliaVehicleDefinition> UAnomaliaVehicleCatalog::GetDefaultVehicleCat
         MakeVehicle(TEXT("warship"), TEXT("Navire de guerre"), D::Water, 65, 45, 300, false, true),
         MakeVehicle(TEXT("submarine"), TEXT("Sous-marin"), D::Underwater, 50, 25, 200, false, true),
         MakeVehicle(TEXT("train"), TEXT("Locomotive"), D::Rail, 120, 2, 60),
+        MakeVehicle(TEXT("airliner"), TEXT("Avion de ligne"), D::Air, 850, 180, 200),
         MakeVehicle(TEXT("airplane"), TEXT("Avion de transport léger"), D::Air, 320, 6, 40),
         MakeVehicle(TEXT("fighter_jet"), TEXT("Avion de chasse"), D::Air, 1500, 2, 10, false, true),
         MakeVehicle(TEXT("attack_helicopter"), TEXT("Helicoptere d'attaque"), D::Air, 310, 2, 25, false, true),

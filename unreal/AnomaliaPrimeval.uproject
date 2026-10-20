@@ -29,6 +29,14 @@
     {
       "Name": "PythonScriptPlugin",
       "Enabled": true
+    },
+    {
+      "Name": "InterchangeEditor",
+      "Enabled": true
+    },
+    {
+      "Name": "InterchangeAssets",
+      "Enabled": true
     }
   ]
 }

@@ -2,6 +2,8 @@
 #include "AnomaliaSurvivor.h"
 #include "Vehicles/AnomaliaTransportMovement.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
+#include "Misc/PackageName.h"
 #include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -76,7 +78,41 @@ void AAnomaliaVehiclePawn::ApplyDefinition()
     TransportMovement->Configure(Definition, SpeedMultiplier);
     // Only one movement system may move the collision root. Clients receive authoritative actor movement.
     Movement->SetComponentTickEnabled(HasAuthority() && !TransportMovement->IsTransport());
+    RefreshVehicleVisual();
     OnVehicleConfigured(Definition);
+}
+
+void AAnomaliaVehiclePawn::RefreshVehicleVisual()
+{
+    if(!bPresentationCaptured)
+    {
+        OriginalBodyTransform=Body->GetRelativeTransform();
+        OriginalCameraDistance=CameraBoom->TargetArmLength;
+        bPresentationCaptured=true;
+    }
+    if(AutomaticModel.IsValid() && Body->GetStaticMesh()==AutomaticModel.Get())
+    {
+        Body->SetStaticMesh(nullptr);
+        Body->SetRelativeTransform(OriginalBodyTransform);
+        CameraBoom->TargetArmLength=OriginalCameraDistance;
+    }
+    AutomaticModel.Reset();
+    FAnomaliaVehicleDefinition Definition;
+    if(!UAnomaliaVehicleCatalog::FindVehicleDefinition(VehicleId,Definition)) return;
+    // IDs come from the fixed server-authorized catalogue, never from an arbitrary client path.
+    const FString Id=VehicleId.ToString();
+    const FString Package=TEXT("/Game/Anomalia/Vehicles/")+Id+TEXT("/SM_")+Id;
+    if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
+    UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    if(!Mesh) return;
+    Body->SetStaticMesh(Mesh);
+    const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
+    const FBoxSphereBounds Bounds=Mesh->GetBounds();
+    const FVector BottomCenter(Bounds.Origin.X,Bounds.Origin.Y,Bounds.Origin.Z-Bounds.BoxExtent.Z);
+    Body->SetRelativeRotation(Orientation);
+    Body->SetRelativeLocation(-Orientation.RotateVector(BottomCenter)-FVector(0,0,Collision->GetUnscaledSphereRadius()));
+    CameraBoom->TargetArmLength=FMath::Max(OriginalCameraDistance,static_cast<float>(Bounds.BoxExtent.GetMax()*2.5));
+    AutomaticModel=Mesh;
 }
 
 void AAnomaliaVehiclePawn::OnRep_VehicleId()

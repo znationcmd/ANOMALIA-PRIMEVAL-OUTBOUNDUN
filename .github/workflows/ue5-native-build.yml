@@ -33,6 +33,22 @@ jobs:
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output $evidence --run-tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import vehicle model and verify native presentation binding
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+          $env:ANOMALIA_VEHICLE_IMPORT_REPORT = Join-Path $evidence 'vehicle-import.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/import_vehicle_models.py'
+          $logPath = Join-Path $evidence 'vehicle-import.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT)) { throw 'Vehicle import did not produce a report.' }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -ne 'IMPORTED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or @($result.models).Count -ne 1 -or -not $result.models[0].nativePresentationBound) { throw 'Vehicle import or native model binding failed.' }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4
@@ -40,3 +56,12 @@ jobs:
           name: ue5-native-build-evidence
           path: unreal/Saved/BuildValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/
           if-no-files-found: warn
+      - name: Retain imported vehicle assets with their materials
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-imported-vehicle-assets
+          path: |
+            unreal/Content/Anomalia/Vehicles/
+            unreal/Content/ThirdPartyNotices/
+          if-no-files-found: error

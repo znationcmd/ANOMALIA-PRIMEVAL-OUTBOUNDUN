@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "vehicleId": "airliner",
+      "sourceFile": "airliner/airliner.glb",
+      "preparedFile": "airliner/airliner_prepared.glb",
+      "sha256": "08cc60caafe3d0937f3e12e72c28bcb96dfdb39763ac124bcd4da8adaea11ab9",
+      "bytes": 250472,
+      "author": "amvlab",
+      "license": "CC-BY-4.0",
+      "source": "https://github.com/amvlab/aircraft-models/blob/91d835e8e851b2317fe79af291c9fed6153fd525/models/A320_nologo.glb",
+      "objectPath": "/Game/Anomalia/Vehicles/airliner/SM_airliner.SM_airliner",
+      "bodyYaw": 180,
+      "notes": "Original logo-free static airliner. Node transform baked; no animated or functional cockpit included.",
+      "preparedSha256": "2ec592178baa8c27ec6ac59e12ea1637f498ea0b7c96c587a22e0b54993b6f58"
+    }
+  ]
+}

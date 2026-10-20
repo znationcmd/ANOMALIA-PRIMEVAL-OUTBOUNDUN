@@ -7,6 +7,7 @@
 
 class USphereComponent;
 class UStaticMeshComponent;
+class UStaticMesh;
 class USpringArmComponent;
 class UCameraComponent;
 class UFloatingPawnMovement;
@@ -139,6 +140,11 @@ private:
     float BrakeAxis = 0.f;
     float ControlSendElapsed = 0.f;
     double LastControlReceived = -1;
+    TWeakObjectPtr<UStaticMesh> AutomaticModel;
+    FTransform OriginalBodyTransform;
+    float OriginalCameraDistance=650.f;
+    bool bPresentationCaptured=false;
+    void RefreshVehicleVisual();
     void ClearControls();
     void ApplyDefinition();
 };

@@ -89,3 +89,5 @@ jobs:
         run: |
           g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all tests/native/transport_dynamics.cpp -o /tmp/transport-dynamics
           /tmp/transport-dynamics
+      - name: Verify real vehicle GLB source and non-destructive preparation
+        run: python -m unittest discover -s tests -p test_ue5_vehicle_models.py -v
