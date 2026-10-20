@@ -10,7 +10,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCatalogTest, "Anomalia.Native.VehicleC
 bool FAnomaliaCatalogTest::RunTest(const FString& Parameters)
 {
     const auto Catalog = UAnomaliaVehicleCatalog::GetDefaultVehicleCatalog();
-    TestEqual(TEXT("Expected catalogue size (not finished vehicles)"), Catalog.Num(), 27);
+    TestEqual(TEXT("Expected catalogue size (not finished vehicles)"), Catalog.Num(), 28);
     TSet<FName> Ids;
     for (const auto& Definition : Catalog)
     {
@@ -22,6 +22,10 @@ bool FAnomaliaCatalogTest::RunTest(const FString& Parameters)
             UAnomaliaVehicleCatalog::FindVehicleDefinition(Definition.Id, Found));
         TestEqual(TEXT("Lookup identity"), Found.Id, Definition.Id);
     }
+    FAnomaliaVehicleDefinition Tractor;
+    TestTrue(TEXT("Agricultural tractor remains in the catalogue"),
+        UAnomaliaVehicleCatalog::FindVehicleDefinition(FName(TEXT("farm_tractor")), Tractor));
+    TestTrue(TEXT("Tractor uses the ground domain"), Tractor.Domain == EAnomaliaVehicleDomain::Ground);
     FAnomaliaVehicleDefinition Unknown;
     TestFalse(TEXT("Unknown vehicle rejected"), UAnomaliaVehicleCatalog::FindVehicleDefinition(
         FName(TEXT("__invalid_vehicle__")), Unknown));
