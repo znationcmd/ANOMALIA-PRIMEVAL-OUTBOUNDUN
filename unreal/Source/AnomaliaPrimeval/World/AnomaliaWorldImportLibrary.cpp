@@ -1,5 +1,5 @@
-#include "World/AnomaliaWorldImportLibrary.h"
-#include "World/AnomaliaArchipelagoHeight.h"
+#include "AnomaliaWorldImportLibrary.h"
+#include "AnomaliaArchipelagoHeight.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Landscape.h"

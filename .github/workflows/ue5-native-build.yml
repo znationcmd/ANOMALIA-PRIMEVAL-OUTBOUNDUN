@@ -55,7 +55,10 @@ jobs:
           $ErrorActionPreference = 'Stop'
           $map = Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Archipelago_v1.umap'
           if (Test-Path -LiteralPath $map) {
-            Write-Host 'Existing archipelago map preserved without modifications.'
+            $priorReports = Get-ChildItem 'unreal/Saved/BuildValidation/run-*/archipelago-world.json' -ErrorAction SilentlyContinue
+            $verified = @($priorReports | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.state -eq 'LEVEL_CREATED_NOT_PLAYTESTED' -and $_.landscapeComponents -eq 576 -and $_.collisionComponents -eq 576 })
+            if ($verified.Count -eq 0) { throw 'Existing map preserved, but no successful creation report exists; inspect before modifying it.' }
+            Write-Host 'Previously created archipelago map preserved without modifications; this is not a new playtest.' 
           } else {
             $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
             $env:ANOMALIA_WORLD_REPORT = Join-Path $evidence 'archipelago-world.json'

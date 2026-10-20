@@ -5,7 +5,7 @@ import unreal
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v1'
 REPORT=Path(os.environ.get('ANOMALIA_WORLD_REPORT',str(ROOT/'Saved/BuildValidation'/('archipelago-'+uuid.uuid4().hex+'.json'))))
-result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,playtested=False,visualQualityValidated=False)
+result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,playtested=False,visualQualityValidated=False,physicalOceanImplemented=False)
 
 def material():
     path='/Game/Anomalia/World/Archipelago_v1/M_BiomeBase'
@@ -57,6 +57,20 @@ try:
         count+=len(a.get_components_by_class(unreal.LandscapeComponent))
         collision+=len(a.get_components_by_class(unreal.LandscapeHeightfieldCollisionComponent))
     if count!=576 or collision!=576:raise RuntimeError('Incomplete terrain or collision: '+str((count,collision)))
+    # Visual sea-level reference only: not a wave simulation or swimming system.
+    sea=actors.spawn_actor_from_class(unreal.StaticMeshActor,unreal.Vector(0,0,0))
+    sea.set_actor_label('ANOMALIA_SeaLevelPreview_NoWaveSimulation')
+    sea.set_actor_scale3d(unreal.Vector(48000,48000,1))
+    sea_mesh=sea.get_component_by_class(unreal.StaticMeshComponent)
+    sea_mesh.set_static_mesh(unreal.load_asset('/Engine/BasicShapes/Plane'))
+    sea_mesh.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+    sea_mat=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_SeaLevelPreview','/Game/Anomalia/World/Archipelago_v1',unreal.Material,unreal.MaterialFactoryNew())
+    sea_color=unreal.MaterialEditingLibrary.create_material_expression(sea_mat,unreal.MaterialExpressionConstant3Vector)
+    sea_color.set_editor_property('constant',unreal.LinearColor(.008,.07,.12,1))
+    unreal.MaterialEditingLibrary.connect_material_property(sea_color,'',unreal.MaterialProperty.MP_BASE_COLOR)
+    unreal.MaterialEditingLibrary.recompile_material(sea_mat)
+    unreal.EditorAssetLibrary.save_loaded_asset(sea_mat)
+    sea_mesh.set_material(0,sea_mat)
     sun=actors.spawn_actor_from_class(unreal.DirectionalLight,unreal.Vector(0,0,100000),unreal.Rotator(-45,-25,0));sun.set_actor_label('ANOMALIA_Sun')
     actors.spawn_actor_from_class(unreal.SkyLight,unreal.Vector(0,0,10000))
     actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector(0,0,0))
