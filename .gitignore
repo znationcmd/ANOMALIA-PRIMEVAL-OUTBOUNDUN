@@ -1,0 +1,23 @@
+# ANOMALIA — Unreal Engine machine-local and generated files.
+# Do not ignore Content/*.umap or Content/*.uasset: original Unreal assets are versioned.
+unreal/Binaries/
+unreal/Intermediate/
+unreal/DerivedDataCache/
+unreal/Saved/
+unreal/.vs/
+unreal/*.sln
+unreal/*.suo
+unreal/TerrainSource/
+unreal/TerrainPreview/
+unreal/**/Collections/
+unreal/**/Developers/
+# Generated IDE/configuration build files
+.vs/
+*.VC.db
+*.VC.opendb
+# JavaScript dependency caches (existing tracked files remain tracked)
+node_modules/
+dist/
+*.log
+.DS_Store
+Thumbs.db
