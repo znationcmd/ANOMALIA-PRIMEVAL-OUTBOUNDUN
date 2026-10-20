@@ -5,7 +5,8 @@ public class AnomaliaPrimevalEditorTarget : TargetRules
     public AnomaliaPrimevalEditorTarget(TargetInfo Target) : base(Target)
     {
         Type = TargetType.Editor;
-        DefaultBuildSettings = BuildSettingsVersion.V5;
+        // UE5.8 installed editor shares build products with UnrealEditor: use current compatible defaults.
+        DefaultBuildSettings = BuildSettingsVersion.V6;
         ExtraModuleNames.Add("AnomaliaPrimeval");
     }
 }
