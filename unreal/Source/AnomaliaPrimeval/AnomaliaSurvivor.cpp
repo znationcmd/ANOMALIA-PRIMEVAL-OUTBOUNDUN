@@ -189,6 +189,7 @@ void AAnomaliaSurvivor::InputInventory()
         PC->SetIgnoreLookInput(false);
         return;
     }
+    if (FurnitureComponent) FurnitureComponent->ClosePalette();
     InventoryWidget = CreateWidget<UAnomaliaInventoryWidget>(PC, UAnomaliaInventoryWidget::StaticClass());
     if (!InventoryWidget) return;
     InventoryWidget->InitializeForInventory(InventoryComponent);

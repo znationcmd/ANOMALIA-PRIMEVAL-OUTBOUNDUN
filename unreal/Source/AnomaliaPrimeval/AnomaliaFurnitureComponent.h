@@ -5,6 +5,7 @@
 #include "AnomaliaFurnitureComponent.generated.h"
 
 class UInputComponent;
+class UAnomaliaFurnitureWidget;
 class AAnomaliaHomesteadStation;
 
 /** Owning-player RPC gateway. Owner/server IDs are never supplied by clients. */
@@ -15,6 +16,12 @@ class ANOMALIAPRIMEVAL_API UAnomaliaFurnitureComponent : public UActorComponent
 public:
     UAnomaliaFurnitureComponent();
     void BindInput(UInputComponent* Input);
+    void TogglePalette();
+    void ClosePalette();
+    void ChoosePlacementType(FName Type);
+    FString GetSelectedId() const;
+    void RotateSelectionFromPalette();
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Furniture")
     void RequestPlace(FName Type, FVector Location, float Yaw);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Furniture")
@@ -34,6 +41,9 @@ protected:
     UFUNCTION(Client, Reliable)
     void ClientResult(bool bSuccess, const FString& Message);
 private:
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaFurnitureWidget> Palette;
+    FName PlacementType = TEXT("bed");
     double LastRequestTime = -1.0;
     TWeakObjectPtr<AAnomaliaHomesteadStation> Selected;
     bool ViewHit(FHitResult& Hit, bool bIgnoreSelection) const;
