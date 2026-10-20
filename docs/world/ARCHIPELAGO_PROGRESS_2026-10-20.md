@@ -27,3 +27,27 @@ Le test d'inventaire PIE utilise un acteur de test transitoire propre au test po
 ## Éléments encore absents de ce niveau
 
 Ponts, routes, chemins, sentiers, villes, villages, bâtiments RP, ports, bases militaires, aéroport, végétation 3D, navmesh, IA, zombies, animaux, dinosaures et drones pilotables. La présence d'un catalogue ne vaut pas intégration. Ces éléments doivent être ajoutés par lots après validation du niveau en mode Jouer.
+
+## Mode Jouer réellement validé — run 39480888218
+
+https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39480888218
+Commit 608d9eb1503f6bb54ac6dbd6dbaa6f5eb69ff469 ; UE5.8.3 ; Editor + Game compilés.
+Anomalia.World.ArchipelagoPIE : Success, zéro erreur et zéro avertissement dans le résultat du test.
+Carte chargée, vraie session Play In Editor lancée, personnage natif possédé,
+contact avec le Landscape vérifié par trace physique, déplacement réel de 729,4 cm,
+maintien au sol après marche, présence de l'inventaire natif et ajout/retrait d'un bandage
+sur un acteur transitoire du test. Rapport `world-pie-39480888218.json`.
+État acquis pour le niveau de base : TESTED_IN_EDITOR_HEADLESS.
+Ni rendu GPU, ni performances, ni multijoueur ne sont validés.
+
+## Lot suivant — viaduc du Détroit, en validation
+
+Modèle 3D original : travée de 50 m, chaussée 8 m, largeur totale 11 m,
+trottoirs, poutres, entretoises et garde-corps tubulaires. Réutilise les images
+CC0 asphalt_02 et concrete_wall_001 déjà présentes dans le jeu JS.
+Assemblage prévu : 50 travées sur 2,5 km entre (13500,-9000) et (16000,-9000),
+avec piles cylindriques descendues jusqu'au fond. Append uniquement ; aucun acteur
+existant supprimé ou remplacé. Chaque travée est un acteur séparé pour World Partition.
+Le test PIE étendu doit vérifier le chargement distant, la collision et la marche sur
+le tablier avant de déclarer ce pont traversable. Rendu et conduite non vérifiés.
+Les autres infrastructures, bâtiments, IA, créatures et drones restent à intégrer.

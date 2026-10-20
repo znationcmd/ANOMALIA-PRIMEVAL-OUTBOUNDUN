@@ -72,6 +72,20 @@ jobs:
             $result = Get-Content -LiteralPath $env:ANOMALIA_WORLD_REPORT -Raw | ConvertFrom-Json
             if ($result.state -ne 'LEVEL_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.landscapeComponents -ne 576 -or $result.collisionComponents -ne 576) { throw 'World generation failed.' }
           }
+      - name: Import original bridge and append its spans to validated world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_BRIDGE_REPORT = Join-Path $evidence 'detroit-bridge.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_detroit_bridge.py'
+          $logPath = Join-Path $evidence 'detroit-bridge.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_BRIDGE_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('PLACED_NOT_PLAYTESTED','EXISTING_PLACEMENTS_PRESERVED') -or $result.spanCount -ne 50) { throw 'Bridge placement failed.' }
       - name: Test actual Play In Editor terrain collision movement and inventory
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -106,4 +120,5 @@ jobs:
             unreal/Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2/
             unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/
             unreal/Content/Anomalia/World/Archipelago_v2/
+            unreal/Content/Anomalia/Infrastructure/Bridge/
           if-no-files-found: error

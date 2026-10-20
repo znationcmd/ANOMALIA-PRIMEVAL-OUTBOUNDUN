@@ -95,3 +95,5 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
           /tmp/archipelago-height
+      - name: Verify actual bridge geometry and reused texture bytes
+        run: python -m unittest discover -s tests -p test_ue5_bridge_source.py -v
