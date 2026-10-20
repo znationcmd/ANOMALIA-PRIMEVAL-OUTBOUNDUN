@@ -3,3 +3,10 @@
 *.uasset filter=lfs diff=lfs merge=lfs -text
 *.ubulk filter=lfs diff=lfs merge=lfs -text
 *.uexp filter=lfs diff=lfs merge=lfs -text
+
+# Small UE5.8.3 imports are committed inline for credential-free runner checkout.
+# Exact paths only; other Unreal content retains the existing LFS policy.
+unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/Materials/01_-_Default.uasset -filter -diff -merge -text
+unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/StaticMeshes/airliner_prepared.uasset -filter -diff -merge -text
+unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/Textures/UV_1KLM_random01_no_logo.uasset -filter -diff -merge -text
+unreal/Content/Anomalia/Vehicles/airliner/SM_airliner.uasset -filter -diff -merge -text

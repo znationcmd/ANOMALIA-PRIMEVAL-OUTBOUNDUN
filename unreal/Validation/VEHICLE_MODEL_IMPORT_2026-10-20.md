@@ -15,3 +15,29 @@ Restent : import natif réel à vérifier, capture du rendu Unreal, orientation/
 Les modèles libres identifiés chez Innerscene pour un hélicoptère moyen, un chasseur, une locomotive et un bateau ne sont pas livrés par ce lot : leur téléchargement a renvoyé HTTP 403 depuis cet environnement. Aucun fichier absent n'est déclaré installé. Les autres catégories, y compris porte-avions, navire de guerre et sous-marin, doivent encore recevoir des assets appropriés.
 
 Les sauvegardes et fichiers de configuration existants ne sont pas remplacés. Le runner utilise clean:false pour conserver les fichiers non suivis et les journaux ; cela ne constitue pas une sauvegarde hors machine.
+
+## Validation native obtenue — run 39473753868
+
+Le run https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39473753868
+sur le commit 55085294c10904a445529a2918a27b8243bcbb64 a terminé avec succès :
+- Unreal Engine 5.8.3 : cibles Editor et Game compilées, codes de sortie 0.
+- Trois tests natifs réussis : ProfileIsolation, TransportDynamics, VehicleCatalog.
+- Import Interchange réellement exécuté ; dimensions 3768.14 × 3547.87 × 1132.21 cm.
+- Un matériau et une texture importés ; liaison du StaticMesh au Body du Pawn natif vérifiée.
+- Rapport : `vehicle-import-39473753868/vehicle-import.json`.
+- Inventaire SHA-256 des quatre packages : `vehicle-import-39473753868/packages.json`.
+
+Les quatre vrais packages .uasset produits par ce run sont désormais conservés dans
+Content, avec leurs chemins de dépendances d'origine. Le StaticMesh du staging est
+également conservé ; aucune suppression ni redirection manuelle des packages.
+Ces petits fichiers (1,25 Mo au total) ont des exceptions Git inline limitées à
+leurs quatre chemins exacts ; la politique LFS des autres ressources reste active.
+
+Dans Unreal Editor : navigateur de contenu → Anomalia → Vehicles → airliner →
+SM_airliner. Le Pawn natif charge ce modèle pour l'identifiant `airliner`.
+Il ne représente aucun des chasseurs militaires demandés.
+
+État : IMPORTED_NOT_PLAYTESTED. L'import headless et la liaison au Pawn ne prouvent
+pas un rendu visuel validé, un cockpit fonctionnel, une conduite testée ou un test
+multijoueur. Les collisions actuelles du Pawn restent génériques. Aucun des 156
+modèles précis du registre utilisateur n'est déclaré terminé par ce résultat.
