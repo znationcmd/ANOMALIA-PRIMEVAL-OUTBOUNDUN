@@ -72,6 +72,14 @@ jobs:
             $result = Get-Content -LiteralPath $env:ANOMALIA_WORLD_REPORT -Raw | ConvertFrom-Json
             if ($result.state -ne 'LEVEL_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.landscapeComponents -ne 576 -or $result.collisionComponents -ne 576) { throw 'World generation failed.' }
           }
+      - name: Test actual Play In Editor terrain collision movement and inventory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/run-world-playtest.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4

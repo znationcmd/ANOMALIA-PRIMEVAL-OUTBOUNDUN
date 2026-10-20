@@ -1,0 +1,22 @@
+{
+  "state": "LEVEL_CREATED_NOT_PLAYTESTED",
+  "sourceCommit": "1b74e33771b82eee3facde5def36e5f0459b1696",
+  "mapPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+  "playtested": false,
+  "visualQualityValidated": false,
+  "physicalOceanImplemented": false,
+  "landscapeComponents": 576,
+  "collisionComponents": 576,
+  "landscapeProxies": 145,
+  "worldWidthMeters": 48000,
+  "worldDepthMeters": 48000,
+  "resolution": 3025,
+  "vertexSpacingMeters": 15.873015873015873,
+  "spawnCm": [
+    -1695000.0,
+    1000000.0,
+    410.4159954659072
+  ],
+  "worldPartitionRequested": true,
+  "streamingPerformanceTested": false
+}
