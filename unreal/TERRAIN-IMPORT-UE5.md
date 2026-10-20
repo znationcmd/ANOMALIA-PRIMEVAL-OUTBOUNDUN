@@ -43,6 +43,33 @@ dans un premier essai**, spécialement sur un PC portable.
    Si un fichier est différent, **elle s'arrête sans le remplacer**.
    Conserver le dossier original `unreal/TerrainSource/` pour les détails finaux.
 
+## Option rapide : préparer la carte World Partition par script
+
+Après installation du moteur, du compilateur C++ et compilation du projet,
+tu peux lancer ceci dans PowerShell à la racine du dépôt :
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\ue5\bootstrap-draft-landscape.ps1
+```
+
+Cette commande :
+
+1. Génère les **144 tuiles de terrain de test** (sans modifier les sources HD).
+2. Contrôle les 264 joints et les **empreintes SHA256** des fichiers.
+3. Demande à Unreal Editor de créer `/Game/Maps/ANOMALIA_TerrainDraft.umap`
+   en mode **World Partition**.
+4. S'arrête sans remplacer un fichier `.umap` qui existe déjà.
+
+**Important :** le niveau est alors un **conteneur World Partition vide** ;
+le terrain `.r16` doit toujours être importé avec le panneau **Landscape**
+dans Unreal, comme décrit plus bas. Cette commande ne certifie pas la
+compilation du jeu, la jouabilité, la présence de routes ni le multijoueur.
+
+**GitHub :** installer `git lfs` avant de synchroniser les binaires Unreal
+(`.umap`, `.uasset`). Les caches d'Unreal et les tuiles générées restent
+sur le PC et sont ignorés par Git. Les projets et ressources déjà suivis
+ne sont pas supprimés.
+
 ## Import dans Unreal Engine 5.8
 
 Il faut réellement effectuer ces actions **dans Unreal Editor** :
