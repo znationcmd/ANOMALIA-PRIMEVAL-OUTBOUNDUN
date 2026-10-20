@@ -1,24 +1,42 @@
 name: UE5 native build (engine host required)
 on:
   workflow_dispatch:
+  push:
+    branches: ['ue5/integrate-world-homestead-20261020']
+    paths:
+      - 'unreal/**'
+      - 'scripts/ue5/**'
+      - '.github/workflows/ue5-native-build.yml'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
 jobs:
   compile:
-    # Explicit dispatch only: public pull requests must not execute on this host.
+    # Trusted repository branch pushes only. Never execute public PR code on this host.
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/ue5/integrate-world-homestead-20261020')
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 120
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
       - name: Compile Editor and Game with installed Unreal Engine
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
+          $ErrorActionPreference = 'Stop'
           if (-not $env:UE_ROOT) { throw 'Set UE_ROOT on the UE5 build host.' }
-          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --run-tests
+          $enginePython = Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (-not (Test-Path -LiteralPath $enginePython)) { throw 'Unreal bundled Python is missing.' }
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output $evidence --run-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ue5-native-build-evidence
-          path: unreal/Saved/BuildValidation/
+          path: unreal/Saved/BuildValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/
           if-no-files-found: warn
