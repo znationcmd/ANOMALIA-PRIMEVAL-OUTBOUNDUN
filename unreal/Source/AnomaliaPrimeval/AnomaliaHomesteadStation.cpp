@@ -4,6 +4,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/World.h"
 #include "Net/UnrealNetwork.h"
+#include "UObject/ConstructorHelpers.h"
+#include "Engine/StaticMesh.h"
 
 AAnomaliaHomesteadStation::AAnomaliaHomesteadStation()
 {
@@ -13,6 +15,9 @@ AAnomaliaHomesteadStation::AAnomaliaHomesteadStation()
     DisplayMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DisplayMesh"));
     RootComponent = DisplayMesh;
     DisplayMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+    // Temporary visible editor/gameplay placeholder; final farm/furniture meshes are still needed.
+    static ConstructorHelpers::FObjectFinder<UStaticMesh> TestCube(TEXT("/Engine/BasicShapes/Cube.Cube"));
+    if (TestCube.Succeeded()) DisplayMesh->SetStaticMesh(TestCube.Object);
 }
 
 FName AAnomaliaHomesteadStation::GetHarvestItemId() const
