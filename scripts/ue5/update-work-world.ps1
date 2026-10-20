@@ -44,7 +44,7 @@ else {
     try {
         New-Item -Path (Join-Path $staging 'scripts\ue5') -ItemType Directory -Force | Out-Null
         New-Item -Path (Join-Path $staging 'src') -ItemType Directory -Force | Out-Null
-        $utf8 = New-Object System.Text.UTF8Encoding($false)
+        $utf8 = [System.Text.UTF8Encoding]::new($false)
         [IO.File]::WriteAllText((Join-Path $staging 'package.json'), '{"type":"module"}', $utf8)
         $base = 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ue5/prototype-world-ai-roads-20261020'
         $paths = @('scripts/ue5/export-work-map.mjs', 'src/mechanics.js', 'src/ecology.js')
