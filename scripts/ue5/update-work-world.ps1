@@ -79,6 +79,51 @@ else {
     Write-Host "Terrain cree avec succes dans $folder" -ForegroundColor Green
 }
 
+# Install *new* preview C++ source files only; never rewrite existing user code.
+# Source files are reviewed independently on GitHub and compilation still occurs in UE on Windows.
+$previewSources = @(
+    'unreal/Source/AnomaliaPrimeval/AnomaliaAmbientAgent.h',
+    'unreal/Source/AnomaliaPrimeval/AnomaliaAmbientAgent.cpp',
+    'unreal/Source/AnomaliaPrimeval/AnomaliaWorkWorldBootstrap.h',
+    'unreal/Source/AnomaliaPrimeval/AnomaliaWorkWorldBootstrap.cpp'
+)
+$previewStaging = Join-Path ([IO.Path]::GetTempPath()) ('anomalia-preview-' + [Guid]::NewGuid().ToString('N'))
+$previewBase = 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ue5/prototype-world-ai-roads-20261020'
+try {
+    New-Item -Path $previewStaging -ItemType Directory -Force | Out-Null
+    $pending = @()
+    foreach ($source in $previewSources) {
+        $file = [IO.Path]::GetFileName($source)
+        $tempFile = Join-Path $previewStaging $file
+        Invoke-WebRequest -Uri "$previewBase/$source" -OutFile $tempFile -UseBasicParsing
+        if ((Get-Item -LiteralPath $tempFile).Length -lt 400) {
+            throw "Telechargement invalide pour $file. Les fichiers du projet restent inchanges."
+        }
+        $destination = Join-Path $root ($source -replace '/', '\')
+        $remoteHash = (Get-FileHash -LiteralPath $tempFile -Algorithm SHA256).Hash
+        if (Test-Path -LiteralPath $destination) {
+            $localHash = (Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash
+            if ($remoteHash -ne $localHash) {
+                throw "Fichier source deja present mais different : $destination. Il n'a PAS ete remplace. Faire examiner la divergence."
+            }
+        } else {
+            $pending += [pscustomobject]@{ From = $tempFile; To = $destination }
+        }
+    }
+    foreach ($item in $pending) {
+        $dir = Split-Path -Path $item.To -Parent
+        if (-not (Test-Path -LiteralPath $dir)) { New-Item -Path $dir -ItemType Directory -Force | Out-Null }
+        Copy-Item -LiteralPath $item.From -Destination $item.To -ErrorAction Stop
+        Write-Host "Nouveau module ajoute : $($item.To)" -ForegroundColor Green
+    }
+    Write-Host "Module routes/batiments/arbres/agents pret pour compilation UE 5.8 (non teste)." -ForegroundColor Green
+}
+finally {
+    if (Test-Path -LiteralPath $previewStaging) {
+        Remove-Item -LiteralPath $previewStaging -Recurse -Force -ErrorAction SilentlyContinue
+    }
+}
+
 Write-Host ""
 Write-Host "ETAPE SUIVANTE DANS UNREAL ENGINE 5.8 :" -ForegroundColor Yellow
 Write-Host "  1. Conserver AnomaliaWorld sans modification."
@@ -88,6 +133,8 @@ Write-Host "  4. Paysage (Maj+2) > Gerer > Importer depuis un fichier :"
 Write-Host "     $heightmap"
 Write-Host "  5. Resolution : 3025 x 3025 ; Section 63, sections/composant 2x2, composants 24x24."
 Write-Host "     Echelle X=1587.301587 Y=1587.301587 Z=800."
-Write-Host "  6. Enregistrer le nouveau niveau et tester Jouer."
+Write-Host "  6. Fermer puis rouvrir Unreal pour compiler les nouveaux fichiers C++."
+Write-Host "  7. Dans C++ Classes, placer un AnomaliaWorkWorldBootstrap sur ANOMALIA_WorkMap_Test."
+Write-Host "  8. Enregistrer puis cliquer Jouer : prototypes de routes, maisons, arbres et IA."
 Write-Host ""
 Write-Host "NOTE : la commande prepare le vrai fichier de relief. Le clic Importer dans l'editeur est necessaire pour creer le Landscape .umap."
