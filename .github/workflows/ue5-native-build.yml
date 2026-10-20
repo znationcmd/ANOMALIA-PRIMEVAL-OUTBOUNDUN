@@ -53,10 +53,10 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
-          $map = Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Archipelago_v1.umap'
+          $map = Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap'
           if (Test-Path -LiteralPath $map) {
             $priorReports = Get-ChildItem 'unreal/Saved/BuildValidation/run-*/archipelago-world.json' -ErrorAction SilentlyContinue
-            $verified = @($priorReports | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.state -eq 'LEVEL_CREATED_NOT_PLAYTESTED' -and $_.landscapeComponents -eq 576 -and $_.collisionComponents -eq 576 })
+            $verified = @($priorReports | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.state -eq 'LEVEL_CREATED_NOT_PLAYTESTED' -and $_.mapPackage -eq '/Game/Maps/ANOMALIA_Archipelago_v2' -and $_.landscapeComponents -eq 576 -and $_.collisionComponents -eq 576 })
             if ($verified.Count -eq 0) { throw 'Existing map preserved, but no successful creation report exists; inspect before modifying it.' }
             Write-Host 'Previously created archipelago map preserved without modifications; this is not a new playtest.' 
           } else {
@@ -94,8 +94,8 @@ jobs:
         with:
           name: ue5-archipelago-world
           path: |
-            unreal/Content/Maps/ANOMALIA_Archipelago_v1.umap
-            unreal/Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v1/
-            unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v1/
-            unreal/Content/Anomalia/World/Archipelago_v1/
+            unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap
+            unreal/Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2/
+            unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/
+            unreal/Content/Anomalia/World/Archipelago_v2/
           if-no-files-found: error

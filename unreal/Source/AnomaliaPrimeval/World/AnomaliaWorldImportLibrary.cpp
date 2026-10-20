@@ -20,7 +20,7 @@ AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape()
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v1"))return nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))return nullptr;
  for(TActorIterator<ALandscape> It(World);It;++It)return nullptr; // Never overlay/replace existing terrain.
  constexpr int32 Size=3025;
  TArray<uint16> Samples; Samples.SetNumUninitialized(Size*Size);

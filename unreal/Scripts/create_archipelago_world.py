@@ -3,22 +3,22 @@ import json,os,uuid
 from pathlib import Path
 import unreal
 ROOT=Path(unreal.Paths.project_dir()).resolve()
-PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v1'
+PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
 REPORT=Path(os.environ.get('ANOMALIA_WORLD_REPORT',str(ROOT/'Saved/BuildValidation'/('archipelago-'+uuid.uuid4().hex+'.json'))))
 result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,playtested=False,visualQualityValidated=False,physicalOceanImplemented=False)
 
 def material():
-    path='/Game/Anomalia/World/Archipelago_v1/M_BiomeBase'
+    path='/Game/Anomalia/World/Archipelago_v2/M_BiomeBase'
     if unreal.EditorAssetLibrary.does_asset_exist(path):
         raise RuntimeError('Refusing to replace an existing material')
-    m=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_BiomeBase','/Game/Anomalia/World/Archipelago_v1',unreal.Material,unreal.MaterialFactoryNew())
+    m=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_BiomeBase','/Game/Anomalia/World/Archipelago_v2',unreal.Material,unreal.MaterialFactoryNew())
     lib=unreal.MaterialEditingLibrary
     def node(cls,**props):
         n=lib.create_material_expression(m,cls)
         for k,v in props.items(): n.set_editor_property(k,v)
         return n
     def link(a,b,pin):
-        if not lib.connect_material_expressions(a,'',b,pin):raise RuntimeError('Material connection failed')
+        if not lib.connect_material_expressions(a,'',b,'' if pin=='Input' else pin):raise RuntimeError('Material connection failed')
     def color(r,g,b):return node(unreal.MaterialExpressionConstant3Vector,constant=unreal.LinearColor(r,g,b,1))
     pos=node(unreal.MaterialExpressionWorldPosition)
     def ramp(axis,start,width):
@@ -43,13 +43,13 @@ def material():
 try:
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    mapfile=ROOT/'Content/Maps/ANOMALIA_Archipelago_v1.umap'
+    mapfile=ROOT/'Content/Maps/ANOMALIA_Archipelago_v2.umap'
     # Strictly non-destructive: an existing map is not recreated or saved by this script.
     if mapfile.exists():raise RuntimeError('Map already exists, preserved. Inspect it or choose a new version; no overwrite.')
+    mat=material() # Validate and save graph BEFORE creating any level file.
     if not level.new_level(PACKAGE,is_partitioned_world=True):raise RuntimeError('World Partition map creation failed')
     terrain=unreal.AnomaliaWorldImportLibrary.create_archipelago_landscape()
     if not terrain:raise RuntimeError('Native landscape import failed')
-    mat=material()
     proxies=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
     count=collision=0
     for a in proxies:
@@ -64,7 +64,7 @@ try:
     sea_mesh=sea.get_component_by_class(unreal.StaticMeshComponent)
     sea_mesh.set_static_mesh(unreal.load_asset('/Engine/BasicShapes/Plane'))
     sea_mesh.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
-    sea_mat=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_SeaLevelPreview','/Game/Anomalia/World/Archipelago_v1',unreal.Material,unreal.MaterialFactoryNew())
+    sea_mat=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_SeaLevelPreview','/Game/Anomalia/World/Archipelago_v2',unreal.Material,unreal.MaterialFactoryNew())
     sea_color=unreal.MaterialEditingLibrary.create_material_expression(sea_mat,unreal.MaterialExpressionConstant3Vector)
     sea_color.set_editor_property('constant',unreal.LinearColor(.008,.07,.12,1))
     unreal.MaterialEditingLibrary.connect_material_property(sea_color,'',unreal.MaterialProperty.MP_BASE_COLOR)

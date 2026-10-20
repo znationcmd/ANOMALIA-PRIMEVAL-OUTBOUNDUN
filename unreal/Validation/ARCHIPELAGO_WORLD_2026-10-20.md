@@ -14,7 +14,7 @@ Demande : grande île découpée, montagnes marquées au nord, îles séparées,
 
 ## Exécution et protection des données
 
-Le workflow natif compile puis exécute `unreal/Scripts/create_archipelago_world.py` dans UnrealEditor-Cmd. Nouvelle carte : `/Game/Maps/ANOMALIA_Archipelago_v1`.
+Le workflow natif compile puis exécute `unreal/Scripts/create_archipelago_world.py` dans UnrealEditor-Cmd. Nouvelle carte : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 Une carte existante à cet emplacement est préservée, jamais régénérée automatiquement. Les anciennes heightmaps, cartes et sauvegardes ne sont pas modifiées.
 Les packages de la carte, ses acteurs externes et le matériau sont conservés ensemble dans l'artefact `ue5-archipelago-world`.
 Le rapport du run doit établir la création réelle, 576 composants et 576 composants de collision avant acceptation.
