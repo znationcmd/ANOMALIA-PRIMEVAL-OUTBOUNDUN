@@ -1,5 +1,9 @@
 # ANOMALIA — niveau original natif, preuves
 
+État courant et reprise : [audit principal](../../AUDIT_WORK_ANOMALIA_2026-10-20.md).
+Les sections ci-dessous constituent un historique chronologique ; les premières
+limitations peuvent avoir été levées dans les sections et rapports plus récents.
+
 Création réelle validée sous Unreal Engine 5.8.3 sur le commit 1b74e33771b82eee3facde5def36e5f0459b1696.
 Run : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39479732171
 
@@ -24,7 +28,7 @@ Le test d'inventaire PIE utilise un acteur de test transitoire propre au test po
 
 ![Aperçu calculé du relief, pas une capture Unreal](ANOMALIA_Archipelago_preview.jpg)
 
-## Éléments encore absents de ce niveau
+## Historique — éléments absents avant le lot du pont
 
 Ponts, routes, chemins, sentiers, villes, villages, bâtiments RP, ports, bases militaires, aéroport, végétation 3D, navmesh, IA, zombies, animaux, dinosaures et drones pilotables. La présence d'un catalogue ne vaut pas intégration. Ces éléments doivent être ajoutés par lots après validation du niveau en mode Jouer.
 
@@ -95,3 +99,43 @@ IA/animaux/zombies/dinosaures et drones pilotables. Ces éléments ne sont pas d
 intégrés par le présent lot. Un modèle de berline CC0 détaillé est déjà embarqué dans
 src/sedan-asset.js (72 meshes, 9 matériaux) ; le réutiliser pour le prochain lot de
 véhicules, sans perdre les pièces ni le confondre avec les modèles précis demandés.
+
+## Continuous bridge crossing — native evidence, run 39485038140
+
+Source commit: `e647a39850ad0ce30e8993c988bc9710dbc1a94e`.
+
+Editor and Game compiled successfully under the installed UE 5.8.3 host. The three
+`Anomalia.Native` automation tests passed. `Anomalia.World.ArchipelagoPIE` passed
+with a continuous **2450.3 metre** character crossing, visiting all **50 spans in
+sequence**. The test teleports to its initial position only, then uses native
+CharacterMovement and collision for the crossing. It pauses movement before
+unloaded collision and resumes at that same position. Speed is accelerated to
+25 m/s on the PIE test character only; this is neither a normal walking speed
+claim nor a vehicle driving test. Original terrain movement and isolated inventory
+add/remove also passed.
+
+Evidence artifact: `12294225168`; SHA-256
+`3d2bb4ccf423809a1485ac60f09391326aa6a25c161bfc249e728618a4f3fc3b`.
+Copied original reports: `world-pie-39485038140.json`,
+`pie-test-results-39485038140.json`.
+
+No rendered quality, FPS, vehicle or multiplayer validation is inferred.
+
+### Next lot currently submitted
+
+Commit `6bb306dd6078f09e49b614992c47082b75d4ebbf` adds two original, terrain-following
+500 m approaches (8 m asphalt roadway, 11 m including shoulders), reusing existing
+CC0 Poly Haven asphalt/concrete images. Geometry is tessellated every 5 m and
+blends into the unchanged bridge endpoints. The native workflow imports actual
+meshes, configures complex collision, appends separate tagged actors and saves
+the existing World Partition map. No existing actor, map or save is replaced.
+
+Le run `39485506803` a compilé et importé les routes mais son PIE a échoué.
+Le diagnostic `39488011249` confirme un contact avec le Landscape devant la
+route au raccord ouest (X du personnage : 1345376 cm). Le mélange de hauteur
+aplatissait et enfouissait la chaussée à la fin de la pente. Le correctif
+`730d7d168b5aef5878bea7bacd2441d70258580b` mélange uniquement l'offset du raccord,
+conserve les anciens maillages et le marqueur v1, et réutilise les acteurs existants.
+Validation du correctif : run `39488623890`, résultat encore en attente.
+Ne pas annoncer le parcours complet de 3490 m avant réussite native.
+Les rapports des deux échecs restent conservés à côté des rapports de succès.

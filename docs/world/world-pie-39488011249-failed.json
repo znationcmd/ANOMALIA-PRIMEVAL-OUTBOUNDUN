@@ -1,0 +1,10 @@
+{
+  "state": "FAILED",
+  "mode": "Play In Editor",
+  "headless": true,
+  "renderingValidated": false,
+  "multiplayerTested": false,
+  "automationReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39488011249-1\\world-pie-e4117985dc574cfb87f7cd2829565a52",
+  "exitCode": 255,
+  "error": "Native PIE test missing, incomplete or failed"
+}

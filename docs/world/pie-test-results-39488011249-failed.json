@@ -1,0 +1,357 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "CMD",
+			"instance": "99A34EF14DA1ACCD14F7CE8E97D10D8E",
+			"instanceName": "CMD-2876",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9711] ",
+			"model": "Default",
+			"gPU": "Intel(R) Iris(R) Xe Graphics",
+			"cPUModel": "11th Gen Intel(R) Core(TM) i5-1155G7 @ 2.50GHz",
+			"rAMInGB": 16,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.20-20.04.32",
+	"succeeded": 0,
+	"succeededWithWarnings": 0,
+	"failed": 1,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 52.661880493164062,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ArchipelagoPIE",
+			"fullTestPath": "Anomalia.World.ArchipelagoPIE",
+			"tags": [],
+			"state": "Fail",
+			"deviceInstance": [
+				"99A34EF14DA1ACCD14F7CE8E97D10D8E"
+			],
+			"duration": 52.661880493164062,
+			"dateTime": "2026.10.20-20.03.39",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(354): 1 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize took 44.914 ms",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.40"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: GenerateStreaming for 'ANOMALIA_Archipelago_v2' started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: GenerateStreaming for 'ANOMALIA_Archipelago_v2' took 16.959 ms",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: UWorldPartition::PostDuplicatePIE started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: UWorldPartition::PostDuplicatePIE took 556 us",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize took 13.558 ms (total: 58.473 ms)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(363,362): 2 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogCsvProfiler: Metadata set : systemresolution.resy=\"638\"",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogPlayLevel: Shutting down PIE online subsystems",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: GenerateStreaming for 'ANOMALIA_Archipelago_v2' started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: GenerateStreaming for 'ANOMALIA_Archipelago_v2' took 17.754 ms (total: 34.713 ms)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: UWorldPartition::PostDuplicatePIE started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: UWorldPartition::PostDuplicatePIE took 946 us (total: 1.502 ms)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize started...",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogWorldPartition: WorldPartition initialize took 13.948 ms (total: 72.422 ms)",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStreaming: FlushAsyncLoading(365,364): 2 QueuedPackages, 0 AsyncPackages",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogPlayLevel: Destroying online subsystem :Context_1",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Actual PIE walking distance 733.9 cm; no rendered visual/performance validation",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStaticMesh: Waiting on static mesh StaticMesh /Game/Anomalia/Infrastructure/Roads/SM_DetroitWest_85c7b5cc6b0a.SM_DetroitWest_85c7b5cc6b0a being ready before playing",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogStaticMesh: Waiting on static mesh StaticMesh /Game/Anomalia/Infrastructure/Bridge/SM_Bridge50m.SM_Bridge50m being ready before playing",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.03.54"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Waiting for route collision: position=X=1345376.345 Y=900000.000 Z=4220.978 aheadX=1348376.3 expectedHeight=3799.9 hit=LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_9_8_0 hitPoint=X=1348376.345 Y=900000.000 Z=3769.764",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.04.02"
+				},
+				{
+					"event":
+					{
+						"type": "Error",
+						"message": "Route collision unavailable after 30s at x=1345376.3; ahead x=1348376.3 hit=LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_9_8_0",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Source\\AnomaliaPrimeval\\Tests\\AnomaliaWorldPlayTests.cpp",
+					"lineNumber": 27,
+					"timestamp": "2026.10.20-20.04.32"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "LogPlayLevel: Shutting down PIE online subsystems",
+						"context": "log",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.04.32"
+				}
+			],
+			"warnings": 0,
+			"errors": 1,
+			"artifacts": []
+		}
+	]
+}
