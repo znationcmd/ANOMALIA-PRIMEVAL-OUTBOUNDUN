@@ -120,6 +120,8 @@ bool UAnomaliaConfigLibrary::LoadServerSettings(const FString& ServerId, FAnomal
             OutSettings.ThirstDrainPerSecond = FMath::Clamp(static_cast<float>(Number), 0.f, 10.f);
         if (Survival->TryGetNumberField(TEXT("starvationDamagePerSecond"), Number) && FMath::IsFinite(Number))
             OutSettings.StarvationDamagePerSecond = FMath::Clamp(static_cast<float>(Number), 0.f, 10.f);
+        if (Survival->TryGetNumberField(TEXT("ambientTemperatureC"), Number) && FMath::IsFinite(Number))
+            OutSettings.AmbientTemperatureC = FMath::Clamp(static_cast<float>(Number), -50.f, 60.f);
     }
     return true;
 }
@@ -132,6 +134,7 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
         !FMath::IsFinite(Settings.HungerDrainPerSecond) || Settings.HungerDrainPerSecond < 0.f || Settings.HungerDrainPerSecond > 10.f ||
         !FMath::IsFinite(Settings.ThirstDrainPerSecond) || Settings.ThirstDrainPerSecond < 0.f || Settings.ThirstDrainPerSecond > 10.f ||
         !FMath::IsFinite(Settings.StarvationDamagePerSecond) || Settings.StarvationDamagePerSecond < 0.f || Settings.StarvationDamagePerSecond > 10.f ||
+        !FMath::IsFinite(Settings.AmbientTemperatureC) || Settings.AmbientTemperatureC < -50.f || Settings.AmbientTemperatureC > 60.f ||
         !(Settings.Mode == TEXT("rp") || Settings.Mode == TEXT("pvp") || Settings.Mode == TEXT("pve") || Settings.Mode == TEXT("mixed")))
     {
         OutError = TEXT("Invalid server settings");
@@ -162,6 +165,7 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
     Survival->SetNumberField(TEXT("hungerDrainPerSecond"), Settings.HungerDrainPerSecond);
     Survival->SetNumberField(TEXT("thirstDrainPerSecond"), Settings.ThirstDrainPerSecond);
     Survival->SetNumberField(TEXT("starvationDamagePerSecond"), Settings.StarvationDamagePerSecond);
+    Survival->SetNumberField(TEXT("ambientTemperatureC"), Settings.AmbientTemperatureC);
     Root->SetObjectField(TEXT("survival"), Survival);
         Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("server"), Server);
