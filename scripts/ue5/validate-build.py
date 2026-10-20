@@ -76,7 +76,7 @@ def validate(engine: Path, output: Path, run_tests: bool = False) -> int:
             report["nativeTestExitCode"] = result.returncode
             data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
             rows = data.get("tests", [])
-            expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation"}
+            expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics"}
             passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}
             if result.returncode != 0 or not expected.issubset(passed) or any(row.get("state") != "Success" for row in rows):
                 raise ValueError("Missing, incomplete or failed native tests")

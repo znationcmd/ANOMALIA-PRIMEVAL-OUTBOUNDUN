@@ -66,7 +66,7 @@ class BuildDriverTests(unittest.TestCase):
     def test_all_expected_native_results_still_do_not_claim_playable_game(self):
         code, report = self.run_native_fixture({"tests": [
             {"fullTestPath": name, "state": "Success"} for name in
-            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation")]})
+            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics")]})
         self.assertEqual(code, 0)
         self.assertEqual(report["nativeTests"], "passed")
         self.assertEqual(report["execution"], "not_run")

@@ -10,6 +10,7 @@ class UStaticMeshComponent;
 class USpringArmComponent;
 class UCameraComponent;
 class UFloatingPawnMovement;
+class UAnomaliaTransportMovement;
 class AAnomaliaSurvivor;
 class AController;
 
@@ -39,6 +40,17 @@ public:
 
     UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     FName VehicleId = FName(TEXT("car"));
+
+    /** Flight/naval/rail movement; deliberately separate from legacy ground movement. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
+    TObjectPtr<UAnomaliaTransportMovement> TransportMovement;
+
+    /** Set its local transform to the real cockpit/helm once the vehicle mesh is integrated. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
+    TObjectPtr<UCameraComponent> InteriorCamera;
+
+    virtual UPawnMovementComponent* GetMovementComponent() const override;
+    virtual void UnPossessed() override;
 
     /** Server-owned fuel percentage. Replicated to passengers/UI and never writable by clients. */
     UPROPERTY(ReplicatedUsing=OnRep_Fuel, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Fuel")
@@ -100,6 +112,16 @@ protected:
     UFUNCTION(Server, Unreliable)
     void ServerSetControls(float Forward, float Steering);
 
+    UFUNCTION(Server, Unreliable)
+    void ServerSetTransportControls(float Forward, float Steering, float Pitch, float Roll, float Vertical, float Brake);
+
+    void InputPitch(float Value);
+    void InputRoll(float Value);
+    void InputVertical(float Value);
+    void InputBrake(float Value);
+    void InputCamera();
+    void InputTurn(float Value);
+    void InputLookUp(float Value);
     void InputForward(float Value);
     void InputSteering(float Value);
     void InputExitVehicle();
@@ -111,5 +133,12 @@ private:
     TWeakObjectPtr<AAnomaliaSurvivor> ParkedSurvivor;
     float ForwardAxis = 0.f;
     float SteeringAxis = 0.f;
+    float PitchAxis = 0.f;
+    float RollAxis = 0.f;
+    float VerticalAxis = 0.f;
+    float BrakeAxis = 0.f;
+    float ControlSendElapsed = 0.f;
+    double LastControlReceived = -1;
+    void ClearControls();
     void ApplyDefinition();
 };

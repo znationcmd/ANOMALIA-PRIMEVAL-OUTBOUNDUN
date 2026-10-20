@@ -11,7 +11,8 @@ enum class EAnomaliaVehicleDomain : uint8
     Ground UMETA(DisplayName="Terre"),
     Water UMETA(DisplayName="Mer"),
     Underwater UMETA(DisplayName="Sous-marin"),
-    Air UMETA(DisplayName="Air")
+    Air UMETA(DisplayName="Air"),
+    Rail UMETA(DisplayName="Rail")
 };
 
 USTRUCT(BlueprintType)

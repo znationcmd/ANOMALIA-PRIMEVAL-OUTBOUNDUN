@@ -9,6 +9,9 @@
 #include "TimerManager.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
+#include "Vehicles/AnomaliaTransportMovement.h"
+#include "Vehicles/AnomaliaTransportEnvironment.h"
+#include "EngineUtils.h"
 #include "AnomaliaHomesteadStation.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
@@ -307,11 +310,37 @@ void AAnomaliaGameMode::SpawnConfiguredVehicles()
             UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: invalid vehicle tuning for %s"), *ServerId, *VehicleName);
             continue;
         }
+        // Transport settings are server-local and validated before creating an actor.
+        double Thrust=0, Stall=3500, Waterline=0, TrackDistance=0;
+        const auto ReadOptionalNumber=[&Row](const TCHAR* Name,double& Value)
+        { return !Row->HasField(Name)||Row->TryGetNumberField(Name,Value); };
+        if(!ReadOptionalNumber(TEXT("thrustAcceleration"),Thrust)||!ReadOptionalNumber(TEXT("stallSpeedCm"),Stall)||
+            !ReadOptionalNumber(TEXT("waterlineOffsetCm"),Waterline)||!ReadOptionalNumber(TEXT("trackDistanceCm"),TrackDistance)) continue;
+        if(!FMath::IsFinite(Thrust)||Thrust<0||Thrust>10000||!FMath::IsFinite(Stall)||Stall<100||Stall>20000||
+            !FMath::IsFinite(Waterline)||Waterline<0||Waterline>1000||!FMath::IsFinite(TrackDistance)||TrackDistance<0) continue;
+        AAnomaliaRailTrack* Route=nullptr;
+        if(Definition.Domain==EAnomaliaVehicleDomain::Rail)
+        {
+            FString RouteName;
+            if(!Row->TryGetStringField(TEXT("routeId"),RouteName)||RouteName.IsEmpty()||RouteName.Len()>128) continue;
+            bool bDuplicate=false;
+            for(TActorIterator<AAnomaliaRailTrack> It(GetWorld());It;++It)
+                if(It->RouteId==FName(*RouteName)) { if(Route) { bDuplicate=true; break; } Route=*It; }
+            if(!Route||bDuplicate) { UE_LOG(LogTemp,Warning,TEXT("ANOMALIA rail route missing or ambiguous: %s"),*RouteName); continue; }
+        }
         AAnomaliaVehiclePawn* Vehicle = SpawnServerVehicle(VehicleId, Transform);
         if (Vehicle)
         {
             if (!Vehicle->ConfigureRuntimeTuning(static_cast<float>(Fuel), static_cast<float>(Consumption),
                 static_cast<float>(SpeedScale))) { Vehicle->Destroy(); continue; }
+            Vehicle->TransportMovement->ThrustAcceleration=Thrust;
+            Vehicle->TransportMovement->StallSpeedCm=Stall;
+            Vehicle->TransportMovement->WaterlineOffsetCm=Waterline;
+            if(Route && !Vehicle->TransportMovement->AssignTrack(Route,TrackDistance))
+            {
+                UE_LOG(LogTemp,Warning,TEXT("ANOMALIA train spawn is not near its rail position"));
+                Vehicle->Destroy(); continue;
+            }
             ++Spawned;
         }
     }
