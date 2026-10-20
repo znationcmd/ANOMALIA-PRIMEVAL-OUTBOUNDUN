@@ -4,7 +4,8 @@ from pathlib import Path
 import unreal
 ROOT=Path(unreal.Paths.project_dir()).resolve();sys.path.insert(0,str(ROOT/'Scripts'))
 from road_mesh import build_road
-REPORT=Path(os.environ['ANOMALIA_ROADS_REPORT']);MARKER=ROOT/'Saved/AnomaliaMigration/detroit-roads-v1.json'
+REPORT=Path(os.environ['ANOMALIA_ROADS_REPORT']);MARKER=ROOT/'Saved/AnomaliaMigration/detroit-roads-v2.json'
+LEGACY=ROOT/'Saved/AnomaliaMigration/detroit-roads-v1.json'
 TAG='ANOMALIA_DetroitRoads_v1';PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
 result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),walkTested=False,renderingValidated=False)
 try:
@@ -16,7 +17,20 @@ try:
         level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
         if not level.load_level(PACKAGE):raise RuntimeError('Could not open validated map')
         actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-        if any(unreal.Name(TAG) in a.tags for a in actors.get_all_level_actors()):raise RuntimeError('Existing road actors preserved; refusing duplicate placement')
+        if not LEGACY.exists() and any(unreal.Name(TAG) in a.tags for a in actors.get_all_level_actors()):raise RuntimeError('Existing road actors preserved; refusing duplicate placement')
+        previous={}
+        if LEGACY.exists():
+            legacy=json.loads(LEGACY.read_text())
+            if legacy.get('state')!='PLACED_NOT_PLAYTESTED' or legacy.get('roadCount')!=2:raise RuntimeError('Unrecognized legacy roads preserved')
+            descriptors=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+            wanted=[d.guid for d in descriptors if str(d.label) in ['ANOMALIA_DetroitRoad_West','ANOMALIA_DetroitRoad_East']]
+            if len(wanted)!=2:raise RuntimeError('Could not identify both original road actors; no duplicates created')
+            unreal.WorldPartitionBlueprintLibrary.load_actors(wanted)
+            for side in ['West','East']:
+                found=[a for a in actors.get_all_level_actors() if a.get_actor_label()=='ANOMALIA_DetroitRoad_'+side and unreal.Name(TAG) in a.tags]
+                old=next(r for r in legacy['roads'] if r['side']==side)
+                if len(found)!=1 or found[0].get_component_by_class(unreal.StaticMeshComponent).get_editor_property('static_mesh').get_path_name()!=old['objectPath']:raise RuntimeError('User-modified or missing road actor preserved')
+                previous[side]=found[0]
         source=(ROOT/'SourceAssets/Infrastructure/Bridge/bridge50m.glb').read_bytes()
         def height(x,north):
             # Landscape height samples are quantized to 1/16 metre. Bilinear interpolation
@@ -41,13 +55,13 @@ try:
             mesh=unreal.EditorAssetLibrary.duplicate_asset(meshes[0].get_path_name(),destination)
             mesh.get_editor_property('body_setup').set_editor_property('collision_trace_flag',unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
             if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,only_if_is_dirty=False):raise RuntimeError('Road collision save failed')
-            actor=actors.spawn_actor_from_class(unreal.StaticMeshActor,unreal.Vector(origin[0]*100,900000,origin[1]*100))
+            actor=previous.get(name) or actors.spawn_actor_from_class(unreal.StaticMeshActor,unreal.Vector(origin[0]*100,900000,origin[1]*100))
             if not actor:raise RuntimeError('Road actor creation failed')
             actor.tags=[unreal.Name(TAG)];actor.set_actor_label('ANOMALIA_DetroitRoad_'+name)
             comp=actor.get_component_by_class(unreal.StaticMeshComponent);comp.set_static_mesh(mesh);comp.set_collision_profile_name('BlockAll')
             placed.append(dict(side=name,lengthMeters=x1-x0,sourceSha256=sha,objectPath=mesh.get_path_name()))
         if not level.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('Road level save failed')
-        result.update(state='PLACED_NOT_PLAYTESTED',roadCount=2,totalLengthMeters=1000,widthMeters=11,roads=placed)
+        result.update(state='PLACED_NOT_PLAYTESTED',roadCount=2,totalLengthMeters=1000,widthMeters=11,roads=placed,geometryVersion=2,legacyGeometryAndMarkerPreserved=LEGACY.exists())
         MARKER.parent.mkdir(parents=True,exist_ok=True);MARKER.write_text(json.dumps(result,indent=2)+'\n')
 except Exception as error:
     result['error']=str(error);raise

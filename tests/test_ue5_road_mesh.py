@@ -15,6 +15,11 @@ class RoadMeshTests(unittest.TestCase):
         self.assertEqual(acc['count'],202);self.assertAlmostEqual(values[-5]+origin[1],270.25,places=4)
         self.assertAlmostEqual(values[1]+origin[1],260.30,places=4)
         self.assertEqual(acc['max'][0]-acc['min'][0],500)
+        # Every vertex stays above the analytic test terrain, including the uphill
+        # final 20m. This detects the real v1 road burial defect.
+        for i in range(0,len(values),3):
+            x=values[i]+origin[0];h=values[i+1]+origin[1]
+            self.assertGreaterEqual(h-.02*x,.2499)
         self.assertEqual(len(doc['images']),2)
         for old,new in zip(json.loads(source[20:20+struct.unpack_from('<I',source,12)[0]])['images'],doc['images']):
             self.assertEqual(new['mimeType'],old['mimeType'])
