@@ -83,3 +83,19 @@ Pour chaque fonction, indiquer : `absent`, `source_only`, `compiles`, `tested_in
 5. Après chaque lot, réponse **courte** : « modifié », « tests exécutés et résultats », « restant », « bloquants », « lien commit/PR ». Éviter de remplir inutilement la conversation ; permettre de continuer dans une nouvelle conversation avec une référence au dépôt/PR.
 
 **Commencer immédiatement par :** fiabiliser la compilation native et la carte FirstTest, puis terminer l'éditeur d'ameublement (ajout, déplacement, rotation, suppression sûre, annulation/rétablissement, persistance) et ses tests, sans toucher à `main` avant validation.
+
+## 7. Dépendance Epic Games / GitHub — contrôle spécifique
+
+Le propriétaire a transmis `git@github.com:EpicGames/Signup.git`. Ce lien SSH correspond au dépôt public officiel `EpicGames/Signup` (documentation d'accès), **pas** au code source ni à un exécutable UE5. Son README renvoie à la liaison Epic Games ↔ GitHub :
+- https://github.com/EpicGames/Signup
+- https://www.unrealengine.com/ue4-on-github
+- Dépôt source une fois l'accès accordé : https://github.com/EpicGames/UnrealEngine
+
+**Constat vérifié via la connexion GitHub `znationcmd`** : le dépôt `EpicGames/Signup` est lisible, tandis que `EpicGames/UnrealEngine` renvoie `404 NOT_FOUND` au moment du contrôle. Ce 404 ne permet pas de déduire la raison exacte : liaison du compte, invitation non acceptée, permissions ou visibilité du connecteur. Ne jamais présumer que Work dispose du code UE5 avant un nouveau contrôle d'accès autorisé.
+
+**Actions pour Work :**
+1. Vérifier les prérequis de compte Epic Games et l'association **du compte GitHub voulu** depuis les paramètres Epic ; laisser l'utilisateur effectuer la connexion, les confirmations et toute acceptation d'invitation, sans demander de mot de passe/token.
+2. Re-tester l'accès au dépôt `EpicGames/UnrealEngine` **avec les permissions effectivement disponibles**. En cas de 404, consigner le blocage ; ne pas contourner les permissions.
+3. Une fois autorisé, employer une version UE5 compatible et une machine de compilation adaptée ; vérifier espace disque, dépendances, temps de build, licence et GPU. L'accès au dépôt **ne fournit pas automatiquement** une VM, un Windows runner, des crédits cloud ou un jeu compilé.
+4. Si le code source Epic n'est pas nécessaire, privilégier l'installation UE5 standard par Epic Games Launcher sur une machine Windows autorisée ; l'utilisateur ne veut pas installer UE5 sur son PC personnel.
+5. Garder le build natif en statut `blocked` tant qu'aucune compilation réelle avec rapport n'est prouvée ; continuer pendant ce temps les correctifs hors moteur disponibles.
