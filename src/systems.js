@@ -15,6 +15,8 @@ export const ITEM_DEFS={
  kibble_exceptional:{label:"Croquettes exceptionnelles",weight:.3,kind:"taming"},
  kibble_extraordinary:{label:"Croquettes extraordinaires",weight:.3,kind:"taming"},
  honey:{label:"Miel sauvage",weight:.3,kind:"material"},
+ milk:{label:"Lait frais",weight:.5,kind:"drink"},
+ eggs:{label:"Œufs de poule",weight:.22,kind:"food"},
  rare_flower:{label:"Fleur rare",weight:.05,kind:"material"},
  sap:{label:"Sève",weight:.1,kind:"material"},
  vegetable:{label:"Légumes sauvages",weight:.2,kind:"material"},
