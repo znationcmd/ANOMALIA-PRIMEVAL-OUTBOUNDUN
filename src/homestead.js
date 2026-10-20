@@ -25,7 +25,7 @@ const clamp=(x,min,max)=>Math.min(max,Math.max(min,x));
 export function sleepTick(state,seconds,{sprinting=false}={}){
  if(!Number.isFinite(seconds)||seconds<=0)return;
  state.sleep=clamp(Number.isFinite(state.sleep)?state.sleep:100,0,100);
- state.sleep=clamp(state.sleep-Math.min(seconds,.25)*(sprinting?.017:.008),0,100);
+ state.sleep=clamp(state.sleep-Math.min(seconds,.25)*(sprinting ? .017 : .008),0,100);
  if(state.sleep<=5)state.stamina=clamp((state.stamina||0)-.5*Math.min(seconds,.25),0,100);
 }
 export function restAtBed(state,objects,now=Date.now()){
