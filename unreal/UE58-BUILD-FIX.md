@@ -12,8 +12,9 @@ DanglingWarningLevel: Off != Error
 ```
 
 Le projet utilisait `DefaultBuildSettings = BuildSettingsVersion.V5`
-dans ses deux fichiers `.Target.cs`. Pour Unreal 5.8, nous passons
-**les deux cibles** à `BuildSettingsVersion.V6`.
+dans ses deux fichiers `.Target.cs`. Le premier correctif en `BuildSettingsVersion.V6` ne suffisait pas pour la version locale du moteur : une fenêtre **Target Upgrade Required** indique expressément `BuildSettingsVersion.V7`. Nous passons donc **les deux cibles** à `BuildSettingsVersion.V7`.
+
+La correction est fondée sur la demande précise de l'outil Unreal installé chez l'utilisateur, pas sur une compilation native déjà réussie.
 
 Ne pas employer `bOverrideBuildEnvironment=true` pour contourner
 la vérification des binaires partagés de l'éditeur installé. Le mode
@@ -27,7 +28,7 @@ la vérification des binaires partagés de l'éditeur installé. Le mode
 2. Depuis le dossier du projet extrait `.../unreal/Source/`, ouvrir
    `AnomaliaPrimevalEditor.Target.cs` dans le Bloc-notes.
 3. Remplacer **uniquement** `BuildSettingsVersion.V5` par
-   `BuildSettingsVersion.V6` et enregistrer.
+   `BuildSettingsVersion.V7` et enregistrer.
 4. Faire la même modification dans `AnomaliaPrimeval.Target.cs`.
 5. Double-cliquer `AnomaliaPrimeval.uproject`, accepter `Yes` pour
    reconstruire les modules. Si besoin, clic droit sur le fichier

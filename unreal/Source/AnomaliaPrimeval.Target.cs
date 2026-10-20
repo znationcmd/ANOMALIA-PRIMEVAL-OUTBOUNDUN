@@ -5,8 +5,8 @@ public class AnomaliaPrimevalTarget : TargetRules
     public AnomaliaPrimevalTarget(TargetInfo Target) : base(Target)
     {
         Type = TargetType.Game;
-        // Keep game and editor targets on the UE5.8 compatible target defaults.
-        DefaultBuildSettings = BuildSettingsVersion.V6;
+        // Keep game and editor targets on the the V7 target defaults requested by the user's UE5.8 installation.
+        DefaultBuildSettings = BuildSettingsVersion.V7;
         ExtraModuleNames.Add("AnomaliaPrimeval");
     }
 }
