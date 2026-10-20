@@ -84,9 +84,19 @@ else {
 # The original ZIP bundled a valid 16-bit raw file but a JSON without these keys.
 # Preserve all metadata and copy original JSON once before adding them.
 $sidecarInfo = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
-if (($sidecarInfo.width -ne 3025) -or
-    ($sidecarInfo.height -ne 3025) -or
-    ($sidecarInfo.bbp -ne 16)) {
+# PowerShell StrictMode throws when reading missing JSON properties with dot notation.
+# Inspect the property collection first so previous ZIP metadata can be upgraded.
+$widthProperty = $sidecarInfo.PSObject.Properties['width']
+$heightProperty = $sidecarInfo.PSObject.Properties['height']
+$bitsProperty = $sidecarInfo.PSObject.Properties['bbp']
+$needsRawFix = ($null -eq $widthProperty) -or ($null -eq $heightProperty) -or
+    ($null -eq $bitsProperty)
+if (-not $needsRawFix) {
+    $needsRawFix = ([int]$widthProperty.Value -ne 3025) -or
+        ([int]$heightProperty.Value -ne 3025) -or
+        ([int]$bitsProperty.Value -ne 16)
+}
+if ($needsRawFix) {
     $metadataBackup = Join-Path $folder 'ANOMALIA_WorkMap_48km_3025_MetadataBeforeUnrealFix.json'
     if (-not (Test-Path -LiteralPath $metadataBackup -PathType Leaf)) {
         Copy-Item -LiteralPath $manifest -Destination $metadataBackup -ErrorAction Stop
