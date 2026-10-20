@@ -6,6 +6,7 @@ This script never overwrites an existing .umap and does not claim playable statu
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import traceback
@@ -48,12 +49,18 @@ def validate_sources():
             or data.get("tilesVerified") != 144
             or data.get("seamsVerified") != 264):
         raise RuntimeError("TerrainPreview verification manifest is invalid or incomplete")
+    hashes = data.get("tileSHA256")
+    if not isinstance(hashes, dict) or len(hashes) != 144:
+        raise RuntimeError("Missing 144 terrain SHA256 checksums")
     expected_bytes = 253 * 253 * 2
     for y in range(12):
         for x in range(12):
             filename = TILES / f"ANOMALIA_x{x}_y{y}.r16"
             if not filename.is_file() or filename.stat().st_size != expected_bytes:
                 raise RuntimeError(f"Missing or invalid terrain tile: {filename}")
+            actual_hash = hashlib.sha256(filename.read_bytes()).hexdigest()
+            if hashes.get(filename.name) != actual_hash:
+                raise RuntimeError(f"Terrain tile checksum mismatch: {filename}")
 
 
 def create():
