@@ -92,6 +92,7 @@ def edges(content: bytes) -> tuple[bytes, bytes, bytes, bytes]:
 
 def verify_tiles(output: Path, cols: int = 12, rows: int = 12) -> dict:
     samples = {}
+    checksums = {}
     missing = []
     for row in range(rows):
         for col in range(cols):
@@ -99,7 +100,9 @@ def verify_tiles(output: Path, cols: int = 12, rows: int = 12) -> dict:
             if not path.is_file():
                 missing.append(tile_name(col, row))
                 continue
-            samples[(col, row)] = edges(path.read_bytes())
+            contents = path.read_bytes()
+            samples[(col, row)] = edges(contents)
+            checksums[tile_name(col, row)] = hashlib.sha256(contents).hexdigest()
     if missing:
         raise ValueError(f"Missing {len(missing)} tiles: {', '.join(missing[:8])}")
     seams = 0
@@ -114,7 +117,9 @@ def verify_tiles(output: Path, cols: int = 12, rows: int = 12) -> dict:
                 if bottom != samples[(col, row + 1)][0]:
                     raise ValueError(f"Horizontal seam mismatch: ({col},{row}) / ({col},{row + 1})")
                 seams += 1
-    return {"tilesVerified": cols * rows, "seamsVerified": seams, "byteCountPerTile": SAMPLES * SAMPLES * 2}
+    return {"tilesVerified": cols * rows, "seamsVerified": seams,
+            "byteCountPerTile": SAMPLES * SAMPLES * 2,
+            "tileSHA256": checksums}
 
 
 def metadata(verification: dict) -> dict:
@@ -158,15 +163,15 @@ def generate(output: Path, verify_only: bool = False) -> dict:
                 save_tile(output, col, row)
     verified = verify_tiles(output, TILES_PER_SIDE, TILES_PER_SIDE)
     result = metadata(verified)
-    if not verify_only:
+    # Check the full tile hashes against the previous manifest on every run,
+    # including --verify-only (detects tampering away from shared edges).
+    encoded = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
+    if manifest_path.exists():
+        if manifest_path.read_text(encoding="utf-8") != encoded:
+            raise ValueError("Existing terrain manifest differs; left unchanged")
+    elif not verify_only:
         output.mkdir(parents=True, exist_ok=True)
-        # Do not delete or overwrite a manifest: re-runs are idempotent if content matches.
-        encoded = json.dumps(result, indent=2, ensure_ascii=False) + "\n"
-        if manifest_path.exists():
-            if manifest_path.read_text(encoding="utf-8") != encoded:
-                raise ValueError("Existing terrain manifest differs; left unchanged")
-        else:
-            manifest_path.write_text(encoded, encoding="utf-8")
+        manifest_path.write_text(encoded, encoding="utf-8")
     return result
 
 
