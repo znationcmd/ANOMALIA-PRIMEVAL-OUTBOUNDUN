@@ -4,6 +4,7 @@
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaVitalsComponent.h"
+#include "AnomaliaHomesteadStation.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -50,6 +51,23 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
     Thirst = FMath::Max(0.f, Thirst - DeltaSeconds * ThirstRate);
     if (Hunger <= 0.f || Thirst <= 0.f) Health = FMath::Max(0.f, Health - DeltaSeconds * DamageRate);
     if (PreviousHunger != Hunger || PreviousThirst != Thirst || PreviousHealth != Health) OnSurvivalChanged();
+
+    // Sleep is server-owned; a bed must still exist in this world and remain nearby.
+    if (bSleeping &&
+        (!ActiveBed.IsValid() || !ActiveBed->IsRestPlace() || Health <= 0.f ||
+         FVector::DistSquared(GetActorLocation(), ActiveBed->GetActorLocation()) > FMath::Square(350.f)))
+    {
+        bSleeping = false;
+        ActiveBed.Reset();
+        if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        OnRestChanged();
+    }
+    const float PreviousFatigue = Fatigue;
+    const float RestStep = FMath::Min(DeltaSeconds, 0.25f);
+    Fatigue = bSleeping
+        ? FMath::Max(0.f, Fatigue - RestStep * 0.7f)
+        : FMath::Min(100.f, Fatigue + RestStep * 0.009f);
+    if (!FMath::IsNearlyEqual(Fatigue, PreviousFatigue, 0.01f)) OnRestChanged();
 }
 
 void AAnomaliaSurvivor::RestoreSurvival(float Food, float Water, float HP)
@@ -63,12 +81,27 @@ void AAnomaliaSurvivor::RestoreSurvival(float Food, float Water, float HP)
 
 void AAnomaliaSurvivor::OnRep_Survival() { OnSurvivalChanged(); }
 
+void AAnomaliaSurvivor::RestoreFatigue(float SavedFatigue)
+{
+    if (!HasAuthority() || !FMath::IsFinite(SavedFatigue)) return;
+    Fatigue = FMath::Clamp(SavedFatigue, 0.f, 100.f);
+    OnRestChanged();
+}
+
+void AAnomaliaSurvivor::OnRep_Rest()
+{
+    // Real movement-mode changes also replicate from the server to simulated proxies.
+    OnRestChanged();
+}
+
 void AAnomaliaSurvivor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaSurvivor, Hunger);
     DOREPLIFETIME(AAnomaliaSurvivor, Thirst);
     DOREPLIFETIME(AAnomaliaSurvivor, Health);
+    DOREPLIFETIME(AAnomaliaSurvivor, Fatigue);
+    DOREPLIFETIME(AAnomaliaSurvivor, bSleeping);
 }
 
 void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
@@ -84,6 +117,7 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
     Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
     Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
+    Input->BindAction(TEXT("Rest"), IE_Pressed, this, &AAnomaliaSurvivor::InputRest);
 }
 
 void AAnomaliaSurvivor::StartSprint()
@@ -94,6 +128,47 @@ void AAnomaliaSurvivor::StartSprint()
 void AAnomaliaSurvivor::StopSprint()
 {
     if (VitalsComponent) VitalsComponent->RequestSprint(false);
+}
+
+void AAnomaliaSurvivor::InputRest()
+{
+    if (!IsLocallyControlled()) return;
+    if (HasAuthority()) ServerRequestRest_Implementation();
+    else ServerRequestRest();
+}
+
+void AAnomaliaSurvivor::ServerRequestRest_Implementation()
+{
+    if (!HasAuthority() || !GetController() || !GetWorld()) return;
+    if (bSleeping)
+    {
+        bSleeping = false;
+        ActiveBed.Reset();
+        if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        OnRestChanged();
+        return;
+    }
+    if (Health <= 0.f || GetVelocity().SizeSquared2D() > FMath::Square(60.f)) return;
+
+    AAnomaliaHomesteadStation* NearestBed = nullptr;
+    float NearestDistanceSquared = FMath::Square(250.f);
+    for (TActorIterator<AAnomaliaHomesteadStation> It(GetWorld()); It; ++It)
+    {
+        AAnomaliaHomesteadStation* Station = *It;
+        if (!IsValid(Station) || !Station->IsRestPlace()) continue;
+        const float DistanceSquared = FVector::DistSquared(GetActorLocation(), Station->GetActorLocation());
+        if (DistanceSquared < NearestDistanceSquared)
+        {
+            NearestBed = Station;
+            NearestDistanceSquared = DistanceSquared;
+        }
+    }
+    if (!NearestBed || !GetCharacterMovement()) return;
+    ActiveBed = NearestBed;
+    bSleeping = true;
+    GetCharacterMovement()->StopMovementImmediately();
+    GetCharacterMovement()->DisableMovement();
+    OnRestChanged();
 }
 
 void AAnomaliaSurvivor::InputInventory()
@@ -152,7 +227,26 @@ void AAnomaliaSurvivor::InputInteract()
 
 void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
 {
-    if (!HasAuthority() || !GetController() || Health <= 0.f || !GetWorld()) return;
+    if (!HasAuthority() || !GetController() || Health <= 0.f || !GetWorld() || bSleeping) return;
+    // A client only requests INTERACT; the server chooses the nearest harvest station.
+    AAnomaliaHomesteadStation* NearestFarm = nullptr;
+    float FarmDistanceSquared = FMath::Square(275.f);
+    for (TActorIterator<AAnomaliaHomesteadStation> It(GetWorld()); It; ++It)
+    {
+        AAnomaliaHomesteadStation* Station = *It;
+        if (!IsValid(Station) || Station->GetHarvestItemId().IsNone()) continue;
+        const float DistanceSquared = FVector::DistSquared(GetActorLocation(), Station->GetActorLocation());
+        if (DistanceSquared < FarmDistanceSquared)
+        {
+            NearestFarm = Station;
+            FarmDistanceSquared = DistanceSquared;
+        }
+    }
+    if (NearestFarm)
+    {
+        NearestFarm->TryHarvest(this);
+        return;
+    }
     AAnomaliaVehiclePawn* Nearest = nullptr;
     float NearestDistanceSquared = FMath::Square(450.f);
     for (TActorIterator<AAnomaliaVehiclePawn> It(GetWorld()); It; ++It)
