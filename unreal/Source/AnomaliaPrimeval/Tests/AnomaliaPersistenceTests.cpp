@@ -1,7 +1,7 @@
 #if WITH_DEV_AUTOMATION_TESTS
 #include "Misc/AutomationTest.h"
-#include "AnomaliaConfigLibrary.h"
-#include "AnomaliaVehicleCatalog.h"
+#include "../AnomaliaConfigLibrary.h"
+#include "../AnomaliaVehicleCatalog.h"
 #include "Misc/Guid.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCatalogTest, "Anomalia.Native.VehicleCatalog",
