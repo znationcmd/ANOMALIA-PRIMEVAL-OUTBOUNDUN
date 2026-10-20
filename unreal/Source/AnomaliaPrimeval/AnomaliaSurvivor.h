@@ -10,6 +10,7 @@ class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
 class UAnomaliaVitalsComponent;
 class AAnomaliaHomesteadStation;
+class UAnomaliaFurnitureComponent;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -26,6 +27,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Furniture")
+    TObjectPtr<UAnomaliaFurnitureComponent> FurnitureComponent;
 
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;

@@ -1,4 +1,5 @@
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaFurnitureComponent.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
@@ -23,6 +24,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
+    FurnitureComponent = CreateDefaultSubobject<UAnomaliaFurnitureComponent>(TEXT("FurnitureComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
@@ -107,6 +109,7 @@ void AAnomaliaSurvivor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
+    if (FurnitureComponent) FurnitureComponent->BindInput(Input);
     Input->BindAxis(TEXT("MoveForward"), this, &AAnomaliaSurvivor::MoveForward);
     Input->BindAxis(TEXT("MoveRight"), this, &AAnomaliaSurvivor::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &AAnomaliaSurvivor::Turn);

@@ -10,10 +10,11 @@
 AAnomaliaHomesteadStation::AAnomaliaHomesteadStation()
 {
     bReplicates = true;
-    SetReplicateMovement(false);
+    SetReplicateMovement(true);
     PrimaryActorTick.bCanEverTick = false;
     DisplayMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("DisplayMesh"));
     RootComponent = DisplayMesh;
+    DisplayMesh->SetMobility(EComponentMobility::Movable);
     DisplayMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
     // Temporary visible editor/gameplay placeholder; final farm/furniture meshes are still needed.
     static ConstructorHelpers::FObjectFinder<UStaticMesh> TestCube(TEXT("/Engine/BasicShapes/Cube.Cube"));
@@ -54,5 +55,6 @@ void AAnomaliaHomesteadStation::GetLifetimeReplicatedProps(TArray<FLifetimePrope
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaHomesteadStation, ObjectType);
+    DOREPLIFETIME(AAnomaliaHomesteadStation, PlacementId);
     DOREPLIFETIME(AAnomaliaHomesteadStation, NextHarvestTime);
 }

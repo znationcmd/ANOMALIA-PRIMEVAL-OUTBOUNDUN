@@ -3,6 +3,28 @@
 #include "AnomaliaConfigLibrary.h"
 #include "AnomaliaVehicleCatalog.h"
 #include "Misc/Guid.h"
+#include "Furniture/AnomaliaFurnitureRules.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaFurnitureTransactionTest, "Anomalia.Native.FurnitureTransactions",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+
+bool FAnomaliaFurnitureTransactionTest::RunTest(const FString& Parameters)
+{
+    using namespace AnomaliaFurniture;
+    Layout State;
+    const Record Bed{"bed-1", "owner-a", "bed", {0, 0, 50, 0}};
+    TestTrue(TEXT("Place own furniture"), State.Place("owner-a", Bed));
+    TestFalse(TEXT("Other owner cannot move"), State.Move("owner-b", "bed-1", {50, 0, 50, 90}));
+    TestFalse(TEXT("Removal must be confirmed"), State.Remove("owner-a", "bed-1", false));
+    TestTrue(TEXT("Own move"), State.Move("owner-a", "bed-1", {100, 0, 50, 90}));
+    TestTrue(TEXT("Undo own move"), State.Undo("owner-a"));
+    TestTrue(TEXT("Original pose restored"), State.Find("bed-1") && State.Find("bed-1")->Transform == Bed.Transform);
+    TestTrue(TEXT("Redo own move"), State.Redo("owner-a"));
+    Layout OtherServer;
+    TestFalse(TEXT("Other world has no shared records"), OtherServer.Find("bed-1") != nullptr);
+    TestFalse(TEXT("Other world has no shared history"), OtherServer.Undo("owner-a"));
+    return true;
+}
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCatalogTest, "Anomalia.Native.VehicleCatalog",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)

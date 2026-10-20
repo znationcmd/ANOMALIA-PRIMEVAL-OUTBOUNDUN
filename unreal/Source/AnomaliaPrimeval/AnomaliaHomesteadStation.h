@@ -27,6 +27,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Replicated, Category="ANOMALIA|Homestead")
     EAnomaliaHomesteadObject ObjectType = EAnomaliaHomesteadObject::Bed;
 
+    /** Stable runtime placement ID; empty for legacy/server-authored scenery. */
+    UPROPERTY(Replicated, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Furniture")
+    FString PlacementId;
+
     /** World time in seconds; replicated so UI may show the cooldown. */
     UPROPERTY(Replicated, BlueprintReadOnly, Category="ANOMALIA|Farm")
     float NextHarvestTime = 0.f;

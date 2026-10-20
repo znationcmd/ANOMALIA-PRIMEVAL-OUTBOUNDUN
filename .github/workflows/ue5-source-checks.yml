@@ -7,6 +7,8 @@ on:
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_furniture_source.py'
+      - 'tests/furniture_rules_test.cpp'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
       - 'tests/test_ue5_player_lifecycle_source.py'
@@ -24,6 +26,8 @@ on:
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_furniture_source.py'
+      - 'tests/furniture_rules_test.cpp'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
       - 'tests/test_ue5_player_lifecycle_source.py'
@@ -41,6 +45,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Execute portable C++ furniture transaction rules (not an Unreal build)
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -fsanitize=undefined -I unreal/Source/AnomaliaPrimeval tests/furniture_rules_test.cpp -o /tmp/anomalia-furniture-rules
+          /tmp/anomalia-furniture-rules
+      - name: Check Unreal furniture integration source boundaries
+        run: python -m unittest discover -s tests -p test_ue5_furniture_source.py -v
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)

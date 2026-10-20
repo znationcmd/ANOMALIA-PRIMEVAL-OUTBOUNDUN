@@ -25,6 +25,13 @@ public:
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Server")
     FString GetActiveServerMode() const { return ActiveServerSettings.Mode; }
 
+    /** Creative prototype: enable explicitly on trusted test servers, no resource economy yet. */
+    UPROPERTY(EditDefaultsOnly, Category="ANOMALIA|Furniture")
+    bool bEnableFurniturePrototype = false;
+
+    /** Server-derived identity, never selected by the RPC caller. */
+    FString GetFurnitureOwnerId(const AController* Controller) const;
+
 protected:
     /** Loads a bounded list of initial vehicles only from this server's own Saved directory. */
     virtual void BeginPlay() override;

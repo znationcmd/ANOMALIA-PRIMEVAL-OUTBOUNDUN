@@ -1,4 +1,5 @@
 #include "AnomaliaGameMode.h"
+#include "AnomaliaFurnitureSubsystem.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaVitalsComponent.h"
@@ -50,7 +51,11 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
 
 FString AAnomaliaGameMode::GetPersistentPlayerId(const AController* Controller) const
 {
-    if (!Controller || !Controller->PlayerState) return FString();
+    if (!Controller || Controller->GetWorld() != GetWorld()) return FString();
+    // Preserve existing network-profile IDs. Offline standalone alone gets a stable local fallback.
+    if ((!Controller->PlayerState || !Controller->PlayerState->GetUniqueId().IsValid()) &&
+        GetNetMode() == NM_Standalone && Controller->IsLocalController()) return TEXT("local-solo");
+    if (!Controller->PlayerState) return FString();
     const FUniqueNetIdRepl& NetId = Controller->PlayerState->GetUniqueId();
     if (!NetId.IsValid()) return FString();
     const FString RawIdentity = NetId.ToString();
@@ -247,8 +252,18 @@ void AAnomaliaGameMode::BeginPlay()
     {
         SpawnConfiguredHomestead();
         SpawnConfiguredVehicles();
+        FString FurnitureError;
+        if (UAnomaliaFurnitureSubsystem* Furniture = GetWorld()->GetSubsystem<UAnomaliaFurnitureSubsystem>())
+            if (!Furniture->LoadWorld(ServerId, FurnitureError))
+                UE_LOG(LogTemp, Warning, TEXT("ANOMALIA furniture: %s"), *FurnitureError);
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }
+}
+
+FString AAnomaliaGameMode::GetFurnitureOwnerId(const AController* Controller) const
+{
+    if (!HasAuthority() || !IsValid(Controller) || Controller->GetWorld() != GetWorld()) return FString();
+    return GetPersistentPlayerId(Controller);
 }
 
 void AAnomaliaGameMode::SpawnConfiguredVehicles()
