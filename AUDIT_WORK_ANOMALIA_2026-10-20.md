@@ -99,3 +99,17 @@ Le propriétaire a transmis `git@github.com:EpicGames/Signup.git`. Ce lien SSH c
 3. Une fois autorisé, employer une version UE5 compatible et une machine de compilation adaptée ; vérifier espace disque, dépendances, temps de build, licence et GPU. L'accès au dépôt **ne fournit pas automatiquement** une VM, un Windows runner, des crédits cloud ou un jeu compilé.
 4. Si le code source Epic n'est pas nécessaire, privilégier l'installation UE5 standard par Epic Games Launcher sur une machine Windows autorisée ; l'utilisateur ne veut pas installer UE5 sur son PC personnel.
 5. Garder le build natif en statut `blocked` tant qu'aucune compilation réelle avec rapport n'est prouvée ; continuer pendant ce temps les correctifs hors moteur disponibles.
+
+## 8. Confirmation de l'accès utilisateur Unreal Engine (20 octobre 2026, 10h00)
+**Preuves fournies par le propriétaire (captures de son application GitHub et de son e-mail) :**
+- E-mail « EpicTeamAdmin added you to the Epic Games team Developers » : l'utilisateur a été ajouté à l'équipe `Developers` d'Epic Games.
+- Capture de l'application GitHub : dépôt privé `EpicGames/UnrealEngine` visible pour le compte connecté, ainsi qu'une publication Unreal Engine 5.8.3.
+- La liaison du compte Epic Games avec `znationcmd` est déjà confirmée dans ses paramètres Epic.
+
+**Nuance essentielle :** un nouveau contrôle depuis **le connecteur GitHub ChatGPT** renvoie toujours `404 NOT_FOUND` pour `EpicGames/UnrealEngine`. L'accès utilisateur au dépôt dans son application est **confirmé par la capture**, mais **pas l'accès du connecteur GitHub**. Ne pas répéter au propriétaire que son inscription Epic ou son acceptation d'équipe sont manquantes. Ne pas confondre visibilité en application avec un accès du connecteur.
+
+**Instructions concrètes pour Work :**
+1. Si l'accès est utile, ouvrir le dépôt dans la session GitHub authentifiée de l'utilisateur via une interface de navigateur autorisée ; ne pas exiger l'accès du connecteur s'il reste limité.
+2. Si l'application GitHub doit accéder au dépôt privé, vérifier **les autorisations de l'installation GitHub** et la présence d'EpicGames ; l'utilisateur ne contrôle pas forcément l'installation d'une application dans l'organisation Epic. Ne pas demander de mot de passe ni de token personnel.
+3. Ne jamais copier, transférer ni rendre public du code propriétaire `EpicGames/UnrealEngine` dans le dépôt public ANOMALIA. Conserver exclusivement son propre code et ses modifications publiables dans `znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN`, et récupérer le moteur Epic dans un environnement privé autorisé, selon sa licence.
+4. La disponibilité du code source **ne fournit toujours pas** un exécutable Unreal, une machine de compilation Windows/GPU ou un runner hébergé. Si pas de build UE5 exécutable disponible, laisser le statut `blocked_native_build` et poursuivre la préparation et la validation hors moteur.
