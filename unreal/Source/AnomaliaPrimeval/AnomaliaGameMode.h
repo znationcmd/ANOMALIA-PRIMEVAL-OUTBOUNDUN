@@ -30,6 +30,8 @@ protected:
     virtual void BeginPlay() override;
     virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
     void SpawnConfiguredVehicles();
+    /** Server-only import of its own validated Editor/world.json placeables. */
+    void SpawnConfiguredHomestead();
     void LoadPersistentPlayer(APlayerController* PlayerController);
     void SavePersistentPlayer(AController* Controller);
     void SaveAllPlayerProfiles();
