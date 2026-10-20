@@ -24,6 +24,7 @@ jobs:
           clean: false
           persist-credentials: false
       - name: Compile Editor and Game with installed Unreal Engine
+        id: native_build
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -107,6 +108,15 @@ jobs:
           $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/run-world-playtest.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture real graphical Unreal views in DX11 SM5
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()
