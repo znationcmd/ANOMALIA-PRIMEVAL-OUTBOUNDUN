@@ -11,6 +11,10 @@ on:
       - 'tests/test_ue5_inventory_source.py'
       - 'tests/test_ue5_vitals_source.py'
       - 'tests/test_ue5_homestead_editor.py'
+      - 'tests/test_ue5_first_world_source.py'
+      - 'tests/test_ue5_draft_bootstrap_source.py'
+      - 'tests/test_ue5_playtest_terrain.py'
+      - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
@@ -23,6 +27,10 @@ on:
       - 'tests/test_ue5_inventory_source.py'
       - 'tests/test_ue5_vitals_source.py'
       - 'tests/test_ue5_homestead_editor.py'
+      - 'tests/test_ue5_first_world_source.py'
+      - 'tests/test_ue5_draft_bootstrap_source.py'
+      - 'tests/test_ue5_playtest_terrain.py'
+      - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
       - '.github/workflows/ue5-source-checks.yml'
 
@@ -43,10 +51,18 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_vitals_source.py -v
       - name: Test safe homestead, farm and offline editor operations
         run: python -m unittest discover -s tests -p test_ue5_homestead_editor.py -v
+      - name: Verify World Partition bootstrap sources (Unreal Editor required for .umap)
+        run: python -m unittest discover -s tests -p test_ue5_first_world_source.py -v
+      - name: Verify draft landscape bootstrap safeguards
+        run: python -m unittest discover -s tests -p test_ue5_draft_bootstrap_source.py -v
+      - name: Verify integration keeps homestead and world scripts
+        run: python -m unittest discover -s tests -p test_ue5_integration_contract.py -v
       - name: Install terrain source dependency
         run: python -m pip install numpy
       - name: Test deterministic terrain source
         run: python -m unittest discover -s tests -p test_ue5_terrain_source.py -v
+      - name: Validate 48km draft terrain seams and non-destructive generation
+        run: python -m unittest discover -s tests -p test_ue5_playtest_terrain.py -v
       - name: Verify config migration is non-destructive
         run: |
           python scripts/migrate-to-ue5.py
