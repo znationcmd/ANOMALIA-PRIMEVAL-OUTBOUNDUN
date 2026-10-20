@@ -57,6 +57,10 @@ const info = {
   status: 'landscape_source_generated_not_imported_into_unreal',
   extentKm: [48, 48],
   rawResolution: [samples, samples],
+  // Landscape RAW sidecar keys; Epic's RAW parser expects "bbp" (not "bpp").
+  width: samples,
+  height: samples,
+  bbp: 16,
   format: 'r16 unsigned 16-bit little-endian, no header',
   landscapeScaleCm: { x: stepMetres * 100, y: stepMetres * 100, z: zScaleCm },
   seaLevelZCm: 0,
