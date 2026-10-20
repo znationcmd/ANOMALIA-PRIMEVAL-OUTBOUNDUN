@@ -79,6 +79,28 @@ else {
     Write-Host "Terrain cree avec succes dans $folder" -ForegroundColor Green
 }
 
+# Repair the JSON next to a previously exported .r16 RAW Landscape heightmap.
+# Epic RAW format requires "width", "height", "bbp" (spelled bbp, not bpp).
+# The original ZIP bundled a valid 16-bit raw file but a JSON without these keys.
+# Preserve all metadata and copy original JSON once before adding them.
+$sidecarInfo = Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+if (($sidecarInfo.width -ne 3025) -or
+    ($sidecarInfo.height -ne 3025) -or
+    ($sidecarInfo.bbp -ne 16)) {
+    $metadataBackup = Join-Path $folder 'ANOMALIA_WorkMap_48km_3025_MetadataBeforeUnrealFix.json'
+    if (-not (Test-Path -LiteralPath $metadataBackup -PathType Leaf)) {
+        Copy-Item -LiteralPath $manifest -Destination $metadataBackup -ErrorAction Stop
+    }
+    $sidecarInfo | Add-Member -NotePropertyName 'width' -NotePropertyValue 3025 -Force
+    $sidecarInfo | Add-Member -NotePropertyName 'height' -NotePropertyValue 3025 -Force
+    $sidecarInfo | Add-Member -NotePropertyName 'bbp' -NotePropertyValue 16 -Force
+    [IO.File]::WriteAllText($manifest, ($sidecarInfo | ConvertTo-Json -Depth 20),
+        [System.Text.UTF8Encoding]::new($false))
+    Write-Host 'Format Unreal corrige : 3025 x 3025, profondeur 16 bits. JSON original sauvegarde.' -ForegroundColor Green
+} else {
+    Write-Host 'Format Unreal RAW deja configure : 3025 x 3025, 16 bits.' -ForegroundColor Green
+}
+
 # Update the four isolated C++ prototype sources without overwriting local changes.
 # Hash-based update: automatically replace only files that match our previous installation.
 # If the local file was edited, skip that file and preserve the modifications.
