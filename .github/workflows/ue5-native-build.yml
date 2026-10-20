@@ -86,6 +86,20 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $result = Get-Content -LiteralPath $env:ANOMALIA_BRIDGE_REPORT -Raw | ConvertFrom-Json
           if ($result.state -notin @('PLACED_NOT_PLAYTESTED','EXISTING_PLACEMENTS_PRESERVED') -or $result.spanCount -ne 50) { throw 'Bridge placement failed.' }
+      - name: Append terrain-following bridge access roads
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_ROADS_REPORT = Join-Path $evidence 'detroit-roads.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_bridge_roads.py'
+          $logPath = Join-Path $evidence 'detroit-roads.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_ROADS_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('PLACED_NOT_PLAYTESTED','EXISTING_PLACEMENTS_PRESERVED') -or $result.roadCount -ne 2) { throw 'Road placement failed.' }
       - name: Test actual Play In Editor terrain collision movement and inventory
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -121,4 +135,5 @@ jobs:
             unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/
             unreal/Content/Anomalia/World/Archipelago_v2/
             unreal/Content/Anomalia/Infrastructure/Bridge/
+            unreal/Content/Anomalia/Infrastructure/Roads/
           if-no-files-found: error

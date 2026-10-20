@@ -34,12 +34,12 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
   if(!Pawn)return false;
   if(Probe->TerrainPassed){
    const double H0=AnomaliaArchipelago::Height(13500,-9000),H1=AnomaliaArchipelago::Height(16000,-9000);
-   const double Deck=H0+(H1-H0)*.01+.25;
-   const FVector BridgePoint(1352500,900000,Deck*100+110);
+   const double Deck=AnomaliaArchipelago::Height(13005,-9000)+.30;
+   const FVector BridgePoint(1300500,900000,Deck*100+110);
    auto DeckHit=[&](const FVector& Point,FHitResult& Hit){
     FCollisionQueryParams Query;Query.AddIgnoredActor(Pawn);
     return World->LineTraceSingleByChannel(Hit,Point+FVector(0,0,300),Point-FVector(0,0,500),ECC_Visibility,Query)
-     && Hit.GetActor() && Hit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitBridge_v1"));
+     && Hit.GetActor() && (Hit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitBridge_v1")) || Hit.GetActor()->ActorHasTag(TEXT("ANOMALIA_DetroitRoads_v1")));
    };
    if(!Probe->BridgeStarted){
     FHitResult Hit;if(!DeckHit(BridgePoint,Hit))return false;
@@ -52,8 +52,9 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
    }
    const FVector Position=Pawn->GetActorLocation();
    // Stop before unloaded collision. Resume at the same position; never teleport over seams.
-   const double AheadX=FMath::Min(Position.X+3000.,1597500.);
-   const double AheadDeck=H0+(H1-H0)*(AheadX/100.-13500.)/2500.+.25;
+   const double AheadX=FMath::Min(Position.X+3000.,1649500.);
+   const double East=AheadX/100.;
+   const double AheadDeck=East>=13500 && East<=16000 ? H0+(H1-H0)*(East-13500.)/2500.+.25 : AnomaliaArchipelago::Height(East,-9000)+.30;
    FHitResult AheadHit;
    if(!DeckHit(FVector(AheadX,900000,AheadDeck*100+110),AheadHit)){
     Pawn->GetCharacterMovement()->DisableMovement();Probe->BridgePaused=true;return false;
@@ -64,15 +65,15 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
     AddError(TEXT("Full bridge traversal lost deck collision or left roadway"));return true;
    }
    const int32 Span=FMath::Clamp(FMath::FloorToInt((Position.X/100.-13500.)/50.),0,49);
-   if(Span!=Probe->LastSpan){
+   if(Position.X>=1350000 && Position.X<=1600000 && Span!=Probe->LastSpan){
     if(Span!=Probe->LastSpan+1){AddError(TEXT("Bridge traversal skipped a span"));return true;}
     Probe->LastSpan=Span;Probe->SpanSamples++;
    }
    if(Position.X>Probe->FurthestX+10){Probe->FurthestX=Position.X;Probe->LastProgress=FPlatformTime::Seconds();}
    if(FPlatformTime::Seconds()-Probe->LastProgress>20){AddError(TEXT("Character blocked during full bridge crossing"));return true;}
-   if(Position.X<1597500){Pawn->AddMovementInput(FVector(1,0,0),1.f);return false;}
+   if(Position.X<1649500){Pawn->AddMovementInput(FVector(1,0,0),1.f);return false;}
    TestEqual(TEXT("All 50 bridge spans crossed in sequence"),Probe->SpanSamples,50);
-   TestTrue(TEXT("Continuous bridge traversal at least 2450 metres"),Position.X-Probe->Origin.X>=245000);
+   TestTrue(TEXT("Continuous roads and bridge traversal at least 3490 metres"),Position.X-Probe->Origin.X>=349000);
    TestTrue(TEXT("Character grounded after full crossing"),Pawn->GetCharacterMovement()->IsMovingOnGround());
    AddInfo(FString::Printf(TEXT("Continuous accelerated PIE bridge crossing %.1f metres, %d spans; test speed 25m/s; no vehicle or multiplayer validation"),(Position.X-Probe->Origin.X)/100.,Probe->SpanSamples));
    return true;
@@ -105,10 +106,9 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
   AddInfo(FString::Printf(TEXT("Actual PIE walking distance %.1f cm; no rendered visual/performance validation"),Travel.Size2D()));
   // Teleport only the PIE character. Freeze movement until the distant bridge collision streams in.
   Probe->TerrainPassed=true;Probe->Deadline=FPlatformTime::Seconds()+120;
-  const double H0=AnomaliaArchipelago::Height(13500,-9000),H1=AnomaliaArchipelago::Height(16000,-9000);
-   const double Deck=H0+(H1-H0)*.01+.25;
+   const double Deck=AnomaliaArchipelago::Height(13005,-9000)+.30;
   Pawn->GetCharacterMovement()->DisableMovement();
-  Pawn->SetActorLocation(FVector(1352500,900000,Deck*100+110),false,nullptr,ETeleportType::TeleportPhysics);
+  Pawn->SetActorLocation(FVector(1300500,900000,Deck*100+110),false,nullptr,ETeleportType::TeleportPhysics);
   return false;
  }));
  ADD_LATENT_AUTOMATION_COMMAND(FEndPlayMapCommand());
