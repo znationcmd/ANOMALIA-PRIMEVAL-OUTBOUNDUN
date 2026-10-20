@@ -38,5 +38,14 @@ class FirstWorldSourceTests(unittest.TestCase):
         self.assertIn("Test-Path -LiteralPath $Result.mapFile", runner)
 
 
+    def test_survivor_controls_support_azerty_and_qwerty(self):
+        settings = (ROOT / "unreal/Config/DefaultInput.ini").read_text(encoding="utf-8")
+        self.assertIn('AxisName="MoveForward",Scale=1.000000,Key=W', settings)
+        self.assertIn('AxisName="MoveForward",Scale=1.000000,Key=Z', settings)
+        self.assertIn('AxisName="MoveRight",Scale=-1.000000,Key=A', settings)
+        self.assertIn('AxisName="MoveRight",Scale=-1.000000,Key=Q', settings)
+        self.assertIn('ActionName="Inventory",Key=I', settings)
+
+
 if __name__ == "__main__":
     unittest.main()
