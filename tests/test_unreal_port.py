@@ -97,7 +97,7 @@ class UnrealPortTests(unittest.TestCase):
         cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
         header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
         self.assertIn("SpawnConfiguredVehicles()", header)
-        self.assertRegex(cpp, r"if\s*\(HasAuthority\(\)\)\s*\{\s*SpawnConfiguredVehicles\(\);")
+        self.assertRegex(cpp, r"if\s*\(HasAuthority\(\)\)\s*\{\s*SpawnConfiguredHomestead\(\);\s*SpawnConfiguredVehicles\(\);")
         self.assertIn('TEXT("Servers"), ServerId, TEXT("vehicles.json")', cpp)
         self.assertIn("Spawned >= 64", cpp)
         self.assertIn("Bytes > 262144", cpp)
