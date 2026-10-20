@@ -4,7 +4,7 @@ Le fichier `scripts/ue5/update-work-world.ps1` est dans cette branche.
 Il verifie `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject`, telecharge temporairement
 le generateur et la geographie Work, puis prepare `unreal/TerrainWorkImport/`.
 Il ne modifie pas `AnomaliaWorld`, ne touche pas aux Blueprints et n'ecrase pas
-un terrain existant. **Node.js est necessaire** pour executer le generateur JS.
+un terrain existant. **Node.js n'est necessaire que pour generer un nouveau relief**. Si le fichier R16 et son manifeste JSON sont deja presents (par exemple via le ZIP), le script verifie leur taille et le SHA-256 puis les conserve. Les fichiers C++ du prototype sont mis a jour a chaque execution seulement si leur empreinte locale correspond a l'installation precedente : aucune modification locale n'est ecrasee. Les anciennes versions mises a jour sont sauvegardees sous TerrainWorkImport/SourceBackups/.
 
 Depuis PowerShell sur Windows :
 
