@@ -22,6 +22,45 @@ Conserver le niveau `AnomaliaWorld` comme sauvegarde et importer dans
 
 # ANOMALIA — importer la véritable géographie Work dans Unreal Engine 5.8
 
+## Prototype routes, batiments, vegetation et IA — UE5 (non compile ici)
+
+Un acteur C++ independant `AAnomaliaWorkWorldBootstrap` a ete ajoute pour un
+**quartier de demonstration**, centré autour du point (0,0). Il n'edite pas le
+`.umap` et se declenche **uniquement** quand l'acteur est place sur le niveau
+`ANOMALIA_WorkMap_Test`, en mode de jeu local/listen. Il n'est pas active
+sur `AnomaliaWorld` ni sur les serveurs dedies.
+
+Quand le Landscape Work est importe et visible, l'acteur produit en Play :
+- Deux axes de route de demonstration en cubes instancies, suivant grossierement
+  le relief (pas encore des routes aplaties ou des splines).
+- Jusqu'a **20 batiments-prototypes** (volumes cubiques avec toit), collisions basiques.
+- Jusqu'a **60 arbres** avec geometrie provisoire.
+- Jusqu'a **12 agents** (cervides, sangliers, loups, dinosaures, civils,
+  gardes) en formes primitives avec deplacement tres simple. Les agents sont
+  serveurs; ils ne sont pas de vrais humanoides animes, ni des IA de combat.
+
+**Installation sans effacer les fichiers existants :** relancer
+`scripts/ue5/update-work-world.ps1` via la commande PowerShell documentee
+plus haut. Elle telecharge les quatre nouveaux fichiers source dans
+`unreal/Source/AnomaliaPrimeval`. Si un fichier de meme nom a ete modifie
+sur ton PC, l'installateur refuse de l'ecraser.
+
+Apres avoir ferme Unreal, reconstruire le projet C++ et ouvrir
+`ANOMALIA_WorkMap_Test`. Dans le panneau **C++ Classes → AnomaliaPrimeval**,
+rechercher `AnomaliaWorkWorldBootstrap`, glisser un exemplaire dans ce niveau,
+enregistrer et cliquer **Jouer**. Un message de log signale l'absence de Landscape
+au point central au lieu de placer des objets dans le vide.
+
+**Limites connues :** le rendu local peut etre lourd, les visuels sont des
+placeholders, il faut importer le Landscape avant, et les instances de maillages
+ne sont pas repliquees aux clients reseau. Tester d'abord en mode joueur unique,
+sur la machine de l'editeur. Les details definitifs de la carte de 2 304 km²,
+routes, maisons et faune, restent a produire.
+
+---
+
+
+
 ## Attention : deux cartes différentes dans le même dépôt
 
 - **Carte Work courante :** `src/mechanics.js`, monde **48 × 48 km**, **8 masses terrestres** (`CONTINENTS`), villes et points d'intérêt (`CITIES`, `SITES`).
