@@ -1,3 +1,25 @@
+## Mise a jour sur le PC en une commande PowerShell
+
+Le fichier `scripts/ue5/update-work-world.ps1` est dans cette branche.
+Il verifie `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject`, telecharge temporairement
+le generateur et la geographie Work, puis prepare `unreal/TerrainWorkImport/`.
+Il ne modifie pas `AnomaliaWorld`, ne touche pas aux Blueprints et n'ecrase pas
+un terrain existant. **Node.js est necessaire** pour executer le generateur JS.
+
+Depuis PowerShell sur Windows :
+
+```powershell
+$u='https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ue5/prototype-world-ai-roads-20261020/scripts/ue5/update-work-world.ps1'; $s=Join-Path $env:TEMP 'anomalia-work-map-update.ps1'; Invoke-WebRequest -Uri $u -OutFile $s; powershell -NoProfile -ExecutionPolicy Bypass -File $s -ProjectRoot 'C:\ANOMALIA'
+```
+
+Une fois les fichiers sources generes, **un import Landscape dans Unreal Editor reste
+necessaire pour produire une vraie carte .umap**. Aucune compilation Unreal, aucun
+import Unreal automatique et aucun test PIE ne sont revendiques par la commande.
+Conserver le niveau `AnomaliaWorld` comme sauvegarde et importer dans
+`ANOMALIA_WorkMap_Test` uniquement.
+
+---
+
 # ANOMALIA — importer la véritable géographie Work dans Unreal Engine 5.8
 
 ## Attention : deux cartes différentes dans le même dépôt
