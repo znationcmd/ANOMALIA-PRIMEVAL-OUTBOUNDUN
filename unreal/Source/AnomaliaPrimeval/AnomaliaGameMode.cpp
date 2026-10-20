@@ -120,6 +120,10 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
         bHasValue = true;
     }
     if (bHasValue) Survivor->RestoreSurvival(static_cast<float>(Food), static_cast<float>(Water), static_cast<float>(HP));
+    // Older profiles have no fatigue key and safely retain the fresh-character default.
+    if (Survival->TryGetNumberField(TEXT("fatigue"), Value) && FMath::IsFinite(Value) &&
+        Value >= 0.0 && Value <= 100.0)
+        Survivor->RestoreFatigue(static_cast<float>(Value));
 
     // Optional fields: legacy profiles without vitals remain valid and unchanged.
     if (Survivor->VitalsComponent)
@@ -187,6 +191,7 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     Survival->SetNumberField(TEXT("hunger"), FMath::Clamp(Survivor->Hunger, 0.f, 100.f));
     Survival->SetNumberField(TEXT("thirst"), FMath::Clamp(Survivor->Thirst, 0.f, 100.f));
     Survival->SetNumberField(TEXT("health"), FMath::Clamp(Survivor->Health, 0.f, 100.f));
+    Survival->SetNumberField(TEXT("fatigue"), FMath::Clamp(Survivor->Fatigue, 0.f, 100.f));
     if (Survivor->VitalsComponent)
     {
         Survival->SetNumberField(TEXT("stamina"), FMath::Clamp(Survivor->VitalsComponent->Stamina, 0.f, 100.f));
