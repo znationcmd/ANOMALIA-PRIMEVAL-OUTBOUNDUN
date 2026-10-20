@@ -3,6 +3,7 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaInventoryWidget.h"
+#include "AnomaliaVitalsComponent.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -21,6 +22,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
+    VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 350.f;
@@ -80,6 +82,18 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaSurvivor::InputInteract);
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
+    Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
+    Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
+}
+
+void AAnomaliaSurvivor::StartSprint()
+{
+    if (VitalsComponent) VitalsComponent->RequestSprint(true);
+}
+
+void AAnomaliaSurvivor::StopSprint()
+{
+    if (VitalsComponent) VitalsComponent->RequestSprint(false);
 }
 
 void AAnomaliaSurvivor::InputInventory()
