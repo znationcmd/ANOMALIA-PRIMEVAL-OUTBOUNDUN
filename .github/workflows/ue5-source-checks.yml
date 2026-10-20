@@ -9,6 +9,7 @@ on:
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
+      - 'tests/test_ue5_player_lifecycle_source.py'
       - 'tests/test_ue5_vitals_source.py'
       - 'tests/test_ue5_homestead_editor.py'
       - 'tests/test_ue5_first_world_source.py'
@@ -25,6 +26,7 @@ on:
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
+      - 'tests/test_ue5_player_lifecycle_source.py'
       - 'tests/test_ue5_vitals_source.py'
       - 'tests/test_ue5_homestead_editor.py'
       - 'tests/test_ue5_first_world_source.py'
@@ -49,6 +51,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_inventory_source.py -v
       - name: Check server-authoritative stamina and temperature source
         run: python -m unittest discover -s tests -p test_ue5_vitals_source.py -v
+      - name: Check server-owned player lifecycle persistence
+        run: python -m unittest discover -s tests -p test_ue5_player_lifecycle_source.py -v
       - name: Test safe homestead, farm and offline editor operations
         run: python -m unittest discover -s tests -p test_ue5_homestead_editor.py -v
       - name: Verify World Partition bootstrap sources (Unreal Editor required for .umap)

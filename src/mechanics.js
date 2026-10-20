@@ -66,7 +66,7 @@ export const SITES=[
  {id:"cargo-blue-key",type:"key",label:"Clé du conteneur bleu",x:3930,z:570,item:"key_blue"},
  {id:"cargo-blue",type:"container",label:"Conteneur sécurisé BLEU",x:4020,z:480,required:"key_blue",loot:{ammo:30,scrap:16}}
 ];
-export const ITEM_NAMES={
+export const ITEM_NAMES={milk:"Lait frais",eggs:"Œufs de poule",
  wood:"Bois",scrap:"Pièces métalliques",food:"Rations",water:"Eau potable",medkit:"Kit médical",
  ammo:"Munitions",key_alpha:"Clé Alpha",key_red:"Clé rouge",key_omega:"Clé Omega",key_abyss:"Clé Abysse",key_blue:"Clé bleue"
 };

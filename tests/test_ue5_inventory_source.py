@@ -50,9 +50,10 @@ class UE5InventorySourceTests(unittest.TestCase):
         legacy_ids = set(re.findall(r"^\s*([a-zA-Z_][a-zA-Z_0-9]*):\{label:", definitions, re.M))
         weight_table = SOURCE.split("static const TMap<FName, float> Weights = {", 1)[1].split("\n    };", 1)[0]
         ue_ids = set(re.findall(r'TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\)', weight_table))
-        # Native farm milk is a new UE5-only item until Work merges the JS homestead branch.
-        self.assertEqual(ue_ids - {"milk"}, legacy_ids)
+        # Every merged legacy item must remain loadable; wild egg and farm eggs are distinct.
+        self.assertEqual(ue_ids, legacy_ids)
         self.assertIn("milk", ue_ids)
+        self.assertTrue({"egg", "eggs"}.issubset(ue_ids))
 
     def test_inventory_component_is_attached_to_every_survivor(self):
         self.assertIn("TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent", SURVIVOR_HEADER)

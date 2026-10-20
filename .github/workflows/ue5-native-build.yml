@@ -1,20 +1,32 @@
 name: UE5 native build (engine host required)
 on:
   workflow_dispatch:
+    inputs:
+      create_first_world:
+        description: Generate and verify the FirstTest map with the real UE Editor
+        type: boolean
+        default: true
 jobs:
   compile:
     # Explicit dispatch only: public pull requests must not execute on this host.
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 120
+    timeout-minutes: 180
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          lfs: true
       - name: Compile Editor and Game with installed Unreal Engine
         shell: powershell
+        env:
+          CREATE_FIRST_WORLD: ${{ inputs.create_first_world }}
         run: |
           if (-not $env:UE_ROOT) { throw 'Set UE_ROOT on the UE5 build host.' }
-          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --run-tests
+          $Extra = @()
+          if ($env:CREATE_FIRST_WORLD -eq 'true') { $Extra += '--create-first-world' }
+          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --build-timeout 3600 --run-tests @Extra
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4

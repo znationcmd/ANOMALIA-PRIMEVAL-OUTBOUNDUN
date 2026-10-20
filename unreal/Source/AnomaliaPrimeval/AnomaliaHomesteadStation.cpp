@@ -25,7 +25,7 @@ FName AAnomaliaHomesteadStation::GetHarvestItemId() const
     switch (ObjectType)
     {
         case EAnomaliaHomesteadObject::Cow: return TEXT("milk");
-        case EAnomaliaHomesteadObject::Chicken: return TEXT("egg");
+        case EAnomaliaHomesteadObject::Chicken: return TEXT("eggs");
         case EAnomaliaHomesteadObject::Beehive: return TEXT("honey");
         default: return NAME_None;
     }
