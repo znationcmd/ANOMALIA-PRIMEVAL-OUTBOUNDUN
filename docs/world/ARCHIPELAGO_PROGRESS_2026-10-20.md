@@ -51,3 +51,47 @@ existant supprimé ou remplacé. Chaque travée est un acteur séparé pour Worl
 Le test PIE étendu doit vérifier le chargement distant, la collision et la marche sur
 le tablier avant de déclarer ce pont traversable. Rendu et conduite non vérifiés.
 Les autres infrastructures, bâtiments, IA, créatures et drones restent à intégrer.
+
+
+## Pont posé et testé en PIE — run 39482943337
+
+https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39482943337
+Commit source : c3c287a2607ef6a926b0f9a225698913956ed773. Native Editor et Game compilés,
+trois tests natifs initiaux réussis, import du pont et test PIE étendu réussis.
+50 travées et 102 piles enregistrées dans la carte existante, sans remplacement des
+acteurs antérieurs. GLB original de 457356 octets, 1836 triangles, 3 matériaux et
+2 textures réutilisées. Garde-corps et trottoirs en géométrie 3D.
+
+Résultat exact Anomalia.World.ArchipelagoPIE : Success, 0 avertissement, 0 erreur.
+Marche réelle sur Landscape : 730,7 cm. Après téléportation dans la session PIE,
+attente du chargement distant, trace physique sur un acteur du pont et marche sur
+tablier : 641,8 cm, personnage au sol en fin de test. L'inventaire isolé passe aussi.
+Ce test ne parcourt PAS tout le pont, ne teste pas encore les raccordements de rive,
+la conduite, les IA, le rendu GPU, les performances ni le multijoueur.
+
+Le rapport de placement reste volontairement PLACED_NOT_PLAYTESTED : il décrit
+l'étape précédant le test. Le résultat PIE séparé ci-joint apporte la preuve de la
+marche testée après ce placement. Ne pas réécrire les preuves originales.
+
+Preuves conservées : bridge-placed-39482943337.json, world-pie-39482943337.json,
+pie-test-results-39482943337.json. Archive carte/acteurs/matériaux/pont :
+artefact ue5-archipelago-world ID 12292462366, 20793464 octets,
+SHA-256 488ed88a3fe638aa925c77789c69f68c08c5800e44141c7af459659c5f582618.
+
+## Reprise technique
+
+Branche : ue5/integrate-world-homestead-20261020 ; PR 4, pas de fusion main.
+Projet du runner Windows :
+C:/Users/utilisateur/actions-runner/_work/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ANOMALIA-PRIMEVAL-OUTBOUNDUN/unreal/AnomaliaPrimeval.uproject
+Carte : /Game/Maps/ANOMALIA_Archipelago_v2 ; lanceur : scripts/ue5/open-archipelago-world.cmd.
+Marqueur du pont : unreal/Saved/AnomaliaMigration/detroit-bridge-v1.json.
+Les futures exécutions préservent la carte et le pont existants et rejouent les tests.
+Le zip du monde doit conserver ses dossiers Content/Maps, __ExternalActors__,
+__ExternalObjects__, Anomalia/World et Anomalia/Infrastructure ensemble.
+
+Reste : raccordements et traversée complète du pont, routes/chemins/sentiers,
+ports/aérodromes/bases, végétation réelle, villes et bâtiments RP accessibles,
+IA/animaux/zombies/dinosaures et drones pilotables. Ces éléments ne sont pas déclarés
+intégrés par le présent lot. Un modèle de berline CC0 détaillé est déjà embarqué dans
+src/sedan-asset.js (72 meshes, 9 matériaux) ; le réutiliser pour le prochain lot de
+véhicules, sans perdre les pièces ni le confondre avec les modèles précis demandés.
