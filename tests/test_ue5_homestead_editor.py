@@ -101,7 +101,7 @@ class HomesteadSourceTests(unittest.TestCase):
         self.assertIn("Survivor->InventoryComponent->TryAddItem(ItemId, 1)", station)
         self.assertIn("NextHarvestTime = Now + 120.f", station)
         self.assertIn('TEXT("milk")', station)
-        self.assertIn('TEXT("egg")', station)
+        self.assertIn('TEXT("eggs")', station)
         self.assertIn('TEXT("honey")', station)
         self.assertIn('TEXT("milk")', inventory)
         self.assertIn("NearestFarm->TryHarvest(this)", player)

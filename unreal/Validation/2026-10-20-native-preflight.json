@@ -1,0 +1,20 @@
+{
+  "startedUtc": "2026-10-20T08:13:27.613992+00:00",
+  "compilation": "not_run",
+  "execution": "not_run",
+  "worldPlayable": "not_verified",
+  "worldGeneration": "not_run",
+  "nativeTests": "not_run",
+  "targets": [],
+  "engineRoot": "/__UNREAL_ENGINE_NOT_CONFIGURED__",
+  "requiredEngine": "5.8",
+  "host": {
+    "system": "linux",
+    "architecture": "x86_64",
+    "cpuCount": 9,
+    "freeDiskBytes": 29771051008
+  },
+  "targetPlatform": "Linux",
+  "error": "Unreal Engine installation missing: Build script and Build.version are required",
+  "status": "BLOCKED"
+}

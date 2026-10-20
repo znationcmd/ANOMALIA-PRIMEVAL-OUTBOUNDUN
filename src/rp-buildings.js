@@ -10,7 +10,35 @@ export function createBuildings({scene,state,heightAt,materials}){
   function sign(text,x,y,z,w=8){const c=document.createElement('canvas');c.width=1024;c.height=160;const ctx=c.getContext('2d');ctx.fillStyle='#243a37';ctx.fillRect(0,0,c.width,c.height);ctx.strokeStyle='#adb7a3';ctx.lineWidth=7;ctx.strokeRect(5,5,1014,150);ctx.fillStyle='#e8e9d7';ctx.font='bold 64px system-ui';ctx.textAlign='center';ctx.fillText(text,512,105);const tex=new THREE.CanvasTexture(c);tex.colorSpace=THREE.SRGBColorSpace;const m=new THREE.Mesh(new THREE.PlaneGeometry(w,w*.156),new THREE.MeshBasicMaterial({map:tex}));m.position.set(x,y,z);m.userData.editorId=o.id;root.add(m)}
   const bed=(x,z)=>{box(x,.6,z,2,1,3.5,metal);box(x,1.2,z,1.9,.25,3.3,wood);box(x,1.4,z-1.2,1.6,.25,.6,floorMat)};
   const desk=(x,z)=>{box(x,1.1,z,3,.15,1.4,wood);for(const dx of [-1.2,1.2])box(x+dx,.5,z,.12,1,.8,metal)};
-  if(o.type==='helipad'){
+  if(d.category==='furniture'||d.category==='farm'){
+   // Low-poly placeholders with real pickable transforms. Final authored 3D assets
+   // and animations are required for shipping quality.
+   const bench=(w,dep,top=1)=>{box(0,top,0,w,.18,dep,wood,true);for(const x of [-w*.42,w*.42])for(const z of [-dep*.35,dep*.35])box(x,top/2,z,.14,top,.14,metal)};
+   if(o.type==='bed'){box(0,.4,0,2,.65,3,metal,true);box(0,.78,0,1.9,.25,2.8,wood);box(0,1,1.1,1.6,.2,.5,floorMat)}
+   else if(o.type==='sofa'){box(0,.5,0,d.width,.9,d.depth,wood,true);box(0,1.15,-.55,d.width,1,.25,wallMat)}
+   else if(o.type==='table')bench(d.width,d.depth);
+   else if(o.type==='chair') {bench(.75,.75,.7);box(0,1,-.3,.7,1,.15,wood)}
+   else if(o.type==='wardrobe'||o.type==='shelf'){box(0,1.3,0,d.width,2.6,d.depth,wood,true);if(o.type==='shelf')for(const y of [.45,1.2,1.95])box(0,y,d.depth/2+.08,d.width,.08,.15,metal)}
+   else if(o.type==='kitchen'){box(0,.75,0,d.width,1.5,d.depth,metal,true);box(0,1.55,0,d.width,.12,d.depth,wood)}
+   else if(o.type==='lamp'){box(0,.9,0,.12,1.8,.12,metal);box(0,1.85,0,.55,.6,.55,wood);const light=new THREE.PointLight(0xffdcab,2.5,7);light.position.y=2;root.add(light)}
+   else if(o.type==='beehive'){box(0,.65,0,1.8,1.3,1.8,wood,true);box(0,1.4,0,2,.25,2,metal);sign('MIEL',0,1.75,0,1.5)}
+   else if(o.type==='doghouse'){box(0,.8,0,2.6,1.6,2.6,wood,true);box(0,1.7,0,3.2,.25,3,wallMat);sign('COMPAGNON',0,2.1,1.5,2.7)}
+   else if(o.type==='chicken_coop'){box(0,.8,0,4,1.6,3,wood,true);box(0,1.7,0,4.8,.24,3.8,wallMat);for(const x of [-3.5,3.5])for(const z of [-3,3])box(x,.7,z,.16,1.4,.16,wood);sign('OEUFS',0,2,2,3)}
+   else if(o.type==='cow_pen'||o.type==='garden'){
+    const w=d.width,dep=d.depth;
+    if(o.type==='garden')box(0,.05,0,w,.1,dep,wood);
+    for(const x of [-w/2,w/2])for(const z of [-dep/2,dep/2])box(x,.8,z,.23,1.6,.23,wood);
+    for(const x of [-w/2,w/2])box(x,.75,0,.12,.14,dep,wood);
+    for(const z of [-dep/2,dep/2])box(0,.75,z,w,.14,.12,wood);
+    if(o.type==='cow_pen'){box(0,1.0,0,2.5,1.6,4,wallMat);box(0,1.8,-1.1,1.5,1.2,1.5,wood);sign('LAIT',0,3,0,3)}
+   }
+   else if(o.type==='barn'||o.type==='tractor_shed'){
+    box(0,0,0,d.width,.2,d.depth,wood);
+    for(const x of [-d.width/2,d.width/2])for(const z of [-d.depth/2,d.depth/2])box(x,2,z,.4,4,.4,wood,true);
+    box(0,4,0,d.width+.6,.25,d.depth+.6,wallMat);
+    sign(o.type==='barn'?'GRANGE':'TRACTEUR',0,3,d.depth/2,Math.min(12,d.width));
+   }
+  }else if(o.type==='helipad'){
    box(0,0,0,d.width,.3,d.depth,floorMat);for(const x of [-3.5,3.5])box(x,.17,0,1,.02,10,wallMat);box(0,.17,0,8,.02,1,wallMat);sign('H',0,.22,0,1);
    const ring=new THREE.Mesh(new THREE.RingGeometry(10,10.4,48),new THREE.MeshBasicMaterial({color:0xd5d4b3,side:THREE.DoubleSide}));ring.rotation.x=-Math.PI/2;ring.position.y=.18;root.add(ring);
   }else if(o.type==='dock'){
@@ -42,7 +70,7 @@ export function createBuildings({scene,state,heightAt,materials}){
   scene.add(root);
   return {root,walls,floor:{...o,y:ground,width:d.width,depth:d.depth},dispose(){const mats=new Set();root.traverse(m=>{m.geometry?.dispose();if(m.material&&!Object.values(materials).includes(m.material))mats.add(m.material)});for(const m of mats){if(m.map&&!Object.values(materials).some(v=>v?.map===m.map))m.map.dispose();m.dispose()}root.removeFromParent()}};
  }
- function update(){const entries=[...RP_SITES,...(state.editorObjects||[])];const next=JSON.stringify(entries);if(signature===next)return;signature=next;for(const model of models.values())model.dispose();models.clear();solids=[];floors=[];for(const o of entries){if(!BUILDING_TYPES[o.type])continue;const model=build(o);models.set(o.id,model);solids.push(...model.walls);if(!['sandbags','barrier','container','watchtower'].includes(o.type))floors.push(model.floor)}}
+ function update(){const entries=[...RP_SITES,...(state.editorObjects||[])];const next=JSON.stringify(entries);if(signature===next)return;signature=next;for(const model of models.values())model.dispose();models.clear();solids=[];floors=[];for(const o of entries){if(!BUILDING_TYPES[o.type])continue;const model=build(o);models.set(o.id,model);solids.push(...model.walls);if(!['sandbags','barrier','container','watchtower'].includes(o.type)&&!BUILDING_TYPES[o.type]?.category)floors.push(model.floor)}}
  function floorAt(x,z){let y=null;for(const floor of floors){const p=localPoint(floor,x,z);if(Math.abs(p.x)<=floor.width/2&&Math.abs(p.z)<=floor.depth/2)y=y===null?floor.y:Math.max(y,floor.y)}return y}
  update();return {update,solids:()=>solids,floorAt,objects:()=>[...RP_SITES,...(state.editorObjects||[])],roots:()=>[...models.values()].map(m=>m.root)};
 }

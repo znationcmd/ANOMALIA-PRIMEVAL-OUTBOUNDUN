@@ -1,0 +1,33 @@
+npm warn Unknown env config "http-proxy". This will stop working in the next major version of npm.
+
+> anomalia-primeval-outboundun@0.7.0 test:browser
+> node scripts/browser-smoke.mjs
+
+2026-10-20T08:15:58.564Z pw:browser <launching> /root/.cache/ms-playwright/chromium_headless_shell-1161/chrome-linux/headless_shell --disable-field-trial-config --disable-background-networking --disable-background-timer-throttling --disable-backgrounding-occluded-windows --disable-back-forward-cache --disable-breakpad --disable-client-side-phishing-detection --disable-component-extensions-with-background-pages --disable-component-update --no-default-browser-check --disable-default-apps --disable-dev-shm-usage --disable-extensions --disable-features=AcceptCHFrame,AutoExpandDetailsElement,AvoidUnnecessaryBeforeUnloadCheckSync,CertificateTransparencyComponentUpdater,DeferRendererTasksAfterInput,DestroyProfileOnBrowserClose,DialMediaRouteProvider,ExtensionManifestV2Disabled,GlobalMediaControls,HttpsUpgrades,ImprovedCookieControls,LazyFrameLoading,LensOverlay,MediaRouter,PaintHolding,ThirdPartyStoragePartitioning,Translate --allow-pre-commit-input --disable-hang-monitor --disable-ipc-flooding-protection --disable-popup-blocking --disable-prompt-on-repost --disable-renderer-backgrounding --force-color-profile=srgb --metrics-recording-only --no-first-run --enable-automation --password-store=basic --use-mock-keychain --no-service-autorun --export-tagged-pdf --disable-search-engine-choice-screen --unsafely-disable-devtools-self-xss-warnings --headless --hide-scrollbars --mute-audio --blink-settings=primaryHoverType=2,availableHoverTypes=2,primaryPointerType=4,availablePointerTypes=4 --no-sandbox --no-sandbox --enable-unsafe-swiftshader --use-angle=swiftshader --user-data-dir=/tmp/playwright_chromiumdev_profile-gaysZV --remote-debugging-pipe --no-startup-window
+2026-10-20T08:15:58.574Z pw:browser <launched> pid=30
+2026-10-20T08:15:58.745Z pw:browser [pid=30][err] [1020/111558.743099:ERROR:bus.cc(408)] Failed to connect to the bus: Failed to open socket: Operation not permitted
+2026-10-20T08:15:58.750Z pw:browser [pid=30][err] [1020/111558.749550:ERROR:bus.cc(408)] Failed to connect to the bus: Failed to open socket: Operation not permitted
+2026-10-20T08:15:58.750Z pw:browser [pid=30][err] [1020/111558.749862:ERROR:bus.cc(408)] Failed to connect to the bus: Failed to open socket: Operation not permitted
+2026-10-20T08:15:58.750Z pw:browser [pid=30][err] [1020/111558.750406:ERROR:address_tracker_linux.cc(217)] Could not create NETLINK socket: Operation not permitted (1)
+2026-10-20T08:15:58.756Z pw:browser [pid=30][err] [1020/111558.755959:ERROR:udev_watcher.cc(51)] Failed to initialize a udev monitor.
+2026-10-20T08:15:58.757Z pw:browser [pid=30][err] [1020/111558.757640:ERROR:zygote_host_impl_linux.cc(283)] Failed to adjust OOM score of renderer with pid 48: No such file or directory (2)
+2026-10-20T08:15:58.790Z pw:browser [pid=30][err] [1020/111558.788394:WARNING:bluez_dbus_manager.cc(234)] Floss manager service not available, cannot set Floss enable/disable.
+2026-10-20T08:15:58.817Z pw:browser [pid=30][err] [1020/111558.811022:WARNING:sandbox_linux.cc(420)] InitializeSandbox() called with multiple threads in process gpu-process.
+2026-10-20T08:15:58.819Z pw:browser [pid=30][err] [1020/111558.816581:WARNING:viz_main_impl.cc(85)] VizNullHypothesis is disabled (not a warning)
+2026-10-20T08:15:58.845Z pw:browser [pid=30][err] [1020/111558.843293:ERROR:zygote_host_impl_linux.cc(283)] Failed to adjust OOM score of renderer with pid 78: No such file or directory (2)
+Navigation: http://127.0.0.1:37239/?smoke=1
+2026-10-20T08:15:59.884Z pw:browser [pid=30][err] [1020/111559.883697:ERROR:udev_watcher.cc(51)] Failed to initialize a udev monitor.
+2026-10-20T08:15:59.891Z pw:browser [pid=30][err] [0100/000000.888700:ERROR:child_process_sandbox_support_impl_linux.cc(108)] GetRenderStyleForStrike did not receive a response for family and size: sans, 64
+2026-10-20T08:15:59.901Z pw:browser [pid=30] <process did exit: exitCode=null, signal=SIGSEGV>
+2026-10-20T08:15:59.901Z pw:browser [pid=30] starting temporary directories cleanup
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+page.goto: Target page, context or browser has been closed
+Call log:
+[2m  - navigating to "http://127.0.0.1:37239/?smoke=1", waiting until "domcontentloaded"[22m
+
+    at /workspace/scratch/b3623fb0fad8/anomalia-ue5-review/scripts/browser-smoke.mjs:29:13
+
+Node.js v24.19.0

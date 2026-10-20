@@ -8,6 +8,7 @@ import {startBeachJourney,beachObjective,reserveBeach} from "./beach-journey.js"
 import {createMapEditor} from "./map-editor.js";
 import {createBuildings} from "./rp-buildings.js";
 import {reserveBuilding,RP_SITES} from "./building-rules.js";
+import {sleepTick,restAtBed,collectFarmProduce} from "./homestead.js";
 import {createStartMenu} from "./start-menu.js";
 import {createMultiplayer} from "./multiplayer.js";
 import {createWorldRuntime} from "./world-runtime.js";
@@ -51,6 +52,9 @@ state.illness=saved?.illness||null;state.infection=Number(saved?.infection)||0;s
 state.tamed=Array.isArray(saved?.tamed)?saved.tamed:[];state.dinoTrust=saved?.dinoTrust||{};
 state.mounted=saved?.mounted||null;state.weapon=saved?.weapon||"pistol";state.underground=null;
 state.inventory={...state.inventory,...saved?.inventory};
+state.sleep=Number.isFinite(saved?.sleep)?clamp(saved.sleep,0,100):100;
+state.lastRestAt=Number.isFinite(saved?.lastRestAt)?saved.lastRestAt:0;
+state.farmHarvests=saved?.farmHarvests&&typeof saved.farmHarvests==="object"?saved.farmHarvests:{};
 state.hunted=Array.isArray(saved?.hunted)?saved.hunted:[];
 state.mapPins=Array.isArray(saved?.mapPins)?saved.mapPins.slice(0,120):[];
 state.dinoEffects=saved?.dinoEffects||{};
@@ -519,7 +523,7 @@ function mapScreen(){
 }
 function updateHud(dt){
  hudTime+=dt;if(hudTime<.1)return;hudTime=0;
- const meters=[["health",state.health],["stamina",state.stamina],["hunger",state.hunger],["thirst",state.thirst]];
+ const meters=[["health",state.health],["stamina",state.stamina],["hunger",state.hunger],["thirst",state.thirst],["sleep",state.sleep]];
  for(const [id,value]of meters){const bar=$(id+"Bar"),label=$(id+"Value");if(bar)bar.style.width=value+"%";if(label)label.textContent=Math.round(value)}
  const {city,distance}=nearestCity(state.position.x,state.position.z);
  const site=nearestSite(state.position.x,state.position.z,16);
@@ -577,7 +581,7 @@ function updatePlayer(dt){
   if(!boatMesh){boatMesh=meshBox(scene,0,0,0,6,1.2,12,m.boat)}
   boatMesh.visible=true;boatMesh.position.set(state.position.x,1,state.position.z);boatMesh.rotation.y=yaw;
  }else if(boatMesh)boatMesh.visible=false;
- tickSurvival(state,dt,currentlySprinting);survivalTick(state,dt,biomeAt(state.position.x,state.position.z));
+ tickSurvival(state,dt,currentlySprinting);survivalTick(state,dt,biomeAt(state.position.x,state.position.z));if(!paused&&!network.connected)sleepTick(state,dt,{sprinting:currentlySprinting});
  for(const z of zombies){if(!z.alive||state.underground||worldRuntime?.isAirborne())continue;z.cooldown=Math.max(0,z.cooldown-dt);const dx=state.position.x-z.x,dz=state.position.z-z.z,d=Math.hypot(dx,dz);
   if(d<30&&d>2){z.x+=dx/d*dt*2;z.z+=dz/d*dt*2;z.mesh.position.x+=dx/d*dt*2;z.mesh.position.z+=dz/d*dt*2;z.mesh.position.y=heightAt(z.x,z.z)+1.7}
   if(d<2.5&&z.cooldown===0){state.health=clamp(state.health-9*(1-protection(state)/100),0,100);z.cooldown=2;notice("Attaque d'infecté !")}
@@ -646,6 +650,8 @@ window.addEventListener("keydown",event=>{
   case "KeyF":headlamp=!headlamp;hemi.intensity=headlamp?2:.95;notice(headlamp?"Lampe activée.":"Lampe désactivée.");break;
   case "KeyP":fishNow();break;
   case "KeyG":buildCampfire();break;
+   case "KeyL":if(!paused&&!network.connected){const result=restAtBed(state,state.editorObjects||[]);notice(result.message);if(result.ok)save()}else notice("Repos : version solo uniquement pour le moment.");break;
+   case "KeyO":if(!paused&&!network.connected){const result=collectFarmProduce(state,state.editorObjects||[]);notice(result.message);if(result.ok){syncInventory(state);save()}}else notice("Ferme : collecte multijoueur non disponible pour le moment.");break;
   case "KeyK":cookNear(hasItem(state,"raw_meat")?"raw_meat":"raw_fish");break;
   case "KeyV":toggleTranqMode();break;
   case "KeyC":if(state.boat){state.boat=false;notice("Bateau quitté")}else notice("Trouve un port pour embarquer.");break;
