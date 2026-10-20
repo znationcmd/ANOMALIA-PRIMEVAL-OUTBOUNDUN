@@ -22,11 +22,11 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
  if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Generated real archipelago map is missing"));return false;}
  if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open generated map"));return false;}
  ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
- struct FProbe { double Deadline=FPlatformTime::Seconds()+120; bool Started=false; bool TerrainPassed=false; bool BridgeStarted=false; bool BridgePaused=false; int32 SpanSamples=0; int32 LastSpan=-1; double LastProgress=0; double FurthestX=0; float StartTime=0; FVector Origin=FVector::ZeroVector; };
+ struct FProbe { double Deadline=FPlatformTime::Seconds()+120; bool Started=false; bool TerrainPassed=false; bool BridgeStarted=false; bool BridgePaused=false; int32 SpanSamples=0; int32 LastSpan=-1; double LastProgress=0; double FurthestX=0; double PauseSince=0; float StartTime=0; FVector Origin=FVector::ZeroVector; };
  TSharedRef<FProbe> Probe=MakeShared<FProbe>();
  ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
  {
-  if(FPlatformTime::Seconds()>Probe->Deadline){AddError(TEXT("Timed out waiting for playable character / terrain streaming"));return true;}
+  if(FPlatformTime::Seconds()>Probe->Deadline){AddError(FString::Printf(TEXT("Timed out: started=%d terrain=%d crossing=%d paused=%d furthestX=%.1f span=%d"),Probe->Started,Probe->TerrainPassed,Probe->BridgeStarted,Probe->BridgePaused,Probe->FurthestX,Probe->LastSpan));return true;}
   UWorld* World=GEditor ? GEditor->PlayWorld : nullptr;
   if(!World || !World->HasBegunPlay())return false;
   APlayerController* PC=UGameplayStatics::GetPlayerController(World,0);
@@ -57,7 +57,13 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
    const double AheadDeck=East>=13500 && East<=16000 ? H0+(H1-H0)*(East-13500.)/2500.+.25 : AnomaliaArchipelago::Height(East,-9000)+.30;
    FHitResult AheadHit;
    if(!DeckHit(FVector(AheadX,900000,AheadDeck*100+110),AheadHit)){
-    Pawn->GetCharacterMovement()->DisableMovement();Probe->BridgePaused=true;return false;
+    if(!Probe->BridgePaused){
+     Probe->PauseSince=FPlatformTime::Seconds();
+     AddInfo(FString::Printf(TEXT("Waiting for route collision: position=%s aheadX=%.1f expectedHeight=%.1f hit=%s hitPoint=%s"),*Position.ToString(),AheadX,AheadDeck*100,*GetNameSafe(AheadHit.GetActor()),*AheadHit.ImpactPoint.ToString()));
+    }
+    Pawn->GetCharacterMovement()->DisableMovement();Probe->BridgePaused=true;
+    if(FPlatformTime::Seconds()-Probe->PauseSince>30){AddError(FString::Printf(TEXT("Route collision unavailable after 30s at x=%.1f; ahead x=%.1f hit=%s"),Position.X,AheadX,*GetNameSafe(AheadHit.GetActor())));return true;}
+    return false;
    }
    if(Probe->BridgePaused){Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);Probe->BridgePaused=false;Probe->LastProgress=FPlatformTime::Seconds();}
    FHitResult Underfoot;
@@ -68,6 +74,7 @@ bool FAnomaliaWorldPlayTest::RunTest(const FString& Parameters)
    if(Position.X>=1350000 && Position.X<=1600000 && Span!=Probe->LastSpan){
     if(Span!=Probe->LastSpan+1){AddError(TEXT("Bridge traversal skipped a span"));return true;}
     Probe->LastSpan=Span;Probe->SpanSamples++;
+    AddInfo(FString::Printf(TEXT("Crossed bridge span %d at x=%.1f"),Span,Position.X));
    }
    if(Position.X>Probe->FurthestX+10){Probe->FurthestX=Position.X;Probe->LastProgress=FPlatformTime::Seconds();}
    if(FPlatformTime::Seconds()-Probe->LastProgress>20){AddError(TEXT("Character blocked during full bridge crossing"));return true;}
