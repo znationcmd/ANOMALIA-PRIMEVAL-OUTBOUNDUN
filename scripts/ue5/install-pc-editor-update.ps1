@@ -85,7 +85,7 @@ try {
                 Copy-Item -LiteralPath $to -Destination (Join-Path $historyDir $name)
                 $newFile=Join-Path $bootstrap ([Guid]::NewGuid().ToString('N')+'.tmp')
                 Copy-Item -LiteralPath $from -Destination $newFile
-                [IO.File]::Replace($newFile,$to,$null)
+                [IO.File]::Replace($newFile,$to,(Join-Path $historyDir ($name+'.replaced')))
             }
         } else { Copy-Item -LiteralPath $from -Destination $to }
         $newHashes[$name]=$newHash

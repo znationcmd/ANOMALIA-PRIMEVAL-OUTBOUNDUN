@@ -427,3 +427,7 @@ explicite, pour conserver un code de sortie entier vérifiable. Aucun code non n
 n'est ignoré. Même méthode pour le bootstrap runner, avec comparaison des PID
 avant/après pour prouver qu'il ne crée pas une seconde session. Les tentatives
 et les copies précédentes restent préservées.
+
+### Correctif installation — chemin de sauvegarde Windows
+
+Run 39589866575 : compilation, PIE et réouverture GPU réussies, installation bloquée avant activation. Le rapport indique File.Replace : chemin non conforme. PowerShell convertit le troisième argument null en chaîne vide ; le lanceur est maintenant remplacé avec un véritable chemin de sauvegarde unique dans bootstrap-history, sans suppression. Nouvelle exécution native requise.
