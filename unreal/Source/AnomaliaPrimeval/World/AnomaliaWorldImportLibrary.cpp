@@ -88,7 +88,6 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
   Entry->SetStringField(TEXT("materialBefore"),Material?Material->GetPathName():TEXT("NONE"));
   // Rebuild transient scene/material resources after a NullRHI-created import.
   // No height data, transform, collision or package is replaced or saved here.
-  Component->SetNaniteActive(false);
   Component->UpdateMaterialInstances();
   Component->SetVisibility(true);
   Component->SetRenderInMainPass(true);

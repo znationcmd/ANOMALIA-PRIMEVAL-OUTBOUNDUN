@@ -276,3 +276,13 @@ les instances de matériau/états de rendu. Le rendu traditionnel est explicitem
 demandé pour le test SM5. Aucune hauteur, collision, transformation ou sauvegarde
 de package n'est remplacée. Hypothèse à tester, **pas de résolution annoncée**.
 63 tests Python UE5 locaux réussis ; nouvelle compilation native encore requise.
+
+
+### Correction de liaison native — run 39574669396
+
+Le premier lot de rafraîchissement (`12d0463`) a échoué à la liaison :
+`ULandscapeComponent::SetNaniteActive(bool)` n'est pas exportée par la DLL
+Landscape de cette installation UE5.8.3 (LNK2019). L'appel est retiré ;
+le profil de capture utilise déjà la commande publique `r.Nanite 0`.
+Le compilateur a compilé le reste de la fonction ; seule la nouvelle liaison
+et le rendu restent à revalider. Conserver ce run en échec comme preuve.
