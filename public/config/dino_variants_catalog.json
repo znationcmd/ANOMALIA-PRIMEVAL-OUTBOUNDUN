@@ -1,0 +1,1047 @@
+{
+  "schemaVersion": 1,
+  "description": "User-requested dinosaur variants inspired by third-party ARK mods; original ANOMALIA implementations required",
+  "perServerOverride": true,
+  "entries": [
+    {
+      "id": "dino_variant_primal_fear_toxic",
+      "name": "Toxic Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_alpha",
+      "name": "Alpha Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_apex",
+      "name": "Apex Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_fabled",
+      "name": "Fabled Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_buffed",
+      "name": "Buffed Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_primal",
+      "name": "Primal Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_origin",
+      "name": "Origin Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_celestial",
+      "name": "Celestial Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_demonic",
+      "name": "Demonic Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_chaos",
+      "name": "Chaos Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_order",
+      "name": "Order Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_elder",
+      "name": "Elder Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_ancient",
+      "name": "Ancient Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_colossus",
+      "name": "Colossus Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_nova",
+      "name": "Nova Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_stardust",
+      "name": "Stardust Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_primal_fear_reaper",
+      "name": "Reaper Variant",
+      "inspiredBy": "Primal Fear",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_gamma",
+      "name": "Gamma Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_beta",
+      "name": "Beta Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_alpha",
+      "name": "Alpha Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_prime",
+      "name": "Prime Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_ultimate",
+      "name": "Ultimate Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_omega",
+      "name": "Omega Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_godly",
+      "name": "Godly Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_fire",
+      "name": "Fire Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_lightning",
+      "name": "Lightning Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_cold",
+      "name": "Cold Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_poison",
+      "name": "Poison Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_wind",
+      "name": "Wind Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_earth",
+      "name": "Earth Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_shadow",
+      "name": "Shadow Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_light",
+      "name": "Light Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_vampire",
+      "name": "Vampire Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_juggernaut",
+      "name": "Juggernaut Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_pearlescent",
+      "name": "Pearlescent Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_neon",
+      "name": "Neon Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_mirror",
+      "name": "Mirror Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_radioactive",
+      "name": "Radioactive Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_unstable",
+      "name": "Unstable Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_void",
+      "name": "Void Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_cosmic",
+      "name": "Cosmic Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_abyssal",
+      "name": "Abyssal Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_infused",
+      "name": "Infused Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_artifact",
+      "name": "Artifact Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_omega_plague",
+      "name": "Plague Variant",
+      "inspiredBy": "ARK Omega",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_alpha",
+      "name": "Eternal Alpha Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_prime",
+      "name": "Eternal Prime Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_elemental",
+      "name": "Eternal Elemental Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_poison",
+      "name": "Eternal Poison Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_fire",
+      "name": "Eternal Fire Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_lightning",
+      "name": "Eternal Lightning Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_ice",
+      "name": "Eternal Ice Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_dark",
+      "name": "Eternal Dark Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_light",
+      "name": "Eternal Light Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_mystic",
+      "name": "Eternal Mystic Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_infernus",
+      "name": "Eternal Infernus Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_cyber",
+      "name": "Eternal Cyber Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_unknown",
+      "name": "Eternal Unknown Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_ghost",
+      "name": "Eternal Ghost Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_eternal_skeletal",
+      "name": "Eternal Skeletal Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_resurrected",
+      "name": "Resurrected Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_eternal_ancient_eternal",
+      "name": "Ancient Eternal Variant",
+      "inspiredBy": "Ark Eternal",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_delta",
+      "name": "Delta Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_beta",
+      "name": "Beta Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_alpha",
+      "name": "Alpha Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_prime",
+      "name": "Prime Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_apex",
+      "name": "Apex Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_mythical",
+      "name": "Mythical Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_guardian",
+      "name": "Guardian Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_divine",
+      "name": "Divine Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_demonic",
+      "name": "Demonic Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_celestial",
+      "name": "Celestial Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_nephilim",
+      "name": "Nephilim Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_ark_supreme_ark_descended_fallen",
+      "name": "Fallen Variant",
+      "inspiredBy": "Ark Supreme & Ark Descended",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_pugnacia_wild_boss",
+      "name": "Pugnacia Wild Boss Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_pugnacia_prime",
+      "name": "Pugnacia Prime Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_pugnacia_elemental",
+      "name": "Pugnacia Elemental Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_pugnacia_god",
+      "name": "Pugnacia God Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_zomdino",
+      "name": "Zomdino Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_badass",
+      "name": "Badass Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_super_badass",
+      "name": "Super Badass Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_psycho",
+      "name": "Psycho Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_pyre",
+      "name": "Pyre Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_frozen",
+      "name": "Frozen Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_pugnacia_dinos_robotic",
+      "name": "Robotic Variant",
+      "inspiredBy": "Pugnacia Dinos",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_copper",
+      "name": "Gaia Copper Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_iron",
+      "name": "Gaia Iron Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_silver",
+      "name": "Gaia Silver Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_gold",
+      "name": "Gaia Gold Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_platinum",
+      "name": "Gaia Platinum Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_diamond",
+      "name": "Gaia Diamond Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_dread",
+      "name": "Gaia Dread Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_gaia_heavenly",
+      "name": "Gaia Heavenly Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_pyria_mythos",
+      "name": "Pyria Mythos Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_pyria_darkwood",
+      "name": "Pyria Darkwood Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_pyria_fireborne",
+      "name": "Pyria Fireborne Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_gaia_pyria_pyria_frostborn",
+      "name": "Pyria Frostborn Variant",
+      "inspiredBy": "Gaia & Pyria",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_paleo_evolved",
+      "name": "Paleo Evolved Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_blighted",
+      "name": "Blighted Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_s_dino",
+      "name": "S-Dino Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_shiny",
+      "name": "Shiny! Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_holographic",
+      "name": "Holographic Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_abyssal_deep_sea",
+      "name": "Abyssal Deep-Sea Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    },
+    {
+      "id": "dino_variant_other_mods_noxious_torpor",
+      "name": "Noxious Torpor Variant",
+      "inspiredBy": "Other Mods",
+      "enabled": true,
+      "spawnWeight": 0,
+      "statProfileId": null,
+      "visualProfileId": null,
+      "tamingKibbleIds": []
+    }
+  ]
+}
