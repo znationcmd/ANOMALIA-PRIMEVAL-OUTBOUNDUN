@@ -1,4 +1,4 @@
-param(
+﻿param(
     [string]$SourceRoot = $env:GITHUB_WORKSPACE,
     [string]$EngineRoot = $env:UE_ROOT,
     [string]$Commit = $env:GITHUB_SHA,
@@ -28,6 +28,11 @@ try {
     } else {
         New-Item -ItemType Directory -Path $base | Out-Null
         @{product='ANOMALIA-UE5-EDITOR-v1'} | ConvertTo-Json | Set-Content -LiteralPath $owner -Encoding UTF8
+    }
+    $existingProfiles=@{}
+    $profileRoot=Join-Path $base 'userdata/Saved/Servers'
+    if (Test-Path -LiteralPath $profileRoot) {
+        foreach ($file in Get-ChildItem -LiteralPath $profileRoot -File -Recurse) { $existingProfiles[$file.FullName]=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash }
     }
     $versions = Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
     $target = Join-Path $versions $Commit
@@ -63,12 +68,33 @@ try {
     }
     foreach ($relative in $critical) { if (-not (Test-Path -LiteralPath (Join-Path $target $relative))) { throw 'Existing version is incomplete; preserved without activation.' } }
     $bootstrap = Join-Path $base 'bootstrap';New-Item -ItemType Directory -Path $bootstrap -Force | Out-Null
+    $ownerState=Get-Content -LiteralPath $owner -Raw | ConvertFrom-Json
+    $newHashes=@{}
     foreach ($name in @('Launch-AnomaliaUE5.ps1','Launch-AnomaliaUE5.vbs')) {
         $from=Join-Path $SourceRoot "distribution/windows-editor/$name";$to=Join-Path $bootstrap $name
+        $newHash=(Get-FileHash -LiteralPath $from -Algorithm SHA256).Hash
         if (Test-Path -LiteralPath $to) {
-            if ((Get-FileHash -LiteralPath $to).Hash -ne (Get-FileHash -LiteralPath $from).Hash) { throw 'Modified launcher preserved; inspect before updating it.' }
+            $currentHash=(Get-FileHash -LiteralPath $to -Algorithm SHA256).Hash
+            $registered=$null
+            if ($null -ne $ownerState.bootstrapSHA) { $registered=$ownerState.bootstrapSHA.$name }
+            # Accept only registered bytes or this exact first shipped launcher.
+            $firstShipped=if ($name -eq 'Launch-AnomaliaUE5.ps1') { @('4F47639732D67BFEF9FAEADF612523F257631816E5FC6DAC63C17DF66533E7CE','479DF1FA241DED7B2AEB352736322C41DFDF26D5F20685ADEF892E611B223105') } else { @($newHash) }
+            if ($currentHash -ne $newHash -and $currentHash -ne $registered -and $firstShipped -notcontains $currentHash) { throw 'Modified launcher preserved; inspect before updating it.' }
+            if ($currentHash -ne $newHash) {
+                $historyDir=Join-Path $base ('bootstrap-history/'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $historyDir -Force | Out-Null
+                Copy-Item -LiteralPath $to -Destination (Join-Path $historyDir $name)
+                $newFile=Join-Path $bootstrap ([Guid]::NewGuid().ToString('N')+'.tmp')
+                Copy-Item -LiteralPath $from -Destination $newFile
+                [IO.File]::Replace($newFile,$to,$null)
+            }
         } else { Copy-Item -LiteralPath $from -Destination $to }
+        $newHashes[$name]=$newHash
     }
+    $ownerState | Add-Member -MemberType NoteProperty -Name bootstrapSHA -Value $newHashes -Force
+    $ownerTemp=Join-Path $base ([Guid]::NewGuid().ToString('N')+'.owner.json')
+    $ownerState | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $ownerTemp -Encoding UTF8
+    $ownerHistory=Join-Path $base 'owner-history';New-Item -ItemType Directory -Path $ownerHistory -Force | Out-Null
+    [IO.File]::Replace($ownerTemp,$owner,(Join-Path $ownerHistory ([Guid]::NewGuid().ToString('N')+'.json')))
     $env:ANOMALIA_EXPECTED_SAVED=Join-Path $base 'userdata/Saved'
     $env:ANOMALIA_PC_UPDATE_REPORT=Join-Path $ValidationDir 'pc-editor-open-probe.json'
     $cmdEditor=Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
@@ -138,6 +164,10 @@ shell.Run Chr(34) & runnerRoot & "\run.cmd" & Chr(34), 0, False
     # Execute bootstrap while the runner is already present: must exit without duplicate.
     $probe=Start-Process -FilePath $wscript -ArgumentList ('"'+$runnerScript+'"') -Wait -PassThru
     if ($probe.ExitCode -ne 0) { throw 'Runner bootstrap probe failed.' }
+    foreach ($path in $existingProfiles.Keys) {
+        if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $existingProfiles[$path]) { throw 'Existing server profile changed during update.' }
+    }
+    $report.existingServerFilesPreserved=$existingProfiles.Count
     $report.state='EDITOR_PROJECT_UPDATE_INSTALLED';$report.installRoot=$base;$report.project=$readback.project;$report.shortcut=$link;$report.startupShortcut=$startupLink;$report.runnerBootstrapExistingSessionTested=$true
 } catch { $report.error=$_.Exception.Message }
 New-Item -ItemType Directory -Path $ValidationDir -Force | Out-Null

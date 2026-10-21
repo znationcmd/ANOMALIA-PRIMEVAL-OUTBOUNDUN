@@ -390,3 +390,25 @@ après redémarrage reste à vérifier sur un véritable redémarrage de Windows
 Le rapport `pc-editor-update.json` doit prouver l'installation des raccourcis et
 `pc-editor-open-probe.json` l'ouverture de la copie. Les futures publications
 validées passent par ce workflow quand le PC et le runner sont disponibles.
+
+
+### Résultat de persistance et contrôle d'une deuxième mise à jour
+
+Run **39587758970** (`c3182f9`) : sauvegarde de **146 packages**, puis nouveau
+processus Unreal et cinq captures réussies **sans fusion forcée**. Inspection
+visuelle : relief conservé. Bornes natives -444,6875 m à 1760,8125 m ; zéro
+composant au sentinel -2048 m. Backup vérifié de 309 fichiers avant écriture,
+SHA256 `e02d7c56fea0dde4d6ba4dd596b267a96506b2277e2d815ae6930bf90057accc`.
+Rapport condensé `docs/world/persist-reopen-39587758970.json` ; preuve brute
+artifact **12339614328**, SHA256
+`b003a3b248e9c6c80b0ff7c267eab268885b694a830371ef546c982e84a6c977`.
+Archive du monde corrigé **12339684137**, SHA256
+`559551cedd6451217b24a0fabeee98c4d2de38e0ce9dd1575f10ad30693ef7e9`.
+
+Une deuxième version de l'installateur est publiée pour tester un véritable
+changement de version. Les scripts PowerShell sont encodés avec BOM pour Windows
+PowerShell 5.1. Un ancien bootstrap n'est remplacé que si ses octets correspondent
+à la version enregistrée ou à l'exacte première version connue ; l'ancien script
+est archivé avant remplacement. Les profils serveur préexistants sont comparés
+par SHA256 avant/après mise à jour. Installation et changement de version encore
+en validation native : attendre les rapports PC avant de les annoncer actifs.
