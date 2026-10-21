@@ -17,7 +17,11 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39490454207
 - Routes/pont : traversée PIE réussie, **3490,4 m**, 50 travées en ordre.
 - Rendu réel : tentative D3D11/SM5 échouée ; zéro capture validée.
-- **Priorité de reprise : tester le correctif de réentrance Slate des captures, puis la démo graphique demandée le 21 octobre.**
+- Correctif de capture publié : `91bfbbfadd3536b4e31152c7c955a6c53368859d`.
+- Nouvelle validation native : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39561443177
+- Dernier état observé : **queued**, job compile sans runner affecté et sans étape démarrée.
+- Contrôles source du correctif : réussis (39561443139 et 39561450108).
+- **Priorité de reprise : lire le résultat de 39561443177 ; si encore queued, le runner Windows doit redevenir disponible. Puis terminer la démo graphique.**
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
 pas déclarée achevée. Conserver leurs développements ; ne pas réécrire main ni
@@ -175,3 +179,21 @@ nouveaux véhicules actifs en doublon. Les dates/noms fournis restent non vérif
 
 Rapport après chaque lot : MODIFIÉ, TESTS, GITHUB, RESTANT, BLOQUANTS. Aucun
 pourcentage global ni déclaration « jeu terminé » sans validations correspondantes.
+
+
+## Point de reprise du 21 octobre — ajouts de véhicules et captures
+
+Commit `91bfbbfadd3536b4e31152c7c955a6c53368859d` : les 54 nouvelles demandes
+(210 lignes groupées au total), leurs relations de familles, les preuves natives
+du parcours de 3490,4 m, l'échec graphique et le correctif de réentrance sont
+enregistrés dans Git. 62 tests Python UE5 locaux réussis ; les vérifications source
+GitHub ont également réussi. Ce résultat ne vaut pas nouvelle compilation native.
+
+Les modèles précis nouvellement demandés restent ABSENT côté UE5 : aucune entrée
+de catalogue n'est présentée comme modèle importé, armé, pilotable ou testé.
+
+Les préparations de végétation, packaging, installateur et mise à jour qui ne sont
+pas publiées dans cette branche ne constituent pas une livraison. Reprendre leur
+développement après vérification de l'arborescence réelle, plutôt que supposer
+qu'un travail temporaire est encore disponible. L'archipel généré et les sauvegardes
+du propriétaire restent sur le runner et doivent être préservés.
