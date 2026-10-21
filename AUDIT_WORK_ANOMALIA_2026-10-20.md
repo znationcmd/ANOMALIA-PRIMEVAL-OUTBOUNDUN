@@ -197,3 +197,34 @@ pas publiées dans cette branche ne constituent pas une livraison. Reprendre leu
 développement après vérification de l'arborescence réelle, plutôt que supposer
 qu'un travail temporaire est encore disponible. L'archipel généré et les sauvegardes
 du propriétaire restent sur le runner et doivent être préservés.
+
+
+## Reprise du 21 octobre — inspection effective des pixels GPU
+
+Le run [39561443177](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39561443177),
+source `91bfbbf`, a réellement compilé Editor et Game, importé les ressources et
+réussi le test PIE de déplacement/collisions/inventaire. Les rapports bruts sont
+conservés dans `docs/world/*39561443177*.json`.
+
+Le GPU DX11/SM5 a produit cinq vrais PNG, inspectés visuellement : les vues
+montrent du ciel/de l'eau sans les sujets demandés. **Captures refusées pour
+valider la démo**. L'ordre positionnel de `unreal.Rotator` est roll,pitch,yaw,
+alors que le script lui passait pitch,yaw,roll. Le correctif utilise les noms
+explicites et vérifie le vecteur avant de chaque caméra relue dans le viewport.
+Un test de régression projette les cinq axes de caméra sur leurs cibles ;
+63 tests Python UE5 réussissent. Cela ne valide pas le prochain rendu natif.
+
+Le processus précédent termine avec `3221225477` malgré un journal de fermeture
+normal : ne pas masquer cet échec. Le script libère maintenant sa référence de
+tâche de capture avant la fermeture et ne demande plus deux mécanismes de sortie.
+Cette correction de fermeture reste à vérifier sur le runner.
+
+Preuve téléchargeable : artifact `12329020076`, SHA256
+`66164e4455ab2dcd795c4df0cecb47813ca2c6d25bee6a2e7d43c011abcd114f`.
+Le workflow relance les contrôles natifs après publication de ce correctif.
+Aucune carte, sauvegarde ou implantation existante n'est remplacée.
+
+Priorité suivante : inspecter les nouvelles images et le code de sortie. Puis
+matériaux texturés et végétation représentative, tests de rendu/déplacement,
+cook Windows et installation testée avant publication d'un canal de mises à jour.
+L'installateur, les mises à jour et les modèles précis demandés restent non livrés.

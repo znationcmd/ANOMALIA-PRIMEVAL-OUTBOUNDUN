@@ -1,5 +1,5 @@
 """Capture only real Unreal viewport pixels from the existing map; no synthetic images."""
-import hashlib,json,math,os,time,traceback
+import gc,hashlib,json,math,os,time,traceback
 from pathlib import Path
 import unreal
 OUT=Path(os.environ['ANOMALIA_VISUAL_OUTPUT']);OUT.mkdir(parents=True,exist_ok=True)
@@ -22,12 +22,21 @@ def finish(error=None):
         report['timingScope']='Editor Slate callback timing, not a gameplay FPS benchmark'
     REPORT.write_text(json.dumps(report,indent=2)+'\n')
     if 'handle' in state:unreal.unregister_slate_post_tick_callback(state['handle'])
-    unreal.EditorPythonScripting.set_keep_python_script_alive(False)
+    # Release automation UObject wrappers before requesting editor teardown.
+    state['task']=None
+    gc.collect()
     unreal.SystemLibrary.quit_editor()
 def set_view():
     _,eye,target=views[state['index']];dx,dy,dz=[target[i]-eye[i] for i in range(3)]
-    rotation=unreal.Rotator(math.degrees(math.atan2(dz,math.hypot(dx,dy))),math.degrees(math.atan2(dy,dx)),0)
-    unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).set_level_viewport_camera_info(unreal.Vector(*eye),rotation)
+    rotation=unreal.Rotator(pitch=math.degrees(math.atan2(dz,math.hypot(dx,dy))),yaw=math.degrees(math.atan2(dy,dx)),roll=0)
+    editor=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+    editor.set_level_viewport_camera_info(unreal.Vector(*eye),rotation)
+    actual_eye,actual_rotation=editor.get_level_viewport_camera_info()
+    forward=actual_rotation.get_forward_vector()
+    length=math.sqrt(dx*dx+dy*dy+dz*dz)
+    alignment=(forward.x*dx+forward.y*dy+forward.z*dz)/length
+    if alignment<.999:raise RuntimeError('Viewport camera does not face requested target')
+    report.setdefault('cameraChecks',[]).append(dict(view=views[state['index']][0],alignment=alignment,eyeCm=[actual_eye.x,actual_eye.y,actual_eye.z],pitch=actual_rotation.pitch,yaw=actual_rotation.yaw,roll=actual_rotation.roll))
 def tick(delta):
     # These native APIs may pump Slate; re-entry must never schedule nested captures.
     if state['busy']:return
