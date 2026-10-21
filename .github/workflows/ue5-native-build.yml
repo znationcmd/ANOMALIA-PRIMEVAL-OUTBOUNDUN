@@ -7,6 +7,8 @@ on:
       - 'unreal/**'
       - 'scripts/ue5/**'
       - 'scripts/vehicle-assets/**'
+      - 'scripts/military-assets/**'
+      - 'docs/vehicles/military-assets-sources.json'
       - 'docs/vehicles/named-assets-sources.json'
       - 'distribution/windows-editor/**'
       - '.github/workflows/ue5-native-build.yml'
@@ -143,11 +145,41 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/NamedVehicles1 "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/named-gltf-structure.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
           Copy-Item 'unreal/SourceAssets/NamedVehicles1/CREDITS.md' 'unreal/Content/ThirdPartyNotices/NamedVehicles1-CREDITS.md'
           $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/validate-expansion-models.py --group NamedVehicles1 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/setup-python@v5
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        with:
+          python-version: '3.12'
+          architecture: 'x64'
+      - name: Prepare and import seven credited military visual references
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $buildEnv = Join-Path $env:GITHUB_WORKSPACE 'unreal/Saved/MilitaryAssetBuildEnv'
+          if (-not (Test-Path (Join-Path $buildEnv 'Scripts/python.exe'))) {
+            python -m venv $buildEnv
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $assetPython = Join-Path $buildEnv 'Scripts/python.exe'
+          & $assetPython -m pip install --disable-pip-version-check -r scripts/military-assets/requirements.txt
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $assetPython scripts/military-assets/prepare.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/Military1 "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/military-gltf-structure.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
+          Copy-Item 'unreal/SourceAssets/Military1/CREDITS.md' 'unreal/Content/ThirdPartyNotices/Military1-CREDITS.md'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group Military1 --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Import original metro lead and coach and capture real GPU views
         if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
@@ -158,6 +190,20 @@ jobs:
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/validate-expansion-models.py --group Metro1 --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create separate closed metro track with native train and three runtime coaches
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_METRO_RAIL_REPORT = Join-Path $evidence 'metro-rail-review.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_metro_rail_review.py'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$evidence/metro-rail-review.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_METRO_RAIL_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('METRO_RAIL_REVIEW_CREATED_NOT_DRIVE_TESTED','EXISTING_METRO_RAIL_REVIEW_PRESERVED_NOT_DRIVE_TESTED') -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Metro review map creation failed.' }
       - name: Import eight original models and test real GPU views and building collisions
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -235,9 +281,13 @@ jobs:
             unreal/SourceAssets/Expansion1/
             unreal/SourceAssets/Metro1/
             unreal/SourceAssets/NamedVehicles1/
+            unreal/SourceAssets/Military1/
+            unreal/Content/Anomalia/Military1/
+            unreal/Content/Maps/ANOMALIA_MilitaryReview_v1.umap
             unreal/Content/Maps/ANOMALIA_NamedVehiclesReview_v1.umap
             unreal/Content/Anomalia/NamedVehicles1/
             unreal/Content/Maps/ANOMALIA_MetroReview_v1.umap
+            unreal/Content/Maps/ANOMALIA_MetroRailReview_v1.umap
             unreal/Content/Anomalia/Props/Metro1/
             unreal/Content/Maps/ANOMALIA_UrbanReview_v1.umap
             unreal/Content/Anomalia/World/UrbanReview1/

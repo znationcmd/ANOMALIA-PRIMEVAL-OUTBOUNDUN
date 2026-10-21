@@ -51,6 +51,8 @@ void AAnomaliaVehiclePawn::BeginPlay()
 {
     Super::BeginPlay();
     ApplyDefinition();
+    if(HasAuthority() && IsValid(InitialRailTrack))
+        TransportMovement->AssignTrack(InitialRailTrack,InitialRailDistanceCm);
 }
 
 bool AAnomaliaVehiclePawn::ConfigureVehicle(FName NewVehicleId)

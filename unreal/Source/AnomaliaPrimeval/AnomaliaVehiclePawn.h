@@ -15,6 +15,7 @@ class UAnomaliaTransportMovement;
 class AAnomaliaSurvivor;
 class AController;
 class AAnomaliaRailCarriage;
+class AAnomaliaRailTrack;
 
 /** Replicated, possessable prototype. Final Chaos wheel/flight/naval physics remain separate work. */
 UCLASS(Blueprintable)
@@ -46,6 +47,12 @@ public:
     /** Flight/naval/rail movement; deliberately separate from legacy ground movement. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     TObjectPtr<UAnomaliaTransportMovement> TransportMovement;
+
+    /** Trusted map configuration. Assignment remains proximity-checked on the server. */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Rail")
+    TObjectPtr<AAnomaliaRailTrack> InitialRailTrack;
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Rail", meta=(ClampMin="0"))
+    float InitialRailDistanceCm=0;
 
     /** Set its local transform to the real cockpit/helm once the vehicle mesh is integrated. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
