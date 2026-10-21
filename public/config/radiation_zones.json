@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "eventName": "DynamicRadiation",
+  "durationSeconds": 900,
+  "intervalSeconds": 3600,
+  "maxConcurrent": 1,
+  "randomizeLocation": true,
+  "avoidLastLocation": true,
+  "radiusMetres": 250,
+  "damagePerSecond": 1,
+  "protection": {
+    "maskRequired": true,
+    "suitRequired": true,
+    "filterDepletionSeconds": 900
+  },
+  "lootTier": 5,
+  "positions": [
+    {
+      "x": 1500,
+      "z": 2200
+    },
+    {
+      "x": -2600,
+      "z": 3200
+    },
+    {
+      "x": 4600,
+      "z": -1700
+    }
+  ],
+  "perServerOverride": true
+}
