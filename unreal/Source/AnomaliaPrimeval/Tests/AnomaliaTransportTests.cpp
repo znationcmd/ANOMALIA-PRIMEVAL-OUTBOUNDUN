@@ -36,7 +36,6 @@ bool FAnomaliaMetroConsistTest::RunTest(const FString& Parameters)
 {
     UWorld* World=UWorld::CreateWorld(EWorldType::Game,false);
     if(!TestNotNull(TEXT("Isolated temporary test world"),World)) return false;
-    World->InitializeNewWorld(UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true).RequiresHitProxies(false).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false).SetTransactional(false));
     auto* Route=World->SpawnActor<AAnomaliaRailTrack>();
     Route->Track->ClearSplinePoints(false);
     for(const FVector Point : {FVector(0,0,160),FVector(10000,0,160),FVector(20000,10000,160),FVector(30000,10000,160)})
