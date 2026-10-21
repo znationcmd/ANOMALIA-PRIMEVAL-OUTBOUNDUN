@@ -6,6 +6,7 @@ on:
     paths:
       - 'unreal/**'
       - 'scripts/ue5/**'
+      - 'distribution/windows-editor/**'
       - '.github/workflows/ue5-native-build.yml'
 concurrency:
   group: anomalia-ue5-native-host
@@ -117,6 +118,13 @@ jobs:
           $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install validated project and automatic PC update shortcuts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()

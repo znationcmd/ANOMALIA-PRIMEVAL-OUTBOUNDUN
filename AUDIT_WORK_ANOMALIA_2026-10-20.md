@@ -361,3 +361,32 @@ les runs suivants passent directement à la vérification de réouverture.
 compilation UE5, écriture et réouverture encore à vérifier : **ne pas annoncer
 la persistance validée avant résultat natif et inspection des captures verify**.
 Textures et végétation attendent la stabilisation de ce cycle.
+
+
+## Demande du propriétaire — mises à jour PC sans commandes manuelles
+
+Un nouveau lot prépare une copie **de développement Unreal**, distincte d'un
+jeu Windows packagé. Après compilation, PIE et preuve GPU de réouverture réussis,
+le workflow copie le projet et ses binaires dans
+`%LOCALAPPDATA%/CMD/ANOMALIA-UE5/versions/<commit>`. Copie vers un dossier de
+staging unique, contrôles SHA256 des fichiers critiques, ancienne version gardée.
+Les dossiers personnels existants comme `C:/ANOMALIA` ne sont pas remplacés.
+Les sauvegardes/configurations partagent un dossier stable `userdata/Saved` via
+une jonction ; seuls les fichiers manquants de Servers/Config sont importés.
+
+La copie est ouverte dans un nouveau processus Unreal sans rendu pour vérifier
+le niveau et la résolution de Saved avant activation atomique. Un raccourci
+`ANOMALIA - Unreal` ouvre la version active dans Unreal Editor installé. Ce
+n'est pas un exécutable autonome ni l'installateur final du jeu. Les modifications
+manuelles d'une ancienne carte ne sont pas fusionnées automatiquement dans une
+nouvelle version ; les fichiers de chaque ancienne version restent conservés.
+
+Un raccourci de démarrage utilisateur relance le runner existant à la connexion
+Windows. Le bootstrap refuse de créer une deuxième session si ce runner est déjà
+présent. Aucun service système, abonnement ou redémarrage forcé. L'ouverture
+après redémarrage reste à vérifier sur un véritable redémarrage de Windows.
+
+**Statut actuel : code publié pour validation, installation non encore confirmée.**
+Le rapport `pc-editor-update.json` doit prouver l'installation des raccourcis et
+`pc-editor-open-probe.json` l'ouverture de la copie. Les futures publications
+validées passent par ce workflow quand le PC et le runner sont disponibles.
