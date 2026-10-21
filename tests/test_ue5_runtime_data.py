@@ -25,8 +25,8 @@ class RuntimeDataTests(unittest.TestCase):
             server = root / 'unreal/Saved/Servers/test/loot_items_catalog.json'
             server.parent.mkdir(parents=True)
             server.write_text('user configuration remains untouched')
-            self.assertEqual(module.stage(root), 3)
-            self.assertEqual(module.stage(root), 3)
+            self.assertEqual(module.stage(root), 5)
+            self.assertEqual(module.stage(root), 5)
             staged = root / 'unreal/Content/Anomalia/Data/loot_items_catalog.json'
             self.assertEqual(len(json.loads(staged.read_text())['items']), 232)
             self.assertEqual(server.read_text(), 'user configuration remains untouched')

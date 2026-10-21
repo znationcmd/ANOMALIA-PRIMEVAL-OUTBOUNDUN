@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
@@ -99,7 +100,22 @@ public:
 
     /** Serialize the current inventory into an existing profile without writing it. Server only. */
     bool BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError);
-    bool IsPersistenceLocked() const { return bPersistenceLocked; }
+    bool IsPersistenceLocked() const { return bPersistenceLocked || bProfileRecoveryPending; }
+    void SetProfileRecoveryPending(bool Pending);
+
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    FString BankAccountId;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 BankBalanceCents = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 NextBankSequence = 1;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    bool bBankingAvailable = false;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    FString BankMessage;
+
+    void RequestBankOperation(EAnomaliaBankAction Action, FName NoteId = NAME_None, const FString& RecipientId = FString(), int64 AmountCents = 0);
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction) override;
 
     /** Client UI requests; the owning actor's RPC ownership routes them to the server. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
@@ -124,6 +140,9 @@ protected:
     void OnRep_Compartments();
 
     UFUNCTION(Server, Reliable)
+    void ServerBankOperation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents, int64 Sequence);
+
+    UFUNCTION(Server, Reliable)
     void ServerRequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
 
     UFUNCTION(Server, Reliable)
@@ -134,7 +153,10 @@ protected:
 
 private:
     friend class UAnomaliaLootSubsystem;
+    friend class UAnomaliaEconomySubsystem;
     bool bPersistenceLocked = false;
+    bool bProfileRecoveryPending = false;
+    double NextBankRequestTime = 0;
     bool bSuppressNotifications = false;
     int32 NextStackId = 1;
     bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;

@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "maxBalanceCents": 1000000000000,
+  "denominations": [
+    {
+      "itemId": "eur_note_5",
+      "valueCents": 500
+    },
+    {
+      "itemId": "eur_note_10",
+      "valueCents": 1000
+    },
+    {
+      "itemId": "eur_note_20",
+      "valueCents": 2000
+    },
+    {
+      "itemId": "eur_note_50",
+      "valueCents": 5000
+    },
+    {
+      "itemId": "eur_note_100",
+      "valueCents": 10000
+    },
+    {
+      "itemId": "eur_note_200",
+      "valueCents": 20000
+    },
+    {
+      "itemId": "eur_note_500",
+      "valueCents": 50000
+    }
+  ],
+  "terminals": [
+    {
+      "id": "review-bank",
+      "map": "ANOMALIA_LootReview_v1",
+      "x": 400,
+      "y": 0,
+      "z": 50
+    }
+  ]
+}

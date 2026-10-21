@@ -15,7 +15,8 @@
         "water",
         "clothing",
         "medical_basic",
-        "tools_basic"
+        "tools_basic",
+        "rp_common"
       ],
       "rarityMultiplier": 1
     },
@@ -32,7 +33,8 @@
         "water",
         "medical",
         "vehicle_parts",
-        "tools"
+        "tools",
+        "rp_common"
       ],
       "rarityMultiplier": 0.8
     },
@@ -48,7 +50,8 @@
         "medical_advanced",
         "industrial",
         "vehicle_parts",
-        "equipment"
+        "equipment",
+        "rp_rare"
       ],
       "rarityMultiplier": 0.6
     },
@@ -63,7 +66,8 @@
       "categories": [
         "military",
         "protection",
-        "rare_parts"
+        "rare_parts",
+        "rp_rare"
       ],
       "rarityMultiplier": 0.35
     },
@@ -76,7 +80,8 @@
       "categories": [
         "rare_medical",
         "rare_parts",
-        "special_equipment"
+        "special_equipment",
+        "rp_rare"
       ],
       "rarityMultiplier": 0.15
     }

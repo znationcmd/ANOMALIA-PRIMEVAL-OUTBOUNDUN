@@ -1,6 +1,7 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaLootSubsystem.h"
+#include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
@@ -59,6 +60,10 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         if (Valid) ServerId = AutomationScope;
     }
 #endif
+    FString EconomyError;
+    if (auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>())
+        if (!Economy->Configure(ServerId, MapName, EconomyError))
+            UE_LOG(LogTemp, Error, TEXT("ANOMALIA economy initialization stopped: %s"), *EconomyError);
     FString LootError;
     if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
         if (!Loot->Configure(ServerId, MapName, LootError))
@@ -101,7 +106,14 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(PlayerController->GetPawn());
     const FString PlayerId = GetPersistentPlayerId(PlayerController);
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
-    if (Loot && Loot->HasPendingPlayer(PlayerId)) { PendingProfileLoads.Add(PlayerId); return; }
+    const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    if ((Loot && Loot->HasPendingPlayer(PlayerId)) || (Economy && Economy->HasPendingPlayer(PlayerId)))
+    {
+        PendingProfileLoads.Add(PlayerId);
+        if (Survivor && Survivor->InventoryComponent) Survivor->InventoryComponent->SetProfileRecoveryPending(true);
+        return;
+    }
+    if (Survivor && Survivor->InventoryComponent) Survivor->InventoryComponent->SetProfileRecoveryPending(false);
     PendingProfileLoads.Remove(PlayerId);
     if (!Survivor || PlayerId.IsEmpty())
     {
@@ -125,7 +137,12 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
     {
         FString InventoryError;
         if (!Survivor->InventoryComponent->LoadInventoryFromPlayerProfile(ServerId, PlayerId, InventoryError))
+        {
+            PendingProfileLoads.Add(PlayerId);
+            Survivor->InventoryComponent->SetProfileRecoveryPending(true);
             UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: inventory load rejected: %s"), *ServerId, *InventoryError);
+            return;
+        }
     }
 
     const TSharedPtr<FJsonObject>* SurvivalPtr = nullptr;
@@ -184,7 +201,9 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(Controller->GetPawn());
     const FString PlayerId = GetPersistentPlayerId(Controller);
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
-    if (PendingProfileLoads.Contains(PlayerId) || (Loot && Loot->HasPendingPlayer(PlayerId))) return;
+    const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    if (PendingProfileLoads.Contains(PlayerId) || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
+        (Economy && Economy->HasPendingPlayer(PlayerId))) return;
     if (!Survivor || PlayerId.IsEmpty()) return;
 
     FString Error;
@@ -490,11 +509,13 @@ void AAnomaliaGameMode::RetryPendingProfileLoads()
 {
     if (!HasAuthority() || !GetWorld() || PendingProfileLoads.IsEmpty()) return;
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
+    const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
         APlayerController* Controller = It->Get();
         const FString PlayerId = GetPersistentPlayerId(Controller);
-        if (PendingProfileLoads.Contains(PlayerId) && (!Loot || !Loot->HasPendingPlayer(PlayerId)))
+        if (PendingProfileLoads.Contains(PlayerId) && (!Loot || !Loot->HasPendingPlayer(PlayerId)) &&
+            (!Economy || !Economy->HasPendingPlayer(PlayerId)))
             LoadPersistentPlayer(Controller);
     }
 }

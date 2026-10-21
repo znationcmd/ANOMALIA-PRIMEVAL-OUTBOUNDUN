@@ -12,6 +12,9 @@ struct FAnomaliaLootItem
 {
     FName Id;
     FString DisplayName, Category;
+    TSet<FString> Categories;
+    bool MatchesAnyCategory(const TSet<FString>& Allowed) const
+    { for (const auto& Name : Categories) if (Allowed.Contains(Name)) return true; return false; }
     int32 MinTier = 1, MaxTier = 5, Quantity = 1, Nominal = 1, Minimum = 0;
     double RestockSeconds = 600, LifetimeSeconds = 3600;
     // Provisional storage rules when a catalogue entry has no physical inventory metadata.
@@ -64,7 +67,7 @@ private:
     bool bConfigured = false, bReady = false;
     double DefaultRestock = 1800;
     float Accumulator = 0;
-    bool LoadCatalog(const FString& File, FString& Error);
+    bool LoadCatalog(const FString& File, FString& Error, bool Append = false);
     bool RecoverPending(FString& Error);
     bool Persist(FString& Error);
     void SyncActors();

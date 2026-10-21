@@ -2,6 +2,7 @@
 #include "AnomaliaLootPickup.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaConfigLibrary.h"
 #include "Dom/JsonObject.h"
 #include "Engine/World.h"
@@ -54,6 +55,8 @@ namespace
     const TMap<FString, TArray<FString>>& CategoryGroups()
     {
         static const TMap<FString, TArray<FString>> Groups = {
+            {TEXT("rp_common"), {TEXT("rp_cash"), TEXT("rp_valuables")}},
+            {TEXT("rp_rare"), {TEXT("rp_precious_metals"), TEXT("rp_gemstones")}},
             {TEXT("food"), {TEXT("canned_food"), TEXT("fresh_food"), TEXT("cooking")}},
             {TEXT("water"), {TEXT("drinks")}},
             {TEXT("clothing"), {TEXT("tops"), TEXT("pants"), TEXT("shoes_gloves"), TEXT("headwear"), TEXT("backpacks")}},
@@ -89,7 +92,8 @@ void UAnomaliaLootSubsystem::Initialize(FSubsystemCollectionBase& Collection)
     Super::Initialize(Collection);
     FString Error;
     // Clients use only shipped inventory definitions, never a dedicated server's files.
-    LoadCatalog(FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Anomalia/Data/loot_items_catalog.json")), Error);
+    if (LoadCatalog(FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Anomalia/Data/loot_items_catalog.json")), Error))
+        LoadCatalog(FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Anomalia/Data/rp_items_catalog.json")), Error, true);
 }
 TStatId UAnomaliaLootSubsystem::GetStatId() const
 { RETURN_QUICK_DECLARE_CYCLE_STAT(UAnomaliaLootSubsystem, STATGROUP_Tickables); }
@@ -104,7 +108,7 @@ void UAnomaliaLootSubsystem::Tick(float DeltaTime)
     if (bReady && GetWorld()->HasBegunPlay()) RefreshLoot();
 }
 
-bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error)
+bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bool Append)
 {
     TSharedPtr<FJsonObject> Root;
     if (!Read(File, Root, Error)) return false;
@@ -118,7 +122,7 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error)
         FString Id; FAnomaliaLootItem Item;
         double Min = 0, Max = 0, Quantity = 0, Nominal = 0, Minimum = 0;
         if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) || !SafeId(Id) ||
-            Candidate.Contains(FName(*Id)) || !Row->TryGetStringField(TEXT("displayName"), Item.DisplayName) ||
+            (Append && Items.Contains(FName(*Id))) || !Row->TryGetStringField(TEXT("displayName"), Item.DisplayName) ||
             Item.DisplayName.IsEmpty() || Item.DisplayName.Len() > 128 ||
             !Row->TryGetStringField(TEXT("category"), Item.Category) || !SafeId(Item.Category) ||
             !Row->TryGetBoolField(TEXT("enabled"), Item.bEnabled) ||
@@ -140,9 +144,23 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error)
         Item.WeightKg = static_cast<float>(Weight); Item.MaxStack = static_cast<int32>(Stack);
         Item.Size = FIntPoint(static_cast<int32>(Width), static_cast<int32>(Height));
         if (Item.Quantity > Item.MaxStack) { Error = TEXT("Loot quantity exceeds stack limit"); return false; }
-        Candidate.Add(Item.Id, Item);
+        Item.Categories.Add(Item.Category);
+        if (auto* Existing = Candidate.Find(Item.Id))
+        {
+            // One existing battery is listed in both lighting and engine-parts categories.
+            // Preserve both categories as one physical item; conflicting data must fail closed.
+            if (Existing->DisplayName != Item.DisplayName || Existing->MinTier != Item.MinTier || Existing->MaxTier != Item.MaxTier ||
+                Existing->Quantity != Item.Quantity || Existing->Nominal != Item.Nominal || Existing->Minimum != Item.Minimum ||
+                Existing->RestockSeconds != Item.RestockSeconds || Existing->LifetimeSeconds != Item.LifetimeSeconds ||
+                Existing->WeightKg != Item.WeightKg || Existing->MaxStack != Item.MaxStack || Existing->Size != Item.Size ||
+                Existing->bEnabled != Item.bEnabled)
+            { Error = TEXT("Conflicting duplicate loot definition: ")+Id; return false; }
+            Existing->Categories.Add(Item.Category);
+        }
+        else Candidate.Add(Item.Id, Item);
     }
-    Items = MoveTemp(Candidate);
+    if (Append) Items.Append(Candidate);
+    else Items = MoveTemp(Candidate);
     return true;
 }
 
@@ -161,7 +179,8 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
     }
     FTCHARToUTF8 Encoded(*MapName);
     StateId = TEXT("loot-") + FSHA1::HashBuffer(Encoded.Get(), Encoded.Length()).ToString().ToLower();
-    if (!LoadCatalog(DataFile(ServerId, TEXT("loot_items_catalog.json")), Error)) return false;
+    if (!LoadCatalog(DataFile(ServerId, TEXT("loot_items_catalog.json")), Error) ||
+        !LoadCatalog(DataFile(ServerId, TEXT("rp_items_catalog.json")), Error, true)) return false;
     TSharedPtr<FJsonObject> Tiers;
     if (!Read(DataFile(ServerId, TEXT("loot_tiers.json")), Tiers, Error)) return false;
     bool Enabled = false;
@@ -230,7 +249,7 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
                 if (!Category.IsValid() || !Category->TryGetString(Name) || !SafeId(Name))
                 { Error = TEXT("Invalid loot category filter"); return false; }
                 bool Found = false;
-                for (const auto& Pair : Items) if (Pair.Value.Category == Name) { Found = true; break; }
+                for (const auto& Pair : Items) if (Pair.Value.Categories.Contains(Name)) { Found = true; break; }
                 if (!Found) { Error = TEXT("Unknown loot category filter"); return false; }
                 Spawn.Categories.Add(Name);
             }
@@ -350,8 +369,8 @@ void UAnomaliaLootSubsystem::RefreshLoot()
         {
             const auto& Item = Pair.Value;
             if (!Item.bEnabled || Item.Nominal < 1 || Spawn.Tier < Item.MinTier || Spawn.Tier > Item.MaxTier ||
-                !TierCategories[Spawn.Tier].Contains(Item.Category) ||
-                (Spawn.Categories.Num() && !Spawn.Categories.Contains(Item.Category))) continue;
+                !Item.MatchesAnyCategory(TierCategories[Spawn.Tier]) ||
+                (Spawn.Categories.Num() && !Item.MatchesAnyCategory(Spawn.Categories))) continue;
             int32 Existing = 0;
             for (const auto& Saved : Points->Values)
                 if (Saved.Value->AsObject()->GetStringField(TEXT("itemId")) == Item.Id.ToString())
@@ -440,7 +459,8 @@ bool UAnomaliaLootSubsystem::TryCollect(AAnomaliaLootPickup* Pickup, AAnomaliaSu
     if (GetWorld()->LineTraceSingleByChannel(Hit, Survivor->GetActorLocation()+FVector(0,0,50),
         Pickup->GetActorLocation(), ECC_Visibility, Query)) return false;
     auto* Inventory = Survivor->InventoryComponent.Get();
-    if (!Inventory || Inventory->bPersistenceLocked) return false;
+    const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    if (!Inventory || Inventory->IsPersistenceLocked() || (Economy && Economy->HasPendingPlayer(PlayerId))) return false;
     const auto Point = State->GetObjectField(TEXT("points"))->GetObjectField(Pickup->SpawnId);
     const auto* Item = FindItem(Pickup->ItemId);
     if (!Item || Point->GetStringField(TEXT("itemId")) != Pickup->ItemId.ToString() ||

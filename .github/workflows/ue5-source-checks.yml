@@ -4,6 +4,9 @@ on:
   push:
     paths:
       - 'unreal/**'
+      - 'public/config/rp*.json'
+      - 'tests/test_ue5_rp_catalog.py'
+      - 'tests/test_ue5_runtime_data.py'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
       - 'tests/test_ue5_settlement_layout.py'
@@ -28,6 +31,9 @@ on:
   pull_request:
     paths:
       - 'unreal/**'
+      - 'public/config/rp*.json'
+      - 'tests/test_ue5_rp_catalog.py'
+      - 'tests/test_ue5_runtime_data.py'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
       - 'tests/test_ue5_settlement_layout.py'
@@ -83,6 +89,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_terrain_source.py -v
       - name: Validate 48km draft terrain seams and non-destructive generation
         run: python -m unittest discover -s tests -p test_ue5_playtest_terrain.py -v
+      - name: Validate additive RP catalogue and integer banknote values
+        run: python -m unittest discover -s tests -p test_ue5_rp_catalog.py -v
       - name: Exercise runtime catalogue staging without modifying server saves
         run: python -m unittest discover -s tests -p test_ue5_runtime_data.py -v
       - name: Verify config migration is non-destructive

@@ -95,6 +95,17 @@
       "categories": [
         "medical_supplies"
       ]
+    },
+    {
+      "id": "review-bank-cash",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "house",
+      "x": 200,
+      "y": -140,
+      "z": 30,
+      "categories": [
+        "rp_cash"
+      ]
     }
   ]
 }

@@ -6,6 +6,7 @@ on:
       - 'unreal/Source/**'
       - 'unreal/Config/**'
       - 'public/config/loot*.json'
+      - 'public/config/rp*.json'
       - 'scripts/ue5/stage-runtime-data.py'
       - 'scripts/ue5/run-loot-playtest.py'
       - 'unreal/Scripts/create_loot_review.py'

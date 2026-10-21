@@ -6,7 +6,7 @@ import os
 import tempfile
 
 ROOT = Path(__file__).resolve().parents[2]
-FILES = ('loot_items_catalog.json', 'loot_tiers.json', 'loot_spawns.json')
+FILES = ('loot_items_catalog.json', 'loot_tiers.json', 'loot_spawns.json', 'rp_items_catalog.json', 'rp_economy.json')
 
 
 def stage(root=ROOT):

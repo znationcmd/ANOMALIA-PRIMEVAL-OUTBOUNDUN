@@ -8,6 +8,8 @@ class UAnomaliaInventoryComponent;
 class UCanvasPanel;
 class UVerticalBox;
 class UButton;
+class UTextBlock;
+class UEditableTextBox;
 class UAnomaliaInventoryWidget;
 struct FAnomaliaInventoryStack;
 
@@ -16,7 +18,9 @@ enum class EAnomaliaInventoryAction : uint8
 {
     MoveToHands,
     SplitHalf,
-    Merge
+    Merge,
+    DepositNote,
+    WithdrawNote
 };
 
 UCLASS()
@@ -70,5 +74,10 @@ private:
     void BindAction(UButton* Button, EAnomaliaInventoryAction Action, int32 StackId, int32 Count=0, int32 OtherStackId=0);
     void PerformAction(EAnomaliaInventoryAction Action, int32 StackId, int32 Count, int32 OtherStackId);
 
+    UPROPERTY() TObjectPtr<UTextBlock> BankStatus;
+    UPROPERTY() TObjectPtr<UEditableTextBox> BankRecipient;
+    UPROPERTY() TObjectPtr<UEditableTextBox> BankAmount;
+    UPROPERTY() TObjectPtr<UButton> TransferButton;
+    UFUNCTION() void TransferMoney();
     void BuildLayout();
 };

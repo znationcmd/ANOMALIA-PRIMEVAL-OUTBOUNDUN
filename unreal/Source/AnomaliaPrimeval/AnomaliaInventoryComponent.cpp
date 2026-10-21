@@ -1,6 +1,8 @@
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaConfigLibrary.h"
 #include "AnomaliaLootSubsystem.h"
+#include "AnomaliaSurvivor.h"
+#include "AnomaliaGameMode.h"
 #include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
@@ -12,6 +14,8 @@
 UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
 {
     SetIsReplicatedByDefault(true);
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 1.f;
     FAnomaliaInventoryCompartment Pockets;
     Pockets.Id = TEXT("pockets");
     Pockets.Width = 6;
@@ -89,7 +93,7 @@ float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
 
 bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, int32 Height)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || Id.IsNone() || Id == TEXT("hands") ||
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Id.IsNone() || Id == TEXT("hands") ||
         Width < 1 || Width > 12 || Height < 1 || Height > 20) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
     if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
@@ -152,7 +156,7 @@ void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candi
 
 bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || Count < 1) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Count < 1) return false;
     float ItemWeight = 0.f;
     int32 MaxStack = 0;
     FIntPoint Size;
@@ -185,7 +189,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 
 bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || ItemId.IsNone() || Count < 1) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || ItemId.IsNone() || Count < 1) return false;
     int32 Available = 0;
     for (const FAnomaliaInventoryStack& Stack : Stacks)
         if (Stack.ItemId == ItemId && Stack.Count > 0) Available += Stack.Count;
@@ -207,7 +211,7 @@ bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
 
 bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Stack = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
     if (!Stack || !CanPlace(Candidate, *Stack, ContainerId, X, Y, bRotate)) return false;
@@ -219,7 +223,7 @@ bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId,
 bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId)
 {
     OutNewStackId = 0;
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
     if (!Source || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
@@ -237,7 +241,7 @@ bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int3
 
 bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 SourceStackId)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || TargetStackId == SourceStackId) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || TargetStackId == SourceStackId) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
@@ -252,7 +256,7 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
 
 bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked)
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked())
     { OutError = TEXT("Inventory persistence is unavailable or locked for recovery"); return false; }
     FString Serialized;
     return BuildInventoryProfile(ServerId, PlayerId, Serialized, OutError) &&
@@ -478,4 +482,44 @@ void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
     DOREPLIFETIME(UAnomaliaInventoryComponent, Stacks);
     DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments);
     DOREPLIFETIME(UAnomaliaInventoryComponent, WeightCapacityKg);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankAccountId, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankBalanceCents, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, NextBankSequence, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, bBankingAvailable, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankMessage, COND_OwnerOnly);
+}
+
+void UAnomaliaInventoryComponent::SetProfileRecoveryPending(bool Pending)
+{
+    if (GetOwner() && GetOwner()->HasAuthority()) bProfileRecoveryPending = Pending;
+}
+void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, TickFunction);
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld()) return;
+    const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
+    auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    if (Survivor && Mode && Economy && Survivor->GetController())
+        Economy->RefreshAccount(this, Mode->GetPersistentPlayerId(Survivor->GetController()));
+}
+void UAnomaliaInventoryComponent::RequestBankOperation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents)
+{
+    if (!GetOwner()) return;
+    if (GetOwner()->HasAuthority()) ServerBankOperation_Implementation(Action, NoteId, RecipientId, AmountCents, NextBankSequence);
+    else ServerBankOperation(Action, NoteId, RecipientId, AmountCents, NextBankSequence);
+}
+void UAnomaliaInventoryComponent::ServerBankOperation_Implementation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents, int64 Sequence)
+{
+    const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AAnomaliaGameMode>() : nullptr;
+    auto* Economy = GetWorld() ? GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>() : nullptr;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !Survivor || !Mode || !Economy || !Survivor->GetController() || RecipientId.Len() > 64) return;
+    const double RequestTime = GetWorld()->GetRealTimeSeconds();
+    if (RequestTime < NextBankRequestTime) return;
+    NextBankRequestTime = RequestTime + .2;
+    FString Error;
+    const bool Accepted = Economy->Execute(this, Mode->GetPersistentPlayerId(Survivor->GetController()), Action, NoteId, RecipientId, AmountCents, Sequence, Error);
+    BankMessage = Accepted ? (IsPersistenceLocked() ? TEXT("Transaction enregistrée ; reprise en cours.") : TEXT("Transaction enregistrée.")) : Error;
+    OnInventoryUpdated.Broadcast(); GetOwner()->ForceNetUpdate();
 }

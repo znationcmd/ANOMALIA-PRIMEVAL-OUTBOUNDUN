@@ -13,6 +13,9 @@
 #include "../AnomaliaGameMode.h"
 #include "../AnomaliaSurvivor.h"
 #include "../AnomaliaLootSubsystem.h"
+#include "../AnomaliaEconomySubsystem.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
 #include "../AnomaliaLootPickup.h"
 #include "../AnomaliaInventoryComponent.h"
 #include "../AnomaliaInventoryWidget.h"
@@ -27,7 +30,8 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
     if (!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_LootReview_v1")))
     { AddError(TEXT("Real loot review map is missing")); return false; }
     ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
-    struct FProbe { int32 Phase = 0; double Deadline = FPlatformTime::Seconds()+120; };
+    struct FProbe { int32 Phase = 0; double Deadline = FPlatformTime::Seconds()+120;
+        FName NoteId; int64 Value = 0; double NextAction = 0; };
     auto Probe = MakeShared<FProbe>();
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Probe, Scope]()
     {
@@ -87,9 +91,53 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Probe->Phase = 3;
             return false;
         }
-        Input(EKeys::I, IE_Released);
-        if (Survivor->InventoryWidget && Survivor->InventoryWidget->IsInViewport()) return false;
-        TestEqual(TEXT("Opening and closing UI does not consume or duplicate the item"), Units, 1);
+        if (Probe->Phase == 3)
+        {
+            Input(EKeys::I, IE_Released);
+            if (Survivor->InventoryWidget && Survivor->InventoryWidget->IsInViewport()) return false;
+            TestEqual(TEXT("Opening and closing UI preserves the item"), Units, 1);
+            Survivor->SetActorLocation(FVector(200,-140,100),false,nullptr,ETeleportType::TeleportPhysics);
+            Input(EKeys::E,IE_Pressed); Probe->Phase=4; return false;
+        }
+        if (Probe->Phase == 4)
+        {
+            Input(EKeys::E,IE_Released);
+            if (Units < 2) return false;
+            for (const auto& Stack : Survivor->InventoryComponent->Stacks)
+                if (Stack.ItemId.ToString().StartsWith(TEXT("eur_note_"))) Probe->NoteId=Stack.ItemId;
+            const auto* Economy=World->GetSubsystem<UAnomaliaEconomySubsystem>();
+            Probe->Value=Economy ? Economy->GetDenomination(Probe->NoteId) : 0;
+            if (!TestTrue(TEXT("Actual world RP note is a fixed denomination"),Probe->Value>0)) return true;
+            Survivor->SetActorLocation(FVector(350,0,100),false,nullptr,ETeleportType::TeleportPhysics);
+            Input(EKeys::I,IE_Pressed); Probe->Phase=5; return false;
+        }
+        auto FindButton=[Survivor](const FString& Prefix)->UButton*
+        {
+            UButton* Found=nullptr;
+            if (Survivor->InventoryWidget && Survivor->InventoryWidget->WidgetTree)
+                Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
+                { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) Found=Cast<UButton>(Widget); });
+            return Found;
+        };
+        if (Probe->Phase == 5)
+        {
+            Input(EKeys::I,IE_Released);
+            if (!Survivor->InventoryComponent->bBankingAvailable) return false;
+            const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
+            UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d"),Stack->StackId)) : nullptr;
+            if (!Deposit) return false;
+            Deposit->OnClicked.Broadcast(); Probe->Phase=6; Probe->NextAction=FPlatformTime::Seconds()+.25; return false;
+        }
+        if (Probe->Phase == 6)
+        {
+            if (Survivor->InventoryComponent->BankBalanceCents!=Probe->Value || FPlatformTime::Seconds()<Probe->NextAction) return false;
+            TestEqual(TEXT("Actual bank UI deposit removes the physical note"),Units,1);
+            UButton* Withdraw=FindButton(TEXT("BankWithdraw_")+Probe->NoteId.ToString());
+            if (!Withdraw) return false;
+            Withdraw->OnClicked.Broadcast(); Probe->Phase=7; return false;
+        }
+        if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
+        TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
         return true;
     }));
     ADD_LATENT_AUTOMATION_COMMAND(FEndPlayMapCommand());
