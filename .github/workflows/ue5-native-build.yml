@@ -137,6 +137,7 @@ jobs:
           & $enginePython scripts/ue5/validate-original-lot1.py --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Create independent urban review block with 28 buildings and open pool recesses
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -150,6 +151,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $result = Get-Content -LiteralPath $env:ANOMALIA_SETTLEMENT_REPORT -Raw | ConvertFrom-Json
           if ($result.state -notin @('URBAN_REVIEW_CREATED_NOT_PLAYTESTED','EXISTING_URBAN_REVIEW_PRESERVED_NOT_PLAYTESTED') -or $result.buildingCount -ne 28 -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Urban review generation failed.' }
+      - name: Collect exact Windows editor fault module without altering system settings
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-modules.json')
+      - name: Retain read-only editor shutdown diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-editor-crash-diagnostics
+          path: unreal/Saved/BuildValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/editor-crash-modules.json
+          if-no-files-found: warn
       - name: Install validated project and automatic PC update shortcuts
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
