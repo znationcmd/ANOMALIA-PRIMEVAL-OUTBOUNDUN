@@ -13,15 +13,18 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Projet : `unreal/AnomaliaPrimeval.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
-- Dernier lot natif terminé : `c855336156e5c874e59308bd26b1087c6b03f35d`.
-- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39575114440
-- Compilation Editor/Game, tests natifs, traversée PIE et capture GPU : réussis.
-- **Terrain toujours invisible ; la démo graphique n'est pas validée.**
-- Anomalie native précise : les 576 composants visuels ont tous des bornes centrées
-  à Z=-204800 cm (-2048 m). Leurs heightmaps existent ; les collisions ont du relief.
-- Hypothèse en cours : fusion GPU des edit layers non évaluée après import NullRHI.
-- Correctif suivant : demande de réévaluation des couches existantes en mémoire,
-  sans réimporter ni sauvegarder le monde. Inspecter le prochain rapport et les PNG.
+- Dernier lot natif terminé : `cca28b25431eba5093e064957f56e4724f32c13f`.
+- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39576659556
+- Compilation Editor/Game, tests natifs et traversée PIE : réussis.
+- **Relief désormais visible dans une vraie session GPU DX11/SM5 : cinq images inspectées.**
+- Correctif : forcer la fusion des couches existantes avec le GPU après leur import
+  initial NullRHI. Aucun réimport, niveau remplacé ou sauvegarde supprimée.
+- Preuves et images : `docs/world/render-reviewed-39576659556.json` et
+  `docs/world/captures/2026-10-21/`.
+- Limites : couleurs de biomes provisoires, mer visuelle, végétation absente ;
+  sauvegarde des sorties GPU et réouverture indépendante encore non testées.
+- **Priorité suivante : pérenniser puis recharger le rendu corrigé avec sauvegarde
+  préalable, améliorer matériaux/texture/végétation, puis démo Windows testée.**
 
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
@@ -308,3 +311,30 @@ avec le vrai GPU, avant le rafraîchissement. Cela recalcule les sorties des
 couches existantes uniquement dans la session de diagnostic : pas d'import,
 pas de remplacement du terrain et pas de sauvegarde. Hypothèse de fusion
 NullRHI encore à confirmer par la nouvelle compilation et les images.
+
+
+## Succès du rendu du relief — 21 octobre
+
+Run **39576659556**, source **cca28b2** : compilation native Editor/Game réussie,
+tests natifs et traversée PIE réussis, capture GPU/fermeture réussies. Les cinq
+PNG ont été inspectés : îles, relief enneigé, sable/zones sèches et rives du pont
+sont visibles. La fusion GPU des couches existantes a rétabli les textures de
+hauteur et leurs bornes ; **0 composant sur 576** reste centré à -2048 m.
+Les textures GPU ont retrouvé leur résolution signalée 128×128.
+
+Preuve brute **12334009161**, SHA256
+`2c9f92e77b9cc9fb599cdccb93ec6feef0aa6538a6df857c4ad9e9075792dbb6`.
+JPEG de consultation conservés dans Git ; aucune image synthétique.
+Les rapports source et les anciens échecs sont conservés.
+
+**Portée exacte** : rendu du relief testé dans la session graphique après
+reconstruction, pas une démo graphique terminée. Les matériaux sont encore des
+couleurs simples ; plage/désert demandent textures et cadrages plus représentatifs,
+pas de végétation intégrée et pas de mesure FPS de gameplay.
+
+Le correctif ne sauvegarde volontairement pas les packages. Avant de prétendre
+que le monde distribué est corrigé : sauvegarde préalable des fichiers du monde,
+persistance ciblée des sorties GPU calculées, réouverture fraîche sans reconstruction
+forcée, nouvelle capture et parcours. L'archive de monde du run ne prouve donc
+pas encore ce cycle. Ensuite matériaux et végétation, cook Windows, tests de
+lancement/installation et mises à jour préservant les données.
