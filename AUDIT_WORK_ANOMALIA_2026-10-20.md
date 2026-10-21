@@ -13,15 +13,16 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Projet : `unreal/AnomaliaPrimeval.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
-- Dernier lot natif exécuté : `e990adf53df99dff53a5e2fb3e6112f586d4bc9c`.
-- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39490454207
-- Routes/pont : traversée PIE réussie, **3490,4 m**, 50 travées en ordre.
-- Rendu réel : tentative D3D11/SM5 échouée ; zéro capture validée.
-- Correctif de capture publié : `91bfbbfadd3536b4e31152c7c955a6c53368859d`.
-- Nouvelle validation native : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39561443177
-- Dernier état observé : **queued**, job compile sans runner affecté et sans étape démarrée.
-- Contrôles source du correctif : réussis (39561443139 et 39561450108).
-- **Priorité de reprise : lire le résultat de 39561443177 ; si encore queued, le runner Windows doit redevenir disponible. Puis terminer la démo graphique.**
+- Dernier lot natif terminé : `2fe49e08eaa694ee46a0e8055a3039f0edd2055c`.
+- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39566307432
+- Compilation Editor/Game, tests natifs et traversée PIE : réussis.
+- Capture DX11/SM5 et fermeture : réussies, code 0 ; cinq PNG réels inspectés.
+- **Rendu partiel : le pont est visible, mais le Landscape est invisible dans les cinq vues. Démo graphique refusée.**
+- Caméras : axes corrigés et relus nativement, alignement vers cible ≈ 1.
+- Correctif suivant : diagnostics des composants/acteurs Landscape chargés, contrôle
+  du nombre 576, visibilité temporaire et ShowFlag Landscape sans sauvegarder la carte.
+- **Priorité de reprise : lire la validation native déclenchée par le dernier commit
+  et son landscapeDiagnostics avant de toucher au terrain ou de refaire un import.**
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
 pas déclarée achevée. Conserver leurs développements ; ne pas réécrire main ni
@@ -53,8 +54,10 @@ isolés ne remplacent jamais les résultats natifs du runner Windows.
 plusieurs clients réels validés. `PACKAGED AND TESTED` : distribution testée.
 `BLOCKED` : échec ou ressource manquante documenté.
 
-Les tests actuels utilisent **NullRHI**, donc sans rendu GPU. Aucun résultat visuel,
-FPS, 4K/60, conduite réseau ou jeu complet n'en découle.
+Les tests de gameplay actuels utilisent **NullRHI**, donc sans rendu GPU. Les
+captures sont exécutées séparément avec un vrai GPU DX11/SM5 ; leurs pixels
+doivent être inspectés. Aucun FPS, 4K/60, conduite réseau ou jeu complet ne se
+déduit du succès des tests de gameplay.
 
 | Fonction | État au dernier contrôle | Preuve et limite | Reste à faire |
 |---|---|---|---|
@@ -228,3 +231,27 @@ Priorité suivante : inspecter les nouvelles images et le code de sortie. Puis
 matériaux texturés et végétation représentative, tests de rendu/déplacement,
 cook Windows et installation testée avant publication d'un canal de mises à jour.
 L'installateur, les mises à jour et les modèles précis demandés restent non livrés.
+
+
+## Résultat GPU du 21 octobre — succès technique, démo toujours refusée
+
+Run **39566307432**, source `2fe49e0` : compilation Editor/Game, tests natifs,
+PIE (routes/pont/inventaire) et capture DX11/SM5 réussis. Fermeture normale, code 0.
+Les cinq PNG ont été ouverts et inspectés : pont visible sur la cinquième vue,
+mais pas de terres visibles. Les quatre autres vues ne démontrent donc ni îles,
+ni neige, ni plage, ni désert. `visual-review-39566307432.json` conserve ce refus ;
+un workflow vert ne signifie pas une démonstration graphique réussie.
+
+Archive du vrai monde avec routes et pont : artifact **12329748850**,
+25 178 528 octets, SHA256
+`75377919c7766db26833c6c159789cff9cdde5c0843e487220caff2251f9c9ad`.
+Preuves natives : artifact **12329963421**, SHA256
+`58ee3df1369e2e3747ed32c188153635aded599aa1356abd79c6687d8e86356d`.
+Ces archives Actions expirent ; aucune prétention de binaire Windows distribué.
+
+Le lot de diagnostic suivant conserve les fichiers du monde. Il vérifie les
+576 composants Landscape effectivement chargés, enregistre les classes des
+descripteurs World Partition et les états masqués des acteurs, puis force leur
+visibilité dans la seule session de capture non sauvegardée. Ne pas refaire
+le Landscape pour masquer le problème. Résultat natif de ce lot encore attendu.
+Le test de régression des cinq caméras est aussi ajouté au workflow de sources.

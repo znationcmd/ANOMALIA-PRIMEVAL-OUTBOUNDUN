@@ -1,0 +1,169 @@
+{
+  "state": "REAL_GPU_CAPTURES_AWAITING_REVIEW",
+  "headless": false,
+  "command": [
+    "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+    "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaPrimeval.uproject",
+    "-d3d11",
+    "-sm5",
+    "-RenderOffscreen",
+    "-unattended",
+    "-nopause",
+    "-nosound",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ExecutePythonScript=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Scripts\\capture_real_world.py",
+    "-abslog=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39566307432-1\\real-graphics\\editor-render.log"
+  ],
+  "exitCode": 0,
+  "nativeReport": {
+    "state": "REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED",
+    "sourceCommit": "2fe49e08eaa694ee46a0e8055a3039f0edd2055c",
+    "mapPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+    "requestedRHI": "D3D11 SM5",
+    "headless": false,
+    "screenshots": [
+      {
+        "file": "01_archipelago.png",
+        "sha256": "1a8aeae4f2c3f1ae66784bf398cbcd874c65f9b095a00567b7990cf8d5ea5e89",
+        "bytes": 544096,
+        "cameraCm": [
+          0,
+          0,
+          3200000
+        ],
+        "targetCm": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "file": "02_snow_mountains.png",
+        "sha256": "b90b856abb11dd3817352d111bc3277c060b383e17251d93aebdecbdab9d7b6c",
+        "bytes": 538710,
+        "cameraCm": [
+          -800000,
+          -1020000,
+          250000
+        ],
+        "targetCm": [
+          -575000,
+          -725000,
+          160000
+        ]
+      },
+      {
+        "file": "03_beach.png",
+        "sha256": "17490ce8ead9493077904c4f1b4cdf347b2d4a0aade55155e33fdd83f2fd3f7a",
+        "bytes": 535796,
+        "cameraCm": [
+          -1690000,
+          1020000,
+          1800
+        ],
+        "targetCm": [
+          -1660000,
+          985000,
+          600
+        ]
+      },
+      {
+        "file": "04_desert.png",
+        "sha256": "cd885be7df52a46d62e9db742d54aab741b5c231abcbe610006173216cc29eff",
+        "bytes": 518594,
+        "cameraCm": [
+          1580000,
+          1190000,
+          11000
+        ],
+        "targetCm": [
+          1630000,
+          1230000,
+          4500
+        ]
+      },
+      {
+        "file": "05_detroit_bridge.png",
+        "sha256": "2bcd12237589bcd55c9c633cb37e882d39483976edfb734466128d532eb2c092",
+        "bytes": 581065,
+        "cameraCm": [
+          1450000,
+          840000,
+          30000
+        ],
+        "targetCm": [
+          1475000,
+          900000,
+          3200
+        ]
+      }
+    ],
+    "gameplayValidated": false,
+    "performanceValidated": false,
+    "cameraChecks": [
+      {
+        "view": "01_archipelago",
+        "alignment": 1.0,
+        "eyeCm": [
+          0.0,
+          0.0,
+          3200000.0
+        ],
+        "pitch": -90.0,
+        "yaw": 0.0,
+        "roll": 0.0
+      },
+      {
+        "view": "02_snow_mountains",
+        "alignment": 0.9999999999999999,
+        "eyeCm": [
+          -800000.0,
+          -1020000.0,
+          250000.0
+        ],
+        "pitch": -13.635405540466309,
+        "yaw": 52.666805267333984,
+        "roll": 0.0
+      },
+      {
+        "view": "03_beach",
+        "alignment": 1.0,
+        "eyeCm": [
+          -1690000.0,
+          1020000.0,
+          1800.0
+        ],
+        "pitch": -1.4911671876907349,
+        "yaw": -49.398704528808594,
+        "roll": 0.0
+      },
+      {
+        "view": "04_desert",
+        "alignment": 1.0,
+        "eyeCm": [
+          1580000.0,
+          1190000.0,
+          11000.0
+        ],
+        "pitch": -5.796407222747803,
+        "yaw": 38.65980911254883,
+        "roll": 0.0
+      },
+      {
+        "view": "05_detroit_bridge",
+        "alignment": 1.0000000000000002,
+        "eyeCm": [
+          1450000.0,
+          840000.0,
+          30000.0
+        ],
+        "pitch": -22.40673065185547,
+        "yaw": 67.38013458251953,
+        "roll": 0.0
+      }
+    ],
+    "editorSlateDeltaMeanMs": 50.099782816980074,
+    "timingScope": "Editor Slate callback timing, not a gameplay FPS benchmark"
+  }
+}

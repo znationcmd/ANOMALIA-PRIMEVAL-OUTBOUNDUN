@@ -64,9 +64,20 @@ try:
     # Load known generated geometry for aerial captures without altering streaming rules on disk.
     desc=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
     wanted=[d.guid for d in desc if 'Landscape' in str(d.native_class) or str(d.label).startswith('ANOMALIA_')]
+    report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(str(d.native_class) for d in desc)))
     unreal.WorldPartitionBlueprintLibrary.load_actors(wanted)
+    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    landscapes=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
+    terrain_components=[c for a in landscapes for c in a.get_components_by_class(unreal.LandscapeComponent)]
+    report['landscapeDiagnostics']=dict(proxies=len(landscapes),components=len(terrain_components),actors=[dict(label=a.get_actor_label(),hiddenInEditor=a.is_temporarily_hidden_in_editor(),hiddenInGame=a.get_editor_property('hidden')) for a in landscapes])
+    if len(terrain_components)!=576:raise RuntimeError('Graphical editor did not load all 576 Landscape components')
+    # Visibility override only in this unsaved inspection session. Preserve map files.
+    for a in landscapes:
+        a.set_is_temporarily_hidden_in_editor(False)
+    for c in terrain_components:
+        c.set_visibility(True,True)
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-    for command in ['r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
+    for command in ['ShowFlag.Landscape 1','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
         unreal.SystemLibrary.execute_console_command(world,command)
     unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
