@@ -12,7 +12,7 @@ public:
  static AActor* CreateArchipelagoLandscape();
  /** Unsaved editor inspection/refresh only. Does not import heights or save packages. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
- static FString RefreshArchipelagoRenderResources();
+ static FString RefreshArchipelagoRenderResources(bool bRefresh = true);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double ArchipelagoHeight(double EastMeters, double NorthMeters);
 };

@@ -9,6 +9,7 @@ on:
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_visual_camera.py'
+      - 'tests/test_ue5_world_snapshot.py'
       - 'tests/test_ue58_target_settings.py'
       - 'tests/test_ue5_native_include_paths.py'
       - 'tests/test_ue5_config_catalog.py'
@@ -29,6 +30,7 @@ on:
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_visual_camera.py'
+      - 'tests/test_ue5_world_snapshot.py'
       - 'tests/test_ue58_target_settings.py'
       - 'tests/test_ue5_native_include_paths.py'
       - 'tests/test_ue5_config_catalog.py'
@@ -101,3 +103,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_bridge_source.py -v
       - name: Regress capture camera target alignment (not Unreal rendering)
         run: python -m unittest discover -s tests -p test_ue5_visual_camera.py -v
+      - name: Verify immutable world snapshots exclude player saves
+        run: python -m unittest discover -s tests -p test_ue5_world_snapshot.py -v

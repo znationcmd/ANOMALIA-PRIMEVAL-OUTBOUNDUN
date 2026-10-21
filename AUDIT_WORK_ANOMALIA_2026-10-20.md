@@ -338,3 +338,26 @@ persistance ciblée des sorties GPU calculées, réouverture fraîche sans recon
 forcée, nouvelle capture et parcours. L'archive de monde du run ne prouve donc
 pas encore ce cycle. Ensuite matériaux et végétation, cook Windows, tests de
 lancement/installation et mises à jour préservant les données.
+
+
+## Lot en validation — persistance du relief et réouverture indépendante
+
+Le lanceur de capture crée désormais un ZIP unique et vérifié des packages du
+monde existant (carte, acteurs/objets externes, matériau du monde), avant toute
+réparation sauvegardée. Les profils/configurations de `Saved` ne sont pas inclus
+ni modifiés. Chaque fichier et l'archive ont un SHA256 ; un ancien backup n'est
+jamais remplacé. Les tests utilisent de vraies archives pour vérifier leur
+contenu, la conservation des octets après modification et l'exclusion des profils.
+
+Première session GPU : fusion des couches, inspection du relief, cinq captures,
+puis sauvegarde limitée aux packages de ce monde et de ses composants Landscape.
+Pas de sauvegarde globale des assets sales. Deuxième processus Unreal indépendant :
+lecture des ressources sans fusion forcée, contrôle des 576 composants et des
+hauteurs, cinq nouvelles captures. Le marqueur de migration n'est écrit qu'après
+la réussite des deux processus. Un marqueur antérieur reconnu est conservé ;
+les runs suivants passent directement à la vérification de réouverture.
+
+66 tests Python locaux réussis, dont 3 tests réels du backup ZIP. Nouvelle
+compilation UE5, écriture et réouverture encore à vérifier : **ne pas annoncer
+la persistance validée avant résultat natif et inspection des captures verify**.
+Textures et végétation attendent la stabilisation de ce cycle.

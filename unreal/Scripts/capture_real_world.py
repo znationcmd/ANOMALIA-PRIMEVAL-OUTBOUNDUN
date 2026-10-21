@@ -3,8 +3,9 @@ import gc,hashlib,json,math,os,time,traceback
 from pathlib import Path
 import unreal
 OUT=Path(os.environ['ANOMALIA_VISUAL_OUTPUT']);OUT.mkdir(parents=True,exist_ok=True)
+PHASE=os.environ.get('ANOMALIA_RENDER_PHASE','inspect')
 REPORT=OUT/'visual-report.json';PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
-report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,requestedRHI='D3D11 SM5',headless=False,screenshots=[],gameplayValidated=False,performanceValidated=False)
+report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,requestedRHI='D3D11 SM5',headless=False,screenshots=[],gameplayValidated=False,performanceValidated=False,renderPhase=PHASE)
 state=dict(index=0,task=None,until=time.monotonic()+45,frames=[],started=time.monotonic(),busy=False)
 # UE coordinates in centimetres; these are views of the real, unchanged archipelago.
 views=[
@@ -15,6 +16,23 @@ views=[
  ('05_detroit_bridge',(1450000,840000,30000),(1475000,900000,3200)),
 ]
 def finish(error=None):
+    if state.get("finishing"):return
+    state["finishing"]=True;state["busy"]=True
+    if "handle" in state:unreal.unregister_slate_post_tick_callback(state.pop("handle"))
+    if not error and PHASE=='repair':
+        try:
+            # Wrapper must first create and verify an immutable backup archive.
+            backup=Path(os.environ['ANOMALIA_RENDER_BACKUP'])
+            if not backup.is_file():raise RuntimeError('No pre-repair backup exists')
+            packages={}
+            for obj in [world]+landscapes+terrain_components:
+                package=obj.get_outermost();name=package.get_name()
+                allowed=name==PACKAGE or name.startswith('/Game/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2/') or name.startswith('/Game/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/')
+                if not allowed:raise RuntimeError('Refusing to save unrelated package '+name)
+                packages[name]=package
+            if not unreal.EditorLoadingAndSavingUtils.save_packages(list(packages.values()),False):raise RuntimeError('Scoped Landscape package save failed')
+            report['savedPackages']=sorted(packages)
+        except Exception as exc:error=exc
     if error:report['error']=str(error)
     else:report['state']='REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED'
     if state['frames']:
@@ -79,8 +97,13 @@ try:
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     for command in ['ShowFlag.Landscape 1','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
         unreal.SystemLibrary.execute_console_command(world,command)
-    report['renderResourceRefresh']=json.loads(unreal.AnomaliaWorldImportLibrary.refresh_archipelago_render_resources())
-    if report['renderResourceRefresh'].get('state')!='REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED':raise RuntimeError('Landscape render refresh refused')
+    report['renderResourceRefresh']=json.loads(unreal.AnomaliaWorldImportLibrary.refresh_archipelago_render_resources(PHASE=='repair'))
+    expected='REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED' if PHASE=='repair' else 'INSPECTED_WITHOUT_FORCED_REBUILD'
+    if report['renderResourceRefresh'].get('state')!=expected:raise RuntimeError('Landscape inspection/refresh refused')
+    entries=report['renderResourceRefresh']['components']
+    min_z=min(c['boundsMinZCm'] for c in entries);max_z=max(c['boundsMaxZCm'] for c in entries)
+    report['heightBoundsCheck']=dict(minCm=min_z,maxCm=max_z,flatSentinelComponents=sum(abs(c['boundsCenterZCm']+204800)<1 for c in entries))
+    if min_z>=-10000 or max_z<=100000 or report['heightBoundsCheck']['flatSentinelComponents']:raise RuntimeError('Persisted Landscape render bounds do not contain archipelago relief')
     if report['renderResourceRefresh']['missingHeightmaps']:raise RuntimeError('Landscape heightmap data is missing')
     unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)

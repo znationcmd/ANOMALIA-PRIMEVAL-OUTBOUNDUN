@@ -53,7 +53,7 @@ AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape()
 #endif
 }
 
-FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
+FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRefresh)
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
@@ -69,7 +69,7 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
  // under NullRHI; its saved collision has relief but all visual bounds are -2048m.
  // Re-evaluate existing layers only in memory, never recreate or save the map.
  int32 MergedLandscapes=0;
- for(TActorIterator<ALandscape> It(World);It;++It){
+ if(bRefresh)for(TActorIterator<ALandscape> It(World);It;++It){
   if(ULandscapeInfo* Info=It->GetLandscapeInfo()){
    Info->ForceLayersFullUpdate();
    It->ForceUpdateLayersContent();
@@ -84,6 +84,9 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
   Entry->SetStringField(TEXT("component"),Component->GetPathName());
   Entry->SetBoolField(TEXT("registered"),Component->IsRegistered());
   Entry->SetBoolField(TEXT("visible"),Component->IsVisible());
+  Entry->SetNumberField(TEXT("boundsCenterZCm"),Component->Bounds.Origin.Z);
+  Entry->SetNumberField(TEXT("boundsMinZCm"),Component->Bounds.Origin.Z-Component->Bounds.BoxExtent.Z);
+  Entry->SetNumberField(TEXT("boundsMaxZCm"),Component->Bounds.Origin.Z+Component->Bounds.BoxExtent.Z);
   Entry->SetStringField(TEXT("bounds"),Component->Bounds.Origin.ToString()+TEXT(" extent=")+Component->Bounds.BoxExtent.ToString());
   UTexture2D* Heightmap=Component->GetHeightmap(false);
   if(Heightmap){
@@ -93,21 +96,23 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
    Entry->SetNumberField(TEXT("sourceWidth"),Heightmap->Source.GetSizeX());
    Entry->SetNumberField(TEXT("sourceHeight"),Heightmap->Source.GetSizeY());
    Entry->SetBoolField(TEXT("resourceBefore"),Heightmap->GetResource()!=nullptr);
-   if(!Refreshed.Contains(Heightmap)){Heightmap->UpdateResource();Refreshed.Add(Heightmap);}
+   if(!Refreshed.Contains(Heightmap)){if(bRefresh)Heightmap->UpdateResource();Refreshed.Add(Heightmap);}
   }else{++MissingHeightmaps;}
   UMaterialInterface* Material=Component->GetMaterial(0);
   Entry->SetStringField(TEXT("materialBefore"),Material?Material->GetPathName():TEXT("NONE"));
   // Rebuild transient scene/material resources after a NullRHI-created import.
   // No height data, transform, collision or package is replaced or saved here.
+  if(bRefresh){
   Component->UpdateMaterialInstances();
   Component->SetVisibility(true);
   Component->SetRenderInMainPass(true);
   Component->UpdateBounds();
   Component->MarkRenderStateDirty();
+  }
   Entries.Add(MakeShared<FJsonValueObject>(Entry));
  }
  TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
- Report->SetStringField(TEXT("state"),TEXT("REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED"));
+ Report->SetStringField(TEXT("state"),bRefresh?TEXT("REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED"):TEXT("INSPECTED_WITHOUT_FORCED_REBUILD"));
  Report->SetNumberField(TEXT("componentCount"),Components.Num());
  Report->SetNumberField(TEXT("landscapesLayerMergeRequested"),MergedLandscapes);
  Report->SetNumberField(TEXT("uniqueHeightmaps"),Refreshed.Num());
