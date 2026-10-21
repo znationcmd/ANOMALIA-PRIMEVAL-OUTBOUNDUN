@@ -195,7 +195,8 @@ def write(name,kind,fn):
  doc=dict(asset=dict(version='2.0',generator='CMD Original Lot1 v1'),scene=0,scenes=[dict(nodes=[0])],nodes=[dict(mesh=0)],meshes=[dict(name='SM_'+name,primitives=primitives)],materials=[dict(name=n,pbrMetallicRoughness=dict(baseColorFactor=([.05,.38,.58,1] if name=='beach_villa_pool_v1' and n=='Hull' else c),metallicFactor=metal,roughnessFactor=rough),doubleSided=True) for n,c,metal,rough in MATERIALS],buffers=[dict(byteLength=len(blob))],bufferViews=views,accessors=access)
  j=json.dumps(doc,separators=(',',':')).encode();j+=b' '*((-len(j))%4);blob+=b'\0'*((-len(blob))%4)
  data=struct.pack('<III',0x46546c67,2,28+len(j)+len(blob))+struct.pack('<II',len(j),0x4e4f534a)+j+struct.pack('<II',len(blob),0x004e4942)+blob
- path=OUT/(name+('_v2' if name in ['zodiac','beach_villa_pool_v1'] else '')+'.glb');OUT.mkdir(parents=True,exist_ok=True)
+ suffix='_repaired' if name=='hlm_8floors_v1' else ('_v2' if name in ['zodiac','beach_villa_pool_v1'] else '')
+ path=OUT/(name+suffix+'.glb');OUT.mkdir(parents=True,exist_ok=True)
  if path.exists() and path.read_bytes()!=data:raise RuntimeError('Existing original preserved: '+name)
  if not path.exists():path.write_bytes(data)
  v=np.vstack([m.vertices for m,_ in parts]);dims=(v.max(axis=0)-v.min(axis=0)).tolist()

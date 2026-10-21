@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_original_lot1.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -25,6 +26,7 @@ on:
   pull_request:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_original_lot1.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -105,3 +107,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_visual_camera.py -v
       - name: Verify immutable world snapshots exclude player saves
         run: python -m unittest discover -s tests -p test_ue5_world_snapshot.py -v
+      - name: Verify all eight original GLB source identities and dimensions
+        run: python -m unittest discover -s tests -p test_ue5_original_lot1.py -v

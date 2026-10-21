@@ -102,7 +102,7 @@
     {
       "id": "hlm_8floors_v1",
       "kind": "building",
-      "file": "hlm_8floors_v1.glb",
+      "file": "hlm_8floors_v1_repaired.glb",
       "sha256": "050c68162af7bfb7df40e343adcf180207089bafd037505bcca006cd31afd370",
       "bytes": 1034508,
       "dimensionsMetresYUp": [
