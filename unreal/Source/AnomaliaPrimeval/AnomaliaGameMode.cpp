@@ -7,6 +7,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
 #include "Misc/SecureHash.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "TimerManager.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
@@ -44,6 +46,19 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         else UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: invalid server ID rejected"));
     }
     if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone) ServerId = TEXT("solo-local");
+#if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
+    // A process-only test scope prevents automated PIE from touching a real local profile.
+    // This is not a client URL option and is restricted to this review map while automation runs.
+    FString AutomationScope;
+    if (GIsAutomationTesting && GetNetMode() == NM_Standalone && MapName.EndsWith(TEXT("ANOMALIA_LootReview_v1")) &&
+        FParse::Value(FCommandLine::Get(), TEXT("AnomaliaAutomationServerId="), AutomationScope))
+    {
+        bool Valid = !AutomationScope.IsEmpty() && AutomationScope.Len() <= 64;
+        for (TCHAR C : AutomationScope)
+            if (C > 127 || !(FChar::IsAlnum(C) || C == '-' || C == '_')) Valid = false;
+        if (Valid) ServerId = AutomationScope;
+    }
+#endif
     FString LootError;
     if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
         if (!Loot->Configure(ServerId, MapName, LootError))

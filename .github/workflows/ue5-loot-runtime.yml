@@ -7,6 +7,8 @@ on:
       - 'unreal/Config/**'
       - 'public/config/loot*.json'
       - 'scripts/ue5/stage-runtime-data.py'
+      - 'scripts/ue5/run-loot-playtest.py'
+      - 'unreal/Scripts/create_loot_review.py'
       - 'scripts/ue5/validate-build.py'
       - '.github/workflows/ue5-loot-runtime.yml'
 concurrency:
@@ -32,6 +34,12 @@ jobs:
           if (-not $env:UE_ROOT) { throw 'Installed UE_ROOT is required.' }
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create the real loot map and test Interact and inventory UI in Play In Editor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain actual compile and native test evidence
         if: always()

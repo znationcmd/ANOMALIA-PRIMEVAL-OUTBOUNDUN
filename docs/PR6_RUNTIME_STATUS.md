@@ -72,3 +72,10 @@ confirms success**. Multiplayer clients, full-map loot distribution, dedicated s
 builds and packaged Windows gameplay remain unverified. Other catalogue systems
 (radiation, creatures, recipes, administration and Workshop) retain their previous
 incomplete status and are not completed by this loot lot.
+
+
+A separate `Anomalia.Loot.PIE` test and `run-loot-playtest.py` now create/open the
+actual review map, inject E/I into the player controller, check collection and saved
+inventory, and open/close the native UMG inventory. It requires a unique process-only
+automation save scope; it refuses to interact if the GameMode uses any other scope.
+This test is pending execution, and does not establish rendered appearance or multiplayer.

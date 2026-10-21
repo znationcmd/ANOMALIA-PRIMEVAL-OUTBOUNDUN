@@ -4,7 +4,6 @@
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaLootPickup.h"
-#include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaHomesteadStation.h"
