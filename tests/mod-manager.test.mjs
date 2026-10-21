@@ -9,3 +9,5 @@ assert.throws(()=>resolveMods(['base'],[{...make('base'),signed:false}]));
 assert.equal(validatePlacementManifest({files:['maps/city.json']}),true);
 assert.throws(()=>validatePlacementManifest({files:['../escape.json']}));
 console.log('mod-manager: OK');
+
+for(const file of ['C:escape.json','https:escape.json','maps/a.json?x.json','maps/%2e%2e/a.json','maps//a.json','maps/./a.json','maps/a\0.json'])assert.throws(()=>validatePlacementManifest({files:[file]}),file);

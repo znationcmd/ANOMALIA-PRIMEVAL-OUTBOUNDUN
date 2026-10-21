@@ -29,7 +29,7 @@ export function resolveMods(requested,catalog,installed=[]){
 export function validatePlacementManifest(manifest){
  if(!manifest||!Array.isArray(manifest.files))throw Error('Invalid mapping manifest');
  for(const file of manifest.files){
-  if(typeof file!=='string'||file.startsWith('/')||file.includes('..')||file.includes('\\')||!file.endsWith('.json'))throw Error('Unsafe mapping path');
+  if(typeof file!=='string'||file.startsWith('/')||file.includes('..')||file.includes('\\')||/[\x00-\x1f:#?%]/.test(file)||file.split('/').some(part=>!part||/[. ]$/.test(part))||!file.endsWith('.json'))throw Error('Unsafe mapping path');
  }
  return true;
 }
