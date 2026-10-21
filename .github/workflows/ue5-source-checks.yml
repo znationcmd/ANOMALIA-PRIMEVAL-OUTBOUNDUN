@@ -24,6 +24,8 @@ on:
       - 'tests/test_ue5_playtest_terrain.py'
       - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
@@ -48,6 +50,8 @@ on:
       - 'tests/test_ue5_playtest_terrain.py'
       - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
 
 jobs:
@@ -117,3 +121,7 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_expansion_models.py -v
       - name: Verify urban footprints road clearance and exact pool recesses
         run: python -m unittest discover -s tests -p test_ue5_settlement_layout.py -v
+      - name: Keep every requested military and civilian entry in the complete worklist
+        run: python scripts/vehicle-requirements/audit-requested-vehicles.py --check
+      - name: Verify original metro meshes preserve artist edits
+        run: python -m unittest discover -s tests -p test_ue5_metro.py -v

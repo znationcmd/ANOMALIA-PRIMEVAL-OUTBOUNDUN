@@ -9,7 +9,7 @@
   "artState": "ORIGINAL_GEOMETRY_PROTOTYPE",
   "movementState": "SERVER_OWNED_COACHES_FOLLOW_ROUTE_SPLINE",
   "nativeCurvedRouteTest": "PASSED_IN_RUN_39618230923",
-  "nativeArtImport": "PENDING_REPORT",
+  "nativeArtImport": "PASSED_IN_RUN_39618230923_TWO_MESHES_AND_GPU_CAPTURES",
   "passengerTransportTested": false,
   "doorsAnimated": false,
   "sweptFullConsistCollisionTested": false,

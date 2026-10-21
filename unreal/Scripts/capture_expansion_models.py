@@ -9,8 +9,8 @@ import time
 import unreal
 
 GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
-if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1']:raise RuntimeError('Unsupported import group')
-MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military'}
+if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1','Military2']:raise RuntimeError('Unsupported import group')
+MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military','Military2':'MilitaryExtra'}
 TAG='AnomaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
 OUT=Path(os.environ['ANOMALIA_EXPANSION_VISUAL']);OUT.mkdir(parents=True,exist_ok=False)
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),screenshots=[],drivingTested=False,walkingTested=False,multiplayerTested=False)

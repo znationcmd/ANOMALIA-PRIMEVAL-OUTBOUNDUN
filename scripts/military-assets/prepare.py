@@ -34,8 +34,45 @@ def retrieve(url,digest,size,cache):
 
 
 def prepare(entry,cache):
-    raw=retrieve(entry['url'],entry['sha256'],entry['bytes'],cache);root=ET.fromstring(raw)
-    if any(root.iter('Inline')) or any(root.iter('ProtoInstance')):raise RuntimeError('External geometry needs dedicated complete-scene import')
+    sources={item['url']:item for item in [entry,*entry.get('dependencies',[])]}
+    aliases=entry.get('inlineUrlReplacements',{});scope=[0]
+    def load_tree(url,stack=()):
+        if url in stack or len(stack)>24:raise RuntimeError('Recursive external geometry')
+        item=sources[url]
+        for meta in item.get('metadata',[]):
+            if meta.get('name')=='accessRights' and any(w in meta.get('content','').lower() for w in ['not be used for any commercial','non-commercial','noncommercial']):raise RuntimeError('Source permission needs clarification: '+url)
+        tree=ET.fromstring(retrieve(url,item['sha256'],item['bytes'],cache));scope[0]+=1;prefix='source_'+str(scope[0])+'_'
+        for node in tree.iter():
+            for key in ['DEF','USE']:
+                if key in node.attrib:node.set(key,prefix+node.get(key))
+            if node.tag=='ImageTexture' and node.get('url'):
+                choices=shlex.split(node.get('url'));node.set('url',urllib.parse.urljoin(url,choices[0]))
+        for parent in list(tree.iter()):
+            for index,node in enumerate(list(parent)):
+                if node.tag=='LOD':
+                    if not len(node):raise RuntimeError('Empty source LOD')
+                    group=ET.Element('Group',{k:v for k,v in node.attrib.items() if k in ['DEF','USE']});group.append(node[0]);parent.remove(node);parent.insert(index,group)
+                elif node.tag in ['ProtoInstance','ExternProtoDeclare']:
+                    if node.get('name')=='ArbitraryAxisCylinderSensor':
+                        # Preserve its actual hatch/nozzle geometry in the unanimated rest pose.
+                        # The sensor's default offset is zero; reject any unknown nonzero rest offset.
+                        group=ET.Element('Group',{k:v for k,v in node.attrib.items() if k in ['DEF','USE']})
+                        for value in node.findall('fieldValue'):
+                            if value.get('name')=='offset' and any(abs(float(v))>1e-8 for v in value.get('value','0').split()):raise RuntimeError('Nonzero sensor rest pose requires review')
+                            if value.get('name')=='children':
+                                for child in value:group.append(copy.deepcopy(child))
+                        parent.remove(node);parent.insert(index,group)
+                    elif node.get('name') in ['ViewPositionOrientation','HeadsUpDisplay']:parent.remove(node)
+                    else:raise RuntimeError('Unresolved geometric prototype: '+str(node.get('name')))
+                elif node.tag=='Inline' and not node.get('USE'):
+                    choice=next((u for u in shlex.split(node.get('url','')) if u.split('#')[0].lower().endswith('.x3d')),None)
+                    if not choice:raise RuntimeError('Missing complete inline geometry')
+                    resolved=urllib.parse.urljoin(url,choice);resolved=aliases.get(resolved,resolved)
+                    nested=load_tree(resolved,stack+(url,));group=ET.Element('Group',{k:v for k,v in node.attrib.items() if k in ['DEF','USE']})
+                    for child in nested.find('Scene'):group.append(copy.deepcopy(child))
+                    parent.remove(node);parent.insert(index,group)
+        return tree
+    root=load_tree(entry['url'])
     defs={n.get('DEF'):n for n in root.iter() if n.get('DEF')}
     # Some archive files USE coordinates declared inside empty shapes; resolve before dropping empties.
     def expand(node,stack=()):
@@ -120,12 +157,12 @@ def prepare(entry,cache):
 
 
 def main():
-    parser=argparse.ArgumentParser();parser.add_argument('--output',type=Path,default=ROOT/'unreal/SourceAssets/Military1');parser.add_argument('--cache',type=Path,default=ROOT/'unreal/Saved/MilitarySourceCache');args=parser.parse_args();args.cache.mkdir(parents=True,exist_ok=True)
-    registry=json.loads((ROOT/'docs/vehicles/military-assets-sources.json').read_text());models=[];credits=['# Savage visual reference models','Historic source art; not finished manufacturer replicas or operational weapon simulations.','']
+    parser=argparse.ArgumentParser();parser.add_argument('--group',choices=['Military1','Military2'],default='Military1');parser.add_argument('--output',type=Path);parser.add_argument('--cache',type=Path,default=ROOT/'unreal/Saved/MilitarySourceCache');args=parser.parse_args();args.output=args.output or ROOT/'unreal/SourceAssets'/args.group;args.cache.mkdir(parents=True,exist_ok=True)
+    registry=json.loads((ROOT/'docs/vehicles'/('military-assets-sources.json' if args.group=='Military1' else 'military-assets-extension-sources.json')).read_text());models=[];credits=['# Savage visual reference models','Historic source art; not finished manufacturer replicas or operational weapon simulations.','']
     for entry in registry['models']:
         data,dims,triangles,missing=prepare(entry,args.cache);preserve(args.output/(entry['id']+'.glb'),data)
-        authors=[m['content'] for m in entry['metadata'] if m['name']=='creator'];models.append(dict(id=entry['id'],kind='reference_vehicle',file=entry['id']+'.glb',sha256=sha(data),bytes=len(data),triangles=triangles,dimensionsMetresYUp=dims,objectPath='/Game/Anomalia/Military1/'+entry['id']+'/SM_'+entry['id'],source=entry,missingTextures=missing,state='HISTORIC_STATIC_VISUAL_REFERENCE_NOT_DRIVABLE',scaleVerified=False,orientationValidated=False,drivingTested=False))
-        credits.extend(['## '+entry['id'],'Creators: '+'; '.join(authors),'Original: '+entry['url'],'License: '+registry['licenseUrl'],'Changes: resolved shared geometry, baked static transforms, rotated source up axis, centred at bottom, triangulated, reconstructed invalid normals and generated analytic UV coordinates where needed, flipped UV vertical axis, and converted embedded PNG textures to 1024px maximum. Source animation/audio excluded; materials approximated as PBR.','Missing source textures: '+str(missing),'']);print(entry['id'],len(data),dims,flush=True)
+        authors=[m['content'] for item in [entry,*entry.get('dependencies',[])] for m in item['metadata'] if m['name']=='creator'];models.append(dict(id=entry['id'],kind='reference_vehicle',file=entry['id']+'.glb',sha256=sha(data),bytes=len(data),triangles=triangles,dimensionsMetresYUp=dims,objectPath='/Game/Anomalia/'+args.group+'/'+entry['id']+'/SM_'+entry['id'],source=entry,missingTextures=missing,state='HISTORIC_STATIC_VISUAL_REFERENCE_NOT_DRIVABLE',scaleVerified=False,orientationValidated=False,drivingTested=False))
+        credits.extend(['## '+entry['id'],'Creators: '+'; '.join(authors),'Original: '+entry['url'],*['Included component: '+d['url'] for d in entry.get('dependencies',[])],'License: '+registry['licenseUrl'],'Changes: resolved shared geometry, baked static transforms, rotated source up axis, centred at bottom, triangulated, reconstructed invalid normals and generated analytic UV coordinates where needed, flipped UV vertical axis, and converted embedded PNG textures to 1024px maximum. Highest-detail LOD selected; sensor child geometry retained at its unanimated rest pose. Source animation/audio and authoring console/HUD excluded; materials approximated as PBR. Broken source inline links, if any, are explicitly replaced as recorded in the manifest.','Missing source textures: '+str(missing),'']);print(entry['id'],len(data),dims,flush=True)
     preserve(args.output/'manifest.json',(json.dumps(dict(schemaVersion=1,models=models,notes=registry['coverage']),indent=2)+'\n').encode())
     license_text=(ROOT/'scripts/military-assets/LICENSE-SAVAGE.txt').read_text();preserve(args.output/'CREDITS.md',('\n'.join(credits)+'\n\n'+license_text).encode())
 if __name__=='__main__':main()

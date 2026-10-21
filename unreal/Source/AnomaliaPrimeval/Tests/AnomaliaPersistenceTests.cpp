@@ -3,6 +3,7 @@
 #include "../AnomaliaConfigLibrary.h"
 #include "../AnomaliaVehicleCatalog.h"
 #include "Misc/Guid.h"
+#include <limits>
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCatalogTest, "Anomalia.Native.VehicleCatalog",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -54,6 +55,22 @@ bool FAnomaliaPersistenceTest::RunTest(const FString& Parameters)
     TestTrue(TEXT("Original still readable"), UAnomaliaConfigLibrary::LoadPlayerProfile(ServerA, Player, Loaded, Error));
     TestEqual(TEXT("Rejected write preserves original bytes"), Loaded, Original);
     // Test data deliberately retained under this unique automation scope for inspection.
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaSettingsFiniteTest,"Anomalia.Native.SettingsRejectNonFinite",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FAnomaliaSettingsFiniteTest::RunTest(const FString& Parameters)
+{
+    const FString Scope=TEXT("settings-")+FGuid::NewGuid().ToString(EGuidFormats::Digits);
+    FAnomaliaServerSettings Settings;Settings.TimeMultiplier=2.f;FString Error;
+    if(!TestTrue(TEXT("Save isolated settings"),UAnomaliaConfigLibrary::SaveServerSettings(Scope,Settings,Error))) return false;
+    Settings.TimeMultiplier=std::numeric_limits<float>::quiet_NaN();
+    TestFalse(TEXT("Reject NaN without replacing existing settings"),UAnomaliaConfigLibrary::SaveServerSettings(Scope,Settings,Error));
+    Settings.TimeMultiplier=std::numeric_limits<float>::infinity();
+    TestFalse(TEXT("Reject infinity"),UAnomaliaConfigLibrary::SaveServerSettings(Scope,Settings,Error));
+    FAnomaliaServerSettings Loaded;
+    TestTrue(TEXT("Original settings remain readable"),UAnomaliaConfigLibrary::LoadServerSettings(Scope,Loaded,Error));
+    TestEqual(TEXT("Original multiplier preserved"),Loaded.TimeMultiplier,2.f);
     return true;
 }
 #endif

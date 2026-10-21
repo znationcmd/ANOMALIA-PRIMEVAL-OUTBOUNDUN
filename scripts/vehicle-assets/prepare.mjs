@@ -3,9 +3,10 @@ import {NodeIO} from '@gltf-transform/core';
 import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import {convertPrimitiveToTriangles,dequantize,flatten,getBounds,prune,transformMesh} from '@gltf-transform/functions';
 import {MeshoptDecoder} from 'meshoptimizer';
-import sharp from 'sharp';
+import {execFileSync} from 'node:child_process';
+import os from 'node:os';
 import {createHash} from 'node:crypto';
-import {readFile,writeFile,mkdir} from 'node:fs/promises';
+import {readFile,writeFile,mkdir,mkdtemp,rm} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
@@ -41,11 +42,15 @@ for(const entry of registry.models){
  const longest=Math.max(dims[0],dims[2]);const scale=longest>1000?.001:longest>100?.01:1;
  const matrix=[scale,0,0,0,0,scale,0,0,0,0,scale,0,-(min[0]+max[0])*scale/2,-min[1]*scale,-(min[2]+max[2])*scale/2,1];
  transformMesh(mesh,matrix);
- for(const texture of r.listTextures()){
-  const image=texture.getImage();if(!image)continue;
-  const png=await sharp(image,{limitInputPixels:100000000}).resize({width:1024,height:1024,fit:'inside',withoutEnlargement:true}).png().toBuffer();
-  texture.setImage(png).setMimeType('image/png').setURI('');
- }
+ const textureFolder=await mkdtemp(path.join(os.tmpdir(),'anomalia-textures-'));
+ try{
+  const textures=r.listTextures().filter(t=>t.getImage()),jobs=[];
+  for(let i=0;i<textures.length;i++){const input='input_'+i+'.bin',output='output_'+i+'.png';await writeFile(path.join(textureFolder,input),textures[i].getImage());jobs.push({input,output});}
+  await writeFile(path.join(textureFolder,'textures.json'),JSON.stringify(jobs));
+  const python=process.env.ANOMALIA_ASSET_PYTHON_EXE||process.env.CODEX_PRIMARY_RUNTIME_PYTHON||'python';
+  execFileSync(python,[path.join(root,'scripts/vehicle-assets/convert-textures.py'),textureFolder],{stdio:'inherit'});
+  for(let i=0;i<textures.length;i++)textures[i].setImage(await readFile(path.join(textureFolder,jobs[i].output))).setMimeType('image/png').setURI('');
+ }finally{await rm(textureFolder,{recursive:true,force:true});}
  for(const ext of r.listExtensionsUsed())if(['EXT_meshopt_compression','KHR_mesh_quantization','EXT_texture_webp'].includes(ext.extensionName))ext.dispose();
  await doc.transform(prune());
  ({min,max}=getBounds(scene));dims=max.map((v,i)=>v-min[i]);

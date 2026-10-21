@@ -10,9 +10,9 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
-if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1']:raise RuntimeError('Unsupported import group')
+if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1','Military2']:raise RuntimeError('Unsupported import group')
 BASE=ROOT/'SourceAssets'/GROUP
-MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military'}
+MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military','Military2':'MilitaryExtra'}
 TAG='AnomaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
 OUT=Path(os.environ['ANOMALIA_EXPANSION_REPORT'])
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),models=[],drivingTested=False,walkingTested=False,multiplayerTested=False)
@@ -75,7 +75,7 @@ try:
         # Large naval models have their own remote display berths. No overlap with roads/housing.
         positions={};ordinary=[m for m in spec['models'] if m['kind']!='building' and m['id'] not in ['carrier','warship','submarine']]
         for i,item in enumerate(ordinary):positions[item['id']]=((i%6)*2200-5500,(i//6)*2200-7000)
-        if GROUP in ['NamedVehicles1','Military1']:
+        if GROUP in ['NamedVehicles1','Military1','Military2']:
             # Independent review bays scale to source bounds, including large ships.
             gap=max(max(m['dimensionsMetresYUp'][0],m['dimensionsMetresYUp'][2]) for m in spec['models'])*100+2000
             positions={m['id']:((i%6)*gap,(i//6)*gap) for i,m in enumerate(spec['models'])}
