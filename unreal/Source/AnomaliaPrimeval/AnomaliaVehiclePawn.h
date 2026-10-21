@@ -14,6 +14,7 @@ class UFloatingPawnMovement;
 class UAnomaliaTransportMovement;
 class AAnomaliaSurvivor;
 class AController;
+class AAnomaliaRailCarriage;
 
 /** Replicated, possessable prototype. Final Chaos wheel/flight/naval physics remain separate work. */
 UCLASS(Blueprintable)
@@ -52,6 +53,7 @@ public:
 
     virtual UPawnMovementComponent* GetMovementComponent() const override;
     virtual void UnPossessed() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
 
     /** Server-owned fuel percentage. Replicated to passengers/UI and never writable by clients. */
     UPROPERTY(ReplicatedUsing=OnRep_Fuel, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Fuel")
@@ -144,6 +146,9 @@ private:
     FTransform OriginalBodyTransform;
     float OriginalCameraDistance=650.f;
     bool bPresentationCaptured=false;
+    UPROPERTY(Transient)
+    TArray<TObjectPtr<AAnomaliaRailCarriage>> MetroCoaches;
+    void UpdateMetroCoaches();
     void RefreshVehicleVisual();
     void ClearControls();
     void ApplyDefinition();

@@ -8,6 +8,10 @@ from pathlib import Path
 import time
 import unreal
 
+GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
+if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1']:raise RuntimeError('Unsupported import group')
+MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military'}
+TAG='AnomaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
 OUT=Path(os.environ['ANOMALIA_EXPANSION_VISUAL']);OUT.mkdir(parents=True,exist_ok=False)
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),screenshots=[],drivingTested=False,walkingTested=False,multiplayerTested=False)
 state=dict(index=0,task=None,until=time.monotonic()+30,busy=False,started=time.monotonic())
@@ -57,14 +61,14 @@ def tick(delta):
 
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
-    if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level('/Game/Maps/ANOMALIA_ExpansionReview_v1'):raise RuntimeError('Missing review level')
-    spec=json.loads((Path(unreal.Paths.project_dir())/'SourceAssets/Expansion1/manifest.json').read_text())
+    if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level('/Game/Maps/ANOMALIA_'+MAPS[GROUP]+'Review_v1'):raise RuntimeError('Missing review level')
+    spec=json.loads((Path(unreal.Paths.project_dir())/'SourceAssets'/GROUP/'manifest.json').read_text())
     actors={a.get_actor_label():a for a in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()}
     for item in spec['models']:
-        actor=actors.get('ANOMALIA_Expansion1_'+item['id'])
+        actor=actors.get('ANOMALIA_'+GROUP+'_'+item['id'])
         if not actor:raise RuntimeError('Missing review actor: '+item['id'])
         mesh=actor.get_component_by_class(unreal.StaticMeshComponent).get_editor_property('static_mesh')
-        if unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaExpansionSHA')!=item['sha256']:raise RuntimeError('Stale review mesh')
+        if unreal.EditorAssetLibrary.get_metadata_tag(mesh,TAG)!=item['sha256']:raise RuntimeError('Stale review mesh')
         views.append((item['id'],actor))
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     for command in ['r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ShadowQuality 1','r.ScreenPercentage 100','t.MaxFPS 20']:

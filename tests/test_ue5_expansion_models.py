@@ -26,7 +26,7 @@ class ExpansionGeometryTests(unittest.TestCase):
     def test_complete_generic_native_catalogue_coverage(self):
         text=(ROOT/'unreal/Source/AnomaliaPrimeval/AnomaliaVehicleCatalog.cpp').read_text()
         ids=set(re.findall(r'MakeVehicle\(TEXT\("([a-z0-9_]+)"\)',text))
-        self.assertEqual(set(MODULE.VEHICLES)|{'quad','snowmobile','jetski','zodiac','airliner'},ids)
+        self.assertEqual(set(MODULE.VEHICLES)|{'quad','snowmobile','jetski','zodiac','airliner','metro'},ids)
         self.assertEqual(len(self.manifest['models']),33)
         self.assertEqual(len({m['objectPath'] for m in self.manifest['models']}),33)
 

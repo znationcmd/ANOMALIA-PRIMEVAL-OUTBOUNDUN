@@ -10,7 +10,7 @@ IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCatalogTest, "Anomalia.Native.VehicleC
 bool FAnomaliaCatalogTest::RunTest(const FString& Parameters)
 {
     const auto Catalog = UAnomaliaVehicleCatalog::GetDefaultVehicleCatalog();
-    TestEqual(TEXT("Expected catalogue size (not finished vehicles)"), Catalog.Num(), 31);
+    TestEqual(TEXT("Expected catalogue size (not finished vehicles)"), Catalog.Num(), 32);
     TSet<FName> Ids;
     for (const auto& Definition : Catalog)
     {

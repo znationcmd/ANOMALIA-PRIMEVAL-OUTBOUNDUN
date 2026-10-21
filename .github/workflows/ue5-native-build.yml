@@ -128,6 +128,15 @@ jobs:
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/validate-expansion-models.py --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import original metro lead and coach and capture real GPU views
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group Metro1 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Import eight original models and test real GPU views and building collisions
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -203,6 +212,9 @@ jobs:
             unreal/Content/Anomalia/Buildings/Lot1/
             unreal/Content/Anomalia/OriginalImports/
             unreal/SourceAssets/Expansion1/
+            unreal/SourceAssets/Metro1/
+            unreal/Content/Maps/ANOMALIA_MetroReview_v1.umap
+            unreal/Content/Anomalia/Props/Metro1/
             unreal/Content/Maps/ANOMALIA_UrbanReview_v1.umap
             unreal/Content/Anomalia/World/UrbanReview1/
             unreal/Content/Maps/ANOMALIA_ExpansionReview_v1.umap

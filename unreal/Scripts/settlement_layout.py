@@ -8,10 +8,10 @@ def layout():
     for x in [40,120]:
         for y in [30,90]:buildings.append(dict(id=f'residence_{x}_{y}',model='residence_4floors',x=x,y=y,width=16.5,depth=14))
     for x in [-140,-115,-60,-35]:
-        for y in [-30,-90,-150]:buildings.append(dict(id=f'house_{x}_{y}',model='townhouse',x=x,y=y,width=10.5,depth=9.5))
+        for y in [-30,-90,-150]:buildings.append(dict(id=f'house_{x}_{y}',model='townhouse',x=x,y=y,width=10.5,depth=10.7))
     for x in [40,120]:
         for y in [-30,-90]:buildings.append(dict(id=f'villa_{x}_{y}',model='beach_villa_pool_v1',x=x,y=y,width=10.75,depth=16.95))
-    for model,x,y,width,depth in [('hospital',40,150,20.5,14.5),('police_station',120,150,10.5,9.5),('fire_station',40,-150,20.5,14.5),('farm_barn',120,-150,10.5,9.5)]:
+    for model,x,y,width,depth in [('hospital',40,150,20.5,15.7),('police_station',120,150,10.5,10.7),('fire_station',40,-150,20.5,14.5),('farm_barn',120,-150,10.5,9.5)]:
         buildings.append(dict(id=model,model=model,x=x,y=y,width=width,depth=depth))
     roads=[dict(id=f'road_h_{y}',x=0,y=y,width=360,depth=7) for y in [-180,-120,-60,0,60,120,180]]
     roads += [dict(id=f'road_v_{x}',x=x,y=0,width=7,depth=400) for x in [-80,0,80]]

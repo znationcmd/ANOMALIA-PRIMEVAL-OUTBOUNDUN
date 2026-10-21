@@ -1,6 +1,9 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaSurvivor.h"
 #include "Vehicles/AnomaliaTransportMovement.h"
+#include "Vehicles/AnomaliaRailCarriage.h"
+#include "Vehicles/AnomaliaTransportEnvironment.h"
+#include "Components/SplineComponent.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "Misc/PackageName.h"
@@ -225,6 +228,7 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
         if(bPowered && FMath::Abs(SteeringAxis)>KINDA_SMALL_NUMBER)
             AddActorWorldRotation(FRotator(0,SteeringAxis*65.f*DeltaSeconds,0));
     }
+    UpdateMetroCoaches();
     // Aircraft consume fuel while maintaining powered lift, even at neutral forward input.
     const float Demand=Definition.Domain==EAnomaliaVehicleDomain::Air?
         FMath::Max(0.2f,FMath::Abs(ForwardAxis)+0.25f*FMath::Abs(VerticalAxis)):FMath::Abs(ForwardAxis);
@@ -316,4 +320,49 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
+}
+
+void AAnomaliaVehiclePawn::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if(HasAuthority()) for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->Destroy();
+    MetroCoaches.Empty();
+    Super::EndPlay(Reason);
+}
+
+void AAnomaliaVehiclePawn::UpdateMetroCoaches()
+{
+    if(!HasAuthority()) return;
+    if(VehicleId!=FName(TEXT("metro")))
+    {
+        for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->Destroy();
+        MetroCoaches.Empty(); return;
+    }
+    AAnomaliaRailTrack* Route=TransportMovement->GetRailTrack();
+    USplineComponent* Track=IsValid(Route)?Route->Track.Get():nullptr;
+    if(!Track || Track->GetSplineLength()<=0)
+    {
+        for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->SetActorHiddenInGame(true);
+        return;
+    }
+    // Fixed prototype centre spacing follows the route through curves; no straight parent attachment.
+    while(MetroCoaches.Num()<3)
+    {
+        FActorSpawnParameters Params; Params.Owner=this;
+        Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Coach=GetWorld()->SpawnActor<AAnomaliaRailCarriage>(AAnomaliaRailCarriage::StaticClass(),GetActorTransform(),Params);
+        if(!Coach) return;
+        Collision->IgnoreActorWhenMoving(Coach,true);
+        MetroCoaches.Add(Coach);
+    }
+    for(int32 Index=0;Index<MetroCoaches.Num();++Index)
+    {
+        auto* Coach=MetroCoaches[Index].Get(); if(!IsValid(Coach)) continue;
+        const double Distance=TransportMovement->GetTrackDistance()-(Index+1)*1850.;
+        const double Length=Track->GetSplineLength();
+        const bool Visible=Track->IsClosedLoop() || (Distance>=0 && Distance<=Length);
+        Coach->SetActorHiddenInGame(!Visible);
+        if(!Visible) continue; // Never pile coaches up at an open route endpoint.
+        const double Wrapped=Track->IsClosedLoop()?FMath::Fmod(FMath::Fmod(Distance,Length)+Length,Length):Distance;
+        Coach->SetActorTransform(Track->GetTransformAtDistanceAlongSpline(Wrapped,ESplineCoordinateSpace::World,false),false,nullptr,ETeleportType::TeleportPhysics);
+    }
 }

@@ -148,3 +148,5 @@ void UAnomaliaTransportMovement::GetLifetimeReplicatedProps(TArray<FLifetimeProp
     DOREPLIFETIME(UAnomaliaTransportMovement,RailDistanceCm);
     DOREPLIFETIME(UAnomaliaTransportMovement,RailSpeedCm);
 }
+
+AAnomaliaRailTrack* UAnomaliaTransportMovement::GetRailTrack() const { return Rail.Get(); }

@@ -24,6 +24,7 @@ public:
     float GetTrackDistance() const { return RailDistanceCm; }
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Rail")
     float GetRailSpeed() const { return RailSpeedCm; }
+    AAnomaliaRailTrack* GetRailTrack() const;
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Transport", meta=(ClampMin="0",ClampMax="1000"))
     float WaterlineOffsetCm=0;
     /** Additional thrust acceleration, cm/s^2. Zero selects per-category defaults. */

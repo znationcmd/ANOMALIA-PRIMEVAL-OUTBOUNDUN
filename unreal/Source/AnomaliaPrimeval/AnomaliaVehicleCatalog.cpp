@@ -48,6 +48,7 @@ TArray<FAnomaliaVehicleDefinition> UAnomaliaVehicleCatalog::GetDefaultVehicleCat
         MakeVehicle(TEXT("carrier"), TEXT("Porte-avions"), D::Water, 55, 100, 500, false, true),
         MakeVehicle(TEXT("warship"), TEXT("Navire de guerre"), D::Water, 65, 45, 300, false, true),
         MakeVehicle(TEXT("submarine"), TEXT("Sous-marin"), D::Underwater, 50, 25, 200, false, true),
+        MakeVehicle(TEXT("metro"), TEXT("Métro avec trois voitures voyageurs"), D::Rail, 80, 1, 0),
         MakeVehicle(TEXT("train"), TEXT("Locomotive"), D::Rail, 120, 2, 60),
         MakeVehicle(TEXT("airliner"), TEXT("Avion de ligne"), D::Air, 850, 180, 200),
         MakeVehicle(TEXT("airplane"), TEXT("Avion de transport léger"), D::Air, 320, 6, 40),
