@@ -139,3 +139,14 @@ conserve les anciens maillages et le marqueur v1, et réutilise les acteurs exis
 Validation du correctif : run `39488623890`, résultat encore en attente.
 Ne pas annoncer le parcours complet de 3490 m avant réussite native.
 Les rapports des deux échecs restent conservés à côté des rapports de succès.
+
+
+## Mise à jour du 21 octobre — routes validées, rendu en correction
+
+Run 39490454207, source e990adf53df99dff53a5e2fb3e6112f586d4bc9c :
+compilations Editor/Game et test PIE réussis, **3490,4 m** parcourus, 50 travées
+visitées en ordre, avec les deux routes d'accès. Le marqueur v3 persiste la
+référence du composant corrigé ; les anciens modèles et marqueurs restent conservés.
+La tentative de rendu D3D11/SM5 a échoué (réentrance Slate/Python puis perte du
+périphérique graphique). Aucune capture ou démo Windows n'est validée.
+Consulter l'audit principal pour la reprise et les 54 nouvelles demandes de véhicules.
