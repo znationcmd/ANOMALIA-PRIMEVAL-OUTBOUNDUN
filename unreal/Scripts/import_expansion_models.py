@@ -75,6 +75,10 @@ try:
         # Large naval models have their own remote display berths. No overlap with roads/housing.
         positions={};ordinary=[m for m in spec['models'] if m['kind']!='building' and m['id'] not in ['carrier','warship','submarine']]
         for i,item in enumerate(ordinary):positions[item['id']]=((i%6)*2200-5500,(i//6)*2200-7000)
+        if GROUP in ['NamedVehicles1','Military1']:
+            # Independent review bays scale to source bounds, including large ships.
+            gap=max(max(m['dimensionsMetresYUp'][0],m['dimensionsMetresYUp'][2]) for m in spec['models'])*100+2000
+            positions={m['id']:((i%6)*gap,(i//6)*gap) for i,m in enumerate(spec['models'])}
         positions.update(carrier=(-14000,13000),warship=(0,13000),submarine=(10000,13000))
         buildings=[m for m in spec['models'] if m['kind']=='building']
         for i,item in enumerate(buildings):positions[item['id']]=((i%3)*3500-3500,(i//3)*3500+3500)
