@@ -20,7 +20,11 @@ def finish(error=None):
     if error:report['error']=str(error)
     else:report['state']='REAL_GPU_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED'
     (OUT/'report.json').write_text(json.dumps(report,indent=2)+'\n')
-    state['task']=None;gc.collect();unreal.SystemLibrary.quit_editor()
+    state['task']=None
+    views.clear()
+    for key in ('world','actors','actor','mesh'):
+        globals().pop(key,None)
+    gc.collect();unreal.SystemLibrary.quit_editor()
 
 
 def camera():

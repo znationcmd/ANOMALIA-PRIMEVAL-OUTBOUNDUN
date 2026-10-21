@@ -42,6 +42,12 @@ def finish(error=None):
     if 'handle' in state:unreal.unregister_slate_post_tick_callback(state['handle'])
     # Release automation UObject wrappers before requesting editor teardown.
     state['task']=None
+    # Release retained Python wrappers while their editor objects are still alive.
+    # In particular, Landscape components must not outlive native World teardown.
+    for key in ('world','landscapes','terrain_components','actors','desc','wanted','a','c'):
+        globals().pop(key,None)
+    if 'packages' in locals():packages.clear()
+    obj=package=None
     gc.collect()
     unreal.SystemLibrary.quit_editor()
 def set_view():
