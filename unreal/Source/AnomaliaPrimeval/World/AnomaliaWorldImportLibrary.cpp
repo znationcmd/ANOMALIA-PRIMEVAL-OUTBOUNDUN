@@ -65,6 +65,17 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
    if(Component)Components.Add(Component);
  // Refuse incomplete worlds before any refresh, preserving their streaming state.
  if(Components.Num()!=576)return TEXT("{\"state\":\"REFUSED_INCOMPLETE_LANDSCAPE\"}");
+ // Edit-layer merging needs a real rendering device. The source map was imported
+ // under NullRHI; its saved collision has relief but all visual bounds are -2048m.
+ // Re-evaluate existing layers only in memory, never recreate or save the map.
+ int32 MergedLandscapes=0;
+ for(TActorIterator<ALandscape> It(World);It;++It){
+  if(ULandscapeInfo* Info=It->GetLandscapeInfo()){
+   Info->ForceLayersFullUpdate();
+   It->ForceUpdateLayersContent();
+   ++MergedLandscapes;
+  }
+ }
  TArray<TSharedPtr<FJsonValue>> Entries;
  TSet<UTexture2D*> Refreshed;
  int32 MissingHeightmaps=0;
@@ -98,6 +109,7 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
  TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
  Report->SetStringField(TEXT("state"),TEXT("REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED"));
  Report->SetNumberField(TEXT("componentCount"),Components.Num());
+ Report->SetNumberField(TEXT("landscapesLayerMergeRequested"),MergedLandscapes);
  Report->SetNumberField(TEXT("uniqueHeightmaps"),Refreshed.Num());
  Report->SetNumberField(TEXT("missingHeightmaps"),MissingHeightmaps);
  Report->SetArrayField(TEXT("components"),Entries);

@@ -13,15 +13,16 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Projet : `unreal/AnomaliaPrimeval.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
-- Dernier lot natif terminé : `f6204c314498832d2dc4c54b335f3edf47d81e31`.
-- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39567669690
-- Compilation Editor/Game, tests natifs et traversée PIE : réussis.
-- Capture DX11/SM5 et fermeture : réussies ; **terrain toujours invisible**.
-- Diagnostics : 145 proxies, 576 composants chargés ; acteurs non masqués.
-- Correctif suivant : inspection des ressources de hauteur, bornes et matériaux,
-  puis rafraîchissement des ressources de rendu en mémoire dans la session GPU.
-- **Priorité de reprise : lire le prochain run et renderResourceRefresh ; inspecter
-  les vrais PNG avant de valider le rendu. Ne pas réimporter le Landscape.**
+- Dernier lot natif terminé : `c855336156e5c874e59308bd26b1087c6b03f35d`.
+- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39575114440
+- Compilation Editor/Game, tests natifs, traversée PIE et capture GPU : réussis.
+- **Terrain toujours invisible ; la démo graphique n'est pas validée.**
+- Anomalie native précise : les 576 composants visuels ont tous des bornes centrées
+  à Z=-204800 cm (-2048 m). Leurs heightmaps existent ; les collisions ont du relief.
+- Hypothèse en cours : fusion GPU des edit layers non évaluée après import NullRHI.
+- Correctif suivant : demande de réévaluation des couches existantes en mémoire,
+  sans réimporter ni sauvegarder le monde. Inspecter le prochain rapport et les PNG.
+
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
 pas déclarée achevée. Conserver leurs développements ; ne pas réécrire main ni
@@ -286,3 +287,24 @@ Landscape de cette installation UE5.8.3 (LNK2019). L'appel est retiré ;
 le profil de capture utilise déjà la commande publique `r.Nanite 0`.
 Le compilateur a compilé le reste de la fonction ; seule la nouvelle liaison
 et le rendu restent à revalider. Conserver ce run en échec comme preuve.
+
+
+## Diagnostic de hauteur visuelle et test de fusion GPU
+
+Run **39575114440** (`c855336`) : nouvelle fonction native compilée et exécutée ;
+0 heightmap manquante, 576 ressources présentes, acteurs/composants chargés,
+visibles et enregistrés. Les 576 bornes restent centrées à **-2048 m**, avec une
+extension verticale de 8 m. Texture source 128×128, mip GPU signalé 32×32.
+La vue montagne inspectée reste vide de terrain. La simple réinitialisation des
+textures/matériaux ne résout donc pas le défaut.
+
+`docs/world/render-resources-39575114440.json` résume les résultats ; rapport
+complet dans artifact **12333393990**, SHA256
+`5af9f01116411fb2f0429ed985556f3b406a1ea46f9fcceb627f230be98bbedf`.
+La compilation et le PIE sont réussis, aucune réussite graphique globale déduite.
+
+Le lot suivant demande `ForceLayersFullUpdate` puis `ForceUpdateLayersContent`
+avec le vrai GPU, avant le rafraîchissement. Cela recalcule les sorties des
+couches existantes uniquement dans la session de diagnostic : pas d'import,
+pas de remplacement du terrain et pas de sauvegarde. Hypothèse de fusion
+NullRHI encore à confirmer par la nouvelle compilation et les images.
