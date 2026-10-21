@@ -6,6 +6,11 @@
 #include "LandscapeInfo.h"
 #include "LandscapeComponent.h"
 #include "LandscapeSubsystem.h"
+#include "Engine/Texture2D.h"
+#include "Materials/MaterialInterface.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "UObject/Package.h"
@@ -45,5 +50,61 @@ AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape()
  return Land;
 #else
  return nullptr;
+#endif
+}
+
+FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))
+  return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ TArray<ULandscapeComponent*> Components;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+  for(ULandscapeComponent* Component:It->LandscapeComponents)
+   if(Component)Components.Add(Component);
+ // Refuse incomplete worlds before any refresh, preserving their streaming state.
+ if(Components.Num()!=576)return TEXT("{\"state\":\"REFUSED_INCOMPLETE_LANDSCAPE\"}");
+ TArray<TSharedPtr<FJsonValue>> Entries;
+ TSet<UTexture2D*> Refreshed;
+ int32 MissingHeightmaps=0;
+ for(ULandscapeComponent* Component:Components){
+  TSharedRef<FJsonObject> Entry=MakeShared<FJsonObject>();
+  Entry->SetStringField(TEXT("component"),Component->GetPathName());
+  Entry->SetBoolField(TEXT("registered"),Component->IsRegistered());
+  Entry->SetBoolField(TEXT("visible"),Component->IsVisible());
+  Entry->SetStringField(TEXT("bounds"),Component->Bounds.Origin.ToString()+TEXT(" extent=")+Component->Bounds.BoxExtent.ToString());
+  UTexture2D* Heightmap=Component->GetHeightmap(false);
+  if(Heightmap){
+   Entry->SetStringField(TEXT("heightmap"),Heightmap->GetPathName());
+   Entry->SetNumberField(TEXT("textureWidth"),Heightmap->GetSizeX());
+   Entry->SetNumberField(TEXT("textureHeight"),Heightmap->GetSizeY());
+   Entry->SetNumberField(TEXT("sourceWidth"),Heightmap->Source.GetSizeX());
+   Entry->SetNumberField(TEXT("sourceHeight"),Heightmap->Source.GetSizeY());
+   Entry->SetBoolField(TEXT("resourceBefore"),Heightmap->GetResource()!=nullptr);
+   if(!Refreshed.Contains(Heightmap)){Heightmap->UpdateResource();Refreshed.Add(Heightmap);}
+  }else{++MissingHeightmaps;}
+  UMaterialInterface* Material=Component->GetMaterial(0);
+  Entry->SetStringField(TEXT("materialBefore"),Material?Material->GetPathName():TEXT("NONE"));
+  // Rebuild transient scene/material resources after a NullRHI-created import.
+  // No height data, transform, collision or package is replaced or saved here.
+  Component->SetNaniteActive(false);
+  Component->UpdateMaterialInstances();
+  Component->SetVisibility(true);
+  Component->SetRenderInMainPass(true);
+  Component->UpdateBounds();
+  Component->MarkRenderStateDirty();
+  Entries.Add(MakeShared<FJsonValueObject>(Entry));
+ }
+ TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
+ Report->SetStringField(TEXT("state"),TEXT("REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED"));
+ Report->SetNumberField(TEXT("componentCount"),Components.Num());
+ Report->SetNumberField(TEXT("uniqueHeightmaps"),Refreshed.Num());
+ Report->SetNumberField(TEXT("missingHeightmaps"),MissingHeightmaps);
+ Report->SetArrayField(TEXT("components"),Entries);
+ FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);
+ FJsonSerializer::Serialize(Report,Writer);return Json;
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
 #endif
 }

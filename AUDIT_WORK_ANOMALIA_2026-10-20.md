@@ -13,16 +13,15 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Projet : `unreal/AnomaliaPrimeval.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
-- Dernier lot natif terminé : `2fe49e08eaa694ee46a0e8055a3039f0edd2055c`.
-- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39566307432
+- Dernier lot natif terminé : `f6204c314498832d2dc4c54b335f3edf47d81e31`.
+- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39567669690
 - Compilation Editor/Game, tests natifs et traversée PIE : réussis.
-- Capture DX11/SM5 et fermeture : réussies, code 0 ; cinq PNG réels inspectés.
-- **Rendu partiel : le pont est visible, mais le Landscape est invisible dans les cinq vues. Démo graphique refusée.**
-- Caméras : axes corrigés et relus nativement, alignement vers cible ≈ 1.
-- Correctif suivant : diagnostics des composants/acteurs Landscape chargés, contrôle
-  du nombre 576, visibilité temporaire et ShowFlag Landscape sans sauvegarder la carte.
-- **Priorité de reprise : lire la validation native déclenchée par le dernier commit
-  et son landscapeDiagnostics avant de toucher au terrain ou de refaire un import.**
+- Capture DX11/SM5 et fermeture : réussies ; **terrain toujours invisible**.
+- Diagnostics : 145 proxies, 576 composants chargés ; acteurs non masqués.
+- Correctif suivant : inspection des ressources de hauteur, bornes et matériaux,
+  puis rafraîchissement des ressources de rendu en mémoire dans la session GPU.
+- **Priorité de reprise : lire le prochain run et renderResourceRefresh ; inspecter
+  les vrais PNG avant de valider le rendu. Ne pas réimporter le Landscape.**
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
 pas déclarée achevée. Conserver leurs développements ; ne pas réécrire main ni
@@ -255,3 +254,25 @@ descripteurs World Partition et les états masqués des acteurs, puis force leur
 visibilité dans la seule session de capture non sauvegardée. Ne pas refaire
 le Landscape pour masquer le problème. Résultat natif de ce lot encore attendu.
 Le test de régression des cinq caméras est aussi ajouté au workflow de sources.
+
+
+## Reprise — Landscape chargé mais invisible, 21 octobre
+
+Run **39567669690** : toutes les étapes techniques réussies. Inspection réelle de
+la vue montagne : toujours eau/ciel sans montagne. Le rapport complet
+`real-graphics-39567669690-terrain-missing.json` confirme 145 proxies et
+576 composants chargés ; les acteurs ne sont ni cachés dans l'éditeur ni en jeu.
+Les simples overrides de visibilité n'ont pas résolu le problème.
+
+Archive de preuve **12331026725**, SHA256
+`7dacd07bd62c4a4a5881c3f84297d8737ffb8ee42546e1bf6728df34e0ee1956`.
+Archive du monde **12331215742**, SHA256
+`7ef06cad804415a6b2dc2c351b45de73dc627faa4d196a21a3906ebce9d4dfe7`.
+
+Le nouveau code natif, appelé uniquement dans la session graphique de cette carte,
+enregistre les dimensions/source des heightmaps, leurs ressources, les bornes et
+matériaux des composants, puis recharge les ressources de texture et reconstruit
+les instances de matériau/états de rendu. Le rendu traditionnel est explicitement
+demandé pour le test SM5. Aucune hauteur, collision, transformation ou sauvegarde
+de package n'est remplacée. Hypothèse à tester, **pas de résolution annoncée**.
+63 tests Python UE5 locaux réussis ; nouvelle compilation native encore requise.

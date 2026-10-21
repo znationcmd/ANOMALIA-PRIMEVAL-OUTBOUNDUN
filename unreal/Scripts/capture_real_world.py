@@ -79,6 +79,9 @@ try:
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     for command in ['ShowFlag.Landscape 1','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
         unreal.SystemLibrary.execute_console_command(world,command)
+    report['renderResourceRefresh']=json.loads(unreal.AnomaliaWorldImportLibrary.refresh_archipelago_render_resources())
+    if report['renderResourceRefresh'].get('state')!='REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED':raise RuntimeError('Landscape render refresh refused')
+    if report['renderResourceRefresh']['missingHeightmaps']:raise RuntimeError('Landscape heightmap data is missing')
     unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:

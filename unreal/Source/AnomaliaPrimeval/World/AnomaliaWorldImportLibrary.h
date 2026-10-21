@@ -7,9 +7,12 @@ class ANOMALIAPRIMEVAL_API UAnomaliaWorldImportLibrary : public UBlueprintFuncti
 {
  GENERATED_BODY()
 public:
- /** Editor-only creation in the dedicated new ANOMALIA_Archipelago_v1 world. Never edits another world. */
+ /** Editor-only creation in the dedicated new ANOMALIA_Archipelago_v2 world. Never edits another world. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateArchipelagoLandscape();
+ /** Unsaved editor inspection/refresh only. Does not import heights or save packages. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static FString RefreshArchipelagoRenderResources();
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double ArchipelagoHeight(double EastMeters, double NorthMeters);
 };
