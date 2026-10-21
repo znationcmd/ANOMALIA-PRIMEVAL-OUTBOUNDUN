@@ -8,7 +8,7 @@ try {
     if (-not $project.StartsWith($versions,[StringComparison]::OrdinalIgnoreCase)) { throw 'Projet actif hors du dossier de versions.' }
     $editor = Join-Path ([string]$active.engineRoot) 'Engine/Binaries/Win64/UnrealEditor.exe'
     if (-not (Test-Path -LiteralPath $project) -or -not (Test-Path -LiteralPath $editor)) { throw 'Projet ou Unreal Engine introuvable.' }
-    Start-Process -FilePath $editor -ArgumentList @(('"' + $project + '"'), '/Game/Maps/ANOMALIA_Archipelago_v2')
+    Start-Process -FilePath $editor -ArgumentList @(('"' + $project + '"'), '/Game/Maps/ANOMALIA_Archipelago_v2', '-d3d11', '-sm5')
 } catch {
     Add-Type -AssemblyName System.Windows.Forms
     [Windows.Forms.MessageBox]::Show($_.Exception.Message,'ANOMALIA — Unreal') | Out-Null

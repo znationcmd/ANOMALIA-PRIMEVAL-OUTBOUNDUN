@@ -431,3 +431,7 @@ et les copies précédentes restent préservées.
 ### Correctif installation — chemin de sauvegarde Windows
 
 Run 39589866575 : compilation, PIE et réouverture GPU réussies, installation bloquée avant activation. Le rapport indique File.Replace : chemin non conforme. PowerShell convertit le troisième argument null en chaîne vide ; le lanceur est maintenant remplacé avec un véritable chemin de sauvegarde unique dans bootstrap-history, sans suppression. Nouvelle exécution native requise.
+
+### Vérification graphique de la copie installée
+
+Avant activation : le vérificateur ouvre aussi la version copiée avec D3D11/SM5, capture cinq vues natives, vérifie leurs SHA256 et exige une sortie native 0 sans fusion ni sauvegarde des couches. Le raccourci utilise les mêmes options DX11/SM5 adaptées au PC observé. Les dossiers Saved/SaveGames, Profiles, Worlds et Maps rejoignent Servers/Config dans la migration des fichiers manquants uniquement. Validation native de ce lot en attente.

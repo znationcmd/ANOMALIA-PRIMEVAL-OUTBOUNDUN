@@ -50,7 +50,7 @@ try {
         }
         # Saved/Servers remains shared across versions. Import missing files only.
         $saved = Join-Path $base 'userdata/Saved';New-Item -ItemType Directory -Path $saved -Force | Out-Null
-        foreach ($group in @('Servers','Config')) {
+        foreach ($group in @('Servers','Config','SaveGames','Profiles','Worlds','Maps')) {
         $sourceServers=Join-Path $source ('Saved/'+$group)
         if (Test-Path -LiteralPath $sourceServers) {
             foreach ($file in Get-ChildItem -LiteralPath $sourceServers -File -Recurse) {
@@ -104,6 +104,8 @@ try {
     $opened=Get-Content -LiteralPath $env:ANOMALIA_PC_UPDATE_REPORT -Raw | ConvertFrom-Json
     if ($opened.state -ne 'COPIED_EDITOR_PROJECT_OPENED_HEADLESS') { throw 'Copied project or shared saves failed validation.' }
     $report.installedProjectHeadlessOpenTested=$true
+    $report.editorLaunchTested=$true
+    $report.installedProjectDX11SM5Tested=$true
     $active=@{state='VALIDATED_EDITOR_PROJECT_INSTALLED';commit=$Commit;project=(Join-Path $target 'AnomaliaPrimeval.uproject');engineRoot=$EngineRoot;userData=(Join-Path $base 'userdata');validation=$proofFile}
     $temp=Join-Path $base ('active-'+[Guid]::NewGuid().ToString('N')+'.json')
     $active | ConvertTo-Json | Set-Content -LiteralPath $temp -Encoding UTF8
