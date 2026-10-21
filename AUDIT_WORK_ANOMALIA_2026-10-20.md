@@ -452,3 +452,15 @@ Run **39591689495**, commit **585704dff9d74162a4a981cadcf544fcea2b89ef** : toute
 `pc-editor-update.json` : **EDITOR_PROJECT_UPDATE_INSTALLED**, 33 fichiers serveur existants conservés par empreinte, raccourci Bureau et raccourci Startup créés. Bootstrap exécuté avec le runner présent : aucun PID ajouté. Le démarrage après un vrai reboot et le clic du raccourci ne sont pas déclarés testés. Le projet exige encore Unreal installé, il ne s'agit pas d'un binaire de jeu autonome.
 
 Preuve condensée : `docs/world/pc-install-39591689495.json`. Artifact natif 12341858979, SHA256 `d2bed0bc7b00069e434340af2b4ffe17a7a4cd7aff52a044baec30dde1d0240c`. Deux checks GitHub sources réussis et 66 tests Python locaux réussis, distincts de la compilation et des sessions Unreal ci-dessus. Historique des échecs conservé ; ces résultats remplacent les statuts « en attente » des paragraphes précédents pour ce lot.
+
+## Lot 3D original — quad, motoneige, jet-ski, zodiaque, maison, garage
+
+Six véritables sources GLB originales avec matériaux PBR de couleur dans `unreal/SourceAssets/OriginalLot1/manifest.json`. Pas de marques ou modèles commerciaux prétendument reproduits. Maison et garage : ouvertures de portes et fenêtres dans la géométrie, toit incliné, plancher et encadrements. Pas de promesse de textures finales, animations, conduite Chaos ou flottabilité.
+
+Importeur non destructif : SHA256, propriété des assets, contrôle de dimensions, matériaux et collisions triangulaires. Quatre véhicules reliés à la présentation du Pawn natif existant. Scène indépendante `/Game/Maps/ANOMALIA_AssetsShowcase_v1` ; l'archipel existant n'est pas remplacé. Un contrôle GPU doit capturer six vues et tester les portes ouvertes, murs bloquants et sols par rayons physiques. Statut avant exécution : SOURCE ONLY, import/rendu/collisions non encore validés.
+
+Restants : autres catégories du catalogue et modèles précis demandés, textures HD, détails intérieurs, animations, physique adaptée et essais réels de conduite, bâtiments RP supplémentaires et placement dans les villes de l'archipel.
+
+### Demande ajoutée : quartiers réalistes et villas côtières
+
+HLM, cités dans les grandes villes, lotissements de villages, résidences et villas avec piscine au bord des plages sont inclus dans le périmètre. Deux sources originales ajoutées au lot : HLM huit niveaux avec planchers, cage d'escalier à deux volées et balcons, villa avec bassin, margelles, échelle et pergola. Le lot compte maintenant huit modèles. Ce sont des premières géométries avec matériaux de couleur ; aucune qualité photoréaliste ni piscine jouable n'est revendiquée. Placement de quartiers, détails intérieurs et textures finales restent à développer.

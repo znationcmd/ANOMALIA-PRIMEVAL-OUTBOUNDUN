@@ -119,6 +119,14 @@ jobs:
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import eight original models and test real GPU views and building collisions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-original-lot1.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Install validated project and automatic PC update shortcuts
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -154,4 +162,11 @@ jobs:
             unreal/Content/Anomalia/World/Archipelago_v2/
             unreal/Content/Anomalia/Infrastructure/Bridge/
             unreal/Content/Anomalia/Infrastructure/Roads/
+            unreal/Content/Maps/ANOMALIA_AssetsShowcase_v1.umap
+            unreal/Content/Anomalia/Buildings/Lot1/
+            unreal/Content/Anomalia/OriginalImports/
+            unreal/Content/Anomalia/Vehicles/quad/
+            unreal/Content/Anomalia/Vehicles/snowmobile/
+            unreal/Content/Anomalia/Vehicles/jetski/
+            unreal/Content/Anomalia/Vehicles/zodiac/
           if-no-files-found: error
