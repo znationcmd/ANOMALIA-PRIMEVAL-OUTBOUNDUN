@@ -63,6 +63,40 @@ class ExpansionGeometryTests(unittest.TestCase):
                     self.assertAlmostEqual(max(a['max'][axis] for a in positions)-min(a['min'][axis] for a in positions),dimension)
                 self.assertFalse(model['drivingTested']);self.assertFalse(model['manufacturerReplica'])
 
+    def test_building_entrances_floors_and_upper_landings(self):
+        # Segment/triangle intersections against the exported GLB, not builder boxes.
+        def hit(a,b,triangle):
+            direction=MODULE.sub(b,a);v0,v1,v2=triangle
+            e1,e2=MODULE.sub(v1,v0),MODULE.sub(v2,v0)
+            p=MODULE.cross(direction,e2);det=sum(x*y for x,y in zip(e1,p))
+            if abs(det)<1e-9:return False
+            tvec=MODULE.sub(a,v0);u=sum(x*y for x,y in zip(tvec,p))/det
+            if u<0 or u>1:return False
+            q=MODULE.cross(tvec,e1);v=sum(x*y for x,y in zip(direction,q))/det
+            if v<0 or u+v>1:return False
+            t=sum(x*y for x,y in zip(e2,q))/det
+            return 0<=t<=1
+        for name in MODULE.BUILDINGS:
+            with self.subTest(building=name):
+                data=(self.base/(name+'.glb')).read_bytes();length=struct.unpack_from('<I',data,12)[0]
+                doc=json.loads(data[20:20+length]);binary=data[28+length:];triangles=[]
+                for primitive in doc['meshes'][0]['primitives']:
+                    acc=doc['accessors'][primitive['attributes']['POSITION']];view=doc['bufferViews'][acc['bufferView']]
+                    values=struct.unpack_from('<'+'f'*(acc['count']*3),binary,view['byteOffset'])
+                    vertices=[values[i:i+3] for i in range(0,len(values),3)]
+                    acc=doc['accessors'][primitive['indices']];view=doc['bufferViews'][acc['bufferView']]
+                    indices=struct.unpack_from('<'+'I'*acc['count'],binary,view['byteOffset'])
+                    triangles.extend(tuple(vertices[j] for j in indices[i:i+3]) for i in range(0,len(indices),3))
+                # Building front is negative local Z, independent of Unreal axis conversion.
+                depth=12 if name=='residence_4floors' else (14 if name in ['hospital','fire_station'] else 9)
+                a,b=(0,1.2,-depth/2-1),(0,1.2,-depth/2+1)
+                self.assertFalse(any(hit(a,b,t) for t in triangles),'Entrance is sealed')
+                a,b=(3,1.2,-depth/2-1),(3,1.2,-depth/2+1)
+                self.assertTrue(any(hit(a,b,t) for t in triangles),'Adjacent wall missing')
+                self.assertTrue(any(hit((0,1,0),(0,-.4,0),t) for t in triangles),'Ground floor missing')
+                if name in ['residence_4floors','townhouse','hospital','police_station']:
+                    self.assertTrue(any(hit((0,3.2,-1.2),(0,2.7,-1.2),t) for t in triangles),'Upper stair landing disconnected')
+
     def test_repeat_is_identical_and_modified_art_is_preserved(self):
         before={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in self.base.iterdir()}
         MODULE.generate(self.base)
