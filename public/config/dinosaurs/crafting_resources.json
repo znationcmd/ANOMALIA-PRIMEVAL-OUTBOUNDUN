@@ -1,0 +1,197 @@
+{
+  "schemaVersion": 1,
+  "description": "Gatherable resources and sources for kibble and cooking recipes",
+  "resources": [
+    {
+      "id": "berries_mixed",
+      "source": "bushes",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "mejoberry",
+      "source": "bushes",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "amarberry",
+      "source": "bushes",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "tintoberry",
+      "source": "bushes",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "azulberry",
+      "source": "bushes",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "fiber",
+      "source": "plants",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "dino_hide",
+      "source": "creature_harvest",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "animal_hide",
+      "source": "animal_harvest",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "raw_meat",
+      "source": "creature_harvest",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "raw_fish",
+      "source": "fishing",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "dino_egg_any",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "extra_small_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "small_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "medium_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "large_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "extra_large_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "special_egg",
+      "source": "dino_breeding",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "tier_essence",
+      "source": "dino_boss_or_event",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "rare_mushroom",
+      "source": "foraging",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "rare_flower",
+      "source": "foraging",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "sap",
+      "source": "trees",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "giant_bee_honey",
+      "source": "beehive",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "herbs",
+      "source": "foraging",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "rockarrot",
+      "source": "farming",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "longrass",
+      "source": "farming",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "savoroot",
+      "source": "farming",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "citronal",
+      "source": "farming",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "water",
+      "source": "water_source",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "narcotic",
+      "source": "crafting",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "stimulant",
+      "source": "crafting",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "potato",
+      "source": "farming",
+      "collectable": true,
+      "requiresUE5Implementation": true
+    }
+  ],
+  "notes": [
+    "Each recipe ingredient requires a matching inventory item definition before crafting can work",
+    "Cooking stations and gathering nodes require Unreal implementation"
+  ],
+  "status": "CONFIG_ONLY"
+}
