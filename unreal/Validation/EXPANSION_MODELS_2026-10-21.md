@@ -42,3 +42,24 @@ on the real terrain and multiplayer scenarios remain outstanding.
 The source generator runs on the trusted Windows Unreal host; generated GLBs and
 imported assets are included in its evidence/artifacts and installed project copy only
 after successful validation. The files generated here are not 33 completed game features.
+
+## Native evidence and urban scene update
+
+Run 39608842042 (source ccbafec5fcf44f151e95ff9305cdb094dd932f1e)
+imported all 33 models and bound all 26 generic vehicles to the native catalogue.
+The report `expansion-import.json` records their native dimensions and materials.
+All 33 GPU screenshots were produced; two were inspected and confirm visibly
+prototype-level geometry rather than finished realistic assets. The GPU process
+subsequently exited with 0xC0000005 during editor teardown, after its final log close.
+The validator correctly FAILED and did not activate a PC update. The retained evidence
+artifact is 12350690256. A follow-up releases Python references to actors and Landscape
+objects before editor teardown; clean native process completion remains required.
+
+The independent urban review generator creates `/Game/Maps/ANOMALIA_UrbanReview_v1`:
+4 HLM buildings, 4 residences, 12 townhouses, 4 villas with pool basins, hospital,
+police/fire stations and a farm barn (28 placements reusing existing models), plus
+10 streets and segmented pavements. It does not place a city on the archipelago.
+Flat ground is partitioned around four exact pool recesses. No ground slab fills
+those below-grade basins. Numerical tests verify building/road/pavement separation,
+unique placements and exact ground area conservation outside the four pools.
+Native scene generation and walking/swimming tests remain unverified.
