@@ -39,11 +39,11 @@ bool FAnomaliaLootCatalogTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("Native loot subsystem"), Loot)) { World->DestroyWorld(false); return false; }
     TestEqual(TEXT("All source catalogue entries available to native inventory"), Loot->GetCatalogSize(), 232);
     auto* Survivor = World->SpawnActor<AAnomaliaSurvivor>();
-    for (const FName Id : {FName(TEXT("m4a1")), FName(TEXT("car_hood")), FName(TEXT("replacement_headlight"))})
+    for (const FName Id : Loot->GetItemIds())
     {
-        TestNotNull(TEXT("New catalogue ID resolves"), Loot->FindItem(Id));
-        TestTrue(TEXT("New catalogue item enters existing native inventory"), Survivor->InventoryComponent->TryAddItem(Id, 1));
-        TestTrue(TEXT("Existing remove operation handles catalogue item"), Survivor->InventoryComponent->TryRemoveItem(Id, 1));
+        TestNotNull(*FString::Printf(TEXT("Catalogue ID resolves: %s"), *Id.ToString()), Loot->FindItem(Id));
+        TestTrue(*FString::Printf(TEXT("Catalogue item enters inventory: %s"), *Id.ToString()), Survivor->InventoryComponent->TryAddItem(Id, 1));
+        TestTrue(*FString::Printf(TEXT("Catalogue item removes cleanly: %s"), *Id.ToString()), Survivor->InventoryComponent->TryRemoveItem(Id, 1));
     }
     TestFalse(TEXT("Unlisted item cannot enter inventory"), Survivor->InventoryComponent->TryAddItem(TEXT("not-authorized-item"), 1));
     World->DestroyWorld(false);

@@ -129,7 +129,7 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error)
             !Number(Row, TEXT("lifetimeSeconds"), Item.LifetimeSeconds, 1, 2592000))
         { Error = TEXT("Invalid or duplicate loot item: ") + Id; return false; }
         Item.Id = FName(*Id); Item.MinTier = static_cast<int32>(Min); Item.MaxTier = static_cast<int32>(Max);
-        Item.Quantity = static_cast<int32>(Quantity); Item.Nominal = static_cast<int32>(Nominal);
+        Item.Quantity = static_cast<int32>(Quantity); Item.Nominal = static_cast<int32>(Nominal); Item.Minimum = static_cast<int32>(Minimum);
         // Explicit physical metadata is optional; no fabricated weapon behaviour is implied.
         double Weight = 1, Stack = 20, Width = 1, Height = 1;
         if ((Row->HasField(TEXT("weightKg")) && !Number(Row, TEXT("weightKg"), Weight, .001, 500)) ||
@@ -345,7 +345,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
             Changed = true; continue;
         }
         if (!Current.IsEmpty() || Time < Row->GetNumberField(TEXT("availableAt"))) continue;
-        TArray<const FAnomaliaLootItem*> Candidates;
+        TArray<const FAnomaliaLootItem*> Candidates, BelowMinimum;
         for (const auto& Pair : Items)
         {
             const auto& Item = Pair.Value;
@@ -356,12 +356,17 @@ void UAnomaliaLootSubsystem::RefreshLoot()
             for (const auto& Saved : Points->Values)
                 if (Saved.Value->AsObject()->GetStringField(TEXT("itemId")) == Item.Id.ToString())
                     Existing += static_cast<int32>(Saved.Value->AsObject()->GetNumberField(TEXT("count")));
-            if (Existing + Item.Quantity <= Item.Nominal) Candidates.Add(&Item);
+            if (Existing + Item.Quantity <= Item.Nominal)
+            {
+                Candidates.Add(&Item);
+                if (Existing < Item.Minimum) BelowMinimum.Add(&Item);
+            }
         }
+        if (BelowMinimum.Num()) Candidates = MoveTemp(BelowMinimum);
         // Sort to make seeded native tests and server diagnostics reproducible.
         Candidates.Sort([](const FAnomaliaLootItem& A, const FAnomaliaLootItem& B) { return A.Id.LexicalLess(B.Id); });
         Row->SetNumberField(TEXT("availableAt"), Time + DefaultRestock);
-        if (Candidates.Num() && FMath::FRand() < Rarity[Spawn.Tier])
+        if (Candidates.Num() && (Rarity[Spawn.Tier] >= 1.0 || FMath::FRand() < Rarity[Spawn.Tier]))
         {
             const auto* Item = Candidates[FMath::RandRange(0, Candidates.Num()-1)];
             Row->SetStringField(TEXT("itemId"), Item->Id.ToString());

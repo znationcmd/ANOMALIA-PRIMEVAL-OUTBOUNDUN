@@ -46,8 +46,9 @@ Hospital, garage, bunker and other building classes resolve to configured tiers;
 placements for every building across the 48 km world still need authoring. Tier
 category groups map explicitly to catalogue categories. Rarity governs appearance
 chance per restock attempt; quantity, lifetime, restock and nominal caps are applied
-per map. The catalogue's `min` is validated but automatic minimum-population balancing
-is not yet implemented. Quality rolls are not yet implemented.
+per map. Eligible items below their configured `min` receive priority over other
+candidates; the number of authored compatible points and rarity still bound achievable
+population. Quality rolls are not yet implemented.
 
 World state is map- and server-scoped. A write-ahead journal records the consumed
 point together with the complete resulting player profile before either is exposed
@@ -64,7 +65,7 @@ provisional 1 kg / 1x1 / stack-20 storage rules; the optional `weightKg`, `maxSt
 is claimed for those defaults.
 
 `Anomalia.Native.LootCatalog`, `LootTransactions` and `LootJournalRecovery` test
-catalogue-to-inventory transfer, range/capacity rejection, replay rejection, saving,
+all 232 catalogue IDs entering and leaving inventory, range/capacity rejection, replay rejection, saving,
 restart cooldown, isolated server scopes and interrupted-journal replay in actual
 Unreal test worlds. The dedicated trusted-branch workflow requires all three tests
 and both Editor/Game compilations. They are **not passed until its fresh report

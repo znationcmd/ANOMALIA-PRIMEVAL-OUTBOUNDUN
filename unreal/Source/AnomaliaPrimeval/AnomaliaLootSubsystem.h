@@ -12,7 +12,7 @@ struct FAnomaliaLootItem
 {
     FName Id;
     FString DisplayName, Category;
-    int32 MinTier = 1, MaxTier = 5, Quantity = 1, Nominal = 1;
+    int32 MinTier = 1, MaxTier = 5, Quantity = 1, Nominal = 1, Minimum = 0;
     double RestockSeconds = 600, LifetimeSeconds = 3600;
     // Provisional storage rules when a catalogue entry has no physical inventory metadata.
     float WeightKg = 1.f;
@@ -43,6 +43,7 @@ public:
     virtual TStatId GetStatId() const override;
     const FAnomaliaLootItem* FindItem(FName Id) const { return Items.Find(Id); }
     int32 GetCatalogSize() const { return Items.Num(); }
+    TArray<FName> GetItemIds() const { TArray<FName> Ids; Items.GetKeys(Ids); return Ids; }
     bool Configure(const FString& InServerId, const FString& InMapName, FString& Error);
     bool IsReady() const { return bReady; }
     bool HasPendingPlayer(const FString& PlayerId) const;
