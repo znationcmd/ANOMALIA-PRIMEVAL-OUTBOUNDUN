@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {parseIni,flattenIniSections,mergeConfig,buildFusionReport,FUSION_DOMAINS} from '../src/config-fusion.js';
+const ini=parseIni('; comment\n[ServerSettings]\nFood=1\nFood=2\n[ANOMALIA]\nStamina=100');
+assert.equal(ini.ServerSettings.Food,'2');
+assert.equal(flattenIniSections(ini)['ANOMALIA.Stamina'],'100');
+const merged=mergeConfig({defaults:{stamina:100,food:1},legacy:{stamina:90},canonical:{stamina:80},server:{stamina:120}});
+assert.equal(merged.values.stamina,120);
+assert.equal(merged.values.food,1);
+assert.equal(merged.conflicts.length,3);
+assert.equal(FUSION_DOMAINS.maps.primary,'scenarios.json');
+assert.equal(buildFusionReport({'config.json':'{}'}).find(x=>x.domain==='server').primaryPresent,true);
+assert.throws(()=>parseIni('[__proto__]\nfoo=1'));
+console.log('config-fusion: OK');
