@@ -97,15 +97,10 @@ try {
     [IO.File]::Replace($ownerTemp,$owner,(Join-Path $ownerHistory ([Guid]::NewGuid().ToString('N')+'.json')))
     $env:ANOMALIA_EXPECTED_SAVED=Join-Path $base 'userdata/Saved'
     $env:ANOMALIA_PC_UPDATE_REPORT=Join-Path $ValidationDir 'pc-editor-open-probe.json'
-    $cmdEditor=Join-Path $EngineRoot 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+    $enginePython=Join-Path $EngineRoot 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
     $copiedProject=Join-Path $target 'AnomaliaPrimeval.uproject'
-    $probeScript=Join-Path $target 'Scripts/probe_installed_editor.py'
-    $probeArgs=@(('"'+$copiedProject+'"'),('"-ExecutePythonScript='+$probeScript+'"'),'-NullRHI','-unattended','-nopause','-nosound')
-    $copyProbe=Start-Process -FilePath $cmdEditor -ArgumentList $probeArgs -PassThru -RedirectStandardOutput (Join-Path $ValidationDir 'pc-editor-open.stdout.log') -RedirectStandardError (Join-Path $ValidationDir 'pc-editor-open.stderr.log')
-    if (-not $copyProbe.WaitForExit(180000)) { $copyProbe.Kill();throw 'Copied project open timed out.' }
-    $copyProbe.WaitForExit()
-    $copyProbe.Refresh()
-    if ($copyProbe.ExitCode -ne 0 -or -not (Test-Path -LiteralPath $env:ANOMALIA_PC_UPDATE_REPORT)) { throw 'Copied project open failed.' }
+    & $enginePython (Join-Path $SourceRoot 'scripts/ue5/verify-installed-project.py') --engine-root $EngineRoot --project $copiedProject --saved $env:ANOMALIA_EXPECTED_SAVED --output $ValidationDir
+    if ($LASTEXITCODE -ne 0) { throw 'Copied project native process verification failed; inspect pc-editor-open-process.json.' }
     $opened=Get-Content -LiteralPath $env:ANOMALIA_PC_UPDATE_REPORT -Raw | ConvertFrom-Json
     if ($opened.state -ne 'COPIED_EDITOR_PROJECT_OPENED_HEADLESS') { throw 'Copied project or shared saves failed validation.' }
     $report.installedProjectHeadlessOpenTested=$true
@@ -162,8 +157,13 @@ shell.Run Chr(34) & runnerRoot & "\run.cmd" & Chr(34), 0, False
     $readback=Get-Content -LiteralPath $current -Raw | ConvertFrom-Json
     if ($readback.commit -ne $Commit -or $shell.CreateShortcut($link).Arguments -ne ('"'+$launcher+'"')) { throw 'Installation readback failed.' }
     # Execute bootstrap while the runner is already present: must exit without duplicate.
-    $probe=Start-Process -FilePath $wscript -ArgumentList ('"'+$runnerScript+'"') -Wait -PassThru
-    if ($probe.ExitCode -ne 0) { throw 'Runner bootstrap probe failed.' }
+    $listenersBefore=@(Get-Process -Name Runner.Listener -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id | Sort-Object)
+    if ($listenersBefore.Count -eq 0) { throw 'No existing runner listener observed; bootstrap probe refused.' }
+    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run([sys.argv[1],sys.argv[2]],timeout=20).returncode)' $wscript $runnerScript
+    if ($LASTEXITCODE -ne 0) { throw 'Runner bootstrap probe failed.' }
+    $listenersAfter=@(Get-Process -Name Runner.Listener -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Id | Sort-Object)
+    if (Compare-Object -ReferenceObject $listenersBefore -DifferenceObject $listenersAfter) { throw 'Runner listener set changed during bootstrap probe.' }
+    $report.runnerListenerIdsUnchanged=$true
     foreach ($path in $existingProfiles.Keys) {
         if (-not (Test-Path -LiteralPath $path) -or (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -ne $existingProfiles[$path]) { throw 'Existing server profile changed during update.' }
     }

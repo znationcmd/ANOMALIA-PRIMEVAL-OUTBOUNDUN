@@ -412,3 +412,18 @@ PowerShell 5.1. Un ancien bootstrap n'est remplacé que si ses octets correspond
 est archivé avant remplacement. Les profils serveur préexistants sont comparés
 par SHA256 avant/après mise à jour. Installation et changement de version encore
 en validation native : attendre les rapports PC avant de les annoncer actifs.
+
+
+### Premier essai d'installation PC — validation de processus corrigée
+
+Run **39588818187** (`f82f62c`) : compilation, PIE et rendu GPU de réouverture
+réussis. La copie du projet s'ouvre réellement, retrouve 576 composants et la
+jonction `userdata/Saved` ; preuve `pc-editor-open-probe.json`. L'installation
+n'est pas activée : le contrôle PowerShell du code de fin du processus échoue.
+Ne pas annoncer encore le raccourci installé.
+
+Le contrôle est délégué à `subprocess.run` avec délai maximum et journal Unreal
+explicite, pour conserver un code de sortie entier vérifiable. Aucun code non nul
+n'est ignoré. Même méthode pour le bootstrap runner, avec comparaison des PID
+avant/après pour prouver qu'il ne crée pas une seconde session. Les tentatives
+et les copies précédentes restent préservées.
