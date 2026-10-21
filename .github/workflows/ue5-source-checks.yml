@@ -6,6 +6,7 @@ on:
       - 'unreal/**'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
+      - 'tests/test_ue5_settlement_layout.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -29,6 +30,7 @@ on:
       - 'unreal/**'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
+      - 'tests/test_ue5_settlement_layout.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -113,3 +115,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_original_lot1.py -v
       - name: Generate and verify 33 original prototype meshes without third-party dependencies
         run: python -m unittest discover -s tests -p test_ue5_expansion_models.py -v
+      - name: Verify urban footprints road clearance and exact pool recesses
+        run: python -m unittest discover -s tests -p test_ue5_settlement_layout.py -v

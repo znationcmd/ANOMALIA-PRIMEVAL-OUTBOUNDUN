@@ -136,6 +136,20 @@ jobs:
           $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $enginePython scripts/ue5/validate-original-lot1.py --engine-root "$env:UE_ROOT" --output $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create independent urban review block with 28 buildings and open pool recesses
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_SETTLEMENT_REPORT = Join-Path $evidence 'urban-review.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_settlement_review.py'
+          $logPath = Join-Path $evidence 'urban-review.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_SETTLEMENT_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('URBAN_REVIEW_CREATED_NOT_PLAYTESTED','EXISTING_URBAN_REVIEW_PRESERVED_NOT_PLAYTESTED') -or $result.buildingCount -ne 28 -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Urban review generation failed.' }
       - name: Install validated project and automatic PC update shortcuts
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -175,6 +189,8 @@ jobs:
             unreal/Content/Anomalia/Buildings/Lot1/
             unreal/Content/Anomalia/OriginalImports/
             unreal/SourceAssets/Expansion1/
+            unreal/Content/Maps/ANOMALIA_UrbanReview_v1.umap
+            unreal/Content/Anomalia/World/UrbanReview1/
             unreal/Content/Maps/ANOMALIA_ExpansionReview_v1.umap
             unreal/Content/Anomalia/Buildings/Expansion1/
             unreal/Content/Anomalia/Props/Expansion1/
