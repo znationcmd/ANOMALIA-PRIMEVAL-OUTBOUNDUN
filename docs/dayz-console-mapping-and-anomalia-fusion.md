@@ -1,0 +1,6 @@
+# DayZ console mapping vs ANOMALIA Editor
+On DayZ console private servers, custom object mapping commonly uses JSON Object Spawner files stored under the mission directory, often `mpmissions/<mission>/custom/<mapname>.json`, with their relative paths listed in `cfggameplay.json` under `WorldsData.objectSpawnersArr`. The actual directory name is configurable; it is not a single mandatory mapping file. The server must enable cfggameplay loading, and valid JSON object class names/coordinates are required. DayZ Editor PC exports must be converted to the appropriate console-compatible Object Spawner format. Economy object groups and loot placement use other mission XML files (e.g. `mapgrouppos.xml`, `mapgroupproto.xml`) and are not interchangeable with JSON object spawns.
+
+For ANOMALIA, editor placement exports are planned in `public/config/mapping/exports/`, indexed by `public/config/mapping/manifest.json`, and associated with a world in `scenarios.json`. The ANOMALIA Editor and Unreal server must implement export/import, validation, World Partition streaming and persistence before these placements become playable.
+
+Fusion code: `src/config-fusion.js` supplies a pure INI parser, precedence-aware merge, conflict reporting and domain mapping. **It is not yet wired into the Unreal server runtime or editor.** No legacy files were deleted.
