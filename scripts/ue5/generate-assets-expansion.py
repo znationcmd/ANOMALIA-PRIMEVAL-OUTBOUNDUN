@@ -143,7 +143,9 @@ def cabin(m, front, rear, height=1.85, width=1.8, floor=.75, paint=0):
         m.box((.18,.1,.12),(front-.15,floor+.8,z+side*.16),paint)
     for x in [front,rear]:m.box((.018,height-floor-.3,width*.87),(x,(height+floor+.3)/2,0),4)
     m.box((.28,.16,width*.9),(front-.16,floor+.62,0),3)
-    for z in [-width*.25,width*.25]:m.seat(rear+.42,floor+.25,z)
+    for z in [-width*.25,width*.25]:m.seat(front-.65,floor+.25,z)
+    if length>2.2:
+        for z in [-width*.3,0,width*.3]:m.seat(rear+.3,floor+.25,z,.42)
     m.steering(front-.32,floor+.85,-width*.25)
 
 
@@ -356,8 +358,13 @@ def building(m,kind):
     for floor in range(levels):
         y=3*floor
         # Open central stairwell; slabs do not seal stair circulation.
-        for side in [-1,1]:m.box(((w-3)/2,.2,d),(side*(w+3)/4,y-.1,0),9)
-        for z in [-d/3,d/3]:m.box((3,.2,d/3),(0,y-.1,z),9)
+        if floor==0:
+            m.box((w,.2,d),(0,y-.1,0),9)
+        else:
+            for side in [-1,1]:m.box(((w-3)/2,.2,d),(side*(w+3)/4,y-.1,0),9)
+            for z in [-d/3,d/3]:m.box((3,.2,d/3),(0,y-.1,z),9)
+            # Upper landing connects the returning stair to the occupied floor.
+            m.box((3,.2,d/6-.95),(0,y-.1,(-d/6-1.05)/2),9)
         for z in [-d/2,d/2]:
             if floor==0 and z<0:
                 for side in [-1,1]:m.box(((w-opening)/2,3,.22),(side*(w+opening)/4,y+1.5,z),8)
