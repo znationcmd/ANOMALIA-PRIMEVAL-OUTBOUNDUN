@@ -11,7 +11,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[2]
 
 
-def validate(engine: Path, output: Path, run_tests: bool = False) -> int:
+def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_tests: bool = False) -> int:
     output.mkdir(parents=True, exist_ok=True)
     report = {"startedUtc": datetime.datetime.now(datetime.timezone.utc).isoformat(),
               "compilation": "not_run", "execution": "not_run", "worldPlayable": "not_verified",
@@ -32,6 +32,13 @@ def validate(engine: Path, output: Path, run_tests: bool = False) -> int:
     report["engineVersion"] = version
     if version.get("MajorVersion") != 5:
         report["error"] = "Unreal Engine 5 is required"
+        save()
+        return 2
+    import runpy
+    try:
+        runpy.run_path(str(ROOT / "scripts/ue5/stage-runtime-data.py"))["stage"](ROOT)
+    except (OSError, ValueError) as error:
+        report["error"] = f"Runtime data staging failed: {error}"
         save()
         return 2
     project = ROOT / "unreal/AnomaliaPrimeval.uproject"
@@ -77,6 +84,8 @@ def validate(engine: Path, output: Path, run_tests: bool = False) -> int:
             data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
             rows = data.get("tests", [])
             expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics"}
+            if require_loot_tests:
+                expected.update({"Anomalia.Native.LootCatalog", "Anomalia.Native.LootTransactions", "Anomalia.Native.LootJournalRecovery"})
             passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}
             if result.returncode != 0 or not expected.issubset(passed) or any(row.get("state") != "Success" for row in rows):
                 raise ValueError("Missing, incomplete or failed native tests")
@@ -96,6 +105,7 @@ if __name__ == "__main__":
     parser.add_argument("--engine-root", type=Path, default=os.environ.get("UE_ROOT"))
     parser.add_argument("--output", type=Path, default=ROOT / "unreal/Saved/BuildValidation")
     parser.add_argument("--run-tests", action="store_true", help="Launch native UE automation tests after compilation")
+    parser.add_argument("--require-loot-tests", action="store_true", help="Require all native loot tests, never accept an older automation report")
     args = parser.parse_args()
     # Use an explicit missing path to record the failed preflight rather than accidentally using cwd.
-    raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output, args.run_tests))
+    raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output, args.run_tests, args.require_loot_tests))

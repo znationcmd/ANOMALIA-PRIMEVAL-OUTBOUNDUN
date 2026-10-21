@@ -196,3 +196,22 @@ bool UAnomaliaConfigLibrary::SavePlayerProfile(const FString& ServerId, const FS
     const FString File = FPaths::Combine(ServerRoot(ServerId), TEXT("userProfile"), PlayerId + TEXT(".json"));
     return WriteJsonSafely(File, Json, OutError);
 }
+
+bool UAnomaliaConfigLibrary::LoadWorldState(const FString& ServerId, const FString& StateId, FString& OutJson, FString& OutError)
+{
+    OutJson.Empty(); OutError.Empty();
+    if (!ValidId(ServerId) || !ValidId(StateId)) { OutError = TEXT("Invalid world state scope"); return false; }
+    const FString File = FPaths::Combine(ServerRoot(ServerId), TEXT("World"), StateId + TEXT(".json"));
+    if (!IFileManager::Get().FileExists(*File)) { OutError = TEXT("World state not found"); return false; }
+    if (IFileManager::Get().FileSize(*File) > MaxProfileChars || !FFileHelper::LoadFileToString(OutJson, *File))
+    { OutError = TEXT("Cannot read world state"); return false; }
+    TSharedPtr<FJsonObject> Parsed;
+    if (!ParseObject(OutJson, Parsed)) { OutJson.Empty(); OutError = TEXT("Invalid world state"); return false; }
+    return true;
+}
+
+bool UAnomaliaConfigLibrary::SaveWorldState(const FString& ServerId, const FString& StateId, const FString& Json, FString& OutError)
+{
+    if (!ValidId(ServerId) || !ValidId(StateId)) { OutError = TEXT("Invalid world state scope"); return false; }
+    return WriteJsonSafely(FPaths::Combine(ServerRoot(ServerId), TEXT("World"), StateId + TEXT(".json")), Json, OutError);
+}

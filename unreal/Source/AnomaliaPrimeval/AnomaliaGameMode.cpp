@@ -1,5 +1,6 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaLootSubsystem.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
@@ -42,6 +43,11 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         if (bValid) ServerId = RequestedId;
         else UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: invalid server ID rejected"));
     }
+    if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone) ServerId = TEXT("solo-local");
+    FString LootError;
+    if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
+        if (!Loot->Configure(ServerId, MapName, LootError))
+            UE_LOG(LogTemp, Error, TEXT("ANOMALIA loot initialization stopped: %s"), *LootError);
     FString ConfigError;
     if (!UAnomaliaConfigLibrary::LoadServerSettings(ServerId, ActiveServerSettings, ConfigError))
     {
@@ -53,7 +59,9 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
 
 FString AAnomaliaGameMode::GetPersistentPlayerId(const AController* Controller) const
 {
-    if (!Controller || !Controller->PlayerState) return FString();
+    if (!Controller) return FString();
+    if (GetNetMode() == NM_Standalone && Controller->IsLocalController()) return TEXT("local-owner");
+    if (!Controller->PlayerState) return FString();
     const FUniqueNetIdRepl& NetId = Controller->PlayerState->GetUniqueId();
     if (!NetId.IsValid()) return FString();
     const FString RawIdentity = NetId.ToString();
@@ -77,6 +85,9 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
     if (!HasAuthority() || !PlayerController) return;
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(PlayerController->GetPawn());
     const FString PlayerId = GetPersistentPlayerId(PlayerController);
+    const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
+    if (Loot && Loot->HasPendingPlayer(PlayerId)) { PendingProfileLoads.Add(PlayerId); return; }
+    PendingProfileLoads.Remove(PlayerId);
     if (!Survivor || PlayerId.IsEmpty())
     {
         UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: player profile load skipped (pawn or authenticated network identity unavailable)"));
@@ -157,6 +168,8 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     if (!HasAuthority() || !Controller) return;
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(Controller->GetPawn());
     const FString PlayerId = GetPersistentPlayerId(Controller);
+    const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
+    if (PendingProfileLoads.Contains(PlayerId) || (Loot && Loot->HasPendingPlayer(PlayerId))) return;
     if (!Survivor || PlayerId.IsEmpty()) return;
 
     FString Error;
@@ -250,6 +263,7 @@ void AAnomaliaGameMode::BeginPlay()
     {
         SpawnConfiguredHomestead();
         SpawnConfiguredVehicles();
+        GetWorldTimerManager().SetTimer(ProfileRecoveryTimer, this, &AAnomaliaGameMode::RetryPendingProfileLoads, 1.f, true);
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }
 }
@@ -455,4 +469,17 @@ void AAnomaliaGameMode::SpawnConfiguredHomestead()
     }
     UE_LOG(LogTemp, Log, TEXT("ANOMALIA server %s: %d homestead placeables loaded"),
         *ServerId, Spawned);
+}
+
+void AAnomaliaGameMode::RetryPendingProfileLoads()
+{
+    if (!HasAuthority() || !GetWorld() || PendingProfileLoads.IsEmpty()) return;
+    const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
+    for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+    {
+        APlayerController* Controller = It->Get();
+        const FString PlayerId = GetPersistentPlayerId(Controller);
+        if (PendingProfileLoads.Contains(PlayerId) && (!Loot || !Loot->HasPendingPlayer(PlayerId)))
+            LoadPersistentPlayer(Controller);
+    }
 }

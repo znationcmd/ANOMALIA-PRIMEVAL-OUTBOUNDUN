@@ -2,6 +2,9 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaLootSubsystem.h"
+#include "AnomaliaLootPickup.h"
+#include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaHomesteadStation.h"
@@ -228,6 +231,25 @@ void AAnomaliaSurvivor::InputInteract()
 void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
 {
     if (!HasAuthority() || !GetController() || Health <= 0.f || !GetWorld() || bSleeping) return;
+    // The client sends no item ID, count, player identity or arbitrary world target.
+    if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
+    {
+        AAnomaliaLootPickup* NearestLoot = nullptr;
+        double Best = FMath::Square(250.0);
+        for (TActorIterator<AAnomaliaLootPickup> It(GetWorld()); It; ++It)
+        {
+            const double Distance = FVector::DistSquared(GetActorLocation(), It->GetActorLocation());
+            if (IsValid(*It) && !It->IsActorBeingDestroyed() && Distance < Best)
+            { Best = Distance; NearestLoot = *It; }
+        }
+        if (NearestLoot)
+        {
+            const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
+            FString Error;
+            if (Mode) Loot->TryCollect(NearestLoot, this, Mode->GetPersistentPlayerId(GetController()), Error);
+            return;
+        }
+    }
     // A client only requests INTERACT; the server chooses the nearest harvest station.
     AAnomaliaHomesteadStation* NearestFarm = nullptr;
     float FarmDistanceSquared = FMath::Square(275.f);

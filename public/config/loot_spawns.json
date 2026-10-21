@@ -1,0 +1,100 @@
+{
+  "schemaVersion": 1,
+  "description": "Native pickup placements. Coordinates are Unreal centimetres. Extend per map; no implicit map-wide building population is claimed.",
+  "spawns": [
+    {
+      "id": "review-house-food",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "house",
+      "x": 160,
+      "y": 0,
+      "z": 30,
+      "categories": [
+        "canned_food"
+      ]
+    },
+    {
+      "id": "review-house-water",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "house",
+      "x": 160,
+      "y": 140,
+      "z": 30,
+      "categories": [
+        "drinks"
+      ]
+    },
+    {
+      "id": "review-hospital",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "hospital",
+      "x": 160,
+      "y": 280,
+      "z": 30,
+      "categories": [
+        "medical_supplies",
+        "medicine"
+      ]
+    },
+    {
+      "id": "review-garage",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "garage",
+      "x": 160,
+      "y": 420,
+      "z": 30,
+      "categories": [
+        "vehicle_engine_parts",
+        "vehicle_body_parts"
+      ]
+    },
+    {
+      "id": "review-bunker",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "bunker",
+      "x": 160,
+      "y": 560,
+      "z": 30,
+      "categories": [
+        "assault_weapons",
+        "ammunition"
+      ]
+    },
+    {
+      "id": "beach-supplies-food",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": -110,
+      "z": -100,
+      "categories": [
+        "canned_food"
+      ]
+    },
+    {
+      "id": "beach-supplies-drink",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": 0,
+      "z": -100,
+      "categories": [
+        "drinks"
+      ]
+    },
+    {
+      "id": "beach-supplies-medical",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": 110,
+      "z": -100,
+      "categories": [
+        "medical_supplies"
+      ]
+    }
+  ]
+}

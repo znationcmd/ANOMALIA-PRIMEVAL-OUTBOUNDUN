@@ -21,3 +21,6 @@ dist/
 *.log
 .DS_Store
 Thumbs.db
+
+# Generated, hash-owned copies of public/config runtime defaults.
+unreal/Content/Anomalia/Data/

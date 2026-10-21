@@ -64,6 +64,10 @@ public:
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Persistence")
     static bool SavePlayerProfile(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError);
 
+    // Atomic server/map-scoped state, separate from player profiles and configuration.
+    static bool LoadWorldState(const FString& ServerId, const FString& StateId, FString& OutJson, FString& OutError);
+    static bool SaveWorldState(const FString& ServerId, const FString& StateId, const FString& Json, FString& OutError);
+
 private:
     static bool ValidId(const FString& Id);
     static FString ServerRoot(const FString& ServerId);

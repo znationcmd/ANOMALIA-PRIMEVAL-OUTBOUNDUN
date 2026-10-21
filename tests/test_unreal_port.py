@@ -133,7 +133,8 @@ class UnrealPortTests(unittest.TestCase):
         for setting in ("r.Nanite.ProjectEnabled=True", "r.AntiAliasingMethod=4",
                         "r.DynamicRes.FrameTimeBudget=16.6667", "r.Shadow.Virtual.Enable=1"):
             self.assertIn(setting, engine)
-        presets = configparser.ConfigParser()
+        # Unreal INI arrays use repeated +Key entries; the preset scalars remain unique.
+        presets = configparser.ConfigParser(strict=False)
         presets.read(root / "DefaultGame.ini", encoding="utf-8")
         for name in ("PC_High", "PS5_Target", "XboxSeriesX_Target", "Performance_Fallback"):
             section = "Anomalia." + name

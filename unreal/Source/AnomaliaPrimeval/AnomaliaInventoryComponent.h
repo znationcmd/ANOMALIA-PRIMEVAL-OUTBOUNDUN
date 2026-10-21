@@ -97,6 +97,10 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory|Persistence")
     bool LoadInventoryFromPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError);
 
+    /** Serialize the current inventory into an existing profile without writing it. Server only. */
+    bool BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError);
+    bool IsPersistenceLocked() const { return bPersistenceLocked; }
+
     /** Client UI requests; the owning actor's RPC ownership routes them to the server. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
@@ -129,8 +133,11 @@ protected:
     void ServerRequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
 private:
+    friend class UAnomaliaLootSubsystem;
+    bool bPersistenceLocked = false;
+    bool bSuppressNotifications = false;
     int32 NextStackId = 1;
-    static bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize);
+    bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const;
