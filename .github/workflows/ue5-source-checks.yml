@@ -5,6 +5,7 @@ on:
     paths:
       - 'unreal/**'
       - 'tests/test_ue5_original_lot1.py'
+      - 'tests/test_ue5_expansion_models.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -27,6 +28,7 @@ on:
     paths:
       - 'unreal/**'
       - 'tests/test_ue5_original_lot1.py'
+      - 'tests/test_ue5_expansion_models.py'
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
@@ -109,3 +111,5 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_world_snapshot.py -v
       - name: Verify all eight original GLB source identities and dimensions
         run: python -m unittest discover -s tests -p test_ue5_original_lot1.py -v
+      - name: Generate and verify 33 original prototype meshes without third-party dependencies
+        run: python -m unittest discover -s tests -p test_ue5_expansion_models.py -v
