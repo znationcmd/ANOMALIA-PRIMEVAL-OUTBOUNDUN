@@ -13,18 +13,27 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Projet : `unreal/AnomaliaPrimeval.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
-- Dernier lot natif terminé : `cca28b25431eba5093e064957f56e4724f32c13f`.
-- Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39576659556
-- Compilation Editor/Game, tests natifs et traversée PIE : réussis.
-- **Relief désormais visible dans une vraie session GPU DX11/SM5 : cinq images inspectées.**
-- Correctif : forcer la fusion des couches existantes avec le GPU après leur import
-  initial NullRHI. Aucun réimport, niveau remplacé ou sauvegarde supprimée.
-- Preuves et images : `docs/world/render-reviewed-39576659556.json` et
-  `docs/world/captures/2026-10-21/`.
-- Limites : couleurs de biomes provisoires, mer visuelle, végétation absente ;
-  sauvegarde des sorties GPU et réouverture indépendante encore non testées.
-- **Priorité suivante : pérenniser puis recharger le rendu corrigé avec sauvegarde
-  préalable, améliorer matériaux/texture/végétation, puis démo Windows testée.**
+- Dernier lot natif terminé : `585704dff9d74162a4a981cadcf544fcea2b89ef`.
+- Exécution réussie : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39591689495
+- Compilation Editor/Game, tests natifs, déplacement/collisions et inventaire PIE : réussis.
+- Relief sauvegardé puis réouvert indépendamment : run 39587758970, preuve
+  `docs/world/persist-reopen-39587758970.json` ; backup original conservé.
+- **Installation PC réussie dans une version séparée**, ouverture native sans rendu
+  puis véritable viewport GPU D3D11/SM5 de la copie installée : sorties natives 0.
+- **33 fichiers serveur préexistants inchangés par SHA256** ; anciens dossiers conservés.
+- Raccourci Bureau : `ANOMALIA - Unreal`. Dossier :
+  `%LOCALAPPDATA%/CMD/ANOMALIA-UE5/versions/585704dff9d74162a4a981cadcf544fcea2b89ef`.
+- Reprise automatique du runner configurée à la connexion Windows ; lancement du
+  bootstrap avec session existante testé sans nouveau PID. Véritable reboot non testé.
+- Preuve : `docs/world/pc-install-39591689495.json` ; artifact natif 12341858979.
+- Les futurs changements de la branche d'intégration exécutent les validations puis
+  installent une nouvelle version quand le PC/runner sont disponibles, sans commande
+  manuelle de téléchargement. Les anciens raccourcis et `C:/ANOMALIA` sont conservés.
+- Limites : projet de développement nécessitant Unreal installé, pas de jeu empaqueté ;
+  clic manuel du raccourci et redémarrage Windows non testés. Couleurs de biomes
+  provisoires, mer visuelle, végétation absente ; aucune promesse de performances.
+- **Suite : tester la reprise après connexion réelle, améliorer textures/végétation,
+  poursuivre gameplay et produire une démo Windows autonome réellement testée.**
 
 
 La réconciliation complète de toutes les branches et de toutes les autres PR n'est
@@ -435,3 +444,11 @@ Run 39589866575 : compilation, PIE et réouverture GPU réussies, installation b
 ### Vérification graphique de la copie installée
 
 Avant activation : le vérificateur ouvre aussi la version copiée avec D3D11/SM5, capture cinq vues natives, vérifie leurs SHA256 et exige une sortie native 0 sans fusion ni sauvegarde des couches. Le raccourci utilise les mêmes options DX11/SM5 adaptées au PC observé. Les dossiers Saved/SaveGames, Profiles, Worlds et Maps rejoignent Servers/Config dans la migration des fichiers manquants uniquement. Validation native de ce lot en attente.
+
+### Installation automatique validée — 21 octobre 2026
+
+Run **39591689495**, commit **585704dff9d74162a4a981cadcf544fcea2b89ef** : toutes les étapes réussies. Le remplacement du bootstrap avec chemin de sauvegarde explicite fonctionne. La version installée est ouverte dans un processus natif avec contrôle du dossier Saved partagé, puis un second processus DX11/SM5 produit cinq captures vérifiées par SHA256, sans fusion forcée et sans sauvegarde de la carte. Les deux processus sortent avec 0. Trois vues de cette copie inspectées : archipel, montagnes, pont.
+
+`pc-editor-update.json` : **EDITOR_PROJECT_UPDATE_INSTALLED**, 33 fichiers serveur existants conservés par empreinte, raccourci Bureau et raccourci Startup créés. Bootstrap exécuté avec le runner présent : aucun PID ajouté. Le démarrage après un vrai reboot et le clic du raccourci ne sont pas déclarés testés. Le projet exige encore Unreal installé, il ne s'agit pas d'un binaire de jeu autonome.
+
+Preuve condensée : `docs/world/pc-install-39591689495.json`. Artifact natif 12341858979, SHA256 `d2bed0bc7b00069e434340af2b4ffe17a7a4cd7aff52a044baec30dde1d0240c`. Deux checks GitHub sources réussis et 66 tests Python locaux réussis, distincts de la compilation et des sessions Unreal ci-dessus. Historique des échecs conservé ; ces résultats remplacent les statuts « en attente » des paragraphes précédents pour ce lot.
