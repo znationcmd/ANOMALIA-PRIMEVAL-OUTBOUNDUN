@@ -1,7 +1,21 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "enabled": false,
-  "provider": "enfusion-workshop",
+  "provider": "anomalia-workshop",
+  "legacyProvider": "enfusion-workshop",
+  "installationModes": [
+    "solo",
+    "cmd-hosting",
+    "dedicated"
+  ],
+  "autoResolveServerRequirements": true,
+  "requireUserApprovalBeforeDownload": true,
+  "verifySha256": true,
+  "allowUnsignedPackages": false,
+  "packageFormat": "anomalia-mod-v1",
+  "catalog": "mods/catalog.json",
+  "installedManifest": "mods/installed.json",
   "mods": [],
-  "notes": "Automatic Enfusion Workshop downloads are NOT supported by this Three.js game. This is a reserved configuration file; no mods are downloaded."
+  "status": "MANIFEST_AND_RESOLVER_ONLY_NO_UNREAL_INSTALLER",
+  "notes": "Mod publishing, hosting, downloads, Unreal pak mounting and one-click UI are not yet implemented. Existing config preserved through legacyProvider."
 }
