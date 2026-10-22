@@ -112,7 +112,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         ItemList->AddChildToVerticalBox(Withdrawals)->SetPadding(FMargin(12.f, 3.f));
         for (int32 Euros : {5,10,20,50,100,200,500})
         {
-            UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankWithdraw_eur_note_%d"), Euros))));
+            UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankWithdraw_eur_note_%d_action"), Euros))));
             UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
             Text->SetText(FText::FromString(FString::Printf(TEXT("Retirer %d EUR"), Euros))); Button->SetContent(Text);
             Button->SetIsEnabled(Inventory->BankBalanceCents >= Euros*100);
@@ -157,7 +157,7 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
 
     if (Inventory && Inventory->bBankingAvailable && Stack.ItemId.ToString().StartsWith(TEXT("eur_note_")))
     {
-        UButton* Deposit = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankDeposit_%d"), Stack.StackId))));
+        UButton* Deposit = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankDeposit_%d_action"), Stack.StackId))));
         UTextBlock* Text = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         Text->SetText(FText::FromString(TEXT("Déposer 1 billet"))); Deposit->SetContent(Text);
         Row->AddChildToHorizontalBox(Deposit)->SetPadding(FMargin(5.f));

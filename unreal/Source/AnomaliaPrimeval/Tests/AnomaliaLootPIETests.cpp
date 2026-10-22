@@ -14,6 +14,7 @@
 #include "../AnomaliaSurvivor.h"
 #include "../AnomaliaLootSubsystem.h"
 #include "../AnomaliaEconomySubsystem.h"
+#include "../AnomaliaBankTerminal.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "../AnomaliaLootPickup.h"
@@ -35,13 +36,28 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
     auto Probe = MakeShared<FProbe>();
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Probe, Scope]()
     {
-        if (FPlatformTime::Seconds() > Probe->Deadline)
-        { AddError(FString::Printf(TEXT("Loot PIE timeout in phase %d"), Probe->Phase)); return true; }
         UWorld* World = GEditor ? GEditor->PlayWorld : nullptr;
         if (!World || !World->HasBegunPlay()) return false;
         auto* Mode = World->GetAuthGameMode<AAnomaliaGameMode>();
         auto* PC = UGameplayStatics::GetPlayerController(World, 0);
         auto* Survivor = PC ? Cast<AAnomaliaSurvivor>(PC->GetPawn()) : nullptr;
+        if (FPlatformTime::Seconds() > Probe->Deadline)
+        {
+            FString Detail;
+            if (Survivor)
+            {
+                Detail = FString::Printf(TEXT("position=%s bankAvailable=%d account=%s inventoryUI=%d"),
+                    *Survivor->GetActorLocation().ToString(), Survivor->InventoryComponent->bBankingAvailable,
+                    *Survivor->InventoryComponent->BankAccountId,
+                    Survivor->InventoryWidget && Survivor->InventoryWidget->IsInViewport());
+                if (Survivor->InventoryWidget && Survivor->InventoryWidget->WidgetTree)
+                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
+                    { if (Widget && Widget->GetName().StartsWith(TEXT("Bank"))) Detail += TEXT(" | ")+Widget->GetName(); });
+                for (TActorIterator<AAnomaliaBankTerminal> It(World); It; ++It)
+                    Detail += TEXT(" terminal=")+It->GetActorLocation().ToString();
+            }
+            AddError(FString::Printf(TEXT("Loot PIE timeout phase %d: %s"),Probe->Phase,*Detail)); return true;
+        }
         if (!Mode || !PC || !Survivor) return false;
         if (Mode->ServerId != Scope)
         { AddError(TEXT("Refusing PIE interaction in a non-isolated save scope")); return true; }
@@ -124,7 +140,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Input(EKeys::I,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
-            UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d"),Stack->StackId)) : nullptr;
+            UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;
             if (!Deposit) return false;
             Deposit->OnClicked.Broadcast(); Probe->Phase=6; Probe->NextAction=FPlatformTime::Seconds()+.25; return false;
         }
@@ -132,7 +148,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         {
             if (Survivor->InventoryComponent->BankBalanceCents!=Probe->Value || FPlatformTime::Seconds()<Probe->NextAction) return false;
             TestEqual(TEXT("Actual bank UI deposit removes the physical note"),Units,1);
-            UButton* Withdraw=FindButton(TEXT("BankWithdraw_")+Probe->NoteId.ToString());
+            UButton* Withdraw=FindButton(TEXT("BankWithdraw_")+Probe->NoteId.ToString()+TEXT("_action"));
             if (!Withdraw) return false;
             Withdraw->OnClicked.Broadcast(); Probe->Phase=7; return false;
         }
