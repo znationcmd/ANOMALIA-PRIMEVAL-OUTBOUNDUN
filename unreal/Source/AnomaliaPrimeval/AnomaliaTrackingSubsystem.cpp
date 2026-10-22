@@ -20,7 +20,7 @@ double UAnomaliaTrackingSubsystem::Lifespan(const FAnomaliaTrackClue& Clue, floa
 }
 void UAnomaliaTrackingSubsystem::AddClue(EAnomaliaTrackKind Kind, const FString& ActorId, FVector Location, FRotator Direction, FName Terrain, float Severity)
 {
- if (ActorId.IsEmpty() || !Location.IsFinite()) return;
+ if (ActorId.IsEmpty() || Location.ContainsNaN() || Direction.ContainsNaN() || !FMath::IsFinite(Severity)) return;
  FAnomaliaTrackClue Clue;
  Clue.Kind = Kind; Clue.ActorId = ActorId; Clue.Location = Location; Clue.Direction = Direction;
  Clue.Terrain = Terrain; Clue.Severity = FMath::Clamp(Severity, 0.f, 1.f);
