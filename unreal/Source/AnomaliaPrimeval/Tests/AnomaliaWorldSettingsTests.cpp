@@ -3,6 +3,7 @@
 #include "Misc/Guid.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
+#include <limits>
 #include "../AnomaliaWorldSettingsLibrary.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(
@@ -16,7 +17,7 @@ bool FAnomaliaWorldSettingsTest::RunTest(const FString& Parameters)
     Input.Mode = TEXT("unknown");
     Input.Difficulty = -9.f;
     Input.Xp = 1000.f;
-    Input.Harvest = TNumericLimits<float>::QuietNaN();
+    Input.Harvest = std::numeric_limits<float>::quiet_NaN();
     Input.WaterDrain = -1.f;
     Input.Taming = 200.f;
     Input.DayLength = 0.f;
