@@ -1,14 +1,22 @@
 # PR #6 — intervention et état réel
 
+**Validation du 22 octobre :** compilation Editor et Game réussie sur Unreal 5.8.3,
+neuf tests natifs réussis, puis essai PIE solo du ramassage, de l’inventaire, de la
+sauvegarde et des boutons de dépôt/retrait réussi. Preuve : étapes 3 et 4 du
+[run 39738850387](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39738850387),
+source `e7cfd93ac671a7b973bf1c853eefb719305026f2`. L’import des voitures est traité
+séparément. Ces résultats ne valident pas le multijoueur, les modèles définitifs,
+la carte entière ou un exécutable Windows autonome.
+
 Corrections effectuées : rejet des réglages temporels non finis, bornage avant conversion des champs numériques serveur, fichiers temporaires de sauvegarde distincts, rejet des chemins de mapping avec lecteur Windows, protocole, encodage ou caractères de contrôle. Les données et clés de configuration existantes sont conservées. Un test natif vérifie le rejet de NaN/infini sans écraser la configuration valide.
 
 Validation locale : 72 tests JavaScript réussis et 11 contrôles de contrats Unreal réussis. Il s’agit des tests du prototype JavaScript pour le gameplay correspondant, pas d’une validation des dinosaures ou du loot dans Unreal. La compilation et le nouveau test natif sont lancés séparément sur l’hôte Unreal via la branche d’intégration.
 
 | Domaine | Présent dans les fichiers | Implémenté dans Unreal | Interface Unreal | Testé fonctionnel dans Unreal |
 | --- | --- | --- | --- | --- |
-| Configurations et isolation des sauvegardes | Oui | Base existante, correction P0 ajoutée | Pas de panneau complet | Nouveau test P0 en attente |
-| Loot, 232 entrées existantes + 28 objets RP et cinq tiers | Oui | Raccordement natif ajouté : apparitions, ramassage, inventaire, journal de sauvegarde | Interaction et inventaire existants ; visuels provisoires | Compilation et trois tests natifs en attente |
-| Banque RP | Billets et configuration ajoutés | Dépôts, retraits, transferts, journal et séquences anti-rejeu ajoutés | Boutons dans l’inventaire près du terminal | Compilation, tests natifs et PIE en attente |
+| Configurations et isolation des sauvegardes | Oui | Base existante, correction P0 ajoutée | Pas de panneau complet | Test natif P0 réussi |
+| Loot, 232 entrées existantes + 28 objets RP et cinq tiers | Oui | Raccordement natif ajouté : apparitions, ramassage, inventaire, journal de sauvegarde | Interaction et inventaire existants ; visuels provisoires | Tests natifs et PIE solo réussis |
+| Banque RP | Billets et configuration ajoutés | Dépôts, retraits, transferts, journal et séquences anti-rejeu ajoutés | Boutons dans l’inventaire près du terminal | Tests natifs et PIE solo réussis |
 | Radiation de 900 secondes | Oui | Non | Non | Non |
 | 142 espèces, 104 variantes, 13 références Moro | Oui | Modèles/IA/apprivoisement non raccordés | Non | Non |
 | 57 références de croquettes | Oui | Recettes complètes et crafting non raccordés | Non | Non |
@@ -19,7 +27,7 @@ Validation locale : 72 tests JavaScript réussis et 11 contrôles de contrats Un
 La branche reste en brouillon. Aucun jeu Windows autonome, serveur officiel déployé ou test multi-utilisateurs complet n’est annoncé. Les anciennes fonctionnalités, branches et sauvegardes sont conservées.
 
 
-## Native loot connection — implementation added, engine verification pending
+## Native loot connection — native and solo PIE tests passed
 
 The branch now connects `loot_items_catalog.json` (232 entries) and `loot_tiers.json`
 to `UAnomaliaLootSubsystem`, the existing native inventory, the existing Interact
@@ -69,8 +77,8 @@ is claimed for those defaults.
 every unique catalogue ID entering and leaving inventory, range/capacity rejection, replay rejection, saving,
 restart cooldown, isolated server scopes and interrupted-journal replay in actual
 Unreal test worlds. The dedicated trusted-branch workflow requires all three tests
-and both Editor/Game compilations. They are **not passed until its fresh report
-confirms success**. Multiplayer clients, full-map loot distribution, dedicated server
+and both Editor/Game compilations. All nine native tests and both compilations passed
+in run 39738850387; the solo PIE interaction/UI test also passed after the button-name fix. Multiplayer clients, full-map loot distribution, dedicated server
 builds and packaged Windows gameplay remain unverified. Other catalogue systems
 (radiation, creatures, recipes, administration and Workshop) retain their previous
 incomplete status and are not completed by this loot lot.
@@ -80,10 +88,10 @@ A separate `Anomalia.Loot.PIE` test and `run-loot-playtest.py` now create/open t
 actual review map, inject E/I into the player controller, check collection and saved
 inventory, and open/close the native UMG inventory. It requires a unique process-only
 automation save scope; it refuses to interact if the GameMode uses any other scope.
-This test is pending execution, and does not establish rendered appearance or multiplayer.
+This test passed in run 39738850387 and does not establish rendered appearance or multiplayer.
 
 
-## RP banking connection — implementation added, native execution pending
+## RP banking connection — native and solo PIE tests passed
 
 The original 232 catalogue entries remain unchanged. An additive `rp_items_catalog.json`
 adds 28 original game objects: seven euro-denominated RP tokens (5/10/20/50/100/200/500),
@@ -126,7 +134,7 @@ Native `Anomalia.Native.RPBankTransactions` covers deposits, withdrawals, transf
 replay/negative/unknown-recipient/overdraft/range/capacity rejection, restart and an
 interrupted deposit replayed twice without duplication. The real PIE input/UI test
 also picks up a note and clicks native deposit and withdrawal buttons. Fresh engine
-reports are required before marking any of these tests successful.
+reports from run 39738850387 confirm the native transaction test and the solo PIE test passed.
 
 The additional mission remains in scope: trading/NPC shops, containers/safes/registers,
 production banks, configurable fictional substance effects and medical treatment,
@@ -145,8 +153,10 @@ Validation locale du lot RP : **81 contrôles de sources/staging et 11 contrôle
 Le premier build natif du lot loot/banque a échoué à la compilation. Les fonctions
 utilitaires de deux fichiers se heurtaient dans le build Unity d’Unreal ; elles ont
 maintenant des noms distincts. Les clés JSON `UE::FSharedString` d’UE 5.8 sont
-converties explicitement avant validation. Ces corrections sont publiées et le
-nouveau build attend l’hôte Windows ; aucun test en jeu de ce lot n’est encore validé.
+converties explicitement avant validation. Ces corrections sont publiées et la
+compilation, les neuf tests natifs et l’essai PIE solo sont maintenant réussis. Le
+premier essai PIE se bloquait sur l’identité des boutons reconstruits ; des noms
+stables corrigent ce problème, vérifié par les clics réels de dépôt et retrait.
 
 La branche d’intégration du 21 octobre est réconciliée dans cette branche sans
 suppression : extension militaire, préparateur Python Windows, convertisseur de
