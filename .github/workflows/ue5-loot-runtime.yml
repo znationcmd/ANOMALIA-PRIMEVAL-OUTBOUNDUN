@@ -23,7 +23,9 @@ jobs:
   native-loot:
     if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/feature/loot-tiers-radiation-config-20261021'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 45
+    # Two car phases plus repair/reopen can each use their existing 15 minute cap.
+    # Leave time for builds and evidence upload without interrupting the GPU check.
+    timeout-minutes: 75
     permissions:
       contents: read
     steps:
