@@ -1,3 +1,4 @@
+import {mountSurvivalIndicators} from './status-indicators.js';
 import worldMetrics from "./world-metrics.json";
 import {createConstructionUI} from "./construction-ui.js";
 import {createConstructionWorld} from "./construction-world.js";
@@ -517,7 +518,9 @@ function mapScreen(){
  });
  openPanel();
 }
+const statusIndicators=mountSurvivalIndicators(document.querySelector('#hud')||document.body);
 function updateHud(dt){
+ statusIndicators.update(state);
  hudTime+=dt;if(hudTime<.1)return;hudTime=0;
  const meters=[["health",state.health],["stamina",state.stamina],["hunger",state.hunger],["thirst",state.thirst]];
  for(const [id,value]of meters){const bar=$(id+"Bar"),label=$(id+"Value");if(bar)bar.style.width=value+"%";if(label)label.textContent=Math.round(value)}
