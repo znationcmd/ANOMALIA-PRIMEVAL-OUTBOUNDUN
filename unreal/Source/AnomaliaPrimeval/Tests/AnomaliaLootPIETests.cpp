@@ -194,6 +194,44 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         {
             if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
             TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
+            // Same real UMG panel, isolated storage fixture; never mutate the player's saved loot.
+            AActor* PagingOwner=World->SpawnActor<AActor>();
+            auto* Paging=NewObject<UAnomaliaInventoryComponent>(PagingOwner);
+            PagingOwner->AddInstanceComponent(Paging);Paging->RegisterComponent();Paging->Compartments.Reset();
+            TestTrue(TEXT("Prepare real paged cargo"),Paging->ConfigureCompartment(TEXT("cargo"),20,25));
+            if(TestTrue(TEXT("Prepare rectangular rotation item"),Paging->TryAddItem(TEXT("wood"),1)))
+            {
+                const int32 WoodId=Paging->Stacks[0].StackId;
+                Survivor->InventoryWidget->InitializeForInventory(Paging);
+                auto* Rotate=FindButton(FString::Printf(TEXT("RotateStack_%d_action"),WoodId));
+                if(TestNotNull(TEXT("Real UMG rotation button exists"),Rotate))Rotate->OnClicked.Broadcast();
+                TestTrue(TEXT("Actual rotation button changes authoritative rectangle"),Paging->Stacks[0].bRotated);
+                TestEqual(TEXT("Rotation preserves occupied area"),Paging->GetUsedCells(TEXT("cargo")),3);
+                TestTrue(TEXT("Seed stacks for real pagination"),Paging->TryAddItem(TEXT("ammo"),40));
+                while(Paging->Stacks.Num()<41)
+                {
+                    const auto* Source=Paging->Stacks.FindByPredicate([](const auto& S){return S.ItemId==TEXT("ammo") && S.Count>1;});
+                    int32 NewId=0;
+                    if(!Source || !Paging->TrySplitStack(Source->StackId,1,NewId)){AddError(TEXT("Cannot prepare real pagination fixture"));break;}
+                }
+                TestEqual(TEXT("41 real stacks form two pages"),Survivor->InventoryWidget->GetPageCount(),2);
+                auto CountRows=[Survivor]()
+                {
+                    int32 Rows=0;
+                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* W){if(W && W->GetName().StartsWith(TEXT("InventoryStack_")))++Rows;});
+                    return Rows;
+                };
+                TestEqual(TEXT("UMG constructs at most 32 stored rows on page one"),CountRows(),32);
+                if(auto* Next=FindButton(TEXT("InventoryNextPage")))Next->OnClicked.Broadcast();
+                TestEqual(TEXT("Actual Next button selects second page"),Survivor->InventoryWidget->GetCurrentPage(),1);
+                TestEqual(TEXT("Last page displays remaining real stacks"),CountRows(),9);
+                if(auto* Previous=FindButton(TEXT("InventoryPreviousPage")))Previous->OnClicked.Broadcast();
+                TestEqual(TEXT("Actual Previous button returns without moving items"),Survivor->InventoryWidget->GetCurrentPage(),0);
+                int32 PagingUnits=0;for(const auto& S:Paging->Stacks)PagingUnits+=S.Count;
+                TestEqual(TEXT("Page navigation never mutates item quantities"),PagingUnits,41);
+            }
+            Survivor->InventoryWidget->InitializeForInventory(Survivor->InventoryComponent);
+            PagingOwner->Destroy();
             auto* Close=FindButton(TEXT("InventoryClose"));
             if (!TestNotNull(TEXT("Touch/controller inventory close button exists"),Close)) return true;
             Close->OnClicked.Broadcast();

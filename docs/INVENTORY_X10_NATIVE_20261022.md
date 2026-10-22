@@ -38,6 +38,15 @@ Equipment slots are not yet fully connected to worn storage and visible meshes.
 Drag/drop, world-container permissions, multiplayer transfer journaling and the
 complete DayZ-style UMG layout remain outstanding.
 
+The existing UMG panel now pages stored contents at 32 rows per page, keeping
+the held item visible independently. Previous/Next buttons, PageUp/PageDown and
+controller shoulder buttons navigate pages without changing inventory contents.
+Rectangular objects show their occupied dimensions and a 90-degree rotation
+button using the existing authoritative move request, so collisions still reject
+invalid placements. The real PIE interaction test exercises rotation and both
+page buttons against an isolated 41-stack inventory, then reconnects the original
+player inventory and checks the existing close controls.
+
 The current persistence and replication model supports **512 stacks per inventory**.
 Cell capacity does not remove that separate bound. Add and split now enforce the
 same bound as reload, preventing creation of contents that cannot be restored.

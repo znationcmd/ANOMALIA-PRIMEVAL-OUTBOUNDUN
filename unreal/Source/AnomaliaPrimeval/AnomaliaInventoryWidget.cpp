@@ -25,6 +25,7 @@ void UAnomaliaInventoryWidget::InitializeForInventory(UAnomaliaInventoryComponen
 {
     if (Inventory) Inventory->OnInventoryUpdated.RemoveDynamic(this, &UAnomaliaInventoryWidget::RefreshInventory);
     Inventory = InInventory;
+    CurrentPage=0;
     if (Inventory) Inventory->OnInventoryUpdated.AddDynamic(this, &UAnomaliaInventoryWidget::RefreshInventory);
     RefreshInventory();
 }
@@ -102,6 +103,21 @@ void UAnomaliaInventoryWidget::BuildLayout()
     TransferButton->OnClicked.AddDynamic(this, &UAnomaliaInventoryWidget::TransferMoney);
     Transfer->AddChildToHorizontalBox(TransferButton);
 
+    auto* Pages=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(),TEXT("InventoryPages"));
+    Content->AddChildToVerticalBox(Pages)->SetPadding(FMargin(14.f,5.f));
+    PreviousPageButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("InventoryPreviousPage"));
+    auto* PreviousLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    PreviousLabel->SetText(FText::FromString(TEXT("Page précédente")));PreviousPageButton->SetContent(PreviousLabel);
+    PreviousPageButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::PreviousPage);
+    Pages->AddChildToHorizontalBox(PreviousPageButton)->SetPadding(FMargin(5.f));
+    PageStatus=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("InventoryPageStatus"));
+    Pages->AddChildToHorizontalBox(PageStatus)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    NextPageButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("InventoryNextPage"));
+    auto* NextLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    NextLabel->SetText(FText::FromString(TEXT("Page suivante")));NextPageButton->SetContent(NextLabel);
+    NextPageButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::NextPage);
+    Pages->AddChildToHorizontalBox(NextPageButton)->SetPadding(FMargin(5.f));
+
     UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("InventoryScroll"));
     Content->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InventoryItems"));
@@ -143,11 +159,19 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         }
     }
     const float Weight = Inventory->GetCurrentWeightKg();
+    int32 StoredStacks=0;
+    for(const auto& Stack:Inventory->Stacks)if(Stack.ContainerId!=TEXT("hands"))++StoredStacks;
+    PageCount=FMath::Max(1,FMath::DivideAndRoundUp(StoredStacks,ItemsPerPage));
+    CurrentPage=FMath::Clamp(CurrentPage,0,PageCount-1);
+    if(PageStatus)PageStatus->SetText(FText::FromString(FString::Printf(TEXT("Page %d / %d · %d piles · LB/RB"),CurrentPage+1,PageCount,StoredStacks)));
+    if(PreviousPageButton)PreviousPageButton->SetIsEnabled(CurrentPage>0);
+    if(NextPageButton)NextPageButton->SetIsEnabled(CurrentPage+1<PageCount);
     UTextBlock* WeightText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
     WeightText->SetText(FText::FromString(FString::Printf(TEXT("POIDS  %.1f / %.1f KG"), Weight, Inventory->WeightCapacityKg)));
     WeightText->SetColorAndOpacity(FSlateColor(Weight > Inventory->WeightCapacityKg ? FLinearColor(1.f, .3f, .24f) : FLinearColor(.2f, .9f, .75f)));
     ItemList->AddChildToVerticalBox(WeightText)->SetPadding(FMargin(14.f, 10.f));
 
+    int32 StoredIndex=0;
     for (const FAnomaliaInventoryCompartment& Box : Inventory->Compartments)
     {
         UTextBlock* BoxTitle = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -159,6 +183,8 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)
         {
             if (Stack.ContainerId != Box.Id) continue;
+            const int32 Index=StoredIndex++;
+            if(Index<CurrentPage*ItemsPerPage || Index>=(CurrentPage+1)*ItemsPerPage)continue;
             AddStackRow(Stack);
         }
     }
@@ -172,10 +198,12 @@ void UAnomaliaInventoryWidget::RefreshInventory()
 
 void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
 {
-    UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(),
+        MakeUniqueObjectName(WidgetTree,UHorizontalBox::StaticClass(),FName(*FString::Printf(TEXT("InventoryStack_%d_row"),Stack.StackId))));
     ItemList->AddChildToVerticalBox(Row)->SetPadding(FMargin(12.f, 3.f));
     UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    Label->SetText(FText::FromString(FString::Printf(TEXT("%s  ×%d   [%s · %d,%d]"), *Inventory->GetItemDisplayName(Stack.ItemId), Stack.Count, *Stack.ContainerId.ToString(), Stack.X, Stack.Y)));
+    const FIntPoint Size=Inventory->GetItemSize(Stack.ItemId,Stack.bRotated);
+    Label->SetText(FText::FromString(FString::Printf(TEXT("%s  ×%d · %d×%d cases [%s · %d,%d]"), *Inventory->GetItemDisplayName(Stack.ItemId), Stack.Count,Size.X,Size.Y, *Stack.ContainerId.ToString(), Stack.X, Stack.Y)));
     Label->SetColorAndOpacity(FSlateColor(FLinearColor(.91f, .95f, .96f)));
     Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
@@ -206,6 +234,17 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     HandsButton->SetContent(HandsLabel);
     Row->AddChildToHorizontalBox(HandsButton)->SetPadding(FMargin(5.f));
     BindAction(HandsButton, bHeld ? EAnomaliaInventoryAction::Stow : EAnomaliaInventoryAction::MoveToHands, Stack.StackId);
+
+    if(!bHeld && Size.X!=Size.Y)
+    {
+        auto* RotateButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
+            MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("RotateStack_%d_action"),Stack.StackId))));
+        auto* RotateLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        RotateLabel->SetText(FText::FromString(TEXT("Tourner 90°")));RotateButton->SetContent(RotateLabel);
+        RotateButton->SetIsEnabled(!Inventory->IsPersistenceLocked());
+        Row->AddChildToHorizontalBox(RotateButton)->SetPadding(FMargin(5.f));
+        BindAction(RotateButton,EAnomaliaInventoryAction::Rotate,Stack.StackId);
+    }
 
     if (Stack.Count > 1)
     {
@@ -258,6 +297,13 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
             Inventory->RequestStowStack(StackId);
             FocusFirstAction();
             break;
+        case EAnomaliaInventoryAction::Rotate:
+        {
+            const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+            if(Stack)Inventory->RequestMoveStack(StackId,Stack->ContainerId,Stack->X,Stack->Y,!Stack->bRotated);
+            FocusFirstAction();
+            break;
+        }
         case EAnomaliaInventoryAction::SplitHalf:
             Inventory->RequestSplitStack(StackId, Count);
             break;
@@ -302,6 +348,21 @@ void UAnomaliaInventoryWidget::FocusFirstAction()
     if (CloseButton && GetOwningPlayer()) CloseButton->SetUserFocus(GetOwningPlayer());
 }
 
+void UAnomaliaInventoryWidget::PreviousPage()
+{
+    if(CurrentPage<=0)return;
+    --CurrentPage;RefreshInventory();
+    if(PreviousPageButton && PreviousPageButton->GetIsEnabled() && GetOwningPlayer())PreviousPageButton->SetUserFocus(GetOwningPlayer());
+    else FocusFirstAction();
+}
+void UAnomaliaInventoryWidget::NextPage()
+{
+    if(CurrentPage+1>=PageCount)return;
+    ++CurrentPage;RefreshInventory();
+    if(NextPageButton && NextPageButton->GetIsEnabled() && GetOwningPlayer())NextPageButton->SetUserFocus(GetOwningPlayer());
+    else FocusFirstAction();
+}
+
 void UAnomaliaInventoryWidget::CloseInventory()
 {
     if (auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn()))
@@ -310,6 +371,10 @@ void UAnomaliaInventoryWidget::CloseInventory()
 
 FReply UAnomaliaInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
+    if(Event.GetKey()==EKeys::PageUp || Event.GetKey()==EKeys::Gamepad_LeftShoulder)
+    { PreviousPage();return FReply::Handled(); }
+    if(Event.GetKey()==EKeys::PageDown || Event.GetKey()==EKeys::Gamepad_RightShoulder)
+    { NextPage();return FReply::Handled(); }
     if (Event.GetKey() == EKeys::Gamepad_FaceButton_Right || Event.GetKey() == EKeys::Escape)
     {
         CloseInventory();

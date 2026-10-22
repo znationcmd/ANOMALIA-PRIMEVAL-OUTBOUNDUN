@@ -22,7 +22,8 @@ enum class EAnomaliaInventoryAction : uint8
     Use,
     DepositNote,
     WithdrawNote,
-    Stow
+    Stow,
+    Rotate
 };
 
 UCLASS()
@@ -56,6 +57,9 @@ public:
     virtual void NativeDestruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
     void FocusFirstAction();
+    static constexpr int32 ItemsPerPage=32;
+    int32 GetCurrentPage() const { return CurrentPage; }
+    int32 GetPageCount() const { return PageCount; }
 
 private:
     friend class UAnomaliaInventoryActionRelay;
@@ -85,7 +89,14 @@ private:
     UPROPERTY() TObjectPtr<UEditableTextBox> BankAmount;
     UPROPERTY() TObjectPtr<UButton> TransferButton;
     UPROPERTY() TObjectPtr<UButton> CloseButton;
+    UPROPERTY() TObjectPtr<UButton> PreviousPageButton;
+    UPROPERTY() TObjectPtr<UButton> NextPageButton;
+    UPROPERTY() TObjectPtr<UTextBlock> PageStatus;
+    int32 CurrentPage=0;
+    int32 PageCount=1;
     UFUNCTION() void CloseInventory();
     UFUNCTION() void TransferMoney();
+    UFUNCTION() void PreviousPage();
+    UFUNCTION() void NextPage();
     void BuildLayout();
 };
