@@ -16,6 +16,8 @@ public:
 private:
     int32 Phase=0,Shot=0;
     double Started=0,Next=0;
+    double PreviousFrame=0,MeasuredSeconds=0,WorstFrame=0;
+    int32 MeasuredFrames=0;
     FVector Before=FVector::ZeroVector,CarStart=FVector::ZeroVector;
     TWeakObjectPtr<AAnomaliaSurvivor> Survivor;
     TWeakObjectPtr<AAnomaliaVehiclePawn> Car;

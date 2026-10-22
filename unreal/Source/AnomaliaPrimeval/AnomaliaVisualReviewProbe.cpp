@@ -30,6 +30,11 @@ void AAnomaliaVisualReviewProbe::Finish(const FString& Error)
     auto Array=[](const TArray<FString>& Values){TArray<TSharedPtr<FJsonValue>> Result;for(const auto& V:Values)Result.Add(MakeShared<FJsonValueString>(V));return Result;};
     Report->SetArrayField(TEXT("screenshots"),Array(Screenshots));Report->SetArrayField(TEXT("checks"),Array(Checks));Report->SetArrayField(TEXT("loadedMeshPaths"),Array(MeshPaths));
     Report->SetBoolField(TEXT("finalPhotorealismApproved"),false);
+    Report->SetNumberField(TEXT("measuredCameraFrames"),MeasuredFrames);
+    Report->SetNumberField(TEXT("averageFrameMs"),MeasuredFrames>0?MeasuredSeconds*1000/MeasuredFrames:0);
+    Report->SetNumberField(TEXT("worstFrameMs"),WorstFrame*1000);
+    Report->SetNumberField(TEXT("averageFps"),MeasuredSeconds>0?MeasuredFrames/MeasuredSeconds:0);
+    Report->SetStringField(TEXT("performanceScope"),TEXT("Observed wall-clock frames during the three settled review camera views; not GPU timings or a performance certification"));
     FString Raw;FJsonSerializer::Serialize(Report,TJsonWriterFactory<>::Create(&Raw));
     IFileManager::Get().MakeDirectory(*FPaths::GetPath(File),true);FFileHelper::SaveStringToFile(Raw,*File);
     SetActorTickEnabled(false);FGenericPlatformMisc::RequestExit(false);
@@ -39,6 +44,9 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
     Super::Tick(Dt);
 #if !UE_BUILD_SHIPPING
     const double Now=FPlatformTime::Seconds();if(Started==0){Started=Now;Next=Now+8;}
+    if(Phase==5 && PreviousFrame>0)
+    { const double Frame=Now-PreviousFrame;MeasuredSeconds+=Frame;WorstFrame=FMath::Max(WorstFrame,Frame);++MeasuredFrames; }
+    PreviousFrame=Now;
     if(Now-Started>150){Finish(FString::Printf(TEXT("Visual review timed out phase %d"),Phase));return;}
     auto* PC=GetWorld()->GetFirstPlayerController();if(!PC||Now<Next)return;
     auto Input=[PC](FKey Key,EInputEvent Event){PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed?1.:0.,false,FInputDeviceId::CreateFromInternalId(0)));};
