@@ -99,6 +99,8 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle")
     bool HasDriver() const;
+    AAnomaliaSurvivor* GetStoredDriverSurvivor() const;
+    void InputPause();
 
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Vehicle")
     void OnVehicleConfigured(const FAnomaliaVehicleDefinition& Definition);

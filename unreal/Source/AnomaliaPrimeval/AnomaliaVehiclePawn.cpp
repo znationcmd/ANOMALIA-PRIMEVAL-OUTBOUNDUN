@@ -1,5 +1,7 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaSessionWidget.h"
+#include "GameFramework/PlayerController.h"
 #include "Vehicles/AnomaliaTransportMovement.h"
 #include "Vehicles/AnomaliaRailCarriage.h"
 #include "Vehicles/AnomaliaTransportEnvironment.h"
@@ -45,6 +47,7 @@ AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
     InteriorCamera->bUsePawnControlRotation = true;
     InteriorCamera->SetAutoActivate(false);
     AutoPossessPlayer = EAutoReceiveInput::Disabled;
+    AutoPossessAI = EAutoPossessAI::Disabled; // Parked level vehicles must remain available to the player.
 }
 
 void AAnomaliaVehiclePawn::BeginPlay()
@@ -226,7 +229,8 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     }
     else
     {
-        if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
+        if(BrakeAxis>0.f) Movement->Velocity=FMath::VInterpConstantTo(Movement->Velocity,FVector::ZeroVector,DeltaSeconds,Movement->Deceleration*4.f);
+        else if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
         if(bPowered && FMath::Abs(SteeringAxis)>KINDA_SMALL_NUMBER)
             AddActorWorldRotation(FRotator(0,SteeringAxis*65.f*DeltaSeconds,0));
     }
@@ -303,6 +307,7 @@ void AAnomaliaVehiclePawn::InputCamera()
 
 void AAnomaliaVehiclePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+    PlayerInputComponent->BindAction(TEXT("Pause"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputPause);
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     PlayerInputComponent->BindAxis(TEXT("MoveForward"),this,&AAnomaliaVehiclePawn::InputForward);
     PlayerInputComponent->BindAxis(TEXT("MoveRight"),this,&AAnomaliaVehiclePawn::InputSteering);
@@ -368,3 +373,6 @@ void AAnomaliaVehiclePawn::UpdateMetroCoaches()
         Coach->SetActorTransform(Track->GetTransformAtDistanceAlongSpline(Wrapped,ESplineCoordinateSpace::World,false),false,nullptr,ETeleportType::TeleportPhysics);
     }
 }
+
+AAnomaliaSurvivor* AAnomaliaVehiclePawn::GetStoredDriverSurvivor() const { return ParkedSurvivor.Get(); }
+void AAnomaliaVehiclePawn::InputPause() { UAnomaliaSessionWidget::Open(Cast<APlayerController>(Controller)); }

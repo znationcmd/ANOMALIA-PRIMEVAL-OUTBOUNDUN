@@ -7,6 +7,10 @@
 #include "AnomaliaLootPickup.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaGameMode.h"
+#include "AnomaliaSessionWidget.h"
+#include "AnomaliaConfigLibrary.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
@@ -55,12 +59,24 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         Survivor=Cast<AAnomaliaSurvivor>(PC->GetPawn());
         auto* S=Survivor.Get(); auto* Loot=GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
         if(!S || !S->StatusWidget || !Loot || !Loot->IsReady()) return;
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaPlayableResume")))
+        {
+            if(S->InventoryComponent->Stacks.IsEmpty() || FVector::Dist2D(S->GetActorLocation(),FVector(0,-400,0))<300)
+            { Finish(TEXT("Saved inventory or map-scoped character position was not restored")); return; }
+            Checks.Add(TEXT("restarted_executable_restored_inventory_and_character_position")); Finish(); return;
+        }
         for(const FName Id:{FName(TEXT("health")),FName(TEXT("hunger")),FName(TEXT("thirst")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("stamina"))})
             if(S->StatusWidget->GetVitalText(Id).IsEmpty()) { Finish(TEXT("Missing native HUD field")); return; }
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
             { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }
         if(Vehicles.Num()!=3) { Finish(TEXT("Expected three cooked vehicles")); return; }
+        auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
+        Play->OnClicked.Broadcast();
+        if(Menu->IsInViewport() || GetWorld()->IsPaused()) { Finish(TEXT("Play button did not enter gameplay")); return; }
+        Checks.Add(TEXT("main_menu_play_button"));
         Checks.Add(TEXT("native_world_HUD_and_three_vehicle_meshes"));
         Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);
         Input(EKeys::W,IE_Pressed); Next=Now+1; Phase=1; return;
@@ -100,7 +116,11 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
     {
         Input(EKeys::I,IE_Released); if(Now<Next) return;
         if(!S->InventoryWidget || !S->InventoryWidget->IsInViewport()) { Finish(TEXT("Cooked inventory UI failed")); return; }
-        S->CloseInventory(); Checks.Add(TEXT("native_inventory_open_close")); Phase=5;
+        S->CloseInventory(); Checks.Add(TEXT("native_inventory_open_close"));
+        auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>(); FString Saved,Error;
+        if(!Mode || !Mode->SaveLocalGame() || !UAnomaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,TEXT("local-owner"),Saved,Error))
+        { Finish(TEXT("Explicit local profile save failed")); return; }
+        Checks.Add(TEXT("explicit_local_profile_save")); Phase=5;
     }
     if(Phase==5)
     {
@@ -117,7 +137,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
     if(Phase==6)
     {
         Input(EKeys::E,IE_Released); if(Now<Next) return;
-        auto* V=Vehicles[VehicleIndex].Get(); if(PC->GetPawn()!=V) { Finish(TEXT("Vehicle interaction possession failed")); return; }
+        auto* V=Vehicles[VehicleIndex].Get(); if(PC->GetPawn()!=V) { Finish(FString::Printf(TEXT("Vehicle possession failed: index=%d id=%s controller=%s occupied=%d distance=%.1f pawn=%s"),VehicleIndex,*V->VehicleId.ToString(),*GetNameSafe(V->GetController()),V->HasDriver(),FVector::Dist(S->GetActorLocation(),V->GetActorLocation()),*GetNameSafe(PC->GetPawn()))); return; }
         Before=V->GetActorLocation(); Input(EKeys::W,IE_Pressed); Input(EKeys::D,IE_Pressed); Next=Now+.7; Phase=7; return;
     }
     if(Phase==7)

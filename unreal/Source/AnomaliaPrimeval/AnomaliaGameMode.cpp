@@ -1,6 +1,7 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaPlayableProbe.h"
+#include "AnomaliaSessionWidget.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaInventoryComponent.h"
@@ -195,25 +196,44 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
         if (bValidVitals)
             Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
     }
+    const TSharedPtr<FJsonObject>* Pose=nullptr;
+    if(Root->TryGetObjectField(TEXT("pose"),Pose) && Pose && Pose->IsValid())
+    {
+        FString Map; double X=0,Y=0,Z=0,Yaw=0;
+        if((*Pose)->TryGetStringField(TEXT("map"),Map) && Map==GetWorld()->GetMapName() &&
+            (*Pose)->TryGetNumberField(TEXT("x"),X) && (*Pose)->TryGetNumberField(TEXT("y"),Y) &&
+            (*Pose)->TryGetNumberField(TEXT("z"),Z) && (*Pose)->TryGetNumberField(TEXT("yaw"),Yaw) &&
+            FMath::IsFinite(X) && FMath::IsFinite(Y) && FMath::IsFinite(Z) && FMath::IsFinite(Yaw) &&
+            FMath::Abs(X)<=2400000 && FMath::Abs(Y)<=2400000 && Z>=-2400000 && Z<=2400000)
+        {
+            const FVector Position(X,Y,Z); FHitResult Floor; FCollisionQueryParams Query; Query.AddIgnoredActor(Survivor);
+            if(GetWorld()->LineTraceSingleByChannel(Floor,Position+FVector(0,0,50),Position-FVector(0,0,500),ECC_Visibility,Query))
+            {
+                Survivor->TeleportTo(Position,FRotator(0,Yaw,0),false,false);
+                PlayerController->SetControlRotation(FRotator(0,Yaw,0));
+            }
+        }
+    }
 }
 
-void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
+bool AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
 {
-    if (!HasAuthority() || !Controller) return;
+    if (!HasAuthority() || !Controller) return false;
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(Controller->GetPawn());
+    if(!Survivor) if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(Controller->GetPawn())) Survivor=Vehicle->GetStoredDriverSurvivor();
     const FString PlayerId = GetPersistentPlayerId(Controller);
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
     const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
     if (PendingProfileLoads.Contains(PlayerId) || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
-        (Economy && Economy->HasPendingPlayer(PlayerId))) return;
-    if (!Survivor || PlayerId.IsEmpty()) return;
+        (Economy && Economy->HasPendingPlayer(PlayerId))) return false;
+    if (!Survivor || PlayerId.IsEmpty()) return false;
 
     FString Error;
     if (Survivor->InventoryComponent &&
         !Survivor->InventoryComponent->SaveInventoryToPlayerProfile(ServerId, PlayerId, Error))
     {
         UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: inventory save rejected: %s"), *ServerId, *Error);
-        return;
+        return false;
     }
 
     FString Raw;
@@ -224,7 +244,7 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
         if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid())
         {
             UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: invalid player profile left untouched"), *ServerId);
-            return;
+            return false;
         }
     }
     else if (Error == TEXT("Profile not found"))
@@ -234,7 +254,7 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     else
     {
         UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: player profile save aborted: %s"), *ServerId, *Error);
-        return;
+        return false;
     }
 
     TSharedPtr<FJsonObject> Survival = MakeShared<FJsonObject>();
@@ -253,12 +273,32 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
+    FVector Position=Survivor->GetActorLocation();
+    if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(Controller->GetPawn()))
+        Position=Vehicle->GetActorLocation()+Vehicle->GetActorRightVector()*350.f+FVector(0,0,120.f);
+    auto Pose=MakeShared<FJsonObject>(); Pose->SetStringField(TEXT("map"),GetWorld()->GetMapName());
+    Pose->SetNumberField(TEXT("x"),Position.X); Pose->SetNumberField(TEXT("y"),Position.Y); Pose->SetNumberField(TEXT("z"),Position.Z);
+    Pose->SetNumberField(TEXT("yaw"),Controller->GetControlRotation().Yaw); Root->SetObjectField(TEXT("pose"),Pose);
 
     FString Serialized;
     const TSharedRef<TJsonWriter<>> Writer = TJsonWriterFactory<>::Create(&Serialized);
     FJsonSerializer::Serialize(Root.ToSharedRef(), Writer);
     if (!UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, Error))
+    {
         UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: profile save failed: %s"), *ServerId, *Error);
+        return false;
+    }
+    return true;
+}
+
+bool AAnomaliaGameMode::SaveLocalGame()
+{
+    if(!HasAuthority() || GetNetMode()!=NM_Standalone) return false;
+    auto* PC=GetWorld()->GetFirstPlayerController();
+    auto* S=PC?Cast<AAnomaliaSurvivor>(PC->GetPawn()):nullptr;
+    if(!S && PC) if(auto* V=Cast<AAnomaliaVehiclePawn>(PC->GetPawn())) S=V->GetStoredDriverSurvivor();
+    if(!S || !S->InventoryComponent || S->InventoryComponent->IsPersistenceLocked()) return false;
+    return SavePersistentPlayer(PC);
 }
 
 void AAnomaliaGameMode::SaveAllPlayerProfiles()
@@ -306,6 +346,12 @@ void AAnomaliaGameMode::BeginPlay()
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaPlayableProbe>();
 #endif
+        if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && !ServerId.StartsWith(TEXT("playable-smoke-")))
+            GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
+            {
+                auto* PC=GetWorld()->GetFirstPlayerController();
+                if(PC) { PC->SetControlRotation(FRotator(0,90,0)); UAnomaliaSessionWidget::Open(PC,true); }
+            }));
         GetWorldTimerManager().SetTimer(ProfileRecoveryTimer, this, &AAnomaliaGameMode::RetryPendingProfileLoads, 1.f, true);
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }

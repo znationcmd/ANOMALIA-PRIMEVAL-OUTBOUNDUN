@@ -6,7 +6,7 @@
 
 TArray<FString> UAnomaliaPerformanceLibrary::GetGraphicsPresets()
 {
-    return {TEXT("PC_High"), TEXT("PS5_Target"), TEXT("XboxSeriesX_Target"), TEXT("Performance_Fallback"), TEXT("XboxSeriesS_Target"), TEXT("Android_Mobile_Target"), TEXT("IOS_Mobile_Target")};
+    return {TEXT("PC_High"), TEXT("PC_Medium"), TEXT("PS5_Target"), TEXT("XboxSeriesX_Target"), TEXT("Performance_Fallback"), TEXT("XboxSeriesS_Target"), TEXT("Android_Mobile_Target"), TEXT("IOS_Mobile_Target")};
 }
 
 bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)

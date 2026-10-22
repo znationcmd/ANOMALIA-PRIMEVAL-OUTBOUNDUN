@@ -93,6 +93,8 @@ private:
     void StartSprint();
     void StopSprint();
     void InputRest();
+    void InputPause();
+    void InputCamera();
 
     TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
 

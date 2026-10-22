@@ -27,12 +27,18 @@ try:
     scope='playable-smoke-'+uuid.uuid4().hex
     run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log')],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
-    required={'native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
+    required={'main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
     if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])):
         raise RuntimeError('Actual packaged gameplay smoke failed: '+native.get('error','missing checks'))
     image=probe.with_suffix('.png')
     if not image.is_file() or image.stat().st_size<10000:raise RuntimeError('Fresh packaged GPU screenshot missing')
-    report.update(state='PACKAGED_WINDOWS_SMOKE_PASSED',executable=str(exe),native=native,screenshot=str(image),archive=str(archive/'Windows'),limitations=['provisional_original_art','prototype_ground_vehicle_physics','no_blood_or_use_drop_UI_yet','no_complete_main_or_pause_menu_yet'])
+    resume=out/'packaged-resume.json'
+    run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-AnomaliaPlayableProbe='+str(resume),'-AnomaliaPlayableResume'],'packaged-resume',90)
+    resumed=json.loads(resume.read_text(encoding='utf-8-sig'))
+    if resumed.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or 'restarted_executable_restored_inventory_and_character_position' not in resumed.get('checks',[]):
+        raise RuntimeError('Actual executable restart did not restore character and inventory')
+    report['resume']=resumed
+    report.update(state='PACKAGED_WINDOWS_SMOKE_PASSED',executable=str(exe),native=native,screenshot=str(image),archive=str(archive/'Windows'),limitations=['provisional_original_art','prototype_ground_vehicle_physics','no_blood_or_use_drop_UI_yet'])
 except Exception as error: report['error']=str(error)
 finally:
     (out/'package-report.json').write_text(json.dumps(report,indent=2)+'\n')

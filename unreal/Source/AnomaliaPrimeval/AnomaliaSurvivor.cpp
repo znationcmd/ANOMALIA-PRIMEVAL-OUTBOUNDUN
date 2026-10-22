@@ -6,6 +6,7 @@
 #include "AnomaliaLootPickup.h"
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaStatusWidget.h"
+#include "AnomaliaSessionWidget.h"
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaHomesteadStation.h"
 #include "EngineUtils.h"
@@ -148,6 +149,8 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaSurvivor::InputInteract);
+    Input->BindAction(TEXT("Pause"), IE_Pressed, this, &AAnomaliaSurvivor::InputPause);
+    Input->BindAction(TEXT("VehicleCamera"), IE_Pressed, this, &AAnomaliaSurvivor::InputCamera);
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
     Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
     Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
@@ -330,4 +333,12 @@ void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
         }
     }
     if (Nearest) Nearest->EnterVehicle(GetController(), this);
+}
+
+void AAnomaliaSurvivor::InputPause() { UAnomaliaSessionWidget::Open(Cast<APlayerController>(Controller)); }
+void AAnomaliaSurvivor::InputCamera()
+{
+    const bool First=CameraBoom->TargetArmLength>1.f;
+    CameraBoom->TargetArmLength=First?0.f:350.f;
+    CameraBoom->SocketOffset=First?FVector(0,0,65):FVector::ZeroVector;
 }
