@@ -51,5 +51,12 @@ they are not evidence that Lumen, Nanite or hardware ray tracing are active. DX1
 quality/performance, indoor walkability, lighting, texture quality and frame rate
 need native visual assessment before promoting this map to the default game.
 
-The complete requested main menu, HUD, Editor, Tools and Mods overhaul remains
-separate work; no inactive button is added to imply those systems are completed.
+The status HUD now paints original vector health/blood/food/water/stamina/sleep/
+temperature icons in a compact bottom-right strip, using existing native values,
+white/yellow/red thresholds and restrained critical pulsing. Bleeding, pain and
+illness icons appear only when the existing effects state warrants them. The old
+blue frame and permanent percentage text are hidden; diagnostic getters and touch
+input remain compatible. Oxygen and consciousness are not fabricated: their
+underlying systems still need implementation/integration. The complete requested
+main menu, Editor, Tools and Mods overhaul remains separate work; no inactive
+button is added to imply those systems are completed.

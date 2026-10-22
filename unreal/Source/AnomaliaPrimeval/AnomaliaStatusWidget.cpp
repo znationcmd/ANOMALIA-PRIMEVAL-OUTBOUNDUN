@@ -14,6 +14,10 @@
 #include "Components/SizeBox.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerInput.h"
+#include "Rendering/DrawElements.h"
+#include "Styling/CoreStyle.h"
+#include "HAL/PlatformTime.h"
+#include <initializer_list>
 
 UAnomaliaTouchButton::UAnomaliaTouchButton(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
@@ -38,6 +42,7 @@ void UAnomaliaStatusWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     SetVisibility(ESlateVisibility::SelfHitTestInvisible);
+    ForceVolatile(true); // Smooth gauges and restrained critical pulses follow live survival values.
     BuildLayout();
 #if PLATFORM_ANDROID || PLATFORM_IOS
     SetTouchControlsEnabled(true);
@@ -55,7 +60,7 @@ void UAnomaliaStatusWidget::BuildLayout()
     Safe->SetContent(Root);
     WidgetTree->RootWidget = Safe;
     auto* Frame = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("StatusFrame"));
-    Frame->SetBrushColor(FLinearColor(.012f,.025f,.035f,.88f));
+    Frame->SetBrushColor(FLinearColor::Transparent);
     Frame->SetPadding(FMargin(12.f,8.f));
     Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
     auto* FrameSlot = Root->AddChildToCanvas(Frame);
@@ -72,6 +77,8 @@ void UAnomaliaStatusWidget::BuildLayout()
         auto LabelFont=Label->GetFont(); LabelFont.Size=16; Label->SetFont(LabelFont);
         Rows->AddChildToVerticalBox(Label)->SetPadding(FMargin(0.f,2.f));
         VitalLabels.Add(Id,Label);
+        // Keep diagnostic values available to automation; visible HUD uses original vector icons.
+        Label->SetVisibility(ESlateVisibility::Collapsed);
     }
     Conditions = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("ActiveConditions"));
     Conditions->SetAutoWrapText(true);
@@ -177,7 +184,7 @@ void UAnomaliaStatusWidget::RefreshFromSurvivor()
     if (Conditions)
     {
         Conditions->SetText(FText::FromString(FString::Join(Active,TEXT(" · "))));
-        Conditions->SetVisibility(Active.IsEmpty() ? ESlateVisibility::Collapsed : ESlateVisibility::HitTestInvisible);
+        Conditions->SetVisibility(ESlateVisibility::Collapsed);
     }
 }
 
@@ -197,4 +204,70 @@ FText UAnomaliaStatusWidget::GetVitalText(FName Id) const
 FText UAnomaliaStatusWidget::GetConditionText() const
 {
     return Conditions ? Conditions->GetText() : FText::GetEmpty();
+}
+
+int32 UAnomaliaStatusWidget::NativePaint(const FPaintArgs& Args,const FGeometry& Geometry,const FSlateRect& CullingRect,
+    FSlateWindowElementList& Elements,int32 LayerId,const FWidgetStyle& Style,bool ParentEnabled) const
+{
+    const int32 Base=Super::NativePaint(Args,Geometry,CullingRect,Elements,LayerId,Style,ParentEnabled);
+    const auto* S=Survivor.Get();if(!S)return Base;
+    struct FIcon{FName Id;float Fill;int32 Severity;};TArray<FIcon> Icons;
+    auto Vital=[&](FName Id,float Value){Icons.Add({Id,FMath::Clamp(Value/100.f,0.f,1.f),Value<25?2:Value<50?1:0});};
+    Vital(TEXT("health"),S->Health);
+    const auto* Effects=S->ItemEffectsComponent.Get();
+    if(Effects)Vital(TEXT("blood"),Effects->State.Blood);
+    Vital(TEXT("hunger"),S->Hunger);Vital(TEXT("thirst"),S->Thirst);
+    if(const auto* V=S->VitalsComponent.Get())
+    {
+        Vital(TEXT("stamina"),V->Stamina);
+        const float T=V->BodyTemperatureC;
+        Icons.Add({TEXT("temperature"),FMath::Clamp((T-30.f)/14.f,0.f,1.f),T<35||T>39?2:T<36||T>38?1:0});
+    }
+    Icons.Add({TEXT("fatigue"),1.f-FMath::Clamp(S->Fatigue/100.f,0.f,1.f),S->Fatigue>=90?2:S->Fatigue>=70?1:0});
+    if(Effects)
+    {
+        if(Effects->State.Bleeding>0)Icons.Add({TEXT("bleeding"),1.f,2});
+        if(Effects->State.Pain>10)Icons.Add({TEXT("injury"),1.f,Effects->State.Pain>65?2:1});
+        if(Effects->State.Infection>10||Effects->State.Poison>10)Icons.Add({TEXT("illness"),1.f,FMath::Max(Effects->State.Infection,Effects->State.Poison)>65?2:1});
+    }
+    const FVector2D Area=Geometry.GetLocalSize();
+    const float Spacing=FMath::Min(48.f,static_cast<float>((Area.X-48.f)/FMath::Max(1,Icons.Num())));
+    const float Left=FMath::Max(24.f,static_cast<float>(Area.X)-32.f-Icons.Num()*Spacing);
+    const float Top=FMath::Max(12.f,static_cast<float>(Area.Y)-90.f);
+    for(int32 Index=0;Index<Icons.Num();++Index)
+    {
+        const auto& Icon=Icons[Index];
+        FLinearColor Color=Icon.Severity==2?FLinearColor(.95f,.13f,.1f):Icon.Severity==1?FLinearColor(1.f,.76f,.15f):FLinearColor(.96f,.96f,.94f);
+        if(Icon.Severity==2)Color.A=.7f+.3f*FMath::Abs(FMath::Sin(FPlatformTime::Seconds()*2.));
+        const FVector2D Origin(Left+Index*Spacing,Top);
+        auto Path=[&](std::initializer_list<FVector2D> Points)
+        {
+            TArray<FVector2f> Scaled;for(const auto& P:Points)Scaled.Add(FVector2f(Origin+P*32.));
+            FSlateDrawElement::MakeLines(Elements,Base+1,Geometry.ToPaintGeometry(),Scaled,ESlateDrawEffect::None,Color,true,2.f);
+        };
+        auto Arc=[&](FVector2D Center,float Radius,float Start,float End)
+        {
+            TArray<FVector2f> Points;for(int32 J=0;J<=28;++J){const float Angle=FMath::Lerp(Start,End,J/28.f);Points.Add(FVector2f(Origin+(Center+FVector2D(FMath::Cos(Angle),FMath::Sin(Angle))*Radius)*32.));}
+            FSlateDrawElement::MakeLines(Elements,Base+1,Geometry.ToPaintGeometry(),Points,ESlateDrawEffect::None,Color,true,2.f);
+        };
+        if(Icon.Id==TEXT("health"))Path({{.35,.12},{.65,.12},{.65,.35},{.88,.35},{.88,.65},{.65,.65},{.65,.88},{.35,.88},{.35,.65},{.12,.65},{.12,.35},{.35,.35},{.35,.12}});
+        else if(Icon.Id==TEXT("blood")||Icon.Id==TEXT("bleeding"))
+        {Path({{.5,.08},{.23,.46},{.17,.65},{.23,.83},{.4,.92},{.6,.92},{.77,.83},{.83,.65},{.77,.46},{.5,.08}});if(Icon.Id==TEXT("bleeding"))Path({{.5,.45},{.5,.69},{.51,.69}});}
+        else if(Icon.Id==TEXT("hunger"))
+        {Arc({.55,.5},.29,0,2*PI);Path({{.06,.1},{.06,.43},{.23,.43},{.23,.1}});Path({{.145,.12},{.145,.9}});Path({{.94,.1},{.88,.48},{.94,.48},{.94,.9}});}
+        else if(Icon.Id==TEXT("thirst"))Path({{.4,.1},{.6,.1},{.6,.25},{.74,.4},{.74,.88},{.26,.88},{.26,.4},{.4,.25},{.4,.1}});
+        else if(Icon.Id==TEXT("stamina"))Path({{.57,.08},{.21,.56},{.47,.56},{.37,.94},{.82,.39},{.56,.39},{.57,.08}});
+        else if(Icon.Id==TEXT("temperature"))
+        {Arc({.5,.74},.17,-.6,3.75);Path({{.4,.59},{.4,.13},{.6,.13},{.6,.59}});Path({{.5,.3},{.5,.76}});Path({{.7,.25},{.87,.25}});Path({{.7,.4},{.82,.4}});}
+        else if(Icon.Id==TEXT("fatigue"))
+        {Arc({.49,.5},.36,.2,5.05);Path({{.63,.16},{.47,.35},{.5,.57},{.67,.7},{.84,.58}});}
+        else if(Icon.Id==TEXT("injury"))
+        {Path({{.15,.34},{.34,.15},{.87,.68},{.68,.87},{.15,.34}});Path({{.34,.68},{.68,.34}});Path({{.28,.65},{.65,.28}});}
+        else
+        {Arc({.5,.5},.23,0,2*PI);for(int32 J=0;J<8;++J){const float A=J*PI/4;Path({{.5+FMath::Cos(A)*.24,.5+FMath::Sin(A)*.24},{.5+FMath::Cos(A)*.42,.5+FMath::Sin(A)*.42}});}}
+        const FSlateBrush* White=FCoreStyle::Get().GetBrush(TEXT("WhiteBrush"));
+        FSlateDrawElement::MakeBox(Elements,Base+1,Geometry.ToPaintGeometry(FVector2f(28,3),FSlateLayoutTransform(FVector2f(Origin.X+2,Origin.Y+38))),White,ESlateDrawEffect::None,FLinearColor(.15,.15,.15,.7));
+        FSlateDrawElement::MakeBox(Elements,Base+2,Geometry.ToPaintGeometry(FVector2f(28*Icon.Fill,3),FSlateLayoutTransform(FVector2f(Origin.X+2,Origin.Y+38))),White,ESlateDrawEffect::None,Color);
+    }
+    return Base+2;
 }

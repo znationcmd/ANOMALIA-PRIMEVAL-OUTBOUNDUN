@@ -36,6 +36,8 @@ public:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeDestruct() override;
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
+    virtual int32 NativePaint(const FPaintArgs& Args,const FGeometry& Geometry,const FSlateRect& CullingRect,
+        FSlateWindowElementList& Elements,int32 LayerId,const FWidgetStyle& Style,bool ParentEnabled) const override;
 
 private:
     TWeakObjectPtr<AAnomaliaSurvivor> Survivor;
