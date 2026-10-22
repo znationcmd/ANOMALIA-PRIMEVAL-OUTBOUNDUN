@@ -1,0 +1,87 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {createCryoTerminal,canAccessCryo,captureCreature,releaseCreature,configureCryo,cryoGunMode} from '../src/cryo-storage.js';
+import {createRecruitmentStation,strikeNonlethal,bindNpc,admitNpc,advanceRecruitment,deployRecruit,assignRecruit} from '../src/npc-recruitment.js';
+const owner={id:'alice'},visitor={id:'bob'},admin={id:'admin',isAdmin:true};
+const terminal=id=>createCryoTerminal({id,ownerId:'alice',position:{x:0,z:0}});
+const creature=()=>({id:'dino-a',ownerId:'alice',tamed:true,level:18,hybrid:true,genetics:{parents:['p1','p2'],traits:{color:'blue'}}});
+
+test('a captured world record cannot be duplicated into another terminal and preserves genetics',()=>{
+ const a=terminal('a'),b=terminal('b'),dino=creature();
+ assert.ok(captureCreature(a,dino,owner).ok);
+ assert.equal(dino.stored,true);
+ assert.equal(captureCreature(b,dino,owner).ok,false);
+ assert.equal(b.creatures.length,0);
+ dino.genetics.traits.color='red';
+ assert.equal(a.creatures[0].genetics.traits.color,'blue');
+ const released=releaseCreature(a,dino.id,owner);
+ assert.ok(released.ok);assert.equal(released.creature.level,18);
+ assert.equal(released.creature.stored,false);
+ assert.deepEqual(released.creature.genetics.parents,['p1','p2']);
+ assert.equal(releaseCreature(a,dino.id,owner).ok,false);
+});
+test('cryo admin override requires the strict trusted-role flag and never bypasses dead or stored checks',()=>{
+ const t=terminal('a'),wild={id:'wild',tamed:false,inCombat:true};
+ assert.equal(canAccessCryo(null,owner),false);
+ assert.equal(canAccessCryo(t,{}),false);
+ const spoof={id:'bob',isAdmin:'true'};
+ assert.equal(cryoGunMode(spoof,true).adminMode,false);
+ assert.equal(captureCreature(t,wild,spoof,{adminMode:true}).ok,false);
+ assert.equal(captureCreature(t,wild,owner,{adminMode:true}).ok,false);
+ assert.equal(captureCreature(t,wild,admin,{adminMode:true,viaGun:true,distance:1000}).ok,true);
+ assert.equal(captureCreature(t,{id:'dead',dead:true},admin,{adminMode:true}).ok,false);
+ assert.equal(captureCreature(t,{id:'stored',stored:true},admin,{adminMode:true}).ok,false);
+});
+test('cryo rejects invalid distances and atomically rejects bad configuration without deleting stored creatures',()=>{
+ const t=terminal('a');t.allowedIds=['bob'];
+ assert.equal(configureCryo(t,visitor,{capacity:0}),false);
+ for(const distance of [NaN,Infinity,-1])assert.equal(captureCreature(t,creature(),owner,{viaGun:true,distance}).ok,false);
+ const before=structuredClone(t.options);
+ assert.equal(configureCryo(t,owner,{range:70,capacity:Infinity}),false);
+ assert.deepEqual(t.options,before);
+ assert.equal(configureCryo(t,owner,{allowHybrids:'false'}),false);
+ assert.ok(captureCreature(t,creature(),owner).ok);
+ assert.equal(releaseCreature(t,'dino-a',owner,{spawnAllowed:false}).ok,false);
+ assert.equal(t.creatures.length,1);
+ assert.ok(configureCryo(t,owner,{capacity:0}));
+ assert.equal(t.creatures.length,1);
+ assert.equal(captureCreature(t,{...creature(),id:'dino-b'},owner).ok,false);
+ assert.throws(()=>createCryoTerminal({id:'a',ownerId:'alice',position:{x:NaN,z:0}}));
+});
+test('nonlethal NPC capture preserves health and rejects invalid torpor or rope distances',()=>{
+ const npc={id:'npc-a',health:75,level:1};
+ assert.equal(strikeNonlethal(npc,{torpor:NaN}).ok,false);
+ assert.equal(strikeNonlethal(npc,{torpor:-2}).ok,false);
+ for(let i=0;i<4;i++)assert.ok(strikeNonlethal(npc).ok);
+ assert.equal(npc.unconscious,true);assert.equal(npc.health,75);
+ assert.equal(bindNpc(npc,owner,{hasRope:true,distance:NaN}).ok,false);
+ assert.equal(bindNpc(npc,owner,{hasRope:true,distance:2}).ok,true);
+ assert.equal(bindNpc(npc,visitor,{hasRope:true,distance:2}).ok,false);
+});
+test('an admitted NPC cannot be rebound or admitted to a second station',()=>{
+ const a=createRecruitmentStation('a','alice'),b=createRecruitmentStation('b','alice');
+ const npc={id:'npc-a',unconscious:true,boundBy:'alice',level:1};
+ assert.ok(admitNpc(a,npc,owner).ok);
+ assert.equal(bindNpc(npc,owner,{hasRope:true,distance:1}).ok,false);
+ npc.boundBy='alice';
+ assert.equal(admitNpc(b,npc,owner).ok,false);
+ assert.equal(a.recruits.length,1);assert.equal(b.recruits.length,0);
+ assert.equal(admitNpc(null,null,null).ok,false);
+});
+test('training, deployment and work assignment preserve ownership and reject role spoofing or nonfinite time',()=>{
+ const station=createRecruitmentStation('a','alice');
+ const npc={id:'npc-a',unconscious:true,boundBy:'alice',level:1,role:'cook'};
+ assert.equal(admitNpc(station,npc,{id:'bob',isAdmin:'true'}).ok,false);
+ assert.ok(admitNpc(station,npc,owner).ok);
+ assert.deepEqual(advanceRecruitment(station,Infinity,{supplies:1}),[]);
+ assert.equal(station.recruits[0].progress,0);
+ assert.deepEqual(advanceRecruitment(station,90,{supplies:1}),['npc-a']);
+ assert.equal(deployRecruit(station,'npc-a',visitor).ok,false);
+ assert.equal(deployRecruit(station,'npc-a',owner,{placementAllowed:false}).ok,false);
+ const result=deployRecruit(station,'npc-a',owner);
+ assert.ok(result.ok);assert.equal(result.recruit.ownerId,'alice');
+ assert.equal(deployRecruit(station,'npc-a',owner).ok,false);
+ assert.equal(assignRecruit(result.recruit,'farmer',{actor:visitor}),false);
+ assert.equal(assignRecruit(result.recruit,'farmer',{actor:owner}),true);
+ assert.equal(assignRecruit(result.recruit,'blacksmith',{actor:admin,workshopType:'forge'}),true);
+});

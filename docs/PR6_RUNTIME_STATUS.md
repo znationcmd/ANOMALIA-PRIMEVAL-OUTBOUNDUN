@@ -1,5 +1,29 @@
 # PR #6 — intervention et état réel
 
+## Ajouts réconciliés le 22 octobre
+
+Les ajouts parallèles sont conservés : `cryo-storage.js`, son mode de fusil admin,
+`npc-recruitment.js`, les 39 nouvelles définitions de ressources et le catalogue
+de 72 ressources de fabrication (aucun ID dupliqué dans ce dernier catalogue).
+Les 39 masses sont désormais définies aussi dans l’inventaire natif, avec contrôle
+de parité et test Unreal d’ajout, de poids et de refus de surcharge.
+
+Les modules cryo et recrutement ne sont importés ni par le jeu JavaScript ni par
+Unreal : ce sont des règles de données, pas des fonctions accessibles en jeu.
+Leur contrôle a corrigé la double capture d’un même objet créature entre terminaux,
+la réinscription d’un PNJ dans une autre station, les droits de configuration et
+d’affectation, les faux drapeaux admin et les nombres non finis. Six nouveaux tests
+vérifient aussi la conservation des données génétiques et des possessions.
+Ces tests ne valident ni l’authentification réseau, ni une transaction persistante,
+ni la suppression/apparition d’acteurs réels dans Unreal.
+
+À raccorder : modèles/animations/IA, interfaces, acteurs et inventaires serveur,
+sauvegarde atomique, annulation si l’apparition échoue, consommation des fournitures,
+travail réel des PNJ, collecte des bébés, incubation et ressources passives. Les
+options de ces trois derniers mécanismes existent mais ne les implémentent pas.
+Le mode admin doit recevoir les permissions résolues par le serveur ; un objet
+JavaScript contenant `isAdmin` ne prouve pas l’identité d’un joueur.
+
 **Contrôle des indicateurs (22 octobre) :** les ajouts de santé/sang/soif/faim,
 fatigue, température et états temporaires étaient dans le prototype JavaScript.
 La restauration recharge maintenant fatigue, dette de sommeil et sang sans
