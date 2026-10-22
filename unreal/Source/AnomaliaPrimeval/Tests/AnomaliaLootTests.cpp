@@ -46,6 +46,16 @@ bool FAnomaliaLootCatalogTest::RunTest(const FString& Parameters)
     {
         TestNotNull(*FString::Printf(TEXT("Catalogue ID resolves: %s"), *Id.ToString()), Loot->FindItem(Id));
         TestTrue(*FString::Printf(TEXT("Catalogue item enters inventory: %s"), *Id.ToString()), Survivor->InventoryComponent->TryAddItem(Id, 1));
+        const auto& Stacks = Survivor->InventoryComponent->Stacks;
+        if (!Stacks.IsEmpty())
+        {
+            const int32 StackId = Stacks[0].StackId;
+            TestTrue(*FString::Printf(TEXT("Catalogue item moves to hands: %s"), *Id.ToString()), Survivor->InventoryComponent->TryMoveStack(StackId, TEXT("hands"), 0, 0, false));
+            TestTrue(*FString::Printf(TEXT("Catalogue item returns to storage: %s"), *Id.ToString()), Survivor->InventoryComponent->TryStowStack(StackId));
+            TestEqual(TEXT("Storage transfer preserves selected stack identity"), Stacks[0].StackId, StackId);
+            TestEqual(TEXT("Storage transfer preserves count"), Stacks[0].Count, 1);
+            TestFalse(TEXT("Item is no longer held"), Stacks[0].ContainerId == TEXT("hands"));
+        }
         TestTrue(*FString::Printf(TEXT("Catalogue item removes cleanly: %s"), *Id.ToString()), Survivor->InventoryComponent->TryRemoveItem(Id, 1));
     }
     auto* Inventory=Survivor->InventoryComponent.Get();

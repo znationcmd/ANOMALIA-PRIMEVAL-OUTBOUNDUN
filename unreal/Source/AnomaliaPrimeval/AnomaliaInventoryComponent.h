@@ -86,6 +86,10 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
 
+    /** Return the selected held stack to the first free compartment slot, without discarding it. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryStowStack(int32 StackId);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId);
 
@@ -123,6 +127,9 @@ public:
     bool RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestStowStack(int32 StackId);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestSplitStack(int32 StackId, int32 Count);
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
@@ -156,6 +163,9 @@ protected:
 
     UFUNCTION(Server, Reliable)
     void ServerRequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestStowStack(int32 StackId);
 
     UFUNCTION(Server, Reliable)
     void ServerRequestSplitStack(int32 StackId, int32 Count);

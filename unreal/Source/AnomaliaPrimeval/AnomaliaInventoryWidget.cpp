@@ -199,10 +199,11 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     }
     UButton* HandsButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     UTextBlock* HandsLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    HandsLabel->SetText(FText::FromString(TEXT("Mains")));
+    const bool bHeld = Stack.ContainerId == TEXT("hands");
+    HandsLabel->SetText(FText::FromString(bHeld ? TEXT("Ranger") : TEXT("Mains")));
     HandsButton->SetContent(HandsLabel);
     Row->AddChildToHorizontalBox(HandsButton)->SetPadding(FMargin(5.f));
-    BindAction(HandsButton, EAnomaliaInventoryAction::MoveToHands, Stack.StackId);
+    BindAction(HandsButton, bHeld ? EAnomaliaInventoryAction::Stow : EAnomaliaInventoryAction::MoveToHands, Stack.StackId);
 
     if (Stack.Count > 1)
     {
@@ -249,6 +250,11 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
     {
         case EAnomaliaInventoryAction::MoveToHands:
             Inventory->RequestMoveStack(StackId, TEXT("hands"), 0, 0, false);
+            FocusFirstAction();
+            break;
+        case EAnomaliaInventoryAction::Stow:
+            Inventory->RequestStowStack(StackId);
+            FocusFirstAction();
             break;
         case EAnomaliaInventoryAction::SplitHalf:
             Inventory->RequestSplitStack(StackId, Count);

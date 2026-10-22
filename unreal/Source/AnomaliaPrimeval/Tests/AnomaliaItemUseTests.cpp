@@ -55,6 +55,9 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
 
     auto* Drinker=World->SpawnActor<AAnomaliaSurvivor>();auto* Bottles=Drinker->InventoryComponent.Get();
     Drinker->RestoreSurvival(100,40,70);
+    // ConfigureCompartment intentionally refuses shrinking an existing compartment.
+    // This isolated empty fixture starts without the survivor's default pockets.
+    Bottles->Compartments.Reset();
     TestTrue(TEXT("One-cell container"),Bottles->ConfigureCompartment(TEXT("pockets"),1,1));
     if(!TestTrue(TEXT("Two bottles share one cell"),Bottles->TryAddItem(TEXT("water_bottle"),2)))
     { World->DestroyWorld(false);return false; }
@@ -70,6 +73,26 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
     auto* Reloaded=World->SpawnActor<AAnomaliaSurvivor>();
     TestTrue(TEXT("Reload consumed bottle result"),Reloaded->InventoryComponent->LoadInventoryFromPlayerProfile(Server,TEXT("water"),Error));
     TestTrue(TEXT("Restart restores empty container, not full water"),Reloaded->InventoryComponent->Stacks.ContainsByPredicate([](const auto& S){return S.ItemId==TEXT("empty_water_bottle");}));
+
+    // A filled pocket must not lose or duplicate the item held while making space.
+    auto* Carrier=World->SpawnActor<AAnomaliaSurvivor>();
+    auto* Storage=Carrier->InventoryComponent.Get();
+    Storage->Compartments.Reset();
+    TestTrue(TEXT("Limit storage to one cell"),Storage->ConfigureCompartment(TEXT("pockets"),1,1));
+    if(!TestTrue(TEXT("Bottle available to hold"),Storage->TryAddItem(TEXT("water_bottle"),1)))
+    { World->DestroyWorld(false);return false; }
+    const int32 HeldId=Storage->Stacks[0].StackId;
+    TestTrue(TEXT("Move bottle into hands"),Storage->RequestMoveStack(HeldId,TEXT("hands"),0,0,false));
+    TestTrue(TEXT("Fill vacated cell"),Storage->TryAddItem(TEXT("empty_water_bottle"),1));
+    TestFalse(TEXT("Full storage refuses stow"),Storage->RequestStowStack(HeldId));
+    TestTrue(TEXT("Rejected stow retains held bottle"),Storage->Stacks.ContainsByPredicate([&](const auto& S){return S.StackId==HeldId && S.ContainerId==TEXT("hands") && S.Count==1;}));
+    TestTrue(TEXT("Make space without changing held item"),Storage->TryRemoveItem(TEXT("empty_water_bottle"),1));
+    Storage->SetProfileRecoveryPending(true);
+    TestFalse(TEXT("Recovery lock also protects storage transfers"),Storage->RequestStowStack(HeldId));
+    Storage->SetProfileRecoveryPending(false);
+    TestTrue(TEXT("Stow once space and recovery permit"),Storage->RequestStowStack(HeldId));
+    TestFalse(TEXT("Repeated stow cannot duplicate item"),Storage->RequestStowStack(HeldId));
+    TestEqual(TEXT("Exactly one item remains after storage transfers"),Storage->Stacks.Num(),1);
 
     auto* Patient=World->SpawnActor<AAnomaliaSurvivor>();auto* Medical=Patient->InventoryComponent.Get();
     Patient->RestoreSurvival(100,100,70);
@@ -105,7 +128,7 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
                     TestTrue(TEXT("Specified empty container returned"),Items->Stacks.ContainsByPredicate([&](const auto& S){return S.ItemId==Definition->Use.ReturnItem && S.Count==1;}));
             }
         }
-        ++TestedUses;Sample->Destroy();
+        ++TestedUses;
     }
     TestEqual(TEXT("Every configured catalogue consumable tested"),TestedUses,21);
     World->DestroyWorld(false);

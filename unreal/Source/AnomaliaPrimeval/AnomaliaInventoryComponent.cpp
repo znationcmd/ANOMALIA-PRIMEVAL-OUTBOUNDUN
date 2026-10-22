@@ -262,6 +262,16 @@ bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId,
     return true;
 }
 
+bool UAnomaliaInventoryComponent::TryStowStack(int32 StackId)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
+    TArray<FAnomaliaInventoryStack> Candidate = Stacks;
+    auto* Stack = Candidate.FindByPredicate([&](const auto& S) { return S.StackId == StackId; });
+    if (!Stack || Stack->ContainerId != TEXT("hands") || !FindPlacement(Candidate, *Stack)) return false;
+    Commit(MoveTemp(Candidate));
+    return true;
+}
+
 bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId)
 {
     OutNewStackId = 0;
@@ -481,6 +491,19 @@ bool UAnomaliaInventoryComponent::RequestMoveStack(int32 StackId, FName Containe
     if (GetOwner()->HasAuthority()) return TryMoveStack(StackId, ContainerId, X, Y, bRotate);
     ServerRequestMoveStack(StackId, ContainerId, X, Y, bRotate);
     return true;
+}
+
+bool UAnomaliaInventoryComponent::RequestStowStack(int32 StackId)
+{
+    if (!GetOwner()) return false;
+    if (GetOwner()->HasAuthority()) return TryStowStack(StackId);
+    ServerRequestStowStack(StackId);
+    return true;
+}
+
+void UAnomaliaInventoryComponent::ServerRequestStowStack_Implementation(int32 StackId)
+{
+    TryStowStack(StackId);
 }
 
 bool UAnomaliaInventoryComponent::RequestSplitStack(int32 StackId, int32 Count)

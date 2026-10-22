@@ -21,7 +21,8 @@ enum class EAnomaliaInventoryAction : uint8
     Merge,
     Use,
     DepositNote,
-    WithdrawNote
+    WithdrawNote,
+    Stow
 };
 
 UCLASS()
