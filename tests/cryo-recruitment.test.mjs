@@ -70,9 +70,10 @@ test('an admitted NPC cannot be rebound or admitted to a second station',()=>{
 });
 test('training, deployment and work assignment preserve ownership and reject role spoofing or nonfinite time',()=>{
  const station=createRecruitmentStation('a','alice');
- const npc={id:'npc-a',unconscious:true,boundBy:'alice',level:1,role:'cook'};
+ const npc={id:'npc-a',unconscious:true,boundBy:'alice',level:1,role:'cook',health:73,inventory:{tool:1},appearance:{hair:'dark'},extension:{experience:7}};
  assert.equal(admitNpc(station,npc,{id:'bob',isAdmin:'true'}).ok,false);
  assert.ok(admitNpc(station,npc,owner).ok);
+ npc.inventory.tool=99;
  assert.deepEqual(advanceRecruitment(station,Infinity,{supplies:1}),[]);
  assert.equal(station.recruits[0].progress,0);
  assert.deepEqual(advanceRecruitment(station,90,{supplies:1}),['npc-a']);
@@ -80,6 +81,9 @@ test('training, deployment and work assignment preserve ownership and reject rol
  assert.equal(deployRecruit(station,'npc-a',owner,{placementAllowed:false}).ok,false);
  const result=deployRecruit(station,'npc-a',owner);
  assert.ok(result.ok);assert.equal(result.recruit.ownerId,'alice');
+ assert.equal(result.recruit.health,73);assert.deepEqual(result.recruit.inventory,{tool:1});
+ assert.deepEqual(result.recruit.appearance,{hair:'dark'});assert.deepEqual(result.recruit.extension,{experience:7});
+ assert.equal(result.recruit.boundBy,null);assert.equal(result.recruit.unconscious,false);assert.equal(result.recruit.recruited,true);
  assert.equal(deployRecruit(station,'npc-a',owner).ok,false);
  assert.equal(assignRecruit(result.recruit,'farmer',{actor:visitor}),false);
  assert.equal(assignRecruit(result.recruit,'farmer',{actor:owner}),true);

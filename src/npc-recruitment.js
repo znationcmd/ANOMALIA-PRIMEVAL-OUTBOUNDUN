@@ -6,6 +6,7 @@
 export const NPC_ROLES=Object.freeze(['fighter','archer','performer','blacksmith','tanner','carpenter','cook','farmer']);
 export const RECRUITMENT_CONFIG=Object.freeze({maxTorpor:100,clubTorpor:25,restorationSeconds:120,ropeMaxDistance:14,baseTrainingSeconds:90});
 const clamp=(v,min,max)=>Math.max(min,Math.min(max,Number(v)||0));
+const clone=value=>JSON.parse(JSON.stringify(value));
 const identity=id=>typeof id==='string'&&id.trim().length>0;
 const canManage=(station,actor)=>!!station&&identity(station.id)&&identity(station.ownerId)&&Array.isArray(station.recruits)&&identity(actor?.id)&&(station.ownerId===actor.id||actor.isAdmin===true);
 export function strikeNonlethal(npc,{torpor=25}={}){
@@ -32,7 +33,9 @@ export function createRecruitmentStation(id,ownerId){
 export function admitNpc(station,npc,actor){
  if(!canManage(station,actor))return {ok:false,reason:'forbidden'};
  if(!station.active||!identity(npc?.id)||!npc.unconscious||npc.dead||npc.inStation||npc.recruited||npc.boundBy!==actor.id||station.recruits.some(x=>x.id===npc.id)||!Number.isFinite(npc.level??1))return {ok:false,reason:'invalid-recruit'};
- station.recruits.push({id:npc.id,role:NPC_ROLES.includes(npc.role)?npc.role:'fighter',level:clamp(npc.level??1,1,100),progress:0,status:'training',name:npc.name||'Recrue'});
+ // Retain appearance, equipment, health and extension data while training.
+ // Building a short role-only record would discard them before deployment.
+ station.recruits.push({...clone(npc),id:npc.id,boundBy:null,inStation:true,role:NPC_ROLES.includes(npc.role)?npc.role:'fighter',level:clamp(npc.level??1,1,100),progress:0,status:'training',name:npc.name||'Recrue'});
  npc.boundBy=null;npc.inStation=true;return {ok:true,removeWorldEntity:true};
 }
 export function advanceRecruitment(station,seconds,{supplies=0}={}){
@@ -47,9 +50,11 @@ export function deployRecruit(station,id,actor,{role,placementAllowed=true}={}){
  if(!canManage(station,actor))return {ok:false,reason:'forbidden'};
  const i=station.recruits.findIndex(n=>n.id===id&&n.status==='ready');
  if(i<0||placementAllowed!==true)return {ok:false,reason:'not-ready-or-invalid-placement'};
- const recruit=station.recruits.splice(i,1)[0];
+ const recruit=clone(station.recruits[i]);
  recruit.role=NPC_ROLES.includes(role)?role:recruit.role;
- return {ok:true,recruit:{...recruit,ownerId:station.ownerId,status:'deployed'},spawnWorldEntity:true};
+ Object.assign(recruit,{ownerId:station.ownerId,status:'deployed',inStation:false,boundBy:null,unconscious:false,torpor:0,recruited:true});
+ station.recruits.splice(i,1);
+ return {ok:true,recruit,spawnWorldEntity:true};
 }
 export function assignRecruit(recruit,role,{workshopType,actor}={}){
  if(!recruit||recruit.status!=='deployed'||!NPC_ROLES.includes(role)||!identity(actor?.id)||(actor.id!==recruit.ownerId&&actor.isAdmin!==true))return false;
