@@ -14,6 +14,7 @@ on:
       - 'unreal/Scripts/short_import_source.py'
       - 'unreal/Scripts/capture_real_world.py'
       - 'scripts/ue5/validate-build.py'
+      - 'scripts/ue5/collect-editor-crash-info.ps1'
       - '.github/workflows/ue5-loot-runtime.yml'
 concurrency:
   # The installed editor, generated projects and GPU must not be used by concurrent jobs.
@@ -33,6 +34,17 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Read recent editor fault modules before native validation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-before.json')
+      - name: Retain early read-only editor fault evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-fault-modules-before-native
+          path: unreal/Saved/LootValidation/run-${{ github.run_id }}/editor-crash-before.json
+          if-no-files-found: warn
       - name: Compile existing Editor and Game with native catalogue and transaction tests
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         id: native_core
@@ -65,6 +77,12 @@ jobs:
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Read editor fault modules after native validation without changing its result
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-after.json')
       - name: Update the existing PC editor copy only after native gameplay and fresh GPU validation
         if: ${{ success() && steps.loot_pie.outcome == 'success' && steps.car_assets.outcome == 'success' && steps.real_gpu.outcome == 'success' }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}

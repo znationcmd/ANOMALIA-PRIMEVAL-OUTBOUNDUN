@@ -1,14 +1,19 @@
 param([Parameter(Mandatory=$true)][string]$OutputPath)
 $ErrorActionPreference = 'Stop'
-$report = @{state='FAILED';events=@();scope='UnrealEditor-Cmd.exe Application Error events only'}
+$report = @{state='FAILED';events=@();scope='UnrealEditor-Cmd.exe Application Error and Windows Error Reporting events only'}
 try {
-    $events = @(Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000;StartTime=(Get-Date).AddHours(-2)} -ErrorAction SilentlyContinue)
+    $events = @(Get-WinEvent -FilterHashtable @{LogName='Application';Id=1000,1001;StartTime=(Get-Date).AddHours(-2)} -ErrorAction SilentlyContinue)
     foreach ($event in $events) {
         [xml]$xml = $event.ToXml()
         $fields = @{}
         foreach ($entry in $xml.Event.EventData.Data) { $fields[[string]$entry.Name]=[string]$entry.'#text' }
+        if ($event.Id -eq 1001) {
+            $fields['AppName']=$fields['P1'];$fields['AppVersion']=$fields['P2']
+            $fields['ModuleName']=$fields['P4'];$fields['ModuleVersion']=$fields['P5']
+            $fields['ExceptionCode']=$fields['P7'];$fields['FaultingOffset']=$fields['P8']
+        }
         if ($fields['AppName'] -ne 'UnrealEditor-Cmd.exe') { continue }
-        $item = @{timeUtc=$event.TimeCreated.ToUniversalTime().ToString('o')}
+        $item = @{timeUtc=$event.TimeCreated.ToUniversalTime().ToString('o');eventId=$event.Id}
         foreach ($name in @('AppName','AppVersion','ModuleName','ModuleVersion','ExceptionCode','FaultingOffset','ModulePath')) { $item[$name]=$fields[$name] }
         $report.events += $item
         if ($report.events.Count -ge 10) { break }

@@ -72,7 +72,11 @@ def exit_tick(delta):
         state['exit_handle']=unreal.register_slate_post_tick_callback(exit_tick)
         return
     gc.collect()
-    unreal.SystemLibrary.quit_editor()
+    # Let the command-line Python executor finish on its own next tick, after
+    # this callback returns, instead of issuing QUIT_EDITOR from Python/Slate.
+    report.setdefault('teardown',{})['pythonExecutorReleased']=True
+    REPORT.write_text(json.dumps(report,indent=2)+'\n')
+    unreal.EditorPythonScripting.set_keep_python_script_alive(False)
 
 def set_view():
     _,eye,target=views[state['index']];dx,dy,dz=[target[i]-eye[i] for i in range(3)]
