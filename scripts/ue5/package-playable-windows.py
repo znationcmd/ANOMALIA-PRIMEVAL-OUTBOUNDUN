@@ -26,9 +26,24 @@ try:
     if scene.get('state')!='PLAYABLE_LOOK_V2_SAVED' or scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or not scene.get('dynamicLights'):
         raise RuntimeError('Fresh playable scene update receipt missing or invalid')
     report['scene']=scene
+    visual_receipt=out/('realism-scene-'+uuid.uuid4().hex+'.json')
+    os.environ['ANOMALIA_REALISM_SCENE_REPORT']=str(visual_receipt)
+    run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
+         '-abslog='+str(out/'create-realism-editor.log'),'-run=pythonscript',
+         '-script='+str(ROOT/'unreal/Scripts/create_realism_validation.py')],'create-realism',900)
+    visual_scene=json.loads(visual_receipt.read_text(encoding='utf-8'))
+    if visual_scene.get('state')!='REALISM_VALIDATION_MAP_SAVED_NOT_PLAYTESTED' or visual_scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or len(visual_scene.get('models',[]))!=7:
+        raise RuntimeError('Fresh imported-art scene receipt missing or invalid')
+    report['visualScene']=visual_scene
+    visual_map='/Game/Maps/ANOMALIA_VisualValidation_v1'
+    editor_review=out/'editor-visual/review.json';editor_review.parent.mkdir()
+    run([editor,project,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
+         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
+    if json.loads(editor_review.read_text(encoding='utf-8-sig')).get('state')!='PACKAGED_VISUAL_REVIEW_PASSED':
+        raise RuntimeError('Imported-art scene failed in actual Editor game renderer')
     archive=out/('package-'+uuid.uuid4().hex);archive.mkdir()
     uat=a.engine_root/'Engine/Build/BatchFiles/RunUAT.bat'
-    run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP,'-prereqs'],'package',5400)
+    run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP+'+'+visual_map,'-prereqs'],'package',5400)
     executables=list(archive.glob('Windows/AnomaliaPrimeval.exe'))
     if len(executables)!=1:raise RuntimeError('Unique actual packaged executable not found')
     exe=executables[0];probe=out/'packaged-smoke.json'
@@ -46,6 +61,14 @@ try:
     if resumed.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not {'restarted_executable_restored_inventory_and_character_position','restarted_executable_restored_item_effects'}.issubset(resumed.get('checks',[])):
         raise RuntimeError('Actual executable restart did not restore character and inventory')
     report['resume']=resumed
+    visual_probe=out/'packaged-visual/review.json';visual_probe.parent.mkdir()
+    run([exe,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
+         '-AnomaliaVisualReview='+str(visual_probe),'-abslog='+str(out/'packaged-visual-engine.log')],'packaged-visual',300)
+    visual=json.loads(visual_probe.read_text(encoding='utf-8-sig'))
+    if visual.get('state')!='PACKAGED_VISUAL_REVIEW_PASSED' or len(visual.get('screenshots',[]))!=3:
+        raise RuntimeError('Real Windows visual review failed: '+visual.get('error','missing screenshots'))
+    if any(not Path(p).is_file() or Path(p).stat().st_size<10000 for p in visual['screenshots']):raise RuntimeError('Missing actual Windows visual capture')
+    report['visualReview']=visual
     report.update(state='PACKAGED_WINDOWS_SMOKE_PASSED',executable=str(exe),native=native,screenshot=str(image),archive=str(archive/'Windows'),limitations=['provisional_original_art','prototype_ground_vehicle_physics','drop_UI_not_implemented','item_specific_weapon_crafting_and_medical_systems_incomplete'])
 except Exception as error: report['error']=str(error)
 finally:

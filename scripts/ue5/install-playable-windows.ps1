@@ -38,6 +38,16 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Installed game process failed.' }
     $native=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
     if ($native.state -ne 'PACKAGED_GAME_SMOKE_PASSED') { throw "Installed gameplay smoke failed: $($native.error)" }
+    if ($proof.visualReview.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED') { throw 'Imported-art package validation missing.' }
+    $visualDir=Join-Path $ValidationDir 'installed-visual';New-Item -ItemType Directory -Path $visualDir -Force | Out-Null
+    $visualProbe=Join-Path $visualDir 'review.json'
+    $visualScope='visual-smoke-'+[Guid]::NewGuid().ToString('N')
+    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=300).returncode)' $exe "/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=$visualScope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaVisualReview=$visualProbe"
+    if ($LASTEXITCODE -ne 0) { throw 'Installed imported-art process failed.' }
+    $visualNative=Get-Content -LiteralPath $visualProbe -Raw | ConvertFrom-Json
+    if ($visualNative.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED' -or @($visualNative.screenshots).Count -ne 3) { throw 'Installed imported-art validation failed.' }
+    foreach($image in $visualNative.screenshots) { if (-not (Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 10000) { throw 'Installed imported-art screenshot missing.' } }
+    $report.installedVisualReview=$visualNative
     $observed=([IO.Path]::GetFullPath($native.savedDir)).TrimEnd('\','/')
     $expected=([IO.Path]::GetFullPath((Join-Path $target 'AnomaliaPrimeval/Saved'))).TrimEnd('\','/')
     if ($observed -ne $expected -and $observed -ne ([IO.Path]::GetFullPath($saved)).TrimEnd('\','/')) { throw "Unexpected packaged save location: $observed" }
@@ -70,6 +80,15 @@ try {
     $desktop=$shell.CreateShortcut($link)
     if ($readback.commit -ne $Commit -or $readback.executable -ne $exe -or $desktop.TargetPath -ne $exe -or $desktop.WorkingDirectory -ne $target -or $desktop.Arguments -ne '-d3d11 -sm5') { throw 'Active version or desktop shortcut readback failed.' }
     $report.activeVersionAndShortcutVerified=$true
+    $visualLink=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Validation visuelle.lnk'
+    if (Test-Path -LiteralPath $visualLink) {
+        if (-not $shell.CreateShortcut($visualLink).TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated visual shortcut preserved.' }
+    }
+    $visualShortcut=$shell.CreateShortcut($visualLink);$visualShortcut.TargetPath=$exe
+    $visualShortcut.Arguments='/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=visual-review-local -d3d11 -sm5'
+    $visualShortcut.WorkingDirectory=$target;$visualShortcut.Description='ANOMALIA — zone de validation des nouvelles ressources 3D';$visualShortcut.Save()
+    if ($shell.CreateShortcut($visualLink).TargetPath -ne $exe) { throw 'Visual shortcut readback failed.' }
+    $report.visualShortcut=$visualLink
     $report.trigger=$env:GITHUB_EVENT_NAME
     $report.updatedExistingInstallation=($null -ne $previous -and $previous.commit -ne $Commit)
     $report.state='PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED';$report.executable=$exe;$report.shortcut=$link;$report.userData=$saved;$report.existingUserFilesPreserved=$hashes.Count;$report.installedProbe=$native

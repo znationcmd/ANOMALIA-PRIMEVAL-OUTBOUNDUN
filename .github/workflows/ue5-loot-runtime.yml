@@ -10,6 +10,10 @@ on:
       - 'scripts/ue5/stage-runtime-data.py'
       - 'scripts/ue5/run-loot-playtest.py'
       - 'scripts/ue5/package-playable-windows.py'
+      - 'scripts/ue5/prepare-realism-sources.py'
+      - 'scripts/vehicle-assets/prepare-realism.mjs'
+      - 'docs/art/realism-validation-sources.json'
+      - 'unreal/Scripts/create_realism_validation.py'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'unreal/Scripts/create_playable_zone.py'
       - 'unreal/Scripts/create_loot_review.py'
@@ -64,6 +68,22 @@ jobs:
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned licensed art for the isolated visual validation zone
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-realism-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
+          Copy-Item 'unreal/SourceAssets/RealismValidation_v1/CREDITS.md' 'unreal/Content/ThirdPartyNotices/RealismValidation_v1-CREDITS.md'
       - name: Cook and launch the autonomous Windows playable zone before large world checks
         id: playable_package
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -82,7 +102,11 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: packaged-playable-install-diagnostics
-          path: unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/*.*
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/editor-visual/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/packaged-visual/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/installed-visual/*.*
           if-no-files-found: error
       - name: Retain downloadable Windows test game without temporary test saves
         if: ${{ always() && steps.playable_package.outcome == 'success' }}

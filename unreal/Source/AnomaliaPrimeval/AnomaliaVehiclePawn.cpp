@@ -110,8 +110,12 @@ void AAnomaliaVehiclePawn::RefreshVehicleVisual()
     // IDs come from the fixed server-authorized catalogue, never from an arbitrary client path.
     const FString Id=VehicleId.ToString();
     const FString Package=TEXT("/Game/Anomalia/Vehicles/")+Id+TEXT("/SM_")+Id;
-    if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
-    UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    UStaticMesh* Mesh=PresentationMeshOverride.Get();
+    if(!Mesh)
+    {
+        if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
+        Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    }
     if(!Mesh) return;
     Body->SetStaticMesh(Mesh);
     const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
@@ -325,6 +329,7 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationMeshOverride);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
 }

@@ -2,6 +2,7 @@
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaPlayableProbe.h"
+#include "AnomaliaVisualReviewProbe.h"
 #include "AnomaliaSessionWidget.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaEconomySubsystem.h"
@@ -354,6 +355,10 @@ void AAnomaliaGameMode::BeginPlay()
             GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) &&
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaPlayableProbe>();
+        if(GetNetMode()==NM_Standalone && ServerId.StartsWith(TEXT("visual-smoke-")) &&
+            GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_VisualValidation_v1")) &&
+            FParse::Value(FCommandLine::Get(),TEXT("AnomaliaVisualReview="),ProbeFile) && !ProbeFile.IsEmpty())
+            GetWorld()->SpawnActor<AAnomaliaVisualReviewProbe>();
 #endif
         if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && !ServerId.StartsWith(TEXT("playable-smoke-")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
