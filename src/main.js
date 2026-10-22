@@ -524,10 +524,10 @@ const statusIndicators=mountSurvivalIndicators(document.querySelector('#hud')||d
 function updateHud(dt){
  if(started&&!paused)vitalsClock+=Math.max(0,dt);
  const condition=tickVitals(state,vitalsClock,dt,{active:started&&!paused});
- statusIndicators.update(state);
  if(!window.anomaliaConsciousnessOverlay){const el=document.createElement('div');el.style.cssText='position:fixed;inset:0;background:#000;z-index:9999;display:none;align-items:center;justify-content:center;color:#fff;font:bold 22px sans-serif;pointer-events:none';document.body.append(el);window.anomaliaConsciousnessOverlay=el;}
  const overlay=window.anomaliaConsciousnessOverlay;overlay.style.display=condition.sleeping||condition.unconscious?'flex':'none';overlay.textContent=condition.sleeping?'SOMMEIL · 30 secondes':'INCONSCIENT · '+Math.ceil(condition.unconsciousSeconds)+' s';
  hudTime+=dt;if(hudTime<.1)return;hudTime=0;
+ statusIndicators.update(state);
  const meters=[["health",state.health],["stamina",state.stamina],["hunger",state.hunger],["thirst",state.thirst]];
  for(const [id,value]of meters){const bar=$(id+"Bar"),label=$(id+"Value");if(bar)bar.style.width=value+"%";if(label)label.textContent=Math.round(value)}
  const {city,distance}=nearestCity(state.position.x,state.position.z);
@@ -768,7 +768,7 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight
 });
 constructionUI=createConstructionUI({state,scene,camera,heightAt,world:constructionWorld,save,notice,panel:$('panel'),body:$('panelBody'),title:$('panelTitle'),open:openPanel,close:closePanel,cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup();}});
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
-window.addEventListener('keydown',e=>{if(e.code==='KeyN'&&started&&!paused&&!e.repeat){if(startSleep(state,vitalsClock))notice('Repos : réveil dans 30 secondes');}});
+window.addEventListener('keydown',e=>{if(e.code==='KeyN'&&started&&!paused&&!e.repeat&&!e.target.matches?.('input,textarea,select')&&!e.target.isContentEditable){if(startSleep(state,vitalsClock))notice('Repos : réveil dans 30 secondes');}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
 for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 let lastAtmosphereUpdate=-10000;

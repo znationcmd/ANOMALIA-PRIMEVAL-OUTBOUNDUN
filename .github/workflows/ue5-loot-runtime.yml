@@ -50,6 +50,7 @@ jobs:
           & $python scripts/ue5/run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Recheck cached car imports with short Windows paths and a separate v2 review map
+        id: car_assets
         if: ${{ success() && hashFiles('unreal/SourceAssets/NamedVehicles1/manifest.json') != '' }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -57,11 +58,19 @@ jobs:
           & $python scripts/ue5/validate-expansion-models.py --group NamedVehicles1 --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/cars"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify actual archipelago GPU capture and release the world before editor shutdown
+        id: real_gpu
         if: ${{ always() && steps.native_core.outcome == 'success' && steps.loot_pie.outcome == 'success' && hashFiles('unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap') != '' }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Update the existing PC editor copy only after native gameplay and fresh GPU validation
+        if: ${{ success() && steps.loot_pie.outcome == 'success' && steps.car_assets.outcome == 'success' && steps.real_gpu.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir $evidence
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain actual compile and native test evidence
         if: always()

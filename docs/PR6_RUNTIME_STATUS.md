@@ -13,14 +13,30 @@ Un HUD UMG natif est ajouté pour les six valeurs réellement existantes dans Un
 santé, soif, faim, endurance, fatigue et température en °C. Il lit les valeurs
 répliquées et retire les alertes de fatigue et de température lors du rétablissement.
 Le repos au lit conserve ses contrôles serveur et se termine désormais après 30 s
-de simulation avec récupération de fatigue et d’endurance. Compilation et essai
-PIE étendu de ce nouveau lot : **en attente**. Aucun affichage de sang, fracture,
+de simulation avec récupération de fatigue et d’endurance. Les compilations Editor
+et Game, les neuf tests natifs et l’essai PIE étendu réussissent dans le run
+[39745990341](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39745990341)
+sur la source `938940f83232a372e898e2da0698ce703fbf1260`. Le test vérifie les six
+libellés natifs, la fatigue réelle, les degrés Celsius, l’alerte d’hypothermie puis
+son effacement, et le sommeil déclenché par la touche R avec réveil reposé. Cet
+essai utilise NullRHI : le rendu graphique final du HUD reste à examiner.
+Aucun affichage de sang, fracture,
 humidité, infection ou drogue n’est prétendu natif : leurs systèmes restent à relier.
 
-Le run 39738850387 confirme aussi **36 modèles de voitures importés**, chemins
-Windows corrigés, sources préservées et présentation reliée au catalogue natif.
-La capture GPU a dépassé 900 s pendant la préparation des textures et shaders ;
-elle n’est pas validée. Il ne s’agit pas de 36 véhicules terminés ou testés en conduite.
+Le run 39738850387 confirme **36 modèles de voitures importés**, chemins Windows
+corrigés, sources préservées et présentation reliée au catalogue natif. Sa capture
+GPU avait dépassé 900 s pendant la préparation des textures et shaders. Le run
+39742361237 (source `6497cfb373743416a00547cd166c9b240fc1c88f`) réussit ensuite
+l’import ET les 36 captures GPU, puis la réouverture graphique de l’archipel avec
+sortie de processus 0. Le rapport confirme le déchargement du monde avant fermeture,
+sans sauvegarde du monde temporaire. Trois vues représentatives ont été examinées
+(BMW E34, archipel et plage) ; cela ne valide pas l’apparence de chaque modèle,
+leurs proportions, leur placement, leur conduite ou le réalisme final du paysage.
+
+Le workflow du lot réutilise maintenant l’installateur PC existant après réussite
+des tests natifs/PIE, des voitures et d’une preuve GPU fraîche du même commit.
+L’installateur conserve les versions précédentes et vérifie les sauvegardes.
+Son nouveau passage reste à confirmer ; il installe un projet Editor, pas un jeu autonome.
 
 **Validation du 22 octobre :** compilation Editor et Game réussie sur Unreal 5.8.3,
 neuf tests natifs réussis, puis essai PIE solo du ramassage, de l’inventaire, de la
