@@ -57,7 +57,8 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
         for(TActorIterator<AActor> It(GetWorld());It;++It)
         {
             if(!It->ActorHasTag(TEXT("ANOMALIA_VisualValidation_v1_Owner")))continue;
-            if(auto* Camera=Cast<ACameraActor>(*It))Cameras.Add(Camera);
+            // Editor camera visualization meshes are not visible scene art.
+            if(auto* Camera=Cast<ACameraActor>(*It)){Cameras.Add(Camera);continue;}
             if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(*It))Car=Vehicle;
             if(auto* Component=It->FindComponentByClass<UStaticMeshComponent>())
             {
