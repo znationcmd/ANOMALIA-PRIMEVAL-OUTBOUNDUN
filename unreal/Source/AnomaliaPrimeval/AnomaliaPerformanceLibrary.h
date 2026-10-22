@@ -10,7 +10,8 @@ class ANOMALIAPRIMEVAL_API UAnomaliaPerformanceLibrary : public UBlueprintFuncti
 {
     GENERATED_BODY()
 public:
-    /** Valid presets: PC_High, PS5_Target, XboxSeriesX_Target, Performance_Fallback.
+    /** Presets include PC, PS5, Xbox Series X/S and Android/iOS targets.
+      * Use GetGraphicsPresets for the complete current list.
       * The console presets are experimental and do not certify 4K60. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Graphics")
     static bool ApplyGraphicsPreset(const FString& PresetName);

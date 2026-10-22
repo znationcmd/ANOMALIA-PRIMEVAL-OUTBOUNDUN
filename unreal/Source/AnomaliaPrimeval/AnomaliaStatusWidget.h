@@ -3,12 +3,22 @@
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
 #include "InputCoreTypes.h"
+#include "Components/Button.h"
 #include "AnomaliaStatusWidget.generated.h"
 
 class AAnomaliaSurvivor;
 class UTextBlock;
 class UVerticalBox;
 class UCanvasPanelSlot;
+
+/** Touch actions must not steal keyboard/gamepad navigation focus. */
+UCLASS()
+class ANOMALIAPRIMEVAL_API UAnomaliaTouchButton : public UButton
+{
+    GENERATED_BODY()
+public:
+    UAnomaliaTouchButton(const FObjectInitializer& ObjectInitializer);
+};
 
 /** Local status HUD and touch input relay using the existing replicated native survival values. */
 UCLASS()

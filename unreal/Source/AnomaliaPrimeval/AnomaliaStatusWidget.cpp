@@ -13,6 +13,12 @@
 #include "Components/SizeBox.h"
 #include "GameFramework/PlayerController.h"
 
+UAnomaliaTouchButton::UAnomaliaTouchButton(const FObjectInitializer& ObjectInitializer)
+    : Super(ObjectInitializer)
+{
+    InitIsFocusable(false);
+}
+
 void UAnomaliaStatusWidget::InitializeForSurvivor(AAnomaliaSurvivor* InSurvivor)
 {
     Survivor = InSurvivor;
@@ -71,8 +77,7 @@ void UAnomaliaStatusWidget::BuildLayout()
         auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
         Size->SetWidthOverride(128.f); Size->SetHeightOverride(48.f);
         TouchControls->AddChildToVerticalBox(Size)->SetPadding(FMargin(0.f,3.f));
-        auto* Result=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Name));
-        Result->SetIsFocusable(false);
+        auto* Result=WidgetTree->ConstructWidget<UAnomaliaTouchButton>(UAnomaliaTouchButton::StaticClass(),FName(Name));
         Size->SetContent(Result);
         auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         Text->SetText(FText::FromString(Label)); Result->SetContent(Text);
