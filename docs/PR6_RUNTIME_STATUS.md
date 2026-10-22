@@ -2,16 +2,25 @@
 
 ## Ajouts réconciliés le 22 octobre
 
-**Blocage PC actuel :** le run 39747258459 (source `76f8531…`) a réussi les
-compilations, neuf tests natifs, le PIE et les captures des 36 voitures. Les cinq
-captures de l’archipel ont aussi été produites, mais le processus est sorti avec
-`0xC0000005` après la fermeture du journal et le déchargement du monde. La mise à
-jour PC a été ignorée automatiquement ; l’ancienne installation est conservée.
-Les passages précédents réussis ne suffisent donc pas à déclarer la fermeture
-stabilisée. Le lot `d65a968…` laisse maintenant l’exécuteur Python terminer au tick
-suivant et collecte les événements Windows 1000/1001 ciblés avant et après test.
-Sa validation est en cours ; le diagnostic préalable ne contient aucun événement
-du processus concerné, donc le module fautif n’est pas encore identifié.
+**Mise à jour PC réussie le 22 octobre :** le
+[run 39749449739](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39749449739)
+(source `d65a9683567ba5f9c2b0c5e145504a6ce960a2a5`) réussit les compilations Editor
+et Game, les neuf tests natifs, le PIE, l’import/capture des 36 voitures et les
+captures de l’archipel. La copie installée est ensuite ouverte réellement en
+NullRHI puis en D3D11/SM5 avec cinq nouvelles captures et sortie de processus 0.
+L’installateur confirme `EDITOR_PROJECT_UPDATE_INSTALLED`, **51 fichiers serveur
+vérifiés inchangés**, les mêmes processus de runner et le raccourci
+`ANOMALIA - Unreal`. Les versions antérieures et sauvegardes sont conservées.
+Il s’agit du projet Editor : aucun exécutable de jeu autonome ni redémarrage
+Windows réel n’est validé par ce passage.
+
+Le run précédent 39747258459 avait échoué après capture avec `0xC0000005` et
+l’installation avait été bloquée. Le script laisse désormais l’exécuteur Python
+terminer au tick suivant, au lieu d’appeler `QUIT_EDITOR` depuis le callback.
+Cette modification passe les deux ouvertures graphiques successives du run
+ci-dessus (source puis copie installée). L’ancien module fautif n’a pas été
+identifié par les événements Windows ciblés ; les prochains passages restent
+surveillés, sans masquer un code de sortie non nul.
 
 Les ajouts parallèles sont conservés : `cryo-storage.js`, son mode de fusil admin,
 `npc-recruitment.js`, les 39 nouvelles définitions de ressources et le catalogue
@@ -71,10 +80,10 @@ sans sauvegarde du monde temporaire. Trois vues représentatives ont été exami
 (BMW E34, archipel et plage) ; cela ne valide pas l’apparence de chaque modèle,
 leurs proportions, leur placement, leur conduite ou le réalisme final du paysage.
 
-Le workflow du lot réutilise maintenant l’installateur PC existant après réussite
+Le workflow du lot réutilise l’installateur PC existant après réussite
 des tests natifs/PIE, des voitures et d’une preuve GPU fraîche du même commit.
 L’installateur conserve les versions précédentes et vérifie les sauvegardes.
-Son nouveau passage reste à confirmer ; il installe un projet Editor, pas un jeu autonome.
+Son passage a réussi dans le run 39749449739 ; il installe un projet Editor, pas un jeu autonome.
 
 **Validation du 22 octobre :** compilation Editor et Game réussie sur Unreal 5.8.3,
 neuf tests natifs réussis, puis essai PIE solo du ramassage, de l’inventaire, de la
