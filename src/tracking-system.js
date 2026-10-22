@@ -1,11 +1,12 @@
 /** ANOMALIA: deterministic tracking clues; integrate with actor movement, combat and world rendering. */
 export const TRACK_TYPES=Object.freeze(["footprint","blood"]);
 export function createTrackingSystem({maxClues=2000}={}){
- const clues=[];
+ if(!Number.isInteger(maxClues)||maxClues<1||maxClues>10000)throw new RangeError("maxClues must be between 1 and 10000");
+ const clues=[];let sequence=0;
  const clamp=(v,min,max)=>Math.max(min,Math.min(max,v));
  function addClue({type,actorId,actorType="player",x,y=0,z,time=Date.now(),severity=1,terrain="soil",direction=0}={}){
-  if(!TRACK_TYPES.includes(type)||!actorId||![x,y,z,time].every(Number.isFinite))return null;
-  const clue={id:`track-${time}-${clues.length}`,type,actorId:String(actorId),actorType,x,y,z,time,severity:clamp(severity,0,1),terrain,direction};
+  if(!TRACK_TYPES.includes(type)||!actorId||![x,y,z,time,severity,direction].every(Number.isFinite))return null;
+  const clue={id:`track-${time}-${++sequence}`,type,actorId:String(actorId),actorType,x,y,z,time,severity:clamp(severity,0,1),terrain,direction};
   clues.push(clue);while(clues.length>maxClues)clues.shift();return {...clue};
  }
  function lifespan(clue,{rain=0}={}){

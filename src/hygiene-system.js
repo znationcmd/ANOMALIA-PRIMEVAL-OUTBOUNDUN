@@ -5,6 +5,7 @@ export function createHygieneState(saved={}){
  return {hygiene:clamp(saved.hygiene??100),bladder:clamp(saved.bladder??0),bowel:clamp(saved.bowel??0),lastUpdate:Number.isFinite(saved.lastUpdate)?saved.lastUpdate:Date.now()};
 }
 export function tickHygiene(state,{now=Date.now(),activity=1,rain=0}={}){
+ if(![now,activity,rain,state.lastUpdate].every(Number.isFinite)||now<state.lastUpdate)return {...state};
  const elapsed=Math.max(0,Math.min((now-state.lastUpdate)/60000,60));
  return {...state,hygiene:clamp(state.hygiene-elapsed*(.09+.06*activity+.05*rain)),bladder:clamp(state.bladder+elapsed*.14),bowel:clamp(state.bowel+elapsed*.07),lastUpdate:now};
 }

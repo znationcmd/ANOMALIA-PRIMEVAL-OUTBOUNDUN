@@ -8,6 +8,11 @@ on:
       - 'src/cryo-storage.js'
       - 'src/npc-recruitment.js'
       - 'src/systems.js'
+      - 'src/tracking-system.js'
+      - 'src/hygiene-system.js'
+      - 'src/family-system.js'
+      - 'src/family-pregnancy.js'
+      - 'tests/new-survival-modules.test.mjs'
       - 'tests/status-indicators.test.mjs'
       - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
@@ -45,6 +50,11 @@ on:
       - 'src/cryo-storage.js'
       - 'src/npc-recruitment.js'
       - 'src/systems.js'
+      - 'src/tracking-system.js'
+      - 'src/hygiene-system.js'
+      - 'src/family-system.js'
+      - 'src/family-pregnancy.js'
+      - 'tests/new-survival-modules.test.mjs'
       - 'tests/status-indicators.test.mjs'
       - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
@@ -91,6 +101,9 @@ jobs:
       - name: Test prototype cryo and recruitment ownership and duplicate rejection
         if: ${{ hashFiles('tests/cryo-recruitment.test.mjs') != '' }}
         run: node --test tests/cryo-recruitment.test.mjs
+      - name: Regress new tracking hygiene and family prototype state boundaries
+        if: ${{ hashFiles('tests/new-survival-modules.test.mjs') != '' }}
+        run: node --test tests/new-survival-modules.test.mjs
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)
