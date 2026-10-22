@@ -20,39 +20,39 @@
 
 namespace
 {
-    bool SafeId(const FString& Id)
+    bool LootSafeId(const FString& Id)
     {
         if (Id.IsEmpty() || Id.Len() > 64) return false;
         for (TCHAR C : Id) if (C > 127 || !(FChar::IsAlnum(C) || C == '-' || C == '_')) return false;
         return true;
     }
-    bool Parse(const FString& Text, TSharedPtr<FJsonObject>& Out)
+    bool LootParse(const FString& Text, TSharedPtr<FJsonObject>& Out)
     {
         return FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Out) && Out.IsValid();
     }
-    FString Json(const TSharedPtr<FJsonObject>& Root)
+    FString LootJson(const TSharedPtr<FJsonObject>& Root)
     {
         FString Text;
         FJsonSerializer::Serialize(Root.ToSharedRef(), TJsonWriterFactory<>::Create(&Text));
         return Text;
     }
-    bool Read(const FString& File, TSharedPtr<FJsonObject>& Out, FString& Error)
+    bool LootRead(const FString& File, TSharedPtr<FJsonObject>& Out, FString& Error)
     {
         FString Text;
         const int64 Bytes = IFileManager::Get().FileSize(*File);
-        if (Bytes < 0 || Bytes > 1024*1024 || !FFileHelper::LoadFileToString(Text, *File) || !Parse(Text, Out))
+        if (Bytes < 0 || Bytes > 1024*1024 || !FFileHelper::LoadFileToString(Text, *File) || !LootParse(Text, Out))
         { Error = TEXT("Missing, oversized or malformed loot JSON: ") + File; return false; }
         double Schema = 0;
         if (!Out->TryGetNumberField(TEXT("schemaVersion"), Schema) || Schema != 1)
         { Error = TEXT("Unsupported loot schema: ") + File; return false; }
         return true;
     }
-    bool Number(const TSharedPtr<FJsonObject>& Row, const TCHAR* Key, double& Out, double Min, double Max, bool Integer = false)
+    bool LootNumber(const TSharedPtr<FJsonObject>& Row, const TCHAR* Key, double& Out, double Min, double Max, bool Integer = false)
     {
         return Row->TryGetNumberField(Key, Out) && FMath::IsFinite(Out) && Out >= Min && Out <= Max &&
             (!Integer || Out == FMath::FloorToDouble(Out));
     }
-    const TMap<FString, TArray<FString>>& CategoryGroups()
+    const TMap<FString, TArray<FString>>& LootCategoryGroups()
     {
         static const TMap<FString, TArray<FString>> Groups = {
             {TEXT("rp_common"), {TEXT("rp_cash"), TEXT("rp_valuables")}},
@@ -76,8 +76,8 @@ namespace
         };
         return Groups;
     }
-    double Now() { return static_cast<double>(FDateTime::UtcNow().ToUnixTimestamp()); }
-    FString DataFile(const FString& ServerId, const TCHAR* Name)
+    double LootNow() { return static_cast<double>(FDateTime::UtcNow().ToUnixTimestamp()); }
+    FString LootDataFile(const FString& ServerId, const TCHAR* Name)
     {
         const FString Override = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Servers"), ServerId, Name);
         return IFileManager::Get().FileExists(*Override) ? Override :
@@ -111,7 +111,7 @@ void UAnomaliaLootSubsystem::Tick(float DeltaTime)
 bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bool Append)
 {
     TSharedPtr<FJsonObject> Root;
-    if (!Read(File, Root, Error)) return false;
+    if (!LootRead(File, Root, Error)) return false;
     const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
     if (!Root->TryGetArrayField(TEXT("items"), Rows) || !Rows || Rows->Num() < 1 || Rows->Num() > 4096)
     { Error = TEXT("Invalid loot catalogue size"); return false; }
@@ -121,25 +121,25 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         const auto Row = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
         FString Id; FAnomaliaLootItem Item;
         double Min = 0, Max = 0, Quantity = 0, Nominal = 0, Minimum = 0;
-        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) || !SafeId(Id) ||
+        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) || !LootSafeId(Id) ||
             (Append && Items.Contains(FName(*Id))) || !Row->TryGetStringField(TEXT("displayName"), Item.DisplayName) ||
             Item.DisplayName.IsEmpty() || Item.DisplayName.Len() > 128 ||
-            !Row->TryGetStringField(TEXT("category"), Item.Category) || !SafeId(Item.Category) ||
+            !Row->TryGetStringField(TEXT("category"), Item.Category) || !LootSafeId(Item.Category) ||
             !Row->TryGetBoolField(TEXT("enabled"), Item.bEnabled) ||
-            !Number(Row, TEXT("minTier"), Min, 1, 5, true) || !Number(Row, TEXT("maxTier"), Max, Min, 5, true) ||
-            !Number(Row, TEXT("quantity"), Quantity, 1, 100, true) || !Number(Row, TEXT("nominal"), Nominal, 0, 10000, true) ||
-            !Number(Row, TEXT("min"), Minimum, 0, Nominal, true) ||
-            !Number(Row, TEXT("restockSeconds"), Item.RestockSeconds, 1, 2592000) ||
-            !Number(Row, TEXT("lifetimeSeconds"), Item.LifetimeSeconds, 1, 2592000))
+            !LootNumber(Row, TEXT("minTier"), Min, 1, 5, true) || !LootNumber(Row, TEXT("maxTier"), Max, Min, 5, true) ||
+            !LootNumber(Row, TEXT("quantity"), Quantity, 1, 100, true) || !LootNumber(Row, TEXT("nominal"), Nominal, 0, 10000, true) ||
+            !LootNumber(Row, TEXT("min"), Minimum, 0, Nominal, true) ||
+            !LootNumber(Row, TEXT("restockSeconds"), Item.RestockSeconds, 1, 2592000) ||
+            !LootNumber(Row, TEXT("lifetimeSeconds"), Item.LifetimeSeconds, 1, 2592000))
         { Error = TEXT("Invalid or duplicate loot item: ") + Id; return false; }
         Item.Id = FName(*Id); Item.MinTier = static_cast<int32>(Min); Item.MaxTier = static_cast<int32>(Max);
         Item.Quantity = static_cast<int32>(Quantity); Item.Nominal = static_cast<int32>(Nominal); Item.Minimum = static_cast<int32>(Minimum);
         // Explicit physical metadata is optional; no fabricated weapon behaviour is implied.
         double Weight = 1, Stack = 20, Width = 1, Height = 1;
-        if ((Row->HasField(TEXT("weightKg")) && !Number(Row, TEXT("weightKg"), Weight, .001, 500)) ||
-            (Row->HasField(TEXT("maxStack")) && !Number(Row, TEXT("maxStack"), Stack, 1, 100, true)) ||
-            (Row->HasField(TEXT("inventoryWidth")) && !Number(Row, TEXT("inventoryWidth"), Width, 1, 12, true)) ||
-            (Row->HasField(TEXT("inventoryHeight")) && !Number(Row, TEXT("inventoryHeight"), Height, 1, 20, true)))
+        if ((Row->HasField(TEXT("weightKg")) && !LootNumber(Row, TEXT("weightKg"), Weight, .001, 500)) ||
+            (Row->HasField(TEXT("maxStack")) && !LootNumber(Row, TEXT("maxStack"), Stack, 1, 100, true)) ||
+            (Row->HasField(TEXT("inventoryWidth")) && !LootNumber(Row, TEXT("inventoryWidth"), Width, 1, 12, true)) ||
+            (Row->HasField(TEXT("inventoryHeight")) && !LootNumber(Row, TEXT("inventoryHeight"), Height, 1, 20, true)))
         { Error = TEXT("Invalid loot inventory metadata: ") + Id; return false; }
         Item.WeightKg = static_cast<float>(Weight); Item.MaxStack = static_cast<int32>(Stack);
         Item.Size = FIntPoint(static_cast<int32>(Width), static_cast<int32>(Height));
@@ -167,7 +167,7 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
 bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString& InMapName, FString& Error)
 {
     Error.Empty();
-    if (bConfigured || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || !SafeId(InServerId))
+    if (bConfigured || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || !LootSafeId(InServerId))
     { Error = TEXT("Loot configuration requires an unconfigured authority world and valid server ID"); return false; }
     ServerId = InServerId;
     MapName = FPaths::GetBaseFilename(InMapName);
@@ -179,14 +179,14 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
     }
     FTCHARToUTF8 Encoded(*MapName);
     StateId = TEXT("loot-") + FSHA1::HashBuffer(Encoded.Get(), Encoded.Length()).ToString().ToLower();
-    if (!LoadCatalog(DataFile(ServerId, TEXT("loot_items_catalog.json")), Error) ||
-        !LoadCatalog(DataFile(ServerId, TEXT("rp_items_catalog.json")), Error, true)) return false;
+    if (!LoadCatalog(LootDataFile(ServerId, TEXT("loot_items_catalog.json")), Error) ||
+        !LoadCatalog(LootDataFile(ServerId, TEXT("rp_items_catalog.json")), Error, true)) return false;
     TSharedPtr<FJsonObject> Tiers;
-    if (!Read(DataFile(ServerId, TEXT("loot_tiers.json")), Tiers, Error)) return false;
+    if (!LootRead(LootDataFile(ServerId, TEXT("loot_tiers.json")), Tiers, Error)) return false;
     bool Enabled = false;
     const TArray<TSharedPtr<FJsonValue>>* TierRows = nullptr;
     if (!Tiers->TryGetBoolField(TEXT("enabled"), Enabled) ||
-        !Number(Tiers, TEXT("restockSeconds"), DefaultRestock, 1, 2592000) ||
+        !LootNumber(Tiers, TEXT("restockSeconds"), DefaultRestock, 1, 2592000) ||
         !Tiers->TryGetArrayField(TEXT("tiers"), TierRows) || !TierRows || TierRows->Num() != 5)
     { Error = TEXT("Invalid loot tiers"); return false; }
     for (const auto& Value : *TierRows)
@@ -194,8 +194,8 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
         const auto Row = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
         double Tier = 0, Chance = 0;
         const TArray<TSharedPtr<FJsonValue>>* Buildings = nullptr;
-        if (!Row.IsValid() || !Number(Row, TEXT("tier"), Tier, 1, 5, true) || Rarity.Contains(static_cast<int32>(Tier)) ||
-            !Number(Row, TEXT("rarityMultiplier"), Chance, 0, 1) ||
+        if (!Row.IsValid() || !LootNumber(Row, TEXT("tier"), Tier, 1, 5, true) || Rarity.Contains(static_cast<int32>(Tier)) ||
+            !LootNumber(Row, TEXT("rarityMultiplier"), Chance, 0, 1) ||
             !Row->TryGetArrayField(TEXT("buildings"), Buildings) || !Buildings)
         { Error = TEXT("Invalid tier row"); return false; }
         const TArray<TSharedPtr<FJsonValue>>* Categories = nullptr;
@@ -205,21 +205,21 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
         for (const auto& Category : *Categories)
         {
             FString Group;
-            if (!Category.IsValid() || !Category->TryGetString(Group) || !CategoryGroups().Contains(Group))
+            if (!Category.IsValid() || !Category->TryGetString(Group) || !LootCategoryGroups().Contains(Group))
             { Error = TEXT("Unknown tier category group"); return false; }
-            for (const auto& Name : CategoryGroups()[Group]) Allowed.Add(Name);
+            for (const auto& Name : LootCategoryGroups()[Group]) Allowed.Add(Name);
         }
         Rarity.Add(static_cast<int32>(Tier), Chance);
         for (const auto& Building : *Buildings)
         {
             FString Kind;
-            if (!Building.IsValid() || !Building->TryGetString(Kind) || !SafeId(Kind) || BuildingTiers.Contains(Kind))
+            if (!Building.IsValid() || !Building->TryGetString(Kind) || !LootSafeId(Kind) || BuildingTiers.Contains(Kind))
             { Error = TEXT("Invalid or duplicate tier building"); return false; }
             BuildingTiers.Add(Kind, static_cast<int32>(Tier));
         }
     }
     TSharedPtr<FJsonObject> Layout;
-    if (!Read(DataFile(ServerId, TEXT("loot_spawns.json")), Layout, Error)) return false;
+    if (!LootRead(LootDataFile(ServerId, TEXT("loot_spawns.json")), Layout, Error)) return false;
     const TArray<TSharedPtr<FJsonValue>>* Points = nullptr;
     if (!Layout->TryGetArrayField(TEXT("spawns"), Points) || !Points || Points->Num() > 512)
     { Error = TEXT("Invalid loot spawn list"); return false; }
@@ -229,11 +229,11 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
         const auto Row = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
         FAnomaliaLootSpawn Spawn; FString Map;
         double X = 0, Y = 0, Z = 0;
-        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("map"), Map) || !SafeId(Map) ||
-            !Row->TryGetStringField(TEXT("id"), Spawn.Id) || !SafeId(Spawn.Id) ||
+        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("map"), Map) || !LootSafeId(Map) ||
+            !Row->TryGetStringField(TEXT("id"), Spawn.Id) || !LootSafeId(Spawn.Id) ||
             !Row->TryGetStringField(TEXT("buildingType"), Spawn.BuildingType) || !BuildingTiers.Contains(Spawn.BuildingType) ||
-            !Number(Row, TEXT("x"), X, -2400000, 2400000) || !Number(Row, TEXT("y"), Y, -2400000, 2400000) ||
-            !Number(Row, TEXT("z"), Z, -2400000, 2400000))
+            !LootNumber(Row, TEXT("x"), X, -2400000, 2400000) || !LootNumber(Row, TEXT("y"), Y, -2400000, 2400000) ||
+            !LootNumber(Row, TEXT("z"), Z, -2400000, 2400000))
         { Error = TEXT("Invalid loot spawn"); return false; }
         const FString Unique = Map + TEXT(":") + Spawn.Id;
         if (Ids.Contains(Unique)) { Error = TEXT("Duplicate loot spawn identity"); return false; }
@@ -246,7 +246,7 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
             for (const auto& Category : *Categories)
             {
                 FString Name;
-                if (!Category.IsValid() || !Category->TryGetString(Name) || !SafeId(Name))
+                if (!Category.IsValid() || !Category->TryGetString(Name) || !LootSafeId(Name))
                 { Error = TEXT("Invalid loot category filter"); return false; }
                 bool Found = false;
                 for (const auto& Pair : Items) if (Pair.Value.Categories.Contains(Name)) { Found = true; break; }
@@ -267,10 +267,10 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
     FString Raw;
     if (UAnomaliaConfigLibrary::LoadWorldState(ServerId, StateId, Raw, Error))
     {
-        if (!Parse(Raw, State)) return false;
+        if (!LootParse(Raw, State)) return false;
         double Schema = 0; FString SavedMap;
         const TSharedPtr<FJsonObject>* PointsObject = nullptr;
-        if (!Number(State, TEXT("schemaVersion"), Schema, 1, 1, true) ||
+        if (!LootNumber(State, TEXT("schemaVersion"), Schema, 1, 1, true) ||
             !State->TryGetStringField(TEXT("map"), SavedMap) || SavedMap != MapName ||
             !State->TryGetObjectField(TEXT("points"), PointsObject) || !PointsObject || !PointsObject->IsValid())
         { Error = TEXT("Invalid loot persistence; existing data left untouched"); return false; }
@@ -287,11 +287,11 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
     {
         const auto Row = Pair.Value.IsValid() && Pair.Value->Type == EJson::Object ? Pair.Value->AsObject() : nullptr;
         FString Id, Generation; double Count = 0, Available = 0, Expires = 0;
-        if (!SafeId(Pair.Key) || !Row.IsValid() || !Row->TryGetStringField(TEXT("itemId"), Id) ||
+        if (!LootSafeId(FString(*Pair.Key)) || !Row.IsValid() || !Row->TryGetStringField(TEXT("itemId"), Id) ||
             (!Id.IsEmpty() && !Items.Contains(FName(*Id))) || !Row->TryGetStringField(TEXT("generation"), Generation) ||
-            (!Generation.IsEmpty() && !SafeId(Generation)) ||
-            !Number(Row, TEXT("count"), Count, 0, 100, true) ||
-            !Number(Row, TEXT("availableAt"), Available, 0, 1e12) || !Number(Row, TEXT("expiresAt"), Expires, 0, 1e12) ||
+            (!Generation.IsEmpty() && !LootSafeId(Generation)) ||
+            !LootNumber(Row, TEXT("count"), Count, 0, 100, true) ||
+            !LootNumber(Row, TEXT("availableAt"), Available, 0, 1e12) || !LootNumber(Row, TEXT("expiresAt"), Expires, 0, 1e12) ||
             (Id.IsEmpty() != (Count == 0)) || (!Id.IsEmpty() && (Generation.IsEmpty() || Count > Items[FName(*Id)].MaxStack)))
         { Error = TEXT("Invalid saved loot point; recovery stopped without overwriting it"); bConfigured = false; return false; }
     }
@@ -310,7 +310,7 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
 }
 
 bool UAnomaliaLootSubsystem::Persist(FString& Error)
-{ return UAnomaliaConfigLibrary::SaveWorldState(ServerId, StateId, Json(State), Error); }
+{ return UAnomaliaConfigLibrary::SaveWorldState(ServerId, StateId, LootJson(State), Error); }
 
 bool UAnomaliaLootSubsystem::HasPendingPlayer(const FString& PlayerId) const
 {
@@ -328,7 +328,7 @@ bool UAnomaliaLootSubsystem::RecoverPending(FString& Error)
     { Error = TEXT("Malformed pending loot transaction"); return false; }
     const auto Pending = *PendingPtr;
     FString PlayerId, ProfileJson;
-    if (!Pending->TryGetStringField(TEXT("playerId"), PlayerId) || !SafeId(PlayerId) ||
+    if (!Pending->TryGetStringField(TEXT("playerId"), PlayerId) || !LootSafeId(PlayerId) ||
         !Pending->TryGetStringField(TEXT("profileAfter"), ProfileJson))
     { Error = TEXT("Invalid pending loot transaction"); return false; }
     // Intent already contains the consumed point and the complete post-pickup profile.
@@ -351,7 +351,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
     if (!bReady || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || State->HasField(TEXT("pending"))) return;
     const auto Points = State->GetObjectField(TEXT("points"));
     bool Changed = false;
-    const double Time = Now();
+    const double Time = LootNow();
     for (const auto& Spawn : Spawns)
     {
         const auto Row = Points->GetObjectField(Spawn.Id);
@@ -447,7 +447,7 @@ bool UAnomaliaLootSubsystem::TryCollect(AAnomaliaLootPickup* Pickup, AAnomaliaSu
 {
     Error.Empty();
     if (!bReady || !IsValid(Pickup) || !IsValid(Survivor) || !Survivor->HasAuthority() ||
-        Pickup->GetWorld() != GetWorld() || Survivor->GetWorld() != GetWorld() || !SafeId(PlayerId) ||
+        Pickup->GetWorld() != GetWorld() || Survivor->GetWorld() != GetWorld() || !LootSafeId(PlayerId) ||
         Survivor->Health <= 0 || Survivor->bSleeping || State->HasField(TEXT("pending")) ||
         FVector::DistSquared(Pickup->GetActorLocation(), Survivor->GetActorLocation()) > FMath::Square(250.f))
     { Error = TEXT("Loot pickup is unavailable"); return false; }
@@ -465,10 +465,10 @@ bool UAnomaliaLootSubsystem::TryCollect(AAnomaliaLootPickup* Pickup, AAnomaliaSu
     const auto* Item = FindItem(Pickup->ItemId);
     if (!Item || Point->GetStringField(TEXT("itemId")) != Pickup->ItemId.ToString() ||
         Point->GetStringField(TEXT("generation")) != Pickup->Generation ||
-        Point->GetNumberField(TEXT("count")) != Pickup->Count || Now() >= Point->GetNumberField(TEXT("expiresAt"))) return false;
+        Point->GetNumberField(TEXT("count")) != Pickup->Count || LootNow() >= Point->GetNumberField(TEXT("expiresAt"))) return false;
     const auto Before = Inventory->Stacks;
     const int32 BeforeId = Inventory->NextStackId;
-    const FString StateBefore = Json(State);
+    const FString StateBefore = LootJson(State);
     Inventory->bSuppressNotifications = true;
     if (!Inventory->TryAddItem(Pickup->ItemId, Pickup->Count))
     { Inventory->bSuppressNotifications = false; Error = TEXT("Inventory capacity exceeded"); return false; }
@@ -479,13 +479,13 @@ bool UAnomaliaLootSubsystem::TryCollect(AAnomaliaLootPickup* Pickup, AAnomaliaSu
         return false;
     }
     Point->SetStringField(TEXT("itemId"), TEXT("")); Point->SetNumberField(TEXT("count"), 0);
-    Point->SetNumberField(TEXT("availableAt"), Now()+Item->RestockSeconds);
+    Point->SetNumberField(TEXT("availableAt"), LootNow()+Item->RestockSeconds);
     auto Pending = MakeShared<FJsonObject>();
     Pending->SetStringField(TEXT("playerId"), PlayerId); Pending->SetStringField(TEXT("profileAfter"), ProfileAfter);
     State->SetObjectField(TEXT("pending"), Pending);
     if (!Persist(Error))
     {
-        Parse(StateBefore, State);
+        LootParse(StateBefore, State);
         Inventory->Stacks = Before; Inventory->NextStackId = BeforeId; Inventory->bSuppressNotifications = false;
         return false;
     }

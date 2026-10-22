@@ -15,17 +15,17 @@
 namespace
 {
     const FString LedgerId = TEXT("rp-economy");
-    bool SafeId(const FString& Id)
+    bool BankSafeId(const FString& Id)
     {
         if (Id.IsEmpty() || Id.Len() > 64) return false;
         for (TCHAR C : Id) if (C > 127 || !(FChar::IsAlnum(C) || C == '-' || C == '_')) return false;
         return true;
     }
-    bool Parse(const FString& Text, TSharedPtr<FJsonObject>& Out)
+    bool BankParse(const FString& Text, TSharedPtr<FJsonObject>& Out)
     { return FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text), Out) && Out.IsValid(); }
-    FString Json(const TSharedPtr<FJsonObject>& Root)
+    FString BankJson(const TSharedPtr<FJsonObject>& Root)
     { FString Text; FJsonSerializer::Serialize(Root.ToSharedRef(), TJsonWriterFactory<>::Create(&Text)); return Text; }
-    bool Integer(const TSharedPtr<FJsonObject>& Row, const TCHAR* Key, int64& Out, int64 Min, int64 Max)
+    bool BankInteger(const TSharedPtr<FJsonObject>& Row, const TCHAR* Key, int64& Out, int64 Min, int64 Max)
     {
         double Value = 0;
         if (!Row->TryGetNumberField(Key, Value) || !FMath::IsFinite(Value) || Value < Min || Value > Max || Value != FMath::FloorToDouble(Value)) return false;
@@ -47,7 +47,7 @@ void UAnomaliaEconomySubsystem::Tick(float DeltaTime)
 bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FString& InMapName, FString& Error)
 {
     Error.Empty();
-    if (bConfigured || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || !SafeId(InServerId))
+    if (bConfigured || !GetWorld() || GetWorld()->GetNetMode() == NM_Client || !BankSafeId(InServerId))
     { Error = TEXT("Invalid authority economy scope"); return false; }
     ServerId = InServerId; MapName = FPaths::GetBaseFilename(InMapName);
     if (MapName.StartsWith(TEXT("UEDPIE_")))
@@ -59,12 +59,12 @@ bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FStri
     const FString File = IFileManager::Get().FileExists(*Override) ? Override :
         FPaths::Combine(FPaths::ProjectContentDir(), TEXT("Anomalia/Data/rp_economy.json"));
     FString Raw; TSharedPtr<FJsonObject> Config;
-    if (IFileManager::Get().FileSize(*File) > 262144 || !FFileHelper::LoadFileToString(Raw, *File) || !Parse(Raw, Config))
+    if (IFileManager::Get().FileSize(*File) > 262144 || !FFileHelper::LoadFileToString(Raw, *File) || !BankParse(Raw, Config))
     { Error = TEXT("Missing or invalid RP economy configuration"); return false; }
     int64 Schema = 0;
     const TArray<TSharedPtr<FJsonValue>> *Notes = nullptr, *Locations = nullptr;
-    if (!Integer(Config, TEXT("schemaVersion"), Schema, 1, 1) || !Config->TryGetBoolField(TEXT("enabled"), bEnabled) ||
-        !Integer(Config, TEXT("maxBalanceCents"), MaxBalanceCents, 1, 1000000000000LL) ||
+    if (!BankInteger(Config, TEXT("schemaVersion"), Schema, 1, 1) || !Config->TryGetBoolField(TEXT("enabled"), bEnabled) ||
+        !BankInteger(Config, TEXT("maxBalanceCents"), MaxBalanceCents, 1, 1000000000000LL) ||
         !Config->TryGetArrayField(TEXT("denominations"), Notes) || !Notes || Notes->Num() != 7 ||
         !Config->TryGetArrayField(TEXT("terminals"), Locations) || !Locations || Locations->Num() > 256)
     { Error = TEXT("Invalid RP economy settings"); return false; }
@@ -76,7 +76,7 @@ bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FStri
         const auto Row = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
         FString Id; int64 Cents = 0;
         if (!Row.IsValid() || !Row->TryGetStringField(TEXT("itemId"), Id) || !Required.Contains(FName(*Id)) ||
-            Denominations.Contains(FName(*Id)) || !Integer(Row, TEXT("valueCents"), Cents, 1, 50000) || Required[FName(*Id)] != Cents)
+            Denominations.Contains(FName(*Id)) || !BankInteger(Row, TEXT("valueCents"), Cents, 1, 50000) || Required[FName(*Id)] != Cents)
         { Error = TEXT("Invalid banknote denomination"); return false; }
         Denominations.Add(FName(*Id), Cents);
     }
@@ -85,8 +85,8 @@ bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FStri
     {
         const auto Row = Value.IsValid() && Value->Type == EJson::Object ? Value->AsObject() : nullptr;
         FString Id, Map; double X = 0, Y = 0, Z = 0;
-        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) || !SafeId(Id) ||
-            !Row->TryGetStringField(TEXT("map"), Map) || !SafeId(Map) || Seen.Contains(Map+TEXT(":")+Id) ||
+        if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) || !BankSafeId(Id) ||
+            !Row->TryGetStringField(TEXT("map"), Map) || !BankSafeId(Map) || Seen.Contains(Map+TEXT(":")+Id) ||
             !Row->TryGetNumberField(TEXT("x"), X) || !Row->TryGetNumberField(TEXT("y"), Y) || !Row->TryGetNumberField(TEXT("z"), Z) ||
             !FMath::IsFinite(X) || !FMath::IsFinite(Y) || !FMath::IsFinite(Z) || FMath::Abs(X)>2400000 || FMath::Abs(Y)>2400000 || FMath::Abs(Z)>2400000)
         { Error = TEXT("Invalid bank terminal placement"); return false; }
@@ -94,17 +94,17 @@ bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FStri
     }
     if (UAnomaliaConfigLibrary::LoadWorldState(ServerId, LedgerId, Raw, Error))
     {
-        if (!Parse(Raw, State)) return false;
+        if (!BankParse(Raw, State)) return false;
         const TSharedPtr<FJsonObject>* Accounts = nullptr;
-        if (!Integer(State, TEXT("schemaVersion"), Schema, 1, 1) ||
+        if (!BankInteger(State, TEXT("schemaVersion"), Schema, 1, 1) ||
             !State->TryGetObjectField(TEXT("accounts"), Accounts) || !Accounts || !Accounts->IsValid() || (*Accounts)->Values.Num()>2000)
         { Error = TEXT("Malformed bank ledger; existing state preserved"); return false; }
         for (const auto& Pair : (*Accounts)->Values)
         {
             const auto Row = Pair.Value.IsValid() && Pair.Value->Type == EJson::Object ? Pair.Value->AsObject() : nullptr;
             int64 Balance = 0, Sequence = 0;
-            if (!SafeId(Pair.Key) || !Row.IsValid() || !Integer(Row, TEXT("balanceCents"), Balance, 0, MaxBalanceCents) ||
-                !Integer(Row, TEXT("sequence"), Sequence, 0, 1000000000000LL))
+            if (!BankSafeId(FString(*Pair.Key)) || !Row.IsValid() || !BankInteger(Row, TEXT("balanceCents"), Balance, 0, MaxBalanceCents) ||
+                !BankInteger(Row, TEXT("sequence"), Sequence, 0, 1000000000000LL))
             { Error = TEXT("Malformed bank account; existing state preserved"); return false; }
         }
     }
@@ -119,7 +119,7 @@ bool UAnomaliaEconomySubsystem::Configure(const FString& InServerId, const FStri
     bReady = Persist(Error); return bReady;
 }
 bool UAnomaliaEconomySubsystem::Persist(FString& Error)
-{ return UAnomaliaConfigLibrary::SaveWorldState(ServerId, LedgerId, Json(State), Error); }
+{ return UAnomaliaConfigLibrary::SaveWorldState(ServerId, LedgerId, BankJson(State), Error); }
 bool UAnomaliaEconomySubsystem::HasPendingPlayer(const FString& PlayerId) const
 {
     const TSharedPtr<FJsonObject>* Pending = nullptr; FString Id;
@@ -132,7 +132,7 @@ bool UAnomaliaEconomySubsystem::RecoverPending(FString& Error)
     const TSharedPtr<FJsonObject>* Ptr = nullptr;
     if (!State->TryGetObjectField(TEXT("pending"), Ptr) || !Ptr || !Ptr->IsValid()) return false;
     const auto Pending = *Ptr; FString Player, Profile;
-    if (!Pending->TryGetStringField(TEXT("playerId"), Player) || !SafeId(Player) ||
+    if (!Pending->TryGetStringField(TEXT("playerId"), Player) || !BankSafeId(Player) ||
         !Pending->TryGetStringField(TEXT("profileAfter"), Profile)) return false;
     if (!UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, Player, Profile, Error)) return false;
     State->RemoveField(TEXT("pending"));
@@ -179,7 +179,7 @@ bool UAnomaliaEconomySubsystem::NearTerminal(const UAnomaliaInventoryComponent* 
 void UAnomaliaEconomySubsystem::RefreshAccount(UAnomaliaInventoryComponent* Inventory, const FString& PlayerId)
 {
     if (!bReady || !bEnabled || !Inventory || !Inventory->GetOwner() || !Inventory->GetOwner()->HasAuthority() ||
-        Inventory->IsPersistenceLocked() || !SafeId(PlayerId) || State->HasField(TEXT("pending"))) return;
+        Inventory->IsPersistenceLocked() || !BankSafeId(PlayerId) || State->HasField(TEXT("pending"))) return;
     auto Row = Account(PlayerId);
     if (!Row.IsValid())
     {
@@ -205,7 +205,7 @@ bool UAnomaliaEconomySubsystem::Execute(UAnomaliaInventoryComponent* Inventory, 
 {
     Error.Empty();
     const auto* Loot = GetWorld() ? GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>() : nullptr;
-    if (!bReady || !bEnabled || !Inventory || Inventory->IsPersistenceLocked() || !SafeId(PlayerId) ||
+    if (!bReady || !bEnabled || !Inventory || Inventory->IsPersistenceLocked() || !BankSafeId(PlayerId) ||
         (Loot && Loot->HasPendingPlayer(PlayerId)) ||
         State->HasField(TEXT("pending")) || !NearTerminal(Inventory))
     { Error = TEXT("Banque indisponible : approchez-vous d’un terminal."); return false; }
@@ -214,18 +214,18 @@ bool UAnomaliaEconomySubsystem::Execute(UAnomaliaInventoryComponent* Inventory, 
         Sequence != static_cast<int64>(Sender->GetNumberField(TEXT("sequence")))+1)
     { Error = TEXT("Requête bancaire répétée ou périmée."); return false; }
     const int64 Balance = static_cast<int64>(Sender->GetNumberField(TEXT("balanceCents")));
-    const FString BeforeState = Json(State);
+    const FString BeforeState = BankJson(State);
     const auto BeforeStacks = Inventory->Stacks; const int32 BeforeId = Inventory->NextStackId;
     if (Action == EAnomaliaBankAction::Transfer)
     {
-        const auto Recipient = SafeId(RecipientId) && RecipientId != PlayerId ? Account(RecipientId) : nullptr;
+        const auto Recipient = BankSafeId(RecipientId) && RecipientId != PlayerId ? Account(RecipientId) : nullptr;
         if (!Recipient.IsValid() || !NoteId.IsNone() || AmountCents <= 0 || AmountCents > Balance ||
             AmountCents > MaxBalanceCents-static_cast<int64>(Recipient->GetNumberField(TEXT("balanceCents"))))
         { Error = TEXT("Compte ou montant de transfert invalide."); return false; }
         Sender->SetNumberField(TEXT("balanceCents"), static_cast<double>(Balance-AmountCents));
         Sender->SetNumberField(TEXT("sequence"), static_cast<double>(Sequence));
         Recipient->SetNumberField(TEXT("balanceCents"), Recipient->GetNumberField(TEXT("balanceCents"))+static_cast<double>(AmountCents));
-        if (!Persist(Error)) { Parse(BeforeState, State); return false; }
+        if (!Persist(Error)) { BankParse(BeforeState, State); return false; }
         RefreshAccount(Inventory, PlayerId); return true;
     }
     const int64 Value = GetDenomination(NoteId);
@@ -245,7 +245,7 @@ bool UAnomaliaEconomySubsystem::Execute(UAnomaliaInventoryComponent* Inventory, 
     auto Pending = MakeShared<FJsonObject>(); Pending->SetStringField(TEXT("playerId"), PlayerId); Pending->SetStringField(TEXT("profileAfter"), After);
     State->SetObjectField(TEXT("pending"), Pending);
     if (!Persist(Error))
-    { Parse(BeforeState, State); Inventory->Stacks = BeforeStacks; Inventory->NextStackId = BeforeId; Inventory->bSuppressNotifications = false; return false; }
+    { BankParse(BeforeState, State); Inventory->Stacks = BeforeStacks; Inventory->NextStackId = BeforeId; Inventory->bSuppressNotifications = false; return false; }
     Inventory->bPersistenceLocked = true; Inventory->bSuppressNotifications = false; PendingInventory = Inventory; bReady = false;
     if (!RecoverPending(Error)) UE_LOG(LogTemp, Error, TEXT("ANOMALIA bank transaction retained for recovery: %s"), *Error);
     if (bReady) RefreshAccount(Inventory, PlayerId);
