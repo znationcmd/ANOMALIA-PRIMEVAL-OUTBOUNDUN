@@ -53,7 +53,7 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
     if(Phase==0)
     {
         Survivor=Cast<AAnomaliaSurvivor>(PC->GetPawn());if(!Survivor.IsValid())return;
-        int32 Trees=0;bool House=false,Terrain=false,Road=false;
+        int32 Trees=0,Grass=0,Rocks=0;bool House=false,Terrain=false,Road=false;
         for(TActorIterator<AActor> It(GetWorld());It;++It)
         {
             if(!It->ActorHasTag(TEXT("ANOMALIA_VisualValidation_v1_Owner")))continue;
@@ -61,16 +61,18 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
             if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(*It))Car=Vehicle;
             if(auto* Component=It->FindComponentByClass<UStaticMeshComponent>())
             {
-                auto* Mesh=Component->GetStaticMesh();if(!Mesh){Finish(TEXT("Missing cooked review art"));return;}
+                UStaticMesh* Mesh=Component->GetStaticMesh();if(!Mesh){Finish(TEXT("Missing cooked review art"));return;}
                 const FString Path=Mesh->GetPathName();
                 if(!Path.StartsWith(TEXT("/Game/Anomalia/VisualValidation_v1/"))){Finish(TEXT("Review map contains fallback geometry: ")+Path);return;}
                 MeshPaths.AddUnique(Path);
                 if(It->GetName().IsEmpty()||Component->GetNumMaterials()<1){Finish(TEXT("Review material missing"));return;}
                 if(Path.Contains(TEXT("/island_tree_02/")))++Trees;
+                if(Path.Contains(TEXT("/grass_medium_01/")))++Grass;
+                if(Path.Contains(TEXT("/rock_moss_set_01/")))++Rocks;
                 House|=Path.Contains(TEXT("/detached_house/"));Terrain|=Path.Contains(TEXT("/forest_ground_04/"));Road|=Path.Contains(TEXT("/asphalt_02/"));
             }
         }
-        if(!House||!Terrain||!Road||Trees<18||Cameras.Num()!=3||!Car.IsValid()||Car->Body->GetStaticMesh()!=Car->PresentationMeshOverride.Get())
+        if(!House||!Terrain||!Road||Trees<18||Grass<24||Rocks<3||MeshPaths.Num()!=7||Cameras.Num()!=3||!Car.IsValid()||Car->Body->GetStaticMesh()!=Car->PresentationMeshOverride.Get())
         {Finish(TEXT("Incomplete imported-art review scene or vehicle binding"));return;}
         Checks.Add(TEXT("cooked_house_tree_grass_rock_terrain_road_and_detailed_car"));
         Checks.Add(TEXT("no_engine_basic_shape_fallbacks_in_review_scene"));
