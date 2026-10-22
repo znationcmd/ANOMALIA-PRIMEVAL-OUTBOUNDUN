@@ -187,11 +187,299 @@
       "source": "farming",
       "collectable": true,
       "requiresUE5Implementation": true
+    },
+    {
+      "id": "thatch",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "wood",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "fungal_wood",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "stone",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "flint",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "hide",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "fur",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "wool",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "keratin",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "chitin",
+      "group": "basic",
+      "source": "world_gathering_or_creature_harvest",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "metal_ore",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "metal_ingot",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "crystal",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "obsidian",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "oil",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "silica_pearls",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "charcoal",
+      "group": "mineral",
+      "source": "mining_or_refining",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "gunpowder",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "sparkpowder",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "cementing_paste",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "achatina_paste",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "electronics",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "polymer",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "organic_polymer",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "gasoline",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "absorbent_substrate",
+      "group": "refined",
+      "source": "crafting_station_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "black_pearls",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "angler_gel",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "bio_toxin",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "leech_blood",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "woolly_rhino_horn",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "sulfur",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "silk",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "sand",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "green_gem",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "blue_gem",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "red_gem",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "condensed_gas",
+      "group": "rare",
+      "source": "rare_biome_or_creature",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "element",
+      "group": "advanced",
+      "source": "boss_event_or_advanced_crafting",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "element_shard",
+      "group": "advanced",
+      "source": "boss_event_or_advanced_crafting",
+      "collectable": false,
+      "requiresUE5Implementation": true
+    },
+    {
+      "id": "element_dust",
+      "group": "advanced",
+      "source": "boss_event_or_advanced_crafting",
+      "collectable": false,
+      "requiresUE5Implementation": true
     }
   ],
   "notes": [
     "Each recipe ingredient requires a matching inventory item definition before crafting can work",
-    "Cooking stations and gathering nodes require Unreal implementation"
+    "Cooking stations and gathering nodes require Unreal implementation",
+    "Expanded catalog entries are inventory definitions; harvesting nodes, recipes and Unreal integration must be implemented and verified."
   ],
   "status": "CONFIG_ONLY"
 }
