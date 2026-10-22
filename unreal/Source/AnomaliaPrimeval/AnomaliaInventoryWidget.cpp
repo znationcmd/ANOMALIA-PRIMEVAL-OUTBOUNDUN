@@ -29,6 +29,13 @@ void UAnomaliaInventoryWidget::InitializeForInventory(UAnomaliaInventoryComponen
     RefreshInventory();
 }
 
+TSharedRef<SWidget> UAnomaliaInventoryWidget::RebuildWidget()
+{
+    if(!WidgetTree) WidgetTree=NewObject<UWidgetTree>(this,TEXT("WidgetTree"));
+    BuildLayout();
+    return Super::RebuildWidget();
+}
+
 void UAnomaliaInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();

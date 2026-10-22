@@ -26,6 +26,13 @@ void UAnomaliaStatusWidget::InitializeForSurvivor(AAnomaliaSurvivor* InSurvivor)
     RefreshFromSurvivor();
 }
 
+TSharedRef<SWidget> UAnomaliaStatusWidget::RebuildWidget()
+{
+    if(!WidgetTree) WidgetTree=NewObject<UWidgetTree>(this,TEXT("WidgetTree"));
+    BuildLayout();
+    return Super::RebuildWidget();
+}
+
 void UAnomaliaStatusWidget::NativeConstruct()
 {
     Super::NativeConstruct();

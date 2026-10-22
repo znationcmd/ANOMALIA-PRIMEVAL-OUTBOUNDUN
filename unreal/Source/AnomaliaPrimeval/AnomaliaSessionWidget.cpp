@@ -31,9 +31,19 @@ UAnomaliaSessionWidget* UAnomaliaSessionWidget::Open(APlayerController* PC,bool 
     if(Menu->PlayButton) Menu->PlayButton->SetUserFocus(PC);
     return Menu;
 }
+TSharedRef<SWidget> UAnomaliaSessionWidget::RebuildWidget()
+{
+    if(!WidgetTree) WidgetTree=NewObject<UWidgetTree>(this,TEXT("WidgetTree"));
+    BuildLayout();
+    return Super::RebuildWidget();
+}
+
 void UAnomaliaSessionWidget::NativeConstruct()
 {
     Super::NativeConstruct(); SetIsFocusable(true);
+}
+void UAnomaliaSessionWidget::BuildLayout()
+{
     if(!WidgetTree || WidgetTree->RootWidget) return;
     auto* Safe=WidgetTree->ConstructWidget<USafeZone>(USafeZone::StaticClass()); WidgetTree->RootWidget=Safe;
     auto* Canvas=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass()); Safe->SetContent(Canvas);

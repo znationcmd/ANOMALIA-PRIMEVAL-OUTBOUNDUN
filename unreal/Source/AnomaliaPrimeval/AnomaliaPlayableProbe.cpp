@@ -128,7 +128,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         {
             Checks.Add(TEXT("three_vehicle_enter_accelerate_steer_exit"));
             FString File; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),File);
-            FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(File,TEXT("png")),false,false); Next=Now+3; Phase=8; return;
+            FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(File,TEXT("png")),true,false); Next=Now+3; Phase=8; return;
         }
         auto* V=Vehicles[VehicleIndex].Get(); if(!V) { Finish(TEXT("Vehicle destroyed")); return; }
         S->SetActorLocation(V->GetActorLocation()+FVector(0,300,100),false,nullptr,ETeleportType::TeleportPhysics);

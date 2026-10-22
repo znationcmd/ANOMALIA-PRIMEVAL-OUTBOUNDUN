@@ -50,6 +50,7 @@ class ANOMALIAPRIMEVAL_API UAnomaliaInventoryWidget : public UUserWidget
 public:
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
+    virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeDestruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
     void FocusFirstAction();

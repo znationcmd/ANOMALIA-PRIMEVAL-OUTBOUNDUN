@@ -33,6 +33,7 @@ public:
     /** Also usable by editor automation to exercise the real touch buttons. */
     void SetTouchControlsEnabled(bool Enabled);
     virtual void NativeConstruct() override;
+    virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeDestruct() override;
     virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
 
