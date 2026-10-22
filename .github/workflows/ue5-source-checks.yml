@@ -3,6 +3,13 @@ name: Unreal Engine 5 source checks
 on:
   push:
     paths:
+      - 'src/status-indicators.js'
+      - 'src/vitals-runtime.js'
+      - 'src/cryo-storage.js'
+      - 'src/npc-recruitment.js'
+      - 'src/systems.js'
+      - 'tests/status-indicators.test.mjs'
+      - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
       - 'tests/test_ue5_short_import_source.py'
       - 'public/config/rp*.json'
@@ -33,6 +40,13 @@ on:
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
+      - 'src/status-indicators.js'
+      - 'src/vitals-runtime.js'
+      - 'src/cryo-storage.js'
+      - 'src/npc-recruitment.js'
+      - 'src/systems.js'
+      - 'tests/status-indicators.test.mjs'
+      - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
       - 'tests/test_ue5_short_import_source.py'
       - 'public/config/rp*.json'
@@ -67,6 +81,16 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: ${{ hashFiles('tests/status-indicators.test.mjs', 'tests/cryo-recruitment.test.mjs') != '' }}
+        with:
+          node-version: '22'
+      - name: Test prototype indicator recovery and saved vital state
+        if: ${{ hashFiles('tests/status-indicators.test.mjs') != '' }}
+        run: node --test tests/status-indicators.test.mjs
+      - name: Test prototype cryo and recruitment ownership and duplicate rejection
+        if: ${{ hashFiles('tests/cryo-recruitment.test.mjs') != '' }}
+        run: node --test tests/cryo-recruitment.test.mjs
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)

@@ -2,6 +2,17 @@
 
 ## Ajouts réconciliés le 22 octobre
 
+**Blocage PC actuel :** le run 39747258459 (source `76f8531…`) a réussi les
+compilations, neuf tests natifs, le PIE et les captures des 36 voitures. Les cinq
+captures de l’archipel ont aussi été produites, mais le processus est sorti avec
+`0xC0000005` après la fermeture du journal et le déchargement du monde. La mise à
+jour PC a été ignorée automatiquement ; l’ancienne installation est conservée.
+Les passages précédents réussis ne suffisent donc pas à déclarer la fermeture
+stabilisée. Le lot `d65a968…` laisse maintenant l’exécuteur Python terminer au tick
+suivant et collecte les événements Windows 1000/1001 ciblés avant et après test.
+Sa validation est en cours ; le diagnostic préalable ne contient aucun événement
+du processus concerné, donc le module fautif n’est pas encore identifié.
+
 Les ajouts parallèles sont conservés : `cryo-storage.js`, son mode de fusil admin,
 `npc-recruitment.js`, les 39 nouvelles définitions de ressources et le catalogue
 de 72 ressources de fabrication (aucun ID dupliqué dans ce dernier catalogue).
@@ -14,6 +25,9 @@ Leur contrôle a corrigé la double capture d’un même objet créature entre t
 la réinscription d’un PNJ dans une autre station, les droits de configuration et
 d’affectation, les faux drapeaux admin et les nombres non finis. Six nouveaux tests
 vérifient aussi la conservation des données génétiques et des possessions.
+Le total local est de 81 tests JavaScript réussis. Les neuf tests ciblés des
+indicateurs et des ajouts cryo/PNJ sont aussi raccordés aux contrôles GitHub de
+la branche et de la PR, sans dépendance du jeu ni déploiement du prototype.
 Ces tests ne valident ni l’authentification réseau, ni une transaction persistante,
 ni la suppression/apparition d’acteurs réels dans Unreal.
 
