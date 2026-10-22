@@ -145,7 +145,8 @@ bool UAnomaliaConfigFusionLibrary::FlattenIniJson(
 
     for (const auto& Section : Sections->Values)
     {
-        if (IsUnsafeKey(Section.Key) || !Section.Value.IsValid() ||
+        const FString SectionName(Section.Key.Len(), *Section.Key);
+        if (IsUnsafeKey(SectionName) || !Section.Value.IsValid() ||
             Section.Value->Type != EJson::Object)
         {
             OutError = TEXT("Invalid INI section object");
@@ -154,9 +155,10 @@ bool UAnomaliaConfigFusionLibrary::FlattenIniJson(
         const TSharedPtr<FJsonObject> Values = Section.Value->AsObject();
         for (const auto& Entry : Values->Values)
         {
-            const FString Name = Section.Key.IsEmpty() ? Entry.Key :
-                Section.Key + TEXT(".") + Entry.Key;
-            if (IsUnsafeKey(Entry.Key) || IsUnsafeKey(Name))
+            const FString EntryName(Entry.Key.Len(), *Entry.Key);
+            const FString Name = SectionName.IsEmpty() ? EntryName :
+                SectionName + TEXT(".") + EntryName;
+            if (IsUnsafeKey(EntryName) || IsUnsafeKey(Name))
             {
                 OutError = TEXT("Unsafe flattened key");
                 return false;
@@ -199,25 +201,26 @@ bool UAnomaliaConfigFusionLibrary::MergeConfigJson(
     {
         for (const auto& Entry : Layer.Data->Values)
         {
-            if (IsUnsafeKey(Entry.Key) || !Entry.Value.IsValid())
+            const FString EntryName(Entry.Key.Len(), *Entry.Key);
+            if (IsUnsafeKey(EntryName) || !Entry.Value.IsValid())
             {
                 OutError = TEXT("Unsafe or invalid config key");
                 return false;
             }
-            if (Merged->HasField(Entry.Key))
+            if (Merged->HasField(EntryName))
             {
                 const TSharedPtr<FJsonValue> Previous = Merged->Values.FindRef(Entry.Key);
                 if (EncodedValue(Previous) != EncodedValue(Entry.Value))
                 {
                     TSharedRef<FJsonObject> Conflict = MakeShared<FJsonObject>();
-                    Conflict->SetStringField(TEXT("key"), Entry.Key);
+                    Conflict->SetStringField(TEXT("key"), EntryName);
                     Conflict->SetField(TEXT("from"), Previous);
                     Conflict->SetField(TEXT("to"), Entry.Value);
                     Conflict->SetStringField(TEXT("source"), Layer.Name);
                     Conflicts.Add(MakeShared<FJsonValueObject>(Conflict));
                 }
             }
-            Merged->SetField(Entry.Key, Entry.Value);
+            Merged->SetField(EntryName, Entry.Value);
         }
     }
 
