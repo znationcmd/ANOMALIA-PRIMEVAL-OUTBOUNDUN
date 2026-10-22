@@ -30,7 +30,7 @@ AAnomaliaPlayableProbe::AAnomaliaPlayableProbe() { PrimaryActorTick.bCanEverTick
 void AAnomaliaPlayableProbe::Finish(const FString& Error)
 {
     FString File; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),File);
-    auto Report=MakeShared<FJsonObject>(); Report->SetStringField(TEXT("state"),Error.IsEmpty()?TEXT("PACKAGED_GAME_SMOKE_PASSED"):TEXT("FAILED"));
+    TSharedPtr<FJsonObject> Report=MakeShared<FJsonObject>(); Report->SetStringField(TEXT("state"),Error.IsEmpty()?TEXT("PACKAGED_GAME_SMOKE_PASSED"):TEXT("FAILED"));
     Report->SetStringField(TEXT("error"),Error); Report->SetStringField(TEXT("savedDir"),FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
     Report->SetStringField(TEXT("map"),GetWorld()->GetMapName());
     TArray<TSharedPtr<FJsonValue>> Rows; for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
