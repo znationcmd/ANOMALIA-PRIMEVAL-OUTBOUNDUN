@@ -206,7 +206,7 @@ bool UAnomaliaConfigFusionLibrary::MergeConfigJson(
             }
             if (Merged->HasField(Entry.Key))
             {
-                const TSharedPtr<FJsonValue> Previous = Merged->TryGetField(Entry.Key);
+                const TSharedPtr<FJsonValue> Previous = Merged->Values.FindRef(Entry.Key);
                 if (EncodedValue(Previous) != EncodedValue(Entry.Value))
                 {
                     TSharedRef<FJsonObject> Conflict = MakeShared<FJsonObject>();
@@ -241,7 +241,8 @@ bool UAnomaliaConfigFusionLibrary::BuildFusionReport(
 {
     OutReportJson.Empty();
     OutError.Empty();
-    TSet<FString> Present(PresentFilePaths);
+    TSet<FString> Present;
+    for (const FString& Path : PresentFilePaths) Present.Add(Path);
     TArray<TSharedPtr<FJsonValue>> Rows;
     for (const FDomainDefinition& Domain : Domains())
     {
