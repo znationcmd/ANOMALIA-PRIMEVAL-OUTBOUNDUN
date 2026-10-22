@@ -23,6 +23,10 @@ def extend():
         if required: row['use']['requiredItem']=required
     # These are simplified game treatments, not clinical claims.
     index['sterile_bandage']['use']['effect']='bandage'
+    index['water_purification_tablets'].update(displayName='Traitement pour eau — objet de jeu',weightKg=.02,
+        use=dict(action='purify',requiredItem='dirty_water_bottle',returnItem='water_bottle'))
+    add(loot,'dirty_water_bottle','Bouteille d’eau non traitée','drinks',
+        dict(action='drink',thirst=30,effect='raw_food',returnItem='empty_water_bottle'),weight=1)
     for ident,label,effect,required in [
         ('rags','Chiffons pour pansement','rags',None),('morphine','Antalgique médical RP','analgesic',None),
         ('epinephrine','Stimulant médical RP','stimulant',None),('blood_test_kit','Kit de diagnostic sanguin','diagnostic',None),

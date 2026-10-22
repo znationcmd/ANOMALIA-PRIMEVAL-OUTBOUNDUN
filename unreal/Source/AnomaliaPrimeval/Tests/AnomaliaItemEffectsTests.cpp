@@ -57,6 +57,28 @@ bool FAnomaliaItemEffectsTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Antibiotic affects game infection"),Patient->ItemEffectsComponent->State.Infection,40.f);
     TestEqual(TEXT("Antitoxic item affects game poisoning"),Patient->ItemEffectsComponent->State.Poison,35.f);
     TestEqual(TEXT("Unrelated blood deficit remains"),Patient->ItemEffectsComponent->State.Blood,50.f);
+    if(TestTrue(TEXT("Diagnostic source available"),Medical->TryAddItem(TEXT("blood_test_kit"),1)))
+    {
+        const auto* Test=Medical->Stacks.FindByPredicate([](const auto& S){return S.ItemId==TEXT("blood_test_kit");});
+        if(Test) TestTrue(TEXT("Diagnostic consumes kit and publishes readable result"),Medical->TryUseStack(Test->StackId,1,Server,TEXT("patient"),Error));
+        TestTrue(TEXT("Diagnostic feedback includes live blood value"),Medical->UseMessage.Contains(TEXT("sang : 50")));
+        TestTrue(TEXT("Diagnostic feedback includes game infection value"),Medical->UseMessage.Contains(TEXT("infection fictive : 40")));
+    }
+
+    auto* WaterUser=World->SpawnActor<AAnomaliaSurvivor>();auto* Water=WaterUser->InventoryComponent.Get();
+    if(TestTrue(TEXT("Treatment item available"),Water->TryAddItem(TEXT("water_purification_tablets"),1)))
+    {
+        const int32 Treatment=Water->Stacks[0].StackId;
+        TestFalse(TEXT("Treatment requires actual dirty bottle"),Water->TryUseStack(Treatment,1,Server,TEXT("water"),Error));
+        TestTrue(TEXT("Dirty water can be carried"),Water->TryAddItem(TEXT("dirty_water_bottle"),1));
+        TestTrue(TEXT("Closed water recipe persists inventory replacement"),Water->TryUseStack(Treatment,1,Server,TEXT("water"),Error));
+        TestEqual(TEXT("Water treatment leaves one bottle, no duplication"),Water->Stacks.Num(),1);
+        if(!Water->Stacks.IsEmpty()) TestEqual(TEXT("Clean water replaces dirty water and treatment source"),Water->Stacks[0].ItemId,FName(TEXT("water_bottle")));
+        auto* WaterRestart=World->SpawnActor<AAnomaliaSurvivor>();
+        TestTrue(TEXT("Treated water survives reload"),WaterRestart->InventoryComponent->LoadInventoryFromPlayerProfile(Server,TEXT("water"),Error));
+        TestTrue(TEXT("Reload retains only clean output"),WaterRestart->InventoryComponent->Stacks.Num()==1 && WaterRestart->InventoryComponent->Stacks[0].ItemId==TEXT("water_bottle"));
+        TestFalse(TEXT("Original treatment request cannot replay"),Water->TryUseStack(Treatment,1,Server,TEXT("water"),Error));
+    }
 
     auto* RP=World->SpawnActor<AAnomaliaSurvivor>();auto* Substance=RP->InventoryComponent.Get();
     if(TestTrue(TEXT("RP supply available"),Substance->TryAddItem(TEXT("rp_substance_cocaine"),4)))

@@ -566,7 +566,8 @@ FString UAnomaliaInventoryComponent::GetUseActionLabel(FName ItemId) const
     const auto Rule=GetUseRule(ItemId);
     if(!Rule.IsUsable()) return FString();
     return Rule.Action==TEXT("eat")?TEXT("Manger") : Rule.Action==TEXT("drink")?TEXT("Boire"):
-        Rule.Action==TEXT("smoke")?TEXT("Fumer (RP)"):Rule.Action==TEXT("rp")?TEXT("Utiliser (RP)"):TEXT("Soigner / examiner");
+        Rule.Action==TEXT("smoke")?TEXT("Fumer (RP)"):Rule.Action==TEXT("rp")?TEXT("Utiliser (RP)"):
+        Rule.Action==TEXT("purify")?TEXT("Traiter l’eau (jeu)"):TEXT("Soigner / examiner");
 }
 
 bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError)
@@ -602,7 +603,7 @@ bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,
     const float Food=FMath::Clamp(Survivor->Hunger+Rule.Hunger,0.f,100.f);
     const float Water=FMath::Clamp(Survivor->Thirst+Rule.Thirst,0.f,100.f);
     const float HP=FMath::Clamp(Survivor->Health+Rule.Health,0.f,100.f);
-    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects))
+    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects) && Rule.Action!=TEXT("purify"))
     { OutError=TEXT("Aucun besoin à restaurer : l’objet est conservé.");return false; }
 
     const auto Before=Stacks;const int32 BeforeId=NextStackId;
@@ -611,6 +612,8 @@ bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,
     auto* Selected=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
     --Selected->Count;
     Stacks.RemoveAll([](const auto& S){return S.Count<=0;});
+    if(Rule.Action==TEXT("purify") && !TryRemoveItem(Rule.RequiredItem,1))
+    { Rollback();OutError=TEXT("La bouteille d’eau non traitée n’est plus disponible.");return false; }
     if(!Rule.ReturnItem.IsNone() && !TryAddItem(Rule.ReturnItem,1))
     { Rollback();OutError=TEXT("Faites de la place pour le contenant vide. L’objet est conservé.");return false; }
     FString Raw;
@@ -644,6 +647,8 @@ bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,
     Survivor->Hunger=Food;Survivor->Thirst=Water;Survivor->Health=HP;
     Effects->ApplyState(NextEffects);
     NextStackId=AfterId;UseMessage=TEXT("Utilisé : ")+GetItemDisplayName(ItemId);
+    if(Rule.Effect==TEXT("diagnostic"))
+        UseMessage=FString::Printf(TEXT("Bilan de jeu — sang : %.0f %%, douleur : %.0f %%, infection fictive : %.0f %%"),NextEffects.Blood,NextEffects.Pain,NextEffects.Infection);
     auto Committed=After;Commit(MoveTemp(Committed));Survivor->OnSurvivalChanged();
     return true;
 }

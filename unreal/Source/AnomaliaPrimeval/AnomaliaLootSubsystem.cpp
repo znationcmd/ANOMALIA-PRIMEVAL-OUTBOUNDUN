@@ -150,12 +150,12 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
             double Food=0,Water=0,HP=0; FString Return,Required;
             if (!Row->TryGetObjectField(TEXT("use"),Use) || !Use || !Use->IsValid() ||
                 !(*Use)->TryGetStringField(TEXT("action"),Item.Use.Action) ||
-                (Item.Use.Action!=TEXT("eat") && Item.Use.Action!=TEXT("drink") && Item.Use.Action!=TEXT("heal") && Item.Use.Action!=TEXT("smoke") && Item.Use.Action!=TEXT("rp")) ||
+                (Item.Use.Action!=TEXT("eat") && Item.Use.Action!=TEXT("drink") && Item.Use.Action!=TEXT("heal") && Item.Use.Action!=TEXT("smoke") && Item.Use.Action!=TEXT("rp") && Item.Use.Action!=TEXT("purify")) ||
                 ((*Use)->HasField(TEXT("hunger")) && !LootNumber(*Use,TEXT("hunger"),Food,0,100)) ||
                 ((*Use)->HasField(TEXT("thirst")) && !LootNumber(*Use,TEXT("thirst"),Water,0,100)) ||
                 ((*Use)->HasField(TEXT("health")) && !LootNumber(*Use,TEXT("health"),HP,0,100)) ||
                 ((*Use)->HasField(TEXT("effect")) && (!(*Use)->TryGetStringField(TEXT("effect"),Item.Use.Effect) || !UAnomaliaItemEffectsComponent::IsKnownEffect(Item.Use.Effect))) ||
-                (Food<=0 && Water<=0 && HP<=0 && Item.Use.Effect.IsEmpty()) ||
+                (Food<=0 && Water<=0 && HP<=0 && Item.Use.Effect.IsEmpty() && Item.Use.Action!=TEXT("purify")) ||
                 (Item.Use.Action==TEXT("heal") ? (Food!=0 || Water!=0) : HP!=0) ||
                 ((*Use)->HasField(TEXT("returnItem")) && (!(*Use)->TryGetStringField(TEXT("returnItem"),Return) || !LootSafeId(Return))) ||
                 ((*Use)->HasField(TEXT("requiredItem")) && (!(*Use)->TryGetStringField(TEXT("requiredItem"),Required) || !LootSafeId(Required))) ||
@@ -165,6 +165,9 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
             Item.Use.Hunger=static_cast<float>(Food);Item.Use.Thirst=static_cast<float>(Water);Item.Use.Health=static_cast<float>(HP);
             if(!Return.IsEmpty()) Item.Use.ReturnItem=FName(*Return);
             if(!Required.IsEmpty()) Item.Use.RequiredItem=FName(*Required);
+            if(Item.Use.Action==TEXT("purify") &&
+                (Required!=TEXT("dirty_water_bottle") || Return!=TEXT("water_bottle") || Food!=0 || Water!=0 || HP!=0 || !Item.Use.Effect.IsEmpty()))
+            { Error=TEXT("Invalid closed water purification recipe");return false; }
         }
         if (Item.Quantity > Item.MaxStack) { Error = TEXT("Loot quantity exceeds stack limit"); return false; }
         Item.Categories.Add(Item.Category);
@@ -190,7 +193,7 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         {
             const auto* Returned=Candidate.Find(Pair.Value.Use.ReturnItem);
             if(!Returned && Append) Returned=Items.Find(Pair.Value.Use.ReturnItem);
-            if(!Returned || Returned->Use.IsUsable())
+            if(!Returned || (Returned->Use.IsUsable() && Pair.Value.Use.Action!=TEXT("purify")))
             { Error=TEXT("Returned container missing or itself consumable: ")+Pair.Value.Use.ReturnItem.ToString();return false; }
         }
     for(const auto& Pair:Candidate)

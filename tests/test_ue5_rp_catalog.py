@@ -8,7 +8,7 @@ class RPCatalogTests(unittest.TestCase):
     def test_existing_catalogue_preserved_and_rp_ids_do_not_shadow_it(self):
         original = json.loads((ROOT/'public/config/loot_items_catalog.json').read_text())['items']
         extra = json.loads((ROOT/'public/config/rp_items_catalog.json').read_text())['items']
-        empty = {'empty_water_bottle', 'empty_military_canteen', 'empty_filter_canteen'}
+        empty = {'empty_water_bottle', 'empty_military_canteen', 'empty_filter_canteen', 'dirty_water_bottle'}
         self.assertEqual(len([row for row in original if row['id'] not in empty]),232)
         self.assertEqual({row['id'] for row in original if row['id'] in empty},empty)
         self.assertEqual(len(extra),79)
@@ -19,7 +19,7 @@ class RPCatalogTests(unittest.TestCase):
         self.assertEqual(duplicates,{'car_battery':2})
         self.assertFalse({row['id'].lower() for row in original} & {row['id'].lower() for row in extra})
         ids = [row['id'].lower() for row in original+extra]
-        self.assertEqual(len(set(ids)),313)
+        self.assertEqual(len(set(ids)),314)
         for row in extra:
             self.assertGreater(row['weightKg'],0)
             self.assertGreaterEqual(row['maxStack'],row['quantity'])
@@ -44,6 +44,32 @@ class RPCatalogTests(unittest.TestCase):
         notes = [row for row in extra if row['category']=='rp_cash']
         self.assertEqual(len(notes),7)
         self.assertTrue(all(row['minTier']==1 for row in notes))
+
+    def test_rp_substances_and_tobacco_require_explicit_policy_and_use_rules(self):
+        rows=json.loads((ROOT/'public/config/rp_items_catalog.json').read_text())['items']
+        substances=[row for row in rows if row['category']=='rp_substances']
+        self.assertEqual(len(substances),36)
+        self.assertEqual({row['use']['effect'] for row in substances},
+                         {'stimulant','opioid','depressant','hallucinogen','cannabinoid','veterinary','anomaly'})
+        self.assertTrue(all(row['use']['restrictedGroup']=='substances' and row['use']['action']=='rp' for row in substances))
+        tobacco=[row for row in rows if row['category']=='rp_tobacco' and 'use' in row]
+        self.assertEqual(len(tobacco),3)
+        for row in tobacco:
+            self.assertEqual(row['use']['restrictedGroup'],'tobacco')
+            self.assertEqual(row['use']['requiredItem'],'lighter')
+            self.assertEqual(row['use']['returnItem'],'cigarette_butt')
+
+    def test_medical_and_hazardous_items_keep_distinct_interactions(self):
+        items={row['id']:row for row in json.loads((ROOT/'public/config/loot_items_catalog.json').read_text())['items']}
+        self.assertEqual(items['blood_bag']['use']['requiredItem'],'iv_kit')
+        self.assertEqual(items['tetracycline']['use']['effect'],'antibiotic')
+        self.assertNotIn('health',items['tetracycline']['use'])
+        self.assertEqual(items['alcohol_90']['use']['action'],'heal')
+        self.assertNotIn('use',items['water_in_fuel_can'])
+        self.assertEqual(items['water_purification_tablets']['use']['requiredItem'],'dirty_water_bottle')
+        self.assertEqual(items['water_purification_tablets']['use']['returnItem'],'water_bottle')
+        for ident in ['vodka','whisky','rum','red_wine','white_wine','rose_wine','champagne']:
+            self.assertEqual(items[ident]['use']['restrictedGroup'],'alcohol')
 
 if __name__=='__main__':
     unittest.main()

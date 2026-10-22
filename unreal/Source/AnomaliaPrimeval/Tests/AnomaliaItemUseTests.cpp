@@ -136,7 +136,7 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
         }
         ++TestedUses;
     }
-    TestEqual(TEXT("Every configured catalogue consumable tested"),TestedUses,96);
+    TestEqual(TEXT("Every configured catalogue consumable tested"),TestedUses,98);
     World->DestroyWorld(false);
     return true;
 }
