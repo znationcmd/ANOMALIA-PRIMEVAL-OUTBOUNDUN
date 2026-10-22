@@ -33,7 +33,7 @@ bool FAnomaliaInventoryMigrationTest::RunTest(const FString& Parameters)
         Rows.Add(MakeShared<FJsonValueObject>(Row));
     }
     Inventory->SetArrayField(TEXT("stacks"),Rows);Root->SetObjectField(TEXT("inventory"),Inventory);
-    FString Raw,Error;FJsonSerializer::Serialize(Root.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw));
+    FString Raw,Error;FJsonSerializer::Serialize(Root,TJsonWriterFactory<>::Create(&Raw));
     TestTrue(TEXT("Seed real legacy profile"),UAnomaliaConfigLibrary::SavePlayerProfile(Server,TEXT("old"),Raw,Error));
     auto* World=UWorld::CreateWorld(EWorldType::Game,false);
     if(!TestNotNull(TEXT("Migration test world"),World)) return false;
@@ -64,7 +64,7 @@ bool FAnomaliaInventoryMigrationTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Restart restores all remaining units exactly once"),Restored,251);
     TestTrue(TEXT("Legacy backup can be requested again without overwriting it"),UAnomaliaConfigLibrary::BackupInventoryLayout(Server,TEXT("old"),Raw,Error));
     Rows[1]->AsObject()->SetNumberField(TEXT("x"),0);Rows[1]->AsObject()->SetNumberField(TEXT("y"),0);
-    FString Corrupt;FJsonSerializer::Serialize(Root.ToSharedRef(),TJsonWriterFactory<>::Create(&Corrupt));
+    FString Corrupt;FJsonSerializer::Serialize(Root,TJsonWriterFactory<>::Create(&Corrupt));
     TestTrue(TEXT("Seed corrupt legacy geometry in a separate profile"),UAnomaliaConfigLibrary::SavePlayerProfile(Server,TEXT("corrupt"),Corrupt,Error));
     TestFalse(TEXT("Migration does not accept pre-existing legacy overlaps"),Items->LoadInventoryFromPlayerProfile(Server,TEXT("corrupt"),Error));
     TestEqual(TEXT("Rejected legacy corruption preserves the live inventory"),Units(),251);

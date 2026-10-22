@@ -274,6 +274,8 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     }
     while (Remaining > 0)
     {
+        // Never accept live contents that the persistence reader cannot restore.
+        if(Candidate.Num()>=MaxStacks) return false;
         FAnomaliaInventoryStack NewStack;
         if (CandidateNextId >= MAX_int32) return false;
         NewStack.StackId = CandidateNextId++;
@@ -337,7 +339,7 @@ bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int3
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
-    if (!Source || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
+    if (!Source || Candidate.Num()>=MaxStacks || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
     Source->Count -= Count;
     FAnomaliaInventoryStack Piece = *Source;
     Piece.StackId = NextStackId;
@@ -492,7 +494,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
     const TArray<TSharedPtr<FJsonValue>>* CompartmentRows = nullptr;
     const TArray<TSharedPtr<FJsonValue>>* StackRows = nullptr;
     if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 128 ||
-        !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > 512)
+        !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > MaxStacks)
     {
         OutError = TEXT("Invalid inventory arrays in profile");
         return false;

@@ -64,6 +64,8 @@ class ANOMALIAPRIMEVAL_API UAnomaliaInventoryComponent : public UActorComponent
 
 public:
     UAnomaliaInventoryComponent();
+    /** Current persistence/replication bound. Cell capacity and number of stacks are distinct. */
+    static constexpr int32 MaxStacks = 512;
 
     UPROPERTY(ReplicatedUsing=OnRep_Stacks, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TArray<FAnomaliaInventoryStack> Stacks;

@@ -1,4 +1,5 @@
 #include "AnomaliaEquipmentSlotsLibrary.h"
+#include "AnomaliaStorageCatalog.h"
 
 bool UAnomaliaEquipmentSlotsLibrary::CanEquip(EAnomaliaEquipmentSlot Slot,const FAnomaliaEquipmentItem& Item,bool Backpack,bool Belt,bool Vest)
 {
@@ -32,14 +33,15 @@ bool UAnomaliaEquipmentSlotsLibrary::CanEquip(EAnomaliaEquipmentSlot Slot,const 
 
 FIntPoint UAnomaliaEquipmentSlotsLibrary::SuggestedCargoGrid(FName Garment)
 {
- if(Garment==TEXT("shirt"))return FIntPoint(3,2);
- if(Garment==TEXT("jacket"))return FIntPoint(4,3);
- if(Garment==TEXT("coat"))return FIntPoint(6,4);
- if(Garment==TEXT("pants")||Garment==TEXT("jeans"))return FIntPoint(4,3);
- if(Garment==TEXT("vest"))return FIntPoint(4,4);
- if(Garment==TEXT("backpack"))return FIntPoint(6,6);
- if(Garment==TEXT("bag"))return FIntPoint(4,5);
- return FIntPoint::ZeroValue;
+ FName Preset=Garment;
+ if(Garment==TEXT("shirt")||Garment==TEXT("jacket"))Preset=TEXT("jacket_light");
+ else if(Garment==TEXT("coat"))Preset=TEXT("jacket_military");
+ else if(Garment==TEXT("jeans"))Preset=TEXT("pants");
+ else if(Garment==TEXT("vest"))Preset=TEXT("vest_tactical");
+ else if(Garment==TEXT("backpack")||Garment==TEXT("bag"))Preset=TEXT("backpack_small");
+ FIntPoint Grid;
+ UAnomaliaStorageCatalog::GetGrid(Preset,Grid);
+ return Grid;
 }
 
 FName UAnomaliaEquipmentSlotsLibrary::SlotContainerId(EAnomaliaEquipmentSlot Slot)
