@@ -18,6 +18,7 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
     GENERATED_BODY()
 public:
     AAnomaliaSurvivor();
+    void CloseInventory();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -85,6 +86,8 @@ private:
     void MoveRight(float Value);
     void Turn(float Value);
     void LookUp(float Value);
+    void TurnRate(float Value);
+    void LookUpRate(float Value);
     void InputInteract();
     void InputInventory();
     void StartSprint();

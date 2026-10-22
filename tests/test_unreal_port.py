@@ -136,7 +136,7 @@ class UnrealPortTests(unittest.TestCase):
         # Unreal INI arrays use repeated +Key entries; the preset scalars remain unique.
         presets = configparser.ConfigParser(strict=False)
         presets.read(root / "DefaultGame.ini", encoding="utf-8")
-        for name in ("PC_High", "PS5_Target", "XboxSeriesX_Target", "Performance_Fallback"):
+        for name in ("PC_High", "PS5_Target", "XboxSeriesX_Target", "XboxSeriesS_Target", "Android_Mobile_Target", "IOS_Mobile_Target", "Performance_Fallback"):
             section = "Anomalia." + name
             self.assertIn(section, presets)
             minimum = presets.getint(section, "RenderScaleMin")
@@ -146,6 +146,21 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("GGameIni", cpp)
         self.assertIn("SaveSettings()", cpp)
         self.assertNotIn("SaveServerSettings", cpp)
+
+    def test_mobile_renderer_does_not_override_pc_settings(self):
+        import configparser
+        root = ROOT / "unreal" / "Config"
+        for platform in ("Android", "IOS"):
+            config = configparser.ConfigParser()
+            config.read(root / platform / (platform + "Engine.ini"))
+            renderer = config["/Script/Engine.RendererSettings"]
+            self.assertFalse(renderer.getboolean("r.MobileHDR"))
+            self.assertFalse(renderer.getboolean("r.Nanite.ProjectEnabled"))
+            self.assertEqual(renderer.getint("r.DynamicGlobalIlluminationMethod"), 0)
+        presets = configparser.ConfigParser(strict=False)
+        presets.read(root / "DefaultGame.ini")
+        for name in ("Android_Mobile_Target", "IOS_Mobile_Target"):
+            self.assertEqual(presets.getint("Anomalia." + name, "FrameRateLimit"), 30)
 
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")

@@ -21,6 +21,7 @@
 #include "../AnomaliaInventoryComponent.h"
 #include "../AnomaliaInventoryWidget.h"
 #include "../AnomaliaStatusWidget.h"
+#include "Components/SafeZone.h"
 #include "../AnomaliaVitalsComponent.h"
 #include "../AnomaliaHomesteadStation.h"
 
@@ -117,7 +118,13 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             if (Survivor->InventoryWidget && Survivor->InventoryWidget->IsInViewport()) return false;
             TestEqual(TEXT("Opening and closing UI preserves the item"), Units, 1);
             Survivor->SetActorLocation(FVector(200,-140,100),false,nullptr,ETeleportType::TeleportPhysics);
-            Input(EKeys::E,IE_Pressed); Probe->Phase=4; return false;
+            auto* HUD=Survivor->StatusWidget.Get();
+            if (!HUD || !HUD->WidgetTree) return false;
+            HUD->SetTouchControlsEnabled(true);
+            TestNotNull(TEXT("HUD respects screen safe areas"),Cast<USafeZone>(HUD->WidgetTree->RootWidget));
+            auto* Touch=Cast<UButton>(HUD->WidgetTree->FindWidget(FName(TEXT("TouchInteract"))));
+            if (!TestNotNull(TEXT("Real touch interaction button exists"),Touch)) return true;
+            Touch->OnClicked.Broadcast(); Probe->Phase=4; return false;
         }
         if (Probe->Phase == 4)
         {
@@ -129,7 +136,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Probe->Value=Economy ? Economy->GetDenomination(Probe->NoteId) : 0;
             if (!TestTrue(TEXT("Actual world RP note is a fixed denomination"),Probe->Value>0)) return true;
             Survivor->SetActorLocation(FVector(350,0,100),false,nullptr,ETeleportType::TeleportPhysics);
-            Input(EKeys::I,IE_Pressed); Probe->Phase=5; return false;
+            Input(EKeys::Gamepad_Special_Right,IE_Pressed); Probe->Phase=5; return false;
         }
         auto FindButton=[Survivor](const FString& Prefix)->UButton*
         {
@@ -141,11 +148,12 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         };
         if (Probe->Phase == 5)
         {
-            Input(EKeys::I,IE_Released);
+            Input(EKeys::Gamepad_Special_Right,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
             UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;
             if (!Deposit) return false;
+            TestNotNull(TEXT("Gamepad inventory opens a safe-zone panel"),Cast<USafeZone>(Survivor->InventoryWidget->WidgetTree->RootWidget));
             Deposit->OnClicked.Broadcast(); Probe->Phase=6; Probe->NextAction=FPlatformTime::Seconds()+.25; return false;
         }
         if (Probe->Phase == 6)
@@ -160,7 +168,12 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         {
             if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
             TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
-            Input(EKeys::I,IE_Pressed);
+            auto* Close=FindButton(TEXT("InventoryClose"));
+            if (!TestNotNull(TEXT("Touch/controller inventory close button exists"),Close)) return true;
+            Close->OnClicked.Broadcast();
+            TestNull(TEXT("Close button restores gameplay and clears the panel"),Survivor->InventoryWidget.Get());
+            TestFalse(TEXT("Closing inventory restores movement"),PC->IsMoveInputIgnored());
+            TestFalse(TEXT("Closing inventory restores look"),PC->IsLookInputIgnored());
             Survivor->RestoreFatigue(85.f);
             Survivor->VitalsComponent->RestoreVitals(42.f,34.f);
             Probe->NextAction=FPlatformTime::Seconds()+.4; Probe->Phase=8; return false;

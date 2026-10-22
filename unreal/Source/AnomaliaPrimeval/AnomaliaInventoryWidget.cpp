@@ -1,5 +1,7 @@
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaSurvivor.h"
+#include "Components/SafeZone.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
@@ -30,6 +32,7 @@ void UAnomaliaInventoryWidget::InitializeForInventory(UAnomaliaInventoryComponen
 void UAnomaliaInventoryWidget::NativeConstruct()
 {
     Super::NativeConstruct();
+    SetIsFocusable(true);
     BuildLayout();
     RefreshInventory();
 }
@@ -44,7 +47,9 @@ void UAnomaliaInventoryWidget::BuildLayout()
 {
     if (!WidgetTree || RootCanvas) return;
     RootCanvas = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("InventoryCanvas"));
-    WidgetTree->RootWidget = RootCanvas;
+    auto* Safe = WidgetTree->ConstructWidget<USafeZone>(USafeZone::StaticClass(), TEXT("InventorySafeZone"));
+    Safe->SetContent(RootCanvas);
+    WidgetTree->RootWidget = Safe;
     UBorder* Frame = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("InventoryFrame"));
     Frame->SetBrushColor(FLinearColor(0.012f, 0.035f, 0.055f, 0.96f));
     UCanvasPanelSlot* FrameSlot = RootCanvas->AddChildToCanvas(Frame);
@@ -54,6 +59,12 @@ void UAnomaliaInventoryWidget::BuildLayout()
 
     UVerticalBox* Content = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InventoryContent"));
     Frame->SetContent(Content);
+    CloseButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("InventoryClose"));
+    auto* CloseLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    CloseLabel->SetText(FText::FromString(TEXT("Fermer / Retour")));
+    CloseButton->SetContent(CloseLabel);
+    CloseButton->OnClicked.AddDynamic(this, &UAnomaliaInventoryWidget::CloseInventory);
+    Content->AddChildToVerticalBox(CloseButton)->SetPadding(FMargin(14.f, 8.f));
     UTextBlock* Heading = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHeading"));
     Heading->SetText(FText::FromString(TEXT("ANOMALIA  /  INVENTAIRE")));
     Heading->SetColorAndOpacity(FSlateColor(FLinearColor(.32f, .86f, .94f)));
@@ -82,7 +93,7 @@ void UAnomaliaInventoryWidget::BuildLayout()
     Transfer->AddChildToHorizontalBox(TransferButton);
 
     UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("InventoryScroll"));
-    Content->AddChildToVerticalBox(Scroll);
+    Content->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InventoryItems"));
     Scroll->AddChild(ItemList);
 }
@@ -249,4 +260,25 @@ void UAnomaliaInventoryWidget::TransferMoney()
     if (Fraction.Len() == 1) Fraction += TEXT("0");
     const int64 Amount = FCString::Atoi64(*Whole)*100 + (Fraction.IsEmpty() ? 0 : FCString::Atoi64(*Fraction));
     Inventory->RequestBankOperation(EAnomaliaBankAction::Transfer, NAME_None, BankRecipient->GetText().ToString().TrimStartAndEnd(), Amount);
+}
+
+void UAnomaliaInventoryWidget::FocusFirstAction()
+{
+    if (CloseButton && GetOwningPlayer()) CloseButton->SetUserFocus(GetOwningPlayer());
+}
+
+void UAnomaliaInventoryWidget::CloseInventory()
+{
+    if (auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn()))
+        Survivor->CloseInventory();
+}
+
+FReply UAnomaliaInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
+{
+    if (Event.GetKey() == EKeys::Gamepad_FaceButton_Right || Event.GetKey() == EKeys::Escape)
+    {
+        CloseInventory();
+        return FReply::Handled();
+    }
+    return Super::NativeOnKeyDown(Geometry, Event);
 }

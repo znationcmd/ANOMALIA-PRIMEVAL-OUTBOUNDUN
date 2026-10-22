@@ -51,6 +51,8 @@ public:
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
+    virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
+    void FocusFirstAction();
 
 private:
     friend class UAnomaliaInventoryActionRelay;
@@ -78,6 +80,8 @@ private:
     UPROPERTY() TObjectPtr<UEditableTextBox> BankRecipient;
     UPROPERTY() TObjectPtr<UEditableTextBox> BankAmount;
     UPROPERTY() TObjectPtr<UButton> TransferButton;
+    UPROPERTY() TObjectPtr<UButton> CloseButton;
+    UFUNCTION() void CloseInventory();
     UFUNCTION() void TransferMoney();
     void BuildLayout();
 };

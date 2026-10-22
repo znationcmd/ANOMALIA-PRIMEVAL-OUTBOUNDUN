@@ -143,6 +143,8 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAxis(TEXT("MoveRight"), this, &AAnomaliaSurvivor::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &AAnomaliaSurvivor::Turn);
     Input->BindAxis(TEXT("LookUp"), this, &AAnomaliaSurvivor::LookUp);
+    Input->BindAxis(TEXT("TurnRate"), this, &AAnomaliaSurvivor::TurnRate);
+    Input->BindAxis(TEXT("LookUpRate"), this, &AAnomaliaSurvivor::LookUpRate);
     Input->BindAction(TEXT("Jump"), IE_Pressed, this, &ACharacter::Jump);
     Input->BindAction(TEXT("Jump"), IE_Released, this, &ACharacter::StopJumping);
     Input->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaSurvivor::InputInteract);
@@ -205,6 +207,11 @@ void AAnomaliaSurvivor::ServerRequestRest_Implementation()
     OnRestChanged();
 }
 
+void AAnomaliaSurvivor::CloseInventory()
+{
+    if (InventoryWidget && InventoryWidget->IsInViewport()) InputInventory();
+}
+
 void AAnomaliaSurvivor::InputInventory()
 {
     if (!IsLocallyControlled() || !InventoryComponent) return;
@@ -228,6 +235,7 @@ void AAnomaliaSurvivor::InputInventory()
     InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
     InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
     PC->SetInputMode(InputMode);
+    InventoryWidget->FocusFirstAction();
     PC->bShowMouseCursor = true;
     PC->SetIgnoreMoveInput(true);
     PC->SetIgnoreLookInput(true);
@@ -251,6 +259,14 @@ void AAnomaliaSurvivor::MoveRight(float Value)
 }
 void AAnomaliaSurvivor::Turn(float Value) { AddControllerYawInput(Value); }
 void AAnomaliaSurvivor::LookUp(float Value) { AddControllerPitchInput(Value); }
+void AAnomaliaSurvivor::TurnRate(float Value)
+{
+    if (GetWorld()) AddControllerYawInput(Value*90.f*GetWorld()->GetDeltaSeconds());
+}
+void AAnomaliaSurvivor::LookUpRate(float Value)
+{
+    if (GetWorld()) AddControllerPitchInput(Value*90.f*GetWorld()->GetDeltaSeconds());
+}
 
 void AAnomaliaSurvivor::InputInteract()
 {

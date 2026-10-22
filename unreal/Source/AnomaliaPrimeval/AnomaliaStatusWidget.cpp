@@ -8,6 +8,10 @@
 #include "Components/TextBlock.h"
 #include "Components/VerticalBox.h"
 #include "Components/VerticalBoxSlot.h"
+#include "Components/SafeZone.h"
+#include "Components/Button.h"
+#include "Components/SizeBox.h"
+#include "GameFramework/PlayerController.h"
 
 void UAnomaliaStatusWidget::InitializeForSurvivor(AAnomaliaSurvivor* InSurvivor)
 {
@@ -18,8 +22,13 @@ void UAnomaliaStatusWidget::InitializeForSurvivor(AAnomaliaSurvivor* InSurvivor)
 void UAnomaliaStatusWidget::NativeConstruct()
 {
     Super::NativeConstruct();
-    SetVisibility(ESlateVisibility::HitTestInvisible);
+    SetVisibility(ESlateVisibility::SelfHitTestInvisible);
     BuildLayout();
+#if PLATFORM_ANDROID || PLATFORM_IOS
+    SetTouchControlsEnabled(true);
+#else
+    SetTouchControlsEnabled(false);
+#endif
     RefreshFromSurvivor();
 }
 
@@ -27,11 +36,15 @@ void UAnomaliaStatusWidget::BuildLayout()
 {
     if (!WidgetTree || WidgetTree->RootWidget) return;
     auto* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass(), TEXT("StatusCanvas"));
-    WidgetTree->RootWidget = Root;
+    auto* Safe=WidgetTree->ConstructWidget<USafeZone>(USafeZone::StaticClass(),TEXT("StatusSafeZone"));
+    Safe->SetContent(Root);
+    WidgetTree->RootWidget = Safe;
     auto* Frame = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("StatusFrame"));
     Frame->SetBrushColor(FLinearColor(.012f,.025f,.035f,.88f));
     Frame->SetPadding(FMargin(12.f,8.f));
+    Frame->SetVisibility(ESlateVisibility::HitTestInvisible);
     auto* FrameSlot = Root->AddChildToCanvas(Frame);
+    StatusFrameSlot=FrameSlot;
     FrameSlot->SetAnchors(FAnchors(.98f,.98f));
     FrameSlot->SetAlignment(FVector2D(1.f,1.f));
     FrameSlot->SetAutoSize(true);
@@ -50,6 +63,60 @@ void UAnomaliaStatusWidget::BuildLayout()
     Conditions->SetWrapTextAt(300.f);
     Conditions->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.67f,.25f)));
     Rows->AddChildToVerticalBox(Conditions)->SetPadding(FMargin(0.f,6.f,0.f,0.f));
+    TouchControls=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("TouchControls"));
+    auto* TouchSlot=Root->AddChildToCanvas(TouchControls);
+    TouchSlot->SetAnchors(FAnchors(.98f,.5f)); TouchSlot->SetAlignment(FVector2D(1.f,.5f)); TouchSlot->SetAutoSize(true);
+    auto Button=[&](const TCHAR* Name,const TCHAR* Label)
+    {
+        auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+        Size->SetWidthOverride(128.f); Size->SetHeightOverride(48.f);
+        TouchControls->AddChildToVerticalBox(Size)->SetPadding(FMargin(0.f,3.f));
+        auto* Result=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Name));
+        Result->SetIsFocusable(false);
+        Size->SetContent(Result);
+        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Text->SetText(FText::FromString(Label)); Result->SetContent(Text);
+        return Result;
+    };
+    Button(TEXT("TouchInteract"),TEXT("Interagir"))->OnClicked.AddDynamic(this,&UAnomaliaStatusWidget::TouchInteract);
+    Button(TEXT("TouchInventory"),TEXT("Inventaire"))->OnClicked.AddDynamic(this,&UAnomaliaStatusWidget::TouchInventory);
+    Button(TEXT("TouchRest"),TEXT("Repos"))->OnClicked.AddDynamic(this,&UAnomaliaStatusWidget::TouchRest);
+    auto* JumpButton=Button(TEXT("TouchJump"),TEXT("Sauter"));
+    JumpButton->OnPressed.AddDynamic(this,&UAnomaliaStatusWidget::TouchJumpPressed);
+    JumpButton->OnReleased.AddDynamic(this,&UAnomaliaStatusWidget::TouchJumpReleased);
+    auto* SprintButton=Button(TEXT("TouchSprint"),TEXT("Courir"));
+    SprintButton->OnPressed.AddDynamic(this,&UAnomaliaStatusWidget::TouchSprintPressed);
+    SprintButton->OnReleased.AddDynamic(this,&UAnomaliaStatusWidget::TouchSprintReleased);
+}
+
+void UAnomaliaStatusWidget::SetTouchControlsEnabled(bool Enabled)
+{
+    if (TouchControls) TouchControls->SetVisibility(Enabled ? ESlateVisibility::SelfHitTestInvisible : ESlateVisibility::Collapsed);
+    if (StatusFrameSlot)
+    {
+        StatusFrameSlot->SetAnchors(Enabled ? FAnchors(.02f,.02f) : FAnchors(.98f,.98f));
+        StatusFrameSlot->SetAlignment(Enabled ? FVector2D(0.f,0.f) : FVector2D(1.f,1.f));
+    }
+}
+
+void UAnomaliaStatusWidget::SendLocalInput(FKey Key,EInputEvent Event)
+{
+    auto* PC=GetOwningPlayer();
+    if (!PC || !PC->IsLocalController()) return;
+    // Route through the same input bindings and server RPC checks as physical keys.
+    PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed ? 1.0 : 0.0,false,FInputDeviceId::CreateFromInternalId(0)));
+}
+void UAnomaliaStatusWidget::TouchInteract() { SendLocalInput(EKeys::E,IE_Pressed); SendLocalInput(EKeys::E,IE_Released); }
+void UAnomaliaStatusWidget::TouchInventory() { SendLocalInput(EKeys::I,IE_Pressed); SendLocalInput(EKeys::I,IE_Released); }
+void UAnomaliaStatusWidget::TouchRest() { SendLocalInput(EKeys::R,IE_Pressed); SendLocalInput(EKeys::R,IE_Released); }
+void UAnomaliaStatusWidget::TouchJumpPressed() { SendLocalInput(EKeys::SpaceBar,IE_Pressed); }
+void UAnomaliaStatusWidget::TouchJumpReleased() { SendLocalInput(EKeys::SpaceBar,IE_Released); }
+void UAnomaliaStatusWidget::TouchSprintPressed() { SendLocalInput(EKeys::LeftShift,IE_Pressed); }
+void UAnomaliaStatusWidget::TouchSprintReleased() { SendLocalInput(EKeys::LeftShift,IE_Released); }
+void UAnomaliaStatusWidget::NativeDestruct()
+{
+    TouchJumpReleased(); TouchSprintReleased();
+    Super::NativeDestruct();
 }
 
 void UAnomaliaStatusWidget::RefreshFromSurvivor()

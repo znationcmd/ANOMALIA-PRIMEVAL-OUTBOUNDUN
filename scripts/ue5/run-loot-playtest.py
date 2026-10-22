@@ -33,7 +33,7 @@ try:
     tests = json.loads((out / 'index.json').read_text(encoding='utf-8-sig')).get('tests', [])
     if result.returncode or len(tests) != 1 or tests[0].get('fullTestPath') != 'Anomalia.Loot.PIE' or tests[0].get('state') != 'Success':
         raise RuntimeError('Actual loot PIE input/UI/persistence test missing or failed')
-    report.update(state='TESTED_IN_EDITOR_HEADLESS', checks=['real_native_pickup', 'Interact_key', 'inventory_transfer', 'profile_reload', 'inventory_key', 'native_UMG_open_close', 'physical_RP_note_pickup', 'bank_UMG_deposit', 'bank_UMG_withdrawal', 'native_vitals_HUD', 'native_warning_recovery', 'thirty_second_server_sleep'])
+    report.update(state='TESTED_IN_EDITOR_HEADLESS', checks=['real_native_pickup', 'Interact_key', 'inventory_transfer', 'profile_reload', 'inventory_key', 'native_UMG_open_close', 'physical_RP_note_pickup', 'bank_UMG_deposit', 'bank_UMG_withdrawal', 'native_vitals_HUD', 'native_warning_recovery', 'thirty_second_server_sleep', 'touch_interact_relay', 'gamepad_inventory_binding', 'safe_zone_roots', 'inventory_close_restores_input'])
 except Exception as error:
     report['error'] = str(error)
 finally:
