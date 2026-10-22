@@ -9,16 +9,16 @@ export const STATUS_DEFINITIONS=Object.freeze([
  ['dependent','Dépendance','link'],['withdrawal','Sevrage','alert-triangle'],
  ['overdose','Surdose','siren']
 ]);
-const value=(v,f=0)=>Number.isFinite(Number(v))?Number(v):f;
+const value=(v,f=0)=>v!=null&&Number.isFinite(Number(v))?Number(v):f;
 export function getSurvivalIndicators(s){
- const f=s.conditions||{},dr=s.drugEffects||{},wetness=Number(s.wetness??f.wetness??0),flags={
+ const f=s.conditions||{},dr=s.drugEffects||{},condition=key=>Object.hasOwn(f,key)?f[key]:s[key],wetness=Number(s.wetness??f.wetness??0),flags={
  tired:Number(s.fatigue??f.fatigue??0)>=35&&Number(s.fatigue??f.fatigue??0)<70,
  exhausted:Number(s.fatigue??f.fatigue??0)>=70,
  sleepDeprived:Number(s.sleepDebt??f.sleepDebt??0)>=60,
  wet:wetness>0&&wetness<70,soaked:wetness>=70,
- bleeding:value(f.bleeding||s.bleeding)>0,fracture:!!(f.fracture||s.fracture),
- infection:!!(f.infection||s.infection),illness:!!(f.illness||s.illness),
- poisoned:!!(f.poisoned||s.poisoned),cold:value(s.temperature,37)<35,
+ bleeding:value(condition('bleeding'))>0,fracture:!!condition('fracture'),
+ infection:!!condition('infection'),illness:!!condition('illness'),
+ poisoned:!!condition('poisoned'),cold:value(s.temperature,37)<35,
  heat:value(s.temperature,37)>39,shock:value(s.shock)>65,lowBlood:value(s.blood,100)<40,
  underInfluence:value(dr.intoxication)>0,disoriented:value(dr.disorientation)>0,
  hallucinating:value(dr.hallucinations)>0,drowsy:value(dr.sedation)>0,

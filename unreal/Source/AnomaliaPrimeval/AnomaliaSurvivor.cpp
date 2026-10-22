@@ -5,6 +5,7 @@
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaLootPickup.h"
 #include "AnomaliaInventoryWidget.h"
+#include "AnomaliaStatusWidget.h"
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaHomesteadStation.h"
 #include "EngineUtils.h"
@@ -40,6 +41,15 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
 void AAnomaliaSurvivor::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
+    // The owning HUD also reads replicated values on clients; dedicated servers create no UI.
+    if (!StatusWidget && IsLocallyControlled() && GetNetMode()!=NM_DedicatedServer)
+    {
+        if (auto* PC=Cast<APlayerController>(Controller))
+        {
+            StatusWidget=CreateWidget<UAnomaliaStatusWidget>(PC,UAnomaliaStatusWidget::StaticClass());
+            if (StatusWidget) { StatusWidget->InitializeForSurvivor(this); StatusWidget->AddToViewport(20); }
+        }
+    }
     if (!HasAuthority()) return;
     const float PreviousHunger = Hunger;
     const float PreviousThirst = Thirst;
@@ -60,6 +70,7 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
          FVector::DistSquared(GetActorLocation(), ActiveBed->GetActorLocation()) > FMath::Square(350.f)))
     {
         bSleeping = false;
+        SleepRemainingSeconds = 0.f;
         ActiveBed.Reset();
         if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(MOVE_Walking);
         OnRestChanged();
@@ -67,9 +78,27 @@ void AAnomaliaSurvivor::Tick(float DeltaSeconds)
     const float PreviousFatigue = Fatigue;
     const float RestStep = FMath::Min(DeltaSeconds, 0.25f);
     Fatigue = bSleeping
-        ? FMath::Max(0.f, Fatigue - RestStep * 0.7f)
+        ? FMath::Max(0.f, Fatigue - RestStep * (100.f/30.f))
         : FMath::Min(100.f, Fatigue + RestStep * 0.009f);
+    if (bSleeping)
+    {
+        SleepRemainingSeconds=FMath::Max(0.f,SleepRemainingSeconds-RestStep);
+        if (SleepRemainingSeconds<=KINDA_SMALL_NUMBER)
+        {
+            bSleeping=false; Fatigue=0.f; ActiveBed.Reset();
+            if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+            if (VitalsComponent) VitalsComponent->RestoreVitals(100.f,VitalsComponent->BodyTemperatureC);
+            OnRestChanged();
+        }
+    }
     if (!FMath::IsNearlyEqual(Fatigue, PreviousFatigue, 0.01f)) OnRestChanged();
+}
+
+void AAnomaliaSurvivor::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if (StatusWidget) { StatusWidget->RemoveFromParent(); StatusWidget=nullptr; }
+    if (InventoryWidget) { InventoryWidget->RemoveFromParent(); InventoryWidget=nullptr; }
+    Super::EndPlay(Reason);
 }
 
 void AAnomaliaSurvivor::RestoreSurvival(float Food, float Water, float HP)
@@ -104,6 +133,7 @@ void AAnomaliaSurvivor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
     DOREPLIFETIME(AAnomaliaSurvivor, Health);
     DOREPLIFETIME(AAnomaliaSurvivor, Fatigue);
     DOREPLIFETIME(AAnomaliaSurvivor, bSleeping);
+    DOREPLIFETIME(AAnomaliaSurvivor, SleepRemainingSeconds);
 }
 
 void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
@@ -145,6 +175,7 @@ void AAnomaliaSurvivor::ServerRequestRest_Implementation()
     if (bSleeping)
     {
         bSleeping = false;
+        SleepRemainingSeconds = 0.f;
         ActiveBed.Reset();
         if (GetCharacterMovement()) GetCharacterMovement()->SetMovementMode(MOVE_Walking);
         OnRestChanged();
@@ -168,6 +199,7 @@ void AAnomaliaSurvivor::ServerRequestRest_Implementation()
     if (!NearestBed || !GetCharacterMovement()) return;
     ActiveBed = NearestBed;
     bSleeping = true;
+    SleepRemainingSeconds = 30.f;
     GetCharacterMovement()->StopMovementImmediately();
     GetCharacterMovement()->DisableMovement();
     OnRestChanged();

@@ -1,5 +1,27 @@
 # PR #6 — intervention et état réel
 
+**Contrôle des indicateurs (22 octobre) :** les ajouts de santé/sang/soif/faim,
+fatigue, température et états temporaires étaient dans le prototype JavaScript.
+La restauration recharge maintenant fatigue, dette de sommeil et sang sans
+réutiliser les horodatages d’un ancien processus. Les conditions explicitement
+guéries cessent d’afficher leurs alertes. Les durées de sommeil (30 s), malaise
+lié au sang bas (10 s, nouvelle vérification après 5 s éveillé) et KO (23 s) sont
+testées dans la logique du prototype ; les coups ne sont pas encore reliés au KO.
+75 tests JavaScript passent, dont trois nouveaux tests de ces comportements.
+
+Un HUD UMG natif est ajouté pour les six valeurs réellement existantes dans Unreal :
+santé, soif, faim, endurance, fatigue et température en °C. Il lit les valeurs
+répliquées et retire les alertes de fatigue et de température lors du rétablissement.
+Le repos au lit conserve ses contrôles serveur et se termine désormais après 30 s
+de simulation avec récupération de fatigue et d’endurance. Compilation et essai
+PIE étendu de ce nouveau lot : **en attente**. Aucun affichage de sang, fracture,
+humidité, infection ou drogue n’est prétendu natif : leurs systèmes restent à relier.
+
+Le run 39738850387 confirme aussi **36 modèles de voitures importés**, chemins
+Windows corrigés, sources préservées et présentation reliée au catalogue natif.
+La capture GPU a dépassé 900 s pendant la préparation des textures et shaders ;
+elle n’est pas validée. Il ne s’agit pas de 36 véhicules terminés ou testés en conduite.
+
 **Validation du 22 octobre :** compilation Editor et Game réussie sur Unreal 5.8.3,
 neuf tests natifs réussis, puis essai PIE solo du ramassage, de l’inventaire, de la
 sauvegarde et des boutons de dépôt/retrait réussi. Preuve : étapes 3 et 4 du

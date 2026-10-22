@@ -8,6 +8,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
+class UAnomaliaStatusWidget;
 class UAnomaliaVitalsComponent;
 class AAnomaliaHomesteadStation;
 
@@ -30,6 +31,9 @@ public:
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
 
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaStatusWidget> StatusWidget;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Survival")
     TObjectPtr<UAnomaliaVitalsComponent> VitalsComponent;
 
@@ -49,6 +53,9 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
     bool bSleeping = false;
 
+    UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
+    float SleepRemainingSeconds = 0.f;
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Rest")
     void OnRestChanged();
 
@@ -64,6 +71,7 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
 
 protected:
     UFUNCTION()

@@ -20,6 +20,9 @@
 #include "../AnomaliaLootPickup.h"
 #include "../AnomaliaInventoryComponent.h"
 #include "../AnomaliaInventoryWidget.h"
+#include "../AnomaliaStatusWidget.h"
+#include "../AnomaliaVitalsComponent.h"
+#include "../AnomaliaHomesteadStation.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaLootPIETest, "Anomalia.Loot.PIE",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -32,7 +35,8 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
     { AddError(TEXT("Real loot review map is missing")); return false; }
     ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
     struct FProbe { int32 Phase = 0; double Deadline = FPlatformTime::Seconds()+120;
-        FName NoteId; int64 Value = 0; double NextAction = 0; };
+        FName NoteId; int64 Value = 0; double NextAction = 0;
+        TWeakObjectPtr<AAnomaliaHomesteadStation> Bed; };
     auto Probe = MakeShared<FProbe>();
     ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this, Probe, Scope]()
     {
@@ -152,8 +156,46 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             if (!Withdraw) return false;
             Withdraw->OnClicked.Broadcast(); Probe->Phase=7; return false;
         }
-        if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
-        TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
+        if (Probe->Phase==7)
+        {
+            if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
+            TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
+            Input(EKeys::I,IE_Pressed);
+            Survivor->RestoreFatigue(85.f);
+            Survivor->VitalsComponent->RestoreVitals(42.f,34.f);
+            Probe->NextAction=FPlatformTime::Seconds()+.4; Probe->Phase=8; return false;
+        }
+        if (Probe->Phase==8)
+        {
+            Input(EKeys::I,IE_Released);
+            if (FPlatformTime::Seconds()<Probe->NextAction) return false;
+            auto* HUD=Survivor->StatusWidget.Get();
+            if (!HUD || !HUD->IsInViewport()) { AddError(TEXT("Native status HUD is missing")); return true; }
+            // Explicit refresh also runs under NullRHI, where Slate may skip visual widget ticks.
+            HUD->RefreshFromSurvivor();
+            TestTrue(TEXT("Native fatigue HUD reads the actual replicated survivor value"),HUD->GetVitalText(TEXT("fatigue")).ToString().Contains(TEXT("85")));
+            TestTrue(TEXT("Native temperature HUD includes Celsius"),HUD->GetVitalText(TEXT("temperature")).ToString().Contains(TEXT("°C")));
+            TestTrue(TEXT("Actual low body temperature activates hypothermia"),HUD->GetConditionText().ToString().Contains(TEXT("Hypothermie")));
+            for (const FName Id : {FName(TEXT("health")),FName(TEXT("thirst")),FName(TEXT("hunger")),FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature"))})
+                TestFalse(TEXT("Permanent native vital label exists"),HUD->GetVitalText(Id).IsEmpty());
+            Survivor->RestoreFatigue(0.f); Survivor->VitalsComponent->RestoreVitals(100.f,37.f);
+            HUD->RefreshFromSurvivor();
+            TestTrue(TEXT("Recovered native warnings disappear while permanent vitals stay"),HUD->GetConditionText().IsEmpty());
+            auto* Bed=World->SpawnActor<AAnomaliaHomesteadStation>(Survivor->GetActorLocation()+FVector(120,0,-40),FRotator::ZeroRotator);
+            if (!Bed) { AddError(TEXT("Cannot create isolated sleep test bed")); return true; }
+            Probe->Bed=Bed;
+            Survivor->RestoreFatigue(96.f);
+            Input(EKeys::R,IE_Pressed); Probe->Phase=9; return false;
+        }
+        Input(EKeys::R,IE_Released);
+        if (Probe->Phase==9)
+        {
+            if (!TestTrue(TEXT("Actual rest input starts a thirty-second server-owned sleep"),Survivor->bSleeping && Survivor->SleepRemainingSeconds>29.f)) return true;
+            Probe->Phase=10; return false;
+        }
+        if (Survivor->bSleeping) return false;
+        TestTrue(TEXT("Timed sleep wakes the real player fully rested"),Survivor->Fatigue<.05f && Survivor->VitalsComponent->Stamina>99.f);
+        if (Probe->Bed.IsValid()) Probe->Bed->Destroy();
         return true;
     }));
     ADD_LATENT_AUTOMATION_COMMAND(FEndPlayMapCommand());
