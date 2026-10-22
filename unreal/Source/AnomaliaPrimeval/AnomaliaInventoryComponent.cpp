@@ -115,6 +115,14 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
     else if (ItemId == TEXT("jacket") || ItemId == TEXT("coat") || ItemId == TEXT("shirt") || ItemId == TEXT("pants") ||
         ItemId == TEXT("jeans") || ItemId == TEXT("boots") || ItemId == TEXT("helmet") || ItemId == TEXT("backpack") ||
         ItemId == TEXT("bag") || ItemId == TEXT("vest")) OutSize = FIntPoint(2, 2);
+    // Requested ANOMALIA footprints also apply to the preserved generic survival IDs.
+    if(ItemId==TEXT("food")) OutSize={1,2};
+    else if(ItemId==TEXT("water") || ItemId==TEXT("pistol")) OutSize={1,3};
+    else if(ItemId==TEXT("rifle")) OutSize={3,3};
+    else if(ItemId==TEXT("medkit")) OutSize={2,3};
+    else if(ItemId==TEXT("jacket") || ItemId==TEXT("coat") || ItemId==TEXT("shirt")) OutSize={2,4};
+    else if(ItemId==TEXT("pants") || ItemId==TEXT("jeans") || ItemId==TEXT("vest")) OutSize={2,3};
+    else if(ItemId==TEXT("backpack") || ItemId==TEXT("bag")) OutSize={3,4};
     if (ItemId == TEXT("ammo") || ItemId == TEXT("rifle_ammo") || ItemId == TEXT("tranq_dart") ||
         ItemId == TEXT("wood") || ItemId == TEXT("stone") || ItemId == TEXT("scrap") || ItemId == TEXT("cloth") ||
         ItemId == TEXT("honey") || ItemId == TEXT("rare_flower") || ItemId == TEXT("sap") || ItemId == TEXT("vegetable") ||
@@ -138,7 +146,7 @@ float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
 bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, int32 Height)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Id.IsNone() || Id == TEXT("hands") ||
-        !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
+        Id.ToString().StartsWith(TEXT("migration_recovery_")) || !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
     if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
     if (!Existing) Existing = &Compartments.AddDefaulted_GetRef();
@@ -169,6 +177,11 @@ int32 UAnomaliaInventoryComponent::GetUsedCells(FName ContainerId) const
     { const auto Size=GetItemSize(Stack.ItemId,Stack.bRotated);Cells+=Size.X*Size.Y; }
     return Cells;
 }
+bool UAnomaliaInventoryComponent::IsRecoveryContainer(FName ContainerId) const
+{
+    const auto* Box=Compartments.FindByPredicate([&](const auto& C){return C.Id==ContainerId;});
+    return Box && Box->bRecoveryOnly;
+}
 
 bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate,
     const FAnomaliaInventoryStack& Stack, FName ContainerId, int32 X, int32 Y, bool bRotate) const
@@ -179,7 +192,7 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
     float Weight = 0.f;
     int32 MaxStack = 0;
     FIntPoint Size;
-    if (!Box || !GetItemRules(Stack.ItemId, Weight, MaxStack, Size)) return false;
+    if (!Box || (Box->bRecoveryOnly && Stack.ContainerId!=ContainerId) || !GetItemRules(Stack.ItemId, Weight, MaxStack, Size)) return false;
     if (bRotate) Swap(Size.X, Size.Y);
     if (X < 0 || Y < 0 || X + Size.X > Box->Width || Y + Size.Y > Box->Height) return false;
     for (const FAnomaliaInventoryStack& Other : Candidate)
@@ -195,10 +208,11 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
     return true;
 }
 
-bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const
+bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery) const
 {
     for (const FAnomaliaInventoryCompartment& Box : Compartments)
     {
+        if(Box.bRecoveryOnly && !bIncludeRecovery) continue;
         if(!UAnomaliaStorageCatalog::IsValidGrid(Box.Width,Box.Height)) return false;
         // One compact occupancy map per compartment. Large grids do not scan every
         // existing stack again for each candidate cell, and contain no UI widgets.
@@ -253,7 +267,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     int32 CandidateNextId = NextStackId;
     for (FAnomaliaInventoryStack& Stack : Candidate)
     {
-        if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || Stack.Count >= MaxStack) continue;
+        if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
         Stack.Count += Added; Remaining -= Added;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
@@ -343,6 +357,7 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     FAnomaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
     if (!Target || !Source || Target->ItemId != Source->ItemId || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
+    if(IsRecoveryContainer(Target->ContainerId) && !IsRecoveryContainer(Source->ContainerId)) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
     Target->Count += Source->Count;
@@ -358,6 +373,40 @@ bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& Se
     FString Serialized;
     return BuildInventoryProfile(ServerId, PlayerId, Serialized, OutError) &&
         UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, OutError);
+}
+
+TSharedPtr<FJsonObject> UAnomaliaInventoryComponent::ExportInventoryObject() const
+{
+    TSharedPtr<FJsonObject> Inventory = MakeShared<FJsonObject>();
+    Inventory->SetNumberField(TEXT("schemaVersion"), 1);
+    Inventory->SetNumberField(TEXT("layoutVersion"), 2);
+    Inventory->SetNumberField(TEXT("weightCapacityKg"), WeightCapacityKg);
+    TArray<TSharedPtr<FJsonValue>> CompartmentRows;
+    for (const FAnomaliaInventoryCompartment& Box : Compartments)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetStringField(TEXT("id"), Box.Id.ToString());
+        Row->SetNumberField(TEXT("width"), Box.Width);
+        Row->SetNumberField(TEXT("height"), Box.Height);
+        Row->SetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly);
+        CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
+    TArray<TSharedPtr<FJsonValue>> StackRows;
+    for (const FAnomaliaInventoryStack& Stack : Stacks)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetNumberField(TEXT("stackId"), Stack.StackId);
+        Row->SetStringField(TEXT("itemId"), Stack.ItemId.ToString());
+        Row->SetNumberField(TEXT("count"), Stack.Count);
+        Row->SetStringField(TEXT("containerId"), Stack.ContainerId.ToString());
+        Row->SetNumberField(TEXT("x"), Stack.X);
+        Row->SetNumberField(TEXT("y"), Stack.Y);
+        Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
+        StackRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("stacks"), StackRows);
+    return Inventory;
 }
 
 bool UAnomaliaInventoryComponent::BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError)
@@ -384,33 +433,7 @@ bool UAnomaliaInventoryComponent::BuildInventoryProfile(const FString& ServerId,
         return false;
     }
 
-    TSharedPtr<FJsonObject> Inventory = MakeShared<FJsonObject>();
-    Inventory->SetNumberField(TEXT("schemaVersion"), 1);
-    Inventory->SetNumberField(TEXT("weightCapacityKg"), WeightCapacityKg);
-    TArray<TSharedPtr<FJsonValue>> CompartmentRows;
-    for (const FAnomaliaInventoryCompartment& Box : Compartments)
-    {
-        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
-        Row->SetStringField(TEXT("id"), Box.Id.ToString());
-        Row->SetNumberField(TEXT("width"), Box.Width);
-        Row->SetNumberField(TEXT("height"), Box.Height);
-        CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
-    }
-    Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
-    TArray<TSharedPtr<FJsonValue>> StackRows;
-    for (const FAnomaliaInventoryStack& Stack : Stacks)
-    {
-        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
-        Row->SetNumberField(TEXT("stackId"), Stack.StackId);
-        Row->SetStringField(TEXT("itemId"), Stack.ItemId.ToString());
-        Row->SetNumberField(TEXT("count"), Stack.Count);
-        Row->SetStringField(TEXT("containerId"), Stack.ContainerId.ToString());
-        Row->SetNumberField(TEXT("x"), Stack.X);
-        Row->SetNumberField(TEXT("y"), Stack.Y);
-        Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
-        StackRows.Add(MakeShared<FJsonValueObject>(Row));
-    }
-    Inventory->SetArrayField(TEXT("stacks"), StackRows);
+    TSharedPtr<FJsonObject> Inventory = ExportInventoryObject();
     Profile->SetObjectField(TEXT("inventory"), Inventory);
 
     FString Serialized;
@@ -439,8 +462,26 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         OutError = TEXT("Player profile has no saved inventory");
         return false;
     }
-    const TSharedPtr<FJsonObject>& Inventory = *InventoryPtr;
+    double Layout=1;
+    if(!(*InventoryPtr)->HasField(TEXT("layoutVersion")))
+    {
+        if(!UAnomaliaConfigLibrary::BackupInventoryLayout(ServerId,PlayerId,Raw,OutError)) return false;
+    }
+    else if((*InventoryPtr)->TryGetNumberField(TEXT("layoutVersion"),Layout) && Layout<2)
+        if(!UAnomaliaConfigLibrary::BackupInventoryLayout(ServerId,PlayerId,Raw,OutError)) return false;
+    return LoadInventoryObject(*InventoryPtr,OutError);
+}
+
+bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObject>& Inventory,FString& OutError)
+{
+    OutError.Empty();
+    if(!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || !Inventory.IsValid())
+    { OutError=TEXT("Inventory snapshot requires available authority");return false; }
     double SchemaVersion = 0.0;
+    double LayoutVersion = 1;
+    if(Inventory->HasField(TEXT("layoutVersion")) &&
+        (!Inventory->TryGetNumberField(TEXT("layoutVersion"),LayoutVersion) || (LayoutVersion!=1 && LayoutVersion!=2)))
+    { OutError=TEXT("Unsupported inventory layout version");return false; }
     double SavedCapacity = 0.0;
     if (!Inventory->TryGetNumberField(TEXT("schemaVersion"), SchemaVersion) || SchemaVersion != 1.0 ||
         !Inventory->TryGetNumberField(TEXT("weightCapacityKg"), SavedCapacity) || !FMath::IsFinite(SavedCapacity) || SavedCapacity < 0.1 || SavedCapacity > 500.0)
@@ -450,7 +491,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
     }
     const TArray<TSharedPtr<FJsonValue>>* CompartmentRows = nullptr;
     const TArray<TSharedPtr<FJsonValue>>* StackRows = nullptr;
-    if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 64 ||
+    if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 128 ||
         !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > 512)
     {
         OutError = TEXT("Invalid inventory arrays in profile");
@@ -475,6 +516,10 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         SeenCompartments.Add(Id);
         FAnomaliaInventoryCompartment Box;
         Box.Id = Id; Box.Width = FMath::RoundToInt(Width); Box.Height = FMath::RoundToInt(Height);
+        if(Row->HasField(TEXT("recoveryOnly")) && !Row->TryGetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly))
+        { OutError=TEXT("Invalid migration compartment flag");return false; }
+        if(Box.bRecoveryOnly!=IdText.StartsWith(TEXT("migration_recovery_")))
+        { OutError=TEXT("Invalid reserved migration compartment");return false; }
         LoadedCompartments.Add(Box);
     }
 
@@ -515,14 +560,73 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
 
     const TArray<FAnomaliaInventoryCompartment> PreviousCompartments = Compartments;
     Compartments = LoadedCompartments;
+    bool ValidLayout=true;
     for (const FAnomaliaInventoryStack& Stack : LoadedStacks)
     {
         if (!CanPlace(LoadedStacks, Stack, Stack.ContainerId, Stack.X, Stack.Y, Stack.bRotated))
+            ValidLayout=false;
+    }
+    if(!ValidLayout && LayoutVersion!=1)
+    {
+        Compartments=PreviousCompartments;
+        OutError=TEXT("Saved inventory layout overlaps or exceeds its compartments");return false;
+    }
+    if(!ValidLayout)
+    {
+        const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+        auto LegacySize=[&](const FAnomaliaInventoryStack& S)
         {
-            Compartments = PreviousCompartments;
-            OutError = TEXT("Saved inventory layout overlaps or exceeds its compartments");
-            return false;
+            FIntPoint Size(1,1);
+            // The previous catalogue used 1x1 definitions; generic legacy IDs
+            // had a small number of larger native footprints.
+            if(!(Loot && Loot->FindItem(S.ItemId)))
+            {
+                if(S.ItemId==TEXT("wood")) Size={1,3};
+                else if(S.ItemId==TEXT("rifle") || S.ItemId==TEXT("fishing_rod")) Size={2,5};
+                else if(S.ItemId==TEXT("saddle")) Size={3,3};
+                else if(S.ItemId==TEXT("pistol") || S.ItemId==TEXT("jacket") || S.ItemId==TEXT("coat") ||
+                    S.ItemId==TEXT("shirt") || S.ItemId==TEXT("pants") || S.ItemId==TEXT("jeans") || S.ItemId==TEXT("boots") ||
+                    S.ItemId==TEXT("helmet") || S.ItemId==TEXT("backpack") || S.ItemId==TEXT("bag") || S.ItemId==TEXT("vest")) Size={2,2};
+            }
+            if(S.bRotated) Swap(Size.X,Size.Y);return Size;
+        };
+        // Migration repairs only geometry changed by this version, not corrupt
+        // legacy overlaps, missing compartments or multiple held objects.
+        for(int32 Index=0;Index<LoadedStacks.Num();++Index)
+        {
+            const auto& S=LoadedStacks[Index];const auto Size=LegacySize(S);
+            const auto* Box=Compartments.FindByPredicate([&](const auto& C){return C.Id==S.ContainerId;});
+            bool Valid=S.ContainerId==TEXT("hands") || (Box && S.X+Size.X<=Box->Width && S.Y+Size.Y<=Box->Height);
+            for(int32 OtherIndex=0;OtherIndex<Index && Valid;++OtherIndex)
+            {
+                const auto& Other=LoadedStacks[OtherIndex];if(Other.ContainerId!=S.ContainerId) continue;
+                const auto OtherSize=LegacySize(Other);
+                if(S.ContainerId==TEXT("hands") || (S.X<Other.X+OtherSize.X && S.X+Size.X>Other.X && S.Y<Other.Y+OtherSize.Y && S.Y+Size.Y>Other.Y)) Valid=false;
+            }
+            if(!Valid) { Compartments=PreviousCompartments;OutError=TEXT("Malformed legacy inventory preserved without migration");return false; }
         }
+        TArray<FAnomaliaInventoryStack> Repacked;
+        for(auto Stack:LoadedStacks)
+        {
+            if(Stack.ContainerId==TEXT("hands")) { Repacked.Add(Stack);continue; }
+            if(!CanPlace(Repacked,Stack,Stack.ContainerId,Stack.X,Stack.Y,Stack.bRotated) && !FindPlacement(Repacked,Stack))
+            {
+                if(!FindPlacement(Repacked,Stack,true))
+                {
+                    if(Compartments.Num()>=128) { Compartments=PreviousCompartments;OutError=TEXT("Legacy recovery compartment limit reached; profile preserved");return false; }
+                    FAnomaliaInventoryCompartment Recovery;
+                    int32 Index=0;do { Recovery.Id=FName(*FString::Printf(TEXT("migration_recovery_%d"),Index++)); }
+                    while(Compartments.ContainsByPredicate([&](const auto& C){return C.Id==Recovery.Id;}));
+                    Recovery.Width=1000;Recovery.Height=100;Recovery.bRecoveryOnly=true;
+                    Compartments.Add(Recovery);
+                    if(!FindPlacement(Repacked,Stack,true))
+                    { Compartments=PreviousCompartments;OutError=TEXT("Unable to preserve legacy item placement");return false; }
+                }
+            }
+            Repacked.Add(Stack);
+        }
+        LoadedStacks=MoveTemp(Repacked);
+        UseMessage=TEXT("Ancien rangement adapté : les éventuels objets en récupération peuvent être retirés sans perte.");
     }
     WeightCapacityKg = static_cast<float>(SavedCapacity);
     NextStackId = MaxSeenStackId + 1;

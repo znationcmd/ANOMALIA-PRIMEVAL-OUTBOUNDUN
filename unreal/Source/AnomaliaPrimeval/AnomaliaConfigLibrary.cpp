@@ -4,6 +4,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Guid.h"
 #include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -197,6 +198,22 @@ bool UAnomaliaConfigLibrary::LoadPlayerProfile(const FString& ServerId, const FS
         return false;
     }
     return true;
+}
+
+bool UAnomaliaConfigLibrary::BackupInventoryLayout(const FString& ServerId,const FString& PlayerId,const FString& Json,FString& OutError)
+{
+    if(!ValidId(ServerId) || !ValidId(PlayerId)) { OutError=TEXT("Invalid backup scope");return false; }
+    FTCHARToUTF8 Encoded(*(PlayerId+TEXT("|")+Json));
+    const FString Name=FSHA1::HashBuffer(Encoded.Get(),Encoded.Length()).ToString().ToLower()+TEXT(".json");
+    // Short immutable-backup directory also avoids the runner's long Windows paths.
+    const FString File=FPaths::Combine(ServerRoot(ServerId),TEXT("ib"),Name);
+    if(IFileManager::Get().FileExists(*File))
+    {
+        FString Existing;
+        if(FFileHelper::LoadFileToString(Existing,*File) && Existing==Json) return true;
+        OutError=TEXT("Existing inventory backup differs; preserved without overwriting");return false;
+    }
+    return WriteJsonSafely(File,Json,OutError);
 }
 
 bool UAnomaliaConfigLibrary::SavePlayerProfile(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError)

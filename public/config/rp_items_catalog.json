@@ -493,7 +493,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -514,7 +514,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -535,7 +535,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -556,7 +556,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -577,7 +577,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -598,7 +598,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -619,7 +619,7 @@
       "weightKg": 0.3,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 2,
       "use": {
         "action": "eat",
         "hunger": 25
@@ -640,7 +640,7 @@
       "weightKg": 0.5,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 3,
       "use": {
         "action": "drink",
         "thirst": 35
@@ -661,7 +661,7 @@
       "weightKg": 0.5,
       "maxStack": 20,
       "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryHeight": 3,
       "use": {
         "action": "drink",
         "thirst": 35
@@ -681,8 +681,8 @@
       "enabled": true,
       "weightKg": 0.25,
       "maxStack": 20,
-      "inventoryWidth": 1,
-      "inventoryHeight": 1,
+      "inventoryWidth": 2,
+      "inventoryHeight": 3,
       "use": {
         "action": "heal",
         "effect": "recovery"
@@ -1586,5 +1586,6 @@
       "inventoryWidth": 1,
       "inventoryHeight": 1
     }
-  ]
+  ],
+  "inventoryLayoutVersion": 2
 }

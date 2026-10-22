@@ -58,7 +58,7 @@ bool FAnomaliaStorageGridTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Place first stack"),Inventory->TryMoveStack(Wood,TEXT("pockets"),0,0,false));
         TestFalse(TEXT("A multi-cell weapon cannot overlap existing wood"),Inventory->TryMoveStack(Rifle,TEXT("pockets"),0,0,false));
         TestTrue(TEXT("Auto-stow finds a genuinely free rectangle"),Inventory->TryStowStack(Rifle));
-        TestEqual(TEXT("Combined occupied area counts both footprints"),Inventory->GetUsedCells(TEXT("pockets")),13);
+        TestEqual(TEXT("Combined occupied area counts both footprints"),Inventory->GetUsedCells(TEXT("pockets")),12);
     }
     World->DestroyWorld(false);return true;
 }

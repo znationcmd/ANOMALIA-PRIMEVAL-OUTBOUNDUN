@@ -7,6 +7,8 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
 struct FAnomaliaItemUseRule;
+class FJsonObject;
+class UAnomaliaSharedStorageSubsystem;
 
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
@@ -48,6 +50,10 @@ struct FAnomaliaInventoryCompartment
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     int32 Height = 0;
+
+    /** Migration overflow: existing items may be removed, never added through normal placement. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    bool bRecoveryOnly = false;
 };
 
 /** Server-authoritative inventory data model. A UMG screen and item-world actors remain separate tasks. */
@@ -85,6 +91,7 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
     FIntPoint GetItemSize(FName ItemId, bool bRotated = false) const;
+    bool IsRecoveryContainer(FName ContainerId) const;
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryAddItem(FName ItemId, int32 Count);
@@ -114,6 +121,9 @@ public:
 
     /** Serialize the current inventory into an existing profile without writing it. Server only. */
     bool BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError);
+    /** Same representation for player, vehicle and world-container inventories. Trusted server API. */
+    TSharedPtr<FJsonObject> ExportInventoryObject() const;
+    bool LoadInventoryObject(const TSharedPtr<FJsonObject>& Inventory, FString& OutError);
     bool IsPersistenceLocked() const { return bPersistenceLocked || bProfileRecoveryPending; }
     void SetProfileRecoveryPending(bool Pending);
 
@@ -188,6 +198,7 @@ protected:
 private:
     friend class UAnomaliaLootSubsystem;
     friend class UAnomaliaEconomySubsystem;
+    friend class UAnomaliaSharedStorageSubsystem;
     bool bPersistenceLocked = false;
     bool bProfileRecoveryPending = false;
     double NextBankRequestTime = 0;
@@ -199,6 +210,6 @@ private:
     bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;
-    bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const;
+    bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };

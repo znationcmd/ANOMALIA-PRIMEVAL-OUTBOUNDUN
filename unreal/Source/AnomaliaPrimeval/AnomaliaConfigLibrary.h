@@ -70,6 +70,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Persistence")
     static bool SavePlayerProfile(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError);
+    /** Immutable content-addressed backup before migrating a player's legacy inventory layout. */
+    static bool BackupInventoryLayout(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError);
 
     // Atomic server/map-scoped state, separate from player profiles and configuration.
     static bool LoadWorldState(const FString& ServerId, const FString& StateId, FString& OutJson, FString& OutError);

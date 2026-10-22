@@ -154,6 +154,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         BoxTitle->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %d × %d · %d / %d cases"), *Box.Id.ToString(), Box.Width, Box.Height,
             Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height)));
         BoxTitle->SetColorAndOpacity(FSlateColor(FLinearColor(.32f, .86f, .94f)));
+        if(Box.bRecoveryOnly) BoxTitle->SetText(FText::FromString(TEXT("RÉCUPÉRATION — retrait uniquement · objets conservés après migration")));
         ItemList->AddChildToVerticalBox(BoxTitle)->SetPadding(FMargin(14.f, 14.f, 8.f, 5.f));
         for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)
         {

@@ -59,8 +59,8 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
     // ConfigureCompartment intentionally refuses shrinking an existing compartment.
     // This isolated empty fixture starts without the survivor's default pockets.
     Bottles->Compartments.Reset();
-    TestTrue(TEXT("One-cell container"),Bottles->ConfigureCompartment(TEXT("pockets"),1,1));
-    if(!TestTrue(TEXT("Two bottles share one cell"),Bottles->TryAddItem(TEXT("water_bottle"),2)))
+    TestTrue(TEXT("Single-bottle-sized container"),Bottles->ConfigureCompartment(TEXT("pockets"),1,3));
+    if(!TestTrue(TEXT("Two bottles share one occupied footprint"),Bottles->TryAddItem(TEXT("water_bottle"),2)))
     { World->DestroyWorld(false);return false; }
     const int32 BottleId=Bottles->Stacks[0].StackId;
     TestFalse(TEXT("No room for returned bottle keeps source intact"),Bottles->TryUseStack(BottleId,2,Server,TEXT("water"),Error));
@@ -79,12 +79,12 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
     auto* Carrier=World->SpawnActor<AAnomaliaSurvivor>();
     auto* Storage=Carrier->InventoryComponent.Get();
     Storage->Compartments.Reset();
-    TestTrue(TEXT("Limit storage to one cell"),Storage->ConfigureCompartment(TEXT("pockets"),1,1));
+    TestTrue(TEXT("Limit storage to one bottle-sized slot"),Storage->ConfigureCompartment(TEXT("pockets"),1,3));
     if(!TestTrue(TEXT("Bottle available to hold"),Storage->TryAddItem(TEXT("water_bottle"),1)))
     { World->DestroyWorld(false);return false; }
     const int32 HeldId=Storage->Stacks[0].StackId;
     TestTrue(TEXT("Move bottle into hands"),Storage->RequestMoveStack(HeldId,TEXT("hands"),0,0,false));
-    TestTrue(TEXT("Fill vacated cell"),Storage->TryAddItem(TEXT("empty_water_bottle"),1));
+    TestTrue(TEXT("Fill vacated footprint"),Storage->TryAddItem(TEXT("empty_water_bottle"),1));
     TestFalse(TEXT("Full storage refuses stow"),Storage->RequestStowStack(HeldId));
     TestTrue(TEXT("Rejected stow retains held bottle"),Storage->Stacks.ContainsByPredicate([&](const auto& S){return S.StackId==HeldId && S.ContainerId==TEXT("hands") && S.Count==1;}));
     TestTrue(TEXT("Make space without changing held item"),Storage->TryRemoveItem(TEXT("empty_water_bottle"),1));
