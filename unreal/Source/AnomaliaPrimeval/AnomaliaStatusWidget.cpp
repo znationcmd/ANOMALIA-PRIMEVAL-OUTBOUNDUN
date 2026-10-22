@@ -12,6 +12,7 @@
 #include "Components/Button.h"
 #include "Components/SizeBox.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerInput.h"
 
 UAnomaliaTouchButton::UAnomaliaTouchButton(const FObjectInitializer& ObjectInitializer)
     : Super(ObjectInitializer)
