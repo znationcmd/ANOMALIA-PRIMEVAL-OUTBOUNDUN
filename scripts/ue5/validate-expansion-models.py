@@ -9,11 +9,11 @@ import subprocess
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--group',choices=['Expansion1','Metro1','NamedVehicles1','Military1'],default='Expansion1');p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--group',choices=['Expansion1','Metro1','NamedVehicles1','Military1','Military2'],default='Expansion1');p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);args=p.parse_args()
     root=Path(__file__).resolve().parents[2];out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),phases=[],drivingTested=False,multiplayerTested=False)
     try:
-        group=args.group;prefix={'Expansion1':'expansion','Metro1':'metro','NamedVehicles1':'named-vehicles','Military1':'military'}[group]
+        group=args.group;prefix={'Expansion1':'expansion','Metro1':'metro','NamedVehicles1':'named-vehicles','Military1':'military','Military2':'military-extra'}[group]
         module_spec=importlib.util.spec_from_file_location('expansion',root/('scripts/ue5/generate-metro.py' if group=='Metro1' else 'scripts/ue5/generate-assets-expansion.py'))
         module=importlib.util.module_from_spec(module_spec);module_spec.loader.exec_module(module)
         manifest=module.generate(root/'unreal/SourceAssets'/group) if group in ['Expansion1','Metro1'] else json.loads((root/'unreal/SourceAssets'/group/'manifest.json').read_text())

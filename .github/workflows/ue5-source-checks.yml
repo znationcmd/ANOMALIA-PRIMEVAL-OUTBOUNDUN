@@ -4,6 +4,7 @@ on:
   push:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_short_import_source.py'
       - 'public/config/rp*.json'
       - 'tests/test_ue5_rp_catalog.py'
       - 'tests/test_ue5_runtime_data.py'
@@ -27,10 +28,13 @@ on:
       - 'tests/test_ue5_playtest_terrain.py'
       - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_short_import_source.py'
       - 'public/config/rp*.json'
       - 'tests/test_ue5_rp_catalog.py'
       - 'tests/test_ue5_runtime_data.py'
@@ -54,6 +58,8 @@ on:
       - 'tests/test_ue5_playtest_terrain.py'
       - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
 
 jobs:
@@ -115,6 +121,8 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
           /tmp/archipelago-height
+      - name: Regress Windows GLB import path length and preserve source geometry and credits
+        run: python -m unittest discover -s tests -p test_ue5_short_import_source.py -v
       - name: Verify actual bridge geometry and reused texture bytes
         run: python -m unittest discover -s tests -p test_ue5_bridge_source.py -v
       - name: Regress capture camera target alignment (not Unreal rendering)
@@ -127,3 +135,7 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_expansion_models.py -v
       - name: Verify urban footprints road clearance and exact pool recesses
         run: python -m unittest discover -s tests -p test_ue5_settlement_layout.py -v
+      - name: Keep every requested military and civilian entry in the complete worklist
+        run: python scripts/vehicle-requirements/audit-requested-vehicles.py --check
+      - name: Verify original metro meshes preserve artist edits
+        run: python -m unittest discover -s tests -p test_ue5_metro.py -v

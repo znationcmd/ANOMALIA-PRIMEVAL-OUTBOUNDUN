@@ -138,3 +138,31 @@ or biological engineering protocols are included. A global substance catalogue w
 be extensible and cannot honestly be described as an exhaustive list of every drug.
 
 Validation locale du lot RP : **81 contrôles de sources/staging et 11 contrôles de contrats réussis**. Ces résultats ne constituent pas une compilation Unreal ni une validation multijoueur.
+
+
+## 22 octobre — reprise des blocages constatés
+
+Le premier build natif du lot loot/banque a échoué à la compilation. Les fonctions
+utilitaires de deux fichiers se heurtaient dans le build Unity d’Unreal ; elles ont
+maintenant des noms distincts. Les clés JSON `UE::FSharedString` d’UE 5.8 sont
+converties explicitement avant validation. Ces corrections sont publiées et le
+nouveau build attend l’hôte Windows ; aucun test en jeu de ce lot n’est encore validé.
+
+La branche d’intégration du 21 octobre est réconciliée dans cette branche sans
+suppression : extension militaire, préparateur Python Windows, convertisseur de
+textures, suivi complet des véhicules et carte métro v2 sont conservés.
+
+Le run 39671151992 a effectivement importé et capturé les 7 + 3 références militaires
+et les deux modèles de métro, et créé le circuit métro v2. Cela ne valide ni leur
+réalisme final, ni leur conduite ni le multijoueur. Il a échoué sur la capture globale
+(retour 0xC0000005 après capture) et sur l’import des 36 voitures : les chemins
+Interchange dépassaient la limite Windows et les écritures de textures échouaient.
+
+L’import utilise maintenant des copies GLB aux noms courts, avec conservation du
+binaire de géométrie, des références par index et des crédits. Les originaux ne sont
+pas modifiés. Les voitures sont réimportées vers `NamedVehicles2` et une carte de
+revue v2 ; les imports partiels v1 sont préservés. Des tests locaux vérifient le GLB,
+les droits d’écriture exclusifs, les crédits et le maintien des sources. Une étape
+native réessaiera les 36 modèles si leur cache existe sur l’hôte. La validation des
+nouveaux imports reste en attente ; le crash de fermeture de la capture globale reste
+à corriger et aucun nouvel installateur autonome n’est annoncé.

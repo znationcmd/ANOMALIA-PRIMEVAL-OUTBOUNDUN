@@ -1,0 +1,2105 @@
+{
+  "schemaVersion": 1,
+  "licenseUrl": "https://savage.nps.edu/Savage/license.html",
+  "models": [
+    {
+      "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/HMMWV.x3d",
+      "sha256": "61ccf8741a9ed11958e172238135683945db691bb43dbc0d7fc61320d53f91b9",
+      "bytes": 5809,
+      "id": "humvee_hmmwv",
+      "sourceUp": "y",
+      "metadata": [
+        {
+          "content": "HMMWV.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Highly Mobile Muliti-purpose Wheeled Vehicle (HMMWV)",
+          "name": "description"
+        },
+        {
+          "content": "Jeffrey Weekley",
+          "name": "creator"
+        },
+        {
+          "content": "3 December 2001",
+          "name": "created"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/HMMWV.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "dependencies": [
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/RearAntenna.x3d",
+          "sha256": "b441b92525c366a790a34c18004155f17c7221df3f24b1510345c7c7b24e70d9",
+          "bytes": 3632,
+          "metadata": [
+            {
+              "content": "RearAntenna.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Rear antenna for the AAV7PA1",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "1 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/RearAntenna.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/BenchSeat.x3d",
+          "sha256": "84432abd74e11ac7478a6c458505f7b66080cd4f7c85a8d18213fa56164f2f7f",
+          "bytes": 3442,
+          "metadata": [
+            {
+              "content": "BenchSeat.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Bench Seat for HMMWV",
+              "name": "description"
+            },
+            {
+              "content": "Etsuko Lippi",
+              "name": "creator"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "contributor"
+            },
+            {
+              "content": "18 September 2001",
+              "name": "created"
+            },
+            {
+              "content": "7 April 2024",
+              "name": "modified"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/BenchSeat.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "F18 cockpit seat",
+              "name": "subject"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/DriverSideLargeSideMirror.x3d",
+          "sha256": "43fcd134a75b06633b7c380ec173909fc76802cf55a8b850eafed5284bb3949a",
+          "bytes": 2800,
+          "metadata": [
+            {
+              "content": "DriverSideLargeSideMirror.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Large Side Mirrors for Large Utility Vehicles",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "12 December 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/DriverSideLargeSideMirror.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/Frame.x3d",
+          "sha256": "630cfe96cde6a0ed0dbfd871a93d875f4333cbede85c4320efd64497df655cb0",
+          "bytes": 16846,
+          "metadata": [
+            {
+              "content": "Frame.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Frame for the Highly Mobile Muliti-purpose Wheeled Vehicle (HMMWV)",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "3 December 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "Version 2",
+              "name": "version"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/Frame.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/PassengerSideLargeSideMirror.x3d",
+          "sha256": "bc05b92ce9e05e233f4b49aca1857d8a1e95fba4862c283820dc81669dc5d816",
+          "bytes": 2969,
+          "metadata": [
+            {
+              "content": "PassengerSideLargeSideMirror.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Large Side Mirrors for Large Utility Vehicles",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "12 December 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/PassengerSideLargeSideMirror.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/SteeringWheel.x3d",
+          "sha256": "65a6c2d60a8bb46a50dd68ab5b491e7b367f9919793b8f33fd2bea067aa43ff0",
+          "bytes": 3898,
+          "metadata": [
+            {
+              "content": "SteeringWheel.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Steering wheel.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "12 December 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "Lightweight155mmHowitzer.x3d",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/SteeringWheel.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "Steering Wheel, Crank",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/Suspension.x3d",
+          "sha256": "b96ae7fd1987b7e50c6de363d2a1e649ccb74c5eb66cc5ee9ff5ac7facb5859c",
+          "bytes": 5439,
+          "metadata": [
+            {
+              "content": "Suspension.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Suspension and Tires for the Highly Mobile Multi-purpose Wheeled Vehicle",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "17 December 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.fas.org",
+              "name": "reference"
+            },
+            {
+              "content": "This is the front and rear suspension for the HMMWV from AM General.",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/Suspension.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/AutomotiveTire.x3d",
+          "sha256": "421f1f058b062c928b4f271ea94ade2d85bfd16de71340131969737ce941784b",
+          "bytes": 9921,
+          "metadata": [
+            {
+              "content": "AutomotiveTire.x3d",
+              "name": "title"
+            },
+            {
+              "content": "White Wall Tire for Wheeled Vehicles",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey D Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "12 November 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "Reversible Tire with White Walls for wheeled vehicles",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/AutomotiveTire.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        }
+      ],
+      "inlineUrlReplacements": {
+        "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/BenchSeat.x3d": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/BenchSeat.x3d",
+        "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/SteeringWheel.x3d": "https://savage.nps.edu/Savage/GroundVehicles/HMMWV/SteeringWheel.x3d"
+      },
+      "media": []
+    },
+    {
+      "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LCAC.x3d",
+      "sha256": "fbb97944e35a501d32c49ba8971aa831d8c5657e79d2ef8c463c64ed75abdd57",
+      "bytes": 22671,
+      "id": "lcac",
+      "sourceUp": "y",
+      "metadata": [
+        {
+          "content": "LCAC.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Landing Craft Air Cushioned (LCAC) amphibious assault vehicle. Carrying capacity is 60 to 75 tons.",
+          "name": "description"
+        },
+        {
+          "content": "Jeffrey Weekley",
+          "name": "creator"
+        },
+        {
+          "content": "22 June 2001",
+          "name": "created"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "lcac.pdf",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+          "name": "reference"
+        },
+        {
+          "content": "lsd-44_990829-N-9593R-002.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.hazegray.org/features/nato/us/lcac",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "lcac-kb97_8.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "lcac-dvic076.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.surfpac.navy.mil/photorelease/2001/01-008LCAC.htm",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.surfpac.navy.mil/photorelease/2001/UssBoxerApril01.3.htm",
+          "name": "reference"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LCAC.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "LCAC Pilot House",
+          "name": "subject"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "dependencies": [
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/AAV.x3d",
+          "sha256": "62ed046f92e0dcd5ab1a6ab29491b8947619a96e0c70686347500e9cef65d7aa",
+          "bytes": 4786,
+          "metadata": [
+            {
+              "content": "AAV.x3d",
+              "name": "title"
+            },
+            {
+              "content": "The AAV is a fully-tracked Amphibious Assault Vehicle (Patrol), aka AAV7PA1 and LVTP7.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "1 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "AAV1.jpg",
+              "name": "photo"
+            },
+            {
+              "content": "aav3.jpg",
+              "name": "photo"
+            },
+            {
+              "content": "capex7.jpg",
+              "name": "photo"
+            },
+            {
+              "content": "aavp7a1.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/land/aavp7a1.htm",
+              "name": "reference"
+            },
+            {
+              "content": "http://www.technogap.com/aavp7a1.htm",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/AAV.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "AAV AAV7PA1 LVTP7",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/BlowerHouse.x3d",
+          "sha256": "c40b2472d99b0569094e861d731682ddfebd177acb4d06290ec8b03ea80ffb20",
+          "bytes": 28715,
+          "metadata": [
+            {
+              "content": "BlowerHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Blower, Nozzle and Blower Engine House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "translator"
+            },
+            {
+              "content": "24 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/BlowerHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Blower House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/CrewHouse.x3d",
+          "sha256": "5ac73096c558156b72616eb9f4218f6436872e936983592b85007b9f5b42c2c5",
+          "bytes": 10828,
+          "metadata": [
+            {
+              "content": "CrewHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Crew House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "5 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "LCAC Crew House",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/CrewHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Fan.x3d",
+          "sha256": "205429e0b3ca011b4c1c23f9b485d85909b8f7b4a60199125cf0825ad00e7f79",
+          "bytes": 12327,
+          "metadata": [
+            {
+              "content": "Fan.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Fan with Cowling, Shaft and Control Surfaces for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "13 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "http://www.surfpac.navy.mil/acu5/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Fan.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "LCAC Propellor",
+              "name": "subject"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Ladder.x3d",
+          "sha256": "7fb0e43c1fdb3a12dbd10fe1f0e95f2a4c27640774b8b7b36c6eaa1afb39aa38",
+          "bytes": 5170,
+          "metadata": [
+            {
+              "content": "Ladder.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Ladder for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "6 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Ladder.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Exterior Ladder",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PilotHouse.x3d",
+          "sha256": "a426984d21538cc3d8c1d6258a32f0f6fe75393d3f3c4295a8ba14dba426f967",
+          "bytes": 18922,
+          "metadata": [
+            {
+              "content": "PilotHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Starboard Pilot House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "19 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PilotHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Pilot House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortBlowerHouse.x3d",
+          "sha256": "df7e58d0628955c85112617640633f711c7a51f630d5636bfa767fed0c369fb3",
+          "bytes": 27975,
+          "metadata": [
+            {
+              "content": "PortBlowerHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Blower, Nozzle and Blower Engine House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "translator"
+            },
+            {
+              "content": "24 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortBlowerHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Blower House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortFanEngineHouse.x3d",
+          "sha256": "2cc9119dc163d8507b48cef8c61432a171b585cd955d1e46ea922e70bdfcb383",
+          "bytes": 11369,
+          "metadata": [
+            {
+              "content": "PortFanEngineHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Port Engine House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "7 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortFanEngineHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Fan Engine House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortGuardRail.x3d",
+          "sha256": "2e3e68dcb19cb9f640f3002ebb2f65f4b9eca87c4e61b1d562960f3dc6c43c4b",
+          "bytes": 3412,
+          "metadata": [
+            {
+              "content": "PortGuardRail.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Forward Port Guardrail for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "5 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "photo"
+            },
+            {
+              "content": "LCAC Guardrail",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PortGuardRail.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Skirt.x3d",
+          "sha256": "a00fbedf31bd44120de51ac69fbccd0608742822b545113e679a704f3a7020ec",
+          "bytes": 3729,
+          "metadata": [
+            {
+              "content": "Skirt.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Animated Skirt for LCAC which animates using a Vector2FloatArray Interpolator - click geometry to activate animation loop.",
+              "name": "description"
+            },
+            {
+              "content": "Jeff Weekley, Don Brutzman and Jane Wu",
+              "name": "creator"
+            },
+            {
+              "content": "15 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.web3d.org/technicalinfo/specifications/vrml97/part1/concepts.html#4.6.8",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.web3d.org/technicalinfo/specifications/vrml97/part1/nodesRef.html#CoordinateInterpolator",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.web3d.org/technicalinfo/specifications/vrml97/part1/nodesRef.html#Extrusion",
+              "name": "reference"
+            },
+            {
+              "content": "Skirt",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Skirt.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/StarboardFanEngineHouse.x3d",
+          "sha256": "32da75fa849adfc6c781f696fdc80a3c966b21ca1451697fd9bd1fd1de243ff2",
+          "bytes": 11472,
+          "metadata": [
+            {
+              "content": "StarboardFanEngineHouse.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Starboard Engine House for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "7 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/StarboardFanEngineHouse.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Starboard Fan Engine House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/Chassis.x3d",
+          "sha256": "e6721f6602971334609c1bbe3670bbce9a41fdc7ee83f079ab55c34eb6f6b524",
+          "bytes": 17082,
+          "metadata": [
+            {
+              "content": "Chassis.x3d",
+              "name": "title"
+            },
+            {
+              "content": "This group of indexed face sets builds the chassis of the AAVP7A1, the USMC fully tracked amphibious assault vehicle.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey D. Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "16 March 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "triangular hole in front of forward left mud guard",
+              "name": "TODO"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/Chassis.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "Chassis AAV Gator AAV7PA1",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/ChassisHatch.x3d",
+          "sha256": "8acfdcb977144c913839b58492a59faeb4f02b72fc3f03713f3cacc276a3b33f",
+          "bytes": 7780,
+          "metadata": [
+            {
+              "content": "ChassisHatch.x3d",
+              "name": "title"
+            },
+            {
+              "content": "A circular hatch and hinges for the chassis of the AAV7PA1.",
+              "name": "creator"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "1 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "An extruded hatch cover with primitive geometry building the hinges.",
+              "name": "description"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/ChassisHatch.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "AAV AAV7PA1 LVTP7",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/ForwardAntenna.x3d",
+          "sha256": "8f6eb9b8c017a6777b4fe52f49a0095244af5570ef61c548c1a85b935b04bf4d",
+          "bytes": 3612,
+          "metadata": [
+            {
+              "content": "ForwardAntenna.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Forward antenna for the AAV7PA1.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "5 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "28 November 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/ForwardAntenna.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/FullTrack.x3d",
+          "sha256": "d26187ad2fd470491abb9d5b1975ee38ff192dada1a810f2f234b093b36c7b44",
+          "bytes": 15956,
+          "metadata": [
+            {
+              "content": "FullTrack.x3d",
+              "name": "title"
+            },
+            {
+              "content": "AAV tracks and road wheels - place mouse over geometry to make the tracks move.",
+              "name": "description"
+            },
+            {
+              "content": "William Geissler, Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "31 January 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/FullTrack.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/HeadLights.x3d",
+          "sha256": "cea2f01a49083962ac20c241eea27f15805c01cc2faf52d61dec4576813651c3",
+          "bytes": 2337,
+          "metadata": [
+            {
+              "content": "HeadLights.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Headlights for the AAV7PA1.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "4 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "AAV7PA1 Headlights",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/HeadLights.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/RearAntenna.x3d",
+          "sha256": "b441b92525c366a790a34c18004155f17c7221df3f24b1510345c7c7b24e70d9",
+          "bytes": 3632,
+          "metadata": [
+            {
+              "content": "RearAntenna.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Rear antenna for the AAV7PA1",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "1 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/RearAntenna.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/Turret.x3d",
+          "sha256": "429f27595d0775a383cc8479b391400fe13f4070de06cb2ada358f67be7edfb1",
+          "bytes": 14823,
+          "metadata": [
+            {
+              "content": "Turret.x3d",
+              "name": "title"
+            },
+            {
+              "content": "This set of indexed face sets, primitives and inlines builds the Turret for the AAV7PA1.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "20 May 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/Turret.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/CrewHouseHatch.x3d",
+          "sha256": "aec9ee2d8bcae5a0941506ee323c036940dd624860b2484887c3c31903b3e48f",
+          "bytes": 8736,
+          "metadata": [
+            {
+              "content": "CrewHouseHatch.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Crew House Hatch for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "6 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/CrewHouseHatch.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Crew House Hatch",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LifeBoatPod.x3d",
+          "sha256": "66edef326ff0f6d400e1e952ae677b779ca1586e9f522f137bd248cf8e799f30",
+          "bytes": 4265,
+          "metadata": [
+            {
+              "content": "LifeBoatPod.x3d",
+              "name": "title"
+            },
+            {
+              "content": "General Purpose Lifeboat Pod",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "5 July 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LifeBoatPod.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "Lifeboat Pod",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PilotHouseHatch.x3d",
+          "sha256": "f89409f57850d3cc3fcaa8c32060725cd99576ef4c6f6d540358893c310faaa5",
+          "bytes": 8549,
+          "metadata": [
+            {
+              "content": "PilotHouseHatch.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Starboard Pilot House Hatch for the LCAC",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "22 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "http://www.hazegray.org/features/nato/us/lcac",
+              "name": "reference"
+            },
+            {
+              "content": "lcac.pdf",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac.htm",
+              "name": "reference"
+            },
+            {
+              "content": "lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lsd-44_990829-N-9593R-002.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-kb97_8.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/lcac-dvic076.jpg",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/PilotHouseHatch.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "LCAC Pilot House",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/GrenadeLauncher.x3d",
+          "sha256": "e99b90ec93ea3d25caa02c174123cbaee4f9c04125c70860623f4f73cca44351",
+          "bytes": 6059,
+          "metadata": [
+            {
+              "content": "GrenadeLauncher.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Smoke grenade launchers for the AAV7PA1.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "31 May 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/GrenadeLauncher.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/HatchHousingWithTurretHatch.x3d",
+          "sha256": "17a10ec4d3d2855cf3b9e02fbb78321b37e8f5aaf938b13a8e39155218408bf1",
+          "bytes": 5146,
+          "metadata": [
+            {
+              "content": "HatchHousingWithTurretHatch.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Turret Housing with windows, Turret Hatch and Hinge Assembly for the AAVP7A1 - click and drag hatch to open.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "30 May 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/HatchHousingWithTurretHatch.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/TurretHatch.x3d",
+          "sha256": "ad86f0c67b46c6bd5d629ffdefcdd3763bb85cb0301af4c4418a642e97e776c3",
+          "bytes": 7228,
+          "metadata": [
+            {
+              "content": "TurretHatch.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Turret Hatch and Hinge Assembly for the AAVP7A1 - click and drag hatch to open.",
+              "name": "description"
+            },
+            {
+              "content": "Jeffrey Weekley",
+              "name": "creator"
+            },
+            {
+              "content": "1 June 2001",
+              "name": "created"
+            },
+            {
+              "content": "20 October 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/AmphibiousVehicles/AAV/TurretHatch.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "AAV AAV7PA1 LVTP7",
+              "name": "subject"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        }
+      ],
+      "inlineUrlReplacements": {},
+      "media": [
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/Hovercraft.png",
+          "key": "7d933d8e37fadb6dd4212be699aae0eee0304084d4f8b6201a6214ab0f98d182",
+          "sha256": "261b874a69674be90d280d66847c54525edfdfd9f667d9d3d97f7167104f5039",
+          "bytes": 2436
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LCAC-1.jpg",
+          "key": "939fa0b6d86408993ab415b31517f6bdb32f12a92692ba2966e7129d05ac766d",
+          "unavailable": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/LCAC-1.jpg HTTP Error 404: Not Found"
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/CowlingPaint.jpg",
+          "key": "ec7088efc48a30ab8db967da3cbfeb02c726cbd098de4f57d5ffd05999fd9a0c",
+          "sha256": "a5656c2cd06c4b851d8c4e6b47488a47db1f5986fb0d1757b1c881d22fe8ad5f",
+          "bytes": 20618
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/grate.jpg",
+          "key": "8c1258956f8035168b022171c2245503ccf06d0e9d92146e68cdebb68aa03433",
+          "sha256": "5a08cb22ddce00e4b133b6245e7ca4f005f496d7ecff7f3664254fdb5a2d1f50",
+          "bytes": 45803
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AmphibiousVehicles/LCAC/RearGrate.jpg",
+          "key": "39633b88e34cac380bfeedc5ac54ba54089311bf01bb7571e80ef67f3500e396",
+          "sha256": "a628ff52fa3c5ca48e9fadc2466305892a97892044216219b99f202e8342c334",
+          "bytes": 11804
+        }
+      ]
+    },
+    {
+      "url": "https://savage.nps.edu/Savage/Submarines/SsnSeawolfUnitedStates/SSN21Seawolf.x3d",
+      "sha256": "81e6e01082efcdf300e897d4b18462d510ab95efe1ddc5540b5efd5ca351225f",
+      "bytes": 147985,
+      "id": "seawolf",
+      "sourceUp": "y",
+      "metadata": [
+        {
+          "content": "SSN21Seawolf.x3d",
+          "name": "title"
+        },
+        {
+          "content": "SSN-21 Seawolf fast attack submarine.",
+          "name": "description"
+        },
+        {
+          "content": "Ryan Alexander Rippeon",
+          "name": "creator"
+        },
+        {
+          "content": "Ryan Alexander Rippeon",
+          "name": "translator"
+        },
+        {
+          "content": "1 March 2007",
+          "name": "created"
+        },
+        {
+          "content": "6 March 2007",
+          "name": "translated"
+        },
+        {
+          "content": "28 January 2024",
+          "name": "modified"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/ssn-21.htm",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/seawolf.gif",
+          "name": "drawing"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/ssn21_4.gif",
+          "name": "Image"
+        },
+        {
+          "content": "Propeller from SAVAGE Archive: https://savage.nps.edu/Savage/Submarines/Various/Type209GlafkosDieselSubmarinePropeller.x3d",
+          "name": "reference"
+        },
+        {
+          "content": "Antennas and Radar code from SAVAGE Archive: http://savage.nps.edu/Savage/Submarines/SsnLosAngelesUnitedStates/Sail.wrl",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ship/ssn-21-DNSD9904056_JPG.jpg",
+          "name": "photo"
+        },
+        {
+          "content": "Outer hull of the boat, sail, side array sonar, prop shroud",
+          "name": "subject"
+        },
+        {
+          "content": "Wings 3D, http://www.wings3d.com/ X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "http://savage.nps.edu/Savage/Submarines/SsnSeawolfUnitedStates/SSN21Seawolf.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "dependencies": [
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsnLosAngelesUnitedStates/Planes.x3d",
+          "sha256": "11d05a14a59577966a1ab956d22be903986f4cde7b0655eda03684db8d3e554f",
+          "bytes": 1695,
+          "metadata": [
+            {
+              "content": "Planes.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Fairwater and Stern Planes for 688 Submarine",
+              "name": "description"
+            },
+            {
+              "content": "LT Ken Curtin",
+              "name": "creator"
+            },
+            {
+              "content": "10 August 2003",
+              "name": "created"
+            },
+            {
+              "content": "28 November 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/ssn-688.htm",
+              "name": "reference"
+            },
+            {
+              "content": "http://www.combatindex.com/store/3d/ssn688_model.html",
+              "name": "reference"
+            },
+            {
+              "content": "Fairwater Planes, Stern Planes, 688, Submarine",
+              "name": "subject"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/Submarines/SsnLosAngelesUnitedStates/Planes.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/Various/Type209GlafkosDieselSubmarinePropeller.x3d",
+          "sha256": "c863671522ba8eb63df62876bd5f82d55ab0d919a225d043912e283d6075da9f",
+          "bytes": 5446,
+          "metadata": [
+            {
+              "content": "Type209GlafkosDieselSubmarinePropeller.x3d",
+              "name": "title"
+            },
+            {
+              "content": "Submarine propeller based on a propeller initially created by James Harney for an \"Arleigh Burke\" type DDG",
+              "name": "description"
+            },
+            {
+              "content": "Anthony Varelas",
+              "name": "creator"
+            },
+            {
+              "content": "1 September 2002",
+              "name": "created"
+            },
+            {
+              "content": "28 November 2019",
+              "name": "modified"
+            },
+            {
+              "content": "https://www.fas.org/man/dod-101/sys/ship/ddg-51.htm",
+              "name": "reference"
+            },
+            {
+              "content": "FASDDG51.htm",
+              "name": "reference"
+            },
+            {
+              "content": "https://savage.nps.edu/Savage/Submarines/Various/Type209GlafkosDieselSubmarinePropeller.x3d",
+              "name": "identifier"
+            },
+            {
+              "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+              "name": "generator"
+            },
+            {
+              "content": "../../license.html",
+              "name": "license"
+            }
+          ]
+        }
+      ],
+      "inlineUrlReplacements": {},
+      "media": []
+    }
+  ],
+  "coverage": "Additional historic visual references. All 87 military-related grouped requests remain in scope; these references do not validate exact variants, rigging, dimensions or gameplay."
+}

@@ -6,13 +6,16 @@ import json
 import os
 from pathlib import Path
 import uuid
+import sys
 import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
+sys.path.insert(0,str(ROOT/'Scripts'))
+from short_import_source import prepare_short_import, canonical_destination, review_version
 GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
-if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1']:raise RuntimeError('Unsupported import group')
+if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1','Military2']:raise RuntimeError('Unsupported import group')
 BASE=ROOT/'SourceAssets'/GROUP
-MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military'}
+MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military','Military2':'MilitaryExtra'}
 TAG='AnomaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
 OUT=Path(os.environ['ANOMALIA_EXPANSION_REPORT'])
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),models=[],drivingTested=False,walkingTested=False,multiplayerTested=False)
@@ -20,7 +23,7 @@ try:
     spec=json.loads((BASE/'manifest.json').read_text())
     tools=unreal.AssetToolsHelpers.get_asset_tools();loaded={}
     for item in spec['models']:
-        source=BASE/item['file'];dest=item['objectPath']
+        source=BASE/item['file'];dest=canonical_destination(GROUP,item['objectPath']);import_proof=None
         if source.resolve().parent!=BASE or hashlib.sha256(source.read_bytes()).hexdigest()!=item['sha256']:
             raise RuntimeError('Source identity mismatch: '+item['id'])
         mesh=unreal.EditorAssetLibrary.load_asset(dest) if unreal.EditorAssetLibrary.does_asset_exist(dest) else None
@@ -28,8 +31,13 @@ try:
             if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,TAG)!=item['sha256']:
                 raise RuntimeError('Unrelated existing mesh preserved: '+dest)
         else:
-            staging='/Game/Anomalia/OriginalImports/'+GROUP+'_'+item['id']+'_'+uuid.uuid4().hex
-            task=unreal.AssetImportTask();task.filename=str(source);task.destination_path=staging;task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
+            # Long source and UUID names exceeded Windows MAX_PATH during texture saves.
+            # Preserve originals and use a short, separately owned import copy and package.
+            short_source, import_proof=prepare_short_import(ROOT,source,item['sha256'])
+            staging='/Game/Anomalia/I/'+uuid.uuid4().hex[:12]
+            if len(str(ROOT/'Content'/staging.removeprefix('/Game/')))+70>240:
+                raise RuntimeError('Project directory is too long for safe Windows asset imports')
+            task=unreal.AssetImportTask();task.filename=str(short_source);task.destination_path=staging;task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
             tools.import_asset_tasks([task]);task.get_objects()
             meshes=[unreal.EditorAssetLibrary.load_asset(p) for p in unreal.EditorAssetLibrary.list_assets(staging,recursive=True,include_folder=False)]
             meshes=[m for m in meshes if isinstance(m,unreal.StaticMesh)]
@@ -47,7 +55,7 @@ try:
         materials=mesh.get_editor_property('static_materials')
         if not materials or any(not v.material_interface for v in materials):raise RuntimeError('Missing material: '+item['id'])
         loaded[item['id']]=mesh
-        report['models'].append(dict(id=item['id'],kind=item['kind'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(materials),nativePresentationBound=False))
+        report['models'].append(dict(id=item['id'],kind=item['kind'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(materials),nativePresentationBound=False,importSourceAdaptation=import_proof))
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     vehicle=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
     for item in report['models']:
@@ -59,7 +67,7 @@ try:
             item['nativePresentationBound']=True
         finally:actors.destroy_actor(probe)
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    package='/Game/Maps/ANOMALIA_'+MAPS[GROUP]+'Review_v1'
+    package='/Game/Maps/ANOMALIA_'+MAPS[GROUP]+'Review_'+review_version(GROUP)
     existing=unreal.EditorAssetLibrary.does_asset_exist(package)
     if existing:
         if not level.load_level(package):raise RuntimeError('Cannot open existing review map')
@@ -75,7 +83,7 @@ try:
         # Large naval models have their own remote display berths. No overlap with roads/housing.
         positions={};ordinary=[m for m in spec['models'] if m['kind']!='building' and m['id'] not in ['carrier','warship','submarine']]
         for i,item in enumerate(ordinary):positions[item['id']]=((i%6)*2200-5500,(i//6)*2200-7000)
-        if GROUP in ['NamedVehicles1','Military1']:
+        if GROUP in ['NamedVehicles1','Military1','Military2']:
             # Independent review bays scale to source bounds, including large ships.
             gap=max(max(m['dimensionsMetresYUp'][0],m['dimensionsMetresYUp'][2]) for m in spec['models'])*100+2000
             positions={m['id']:((i%6)*gap,(i//6)*gap) for i,m in enumerate(spec['models'])}

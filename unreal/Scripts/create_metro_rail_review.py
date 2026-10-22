@@ -8,7 +8,7 @@ OUT=Path(os.environ['ANOMALIA_METRO_RAIL_REPORT'])
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),drivingTested=False,multiplayerTested=False)
 try:
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    package='/Game/Maps/ANOMALIA_MetroRailReview_v1';marker='ANOMALIA_MetroRail1_OwnershipMarker'
+    package='/Game/Maps/ANOMALIA_MetroRailReview_v2';marker='ANOMALIA_MetroRail1_OwnershipMarker'
     if unreal.EditorAssetLibrary.does_asset_exist(package):
         if not level.load_level(package):raise RuntimeError('Cannot load review map')
         present={a.get_actor_label():a for a in actors.get_all_level_actors()}
@@ -42,7 +42,7 @@ try:
         if not lead.configure_vehicle(unreal.Name('metro')):raise RuntimeError('Native metro unavailable')
         lead.set_actor_rotation(spline.get_rotation_at_distance_along_spline(start,unreal.SplineCoordinateSpace.WORLD),False)
         lead.set_editor_property('initial_rail_track',track);lead.set_editor_property('initial_rail_distance_cm',start)
-        lead.set_editor_property('fuel_consumption_per_second',0.) # Prototype electric traction; no supply network simulation.
+        lead.configure_runtime_tuning(100.,0.,1.) # Prototype electric traction; no supply network simulation.
         place('PlayerStart',unreal.PlayerStart,(point.x+300,point.y,120))
         sun=place('Sun',unreal.DirectionalLight,(0,0,4000));sun.set_actor_rotation(unreal.Rotator(pitch=-45,yaw=-30,roll=0),False)
         place('Sky',unreal.SkyAtmosphere,(0,0,0));place('Ambient',unreal.SkyLight,(0,0,1000))
