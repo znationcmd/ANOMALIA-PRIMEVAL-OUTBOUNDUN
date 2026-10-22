@@ -52,7 +52,10 @@ try {
     $report.validationSaveIsolationVerified=$true
     $active=Join-Path $base 'active.json';$temp=Join-Path $base ([Guid]::NewGuid().ToString('N')+'.json')
     @{commit=$Commit;executable=$exe;userData=$saved} | ConvertTo-Json | Set-Content -LiteralPath $temp -Encoding UTF8
+    $previous=$null
     if (Test-Path -LiteralPath $active) {
+        $previous=Get-Content -LiteralPath $active -Raw | ConvertFrom-Json
+        $report.previousCommit=$previous.commit
         $history=Join-Path $base 'history';New-Item -ItemType Directory -Path $history -Force | Out-Null
         [IO.File]::Replace($temp,$active,(Join-Path $history ([Guid]::NewGuid().ToString('N')+'.json')))
     } else { Move-Item -LiteralPath $temp -Destination $active }
@@ -63,6 +66,12 @@ try {
         if (-not $old.TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated desktop shortcut preserved.' }
     }
     $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.Description='ANOMALIA — version de test Windows autonome';$shortcut.Save()
+    $readback=Get-Content -LiteralPath $active -Raw | ConvertFrom-Json
+    $desktop=$shell.CreateShortcut($link)
+    if ($readback.commit -ne $Commit -or $readback.executable -ne $exe -or $desktop.TargetPath -ne $exe -or $desktop.WorkingDirectory -ne $target -or $desktop.Arguments -ne '-d3d11 -sm5') { throw 'Active version or desktop shortcut readback failed.' }
+    $report.activeVersionAndShortcutVerified=$true
+    $report.trigger=$env:GITHUB_EVENT_NAME
+    $report.updatedExistingInstallation=($null -ne $previous -and $previous.commit -ne $Commit)
     $report.state='PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED';$report.executable=$exe;$report.shortcut=$link;$report.userData=$saved;$report.existingUserFilesPreserved=$hashes.Count;$report.installedProbe=$native
 } catch { $report.error=$_.Exception.Message }
 $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $ValidationDir 'installed-package-report.json') -Encoding UTF8

@@ -1,5 +1,5 @@
 """Assemble an owned small game map from existing imported art; never alter other maps."""
-import json, os
+import json, os, math
 from pathlib import Path
 import unreal
 
@@ -54,4 +54,103 @@ else:
     bed=spawn(unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaHomesteadStation'),'PlayableBed',(250,1000,50))
     bed.display_mesh.set_static_mesh(cube);bed.display_mesh.set_relative_scale3d(unreal.Vector(1,2,.4))
     if not level.save_current_level(): raise RuntimeError('Cannot save playable map')
-unreal.log('ANOMALIA playable zone assembled; packaged execution and art quality still require validation.')
+# Upgrade only our isolated map. Never recreate it: keep gameplay actors, IDs and saves.
+owned={a.get_actor_label():a for a in actors.get_all_level_actors() if unreal.Name(marker) in a.tags}
+def surface(name,dark,light,roughness,grain):
+    folder='/Game/Anomalia/World/PlayableLook_v2'
+    path=folder+'/'+name
+    if unreal.EditorAssetLibrary.does_asset_exist(path):
+        value=unreal.load_asset(path)
+        if not isinstance(value,unreal.Material): raise RuntimeError('Existing non-material preserved: '+path)
+        return value  # Preserve any subsequent artist edits.
+    value=unreal.AssetToolsHelpers.get_asset_tools().create_asset(name,folder,unreal.Material,unreal.MaterialFactoryNew())
+    lib=unreal.MaterialEditingLibrary
+    def node(cls,**props):
+        n=lib.create_material_expression(value,cls)
+        for key,item in props.items(): n.set_editor_property(key,item)
+        return n
+    def link(source,target,pin):
+        if not lib.connect_material_expressions(source,'',target,pin): raise RuntimeError('Material graph connection failed')
+    pos=node(unreal.MaterialExpressionWorldPosition)
+    noise=node(unreal.MaterialExpressionNoise,scale=grain,levels=2,quality=1,output_min=0.,output_max=1.)
+    link(pos,noise,'Position')
+    low=node(unreal.MaterialExpressionConstant3Vector,constant=unreal.LinearColor(*dark,1))
+    high=node(unreal.MaterialExpressionConstant3Vector,constant=unreal.LinearColor(*light,1))
+    mix=node(unreal.MaterialExpressionLinearInterpolate)
+    link(low,mix,'A');link(high,mix,'B');link(noise,mix,'Alpha')
+    r=node(unreal.MaterialExpressionConstant,r=roughness)
+    if not lib.connect_material_property(mix,'',unreal.MaterialProperty.MP_BASE_COLOR): raise RuntimeError('Base colour connection failed')
+    if not lib.connect_material_property(r,'',unreal.MaterialProperty.MP_ROUGHNESS): raise RuntimeError('Roughness connection failed')
+    lib.recompile_material(value)
+    if not unreal.EditorAssetLibrary.save_loaded_asset(value): raise RuntimeError('Cannot save original material')
+    return value
+
+palette={
+    'grass':surface('M_Meadow',(.045,.072,.018),(.16,.24,.065),.95,.018),
+    'road':surface('M_Asphalt',(.018,.022,.026),(.055,.061,.065),.88,.18),
+    'bark':surface('M_Bark',(.055,.026,.012),(.16,.085,.035),.95,.035),
+    'leaf':surface('M_Leaf',(.015,.055,.012),(.07,.18,.028),.9,.015),
+    'stone':surface('M_Stone',(.12,.13,.115),(.27,.29,.25),.94,.025),
+    'walk':surface('M_Pavement',(.25,.24,.21),(.4,.39,.34),.9,.05),
+    'paint':surface('M_RoadPaint',(.65,.64,.53),(.78,.77,.66),.82,.12),
+}
+for name,key in [('PlayableGround','grass'),('PlayableRoad','road')]:
+    if name not in owned: raise RuntimeError('Owned base actor missing: '+name)
+    owned[name].static_mesh_component.set_material(0,palette[key])
+
+def decor(name,asset,pos,scale,material):
+    a=owned.get(name)
+    if a is None:
+        # Refuse to claim a same-label actor without our ownership tag.
+        if any(x.get_actor_label()==name for x in actors.get_all_level_actors()): raise RuntimeError('Unowned decoration preserved: '+name)
+        a=actors.spawn_actor_from_class(unreal.StaticMeshActor,unreal.Vector(*pos))
+        a.set_actor_label(name);a.tags=[unreal.Name(marker),unreal.Name('PlayableLook_v2')]
+        a.static_mesh_component.set_static_mesh(asset)
+        a.set_actor_scale3d(unreal.Vector(*scale))
+        a.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+        a.static_mesh_component.set_material(0,palette[material]);owned[name]=a
+    return a
+
+cube=unreal.load_asset('/Engine/BasicShapes/Cube')
+sphere=unreal.load_asset('/Engine/BasicShapes/Sphere')
+for i in range(20):
+    trunk=owned.get('PlayableTreeTrunk'+str(i));crown=owned.get('PlayableTreeCrown'+str(i))
+    if not trunk or not crown: raise RuntimeError('Owned tree missing')
+    trunk.static_mesh_component.set_material(0,palette['bark'])
+    crown.static_mesh_component.set_static_mesh(sphere)
+    crown.static_mesh_component.set_material(0,palette['leaf'])
+    crown.set_actor_scale3d(unreal.Vector(4.3+(i%3)*.3,4.1,5.2))
+    pos=trunk.get_actor_location()
+    decor('PlayableLook_v2_Canopy'+str(i),sphere,(pos.x+120,pos.y-70,510),(3.6,3.4,3.9),'leaf')
+    decor('PlayableLook_v2_CanopyTip'+str(i),sphere,(pos.x-90,pos.y+60,780),(3.2,3.2,3.6),'leaf')
+
+for side in (-1,1):
+    decor('PlayableLook_v2_Pavement'+str(side),cube,(0,-1500+side*475,4),(180,1.4,.08),'walk')
+    decor('PlayableLook_v2_RoadEdge'+str(side),cube,(0,-1500+side*370,3),(175,.1,.01),'paint')
+for i in range(25):
+    decor('PlayableLook_v2_RoadDash'+str(i),cube,(-8400+i*700,-1500,3),(3,.12,.01),'paint')
+for i in range(24):
+    x=-8200+(i%12)*1460;y=5400 if i<12 else -5500
+    decor('PlayableLook_v2_Shrub'+str(i),sphere,(x,y,50),(1.5,1.2,1.1),'leaf')
+    decor('PlayableLook_v2_Rock'+str(i),sphere,(x+300,y+150,25),(1.1,.8,.6),'stone')
+# Non-colliding background relief outside the walkable 200m zone, not a terrain claim.
+for i in range(12):
+    angle=i*math.tau/12
+    decor('PlayableLook_v2_BackgroundHill'+str(i),sphere,
+          (math.cos(angle)*21000,math.sin(angle)*21000,-1800),
+          (190+(i%3)*20,180,85+(i%4)*12),'grass')
+
+for name in ('PlayableSun','PlayableSky'):
+    a=owned.get(name)
+    if not a: raise RuntimeError('Owned light missing: '+name)
+    a.light_component.set_mobility(unreal.ComponentMobility.MOVABLE)
+sun=owned['PlayableSun'].light_component
+sun.set_editor_property('atmosphere_sun_light',True)
+sun.set_editor_property('light_source_angle',1.0)
+sun.set_editor_property('dynamic_shadow_distance_movable_light',20000.)
+owned['PlayableSky'].light_component.set_editor_property('real_time_capture',True)
+if 'PlayableLook_v2_Fog' not in owned:
+    fog=actors.spawn_actor_from_class(unreal.ExponentialHeightFog,unreal.Vector(0,0,0))
+    fog.set_actor_label('PlayableLook_v2_Fog');fog.tags=[unreal.Name(marker),unreal.Name('PlayableLook_v2')]
+if not level.save_current_level(): raise RuntimeError('Cannot save playable visual upgrade')
+unreal.log('ANOMALIA playable look v2 saved: original materials, dynamic lighting, road detail and vegetation; packaged GPU validation required.')
