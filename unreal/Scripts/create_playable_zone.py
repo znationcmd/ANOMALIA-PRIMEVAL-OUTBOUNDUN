@@ -58,10 +58,12 @@ else:
 owned={a.get_actor_label():a for a in actors.get_all_level_actors() if unreal.Name(marker) in a.tags}
 def surface(name,dark,light,roughness,grain):
     folder='/Game/Anomalia/World/PlayableLook_v2'
+    name+='_PBR'
     path=folder+'/'+name
     if unreal.EditorAssetLibrary.does_asset_exist(path):
         value=unreal.load_asset(path)
-        if not isinstance(value,unreal.Material): raise RuntimeError('Existing non-material preserved: '+path)
+        if not isinstance(value,unreal.Material) or unreal.EditorAssetLibrary.get_metadata_tag(value,'AnomaliaPlayableSurfaceState')!='SAVED_NOISE_PBR_1':
+            raise RuntimeError('Existing unrecognized material preserved: '+path)
         return value  # Preserve any subsequent artist edits.
     value=unreal.AssetToolsHelpers.get_asset_tools().create_asset(name,folder,unreal.Material,unreal.MaterialFactoryNew())
     lib=unreal.MaterialEditingLibrary
@@ -70,10 +72,13 @@ def surface(name,dark,light,roughness,grain):
         for key,item in props.items(): n.set_editor_property(key,item)
         return n
     def link(source,target,pin):
-        if not lib.connect_material_expressions(source,'',target,pin): raise RuntimeError('Material graph connection failed')
+        if not lib.connect_material_expressions(source,'',target,pin):
+            raise RuntimeError('Material graph connection failed at '+str(pin)+'; inputs='+str(lib.get_material_expression_input_names(target)))
     pos=node(unreal.MaterialExpressionWorldPosition)
     noise=node(unreal.MaterialExpressionNoise,scale=grain,levels=2,quality=1,output_min=0.,output_max=1.)
-    link(pos,noise,'Position')
+    position_pins=[pin for pin in lib.get_material_expression_input_names(noise) if 'position' in pin.lower().replace(' ','')]
+    if len(position_pins)!=1: raise RuntimeError('Cannot identify Noise world-position input')
+    link(pos,noise,position_pins[0])
     low=node(unreal.MaterialExpressionConstant3Vector,constant=unreal.LinearColor(*dark,1))
     high=node(unreal.MaterialExpressionConstant3Vector,constant=unreal.LinearColor(*light,1))
     mix=node(unreal.MaterialExpressionLinearInterpolate)
@@ -82,6 +87,7 @@ def surface(name,dark,light,roughness,grain):
     if not lib.connect_material_property(mix,'',unreal.MaterialProperty.MP_BASE_COLOR): raise RuntimeError('Base colour connection failed')
     if not lib.connect_material_property(r,'',unreal.MaterialProperty.MP_ROUGHNESS): raise RuntimeError('Roughness connection failed')
     lib.recompile_material(value)
+    unreal.EditorAssetLibrary.set_metadata_tag(value,'AnomaliaPlayableSurfaceState','SAVED_NOISE_PBR_1')
     if not unreal.EditorAssetLibrary.save_loaded_asset(value): raise RuntimeError('Cannot save original material')
     return value
 
