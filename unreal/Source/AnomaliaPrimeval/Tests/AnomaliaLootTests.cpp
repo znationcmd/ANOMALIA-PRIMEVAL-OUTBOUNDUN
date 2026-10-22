@@ -48,6 +48,14 @@ bool FAnomaliaLootCatalogTest::RunTest(const FString& Parameters)
         TestTrue(*FString::Printf(TEXT("Catalogue item enters inventory: %s"), *Id.ToString()), Survivor->InventoryComponent->TryAddItem(Id, 1));
         TestTrue(*FString::Printf(TEXT("Catalogue item removes cleanly: %s"), *Id.ToString()), Survivor->InventoryComponent->TryRemoveItem(Id, 1));
     }
+    auto* Inventory=Survivor->InventoryComponent.Get();
+    TestTrue(TEXT("Added metal resource is accepted by the real inventory"),Inventory->TryAddItem(TEXT("metal_ingot"),2));
+    TestTrue(TEXT("Added wool resource is accepted by the real inventory"),Inventory->TryAddItem(TEXT("wool"),4));
+    TestTrue(TEXT("Added resources use their catalogue storage mass"),FMath::IsNearlyEqual(Inventory->GetCurrentWeightKg(),3.2f));
+    Inventory->WeightCapacityKg=3.2f;
+    TestFalse(TEXT("Resource weight prevents an overweight addition"),Inventory->TryAddItem(TEXT("wool"),1));
+    TestEqual(TEXT("Rejected resource addition preserves the six existing units"),Units(Inventory),6);
+    Inventory->WeightCapacityKg=14.f;
     TestFalse(TEXT("Unlisted item cannot enter inventory"), Survivor->InventoryComponent->TryAddItem(TEXT("not-authorized-item"), 1));
     World->DestroyWorld(false);
     return true;
