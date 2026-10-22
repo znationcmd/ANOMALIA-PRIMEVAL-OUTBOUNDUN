@@ -77,6 +77,13 @@ jobs:
         run: |
           & ./scripts/ue5/install-playable-windows.ps1 -ValidationDir "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/playable"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retain small packaged gameplay and installer diagnostics immediately
+        if: ${{ always() && steps.playable_package.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-playable-install-diagnostics
+          path: unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/*.*
+          if-no-files-found: error
       - name: Retain downloadable Windows test game without temporary test saves
         if: ${{ always() && steps.playable_package.outcome == 'success' }}
         uses: actions/upload-artifact@v4

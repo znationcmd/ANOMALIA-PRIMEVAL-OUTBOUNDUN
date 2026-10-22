@@ -2,6 +2,8 @@ param([Parameter(Mandatory=$true)][string]$ValidationDir,[string]$Commit=$env:GI
 $ErrorActionPreference='Stop'
 $report=@{state='FAILED';commit=$Commit;packagedGame=$true}
 try {
+    # Unreal resolves relative output paths from its executable, not the shell workspace.
+    $ValidationDir=(Resolve-Path -LiteralPath $ValidationDir).ProviderPath
     $proof=Get-Content -LiteralPath (Join-Path $ValidationDir 'package-report.json') -Raw | ConvertFrom-Json
     if ($proof.state -ne 'PACKAGED_WINDOWS_SMOKE_PASSED' -or $proof.sourceCommit -ne $Commit) { throw 'Fresh packaged executable smoke proof required.' }
     $base=Join-Path $env:LOCALAPPDATA 'CMD/ANOMALIA-Windows'
