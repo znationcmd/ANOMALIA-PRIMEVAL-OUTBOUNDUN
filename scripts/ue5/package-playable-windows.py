@@ -17,7 +17,15 @@ def run(command,name,timeout):
     if r.returncode:raise RuntimeError(name+' failed; inspect '+str(out/(name+'.log')))
 try:
     editor=a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-    run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-ExecutePythonScript='+str(ROOT/'unreal/Scripts/create_playable_zone.py')],'create-zone',300)
+    scene_receipt=out/('scene-'+uuid.uuid4().hex+'.json')
+    os.environ['ANOMALIA_PLAYABLE_ZONE_REPORT']=str(scene_receipt)
+    run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
+         '-abslog='+str(out/'create-zone-editor.log'),
+         '-run=pythonscript','-script='+str(ROOT/'unreal/Scripts/create_playable_zone.py')],'create-zone',300)
+    scene=json.loads(scene_receipt.read_text(encoding='utf-8'))
+    if scene.get('state')!='PLAYABLE_LOOK_V2_SAVED' or scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or not scene.get('dynamicLights'):
+        raise RuntimeError('Fresh playable scene update receipt missing or invalid')
+    report['scene']=scene
     archive=out/('package-'+uuid.uuid4().hex);archive.mkdir()
     uat=a.engine_root/'Engine/Build/BatchFiles/RunUAT.bat'
     run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP,'-prereqs'],'package',5400)
@@ -27,7 +35,7 @@ try:
     scope='playable-smoke-'+uuid.uuid4().hex
     run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log')],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
-    required={'main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
+    required={'native_playable_look_v2_cooked_materials_and_lights','main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
     if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])):
         raise RuntimeError('Actual packaged gameplay smoke failed: '+native.get('error','missing checks'))
     image=probe.with_suffix('.png')

@@ -153,4 +153,11 @@ if 'PlayableLook_v2_Fog' not in owned:
     fog=actors.spawn_actor_from_class(unreal.ExponentialHeightFog,unreal.Vector(0,0,0))
     fog.set_actor_label('PlayableLook_v2_Fog');fog.tags=[unreal.Name(marker),unreal.Name('PlayableLook_v2')]
 if not level.save_current_level(): raise RuntimeError('Cannot save playable visual upgrade')
+receipt=os.environ.get('ANOMALIA_PLAYABLE_ZONE_REPORT')
+if not receipt: raise RuntimeError('Explicit playable zone receipt path required')
+proof=dict(state='PLAYABLE_LOOK_V2_SAVED',sourceCommit=os.environ.get('GITHUB_SHA'),map=PACKAGE,
+           lookVersion=2,ownedActorCount=len(owned),materialCount=len(palette),
+           dynamicLights=all(owned[name].light_component.get_editor_property('mobility')==unreal.ComponentMobility.MOVABLE for name in ('PlayableSun','PlayableSky')))
+if not proof['dynamicLights']: raise RuntimeError('Dynamic lighting was not applied')
+Path(receipt).write_text(json.dumps(proof,indent=2)+'\n',encoding='utf-8')
 unreal.log('ANOMALIA playable look v2 saved: original materials, dynamic lighting, road detail and vegetation; packaged GPU validation required.')

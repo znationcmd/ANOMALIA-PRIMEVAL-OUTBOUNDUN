@@ -17,6 +17,8 @@
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerInput.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/LightComponentBase.h"
+#include "Materials/MaterialInterface.h"
 #include "Camera/CameraComponent.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
@@ -67,6 +69,23 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         }
         for(const FName Id:{FName(TEXT("health")),FName(TEXT("hunger")),FName(TEXT("thirst")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("stamina"))})
             if(S->StatusWidget->GetVitalText(Id).IsEmpty()) { Finish(TEXT("Missing native HUD field")); return; }
+        int32 VisualActors=0,DynamicLights=0; bool Meadow=false;
+        for(TActorIterator<AActor> It(GetWorld());It;++It)
+        {
+            if(It->ActorHasTag(TEXT("PlayableLook_v2"))) ++VisualActors;
+            if(It->ActorHasTag(TEXT("PlayableGround")))
+            {
+                auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
+                auto* Material=Mesh?Mesh->GetMaterial(0):nullptr;
+                Meadow=Material && Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow"));
+            }
+            if(It->ActorHasTag(TEXT("PlayableSun")) || It->ActorHasTag(TEXT("PlayableSky")))
+                if(auto* Light=It->FindComponentByClass<ULightComponentBase>())
+                    if(Light->GetMobility()==EComponentMobility::Movable) ++DynamicLights;
+        }
+        if(!Meadow || DynamicLights!=2 || VisualActors<120)
+        { Finish(FString::Printf(TEXT("Cooked visual update missing: meadow=%d dynamicLights=%d decorations=%d"),Meadow,DynamicLights,VisualActors)); return; }
+        Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
             { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }
