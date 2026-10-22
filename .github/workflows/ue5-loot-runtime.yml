@@ -104,7 +104,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify actual archipelago GPU capture and release the world before editor shutdown
         id: real_gpu
-        if: ${{ always() && steps.native_core.outcome == 'success' && steps.loot_pie.outcome == 'success' && hashFiles('unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap') != '' }}
+        if: ${{ success() && steps.native_core.outcome == 'success' && steps.loot_pie.outcome == 'success' && hashFiles('unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap') != '' }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
