@@ -12,6 +12,7 @@ on:
       - 'unreal/Scripts/create_loot_review.py'
       - 'unreal/Scripts/import_expansion_models.py'
       - 'unreal/Scripts/short_import_source.py'
+      - 'unreal/Scripts/capture_real_world.py'
       - 'scripts/ue5/validate-build.py'
       - '.github/workflows/ue5-loot-runtime.yml'
 concurrency:
@@ -32,6 +33,7 @@ jobs:
           persist-credentials: false
       - name: Compile existing Editor and Game with native catalogue and transaction tests
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        id: native_core
         run: |
           $ErrorActionPreference = 'Stop'
           if (-not $env:UE_ROOT) { throw 'Installed UE_ROOT is required.' }
@@ -39,6 +41,7 @@ jobs:
           & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID" --run-tests --require-loot-tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Create the real loot map and test Interact and inventory UI in Play In Editor
+        id: loot_pie
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
@@ -50,6 +53,13 @@ jobs:
         run: |
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/validate-expansion-models.py --group NamedVehicles1 --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/cars"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify actual archipelago GPU capture and release the world before editor shutdown
+        if: ${{ always() && steps.native_core.outcome == 'success' && steps.loot_pie.outcome == 'success' && hashFiles('unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap') != '' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain actual compile and native test evidence
         if: always()
