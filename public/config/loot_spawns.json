@@ -106,6 +106,61 @@
       "categories": [
         "rp_cash"
       ]
+    },
+    {
+      "id": "playable-supplies-0",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "house",
+      "x": -150,
+      "y": 950,
+      "z": 35,
+      "categories": [
+        "canned_food"
+      ]
+    },
+    {
+      "id": "playable-supplies-1",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "house",
+      "x": 150,
+      "y": 950,
+      "z": 35,
+      "categories": [
+        "drinks"
+      ]
+    },
+    {
+      "id": "playable-supplies-2",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "garage",
+      "x": 2200,
+      "y": 1000,
+      "z": 35,
+      "categories": [
+        "vehicle_engine_parts"
+      ]
+    },
+    {
+      "id": "playable-supplies-3",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "hospital",
+      "x": -3000,
+      "y": 2600,
+      "z": 35,
+      "categories": [
+        "medical_supplies"
+      ]
+    },
+    {
+      "id": "playable-supplies-4",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "bunker",
+      "x": -3100,
+      "y": 2800,
+      "z": 35,
+      "categories": [
+        "ammunition"
+      ]
     }
   ]
 }

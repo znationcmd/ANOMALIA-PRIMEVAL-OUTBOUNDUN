@@ -9,6 +9,9 @@ on:
       - 'public/config/rp*.json'
       - 'scripts/ue5/stage-runtime-data.py'
       - 'scripts/ue5/run-loot-playtest.py'
+      - 'scripts/ue5/package-playable-windows.py'
+      - 'scripts/ue5/install-playable-windows.ps1'
+      - 'unreal/Scripts/create_playable_zone.py'
       - 'unreal/Scripts/create_loot_review.py'
       - 'unreal/Scripts/import_expansion_models.py'
       - 'unreal/Scripts/short_import_source.py'
@@ -26,7 +29,7 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     # Two car phases plus repair/reopen can each use their existing 15 minute cap.
     # Leave time for builds and evidence upload without interrupting the GPU check.
-    timeout-minutes: 75
+    timeout-minutes: 150
     permissions:
       contents: read
     steps:
@@ -61,6 +64,29 @@ jobs:
           $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           & $python scripts/ue5/run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Cook and launch the autonomous Windows playable zone before large world checks
+        id: playable_package
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/package-playable-windows.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/playable"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install only the autonomous Windows build that passed its actual game smoke test
+        if: ${{ success() && steps.playable_package.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          & ./scripts/ue5/install-playable-windows.ps1 -ValidationDir "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/playable"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retain downloadable Windows test game without temporary test saves
+        if: ${{ always() && steps.playable_package.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Windows-Test
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/Windows/**
+            !unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/Windows/**/Saved/**
+          if-no-files-found: error
+          compression-level: 1
       - name: Recheck cached car imports with short Windows paths and a separate v2 review map
         id: car_assets
         if: ${{ success() && hashFiles('unreal/SourceAssets/NamedVehicles1/manifest.json') != '' }}
@@ -95,5 +121,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: native-loot-runtime-evidence
-          path: unreal/Saved/LootValidation/run-${{ github.run_id }}/
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/**
+            !unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/**
           if-no-files-found: error

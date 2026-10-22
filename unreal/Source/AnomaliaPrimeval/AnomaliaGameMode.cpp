@@ -1,5 +1,6 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaPlayableProbe.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaInventoryComponent.h"
@@ -46,7 +47,8 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         if (bValid) ServerId = RequestedId;
         else UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: invalid server ID rejected"));
     }
-    if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone) ServerId = TEXT("solo-local");
+    if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone)
+        ServerId = MapName.EndsWith(TEXT("ANOMALIA_Playable_v1")) ? TEXT("solo-playable-v1") : TEXT("solo-local");
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
     // A process-only test scope prevents automated PIE from touching a real local profile.
     // This is not a client URL option and is restricted to this review map while automation runs.
@@ -297,6 +299,13 @@ void AAnomaliaGameMode::BeginPlay()
     {
         SpawnConfiguredHomestead();
         SpawnConfiguredVehicles();
+#if !UE_BUILD_SHIPPING
+        FString ProbeFile;
+        if (GetNetMode()==NM_Standalone && ServerId.StartsWith(TEXT("playable-smoke-")) &&
+            GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) &&
+            FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),ProbeFile) && !ProbeFile.IsEmpty())
+            GetWorld()->SpawnActor<AAnomaliaPlayableProbe>();
+#endif
         GetWorldTimerManager().SetTimer(ProfileRecoveryTimer, this, &AAnomaliaGameMode::RetryPendingProfileLoads, 1.f, true);
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }
