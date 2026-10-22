@@ -42,6 +42,13 @@ struct FAnomaliaServerSettings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="-50.0", ClampMax="60.0"))
     float AmbientTemperatureC = 20.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowRPSubstances = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowTobacco = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowAlcohol = true;
+
         // Intentionally no password/admin key in this Blueprint struct.
 };
 

@@ -161,6 +161,39 @@
       "categories": [
         "ammunition"
       ]
+    },
+    {
+      "id": "playable-rp-tobacco",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "house",
+      "x": 400,
+      "y": 900,
+      "z": 35,
+      "categories": [
+        "rp_tobacco"
+      ]
+    },
+    {
+      "id": "playable-rp-substances",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "hospital",
+      "x": -3200,
+      "y": 2600,
+      "z": 35,
+      "categories": [
+        "rp_substances"
+      ]
+    },
+    {
+      "id": "playable-rp-medicine",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "pharmacy",
+      "x": -2900,
+      "y": 2600,
+      "z": 35,
+      "categories": [
+        "medicine"
+      ]
     }
   ]
 }

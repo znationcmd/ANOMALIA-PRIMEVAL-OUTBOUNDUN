@@ -11,7 +11,7 @@ class RPCatalogTests(unittest.TestCase):
         empty = {'empty_water_bottle', 'empty_military_canteen', 'empty_filter_canteen'}
         self.assertEqual(len([row for row in original if row['id'] not in empty]),232)
         self.assertEqual({row['id'] for row in original if row['id'] in empty},empty)
-        self.assertEqual(len(extra),28)
+        self.assertEqual(len(extra),79)
         # Existing battery appears under lighting and engine parts; native loader merges
         # its categories while retaining the unchanged source rows.
         from collections import Counter
@@ -19,7 +19,7 @@ class RPCatalogTests(unittest.TestCase):
         self.assertEqual(duplicates,{'car_battery':2})
         self.assertFalse({row['id'].lower() for row in original} & {row['id'].lower() for row in extra})
         ids = [row['id'].lower() for row in original+extra]
-        self.assertEqual(len(set(ids)),262)
+        self.assertEqual(len(set(ids)),313)
         for row in extra:
             self.assertGreater(row['weightKg'],0)
             self.assertGreaterEqual(row['maxStack'],row['quantity'])

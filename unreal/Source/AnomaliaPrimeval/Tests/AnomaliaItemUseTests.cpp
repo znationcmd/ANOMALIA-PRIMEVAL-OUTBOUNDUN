@@ -4,6 +4,7 @@
 #include "../AnomaliaInventoryComponent.h"
 #include "../AnomaliaConfigLibrary.h"
 #include "../AnomaliaLootSubsystem.h"
+#include "../AnomaliaItemEffectsComponent.h"
 #include "Engine/World.h"
 #include "Misc/Guid.h"
 #include "Dom/JsonObject.h"
@@ -111,11 +112,16 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
         if(!Definition || !Definition->Use.IsUsable()) continue;
         auto* Sample=World->SpawnActor<AAnomaliaSurvivor>();
         Sample->RestoreSurvival(10,10,10);
+        FAnomaliaItemEffectsState Conditions;
+        Conditions.Blood=50;Conditions.Bleeding=40;Conditions.Pain=50;Conditions.Infection=50;Conditions.Poison=50;
+        Sample->ItemEffectsComponent->ApplyState(Conditions);
         auto* Items=Sample->InventoryComponent.Get();
         const bool Added=Items->TryAddItem(ItemId,1);
         TestTrue(*FString::Printf(TEXT("Consumable enters inventory: %s"),*ItemId.ToString()),Added);
         if(Added)
         {
+            if(!Definition->Use.RequiredItem.IsNone())
+                TestTrue(TEXT("Required tool available"),Items->TryAddItem(Definition->Use.RequiredItem,1));
             const bool Used=Items->TryUseStack(Items->Stacks[0].StackId,1,Server,ItemId.ToString(),Error);
             TestTrue(*FString::Printf(TEXT("Actual use and profile write: %s"),*ItemId.ToString()),Used);
             if(Used)
@@ -130,7 +136,7 @@ bool FAnomaliaItemUseTest::RunTest(const FString& Parameters)
         }
         ++TestedUses;
     }
-    TestEqual(TEXT("Every configured catalogue consumable tested"),TestedUses,21);
+    TestEqual(TEXT("Every configured catalogue consumable tested"),TestedUses,96);
     World->DestroyWorld(false);
     return true;
 }

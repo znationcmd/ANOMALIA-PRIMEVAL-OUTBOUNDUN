@@ -10,6 +10,7 @@ class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
 class UAnomaliaStatusWidget;
 class UAnomaliaVitalsComponent;
+class UAnomaliaItemEffectsComponent;
 class AAnomaliaHomesteadStation;
 
 UCLASS()
@@ -37,6 +38,9 @@ public:
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Survival")
     TObjectPtr<UAnomaliaVitalsComponent> VitalsComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|ItemEffects")
+    TObjectPtr<UAnomaliaItemEffectsComponent> ItemEffectsComponent;
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -73,6 +77,7 @@ public:
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
     virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+    virtual float TakeDamage(float Amount, const FDamageEvent& Event, AController* InstigatorController, AActor* Causer) override;
 
 protected:
     UFUNCTION()

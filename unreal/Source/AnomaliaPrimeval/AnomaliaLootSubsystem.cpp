@@ -1,4 +1,5 @@
 #include "AnomaliaLootSubsystem.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaLootPickup.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
@@ -55,8 +56,8 @@ namespace
     const TMap<FString, TArray<FString>>& LootCategoryGroups()
     {
         static const TMap<FString, TArray<FString>> Groups = {
-            {TEXT("rp_common"), {TEXT("rp_cash"), TEXT("rp_valuables")}},
-            {TEXT("rp_rare"), {TEXT("rp_precious_metals"), TEXT("rp_gemstones")}},
+            {TEXT("rp_common"), {TEXT("rp_cash"), TEXT("rp_valuables"), TEXT("rp_tobacco")}},
+            {TEXT("rp_rare"), {TEXT("rp_precious_metals"), TEXT("rp_gemstones"), TEXT("rp_substances")}},
             {TEXT("food"), {TEXT("canned_food"), TEXT("fresh_food"), TEXT("cooking")}},
             {TEXT("water"), {TEXT("drinks")}},
             {TEXT("clothing"), {TEXT("tops"), TEXT("pants"), TEXT("shoes_gloves"), TEXT("headwear"), TEXT("backpacks")}},
@@ -146,19 +147,24 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         if (Row->HasField(TEXT("use")))
         {
             const TSharedPtr<FJsonObject>* Use=nullptr;
-            double Food=0,Water=0,HP=0; FString Return;
+            double Food=0,Water=0,HP=0; FString Return,Required;
             if (!Row->TryGetObjectField(TEXT("use"),Use) || !Use || !Use->IsValid() ||
                 !(*Use)->TryGetStringField(TEXT("action"),Item.Use.Action) ||
-                (Item.Use.Action!=TEXT("eat") && Item.Use.Action!=TEXT("drink") && Item.Use.Action!=TEXT("heal")) ||
+                (Item.Use.Action!=TEXT("eat") && Item.Use.Action!=TEXT("drink") && Item.Use.Action!=TEXT("heal") && Item.Use.Action!=TEXT("smoke") && Item.Use.Action!=TEXT("rp")) ||
                 ((*Use)->HasField(TEXT("hunger")) && !LootNumber(*Use,TEXT("hunger"),Food,0,100)) ||
                 ((*Use)->HasField(TEXT("thirst")) && !LootNumber(*Use,TEXT("thirst"),Water,0,100)) ||
                 ((*Use)->HasField(TEXT("health")) && !LootNumber(*Use,TEXT("health"),HP,0,100)) ||
-                (Food<=0 && Water<=0 && HP<=0) ||
+                ((*Use)->HasField(TEXT("effect")) && (!(*Use)->TryGetStringField(TEXT("effect"),Item.Use.Effect) || !UAnomaliaItemEffectsComponent::IsKnownEffect(Item.Use.Effect))) ||
+                (Food<=0 && Water<=0 && HP<=0 && Item.Use.Effect.IsEmpty()) ||
                 (Item.Use.Action==TEXT("heal") ? (Food!=0 || Water!=0) : HP!=0) ||
-                ((*Use)->HasField(TEXT("returnItem")) && (!(*Use)->TryGetStringField(TEXT("returnItem"),Return) || !LootSafeId(Return))))
+                ((*Use)->HasField(TEXT("returnItem")) && (!(*Use)->TryGetStringField(TEXT("returnItem"),Return) || !LootSafeId(Return))) ||
+                ((*Use)->HasField(TEXT("requiredItem")) && (!(*Use)->TryGetStringField(TEXT("requiredItem"),Required) || !LootSafeId(Required))) ||
+                ((*Use)->HasField(TEXT("restrictedGroup")) && (!(*Use)->TryGetStringField(TEXT("restrictedGroup"),Item.Use.RestrictedGroup) ||
+                  (Item.Use.RestrictedGroup!=TEXT("substances") && Item.Use.RestrictedGroup!=TEXT("tobacco") && Item.Use.RestrictedGroup!=TEXT("alcohol")))))
             { Error=TEXT("Invalid item use rule: ")+Id; return false; }
             Item.Use.Hunger=static_cast<float>(Food);Item.Use.Thirst=static_cast<float>(Water);Item.Use.Health=static_cast<float>(HP);
             if(!Return.IsEmpty()) Item.Use.ReturnItem=FName(*Return);
+            if(!Required.IsEmpty()) Item.Use.RequiredItem=FName(*Required);
         }
         if (Item.Quantity > Item.MaxStack) { Error = TEXT("Loot quantity exceeds stack limit"); return false; }
         Item.Categories.Add(Item.Category);
@@ -172,7 +178,8 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
                 Existing->WeightKg != Item.WeightKg || Existing->MaxStack != Item.MaxStack || Existing->Size != Item.Size ||
                 Existing->bEnabled != Item.bEnabled || Existing->Use.Action!=Item.Use.Action ||
                 Existing->Use.Hunger!=Item.Use.Hunger || Existing->Use.Thirst!=Item.Use.Thirst ||
-                Existing->Use.Health!=Item.Use.Health || Existing->Use.ReturnItem!=Item.Use.ReturnItem)
+                Existing->Use.Health!=Item.Use.Health || Existing->Use.ReturnItem!=Item.Use.ReturnItem ||
+                Existing->Use.Effect!=Item.Use.Effect || Existing->Use.RequiredItem!=Item.Use.RequiredItem || Existing->Use.RestrictedGroup!=Item.Use.RestrictedGroup)
             { Error = TEXT("Conflicting duplicate loot definition: ")+Id; return false; }
             Existing->Categories.Add(Item.Category);
         }
@@ -186,6 +193,10 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
             if(!Returned || Returned->Use.IsUsable())
             { Error=TEXT("Returned container missing or itself consumable: ")+Pair.Value.Use.ReturnItem.ToString();return false; }
         }
+    for(const auto& Pair:Candidate)
+        if(!Pair.Value.Use.RequiredItem.IsNone() && !Candidate.Contains(Pair.Value.Use.RequiredItem) &&
+            !(Append && Items.Contains(Pair.Value.Use.RequiredItem)))
+        { Error=TEXT("Required item is missing: ")+Pair.Value.Use.RequiredItem.ToString();return false; }
     if (Append) Items.Append(Candidate);
     else Items = MoveTemp(Candidate);
     return true;

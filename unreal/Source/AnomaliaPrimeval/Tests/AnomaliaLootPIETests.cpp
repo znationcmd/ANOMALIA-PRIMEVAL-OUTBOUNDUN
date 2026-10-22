@@ -24,6 +24,7 @@
 #include "Components/SafeZone.h"
 #include "../AnomaliaVitalsComponent.h"
 #include "../AnomaliaHomesteadStation.h"
+#include "../AnomaliaSessionWidget.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaLootPIETest, "Anomalia.Loot.PIE",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -79,6 +80,31 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
                 if (It->SpawnId == TEXT("review-house-food")) { Food = *It; break; }
             if (!Food) return false;
             TestEqual(TEXT("Fresh isolated player inventory"), Units, 0);
+            auto* Items=Survivor->InventoryComponent.Get();FString PolicyError;
+            const auto PreviousSettings=Mode->ActiveServerSettings;
+            Mode->ActiveServerSettings.bAllowRPSubstances=false;
+            Mode->ActiveServerSettings.bAllowTobacco=false;
+            Mode->ActiveServerSettings.bAllowAlcohol=false;
+            TestTrue(TEXT("Prerequisite tool in isolated policy test"),Items->TryAddItem(TEXT("lighter"),1));
+            for(const FName Id:{FName(TEXT("cigarette")),FName(TEXT("vodka")),FName(TEXT("rp_substance_cocaine"))})
+            {
+                TestTrue(TEXT("Restricted item can be carried"),Items->TryAddItem(Id,1));
+                const auto* Stack=Items->Stacks.FindByPredicate([&](const auto& Row){return Row.ItemId==Id;});
+                if(Stack) TestFalse(TEXT("Authoritative party policy rejects consumption"),Items->TryUseStack(Stack->StackId,1,Scope,TEXT("local-owner"),PolicyError));
+                TestTrue(TEXT("Policy rejection preserves the source item"),Items->TryRemoveItem(Id,1));
+            }
+            TestTrue(TEXT("Remove isolated policy tool"),Items->TryRemoveItem(TEXT("lighter"),1));
+            Mode->ActiveServerSettings=PreviousSettings;
+            auto* PolicyMenu=UAnomaliaSessionWidget::Open(PC,false);
+            auto* Toggle=PolicyMenu && PolicyMenu->WidgetTree?Cast<UButton>(PolicyMenu->WidgetTree->FindWidget(TEXT("SessionTobacco"))):nullptr;
+            if(!TestNotNull(TEXT("Actual solo tobacco policy button exists"),Toggle)) return true;
+            Toggle->OnClicked.Broadcast();
+            TestEqual(TEXT("Solo policy UI changes authoritative setting"),Mode->ActiveServerSettings.bAllowTobacco,!PreviousSettings.bAllowTobacco);
+            FAnomaliaServerSettings Reloaded;FString PolicyLoadError;
+            TestTrue(TEXT("Solo policy persisted"),UAnomaliaConfigLibrary::LoadServerSettings(Scope,Reloaded,PolicyLoadError));
+            TestEqual(TEXT("Saved policy agrees with UI"),Reloaded.bAllowTobacco,Mode->ActiveServerSettings.bAllowTobacco);
+            Toggle->OnClicked.Broadcast();
+            if(auto* Play=Cast<UButton>(PolicyMenu->WidgetTree->FindWidget(TEXT("SessionPlay")))) Play->OnClicked.Broadcast();
             Survivor->SetActorLocation(FVector(70, 0, 100), false, nullptr, ETeleportType::TeleportPhysics);
             Input(EKeys::E, IE_Pressed);
             Probe->Phase = 1;
@@ -189,7 +215,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             TestTrue(TEXT("Native fatigue HUD reads the actual replicated survivor value"),HUD->GetVitalText(TEXT("fatigue")).ToString().Contains(TEXT("85")));
             TestTrue(TEXT("Native temperature HUD includes Celsius"),HUD->GetVitalText(TEXT("temperature")).ToString().Contains(TEXT("°C")));
             TestTrue(TEXT("Actual low body temperature activates hypothermia"),HUD->GetConditionText().ToString().Contains(TEXT("Hypothermie")));
-            for (const FName Id : {FName(TEXT("health")),FName(TEXT("thirst")),FName(TEXT("hunger")),FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature"))})
+            for (const FName Id : {FName(TEXT("health")),FName(TEXT("thirst")),FName(TEXT("hunger")),FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("blood"))})
                 TestFalse(TEXT("Permanent native vital label exists"),HUD->GetVitalText(Id).IsEmpty());
             Survivor->RestoreFatigue(0.f); Survivor->VitalsComponent->RestoreVitals(100.f,37.f);
             HUD->RefreshFromSurvivor();

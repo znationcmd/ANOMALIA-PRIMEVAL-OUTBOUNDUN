@@ -13,7 +13,9 @@ struct FAnomaliaItemUseRule
     FString Action;
     float Hunger = 0.f, Thirst = 0.f, Health = 0.f;
     FName ReturnItem;
-    bool IsUsable() const { return !Action.IsEmpty() && (Hunger>0.f || Thirst>0.f || Health>0.f); }
+    FString Effect, RestrictedGroup;
+    FName RequiredItem;
+    bool IsUsable() const { return !Action.IsEmpty() && (Hunger>0.f || Thirst>0.f || Health>0.f || !Effect.IsEmpty()); }
 };
 
 struct FAnomaliaLootItem

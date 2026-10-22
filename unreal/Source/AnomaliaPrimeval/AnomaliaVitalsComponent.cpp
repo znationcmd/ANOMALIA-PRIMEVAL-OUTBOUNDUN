@@ -1,5 +1,6 @@
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaGameMode.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -84,7 +85,8 @@ void UAnomaliaVitalsComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
     }
     else
     {
-        Stamina = FMath::Min(100.f, Stamina + StaminaRecoveryPerSecond * Step);
+        const float ItemScale=Survivor->ItemEffectsComponent?Survivor->ItemEffectsComponent->GetStaminaRecoveryScale():1.f;
+        Stamina = FMath::Min(100.f, Stamina + StaminaRecoveryPerSecond * ItemScale * Step);
     }
 
     const bool bNewSprint = bCanSprint && !bExhausted;
@@ -93,6 +95,8 @@ void UAnomaliaVitalsComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
         bIsSprinting = bNewSprint;
         ApplyMovementSpeed();
     }
+    // Apply changing intoxication/pain even when sprint state does not change.
+    ApplyMovementSpeed();
 
     // Temperature damage is authoritative; client profiles cannot set it.
     if (BodyTemperatureC < 35.f || BodyTemperatureC > 40.f)
@@ -112,7 +116,8 @@ void UAnomaliaVitalsComponent::ApplyMovementSpeed()
 {
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
     if (!Survivor || !Survivor->GetCharacterMovement()) return;
-    Survivor->GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? SprintWalkSpeed : 450.f;
+    const float Scale=Survivor->ItemEffectsComponent?Survivor->ItemEffectsComponent->GetMovementScale():1.f;
+    Survivor->GetCharacterMovement()->MaxWalkSpeed = (bIsSprinting ? SprintWalkSpeed : 450.f)*Scale;
 }
 
 void UAnomaliaVitalsComponent::OnRep_Vitals()

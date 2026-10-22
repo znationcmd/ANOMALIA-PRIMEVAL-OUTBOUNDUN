@@ -1,4 +1,5 @@
 #include "AnomaliaPlayableProbe.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaStatusWidget.h"
@@ -65,9 +66,12 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         {
             if(S->InventoryComponent->Stacks.IsEmpty() || FVector::Dist2D(S->GetActorLocation(),FVector(0,-400,0))<300)
             { Finish(TEXT("Saved inventory or map-scoped character position was not restored")); return; }
+            if(!S->ItemEffectsComponent || S->ItemEffectsComponent->State.Dependence<1)
+            { Finish(TEXT("Saved item effects were not restored"));return; }
+            Checks.Add(TEXT("restarted_executable_restored_item_effects"));
             Checks.Add(TEXT("restarted_executable_restored_inventory_and_character_position")); Finish(); return;
         }
-        for(const FName Id:{FName(TEXT("health")),FName(TEXT("hunger")),FName(TEXT("thirst")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("stamina"))})
+        for(const FName Id:{FName(TEXT("health")),FName(TEXT("hunger")),FName(TEXT("thirst")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("stamina")),FName(TEXT("blood"))})
             if(S->StatusWidget->GetVitalText(Id).IsEmpty()) { Finish(TEXT("Missing native HUD field")); return; }
         int32 VisualActors=0,DynamicLights=0; bool Meadow=false;
         for(TActorIterator<AActor> It(GetWorld());It;++It)
@@ -165,6 +169,26 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         if((Remaining?Remaining->Count:0)!=UsedCount-1 || S->Hunger<=20.1f || S->InventoryComponent->Stacks.IsEmpty())
         { Finish(TEXT("Native inventory food use failed to consume exactly one unit and restore hunger"));return; }
         Checks.Add(TEXT("native_inventory_food_use_consumes_one_and_restores_hunger"));
+        if(!S->InventoryComponent->TryAddItem(TEXT("cigarette"),1) || !S->InventoryComponent->TryAddItem(TEXT("lighter"),1))
+        { Finish(TEXT("Isolated tobacco test supplies unavailable"));return; }
+        const auto* Cigarette=S->InventoryComponent->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("cigarette");});
+        if(!Cigarette) { Finish(TEXT("Isolated cigarette missing"));return; }
+        UsedStackId=Cigarette->StackId;
+        TArray<UWidget*> Widgets;S->InventoryWidget->WidgetTree->GetAllWidgets(Widgets);UButton* Smoke=nullptr;
+        const FString Prefix=FString::Printf(TEXT("UseStack_%d_action"),UsedStackId);
+        for(auto* Widget:Widgets) if(auto* Button=Cast<UButton>(Widget)) if(Button->GetName().StartsWith(Prefix)) Smoke=Button;
+        if(!Smoke) { Finish(TEXT("Actual cigarette inventory button missing"));return; }
+        Smoke->OnClicked.Broadcast();Next=Now+.4;Phase=13;return;
+    }
+    if(Phase==13)
+    {
+        if(Now<Next)return;
+        const auto* Effects=S->ItemEffectsComponent.Get();
+        if(!Effects || Effects->State.Intoxication<4 || Effects->State.Dependence<7 ||
+            S->InventoryComponent->Stacks.ContainsByPredicate([&](const auto& Stack){return Stack.StackId==UsedStackId;}) ||
+            !S->InventoryComponent->Stacks.ContainsByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("cigarette_butt");}))
+        { Finish(TEXT("Actual cigarette UI use did not consume source, apply risks and retain waste"));return; }
+        Checks.Add(TEXT("native_inventory_tobacco_use_has_risk_and_returns_waste"));
         S->CloseInventory(); Checks.Add(TEXT("native_inventory_open_close"));
         auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>(); FString Saved,Error;
         if(!Mode || !Mode->SaveLocalGame() || !UAnomaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,TEXT("local-owner"),Saved,Error))

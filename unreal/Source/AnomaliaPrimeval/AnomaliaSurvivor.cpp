@@ -8,6 +8,7 @@
 #include "AnomaliaStatusWidget.h"
 #include "AnomaliaSessionWidget.h"
 #include "AnomaliaVitalsComponent.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaHomesteadStation.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
@@ -28,6 +29,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
+    ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 350.f;
@@ -37,6 +39,16 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     FollowCamera->bUsePawnControlRotation = false;
     bUseControllerRotationYaw = false;
     GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+float AAnomaliaSurvivor::TakeDamage(float Amount,const FDamageEvent& Event,AController* InstigatorController,AActor* Causer)
+{
+    if(!HasAuthority() || !CanBeDamaged() || !FMath::IsFinite(Amount) || Amount<=0 || Health<=0) return 0;
+    const float Applied=FMath::Min(Health,Amount);
+    Super::TakeDamage(Applied,Event,InstigatorController,Causer);
+    Health=FMath::Max(0.f,Health-Applied);
+    if(ItemEffectsComponent) ItemEffectsComponent->AddInjury(Applied);
+    OnSurvivalChanged();return Applied;
 }
 
 void AAnomaliaSurvivor::Tick(float DeltaSeconds)

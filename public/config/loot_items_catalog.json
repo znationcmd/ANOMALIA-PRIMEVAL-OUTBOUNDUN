@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Requested ANOMALIA survival loot inventory; configuration only until UE5 server loader and 3D assets are implemented",
+  "description": "Original ANOMALIA loot definitions consumed by native Unreal inventory and world loot. Supported use rules are authoritative; specialist weapon, tool and medical gameplay remains incomplete.",
   "perServerOverride": true,
   "notes": [
     "IDs are ANOMALIA identifiers, not claims of native DayZ compatibility",
@@ -1792,7 +1792,11 @@
     },
     {
       "id": "sterile_bandage",
-      "use": {"action":"heal","health":15},
+      "use": {
+        "action": "heal",
+        "health": 15,
+        "effect": "bandage"
+      },
       "displayName": "Bandage stérile",
       "weightKg": 0.1,
       "category": "medical_supplies",
@@ -1807,7 +1811,7 @@
     },
     {
       "id": "rags",
-      "displayName": "rags",
+      "displayName": "Chiffons pour pansement",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1816,11 +1820,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "rags"
+      }
     },
     {
       "id": "morphine",
-      "displayName": "morphine",
+      "displayName": "Antalgique médical RP",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1829,11 +1838,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "analgesic"
+      }
     },
     {
       "id": "epinephrine",
-      "displayName": "epinephrine",
+      "displayName": "Stimulant médical RP",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1842,11 +1856,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "stimulant"
+      }
     },
     {
       "id": "blood_test_kit",
-      "displayName": "blood test kit",
+      "displayName": "Kit de diagnostic sanguin",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1855,11 +1874,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "diagnostic"
+      }
     },
     {
       "id": "blood_bag",
-      "displayName": "blood bag",
+      "displayName": "Poche de sang (soins simplifiés)",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1868,7 +1892,13 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "blood",
+        "requiredItem": "iv_kit"
+      }
     },
     {
       "id": "iv_kit",
@@ -1885,7 +1915,7 @@
     },
     {
       "id": "saline",
-      "displayName": "saline",
+      "displayName": "Solution de perfusion (jeu)",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1894,11 +1924,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "saline",
+        "requiredItem": "iv_kit"
+      }
     },
     {
       "id": "splint",
-      "displayName": "splint",
+      "displayName": "Attelle — soulagement provisoire",
       "category": "medical_supplies",
       "minTier": 2,
       "maxTier": 5,
@@ -1907,11 +1943,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "splint"
+      }
     },
     {
       "id": "tetracycline",
-      "displayName": "tetracycline",
+      "displayName": "Antibiotique RP",
       "category": "medicine",
       "minTier": 2,
       "maxTier": 5,
@@ -1920,11 +1961,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "antibiotic"
+      }
     },
     {
       "id": "charcoal_tablets",
-      "displayName": "charcoal tablets",
+      "displayName": "Traitement antitoxique RP",
       "category": "medicine",
       "minTier": 2,
       "maxTier": 5,
@@ -1933,7 +1979,12 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "antidote"
+      }
     },
     {
       "id": "water_purification_tablets",
@@ -1950,7 +2001,7 @@
     },
     {
       "id": "vitamins",
-      "displayName": "vitamins",
+      "displayName": "Vitamines RP",
       "category": "medicine",
       "minTier": 2,
       "maxTier": 5,
@@ -1959,11 +2010,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "vitamins"
+      }
     },
     {
       "id": "iodine",
-      "displayName": "iodine",
+      "displayName": "Antiseptique RP",
       "category": "hygiene",
       "minTier": 1,
       "maxTier": 5,
@@ -1972,11 +2028,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "disinfectant"
+      }
     },
     {
       "id": "disinfectant_spray",
-      "displayName": "disinfectant spray",
+      "displayName": "Désinfectant pour plaies RP",
       "category": "hygiene",
       "minTier": 1,
       "maxTier": 5,
@@ -1985,11 +2046,16 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "disinfectant"
+      }
     },
     {
       "id": "alcohol_90",
-      "displayName": "alcohol 90",
+      "displayName": "Alcool antiseptique — usage externe RP",
       "category": "hygiene",
       "minTier": 1,
       "maxTier": 5,
@@ -1998,11 +2064,19 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.25,
+      "use": {
+        "action": "heal",
+        "effect": "disinfectant"
+      }
     },
     {
       "id": "canned_bacon",
-      "use": {"action":"eat","hunger":35},
+      "use": {
+        "action": "eat",
+        "hunger": 35
+      },
       "displayName": "Bacon en conserve",
       "weightKg": 0.35,
       "category": "canned_food",
@@ -2017,7 +2091,11 @@
     },
     {
       "id": "canned_peaches",
-      "use": {"action":"eat","hunger":22,"thirst":10},
+      "use": {
+        "action": "eat",
+        "hunger": 22,
+        "thirst": 10
+      },
       "displayName": "Pêches en conserve",
       "weightKg": 0.45,
       "category": "canned_food",
@@ -2032,7 +2110,10 @@
     },
     {
       "id": "canned_beans",
-      "use": {"action":"eat","hunger":30},
+      "use": {
+        "action": "eat",
+        "hunger": 30
+      },
       "displayName": "Haricots en conserve",
       "weightKg": 0.45,
       "category": "canned_food",
@@ -2047,7 +2128,10 @@
     },
     {
       "id": "sardines",
-      "use": {"action":"eat","hunger":25},
+      "use": {
+        "action": "eat",
+        "hunger": 25
+      },
       "displayName": "Sardines en conserve",
       "weightKg": 0.15,
       "category": "canned_food",
@@ -2062,7 +2146,10 @@
     },
     {
       "id": "tuna",
-      "use": {"action":"eat","hunger":25},
+      "use": {
+        "action": "eat",
+        "hunger": 25
+      },
       "displayName": "Thon en conserve",
       "weightKg": 0.2,
       "category": "canned_food",
@@ -2077,7 +2164,10 @@
     },
     {
       "id": "pate",
-      "use": {"action":"eat","hunger":20},
+      "use": {
+        "action": "eat",
+        "hunger": 20
+      },
       "displayName": "Pâté en conserve",
       "weightKg": 0.2,
       "category": "canned_food",
@@ -2092,7 +2182,10 @@
     },
     {
       "id": "cat_food",
-      "use": {"action":"eat","hunger":15},
+      "use": {
+        "action": "eat",
+        "hunger": 15
+      },
       "displayName": "Nourriture pour chat",
       "weightKg": 0.4,
       "category": "canned_food",
@@ -2107,7 +2200,10 @@
     },
     {
       "id": "dog_food",
-      "use": {"action":"eat","hunger":15},
+      "use": {
+        "action": "eat",
+        "hunger": 15
+      },
       "displayName": "Nourriture pour chien",
       "weightKg": 0.4,
       "category": "canned_food",
@@ -2122,7 +2218,7 @@
     },
     {
       "id": "beef",
-      "displayName": "beef",
+      "displayName": "Viande bovine crue",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2131,11 +2227,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "pork",
-      "displayName": "pork",
+      "displayName": "Viande de porc crue",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2144,11 +2246,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "chicken",
-      "displayName": "chicken",
+      "displayName": "Volaille crue",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2157,11 +2265,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "animal_fat",
-      "displayName": "animal fat",
+      "displayName": "Graisse animale",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2170,11 +2284,21 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "apple",
-      "use": {"action":"eat","hunger":14,"thirst":8},
+      "use": {
+        "action": "eat",
+        "hunger": 14,
+        "thirst": 8
+      },
       "displayName": "Pomme",
       "weightKg": 0.15,
       "category": "fresh_food",
@@ -2189,7 +2313,11 @@
     },
     {
       "id": "pear",
-      "use": {"action":"eat","hunger":14,"thirst":10},
+      "use": {
+        "action": "eat",
+        "hunger": 14,
+        "thirst": 10
+      },
       "displayName": "Poire",
       "weightKg": 0.2,
       "category": "fresh_food",
@@ -2204,7 +2332,11 @@
     },
     {
       "id": "plum",
-      "use": {"action":"eat","hunger":8,"thirst":5},
+      "use": {
+        "action": "eat",
+        "hunger": 8,
+        "thirst": 5
+      },
       "displayName": "Prune",
       "weightKg": 0.05,
       "category": "fresh_food",
@@ -2219,7 +2351,11 @@
     },
     {
       "id": "tomato",
-      "use": {"action":"eat","hunger":10,"thirst":8},
+      "use": {
+        "action": "eat",
+        "hunger": 10,
+        "thirst": 8
+      },
       "displayName": "Tomate",
       "weightKg": 0.15,
       "category": "fresh_food",
@@ -2234,7 +2370,10 @@
     },
     {
       "id": "potato",
-      "use": {"action":"eat","hunger":12},
+      "use": {
+        "action": "eat",
+        "hunger": 12
+      },
       "displayName": "Pomme de terre",
       "weightKg": 0.2,
       "category": "fresh_food",
@@ -2249,7 +2388,7 @@
     },
     {
       "id": "mushroom",
-      "displayName": "mushroom",
+      "displayName": "Champignon non identifié",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2258,11 +2397,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "raw_fish",
-      "displayName": "raw fish",
+      "displayName": "Poisson cru",
       "category": "fresh_food",
       "minTier": 1,
       "maxTier": 5,
@@ -2271,11 +2416,21 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.3,
+      "use": {
+        "action": "eat",
+        "hunger": 12,
+        "effect": "raw_food"
+      }
     },
     {
       "id": "pipsi",
-      "use": {"action":"drink","hunger":8,"thirst":30},
+      "use": {
+        "action": "drink",
+        "hunger": 8,
+        "thirst": 30
+      },
       "displayName": "Pipsi",
       "weightKg": 0.35,
       "category": "drinks",
@@ -2290,7 +2445,11 @@
     },
     {
       "id": "notacola",
-      "use": {"action":"drink","hunger":8,"thirst":30},
+      "use": {
+        "action": "drink",
+        "hunger": 8,
+        "thirst": 30
+      },
       "displayName": "Notacola",
       "weightKg": 0.35,
       "category": "drinks",
@@ -2305,7 +2464,11 @@
     },
     {
       "id": "spite",
-      "use": {"action":"drink","hunger":7,"thirst":30},
+      "use": {
+        "action": "drink",
+        "hunger": 7,
+        "thirst": 30
+      },
       "displayName": "Spite",
       "weightKg": 0.35,
       "category": "drinks",
@@ -2320,7 +2483,11 @@
     },
     {
       "id": "mad_monk",
-      "use": {"action":"drink","hunger":10,"thirst":25},
+      "use": {
+        "action": "drink",
+        "hunger": 10,
+        "thirst": 25
+      },
       "displayName": "Mad Monk",
       "weightKg": 0.5,
       "category": "drinks",
@@ -2335,7 +2502,7 @@
     },
     {
       "id": "vodka",
-      "displayName": "vodka",
+      "displayName": "Vodka RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2344,11 +2511,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "whisky",
-      "displayName": "whisky",
+      "displayName": "Whisky RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2357,11 +2530,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "rum",
-      "displayName": "rum",
+      "displayName": "Rhum RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2370,11 +2549,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "red_wine",
-      "displayName": "red wine",
+      "displayName": "Vin rouge RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2383,11 +2568,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "white_wine",
-      "displayName": "white wine",
+      "displayName": "Vin blanc RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2396,11 +2587,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "rose_wine",
-      "displayName": "rose wine",
+      "displayName": "Vin rosé RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2409,11 +2606,17 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "champagne",
-      "displayName": "champagne",
+      "displayName": "Vin pétillant RP",
       "category": "drinks",
       "minTier": 1,
       "maxTier": 5,
@@ -2422,11 +2625,21 @@
       "lifetimeSeconds": 3600,
       "restockSeconds": 600,
       "quantity": 1,
-      "enabled": true
+      "enabled": true,
+      "weightKg": 0.5,
+      "use": {
+        "action": "drink",
+        "effect": "alcohol",
+        "restrictedGroup": "alcohol"
+      }
     },
     {
       "id": "water_bottle",
-      "use": {"action":"drink","thirst":45,"returnItem":"empty_water_bottle"},
+      "use": {
+        "action": "drink",
+        "thirst": 45,
+        "returnItem": "empty_water_bottle"
+      },
       "displayName": "Bouteille d’eau",
       "weightKg": 1,
       "category": "drinks",
@@ -2441,7 +2654,11 @@
     },
     {
       "id": "military_canteen",
-      "use": {"action":"drink","thirst":55,"returnItem":"empty_military_canteen"},
+      "use": {
+        "action": "drink",
+        "thirst": 55,
+        "returnItem": "empty_military_canteen"
+      },
       "displayName": "Gourde militaire",
       "weightKg": 1,
       "category": "drinks",
@@ -2469,7 +2686,11 @@
     },
     {
       "id": "filter_canteen",
-      "use": {"action":"drink","thirst":55,"returnItem":"empty_filter_canteen"},
+      "use": {
+        "action": "drink",
+        "thirst": 55,
+        "returnItem": "empty_filter_canteen"
+      },
       "displayName": "Gourde filtrante",
       "weightKg": 1,
       "category": "drinks",

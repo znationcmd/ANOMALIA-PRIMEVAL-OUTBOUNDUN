@@ -64,6 +64,14 @@ void UAnomaliaSessionWidget::BuildLayout()
     PlayButton=Button(TEXT("SessionPlay"),bMainMenu?TEXT("Jouer"):TEXT("Reprendre")); PlayButton->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::Play);
     auto* Q=Button(TEXT("SessionQuality"),TEXT("Qualité : choisir un préréglage")); QualityLabel=Cast<UTextBlock>(Q->GetContent()); Q->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ChangeQuality);
     Button(TEXT("SessionSave"),TEXT("Sauvegarder"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::Save);
+    auto* Substances=Button(TEXT("SessionRPSubstances"),TEXT("Substances RP"));
+    auto* Tobacco=Button(TEXT("SessionTobacco"),TEXT("Tabac"));
+    auto* Alcohol=Button(TEXT("SessionAlcohol"),TEXT("Alcool"));
+    ItemPolicyLabels={Cast<UTextBlock>(Substances->GetContent()),Cast<UTextBlock>(Tobacco->GetContent()),Cast<UTextBlock>(Alcohol->GetContent())};
+    Substances->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ToggleSubstances);
+    Tobacco->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ToggleTobacco);
+    Alcohol->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ToggleAlcohol);
+    RefreshItemPolicyLabels();
     Button(TEXT("SessionSaveQuit"),TEXT("Sauvegarder et quitter"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::SaveAndQuit);
     Button(TEXT("SessionQuit"),TEXT("Quitter sans nouvelle sauvegarde"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::Quit);
     Label(TEXT("COMMANDES\nZ/W : avancer · Q/A/D : direction · souris : regard\nMaj : courir · E : interagir/entrer/sortir · I : inventaire\nEspace : sauter · R : dormir près du lit · V : caméra\nÉchap : pause · manette : sticks, A/Croix, X/Carré\nMenu : inventaire · View/Share : pause"));
@@ -96,6 +104,30 @@ void UAnomaliaSessionWidget::SaveAndQuit()
     else if(Feedback) Feedback->SetText(FText::FromString(TEXT("Sauvegarde non confirmée. La partie reste ouverte.")));
 }
 void UAnomaliaSessionWidget::Quit() { UKismetSystemLibrary::QuitGame(this,GetOwningPlayer(),EQuitPreference::Quit,false); }
+void UAnomaliaSessionWidget::ToggleSubstances() { ToggleItemPolicy(0); }
+void UAnomaliaSessionWidget::ToggleTobacco() { ToggleItemPolicy(1); }
+void UAnomaliaSessionWidget::ToggleAlcohol() { ToggleItemPolicy(2); }
+void UAnomaliaSessionWidget::RefreshItemPolicyLabels()
+{
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(!Mode || ItemPolicyLabels.Num()!=3) return;
+    const bool Enabled[]={Mode->ActiveServerSettings.bAllowRPSubstances,Mode->ActiveServerSettings.bAllowTobacco,Mode->ActiveServerSettings.bAllowAlcohol};
+    const TCHAR* Names[]={TEXT("Substances RP"),TEXT("Tabac"),TEXT("Alcool")};
+    for(int32 Index=0;Index<3;++Index) if(ItemPolicyLabels[Index])
+        ItemPolicyLabels[Index]->SetText(FText::FromString(FString(Names[Index])+(Enabled[Index]?TEXT(" : autorisé"):TEXT(" : interdit"))));
+}
+void UAnomaliaSessionWidget::ToggleItemPolicy(int32 Index)
+{
+    auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(!Mode || GetWorld()->GetNetMode()!=NM_Standalone || Index<0 || Index>2) return;
+    auto Candidate=Mode->ActiveServerSettings;
+    bool* Flags[]={&Candidate.bAllowRPSubstances,&Candidate.bAllowTobacco,&Candidate.bAllowAlcohol};
+    *Flags[Index]=!*Flags[Index];FString Error;
+    const bool Saved=UAnomaliaConfigLibrary::SaveServerSettings(Mode->ServerId,Candidate,Error);
+    if(Saved) Mode->ActiveServerSettings=Candidate;
+    RefreshItemPolicyLabels();
+    if(Feedback) Feedback->SetText(FText::FromString(Saved?TEXT("Règle appliquée et enregistrée pour cette partie."):Error));
+}
 FReply UAnomaliaSessionWidget::NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event)
 {
     if(Event.GetKey()==EKeys::Escape || Event.GetKey()==EKeys::Gamepad_FaceButton_Right) { Play(); return FReply::Handled(); }

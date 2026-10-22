@@ -1,4 +1,5 @@
 #include "AnomaliaGameMode.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaPlayableProbe.h"
 #include "AnomaliaSessionWidget.h"
@@ -196,6 +197,12 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
         if (bValidVitals)
             Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
     }
+    if(Survivor->ItemEffectsComponent)
+    {
+        FAnomaliaItemEffectsState Effects;FString EffectsError;
+        if(UAnomaliaItemEffectsComponent::ReadState(Survival,Effects,EffectsError)) Survivor->ItemEffectsComponent->ApplyState(Effects);
+        else UE_LOG(LogTemp,Warning,TEXT("ANOMALIA effects were not restored: %s"),*EffectsError);
+    }
     const TSharedPtr<FJsonObject>* Pose=nullptr;
     if(Root->TryGetObjectField(TEXT("pose"),Pose) && Pose && Pose->IsValid())
     {
@@ -273,6 +280,8 @@ bool AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
+    if(Survivor->ItemEffectsComponent && !UAnomaliaItemEffectsComponent::WriteState(Survival,Survivor->ItemEffectsComponent->State,Error))
+    { UE_LOG(LogTemp,Warning,TEXT("ANOMALIA effects save refused: %s"),*Error);return false; }
     FVector Position=Survivor->GetActorLocation();
     if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(Controller->GetPawn()))
         Position=Vehicle->GetActorLocation()+Vehicle->GetActorRightVector()*350.f+FVector(0,0,120.f);

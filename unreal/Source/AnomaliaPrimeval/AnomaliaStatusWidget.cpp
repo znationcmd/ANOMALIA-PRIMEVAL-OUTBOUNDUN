@@ -1,6 +1,7 @@
 #include "AnomaliaStatusWidget.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVitalsComponent.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
 #include "Components/CanvasPanel.h"
@@ -65,7 +66,7 @@ void UAnomaliaStatusWidget::BuildLayout()
     auto* Rows = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("StatusRows"));
     Frame->SetContent(Rows);
     for (const FName Id : {FName(TEXT("health")),FName(TEXT("thirst")),FName(TEXT("hunger")),
-                         FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature"))})
+                         FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("blood"))})
     {
         auto* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), FName(*(TEXT("Vital_")+Id.ToString())));
         auto LabelFont=Label->GetFont(); LabelFont.Size=16; Label->SetFont(LabelFont);
@@ -157,6 +158,17 @@ void UAnomaliaStatusWidget::RefreshFromSurvivor()
             Vitals->BodyTemperatureC<35.f || Vitals->BodyTemperatureC>39.f,true);
     }
     TArray<FString> Active;
+    if(const auto* Effects=Target->ItemEffectsComponent.Get())
+    {
+        const auto& State=Effects->State;
+        Set(TEXT("blood"),TEXT("Sang"),State.Blood,State.Blood<35);
+        if(State.Bleeding>0) Active.Add(TEXT("Saignement"));
+        if(State.Pain>10) Active.Add(TEXT("Douleur"));
+        if(State.Infection>10) Active.Add(TEXT("Infection fictive"));
+        if(State.Poison>10) Active.Add(TEXT("Intoxication toxique"));
+        if(State.Intoxication>1) Active.Add(FString::Printf(TEXT("Effets RP : %.0f %%"),State.Intoxication));
+        if(State.Dependence>40) Active.Add(TEXT("Dépendance RP"));
+    }
     if (Target->bSleeping) Active.Add(FString::Printf(TEXT("Sommeil · %.0f s"),FMath::CeilToFloat(Target->SleepRemainingSeconds)));
     else if (Target->Fatigue>=70.f) Active.Add(TEXT("Épuisé"));
     else if (Target->Fatigue>=35.f) Active.Add(TEXT("Fatigué"));

@@ -25,4 +25,10 @@ private:
     UFUNCTION() void Save();
     UFUNCTION() void SaveAndQuit();
     UFUNCTION() void Quit();
+    UFUNCTION() void ToggleSubstances();
+    UFUNCTION() void ToggleTobacco();
+    UFUNCTION() void ToggleAlcohol();
+    void ToggleItemPolicy(int32 Index);
+    void RefreshItemPolicyLabels();
+    UPROPERTY() TArray<TObjectPtr<UTextBlock>> ItemPolicyLabels;
 };

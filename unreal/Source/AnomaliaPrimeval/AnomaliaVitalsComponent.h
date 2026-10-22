@@ -46,6 +46,7 @@ public:
     /** Only trusted server-side lifecycle restoration is allowed. */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Survival")
     void RestoreVitals(float SavedStamina, float SavedTemperatureC);
+    void RefreshMovementSpeed() { ApplyMovementSpeed(); }
 
     virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;

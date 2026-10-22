@@ -110,6 +110,12 @@ bool UAnomaliaConfigLibrary::LoadServerSettings(const FString& ServerId, FAnomal
     if (Server->TryGetNumberField(TEXT("timeMultiplier"), Number) && FMath::IsFinite(Number)) OutSettings.TimeMultiplier = FMath::Clamp(static_cast<float>(Number), 0.1f, 24.0f);
     bool bValue = false;
     if (Server->TryGetBoolField(TEXT("thirdPerson"), bValue)) OutSettings.bThirdPerson = bValue;
+    // A malformed explicit policy is denied rather than silently enabled.
+    auto Policy=[&](const TCHAR* Key,bool& Enabled)
+    { if(Server->HasField(Key)) { Enabled=false;Server->TryGetBoolField(Key,Enabled); } };
+    Policy(TEXT("allowRPSubstances"),OutSettings.bAllowRPSubstances);
+    Policy(TEXT("allowTobacco"),OutSettings.bAllowTobacco);
+    Policy(TEXT("allowAlcohol"),OutSettings.bAllowAlcohol);
     // Missing survival fields preserve the original gameplay defaults.
     const TSharedPtr<FJsonObject>* SurvivalPtr = nullptr;
     if (Root->TryGetObjectField(TEXT("survival"), SurvivalPtr) && SurvivalPtr && SurvivalPtr->IsValid())
@@ -159,6 +165,9 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
     Server->SetNumberField(TEXT("maxPlayers"), Settings.MaxPlayers);
     Server->SetStringField(TEXT("mode"), Settings.Mode);
     Server->SetBoolField(TEXT("thirdPerson"), Settings.bThirdPerson);
+    Server->SetBoolField(TEXT("allowRPSubstances"), Settings.bAllowRPSubstances);
+    Server->SetBoolField(TEXT("allowTobacco"), Settings.bAllowTobacco);
+    Server->SetBoolField(TEXT("allowAlcohol"), Settings.bAllowAlcohol);
     Server->SetNumberField(TEXT("timeMultiplier"), Settings.TimeMultiplier);
     const TSharedPtr<FJsonObject>* PreviousSurvival = nullptr;
     TSharedPtr<FJsonObject> Survival = (Root->TryGetObjectField(TEXT("survival"), PreviousSurvival) && PreviousSurvival && PreviousSurvival->IsValid())

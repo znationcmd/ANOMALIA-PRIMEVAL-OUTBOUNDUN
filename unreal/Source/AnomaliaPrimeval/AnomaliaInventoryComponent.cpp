@@ -1,4 +1,5 @@
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaConfigLibrary.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaSurvivor.h"
@@ -564,7 +565,8 @@ FString UAnomaliaInventoryComponent::GetUseActionLabel(FName ItemId) const
 {
     const auto Rule=GetUseRule(ItemId);
     if(!Rule.IsUsable()) return FString();
-    return Rule.Action==TEXT("eat")?TEXT("Manger") : Rule.Action==TEXT("drink")?TEXT("Boire"):TEXT("Soigner");
+    return Rule.Action==TEXT("eat")?TEXT("Manger") : Rule.Action==TEXT("drink")?TEXT("Boire"):
+        Rule.Action==TEXT("smoke")?TEXT("Fumer (RP)"):Rule.Action==TEXT("rp")?TEXT("Utiliser (RP)"):TEXT("Soigner / examiner");
 }
 
 bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError)
@@ -583,12 +585,24 @@ bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,
     const FName ItemId=Stack->ItemId;
     const auto Rule=GetUseRule(ItemId);
     if(!Rule.IsUsable()) { OutError=TEXT("Cet objet nécessite une autre interaction.");return false; }
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(Mode && ((Rule.RestrictedGroup==TEXT("substances") && !Mode->ActiveServerSettings.bAllowRPSubstances) ||
+        (Rule.RestrictedGroup==TEXT("tobacco") && !Mode->ActiveServerSettings.bAllowTobacco) ||
+        (Rule.RestrictedGroup==TEXT("alcohol") && !Mode->ActiveServerSettings.bAllowAlcohol)))
+    { OutError=TEXT("Cette catégorie est désactivée dans les règles de cette partie.");return false; }
+    if(!Rule.RequiredItem.IsNone() && !Stacks.ContainsByPredicate([&](const auto& S)
+        { return S.Count>0 && (S.ItemId==Rule.RequiredItem || (Rule.RequiredItem==TEXT("lighter") && S.ItemId==TEXT("matches"))); }))
+    { OutError=TEXT("Matériel nécessaire : ")+GetItemDisplayName(Rule.RequiredItem);return false; }
+    auto* Effects=Survivor->ItemEffectsComponent.Get();
+    FAnomaliaItemEffectsState NextEffects;
+    if(!Effects || !Effects->PreviewUse(Rule.Effect,NextEffects))
+    { OutError=TEXT("État des effets invalide.");return false; }
     if(!FMath::IsFinite(Survivor->Hunger) || !FMath::IsFinite(Survivor->Thirst) || !FMath::IsFinite(Survivor->Health))
     { OutError=TEXT("État du personnage invalide.");return false; }
     const float Food=FMath::Clamp(Survivor->Hunger+Rule.Hunger,0.f,100.f);
     const float Water=FMath::Clamp(Survivor->Thirst+Rule.Thirst,0.f,100.f);
     const float HP=FMath::Clamp(Survivor->Health+Rule.Health,0.f,100.f);
-    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health)
+    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects))
     { OutError=TEXT("Aucun besoin à restaurer : l’objet est conservé.");return false; }
 
     const auto Before=Stacks;const int32 BeforeId=NextStackId;
@@ -622,11 +636,13 @@ bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,
         Survival->SetNumberField(TEXT("bodyTemperatureC"),Vitals->BodyTemperatureC);
     }
     Profile->SetObjectField(TEXT("survival"),Survival);
+    if(!UAnomaliaItemEffectsComponent::WriteState(Survival,NextEffects,OutError)) return false;
     Raw.Empty();
     if(!FJsonSerializer::Serialize(Profile.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw)) ||
        !UAnomaliaConfigLibrary::SavePlayerProfile(ServerId,PlayerId,Raw,OutError)) return false;
     // Publish both sides only after their single combined profile write succeeds.
     Survivor->Hunger=Food;Survivor->Thirst=Water;Survivor->Health=HP;
+    Effects->ApplyState(NextEffects);
     NextStackId=AfterId;UseMessage=TEXT("Utilisé : ")+GetItemDisplayName(ItemId);
     auto Committed=After;Commit(MoveTemp(Committed));Survivor->OnSurvivalChanged();
     return true;
