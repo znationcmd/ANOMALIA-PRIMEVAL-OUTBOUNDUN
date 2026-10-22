@@ -1,6 +1,6 @@
 /** Original ANOMALIA survival condition indicators; no borrowed DayZ icon assets. */
 export const STATUS_DEFINITIONS=Object.freeze([
- ['bleeding','Saignement','droplets'],['fracture','Fracture','bone'],['infection','Infection','biohazard'],
+ ['wet','Mouillé','droplets'],['soaked','Trempé','cloud-rain'],['bleeding','Saignement','droplets'],['fracture','Fracture','bone'],['infection','Infection','biohazard'],
  ['illness','Maladie','thermometer'],['poisoned','Intoxication','flask-conical'],['cold','Hypothermie','snowflake'],
  ['heat','Hyperthermie','sun'],['shock','Choc','activity'],['lowBlood','Sang faible','heart-pulse'],
  ['underInfluence','Sous influence','eye'],['disoriented','Désorientation','scan-eye'],
@@ -10,7 +10,8 @@ export const STATUS_DEFINITIONS=Object.freeze([
 ]);
 const value=(v,f=0)=>Number.isFinite(Number(v))?Number(v):f;
 export function getSurvivalIndicators(s){
- const f=s.conditions||{},dr=s.drugEffects||{},flags={
+ const f=s.conditions||{},dr=s.drugEffects||{},wetness=Number(s.wetness??f.wetness??0),flags={
+ wet:wetness>0&&wetness<70,soaked:wetness>=70,
  bleeding:value(f.bleeding||s.bleeding)>0,fracture:!!(f.fracture||s.fracture),
  infection:!!(f.infection||s.infection),illness:!!(f.illness||s.illness),
  poisoned:!!(f.poisoned||s.poisoned),cold:value(s.temperature,37)<35,
