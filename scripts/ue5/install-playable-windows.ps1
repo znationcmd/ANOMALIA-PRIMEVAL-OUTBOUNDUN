@@ -18,12 +18,14 @@ try {
     $saved=Join-Path $base 'userdata/Saved';New-Item -ItemType Directory -Path $saved -Force | Out-Null
     $hashes=@{};foreach($f in Get-ChildItem -LiteralPath $saved -Recurse -File) { $hashes[$f.FullName]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash }
     $versions=Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
-    $target=Join-Path $versions $Commit
+    $target=Join-Path $versions ($Commit+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8))
+    $testSaved=Join-Path $base ('validation/'+[Guid]::NewGuid().ToString('N')+'/Saved')
+    New-Item -ItemType Directory -Path $testSaved -Force | Out-Null
     if (-not (Test-Path -LiteralPath $target)) {
         $stage=Join-Path $versions ('.stage-'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $stage | Out-Null
         & robocopy.exe $proof.archive $stage /E /COPY:DAT /DCOPY:DAT /XJ /XD Saved /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
         if ($LASTEXITCODE -gt 7) { throw 'Packaged version copy failed.' }
-        New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaPrimeval/Saved') -Target $saved | Out-Null
+        New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaPrimeval/Saved') -Target $testSaved | Out-Null
         Move-Item -LiteralPath $stage -Destination $target
     }
     $exe=Join-Path $target 'AnomaliaPrimeval.exe'
@@ -39,7 +41,15 @@ try {
     $observed=([IO.Path]::GetFullPath($native.savedDir)).TrimEnd('\','/')
     $expected=([IO.Path]::GetFullPath((Join-Path $target 'AnomaliaPrimeval/Saved'))).TrimEnd('\','/')
     if ($observed -ne $expected -and $observed -ne ([IO.Path]::GetFullPath($saved)).TrimEnd('\','/')) { throw "Unexpected packaged save location: $observed" }
-    foreach($f in $hashes.Keys) { if (-not (Test-Path -LiteralPath $f) -or (Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash -ne $hashes[$f]) { throw 'Existing user data changed during installation.' } }
+    foreach($f in $hashes.Keys) { if (-not (Test-Path -LiteralPath $f) -or (Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash -ne $hashes[$f]) { throw ('Existing user data changed during installation: '+$f) } }
+    # Keep smoke-test output separate from all real saves and settings. Preserve the test link too.
+    $savedLink=Join-Path $target 'AnomaliaPrimeval/Saved'
+    $testLink=Get-Item -LiteralPath $savedLink
+    if ($testLink.LinkType -ne 'Junction' -or @($testLink.Target)[0] -ne $testSaved) { throw 'Unexpected validation save junction preserved.' }
+    Rename-Item -LiteralPath $savedLink -NewName 'Saved-validation'
+    New-Item -ItemType Junction -Path $savedLink -Target $saved | Out-Null
+    if (@((Get-Item -LiteralPath $savedLink).Target)[0] -ne $saved) { throw 'Shared player save junction readback failed.' }
+    $report.validationSaveIsolationVerified=$true
     $active=Join-Path $base 'active.json';$temp=Join-Path $base ([Guid]::NewGuid().ToString('N')+'.json')
     @{commit=$Commit;executable=$exe;userData=$saved} | ConvertTo-Json | Set-Content -LiteralPath $temp -Encoding UTF8
     if (Test-Path -LiteralPath $active) {
