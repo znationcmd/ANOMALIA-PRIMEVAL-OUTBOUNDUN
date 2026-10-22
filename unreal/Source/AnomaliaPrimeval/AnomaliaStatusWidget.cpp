@@ -31,10 +31,10 @@ void UAnomaliaStatusWidget::BuildLayout()
     auto* Frame = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(), TEXT("StatusFrame"));
     Frame->SetBrushColor(FLinearColor(.012f,.025f,.035f,.88f));
     Frame->SetPadding(FMargin(12.f,8.f));
-    auto* Slot = Root->AddChildToCanvas(Frame);
-    Slot->SetAnchors(FAnchors(.98f,.98f));
-    Slot->SetAlignment(FVector2D(1.f,1.f));
-    Slot->SetAutoSize(true);
+    auto* FrameSlot = Root->AddChildToCanvas(Frame);
+    FrameSlot->SetAnchors(FAnchors(.98f,.98f));
+    FrameSlot->SetAlignment(FVector2D(1.f,1.f));
+    FrameSlot->SetAutoSize(true);
     auto* Rows = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("StatusRows"));
     Frame->SetContent(Rows);
     for (const FName Id : {FName(TEXT("health")),FName(TEXT("thirst")),FName(TEXT("hunger")),
