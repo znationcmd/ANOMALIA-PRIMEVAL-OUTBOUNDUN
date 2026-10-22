@@ -8,12 +8,13 @@ export function createCryoTerminal({id,ownerId,position,options={}}){
  return {id,ownerId,position:clone(position),options:{...CRYO_DEFAULTS,...options},creatures:[],eggs:[]};
 }
 export function canAccessCryo(terminal,actor){return !!actor&&(actor.id===terminal.ownerId||actor.isAdmin===true||terminal.allowedIds?.includes(actor.id));}
-export function captureCreature(terminal,creature,actor,{viaGun=false,distance=0}={}){
+export function captureCreature(terminal,creature,actor,{viaGun=false,distance=0,adminMode=false}={}){
  if(!canAccessCryo(terminal,actor))return {ok:false,reason:'forbidden'};
- if(!creature?.id||!creature.tamed||creature.ownerId!==actor.id&&!actor.isAdmin&&!terminal.allowedIds?.includes(creature.ownerId))return {ok:false,reason:'not-owned-or-not-tamed'};
- if(creature.dead||creature.stored||creature.inCombat)return {ok:false,reason:'unavailable'};
+ const authorizedAdmin=adminMode===true&&actor?.isAdmin===true;
+ if(!creature?.id||(!authorizedAdmin&&(!creature.tamed||creature.ownerId!==actor.id&&!terminal.allowedIds?.includes(creature.ownerId))))return {ok:false,reason:'not-owned-or-not-tamed'};
+ if(creature.dead||creature.stored||creature.inCombat&&!authorizedAdmin)return {ok:false,reason:'unavailable'};
  if(creature.hybrid&&terminal.options.allowHybrids===false)return {ok:false,reason:'hybrids-disabled'};
- if(viaGun&&distance>terminal.options.range)return {ok:false,reason:'out-of-range'};
+ if(viaGun&&distance>terminal.options.range&&!authorizedAdmin)return {ok:false,reason:'out-of-range'};
  if(terminal.creatures.some(c=>c.id===creature.id))return {ok:false,reason:'duplicate'};
  if(terminal.options.capacity!==null&&terminal.creatures.length>=terminal.options.capacity)return {ok:false,reason:'full'};
  const stored=clone(creature);stored.stored=true;stored.storedAt=Date.now();
@@ -39,4 +40,13 @@ export function configureCryo(terminal,actor,changes){
   else terminal.options[key]=Boolean(v);
  }
  return true;
+}
+
+/** Client-visible color is derived from server-validated role, not trusted as permission. */
+export function cryoGunMode(actor,requestedAdminMode=false){
+ const admin=Boolean(requestedAdminMode&&actor?.isAdmin===true);
+ return {adminMode:admin,color:admin?'#ff9a25':'#19d9ee',label:admin?'CAPTURE ADMIN':'CAPTURE NORMALE'};
+}
+export function toggleCryoGunMode(actor,currentMode=false){
+ return cryoGunMode(actor,!currentMode);
 }
