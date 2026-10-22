@@ -78,9 +78,12 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto HeadingFont=Heading->GetFont(); HeadingFont.Size=26; Heading->SetFont(HeadingFont);
     Content->AddChildToVerticalBox(Heading)->SetPadding(FMargin(14.f, 10.f));
     UTextBlock* Hint = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHint"));
-    Hint->SetText(FText::FromString(TEXT("Déplacer un objet vers les mains · séparer une pile · fusionner deux piles")));
+    Hint->SetText(FText::FromString(TEXT("Manger · boire · soins simples · déplacer vers les mains · séparer et fusionner les piles")));
     Hint->SetColorAndOpacity(FSlateColor(FLinearColor(.72f, .82f, .86f)));
     Content->AddChildToVerticalBox(Hint)->SetPadding(FMargin(14.f, 0.f, 14.f, 10.f));
+    UseStatus=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("ItemUseStatus"));
+    UseStatus->SetAutoWrapText(true);
+    Content->AddChildToVerticalBox(UseStatus)->SetPadding(FMargin(14.f,4.f));
 
     BankStatus = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("BankStatus"));
     BankStatus->SetAutoWrapText(true);
@@ -118,6 +121,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         return;
     }
 
+    if(UseStatus) UseStatus->SetText(FText::FromString(Inventory->UseMessage));
     if (BankStatus)
         BankStatus->SetText(FText::FromString(FString::Printf(TEXT("BANQUE RP · Compte %s · %lld,%02lld EUR\n%s %s"),
             *Inventory->BankAccountId, static_cast<long long>(Inventory->BankBalanceCents/100),
@@ -169,9 +173,21 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     UHorizontalBox* Row = WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
     ItemList->AddChildToVerticalBox(Row)->SetPadding(FMargin(12.f, 3.f));
     UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    Label->SetText(FText::FromString(FString::Printf(TEXT("%s  ×%d   [%s · %d,%d]"), *Stack.ItemId.ToString(), Stack.Count, *Stack.ContainerId.ToString(), Stack.X, Stack.Y)));
+    Label->SetText(FText::FromString(FString::Printf(TEXT("%s  ×%d   [%s · %d,%d]"), *Inventory->GetItemDisplayName(Stack.ItemId), Stack.Count, *Stack.ContainerId.ToString(), Stack.X, Stack.Y)));
     Label->SetColorAndOpacity(FSlateColor(FLinearColor(.91f, .95f, .96f)));
     Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+    const FString UseLabel=Inventory->GetUseActionLabel(Stack.ItemId);
+    if(!UseLabel.IsEmpty())
+    {
+        auto* UseButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
+            MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("UseStack_%d_action"),Stack.StackId))));
+        auto* UseText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        UseText->SetText(FText::FromString(UseLabel));UseButton->SetContent(UseText);
+        UseButton->SetIsEnabled(!Inventory->IsPersistenceLocked());
+        Row->AddChildToHorizontalBox(UseButton)->SetPadding(FMargin(5.f));
+        BindAction(UseButton,EAnomaliaInventoryAction::Use,Stack.StackId,Stack.Count);
+    }
 
     if (Inventory && Inventory->bBankingAvailable && Stack.ItemId.ToString().StartsWith(TEXT("eur_note_")))
     {
@@ -239,6 +255,10 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
             break;
         case EAnomaliaInventoryAction::Merge:
             Inventory->RequestMergeStacks(StackId, OtherStackId);
+            break;
+        case EAnomaliaInventoryAction::Use:
+            Inventory->RequestUseStack(StackId,Count);
+            FocusFirstAction();
             break;
         case EAnomaliaInventoryAction::DepositNote:
         {

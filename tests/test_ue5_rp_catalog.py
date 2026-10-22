@@ -8,7 +8,9 @@ class RPCatalogTests(unittest.TestCase):
     def test_existing_catalogue_preserved_and_rp_ids_do_not_shadow_it(self):
         original = json.loads((ROOT/'public/config/loot_items_catalog.json').read_text())['items']
         extra = json.loads((ROOT/'public/config/rp_items_catalog.json').read_text())['items']
-        self.assertEqual(len(original),232)
+        empty = {'empty_water_bottle', 'empty_military_canteen', 'empty_filter_canteen'}
+        self.assertEqual(len([row for row in original if row['id'] not in empty]),232)
+        self.assertEqual({row['id'] for row in original if row['id'] in empty},empty)
         self.assertEqual(len(extra),28)
         # Existing battery appears under lighting and engine parts; native loader merges
         # its categories while retaining the unchanged source rows.
@@ -17,7 +19,7 @@ class RPCatalogTests(unittest.TestCase):
         self.assertEqual(duplicates,{'car_battery':2})
         self.assertFalse({row['id'].lower() for row in original} & {row['id'].lower() for row in extra})
         ids = [row['id'].lower() for row in original+extra]
-        self.assertEqual(len(set(ids)),259)
+        self.assertEqual(len(set(ids)),262)
         for row in extra:
             self.assertGreater(row['weightKg'],0)
             self.assertGreaterEqual(row['maxStack'],row['quantity'])

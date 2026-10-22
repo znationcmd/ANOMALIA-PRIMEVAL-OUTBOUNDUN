@@ -129,12 +129,42 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
     {
         Input(EKeys::E,IE_Released); if(Now<Next) return;
         if(S->InventoryComponent->Stacks.IsEmpty()) { Finish(TEXT("Cooked Interact pickup failed")); return; }
-        Checks.Add(TEXT("world_pickup_into_native_inventory")); Input(EKeys::I,IE_Pressed); Next=Now+.5; Phase=4; return;
+        Checks.Add(TEXT("world_pickup_into_native_inventory"));
+        AAnomaliaLootPickup* Drink=nullptr;
+        for(TActorIterator<AAnomaliaLootPickup> It(GetWorld());It;++It) if(It->SpawnId==TEXT("playable-supplies-1")) Drink=*It;
+        if(!Drink) { Finish(TEXT("Second world pickup missing"));return; }
+        S->SetActorLocation(Drink->GetActorLocation()+FVector(0,-100,100),false,nullptr,ETeleportType::TeleportPhysics);
+        Input(EKeys::E,IE_Pressed);Next=Now+.5;Phase=11;return;
+    }
+    if(Phase==11)
+    {
+        Input(EKeys::E,IE_Released);if(Now<Next)return;
+        if(S->InventoryComponent->Stacks.Num()<2) { Finish(TEXT("Second pickup did not enter inventory"));return; }
+        Input(EKeys::I,IE_Pressed);Next=Now+.5;Phase=4;return;
     }
     if(Phase==4)
     {
         Input(EKeys::I,IE_Released); if(Now<Next) return;
         if(!S->InventoryWidget || !S->InventoryWidget->IsInViewport()) { Finish(TEXT("Cooked inventory UI failed")); return; }
+        const auto* Food=S->InventoryComponent->Stacks.FindByPredicate([&](const auto& Stack){return S->InventoryComponent->GetUseActionLabel(Stack.ItemId)==TEXT("Manger");});
+        if(!Food) { Finish(TEXT("Collected food has no native use rule"));return; }
+        UsedStackId=Food->StackId;UsedCount=Food->Count;
+        S->RestoreSurvival(20.f,20.f,70.f);
+        TArray<UWidget*> Widgets;S->InventoryWidget->WidgetTree->GetAllWidgets(Widgets);
+        UButton* Eat=nullptr;
+        const FString Prefix=FString::Printf(TEXT("UseStack_%d_action"),UsedStackId);
+        for(auto* Widget:Widgets)
+            if(auto* Button=Cast<UButton>(Widget)) if(Button->GetName().StartsWith(Prefix)) Eat=Button;
+        if(!Eat) { Finish(TEXT("Actual inventory food-use button missing"));return; }
+        Eat->OnClicked.Broadcast();Next=Now+.4;Phase=12;return;
+    }
+    if(Phase==12)
+    {
+        if(Now<Next)return;
+        const auto* Remaining=S->InventoryComponent->Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==UsedStackId;});
+        if((Remaining?Remaining->Count:0)!=UsedCount-1 || S->Hunger<=20.1f || S->InventoryComponent->Stacks.IsEmpty())
+        { Finish(TEXT("Native inventory food use failed to consume exactly one unit and restore hunger"));return; }
+        Checks.Add(TEXT("native_inventory_food_use_consumes_one_and_restores_hunger"));
         S->CloseInventory(); Checks.Add(TEXT("native_inventory_open_close"));
         auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>(); FString Saved,Error;
         if(!Mode || !Mode->SaveLocalGame() || !UAnomaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,TEXT("local-owner"),Saved,Error))

@@ -37,7 +37,7 @@ bool FAnomaliaLootCatalogTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("Isolated world"), World)) return false;
     auto* Loot = World->GetSubsystem<UAnomaliaLootSubsystem>();
     if (!TestNotNull(TEXT("Native loot subsystem"), Loot)) { World->DestroyWorld(false); return false; }
-    TestEqual(TEXT("All source catalogue entries available to native inventory"), Loot->GetCatalogSize(), 259);
+    TestEqual(TEXT("All source catalogue entries and three empty containers available to native inventory"), Loot->GetCatalogSize(), 262);
     const auto* Battery = Loot->FindItem(TEXT("car_battery"));
     TestTrue(TEXT("Existing battery retains both source categories without duplication"), Battery &&
         Battery->Categories.Contains(TEXT("power_lighting")) && Battery->Categories.Contains(TEXT("vehicle_engine_parts")));

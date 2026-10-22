@@ -19,6 +19,7 @@ enum class EAnomaliaInventoryAction : uint8
     MoveToHands,
     SplitHalf,
     Merge,
+    Use,
     DepositNote,
     WithdrawNote
 };
@@ -78,6 +79,7 @@ private:
     void PerformAction(EAnomaliaInventoryAction Action, int32 StackId, int32 Count, int32 OtherStackId);
 
     UPROPERTY() TObjectPtr<UTextBlock> BankStatus;
+    UPROPERTY() TObjectPtr<UTextBlock> UseStatus;
     UPROPERTY() TObjectPtr<UEditableTextBox> BankRecipient;
     UPROPERTY() TObjectPtr<UEditableTextBox> BankAmount;
     UPROPERTY() TObjectPtr<UButton> TransferButton;

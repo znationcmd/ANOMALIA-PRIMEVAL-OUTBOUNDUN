@@ -8,6 +8,14 @@ class AAnomaliaLootPickup;
 class AAnomaliaSurvivor;
 class UAnomaliaInventoryComponent;
 
+struct FAnomaliaItemUseRule
+{
+    FString Action;
+    float Hunger = 0.f, Thirst = 0.f, Health = 0.f;
+    FName ReturnItem;
+    bool IsUsable() const { return !Action.IsEmpty() && (Hunger>0.f || Thirst>0.f || Health>0.f); }
+};
+
 struct FAnomaliaLootItem
 {
     FName Id;
@@ -22,6 +30,7 @@ struct FAnomaliaLootItem
     int32 MaxStack = 20;
     FIntPoint Size = FIntPoint(1, 1);
     bool bEnabled = true;
+    FAnomaliaItemUseRule Use;
 };
 
 struct FAnomaliaLootSpawn

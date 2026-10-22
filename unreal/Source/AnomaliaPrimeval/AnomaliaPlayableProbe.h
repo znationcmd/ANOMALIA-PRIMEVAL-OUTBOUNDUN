@@ -14,6 +14,7 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 private:
     int32 Phase=0, VehicleIndex=0;
+    int32 UsedStackId=0, UsedCount=0;
     double Started=0, Next=0;
     FVector Before=FVector::ZeroVector, House=FVector::ZeroVector;
     float DoorSign=1;

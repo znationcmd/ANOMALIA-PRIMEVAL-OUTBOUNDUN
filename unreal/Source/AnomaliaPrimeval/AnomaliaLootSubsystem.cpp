@@ -143,6 +143,23 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         { Error = TEXT("Invalid loot inventory metadata: ") + Id; return false; }
         Item.WeightKg = static_cast<float>(Weight); Item.MaxStack = static_cast<int32>(Stack);
         Item.Size = FIntPoint(static_cast<int32>(Width), static_cast<int32>(Height));
+        if (Row->HasField(TEXT("use")))
+        {
+            const TSharedPtr<FJsonObject>* Use=nullptr;
+            double Food=0,Water=0,HP=0; FString Return;
+            if (!Row->TryGetObjectField(TEXT("use"),Use) || !Use || !Use->IsValid() ||
+                !(*Use)->TryGetStringField(TEXT("action"),Item.Use.Action) ||
+                (Item.Use.Action!=TEXT("eat") && Item.Use.Action!=TEXT("drink") && Item.Use.Action!=TEXT("heal")) ||
+                ((*Use)->HasField(TEXT("hunger")) && !LootNumber(*Use,TEXT("hunger"),Food,0,100)) ||
+                ((*Use)->HasField(TEXT("thirst")) && !LootNumber(*Use,TEXT("thirst"),Water,0,100)) ||
+                ((*Use)->HasField(TEXT("health")) && !LootNumber(*Use,TEXT("health"),HP,0,100)) ||
+                (Food<=0 && Water<=0 && HP<=0) ||
+                (Item.Use.Action==TEXT("heal") ? (Food!=0 || Water!=0) : HP!=0) ||
+                ((*Use)->HasField(TEXT("returnItem")) && (!(*Use)->TryGetStringField(TEXT("returnItem"),Return) || !LootSafeId(Return))))
+            { Error=TEXT("Invalid item use rule: ")+Id; return false; }
+            Item.Use.Hunger=static_cast<float>(Food);Item.Use.Thirst=static_cast<float>(Water);Item.Use.Health=static_cast<float>(HP);
+            if(!Return.IsEmpty()) Item.Use.ReturnItem=FName(*Return);
+        }
         if (Item.Quantity > Item.MaxStack) { Error = TEXT("Loot quantity exceeds stack limit"); return false; }
         Item.Categories.Add(Item.Category);
         if (auto* Existing = Candidate.Find(Item.Id))
@@ -153,12 +170,22 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
                 Existing->Quantity != Item.Quantity || Existing->Nominal != Item.Nominal || Existing->Minimum != Item.Minimum ||
                 Existing->RestockSeconds != Item.RestockSeconds || Existing->LifetimeSeconds != Item.LifetimeSeconds ||
                 Existing->WeightKg != Item.WeightKg || Existing->MaxStack != Item.MaxStack || Existing->Size != Item.Size ||
-                Existing->bEnabled != Item.bEnabled)
+                Existing->bEnabled != Item.bEnabled || Existing->Use.Action!=Item.Use.Action ||
+                Existing->Use.Hunger!=Item.Use.Hunger || Existing->Use.Thirst!=Item.Use.Thirst ||
+                Existing->Use.Health!=Item.Use.Health || Existing->Use.ReturnItem!=Item.Use.ReturnItem)
             { Error = TEXT("Conflicting duplicate loot definition: ")+Id; return false; }
             Existing->Categories.Add(Item.Category);
         }
         else Candidate.Add(Item.Id, Item);
     }
+    for(const auto& Pair:Candidate)
+        if(!Pair.Value.Use.ReturnItem.IsNone())
+        {
+            const auto* Returned=Candidate.Find(Pair.Value.Use.ReturnItem);
+            if(!Returned && Append) Returned=Items.Find(Pair.Value.Use.ReturnItem);
+            if(!Returned || Returned->Use.IsUsable())
+            { Error=TEXT("Returned container missing or itself consumable: ")+Pair.Value.Use.ReturnItem.ToString();return false; }
+        }
     if (Append) Items.Append(Candidate);
     else Items = MoveTemp(Candidate);
     return true;

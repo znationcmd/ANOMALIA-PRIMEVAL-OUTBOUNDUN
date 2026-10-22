@@ -6,6 +6,7 @@
 #include "AnomaliaInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
+struct FAnomaliaItemUseRule;
 
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
@@ -127,6 +128,17 @@ public:
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
+    FString GetItemDisplayName(FName ItemId) const;
+    FString GetUseActionLabel(FName ItemId) const;
+    /** Client supplies only the selected stack and its displayed count, never effects or profile identity. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestUseStack(int32 StackId, int32 ExpectedCount);
+    /** Trusted server entry point. Persists the consumed unit and resulting vitals in one profile write. */
+    bool TryUseStack(int32 StackId, int32 ExpectedCount, const FString& ServerId, const FString& PlayerId, FString& OutError);
+
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    FString UseMessage;
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Inventory")
     void OnInventoryChanged();
 
@@ -151,12 +163,18 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerRequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
+    UFUNCTION(Server, Reliable)
+    void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
+
 private:
     friend class UAnomaliaLootSubsystem;
     friend class UAnomaliaEconomySubsystem;
     bool bPersistenceLocked = false;
     bool bProfileRecoveryPending = false;
     double NextBankRequestTime = 0;
+    double NextUseRequestTime = 0;
+    FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
+    bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
     bool bSuppressNotifications = false;
     int32 NextStackId = 1;
     bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;

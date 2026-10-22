@@ -2,10 +2,12 @@
 #include "AnomaliaConfigLibrary.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaVitalsComponent.h"
 #include "AnomaliaGameMode.h"
 #include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Controller.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -513,6 +515,127 @@ void UAnomaliaInventoryComponent::ServerRequestMergeStacks_Implementation(int32 
     TryMergeStacks(TargetStackId, SourceStackId);
 }
 
+FAnomaliaItemUseRule UAnomaliaInventoryComponent::GetUseRule(FName ItemId) const
+{
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    if(const auto* Item=Loot?Loot->FindItem(ItemId):nullptr) return Item->Use;
+    // Preserve the existing generic survival item IDs alongside the full loot catalogue.
+    FAnomaliaItemUseRule Rule;
+    if(ItemId==TEXT("food") || ItemId==TEXT("meat") || ItemId==TEXT("cooked_meat") || ItemId==TEXT("cooked_fish"))
+    { Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("food")?27.f:34.f; }
+    else if(ItemId==TEXT("berry")) { Rule.Action=TEXT("eat");Rule.Hunger=7.f;Rule.Thirst=3.f; }
+    else if(ItemId==TEXT("water")) { Rule.Action=TEXT("drink");Rule.Thirst=38.f; }
+    else if(ItemId==TEXT("bandage") || ItemId==TEXT("medkit"))
+    { Rule.Action=TEXT("heal");Rule.Health=ItemId==TEXT("medkit")?50.f:19.f; }
+    return Rule;
+}
+
+FString UAnomaliaInventoryComponent::GetItemDisplayName(FName ItemId) const
+{
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    const auto* Item=Loot?Loot->FindItem(ItemId):nullptr;
+    return Item?Item->DisplayName:ItemId.ToString();
+}
+
+FString UAnomaliaInventoryComponent::GetUseActionLabel(FName ItemId) const
+{
+    const auto Rule=GetUseRule(ItemId);
+    if(!Rule.IsUsable()) return FString();
+    return Rule.Action==TEXT("eat")?TEXT("Manger") : Rule.Action==TEXT("drink")?TEXT("Boire"):TEXT("Soigner");
+}
+
+bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError)
+{
+    OutError.Empty();
+    auto* Survivor=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    const auto* Economy=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>():nullptr;
+    if(!Survivor || !Survivor->HasAuthority() || IsPersistenceLocked() || bSuppressNotifications ||
+       Survivor->Health<=0 || Survivor->bSleeping || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
+       (Economy && Economy->HasPendingPlayer(PlayerId)))
+    { OutError=TEXT("Utilisation indisponible pendant une sauvegarde, le sommeil ou sans personnage vivant.");return false; }
+    const auto* Stack=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack || ExpectedCount<1 || Stack->Count!=ExpectedCount)
+    { OutError=TEXT("La pile a changé : sélectionnez de nouveau l’objet.");return false; }
+    const FName ItemId=Stack->ItemId;
+    const auto Rule=GetUseRule(ItemId);
+    if(!Rule.IsUsable()) { OutError=TEXT("Cet objet nécessite une autre interaction.");return false; }
+    if(!FMath::IsFinite(Survivor->Hunger) || !FMath::IsFinite(Survivor->Thirst) || !FMath::IsFinite(Survivor->Health))
+    { OutError=TEXT("État du personnage invalide.");return false; }
+    const float Food=FMath::Clamp(Survivor->Hunger+Rule.Hunger,0.f,100.f);
+    const float Water=FMath::Clamp(Survivor->Thirst+Rule.Thirst,0.f,100.f);
+    const float HP=FMath::Clamp(Survivor->Health+Rule.Health,0.f,100.f);
+    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health)
+    { OutError=TEXT("Aucun besoin à restaurer : l’objet est conservé.");return false; }
+
+    const auto Before=Stacks;const int32 BeforeId=NextStackId;
+    auto Rollback=[&](){Stacks=Before;NextStackId=BeforeId;bSuppressNotifications=false;};
+    bSuppressNotifications=true;
+    auto* Selected=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    --Selected->Count;
+    Stacks.RemoveAll([](const auto& S){return S.Count<=0;});
+    if(!Rule.ReturnItem.IsNone() && !TryAddItem(Rule.ReturnItem,1))
+    { Rollback();OutError=TEXT("Faites de la place pour le contenant vide. L’objet est conservé.");return false; }
+    FString Raw;
+    if(!BuildInventoryProfile(ServerId,PlayerId,Raw,OutError)) { Rollback();return false; }
+    const auto After=Stacks;const int32 AfterId=NextStackId;
+    Rollback();
+    TSharedPtr<FJsonObject> Profile;
+    if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Profile) || !Profile.IsValid())
+    { OutError=TEXT("Profil de sauvegarde invalide.");return false; }
+    TSharedPtr<FJsonObject> Survival=MakeShared<FJsonObject>();
+    const TSharedPtr<FJsonObject>* Existing=nullptr;
+    if(Profile->HasField(TEXT("survival")))
+    {
+        if(!Profile->TryGetObjectField(TEXT("survival"),Existing) || !Existing || !Existing->IsValid())
+        { OutError=TEXT("Données de survie existantes invalides : profil conservé.");return false; }
+        Survival=*Existing;
+    }
+    Survival->SetNumberField(TEXT("hunger"),Food);Survival->SetNumberField(TEXT("thirst"),Water);
+    Survival->SetNumberField(TEXT("health"),HP);Survival->SetNumberField(TEXT("fatigue"),Survivor->Fatigue);
+    if(const auto* Vitals=Survivor->VitalsComponent.Get())
+    {
+        Survival->SetNumberField(TEXT("stamina"),Vitals->Stamina);
+        Survival->SetNumberField(TEXT("bodyTemperatureC"),Vitals->BodyTemperatureC);
+    }
+    Profile->SetObjectField(TEXT("survival"),Survival);
+    Raw.Empty();
+    if(!FJsonSerializer::Serialize(Profile.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw)) ||
+       !UAnomaliaConfigLibrary::SavePlayerProfile(ServerId,PlayerId,Raw,OutError)) return false;
+    // Publish both sides only after their single combined profile write succeeds.
+    Survivor->Hunger=Food;Survivor->Thirst=Water;Survivor->Health=HP;
+    NextStackId=AfterId;UseMessage=TEXT("Utilisé : ")+GetItemDisplayName(ItemId);
+    auto Committed=After;Commit(MoveTemp(Committed));Survivor->OnSurvivalChanged();
+    return true;
+}
+
+bool UAnomaliaInventoryComponent::UseFromOwningPlayer(int32 StackId,int32 ExpectedCount)
+{
+    const auto* Survivor=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(!Survivor || !Survivor->HasAuthority() || !Mode || !Survivor->GetController() ||
+       Survivor->GetController()->GetPawn()!=Survivor) return false;
+    const double Now=GetWorld()->GetRealTimeSeconds();
+    if(Now<NextUseRequestTime) return false;
+    NextUseRequestTime=Now+.2;
+    FString Error;
+    const bool Accepted=TryUseStack(StackId,ExpectedCount,Mode->ServerId,Mode->GetPersistentPlayerId(Survivor->GetController()),Error);
+    if(!Accepted) { UseMessage=Error;OnInventoryUpdated.Broadcast();GetOwner()->ForceNetUpdate(); }
+    return Accepted;
+}
+
+bool UAnomaliaInventoryComponent::RequestUseStack(int32 StackId,int32 ExpectedCount)
+{
+    if(!GetOwner()) return false;
+    if(GetOwner()->HasAuthority()) return UseFromOwningPlayer(StackId,ExpectedCount);
+    ServerRequestUseStack(StackId,ExpectedCount);return true;
+}
+
+void UAnomaliaInventoryComponent::ServerRequestUseStack_Implementation(int32 StackId,int32 ExpectedCount)
+{
+    UseFromOwningPlayer(StackId,ExpectedCount);
+}
+
 void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 
@@ -527,6 +650,7 @@ void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
     DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, NextBankSequence, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, bBankingAvailable, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankMessage, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, UseMessage, COND_OwnerOnly);
 }
 
 void UAnomaliaInventoryComponent::SetProfileRecoveryPending(bool Pending)
