@@ -68,7 +68,7 @@ void UAnomaliaStatusWidget::BuildLayout()
                          FName(TEXT("stamina")),FName(TEXT("fatigue")),FName(TEXT("temperature"))})
     {
         auto* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), FName(*(TEXT("Vital_")+Id.ToString())));
-        Label->SetFont(FSlateFontInfo(FName("Roboto"),16,EFontHinting::Default));
+        auto LabelFont=Label->GetFont(); LabelFont.Size=16; Label->SetFont(LabelFont);
         Rows->AddChildToVerticalBox(Label)->SetPadding(FMargin(0.f,2.f));
         VitalLabels.Add(Id,Label);
     }

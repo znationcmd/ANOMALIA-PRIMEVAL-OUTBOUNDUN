@@ -12,6 +12,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/SizeBox.h"
+#include "Components/ScrollBox.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -49,8 +50,9 @@ void UAnomaliaSessionWidget::BuildLayout()
     auto* Canvas=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass()); Safe->SetContent(Canvas);
     auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass()); Frame->SetBrushColor(FLinearColor(.015,.025,.035,.94)); Frame->SetPadding(FMargin(24));
     auto* FrameSlot=Canvas->AddChildToCanvas(Frame); FrameSlot->SetAnchors(FAnchors(.05,.08,.55,.92)); FrameSlot->SetOffsets(FMargin(0));
-    auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Frame->SetContent(Rows);
-    auto Label=[&](const TCHAR* Text) { auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text)); L->SetAutoWrapText(true); Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,6)); return L; };
+    auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass()); Frame->SetContent(Scroll);
+    auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Scroll->AddChild(Rows);
+    auto Label=[&](const TCHAR* Text) { auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text)); auto Font=L->GetFont(); Font.Size=16; L->SetFont(Font); L->SetAutoWrapText(true); Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,6)); return L; };
     Label(TEXT("ANOMALIA\nPRIMEVAL OUTBOUNDUN"));
     Label(TEXT("VERSION DE TEST WINDOWS · zone initiale\nGraphismes et conduite encore provisoires"));
     auto Button=[&](const TCHAR* Name,const TCHAR* Text) {

@@ -75,7 +75,7 @@ void UAnomaliaInventoryWidget::BuildLayout()
     UTextBlock* Heading = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHeading"));
     Heading->SetText(FText::FromString(TEXT("ANOMALIA  /  INVENTAIRE")));
     Heading->SetColorAndOpacity(FSlateColor(FLinearColor(.32f, .86f, .94f)));
-    Heading->SetFont(FSlateFontInfo(FName("Roboto"), 26, EFontHinting::Default));
+    auto HeadingFont=Heading->GetFont(); HeadingFont.Size=26; Heading->SetFont(HeadingFont);
     Content->AddChildToVerticalBox(Heading)->SetPadding(FMargin(14.f, 10.f));
     UTextBlock* Hint = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("InventoryHint"));
     Hint->SetText(FText::FromString(TEXT("Déplacer un objet vers les mains · séparer une pile · fusionner deux piles")));
