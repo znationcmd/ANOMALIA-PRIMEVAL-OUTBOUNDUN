@@ -78,6 +78,15 @@ public:
     bool ConfigureCompartment(FName Id, int32 Width, int32 Height);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool ConfigureCompartmentFromPreset(FName Id, FName PresetId);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    int32 GetUsedCells(FName ContainerId) const;
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    FIntPoint GetItemSize(FName ItemId, bool bRotated = false) const;
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryAddItem(FName ItemId, int32 Count);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")

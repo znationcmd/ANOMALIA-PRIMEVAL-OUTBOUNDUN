@@ -37,8 +37,8 @@ class UE5InventorySourceTests(unittest.TestCase):
         for item_id in ("water", "food", "bandage", "wood", "stone", "rifle_ammo", "pistol", "rifle", "fishing_rod", "saddle"):
             with self.subTest(item=item_id):
                 self.assertIn(f'TEXT("{item_id}")', SOURCE)
-        self.assertIn("Width > 12", SOURCE)
-        self.assertIn("Height > 20", SOURCE)
+        self.assertIn("UAnomaliaStorageCatalog::IsValidGrid(Width,Height)", SOURCE)
+        self.assertIn("Width*Height>UAnomaliaStorageCatalog::MaxCells", SOURCE)
         self.assertIn("Compartments.Add(Pockets)", SOURCE)
         self.assertIn("ReplicatedUsing=OnRep_Compartments", HEADER)
         self.assertIn("DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments)", SOURCE)

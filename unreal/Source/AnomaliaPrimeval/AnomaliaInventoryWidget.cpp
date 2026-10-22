@@ -151,7 +151,8 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     for (const FAnomaliaInventoryCompartment& Box : Inventory->Compartments)
     {
         UTextBlock* BoxTitle = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        BoxTitle->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %d × %d"), *Box.Id.ToString(), Box.Width, Box.Height)));
+        BoxTitle->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %d × %d · %d / %d cases"), *Box.Id.ToString(), Box.Width, Box.Height,
+            Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height)));
         BoxTitle->SetColorAndOpacity(FSlateColor(FLinearColor(.32f, .86f, .94f)));
         ItemList->AddChildToVerticalBox(BoxTitle)->SetPadding(FMargin(14.f, 14.f, 8.f, 5.f));
         for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)

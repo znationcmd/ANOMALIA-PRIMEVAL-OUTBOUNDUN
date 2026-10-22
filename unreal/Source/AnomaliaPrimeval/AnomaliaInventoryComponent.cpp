@@ -1,4 +1,5 @@
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaStorageCatalog.h"
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaConfigLibrary.h"
 #include "AnomaliaLootSubsystem.h"
@@ -137,7 +138,7 @@ float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
 bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, int32 Height)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Id.IsNone() || Id == TEXT("hands") ||
-        Width < 1 || Width > 12 || Height < 1 || Height > 20) return false;
+        !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
     if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
     if (!Existing) Existing = &Compartments.AddDefaulted_GetRef();
@@ -147,6 +148,26 @@ bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, in
     OnInventoryChanged();
     OnInventoryUpdated.Broadcast();
     return true;
+}
+
+bool UAnomaliaInventoryComponent::ConfigureCompartmentFromPreset(FName Id,FName PresetId)
+{
+    FIntPoint Grid;
+    return UAnomaliaStorageCatalog::GetGrid(PresetId,Grid) && ConfigureCompartment(Id,Grid.X,Grid.Y);
+}
+FIntPoint UAnomaliaInventoryComponent::GetItemSize(FName ItemId,bool bRotated) const
+{
+    float Weight=0;int32 Limit=0;FIntPoint Size=FIntPoint::ZeroValue;
+    if(!GetItemRules(ItemId,Weight,Limit,Size)) return FIntPoint::ZeroValue;
+    if(bRotated) Swap(Size.X,Size.Y);
+    return Size;
+}
+int32 UAnomaliaInventoryComponent::GetUsedCells(FName ContainerId) const
+{
+    int32 Cells=0;
+    for(const auto& Stack:Stacks) if(Stack.ContainerId==ContainerId)
+    { const auto Size=GetItemSize(Stack.ItemId,Stack.bRotated);Cells+=Size.X*Size.Y; }
+    return Cells;
 }
 
 bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate,
@@ -177,14 +198,37 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
 bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const
 {
     for (const FAnomaliaInventoryCompartment& Box : Compartments)
+    {
+        if(!UAnomaliaStorageCatalog::IsValidGrid(Box.Width,Box.Height)) return false;
+        // One compact occupancy map per compartment. Large grids do not scan every
+        // existing stack again for each candidate cell, and contain no UI widgets.
+        TBitArray<> Occupied(false,Box.Width*Box.Height);
+        for(const auto& Other:Candidate)
+        {
+            if(Other.StackId==Stack.StackId || Other.ContainerId!=Box.Id) continue;
+            const auto Size=GetItemSize(Other.ItemId,Other.bRotated);
+            if(Size.X<=0 || Size.Y<=0 || Other.X<0 || Other.Y<0 || Other.X+Size.X>Box.Width || Other.Y+Size.Y>Box.Height) return false;
+            for(int32 Y=Other.Y;Y<Other.Y+Size.Y;++Y)
+                for(int32 X=Other.X;X<Other.X+Size.X;++X) Occupied[Y*Box.Width+X]=true;
+        }
+        const auto OriginalSize=GetItemSize(Stack.ItemId);
+        if(OriginalSize.X<=0 || OriginalSize.Y<=0) return false;
         for (int32 Y = 0; Y < Box.Height; ++Y)
             for (int32 X = 0; X < Box.Width; ++X)
                 for (int32 Rotation = 0; Rotation < 2; ++Rotation)
-                    if (CanPlace(Candidate, Stack, Box.Id, X, Y, Rotation == 1))
                     {
-                        Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
-                        return true;
+                        auto Size=OriginalSize;if(Rotation==1) Swap(Size.X,Size.Y);
+                        if(X+Size.X>Box.Width || Y+Size.Y>Box.Height) continue;
+                        bool Free=true;
+                        for(int32 DY=0;DY<Size.Y && Free;++DY)
+                            for(int32 DX=0;DX<Size.X;++DX) if(Occupied[(Y+DY)*Box.Width+X+DX]) { Free=false;break; }
+                        if(Free)
+                        {
+                            Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
+                            return true;
+                        }
                     }
+    }
     return false;
 }
 
@@ -422,7 +466,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         FString IdText;
         double Width = 0.0, Height = 0.0;
         if (!Row->TryGetStringField(TEXT("id"), IdText) || !Row->TryGetNumberField(TEXT("width"), Width) || !Row->TryGetNumberField(TEXT("height"), Height) ||
-            !FMath::IsFinite(Width) || !FMath::IsFinite(Height) || Width < 1 || Width > 12 || Height < 1 || Height > 20 ||
+            !FMath::IsFinite(Width) || !FMath::IsFinite(Height) || Width < 1 || Width > UAnomaliaStorageCatalog::MaxDimension || Height < 1 || Height > UAnomaliaStorageCatalog::MaxDimension || Width*Height>UAnomaliaStorageCatalog::MaxCells ||
             !FMath::IsNearlyEqual(Width, static_cast<double>(FMath::RoundToInt(Width))) ||
             !FMath::IsNearlyEqual(Height, static_cast<double>(FMath::RoundToInt(Height))))
         { OutError = TEXT("Invalid inventory compartment dimensions"); return false; }
@@ -450,7 +494,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
             !Row->TryGetStringField(TEXT("itemId"), ItemText) || !Row->TryGetStringField(TEXT("containerId"), ContainerText) ||
             !Row->TryGetBoolField(TEXT("rotated"), bRotated) || !FMath::IsFinite(StackId) || !FMath::IsFinite(Count) ||
             !FMath::IsFinite(X) || !FMath::IsFinite(Y) || StackId < 1 || StackId >= MAX_int32 || Count < 1 || Count > 100000 ||
-            X < 0 || X > 12 || Y < 0 || Y > 20 ||
+            X < 0 || X >= UAnomaliaStorageCatalog::MaxDimension || Y < 0 || Y >= UAnomaliaStorageCatalog::MaxDimension ||
             !FMath::IsNearlyEqual(StackId, static_cast<double>(FMath::RoundToInt(StackId))) ||
             !FMath::IsNearlyEqual(Count, static_cast<double>(FMath::RoundToInt(Count))) ||
             !FMath::IsNearlyEqual(X, static_cast<double>(FMath::RoundToInt(X))) ||
