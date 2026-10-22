@@ -6,7 +6,7 @@ bool UAnomaliaCryoSubsystem::CanAccess(const FAnomaliaCryoTerminal& Terminal,con
 }
 bool UAnomaliaCryoSubsystem::RegisterTerminal(const FString& Id,const FString& Owner,FVector Location)
 {
- if(Id.IsEmpty()||Owner.IsEmpty()||!Location.IsFinite()||Terminals.Contains(Id))return false;
+ if(Id.IsEmpty()||Owner.IsEmpty()||Location.ContainsNaN()||Terminals.Contains(Id))return false;
  FAnomaliaCryoTerminal Terminal;Terminal.Id=Id;Terminal.OwnerId=Owner;Terminal.Location=Location;
  Terminals.Add(Id,MoveTemp(Terminal));return true;
 }
