@@ -1,80 +1,132 @@
-name: ANOMALIA - Installateur unique Windows
+name: ANOMALIA - trois applications et mises a jour en un installateur
 on:
   push:
     branches:
-      - feature/anomalia-suite-one-click-install-20261023
+      - feature/anomalia-suite-3-apps-updater-bootstrap-20261023
     paths:
-      - 'installer/windows/**'
-      - '.github/workflows/anomalia-suite-installer.yml'
-  pull_request:
-    paths:
-      - 'installer/windows/**'
-      - '.github/workflows/anomalia-suite-installer.yml'
+      - installer/windows/**
+      - .github/workflows/anomalia-suite-installer.yml
   workflow_dispatch:
 permissions:
   contents: read
   actions: read
 jobs:
   installer:
-    name: Assembler le programme d'installation unique
+    name: Compiler l installateur unique des trois applications
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
+      # CMD Studio is deliberately NOT publicly published in Releases.
+      # This is the latest verified Windows build of the personal Studio.
+      - name: Recuperer le CMD Studio prive depuis GitHub Actions
+        uses: actions/download-artifact@v4
         with:
-          run-id: 39932307272
+          run-id: 39981069253
           name: CMD-Studio-Installateur-Windows
           repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
           github-token: ${{ github.token }}
           path: installers/studio
-      - uses: actions/download-artifact@v4
-        with:
-          run-id: 39934271449
-          name: ANOMALIA-Editor-Installateur-Windows
-          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
-          github-token: ${{ github.token }}
-          path: installers/editor
-      - uses: actions/download-artifact@v4
-        with:
-          run-id: 39938400505
-          name: ANOMALIA-Tools-Installateur-Windows
-          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
-          github-token: ${{ github.token }}
-          path: installers/tools
-      - name: Verifier les trois installateurs telecharges
+      - name: Verifier la version de CMD Studio
         shell: pwsh
         run: |
-          $expected = @(
-            "installers/studio/CMD Studio Setup 0.1.1.exe",
-            "installers/editor/ANOMALIA Editor Setup 0.1.1.exe",
-            "installers/tools/ANOMALIA Tools Setup 0.1.1.exe"
+          $ErrorActionPreference="Stop"
+          $studio=@(Get-ChildItem "installers/studio" -File -Filter "*.exe")
+          if($studio.Count -ne 1){throw "Un seul installateur CMD Studio attendu"}
+          if($studio[0].Name -ne "CMD Studio Setup 0.2.1.exe"){throw "Version CMD Studio incorrecte : $($studio[0].Name)"}
+          if($studio[0].Length -lt 20000000){throw "CMD Studio incomplet"}
+          New-Item -ItemType Directory -Force "installers/studio" | Out-Null
+          Copy-Item -LiteralPath $studio[0].FullName -Destination "installers/studio/CMD-Studio-Setup.exe"
+      - name: Recuperer les deux vraies mises a jour publiées et verifier SHA512
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          $ErrorActionPreference="Stop"
+          $apps=@(
+            @{name="editor";tag="anomalia-editor-latest";version="0.5.1";expected="ANOMALIA-Editor-Setup-0.5.1.exe"},
+            @{name="tools";tag="anomalia-tools-latest";version="0.2.2";expected="ANOMALIA-Tools-Setup-0.2.2.exe"}
           )
-          foreach ($file in $expected) {
-            if (!(Test-Path -LiteralPath $file)) { throw "Installateur manquant : $file" }
-            $size = (Get-Item -LiteralPath $file).Length
-            if ($size -lt 20000000) { throw "Installateur suspect ou incomplet : $file ($size octets)" }
-            Write-Host "$file : $size octets"
+          foreach($app in $apps){
+            $dest="installers/"+$app.name
+            New-Item -ItemType Directory -Force $dest | Out-Null
+            gh release download $app.tag --repo $env:REPOSITORY --pattern "latest.yml" --dir $dest
+            if($LASTEXITCODE -ne 0){throw "Manifest officiel absent pour "+$app.name}
+            $manifest=Get-Content (Join-Path $dest "latest.yml") -Raw
+            $ver=[regex]::Match($manifest,'(?m)^version:\s*[''"]?(\d+\.\d+\.\d+)').Groups[1].Value
+            if($ver -ne $app.version){throw "Version inattendue : "+$app.name+" "+$ver}
+            $filename=[regex]::Match($manifest,'(?m)^path:\s*(.+\.exe)\s*$').Groups[1].Value.Trim()
+            if($filename -ne $app.expected){throw "Nom du setup incorrect dans latest.yml : "+$filename}
+            $digest=[regex]::Match($manifest,'(?m)^\s*sha512:\s*([A-Za-z0-9+/=]{80,})\s*$').Groups[1].Value
+            if(!$digest){throw "SHA512 non declare pour "+$app.name}
+            gh release download $app.tag --repo $env:REPOSITORY --pattern $filename --dir $dest
+            if($LASTEXITCODE -ne 0){throw "Setup introuvable sur la Release : "+$filename}
+            $file=Join-Path $dest $filename
+            if(!(Test-Path -LiteralPath $file)){throw "Fichier setup absent"}
+            if((Get-Item -LiteralPath $file).Length -lt 20000000){throw "Fichier setup incomplet"}
+            $actual=[Convert]::ToBase64String([System.Security.Cryptography.SHA512]::HashData([System.IO.File]::ReadAllBytes((Resolve-Path $file).Path)))
+            if($actual -cne $digest){throw "Erreur de securite : SHA512 different pour "+$filename}
+            Copy-Item -LiteralPath $file -Destination (Join-Path $dest ("ANOMALIA-"+(Get-Culture).TextInfo.ToTitleCase($app.name)+"-Setup.exe"))
+            Write-Host ("VERIFIE "+$app.name+" "+$ver+" SHA512 "+$filename)
           }
-      - name: Preparer le compilateur NSIS
+      - name: Normaliser les trois installateurs
         shell: pwsh
         run: |
-          $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
-          if (!(Test-Path -LiteralPath $nsis)) {
-            choco install nsis -y --no-progress
+          $ErrorActionPreference="Stop"
+          $renames=@(
+            @{source="installers/editor/ANOMALIA-Editor-Setup-0.5.1.exe";destination="installers/editor/ANOMALIA-Editor-Setup.exe"},
+            @{source="installers/tools/ANOMALIA-Tools-Setup-0.2.2.exe";destination="installers/tools/ANOMALIA-Tools-Setup.exe"}
+          )
+          foreach($item in $renames){
+            if(!(Test-Path $item.destination)){Copy-Item $item.source $item.destination}
           }
-          if (!(Test-Path -LiteralPath $nsis)) { throw "NSIS non disponible" }
+          foreach($p in @("installers/studio/CMD-Studio-Setup.exe","installers/editor/ANOMALIA-Editor-Setup.exe","installers/tools/ANOMALIA-Tools-Setup.exe")){
+            if(!(Test-Path $p)){throw "Missing "+$p}
+            if((Get-Item $p).Length -lt 20000000){throw "Setup incomplete "+$p}
+          }
+      - name: Compiler un seul programme Windows avec NSIS
+        shell: pwsh
+        run: |
+          $ErrorActionPreference="Stop"
+          $nsis="${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          if(!(Test-Path $nsis)){choco install nsis -y --no-progress}
+          if(!(Test-Path $nsis)){throw "NSIS absent"}
           New-Item -ItemType Directory -Force -Path release | Out-Null
-      - name: Fabriquer un seul EXE
+          $root=(Get-Location).Path
+          & $nsis /V3 "/DREPO_ROOT=$root" "installer\windows\suite.nsi"
+          if($LASTEXITCODE -ne 0){throw "Echec de compilation NSIS"}
+          $bundle="release/Installer-ANOMALIA-Trois-Applications-AutoMAJ.exe"
+          if(!(Test-Path $bundle)){throw "Installateur unique non genere"}
+          $size=(Get-Item $bundle).Length
+          if($size -lt 220000000){throw "Installateur suspect : taille insuffisante "+$size}
+          Write-Host ("Installateur 3-en-1 termine : "+$size+" octets")
+      - name: Test reel du programme 3-en-1 sur ce Windows temporaire
         shell: pwsh
         run: |
-          $root = (Get-Location).Path
-          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" "/V3" "/DREPO_ROOT=$root" "installer\windows\suite.nsi"
-          if ($LASTEXITCODE -ne 0) { throw "Compilation NSIS echouee" }
-          if (!(Test-Path -LiteralPath "release/Installer-ANOMALIA-3-applications.exe")) {
-            throw "Installateur final non trouve"
+          $ErrorActionPreference="Stop"
+          $bundle=(Resolve-Path "release/Installer-ANOMALIA-Trois-Applications-AutoMAJ.exe").Path
+          Write-Host "Testing silent installation of the entire three-app suite..."
+          $job=Start-Process -FilePath $bundle -ArgumentList "/S" -PassThru -Wait
+          if($job.ExitCode -ne 0){throw "L'installation 3-en-1 a echoue (code "+$job.ExitCode+")"}
+          $entries=@(Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue)
+          $names=@($entries | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName)
+          Write-Host ("Windows registered apps: "+($names -join ", "))
+          foreach($name in @("CMD Studio","ANOMALIA Editor","ANOMALIA Tools")){
+            if(-not @($names | Where-Object { $_ -like "*$name*" }).Count){
+              throw "L'application n'est pas enregistree apres l'installateur : "+$name
+            }
+            Write-Host ("INSTALLED "+$name)
           }
+          $folder=Join-Path $env:LOCALAPPDATA "Programs"
+          if(-not(Test-Path $folder)){throw "Dossier Windows Programs absent"}
+          $updaterFiles=@(Get-ChildItem $folder -Filter "app-update.yml" -File -Recurse -ErrorAction SilentlyContinue)
+          if($updaterFiles.Count -lt 2){
+            throw "Les deux applications publiques ne contiennent pas leurs manifestes electron-updater"
+          }
+          Write-Host ("Auto-update manifests installed: "+$updaterFiles.Count)
       - uses: actions/upload-artifact@v4
         with:
-          name: Installateur-ANOMALIA-3-Applications
-          path: release/Installer-ANOMALIA-3-applications.exe
+          name: ANOMALIA-Installeur-Unique-3-Logiciels-AutoMAJ
+          path: release/Installer-ANOMALIA-Trois-Applications-AutoMAJ.exe
           if-no-files-found: error
+          compression-level: 0
