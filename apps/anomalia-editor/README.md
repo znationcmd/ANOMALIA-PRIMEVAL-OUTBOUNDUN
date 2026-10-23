@@ -56,3 +56,7 @@ Clic droit + souris = orbite ; molette = zoom ; clic milieu = déplacer la camé
 Le système de sélection et le pinceau placent des objets 3D, mais il n'y a **pas encore** de terrain modifiable, brush de végétation 100k objets, navigation libre FPS, catalogue Workshop ou Fab, streaming World Partition, export natif .umap/.uasset, synchronisation cloud privée, ni format .dze DayZ Editor Loader garanti. Le CSV permet uniquement de préparer l'importation dans Unreal après association des vraies ressources 3D.
 
 Les objets inclus sont des références visuelles. La physique, les comportements de zombies, les constructions persistantes en multijoueur et la compatibilité réelle ANOMALIA/UE5 nécessitent d'autres modules.
+
+## Icône officielle Windows (0.1.1)
+
+Le logo ANOMALIA Editor validé est intégré à l'application sous forme d'une icône Windows multi-résolutions. L'installateur, les raccourcis Bureau/menu Démarrer, la fenêtre et la barre des tâches utilisent cette identité. La source est un recadrage du véritable logo montrant le « A » futuriste et le cube au centre, pour rester lisible à petite taille. La commande `npm run desktop:package` génère automatiquement le fichier ICO 256 px avant la création de l'installateur. Les utilisateurs de la version précédente doivent installer 0.1.1 pour actualiser les raccourcis.
