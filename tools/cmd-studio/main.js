@@ -2,9 +2,11 @@
 const { app, BrowserWindow, ipcMain, dialog, shell } = require('electron');
 const path = require('node:path');
 const { Studio } = require('./core');
+const { PrivateAutoUpdates } = require('./updates.cjs');
 
 let studio;
 let window;
+let privateUpdates;
 if (process.platform === 'win32') app.setAppUserModelId('fr.cmd.studio');
 const ACTIONS = new Set([
   'status', 'settings', 'configure', 'assets', 'import', 'search',
@@ -34,6 +36,11 @@ function createWindow() {
 
 app.whenReady().then(() => {
   studio = new Studio(app.getPath('userData'), path.join(__dirname, 'scripts'));
+  privateUpdates = new PrivateAutoUpdates();
+  ipcMain.handle('studio:updates:status',()=>privateUpdates.status());
+  ipcMain.handle('studio:updates:configure',(_event,options)=>privateUpdates.configure(options));
+  ipcMain.handle('studio:updates:check',()=>privateUpdates.check());
+  ipcMain.handle('studio:updates:install',()=>privateUpdates.installNow());
   ipcMain.handle('studio:call', async (_event, action, payload = {}) => {
     if (!ACTIONS.has(action)) throw new Error('Action non autorisée.');
     return await studio[action](payload);
@@ -55,6 +62,9 @@ app.whenReady().then(() => {
     await shell.openExternal(url);
   });
   createWindow();
+  privateUpdates.activate();
   app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0) createWindow(); });
 });
 app.on('window-all-closed', () => { if (process.platform !== 'darwin') app.quit(); });
+
+app.on('before-quit',()=>privateUpdates?.shutdown());
