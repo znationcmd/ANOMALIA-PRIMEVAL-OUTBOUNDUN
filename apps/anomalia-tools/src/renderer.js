@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
+import './updates-ui.js';
 
 const api=window.anomaliaTools;
 const $=s=>document.querySelector(s);
@@ -15,7 +16,7 @@ const MODS=[
   ['addon','◈','Addon Builder','Archives de mods et manifestes'],
   ['publisher','⬆','Publisher','Exporter tes packages en ZIP']
 ];
-const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title]))};
+const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),updates:'Mises à jour'};
 const SOURCE=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const TEXTURES=['.png','.jpg','.jpeg','.webp','.tga'];
 let projects=[],currentId='',files=[],fileOpen='',economy={items:[]},activeTab='home';
@@ -61,11 +62,15 @@ async function refreshProjects(select=null){
   else if(!projects.some(p=>p.id===currentId))currentId=projects[0]?.id||'';
   picker.value=currentId;
   $('#projectCount').textContent=projects.length+' projet'+(projects.length>1?'s':'');
+  $('#overviewProjectTotal').textContent=projects.length;
+  $('#sidebarWorkspaceName').textContent=projects.find(p=>p.id===currentId)?.name||'Aucun projet actif';
   renderProjects();
   await refreshFiles();
 }
 async function refreshFiles(){
   files=currentId?await api.call('listFiles',{projectId:currentId}):[];
+  $('#overviewFileTotal').textContent=files.filter(f=>f.type==='file').length;
+  $('#sidebarWorkspaceName').textContent=projects.find(p=>p.id===currentId)?.name||'Aucun projet actif';
   renderFiles();renderAssets();renderTextures();renderTerrainFiles();
 }
 function renderProjects(){
@@ -276,6 +281,7 @@ async function publish(){
 }
 $$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 $('#newProject').onclick=$('#heroCreate').onclick=showModal;
+$('#heroExplore').onclick=()=>setTab('workbench');
 $('#cancelModal').onclick=hideModal;
 $('#createForm').onsubmit=async e=>{
   e.preventDefault();
