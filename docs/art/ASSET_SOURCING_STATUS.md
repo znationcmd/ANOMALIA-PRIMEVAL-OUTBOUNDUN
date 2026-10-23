@@ -8,65 +8,65 @@ Ce registre complète le [suivi des véhicules](../vehicles/FULL_VEHICLE_WORKLIS
 - 314 identifiants uniques des deux catalogues d'objets conservés : 35 avec au moins une source candidate, 279 encore sans source dans ce registre. La double référence car_battery est fusionnée dans le suivi seulement; les fichiers de gameplay sont inchangés.
 - Les 210 demandes groupées de véhicules sont conservées. 15 groupes ont des candidats de recherche, 32 des variantes déjà référencées, 11 uniquement une référence historique, 152 aucun candidat enregistré.
 - 12 pièces de construction et 14 types d'objets homestead sont également recensés séparément; ils ne sont pas additionnés aux 314 IDs.
-- Aucun nouveau fichier 3D téléchargé, aucun import Unreal, aucune compilation ou validation de rendu effectués pendant cette recherche.
+- 49 sources Poly Haven téléchargées avec leurs buffers et textures, vérification de dépendances et SHA-256. 32 IDs ont au moins un candidat téléchargé. Aucun import Unreal, compilation ou validation de rendu exécuté ici. Voir [le reçu](item-source-download-receipt-20261023.json) et [les instructions Work](ITEMS_WORK_HANDOFF_20261023.md).
 
 ## Lire les états correctement
-PAGE_LUE signifie fiche individuelle consultée; les fichiers 3D restent à inspecter. INDEX_SEUL signifie candidat trouvé dans l'index de recherche; de nombreuses pages Sketchfab ont répondu HTTP 403. La licence annoncée ne prouve pas les droits de l'uploader. Aucune source n'est marquée comme intégrée.
+PAGE_LUE décrit la consultation initiale de la fiche. Les 49 sources Poly Haven ont depuis été récupérées; collisions, échelle, rig, gameplay et rendu UE restent à vérifier. INDEX_SEUL signifie candidat trouvé dans l'index de recherche; de nombreuses pages Sketchfab ont répondu HTTP 403. La licence annoncée ne prouve pas les droits de l'uploader. Aucune source n'est marquée comme intégrée.
 
 Les 49 ressources Poly Haven suivent la [licence CC0 publiée par le fournisseur](https://polyhaven.com/license). Les sources Sketchfab restent soumises à vérification de provenance et à attribution. Une base civile ou générique ne valide pas une version militaire, une carrosserie ou un modèle précis.
 
 ## Véhicules, bâtiments et objets trouvés
 | ID source | Ressource | Correspondances | Vérification restante |
 | --- | --- | --- | --- |
-| ph_hatchet | [Hachette](https://polyhaven.com/a/hatchet) | item:hatchet | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_wooden_axe | [Hache en bois](https://polyhaven.com/a/wooden_axe) | family:axes | Hache générique; ne valide pas une hache de pompier exacte. |
-| ph_screwdriver | [Tournevis](https://polyhaven.com/a/screwdriver) | item:screwdriver | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_flathead_screwdriver | [Tournevis plat](https://polyhaven.com/a/flathead_screwdriver) | item:screwdriver | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_pliers | [Pince](https://polyhaven.com/a/pliers) | item:pliers | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_crowbar_01 | [Pied-de-biche](https://polyhaven.com/a/crowbar_01) | item:crowbar | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_sledgehammer_01 | [Masse](https://polyhaven.com/a/sledgehammer_01) | item:sledgehammer | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_handsaw_wood | [Scie à bois](https://polyhaven.com/a/handsaw_wood) | item:handsaw | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_rusted_hacksaw | [Scie à métaux](https://polyhaven.com/a/rusted_hacksaw) | item:hacksaw | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_rusted_spade_01 | [Bêche](https://polyhaven.com/a/rusted_spade_01) | item:shovel | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_pipe_wrench | [Clé à griffe](https://polyhaven.com/a/pipe_wrench) | item:wrench | Variante de clé; vérifier si elle convient à l'objet wrench demandé. |
-| ph_wooden_hammer_01 | [Marteau](https://polyhaven.com/a/wooden_hammer_01) | item:hammer | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_picke_dirty_01 | [Pioche](https://polyhaven.com/a/picke_dirty_01) | item:pickaxe | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_binoculars | [Jumelles](https://polyhaven.com/a/binoculars) | item:binoculars | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_portable_generator | [Générateur portable](https://polyhaven.com/a/portable_generator) | item:generator | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_small_plastic_torch | [Lampe torche](https://polyhaven.com/a/small_plastic_torch) | item:flashlight | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_portable_searchlight | [Projecteur portable](https://polyhaven.com/a/portable_searchlight) | family:floodlights | Projecteur portable; ne valide pas un projecteur de chantier sur pied. |
-| ph_plastic_jerrycan | [Bidon plastique](https://polyhaven.com/a/plastic_jerrycan) | item:water_in_fuel_can | Contenant candidat; n'ajoute aucune simulation de liquide ni contrôle de contamination. |
-| ph_metal_jerrycan_green | [Jerrican métallique](https://polyhaven.com/a/metal_jerrycan_green) | item:water_in_fuel_can | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_Barrel_01 | [Fût métallique](https://polyhaven.com/a/Barrel_01) | item:metal_barrel | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_Barrel_02 | [Fût plastique](https://polyhaven.com/a/Barrel_02) | item:plastic_barrel | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_vintage_lighter | [Briquet](https://polyhaven.com/a/vintage_lighter) | item:lighter | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_brass_pan_01 | [Poêle](https://polyhaven.com/a/brass_pan_01) | item:frying_pan | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_brass_pot_02 | [Marmite](https://polyhaven.com/a/brass_pot_02) | item:cooking_pot | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_food_apple_01 | [Pomme](https://polyhaven.com/a/food_apple_01) | item:apple | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_food_pears_asian_01 | [Poires asiatiques](https://polyhaven.com/a/food_pears_asian_01) | item:pear | Variété asiatique; correspondance à confirmer pour la poire générique. |
-| ph_long_life_food | [Conserves et carton alimentaire](https://polyhaven.com/a/long_life_food) | item:canned_beans, item:sardines | Pack comprenant notamment conserves de haricots et sardines; vérifier fichiers séparés et étiquettes. Ne couvre pas toutes les conserves. |
-| ph_wine_bottles_01 | [Bouteilles de vin et vin pétillant](https://polyhaven.com/a/wine_bottles_01) | item:red_wine, item:white_wine, item:rose_wine, item:champagne | Plusieurs bouteilles; vérifier chaque variante et adapter les étiquettes fictives. Une seule ressource commune. |
-| ph_medical_box | [Boîte de soins](https://polyhaven.com/a/medical_box) | item:rp_recovery_kit | Contenant de trousse uniquement; ne valide pas chaque instrument ou médicament. |
-| ph_medical_tape | [Ruban médical](https://polyhaven.com/a/medical_tape) | family:medical | Ruban adhésif médical, distinct du bandage stérile; ne pas remplacer silencieusement sterile_bandage. |
-| ph_old_gas_mask | [Masque à gaz ancien](https://polyhaven.com/a/old_gas_mask) | item:gas_mask | Masque ancien, tube et filtre; adaptation au squelette et visibilité première personne requises. |
-| ph_digital_wrist_watch | [Montre numérique](https://polyhaven.com/a/digital_wrist_watch) | item:rp_watch | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_rubber_boots | [Bottes en caoutchouc](https://polyhaven.com/a/rubber_boots) | family:boots | Bottes en caoutchouc; ne remplace pas les rangers ou bottes militaires demandées. |
-| ph_cigarette_pack | [Paquet de cigarettes](https://polyhaven.com/a/cigarette_pack) | item:cigarette | Cigarettes visibles dans un paquet; vérifier séparation des meshes; mégot et cigare restent distincts. |
-| ph_propane_tank | [Bouteille de propane](https://polyhaven.com/a/propane_tank) | family:gas_containers | Grand réservoir; pas une cartouche de réchaud validée. |
-| ph_old_tyre | [Pneu usagé](https://polyhaven.com/a/old_tyre) | family:vehicle_tyres | Pneu générique, sans jante; ne couvre pas les roues exactes Ada/Gunter/Olga/Humvee. |
-| ph_service_pistol | [Pistolet de service](https://polyhaven.com/a/service_pistol) | family:handguns | Désignation générique; ne pas l'assimiler à un identifiant d'arme précis sans vérification. |
-| ph_bolt_action_rifle_7_62 | [Fusil à verrou 7,62](https://polyhaven.com/a/bolt_action_rifle_7_62) | family:rifles | Modèle précis non identifié; ne pas l'assimiler à Mosin, M24 ou autre arme nommée. |
-| ph_Sofa_01 | [Canapé](https://polyhaven.com/a/Sofa_01) | env:decor_rooms, homestead:Sofa | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_Shelf_01 | [Étagère](https://polyhaven.com/a/Shelf_01) | env:decor_storage | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_painted_wooden_cabinet | [Meuble de rangement](https://polyhaven.com/a/painted_wooden_cabinet) | env:decor_storage | Meuble de rangement, pas une armoire haute validée. |
-| ph_wooden_table_02 | [Table](https://polyhaven.com/a/wooden_table_02) | env:decor_rooms, homestead:Table | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_street_lamp_01 | [Lampadaire](https://polyhaven.com/a/street_lamp_01) | env:decor_lights, env:decor_street | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_modular_chainlink_fence | [Clôture grillagée modulaire](https://polyhaven.com/a/modular_chainlink_fence) | env:decor_gardens, homestead:Fence | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_pine_tree_01 | [Pin](https://polyhaven.com/a/pine_tree_01) | env:nature_forest | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_fir_tree_01 | [Sapins](https://polyhaven.com/a/fir_tree_01) | env:nature_forest | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_fern_02 | [Fougères](https://polyhaven.com/a/fern_02) | env:nature_ground | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_shrub_01 | [Buisson](https://polyhaven.com/a/shrub_01) | env:nature_ground | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
-| ph_watering_can_metal_01 | [Arrosoir](https://polyhaven.com/a/watering_can_metal_01) | family:farming_tools | Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés. |
+| ph_hatchet | [Hachette](https://polyhaven.com/a/hatchet) | item:hatchet | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_wooden_axe | [Hache en bois](https://polyhaven.com/a/wooden_axe) | family:axes | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_screwdriver | [Tournevis](https://polyhaven.com/a/screwdriver) | item:screwdriver | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_flathead_screwdriver | [Tournevis plat](https://polyhaven.com/a/flathead_screwdriver) | item:screwdriver | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_pliers | [Pince](https://polyhaven.com/a/pliers) | item:pliers | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_crowbar_01 | [Pied-de-biche](https://polyhaven.com/a/crowbar_01) | item:crowbar | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_sledgehammer_01 | [Masse](https://polyhaven.com/a/sledgehammer_01) | item:sledgehammer | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_handsaw_wood | [Scie à bois](https://polyhaven.com/a/handsaw_wood) | item:handsaw | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_rusted_hacksaw | [Scie à métaux](https://polyhaven.com/a/rusted_hacksaw) | item:hacksaw | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_rusted_spade_01 | [Bêche](https://polyhaven.com/a/rusted_spade_01) | item:shovel | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_pipe_wrench | [Clé à griffe](https://polyhaven.com/a/pipe_wrench) | item:wrench | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_wooden_hammer_01 | [Marteau](https://polyhaven.com/a/wooden_hammer_01) | item:hammer | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_picke_dirty_01 | [Pioche](https://polyhaven.com/a/picke_dirty_01) | item:pickaxe | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_binoculars | [Jumelles](https://polyhaven.com/a/binoculars) | item:binoculars | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_portable_generator | [Générateur portable](https://polyhaven.com/a/portable_generator) | item:generator | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_small_plastic_torch | [Lampe torche](https://polyhaven.com/a/small_plastic_torch) | item:flashlight | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_portable_searchlight | [Projecteur portable](https://polyhaven.com/a/portable_searchlight) | family:floodlights | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_plastic_jerrycan | [Bidon plastique](https://polyhaven.com/a/plastic_jerrycan) | item:water_in_fuel_can | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_metal_jerrycan_green | [Jerrican métallique](https://polyhaven.com/a/metal_jerrycan_green) | item:water_in_fuel_can | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_Barrel_01 | [Fût métallique](https://polyhaven.com/a/Barrel_01) | item:metal_barrel | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_Barrel_02 | [Fût plastique](https://polyhaven.com/a/Barrel_02) | item:plastic_barrel | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_vintage_lighter | [Briquet](https://polyhaven.com/a/vintage_lighter) | item:lighter | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_brass_pan_01 | [Poêle](https://polyhaven.com/a/brass_pan_01) | item:frying_pan | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_brass_pot_02 | [Marmite](https://polyhaven.com/a/brass_pot_02) | item:cooking_pot | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_food_apple_01 | [Pomme](https://polyhaven.com/a/food_apple_01) | item:apple | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_food_pears_asian_01 | [Poires asiatiques](https://polyhaven.com/a/food_pears_asian_01) | item:pear | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_long_life_food | [Conserves et carton alimentaire](https://polyhaven.com/a/long_life_food) | item:canned_beans, item:sardines | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_wine_bottles_01 | [Bouteilles de vin et vin pétillant](https://polyhaven.com/a/wine_bottles_01) | item:red_wine, item:white_wine, item:rose_wine, item:champagne | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_medical_box | [Boîte de soins](https://polyhaven.com/a/medical_box) | item:rp_recovery_kit | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_medical_tape | [Ruban médical](https://polyhaven.com/a/medical_tape) | family:medical | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_old_gas_mask | [Masque à gaz ancien](https://polyhaven.com/a/old_gas_mask) | item:gas_mask | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_digital_wrist_watch | [Montre numérique](https://polyhaven.com/a/digital_wrist_watch) | item:rp_watch | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_rubber_boots | [Bottes en caoutchouc](https://polyhaven.com/a/rubber_boots) | family:boots | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_cigarette_pack | [Paquet de cigarettes](https://polyhaven.com/a/cigarette_pack) | item:cigarette | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_propane_tank | [Bouteille de propane](https://polyhaven.com/a/propane_tank) | family:gas_containers | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_old_tyre | [Pneu usagé](https://polyhaven.com/a/old_tyre) | family:vehicle_tyres | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_service_pistol | [Pistolet de service](https://polyhaven.com/a/service_pistol) | family:handguns | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_bolt_action_rifle_7_62 | [Fusil à verrou 7,62](https://polyhaven.com/a/bolt_action_rifle_7_62) | family:rifles | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_Sofa_01 | [Canapé](https://polyhaven.com/a/Sofa_01) | env:decor_rooms, homestead:Sofa | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_Shelf_01 | [Étagère](https://polyhaven.com/a/Shelf_01) | env:decor_storage | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_painted_wooden_cabinet | [Meuble de rangement](https://polyhaven.com/a/painted_wooden_cabinet) | env:decor_storage | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_wooden_table_02 | [Table](https://polyhaven.com/a/wooden_table_02) | env:decor_rooms, homestead:Table | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_street_lamp_01 | [Lampadaire](https://polyhaven.com/a/street_lamp_01) | env:decor_lights, env:decor_street | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_modular_chainlink_fence | [Clôture grillagée modulaire](https://polyhaven.com/a/modular_chainlink_fence) | env:decor_gardens, homestead:Fence | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_pine_tree_01 | [Pin](https://polyhaven.com/a/pine_tree_01) | env:nature_forest | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_fir_tree_01 | [Sapins](https://polyhaven.com/a/fir_tree_01) | env:nature_forest | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_fern_02 | [Fougères](https://polyhaven.com/a/fern_02) | env:nature_ground | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_shrub_01 | [Buisson](https://polyhaven.com/a/shrub_01) | env:nature_ground | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
+| ph_watering_can_metal_01 | [Arrosoir](https://polyhaven.com/a/watering_can_metal_01) | family:farming_tools | Sources téléchargées, dépendances vérifiées ; import et validation UE à faire. |
 | v_f35 | [F-35A](https://sketchfab.com/3d-models/f-35-a-lightning-ii-war-mode-full-pack-c2fd326b8a714c0d91d7d1b41e0a86e2) | vehicle:military_aircraft_f_35_lightning_ii | 1,2M triangles annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier. |
 | v_f22 | [F-22 Raptor](https://sketchfab.com/3d-models/f22-raptor-free-2a64abf0866a405c865466c7642ca689) | vehicle:military_aircraft_f_22_raptor | Animation et textures Substance annoncées; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier. |
 | v_mirage2000 | [Mirage 2000](https://sketchfab.com/3d-models/mirage-2000-b1a103c2c1fb463ebcf5a54004368221) | vehicle:military_aircraft_mirage_2000 | 32,7k triangles annoncés; fiche indexée complète. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier. |
