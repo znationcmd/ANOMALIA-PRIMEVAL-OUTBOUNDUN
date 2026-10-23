@@ -6,6 +6,7 @@ import { createEditorMesh } from './meshes.js';
 import './style.css';
 import './updates-ui.js';
 import './workspace-layout.js';
+import { bindGameLibrary } from './game-library-ui.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -408,3 +409,19 @@ async function start(){
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
 start();
+bindGameLibrary({
+  notify:toast,
+  placeGLB:async file=>{
+    if(history.project.objects.length>=4000)throw Error('Limite de 4 000 objets dans ce secteur. Crée un autre secteur pour la suite de la carte.');
+    await addModel(file,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
+    toast('Ressource réelle ajoutée : '+file.name);
+  },
+  openMap:async text=>{
+    const map=validateProject(JSON.parse(text));
+    history.reset(map);
+    selectedId=null;
+    await rebuild(map);
+    afterCommit();
+    toast('Secteur ANOMALIA ouvert : '+map.name);
+  }
+});
