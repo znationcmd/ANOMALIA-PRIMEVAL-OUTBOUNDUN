@@ -32,8 +32,13 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Tests unitaires
         run: npm test
-      - name: Compiler interface
+      - name: Compiler interface Web + applications mobiles PWA
         run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Tools-Mobile-PWA
+          path: apps/anomalia-tools/dist
+          if-no-files-found: error
 
   windows:
     name: Installer Windows ANOMALIA Tools
