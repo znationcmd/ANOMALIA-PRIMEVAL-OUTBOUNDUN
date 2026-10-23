@@ -147,6 +147,8 @@ function countTriangles(root){
 async function show(resource){
   const token=++currentRequest;
   bootstrap();
+  freeOld();
+  fallback.style.display='flex';
   if(!resource||!resource.data||!resource.format)throw Error('Ressource locale invalide.');
   const ext=resource.format.toLowerCase();
   if(!['glb','png','jpg','jpeg'].includes(ext))throw Error('Prévisualisation disponible pour GLB et images PNG/JPEG.');
@@ -176,7 +178,6 @@ async function show(resource){
   }
   if(token!==currentRequest){incoming?.traverse(o=>o.geometry?.dispose());return {triangles:null};}
   const count=ext==='glb'?countTriangles(incoming):null;
-  freeOld();
   display=incoming;scene.add(display);
   frame(display);
   if(animations.length){
