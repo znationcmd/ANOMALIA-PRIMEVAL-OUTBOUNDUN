@@ -1,5 +1,5 @@
 """Cook a real Windows test build, then launch its executable with an isolated GPU smoke test."""
-import argparse,json,os,subprocess,uuid
+import argparse,json,os,subprocess,uuid,shutil
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -7,6 +7,7 @@ MAP='/Game/Maps/ANOMALIA_Playable_v1'
 p=argparse.ArgumentParser(description=__doc__)
 p.add_argument('--engine-root',type=Path,required=True)
 p.add_argument('--output',type=Path,required=True)
+p.add_argument('--progress-art',action='store_true')
 a=p.parse_args();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),packagedGame=True,consoleMobileTested=False)
 project=ROOT/'unreal/AnomaliaPrimeval.uproject'
@@ -26,6 +27,17 @@ try:
     if scene.get('state')!='PLAYABLE_LOOK_V2_SAVED' or scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or not scene.get('dynamicLights'):
         raise RuntimeError('Fresh playable scene update receipt missing or invalid')
     report['scene']=scene
+    progress_flags=['-AnomaliaProgressArt'] if a.progress_art else []
+    if a.progress_art:
+        os.environ['ANOMALIA_PROGRESS_ART_REPORT']=str(out/'progress-art.json')
+        os.environ['ANOMALIA_EDITOR_TASK']=str(ROOT/'scripts/world-features/apply-playable-progress-art.py')
+        run([editor,project,'-unattended','-nopause','-nosound','-NullRHI',
+             '-ExecutePythonScript='+str(ROOT/'scripts/world-features/run-editor-task.py'),
+             '-abslog='+str(out/'progress-art.log')],'progress-art',900)
+        progress=json.loads((out/'progress-art.json').read_text())
+        if progress.get('state')!='PROGRESS_ART_SAVED_REQUIRES_PACKAGED_GAME_TEST' or progress.get('trees')!=20 or len(progress.get('houses',[]))!=2:
+            raise RuntimeError('Fresh complete playable art report required')
+        report['progressArt']=progress
     visual_receipt=out/('realism-scene-'+uuid.uuid4().hex+'.json')
     os.environ['ANOMALIA_REALISM_SCENE_REPORT']=str(visual_receipt)
     run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
@@ -48,11 +60,13 @@ try:
     if len(executables)!=1:raise RuntimeError('Unique actual packaged executable not found')
     exe=executables[0];probe=out/'packaged-smoke.json'
     scope='playable-smoke-'+uuid.uuid4().hex
-    run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log')],'packaged-run',180)
+    run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log'),*progress_flags],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
     required={'native_inventory_tobacco_use_has_risk_and_returns_waste','native_inventory_food_use_consumes_one_and_restores_hunger','native_playable_look_v2_cooked_materials_and_lights','main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
     if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])):
         raise RuntimeError('Actual packaged gameplay smoke failed: '+native.get('error','missing checks'))
+    if a.progress_art and 'validated_progress_houses_and_twenty_real_trees' not in native.get('checks',[]):
+        raise RuntimeError('Cooked progress art was not verified by the executable')
     image=probe.with_suffix('.png')
     if not image.is_file() or image.stat().st_size<10000:raise RuntimeError('Fresh packaged GPU screenshot missing')
     resume=out/'packaged-resume.json'
@@ -69,6 +83,10 @@ try:
         raise RuntimeError('Real Windows visual review failed: '+visual.get('error','missing screenshots'))
     if any(not Path(p).is_file() or Path(p).stat().st_size<10000 for p in visual['screenshots']):raise RuntimeError('Missing actual Windows visual capture')
     report['visualReview']=visual
+    if a.progress_art:
+        notices=archive/'Windows/ThirdPartyNotices';notices.mkdir(parents=True,exist_ok=True)
+        for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1'):
+            shutil.copyfile(ROOT/'unreal/SourceAssets'/group/'CREDITS.md',notices/(group+'-CREDITS.md'))
     report.update(state='PACKAGED_WINDOWS_SMOKE_PASSED',executable=str(exe),native=native,screenshot=str(image),archive=str(archive/'Windows'),limitations=['provisional_original_art','prototype_ground_vehicle_physics','drop_UI_not_implemented','item_specific_weapon_crafting_and_medical_systems_incomplete'])
 except Exception as error: report['error']=str(error)
 finally:

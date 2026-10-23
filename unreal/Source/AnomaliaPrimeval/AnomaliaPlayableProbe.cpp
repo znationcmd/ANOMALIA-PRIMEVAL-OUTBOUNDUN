@@ -13,6 +13,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "Engine/World.h"
+#include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
 #include "GameFramework/PlayerController.h"
@@ -90,6 +91,21 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         if(!Meadow || DynamicLights!=2 || VisualActors<120)
         { Finish(FString::Printf(TEXT("Cooked visual update missing: meadow=%d dynamicLights=%d decorations=%d"),Meadow,DynamicLights,VisualActors)); return; }
         Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaProgressArt")))
+        {
+            int32 Houses=0,Trees=0;
+            for(TActorIterator<AActor> It(GetWorld());It;++It)
+            {
+                if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1")))continue;
+                auto* Component=It->FindComponentByClass<UStaticMeshComponent>();
+                const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressTree_v1")))
+                {if(Path.StartsWith(TEXT("/Game/Anomalia/VerifiedProps_v1/"))||Path.Contains(TEXT("/island_tree_02/")))++Trees;}
+                else if(Path.StartsWith(TEXT("/Game/Anomalia/ResidentialPhotogrammetryReview_v1/")))++Houses;
+            }
+            if(Houses!=2||Trees!=20){Finish(TEXT("New cooked houses or real trees missing"));return;}
+            Checks.Add(TEXT("validated_progress_houses_and_twenty_real_trees"));
+        }
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
             { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }

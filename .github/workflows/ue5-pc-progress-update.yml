@@ -1,0 +1,92 @@
+name: UE5 validated progress automatic PC update
+on:
+  workflow_dispatch:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths:
+      - 'unreal/Source/**'
+      - 'unreal/Config/**'
+      - 'scripts/ue5/package-playable-windows.py'
+      - 'scripts/ue5/install-playable-windows.ps1'
+      - 'scripts/world-features/apply-playable-progress-art.py'
+      - 'docs/art/realism-validation-sources.json'
+      - 'docs/art/residential-photogrammetry-sources.json'
+      - '.github/workflows/ue5-pc-progress-update.yml'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  update-owned-installed-game:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile Editor and Game and pass the native gameplay tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify pinned art and retain the imported realistic buildings
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-realism-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/world-features/prepare-sources.py --residential
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-world-features.mjs --residential
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence=Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_WORLD_FEATURE_SET='residential-photogrammetry'
+          $env:ANOMALIA_WORLD_FEATURES_REPORT=Join-Path $evidence 'residential-import.json'
+          $env:ANOMALIA_EDITOR_TASK=Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/import-review.py'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $wrapper=Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/residential-import.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Cook the actual game with the new houses trees and detailed vehicles and run GPU gameplay tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/package-playable-windows.py --engine-root "$env:UE_ROOT" --output "$evidence/package" --progress-art
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Update the existing owned PC installation only after the new executable passes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-playable-windows.ps1 -ValidationDir "$evidence/package"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report=Get-Content "$evidence/package/installed-package-report.json" -Raw | ConvertFrom-Json
+          if ($report.state -ne 'PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED' -or -not $report.activeVersionAndShortcutVerified -or $report.commit -ne $env:GITHUB_SHA) { throw 'PC update activation is not confirmed.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: pc-progress-update-evidence
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
+          if-no-files-found: warn

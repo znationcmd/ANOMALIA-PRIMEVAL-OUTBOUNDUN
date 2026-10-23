@@ -1,8 +1,6 @@
 name: UE5 transport and city services
 on:
-  push:
-    branches: ['ue5/driveable-roster-city-20261023']
-    paths: ['unreal/**', 'scripts/ue5/**', '.github/workflows/ue5-transport-city.yml']
+  workflow_dispatch:
 concurrency:
   group: anomalia-ue5-native-host
   cancel-in-progress: false

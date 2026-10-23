@@ -34,10 +34,13 @@ try {
     $probe=Join-Path $ValidationDir ('installed-smoke-'+[Guid]::NewGuid().ToString('N')+'.json')
     $scope='playable-smoke-'+[Guid]::NewGuid().ToString('N')
     $enginePython=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
-    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=180).returncode)' $exe "/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=$scope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaPlayableProbe=$probe"
+    $progressArguments=@()
+    if ($proof.progressArt) { $progressArguments=@('-AnomaliaProgressArt') }
+    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=180).returncode)' $exe "/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=$scope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaPlayableProbe=$probe" @progressArguments
     if ($LASTEXITCODE -ne 0) { throw 'Installed game process failed.' }
     $native=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
     if ($native.state -ne 'PACKAGED_GAME_SMOKE_PASSED') { throw "Installed gameplay smoke failed: $($native.error)" }
+    if ($proof.progressArt -and $native.checks -notcontains 'validated_progress_houses_and_twenty_real_trees') { throw 'Installed progress art is missing.' }
     if ($proof.visualReview.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED') { throw 'Imported-art package validation missing.' }
     $visualDir=Join-Path $ValidationDir 'installed-visual';New-Item -ItemType Directory -Path $visualDir -Force | Out-Null
     $visualProbe=Join-Path $visualDir 'review.json'
