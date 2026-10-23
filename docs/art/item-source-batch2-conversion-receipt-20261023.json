@@ -1,0 +1,3799 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-23",
+  "models": [
+    {
+      "id": "mh_dress01__aethelraed_flapper_dress",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/aethelraed_flapper_dress/flapper_dress_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Aethelraed_Unraed",
+      "individualSource": "http://www.makehumancommunity.org/node/581",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__aethelraed_flapper_dress.glb",
+      "bytes": 1643824,
+      "sha256": "3fd26a0b52de14a8fe3a4f19223c23c621b8960bd7b07c85659fb237f66fc736",
+      "triangles": 12846,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.30924999713897705,
+          -0.6249199867248536,
+          -0.09667999744415284
+        ],
+        [
+          0.29370999336242676,
+          0.5389900207519531,
+          0.17776999473571778
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__mindfront_kimono",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/mindfront_kimono/f_kimono.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Mindfront",
+      "individualSource": "http://www.makehumancommunity.org/node/3171",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__mindfront_kimono.glb",
+      "bytes": 4357732,
+      "sha256": "6cdc83e76fce989cb4b682fd4897ad59a4ab924be244fd8e61208ffda0ba4211",
+      "triangles": 6922,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.45594000816345215,
+          -0.815839958190918,
+          -0.11289000511169434
+        ],
+        [
+          0.45598998069763186,
+          0.5876299858093262,
+          0.22167000770568848
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_bodice_dress_with_lace_ruffle_skirt",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_bodice_dress_with_lace_ruffle_skirt/dress_bodice_ruffle_skirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1706",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_bodice_dress_with_lace_ruffle_skirt.glb",
+      "bytes": 3539296,
+      "sha256": "6665a114cc4b6deb04ee676a2da3ef147a581b9b8d68409c70d13a4fa416559d",
+      "triangles": 8840,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2569000005722046,
+          -0.27562000751495364,
+          -0.15924999713897706
+        ],
+        [
+          0.2628200054168701,
+          0.4032000064849854,
+          0.24563999176025392
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_camisole_dress_with_full_skirt",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_camisole_dress_with_full_skirt/dress_camisole_full_skirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1730",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_camisole_dress_with_full_skirt.glb",
+      "bytes": 7657156,
+      "sha256": "0b7ca125b9c6f8100c741cbcf2ecc9e32ca92d563b1093891ff55feb130f1692",
+      "triangles": 10792,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.3148699998855591,
+          -0.5053500175476074,
+          -0.14907000064849854
+        ],
+        [
+          0.30267999172210697,
+          0.523829984664917,
+          0.2556699991226196
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_cut_out_dress",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_cut_out_dress/dress_cut_outs.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1704",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_cut_out_dress.glb",
+      "bytes": 7807784,
+      "sha256": "9ec63e9602702985eba09fc199a91de6a11144bf42c64d4671f96fd342117b4b",
+      "triangles": 6156,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.44067997932434083,
+          -0.19551000595092774,
+          -0.09747999906539917
+        ],
+        [
+          0.44075999259948734,
+          0.5236599922180176,
+          0.17682000398635866
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_dress_with_tiered_skirt",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_dress_with_tiered_skirt/dresstierskirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1640",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_dress_with_tiered_skirt.glb",
+      "bytes": 2258452,
+      "sha256": "1f1902abefcd16bfb0b23ae68edf3ec640c1e8a60ad4c8a501b1ce1278e1e3b0",
+      "triangles": 18896,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.26080000400543213,
+          -0.663920021057129,
+          -0.18842999935150148
+        ],
+        [
+          0.26710000038146975,
+          0.5907400131225586,
+          0.23222000598907472
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_halter_dress_knee_length",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_halter_dress_knee_length/dress_knee_halter.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1853",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_halter_dress_knee_length.glb",
+      "bytes": 769796,
+      "sha256": "fc8e4c724eb532050b25907df6fe9a657aaf4251ce1216b5003c950705813ed1",
+      "triangles": 3936,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.24872000217437745,
+          -0.33462998867034915,
+          -0.1561699986457825
+        ],
+        [
+          0.24035000801086426,
+          0.5668200016021728,
+          0.18494999408721924
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_halter_dress_midi",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_halter_dress_midi/dress_midi_halter.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1854",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_halter_dress_midi.glb",
+      "bytes": 5929952,
+      "sha256": "bae92e538f14be66977463345cc06c911d757d8bdb0e86a73628b9ef25d526a1",
+      "triangles": 5184,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.21744000911712646,
+          -0.5203499794006348,
+          -0.1128999948501587
+        ],
+        [
+          0.21758000850677492,
+          0.5668200016021728,
+          0.17031999826431277
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_halter_dress_with_fluted_skirt",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_halter_dress_with_fluted_skirt/dress_long_fluted_skirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1855",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_halter_dress_with_fluted_skirt.glb",
+      "bytes": 2767992,
+      "sha256": "4ad0e48f7b5c2bc18997291487231b0b8217b9d4f871b508afc929b35cc65b74",
+      "triangles": 6432,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5220300197601319,
+          -0.8196299552917481,
+          -0.48259000778198247
+        ],
+        [
+          0.5391300201416016,
+          0.5668200016021728,
+          0.27511999607086185
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_keyhole_neck_dress",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_keyhole_neck_dress/dress_keyhole_neck.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1613",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_keyhole_neck_dress.glb",
+      "bytes": 1839412,
+      "sha256": "a5715d1609380c7b17b04e44692538364fb91d887e8e35adbfbf4584a46434e7",
+      "triangles": 17888,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.24909000396728517,
+          -0.3742300033569336,
+          -0.10923999547958374
+        ],
+        [
+          0.22532999515533447,
+          0.5325399875640869,
+          0.18118000030517578
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_shift_dress",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_shift_dress/dress_shift.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1724",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_shift_dress.glb",
+      "bytes": 1477004,
+      "sha256": "26e127dc64b8b15ed33367a64032af1fd9dc943d34fd937a2afd3ea8f1e7519c",
+      "triangles": 13568,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2016999959945679,
+          -0.3462500095367432,
+          -0.10011999607086182
+        ],
+        [
+          0.20283999443054201,
+          0.5235599994659424,
+          0.18681000471115114
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__toigo_strapless_ruffle_top_dress",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/toigo_strapless_ruffle_top_dress/dress_strapless_ruffle_top.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1705",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__toigo_strapless_ruffle_top_dress.glb",
+      "bytes": 4245464,
+      "sha256": "1fbb4442588a831d02e3aadd99017a39768b0ca5ee5bfb5f734048031719f1f4",
+      "triangles": 10336,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.26642000675201416,
+          -0.2831000089645386,
+          -0.16664999723434448
+        ],
+        [
+          0.27265000343322754,
+          0.377430009841919,
+          0.2533200025558472
+        ]
+      ]
+    },
+    {
+      "id": "mh_dress01__wdg_mycenaean_tunic",
+      "sourceId": "mh_dress01",
+      "original": "extracted/mh_dress01/clothes/wdg_mycenaean_tunic/mycenaean_tunic.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "WDG",
+      "individualSource": "http://www.makehumancommunity.org/node/1763",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_dress01__wdg_mycenaean_tunic.glb",
+      "bytes": 1072492,
+      "sha256": "44c733d6fb896e9c0d43b11190a0647ca65a9194773c10f6c463d9a016cd8ef0",
+      "triangles": 2660,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.35801000595092775,
+          -0.28515000343322755,
+          -0.09980000257492067
+        ],
+        [
+          0.35801000595092775,
+          0.6766900062561035,
+          0.15849000215530396
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__culturalibre_hero-heroine_gloves_1",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/culturalibre_hero-heroine_gloves_1/hero-heroine_gloves_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2074",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__culturalibre_hero-heroine_gloves_1.glb",
+      "bytes": 154956,
+      "sha256": "332e1f186edeb90d93448369cc2245ab0b9950cc51659e9e28297523bebb9c08",
+      "triangles": 4528,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5690599918365479,
+          0.1211300015449524,
+          0.022079999744892123
+        ],
+        [
+          0.5690599918365479,
+          0.41090002059936526,
+          0.377679991722107
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__culturalibre_hero-heroine_gloves_2",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/culturalibre_hero-heroine_gloves_2/hero-heroine_gloves_2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2093",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__culturalibre_hero-heroine_gloves_2.glb",
+      "bytes": 370352,
+      "sha256": "1221b4c3aa5eeac4173bd804497a9d479f4e91bde9fc19b565e40ee0dd7dfeab",
+      "triangles": 14464,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5678400039672852,
+          0.12604000568389892,
+          0.03698000013828278
+        ],
+        [
+          0.5678400039672852,
+          0.4044099807739258,
+          0.37709999084472656
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__culturalibre_hero-heroine_gloves_3",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/culturalibre_hero-heroine_gloves_3/hero-heroine_gloves_3.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2193",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__culturalibre_hero-heroine_gloves_3.glb",
+      "bytes": 568640,
+      "sha256": "75ed2c85e51d3d84df7b2f1a64c9e99d8049172fbdb6eb2f9552254639ac37f3",
+      "triangles": 14536,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.568559980392456,
+          0.125,
+          0.06209999918937684
+        ],
+        [
+          0.568559980392456,
+          0.38141000270843506,
+          0.37758998870849614
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__culturalibre_hero-heroine_gloves_4",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/culturalibre_hero-heroine_gloves_4/hero-heroine_gloves_4.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2333",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__culturalibre_hero-heroine_gloves_4.glb",
+      "bytes": 409520,
+      "sha256": "2d00521c60350b765384bf7e557885ff9a2e73e7ad02de7187e0527163cfc6e6",
+      "triangles": 16544,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4908199787139893,
+          0.039190000295639044,
+          -0.027160000801086426
+        ],
+        [
+          0.4908199787139893,
+          0.4329400062561035,
+          0.29588000774383544
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__culturalibre_hero-heroine_gloves_5",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/culturalibre_hero-heroine_gloves_5/hero-heroine_gloves_5.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2401",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__culturalibre_hero-heroine_gloves_5.glb",
+      "bytes": 140428,
+      "sha256": "5dcd92f087f9ef2e18f320e49f1ee7f25b89bf55bb12d147c96fcc720c65ff01",
+      "triangles": 5212,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5690599918365479,
+          0.1211300015449524,
+          0.003999999910593033
+        ],
+        [
+          0.5690599918365479,
+          0.4093800067901612,
+          0.377679991722107
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__learning_mma_fighting_gloves",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/learning_mma_fighting_gloves/mma_gloves.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "learning",
+      "individualSource": "http://www.makehumancommunity.org/node/95",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__learning_mma_fighting_gloves.glb",
+      "bytes": 142948,
+      "sha256": "82078222a66a6c4e1e68fcb6bc8b67e9791bad0ee88d986986d5dc505d633677",
+      "triangles": 4392,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.49464001655578616,
+          0.9920599937438965,
+          0.12509000301361084
+        ],
+        [
+          0.49464001655578616,
+          1.1230600357055665,
+          0.2960400104522705
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__toigo_gloves_long",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/toigo_gloves_long/gloves_long.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1850",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__toigo_gloves_long.glb",
+      "bytes": 454396,
+      "sha256": "a6dfebca0f80709bc12dde28e0d6feccab7778fbf9e56aec7a57f8ac28524273",
+      "triangles": 6864,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4912600040435791,
+          0.038760000467300416,
+          -0.028049999475479127
+        ],
+        [
+          0.4912600040435791,
+          0.4251599788665772,
+          0.29611001014709476
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__toigo_gloves_medium",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/toigo_gloves_medium/gloves_medium.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1851",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__toigo_gloves_medium.glb",
+      "bytes": 441420,
+      "sha256": "1f4367110b23f62358b39d2170fd8727e80ba434870a7daa18f43bd77792eb27",
+      "triangles": 5744,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4912600040435791,
+          0.038760000467300416,
+          0.022290000319480897
+        ],
+        [
+          0.4912600040435791,
+          0.28619999885559083,
+          0.29611001014709476
+        ]
+      ]
+    },
+    {
+      "id": "mh_gloves01__toigo_gloves_short",
+      "sourceId": "mh_gloves01",
+      "original": "extracted/mh_gloves01/clothes/toigo_gloves_short/gloves_hand.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1852",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_gloves01__toigo_gloves_short.glb",
+      "bytes": 416204,
+      "sha256": "a15bbcf704f09f604e44abbcd98c8aea6f57b03836b045fcce76593f4aaa9417",
+      "triangles": 4544,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4926599979400635,
+          0.03794000148773194,
+          0.13806999921798707
+        ],
+        [
+          0.4926599979400635,
+          0.18061000108718872,
+          0.2956300020217896
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__aethelraed_unraed_cloche_hat",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/aethelraed_unraed_cloche_hat/cloche_hat.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Aethelraed_Unraed",
+      "individualSource": "http://www.makehumancommunity.org/node/582",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__aethelraed_unraed_cloche_hat.glb",
+      "bytes": 631376,
+      "sha256": "9f701d997cccbf0b7b7aa2dc0896786b4e16d7af467e13fc8dbd3734ed8bd0b8",
+      "triangles": 771,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.08817999958992005,
+          0.6165200233459474,
+          -0.05321000218391419
+        ],
+        [
+          0.09275000095367432,
+          0.7999800205230714,
+          0.165910005569458
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__grinsegold_uncle_joshis_hat",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/grinsegold_uncle_joshis_hat/uncle_joshi's_hat.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "grinsegold",
+      "individualSource": "http://www.makehumancommunity.org/node/193",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__grinsegold_uncle_joshis_hat.glb",
+      "bytes": 534068,
+      "sha256": "2ddb80fb97896236a4afecb1e03a04f2874efe4bff8877155e7f0c1127efd48b",
+      "triangles": 7168,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.11466000080108643,
+          0.8396900177001954,
+          -0.09359999895095826
+        ],
+        [
+          0.11011999845504761,
+          0.9048800468444824,
+          0.18853000402450562
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__joepal_xmas_cap",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/joepal_xmas_cap/xmascap.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Joel Palmius",
+      "individualSource": "http://www.makehumancommunity.org/node/520",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__joepal_xmas_cap.glb",
+      "bytes": 434100,
+      "sha256": "28536a913ca7a7fe0e5ecfbfef4179ffdc5d2e4213cf0a44b0a94cf846e87088",
+      "triangles": 2016,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.08235999941825867,
+          0.6588799953460693,
+          -0.0717299997806549
+        ],
+        [
+          0.08235999941825867,
+          0.8692700386047364,
+          0.15317000150680543
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__jujube_bag_on_head",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/jujube_bag_on_head/pillow_man.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "jujube",
+      "individualSource": "http://www.makehumancommunity.org/node/578",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__jujube_bag_on_head.glb",
+      "bytes": 316036,
+      "sha256": "b50c3003e7a40fba4f19a8f689d6c0d87e3f4d3c13c4c02acfedbc5f74be8f9d",
+      "triangles": 11264,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.208270001411438,
+          0.5725900173187256,
+          -0.1465399980545044
+        ],
+        [
+          0.22909998893737793,
+          1.1375,
+          0.17888000011444094
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__jujube_newsboy_cap",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/jujube_newsboy_cap/newsboy_cap.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "jujube",
+      "individualSource": "http://www.makehumancommunity.org/node/78",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__jujube_newsboy_cap.glb",
+      "bytes": 2718844,
+      "sha256": "9ed24532dca96aec8a41837c1454f6c559ab5e75a2b479554de171150299ebf3",
+      "triangles": 996,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.09463000297546387,
+          0.7810500144958497,
+          -0.05710999965667725
+        ],
+        [
+          0.09452000260353088,
+          0.8699600219726563,
+          0.19009000062942505
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats01__toigo_maga_hat",
+      "sourceId": "mh_hats01",
+      "original": "extracted/mh_hats01/clothes/toigo_maga_hat/maga_hat.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/652",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats01__toigo_maga_hat.glb",
+      "bytes": 4023220,
+      "sha256": "525b5f9e7f8a1a92b553d38271887059af1d564e77600faed7a4fcb6821056ea",
+      "triangles": 6004,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.07910000085830689,
+          1.549810028076172,
+          -0.05052000284194946
+        ],
+        [
+          0.08051999807357789,
+          1.6822200775146485,
+          0.2290600061416626
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__culturalibre_motorcycle_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/culturalibre_motorcycle_helmet/motorcyclehelmet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2025",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license creative commons zero (public domain)"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__culturalibre_motorcycle_helmet.glb",
+      "bytes": 1007552,
+      "sha256": "2cd8f3c24e9257f8c604dc473e651b4b164c99a962d7e261f22e57b38df765dc",
+      "triangles": 44608,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.10141999721527101,
+          0.5543900012969971,
+          -0.06535999774932862
+        ],
+        [
+          0.09761999845504761,
+          0.7964099884033203,
+          0.19735000133514405
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__culturalibre_skull_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/culturalibre_skull_helmet/skull_helmet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2349",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__culturalibre_skull_helmet.glb",
+      "bytes": 4489744,
+      "sha256": "6caabfe174029d092e485097f261a4a6effbf1a7162e3b8e070eb0ed3d2506fd",
+      "triangles": 8504,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22609000205993654,
+          0.5352399826049805,
+          -0.5334199905395508
+        ],
+        [
+          0.22481999397277833,
+          1.027989959716797,
+          0.18353999853134156
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__culturalibre_warrior_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/culturalibre_warrior_helmet/warrior_helmet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2351",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__culturalibre_warrior_helmet.glb",
+      "bytes": 970416,
+      "sha256": "e9bc339d94bf3a4f5fbed25e63f58e9c4782a4479fcb206562c2c9a51532f3d6",
+      "triangles": 2712,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.08479999899864198,
+          0.625089979171753,
+          -0.0666700005531311
+        ],
+        [
+          0.08479999899864198,
+          0.8304300308227539,
+          0.15578999519348147
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__grinsegold_corinthian_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/grinsegold_corinthian_helmet/corinthian_helmet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "grinsegold",
+      "individualSource": "http://www.makehumancommunity.org/node/667",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__grinsegold_corinthian_helmet.glb",
+      "bytes": 1421652,
+      "sha256": "d793568639a68bb6208ef6bd27acb140a490341cb9853e4ceedf0ac536bc24b6",
+      "triangles": 296,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.10092999935150147,
+          0.6929900169372559,
+          -0.05516999959945679
+        ],
+        [
+          0.10297000408172607,
+          0.9648599624633789,
+          0.209089994430542
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__javherre_casco_caballero_templario_templar_knight_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/javherre_casco_caballero_templario_templar_knight_helmet/casco_templario.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "javherre",
+      "individualSource": "http://www.makehumancommunity.org/node/2014",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__javherre_casco_caballero_templario_templar_knight_helmet.glb",
+      "bytes": 3132400,
+      "sha256": "d0a3cd374c53f80bb72219b77139074ad7eeae58a9ab440835823cc82e3e526d",
+      "triangles": 6420,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.11542999744415283,
+          0.7746900081634522,
+          -0.08446999788284303
+        ],
+        [
+          0.10681999921798707,
+          0.9741900444030762,
+          0.19163999557495118
+        ]
+      ]
+    },
+    {
+      "id": "mh_hats02__mrgreaterthan_m1_helmet",
+      "sourceId": "mh_hats02",
+      "original": "extracted/mh_hats02/clothes/mrgreaterthan_m1_helmet/M1Helmet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MrGreaterThan",
+      "individualSource": "http://www.makehumancommunity.org/node/2697",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license: CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_hats02__mrgreaterthan_m1_helmet.glb",
+      "bytes": 8593936,
+      "sha256": "caec3284c384f2417d80a2811d8f146f04891bcd63c41e1215e04a6fa1c9cc12",
+      "triangles": 72292,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.09420999884605408,
+          0.6749499797821046,
+          -0.07124999761581421
+        ],
+        [
+          0.09420999884605408,
+          0.9255999565124512,
+          0.18892999887466433
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero-heroine_hood_1",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero-heroine_hood_1/hero-heroine_hood_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2100",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero-heroine_hood_1.glb",
+      "bytes": 133736,
+      "sha256": "4540cbbb1409b112f5c0f55c57c698718a3a8710b358fff10db49489cf82110d",
+      "triangles": 3004,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.0824500024318695,
+          0.6745500087738038,
+          -0.04677000045776367
+        ],
+        [
+          0.0824500024318695,
+          0.9320300102233887,
+          0.15769000053405763
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero-heroine_hood_2",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero-heroine_hood_2/hero-heroine_hood_2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2309",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero-heroine_hood_2.glb",
+      "bytes": 141648,
+      "sha256": "9b67c099ebd78103ab08c07cea10f1a5557157a6127ce82d1a0bc5183c9e4aae",
+      "triangles": 3928,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.08001000285148621,
+          0.673360013961792,
+          -0.05072000026702881
+        ],
+        [
+          0.08001000285148621,
+          0.9360199928283692,
+          0.17293000221252441
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero_mask_1",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero_mask_1/hero_mask_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2055",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero_mask_1.glb",
+      "bytes": 261744,
+      "sha256": "a096457c1706bea86b6cafa411e2286666d4be70452722ec1bfe4223e6e0679e",
+      "triangles": 4916,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.07648000121116638,
+          0.6745800018310547,
+          -0.04677000045776367
+        ],
+        [
+          0.07648000121116638,
+          0.9320300102233887,
+          0.1621399998664856
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero_mask_2",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero_mask_2/hero_mask_2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2049",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero_mask_2.glb",
+      "bytes": 1416444,
+      "sha256": "7e4bf2729f742a51d8f04f2ba348b5ba94fca8ef6d372f4438bf076366512daf",
+      "triangles": 55680,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.06589999794960022,
+          0.7732999801635743,
+          0.11016999483108521
+        ],
+        [
+          0.06589999794960022,
+          0.8657600402832032,
+          0.1663599967956543
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero_mask_3",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero_mask_3/hero_mask_3.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2202",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero_mask_3.glb",
+      "bytes": 61408,
+      "sha256": "da4e101e91d130a3bfd9ec198eaedc10c16aa838fe501886a7f0ae6016f471a0",
+      "triangles": 2072,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.06586999893188476,
+          0.7642600059509278,
+          0.10882999897003175
+        ],
+        [
+          0.06586999893188476,
+          0.8627400398254395,
+          0.1703500032424927
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero_mask_4",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero_mask_4/hero_mask_4.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2220",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero_mask_4.glb",
+      "bytes": 52076,
+      "sha256": "3e8a40063ee662c3a127e046cd15568b806c8358d24485c44969c6ec9326d70e",
+      "triangles": 1636,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.08723000288009644,
+          0.7633500099182129,
+          0.10918999910354615
+        ],
+        [
+          0.08723000288009644,
+          0.9408699989318848,
+          0.16466000080108645
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_hero_mask_5",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_hero_mask_5/hero_mask_5.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2396",
+      "license": "CC-BY",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_hero_mask_5.glb",
+      "bytes": 621084,
+      "sha256": "17c5a9985362a1144c4ae04092ce95787af09b6249d33d8eba9fdfa7ef766f52",
+      "triangles": 25968,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.07835000157356263,
+          0.6344500064849854,
+          -0.0460999995470047
+        ],
+        [
+          0.07835000157356263,
+          0.9686800003051759,
+          0.17784999608993532
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__culturalibre_heroine_mask_1",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/culturalibre_heroine_mask_1/heroine_mask_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2474",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__culturalibre_heroine_mask_1.glb",
+      "bytes": 134156,
+      "sha256": "4dec55411b3685aae58b03b65ceb36ab90b580eb5a77b5ac8c46033da855ac13",
+      "triangles": 4932,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.0720200002193451,
+          0.5471799850463868,
+          -0.04699999988079071
+        ],
+        [
+          0.0720200002193451,
+          0.7874300003051758,
+          0.15928000211715698
+        ]
+      ]
+    },
+    {
+      "id": "mh_masks01__joepal_medical_mouth_protection",
+      "sourceId": "mh_masks01",
+      "original": "extracted/mh_masks01/clothes/joepal_medical_mouth_protection/munskydd.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Joel Palmius",
+      "individualSource": "http://www.makehumancommunity.org/node/2369",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_masks01__joepal_medical_mouth_protection.glb",
+      "bytes": 1214512,
+      "sha256": "bc3672033afb8830f7c5b1bfd66d61f92f72340e0b6342ea836795c7e9f0a394",
+      "triangles": 204,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.0749899983406067,
+          0.5796000003814697,
+          0.01993999928236008
+        ],
+        [
+          0.0749899983406067,
+          0.6980500221252441,
+          0.1624400019645691
+        ]
+      ]
+    },
+    {
+      "id": "mh_pants01__cortu_cargo_pants",
+      "sourceId": "mh_pants01",
+      "original": "extracted/mh_pants01/clothes/cortu_cargo_pants/cargo_pants.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Cortu",
+      "individualSource": "http://www.makehumancommunity.org/node/2798",
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_pants01__cortu_cargo_pants.glb",
+      "bytes": 6040836,
+      "sha256": "d6013f8b00a654a2f1cfa5a481b385e8a03115996c4777272b9d9076a7e1ab52",
+      "triangles": 392,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2413599967956543,
+          -0.7753499984741211,
+          -0.10880000591278077
+        ],
+        [
+          0.2413599967956543,
+          0.09222999811172486,
+          0.14801000356674196
+        ]
+      ]
+    },
+    {
+      "id": "mh_pants01__cortu_jeans_shorts",
+      "sourceId": "mh_pants01",
+      "original": "extracted/mh_pants01/clothes/cortu_jeans_shorts/jean_shorts.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Cortu",
+      "individualSource": "http://www.makehumancommunity.org/node/2800",
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_pants01__cortu_jeans_shorts.glb",
+      "bytes": 6987684,
+      "sha256": "65214729da68d77198a26e5d15c11f60134deded8dc22fee96d3bc9a66411e71",
+      "triangles": 500,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.18796000480651856,
+          -0.10425000190734864,
+          -0.09430000185966492
+        ],
+        [
+          0.18796000480651856,
+          0.11294000148773194,
+          0.1420699954032898
+        ]
+      ]
+    },
+    {
+      "id": "mh_pants01__toigo_harem_pants",
+      "sourceId": "mh_pants01",
+      "original": "extracted/mh_pants01/clothes/toigo_harem_pants/pants_harem.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1728",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_pants01__toigo_harem_pants.glb",
+      "bytes": 5924992,
+      "sha256": "f5f453e976448a17c79360f51805d498a7684e78f40c75328e426fd67133e32c",
+      "triangles": 10912,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25058999061584475,
+          -0.69899001121521,
+          -0.09598000049591066
+        ],
+        [
+          0.25223000049591066,
+          0.1375399947166443,
+          0.1534000039100647
+        ]
+      ]
+    },
+    {
+      "id": "mh_pants01__toigo_wool_pants",
+      "sourceId": "mh_pants01",
+      "original": "extracted/mh_pants01/clothes/toigo_wool_pants/pants_wool.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1194",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_pants01__toigo_wool_pants.glb",
+      "bytes": 1450940,
+      "sha256": "8809717773d0a3ff93164f68fbd2e1598ed2bb0a010faf3e17f4f4a7bb92485c",
+      "triangles": 2674,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.24237000942230225,
+          -0.7519700050354005,
+          -0.11653000116348267
+        ],
+        [
+          0.24237000942230225,
+          0.25151000022888187,
+          0.14570000171661376
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__elvs_crude_t-shirt_male",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/elvs_crude_t-shirt_male/crude_male_shirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Elvaerwyn",
+      "individualSource": "http://www.makehumancommunity.org/node/1416",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__elvs_crude_t-shirt_male.glb",
+      "bytes": 60196,
+      "sha256": "f735167bd2df4d01952a1b58cc1c48f2348d73323f84c210cca5a74543a65c59",
+      "triangles": 2068,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.28197000026702884,
+          0.1431399941444397,
+          -0.09473000168800355
+        ],
+        [
+          0.2819000005722046,
+          0.669920015335083,
+          0.15485999584197999
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__joepal_crude_t-shirt_female",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/joepal_crude_t-shirt_female/crudefemaletshirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Joel Palmius",
+      "individualSource": "http://www.makehumancommunity.org/node/894",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__joepal_crude_t-shirt_female.glb",
+      "bytes": 185544,
+      "sha256": "97dd9769a9519514a4f3d0fc75d3d3551087ac107af2d12b201869fb680e9c6e",
+      "triangles": 2068,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.26958000659942627,
+          0.04417000114917755,
+          -0.0883899986743927
+        ],
+        [
+          0.26958000659942627,
+          0.5304100036621094,
+          0.1679200053215027
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__namuhekam_male_polo_shirt",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/namuhekam_male_polo_shirt/Polo_t-shirt.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "namuhekam",
+      "individualSource": "http://www.makehumancommunity.org/node/2909",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license: CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__namuhekam_male_polo_shirt.glb",
+      "bytes": 1408680,
+      "sha256": "3bf7f6b71571532d515fb7e21b393058f17d1e4690971ed682710336207fa296",
+      "triangles": 4106,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.3420799970626831,
+          0.06355000138282776,
+          -0.11368000507354736
+        ],
+        [
+          0.3420799970626831,
+          0.6773499965667725,
+          0.16044000387191773
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__skalldyrssuppe_tube_top_funky_colors",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/skalldyrssuppe_tube_top_funky_colors/tube_top.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "skalldyrssuppe",
+      "individualSource": "http://www.makehumancommunity.org/node/975",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__skalldyrssuppe_tube_top_funky_colors.glb",
+      "bytes": 389540,
+      "sha256": "bc419de856236cf95eef850a459d9a6fb35f52423332f694ef1c8b0cf9c309fb",
+      "triangles": 2912,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.12372000217437745,
+          0.004289999976754189,
+          -0.06915000081062317
+        ],
+        [
+          0.12372000217437745,
+          0.20538001060485842,
+          0.12446000576019288
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_basic_tucked_t-shirt",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_basic_tucked_t-shirt/t_shirt_basic_tucked.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1203",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_basic_tucked_t-shirt.glb",
+      "bytes": 947636,
+      "sha256": "9014127866a66081b18d6c66a611f6fa680828c8b71e997357391948fd234307",
+      "triangles": 2700,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.32999999523162843,
+          0.214739990234375,
+          -0.08970999717712402
+        ],
+        [
+          0.32973001003265384,
+          0.686329984664917,
+          0.15604000091552736
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_bodice-style_top",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_bodice-style_top/bodice_style_top.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1667",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_bodice-style_top.glb",
+      "bytes": 2526736,
+      "sha256": "60e88d54cac61581be99944ed79e1d69dc058ed4a9f8191c462153566d58cadb",
+      "triangles": 1944,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.16913000345230103,
+          0.024840000271797183,
+          -0.09067000150680543
+        ],
+        [
+          0.16829999685287478,
+          0.39535999298095703,
+          0.18093999624252322
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_camisole_top",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_camisole_top/camisole_top.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1726",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_camisole_top.glb",
+      "bytes": 5042948,
+      "sha256": "b31a0a5510b9cdddfc951beaacf6ae4851d666d371e1ea1e37d54eeb208bc796",
+      "triangles": 8232,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.1575700044631958,
+          0.11188000440597534,
+          -0.07006000280380249
+        ],
+        [
+          0.15770000219345093,
+          0.5295899868011474,
+          0.16815999746322632
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_fisherman_sweater",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_fisherman_sweater/sweater_fisherman.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1187",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_fisherman_sweater.glb",
+      "bytes": 2400100,
+      "sha256": "6847fffc081eea27347b7e782cb2139bc03c45799cd6f272798eb07948555ed2",
+      "triangles": 4164,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5114200115203857,
+          0.11552000045776367,
+          -0.09607999920845033
+        ],
+        [
+          0.5114200115203857,
+          0.6933499813079834,
+          0.22032001018524172
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_keyhole_tank_top",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_keyhole_tank_top/tank_keyhole_neck.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1606",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_keyhole_tank_top.glb",
+      "bytes": 1371832,
+      "sha256": "db89a3f0980f65abf924b32ba03e99846e14e3b6d1fe496434563f11f0b90d3c",
+      "triangles": 1352,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.1720900058746338,
+          0.07785000205039978,
+          -0.08476999998092652
+        ],
+        [
+          0.1720900058746338,
+          0.527869987487793,
+          0.17553999423980715
+        ]
+      ]
+    },
+    {
+      "id": "mh_shirts01__toigo_turtleneck_halter_top",
+      "sourceId": "mh_shirts01",
+      "original": "extracted/mh_shirts01/clothes/toigo_turtleneck_halter_top/turtleneck_halter.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1642",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shirts01__toigo_turtleneck_halter_top.glb",
+      "bytes": 1973740,
+      "sha256": "19d49577c43df1828de54457de6cac8dea84dbf61141fee87f0b95cdd5bfc12d",
+      "triangles": 5504,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.15383000373840333,
+          0.1627500057220459,
+          -0.06470999717712403
+        ],
+        [
+          0.15383000373840333,
+          0.5907400131225586,
+          0.16610000133514405
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__cortu_floppy_overknee_shoes",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/cortu_floppy_overknee_shoes/floppy_overknee_shoe.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Cortu",
+      "individualSource": "http://www.makehumancommunity.org/node/2803",
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__cortu_floppy_overknee_shoes.glb",
+      "bytes": 18411092,
+      "sha256": "e5d578ffcbc5041b741f8e07f7826e3a6f558c967410acffc217ce50dbcac848",
+      "triangles": 3128,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22593998908996582,
+          -0.8326499938964844,
+          -0.04589000046253205
+        ],
+        [
+          0.22593998908996582,
+          -0.25703999996185306,
+          0.2066499948501587
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__cortu_t-bar",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/cortu_t-bar/tbar.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Cortu",
+      "individualSource": "http://www.makehumancommunity.org/node/2801",
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__cortu_t-bar.glb",
+      "bytes": 5810408,
+      "sha256": "ad8dc8fd3d38ba3751e19840bc4443beef64d43aeb5b51db50f03c3efc872805",
+      "triangles": 704,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22030999660491946,
+          -0.8301300048828125,
+          -0.012999999523162843
+        ],
+        [
+          0.21975998878479006,
+          -0.7301000118255616,
+          0.20462000370025635
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_hero_boots_1",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_hero_boots_1/hero_boots_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2081",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_hero_boots_1.glb",
+      "bytes": 85368,
+      "sha256": "10fa7f39da9821fbd9775c2fada0025e1d18ae6d32e7eed9e64529a3a5b657aa",
+      "triangles": 2888,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25660998821258546,
+          -0.8222000122070313,
+          -0.08413000106811525
+        ],
+        [
+          0.25660998821258546,
+          -0.3241899967193604,
+          0.22602000236511233
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_hero_boots_2",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_hero_boots_2/hero_boots_2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2132",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_hero_boots_2.glb",
+      "bytes": 65784,
+      "sha256": "b6ebd8c6245a16ea2b187db7d7446ed10842ae8d488b337434a9c122926447f9",
+      "triangles": 2312,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25808999538421634,
+          -0.8236900329589845,
+          -0.0713100016117096
+        ],
+        [
+          0.25808999538421634,
+          -0.4103400230407715,
+          0.2279900074005127
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_hero_boots_3",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_hero_boots_3/hero_boots_3.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2138",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_hero_boots_3.glb",
+      "bytes": 67500,
+      "sha256": "c3f07f9f2c9af1d2439fb024af75410e5dc7e7d7fcbf64afe80bfd8f0f711202",
+      "triangles": 2312,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25660998821258546,
+          -0.8222000122070313,
+          -0.07121999859809876
+        ],
+        [
+          0.25660998821258546,
+          -0.3883300065994263,
+          0.22602000236511233
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_hero_boots_4",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_hero_boots_4/hero_boots_4.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2167",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_hero_boots_4.glb",
+      "bytes": 67884,
+      "sha256": "a60fa73a8c1959584b65eda3afa47bda41a626c8530bfe16c015d8654f0be71b",
+      "triangles": 2312,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.27741000652313236,
+          -0.8222000122070313,
+          -0.1009600043296814
+        ],
+        [
+          0.27741000652313236,
+          -0.4633999824523926,
+          0.22602000236511233
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_hero_boots_5",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_hero_boots_5/hero_boots_5.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2424",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_hero_boots_5.glb",
+      "bytes": 530720,
+      "sha256": "adcc15e6e6c12daae0987b024c3129f2de79e5ba25321bdab7a14a2180789ec7",
+      "triangles": 11552,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.26549999713897704,
+          -0.8224599838256836,
+          -0.06897000074386597
+        ],
+        [
+          0.26549999713897704,
+          -0.2006500005722046,
+          0.22602000236511233
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_heroine_boots_1",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_heroine_boots_1/heroine_boots_1.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2155",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_heroine_boots_1.glb",
+      "bytes": 110828,
+      "sha256": "164fef207a63cf5742687e73fa3227e39f9063177822d8211cecaa01331da60a",
+      "triangles": 4104,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22499001026153564,
+          -0.8233499526977539,
+          -0.047080001235008245
+        ],
+        [
+          0.22499001026153564,
+          -0.06543999910354614,
+          0.20859999656677247
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_heroine_boots_2",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_heroine_boots_2/heroine_boots_2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2181",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_heroine_boots_2.glb",
+      "bytes": 77116,
+      "sha256": "1638b01d09168dad2dd75f89d0ca0ce0653bd22775da09f8759c2e5f1711b685",
+      "triangles": 2720,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25559000968933104,
+          -0.8233499526977539,
+          -0.09226999878883363
+        ],
+        [
+          0.25559000968933104,
+          -0.4946599960327149,
+          0.20859999656677247
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_heroine_boots_3",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_heroine_boots_3/heroine_boots_3.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2187",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_heroine_boots_3.glb",
+      "bytes": 77088,
+      "sha256": "06ce79e5f98d19838e179dfb5bb5c3c310eb68859426f1bb0b35cc386935f9a0",
+      "triangles": 2720,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22499001026153564,
+          -0.8233499526977539,
+          -0.049070000648498535
+        ],
+        [
+          0.22499001026153564,
+          -0.4788899898529053,
+          0.20859999656677247
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_heroine_boots_4",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_heroine_boots_4/heroine_boots_4.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2464",
+      "license": "CC-BY",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_heroine_boots_4.glb",
+      "bytes": 49540,
+      "sha256": "b7d9c95d418d323d2c9e54b973a9e50575c6884ecb87a2091827f0b883a684e8",
+      "triangles": 1712,
+      "warnings": [
+        "Missing texture: red.png",
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22852001190185547,
+          -0.8190500259399415,
+          -0.05386999845504761
+        ],
+        [
+          0.22852001190185547,
+          -0.49896998405456544,
+          0.2071000099182129
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__culturalibre_male_boots",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/culturalibre_male_boots/male_boots.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "culturalibre",
+      "individualSource": "http://www.makehumancommunity.org/node/2548",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC-0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__culturalibre_male_boots.glb",
+      "bytes": 1186060,
+      "sha256": "29bb4be06ed24eaa348c085d8309022e2ea9522e19f4c470e451ce268f397c47",
+      "triangles": 30768,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.26080000400543213,
+          -0.8285799980163575,
+          -0.0808799982070923
+        ],
+        [
+          0.26080000400543213,
+          -0.4255400180816651,
+          0.2369100093841553
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__grinsegold_female_pirate_boots",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/grinsegold_female_pirate_boots/leatherboots_2cm.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "grinsegold",
+      "individualSource": "http://www.makehumancommunity.org/node/211",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__grinsegold_female_pirate_boots.glb",
+      "bytes": 2874100,
+      "sha256": "ea9ee1a41e3f8fefef0953febf36eab63a62e7a1bc8efb250779031918eeb46d",
+      "triangles": 63552,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.21372001171112062,
+          -0.8208100318908692,
+          -0.05288000106811524
+        ],
+        [
+          0.21372001171112062,
+          -0.3432100057601929,
+          0.2082200050354004
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__scailman_gogo_platform_boots",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/scailman_gogo_platform_boots/gogo_boots.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "scailman",
+      "individualSource": "http://www.makehumancommunity.org/node/1467",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__scailman_gogo_platform_boots.glb",
+      "bytes": 2345280,
+      "sha256": "0a1945d46d2727897e7c53dca7a54df92e9afc8d52f8597d073e8ee19306cf9f",
+      "triangles": 10068,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.20845999717712405,
+          -0.9867400169372559,
+          -0.03519999980926514
+        ],
+        [
+          0.20845999717712405,
+          -0.3539400100708008,
+          0.1746399998664856
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__scailman_semitransparent_water_boots",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/scailman_semitransparent_water_boots/botas_102.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "scailman",
+      "individualSource": "http://www.makehumancommunity.org/node/1778",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license AGPL3 (see also http://www.makehuman.org/doc/node/external_tools_license.html)"
+      ],
+      "licenseReviewRequired": true,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__scailman_semitransparent_water_boots.glb",
+      "bytes": 660044,
+      "sha256": "18ce35151d8799ab8d09e2061ac9ad2a8f9dedc9271058e0c145ab8fff42053e",
+      "triangles": 10752,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2241600036621094,
+          -0.8383099555969239,
+          -0.04471000134944916
+        ],
+        [
+          0.2241600036621094,
+          -0.394409990310669,
+          0.21514999866485596
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_ankle_boots_female",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_ankle_boots_female/boots_ankle.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1738",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_ankle_boots_female.glb",
+      "bytes": 3749044,
+      "sha256": "cb170d30a74e2fe2743e5de6d11225de7e7b1b100dbd63c6ccbadac696afba7b",
+      "triangles": 4120,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.21770999431610108,
+          -0.8362299919128419,
+          -0.01580999940633774
+        ],
+        [
+          0.21770999431610108,
+          -0.6841000080108643,
+          0.18625999689102174
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_ankle_boots_male",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_ankle_boots_male/boots_ankle_male.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1743",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_ankle_boots_male.glb",
+      "bytes": 3800948,
+      "sha256": "4dae57083349c2945e3e7793c46841e19d4a1ee88a4f345ba949ffad29a03858",
+      "triangles": 4120,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.25975999832153324,
+          -0.8329500198364258,
+          -0.05295000076293946
+        ],
+        [
+          0.25975999832153324,
+          -0.6412499904632569,
+          0.24697999954223634
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_ballet_flats",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_ballet_flats/flats_ballet.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1734",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_ballet_flats.glb",
+      "bytes": 7251612,
+      "sha256": "03b5a3b6da6d5afcb4cd6286f4f4824ff1a01743024933376e66b20cddd2cd5a",
+      "triangles": 8960,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22007999420166016,
+          -0.8252300262451172,
+          -0.013150000572204591
+        ],
+        [
+          0.22007999420166016,
+          -0.7672399997711182,
+          0.21027998924255373
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_ballet_flats_with_bows",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_ballet_flats_with_bows/flats_ballet_bow.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1735",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_ballet_flats_with_bows.glb",
+      "bytes": 9541364,
+      "sha256": "ec15ded4acd983dd09c2fb98e6473b48cd8205adf7c5359618d7ea77c32ecfc1",
+      "triangles": 14864,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22007999420166016,
+          -0.8252300262451172,
+          -0.013150000572204591
+        ],
+        [
+          0.22007999420166016,
+          -0.7672399997711182,
+          0.21027998924255373
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_ballet_flats_with_flowers",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_ballet_flats_with_flowers/flats_ballet_flower.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1736",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_ballet_flats_with_flowers.glb",
+      "bytes": 9111652,
+      "sha256": "b3775dfde3df742fdbcbb160c8723d3874a344a57992055d48a629570f9cf90e",
+      "triangles": 10272,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22007999420166016,
+          -0.8252300262451172,
+          -0.013150000572204591
+        ],
+        [
+          0.22007999420166016,
+          -0.7672399997711182,
+          0.21027998924255373
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_flats",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_flats/flats.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1117",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_flats.glb",
+      "bytes": 9112396,
+      "sha256": "8e2dd1481affe635bfd31a3e545b8783bc53df9bf5354f1db8d7a77d2d788572",
+      "triangles": 57600,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22060000896453857,
+          -0.8249699592590333,
+          -0.021629999577999118
+        ],
+        [
+          0.22060000896453857,
+          -0.7691999912261963,
+          0.2140500068664551
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_mj_cloth_shoes",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_mj_cloth_shoes/mj_shoes.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1700",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_mj_cloth_shoes.glb",
+      "bytes": 4369192,
+      "sha256": "c2e03b4a319e86b4bc071f8aad09b8451093fb61f71acd8c3576eb3ade0f996d",
+      "triangles": 1004,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22286999225616455,
+          -0.8280500411987305,
+          -0.01687999963760376
+        ],
+        [
+          0.22286999225616455,
+          -0.7626699924468995,
+          0.21266000270843508
+        ]
+      ]
+    },
+    {
+      "id": "mh_shoes01__toigo_stiletto_booties",
+      "sourceId": "mh_shoes01",
+      "original": "extracted/mh_shoes01/clothes/toigo_stiletto_booties/booties_stiletto.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1694",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_shoes01__toigo_stiletto_booties.glb",
+      "bytes": 5121568,
+      "sha256": "0b9164184f977012436eefeabe10aeb197cd245a7c146df5a8f8770ba35f0ea2",
+      "triangles": 44664,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.20901999473571778,
+          -0.8816399574279785,
+          -0.046480000019073486
+        ],
+        [
+          0.20901999473571778,
+          -0.6914700031280518,
+          0.14402999877929687
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_female_double-breasted_suit",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_female_double-breasted_suit/fem_suit_double_breasted.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1742",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_female_double-breasted_suit.glb",
+      "bytes": 6215120,
+      "sha256": "a087bd594c76af0f2501092a5cc84857e2d289fd1259d661e2d50d678e1df71b",
+      "triangles": 10062,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4552599906921387,
+          -0.7583499908447267,
+          -0.11871000528335572
+        ],
+        [
+          0.4547399997711182,
+          0.5763700008392334,
+          0.1944100022315979
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_female_suit",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_female_suit/fem_suit.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1324",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_female_suit.glb",
+      "bytes": 1430316,
+      "sha256": "86a1b5f8999dba4b351f33d418de7937186f78156f931f0f72f87e049ed06c32",
+      "triangles": 27938,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.4607100009918213,
+          -0.31700000762939456,
+          -0.12682000398635865
+        ],
+        [
+          0.45848999023437503,
+          0.6102399826049805,
+          0.19342000484466554
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_female_suit_2",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_female_suit_2/fem_suit2.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1739",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_female_suit_2.glb",
+      "bytes": 5524416,
+      "sha256": "89462a0852b485f336ae4915d1774703899bc4916f289a08350c38c97c6a2bf6",
+      "triangles": 16214,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.45809001922607423,
+          -0.7799300193786621,
+          -0.11950000524520875
+        ],
+        [
+          0.45947999954223634,
+          0.592710018157959,
+          0.20445001125335693
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_male_double-breasted_suit",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_male_double-breasted_suit/suit_double_breasted.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1740",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_male_double-breasted_suit.glb",
+      "bytes": 5433452,
+      "sha256": "30981ee4dae17f74a99a2920a125fef53cfb57995c8438c2544066edecf6a9d2",
+      "triangles": 10062,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5073999881744385,
+          -0.7484300136566162,
+          -0.1236799955368042
+        ],
+        [
+          0.510260009765625,
+          0.7089399814605714,
+          0.22153000831604006
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_male_suit_3",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_male_suit_3/suit3.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1733",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_male_suit_3.glb",
+      "bytes": 5595952,
+      "sha256": "b470da5b0133a2ac20191e3f8005650eee33cddb3a9042e89c9192a3c7646a6b",
+      "triangles": 16250,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.525659990310669,
+          -0.756440019607544,
+          -0.12653000354766847
+        ],
+        [
+          0.5282999992370606,
+          0.7372399806976319,
+          0.2623800039291382
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_male_suit_tie_and_jacket",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_male_suit_tie_and_jacket/jacket_tie_pants.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1265",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_male_suit_tie_and_jacket.glb",
+      "bytes": 718708,
+      "sha256": "da6575bb455134f40228cb35dd1b768d95731e91bda8d82ef1a2069a54b46cfe",
+      "triangles": 19202,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5306099891662598,
+          -0.7568999767303467,
+          -0.13729000091552734
+        ],
+        [
+          0.5306099891662598,
+          0.7367499828338624,
+          0.25211000442504883
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_suit_with_dinner_jacket",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_suit_with_dinner_jacket/suit_dinner_jacket.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1746",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_suit_with_dinner_jacket.glb",
+      "bytes": 10326228,
+      "sha256": "70ddc2ab0c8c1eaf341b5f011d21d19744d5c09913cca94360e85071af58beb8",
+      "triangles": 15300,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5197400093078614,
+          -0.7293700218200684,
+          -0.12323000431060792
+        ],
+        [
+          0.51697998046875,
+          0.7310800075531007,
+          0.23817000389099122
+        ]
+      ]
+    },
+    {
+      "id": "mh_suits01__toigo_suit_with_jacket_and_bowtie",
+      "sourceId": "mh_suits01",
+      "original": "extracted/mh_suits01/clothes/toigo_suit_with_jacket_and_bowtie/jacket_bowtie_pants.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1317",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_suits01__toigo_suit_with_jacket_and_bowtie.glb",
+      "bytes": 2495244,
+      "sha256": "864da2c600b707447d5bcd3113a980e40cf9c8bea6726d72db7d1763a77f0f1a",
+      "triangles": 24654,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.5306099891662598,
+          -0.7568999767303467,
+          -0.13729000091552734
+        ],
+        [
+          0.5306099891662598,
+          0.7367499828338624,
+          0.25211000442504883
+        ]
+      ]
+    },
+    {
+      "id": "mh_underwear04__joepal_crude_high_socks",
+      "sourceId": "mh_underwear04",
+      "original": "extracted/mh_underwear04/clothes/joepal_crude_high_socks/crudehighsocks.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Joel Palmius",
+      "individualSource": "http://www.makehumancommunity.org/node/25",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_underwear04__joepal_crude_high_socks.glb",
+      "bytes": 181680,
+      "sha256": "7d0187997eb5fe119afcd39dd8e16774f341ca77a372d69b4404ab4f2b853539",
+      "triangles": 696,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2778500080108643,
+          -0.8246399879455567,
+          -0.07189000248908997
+        ],
+        [
+          0.2778500080108643,
+          -0.41336998939514163,
+          0.19775999784469606
+        ]
+      ]
+    },
+    {
+      "id": "mh_underwear04__joepal_crude_low_socks",
+      "sourceId": "mh_underwear04",
+      "original": "extracted/mh_underwear04/clothes/joepal_crude_low_socks/crudelowsocks.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "Joel Palmius",
+      "individualSource": "http://www.makehumancommunity.org/node/32",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_underwear04__joepal_crude_low_socks.glb",
+      "bytes": 245276,
+      "sha256": "0ab25c5504edeed2b74a97c366e381c5665e19ea2f4399725c23124391c6f05b",
+      "triangles": 496,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.2778500080108643,
+          -0.8246399879455567,
+          -0.06560999751091004
+        ],
+        [
+          0.2778500080108643,
+          -0.6547999858856202,
+          0.19775999784469606
+        ]
+      ]
+    },
+    {
+      "id": "mh_underwear04__toigo_lace_frill_socks",
+      "sourceId": "mh_underwear04",
+      "original": "extracted/mh_underwear04/clothes/toigo_lace_frill_socks/sockslacefrill.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1078",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_underwear04__toigo_lace_frill_socks.glb",
+      "bytes": 1062240,
+      "sha256": "681f135247404e5b1c0f13a77e11c3eb335a9b4324905d0827d6751acc456a47",
+      "triangles": 1152,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22211000919342042,
+          -0.8247599601745605,
+          -0.019210000336170197
+        ],
+        [
+          0.22211000919342042,
+          -0.6847700119018555,
+          0.20855000019073489
+        ]
+      ]
+    },
+    {
+      "id": "mh_underwear04__toigo_leg_warmer_socks",
+      "sourceId": "mh_underwear04",
+      "original": "extracted/mh_underwear04/clothes/toigo_leg_warmer_socks/leg_warmer_socks.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": "MargaretToigo",
+      "individualSource": "http://www.makehumancommunity.org/node/1092",
+      "license": "CC0",
+      "originalLicenseHeaders": [
+        "# license CC0"
+      ],
+      "licenseReviewRequired": false,
+      "unitConversion": "MakeHuman decimeters to glTF meters (0.1)",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/mh_underwear04__toigo_leg_warmer_socks.glb",
+      "bytes": 2291796,
+      "sha256": "78942c5f9deb6e4a67000b30679b6128f69752fa61485735f4afe18027597958",
+      "triangles": 7776,
+      "warnings": [
+        "Phong to PBR approximation; original mhmat retained"
+      ],
+      "bounds": [
+        [
+          -0.22885000705718994,
+          -0.8223299980163574,
+          -0.054100000858306886
+        ],
+        [
+          0.22885000705718994,
+          -0.5670199871063233,
+          0.20606000423431398
+        ]
+      ]
+    },
+    {
+      "id": "oga_cannabis_yughues__Cannabis",
+      "sourceId": "oga_cannabis_yughues",
+      "original": "extracted/oga_cannabis_yughues/Cannabis.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_cannabis_yughues__Cannabis.glb",
+      "bytes": 2143996,
+      "sha256": "4eeb5918f64722a3443e3aaa7e00c9f156eaa0611244db5383b0ad0541b75417",
+      "triangles": 840,
+      "warnings": [],
+      "bounds": [
+        [
+          -45.99769973754883,
+          0.0,
+          -45.18949890136719
+        ],
+        [
+          40.173301696777344,
+          128.13319396972656,
+          40.95940017700195
+        ]
+      ]
+    },
+    {
+      "id": "oga_cannabis_yughues__Cannabis_flowering",
+      "sourceId": "oga_cannabis_yughues",
+      "original": "extracted/oga_cannabis_yughues/Cannabis_flowering.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_cannabis_yughues__Cannabis_flowering.glb",
+      "bytes": 2181120,
+      "sha256": "c3b4076dfde2b33e93b331a760ec88c8f77d88938a09a57c0879828cf415397d",
+      "triangles": 1328,
+      "warnings": [],
+      "bounds": [
+        [
+          -45.99769973754883,
+          0.0,
+          -45.18949890136719
+        ],
+        [
+          43.578800201416016,
+          128.13319396972656,
+          40.95940017700195
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__batch_clean",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/batch_clean.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__batch_clean.glb",
+      "bytes": 12848652,
+      "sha256": "244f318ffa7d6df11ebf751ede1fa0e16789398061e557117bc3d6b7cbb29ee6",
+      "triangles": 12,
+      "warnings": [],
+      "bounds": [
+        [
+          -12.5,
+          0.0,
+          -5.0
+        ],
+        [
+          12.5,
+          4.0,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__batch_used",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/batch_used.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__batch_used.glb",
+      "bytes": 12850660,
+      "sha256": "af1bb28425f6885b5241edc4695836ba3e477ba5a828bc05728df37aa2d9a19c",
+      "triangles": 48,
+      "warnings": [],
+      "bounds": [
+        [
+          -12.5,
+          -4.913300037384033,
+          -5.16540002822876
+        ],
+        [
+          12.5,
+          9.021699905395508,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__box",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/box.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__box.glb",
+      "bytes": 12848464,
+      "sha256": "744f5ac9423497cee2b75ea1a7224618f57836760c64c4db73b42387498c89e6",
+      "triangles": 12,
+      "warnings": [],
+      "bounds": [
+        [
+          -50.0,
+          0.0,
+          -25.0
+        ],
+        [
+          50.0,
+          50.0,
+          25.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__pack",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/pack.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__pack.glb",
+      "bytes": 12863224,
+      "sha256": "227c5b1fffc071671953d99b0548ba42203e95fde72ac1ca007ace68efbd217b",
+      "triangles": 272,
+      "warnings": [],
+      "bounds": [
+        [
+          -100.5,
+          0.0,
+          -75.5
+        ],
+        [
+          100.5,
+          161.0,
+          75.5
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__single_burned",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/single_burned.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__single_burned.glb",
+      "bytes": 12847908,
+      "sha256": "a28c9bf9071045cd5a4ea1238f9133b6e84fa1d56502185cc8d2de1b6c3417db",
+      "triangles": 2,
+      "warnings": [],
+      "bounds": [
+        [
+          -9.746299743652344,
+          0.0,
+          -5.0
+        ],
+        [
+          9.746299743652344,
+          0.0,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__single_burned_bended",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/single_burned_bended.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__single_burned_bended.glb",
+      "bytes": 12848216,
+      "sha256": "b7ca37bfd5704dedf2aed0b7f5b12611f3afa84d17a4742aa7cff59cb722aa39",
+      "triangles": 6,
+      "warnings": [],
+      "bounds": [
+        [
+          -10.618000030517578,
+          0.0,
+          -5.0
+        ],
+        [
+          7.8383002281188965,
+          7.9008002281188965,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__single_clean",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/single_clean.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__single_clean.glb",
+      "bytes": 12847880,
+      "sha256": "d64f50e1dac9970de7f6d9fff6f75a2d9186c00e4414034009a1d2504f7fc4ef",
+      "triangles": 2,
+      "warnings": [],
+      "bounds": [
+        [
+          -12.5,
+          0.0,
+          -5.0
+        ],
+        [
+          12.5,
+          0.0,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_money_yughues__single_clean_bended",
+      "sourceId": "oga_money_yughues",
+      "original": "extracted/oga_money_yughues/single_clean_bended.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_money_yughues__single_clean_bended.glb",
+      "bytes": 12848228,
+      "sha256": "b89d9da0f449bad6c28094c0ea53c737547e8ade31de8493f6fa97b7429578d8",
+      "triangles": 6,
+      "warnings": [],
+      "bounds": [
+        [
+          -12.048100471496582,
+          -0.5002999901771545,
+          -5.0
+        ],
+        [
+          12.048100471496582,
+          7.368899822235107,
+          5.0
+        ]
+      ]
+    },
+    {
+      "id": "oga_pills_mxc2__complexPill",
+      "sourceId": "oga_pills_mxc2",
+      "original": "extracted/oga_pills_mxc2/complexPill/complexPill.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_pills_mxc2__complexPill.glb",
+      "bytes": 50136,
+      "sha256": "55ddd61f5a820653e8971dec8780ffd0f217abef1195b14781aeaa7a27983977",
+      "triangles": 1920,
+      "warnings": [],
+      "bounds": [
+        [
+          -0.14819499850273132,
+          -0.05444499850273132,
+          -0.050126999616622925
+        ],
+        [
+          0.14374999701976776,
+          0.05444499850273132,
+          0.05876399949193001
+        ]
+      ]
+    },
+    {
+      "id": "oga_pills_mxc2__simplePill",
+      "sourceId": "oga_pills_mxc2",
+      "original": "extracted/oga_pills_mxc2/simplePill/simplePill.obj",
+      "unrealImported": false,
+      "gameplayVerified": false,
+      "rigged": false,
+      "qualityApproved": false,
+      "author": null,
+      "individualSource": null,
+      "license": "CC0",
+      "originalLicenseHeaders": [],
+      "licenseReviewRequired": false,
+      "unitConversion": "Source coordinates preserved; physical size unverified",
+      "status": "CONVERTED_STATIC_REVIEW_REQUIRED",
+      "file": "ready_glb/oga_pills_mxc2__simplePill.glb",
+      "bytes": 83408,
+      "sha256": "916fc7cb4cececb7f21c49fd8d13d53743a5c4fe4b0bdaa5b53f267ae1813290",
+      "triangles": 2432,
+      "warnings": [],
+      "bounds": [
+        [
+          -0.09106899797916412,
+          -0.026417000219225883,
+          -0.06880000233650208
+        ],
+        [
+          0.08328600227832794,
+          0.07358299940824509,
+          0.031199999153614044
+        ]
+      ]
+    }
+  ]
+}
