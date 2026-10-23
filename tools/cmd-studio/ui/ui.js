@@ -257,3 +257,62 @@ $$('.category').forEach(b=>b.addEventListener('click',()=>{
   runSearch();
 }));
 refresh();
+
+
+function paintUpdateState(s){
+  if(!s)return;
+  $('#updateVersion').textContent='v'+(s.version||'—');
+  $('#updateFeed').value=s.feedUrl||'';
+  $('#updateEnabled').checked=s.enabled===true;
+  $('#updateStatus').dataset.phase=s.phase||'configuration';
+  $('#updateStatusTitle').textContent={
+    configuration:'Configuration requise',veille:'Surveillance active',verification:'Vérification',
+    disponible:'Nouvelle version',telechargement:'Téléchargement sécurisé',
+    prete:'Mise à jour prête', 'a-jour':'Version à jour', erreur:'Erreur',
+    desactivee:'Mises à jour désactivées',developpement:'Version développeur'
+  }[s.phase]||'Mises à jour';
+  $('#updateStatusText').textContent=s.message||'';
+  $('#updateInstall').hidden=s.phase!=='prete';
+  $('#updateProgressTrack').hidden=s.phase!=='telechargement'&&s.phase!=='prete';
+  $('#updateProgressBar').style.width=Math.max(0,Math.min(100,Number(s.progress||0)))+'%';
+  $('#updateToken').placeholder=s.hasToken?
+    'Clé privée conservée et chiffrée — laisse vide pour la garder':
+    'Clé privée fournie par ton serveur de mises à jour';
+}
+async function updateStatusInit(){
+  try{
+    paintUpdateState(await api.updates.status());
+    api.updates.subscribe(paintUpdateState);
+  }catch(e){notice('Statut des mises à jour indisponible : '+e.message,true);}
+}
+$('#updateConfigure').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const payload={
+    url:$('#updateFeed').value.trim(),
+    enabled:$('#updateEnabled').checked
+  };
+  const key=$('#updateToken').value;
+  if(key)payload.token=key;
+  const submit=$('#updateConfigure button[type="submit"]');
+  submit.disabled=true;
+  try{
+    const result=await api.updates.configure(payload);
+    $('#updateToken').value='';
+    paintUpdateState(result);
+    notice('Configuration privée des mises à jour enregistrée.');
+  }catch(err){notice('Configuration des mises à jour : '+err.message,true);}
+  finally{submit.disabled=false;}
+});
+$('#updateCheck').addEventListener('click',async()=>{
+  const b=$('#updateCheck');b.disabled=true;
+  try{
+    paintUpdateState(await api.updates.check());
+  }catch(err){notice('Vérification des mises à jour : '+err.message,true);}
+  finally{b.disabled=false;}
+});
+$('#updateInstall').addEventListener('click',async()=>{
+  if(!window.confirm('Installer la nouvelle version de CMD Studio maintenant ? Tes projets locaux resteront conservés.'))return;
+  try{await api.updates.install();}
+  catch(err){notice('Installation impossible : '+err.message,true);}
+});
+updateStatusInit();
