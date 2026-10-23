@@ -2,10 +2,12 @@
 const { app, BrowserWindow } = require('electron');
 const path=require('node:path');
 app.setName('ANOMALIA Editor');
+if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.editor');
 function createWindow(){
   const window=new BrowserWindow({
     width:1600,height:940,minWidth:1120,minHeight:720,
     title:'ANOMALIA Editor',backgroundColor:'#0e1420',
+    icon:path.join(__dirname,'..','assets','anomalia-editor.ico'),
     webPreferences:{
       contextIsolation:true,nodeIntegration:false,sandbox:true,
       webSecurity:true,devTools:false
