@@ -15,13 +15,17 @@ function load(){
     };
   }catch{return {...defaults};}
 }
+const isMobile=()=>window.matchMedia('(max-width:820px)').matches;
 let state=load();
+if(isMobile()){state.library=false;state.inspector=false;state.focus=false;}
 let prior=null;
 function save(){
   try{localStorage.setItem(storageKey,JSON.stringify({...state,focus:false}));}catch{}
 }
 function render(){
   const left=state.library&&!state.focus,right=state.inspector&&!state.focus;
+  const close=document.getElementById('mobilePanelClose');
+  if(close)close.hidden=!isMobile()||(!left&&!right);
   workspace.classList.toggle('hide-left',!left);
   workspace.classList.toggle('hide-right',!right);
   workspace.classList.toggle('focus-mode',state.focus);
@@ -43,13 +47,19 @@ function render(){
 }
 function togglePanel(key){
   if(state.focus){state.focus=false;state.library=prior?.library??true;state.inspector=prior?.inspector??true;}
-  state[key]=!state[key];save();render();
+  const next=!state[key];
+  if(isMobile()&&next)state[key==='library'?'inspector':'library']=false;
+  state[key]=next;save();render();
 }
 function focus(){
   if(!state.focus){prior={library:state.library,inspector:state.inspector};state.focus=true;}
   else{state.focus=false;state.library=prior?.library??state.library;state.inspector=prior?.inspector??state.inspector;}
   save();render();
 }
+document.getElementById('mobilePanelClose')?.addEventListener('click',()=>{
+  state.library=false;state.inspector=false;state.focus=false;render();
+});
+window.addEventListener('resize',()=>{if(isMobile()&&state.library&&state.inspector)state.inspector=false;render();});
 document.getElementById('toggleLibrary').addEventListener('click',()=>togglePanel('library'));
 document.getElementById('toggleInspector').addEventListener('click',()=>togglePanel('inspector'));
 document.getElementById('toggleFocus').addEventListener('click',focus);
