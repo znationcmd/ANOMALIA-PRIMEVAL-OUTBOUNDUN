@@ -10,6 +10,13 @@ public:
  /** Editor-only creation in the dedicated new ANOMALIA_Archipelago_v2 world. Never edits another world. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateArchipelagoLandscape();
+ /** New separate world with original urban terrain pads. Never alters the v2 archipelago. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateInhabitedArchipelagoLandscape();
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double InhabitedArchipelagoHeight(double EastMeters, double NorthMeters);
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static TArray<FVector2D> InhabitedSettlementSites();
  /** Unsaved editor inspection/refresh only. Does not import heights or save packages. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static FString RefreshArchipelagoRenderResources(bool bRefresh = true);

@@ -1,5 +1,6 @@
 #include "AnomaliaWorldImportLibrary.h"
 #include "AnomaliaArchipelagoHeight.h"
+#include "AnomaliaInhabitedHeight.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Landscape.h"
@@ -21,22 +22,22 @@ double UAnomaliaWorldImportLibrary::ArchipelagoHeight(double EastMeters,double N
  if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return 0;
  return AnomaliaArchipelago::Height(EastMeters,NorthMeters);
 }
-AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape()
+static AActor* CreateLandscape(bool bInhabited)
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))return nullptr;
+ if(!World || World->GetPackage()->GetName()!=(bInhabited?TEXT("/Game/Maps/ANOMALIA_Inhabited_v1"):TEXT("/Game/Maps/ANOMALIA_Archipelago_v2")))return nullptr;
  for(TActorIterator<ALandscape> It(World);It;++It)return nullptr; // Never overlay/replace existing terrain.
  constexpr int32 Size=3025;
  TArray<uint16> Samples; Samples.SetNumUninitialized(Size*Size);
  for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X){
   const double East=-24000.+48000.*X/(Size-1);
   const double North=24000.-48000.*Y/(Size-1);
-  Samples[Y*Size+X]=AnomaliaArchipelago::Encode(AnomaliaArchipelago::Height(East,North));
+  Samples[Y*Size+X]=AnomaliaArchipelago::Encode(bInhabited?AnomaliaInhabited::Height(East,North):AnomaliaArchipelago::Height(East,North));
  }
  ALandscape* Land=World->SpawnActor<ALandscape>();
  if(!Land)return nullptr;
- Land->SetActorLabel(TEXT("ANOMALIA_OriginalArchipelago_48km"));
+ Land->SetActorLabel(bInhabited?TEXT("ANOMALIA_InhabitedArchipelago_48km"):TEXT("ANOMALIA_OriginalArchipelago_48km"));
  Land->SetActorLocation(FVector(-2400000,-2400000,0));
  Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800));
  TMap<FGuid,TArray<uint16>> Heights; Heights.Add(FGuid(),MoveTemp(Samples));
@@ -51,6 +52,20 @@ AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape()
 #else
  return nullptr;
 #endif
+}
+
+AActor* UAnomaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
+AActor* UAnomaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
+TArray<FVector2D> UAnomaliaWorldImportLibrary::InhabitedSettlementSites()
+{
+ TArray<FVector2D> Result;
+ for(const auto& Site:AnomaliaInhabited::Sites)Result.Add(FVector2D(Site[0],Site[1]));
+ return Result;
+}
+double UAnomaliaWorldImportLibrary::InhabitedArchipelagoHeight(double EastMeters,double NorthMeters)
+{
+ if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return 0;
+ return AnomaliaInhabited::Height(EastMeters,NorthMeters);
 }
 
 FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRefresh)

@@ -23,11 +23,23 @@ class UrbanLayoutTests(unittest.TestCase):
         geometry=importlib.util.module_from_spec(source);source.loader.exec_module(geometry)
         with tempfile.TemporaryDirectory() as folder:
             manifest=geometry.generate(Path(folder));actual={m['id']:m['dimensionsMetresYUp'] for m in manifest['models']}
-        for building in module.layout()['buildings']:
+        for building in module.layout()['buildings']+module.service_fleet():
             if building['model'] not in actual:continue
             dims=actual[building['model']]
             self.assertLessEqual(dims[0],building['width']+.01,building['id'])
             self.assertLessEqual(dims[2],building['depth']+.01,building['id'])
+
+    def test_emergency_fleet_has_clear_parking_near_each_service(self):
+        plan=module.layout();buildings={b['id']:b for b in plan['buildings']}
+        fleet=module.service_fleet()
+        self.assertEqual({v['model'] for v in fleet},{'police','fire_engine','ambulance'})
+        for index,vehicle in enumerate(fleet):
+            service=buildings[vehicle['service']]
+            self.assertLess((vehicle['x']-service['x'])**2+(vehicle['y']-service['y'])**2,30**2)
+            for other in plan['buildings']+fleet[index+1:]:
+                self.assertFalse(module.overlaps(module.rectangle(vehicle),module.rectangle(other)),(vehicle['id'],other['id']))
+            for road in plan['roads']:
+                self.assertFalse(module.overlaps(module.rectangle(vehicle),module.rectangle(road,2)))
 
     def test_ground_area_is_conserved_except_for_four_pool_recesses(self):
         plan=module.layout();rectangles=module.ground_rectangles(plan['groundBounds'],plan['pools'])

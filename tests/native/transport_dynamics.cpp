@@ -48,6 +48,14 @@ int main()
     I.Throttle=0;I.Brake=1;
     for(int N=0;N<3600;++N) { Speed=RailSpeed(Speed,I,P,false,Dt);assert(Speed>=0); }
     assert(Speed==0);
+    // A cable cabin returns at its configured line speed; trains retain limited reverse.
+    I={};I.Throttle=-1;Speed=0;
+    for(int N=0;N<72000;++N) Speed=RailSpeed(Speed,I,P,true,Dt,1.0);
+    assert(Speed>=-P.MaxSpeed&&Speed<-P.MaxSpeed*0.9);
+    I={};I.Brake=1;
+    for(int N=0;N<3600;++N) { Speed=RailSpeed(Speed,I,P,false,Dt,1.0);assert(Speed<=0); }
+    assert(Speed==0);
+    assert(RailSpeed(100,I,P,true,Dt,std::numeric_limits<double>::quiet_NaN())==0);
     bool End=false;
     assert(RailDistance(990,30,1000,false,End)==1000&&End);
     assert(RailDistance(5,-20,1000,false,End)==0&&End);

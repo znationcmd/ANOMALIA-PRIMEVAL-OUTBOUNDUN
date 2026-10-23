@@ -17,7 +17,7 @@ try:
     for group in ['OriginalLot1','Expansion1']:source.extend(json.loads((ROOT/'SourceAssets'/group/'manifest.json').read_text())['models'])
     catalogue={m['id']:m for m in source};loaded={}
     # Resolve every source before creating anything, preserving any existing scene.
-    for item in plan['buildings']:
+    for item in plan['buildings']+module.service_fleet():
         model=catalogue[item['model']];mesh=unreal.EditorAssetLibrary.load_asset(model['objectPath'])
         tag='AnomaliaOriginalLot1SHA' if item['model'] in ['hlm_8floors_v1','beach_villa_pool_v1'] else 'AnomaliaExpansionSHA'
         if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,tag)!=model['sha256']:
@@ -28,12 +28,35 @@ try:
         loaded[item['model']]=mesh
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     package='/Game/Maps/ANOMALIA_UrbanReview_v1'
+    def deploy_services():
+        vehicle_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+        if not vehicle_class:raise RuntimeError('Native possessable vehicle class unavailable')
+        existing={a.get_actor_label():a for a in actors.get_all_level_actors()}
+        placed=[]
+        for item in module.service_fleet():
+            label='ANOMALIA_Urban1_'+item['id']
+            if label in existing:
+                a=existing[label]
+                if a.get_class()!=vehicle_class or unreal.Name('ANOMALIA_Urban1_ServiceFleet') not in a.tags or str(a.get_editor_property('vehicle_id'))!=item['model']:
+                    raise RuntimeError('Existing unowned or modified service actor preserved: '+label)
+                placed.append(dict(id=item['id'],vehicleId=item['model'],state='EXISTING_PRESERVED'))
+                continue
+            # Sphere bottom at pavement elevation; native refresh places the model on that bottom.
+            a=actors.spawn_actor_from_class(vehicle_class,unreal.Vector(item['x']*100,item['y']*100,175))
+            if not a:raise RuntimeError('Could not create service vehicle: '+label)
+            a.set_actor_label(label);a.tags=[unreal.Name('ANOMALIA_Urban1_ServiceFleet')]
+            a.set_editor_property('presentation_mesh_override',loaded[item['model']])
+            if not a.configure_vehicle(unreal.Name(item['model'])):raise RuntimeError('Service vehicle configuration failed: '+label)
+            placed.append(dict(id=item['id'],vehicleId=item['model'],state='POSSESSABLE_NOT_PLAYTESTED'))
+        return placed
     if unreal.EditorAssetLibrary.does_asset_exist(package):
         if not level.load_level(package):raise RuntimeError('Cannot load existing review map')
         present={a.get_actor_label():a for a in actors.get_all_level_actors()}
         if 'ANOMALIA_Urban1_OwnershipMarker' not in present:raise RuntimeError('Existing unowned map preserved')
         for item in plan['buildings']:
             if 'ANOMALIA_Urban1_'+item['id'] not in present:raise RuntimeError('Existing incomplete scene preserved for inspection')
+        report['serviceFleet']=deploy_services()
+        if not level.save_current_level():raise RuntimeError('Cannot save service fleet')
         report.update(state='EXISTING_URBAN_REVIEW_PRESERVED_NOT_PLAYTESTED',mapPackage=package,buildingCount=len(plan['buildings']))
     else:
         if not level.new_level(package):raise RuntimeError('Cannot create independent city review scene')
@@ -81,6 +104,7 @@ try:
             a=place(item['id'],unreal.StaticMeshActor,(item['x']*100-bounds.origin.x,item['y']*100-bounds.origin.y,0))
             c=a.get_component_by_class(unreal.StaticMeshComponent);c.set_static_mesh(mesh);c.set_collision_profile_name('BlockAll')
             report['placements'].append(dict(id=item['id'],model=item['model'],locationCm=str(a.get_actor_location())))
+        report['serviceFleet']=deploy_services()
         sun=place('Sun',unreal.DirectionalLight,(0,0,3000));sun.set_actor_rotation(unreal.Rotator(pitch=-45,yaw=-30,roll=0),False)
         place('Sky',unreal.SkyAtmosphere,(0,0,0));place('Ambient',unreal.SkyLight,(0,0,1000))
         place('PlayerStart',unreal.PlayerStart,(1500,-1500,120))

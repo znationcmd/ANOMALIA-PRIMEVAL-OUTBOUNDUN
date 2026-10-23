@@ -1,0 +1,86 @@
+name: UE5 transport and city services
+on:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths: ['unreal/**', 'scripts/ue5/**', '.github/workflows/ue5-transport-city.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  compile-and-test:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/driveable-roster-city-20261023'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Build actual Editor and Game and run native tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:UE_ROOT) { throw 'Installed Unreal Engine 5.8 is required.' }
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/TransportCity/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output $evidence --run-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content "$evidence/report.json" -Raw | ConvertFrom-Json
+          if ($report.engineVersion.MajorVersion -ne 5 -or $report.engineVersion.MinorVersion -ne 8) { throw 'Validation requires UE5.8.' }
+          $tests = Get-Content (Join-Path $report.automationReport 'index.json') -Raw | ConvertFrom-Json
+          foreach ($name in @('Anomalia.Native.CableCabin', 'Anomalia.Native.NavigableSeaRegion')) {
+            if (-not @($tests.tests | Where-Object { $_.fullTestPath -eq $name -and $_.state -eq 'Success' }).Count) { throw "Native test missing or failed: $name" }
+          }
+      - name: Add emergency fleet to the existing owned urban review and configure sea
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/TransportCity/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          # All urban art must already have been imported with its manifest; never replace it with primitives.
+          $env:ANOMALIA_SETTLEMENT_REPORT = Join-Path $evidence 'city-services.json'
+          $env:ANOMALIA_SEA_REPORT = Join-Path $evidence 'navigable-sea.json'
+          foreach ($script in @('create_settlement_review.py', 'configure_archipelago_transport.py')) {
+            $scriptPath = Join-Path $env:GITHUB_WORKSPACE "unreal/Scripts/$script"
+            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$evidence/$script.log"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $city = Get-Content $env:ANOMALIA_SETTLEMENT_REPORT -Raw | ConvertFrom-Json
+          $sea = Get-Content $env:ANOMALIA_SEA_REPORT -Raw | ConvertFrom-Json
+          if ($city.state -notin @('URBAN_REVIEW_CREATED_NOT_PLAYTESTED','EXISTING_URBAN_REVIEW_PRESERVED_NOT_PLAYTESTED') -or @($city.serviceFleet).Count -ne 3 -or $city.sourceCommit -ne $env:GITHUB_SHA) { throw 'Fresh complete city service report required.' }
+          if ($sea.state -notin @('NAVIGABLE_SEA_CREATED_NOT_PLAYTESTED','EXISTING_NAVIGABLE_SEA_PRESERVED_NOT_PLAYTESTED') -or $sea.sourceCommit -ne $env:GITHUB_SHA) { throw 'Fresh sea configuration report required.' }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare verified licensed art and create the separate populated world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/TransportCity/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/prepare-realism-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:ANOMALIA_REALISM_SCENE_REPORT = Join-Path $evidence 'realism-import.json'
+          $env:ANOMALIA_POPULATION_REPORT = Join-Path $evidence 'populated-world.json'
+          foreach ($script in @('create_realism_validation.py','create_inhabited_archipelago.py')) {
+            $scriptPath = Join-Path $env:GITHUB_WORKSPACE "unreal/Scripts/$script"
+            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -d3d11 -sm5 -RenderOffscreen "-abslog=$evidence/$script.log"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          }
+          $result = Get-Content $env:ANOMALIA_POPULATION_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -ne 'POPULATED_WORLD_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.houses -lt 4500) { throw 'Fresh populated world assembly failed.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ue5-transport-city-evidence
+          path: unreal/Saved/TransportCity/run-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: warn

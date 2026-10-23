@@ -34,6 +34,8 @@ public:
     float StallSpeedCm=3500;
 private:
     bool bTransport=false;
+    bool bUprightCabin=false;
+    FQuat RouteRotation(const FQuat& Rotation) const;
     AnomaliaTransport::Mode Kind=AnomaliaTransport::Mode::Surface;
     AnomaliaTransport::Settings Parameters;
     TWeakObjectPtr<AAnomaliaRailTrack> Rail;

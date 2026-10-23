@@ -80,14 +80,15 @@ inline Vector Integrate(Vector Velocity, Vector A, double Dt, double MaxSpeed)
     if(Length>MaxSpeed) Next=Next*(MaxSpeed/Length);
     return Next;
 }
-inline double RailSpeed(double Speed, Controls Input, const Settings& P, bool Powered, double Dt)
+inline double RailSpeed(double Speed, Controls Input, const Settings& P, bool Powered, double Dt, double ReverseSpeedFraction=0.25)
 {
+    if(!std::isfinite(ReverseSpeedFraction)||ReverseSpeedFraction<0||ReverseSpeedFraction>1) return 0;
     if(!std::isfinite(Speed)||!std::isfinite(Dt)||Dt<=0||Dt>0.05||!P.Valid()) return 0;
     Input.Sanitize();
     Speed+=(Powered?Input.Throttle:0)*P.Acceleration*Dt;
     const double Deceleration=(Input.Brake*1200+30)*Dt;
     Speed=std::copysign(std::max(0.0,std::abs(Speed)-Deceleration),Speed);
-    return std::clamp(Speed,-P.MaxSpeed*0.25,P.MaxSpeed);
+    return std::clamp(Speed,-P.MaxSpeed*ReverseSpeedFraction,P.MaxSpeed);
 }
 inline double RailDistance(double Distance,double Delta,double Length,bool Loop,bool& AtEnd)
 {

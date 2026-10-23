@@ -40,3 +40,12 @@ def ground_rectangles(bounds,pools):
             rect=[x0,y0,x1,y1]
             if not any(overlaps(rect,h) for h in holes):result.append(rect)
     return result
+
+
+def service_fleet():
+    """Off-street parking for possessable service vehicles, metres in the urban review."""
+    return [
+        dict(id='police_patrol',model='police',x=120,y=135,width=8,depth=4,service='police_station'),
+        dict(id='fire_response',model='fire_engine',x=40,y=-165,width=12,depth=4,service='fire_station'),
+        dict(id='medical_response',model='ambulance',x=40,y=135,width=9,depth=4,service='hospital'),
+    ]

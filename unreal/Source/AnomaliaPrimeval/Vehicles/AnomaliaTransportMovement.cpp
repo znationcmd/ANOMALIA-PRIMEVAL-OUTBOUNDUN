@@ -15,20 +15,30 @@ UAnomaliaTransportMovement::UAnomaliaTransportMovement()
 }
 void UAnomaliaTransportMovement::Configure(const FAnomaliaVehicleDefinition& D,float Multiplier)
 {
+    const Mode PreviousKind=Kind;
+    const bool bWasUprightCabin=bUprightCabin;
     bTransport=D.Domain!=EAnomaliaVehicleDomain::Ground;
+    bUprightCabin=D.Domain==EAnomaliaVehicleDomain::Cable;
     Kind=Mode::Surface;
     if(D.Domain==EAnomaliaVehicleDomain::Air)
         Kind=(D.Id==TEXT("attack_helicopter")||D.Id==TEXT("transport_helicopter"))?Mode::Helicopter:Mode::Plane;
     else if(D.Domain==EAnomaliaVehicleDomain::Underwater) Kind=Mode::Submarine;
-    else if(D.Domain==EAnomaliaVehicleDomain::Rail) Kind=Mode::Rail;
+    else if(D.Domain==EAnomaliaVehicleDomain::Rail||bUprightCabin) Kind=Mode::Rail;
     Parameters.MaxSpeed=FMath::Clamp(D.MaxSpeedKmh*Multiplier*100000.0/3600.0,100.0,60000.0);
     Parameters.Acceleration=Kind==Mode::Plane?2500:Kind==Mode::Helicopter?1100:Kind==Mode::Rail?180:350;
+    if(bUprightCabin) Parameters.Acceleration=100;
     Parameters.Drag=Kind==Mode::Plane?0.045:0.18;
     // A carrier accelerates and turns much more slowly than a jetski.
     if(D.Id==TEXT("carrier")||D.Id==TEXT("warship")) Parameters.Acceleration=45;
     if(Kind==Mode::Surface) Parameters.Drag=Parameters.Acceleration/Parameters.MaxSpeed;
+    if(PreviousKind!=Kind||bWasUprightCabin!=bUprightCabin) { Rail.Reset(); RailDistanceCm=0; }
     Velocity=FVector::ZeroVector;
     RailSpeedCm=0;
+}
+FQuat UAnomaliaTransportMovement::RouteRotation(const FQuat& Rotation) const
+{
+    // The cable follows the slope; the suspended passenger cabin stays upright.
+    return bUprightCabin?FRotator(0,Rotation.Rotator().Yaw,0).Quaternion():Rotation;
 }
 bool UAnomaliaTransportMovement::AssignTrack(AAnomaliaRailTrack* Route,float DistanceCm)
 {
@@ -39,7 +49,7 @@ bool UAnomaliaTransportMovement::AssignTrack(AAnomaliaRailTrack* Route,float Dis
     // Joining a rail is proximity-gated; do not teleport vehicles through the world.
     FHitResult Hit;
     SafeMoveUpdatedComponent(Target-UpdatedComponent->GetComponentLocation(),
-        Route->Track->GetQuaternionAtDistanceAlongSpline(DistanceCm,ESplineCoordinateSpace::World),true,Hit);
+        RouteRotation(Route->Track->GetQuaternionAtDistanceAlongSpline(DistanceCm,ESplineCoordinateSpace::World)),true,Hit);
     if(Hit.bBlockingHit||!UpdatedComponent->GetComponentLocation().Equals(Target,1.f)) return false;
     Rail=Route; RailDistanceCm=DistanceCm; RailSpeedCm=0; return true;
 }
@@ -120,13 +130,13 @@ void UAnomaliaTransportMovement::StepRail(double Dt,Controls Input,bool bPowered
     USplineComponent* Spline=Rail->Track;
     if(Spline->GetSplineLength()<=0) { Velocity=FVector::ZeroVector; RailSpeedCm=0; return; }
     const double Previous=RailDistanceCm;
-    RailSpeedCm=AnomaliaTransport::RailSpeed(RailSpeedCm,Input,Parameters,bPowered,Dt);
+    RailSpeedCm=AnomaliaTransport::RailSpeed(RailSpeedCm,Input,Parameters,bPowered,Dt,bUprightCabin?1.0:0.25);
     bool AtEnd=false;
     const double Next=AnomaliaTransport::RailDistance(Previous,RailSpeedCm*Dt,Spline->GetSplineLength(),Spline->IsClosedLoop(),AtEnd);
     const FTransform Target=Spline->GetTransformAtDistanceAlongSpline(Next,ESplineCoordinateSpace::World,false);
     const FVector Start=UpdatedComponent->GetComponentLocation();
     FHitResult Hit;
-    SafeMoveUpdatedComponent(Target.GetLocation()-Start,Target.GetRotation(),true,Hit);
+    SafeMoveUpdatedComponent(Target.GetLocation()-Start,RouteRotation(Target.GetRotation()),true,Hit);
     if(Hit.bBlockingHit)
     {
         // Stop at an obstruction, never slide a locomotive off its rail or teleport through it.

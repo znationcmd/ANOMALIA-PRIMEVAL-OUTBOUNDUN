@@ -180,3 +180,6 @@ jobs:
         run: python scripts/vehicle-requirements/audit-requested-vehicles.py --check
       - name: Verify original metro meshes preserve artist edits
         run: python -m unittest discover -s tests -p test_ue5_metro.py -v
+
+      - name: Verify populated archipelago against native heights and preserve coastline
+        run: python -m unittest discover -s tests -p test_ue5_archipelago_population.py -v

@@ -19,7 +19,7 @@ class UnrealPortTests(unittest.TestCase):
     def test_requested_vehicle_catalog_is_unique(self):
         cpp = (SOURCE / "AnomaliaVehicleCatalog.cpp").read_text(encoding="utf-8")
         ids = re.findall(r'MakeVehicle\(TEXT\("([^"]+)"\)', cpp)
-        self.assertEqual(len(ids), 32)
+        self.assertEqual(len(ids), 45)
         self.assertEqual(len(set(ids)), len(ids))
         for expected in ("airliner", "airplane", "train", "farm_tractor", "transport_truck", "semi_truck", "quad", "buggy", "snowmobile",
                          "jetski", "zodiac", "dirt_bike", "kart", "formula_one", "motorcycle",
