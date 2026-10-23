@@ -2,3 +2,28 @@
 @media(max-width:1340px){.sidebar{width:231px;padding:20px 12px 13px}.brandText b{font-size:15px}.mainArea{padding:22px}.topbar{padding:17px 22px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.toolsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.heroContent{padding:29px}.hero{min-height:300px}.sideFeature{min-height:150px}.libraryLayout{grid-template-columns:minmax(0,1fr) 300px}.searchBar select{max-width:175px}.quickGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1030px){.sidebar{width:205px}.sidebarLabel{font-size:9px}.navItem{gap:8px;font-size:11px;padding:10px}.brandMark{width:38px;height:38px;font-size:25px}.brandText small{font-size:7px}.sideFeature{display:none}.topActions .btn{padding:10px 11px}.libraryLayout{grid-template-columns:1fr}.viewerCard{position:relative}.searchBar{flex-wrap:wrap}.searchBar .searchInput{flex-basis:100%}.searchBar select{max-width:unset;flex:1}.heroIndex{display:none}.quickGrid{grid-template-columns:1fr}.stats{gap:9px}}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* Paramètres de mise à jour du studio — visibles uniquement dans sa propre application. */
+.updatePanel{margin-top:20px;border:1px solid #45638b;border-radius:17px;padding:24px;background:linear-gradient(135deg,#1e2f4b,#162136);box-shadow:inset 0 1px #ffffff18,0 8px 24px #0004}
+.updateHead{display:flex;align-items:start;justify-content:space-between;gap:16px}
+.updateHead h3{font-size:17px;letter-spacing:-.2px;margin:5px 0}
+.updateHead p{font-size:11px;line-height:1.8;color:#9fb1cc;max-width:730px}
+.updateVersion{font-size:11px;color:#a6d9ff;padding:6px 12px;border-radius:9px;border:1px solid #5578a3;background:#1b3451;white-space:nowrap}
+.updateStatus{display:flex;align-items:center;gap:12px;margin:18px 0;padding:15px;border:1px solid #396282;border-radius:12px;background:#17293e}
+.updateStatus strong{font-size:12px}.updateStatus small{display:block;font-size:11px;color:#9bb7cb;margin-top:6px}
+.updateBullet{display:block;width:9px;height:9px;border-radius:50%;background:#84a5e8;box-shadow:0 0 15px #6086d8;flex:none}
+.updateStatus[data-phase="prete"]{border-color:#4da68b}.updateStatus[data-phase="prete"] .updateBullet{background:#65e5ae;box-shadow:0 0 15px #65e5ae}
+.updateStatus[data-phase="erreur"]{border-color:#bd6370}.updateStatus[data-phase="erreur"] .updateBullet{background:#f27f94}
+.progressTrack{height:7px;border-radius:99px;overflow:hidden;background:#283e55;margin:12px 0}
+.progressTrack[hidden],#updateInstall[hidden]{display:none}
+#updateProgressBar{height:100%;width:0%;background:linear-gradient(90deg,#4277ff,#60ead2);transition:width .2s}
+.updateForm{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.updateForm>label:not(.updateToggle){display:flex;flex-direction:column;gap:8px;font-size:11px;color:#a8bcde}
+.updateForm input[type="url"],.updateForm input[type="password"]{width:100%;height:43px;border:1px solid #42648c;border-radius:9px;padding:10px 12px;background:#12223a;color:#f2f6ff;font-size:12px;min-width:0}
+.updateForm input::placeholder{color:#738aa8;font-size:11px}
+.updateToggle{grid-column:1/-1;display:flex;align-items:center;gap:10px;font-size:12px;color:#d4def4}
+.updateToggle input{width:16px;height:16px;accent-color:#686df3}
+.updateActions{grid-column:1/-1;display:flex;gap:10px;flex-wrap:wrap}
+.updatePrivacy{display:flex;align-items:start;gap:10px;color:#91acc2;font-size:10px;line-height:1.8;margin:20px 0 0}
+.updatePrivacy svg{width:17px;height:17px;color:#70debc}
+@media(max-width:1250px){.updateForm{grid-template-columns:1fr}}
