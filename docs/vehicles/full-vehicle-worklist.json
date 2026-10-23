@@ -5669,6 +5669,36 @@
           "excludedSection": true
         }
       ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/free-honda-crf-450-c80f0e732e844580af412958c9d67315",
+      "mentions": [
+        {
+          "document": "Recherche ciblée du 23 octobre 2026",
+          "note": "Honda CRF 450 2022: 180k triangles; auteur annonce modèle créé dans Blender, fichier .blend inclus et rig. Page directe HTTP 403; fichiers, provenance et qualité non inspectés.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/ktm-450-exc-d4a99a39c0ff48378ba47af8f8b74dea",
+      "mentions": [
+        {
+          "document": "Recherche ciblée du 23 octobre 2026",
+          "note": "KTM 450 EXC: 124.9k triangles; page directe HTTP 403. Variante civile; ne valide pas KTM 450 EXC Tactical militaire.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/apocalyptic-off-road-buggy-5aacc30acdc5455aac98f44f5bc8c043",
+      "mentions": [
+        {
+          "document": "Recherche ciblée du 23 octobre 2026",
+          "note": "Apocalyptic Off Road Buggy: 40.9k triangles; auteur annonce modélisation et textures C4D. Page directe HTTP 403; vérifier intérieur, textures PBR et roues séparées.",
+          "excludedSection": false
+        }
+      ]
     }
   ],
   "sourcingPolicy": {
@@ -5778,14 +5808,28 @@
     {
       "requestId": "generic_motocross",
       "label": "Motocross",
-      "status": "PISTE_PARTIELLE_A_VERIFIER",
+      "status": "CANDIDATS_PRECIS_A_VERIFIER",
       "sources": [
         {
           "url": "https://sketchfab.com/3d-models/motorcycle-d2491be97414453ea6c1f2e13b6db4a5",
           "evidenceDocument": "docs/ANOMALIA_VEHICLE_ASSET_LEADS_BATCH5_20261023.md"
+        },
+        {
+          "url": "https://sketchfab.com/3d-models/free-honda-crf-450-c80f0e732e844580af412958c9d67315",
+          "label": "Honda CRF 450 2022",
+          "licenseEvidence": "CC Attribution dans l'index",
+          "notes": "180k triangles; auteur annonce modèle créé dans Blender, fichier .blend inclus et rig. Page directe HTTP 403; fichiers, provenance et qualité non inspectés.",
+          "evidenceDocument": "Recherche ciblée du 23 octobre 2026"
+        },
+        {
+          "url": "https://sketchfab.com/3d-models/ktm-450-exc-d4a99a39c0ff48378ba47af8f8b74dea",
+          "label": "KTM 450 EXC",
+          "licenseEvidence": "CC Attribution dans l'index",
+          "notes": "124.9k triangles; page directe HTTP 403. Variante civile; ne valide pas KTM 450 EXC Tactical militaire.",
+          "evidenceDocument": "Recherche ciblée du 23 octobre 2026"
         }
       ],
-      "note": "Suivi des demandes génériques et compléments de conversation; non additionnable aux 210 groupes, plusieurs se recoupent."
+      "note": "Sources trouvées dans l'index public; accès direct HTTP 403. Aucun fichier téléchargé, importé ni validé. Vérifier ces sources avant de recommencer une recherche générale."
     },
     {
       "requestId": "generic_jet_ski",
@@ -6057,9 +6101,17 @@
     {
       "requestId": "supplement_1",
       "label": "Buggy",
-      "status": "A_RECHERCHER",
-      "sources": [],
-      "note": "Suivi des demandes génériques et compléments de conversation; non additionnable aux 210 groupes, plusieurs se recoupent."
+      "status": "CANDIDATS_PRECIS_A_VERIFIER",
+      "sources": [
+        {
+          "url": "https://sketchfab.com/3d-models/apocalyptic-off-road-buggy-5aacc30acdc5455aac98f44f5bc8c043",
+          "label": "Apocalyptic Off Road Buggy",
+          "licenseEvidence": "CC Attribution dans l'index",
+          "notes": "40.9k triangles; auteur annonce modélisation et textures C4D. Page directe HTTP 403; vérifier intérieur, textures PBR et roues séparées.",
+          "evidenceDocument": "Recherche ciblée du 23 octobre 2026"
+        }
+      ],
+      "note": "Sources trouvées dans l'index public; accès direct HTTP 403. Aucun fichier téléchargé, importé ni validé. Vérifier ces sources avant de recommencer une recherche générale."
     },
     {
       "requestId": "supplement_2",
@@ -6170,5 +6222,11 @@
     "newDownloadsThisReconciliation": 0,
     "newUnrealImportsThisReconciliation": 0,
     "note": "Comptage de groupes et de sources enregistrées, pas de véhicules individuels finis. Références historiques et variantes partielles distinguées."
+  },
+  "environmentSourcingIndex": {
+    "document": "docs/art/FULL_ENVIRONMENT_WORKLIST.md",
+    "scope": "Bâtiments, arbres, végétation, mobilier et décorations demandés; complément aux 210 groupes de véhicules.",
+    "existingPreparedManifest": "docs/art/realism-validation-sources.json",
+    "noNewImportsThisUpdate": true
   }
 }
