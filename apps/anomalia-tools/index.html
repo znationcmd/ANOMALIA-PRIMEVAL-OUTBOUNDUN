@@ -5,7 +5,7 @@
 <div class="shell">
 <aside class="sidebar">
  <div class="brand"><div class="brandBadge"><span class="brandSymbol">A</span><span class="brandPlus">+</span></div><div><strong>ANOMALIA <em>TOOLS</em></strong><small>PROFESSIONAL DEVELOPMENT SUITE</small></div></div>
- <div class="version"><span class="versionLine"></span> VERSION 0.2.0 · WINDOWS WORKSTATION</div>
+ <div class="version"><span class="versionLine"></span> VERSION <strong id="appSidebarVersion" aria-label="Version installée">—</strong> · WINDOWS WORKSTATION</div>
  <div class="navHeading">ESPACE DE TRAVAIL</div>
  <button data-tab="home" class="nav active"><span>◩</span> Vue d'ensemble</button>
  <button data-tab="workbench" class="nav"><span>⌘</span> Workbench <small>Code</small></button>
@@ -86,7 +86,7 @@
    <div class="split"><div class="panel"><h3>Exporter mon mod</h3><p>Enregistre un fichier ZIP sur ton PC, que tu pourras contrôler puis distribuer toi-même.</p><button id="exportMod" class="primary fullWidth">Exporter mon mod en ZIP</button><div id="publishInfo" class="output">Aucune publication en ligne n'est effectuée automatiquement.</div></div><div class="panel"><h3>Sécurité de publication</h3><p class="caption">Les sources restent privées tant que tu ne choisis pas de les partager. Aucun Steam Workshop ni serveur public n'est connecté. Les droits sur les modèles et textures sont à vérifier avant toute diffusion.</p><div class="safeBox">◉ Aucune clé Steam ou Epic demandée. Aucun projet tiers consulté.</div></div></div>
   </section>
   <section id="updates" class="page" hidden>
-    <div class="panelTitle"><div><small class="sectionOverline">APPLICATION & MAINTENANCE</small><h2>Mises à jour de ANOMALIA Tools</h2><p>Le logiciel vérifie les versions officielles dans un canal séparé de CMD Studio et ANOMALIA Editor.</p></div><span id="updateVersion" class="versionPill">v0.2.0</span></div>
+    <div class="panelTitle"><div><small class="sectionOverline">APPLICATION & MAINTENANCE</small><h2>Mises à jour de ANOMALIA Tools</h2><p>Le logiciel vérifie les versions officielles dans un canal séparé de CMD Studio et ANOMALIA Editor.</p></div><span id="updateVersion" class="versionPill">v—</span></div>
     <div class="updatesLayout">
       <div class="panel updateMain">
         <div class="updateHeader"><div class="updateVisual" aria-hidden="true">↻</div><div><small>MISE À JOUR WINDOWS</small><h3 id="updateStatusTitle">Statut du logiciel</h3><p id="updateMessage" role="status" aria-live="polite">Chargement du système de mise à jour…</p></div></div>
@@ -98,7 +98,7 @@
     </div>
   </section>
  </div>
- <footer><span>ANOMALIA TOOLS 0.2 · SUITE DE PRODUCTION INDÉPENDANTE</span><span>PROJETS LOCAUX · DONNÉES PRIVÉES</span></footer>
+ <footer><span>ANOMALIA TOOLS <strong id="appFooterVersion" aria-label="Version installée">—</strong> · SUITE DE PRODUCTION INDÉPENDANTE</span><span>PROJETS LOCAUX · DONNÉES PRIVÉES</span></footer>
 </main></div>
 <div id="modal" class="modal" hidden><div class="modalCard"><h2>Nouveau projet ANOMALIA</h2><p>Un dossier privé est créé uniquement pour ce compte Windows.</p><form id="createForm"><label>Nom du mod ou projet<input id="newName" maxlength="55" placeholder="Mon Mod ANOMALIA" required></label><label>Description<input id="newDescription" maxlength="260" placeholder="Description (facultative)"></label><div class="actions end"><button type="button" id="cancelModal">Annuler</button><button class="primary" type="submit">Créer mon projet</button></div></form></div></div>
 <script type="module" src="/src/renderer.js"></script>
