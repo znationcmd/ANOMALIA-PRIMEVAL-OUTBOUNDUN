@@ -25,31 +25,31 @@ Les exemples ci-dessous décrivent le périmètre demandé; ils ne constituent p
 
 | ID stable | Demande | État de recherche |
 | --- | --- | --- |
-| world_hlm | HLM, immeubles d'habitation et cités dans les grandes villes | Source spécifique à rechercher; pack modulaire seulement partiel |
-| world_residences | Résidences, appartements, halls, escaliers et balcons | À rechercher; aucun ensemble complet validé |
+| world_hlm | HLM, immeubles d'habitation et cités dans les grandes villes | Candidats partiels à vérifier : [Immeuble résidentiel modulaire](https://sketchfab.com/3d-models/modular-russian-panel-house-7bef9b27b4c54a03b64e2f395fef3d7f). Ne valide pas l'ensemble du groupe. |
+| world_residences | Résidences, appartements, halls, escaliers et balcons | Candidats partiels à vérifier : [Immeuble résidentiel modulaire](https://sketchfab.com/3d-models/modular-russian-panel-house-7bef9b27b4c54a03b64e2f395fef3d7f). Ne valide pas l'ensemble du groupe. |
 | world_lotissements | Lotissements, maisons et jardins | Une maison déjà référencée; diversité à compléter |
-| world_villas_pool | Villas avec piscine en bord de plage | Ressources réalistes spécifiques à rechercher |
+| world_villas_pool | Villas avec piscine en bord de plage | Candidats partiels à vérifier : [Villa avec piscine et intérieur](https://sketchfab.com/3d-models/small-villa-6fc3a756dacd40af8c6e4e3b8e674ea2). Ne valide pas l'ensemble du groupe. |
 | world_villages | Villages et maisons régionales | À rechercher et assembler |
 | world_shops | Commerces et bâtiments de ville | Pack modulaire candidat partiel |
-| world_hospital | Hôpitaux et espaces médicaux | À rechercher |
-| world_emergency | Police, gendarmerie, casernes de pompiers | À rechercher |
+| world_hospital | Hôpitaux et espaces médicaux | Candidats partiels à vérifier : [Hôpital de Pori, bâtiment principal](https://sketchfab.com/3d-models/pori-city-hospital-16-main-hospital-building-1acf49182b3a4248a0dc1cddb2e2e976). Ne valide pas l'ensemble du groupe. |
+| world_emergency | Police, gendarmerie, casernes de pompiers | Candidats partiels à vérifier : [Caserne de pompiers](https://sketchfab.com/3d-models/fire-station-34988c59a010496cacc06d0580a116dd), [Poste de police urbain](https://sketchfab.com/3d-models/city-police-station-f6ba27f0426c4eefabce32d17e87fd35). Ne valide pas l'ensemble du groupe. |
 | world_military | Bases militaires et bunkers | À rechercher |
-| world_farms | Fermes, granges et bâtiments agricoles | À rechercher |
+| world_farms | Fermes, granges et bâtiments agricoles | Candidats partiels à vérifier : [Abri agricole usé](https://sketchfab.com/3d-models/worn-shed-pbr-game-ready-be6edd62e55a4f9a99da940fc164a5b9). Ne valide pas l'ensemble du groupe. |
 | world_ports | Ports et bâtiments portuaires | À rechercher |
 | world_airports | Aéroports, hangars et tours de contrôle | À rechercher |
 | world_stations | Gares ferroviaires, stations de métro et tunnels | À rechercher; véhicules suivis dans le registre véhicule |
 | world_roads | Routes, autoroutes, chemins, ponts et tunnels | Asphalte référencé; ouvrages et ensemble du réseau à compléter |
-| nature_forest | Arbres et forêts tempérées | Island Tree 02 existant, charme européen candidat; diversité à compléter |
+| nature_forest | Arbres et forêts tempérées | Candidats partiels à vérifier : [Pin](https://polyhaven.com/a/pine_tree_01), [Sapins](https://polyhaven.com/a/fir_tree_01). Ne valide pas l'ensemble du groupe. |
 | nature_jungle | Arbres tropicaux, jungle et végétation de plage | À rechercher |
-| nature_ground | Buissons, herbes, fleurs, fougères et végétation basse | Herbe existante et parc candidat; ensemble incomplet |
+| nature_ground | Buissons, herbes, fleurs, fougères et végétation basse | Candidats partiels à vérifier : [Fougères](https://polyhaven.com/a/fern_02), [Buisson](https://polyhaven.com/a/shrub_01). Ne valide pas l'ensemble du groupe. |
 | nature_rocks | Rochers, sols, falaises et grottes | Rochers/sol forestier existants; autres groupes à compléter |
-| decor_rooms | Mobilier chambres et salons | À rechercher |
+| decor_rooms | Mobilier chambres et salons | Candidats partiels à vérifier : [Canapé](https://polyhaven.com/a/Sofa_01), [Table](https://polyhaven.com/a/wooden_table_02). Ne valide pas l'ensemble du groupe. |
 | decor_kitchen | Cuisines et équipements | À rechercher |
 | decor_bathroom | Salles de bains et sanitaires | À rechercher |
-| decor_storage | Armoires, étagères et rangement | À rechercher |
-| decor_lights | Éclairages intérieurs et extérieurs | À rechercher; ressources du parc à inventorier |
-| decor_street | Bancs, poubelles, panneaux, lampadaires et mobilier urbain | Parc candidat partiel; inventaire exact à vérifier |
-| decor_gardens | Clôtures, portails, terrasses, jardins et décoration de piscine | À rechercher; parc candidat partiel |
+| decor_storage | Armoires, étagères et rangement | Candidats partiels à vérifier : [Étagère](https://polyhaven.com/a/Shelf_01), [Meuble de rangement](https://polyhaven.com/a/painted_wooden_cabinet). Ne valide pas l'ensemble du groupe. |
+| decor_lights | Éclairages intérieurs et extérieurs | Candidats partiels à vérifier : [Lampadaire](https://polyhaven.com/a/street_lamp_01). Ne valide pas l'ensemble du groupe. |
+| decor_street | Bancs, poubelles, panneaux, lampadaires et mobilier urbain | Candidats partiels à vérifier : [Lampadaire](https://polyhaven.com/a/street_lamp_01). Ne valide pas l'ensemble du groupe. |
+| decor_gardens | Clôtures, portails, terrasses, jardins et décoration de piscine | Candidats partiels à vérifier : [Clôture grillagée modulaire](https://polyhaven.com/a/modular_chainlink_fence). Ne valide pas l'ensemble du groupe. |
 | decor_small | Petits objets, tableaux et accessoires de décoration | À rechercher |
 
 ## Règles de mise à jour
@@ -59,3 +59,7 @@ Les exemples ci-dessous décrivent le périmètre demandé; ils ne constituent p
 - Pour les bâtiments : tester ouvertures, étages accessibles, collisions, portes, éclairage et placement du mobilier. Pour les végétaux : LOD, vent, matériaux et densité. Pour les objets : échelle, collision et placement.
 - Les exclusions agricoles et maritimes du propriétaire restent appliquées. Aucun fichier ni fonctionnalité existante à supprimer.
 - Cette mise à jour ajoute des références et un suivi. Aucun nouveau modèle téléchargé ou importé, aucune nouvelle compilation ni validation visuelle exécutée.
+
+## Sources supplémentaires enregistrées
+
+Le [registre commun](ASSET_SOURCING_STATUS.md) relie chaque fiche aux bâtiments, arbres, meubles ou objets correspondants. Les sources antérieures ci-dessus restent conservées. Aucun nouveau téléchargement ou import Unreal dans cette recherche.
