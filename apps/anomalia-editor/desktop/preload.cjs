@@ -2,6 +2,11 @@
 const {contextBridge,ipcRenderer}=require('electron');
 contextBridge.exposeInMainWorld('anomaliaDesktop',Object.freeze({
   isDesktop:true,
+  unreal:Object.freeze({
+    status:()=>ipcRenderer.invoke('editor:unreal:status'),
+    link:()=>ipcRenderer.invoke('editor:unreal:link'),
+    open:()=>ipcRenderer.invoke('editor:unreal:open')
+  }),
   gameLibrary:Object.freeze({
     status:()=>ipcRenderer.invoke('editor:library:status'),
     choose:()=>ipcRenderer.invoke('editor:library:choose'),
