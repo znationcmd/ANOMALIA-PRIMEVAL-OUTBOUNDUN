@@ -158,3 +158,33 @@ Authenticode : SmartScreen peut demander une confirmation et le déploiement
 professionnel bénéficierait d'une signature Windows dédiée. Ne jamais
 désactiver la vérification cryptographique des manifests simplement pour
 faire passer une publication.
+
+## CMD Studio Mobile — PWA privée iPhone, iPad, Android
+
+Les mêmes pages CMD Studio sont adaptées aux écrans tactiles. Le mode navigateur
+utilise une API **locale IndexedDB**, distincte du processus Electron Windows :
+- import et bibliothèque réelle des modèles GLB/PNG/JPG et sources 3D <= 24 Mo ;
+- véritable rendu 3D GLB Three.js avec zoom/rotation tactile ;
+- ajout local de métadonnées des projets `.uproject` (sans exécuter Unreal) ;
+- recherche Poly Haven/Sketchfab si CORS autorise l'accès depuis le navigateur,
+  avec liens vers les fiches officielles (le téléchargement doit ensuite être
+  importé via le navigateur) ;
+- stockage privé **sur chaque appareil** et exports de fichiers locaux, PWA
+  installable sur l'écran d'accueil et cache hors ligne.
+
+`npm install && npm run build:mobile` produit `mobile-dist/`, à servir
+sur une **URL HTTPS sécurisée** (Safari / Chrome / Edge). Le service worker
+récupère les nouvelles versions publiées du site au prochain chargement.
+Ne **pas** publier cette PWA sur un domaine public sans authentification :
+CMD Studio est destiné à un usage privé.
+
+**Limites** : conversion Blender, import UE5, accès aux dossiers Windows
+et exécution de jeux Unreal nécessitent un véritable PC. Une nouvelle
+installation PWA ne récupère pas automatiquement les modèles déjà
+stockés sur le PC : exporter/importer les fichiers ou activer à l'avenir
+un stockage partagé avec authentification. Ne pas effacer les données du
+navigateur si tu veux préserver les bibliothèques IndexedDB.
+
+iOS : ouvrir le site HTTPS dans Safari → Partager → Sur l'écran d'accueil.
+Android : ouvrir le site HTTPS dans Chrome → Installer l'application.
+Un téléchargement ZIP seul n'est pas une application iOS/Android installable.

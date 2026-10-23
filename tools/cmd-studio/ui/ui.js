@@ -316,3 +316,17 @@ $('#updateInstall').addEventListener('click',async()=>{
   catch(err){notice('Installation impossible : '+err.message,true);}
 });
 updateStatusInit();
+
+const mobileMenu=$('#mobileMenu'),mobileOverlay=$('#mobileOverlay'),sidebar=$('#studioSidebar');
+function menuVisible(show){
+ sidebar.classList.toggle('mobileOpen',show);
+ mobileOverlay.hidden=!show;
+ mobileMenu.setAttribute('aria-expanded',String(show));
+}
+mobileMenu?.addEventListener('click',()=>menuVisible(!sidebar.classList.contains('mobileOpen')));
+mobileOverlay?.addEventListener('click',()=>menuVisible(false));
+$$('[data-view],[data-go]').forEach(b=>b.addEventListener('click',()=>menuVisible(false)));
+if ('serviceWorker' in navigator && !window.process?.versions?.electron &&
+    (location.protocol==='https:'||location.hostname==='localhost')){
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}

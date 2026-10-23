@@ -2,11 +2,11 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cdn.polyhaven.com https://media.sketchfab.com https://*.sketchfab.com; connect-src 'self' blob: data:; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#111b30"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="CMD Studio"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" href="./icon.svg" type="image/svg+xml">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cdn.polyhaven.com https://media.sketchfab.com https://*.sketchfab.com; connect-src 'self' blob: data: https://api.polyhaven.com https://api.sketchfab.com; object-src 'none'; base-uri 'none'; form-action 'none'">
 <title>CMD Studio — Créateur de jeux</title>
 <link rel="stylesheet" href="style.css">
-<script src="ui.js" defer></script>
+<script src="mobile-api.js" defer></script><script src="ui.js" defer></script>
 <script src="generated/viewer.bundle.js" defer></script>
 </head>
 <body>
@@ -32,8 +32,8 @@
 <symbol id="i-mountain" viewBox="0 0 24 24"><path d="m2 20 7-12 4 6 3-4 6 10z"/></symbol>
 <symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V3h12v18M16 10h4v11M8 7h4M8 12h4M8 17h4"/></symbol>
 </svg>
-<div class="shell">
-<aside class="sidebar">
+<div class="mobileTop"><button id="mobileMenu" type="button" aria-label="Afficher le menu CMD Studio" aria-expanded="false" aria-controls="studioSidebar">☰</button><strong>CMD <span>STUDIO</span></strong><span>3D CREATOR</span></div><div id="mobileOverlay" class="mobileOverlay" hidden></div><div class="shell">
+<aside class="sidebar" id="studioSidebar">
   <div class="brand"><div class="brandMark" aria-hidden="true">C<span>✦</span></div><div class="brandText"><b>CMD <em>STUDIO</em></b><small>GAME DEVELOPMENT SUITE</small></div></div>
   <div class="sideDivider"></div>
   <div class="sidebarLabel">ESPACE DE CRÉATION</div>
