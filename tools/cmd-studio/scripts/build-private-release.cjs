@@ -12,6 +12,9 @@ if(publicKey!==PUBLIC_KEY.trim())throw Error('La clé de publication ne correspo
 const pkg=require('../package.json');
 const config={
  ...pkg.build,
+ // Sans certificat Authenticode commercial, la confiance repose sur le manifeste
+ // Ed25519 signé, validé AVANT téléchargement, puis SHA-512 de l'installateur.
+ win:{...pkg.build.win,verifyUpdateCodeSignature:false},
  publish:[{provider:'generic',url}],
  updateManifest:{publicKey:PUBLIC_KEY}
 };
