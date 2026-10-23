@@ -50,12 +50,7 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
         act.addEventListener('click',async()=>{
           act.disabled=true;
           try{
-            const data=await library.read(item.id);
-            if(data.kind!=='glb')throw Error('Format GLB requis');
-            const raw=atob(data.data),buf=new Uint8Array(raw.length);
-            for(let i=0;i<raw.length;i++)buf[i]=raw.charCodeAt(i);
-            const file=new File([buf],item.name,{type:'model/gltf-binary'});
-            await placeGLB(file);
+            await placeGLB(item);
             updateMessage('Modèle réellement placé : '+item.name);
           }catch(e){notify('Import 3D impossible : '+e.message,true);}
           finally{act.disabled=false;}
