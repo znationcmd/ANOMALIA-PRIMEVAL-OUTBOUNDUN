@@ -4,6 +4,7 @@ const assert=require('node:assert/strict');
 const fs=require('node:fs');
 const path=require('node:path');
 const os=require('node:os');
+const crypto=require('node:crypto');
 const yazl=require('yazl');
 const {importArchive,safeEntry}=require('../desktop/pack-import.cjs');
 const {GameLibrary}=require('../desktop/game-library.cjs');
@@ -57,4 +58,18 @@ test('pack et dossier Unreal sont fusionnés dans le catalogue sans modifier les
  assert.equal(result.library.total,2);
  assert.ok(result.library.items.find(x=>x.rootTag==='pack'));
  assert.ok(result.library.items.find(x=>x.kind==='unreal-map'));
+});
+
+test('empreintes SHA-256 de vrais packs GLB : 1 valide puis 1 falsifié',async t=>{
+ const root=fixture(t),pack=path.join(root,'verified.zip'),bad=path.join(root,'tampered.zip');
+ const glb=Buffer.concat([Buffer.from('glTF'),Buffer.alloc(250)]);
+ const record={schemaVersion:1,models:[{file:'vehicle.glb',bytes:glb.length,sha256:crypto.createHash('sha256').update(glb).digest('hex')}]};
+ await zipFile(pack,{'models/vehicle.glb':glb,'models/manifest.json':JSON.stringify(record)});
+ const result=await importArchive(pack,path.join(root,'valid'));
+ assert.equal(result.verified,1);
+ const changed=Buffer.from(glb);changed[5]=42;
+ await zipFile(bad,{'models/vehicle.glb':changed,'models/manifest.json':JSON.stringify(record)});
+ await assert.rejects(()=>importArchive(bad,path.join(root,'invalid')),/SHA-256 non conforme/);
+ const dest=path.join(root,'invalid','imported-ANOMALIA-packs');
+ if(fs.existsSync(dest))assert.ok(fs.readdirSync(dest).every(n=>!n.includes('tampered')));
 });
