@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="fr"><head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' blob: data:; object-src 'none'; base-uri 'none'">
+<title>ANOMALIA Editor — Éditeur 3D</title>
+</head><body>
+<div class="app">
+  <header class="top">
+    <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD BUILDING • ÉDITEUR 3D INDÉPENDANT</small></div></div>
+    <div class="project"><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
+    <div class="topButtons">
+      <button id="newScene" title="Nouveau projet">Nouveau</button><button id="saveScene" title="Sauvegarder localement">Enregistrer</button>
+      <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
+    </div>
+  </header>
+  <div class="workspace">
+    <aside class="left">
+      <div class="paneHeading">CATALOGUE <small>OBJETS 3D</small></div>
+      <input id="assetSearch" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
+      <div id="categoryBar" class="categories"></div>
+      <div id="catalog" class="catalog"></div>
+      <div class="leftBottom"><button id="importModel" class="wide">＋ Importer un modèle GLB</button><div class="hint">Fichiers ajoutés depuis cet appareil seulement.</div></div>
+      <div class="paneHeading borderTop">HIÉRARCHIE <span id="count">0 objet</span></div>
+      <div id="hierarchy" class="hierarchy"></div>
+    </aside>
+    <section class="stage">
+      <div class="tools">
+        <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)">Sélection</button><button id="moveTool" title="Déplacer (W)">Déplacer</button><button id="rotateTool" title="Rotation (E)">Rotation</button><button id="scaleTool" title="Échelle (R)">Échelle</button><button id="brushTool" title="Pinceau (B)">Pinceau</button></div>
+        <div class="toolsPart"><label><input id="snap" type="checkbox" checked> Aimantation</label><select id="snapSize" title="Pas de grille"><option value="0.5">0,5 m</option><option value="1" selected>1 m</option><option value="5">5 m</option></select></div>
+        <div class="toolsPart end"><button id="undo" title="Annuler (Ctrl+Z)">↶</button><button id="redo" title="Rétablir (Ctrl+Y)">↷</button><button id="duplicate" title="Dupliquer (Ctrl+D)">Dupliquer</button><button id="delete" title="Supprimer (Suppr)">Supprimer</button></div>
+      </div>
+      <div id="viewport" aria-label="Vue 3D interactive">
+        <div class="viewportLabel">ANOMALIA WORLD EDITOR <span id="modeLabel">SÉLECTION</span></div>
+        <div id="crosshair">＋</div>
+        <div class="viewportTips" id="viewportTips">Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
+        <div class="compass">N<br>◉</div>
+      </div>
+      <div class="status"><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span></div>
+    </section>
+    <aside class="right">
+      <div class="paneHeading">INSPECTEUR <small>PROPRIÉTÉS</small></div>
+      <div id="noSelection" class="noSelection">Sélectionne un objet pour modifier son emplacement, sa rotation et ses dimensions.</div>
+      <div id="inspector" hidden>
+        <label class="fieldLabel" for="objectName">NOM DE L'OBJET</label><input id="objectName" class="full" maxlength="90">
+        <div class="sectionTitle">POSITION <span>MÈTRES</span></div>
+        <div class="three" id="posFields"><label>X<input type="number" step=".1" data-group="position" data-axis="x"></label><label>Y<input type="number" step=".1" data-group="position" data-axis="y"></label><label>Z<input type="number" step=".1" data-group="position" data-axis="z"></label></div>
+        <div class="sectionTitle">ROTATION <span>DEGRÉS</span></div>
+        <div class="three" id="rotFields"><label>X<input type="number" step="1" data-group="rotation" data-axis="x"></label><label>Y<input type="number" step="1" data-group="rotation" data-axis="y"></label><label>Z<input type="number" step="1" data-group="rotation" data-axis="z"></label></div>
+        <div class="sectionTitle">ÉCHELLE</div>
+        <div class="three" id="scaleFields"><label>X<input type="number" min=".01" step=".1" data-group="scale" data-axis="x"></label><label>Y<input type="number" min=".01" step=".1" data-group="scale" data-axis="y"></label><label>Z<input type="number" min=".01" step=".1" data-group="scale" data-axis="z"></label></div>
+        <div class="sectionTitle">OBJET</div><div id="meta" class="metadata"></div>
+        <div class="inspectorButtons"><button id="focusObject" class="wide">Centrer la caméra (F)</button><button id="inspectorDuplicate" class="wide">Dupliquer cet objet</button></div>
+      </div>
+      <div class="paneHeading borderTop">OUTILS D'EXPORT</div>
+      <div class="exportPanel"><button id="exportCSV" class="wide">Exporter les positions CSV</button><button id="saveAs" class="wide">Télécharger le projet</button><p>Format natif <code>.anomalia.json</code>. Export CSV exploitable pour préparer une implantation Unreal Engine après liaison des vrais assets.</p></div>
+      <div class="privacy"><span class="privacyDot"></span><b>MODE PRIVÉ LOCAL</b><p>Aucun compte, aucun serveur de stockage, aucun accès aux créations d'autres utilisateurs. Le partage nécessite une exportation volontaire.</p></div>
+    </aside>
+  </div>
+  <input type="file" id="fileOpen" accept=".json,.anomalia.json" hidden>
+  <input type="file" id="fileModel" accept=".glb" hidden>
+  <div id="toast" role="status" aria-live="polite" hidden></div>
+</div>
+<script type="module" src="/src/main.js"></script></body></html>

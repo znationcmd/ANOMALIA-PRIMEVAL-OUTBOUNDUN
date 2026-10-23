@@ -1,0 +1,58 @@
+name: ANOMALIA Editor - Tests et Windows
+
+on:
+  push:
+    branches:
+      - feature/anomalia-editor-public-20261023
+    paths:
+      - 'apps/anomalia-editor/**'
+      - '.github/workflows/anomalia-editor.yml'
+  pull_request:
+    paths:
+      - 'apps/anomalia-editor/**'
+      - '.github/workflows/anomalia-editor.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    name: Tests et compilation web
+    defaults:
+      run:
+        working-directory: apps/anomalia-editor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Editor-Web
+          path: apps/anomalia-editor/dist
+          if-no-files-found: error
+
+  windows:
+    runs-on: windows-latest
+    name: Installer Windows indépendant
+    defaults:
+      run:
+        working-directory: apps/anomalia-editor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: npm install --no-audit --no-fund
+      - run: npm test
+      - run: npm run desktop:package
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Editor-Installateur-Windows
+          path: apps/anomalia-editor/release/*.exe
+          if-no-files-found: error
