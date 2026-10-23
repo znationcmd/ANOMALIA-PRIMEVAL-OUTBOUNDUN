@@ -3,7 +3,12 @@ Mise à jour : 23 octobre 2026.
 
 Ce registre complète le [suivi des véhicules](../vehicles/FULL_VEHICLE_WORKLIST.md) et celui des [bâtiments et décors](FULL_ENVIRONMENT_WORKLIST.md). Données structurées : [asset-sourcing-register.json](asset-sourcing-register.json).
 
-## État concret
+
+## Nouveau lot 2 — fichiers récupérés et convertis
+
+14 téléchargements d'origine supplémentaires, 104 GLB statiques convertis et rechargés : 92 vêtements/accessoires, 8 modèles d'argent, 2 comprimés, 2 plantes de cannabis. 91 passent les vérifications automatiques d'admission; 12 sont retenus pour des mentions de licence contradictoires, 1 pour une texture absente. Aucun import UE vérifié. [Instructions Work](ITEMS_WORK_HANDOFF_BATCH2_20261023.md), [reçu des sources](item-source-batch2-download-receipt-20261023.json), [reçu des conversions](item-source-batch2-conversion-receipt-20261023.json). Le registre contient désormais 84 sources et candidats, dont 1 nouvel échec de téléchargement; 39 IDs d'inventaire ont au moins un candidat, 275 restent sans source.
+
+## État du lot initial
 - 69 nouvelles fiches regroupées sans URL en double : 49 ressources Poly Haven CC0 et 20 candidats Sketchfab indexés.
 - 314 identifiants uniques des deux catalogues d'objets conservés : 35 avec au moins une source candidate, 279 encore sans source dans ce registre. La double référence car_battery est fusionnée dans le suivi seulement; les fichiers de gameplay sont inchangés.
 - Les 210 demandes groupées de véhicules sont conservées. 15 groupes ont des candidats de recherche, 32 des variantes déjà référencées, 11 uniquement une référence historique, 152 aucun candidat enregistré.
