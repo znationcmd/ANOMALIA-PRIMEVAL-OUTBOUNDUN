@@ -86,7 +86,9 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
     if(!status)return;
     all=Array.isArray(status.items)?status.items:[];
     count.textContent=String(status.total??all.length);
-    $('#gameLibraryFolder').textContent=status.folder||'Aucun dossier lié — sélectionne une seule fois celui des ressources du jeu.';
+    $('#gameLibraryFolder').textContent=status.folder||
+      (status.packCount?'Packs importés dans la bibliothèque privée. Tu peux aussi lier le dossier Unreal.':
+       'Aucun dossier lié — sélectionne celui du jeu ou importe un pack ZIP.');
     $('#gameLibraryFolder').title=status.folder||'';
     $('#gameModelsCount').textContent=all.filter(x=>x.kind==='glb').length+' modèles GLB';
     $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map'].includes(x.kind)).length+' cartes/secteurs';
@@ -108,6 +110,18 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
     if(busy)return;busy=true;
     try{const result=await library.choose();if(!result.cancelled)apply(result);}
     catch(e){notify('Dossier ANOMALIA impossible à ouvrir : '+e.message,true);}
+    finally{busy=false;}
+  });
+  $('#importGamePack').addEventListener('click',async()=>{
+    if(busy)return;busy=true;
+    updateMessage('Importation sécurisée des modèles et licences du pack ANOMALIA…');
+    try{
+      const result=await library.importPack();
+      if(!result.cancelled){
+        apply(result.library);
+        updateMessage(result.duplicate?'Ce pack était déjà importé.':'Pack ajouté : '+result.files+' fichiers réels dans la bibliothèque privée.');
+      }
+    }catch(e){notify('Import ZIP impossible : '+e.message,true);}
     finally{busy=false;}
   });
   $('#refreshGameFolder').addEventListener('click',async()=>{
