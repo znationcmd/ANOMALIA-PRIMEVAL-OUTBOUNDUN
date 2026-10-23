@@ -53,8 +53,14 @@
       "createDesktopShortcut": true,
       "installerIcon": "assets/anomalia-editor.ico",
       "uninstallerIcon": "assets/anomalia-editor.ico",
-      "installerHeaderIcon": "assets/anomalia-editor.ico"
+      "installerHeaderIcon": "assets/anomalia-editor.ico",
+      "deleteAppDataOnUninstall": false
     },
-    "publish": null
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-editor-latest/"
+      }
+    ]
   }
 }
