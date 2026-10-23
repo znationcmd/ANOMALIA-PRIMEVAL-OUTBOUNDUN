@@ -135,6 +135,17 @@ async function addModel(file,position={x:0,y:0,z:0}){
   const next=addToProject(history.project,item);
   if(history.commit(next)){objects.add(mesh);meshed.set(item.id,mesh);afterCommit();applySelection(item.id);}
 }
+async function addLinkedModel(item,position={x:0,y:0,z:0}){
+  if(history.project.objects.length>=4000)throw Error('Secteur saturé : utilise plusieurs secteurs ANOMALIA.');
+  if(!item.canPlace||item.kind!=='glb')throw Error('Seuls les vrais modèles GLB présents dans le dossier lié peuvent être placés.');
+  const object=makeObject('linked-glb',position,{libraryId:item.id,filename:item.name});
+  const mesh=await createEditorMesh(object);
+  const next=addToProject(history.project,object);
+  if(history.commit(next)){
+    objects.add(mesh);meshed.set(object.id,mesh);
+    afterCommit();applySelection(object.id);
+  }
+}
 async function rebuild(project) {
   const token=++rebuildToken;
   transforms.detach();
@@ -411,10 +422,9 @@ async function start(){
 start();
 bindGameLibrary({
   notify:toast,
-  placeGLB:async file=>{
-    if(history.project.objects.length>=4000)throw Error('Limite de 4 000 objets dans ce secteur. Crée un autre secteur pour la suite de la carte.');
-    await addModel(file,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
-    toast('Ressource réelle ajoutée : '+file.name);
+  placeGLB:async item=>{
+    await addLinkedModel(item,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
+    toast('Ressource liée ajoutée : '+item.name);
   },
   openMap:async text=>{
     const map=validateProject(JSON.parse(text));
