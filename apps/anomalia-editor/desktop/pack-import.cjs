@@ -6,7 +6,7 @@ const {pipeline}=require('node:stream/promises');
 const yauzl=require('yauzl');
 
 const EXT=new Set(['.glb','.gltf','.fbx','.obj','.usd','.usdz','.blend','.uasset','.umap',
- '.png','.jpg','.jpeg','.webp','.tga','.bin','.json','.txt','.md','.mtl','.wav','.ogg','.xml','.ini','.cfg']);
+ '.png','.jpg','.jpeg','.webp','.tga','.bin','.json','.txt','.md','.mtl','.mhmat','.mhclo','.py','.wav','.ogg','.xml','.ini','.cfg']);
 const MAX_FILES=7000;
 const MAX_TOTAL=3*1024*1024*1024;
 const MAX_SINGLE=320*1024*1024;
