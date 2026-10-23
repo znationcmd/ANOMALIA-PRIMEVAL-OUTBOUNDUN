@@ -6,8 +6,8 @@
 </head><body>
 <div class="app">
   <header class="top">
-    <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD BUILDING • ÉDITEUR 3D INDÉPENDANT</small></div></div>
-    <div class="project"><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
+    <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD CREATION SUITE · 3D EDITOR</small></div></div>
+    <div class="project"><span class="projectCaption">SCÈNE ACTIVE</span><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
     <div class="topButtons">
       <button id="newScene" title="Nouveau projet">Nouveau</button><button id="saveScene" title="Sauvegarder localement">Enregistrer</button>
       <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
@@ -15,31 +15,32 @@
   </header>
   <div class="workspace">
     <aside class="left">
-      <div class="paneHeading">CATALOGUE <small>OBJETS 3D</small></div>
-      <input id="assetSearch" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
+      <div class="paneHeading"><div><span class="paneOverline">ASSET LIBRARY</span><strong>Catalogue 3D</strong></div><small>CRÉATION</small></div><p class="paneIntro">Choisis un objet, puis place-le dans ton univers.</p>
+      <input id="assetSearch" class="searchAsset" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
       <div id="categoryBar" class="categories"></div>
       <div id="catalog" class="catalog"></div>
-      <div class="leftBottom"><button id="importModel" class="wide">＋ Importer un modèle GLB</button><div class="hint">Fichiers ajoutés depuis cet appareil seulement.</div></div>
-      <div class="paneHeading borderTop">HIÉRARCHIE <span id="count">0 objet</span></div>
+      <div class="leftBottom"><button id="importModel" class="wide accent">＋ Importer un modèle GLB</button><div class="hint"><span class="privacyDot"></span> Import local sécurisé · aucun transfert</div></div>
+      <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTLINER</span><strong>Hiérarchie</strong></div><span id="count">0 objet</span></div>
       <div id="hierarchy" class="hierarchy"></div>
     </aside>
     <section class="stage">
+      <div class="workspaceRibbon"><span><i class="liveDot"></i> ESPACE DE CRÉATION</span><span>ÉDITEUR DE MONDE · 3D TEMPS RÉEL</span></div>
       <div class="tools">
         <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)">Sélection</button><button id="moveTool" title="Déplacer (W)">Déplacer</button><button id="rotateTool" title="Rotation (E)">Rotation</button><button id="scaleTool" title="Échelle (R)">Échelle</button><button id="brushTool" title="Pinceau (B)">Pinceau</button></div>
         <div class="toolsPart"><label><input id="snap" type="checkbox" checked> Aimantation</label><select id="snapSize" title="Pas de grille"><option value="0.5">0,5 m</option><option value="1" selected>1 m</option><option value="5">5 m</option></select></div>
         <div class="toolsPart end"><button id="undo" title="Annuler (Ctrl+Z)">↶</button><button id="redo" title="Rétablir (Ctrl+Y)">↷</button><button id="duplicate" title="Dupliquer (Ctrl+D)">Dupliquer</button><button id="delete" title="Supprimer (Suppr)">Supprimer</button></div>
       </div>
       <div id="viewport" aria-label="Vue 3D interactive">
-        <div class="viewportLabel">ANOMALIA WORLD EDITOR <span id="modeLabel">SÉLECTION</span></div>
+        <div class="viewportLabel"><span class="viewportTag">● LIVE VIEWPORT</span><span id="modeLabel">SÉLECTION</span></div><div class="viewportInfo"><strong>ANOMALIA / SCENE VIEW</strong><small>Perspective · Rendu local</small></div>
         <div id="crosshair">＋</div>
         <div class="viewportTips" id="viewportTips">Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
         <div class="compass">N<br>◉</div>
       </div>
-      <div class="status"><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span></div>
+      <div class="status"><span class="statusReady"><i class="liveDot"></i> PRÊT</span><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span></div>
     </section>
     <aside class="right">
-      <div class="paneHeading">INSPECTEUR <small>PROPRIÉTÉS</small></div>
-      <div id="noSelection" class="noSelection">Sélectionne un objet pour modifier son emplacement, sa rotation et ses dimensions.</div>
+      <div class="paneHeading"><div><span class="paneOverline">OBJECT INSPECTOR</span><strong>Propriétés</strong></div><small>ÉDITION</small></div>
+      <div id="noSelection" class="noSelection"><div class="inspectorIllustration">⬡</div><strong>Aucun objet sélectionné</strong><p>Clique sur un élément de la scène ou de la hiérarchie pour accéder à ses paramètres.</p></div>
       <div id="inspector" hidden>
         <label class="fieldLabel" for="objectName">NOM DE L'OBJET</label><input id="objectName" class="full" maxlength="90">
         <div class="sectionTitle">POSITION <span>MÈTRES</span></div>
@@ -51,9 +52,18 @@
         <div class="sectionTitle">OBJET</div><div id="meta" class="metadata"></div>
         <div class="inspectorButtons"><button id="focusObject" class="wide">Centrer la caméra (F)</button><button id="inspectorDuplicate" class="wide">Dupliquer cet objet</button></div>
       </div>
-      <div class="paneHeading borderTop">OUTILS D'EXPORT</div>
+      <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTPUT</span><strong>Exportation</strong></div></div>
       <div class="exportPanel"><button id="exportCSV" class="wide">Exporter les positions CSV</button><button id="saveAs" class="wide">Télécharger le projet</button><p>Format natif <code>.anomalia.json</code>. Export CSV exploitable pour préparer une implantation Unreal Engine après liaison des vrais assets.</p></div>
-      <div class="privacy"><span class="privacyDot"></span><b>MODE PRIVÉ LOCAL</b><p>Aucun compte, aucun serveur de stockage, aucun accès aux créations d'autres utilisateurs. Le partage nécessite une exportation volontaire.</p></div>
+      <div class="privacy"><span class="privacyDot"></span><b>ESPACE PERSONNEL PROTÉGÉ</b><p>Aucun compte, aucun serveur de stockage, aucun accès aux créations d'autres utilisateurs. Le partage nécessite une exportation volontaire.</p></div>
+      <div id="updaterPanel" class="updaterPanel" hidden>
+        <div class="paneHeading borderTop"><div><span class="paneOverline">EDITOR MAINTENANCE</span><strong>Mises à jour</strong></div><span id="editorVersion">—</span></div>
+        <div class="updateInner">
+          <div class="updateState" id="updateState">Vérification du système de mises à jour…</div>
+          <div id="updateProgress" class="progressTrack" hidden><div id="updateProgressFill"></div></div>
+          <div class="updateRow"><button id="checkForUpdates">Vérifier</button><button id="installUpdate" class="accent" hidden>Installer et redémarrer</button></div>
+          <p>La nouvelle version se télécharge automatiquement et s’installe lorsque tu fermes l’application.</p>
+        </div>
+      </div>
     </aside>
   </div>
   <input type="file" id="fileOpen" accept=".json,.anomalia.json" hidden>

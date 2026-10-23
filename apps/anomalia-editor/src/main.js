@@ -4,6 +4,7 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { PRESETS, History, newProject, makeObject, cloneProject, validateProject, makeCSV, addToProject, removeFromProject } from './model.js';
 import { createEditorMesh } from './meshes.js';
 import './style.css';
+import './updates-ui.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
