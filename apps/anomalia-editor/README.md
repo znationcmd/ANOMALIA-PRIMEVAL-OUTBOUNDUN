@@ -119,7 +119,7 @@ textures, cartes et secteurs sont classés automatiquement d'après leur
 chemin et leurs extensions.
 
 - Modèles GLB réels : ajout volontaire dans la scène avec « Placer »,
-  jusqu'à 48 Mo par GLB, pour éviter de superposer tous les modèles.
+  jusqu'à 80 Mo par GLB, pour éviter de superposer tous les modèles.
 - Secteurs au format ANOMALIA JSON : ouverture après confirmation et
   sauvegarde de la scène précédente recommandée, jusqu'à 45 Mo.
 - Cartes Unreal .umap et ressources .uasset : visibles dans le catalogue,
@@ -153,3 +153,40 @@ partager une carte avec une autre personne, fournir aussi les fichiers GLB
 correspondants et choisir le dossier correct dans sa version de l'éditeur.
 Les modèles GLB importés directement avec le bouton d'import classique
 continuent d'être intégrés à la scène comme auparavant.
+
+### Import direct des packs de Work (ZIP)
+
+Un deuxième bouton « Importer un pack 3D ZIP » permet d'importer un ZIP
+sur l'ordinateur sans l'extraire manuellement. L'extraction contrôlée
+s'effectue dans la bibliothèque privée du profil Windows, avec détection
+des collisions et conservation de toutes les anciennes archives. L'éditeur
+fusionne automatiquement ces assets avec ceux du dossier Unreal lié,
+puis les retrouve toutes les 45 secondes. Les ZIP sont limités à 750 Mo
+compressés et 3 Go décompressés ; un modèle individuel à 80 Mo maximum
+peut être placé dans la scène, mais davantage nécessite optimisation
+ou travail dans Unreal Engine.
+
+Deux archives Work effectivement disponibles le 23 octobre 2026 :
+- ANOMALIA_ASSETS_3D_PBR_20261023.zip : 8 modèles GLB PBR réellement
+  préparés, crédits inclus ; arbre de 59 Mo, maison, voiture, camion,
+  herbe, rocher, sol de forêt et asphalte. Le manifeste de chacun
+  des 8 GLB comporte taille et SHA-256. Les textures sont 2K.
+- ANOMALIA_Items_Vetements_Batch2_UE5.zip : 104 GLB statiques
+  convertis (vêtements, accessoires, argent, etc.), fichiers MakeHuman
+  et scripts de préparation. Les 104 fichiers GLB ont une empreinte
+  SHA-256 référencée dans conversion-receipt.json.
+
+L'importateur compare automatiquement chaque modèle répertorié aux
+empreintes de ces manifestes et refuse un pack altéré. Il n'exécute
+aucun script contenu dans les archives. Les licences et crédits sont
+conservés. Tous ces GLB restent **des ressources source**, pas des
+acteurs Unreal importés, riggés, équipés de collisions ou intégrés dans
+le gameplay. Les fichiers de plan de population, y compris
+population-plan-NOT-EXECUTED.json, ne sont pas traités comme une
+carte existante.
+
+Le fait d'installer ANOMALIA Editor 0.3.1 ne dépose pas automatiquement
+les centaines de mégaoctets d'assets sur chaque PC : il faut fournir
+les ZIP une première fois sur cet appareil et les choisir dans
+l'éditeur, ou synchroniser un dossier local. Les nouveautés suivantes
+dans ces dossiers apparaissent automatiquement au catalogue.
