@@ -85,9 +85,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/f-35-a-lightning-ii-war-mode-full-pack-c2fd326b8a714c0d91d7d1b41e0a86e2",
+            "label": "F-35A",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_f35",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "1,2M triangles annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -104,9 +112,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/f22-raptor-free-2a64abf0866a405c865466c7642ca689",
+            "label": "F-22 Raptor",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_f22",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "Animation et textures Substance annoncées; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -266,9 +282,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/pbr-b-2-spirit-b16592b1083948a49ae2afa90d190a08",
+            "label": "B-2 Spirit PBR",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_b2",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -285,9 +309,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/mirage-2000-b1a103c2c1fb463ebcf5a54004368221",
+            "label": "Mirage 2000",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_mirage2000",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "32,7k triangles annoncés; fiche indexée complète. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -439,9 +471,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/pbr-kamov-ka-52-6f29175ef23940fcb4c5364240e169f7",
+            "label": "Ka-52 PBR",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_ka52",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -1131,9 +1171,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/char-leclerc-84a0918d2f534c2eb003ab3cb3029c03",
+            "label": "Char Leclerc",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_leclerc",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "L'auteur décrit une nouvelle texture de son ancien modèle; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -1404,9 +1452,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/unimog-truck-72caf995b6064890b7bc62371cc79f36",
+            "label": "Unimog Truck",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_unimog",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "Optimisation jeu et crédit auteur annoncés; version militaire à adapter; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -1729,9 +1785,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/2022-audi-q5-s-line-sportback-7f3ddb0b4ff840b68890781234fc521d",
+            "label": "Audi Q5 Sportback",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_q5",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "Version Sportback seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -4021,9 +4085,17 @@
       "state": "MODELE_EXACT_A_PRODUIRE_OU_ACQUERIR",
       "sourcing": {
         "checkedOn": "2026-10-23",
-        "status": "A_RECHERCHER",
-        "sources": [],
-        "nextAction": "Rechercher le modèle exact gratuit et réaliste."
+        "status": "CANDIDAT_A_VERIFIER",
+        "sources": [
+          {
+            "url": "https://sketchfab.com/3d-models/bmw-e46-msport-614c2f1660474178a1d4717b7492d1c7",
+            "label": "BMW E46 MSport",
+            "evidenceDocument": "docs/art/asset-sourcing-register.json#v_e46",
+            "kind": "CANDIDAT_INDEXE_A_VERIFIER",
+            "note": "Variante E46 seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+          }
+        ],
+        "nextAction": "Contrôler accès, fichiers, auteur, licence et qualité de la source indexée avant nouvelle recherche générale."
       }
     },
     {
@@ -5699,6 +5771,116 @@
           "excludedSection": false
         }
       ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/f-35-a-lightning-ii-war-mode-full-pack-c2fd326b8a714c0d91d7d1b41e0a86e2",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "F-35A: 1,2M triangles annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/f22-raptor-free-2a64abf0866a405c865466c7642ca689",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "F-22 Raptor: Animation et textures Substance annoncées; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/mirage-2000-b1a103c2c1fb463ebcf5a54004368221",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Mirage 2000: 32,7k triangles annoncés; fiche indexée complète. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/char-leclerc-84a0918d2f534c2eb003ab3cb3029c03",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Char Leclerc: L'auteur décrit une nouvelle texture de son ancien modèle; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/unimog-truck-72caf995b6064890b7bc62371cc79f36",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Unimog Truck: Optimisation jeu et crédit auteur annoncés; version militaire à adapter; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/pbr-kamov-ka-52-6f29175ef23940fcb4c5364240e169f7",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Ka-52 PBR: PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/pbr-b-2-spirit-b16592b1083948a49ae2afa90d190a08",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "B-2 Spirit PBR: PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/2022-audi-q5-s-line-sportback-7f3ddb0b4ff840b68890781234fc521d",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Audi Q5 Sportback: Version Sportback seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/bmw-e46-msport-614c2f1660474178a1d4717b7492d1c7",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "BMW E46 MSport: Variante E46 seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/assault-boat-0d4fca4f2e014cd7b6aefd4653b1508c",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Bateau pneumatique d'assaut: 4K PBR annoncé; correspond à la catégorie pneumatique, marque Zodiac non établie; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/rettungswagen-krankenwagen-ambulance-e6c4858d34f0440394c2aa772ebaca38",
+      "mentions": [
+        {
+          "document": "docs/art/asset-sourcing-register.json",
+          "note": "Ambulance Sprinter 413: Modèle crédité à Spaehling; origine et détails à contrôler. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+          "excludedSection": false
+        }
+      ]
     }
   ],
   "sourcingPolicy": {
@@ -5726,7 +5908,8 @@
       "Ne relancer une recherche de remplacement que pour une variante absente, un refus de licence, un accès indisponible ou une qualité insuffisante; noter le motif.",
       "Mettre à jour sourcing.sources et sourcing.status immédiatement à chaque découverte; conserver les sources rejetées et leur motif."
     ],
-    "noNewImportsClaimed": true
+    "noNewImportsClaimed": true,
+    "worldAndItemSourceRegister": "docs/art/asset-sourcing-register.json"
   },
   "supplementarySourcing": [
     {
@@ -5870,7 +6053,7 @@
     {
       "requestId": "generic_ambulance",
       "label": "Ambulances",
-      "status": "CANDIDAT_A_VERIFIER",
+      "status": "CANDIDATS_PRECIS_A_VERIFIER",
       "sources": [
         {
           "url": "https://sketchfab.com/3d-models/ambulance-emergency-vehicle-e0a1d9359f2b415c9d91e1d7815fdbaf",
@@ -5879,6 +6062,12 @@
         {
           "url": "https://sketchfab.com/3d-models/ambulance-41574a23a9ae4c9d990ffe672af6281e",
           "evidenceDocument": "docs/ANOMALIA_VEHICLE_ASSET_LEADS_BATCH6_20261023.md"
+        },
+        {
+          "url": "https://sketchfab.com/3d-models/rettungswagen-krankenwagen-ambulance-e6c4858d34f0440394c2aa772ebaca38",
+          "label": "Ambulance Sprinter 413",
+          "evidenceDocument": "docs/art/asset-sourcing-register.json#v_sprinter_ambulance",
+          "note": "Modèle crédité à Spaehling; origine et détails à contrôler. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
         }
       ],
       "note": "Suivi des demandes génériques et compléments de conversation; non additionnable aux 210 groupes, plusieurs se recoupent."
@@ -6116,8 +6305,15 @@
     {
       "requestId": "supplement_2",
       "label": "Zodiac / semi-rigide",
-      "status": "A_RECHERCHER",
-      "sources": [],
+      "status": "CANDIDATS_PRECIS_A_VERIFIER",
+      "sources": [
+        {
+          "url": "https://sketchfab.com/3d-models/assault-boat-0d4fca4f2e014cd7b6aefd4653b1508c",
+          "label": "Bateau pneumatique d'assaut",
+          "evidenceDocument": "docs/art/asset-sourcing-register.json#v_rib",
+          "note": "4K PBR annoncé; correspond à la catégorie pneumatique, marque Zodiac non établie; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier."
+        }
+      ],
       "note": "Suivi des demandes génériques et compléments de conversation; non additionnable aux 210 groupes, plusieurs se recoupent."
     },
     {
@@ -6213,8 +6409,8 @@
   "sourcingSummary": {
     "groupedRequests": 210,
     "statusCounts": {
-      "CANDIDAT_A_VERIFIER": 6,
-      "A_RECHERCHER": 161,
+      "CANDIDAT_A_VERIFIER": 15,
+      "A_RECHERCHER": 152,
       "REFERENCE_HISTORIQUE_SEULE": 11,
       "CANDIDAT_PARTIEL_A_VERIFIER": 32
     },
