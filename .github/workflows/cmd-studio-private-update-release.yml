@@ -1,0 +1,61 @@
+name: CMD Studio - Publication privee des mises a jour
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  private-release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/cmd-studio
+    env:
+      CMD_STUDIO_PRIVATE_FEED_URL: ${{ secrets.CMD_STUDIO_PRIVATE_FEED_URL }}
+      CMD_STUDIO_PRIVATE_FEED_WRITE_TOKEN: ${{ secrets.CMD_STUDIO_PRIVATE_FEED_WRITE_TOKEN }}
+      ELECTRON_BUILDER_UPDATE_SIGN_KEY: ${{ secrets.CMD_STUDIO_UPDATE_SIGNING_KEY_PEM }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exiger les secrets de distribution privee
+        shell: pwsh
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:CMD_STUDIO_PRIVATE_FEED_URL) -or
+              [string]::IsNullOrWhiteSpace($env:CMD_STUDIO_PRIVATE_FEED_WRITE_TOKEN) -or
+              [string]::IsNullOrWhiteSpace($env:ELECTRON_BUILDER_UPDATE_SIGN_KEY)) {
+            throw "Mise a jour privee desactivee : secrets du serveur et signature non configures."
+          }
+      - name: Installer les dependances
+        run: npm install --no-audit --no-fund
+      - name: Executer les tests du studio
+        run: npm test
+      - name: Preparer la scene, les icones et le moteur 3D
+        run: |
+          npm run build:art
+          node scripts/prepare-icon.cjs
+          npm run build:viewer
+      - name: Verifier la cle de signature et preparer les metadonnees
+        run: node scripts/build-private-release.cjs
+      - name: Compiler un paquet NSIS et latest.yml signes
+        run: npx electron-builder --config private-release.config.json --win nsis --publish never
+      - name: Publier dans le depot HTTPS prive (manifeste en dernier)
+        shell: pwsh
+        run: |
+          $base = $env:CMD_STUDIO_PRIVATE_FEED_URL.TrimEnd('/') + '/'
+          $headers = @{ Authorization = "Bearer $env:CMD_STUDIO_PRIVATE_FEED_WRITE_TOKEN" }
+          $folder = (Resolve-Path "release").Path
+          $manifest = Join-Path $folder "latest.yml"
+          if (!(Test-Path -LiteralPath $manifest)) { throw "Manifeste latest.yml absent : publication interrompue" }
+          $manifestText = Get-Content -LiteralPath $manifest -Raw
+          if ($manifestText -notmatch "(?m)^signature:" -or $manifestText -notmatch "(?m)^sha512:") {
+            throw "Manifeste non signe : publication interrompue"
+          }
+          $files = Get-ChildItem $folder -File | Where-Object { $_.Extension -in '.exe','.blockmap' }
+          if (!($files | Where-Object { $_.Extension -eq '.exe' })) { throw "Installateur manquant" }
+          foreach ($file in $files) {
+            $target = $base + [uri]::EscapeDataString($file.Name)
+            Invoke-WebRequest -Uri $target -Method Put -Headers $headers -InFile $file.FullName -ContentType "application/octet-stream" -UseBasicParsing | Out-Null
+          }
+          Invoke-WebRequest -Uri ($base + "latest.yml") -Method Put -Headers $headers -InFile $manifest -ContentType "text/yaml" -UseBasicParsing | Out-Null
+          Write-Host "Publication privee terminee. Aucun artefact public n'a ete cree."
