@@ -20,6 +20,15 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Identify the existing owned PC game and its active version without modifying it
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/RegisteredProps/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_INSTALLED_STATE_REPORT = Join-Path $evidence 'installed-state.json'
+          & $enginePython scripts/world-features/inspect-installed-game.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Restore all 49 pinned sources and their textures
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
