@@ -2,87 +2,155 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.polyhaven.com https://media.sketchfab.com https://*.sketchfab.com data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>CMD Studio — Game Creator</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: https://cdn.polyhaven.com https://media.sketchfab.com https://*.sketchfab.com https://images.unsplash.com; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>CMD Studio — Créateur de jeux</title>
 <link rel="stylesheet" href="style.css">
 <script src="ui.js" defer></script>
+<script src="generated/viewer.bundle.js" defer></script>
 </head>
 <body>
+<svg class="sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+<symbol id="i-grid" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></symbol>
+<symbol id="i-cube" viewBox="0 0 24 24"><path d="m12 2 9 5-9 5-9-5 9-5Zm-9 5v10l9 5 9-5V7M12 12v10"/></symbol>
+<symbol id="i-search" viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="7"/><path d="m16 16 5 5"/></symbol>
+<symbol id="i-folder" viewBox="0 0 24 24"><path d="M3 6h7l2 2h9v12H3z"/></symbol>
+<symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+<symbol id="i-tool" viewBox="0 0 24 24"><path d="m4 20 10-10M13 3a6 6 0 0 0 8 8l-7 7-8-8z"/></symbol>
+<symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v13m-5-5 5 5 5-5M4 18v3h16v-3"/></symbol>
+<symbol id="i-spark" viewBox="0 0 24 24"><path d="m12 2 2.7 7.3L22 12l-7.3 2.7L12 22l-2.7-7.3L2 12l7.3-2.7z"/></symbol>
+<symbol id="i-arrow" viewBox="0 0 24 24"><path d="M4 12h16m-7-7 7 7-7 7"/></symbol>
+<symbol id="i-external" viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9M20 13v7H4V4h7"/></symbol>
+<symbol id="i-check" viewBox="0 0 24 24"><path d="m4 12 5 5L20 6"/></symbol>
+<symbol id="i-shield" viewBox="0 0 24 24"><path d="m12 2 9 4v6c0 6-3.5 8.5-9 10-5.5-1.5-9-4-9-10V6zM8 12l3 3 5-6"/></symbol>
+<symbol id="i-close" viewBox="0 0 24 24"><path d="M5 5 19 19M19 5 5 19"/></symbol>
+<symbol id="i-expand" viewBox="0 0 24 24"><path d="M9 3H3v6m0-6 7 7m5 11h6v-6m0 6-7-7M3 15v6h6m-6 0 7-7M21 9V3h-6m6 0-7 7"/></symbol>
+<symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8" cy="8" r="2"/><path d="m3 18 6-6 4 4 3-3 5 5"/></symbol>
+<symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
+<symbol id="i-layers" viewBox="0 0 24 24"><path d="m2 9 10-6 10 6-10 6zM2 14l10 6 10-6"/></symbol>
+<symbol id="i-car" viewBox="0 0 24 24"><path d="m5 15 2-6h10l2 6M4 15h16v4H4zM7 19v2m10-2v2M7 16h.1m9.9 0h.1"/></symbol>
+<symbol id="i-mountain" viewBox="0 0 24 24"><path d="m2 20 7-12 4 6 3-4 6 10z"/></symbol>
+<symbol id="i-building" viewBox="0 0 24 24"><path d="M4 21V3h12v18M16 10h4v11M8 7h4M8 12h4M8 17h4"/></symbol>
+</svg>
 <div class="shell">
-  <aside class="sidebar">
-    <div class="brand"><div class="brandIcon">C</div><div><b>CMD <em>STUDIO</em></b><small>GAME CREATOR 0.1</small></div></div>
-    <div class="sidebarLabel">ESPACE DE TRAVAIL</div>
-    <nav id="nav">
-      <button class="navItem active" data-view="dashboard"><span>▦</span> Vue d'ensemble</button>
-      <button class="navItem" data-view="assets"><span>◈</span> Bibliothèque 3D</button>
-      <button class="navItem" data-view="search"><span>⌕</span> Rechercher des modèles</button>
-      <button class="navItem" data-view="projects"><span>◧</span> Mes projets</button>
-      <button class="navItem" data-view="tools"><span>⚙</span> Outils connectés</button>
-    </nav>
-    <div class="spacer"></div>
-    <div class="sidebarLabel">CONFIGURATION</div>
-    <button class="navItem" data-view="settings"><span>⚒</span> Paramètres</button>
-    <div class="sideBottom"><span class="live"></span> Studio local · fichiers privés<div class="mini">Les ressources restent sur ton PC.</div></div>
-  </aside>
-  <main>
-    <header class="topbar">
-      <div><small class="eyebrow">CMD SPHERE / GAME DEVELOPMENT</small><div id="headerTitle" class="headerTitle">Vue d'ensemble</div></div>
-      <div class="topActions"><span id="projectBadge" class="tag">Aucun projet</span><button class="btn primary" id="quickImport">＋ Importer un fichier 3D</button></div>
-    </header>
-    <div id="notice" class="notice" role="status" hidden></div>
-    <div class="mainArea">
-      <section id="dashboard" class="page">
-        <div class="hero"><span class="eyebrow">TON STUDIO DE CRÉATION DE JEUX</span><h1>Imagine. Crée. <strong>Construis ton monde.</strong></h1><p>Un seul espace pour ANOMALIA, Blender, Unreal Engine et les modèles 3D de tes bibliothèques.</p><div class="heroActions"><button class="btn primary" data-go="search">Explorer les ressources 3D →</button><button class="btn" data-go="projects">Choisir un projet</button></div><div class="orb"></div></div>
-        <div class="sectionHead"><h2>Statut de ton atelier</h2><span class="caption">Vérification locale, sans simulation</span></div>
-        <div class="stats">
-          <article class="stat"><div class="statIcon">◈</div><b id="statAssets">0</b><span>Ressources enregistrées</span></article>
-          <article class="stat"><div class="statIcon">▣</div><b id="statProjects">0</b><span>Projets Unreal</span></article>
-          <article class="stat"><div class="statIcon">◉</div><b id="statBlender">—</b><span>Blender local</span></article>
-          <article class="stat"><div class="statIcon">◆</div><b id="statUnreal">—</b><span>Unreal Engine local</span></article>
-        </div>
-        <div class="sectionHead"><h2>Démarrage rapide</h2></div>
-        <div class="two">
-          <article class="panel"><div class="panelGlyph">◈</div><h3>Bibliothèque 3D</h3><p>Importe tes modèles locaux, conserve la provenance et prépare les ressources pour Unreal Engine.</p><button class="linkButton" data-go="assets">Accéder à la bibliothèque →</button></article>
-          <article class="panel"><div class="panelGlyph">⌕</div><h3>Catalogues connectés</h3><p>Recherche Sketchfab et Poly Haven depuis un seul écran. Télécharge les ressources Poly Haven compatibles.</p><button class="linkButton" data-go="search">Ouvrir la recherche →</button></article>
-        </div>
-      </section>
-      <section id="assets" class="page" hidden>
-        <div class="sectionHead"><div><h2>Mes ressources 3D</h2><p class="caption">Vrais fichiers présents dans la bibliothèque locale du studio.</p></div><button class="btn primary" id="assetImport">＋ Ajouter des fichiers</button></div>
-        <div id="assetList" class="assetGrid"></div>
-      </section>
-      <section id="search" class="page" hidden>
-        <div class="sectionHead"><div><h2>Rechercher des ressources</h2><p class="caption">Catalogues publics et licences conservées pour chaque élément.</p></div></div>
-        <form id="searchForm" class="searchBar"><select id="provider"><option value="polyhaven">Poly Haven · CC0</option><option value="sketchfab">Sketchfab · recherche</option></select><input id="query" placeholder="Ex. maison, voiture, forêt, rocher..." maxlength="100" aria-label="Recherche"><button class="btn primary" type="submit">Rechercher</button></form>
-        <div class="hint">Poly Haven : téléchargement direct des formats pris en charge. Sketchfab : ouvre la fiche officielle ; connexion OAuth non activée dans cette version. Powered by Poly Haven.</div>
-        <div id="searchResults" class="assetGrid"><div class="empty">Lance une recherche pour afficher les modèles disponibles.</div></div>
-      </section>
-      <section id="projects" class="page" hidden>
-        <div class="sectionHead"><div><h2>Mes jeux</h2><p class="caption">Ajoute un fichier .uproject sans modifier son contenu.</p></div><button id="chooseProject" class="btn primary">＋ Ajouter un projet Unreal</button></div>
-        <div id="projectList" class="listStack"></div>
-      </section>
-      <section id="tools" class="page" hidden>
-        <div class="sectionHead"><div><h2>Mes logiciels 3D</h2><p class="caption">Applications installées sur ton ordinateur, lancées localement.</p></div></div>
-        <div class="two">
-          <article class="panel tool"><div class="toolTop"><div class="panelGlyph">◉</div><span id="blenderTag" class="tag">Non configuré</span></div><h3>Blender</h3><p>Modélisation, ouverture des fichiers .blend et conversion FBX/OBJ vers GLB.</p><button class="btn" id="launchBlender">Lancer Blender</button></article>
-          <article class="panel tool"><div class="toolTop"><div class="panelGlyph">◆</div><span id="unrealTag" class="tag">Non configuré</span></div><h3>Unreal Engine</h3><p>Ouverture du projet, importation d'assets dans /Game/CMDStudio via Python.</p><button class="btn" id="launchUnreal">Lancer Unreal</button></article>
-        </div>
-        <article class="panel gapTop"><h3>Outils prévus pour les prochaines versions</h3><p>Éditeur de mondes, création de mods, configurations de véhicules pilotables, éditeur économique, pipelines d'animations et assistant CMD NEURIA. Ces modules ne sont pas encore implémentés.</p></article>
-      </section>
-      <section id="settings" class="page" hidden>
-        <div class="sectionHead"><div><h2>Configurer CMD Studio</h2><p class="caption">Sélectionne les véritables exécutables installés sur ton PC.</p></div></div>
-        <div class="panel setting">
-          <label>Blender.exe</label><div class="pathRow"><code id="blenderPath">Non configuré</code><button class="btn" id="chooseBlender">Parcourir</button></div>
-          <div class="separation"></div>
-          <label>UnrealEditor-Cmd.exe (pour l'importation Python)</label><div class="pathRow"><code id="unrealPath">Non configuré</code><button class="btn" id="chooseUnreal">Parcourir</button></div>
-          <div class="separation"></div>
-          <label>Dossier de ressources du studio</label><div class="pathRow"><code id="libraryPath">Chargement...</code></div>
-          <p class="caption">Le plugin « Python Editor Script Plugin » doit être activé dans le projet Unreal. Les conversions et importations nécessitent de véritables fichiers 3D et peuvent prendre du temps.</p>
-        </div>
-      </section>
+<aside class="sidebar">
+  <div class="brand"><div class="brandMark" aria-hidden="true">C<span>✦</span></div><div class="brandText"><b>CMD <em>STUDIO</em></b><small>GAME DEVELOPMENT SUITE</small></div></div>
+  <div class="sideDivider"></div>
+  <div class="sidebarLabel">ESPACE DE CRÉATION</div>
+  <nav class="sideNav" aria-label="Navigation principale">
+    <button class="navItem active" data-view="dashboard"><svg><use href="#i-grid"/></svg> Tableau de bord</button>
+    <button class="navItem" data-view="search"><svg><use href="#i-search"/></svg> Explorer les modèles</button>
+    <button class="navItem" data-view="assets"><svg><use href="#i-cube"/></svg> Bibliothèque 3D <span id="sidebarAssetCount" class="navCount">0</span></button>
+    <button class="navItem" data-view="projects"><svg><use href="#i-folder"/></svg> Mes projets</button>
+  </nav>
+  <div class="sidebarLabel">PRODUCTION</div>
+  <nav class="sideNav" aria-label="Outils de production">
+    <button class="navItem" data-view="tools"><svg><use href="#i-tool"/></svg> Outils connectés</button>
+    <button class="navItem" data-view="settings"><svg><use href="#i-settings"/></svg> Paramètres</button>
+  </nav>
+  <div class="spacer"></div>
+  <div class="sideFeature">
+    <span class="sideFeatureEyebrow">ANOMALIA • WORLD BUILDING</span>
+    <div class="sideFeatureArt" aria-hidden="true"></div>
+    <strong>Ton univers commence ici.</strong>
+    <span>Construis ton catalogue pour ton jeu.</span>
+    <button class="sideFeatureLink" data-go="projects">Voir mes projets <svg><use href="#i-arrow"/></svg></button>
+  </div>
+  <div class="privateState"><span class="statusDot"></span><div><b>Studio personnel</b><small>Données conservées sur ton PC</small></div><svg><use href="#i-shield"/></svg></div>
+</aside>
+<main>
+<header class="topbar">
+  <div class="topbarTitle"><div class="eyebrow">CMD SPHERE <span class="crumb">/</span> CRÉATION DE JEUX</div><div id="headerTitle" class="headerTitle">Tableau de bord</div></div>
+  <div class="topActions">
+    <button id="projectBadge" class="projectBadge" title="Choisir un projet Unreal"><svg><use href="#i-folder"/></svg><span>Aucun projet actif</span><span class="chevron">⌄</span></button>
+    <button id="quickImport" class="btn primary"><svg><use href="#i-download"/></svg> Importer un modèle</button>
+  </div>
+</header>
+<div id="notice" class="notice" role="status" hidden></div>
+<div class="mainArea">
+<section id="dashboard" class="page">
+  <div class="hero">
+    <div class="heroPhoto" aria-hidden="true"></div>
+    <div class="heroContent">
+      <span class="heroEyebrow"><span class="eyebrowDot"></span> CMD STUDIO <span class="heroSep">/</span> ANOMALIA UNIVERSE</span>
+      <h1>Donne vie à tes<br><strong>mondes imaginaires.</strong></h1>
+      <p>De la première ressource 3D au monde ouvert. Centralise tes modèles, tes outils et tes projets Unreal Engine dans un studio unique.</p>
+      <div class="heroActions"><button class="btn primary large" data-go="search">Explorer les modèles <svg><use href="#i-arrow"/></svg></button><button class="btn glass large" data-go="projects">Ouvrir un projet</button></div>
+      <span class="visualCredit">Image d’ambiance paysagère • Pas une capture du jeu</span>
     </div>
-    <footer>CMD STUDIO · GAME CREATOR <span>Prototype fonctionnel local · Aucun modèle 3D propriétaire inclus</span></footer>
-  </main>
+    <div class="heroIndex">CMD <span>01 / CREATION LAB</span></div>
+  </div>
+  <div class="sectionHead"><div><span class="sectionKicker">VUE D’ENSEMBLE</span><h2>Ton espace de production</h2></div><span class="sectionAside">État réel de ton environnement local</span></div>
+  <div class="stats">
+    <article class="stat"><span class="statIcon"><svg><use href="#i-cube"/></svg></span><div class="statLabel">Ressources 3D</div><b id="statAssets">0</b><small>Dans ta bibliothèque</small></article>
+    <article class="stat"><span class="statIcon"><svg><use href="#i-folder"/></svg></span><div class="statLabel">Projets Unreal</div><b id="statProjects">0</b><small>Projets enregistrés</small></article>
+    <article class="stat"><span class="statIcon"><svg><use href="#i-tool"/></svg></span><div class="statLabel">Blender</div><b id="statBlender">—</b><small>Connexion locale</small></article>
+    <article class="stat"><span class="statIcon"><svg><use href="#i-spark"/></svg></span><div class="statLabel">Unreal Engine</div><b id="statUnreal">—</b><small>Connexion locale</small></article>
+  </div>
+  <div class="sectionHead"><div><span class="sectionKicker">ACCÈS RAPIDE</span><h2>À toi de créer</h2></div></div>
+  <div class="quickGrid">
+    <button class="quickCard" data-go="search"><div class="quickBadge"><svg><use href="#i-search"/></svg></div><div><strong>Explorer les ressources</strong><span>Poly Haven • Sketchfab</span></div><svg class="quickArrow"><use href="#i-arrow"/></svg></button>
+    <button class="quickCard" data-go="assets"><div class="quickBadge"><svg><use href="#i-cube"/></svg></div><div><strong>Bibliothèque personnelle</strong><span>Prévisualisation 3D • Conversion</span></div><svg class="quickArrow"><use href="#i-arrow"/></svg></button>
+    <button class="quickCard" data-go="tools"><div class="quickBadge"><svg><use href="#i-tool"/></svg></div><div><strong>Pipeline de production</strong><span>Blender • Unreal Engine 5</span></div><svg class="quickArrow"><use href="#i-arrow"/></svg></button>
+  </div>
+</section>
+<section id="search" class="page" hidden>
+  <div class="pageIntro"><div><span class="sectionKicker">BIBLIOTHÈQUE DE CRÉATION</span><h2>Explorer les modèles 3D</h2><p>De véritables ressources pour construire ton univers. Vérifie toujours le format et la licence avant l’import.</p></div></div>
+  <div class="searchSurface">
+    <div class="searchBanner"><div><span class="heroEyebrow">3D ASSET DISCOVERY</span><h3>Tout commence par <em>la bonne ressource.</em></h3><p>Environnements, véhicules, bâtiments, objets et matériaux : trouve tes prochaines ressources 3D.</p></div><div class="searchBannerPattern"></div></div>
+    <div class="categoryBar" id="categoryBar">
+      <button class="category active" data-term=""><svg><use href="#i-grid"/></svg> Tous</button>
+      <button class="category" data-term="nature"><svg><use href="#i-mountain"/></svg> Nature</button>
+      <button class="category" data-term="car"><svg><use href="#i-car"/></svg> Véhicules</button>
+      <button class="category" data-term="house"><svg><use href="#i-building"/></svg> Bâtiments</button>
+      <button class="category" data-term="rock"><svg><use href="#i-layers"/></svg> Roches</button>
+      <button class="category" data-term="wood"><svg><use href="#i-cube"/></svg> Matériaux</button>
+    </div>
+    <form id="searchForm" class="searchBar">
+      <label class="searchInput"><svg><use href="#i-search"/></svg><input id="query" placeholder="Maison, voiture, forêt, roche, matériaux..." maxlength="100" aria-label="Rechercher une ressource 3D"></label>
+      <select id="provider" aria-label="Catalogue"><option value="polyhaven">Poly Haven • CC0</option><option value="sketchfab">Sketchfab • catalogue</option></select>
+      <button class="btn primary" type="submit"><svg><use href="#i-search"/></svg> Rechercher</button>
+    </form>
+    <div class="suggestRow"><span>Suggestions</span><button class="suggest" data-query="house">Maison</button><button class="suggest" data-query="rock">Rocher</button><button class="suggest" data-query="forest">Forêt</button><button class="suggest" data-query="wood">Bois</button><button class="suggest" data-query="car">Voiture</button><button class="suggest" data-query="bunker">Bunker</button></div>
+    <div class="catalogHelp"><svg><use href="#i-shield"/></svg><span>Poly Haven : téléchargement CC0 des fichiers pris en charge. Sketchfab : consultation de la fiche officielle, pas de téléchargement OAuth dans cette version.</span></div>
+  </div>
+  <div class="sectionHead resultHeading"><div><span class="sectionKicker">EXPLORATION</span><h2>Résultats <span id="resultCount" class="resultCount"></span></h2></div></div>
+  <div id="searchResults" class="assetGrid">
+    <div class="emptyState"><span class="emptyGlyph"><svg><use href="#i-cube"/></svg></span><h3>À toi de découvrir.</h3><p>Choisis un catalogue et recherche des modèles réels. Les résultats viendront directement des plateformes sélectionnées.</p><button class="btn subtle" id="discoverBtn" type="button">Découvrir Poly Haven <svg><use href="#i-arrow"/></svg></button></div>
+  </div>
+</section>
+<section id="assets" class="page" hidden>
+  <div class="pageIntro"><div><span class="sectionKicker">RESSOURCES LOCALES</span><h2>Bibliothèque 3D</h2><p>Modèles conservés sur ton PC. Clique sur « Prévisualiser » pour inspecter un véritable modèle GLB sous différents angles.</p></div><button class="btn primary" id="assetImport"><svg><use href="#i-download"/></svg> Ajouter des fichiers</button></div>
+  <div class="libraryLayout">
+    <div><div class="libraryToolbar"><strong>Mes ressources <span id="assetCount" class="resultCount"></span></strong><span class="caption">GLB • GLTF • FBX • OBJ • textures</span></div><div id="assetList" class="assetGrid libraryGrid"></div></div>
+    <aside class="viewerCard" id="viewerCard"><div class="viewerHeading"><div><span class="sectionKicker">STUDIO VIEWPORT</span><h3>Prévisualisation 3D</h3></div><span class="rendererTag">PBR</span></div>
+      <div id="modelViewport" class="modelViewport"><div id="previewFallback" class="previewFallback"><span class="emptyGlyph"><svg><use href="#i-cube"/></svg></span><b>Aucun modèle sélectionné</b><small>Ouvre un GLB de ta bibliothèque pour voir son rendu 3D.</small></div></div>
+      <div class="viewerControls"><span>Rotation • Zoom • Matériaux</span><button class="iconAction" id="resetCamera" title="Recentrer le modèle"><svg><use href="#i-expand"/></svg></button></div>
+      <div class="viewerDetails"><h4 id="previewName">Aucune ressource</h4><div class="detailRow"><span>Format</span><strong id="previewFormat">—</strong></div><div class="detailRow"><span>Licence</span><strong id="previewLicense">—</strong></div><div class="detailRow"><span>Géométrie</span><strong id="previewTriangles">—</strong></div><p id="previewHint" class="caption">La fidélité du rendu dépend des fichiers et textures réellement importés.</p></div>
+    </aside>
+  </div>
+</section>
+<section id="projects" class="page" hidden>
+  <div class="pageIntro"><div><span class="sectionKicker">PROJETS ET MONDES</span><h2>Mes projets Unreal Engine</h2><p>Associe tes véritables projets .uproject sans changer leurs fichiers.</p></div><button class="btn primary" id="chooseProject"><svg><use href="#i-folder"/></svg> Ajouter un projet</button></div>
+  <div class="projectShowcase"><span class="heroEyebrow">ANOMALIA / WORLD BUILDING</span><h3>Un monde à construire.</h3><p>Associe ANOMALIA ou un autre projet UE5, puis prépare tes ressources dans CMD Studio.</p></div>
+  <div id="projectList" class="listStack"></div>
+</section>
+<section id="tools" class="page" hidden>
+  <div class="pageIntro"><div><span class="sectionKicker">OUTILS PROFESSIONNELS</span><h2>Pipeline de production</h2><p>Connecte tes véritables installations de Blender et Unreal Engine. Aucun statut n’est simulé.</p></div></div>
+  <div class="toolsGrid">
+    <article class="toolPanel"><div class="toolEmblem">B</div><div class="toolTitle"><h3>Blender</h3><span id="blenderTag" class="toolStatus">Non configuré</span></div><p>Modélisation, matériaux et conversion de tes ressources en GLB.</p><button class="btn subtle" id="launchBlender">Lancer Blender <svg><use href="#i-arrow"/></svg></button></article>
+    <article class="toolPanel"><div class="toolEmblem unrealEmblem">U</div><div class="toolTitle"><h3>Unreal Engine</h3><span id="unrealTag" class="toolStatus">Non configuré</span></div><p>Ouvre ton projet et importe de vrais assets dans <code>/Game/CMDStudio</code>.</p><button class="btn subtle" id="launchUnreal">Lancer Unreal <svg><use href="#i-arrow"/></svg></button></article>
+    <article class="toolPanel guidePanel"><span class="sectionKicker">EN DÉVELOPPEMENT</span><h3>Le studio évolue</h3><p>Les pipelines avancés d’animation, de construction et de modding viendront après intégration et validation avec les moteurs concernés.</p><button class="btn subtle" data-go="settings">Configurer les outils <svg><use href="#i-arrow"/></svg></button></article>
+  </div>
+</section>
+<section id="settings" class="page" hidden>
+  <div class="pageIntro"><div><span class="sectionKicker">CONFIGURATION</span><h2>Paramètres du studio</h2><p>Indique les emplacements des logiciels installés sur ton PC.</p></div></div>
+  <div class="settingsPanel"><div class="settingRow"><div><h3>Blender</h3><p>Exécutable blender.exe</p><code id="blenderPath">Non configuré</code></div><button id="chooseBlender" class="btn subtle">Parcourir</button></div>
+    <div class="settingRow"><div><h3>Unreal Engine</h3><p>UnrealEditor-Cmd.exe pour l'importation Python automatisée</p><code id="unrealPath">Non configuré</code></div><button id="chooseUnreal" class="btn subtle">Parcourir</button></div>
+    <div class="settingRow"><div><h3>Bibliothèque locale privée</h3><p>Emplacement de tes ressources téléchargées ou importées</p><code id="libraryPath">Chargement...</code></div><span class="rendererTag">LOCAL</span></div>
+    <div class="privacyNote"><svg><use href="#i-shield"/></svg><p>Ton catalogue reste sur ton PC. Active le plugin « Python Editor Script Plugin » dans Unreal pour l’import automatisé. CMD Studio n’est pas connecté à un service de sauvegarde cloud.</p></div>
+  </div>
+</section>
 </div>
-</body>
-</html>
+<footer>CMD STUDIO · GAME CREATOR <span>Une interface soignée. De vrais fichiers 3D. Aucun résultat inventé.</span></footer>
+</main></div></body></html>
