@@ -25,8 +25,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Tests unitaires sans installation
-        run: node --test tests/*.test.js
+      - name: Installer les dépendances du visualiseur
+        run: npm install --no-audit --no-fund
+      - name: Tester les fonctions locales
+        run: npm test
+      - name: Vérifier la compilation 3D
+        run: npm run build:viewer
 
   windows:
     name: Fabriquer l'installateur Windows
