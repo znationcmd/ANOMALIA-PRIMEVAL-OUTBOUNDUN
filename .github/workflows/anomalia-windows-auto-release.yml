@@ -126,7 +126,11 @@ jobs:
           $blockmaps=@(Get-ChildItem $dir -Filter "*.blockmap" -File)
           if($exe.Count -ne 1 -or $exe[0].Length -lt 1000000){throw "Windows setup missing"}
           if($blockmaps.Count -lt 1){throw "NSIS blockmap missing"}
-          $pathMatch=[regex]::Match($content,'(?m)^path:\s*(.+?\.exe)\s*
+          $pathMatch=[regex]::Match($content,'(?m)^path:\s*(.+?\.exe)\s*$')
+          if(-not $pathMatch.Success){throw "latest.yml must reference a Windows setup"}
+          $manifestFile=$pathMatch.Groups[1].Value.Trim()
+          if($exe[0].Name -cne $manifestFile){throw "Setup name does not match latest.yml path: "+$manifestFile}
+          if($manifestFile -match '\s'){throw "Spaces in installer name would be renamed by GitHub Releases"}
           $releaseUrl="https://api.github.com/repos/"+$env:GITHUB_REPOSITORY+"/releases/tags/"+$env:TAG
           $releaseStatus=0
           $null=Invoke-RestMethod -Uri $releaseUrl -Headers @{Authorization=("Bearer "+$env:GH_TOKEN);'User-Agent'='ANOMALIA-Updater'} -SkipHttpErrorCheck -StatusCodeVariable releaseStatus
