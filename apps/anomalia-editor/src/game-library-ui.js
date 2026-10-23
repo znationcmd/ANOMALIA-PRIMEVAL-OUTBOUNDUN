@@ -69,9 +69,9 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
           finally{act.disabled=false;}
         });
       }else{
-        act.textContent=item.kind==='unreal-map'?'UE5':item.kind==='unreal-asset'?'UE5':'Source';
+        act.textContent=item.kind==='plan'?'Plan':item.kind==='unreal-map'?'UE5':item.kind==='unreal-asset'?'UE5':'Source';
         act.disabled=true;
-        act.title='Fichier repéré mais conversion ou chargement dans Unreal Engine nécessaire';
+        act.title=item.kind==='plan'?'Plan de population répertorié, mais carte Unreal non exécutée.':'Fichier repéré mais conversion ou chargement dans Unreal Engine nécessaire';
       }
       row.append(meta,act);
       items.append(row);
@@ -91,7 +91,7 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
        'Aucun dossier lié — sélectionne celui du jeu ou importe un pack ZIP.');
     $('#gameLibraryFolder').title=status.folder||'';
     $('#gameModelsCount').textContent=all.filter(x=>x.kind==='glb').length+' modèles GLB';
-    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map'].includes(x.kind)).length+' cartes/secteurs';
+    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map','plan'].includes(x.kind)).length+' cartes/secteurs/plans';
     $('#gameUnreadableCount').textContent=all.filter(x=>x.kind==='unreal-asset'||x.kind==='unreal-map').length+' fichiers Unreal';
     const selected=category.value;
     category.replaceChildren(new Option('Toutes les catégories',''));
