@@ -67,6 +67,7 @@ test('import asset puis package ZIP avec manifest',async t=>{
   assert.ok(!pkg.manifest.assets.some(f=>f.path.includes('../')));
 });
 test('modification ne traverse pas les liens symboliques',t=>{
+  if(process.platform==='win32')return; // La création de liens sous Windows peut exiger le mode développeur.
   const {root,api,projectId}=setup(t);
   const folder=path.join(api.getProjectPath(projectId),'Content','malicious');
   fs.symlinkSync(root,folder,'dir');
