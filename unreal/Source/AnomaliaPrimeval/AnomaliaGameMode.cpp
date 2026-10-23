@@ -356,7 +356,8 @@ void AAnomaliaGameMode::BeginPlay()
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaPlayableProbe>();
         if(GetNetMode()==NM_Standalone && ServerId.StartsWith(TEXT("visual-smoke-")) &&
-            GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_VisualValidation_v1")) &&
+            (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_VisualValidation_v1")) ||
+             (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_ResidentialPhotogrammetryReview_v1")) && FParse::Param(FCommandLine::Get(),TEXT("AnomaliaResidentialReview")))) &&
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaVisualReview="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaVisualReviewProbe>();
 #endif

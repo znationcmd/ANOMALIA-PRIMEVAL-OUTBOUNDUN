@@ -5,6 +5,10 @@ on:
     paths:
       - 'docs/art/residential-photogrammetry-sources.json'
       - '.github/workflows/ue5-residential-photogrammetry.yml'
+      - 'scripts/world-features/configure-residential-review.py'
+      - 'scripts/world-features/run-residential-review.py'
+      - 'unreal/Source/AnomaliaPrimeval/AnomaliaVisualReviewProbe.cpp'
+      - 'unreal/Source/AnomaliaPrimeval/AnomaliaGameMode.cpp'
 concurrency:
   group: anomalia-ue5-native-host
   cancel-in-progress: false
@@ -12,7 +16,7 @@ jobs:
   import-residential-review:
     if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 40
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -23,6 +27,15 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Build the native Editor with the residential capture probe
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:UE_ROOT) { throw 'Installed UE5.8 is required.' }
+          $build = Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $build AnomaliaPrimevalEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Acquire pinned CC BY models and prepare separate native review
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -46,6 +59,28 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report = Get-Content $env:ANOMALIA_WORLD_FEATURES_REPORT -Raw | ConvertFrom-Json
           if ($report.state -ne 'IMPORTED_REVIEW_SAVED_SCALE_AND_ACCESS_UNVALIDATED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or @($report.models).Count -ne 4) { throw 'Fresh complete residential review receipt required.' }
+      - name: Set up detailed materials and eight residential cameras
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/ResidentialPhotogrammetry/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_RESIDENTIAL_SETUP_REPORT = Join-Path $evidence 'cameras.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/configure-residential-review.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/cameras.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_RESIDENTIAL_SETUP_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'RESIDENTIAL_CAMERAS_SAVED_NOT_RENDERED' -or @($report.cameras).Count -ne 8) { throw 'Eight saved review cameras required.' }
+      - name: Capture the four new buildings through the actual GPU renderer
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/ResidentialPhotogrammetry/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/world-features/run-residential-review.py --engine-root "$env:UE_ROOT" --output "$evidence/render"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

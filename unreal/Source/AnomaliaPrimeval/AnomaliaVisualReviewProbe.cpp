@@ -35,7 +35,8 @@ void AAnomaliaVisualReviewProbe::Finish(const FString& Error)
     auto Array=[](const TArray<FString>& Values){TArray<TSharedPtr<FJsonValue>> Result;for(const auto& V:Values)Result.Add(MakeShared<FJsonValueString>(V));return Result;};
     Report->SetArrayField(TEXT("screenshots"),Array(Screenshots));Report->SetArrayField(TEXT("checks"),Array(Checks));Report->SetArrayField(TEXT("loadedMeshPaths"),Array(MeshPaths));
     Report->SetBoolField(TEXT("finalPhotorealismApproved"),false);
-    Report->SetBoolField(TEXT("dayAndNightCaptured"),bNight && Screenshots.Num()==8);
+    Report->SetBoolField(TEXT("dayAndNightCaptured"),bNight && Screenshots.Num()==Cameras.Num()*2);
+    Report->SetStringField(TEXT("reviewScope"),FParse::Param(FCommandLine::Get(),TEXT("AnomaliaResidentialReview"))?TEXT("Four residential candidates only; scale, interiors and full world not validated"):TEXT("Original imported-art and vehicle review"));
     Report->SetNumberField(TEXT("measuredCameraFrames"),MeasuredFrames);
     Report->SetNumberField(TEXT("averageFrameMs"),MeasuredFrames>0?MeasuredSeconds*1000/MeasuredFrames:0);
     Report->SetNumberField(TEXT("worstFrameMs"),WorstFrame*1000);
@@ -58,6 +59,27 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
     auto Input=[PC](FKey Key,EInputEvent Event){PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed?1.:0.,false,FInputDeviceId::CreateFromInternalId(0)));};
     if(Phase==0)
     {
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaResidentialReview")))
+        {
+            int32 Models=0;
+            for(TActorIterator<AActor> It(GetWorld());It;++It)
+            {
+                if(!It->ActorHasTag(TEXT("ANOMALIA_ResidentialPhotogrammetryReview_v1")))continue;
+                if(auto* Camera=Cast<ACameraActor>(*It)){Cameras.Add(Camera);continue;}
+                if(auto* Component=It->FindComponentByClass<UStaticMeshComponent>())
+                {
+                    UStaticMesh* Mesh=Component->GetStaticMesh();
+                    if(!Mesh||!Mesh->GetPathName().StartsWith(TEXT("/Game/Anomalia/ResidentialPhotogrammetryReview_v1/"))||Component->GetNumMaterials()<1)
+                    {Finish(TEXT("Residential review missing verified imported art"));return;}
+                    ++Models;MeshPaths.AddUnique(Mesh->GetPathName());
+                }
+            }
+            if(Models!=4||MeshPaths.Num()!=4||Cameras.Num()!=8)
+            {Finish(TEXT("Expected four residential candidates and eight review cameras"));return;}
+            Cameras.Sort([](const auto& A,const auto& B){return A->GetName()<B->GetName();});
+            Checks.Add(TEXT("four_actual_residential_imports_eight_source_review_cameras"));
+            Phase=4;return;
+        }
         Survivor=Cast<AAnomaliaSurvivor>(PC->GetPawn());if(!Survivor.IsValid())return;
         int32 Trees=0,Grass=0,Rocks=0;bool House=false,Terrain=false,Road=false;
         for(TActorIterator<AActor> It(GetWorld());It;++It)

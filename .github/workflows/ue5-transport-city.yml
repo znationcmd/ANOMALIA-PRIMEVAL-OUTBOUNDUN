@@ -59,6 +59,13 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
+          # A saved World Partition map has external actors and subsequent authored
+          # streets/materials. Rebuilding it is deliberately refused by the creator.
+          # Preserve it; detailed inspection is handled by the world-feature audit.
+          if (Test-Path (Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Inhabited_v2.umap')) {
+            Write-Host 'Saved populated world preserved; no landscape regeneration requested.'
+            exit 0
+          }
           $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
           $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
