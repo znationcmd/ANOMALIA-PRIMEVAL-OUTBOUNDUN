@@ -31,7 +31,7 @@ export function newProject(name='Nouvelle carte') {
   return {schema:SCHEMA,version:VERSION,name:String(name).slice(0,80),objects:[],createdAt:new Date().toISOString()};
 }
 export function makeObject(preset,position=vector(),asset=null) {
-  if (!PRESET_IDS.has(preset) && preset !== 'custom-glb') throw new Error('Objet inconnu');
+  if (!PRESET_IDS.has(preset) && preset !== 'custom-glb' && preset !== 'linked-glb') throw new Error('Objet inconnu');
   const item=PRESETS.find(p=>p.id===preset);
   return {id:crypto.randomUUID(),preset,name:item?.name||asset?.filename||'Modèle 3D',
     position:{...vector(),...position},rotation:vector(),scale:vector(1,1,1),
@@ -82,12 +82,18 @@ export function validateProject(input) {
   const objects=input.objects.map(o=>{
     if(!o||typeof o.id!=='string'||o.id.length>120||ids.has(o.id))throw new Error('Identifiant d’objet invalide ou dupliqué');
     ids.add(o.id);
-    if(!PRESET_IDS.has(o.preset)&&o.preset!=='custom-glb')throw new Error('Modèle inconnu');
+    if(!PRESET_IDS.has(o.preset)&&o.preset!=='custom-glb'&&o.preset!=='linked-glb')throw new Error('Modèle inconnu');
     if(typeof o.name!=='string'||o.name.length>90)throw new Error('Nom d’objet invalide');
     const result={id:o.id,preset:o.preset,name:o.name,
       position:validateAxis(o.position,vector(),'position'),
       rotation:validateAxis(o.rotation,vector(),'rotation'),
       scale:validateAxis(o.scale,vector(1,1,1),'scale'),visible:o.visible!==false};
+    if(o.preset==='linked-glb'){
+      if(!o.asset||typeof o.asset.libraryId!=='string'||!/^[0-9a-f]{24}$/.test(o.asset.libraryId)||
+        typeof o.asset.filename!=='string'||o.asset.filename.length>140)
+        throw new Error('Référence de bibliothèque ANOMALIA invalide');
+      result.asset={libraryId:o.asset.libraryId,filename:o.asset.filename};
+    }
     if(o.preset==='custom-glb'){
       if(!o.asset||typeof o.asset.data!=='string'||o.asset.data.length>28000000||
         !/^[A-Za-z0-9+/]+={0,2}$/.test(o.asset.data)||typeof o.asset.filename!=='string'||o.asset.filename.length>140)
