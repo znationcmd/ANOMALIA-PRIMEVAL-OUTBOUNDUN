@@ -1,0 +1,4659 @@
+{
+  "schemaVersion": 1,
+  "updatedOn": "2026-10-23",
+  "scope": "Recherche de ressources réalistes pour les demandes ANOMALIA. Aucun téléchargement ni import Unreal lors de cette recherche.",
+  "vehicleRegister": "docs/vehicles/full-vehicle-worklist.json",
+  "environmentRegister": "docs/art/FULL_ENVIRONMENT_WORKLIST.md",
+  "itemCatalogSnapshots": [
+    "public/config/loot_items_catalog.json",
+    "public/config/rp_items_catalog.json"
+  ],
+  "deduplication": {
+    "itemIdCount": 314,
+    "duplicateCatalogReferences": [
+      "car_battery"
+    ],
+    "sourceUrlCount": 69,
+    "policy": "Un ID par objet; un URL par source. Un pack partagé par plusieurs objets est compté une seule fois. Ne pas remplacer une variante demandée par un modèle générique sans le noter."
+  },
+  "sources": [
+    {
+      "id": "ph_hatchet",
+      "title": "Hachette",
+      "url": "https://polyhaven.com/a/hatchet",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:hatchet"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_wooden_axe",
+      "title": "Hache en bois",
+      "url": "https://polyhaven.com/a/wooden_axe",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:axes"
+      ],
+      "note": "Hache générique; ne valide pas une hache de pompier exacte.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_screwdriver",
+      "title": "Tournevis",
+      "url": "https://polyhaven.com/a/screwdriver",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:screwdriver"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_flathead_screwdriver",
+      "title": "Tournevis plat",
+      "url": "https://polyhaven.com/a/flathead_screwdriver",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:screwdriver"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_pliers",
+      "title": "Pince",
+      "url": "https://polyhaven.com/a/pliers",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:pliers"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_crowbar_01",
+      "title": "Pied-de-biche",
+      "url": "https://polyhaven.com/a/crowbar_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:crowbar"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_sledgehammer_01",
+      "title": "Masse",
+      "url": "https://polyhaven.com/a/sledgehammer_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:sledgehammer"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_handsaw_wood",
+      "title": "Scie à bois",
+      "url": "https://polyhaven.com/a/handsaw_wood",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:handsaw"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_rusted_hacksaw",
+      "title": "Scie à métaux",
+      "url": "https://polyhaven.com/a/rusted_hacksaw",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:hacksaw"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_rusted_spade_01",
+      "title": "Bêche",
+      "url": "https://polyhaven.com/a/rusted_spade_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:shovel"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_pipe_wrench",
+      "title": "Clé à griffe",
+      "url": "https://polyhaven.com/a/pipe_wrench",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:wrench"
+      ],
+      "note": "Variante de clé; vérifier si elle convient à l'objet wrench demandé.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_wooden_hammer_01",
+      "title": "Marteau",
+      "url": "https://polyhaven.com/a/wooden_hammer_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:hammer"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_picke_dirty_01",
+      "title": "Pioche",
+      "url": "https://polyhaven.com/a/picke_dirty_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:pickaxe"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_binoculars",
+      "title": "Jumelles",
+      "url": "https://polyhaven.com/a/binoculars",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:binoculars"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_portable_generator",
+      "title": "Générateur portable",
+      "url": "https://polyhaven.com/a/portable_generator",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:generator"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_small_plastic_torch",
+      "title": "Lampe torche",
+      "url": "https://polyhaven.com/a/small_plastic_torch",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:flashlight"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_portable_searchlight",
+      "title": "Projecteur portable",
+      "url": "https://polyhaven.com/a/portable_searchlight",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:floodlights"
+      ],
+      "note": "Projecteur portable; ne valide pas un projecteur de chantier sur pied.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_plastic_jerrycan",
+      "title": "Bidon plastique",
+      "url": "https://polyhaven.com/a/plastic_jerrycan",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:water_in_fuel_can"
+      ],
+      "note": "Contenant candidat; n'ajoute aucune simulation de liquide ni contrôle de contamination.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_metal_jerrycan_green",
+      "title": "Jerrican métallique",
+      "url": "https://polyhaven.com/a/metal_jerrycan_green",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:water_in_fuel_can"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_Barrel_01",
+      "title": "Fût métallique",
+      "url": "https://polyhaven.com/a/Barrel_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:metal_barrel"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_Barrel_02",
+      "title": "Fût plastique",
+      "url": "https://polyhaven.com/a/Barrel_02",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:plastic_barrel"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_vintage_lighter",
+      "title": "Briquet",
+      "url": "https://polyhaven.com/a/vintage_lighter",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:lighter"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_brass_pan_01",
+      "title": "Poêle",
+      "url": "https://polyhaven.com/a/brass_pan_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:frying_pan"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_brass_pot_02",
+      "title": "Marmite",
+      "url": "https://polyhaven.com/a/brass_pot_02",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:cooking_pot"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_food_apple_01",
+      "title": "Pomme",
+      "url": "https://polyhaven.com/a/food_apple_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:apple"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_food_pears_asian_01",
+      "title": "Poires asiatiques",
+      "url": "https://polyhaven.com/a/food_pears_asian_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:pear"
+      ],
+      "note": "Variété asiatique; correspondance à confirmer pour la poire générique.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_long_life_food",
+      "title": "Conserves et carton alimentaire",
+      "url": "https://polyhaven.com/a/long_life_food",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:canned_beans",
+        "item:sardines"
+      ],
+      "note": "Pack comprenant notamment conserves de haricots et sardines; vérifier fichiers séparés et étiquettes. Ne couvre pas toutes les conserves.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_wine_bottles_01",
+      "title": "Bouteilles de vin et vin pétillant",
+      "url": "https://polyhaven.com/a/wine_bottles_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:red_wine",
+        "item:white_wine",
+        "item:rose_wine",
+        "item:champagne"
+      ],
+      "note": "Plusieurs bouteilles; vérifier chaque variante et adapter les étiquettes fictives. Une seule ressource commune.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_medical_box",
+      "title": "Boîte de soins",
+      "url": "https://polyhaven.com/a/medical_box",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:rp_recovery_kit"
+      ],
+      "note": "Contenant de trousse uniquement; ne valide pas chaque instrument ou médicament.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_medical_tape",
+      "title": "Ruban médical",
+      "url": "https://polyhaven.com/a/medical_tape",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:medical"
+      ],
+      "note": "Ruban adhésif médical, distinct du bandage stérile; ne pas remplacer silencieusement sterile_bandage.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_old_gas_mask",
+      "title": "Masque à gaz ancien",
+      "url": "https://polyhaven.com/a/old_gas_mask",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:gas_mask"
+      ],
+      "note": "Masque ancien, tube et filtre; adaptation au squelette et visibilité première personne requises.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_digital_wrist_watch",
+      "title": "Montre numérique",
+      "url": "https://polyhaven.com/a/digital_wrist_watch",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:rp_watch"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_rubber_boots",
+      "title": "Bottes en caoutchouc",
+      "url": "https://polyhaven.com/a/rubber_boots",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:boots"
+      ],
+      "note": "Bottes en caoutchouc; ne remplace pas les rangers ou bottes militaires demandées.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_cigarette_pack",
+      "title": "Paquet de cigarettes",
+      "url": "https://polyhaven.com/a/cigarette_pack",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "item:cigarette"
+      ],
+      "note": "Cigarettes visibles dans un paquet; vérifier séparation des meshes; mégot et cigare restent distincts.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_propane_tank",
+      "title": "Bouteille de propane",
+      "url": "https://polyhaven.com/a/propane_tank",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:gas_containers"
+      ],
+      "note": "Grand réservoir; pas une cartouche de réchaud validée.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_old_tyre",
+      "title": "Pneu usagé",
+      "url": "https://polyhaven.com/a/old_tyre",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:vehicle_tyres"
+      ],
+      "note": "Pneu générique, sans jante; ne couvre pas les roues exactes Ada/Gunter/Olga/Humvee.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_service_pistol",
+      "title": "Pistolet de service",
+      "url": "https://polyhaven.com/a/service_pistol",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:handguns"
+      ],
+      "note": "Désignation générique; ne pas l'assimiler à un identifiant d'arme précis sans vérification.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_bolt_action_rifle_7_62",
+      "title": "Fusil à verrou 7,62",
+      "url": "https://polyhaven.com/a/bolt_action_rifle_7_62",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:rifles"
+      ],
+      "note": "Modèle précis non identifié; ne pas l'assimiler à Mosin, M24 ou autre arme nommée.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_Sofa_01",
+      "title": "Canapé",
+      "url": "https://polyhaven.com/a/Sofa_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_rooms",
+        "homestead:Sofa"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_Shelf_01",
+      "title": "Étagère",
+      "url": "https://polyhaven.com/a/Shelf_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_storage"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_painted_wooden_cabinet",
+      "title": "Meuble de rangement",
+      "url": "https://polyhaven.com/a/painted_wooden_cabinet",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_storage"
+      ],
+      "note": "Meuble de rangement, pas une armoire haute validée.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_wooden_table_02",
+      "title": "Table",
+      "url": "https://polyhaven.com/a/wooden_table_02",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_rooms",
+        "homestead:Table"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_street_lamp_01",
+      "title": "Lampadaire",
+      "url": "https://polyhaven.com/a/street_lamp_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_lights",
+        "env:decor_street"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_modular_chainlink_fence",
+      "title": "Clôture grillagée modulaire",
+      "url": "https://polyhaven.com/a/modular_chainlink_fence",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:decor_gardens",
+        "homestead:Fence"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_pine_tree_01",
+      "title": "Pin",
+      "url": "https://polyhaven.com/a/pine_tree_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:nature_forest"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_fir_tree_01",
+      "title": "Sapins",
+      "url": "https://polyhaven.com/a/fir_tree_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:nature_forest"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_fern_02",
+      "title": "Fougères",
+      "url": "https://polyhaven.com/a/fern_02",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:nature_ground"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_shrub_01",
+      "title": "Buisson",
+      "url": "https://polyhaven.com/a/shrub_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "env:nature_ground"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "ph_watering_can_metal_01",
+      "title": "Arrosoir",
+      "url": "https://polyhaven.com/a/watering_can_metal_01",
+      "domain": "polyhaven",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "evidence": "Fiche individuelle consultée; catalogue et politique de licence Poly Haven.",
+      "access": "PAGE_LUE",
+      "targets": [
+        "family:farming_tools"
+      ],
+      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_f35",
+      "title": "F-35A",
+      "url": "https://sketchfab.com/3d-models/f-35-a-lightning-ii-war-mode-full-pack-c2fd326b8a714c0d91d7d1b41e0a86e2",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_aircraft_f_35_lightning_ii"
+      ],
+      "note": "1,2M triangles annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_f22",
+      "title": "F-22 Raptor",
+      "url": "https://sketchfab.com/3d-models/f22-raptor-free-2a64abf0866a405c865466c7642ca689",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_aircraft_f_22_raptor"
+      ],
+      "note": "Animation et textures Substance annoncées; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_mirage2000",
+      "title": "Mirage 2000",
+      "url": "https://sketchfab.com/3d-models/mirage-2000-b1a103c2c1fb463ebcf5a54004368221",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_aircraft_mirage_2000"
+      ],
+      "note": "32,7k triangles annoncés; fiche indexée complète. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_leclerc",
+      "title": "Char Leclerc",
+      "url": "https://sketchfab.com/3d-models/char-leclerc-84a0918d2f534c2eb003ab3cb3029c03",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:armored_tactical_char_leclerc"
+      ],
+      "note": "L'auteur décrit une nouvelle texture de son ancien modèle; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_unimog",
+      "title": "Unimog Truck",
+      "url": "https://sketchfab.com/3d-models/unimog-truck-72caf995b6064890b7bc62371cc79f36",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_trucks_mercedes_benz_unimog"
+      ],
+      "note": "Optimisation jeu et crédit auteur annoncés; version militaire à adapter; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_ka52",
+      "title": "Ka-52 PBR",
+      "url": "https://sketchfab.com/3d-models/pbr-kamov-ka-52-6f29175ef23940fcb4c5364240e169f7",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_helicopters_kamov_ka_52_alligator"
+      ],
+      "note": "PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_b2",
+      "title": "B-2 Spirit PBR",
+      "url": "https://sketchfab.com/3d-models/pbr-b-2-spirit-b16592b1083948a49ae2afa90d190a08",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:military_aircraft_b_2_spirit"
+      ],
+      "note": "PBR annoncé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_q5",
+      "title": "Audi Q5 Sportback",
+      "url": "https://sketchfab.com/3d-models/2022-audi-q5-s-line-sportback-7f3ddb0b4ff840b68890781234fc521d",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:audi_q5_q5_sportback"
+      ],
+      "note": "Version Sportback seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_e46",
+      "title": "BMW E46 MSport",
+      "url": "https://sketchfab.com/3d-models/bmw-e46-msport-614c2f1660474178a1d4717b7492d1c7",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "vehicle:bmw_3_generations_e46"
+      ],
+      "note": "Variante E46 seulement; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_rib",
+      "title": "Bateau pneumatique d'assaut",
+      "url": "https://sketchfab.com/3d-models/assault-boat-0d4fca4f2e014cd7b6aefd4653b1508c",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "generic:supplement_2"
+      ],
+      "note": "4K PBR annoncé; correspond à la catégorie pneumatique, marque Zodiac non établie; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "v_sprinter_ambulance",
+      "title": "Ambulance Sprinter 413",
+      "url": "https://sketchfab.com/3d-models/rettungswagen-krankenwagen-ambulance-e6c4858d34f0440394c2aa772ebaca38",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "generic:generic_ambulance"
+      ],
+      "note": "Modèle crédité à Spaehling; origine et détails à contrôler. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_panel",
+      "title": "Immeuble résidentiel modulaire",
+      "url": "https://sketchfab.com/3d-models/modular-russian-panel-house-7bef9b27b4c54a03b64e2f395fef3d7f",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_hlm",
+        "env:world_residences"
+      ],
+      "note": "Architecture résidentielle russe; référence partielle pour immeubles, pas un HLM français certifié; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_villa",
+      "title": "Villa avec piscine et intérieur",
+      "url": "https://sketchfab.com/3d-models/small-villa-6fc3a756dacd40af8c6e4e3b8e674ea2",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_villas_pool"
+      ],
+      "note": "113,9k triangles; cuisine/bureau/salle de bains/chambre annoncés. NoAI à respecter. Page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_hospital",
+      "title": "Hôpital de Pori, bâtiment principal",
+      "url": "https://sketchfab.com/3d-models/pori-city-hospital-16-main-hospital-building-1acf49182b3a4248a0dc1cddb2e2e976",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_hospital"
+      ],
+      "note": "Fiche publiée le 25 septembre 2026; intérieur non confirmé; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_fire",
+      "title": "Caserne de pompiers",
+      "url": "https://sketchfab.com/3d-models/fire-station-34988c59a010496cacc06d0580a116dd",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_emergency"
+      ],
+      "note": "Textures et formats OBJ/FBX annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_police",
+      "title": "Poste de police urbain",
+      "url": "https://sketchfab.com/3d-models/city-police-station-f6ba27f0426c4eefabce32d17e87fd35",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_emergency"
+      ],
+      "note": "Modélisation 3ds Max et textures annoncées; ne valide pas gendarmerie française; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "b_shed",
+      "title": "Abri agricole usé",
+      "url": "https://sketchfab.com/3d-models/worn-shed-pbr-game-ready-be6edd62e55a4f9a99da940fc164a5b9",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "env:world_farms",
+        "homestead:TractorShed"
+      ],
+      "note": "PBR et porte séparée annoncés; dimensions pour tracteur non vérifiées; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "i_m4a1",
+      "title": "Colt M4A1",
+      "url": "https://sketchfab.com/3d-models/colt-m4a1-carbine-fa4a73faf4234e5db4066335074a7655",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "item:m4a1"
+      ],
+      "note": "FBX, PBR 4K, viseur 2K annoncés; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "i_famas",
+      "title": "FAMAS",
+      "url": "https://sketchfab.com/3d-models/famas-7d35e14ad8874d148ce9cc46e5765a6b",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "item:famas"
+      ],
+      "note": "Variante exacte et PBR à vérifier; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    },
+    {
+      "id": "i_backpack",
+      "title": "Sac tactique PBR",
+      "url": "https://sketchfab.com/3d-models/tactical-backpack-game-ready-pbr-dea541825b8d4fd5a8c4fbb68f0ed62f",
+      "domain": "sketchfab",
+      "license": "CC Attribution annoncé par l'index",
+      "evidence": "Résultat de recherche de la fiche du créateur; droits de l'auteur non certifiés.",
+      "access": "INDEX_SEUL_PAGE_DIRECTE_NON_VERIFIEE",
+      "targets": [
+        "item:assault_backpack"
+      ],
+      "note": "Base candidate pour sac d'assaut; adaptation au corps à vérifier; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false
+    }
+  ],
+  "items": [
+    {
+      "id": "m4a1",
+      "displayName": "M4A1",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "i_m4a1"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "akm",
+      "displayName": "AKM",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ak74",
+      "displayName": "AK74",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "aks74u",
+      "displayName": "AKS74U",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "fal_lar",
+      "displayName": "FAL LAR",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ka101",
+      "displayName": "KA101",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "m16a2",
+      "displayName": "M16A2",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "aug_a1",
+      "displayName": "AUG A1",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "aug_ax",
+      "displayName": "AUG AX",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "famas",
+      "displayName": "FAMAS",
+      "category": "assault_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "i_famas"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "mosin_9130",
+      "displayName": "Mosin 9130",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "blaze",
+      "displayName": "Blaze",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tundra",
+      "displayName": "Tundra",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cr527",
+      "displayName": "CR527",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "savanna",
+      "displayName": "Savanna",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "winchester70",
+      "displayName": "Winchester70",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "vsd_svd",
+      "displayName": "VSD SVD",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "vss",
+      "displayName": "VSS",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pioneer",
+      "displayName": "Pioneer",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "scout",
+      "displayName": "Scout",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "m24",
+      "displayName": "M24",
+      "category": "hunting_precision_weapons",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "mlock91",
+      "displayName": "Mlock91",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "fx45",
+      "displayName": "FX45",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ij70",
+      "displayName": "IJ70",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "kolt1911",
+      "displayName": "Kolt1911",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "deagle",
+      "displayName": "Deagle",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cr75",
+      "displayName": "CR75",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "p1",
+      "displayName": "P1",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "derringer",
+      "displayName": "Derringer",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "amphibias",
+      "displayName": "AmphibiaS",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "usg45_ump",
+      "displayName": "USG45 UMP",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sg5k_mp5",
+      "displayName": "SG5K MP5",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bk133",
+      "displayName": "BK133",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bk43",
+      "displayName": "BK43",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bk12",
+      "displayName": "BK12",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bizon",
+      "displayName": "Bizon",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "scorpion",
+      "displayName": "Scorpion",
+      "category": "handguns_smg_shotguns",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "308_win",
+      "displayName": "308 Win",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "762x54r",
+      "displayName": "762x54R",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "762x39",
+      "displayName": "762x39",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "556x45",
+      "displayName": "556x45",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "545x39",
+      "displayName": "545x39",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "9x19",
+      "displayName": "9x19",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "45_acp",
+      "displayName": "45 ACP",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "380_auto",
+      "displayName": "380 Auto",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "22_lr",
+      "displayName": "22 LR",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "12g_buckshot",
+      "displayName": "12g buckshot",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "12g_slug",
+      "displayName": "12g slug",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "12g_rubber",
+      "displayName": "12g rubber",
+      "category": "ammunition",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_scope",
+      "displayName": "hunting scope",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pso1_scope",
+      "displayName": "PSO1 scope",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "acog_scope",
+      "displayName": "ACOG scope",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "kobra_sight",
+      "displayName": "Kobra sight",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rifle_suppressor",
+      "displayName": "rifle suppressor",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pistol_suppressor",
+      "displayName": "pistol suppressor",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bottle_suppressor",
+      "displayName": "bottle suppressor",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "stanag_magazine",
+      "displayName": "STANAG magazine",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ak_magazine",
+      "displayName": "AK magazine",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "weapon_cleaning_kit",
+      "displayName": "weapon cleaning kit",
+      "category": "weapon_accessories",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "fire_axe",
+      "displayName": "fire axe",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hatchet",
+      "displayName": "hatchet",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_hatchet"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sledgehammer",
+      "displayName": "sledgehammer",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_sledgehammer_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "shovel",
+      "displayName": "shovel",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_rusted_spade_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pickaxe",
+      "displayName": "pickaxe",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_picke_dirty_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hacksaw",
+      "displayName": "hacksaw",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_rusted_hacksaw"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "handsaw",
+      "displayName": "handsaw",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_handsaw_wood"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "screwdriver",
+      "displayName": "screwdriver",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_screwdriver",
+        "ph_flathead_screwdriver"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pliers",
+      "displayName": "pliers",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_pliers"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "crowbar",
+      "displayName": "crowbar",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_crowbar_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hammer",
+      "displayName": "hammer",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_wooden_hammer_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wrench",
+      "displayName": "wrench",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_pipe_wrench"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_knife",
+      "displayName": "hunting knife",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "kitchen_knife",
+      "displayName": "kitchen knife",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bone_knife",
+      "displayName": "bone knife",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "chainsaw",
+      "displayName": "chainsaw",
+      "category": "tools",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "nails_box",
+      "displayName": "nails box",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wire",
+      "displayName": "wire",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "barbed_wire",
+      "displayName": "barbed wire",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "metal_sheet",
+      "displayName": "metal sheet",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "camo_net",
+      "displayName": "camo net",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rope",
+      "displayName": "rope",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "burlap",
+      "displayName": "burlap",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "duct_tape",
+      "displayName": "duct tape",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "animal_hide",
+      "displayName": "animal hide",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tree_bark",
+      "displayName": "tree bark",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "log",
+      "displayName": "log",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "plank",
+      "displayName": "plank",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "long_stick",
+      "displayName": "long stick",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "short_stick",
+      "displayName": "short stick",
+      "category": "craft_materials",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hiking_backpack",
+      "displayName": "hiking backpack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "field_backpack",
+      "displayName": "field backpack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_backpack",
+      "displayName": "hunting backpack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "drysack",
+      "displayName": "drysack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "assault_backpack",
+      "displayName": "assault backpack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "i_backpack"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "improvised_backpack",
+      "displayName": "improvised backpack",
+      "category": "backpacks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_jacket",
+      "displayName": "hunting jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bdu_jacket",
+      "displayName": "BDU jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "field_jacket",
+      "displayName": "field jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tactical_jacket",
+      "displayName": "tactical jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "firefighter_jacket",
+      "displayName": "firefighter jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gorka_jacket",
+      "displayName": "gorka jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hi_vis_jacket",
+      "displayName": "hi vis jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sweater",
+      "displayName": "sweater",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "leather_jacket",
+      "displayName": "leather jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "parka",
+      "displayName": "parka",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "raincoat",
+      "displayName": "raincoat",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "doctor_jacket",
+      "displayName": "doctor jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "paramedic_jacket",
+      "displayName": "paramedic jacket",
+      "category": "tops",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cargo_pants",
+      "displayName": "cargo pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "combat_pants",
+      "displayName": "combat pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "jeans",
+      "displayName": "jeans",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_pants",
+      "displayName": "hunting pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "firefighter_pants",
+      "displayName": "firefighter pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "doctor_pants",
+      "displayName": "doctor pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "paramedic_pants",
+      "displayName": "paramedic pants",
+      "category": "pants",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ballistic_helmet",
+      "displayName": "ballistic helmet",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tactical_helmet",
+      "displayName": "tactical helmet",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "motorcycle_helmet",
+      "displayName": "motorcycle helmet",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "construction_helmet",
+      "displayName": "construction helmet",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cap",
+      "displayName": "cap",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "beanie",
+      "displayName": "beanie",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cowboy_hat",
+      "displayName": "cowboy hat",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "boonie_hat",
+      "displayName": "boonie hat",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "balaclava",
+      "displayName": "balaclava",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gas_mask",
+      "displayName": "gas mask",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_old_gas_mask"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gas_mask_filter",
+      "displayName": "gas mask filter",
+      "category": "headwear",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "plate_carrier",
+      "displayName": "plate carrier",
+      "category": "vests",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "press_vest",
+      "displayName": "press vest",
+      "category": "vests",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tactical_vest",
+      "displayName": "tactical vest",
+      "category": "vests",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "flak_vest",
+      "displayName": "flak vest",
+      "category": "vests",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "military_boots",
+      "displayName": "military boots",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hiking_shoes",
+      "displayName": "hiking shoes",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rangers",
+      "displayName": "rangers",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hunting_boots",
+      "displayName": "hunting boots",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "work_gloves",
+      "displayName": "work gloves",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "surgical_gloves",
+      "displayName": "surgical gloves",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tactical_gloves",
+      "displayName": "tactical gloves",
+      "category": "shoes_gloves",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sterile_bandage",
+      "displayName": "Bandage stérile",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rags",
+      "displayName": "Chiffons pour pansement",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "morphine",
+      "displayName": "Antalgique médical RP",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "epinephrine",
+      "displayName": "Stimulant médical RP",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "blood_test_kit",
+      "displayName": "Kit de diagnostic sanguin",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "blood_bag",
+      "displayName": "Poche de sang (soins simplifiés)",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "iv_kit",
+      "displayName": "iv kit",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "saline",
+      "displayName": "Solution de perfusion (jeu)",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "splint",
+      "displayName": "Attelle — soulagement provisoire",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tetracycline",
+      "displayName": "Antibiotique RP",
+      "category": "medicine",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "charcoal_tablets",
+      "displayName": "Traitement antitoxique RP",
+      "category": "medicine",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "water_purification_tablets",
+      "displayName": "Traitement pour eau — objet de jeu",
+      "category": "medicine",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "vitamins",
+      "displayName": "Vitamines RP",
+      "category": "medicine",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "iodine",
+      "displayName": "Antiseptique RP",
+      "category": "hygiene",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "disinfectant_spray",
+      "displayName": "Désinfectant pour plaies RP",
+      "category": "hygiene",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "alcohol_90",
+      "displayName": "Alcool antiseptique — usage externe RP",
+      "category": "hygiene",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "canned_bacon",
+      "displayName": "Bacon en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "canned_peaches",
+      "displayName": "Pêches en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "canned_beans",
+      "displayName": "Haricots en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_long_life_food"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sardines",
+      "displayName": "Sardines en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_long_life_food"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tuna",
+      "displayName": "Thon en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pate",
+      "displayName": "Pâté en conserve",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cat_food",
+      "displayName": "Nourriture pour chat",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "dog_food",
+      "displayName": "Nourriture pour chien",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "beef",
+      "displayName": "Viande bovine crue",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pork",
+      "displayName": "Viande de porc crue",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "chicken",
+      "displayName": "Volaille crue",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "animal_fat",
+      "displayName": "Graisse animale",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "apple",
+      "displayName": "Pomme",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_food_apple_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pear",
+      "displayName": "Poire",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_food_pears_asian_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "plum",
+      "displayName": "Prune",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tomato",
+      "displayName": "Tomate",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "potato",
+      "displayName": "Pomme de terre",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "mushroom",
+      "displayName": "Champignon non identifié",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "raw_fish",
+      "displayName": "Poisson cru",
+      "category": "fresh_food",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "pipsi",
+      "displayName": "Pipsi",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "notacola",
+      "displayName": "Notacola",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "spite",
+      "displayName": "Spite",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "mad_monk",
+      "displayName": "Mad Monk",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "vodka",
+      "displayName": "Vodka RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "whisky",
+      "displayName": "Whisky RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rum",
+      "displayName": "Rhum RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "red_wine",
+      "displayName": "Vin rouge RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_wine_bottles_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "white_wine",
+      "displayName": "Vin blanc RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_wine_bottles_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rose_wine",
+      "displayName": "Vin rosé RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_wine_bottles_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "champagne",
+      "displayName": "Vin pétillant RP",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_wine_bottles_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "water_bottle",
+      "displayName": "Bouteille d’eau",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "military_canteen",
+      "displayName": "Gourde militaire",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "water_in_fuel_can",
+      "displayName": "water in fuel can",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_plastic_jerrycan",
+        "ph_metal_jerrycan_green"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "filter_canteen",
+      "displayName": "Gourde filtrante",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooking_pot",
+      "displayName": "cooking pot",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_brass_pot_02"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "frying_pan",
+      "displayName": "frying pan",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_brass_pan_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "portable_gas_stove",
+      "displayName": "portable gas stove",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gas_canister",
+      "displayName": "gas canister",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooking_tripod",
+      "displayName": "cooking tripod",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "matches",
+      "displayName": "matches",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "lighter",
+      "displayName": "lighter",
+      "category": "cooking",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_vintage_lighter"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "camping_tent",
+      "displayName": "camping tent",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "military_tent",
+      "displayName": "military tent",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "car_tent",
+      "displayName": "car tent",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "plastic_barrel",
+      "displayName": "plastic barrel",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_Barrel_02"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "metal_barrel",
+      "displayName": "metal barrel",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_Barrel_01"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "crafted_wooden_crate",
+      "displayName": "crafted wooden crate",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sea_chest",
+      "displayName": "sea chest",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sleeping_bag",
+      "displayName": "sleeping bag",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bear_trap",
+      "displayName": "bear trap",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "generator",
+      "displayName": "generator",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_portable_generator"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cable_reel",
+      "displayName": "cable reel",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "floodlight",
+      "displayName": "floodlight",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "car_battery",
+      "displayName": "car battery",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "9v_battery",
+      "displayName": "9v battery",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "flashlight",
+      "displayName": "flashlight",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_small_plastic_torch"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "headlamp",
+      "displayName": "headlamp",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "chemlight",
+      "displayName": "chemlight",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "flare",
+      "displayName": "flare",
+      "category": "power_lighting",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "compass",
+      "displayName": "compass",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gps_player_map",
+      "displayName": "gps player map",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gps_receiver",
+      "displayName": "gps receiver",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "binoculars",
+      "displayName": "binoculars",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_binoculars"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rangefinder",
+      "displayName": "rangefinder",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "walkie_talkie",
+      "displayName": "walkie talkie",
+      "category": "navigation",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "truck_battery",
+      "displayName": "truck battery",
+      "category": "vehicle_engine_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "spark_plug",
+      "displayName": "spark plug",
+      "category": "vehicle_engine_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "glow_plug",
+      "displayName": "glow plug",
+      "category": "vehicle_engine_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "radiator",
+      "displayName": "radiator",
+      "category": "vehicle_engine_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wheel_ada",
+      "displayName": "wheel ada",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wheel_gunter",
+      "displayName": "wheel gunter",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wheel_olga",
+      "displayName": "wheel olga",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "wheel_m1025",
+      "displayName": "wheel m1025",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "truck_tire",
+      "displayName": "truck tire",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "car_door",
+      "displayName": "car door",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "car_hood",
+      "displayName": "car hood",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "car_trunk",
+      "displayName": "car trunk",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "replacement_headlight",
+      "displayName": "replacement headlight",
+      "category": "vehicle_body_parts",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "empty_water_bottle",
+      "displayName": "Bouteille d’eau vide",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "empty_military_canteen",
+      "displayName": "Gourde militaire vide",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "empty_filter_canteen",
+      "displayName": "Gourde filtrante vide",
+      "category": "camping_storage",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "dirty_water_bottle",
+      "displayName": "Bouteille d’eau non traitée",
+      "category": "drinks",
+      "sourceCatalog": "public/config/loot_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_5",
+      "displayName": "Billet RP de 5 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_10",
+      "displayName": "Billet RP de 10 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_20",
+      "displayName": "Billet RP de 20 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_50",
+      "displayName": "Billet RP de 50 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_100",
+      "displayName": "Billet RP de 100 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_200",
+      "displayName": "Billet RP de 200 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "eur_note_500",
+      "displayName": "Billet RP de 500 EUR",
+      "category": "rp_cash",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_wallet",
+      "displayName": "Portefeuille",
+      "category": "rp_valuables",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_cash_bundle",
+      "displayName": "Liasse RP scellée (objet, non convertible automatiquement)",
+      "category": "rp_valuables",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_jewellery",
+      "displayName": "Bijou",
+      "category": "rp_valuables",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_watch",
+      "displayName": "Montre",
+      "category": "rp_valuables",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_digital_wrist_watch"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_1g",
+      "displayName": "Lingot d’or de 1 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_10g",
+      "displayName": "Lingot d’or de 10 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_100g",
+      "displayName": "Lingot d’or de 100 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_250g",
+      "displayName": "Lingot d’or de 250 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_500g",
+      "displayName": "Lingot d’or de 500 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_bar_1000g",
+      "displayName": "Lingot d’or de 1000 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_nugget",
+      "displayName": "Pépite d’or",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "gold_ore",
+      "displayName": "Minerai d’or",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "silver_bar_100g",
+      "displayName": "Lingot d’argent de 100 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "platinum_bar_100g",
+      "displayName": "Lingot de platine de 100 g",
+      "category": "rp_precious_metals",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rough_diamond",
+      "displayName": "Diamant brut",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cut_diamond",
+      "displayName": "Diamant taillé",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "ruby",
+      "displayName": "Rubis",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "emerald",
+      "displayName": "Émeraude",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "sapphire",
+      "displayName": "Saphir",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "amethyst",
+      "displayName": "Améthyste",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "opal",
+      "displayName": "Opale",
+      "category": "rp_gemstones",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooked_beef",
+      "displayName": "Viande bovine cuite",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooked_pork",
+      "displayName": "Viande de porc cuite",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooked_chicken",
+      "displayName": "Volaille cuite",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cooked_fish_fillet",
+      "displayName": "Filet de poisson cuit",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "bread_loaf",
+      "displayName": "Pain",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rice_meal",
+      "displayName": "Riz préparé",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "vegetable_soup",
+      "displayName": "Soupe de légumes",
+      "category": "canned_food",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "orange_juice",
+      "displayName": "Jus de fruits",
+      "category": "drinks",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "drinking_water_carton",
+      "displayName": "Eau potable en carton",
+      "category": "drinks",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_recovery_kit",
+      "displayName": "Trousse de soins RP — intoxication",
+      "category": "medical_supplies",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_medical_box"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_cocaine",
+      "displayName": "Cocaïne — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_crack",
+      "displayName": "Crack — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_amphetamine",
+      "displayName": "Amphétamine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_methamphetamine",
+      "displayName": "Méthamphétamine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_mdma",
+      "displayName": "MDMA — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_methylphenidate",
+      "displayName": "Méthylphénidate — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_modafinil",
+      "displayName": "Modafinil — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_heroin",
+      "displayName": "Héroïne — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_opium",
+      "displayName": "Opium — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_fentanyl",
+      "displayName": "Fentanyl — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_oxycodone",
+      "displayName": "Oxycodone — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_codeine",
+      "displayName": "Codéine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_tramadol",
+      "displayName": "Tramadol — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_methadone",
+      "displayName": "Méthadone — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_buprenorphine",
+      "displayName": "Buprénorphine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_diazepam",
+      "displayName": "Diazépam — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_alprazolam",
+      "displayName": "Alprazolam — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_clonazepam",
+      "displayName": "Clonazépam — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_zolpidem",
+      "displayName": "Zolpidem — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_ghb",
+      "displayName": "GHB — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_barbiturates",
+      "displayName": "Barbituriques — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_lsd",
+      "displayName": "LSD — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_psilocybin",
+      "displayName": "Psilocybine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_mescaline",
+      "displayName": "Mescaline — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_dmt",
+      "displayName": "DMT — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_ketamine",
+      "displayName": "Kétamine — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_pcp",
+      "displayName": "PCP — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_nitrous_oxide",
+      "displayName": "Protoxyde — objet RP — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_cannabis",
+      "displayName": "Cannabis — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_cannabis_resin",
+      "displayName": "Résine de cannabis — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_cannabis_oil",
+      "displayName": "Huile de cannabis — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_synthetic_cannabinoid",
+      "displayName": "Cannabinoïde synthétique — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_vet_sedative",
+      "displayName": "Sédatif vétérinaire RP — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_anomaly_azure",
+      "displayName": "Composé fictif Azur — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_anomaly_ember",
+      "displayName": "Composé fictif Braise — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "rp_substance_anomaly_spore",
+      "displayName": "Spore fictive ANOMALIA — accessoire RP",
+      "category": "rp_substances",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cigarette_butt",
+      "displayName": "Mégot",
+      "category": "rp_tobacco",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cigarette",
+      "displayName": "Cigarette",
+      "category": "rp_tobacco",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "sources": [
+        "ph_cigarette_pack"
+      ],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "hand_rolled_cigarette",
+      "displayName": "Cigarette roulée",
+      "category": "rp_tobacco",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "cigar",
+      "displayName": "Cigare",
+      "category": "rp_tobacco",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    },
+    {
+      "id": "tobacco_pouch",
+      "displayName": "Pochette de tabac",
+      "category": "rp_tobacco",
+      "sourceCatalog": "public/config/rp_items_catalog.json",
+      "status": "A_RECHERCHER",
+      "sources": [],
+      "meshImportedVerified": false,
+      "gameplayVerifiedByThisResearch": false
+    }
+  ],
+  "environments": [
+    {
+      "id": "world_hlm",
+      "label": "HLM, immeubles d'habitation et cités dans les grandes villes",
+      "previousState": "Source spécifique à rechercher; pack modulaire seulement partiel",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_panel"
+      ]
+    },
+    {
+      "id": "world_residences",
+      "label": "Résidences, appartements, halls, escaliers et balcons",
+      "previousState": "À rechercher; aucun ensemble complet validé",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_panel"
+      ]
+    },
+    {
+      "id": "world_lotissements",
+      "label": "Lotissements, maisons et jardins",
+      "previousState": "Une maison déjà référencée; diversité à compléter",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_villas_pool",
+      "label": "Villas avec piscine en bord de plage",
+      "previousState": "Ressources réalistes spécifiques à rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_villa"
+      ]
+    },
+    {
+      "id": "world_villages",
+      "label": "Villages et maisons régionales",
+      "previousState": "À rechercher et assembler",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_shops",
+      "label": "Commerces et bâtiments de ville",
+      "previousState": "Pack modulaire candidat partiel",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_hospital",
+      "label": "Hôpitaux et espaces médicaux",
+      "previousState": "À rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_hospital"
+      ]
+    },
+    {
+      "id": "world_emergency",
+      "label": "Police, gendarmerie, casernes de pompiers",
+      "previousState": "À rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_fire",
+        "b_police"
+      ]
+    },
+    {
+      "id": "world_military",
+      "label": "Bases militaires et bunkers",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_farms",
+      "label": "Fermes, granges et bâtiments agricoles",
+      "previousState": "À rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "b_shed"
+      ]
+    },
+    {
+      "id": "world_ports",
+      "label": "Ports et bâtiments portuaires",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_airports",
+      "label": "Aéroports, hangars et tours de contrôle",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_stations",
+      "label": "Gares ferroviaires, stations de métro et tunnels",
+      "previousState": "À rechercher; véhicules suivis dans le registre véhicule",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "world_roads",
+      "label": "Routes, autoroutes, chemins, ponts et tunnels",
+      "previousState": "Asphalte référencé; ouvrages et ensemble du réseau à compléter",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "nature_forest",
+      "label": "Arbres et forêts tempérées",
+      "previousState": "Island Tree 02 existant, charme européen candidat; diversité à compléter",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_pine_tree_01",
+        "ph_fir_tree_01"
+      ]
+    },
+    {
+      "id": "nature_jungle",
+      "label": "Arbres tropicaux, jungle et végétation de plage",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "nature_ground",
+      "label": "Buissons, herbes, fleurs, fougères et végétation basse",
+      "previousState": "Herbe existante et parc candidat; ensemble incomplet",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_fern_02",
+        "ph_shrub_01"
+      ]
+    },
+    {
+      "id": "nature_rocks",
+      "label": "Rochers, sols, falaises et grottes",
+      "previousState": "Rochers/sol forestier existants; autres groupes à compléter",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "decor_rooms",
+      "label": "Mobilier chambres et salons",
+      "previousState": "À rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_Sofa_01",
+        "ph_wooden_table_02"
+      ]
+    },
+    {
+      "id": "decor_kitchen",
+      "label": "Cuisines et équipements",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "decor_bathroom",
+      "label": "Salles de bains et sanitaires",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    },
+    {
+      "id": "decor_storage",
+      "label": "Armoires, étagères et rangement",
+      "previousState": "À rechercher",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_Shelf_01",
+        "ph_painted_wooden_cabinet"
+      ]
+    },
+    {
+      "id": "decor_lights",
+      "label": "Éclairages intérieurs et extérieurs",
+      "previousState": "À rechercher; ressources du parc à inventorier",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_street_lamp_01"
+      ]
+    },
+    {
+      "id": "decor_street",
+      "label": "Bancs, poubelles, panneaux, lampadaires et mobilier urbain",
+      "previousState": "Parc candidat partiel; inventaire exact à vérifier",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_street_lamp_01"
+      ]
+    },
+    {
+      "id": "decor_gardens",
+      "label": "Clôtures, portails, terrasses, jardins et décoration de piscine",
+      "previousState": "À rechercher; parc candidat partiel",
+      "status": "NOUVEAUX_CANDIDATS_PARTIELS_A_VERIFIER",
+      "sources": [
+        "ph_modular_chainlink_fence"
+      ]
+    },
+    {
+      "id": "decor_small",
+      "label": "Petits objets, tableaux et accessoires de décoration",
+      "previousState": "À rechercher",
+      "status": "CONSULTER_SUIVI_EXISTANT",
+      "sources": []
+    }
+  ],
+  "supplements": {
+    "buildPartsSource": "src/construction.js",
+    "buildParts": [
+      "foundation",
+      "piles",
+      "floating",
+      "underwater",
+      "wall",
+      "window",
+      "doorway",
+      "door",
+      "ceiling",
+      "roof",
+      "stairs",
+      "ramp"
+    ],
+    "homesteadSource": "unreal/Source/AnomaliaPrimeval/AnomaliaHomesteadStation.h",
+    "homesteadObjects": [
+      "Bed",
+      "Table",
+      "Chair",
+      "Sofa",
+      "Wardrobe",
+      "Kitchen",
+      "Lamp",
+      "Cow",
+      "Chicken",
+      "Beehive",
+      "Doghouse",
+      "Barn",
+      "Fence",
+      "TractorShed"
+    ],
+    "note": "Ces compléments ne sont pas additionnés aux 314 IDs des deux catalogues. Sources à associer individuellement; prototypes et logique ne prouvent pas le rendu final."
+  },
+  "rejectedOrHeld": [
+    {
+      "title": "F-35 bohmerang",
+      "url": "https://sketchfab.com/3d-models/f-35-lightning-ii-fighter-jet-free-b1ab1c0090e34b0fbfe667e706023e6d",
+      "reason": "Licence non commerciale."
+    },
+    {
+      "title": "F-35B Battlefield 2042",
+      "url": "https://sketchfab.com/3d-models/f-35b-lightning-ii-fa3e9c175c244bedb457582f08cf8e31",
+      "reason": "Modèle extrait de Battlefield 2042 selon l'auteur."
+    },
+    {
+      "title": "F-35A DCS",
+      "url": "https://sketchfab.com/3d-models/f-35a-lightning-ii-a06d6113cfb44a0aa7b8f17106aca9c4",
+      "reason": "Origine mod communautaire DCS; droits de réutilisation de la source non établis; en attente, ne pas importer."
+    },
+    {
+      "title": "Leclerc War Thunder",
+      "url": "https://sketchfab.com/3d-models/leclerc-s1-war-thunder-1b65a5b9cfc6481487e6efbb18059653",
+      "reason": "Origine War Thunder; ne pas importer sans droits de l'ayant droit."
+    },
+    {
+      "title": "HMS Queen Elizabeth Modern Warships",
+      "url": "https://sketchfab.com/3d-models/hms-queen-elizabeth-r08-aircraft-carrier-b7394547685749ae9e1c48afe29586ab",
+      "reason": "Origine Modern Warships annoncée; droits non établis."
+    },
+    {
+      "title": "Hôpital The Evil Within 2",
+      "url": "https://sketchfab.com/3d-models/the-hospital-4-of-4-a9c83a4b678c43e2a84426472b9ca0c7",
+      "reason": "Origine autre jeu; ne pas importer."
+    },
+    {
+      "title": "Caserne San Francisco Banobano",
+      "url": "https://sketchfab.com/3d-models/fire-station-97c5cfa041e440c38362332ce566184e",
+      "reason": "Licence non commerciale."
+    },
+    {
+      "title": "Modern Bathroom",
+      "url": "https://polyhaven.com/a/modern_bathroom",
+      "reason": "HDRI, pas un bâtiment ni des sanitaires 3D."
+    },
+    {
+      "title": "Service Pistol / Bolt Action Rifle génériques",
+      "url": "https://polyhaven.com/a/service_pistol",
+      "reason": "Sources CC0 valables comme références mais identité exacte non établie; pas de correspondance automatique aux armes nommées."
+    }
+  ],
+  "exclusions": [
+    "Moissonneuses",
+    "Ensileuses",
+    "Pulvérisateurs agricoles",
+    "Ferries",
+    "Cargos",
+    "Pétroliers",
+    "Chalutiers",
+    "Remorqueurs",
+    "Porte-conteneurs (navires)"
+  ],
+  "remaining": "Aucun statut de cette recherche ne signifie un véhicule ou objet terminé. Tous les IDs sans source restent explicitement A_RECHERCHER; les sources indexées seulement ne sont pas validées.",
+  "dayzSourcePolicy": {
+    "artistSource": "https://dayz.com/article/general/DayZ-Team-Evolution-n2",
+    "licenseSource": "https://www.bohemia.net/en/licenses/dayz-public-license-dpl",
+    "note": "L'équipe DayZ décrit des artistes créant personnages, environnements, bâtiments, armes et équipements. Les données publiées sous DPL restent réservées à DayZ et non commerciales. Ne pas les importer dans ANOMALIA Unreal sans une licence distincte autorisant cet usage. Les mods tiers exigent leur propre vérification."
+  },
+  "summary": {
+    "newSourceRecords": 69,
+    "polyHavenCC0Sources": 49,
+    "indexedSketchfabCandidates": 20,
+    "itemIds": 314,
+    "itemIdsWithCandidate": 35,
+    "itemIdsWithoutCandidate": 279,
+    "vehicleGroupedStatusCounts": {
+      "CANDIDAT_A_VERIFIER": 15,
+      "A_RECHERCHER": 152,
+      "REFERENCE_HISTORIQUE_SEULE": 11,
+      "CANDIDAT_PARTIEL_A_VERIFIER": 32
+    },
+    "noNewBinaryDownloads": true,
+    "noNewUnrealImports": true
+  }
+}
