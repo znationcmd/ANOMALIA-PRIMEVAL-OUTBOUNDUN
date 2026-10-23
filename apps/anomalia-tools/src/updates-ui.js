@@ -4,7 +4,10 @@ const updates=window.anomaliaTools?.updates;
 const $=selector=>document.querySelector(selector);
 function paint(state){
   if(!state)return;
-  $('#updateVersion').textContent='v'+(state.currentVersion||'—');
+  const installedVersion=state.currentVersion||'—';
+  $('#updateVersion').textContent='v'+installedVersion;
+  document.getElementById('appSidebarVersion').textContent=installedVersion;
+  document.getElementById('appFooterVersion').textContent=installedVersion;
   $('#updateStatusTitle').textContent={
     initialisation:'Initialisation',developpement:'Application en développement',veille:'Surveillance activée',
     verification:'Recherche en cours',disponible:'Mise à jour disponible',
