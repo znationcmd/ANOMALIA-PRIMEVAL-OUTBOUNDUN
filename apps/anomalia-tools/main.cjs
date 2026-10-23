@@ -2,7 +2,8 @@
 const {app,BrowserWindow,dialog,shell,ipcMain}=require('electron');
 const path=require('node:path');
 const {AnomaliaTools}=require('./core.cjs');
-let toolsApp;let win;
+const {ToolsUpdater}=require('./updates.cjs');
+let toolsApp;let win;let updater;
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
   'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod']);
@@ -19,6 +20,10 @@ function start(){
 }
 app.whenReady().then(()=>{
   toolsApp=new AnomaliaTools(path.join(app.getPath('userData'),'private-workspaces'));
+  updater=new ToolsUpdater();
+  ipcMain.handle('tools:updates:status',()=>updater.status());
+  ipcMain.handle('tools:updates:check',()=>updater.check());
+  ipcMain.handle('tools:updates:install',()=>updater.installNow());
   ipcMain.handle('tools:call',async(_,method,payload={})=>{
     if(!allowed.has(method)||typeof toolsApp[method]!=='function')throw Error('Commande interdite');
     return toolsApp[method](payload);
@@ -43,6 +48,8 @@ app.whenReady().then(()=>{
     if(path.resolve(choice.filePath)!==path.resolve(archive.path))fs.copyFileSync(archive.path,choice.filePath);
     return {saved:true,path:choice.filePath,manifest:archive.manifest};
   });
-  start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
+  start();updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
 });
 app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit();});
+
+app.on('before-quit',()=>updater?.stop());
