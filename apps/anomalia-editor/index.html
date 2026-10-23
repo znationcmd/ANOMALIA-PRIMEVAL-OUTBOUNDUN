@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="fr"><head>
-<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="UTF-8"><meta name="theme-color" content="#111b2b"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="apple-mobile-web-app-title" content="ANOMALIA Editor"><link rel="manifest" href="./manifest.webmanifest"><link rel="icon" type="image/svg+xml" href="./icon.svg"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self' blob: data:; script-src 'self'; style-src 'self'; connect-src 'self' blob: data:; object-src 'none'; base-uri 'none'">
 <title>ANOMALIA Editor — Éditeur 3D</title>
 </head><body>
-<div class="app">
+<div class="app"><div class="mobileAppBanner"><span>ANOMALIA EDITOR <strong>· MOBILE WORKSPACE</strong></span><span>TOUCH · 3D</span></div>
   <header class="top">
     <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD CREATION SUITE · 3D EDITOR</small></div></div>
     <div class="project"><span class="projectCaption">SCÈNE ACTIVE</span><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
@@ -13,7 +13,7 @@
       <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
     </div>
   </header>
-  <div class="workspace" id="editorWorkspace">
+  <div class="workspace" id="editorWorkspace"><button type="button" id="mobilePanelClose" class="mobilePanelBackdrop" aria-label="Fermer les panneaux" hidden></button>
     <nav class="activityRail" aria-label="Disposition de l'éditeur">
       <span class="railTitle">OUTILS</span>
       <button id="toggleLibrary" class="railButton active" type="button" aria-label="Afficher ou masquer la bibliothèque" aria-controls="editorLibrary" aria-expanded="true" title="Bibliothèque 3D"><span aria-hidden="true">▦</span><small>Objets</small></button>
