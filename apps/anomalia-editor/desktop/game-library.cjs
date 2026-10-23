@@ -9,7 +9,7 @@ const IGNORE=new Set(['.git','.svn','node_modules','Binaries','Intermediate','Sa
 const MAX_ENTRIES=35000;
 function category(name,kind){
   const s=name.toLowerCase();
-  if(kind==='map')return 'Cartes et secteurs';
+  if(kind==='map'||kind==='unreal-map')return 'Cartes et secteurs';
   if(/vehic|vehicle|car|auto|sedan|bmw|truck|camion|van|suv|moto|bike|kart|buggy|quad|train|metro|helico|helicopt|aircraft|plane|avion|boat|jet.?ski|zodiac|submarine|tank|armored|ambulance|police|fire.?engine/.test(s))return 'Véhicules';
   if(/hous|maison|home|villa|building|batiment|apartment|immeuble|hlm|residence|warehouse|garage|bunker|shop|hospital|hangar|military|caserne|station|school/.test(s))return 'Bâtiments';
   if(/road|route|street|highway|bridge|pont|tunnel|rail|railway|track|sidewalk|pavement/.test(s))return 'Routes et infrastructures';
