@@ -5,13 +5,14 @@
   "description": "CMD Studio Game Creator - atelier 3D local pour ANOMALIA et autres jeux",
   "main": "main.js",
   "scripts": {
-    "start": "electron .",
+    "start": "node scripts/prepare-icon.cjs && electron .",
     "test": "node --test tests/*.test.js",
-    "package:win": "electron-builder --win nsis"
+    "package:win": "node scripts/prepare-icon.cjs && electron-builder --win nsis"
   },
   "devDependencies": {
     "electron": "^33.4.11",
-    "electron-builder": "^25.1.8"
+    "electron-builder": "^25.1.8",
+    "pngjs": "^7.0.0"
   },
   "build": {
     "appId": "fr.cmd.studio",
@@ -37,15 +38,15 @@
           ]
         }
       ],
-      "icon": "resources/cmd-studio.ico"
+      "icon": "resources/cmd-studio-256.ico"
     },
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
-      "installerIcon": "resources/cmd-studio.ico",
-      "uninstallerIcon": "resources/cmd-studio.ico",
-      "installerHeaderIcon": "resources/cmd-studio.ico"
+      "installerIcon": "resources/cmd-studio-256.ico",
+      "uninstallerIcon": "resources/cmd-studio-256.ico",
+      "installerHeaderIcon": "resources/cmd-studio-256.ico"
     }
   }
 }
