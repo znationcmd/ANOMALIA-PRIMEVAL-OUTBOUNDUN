@@ -27,3 +27,84 @@
 .updatePrivacy{display:flex;align-items:start;gap:10px;color:#91acc2;font-size:10px;line-height:1.8;margin:20px 0 0}
 .updatePrivacy svg{width:17px;height:17px;color:#70debc}
 @media(max-width:1250px){.updateForm{grid-template-columns:1fr}}
+
+/* Touch/iOS/Android layout — preserves existing desktop presentation. */
+.mobileTop,.mobileOverlay{display:none}
+@media(max-width:960px){
+ body{min-width:0;max-width:100vw;overflow-x:hidden}
+ .shell{min-width:0}
+ .sidebar{width:213px}
+ .mainArea{padding:18px}
+ .hero h1{font-size:31px}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .quickGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .toolsGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .libraryLayout{grid-template-columns:1fr}
+ .viewerCard{position:relative}
+ .topbar{padding:12px 17px;min-height:75px;height:auto;flex-wrap:wrap}
+ .topActions{max-width:100%}
+ .heroContent{padding:25px}
+}
+@media(max-width:760px){
+ html,body{width:100%;height:100%;overscroll-behavior-x:none}
+ .mobileTop{height:49px;display:flex;align-items:center;gap:11px;padding:4px 13px;padding-top:env(safe-area-inset-top,0px);
+  background:linear-gradient(100deg,#101b2e,#17243c);border-bottom:1px solid #374d71;position:relative;z-index:9}
+ .mobileTop button{width:37px;height:37px;flex:none;border:1px solid #586e94;border-radius:9px;background:#22334f;color:#e7f1ff;font-size:18px}
+ .mobileTop strong{font-size:14px;letter-spacing:.8px}
+ .mobileTop strong span{color:#baa7ff}
+ .mobileTop>span{margin-left:auto;color:#829fcc;font-size:9px;letter-spacing:1.1px}
+ .mobileOverlay:not([hidden]){display:block;position:fixed;inset:49px 0 0;z-index:7;background:#050d1dc7}
+ .shell{display:block;min-height:calc(100dvh - 49px)}
+ .sidebar{position:fixed;top:49px;bottom:0;left:0;z-index:8;width:min(288px,85vw);height:auto;overflow-y:auto;
+  transform:translateX(-103%);transition:transform .22s ease;border-right:1px solid #8f9cef;box-shadow:10px 0 38px #0007}
+ .sidebar.mobileOpen{transform:translateX(0)}
+ .sidebar .spacer{min-height:20px}
+ main{min-height:calc(100dvh - 49px);width:100%;max-width:100%}
+ .topbar{gap:8px;flex-direction:column;align-items:stretch;padding:13px 15px}
+ .topActions{justify-content:space-between;gap:6px}
+ .projectBadge{min-width:0;flex:1}
+ .topActions .btn{flex:none;padding:10px 11px;white-space:nowrap}
+ .headerTitle{font-size:20px}
+ .mainArea{padding:16px 12px 30px}
+ .hero{min-height:0;border-radius:15px}
+ .heroContent{padding:22px 18px}
+ .hero h1{font-size:29px;line-height:1.18}
+ .hero p{font-size:12px;line-height:1.6}
+ .heroActions{gap:8px}
+ .heroActions .btn{font-size:11px;min-height:41px}
+ .heroIndex{display:none}
+ .stats{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .stat{padding:13px}
+ .stat b{font-size:21px}
+ .quickGrid{grid-template-columns:1fr;gap:8px}
+ .quickCard{min-height:65px}
+ .pageIntro{align-items:flex-start;flex-wrap:wrap;gap:11px}
+ .pageIntro h2{font-size:23px}
+ .pageIntro .btn{min-height:43px}
+ .sectionHead{margin:22px 0 12px}
+ .searchBanner{min-height:130px;padding:18px}
+ .searchBanner h3{font-size:20px}
+ .categoryBar{padding:12px 10px 8px;gap:6px}
+ .category{min-height:40px}
+ .searchBar{gap:8px;padding:8px 10px;display:grid;grid-template-columns:minmax(0,1fr) auto}
+ .searchInput{grid-column:1/-1;min-height:46px}
+ .searchBar select{max-width:100%;width:100%;font-size:11px}
+ .searchBar>.btn{min-width:105px}
+ .suggestRow{padding:5px 10px 12px}
+ .suggest{min-height:34px}
+ .catalogHelp{padding:11px}
+ .assetGrid,.libraryGrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .assetPreview{height:105px}
+ .assetBody{padding:10px}
+ .assetActions .btn{min-height:35px}
+ .viewerCard{position:relative}
+ .modelViewport{height:300px;touch-action:none}
+ .toolsGrid{grid-template-columns:1fr}
+ .settingRow{padding:15px;gap:9px;flex-wrap:wrap}
+ .updateForm{grid-template-columns:1fr}
+ .updatePanel{padding:14px}
+ footer{padding:12px;display:block;line-height:1.7}
+ footer span{display:block}
+}
+@media(max-width:395px){.assetGrid,.libraryGrid{grid-template-columns:1fr}.topActions .btn{font-size:10px}.statLabel{font-size:10px}}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none}}
