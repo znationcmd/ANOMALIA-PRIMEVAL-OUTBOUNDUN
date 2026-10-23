@@ -183,3 +183,6 @@ jobs:
 
       - name: Verify populated archipelago against native heights and preserve coastline
         run: python -m unittest discover -s tests -p test_ue5_archipelago_population.py -v
+
+      - name: Preserve incremental sourcing and original vehicle request identities
+        run: python -m unittest discover -s tests -p test_ue5_vehicle_worklist.py -v

@@ -61,7 +61,34 @@ def main():
     for name,text in outputs.items():
         file=ROOT/'docs/vehicles'/name
         if args.check:
-            if not file.exists() or file.read_text()!=text:raise RuntimeError('Regenerate complete worklist: '+name)
-        else:file.write_text(text)
+            if not file.exists():raise RuntimeError('Missing complete worklist: '+name)
+            if name.endswith('.json'):
+                saved=json.loads(file.read_text())
+                actual={r['requestId']:r for r in saved['requests']}
+                if len(actual)!=len(report['requests']) or len(saved['requests'])!=len(actual):raise RuntimeError('Missing or duplicate original vehicle request')
+                # Sourcing is edited incrementally. Preserve its evidence while checking the immutable request identity.
+                for row in report['requests']:
+                    for key in ['requestId','requestedLabel','category','domain','militaryRelated','sourceRegister','relatedPriorRequests','variantLabelPreserved']:
+                        if actual[row['requestId']].get(key)!=row[key]:raise RuntimeError('Original request changed: '+row['requestId']+'/'+key)
+                for key,value in report['summary'].items():
+                    if saved['summary'].get(key)!=value:raise RuntimeError('Request summary changed: '+key)
+            else:
+                saved=file.read_text()
+                for row in report['requests']:
+                    if row['requestedLabel'].replace('|','/') not in saved:raise RuntimeError('Request absent from readable worklist: '+row['requestId'])
+        else:
+            if file.exists() and name.endswith('.json'):
+                prior=json.loads(file.read_text());previous={r['requestId']:r for r in prior.get('requests',[])}
+                for row in report['requests']:
+                    evidence=previous.get(row['requestId'],{})
+                    for key,value in evidence.items():
+                        if key not in row or key in ['referenceSources','state']:row[key]=value
+                report={**prior,**report};text=json.dumps(report,ensure_ascii=False,indent=2)+'\n'
+            elif file.exists():
+                # The readable worklist contains later sourcing notes; never erase them on regeneration.
+                previous=file.read_text()
+                missing=[r['requestedLabel'].replace('|','/') for r in report['requests'] if r['requestedLabel'].replace('|','/') not in previous]
+                text=previous+('\n## Requests restored\n\n'+'\n'.join('- '+label for label in missing)+'\n' if missing else '')
+            file.write_text(text)
     print(json.dumps(report['summary']))
 if __name__=='__main__':main()
