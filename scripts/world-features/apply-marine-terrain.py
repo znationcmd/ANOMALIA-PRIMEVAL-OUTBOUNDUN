@@ -13,7 +13,7 @@ ROOT = Path(unreal.Paths.project_dir()).resolve()
 PACKAGE = '/Game/Maps/ANOMALIA_Inhabited_v2'
 ORIGINAL = '/Game/Anomalia/Inhabited_v2/M_PBRGround'
 ART = '/Game/Anomalia/MarineTerrain_v1'
-DEST = ART + '/M_LandShoreSeabed'
+DEST = ART + '/M_LandShoreSeabed_v2'
 OUT = Path(os.environ['ANOMALIA_MARINE_TERRAIN_REPORT'])
 report = dict(state='FAILED', sourceCommit=os.environ.get('GITHUB_SHA'), map=PACKAGE,
               rendered=False, playtested=False, oceanRenderingImplemented=False)
@@ -58,7 +58,7 @@ try:
     report['loadedTerrainComponents'] = count
     if count != 576 or not any(a.get_actor_label() == 'ANOMALIA_InhabitedArchipelago_48km' for a in landscapes):
         raise RuntimeError('Expected owned complete 576-component terrain; loaded ' + str(count))
-    allowed = {ORIGINAL + '.M_PBRGround', DEST + '.M_LandShoreSeabed'}
+    allowed = {ORIGINAL + '.M_PBRGround', DEST + '.' + DEST.rsplit('/', 1)[1]}
     for a in landscapes:
         material = a.get_editor_property('landscape_material')
         if not material or material.get_path_name() not in allowed:
@@ -119,7 +119,7 @@ try:
                     if not unreal.EditorAssetLibrary.save_loaded_asset(texture, only_if_is_dirty=False):
                         raise RuntimeError('Texture save failed')
                 textures[(model['id'], entry['channel'])] = texture
-        mat = tools.create_asset('M_LandShoreSeabed', ART, unreal.Material, unreal.MaterialFactoryNew())
+        mat = tools.create_asset(DEST.rsplit('/', 1)[1], ART, unreal.Material, unreal.MaterialFactoryNew())
         if not mat:
             raise RuntimeError('Marine material creation failed')
         def node(name):
@@ -135,14 +135,14 @@ try:
         xy = node('ComponentMask')
         for key, value in [('r', True), ('g', True), ('b', False), ('a', False)]:
             xy.set_editor_property(key, value)
-        wire(position, xy, 'Input')
+        wire(position, xy, '')
         z = node('ComponentMask')
         for key, value in [('r', False), ('g', False), ('b', True), ('a', False)]:
             z.set_editor_property(key, value)
-        wire(position, z, 'Input')
+        wire(position, z, '')
         def mask(top, span):
             result = node('Clamp')
-            wire(op('Divide', op('Subtract', constant(top), z), constant(span)), result, 'Input')
+            wire(op('Divide', op('Subtract', constant(top), z), constant(span)), result, '')
             return result
         # Sea level is Z=0. Shore: +5m to -5m; deeper rock: -25m to -75m.
         shore = mask(500., 1000.)
@@ -170,7 +170,7 @@ try:
             wire(sample('land', channel), result, 'A', output)
             wire(seabed, result, 'B'); wire(shore, result, 'Alpha')
             if channel == 'nor_gl':
-                normal = node('Normalize'); wire(result, normal, 'VectorInput'); result = normal
+                normal = node('Normalize'); wire(result, normal, ''); result = normal
             if not lib.connect_material_property(result, '', prop):
                 raise RuntimeError('Material property connection failed')
         lib.layout_material_expressions(mat)

@@ -15,6 +15,7 @@ on:
       - 'scripts/world-features/build-settlement-roads.py'
       - 'scripts/world-features/audit-detailed-world.py'
       - 'scripts/world-features/run-visual-review.py'
+      - 'scripts/world-features/configure-detailed-rendering.py'
       - 'docs/art/marine-terrain-sources.json'
       - '.github/workflows/ue5-world-features.yml'
 concurrency:
@@ -106,6 +107,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report = Get-Content $env:ANOMALIA_STREETS_REPORT -Raw | ConvertFrom-Json
           if ($report.state -ne 'TOWN_STREETS_SAVED_NOT_PLAYTESTED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.townsWithStreets -lt 20) { throw 'Fresh town street build receipt required.' }
+      - name: Preserve foliage and street detail on the compatibility renderer
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_RENDER_SETTINGS_REPORT = Join-Path $evidence 'detailed-render-settings.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/configure-detailed-rendering.py'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/detailed-render-settings.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_RENDER_SETTINGS_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'DETAILED_COMPATIBILITY_SETTINGS_SAVED_NOT_RENDERED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or @($report.meshes).Count -ne 29) { throw 'Fresh compatibility detail settings required.' }
       - name: Check all saved detailed meshes and reject primitive placeholders
         if: ${{ !cancelled() }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}

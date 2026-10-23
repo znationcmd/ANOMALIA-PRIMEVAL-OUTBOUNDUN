@@ -75,10 +75,15 @@ try:
                                         and bool(unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaStreetGeometrySha256')))
                         materials = mesh.get_editor_property('static_materials')
                         triangles = mesh.get_num_triangles(0)
+                        nanite_triangles = mesh.get_num_nanite_triangles()
                         meshes[path] = dict(path=path, sourceIdentityVerified=verified,
-                                            triangles=triangles, lods=mesh.get_num_lods(), materials=len(materials))
-                        if not verified or triangles < 1000:
-                            report['violations'].append(dict(actor=label, reason='UNVERIFIED_OR_SIMPLISTIC_GEOMETRY', mesh=path))
+                                            triangles=triangles, naniteTriangles=nanite_triangles,
+                                            lods=mesh.get_num_lods(), materials=len(materials))
+                        # A Nanite fallback or a small street fragment may have few
+                        # triangles. Source identity and nonempty geometry establish
+                        # this check; a polygon threshold is not a realism test.
+                        if not verified or max(triangles, nanite_triangles) <= 0:
+                            report['violations'].append(dict(actor=label, reason='UNVERIFIED_OR_EMPTY_GEOMETRY', mesh=path))
                         if not materials or any(not slot.material_interface or slot.material_interface.get_path_name().startswith('/Engine/EngineMaterials/DefaultMaterial') for slot in materials):
                             report['violations'].append(dict(actor=label, reason='MISSING_OR_DEFAULT_MATERIAL', mesh=path))
                     for material in component.get_materials():

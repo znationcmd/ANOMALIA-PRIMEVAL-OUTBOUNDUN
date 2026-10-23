@@ -63,3 +63,15 @@ The same run failed the marine material guard because reopening a World Partitio
 `run-visual-review.py` launches the existing native detailed-art review with a real D3D11 renderer at 1280×720, an isolated temporary server identity, and a five-minute timeout. It requests eight day/night views and the existing walk/vehicle checks. This small review scene is intentionally separate from full-world rendering; its outcome must be read from the fresh receipt and actual screenshots.
 
 The current GameDefaultMap remains the older `ANOMALIA_Playable_v1`; a default launch is not evidence that the inhabited map was opened. The populated world is `/Game/Maps/ANOMALIA_Inhabited_v2`. No default-map promotion is made before its rendering and streaming behavior are verified.
+
+## First real-render evidence and follow-up corrections
+
+Run 39999219574 successfully rendered the detailed-art review with eight real day/night captures and passed native walk, car/truck entry, movement and exit checks. The actual images are in its `visual-render` evidence folder. This is a genuine rendered scene, not a full-world screenshot or final photorealism approval. Inspection found missing/degraded foliage and the review road running under the house.
+
+The same run loaded all 145 landscape actors and confirmed 576 components. Material graph construction then failed at a ComponentMask input connection. The correction uses the documented empty input name for first-input connections and creates a new `M_LandShoreSeabed_v2`, preserving the earlier partial asset.
+
+The full-world mesh audit loaded and inspected **7,176 mesh actors, including all 4,760 saved houses**. It reported no engine primitive or default-material violations, but nine false positives from an arbitrary 1,000-triangle threshold applied to fallback geometry and small road fragments. The corrected audit records both conventional and Nanite triangle counts and checks verified source identity and nonempty geometry rather than equating polygon count with realism.
+
+`configure-detailed-rendering.py` disables Nanite for the two verified foliage meshes (one has transparent leaf materials) and the 27 owned street meshes, retaining authored LODs for compatibility rendering. It records the original flag before changing it, keeps original sources and materials, and rotates the owned review road 90 degrees to clear the house. New captures are required to verify the resulting appearance; the intended improvement is not yet a confirmed result.
+
+Four additional original Innerscene CC0 residential GLBs have also been acquired and checked at metre scale: townhouse row (14,484 source triangles), cottage (14,716), modern villa (12,740), and garage/apartment (14,760), each with 8–10 texture maps. They remain **downloaded sources, not imported or placed houses**. The existing map still repeats the original detached-house mesh. `acquire-residential.mjs` preserves originals and records exact bytes, hashes and source links in its local manifest.
