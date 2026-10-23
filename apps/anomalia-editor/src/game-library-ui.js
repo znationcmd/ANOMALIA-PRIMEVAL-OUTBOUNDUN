@@ -119,7 +119,8 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
       const result=await library.importPack();
       if(!result.cancelled){
         apply(result.library);
-        updateMessage(result.duplicate?'Ce pack était déjà importé.':'Pack ajouté : '+result.files+' fichiers réels dans la bibliothèque privée.');
+        updateMessage(result.duplicate?'Ce pack était déjà importé.':
+          'Pack ajouté : '+result.files+' fichiers dont '+(result.verified||0)+' modèles contrôlés par SHA-256.');
       }
     }catch(e){notify('Import ZIP impossible : '+e.message,true);}
     finally{busy=false;}
