@@ -102,7 +102,11 @@ jobs:
         working-directory: ${{ matrix.folder }}
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: npm run ${{ matrix.command }}
+          APPLICATION: ${{ matrix.application }}
+        run: |
+          if($env:APPLICATION -eq 'editor'){npm run desktop:package}
+          else{npm run package:win}
+          if($LASTEXITCODE -ne 0){throw 'NSIS packaging failed'}
       - name: Verifier manifestes et fichiers puis publier
         if: steps.version.outputs.publish == 'true'
         env:
