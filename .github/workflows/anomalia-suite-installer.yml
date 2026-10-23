@@ -1,0 +1,75 @@
+name: ANOMALIA - Installateur unique Windows
+on:
+  push:
+    branches:
+      - feature/anomalia-suite-one-click-install-20261023
+    paths:
+      - 'installer/windows/**'
+      - '.github/workflows/anomalia-suite-installer.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  installer:
+    name: Assembler le programme d'installation unique
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39932307272
+          name: CMD-Studio-Installateur-Windows
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: installers/studio
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39934271449
+          name: ANOMALIA-Editor-Installateur-Windows
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: installers/editor
+      - uses: actions/download-artifact@v4
+        with:
+          run-id: 39938400505
+          name: ANOMALIA-Tools-Installateur-Windows
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: installers/tools
+      - name: Verifier les trois installateurs telecharges
+        shell: pwsh
+        run: |
+          $expected = @(
+            "installers/studio/CMD Studio Setup 0.1.1.exe",
+            "installers/editor/ANOMALIA Editor Setup 0.1.1.exe",
+            "installers/tools/ANOMALIA Tools Setup 0.1.1.exe"
+          )
+          foreach ($file in $expected) {
+            if (!(Test-Path -LiteralPath $file)) { throw "Installateur manquant : $file" }
+            $size = (Get-Item -LiteralPath $file).Length
+            if ($size -lt 20000000) { throw "Installateur suspect ou incomplet : $file ($size octets)" }
+            Write-Host "$file : $size octets"
+          }
+      - name: Preparer le compilateur NSIS
+        shell: pwsh
+        run: |
+          $nsis = "${env:ProgramFiles(x86)}\NSIS\makensis.exe"
+          if (!(Test-Path -LiteralPath $nsis)) {
+            choco install nsis -y --no-progress
+          }
+          if (!(Test-Path -LiteralPath $nsis)) { throw "NSIS non disponible" }
+          New-Item -ItemType Directory -Force -Path release | Out-Null
+      - name: Fabriquer un seul EXE
+        shell: pwsh
+        run: |
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" "/V3" "installer\windows\suite.nsi"
+          if ($LASTEXITCODE -ne 0) { throw "Compilation NSIS echouee" }
+          if (!(Test-Path -LiteralPath "release/Installer-ANOMALIA-3-applications.exe")) {
+            throw "Installateur final non trouve"
+          }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Installateur-ANOMALIA-3-Applications
+          path: release/Installer-ANOMALIA-3-applications.exe
+          if-no-files-found: error
