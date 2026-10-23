@@ -6,9 +6,9 @@
 </head><body>
 <div class="app"><div class="mobileAppBanner"><span>ANOMALIA EDITOR <strong>· MOBILE WORKSPACE</strong></span><span>TOUCH · 3D</span></div>
   <header class="top">
-    <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD CREATION SUITE · 3D EDITOR</small></div></div>
+    <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD BUILDER · 3D SCENE AUTHORING</small></div></div>
     <div class="project"><span class="projectCaption">SCÈNE ACTIVE</span><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
-    <div class="topButtons">
+    <nav class="desktopMenu" aria-label="Menus de l’éditeur"><button id="menuFile" type="button">Fichier ⌄</button><button id="menuEdit" type="button">Édition ⌄</button><button id="menuView" type="button">Affichage ⌄</button><button id="menuAssets" type="button">Ressources ⌄</button></nav><div class="topButtons">
       <button id="newScene" title="Nouveau projet">Nouveau</button><button id="saveScene" title="Sauvegarder localement">Enregistrer</button>
       <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
     </div>
@@ -16,49 +16,19 @@
   <div class="workspace" id="editorWorkspace"><button type="button" id="mobilePanelClose" class="mobilePanelBackdrop" aria-label="Fermer les panneaux" hidden></button>
     <nav class="activityRail" aria-label="Disposition de l'éditeur">
       <span class="railTitle">OUTILS</span>
-      <button id="toggleLibrary" class="railButton active" type="button" aria-label="Afficher ou masquer la bibliothèque" aria-controls="editorLibrary" aria-expanded="true" title="Bibliothèque 3D"><span aria-hidden="true">▦</span><small>Objets</small></button>
-      <button id="toggleInspector" class="railButton active" type="button" aria-label="Afficher ou masquer l'inspecteur" aria-controls="editorInspector" aria-expanded="true" title="Inspecteur"><span aria-hidden="true">⚙</span><small>Détails</small></button>
+      <button id="toggleLibrary" class="railButton active" type="button" aria-label="Afficher ou masquer l’explorateur de scène" aria-controls="editorLibrary" aria-expanded="true" title="Explorateur de scène"><span aria-hidden="true">☷</span><small>Scène</small></button>
+      <button id="toggleInspector" class="railButton active" type="button" aria-label="Afficher ou masquer les ressources 3D" aria-controls="editorInspector" aria-expanded="true" title="Ressources 3D"><span aria-hidden="true">▦</span><small>Assets</small></button>
       <span class="railSpacer"></span>
       <button id="toggleFocus" class="railButton" type="button" aria-label="Mode concentration sur la scène" aria-pressed="false" title="Mode concentration"><span aria-hidden="true">⛶</span><small>Focus</small></button>
       <button id="resetLayout" class="railButton" type="button" aria-label="Réinitialiser les panneaux" title="Disposition par défaut"><span aria-hidden="true">↺</span><small>Reset</small></button>
     </nav>
-    <aside class="left" id="editorLibrary">
-      <div class="paneHeading"><div><span class="paneOverline">ASSET LIBRARY</span><strong>Catalogue 3D</strong></div><small>CRÉATION</small></div><p class="paneIntro">Choisis un objet, puis place-le dans ton univers.</p>
-      <input id="assetSearch" class="searchAsset" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
-      <div id="categoryBar" class="categories"></div>
-      <div id="catalog" class="catalog"></div>
-      <div class="leftBottom"><button id="importModel" class="wide accent">＋ Importer un modèle GLB</button><div class="hint"><span class="privacyDot"></span> Import local sécurisé · aucun transfert</div></div>
-      <section class="gameLibraryDock" id="gameLibraryDock" aria-label="Ressources synchronisées du jeu">
-        <div class="paneHeading borderTop"><div><span class="paneOverline">ANOMALIA / LIVE RESOURCES</span><strong>Bibliothèque du jeu</strong></div><span id="gameLibraryCount">0</span></div>
-        <div class="gameLibraryActions"><button type="button" id="linkGameFolder" class="dockAccent">Lier les fichiers ANOMALIA</button><button type="button" id="refreshGameFolder" title="Actualiser le catalogue">↻</button></div><div class="gameLibraryActions"><button type="button" id="importGamePack" class="dockAccent" title="Importer les véritables fichiers GLB, textures et licences depuis une archive ZIP téléchargée">＋ Importer un pack 3D ZIP</button></div>
-        <div id="gameLibraryFolder" class="gameLibraryPath">Aucun dossier lié — choisis le dossier des modèles téléchargés ou du projet Unreal.</div>
-        <div class="gameLibraryMetrics"><span id="gameModelsCount">0 modèles</span><span id="gameMapsCount">0 cartes</span><span id="gameUnreadableCount">0 fichiers Unreal</span></div>
-        <input id="gameAssetSearch" placeholder="Véhicule, bâtiment, route, objet, carte..." maxlength="120" aria-label="Filtrer les ressources synchronisées">
-        <select id="gameAssetCategory" aria-label="Catégorie des ressources synchronisées"><option value="">Toutes les catégories</option></select>
-        <div id="gameLibraryItems" class="gameLibraryItems"><div class="libraryNotice">Le catalogue se mettra à jour automatiquement toutes les 45 secondes après la première association d'un dossier.</div></div>
-        <div id="gameLibraryStatus" class="gameLibraryStatus" role="status" aria-live="polite">Les ressources restent sur ton ordinateur. Aucune copie automatique n’est ajoutée à ta scène.</div>
-      </section>
-      <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTLINER</span><strong>Hiérarchie</strong></div><span id="count">0 objet</span></div>
+    <aside class="left explorerDock" id="editorLibrary" aria-label="Explorateur de scène">
+      <div class="dockHeading"><span class="dockAccent"></span><div><small>ANOMALIA / SCÈNE</small><strong>Explorateur</strong></div><span class="dockStat">LOCAL</span></div>
+      <div class="explorerHint">Objets de la scène active</div>
+      <div class="paneHeading explorerTitle"><div><span class="paneOverline">SCENE OUTLINER</span><strong>Hiérarchie</strong></div><span id="count">0 objet</span></div>
       <div id="hierarchy" class="hierarchy"></div>
-    </aside>
-    <div id="librarySplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la bibliothèque" tabindex="0" aria-valuemin="210" aria-valuemax="440" aria-valuenow="258"></div>
-    <section class="stage">
-      <div class="workspaceRibbon"><span><i class="liveDot"></i> ESPACE DE CRÉATION <span class="ribbonDivider">/</span> PERSPECTIVE</span><span class="ribbonActions"><span class="ribbonHelp">Q Sélection · W Déplacer · E Rotation · R Échelle</span><button id="ribbonFocus" type="button" title="Agrandir la vue 3D">⛶ Agrandir la scène</button></span></div>
-      <div class="tools">
-        <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)"><span aria-hidden="true">⌖</span> Sélection <kbd>Q</kbd></button><button id="moveTool" title="Déplacer (W)"><span aria-hidden="true">✥</span> Déplacer <kbd>W</kbd></button><button id="rotateTool" title="Rotation (E)"><span aria-hidden="true">↻</span> Rotation <kbd>E</kbd></button><button id="scaleTool" title="Échelle (R)"><span aria-hidden="true">⤢</span> Échelle <kbd>R</kbd></button><button id="brushTool" title="Pinceau (B)"><span aria-hidden="true">◌</span> Pinceau <kbd>B</kbd></button></div>
-        <div class="toolsPart"><label><input id="snap" type="checkbox" checked> Aimantation</label><select id="snapSize" title="Pas de grille"><option value="0.5">0,5 m</option><option value="1" selected>1 m</option><option value="5">5 m</option></select></div>
-        <div class="toolsPart end"><button id="undo" title="Annuler (Ctrl+Z)">↶</button><button id="redo" title="Rétablir (Ctrl+Y)">↷</button><button id="duplicate" title="Dupliquer (Ctrl+D)">Dupliquer</button><button id="delete" title="Supprimer (Suppr)">Supprimer</button></div>
-      </div>
-      <div id="viewport" aria-label="Vue 3D interactive">
-        <div class="viewportLabel"><span class="viewportTag">● LIVE VIEWPORT</span><span id="modeLabel">SÉLECTION</span></div><div class="viewportInfo"><strong>ANOMALIA / SCENE VIEW</strong><small>Perspective · Rendu local</small></div>
-        <div id="crosshair">＋</div>
-        <div class="viewportTips" id="viewportTips"><span class="viewportTipHeading">NAVIGATION 3D</span>Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
-        <div class="compass">N<br>◉</div>
-      </div>
-      <div class="status"><span class="statusReady"><i class="liveDot"></i> PRÊT</span><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span></div>
-    </section>
-    <div id="inspectorSplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner l'inspecteur" tabindex="0" aria-valuemin="245" aria-valuemax="460" aria-valuenow="312"></div>
-    <aside class="right" id="editorInspector">
+
+      <div class="dockHeading dockSecond"><span class="dockAccent"></span><div><small>SÉLECTION</small><strong>Inspecteur</strong></div><span class="dockStat">3D</span></div>
       <div class="paneHeading"><div><span class="paneOverline">OBJECT INSPECTOR</span><strong>Propriétés</strong></div><small>ÉDITION</small></div><div class="inspectorSubheading">Transformations précises de l'objet sélectionné</div>
       <div id="noSelection" class="noSelection"><div class="inspectorIllustration">⬡</div><strong>Aucun objet sélectionné</strong><p>Clique sur un élément de la scène ou de la hiérarchie pour accéder à ses paramètres.</p></div>
       <div id="inspector" hidden>
@@ -70,7 +40,7 @@
         <div class="sectionTitle">ÉCHELLE</div>
         <div class="three" id="scaleFields"><label>X<input type="number" min=".01" step=".1" data-group="scale" data-axis="x"></label><label>Y<input type="number" min=".01" step=".1" data-group="scale" data-axis="y"></label><label>Z<input type="number" min=".01" step=".1" data-group="scale" data-axis="z"></label></div>
         <div class="sectionTitle">OBJET</div><div id="meta" class="metadata"></div>
-        <div class="inspectorButtons"><button id="focusObject" class="wide">Centrer la caméra (F)</button><button id="inspectorDuplicate" class="wide">Dupliquer cet objet</button></div>
+        <div class="inspectorButtons"><button id="replaceSelected" class="wide replaceAction" title="Remplacer le modèle provisoire en conservant ses coordonnées">⇄ Remplacer par un vrai modèle GLB</button><button id="focusObject" class="wide">Centrer la caméra (F)</button><button id="inspectorDuplicate" class="wide">Dupliquer cet objet</button></div>
       </div>
       <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTPUT</span><strong>Exportation</strong></div></div>
       <div class="exportPanel"><button id="exportCSV" class="wide">Exporter les positions CSV</button><button id="saveAs" class="wide">Télécharger le projet</button><p>Format natif <code>.anomalia.json</code>. Export CSV exploitable pour préparer une implantation Unreal Engine après liaison des vrais assets.</p></div>
@@ -84,6 +54,48 @@
           <p>La nouvelle version se télécharge automatiquement et s’installe lorsque tu fermes l’application.</p>
         </div>
       </div>
+
+    </aside>
+    <div id="librarySplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la bibliothèque" tabindex="0" aria-valuemin="210" aria-valuemax="440" aria-valuenow="258"></div>
+    <section class="stage">
+      <div class="workspaceRibbon"><span><i class="liveDot"></i> MONDE <span class="ribbonDivider">/</span> SCÈNE 3D <span class="ribbonDivider">/</span> PERSPECTIVE</span><span class="ribbonActions"><span class="ribbonHelp">Q Sélection · W Déplacer · E Rotation · R Échelle</span><button id="ribbonFocus" type="button" title="Agrandir la vue 3D">⛶ Agrandir la scène</button></span></div>
+      <div class="tools">
+        <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)"><span aria-hidden="true">⌖</span> Sélection <kbd>Q</kbd></button><button id="moveTool" title="Déplacer (W)"><span aria-hidden="true">✥</span> Déplacer <kbd>W</kbd></button><button id="rotateTool" title="Rotation (E)"><span aria-hidden="true">↻</span> Rotation <kbd>E</kbd></button><button id="scaleTool" title="Échelle (R)"><span aria-hidden="true">⤢</span> Échelle <kbd>R</kbd></button><button id="brushTool" title="Pinceau (B)"><span aria-hidden="true">◌</span> Pinceau <kbd>B</kbd></button></div>
+        <div class="toolsPart"><label><input id="snap" type="checkbox" checked> Aimantation</label><select id="snapSize" title="Pas de grille"><option value="0.5">0,5 m</option><option value="1" selected>1 m</option><option value="5">5 m</option></select></div>
+        <div class="toolsPart end"><button id="undo" title="Annuler (Ctrl+Z)">↶</button><button id="redo" title="Rétablir (Ctrl+Y)">↷</button><button id="duplicate" title="Dupliquer (Ctrl+D)">Dupliquer</button><button id="delete" title="Supprimer (Suppr)">Supprimer</button></div>
+      </div>
+      <div id="viewport" aria-label="Vue 3D interactive"><div class="emptyWorld" id="emptyWorld" hidden><div class="emptyLogo">A</div><span>WORLD BUILDER · NOUVELLE SCÈNE</span><h2>Commence avec de vrais modèles 3D</h2><p>Lie le dossier du jeu, importe un pack GLB, ou ouvre une carte existante. Les cubes sont réservés aux prototypes.</p><div class="emptyActions"><button type="button" id="emptyLinkFolder">Lier les assets du jeu</button><button type="button" id="emptyImportModel">Importer un GLB</button><button type="button" id="emptyOpenProject">Ouvrir une carte</button></div></div><div class="viewportQuickbar" aria-label="Options de la scène"><button id="toggleGrid" class="on" aria-pressed="true" type="button" title="Afficher la grille"># Grille</button><button id="toggleShadows" class="on" aria-pressed="true" type="button" title="Ombres">◐ Ombres</button><button id="centerWorld" type="button" title="Recentrer sur le monde">◎ Origine</button><button id="viewTop" type="button" title="Vue de dessus">⬒ Dessus</button></div><div class="viewportCorner">ANOMALIA <span>WORLD EDITOR</span></div>
+        <div class="viewportLabel"><span class="viewportTag">● VIEWPORT 3D</span><span id="modeLabel">SÉLECTION</span></div><div class="viewportInfo"><strong>VUE D’ÉDITION</strong><small>Modèles GLB et terrain de prévisualisation</small></div>
+        <div id="crosshair">＋</div>
+        <div class="viewportTips" id="viewportTips"><span class="viewportTipHeading">NAVIGATION 3D</span>Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
+        <div class="compass"><span>N</span><span>◆</span><span>S</span></div>
+      </div>
+      <div class="status"><span class="statusReady"><i class="liveDot"></i> PRÊT</span><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span><span id="fps">— FPS</span></div>
+    </section>
+    <div id="inspectorSplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner l'inspecteur" tabindex="0" aria-valuemin="245" aria-valuemax="460" aria-valuenow="312"></div>
+    <aside class="right placeableDock" id="editorInspector" aria-label="Objets à placer">
+      <div class="dockHeading"><span class="dockAccent"></span><div><small>ANOMALIA / PLACEMENTS</small><strong>Objets à placer</strong></div><span class="dockStat">GLB / UE5</span></div>
+      <div class="assetIntroduction">Les nouveaux modèles réels sont détectés automatiquement.</div>
+      <section class="gameLibraryDock isPrimary" id="gameLibraryDock" aria-label="Ressources synchronisées du jeu">
+        <div class="paneHeading borderTop"><div><span class="paneOverline">ANOMALIA / LIVE RESOURCES</span><strong>Bibliothèque du jeu</strong></div><span id="gameLibraryCount">0</span></div>
+        <div class="gameLibraryActions"><button type="button" id="linkGameFolder" class="dockAccent">Lier les fichiers ANOMALIA</button><button type="button" id="refreshGameFolder" title="Actualiser le catalogue">↻</button></div><div class="gameLibraryActions"><button type="button" id="importGamePack" class="dockAccent" title="Importer les véritables fichiers GLB, textures et licences depuis une archive ZIP téléchargée">＋ Importer un pack 3D ZIP</button></div>
+        <div id="gameLibraryFolder" class="gameLibraryPath">Aucun dossier lié — choisis le dossier des modèles téléchargés ou du projet Unreal.</div>
+        <div class="gameLibraryMetrics"><span id="gameModelsCount">0 modèles</span><span id="gameMapsCount">0 cartes</span><span id="gameUnreadableCount">0 fichiers Unreal</span></div>
+        <input id="gameAssetSearch" placeholder="Véhicule, bâtiment, route, objet, carte..." maxlength="120" aria-label="Filtrer les ressources synchronisées">
+        <select id="gameAssetCategory" aria-label="Catégorie des ressources synchronisées"><option value="">Toutes les catégories</option></select>
+        <div id="gameLibraryItems" class="gameLibraryItems"><div class="libraryNotice">Le catalogue se mettra à jour automatiquement toutes les 45 secondes après la première association d'un dossier.</div></div>
+        <div id="gameLibraryStatus" class="gameLibraryStatus" role="status" aria-live="polite">Les ressources restent sur ton ordinateur. Aucune copie automatique n’est ajoutée à ta scène.</div>
+      </section>
+
+      <details class="prototypeDisclosure" id="prototypeDisclosure">
+        <summary><span><strong>Formes de démonstration</strong><small>Prototypes géométriques, pas photoréalistes</small></span><span class="demoCount">20</span></summary>
+      <div class="paneHeading"><div><span class="paneOverline">PROTOTYPE ASSETS</span><strong>Objets provisoires</strong></div><small>CRÉATION</small></div><p class="paneIntro">Choisis un objet, puis place-le dans ton univers.</p>
+      <input id="assetSearch" class="searchAsset" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
+      <div id="categoryBar" class="categories"></div>
+      <div id="catalog" class="catalog"></div>
+      <div class="leftBottom"><button id="importModel" class="wide accent">＋ Importer un modèle GLB</button><div class="hint"><span class="privacyDot"></span> Import local sécurisé · aucun transfert</div></div>
+
+      </details>
     </aside>
   </div>
   <input type="file" id="fileOpen" accept=".json,.anomalia.json" hidden>

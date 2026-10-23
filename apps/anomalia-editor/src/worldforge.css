@@ -1,0 +1,244 @@
+/* ANOMALIA WORLD FORGE — architectural desktop editor UI.
+   Original identity, DayZ-style placement workflows, not DayZ assets/UI code. */
+:root{
+  --bg:#080d12;--panel:#101821;--raised:#18232e;--raised2:#1c2b39;
+  --line:#30414e;--line-hi:#667b83;--text:#e7edf0;--mute:#9dacb5;
+  --faint:#657c8c;--accent:#d2a46d;--cyan:#7ccfce;--mint:#6acfb3;
+  font-family:"Segoe UI Variable","Segoe UI",Inter,system-ui,sans-serif;
+}
+.app{background:#070c11}
+button{border-radius:5px;background:#1a2732;border-color:#334452;color:#c7d3da;
+  box-shadow:none;font-weight:550;transition:background .13s,border-color .13s,color .13s}
+button:hover{background:#273b49;border-color:#7f919d;box-shadow:none;color:white}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid #e6b178;outline-offset:1px}
+input,select{background:#0a141c;color:#dce6ec;border:1px solid #324451;border-radius:4px;box-shadow:none}
+button.accent,.accent{background:#866343;color:#fef4e5;border:1px solid #d4a273;border-radius:5px;box-shadow:inset 0 1px #ffe2bb30}
+button.accent:hover{background:#aa7d52;box-shadow:none}
+.top{height:58px!important;min-height:58px;padding:5px 13px!important;gap:13px!important;
+  background:#101820!important;border-bottom:1px solid #42515c;box-shadow:none}
+.brand{min-width:215px;gap:9px}
+.brand .logo{width:35px;height:35px;border-radius:7px;font-size:21px;background:linear-gradient(145deg,#c19969,#694d37);
+  box-shadow:inset 0 1px #f5e0ad,0 0 0 1px #8d6547}
+.brand .logo:after{color:#9dd8d9;font-size:6px;top:3px;right:4px}
+.brand b{font-size:13px;font-weight:900;letter-spacing:.55px}
+.brand b span{color:#e1b78b}
+.brand small{color:#849ca9;font-size:7px;letter-spacing:1.1px;margin-top:2px}
+.desktopMenu{display:flex;align-items:center;gap:1px;border-left:1px solid #384751;padding-left:12px;flex:none}
+.desktopMenu button{border:0;background:transparent;font-size:11px;color:#bccad1;padding:9px 11px;border-radius:4px;font-weight:550;white-space:nowrap}
+.desktopMenu button:hover,.desktopMenu button[aria-expanded=true]{background:#293642;color:#f5e0bc}
+.project{max-width:215px;min-width:110px;gap:2px}
+.projectCaption{font-size:8px;letter-spacing:.7px;color:#8da4b3}
+.project input{font-weight:600;font-size:11px;padding:6px 10px;min-height:29px;background:#15232e;border-radius:4px}
+.topButtons{gap:4px;padding-left:10px;border-left:1px solid #394957}
+.topButtons button{min-height:32px!important;padding:7px 9px!important;font-size:10px!important}
+.topButtons .accent{background:#8a6a48}
+.workspace{
+  --library-width:248px;--inspector-width:288px;
+  grid-template-columns:45px minmax(0,var(--library-width)) 4px minmax(0,1fr) 4px minmax(0,var(--inspector-width))!important;
+  min-width:0;overflow:hidden;
+}
+.workspace.hide-left{grid-template-columns:45px 0 0 minmax(0,1fr) 4px minmax(0,var(--inspector-width))!important}
+.workspace.hide-right{grid-template-columns:45px minmax(0,var(--library-width)) 4px minmax(0,1fr) 0 0!important}
+.workspace.hide-left.hide-right{grid-template-columns:45px 0 0 minmax(0,1fr) 0 0!important}
+.activityRail{background:#0e171e;border-right:1px solid #364650;padding:10px 4px 8px;gap:5px}
+.railTitle{font-size:7px;color:#8b9398;letter-spacing:1px;margin:3px 0 9px}
+.railButton{border-radius:4px;min-height:52px;padding:5px 1px;gap:3px}
+.railButton>span{font-size:19px;color:#9daeb8}
+.railButton small{font-size:8px;font-weight:700}
+.railButton.active{background:#283745;border-color:#677d86;box-shadow:inset 2px 0 #d4a46c;color:#f7ebde}
+.railButton.active>span{color:#e2be8b}
+.splitter{background:#17212a;border-color:#2b3b46;z-index:4}
+.splitter:after{background:#576976}
+.left,.right{min-height:0;min-width:0;background:#101a23;overflow:hidden}
+.explorerDock{border-right:1px solid #3e505c}
+.placeableDock{border-left:1px solid #3e505c;overflow-y:auto;scrollbar-color:#344957 #101a23;scrollbar-width:thin}
+.dockHeading{display:flex;align-items:center;gap:9px;background:#17232e;padding:12px 11px 11px;border-bottom:1px solid #344652}
+.dockAccent{width:3px;align-self:stretch;background:#cf9b63;border-radius:5px;flex:none}
+.dockHeading div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.dockHeading small{color:#7b96a6;font-size:8px;font-weight:800;letter-spacing:1.05px}
+.dockHeading strong{font-size:13px;color:#e8eff4;letter-spacing:.2px}
+.dockStat{margin-left:auto;display:block;font-size:8px;white-space:nowrap;color:#aec6cf;border:1px solid #3c5966;background:#162a35;border-radius:3px;padding:4px 5px;font-weight:750}
+.dockSecond{border-top:1px solid #394c58;margin-top:8px}
+.explorerHint,.assetIntroduction{padding:10px 12px;font-size:10px;line-height:1.5;color:#839eae}
+.assetIntroduction{background:#101b24;border-bottom:1px solid #283945}
+.explorerTitle{padding:10px 12px!important;background:#141f28;border-top:1px solid #293945;border-bottom:1px solid #334854}
+.explorerTitle .paneOverline{color:#c4a277}
+.explorerTitle strong{font-size:11px}
+.explorerDock .hierarchy{flex:0 1 auto;max-height:38%;min-height:120px;overflow:auto;padding:4px 4px 10px}
+.explorerDock .treeItem{border:0;border-left:2px solid transparent;border-radius:0;margin:0;min-height:29px;
+  padding:5px 8px;gap:7px;font-size:10px;font-weight:500}
+.explorerDock .treeItem span:first-child{color:#bd9a68}
+.explorerDock .treeItem:hover{background:#22313a}
+.explorerDock .treeItem.active{background:#384134;border-left-color:#e1ac6e;box-shadow:none;color:#fff}
+.explorerDock #inspector{display:block;padding:9px 11px 14px;flex:1;overflow-y:auto;scrollbar-width:thin}
+.explorerDock #inspector[hidden]{display:none}
+.explorerDock .noSelection{margin:10px;padding:15px 10px;background:#141f29;border:1px dashed #3e5663;border-radius:6px}
+.explorerDock .inspectorIllustration{width:38px;height:38px;font-size:23px;background:#1a3541;border:1px solid #517884;border-radius:6px;margin-bottom:9px;box-shadow:none}
+.explorerDock .noSelection p{font-size:10px}
+.explorerDock .paneHeading.borderTop{padding:12px 11px;background:#15222a}
+.explorerDock .exportPanel{padding:12px 11px;background:#101a23}
+.explorerDock .exportPanel p{font-size:9px}
+.explorerDock .privacy{padding:11px;margin:8px;background:#123128;border-radius:5px}
+.explorerDock .privacy p{font-size:9px}
+.explorerDock .sectionTitle{font-size:9px;color:#d7bc97;margin:15px 0 8px}
+.explorerDock .sectionTitle span{color:#8da3b0}
+.explorerDock .fieldLabel{margin-top:10px}
+.explorerDock .three{gap:4px}
+.explorerDock .three input{padding:7px 3px;font-size:10px}
+.explorerDock .full{width:100%;font-size:11px}
+.explorerDock .inspectorButtons{margin-top:14px}
+.explorerDock .inspectorButtons button{font-size:10px}
+.explorerDock .updaterPanel{flex:none}
+.explorerDock .metadata{font-size:9px}
+.placeableDock .gameLibraryDock{display:flex;flex-direction:column;flex:1;min-height:220px;background:#101a23}
+.placeableDock .gameLibraryDock .paneHeading{background:#141f29;border-top:0;padding:12px 11px}
+.placeableDock .gameLibraryDock .paneHeading strong{font-size:12px}
+.placeableDock .gameLibraryDock .paneHeading .paneOverline{color:#d0a475}
+.placeableDock .gameLibraryActions{margin:0;padding:4px 9px;gap:5px}
+.placeableDock .gameLibraryActions button{border-radius:4px;min-height:31px;font-size:10px}
+.placeableDock .gameLibraryActions button:first-child{background:#704f39;border:1px solid #bb8c64}
+.placeableDock .gameLibraryActions button:first-child:hover{background:#936749}
+.placeableDock .gameLibraryPath{padding:5px 10px;color:#7795a2;font-size:9px}
+.placeableDock .gameLibraryMetrics{margin:6px 9px}
+.placeableDock .gameLibraryMetrics span{font-size:8px;border-radius:3px;background:#1a2b36}
+.placeableDock #gameAssetSearch,.placeableDock #gameAssetCategory{
+  min-height:34px;margin:5px 9px 0;width:calc(100% - 18px);border-radius:4px;font-size:11px;padding:7px 9px
+}
+.placeableDock .gameLibraryItems{height:auto;min-height:170px;max-height:none;flex:1;margin:9px 8px 3px;
+  border:1px solid #324652;border-radius:4px;overflow-y:auto;scrollbar-color:#435f6b #0e1921}
+.placeableDock .gameLibraryItem{padding:5px 7px;gap:4px;min-height:41px;border-color:#243641}
+.placeableDock .gameLibraryItem:nth-child(2n){background:#13212b}
+.placeableDock .gameItemMeta strong{font-size:10px;color:#e0edf0}
+.placeableDock .gameItemMeta small{font-size:9px;color:#8ca2ac}
+.placeableDock .gameLibraryItem button{background:#243d4a;border:1px solid #527481;color:#bde9e7;
+  min-width:57px;min-height:29px;padding:5px 7px;border-radius:4px;font-size:9px}
+.placeableDock .gameLibraryItem button:hover{background:#315666;color:#f1ffff}
+.placeableDock .gameLibraryItem button:disabled{opacity:.66;min-width:54px}
+.placeableDock .gameLibraryStatus{padding:8px 10px;line-height:1.5;font-size:9px;background:#0e1922}
+.prototypeDisclosure{flex:none;display:block;background:#121d27;border-top:1px solid #48545a}
+.prototypeDisclosure>summary{cursor:pointer;list-style:none;padding:11px 12px;display:flex;align-items:center;gap:12px;
+ background:#1b252c;color:#c7d5dd;min-height:57px}
+.prototypeDisclosure>summary::before{content:"▸";font-size:13px;color:#cba575}
+.prototypeDisclosure[open]>summary::before{content:"▾"}
+.prototypeDisclosure>summary::-webkit-details-marker{display:none}
+.prototypeDisclosure summary strong{font-size:11px;font-weight:700;display:block}
+.prototypeDisclosure summary small{font-size:9px;color:#8d9eaa;display:block;margin-top:3px}
+.demoCount{margin-left:auto;font-weight:750;color:#a9b9c1;border:1px solid #455762;padding:3px 6px;border-radius:4px}
+.prototypeDisclosure .paneHeading{display:none}
+.prototypeDisclosure .paneIntro{font-size:10px;margin:9px 11px 6px;color:#a8a5a0}
+.prototypeDisclosure .searchAsset{width:calc(100% - 22px);margin:7px 11px}
+.prototypeDisclosure .categories{padding:5px 9px;gap:4px}
+.prototypeDisclosure .category{font-size:9px;padding:5px 8px;border-radius:4px}
+.prototypeDisclosure .catalog{display:block;max-height:200px;min-height:0;padding:0 9px 8px;overflow:auto}
+.prototypeDisclosure .catalogItem{display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+ width:100%;min-height:29px;border:0;border-bottom:1px solid #32404a;border-radius:0;padding:4px 7px;
+ background:transparent;box-shadow:none;text-align:left;gap:9px;color:#c3ced2}
+.prototypeDisclosure .catalogItem:hover{background:#30404a}
+.prototypeDisclosure .catalogIcon{font-size:13px;text-shadow:none;color:#cda777;min-width:19px}
+.prototypeDisclosure .leftBottom{background:#15212a;padding:10px}
+.prototypeDisclosure .leftBottom .hint{font-size:9px}
+.stage{min-width:0;background:#080e13;box-shadow:none}
+.workspaceRibbon{height:31px;min-height:31px!important;padding:0 11px!important;background:#18242e!important;color:#a7b6bd;
+ border-bottom:1px solid #3a4952;font-size:9px!important;letter-spacing:.6px!important}
+.workspaceRibbon b{color:#e4c195}
+.workspaceRibbon .ribbonHelp{color:#839ca7}
+.ribbonActions{gap:7px}
+.ribbonActions button{font-size:9px;min-height:24px;padding:4px 9px;background:#253641}
+.tools{height:43px!important;min-height:43px!important;padding:3px 8px!important;gap:7px!important;
+ background:#131d25!important;border-bottom:1px solid #374a53;flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none}
+.toolsPart{gap:2px}
+.toolsPart:first-child{background:transparent;border:0;padding:0}
+.toolsPart:first-child button{padding:7px 9px;min-height:33px!important;font-size:10px;border:1px solid transparent;border-radius:4px}
+.toolsPart:first-child button span{font-size:14px}
+.toolsPart:first-child button.selected{background:#635239;border:1px solid #caa068;box-shadow:none;color:#fff0d9}
+.toolsPart:first-child button kbd{display:none}
+.toolsPart label{font-size:10px}
+.toolsPart select{font-size:10px;padding:6px 7px}
+.toolsPart.end{margin-left:auto}
+.toolsPart.end button{padding:6px 8px;min-height:32px!important;background:#1c2c36;font-size:10px;border-color:#3c525f}
+#viewport{background:#4e6e70}
+#viewport:after{box-shadow:inset 0 0 35px #03090f22!important}
+.viewportLabel{left:15px;top:14px;gap:5px}
+.viewportTag{background:#101f27dc;padding:5px 8px;border:1px solid #66838b;border-radius:4px;color:#c7e5dc;font-size:9px}
+.viewportLabel #modeLabel{padding:5px 9px;border-radius:4px;background:#624f37dc;border-color:#b38a5f;color:#f7e7ca}
+.viewportInfo{top:47px;left:15px;gap:3px}
+.viewportInfo strong{font-size:10px}
+.viewportInfo small{font-size:9px}
+.viewportTips{padding:6px 9px;bottom:12px;left:14px;font-size:9px;color:#c6d7da;background:#0b1b25b9;border-radius:4px}
+.viewportTipHeading{font-size:8px;margin-bottom:3px}
+.compass{display:flex;flex-direction:column;gap:1px;top:15px;right:15px;padding:7px 10px;background:#12232edb;
+ border-radius:4px;border:1px solid #819b9f;color:#fff;line-height:1.2;font-size:11px}
+.compass span:nth-child(2){color:#dba875;font-size:15px}
+.compass span:last-child{font-size:9px;color:#95aeb8}
+.viewportQuickbar{position:absolute;top:12px;right:75px;z-index:3;display:flex;gap:3px;background:#0e1e28b4;
+ backdrop-filter:blur(7px);padding:4px;border:1px solid #5f7781;border-radius:5px}
+.viewportQuickbar button{padding:5px 8px;background:transparent;border:1px solid transparent;color:#c9dae0;font-size:9px;
+ border-radius:4px;min-height:27px}
+.viewportQuickbar button:hover{background:#355062}
+.viewportQuickbar button.on{background:#2a454d;border-color:#548b83;color:#c6f1e5}
+.viewportCorner{position:absolute;bottom:10px;right:15px;z-index:3;color:#e6e7dd;font-size:10px;font-weight:850;letter-spacing:1px;
+ text-shadow:0 2px 8px #000a;pointer-events:none}
+.viewportCorner span{color:#91d4d3;font-weight:500}
+.status{height:27px;min-height:27px!important;background:#111d26!important;border-top:1px solid #415561;
+ padding:0 10px!important;color:#94acbb;font-size:9px!important;gap:12px}
+.statusReady{font-size:8px}
+.status #coords{color:#c2d9dd}
+#fps{white-space:nowrap;color:#d4bd89;font-size:9px;min-width:44px;text-align:right}
+#toast{background:#132630;border:1px solid #8baaaf;border-radius:6px}
+.menuPopup{position:fixed;z-index:1100;width:214px;padding:6px;background:#17242f;border:1px solid #66747a;
+ box-shadow:0 17px 46px #000b;border-radius:6px;display:grid;gap:1px}
+.menuPopup[hidden]{display:none}
+.menuPopup button{display:flex;justify-content:space-between;gap:12px;background:transparent;border:0;min-height:31px;
+ padding:7px 9px;text-align:left;font-size:11px;border-radius:4px}
+.menuPopup button:hover{background:#3a4b52}
+.menuPopup kbd{font-family:inherit;color:#a8bcc1;font-size:9px;white-space:nowrap}
+@media(min-width:821px) and (max-width:1240px){
+ .top{gap:8px!important}.brand{min-width:155px}.brand b{font-size:11px}.brand small{font-size:6.5px}
+ .desktopMenu{padding-left:4px}.desktopMenu button{padding:7px 6px;font-size:10px}
+ .project{max-width:150px}.topButtons button{padding:6px!important}
+ .workspace,.workspace.hide-left,.workspace.hide-right,.workspace.hide-left.hide-right{overflow:hidden;min-width:0}
+ .toolsPart:first-child button{padding:6px;font-size:9px}
+ .toolsPart.end button{padding:6px}
+ .viewportQuickbar button{font-size:8px;padding:5px}
+}
+@media(max-width:820px){
+ .desktopMenu{display:none}
+ .top{height:auto!important;min-height:60px!important}
+ .workspace,.workspace.hide-left,.workspace.hide-right,.workspace.hide-left.hide-right{
+  grid-template-columns:49px minmax(0,1fr)!important
+ }
+ .gameLibraryDock{flex:none}
+ .placeableDock .gameLibraryItems{min-height:140px;max-height:40vh}
+ .explorerDock{overflow-y:auto}
+ .explorerDock #inspector{overflow:visible}
+ .viewportQuickbar{top:53px;right:8px;max-width:80%;overflow-x:auto}
+ .viewportQuickbar button{font-size:9px;white-space:nowrap}
+ .viewportInfo{top:91px}
+ .compass{right:9px;top:12px}
+ .viewportCorner{display:none}
+ .tools{height:auto!important;min-height:43px!important;flex-wrap:wrap}
+}
+@media(prefers-reduced-motion:reduce){.menuPopup{transition:none}}
+
+/* Proper new-project state: no imaginary photorealistic assets. */
+.emptyWorld:not([hidden]){position:absolute;z-index:5;inset:0;display:flex;flex-direction:column;
+  justify-content:center;align-items:center;text-align:center;gap:12px;padding:25px;
+  background:radial-gradient(circle at 50% 45%,#162d35c7,#08151fe8 80%);
+  color:#e6f0f2;backdrop-filter:blur(2px)}
+.emptyWorld[hidden]{display:none!important}
+.emptyLogo{display:grid;place-items:center;width:60px;height:60px;border:1px solid #c69c65;border-radius:12px;
+  font-size:34px;color:#e6c89e;background:#243238;box-shadow:0 9px 30px #0005}
+.emptyWorld>span{font-size:9px;letter-spacing:2px;color:#bcab8c;font-weight:850}
+.emptyWorld h2{font-size:clamp(21px,2.6vw,35px);letter-spacing:-.7px;font-weight:750;margin:0}
+.emptyWorld p{line-height:1.7;color:#a8bfc5;font-size:12px;margin:0;max-width:430px}
+.emptyActions{display:flex;flex-wrap:wrap;justify-content:center;gap:8px;margin-top:10px}
+.emptyActions button{font-size:11px;min-height:38px;padding:9px 13px;border:1px solid #5b727c;background:#233c4b}
+.emptyActions button:first-child{background:#805d3a;border-color:#c89d70}
+.explorerDock .replaceAction{background:#62492f;border:1px solid #c69c64;color:#f7e5cc;text-align:left;padding:9px 10px;font-size:10px}
+.explorerDock .replaceAction:hover{background:#886342}
+@media(max-width:820px){
+ .emptyWorld{padding:16px}
+ .emptyWorld h2{font-size:21px}
+ .emptyWorld p{font-size:11px}
+ .emptyActions button{font-size:10px}
+}

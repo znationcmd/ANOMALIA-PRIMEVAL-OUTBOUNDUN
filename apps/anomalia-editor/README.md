@@ -218,3 +218,50 @@ les scènes pour transférer le travail.
 Un service public GitHub Pages (ou autre HTTPS) peut héberger la version Web
 si les réglages du dépôt le permettent. La présence du code PWA ne
 signifie pas qu'un site est déjà publié.
+
+## ANOMALIA Editor 0.4.0 — World Forge / éditeur d'implantation de type DayZ
+
+Refonte **réelle des fichiers HTML, CSS et JavaScript** pour remplacer le tableau
+de bord étroit et les grosses cartes de maquettes par une interface d'édition
+de monde : **viewport 3D dominant**, panneau « Objets à placer » à droite
+prioritairement consacré aux **vrais assets GLB**, explorateur/inspecteur
+rétractable à gauche, barre d'outils compacte, menus Fichier/Édition/Affichage/
+Ressources et HUD minimal (coordonnées, outil, FPS).
+
+Fonctions vérifiables dans le code :
+- Menus reliés aux commandes existantes, raccourcis Ctrl+N, Ctrl+O, Ctrl+S,
+  Ctrl+Z/Y, Ctrl+D et Suppr ;
+- Caméra libre : maintenir clic droit et bouger la souris pour tourner ;
+  pendant le clic droit, WASD pour se déplacer, Q/E pour monter/descendre,
+  Shift accélère, Alt ralentit ; orbite classique toujours disponible ;
+- Afficher/masquer la grille et les ombres, centrer la caméra et vue du dessus ;
+- Clic sur « Placer » pour un vrai GLB du dossier ANOMALIA : aperçu réel
+  3D sur le terrain, puis clic gauche pour valider et activer le gizmo de
+  déplacement ; Échap annule le placement ;
+- Sélection d'une vieille maison, arbre, voiture cubique ou autre prototype,
+  puis « Remplacer par un vrai modèle GLB » et choix de l'asset réel :
+  conserve l'ID et les positions/rotations/échelles de l'objet et reste
+  compatible avec l'historique Annuler/Rétablir ;
+- Commande Affichage → Masquer/afficher les prototypes : n'efface ni les
+  créations ni leurs sauvegardes ;
+- Les vieux presets géométriques restent disponibles uniquement dans un
+  dossier explicitement étiqueté « Formes de démonstration », replié au
+  démarrage. Une **nouvelle** scène ne reçoit plus automatiquement la maison
+  cubique et la voiture en blocs. Les anciennes scènes locales sont
+  restaurées sans effacement.
+
+Ceci s'inspire des **principes de flux de travail** de DayZ Editor (browser
+plaçable, liste de scène, barre d'outils, caméras et commandes), sans utiliser
+ni republier son code, ses icônes ou ses assets. Le moteur d'affichage est
+Three.js : **ce n'est pas DayZ ni l'éditeur Unreal Engine**, et la refonte ne
+génère pas par magie des maisons, véhicules ou paysages réalistes. L'utilisateur
+doit importer ses modèles GLB sous licences adaptées et la vraie carte
+Unreal .umap doit être construite/testée dans UE5. Les scènes ANOMALIA JSON
+restent limitées à 4 000 objets ; World Partition demande Unreal Engine.
+
+Le système de mises à jour automatiques Windows existe dans l'application,
+mais nécessite encore la publication d'une release officielle compatible
+pour mettre à jour la 0.4.0 à distance. Une machine possédant 0.1.1 ou 0.3.x
+**ne reçoit pas automatiquement ce nouveau code** sans canal de publication
+actif ou installation de la nouvelle version. Vérifier les commandes et le
+rendu 3D dans la vraie fenêtre Windows avant de fusionner cette branche.

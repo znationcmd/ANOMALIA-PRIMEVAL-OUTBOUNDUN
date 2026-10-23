@@ -1,8 +1,8 @@
 // Professional workspace layout: visual preferences only, never project data.
 // The app remains fully local and does not access any other user's files.
 const workspace=document.getElementById('editorWorkspace');
-const defaults={library:true,inspector:true,focus:false,leftWidth:258,rightWidth:312};
-const storageKey='anomalia-editor-layout-v1';
+const defaults={library:false,inspector:true,focus:false,leftWidth:248,rightWidth:288};
+const storageKey='anomalia-editor-worldforge-layout-v2';
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 function load(){
   try{
@@ -10,8 +10,8 @@ function load(){
     if(!data||typeof data!=='object')return {...defaults};
     return {
       library:data.library!==false,inspector:data.inspector!==false,focus:false,
-      leftWidth:clamp(Number(data.leftWidth)||258,210,440),
-      rightWidth:clamp(Number(data.rightWidth)||312,245,460)
+      leftWidth:clamp(Number(data.leftWidth)||248,210,440),
+      rightWidth:clamp(Number(data.rightWidth)||288,245,460)
     };
   }catch{return {...defaults};}
 }
@@ -41,7 +41,7 @@ function render(){
     button.classList.toggle('active',state.focus);
     button.setAttribute('aria-pressed',String(state.focus));
   }
-  document.getElementById('ribbonFocus').textContent=state.focus?'⛶ Afficher les panneaux':'⛶ Agrandir la scène';
+  document.getElementById('ribbonFocus').textContent=state.focus?'⛶ Afficher les panneaux':'⛶ Vue immersive';
   document.getElementById('librarySplitter').setAttribute('aria-valuenow',String(state.leftWidth));
   document.getElementById('inspectorSplitter').setAttribute('aria-valuenow',String(state.rightWidth));
 }

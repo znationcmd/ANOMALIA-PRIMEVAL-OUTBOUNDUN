@@ -4,6 +4,8 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { PRESETS, History, newProject, makeObject, cloneProject, validateProject, makeCSV, addToProject, removeFromProject } from './model.js';
 import { createEditorMesh } from './meshes.js';
 import './style.css';
+import './worldforge.css';
+import { createWorldForge } from './worldforge-ui.js';
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
@@ -59,6 +61,49 @@ let rebuildToken=0;
 let saving=null;
 const meshed=new Map();
 let lastPointer=null;
+let prototypesVisible=true;
+let pendingLinkedItem=null;
+let replaceTargetId=null;
+let linkedPreview=null;
+let placementToken=0;
+function clearLinkedPreview(){
+  pendingLinkedItem=null;placementToken++;
+  if(linkedPreview){scene.remove(linkedPreview);linkedPreview=null;}
+  updateCount();
+}
+async function armLinkedPlacement(item){
+  clearLinkedPreview();
+  setActiveMode('select');
+  pendingLinkedItem=item;
+  updateCount();
+  const token=placementToken;
+  status('Placer '+item.name+' : clique sur le terrain · Échap pour annuler.');
+  try{
+    const temp={id:'worldforge-preview',preset:'linked-glb',name:item.name,
+      asset:{libraryId:item.id,filename:item.name},position:{x:0,y:0,z:0},
+      rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1}};
+    const group=await createEditorMesh(temp);
+    if(token!==placementToken)return;
+    linkedPreview=group;
+    const helper=new THREE.BoxHelper(group,'#f4c27f');helper.name='Placement preview';
+    group.add(helper);
+    scene.add(group);
+  }catch(e){clearLinkedPreview();throw e;}
+}
+
+function syncPrototypeVisibility(){
+  for(const item of history.project.objects){
+    const mesh=meshed.get(item.id);if(mesh)mesh.visible=prototypesVisible||item.preset==='custom-glb'||item.preset==='linked-glb';
+  }
+}
+function togglePrototypes(){
+  prototypesVisible=!prototypesVisible;
+  syncPrototypeVisibility();
+  if(!prototypesVisible)transforms.detach();
+  else if(selectedId&&meshed.get(selectedId)&&['move','rotate','scale'].includes(activeMode))transforms.attach(meshed.get(selectedId));
+  toast(prototypesVisible?'Prototypes réaffichés : ces formes ne sont pas des modèles photoréalistes.':'Prototypes masqués sans supprimer les objets ni les sauvegardes.');
+}
+
 
 const toast=(message,error=false)=>{
   const node=$('#toast');node.textContent=message;node.hidden=false;node.classList.toggle('error',error);
@@ -78,6 +123,7 @@ function setActiveMode(mode){
 function getObject(id){return history.project.objects.find(o=>o.id===id);}
 function applySelection(id) {
   selectedId=getObject(id)?id:null;
+  if(replaceTargetId&&replaceTargetId!==selectedId)replaceTargetId=null;
   const mesh=selectedId?meshed.get(selectedId):null;
   if(mesh&&['move','rotate','scale'].includes(activeMode)){
     transforms.attach(mesh);transforms.setMode(activeMode==='move'?'translate':activeMode);
@@ -146,6 +192,26 @@ async function addLinkedModel(item,position={x:0,y:0,z:0}){
     afterCommit();applySelection(object.id);
   }
 }
+async function replaceWithRealModel(asset){
+  const id=replaceTargetId;replaceTargetId=null;
+  const current=getObject(id);
+  if(!current||!asset.canPlace||asset.kind!=='glb')throw Error('Sélection ou modèle GLB indisponible.');
+  const next=cloneProject(history.project),target=next.objects.find(o=>o.id===id);
+  if(!target)throw Error('Objet à remplacer introuvable.');
+  target.preset='linked-glb';
+  target.asset={libraryId:asset.id,filename:asset.name};
+  target.name=asset.name.replace(/\.glb$/i,'').slice(0,90);
+  const newMesh=await createEditorMesh(target);
+  if(history.commit(next)){
+    transforms.detach();
+    const old=meshed.get(id);
+    if(old)objects.remove(old);
+    objects.add(newMesh);meshed.set(id,newMesh);
+    selectedId=id;afterCommit();applySelection(id);
+    setActiveMode('move');
+    toast('Objet remplacé par le vrai modèle '+asset.name+' ; position et orientation conservées.');
+  }
+}
 async function rebuild(project) {
   const token=++rebuildToken;
   transforms.detach();
@@ -161,6 +227,7 @@ async function rebuild(project) {
   }
   applySelection(selectedId);
   renderHierarchy();
+  syncPrototypeVisibility();
   if(errors.length)toast('Certains modèles ne peuvent pas être affichés : '+errors.join(' ; ').slice(0,250),true);
 }
 function commitCurrent(transformOnly=false) {
@@ -182,6 +249,18 @@ renderer.domElement.addEventListener('pointerdown',e=>{lastPointer={x:e.clientX,
 renderer.domElement.addEventListener('pointerup',async e=>{
   if(!lastPointer||lastPointer.button!==0||e.button!==0||Math.hypot(e.clientX-lastPointer.x,e.clientY-lastPointer.y)>5)return;
   if(transforms.dragging)return;
+  if(pendingLinkedItem){
+    const point=pickGround(e);
+    if(!point)return;
+    const item=pendingLinkedItem;
+    clearLinkedPreview();
+    try{
+      await addLinkedModel(item,point);
+      setActiveMode('move');
+      toast('Modèle placé : '+item.name+'. Ajuste avec le gizmo.');
+    }catch(err){toast('Placement impossible : '+err.message,true);}
+    return;
+  }
   if(activeMode==='brush'){
     const point=pickGround(e);if(!point)return;
     for(let i=0;i<3;i++){
@@ -196,14 +275,19 @@ renderer.domElement.addEventListener('pointerup',async e=>{
 });
 renderer.domElement.addEventListener('pointermove',e=>{
   const pos=pickGround(e);
+  if(pos&&linkedPreview)linkedPreview.position.set(pos.x,pos.y,pos.z);
   if(pos)$('#coords').textContent='X '+pos.x.toFixed(1)+' · Y '+pos.y.toFixed(1)+' · Z '+pos.z.toFixed(1);
 });
 function afterCommit(){
   $('#projectName').value=history.project.name;
-  renderHierarchy();renderInspector();updateCount();
+  renderHierarchy();renderInspector();updateCount();syncPrototypeVisibility();
   clearTimeout(saving);saving=setTimeout(()=>storeProject(history.project).catch(e=>toast('Sauvegarde locale impossible : '+e.message,true)),650);
 }
-function updateCount(){const n=history.project.objects.length;$('#count').textContent=n+' objet'+(n>1?'s':'');}
+function updateCount(){
+  const n=history.project.objects.length;
+  $('#count').textContent=n+' objet'+(n>1?'s':'');
+  const empty=$('#emptyWorld');if(empty)empty.hidden=n>0||Boolean(pendingLinkedItem);
+}
 function renderCatalog() {
   const categories=['Tous',...new Set(PRESETS.map(p=>p.category))];
   const bar=$('#categoryBar');bar.replaceChildren();
@@ -228,7 +312,7 @@ function renderHierarchy() {
   const list=$('#hierarchy');list.replaceChildren();
   for(const item of history.project.objects){
     const btn=document.createElement('button');btn.className='treeItem'+(selectedId===item.id?' active':'');
-    const marker=document.createElement('span');marker.textContent='◈';
+    const marker=document.createElement('span');marker.textContent=['linked-glb','custom-glb'].includes(item.preset)?'◆':'◇';
     const name=document.createElement('span');name.textContent=item.name;
     btn.append(marker,name);btn.onclick=()=>applySelection(item.id);
     list.append(btn);
@@ -249,7 +333,9 @@ function renderInspector(live=false) {
     if(document.activeElement===el&&!live)continue;
     el.value=Number(sources[el.dataset.group][el.dataset.axis]).toFixed(el.dataset.group==='rotation'?1:2);
   }
-  $('#meta').textContent='Catégorie : '+(PRESETS.find(p=>p.id===item.preset)?.category||'Import GLB')+'\nID : '+item.id;
+  const demo=!['linked-glb','custom-glb'].includes(item.preset);
+  $('#meta').textContent='Type : '+(demo?'Prototype géométrique (à remplacer)':'Véritable modèle GLB')+
+    '\nCatégorie : '+(PRESETS.find(p=>p.id===item.preset)?.category||'Modèle réel importé')+'\nID : '+item.id;
 }
 function changeProperty() {
   const item=getObject(selectedId),mesh=meshed.get(selectedId);
@@ -344,13 +430,36 @@ function resize(){
   renderer.setSize(w,h,false);
 }
 new ResizeObserver(resize).observe(stage);
-function animate(){
-  requestAnimationFrame(animate);orbit.update();renderer.render(scene,camera);
+let lastFrame=performance.now();
+function animate(now=performance.now()){
+  requestAnimationFrame(animate);
+  const delta=Math.min(0.1,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
+  worldForge.tick(delta);
+  orbit.update();
+  renderer.render(scene,camera);
 }
+const worldForge=createWorldForge({
+  camera,orbit,grid,renderer,ground,scene,notify:toast,togglePrototypes,
+  openBrowser:()=>{
+    if(document.getElementById('editorWorkspace')?.classList.contains('hide-right'))
+      document.getElementById('toggleInspector')?.click();
+    document.getElementById('gameAssetSearch')?.focus();
+  }
+});
 for(const mode of ['select','move','rotate','scale','brush'])$('#'+mode+'Tool').onclick=()=>setActiveMode(mode);
 $('#undo').onclick=()=>stepHistory('undo');$('#redo').onclick=()=>stepHistory('redo');
 $('#duplicate').onclick=duplicateObject;$('#inspectorDuplicate').onclick=duplicateObject;
 $('#delete').onclick=removeSelected;$('#focusObject').onclick=focusObject;
+$('#replaceSelected').onclick=()=>{
+  if(!selectedId)return toast('Sélectionne un objet de la scène à remplacer.',true);
+  replaceTargetId=selectedId;
+  if($('#editorWorkspace').classList.contains('hide-right'))$('#toggleInspector').click();
+  $('#gameAssetSearch').focus();
+  toast('Choisis un GLB dans Objets à placer : il remplacera cet objet sans changer ses coordonnées.');
+};
+$('#emptyLinkFolder').onclick=()=>$('#linkGameFolder').click();
+$('#emptyImportModel').onclick=()=>$('#importModel').click();
+$('#emptyOpenProject').onclick=()=>$('#openScene').click();
 $('#assetSearch').addEventListener('input',renderCatalog);
 $('#inspector').addEventListener('change',e=>{if(e.target.matches('input[data-group]'))changeProperty();});
 $('#objectName').addEventListener('change',renameObject);
@@ -384,10 +493,14 @@ $('#fileModel').onchange=async e=>{
   e.target.value='';
 };
 window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&pendingLinkedItem){clearLinkedPreview();status('Placement annulé.');return;}
+  if(worldForge.isFlying())return;
   if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
   const ctrl=e.ctrlKey||e.metaKey;
   const key=e.key.toLowerCase();
-  if(ctrl&&key==='z'){e.preventDefault();stepHistory(e.shiftKey?'redo':'undo');}
+  if(ctrl&&key==='n'){e.preventDefault();$('#newScene').click();}
+  else if(ctrl&&key==='o'){e.preventDefault();$('#openScene').click();}
+  else if(ctrl&&key==='z'){e.preventDefault();stepHistory(e.shiftKey?'redo':'undo');}
   else if(ctrl&&key==='y'){e.preventDefault();stepHistory('redo');}
   else if(ctrl&&key==='d'){e.preventDefault();duplicateObject();}
   else if(ctrl&&key==='s'){e.preventDefault();storeProject(history.project).then(()=>toast('Sauvegarde privée effectuée.'));}
@@ -409,12 +522,8 @@ async function start(){
       $('#projectName').value=history.project.name;
       status('Carte privée restaurée depuis cet appareil.');
     } else {
-      await addPreset('house',{x:0,y:0,z:0});
-      await addPreset('tree',{x:9,y:0,z:3});
-      await addPreset('car',{x:-9,y:0,z:3});
-      history=new History(history.project);applySelection(null);
       await storeProject(history.project);
-      status('Scène de démonstration locale créée : utilise le catalogue pour ajouter des objets.');
+      status('Nouvelle scène vide. Importe de vrais modèles 3D ou une carte ANOMALIA.');
     }
     updateCount();
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
@@ -423,8 +532,9 @@ start();
 bindGameLibrary({
   notify:toast,
   placeGLB:async item=>{
-    await addLinkedModel(item,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
-    toast('Ressource liée ajoutée : '+item.name);
+    if(replaceTargetId)return replaceWithRealModel(item);
+    await armLinkedPlacement(item);
+    toast('Déplace la souris et clique dans la scène pour placer '+item.name+'.');
   },
   openMap:async text=>{
     const map=validateProject(JSON.parse(text));
