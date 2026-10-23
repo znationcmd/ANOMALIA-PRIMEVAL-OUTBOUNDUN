@@ -1,6 +1,6 @@
 {
   "name": "cmd-studio",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "private": true,
   "description": "CMD Studio Game Creator - atelier 3D local pour ANOMALIA et autres jeux",
   "main": "main.js",
@@ -16,9 +16,36 @@
   "build": {
     "appId": "fr.cmd.studio",
     "productName": "CMD Studio",
-    "directories": {"output": "release"},
-    "files": ["main.js", "preload.js", "core.js", "ui/**", "scripts/**", "package.json"],
-    "win": {"target": [{"target": "nsis", "arch": ["x64"]}]},
-    "nsis": {"oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true}
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "core.js",
+      "ui/**",
+      "scripts/**",
+      "package.json",
+      "resources/**"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "resources/cmd-studio.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "installerIcon": "resources/cmd-studio.ico",
+      "uninstallerIcon": "resources/cmd-studio.ico",
+      "installerHeaderIcon": "resources/cmd-studio.ico"
+    }
   }
 }
