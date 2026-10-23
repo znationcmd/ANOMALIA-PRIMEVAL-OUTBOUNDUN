@@ -411,7 +411,8 @@ function animate(now=performance.now()){
 const worldForge=createWorldForge({
   camera,orbit,grid,renderer,ground,scene,notify:toast,togglePrototypes,
   openBrowser:()=>{
-    document.getElementById('toggleInspector')?.click();
+    if(document.getElementById('editorWorkspace')?.classList.contains('hide-right'))
+      document.getElementById('toggleInspector')?.click();
     document.getElementById('gameAssetSearch')?.focus();
   }
 });
