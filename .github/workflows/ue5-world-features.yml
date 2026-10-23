@@ -1,0 +1,55 @@
+name: UE5 licensed world features import
+on:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths:
+      - 'docs/art/world-features-sources.json'
+      - 'scripts/world-features/prepare-sources.py'
+      - 'scripts/vehicle-assets/prepare-world-features.mjs'
+      - 'scripts/world-features/import-review.py'
+      - '.github/workflows/ue5-world-features.yml'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  import-world-features:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify credited sources and import isolated review
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:UE_ROOT) { throw 'Installed UE5.8 is required.' }
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $enginePython scripts/world-features/prepare-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-world-features.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_WORLD_FEATURES_REPORT = Join-Path $evidence 'import.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $script = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/import-review.py'
+          & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/import.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_WORLD_FEATURES_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'IMPORTED_REVIEW_SAVED_SCALE_AND_ACCESS_UNVALIDATED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or @($report.models).Count -ne 8) { throw 'Fresh full import report required.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ue5-world-features-evidence
+          path: unreal/Saved/WorldFeatures/run-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: warn
