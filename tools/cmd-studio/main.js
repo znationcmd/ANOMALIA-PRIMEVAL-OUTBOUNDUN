@@ -5,6 +5,7 @@ const { Studio } = require('./core');
 
 let studio;
 let window;
+if (process.platform === 'win32') app.setAppUserModelId('fr.cmd.studio');
 const ACTIONS = new Set([
   'status', 'settings', 'configure', 'assets', 'import', 'search',
   'downloadPolyHaven', 'convertBlender', 'importUnreal', 'openTool',
@@ -16,6 +17,7 @@ function createWindow() {
     width: 1440, height: 900, minWidth: 980, minHeight: 630,
     backgroundColor: '#0c0b18',
     title: 'CMD Studio — Game Creator',
+    icon: path.join(__dirname, 'resources', 'cmd-studio.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
