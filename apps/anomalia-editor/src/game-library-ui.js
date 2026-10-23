@@ -1,7 +1,7 @@
 // Catalogue local ANOMALIA : ajout automatique des nouvelles ressources disponibles,
 // placement sur action explicite. Les fichiers Unreal .umap/.uasset ne sont pas
 // des GLB et ne sont jamais présentés comme des scènes Three.js importées.
-export function bindGameLibrary({placeGLB,openMap,notify}){
+export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
   const library=window.anomaliaDesktop?.gameLibrary;
   const $=s=>document.querySelector(s);
   const items=$('#gameLibraryItems'),count=$('#gameLibraryCount');
@@ -55,6 +55,18 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
           }catch(e){notify('Import 3D impossible : '+e.message,true);}
           finally{act.disabled=false;}
         });
+      }else if(item.canTerrain){
+        act.textContent='Terrain';act.title='Afficher le vrai relief PNG/JPG/WebP dans la vue 3D (secteur Three.js).';
+        act.addEventListener('click',async()=>{
+          act.disabled=true;
+          try{
+            const payload=await library.read(item.id);
+            if(payload.kind!=='heightmap')throw Error('Image de terrain invalide.');
+            await openTerrain({item,payload});
+            updateMessage('Relief réel importé : '+item.name+' (pas un fichier .umap Unreal).');
+          }catch(e){notify('Relief indisponible : '+e.message,true);}
+          finally{act.disabled=false;}
+        });
       }else if(item.canOpen){
         act.textContent='Ouvrir';act.title='Ouvrir le secteur ANOMALIA JSON (remplace la scène active)';
         act.addEventListener('click',async()=>{
@@ -91,7 +103,7 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
        'Aucun dossier lié — sélectionne celui du jeu ou importe un pack ZIP.');
     $('#gameLibraryFolder').title=status.folder||'';
     $('#gameModelsCount').textContent=all.filter(x=>x.kind==='glb').length+' modèles GLB';
-    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map','plan'].includes(x.kind)).length+' cartes/secteurs/plans';
+    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map','plan','heightmap'].includes(x.kind)).length+' cartes/secteurs/plans';
     $('#gameUnreadableCount').textContent=all.filter(x=>x.kind==='unreal-asset'||x.kind==='unreal-map').length+' fichiers Unreal';
     const selected=category.value;
     category.replaceChildren(new Option('Toutes les catégories',''));
