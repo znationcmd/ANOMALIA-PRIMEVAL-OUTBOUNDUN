@@ -1,7 +1,7 @@
 // The game world cannot be decoded from .umap by Three.js.
 // This panel opens the actual UE5 Editor for those native files, and supports
 // honest, local preview of user-supplied PNG heightmaps in ANOMALIA Editor.
-export function bindWorldSources({terrain,notify,onHeightmap}){
+export function bindWorldSources({terrain,notify,onHeightmap,onClearTerrain}){
   const find=id=>document.getElementById(id);
   const api=window.anomaliaDesktop?.unreal;
   const announce=text=>{find('realWorldInfo').textContent=text;};
@@ -79,8 +79,9 @@ export function bindWorldSources({terrain,notify,onHeightmap}){
     catch(err){notify('Relief : '+err.message,true);}
     finally{e.target.value='';}
   });
-  find('resetTerrain')?.addEventListener('click',()=>{
+  find('resetTerrain')?.addEventListener('click',async()=>{
     terrain.clear();labelTerrain(null);
+    try{await onClearTerrain?.();}catch(err){notify('Nettoyage du relief local : '+err.message,true);}
   });
   return {loadTerrain,labelTerrain};
 }
