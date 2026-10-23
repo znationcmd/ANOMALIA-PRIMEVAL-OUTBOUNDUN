@@ -1,5 +1,8 @@
 name: CMD Studio - Publication privee des mises a jour
 on:
+  push:
+    tags:
+      - 'cmd-studio/v*'
   workflow_dispatch:
 permissions:
   contents: read
