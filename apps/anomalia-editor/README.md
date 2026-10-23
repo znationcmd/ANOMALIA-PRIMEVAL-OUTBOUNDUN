@@ -106,3 +106,40 @@ Deuxième refonte d'ANOMALIA Editor :
 - barre de transformations avec raccourcis Q/W/E/R/B, aide de navigation et meilleure lisibilité des champs X/Y/Z.
 
 Les fonctions de création 3D et le moteur Three.js ne changent pas. Les ressources géométriques de démonstration restent provisoires : ce travail ne prétend pas remplacer les modèles par des assets photoréalistes. La version 0.3.0 doit être compilée et testée avant publication de son installateur ; les mises à jour automatiques restent conditionnées au canal officiel de distribution.
+
+## Version 0.3.1 — Bibliothèque ANOMALIA synchronisée
+
+Dans ANOMALIA Editor Windows, choisir une seule fois le bouton
+« Lier les fichiers ANOMALIA » dans la barre gauche, puis le dossier du
+projet Unreal ou celui où Work télécharge les vrais fichiers. Le chemin
+est sauvegardé localement. Le logiciel analyse les nouveaux fichiers
+toutes les **45 secondes**, sans relancer l'installateur ni copier les
+fichiers : véhicules, bâtiments, routes, équipements, végétation,
+textures, cartes et secteurs sont classés automatiquement d'après leur
+chemin et leurs extensions.
+
+- Modèles GLB réels : ajout volontaire dans la scène avec « Placer »,
+  jusqu'à 14 Mo par GLB, pour éviter de superposer tous les modèles.
+- Secteurs au format ANOMALIA JSON : ouverture après confirmation et
+  sauvegarde de la scène précédente recommandée, jusqu'à 45 Mo.
+- Cartes Unreal .umap et ressources .uasset : visibles dans le catalogue,
+  mais ouverture uniquement dans Unreal Engine, pas dans Three.js.
+- FBX, OBJ, GLTF, USD, BLEND et images : indexés comme sources et à
+  convertir si nécessaire pour un placement direct.
+- Protection des projets : le scanner ignore liens symboliques,
+  Intermediate, Saved, Binaries et node_modules ; aucun fichier du
+  jeu n'est déplacé, effacé ou partagé par le catalogue.
+
+**Important :** ANOMALIA Editor reste pour le moment limité à 4 000
+objets par scène JSON. La carte Unreal complète avec World Partition
+et des dizaines de milliers d'objets doit être compilée et inspectée
+dans Unreal Engine. Un inventaire ou un plan théorique (maisons,
+végétation, véhicules) ne crée pas automatiquement les vraies cartes
+et les vraies ressources 3D.
+
+Work doit réellement déposer/synchroniser les nouveaux fichiers dans
+le dossier lié sur le PC. ANOMALIA Editor détectera ces changements,
+mais n'importe pas tout le dépôt du jeu à partir d'Internet et ne
+télécharge pas d'assets soumis à licence sans autorisation.
+
+Tests : npm install, npm test, npm run build puis npm run desktop:package.
