@@ -110,8 +110,8 @@ function togglePrototypes(){
   prototypesVisible=!prototypesVisible;
   syncPrototypeVisibility();
   if(!prototypesVisible)transforms.detach();
-  updateCount();
   else if(selectedId&&meshed.get(selectedId)&&['move','rotate','scale'].includes(activeMode))transforms.attach(meshed.get(selectedId));
+  updateCount();
   toast(prototypesVisible?'Prototypes réaffichés : ces formes ne sont pas des modèles photoréalistes.':'Prototypes masqués sans supprimer les objets ni les sauvegardes.');
 }
 
@@ -529,7 +529,7 @@ $('#fileOpen').onchange=async e=>{
   try{
     if(file.size>45*1024*1024)throw new Error('Projet trop volumineux (45 Mo maximum).');
     const parsed=validateProject(JSON.parse(await file.text()));
-    history.reset(parsed);selectedId=null;await rebuild(parsed);afterCommit();toast('Projet ouvert : '+parsed.name);
+    history.reset(parsed);selectedId=null;await rebuild(parsed);await restoreTerrainForScene();afterCommit();toast('Projet ouvert : '+parsed.name);
   }catch(err){toast('Fichier invalide : '+err.message,true);}
   e.target.value='';
 };
