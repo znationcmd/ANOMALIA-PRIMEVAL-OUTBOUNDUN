@@ -54,7 +54,7 @@ try:
             camera = spawn(unreal.CameraActor, label, position)
             camera.set_actor_location(position, False, False)
             camera.set_actor_rotation(unreal.MathLibrary.find_look_at_rotation(position, centre), False)
-            camera.get_camera_component().set_field_of_view(55.)
+            camera.camera_component.set_editor_property('field_of_view',55.)
             report['cameras'].append(label)
         report['models'].append(dict(id=item['id'], lods=mesh.get_num_lods(), naniteEnabled=False))
     for label, tag in [('FeatureReviewSun', 'ReviewSun'), ('FeatureReviewSky', 'ReviewSky')]:
