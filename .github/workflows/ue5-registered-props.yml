@@ -1,0 +1,49 @@
+name: UE5 install registered realistic props
+on:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths:
+      - '.github/workflows/ue5-registered-props.yml'
+      - 'scripts/world-features/import-registered-props.py'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-props:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Restore all 49 pinned sources and their textures
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $enginePython scripts/world-features/prepare-registered-props.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import and verify all native prop meshes and materials
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/RegisteredProps/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_PROPS_REPORT = Join-Path $evidence 'import.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/import-registered-props.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/import.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_PROPS_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'ALL_49_REGISTERED_CC0_PROP_SOURCES_INSTALLED_NOT_GAMEPLAY_BOUND' -or $report.importedSources -ne 49 -or $report.sourceCommit -ne $env:GITHUB_SHA) { throw 'Fresh full native prop import receipt required.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: registered-props-evidence
+          path: unreal/Saved/RegisteredProps/run-${{ github.run_id }}-${{ github.run_attempt }}/
+          if-no-files-found: warn
