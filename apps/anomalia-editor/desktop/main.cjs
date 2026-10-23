@@ -30,6 +30,14 @@ app.whenReady().then(()=>{
   ipcMain.handle('editor:library:status',()=>gameLibrary.getStatus());
   ipcMain.handle('editor:library:scan',()=>gameLibrary.scan());
   ipcMain.handle('editor:library:read',(_event,id)=>gameLibrary.read(id));
+  ipcMain.handle('editor:library:import-pack',async()=>{
+    const current=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];
+    const choice=await dialog.showOpenDialog(current,{title:'Importer un pack 3D ANOMALIA ZIP',properties:['openFile'],filters:[{name:'Archives de modèles 3D',extensions:['zip']}]});
+    if(choice.canceled||!choice.filePaths.length)return {cancelled:true};
+    const result=await gameLibrary.importPack(choice.filePaths[0]);
+    for(const w of BrowserWindow.getAllWindows())if(!w.isDestroyed())w.webContents.send('editor:library:changed',result.library);
+    return result;
+  });
   ipcMain.handle('editor:library:choose',async()=>{
     const current=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];
     const result=await dialog.showOpenDialog(current,{title:'Choisir le dossier des ressources ANOMALIA',properties:['openDirectory'],buttonLabel:'Synchroniser ce dossier'});
