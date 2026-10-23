@@ -148,6 +148,26 @@
   <div class="settingsPanel"><div class="settingRow"><div><h3>Blender</h3><p>Exécutable blender.exe</p><code id="blenderPath">Non configuré</code></div><button id="chooseBlender" class="btn subtle">Parcourir</button></div>
     <div class="settingRow"><div><h3>Unreal Engine</h3><p>UnrealEditor-Cmd.exe pour l'importation Python automatisée</p><code id="unrealPath">Non configuré</code></div><button id="chooseUnreal" class="btn subtle">Parcourir</button></div>
     <div class="settingRow"><div><h3>Bibliothèque locale privée</h3><p>Emplacement de tes ressources téléchargées ou importées</p><code id="libraryPath">Chargement...</code></div><span class="rendererTag">LOCAL</span></div>
+    <div class="updatePanel">
+      <div class="updateHead"><div><span class="sectionKicker">MAINTENANCE & SÉCURITÉ</span><h3>Mises à jour automatiques</h3><p>Les nouvelles versions sont vérifiées au démarrage et toutes les six heures. Lorsqu'une version est téléchargée, elle s'installe automatiquement lorsque tu fermes CMD Studio.</p></div><span class="updateVersion" id="updateVersion">v0.2.1</span></div>
+      <div class="updateStatus" id="updateStatus" role="status" aria-live="polite"><span class="updateBullet"></span><div><strong id="updateStatusTitle">Configuration des mises à jour</strong><small id="updateStatusText">Chargement du statut…</small></div></div>
+      <div class="progressTrack" id="updateProgressTrack" hidden><div id="updateProgressBar"></div></div>
+      <form id="updateConfigure" class="updateForm">
+        <label>Adresse privée du serveur de mise à jour (HTTPS)
+          <input id="updateFeed" type="url" placeholder="https://ton-serveur-prive.example/updates/" autocomplete="off" spellcheck="false" maxlength="1024">
+        </label>
+        <label>Clé d'accès privée (chiffrée sur ton PC)
+          <input id="updateToken" type="password" placeholder="Conserver la clé déjà configurée ou saisir une nouvelle clé" autocomplete="new-password" maxlength="4096">
+        </label>
+        <label class="updateToggle"><input id="updateEnabled" type="checkbox"> Rechercher et télécharger automatiquement les mises à jour</label>
+        <div class="updateActions">
+          <button class="btn primary" type="submit"><svg><use href="#i-check"/></svg> Enregistrer la configuration</button>
+          <button class="btn subtle" type="button" id="updateCheck">Vérifier maintenant</button>
+          <button class="btn subtle" type="button" id="updateInstall" hidden>Installer et redémarrer</button>
+        </div>
+      </form>
+      <p class="updatePrivacy"><svg><use href="#i-shield"/></svg> Les installateurs et manifestes doivent être privés et cryptographiquement signés. Aucun fichier personnel ni projet ANOMALIA n'est envoyé au serveur de mises à jour. Aucune installation depuis les artefacts GitHub publics.</p>
+    </div>
     <div class="privacyNote"><svg><use href="#i-shield"/></svg><p>Ton catalogue reste sur ton PC. Active le plugin « Python Editor Script Plugin » dans Unreal pour l’import automatisé. CMD Studio n’est pas connecté à un service de sauvegarde cloud.</p></div>
   </div>
 </section>
