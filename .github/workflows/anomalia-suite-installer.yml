@@ -6,6 +6,10 @@ on:
     paths:
       - 'installer/windows/**'
       - '.github/workflows/anomalia-suite-installer.yml'
+  pull_request:
+    paths:
+      - 'installer/windows/**'
+      - '.github/workflows/anomalia-suite-installer.yml'
   workflow_dispatch:
 permissions:
   contents: read
