@@ -5,7 +5,7 @@ on:
     paths:
       - ".github/workflows/anomalia-windows-auto-release.yml"
   schedule:
-    - cron: "16 4 * * *"
+    - cron: "16 */6 * * *"
   workflow_dispatch:
     inputs:
       application:
