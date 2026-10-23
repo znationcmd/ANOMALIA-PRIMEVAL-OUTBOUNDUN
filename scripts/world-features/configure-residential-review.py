@@ -13,6 +13,9 @@ report = dict(state='FAILED', sourceCommit=os.environ.get('GITHUB_SHA'), map=PAC
 try:
     level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    editor = unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+    if not editor:
+        raise RuntimeError('Full static mesh editor subsystem required')
     if not level.load_level(PACKAGE):
         raise RuntimeError('Imported residential review map required')
     present = {a.get_actor_label(): a for a in actors.get_all_level_actors()}
@@ -36,9 +39,9 @@ try:
         mesh = actor.static_mesh_component.get_editor_property('static_mesh')
         if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaWorldFeatureSha256') != item['sha256']:
             raise RuntimeError('Native candidate source identity mismatch')
-        settings = mesh.get_editor_property('nanite_settings')
+        settings = editor.get_nanite_settings(mesh)
         settings.set_editor_property('enabled', False)
-        mesh.set_editor_property('nanite_settings', settings)
+        editor.set_nanite_settings(mesh, settings, apply_changes=True)
         if not unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False):
             raise RuntimeError('Candidate rendering settings did not save')
         location = actor.get_actor_location(); bounds = mesh.get_bounds(); scale = actor.get_actor_scale3d().x
@@ -61,7 +64,7 @@ try:
         actor.tags = list(set(list(actor.tags) + [unreal.Name(tag)]))
         if label == 'FeatureReviewSun':
             actor.set_actor_rotation(unreal.Rotator(pitch=-40, yaw=-30), False)
-            actor.light_component.set_intensity(3.)
+            actor.get_component_by_class(unreal.DirectionalLightComponent).set_intensity(3.)
     spawn(unreal.SkyAtmosphere, 'ResidentialReviewAtmosphere', unreal.Vector(0,0,0))
     if not level.save_current_level() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True):
         raise RuntimeError('Residential camera setup did not save')
