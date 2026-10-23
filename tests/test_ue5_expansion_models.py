@@ -23,10 +23,13 @@ class ExpansionGeometryTests(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):cls.temp.cleanup()
 
-    def test_complete_generic_native_catalogue_coverage(self):
+    def test_original_prototype_coverage_and_explicit_unmodeled_additions(self):
         text=(ROOT/'unreal/Source/AnomaliaPrimeval/AnomaliaVehicleCatalog.cpp').read_text()
         ids=set(re.findall(r'MakeVehicle\(TEXT\("([a-z0-9_]+)"\)',text))
-        self.assertEqual(set(MODULE.VEHICLES)|{'quad','snowmobile','jetski','zodiac','airliner','metro'},ids)
+        modeled=set(MODULE.VEHICLES)|{'quad','snowmobile','jetski','zodiac','airliner','metro'}
+        self.assertTrue(modeled.issubset(ids))
+        # Pilotable catalogue additions are not invented prototype art.
+        self.assertEqual(ids-modeled,{'nascar','rally_car','racing_truck','pickup','bus','minibus','tow_truck','dump_truck','snowplow','f1_boat','yacht','tram','cable_car'})
         self.assertEqual(len(self.manifest['models']),33)
         self.assertEqual(len({m['objectPath'] for m in self.manifest['models']}),33)
 

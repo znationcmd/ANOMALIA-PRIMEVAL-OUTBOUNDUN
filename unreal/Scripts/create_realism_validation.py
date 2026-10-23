@@ -57,9 +57,10 @@ try:
     else:
         if not level.new_level(PACKAGE):raise RuntimeError('Cannot create isolated review map')
     def spawn(cls,name,pos):
+        expected=cls if isinstance(cls,unreal.Class) else cls.static_class()
         for existing in actors.get_all_level_actors():
             if existing.get_actor_label()==name:
-                if unreal.Name(OWNER)not in existing.tags or not isinstance(existing,cls):raise RuntimeError('Unowned or mismatched review actor preserved: '+name)
+                if unreal.Name(OWNER)not in existing.tags or existing.get_class()!=expected:raise RuntimeError('Unowned or mismatched review actor preserved: '+name)
                 return existing
         a=actors.spawn_actor_from_class(cls,unreal.Vector(*pos));a.set_actor_label(name);a.tags=[unreal.Name(OWNER),unreal.Name(name)];return a
     spawn(unreal.Actor,OWNER,(0,0,0))

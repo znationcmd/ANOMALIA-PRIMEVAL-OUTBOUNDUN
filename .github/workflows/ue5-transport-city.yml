@@ -73,8 +73,13 @@ jobs:
           $env:ANOMALIA_POPULATION_REPORT = Join-Path $evidence 'populated-world.json'
           foreach ($script in @('create_realism_validation.py','create_inhabited_archipelago.py')) {
             $scriptPath = Join-Path $env:GITHUB_WORKSPACE "unreal/Scripts/$script"
-            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -d3d11 -sm5 -RenderOffscreen "-abslog=$evidence/$script.log"
+            # Assemble packages without loading the entire 48km landscape into GPU memory.
+            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$evidence/$script.log"
             if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if ($script -eq 'create_realism_validation.py') {
+              $import = Get-Content $env:ANOMALIA_REALISM_SCENE_REPORT -Raw | ConvertFrom-Json
+              if ($import.state -ne 'REALISM_VALIDATION_MAP_SAVED_NOT_PLAYTESTED' -or $import.sourceCommit -ne $env:GITHUB_SHA) { throw 'Fresh art import receipt required before landscape assembly.' }
+            }
           }
           $result = Get-Content $env:ANOMALIA_POPULATION_REPORT -Raw | ConvertFrom-Json
           if ($result.state -ne 'POPULATED_WORLD_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.houses -lt 4500) { throw 'Fresh populated world assembly failed.' }

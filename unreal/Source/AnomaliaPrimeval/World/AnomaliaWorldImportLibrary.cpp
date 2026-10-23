@@ -26,7 +26,9 @@ static AActor* CreateLandscape(bool bInhabited)
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=(bInhabited?TEXT("/Game/Maps/ANOMALIA_Inhabited_v1"):TEXT("/Game/Maps/ANOMALIA_Archipelago_v2")))return nullptr;
+ if(!World)return nullptr;
+ const FString Map=World->GetPackage()->GetName();
+ if(bInhabited ? (Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v1")&&Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")) : Map!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))return nullptr;
  for(TActorIterator<ALandscape> It(World);It;++It)return nullptr; // Never overlay/replace existing terrain.
  constexpr int32 Size=3025;
  TArray<uint16> Samples; Samples.SetNumUninitialized(Size*Size);

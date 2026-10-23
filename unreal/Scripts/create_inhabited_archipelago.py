@@ -10,15 +10,15 @@ import uuid
 import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
-PACKAGE='/Game/Maps/ANOMALIA_Inhabited_v1'
-ART='/Game/Anomalia/Inhabited_v1'
+PACKAGE='/Game/Maps/ANOMALIA_Inhabited_v2'
+ART='/Game/Anomalia/Inhabited_v2'
 OUT=Path(os.environ.get('ANOMALIA_POPULATION_REPORT',str(ROOT/'Saved/Population'/('run-'+uuid.uuid4().hex+'.json'))))
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,playtested=False,photorealismValidated=False,originalArchipelagoModified=False,roadsBuilt=False,servicesBuilt=False)
 try:
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     # Never duplicate a World Partition .umap without its external actors or replace an existing world.
-    if unreal.EditorAssetLibrary.does_asset_exist(PACKAGE) or (ROOT/'Content/Maps/ANOMALIA_Inhabited_v1.umap').exists():
+    if unreal.EditorAssetLibrary.does_asset_exist(PACKAGE) or (ROOT/'Content/Maps/ANOMALIA_Inhabited_v2.umap').exists():
         raise RuntimeError('Existing populated world preserved; inspect it before authoring a new version')
     spec=importlib.util.spec_from_file_location('population',ROOT/'Scripts/archipelago_population.py')
     population=importlib.util.module_from_spec(spec);spec.loader.exec_module(population)
@@ -41,6 +41,7 @@ try:
     bounds=meshes['detached_house'].get_bounds()
     dims=[bounds.box_extent.x*.02,bounds.box_extent.z*.02,bounds.box_extent.y*.02]
     plan=population.build_plan(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height,dims,sites=sites)
+    plan['mapPackage']=PACKAGE
     if len(plan['buildings'])<100:raise RuntimeError('Population plan unexpectedly incomplete')
     report['planCounts']=dict(settlements=len(plan['settlements']),houses=len(plan['buildings']),foliage=len(plan['foliage']))
     # Source-verified PBR ground textures; world-space UVs prevent per-component stretching.
