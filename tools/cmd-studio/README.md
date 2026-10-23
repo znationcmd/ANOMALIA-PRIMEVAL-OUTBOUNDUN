@@ -23,7 +23,10 @@ Atelier 3D **local**, indépendant d'ANOMALIA, embarqué dans ce dépôt sans mo
 6. Activer dans Unreal le plugin **Python Editor Script Plugin** avant une importation automatique.
 
 Pour créer un installateur Windows depuis un ordinateur Windows : npm run package:win.
-Aucun binaire .exe n'est précompilé ou signé dans ce dépôt.
+
+**Icône Windows (depuis la version 0.1.1)** : le véritable logo CMD Studio est intégré dans `resources/cmd-studio.ico`, dans l'exécutable Windows, l'installateur NSIS, les raccourcis Bureau/menu Démarrer et la fenêtre. L'icône est embarquée automatiquement lors de la construction avec GitHub Actions. Réinstaller la nouvelle version pour remplacer les anciens raccourcis. L'installateur n'a pas de signature commerciale vérifiée.
+
+L'installateur Windows précompilé est disponible dans les artefacts du workflow GitHub Actions `CMD Studio - tests & Windows` lorsque la compilation est réussie.
 
 ## Sécurité et licences
 
