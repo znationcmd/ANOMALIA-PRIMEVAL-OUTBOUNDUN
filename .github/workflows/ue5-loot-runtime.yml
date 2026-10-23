@@ -1,0 +1,158 @@
+name: UE5 loot runtime compile and native tests
+on:
+  push:
+    branches: ['feature/loot-tiers-radiation-config-20261021']
+    paths:
+      - 'unreal/Source/**'
+      - 'unreal/Config/**'
+      - 'public/config/loot*.json'
+      - 'public/config/rp*.json'
+      - 'scripts/ue5/stage-runtime-data.py'
+      - 'scripts/ue5/run-loot-playtest.py'
+      - 'scripts/ue5/package-playable-windows.py'
+      - 'scripts/ue5/prepare-realism-sources.py'
+      - 'scripts/vehicle-assets/prepare-realism.mjs'
+      - 'docs/art/realism-validation-sources.json'
+      - 'unreal/Scripts/create_realism_validation.py'
+      - 'scripts/ue5/install-playable-windows.ps1'
+      - 'unreal/Scripts/create_playable_zone.py'
+      - 'unreal/Scripts/create_loot_review.py'
+      - 'unreal/Scripts/import_expansion_models.py'
+      - 'unreal/Scripts/short_import_source.py'
+      - 'unreal/Scripts/capture_real_world.py'
+      - 'scripts/ue5/validate-build.py'
+      - 'scripts/ue5/collect-editor-crash-info.ps1'
+      - '.github/workflows/ue5-loot-runtime.yml'
+concurrency:
+  # The installed editor, generated projects and GPU must not be used by concurrent jobs.
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-loot:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/feature/loot-tiers-radiation-config-20261021'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    # Two car phases plus repair/reopen can each use their existing 15 minute cap.
+    # Leave time for builds and evidence upload without interrupting the GPU check.
+    timeout-minutes: 150
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Read recent editor fault modules before native validation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-before.json')
+      - name: Retain early read-only editor fault evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: editor-fault-modules-before-native
+          path: unreal/Saved/LootValidation/run-${{ github.run_id }}/editor-crash-before.json
+          if-no-files-found: warn
+      - name: Compile existing Editor and Game with native catalogue and transaction tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        id: native_core
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:UE_ROOT) { throw 'Installed UE_ROOT is required.' }
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create the real loot map and test Interact and inventory UI in Play In Editor
+        id: loot_pie
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Prepare pinned licensed art for the isolated visual validation zone
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-realism-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
+          Copy-Item 'unreal/SourceAssets/RealismValidation_v2/CREDITS.md' 'unreal/Content/ThirdPartyNotices/RealismValidation_v2-CREDITS.md'
+      - name: Cook and launch the autonomous Windows playable zone before large world checks
+        id: playable_package
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/package-playable-windows.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/playable"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Install only the autonomous Windows build that passed its actual game smoke test
+        if: ${{ success() && steps.playable_package.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          & ./scripts/ue5/install-playable-windows.ps1 -ValidationDir "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/playable"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retain small packaged gameplay and installer diagnostics immediately
+        if: ${{ always() && steps.playable_package.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: packaged-playable-install-diagnostics
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/editor-visual/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/packaged-visual/*.*
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/installed-visual/*.*
+          if-no-files-found: error
+      - name: Retain downloadable Windows test game without temporary test saves
+        if: ${{ always() && steps.playable_package.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Windows-Test
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/Windows/**
+            !unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/Windows/**/Saved/**
+          if-no-files-found: error
+          compression-level: 1
+      - name: Recheck cached car imports with short Windows paths and a separate v2 review map
+        id: car_assets
+        if: ${{ success() && hashFiles('unreal/SourceAssets/NamedVehicles1/manifest.json') != '' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/validate-expansion-models.py --group NamedVehicles1 --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID/cars"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify actual archipelago GPU capture and release the world before editor shutdown
+        id: real_gpu
+        if: ${{ success() && steps.native_core.outcome == 'success' && steps.loot_pie.outcome == 'success' && hashFiles('unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap') != '' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Read editor fault modules after native validation without changing its result
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-after.json')
+      - name: Update the existing PC editor copy only after native gameplay and fresh GPU validation
+        if: ${{ success() && steps.loot_pie.outcome == 'success' && steps.car_assets.outcome == 'success' && steps.real_gpu.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/LootValidation/run-$env:GITHUB_RUN_ID"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Retain actual compile and native test evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: native-loot-runtime-evidence
+          path: |
+            unreal/Saved/LootValidation/run-${{ github.run_id }}/**
+            !unreal/Saved/LootValidation/run-${{ github.run_id }}/playable/package-*/**
+          if-no-files-found: error

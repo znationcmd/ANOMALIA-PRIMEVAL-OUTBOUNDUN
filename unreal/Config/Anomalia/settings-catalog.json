@@ -251,7 +251,7 @@
       "id": "graphics.presets",
       "file": "DefaultGame.ini",
       "name": "Préréglages graphiques",
-      "description": "Profils PC, PS5, Xbox Series X et repli; cibles console non mesurées.",
+      "description": "Profils PC, PS5, Xbox Series X/S, Android/iOS et repli ; cibles consoles et mobiles non mesurées.",
       "type": "ini sections",
       "range": null,
       "default": "PC_High",

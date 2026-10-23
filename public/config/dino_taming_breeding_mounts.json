@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "description": "ANOMALIA creature gameplay requirements: all catalog species and variants tameable, breedable and rideable; requires UE5 implementation",
+  "appliesTo": {
+    "speciesCatalog": "dino_species_catalog.json",
+    "variantsCatalog": "dino_variants_catalog.json",
+    "allSpecies": true,
+    "allVariants": true,
+    "includeBosses": true
+  },
+  "defaults": {
+    "taming": {
+      "enabled": true,
+      "methods": [
+        "knockout",
+        "passive",
+        "special"
+      ],
+      "kibbleCatalog": "dino_kibbles_catalog.json",
+      "tamingSpeedMultiplier": 1,
+      "requiresSpeciesSpecificImplementation": true
+    },
+    "breeding": {
+      "enabled": true,
+      "allowCrossVariantBreeding": true,
+      "matingCooldownSeconds": 21600,
+      "gestationOrIncubationSeconds": 3600,
+      "babyMaturationSeconds": 14400,
+      "inheritStats": true,
+      "inheritColors": true,
+      "mutationsEnabled": true,
+      "offspringPersistence": true
+    },
+    "mounting": {
+      "enabled": true,
+      "saddleRequired": true,
+      "saddleItemTemplate": "saddle_{species_id}",
+      "passengerSeats": 0,
+      "allowRiderWeapons": false,
+      "serverAuthoritative": true,
+      "requiresAnimationsAndPhysics": true
+    },
+    "permissions": {
+      "allowBossTaming": true,
+      "allowBossBreeding": true,
+      "allowBossRiding": true
+    },
+    "persistence": {
+      "saveTameOwnership": true,
+      "saveBreedingAndGrowth": true,
+      "saveSaddleInventory": true
+    }
+  },
+  "serverOverrides": {
+    "enabled": true,
+    "perSpecies": true,
+    "perVariant": true,
+    "perServer": true
+  },
+  "implementationStatus": "CONFIGURATION_ONLY_NOT_CONNECTED_TO_UNREAL",
+  "notes": [
+    "All creature species and variants are included by default; individual override can change behavior",
+    "Aquatic, flying, giant and boss mounts need dedicated animations, seats, collision and balance",
+    "No third-party mod assets are imported; original ANOMALIA implementation required"
+  ]
+}

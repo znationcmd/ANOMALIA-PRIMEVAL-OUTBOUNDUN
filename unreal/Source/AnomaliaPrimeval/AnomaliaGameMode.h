@@ -33,13 +33,19 @@ protected:
     /** Server-only import of its own validated Editor/world.json placeables. */
     void SpawnConfiguredHomestead();
     void LoadPersistentPlayer(APlayerController* PlayerController);
-    void SavePersistentPlayer(AController* Controller);
+    bool SavePersistentPlayer(AController* Controller);
     void SaveAllPlayerProfiles();
-    FString GetPersistentPlayerId(const AController* Controller) const;
+
     FTimerHandle ProfileSaveTimer;
+    FTimerHandle ProfileRecoveryTimer;
+    TSet<FString> PendingProfileLoads;
+    void RetryPendingProfileLoads();
     virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
 public:
+
+    FString GetPersistentPlayerId(const AController* Controller) const;
+    bool SaveLocalGame();
 
     /** Called by trusted server logic only. Not a client spawn RPC. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Server|Vehicles")

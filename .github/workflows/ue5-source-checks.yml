@@ -3,7 +3,23 @@ name: Unreal Engine 5 source checks
 on:
   push:
     paths:
+      - 'src/status-indicators.js'
+      - 'src/vitals-runtime.js'
+      - 'src/cryo-storage.js'
+      - 'src/npc-recruitment.js'
+      - 'src/systems.js'
+      - 'src/tracking-system.js'
+      - 'src/hygiene-system.js'
+      - 'src/family-system.js'
+      - 'src/family-pregnancy.js'
+      - 'tests/new-survival-modules.test.mjs'
+      - 'tests/status-indicators.test.mjs'
+      - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
+      - 'tests/test_ue5_short_import_source.py'
+      - 'public/config/rp*.json'
+      - 'tests/test_ue5_rp_catalog.py'
+      - 'tests/test_ue5_runtime_data.py'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
       - 'tests/test_ue5_settlement_layout.py'
@@ -11,6 +27,7 @@ on:
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_playable_package_driver.py'
       - 'tests/test_ue5_visual_camera.py'
       - 'tests/test_ue5_world_snapshot.py'
       - 'tests/test_ue58_target_settings.py'
@@ -29,7 +46,23 @@ on:
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
+      - 'src/status-indicators.js'
+      - 'src/vitals-runtime.js'
+      - 'src/cryo-storage.js'
+      - 'src/npc-recruitment.js'
+      - 'src/systems.js'
+      - 'src/tracking-system.js'
+      - 'src/hygiene-system.js'
+      - 'src/family-system.js'
+      - 'src/family-pregnancy.js'
+      - 'tests/new-survival-modules.test.mjs'
+      - 'tests/status-indicators.test.mjs'
+      - 'tests/cryo-recruitment.test.mjs'
       - 'unreal/**'
+      - 'tests/test_ue5_short_import_source.py'
+      - 'public/config/rp*.json'
+      - 'tests/test_ue5_rp_catalog.py'
+      - 'tests/test_ue5_runtime_data.py'
       - 'tests/test_ue5_original_lot1.py'
       - 'tests/test_ue5_expansion_models.py'
       - 'tests/test_ue5_settlement_layout.py'
@@ -37,6 +70,7 @@ on:
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_playable_package_driver.py'
       - 'tests/test_ue5_visual_camera.py'
       - 'tests/test_ue5_world_snapshot.py'
       - 'tests/test_ue58_target_settings.py'
@@ -59,10 +93,25 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        if: ${{ hashFiles('tests/status-indicators.test.mjs', 'tests/cryo-recruitment.test.mjs') != '' }}
+        with:
+          node-version: '22'
+      - name: Test prototype indicator recovery and saved vital state
+        if: ${{ hashFiles('tests/status-indicators.test.mjs') != '' }}
+        run: node --test tests/status-indicators.test.mjs
+      - name: Test prototype cryo and recruitment ownership and duplicate rejection
+        if: ${{ hashFiles('tests/cryo-recruitment.test.mjs') != '' }}
+        run: node --test tests/cryo-recruitment.test.mjs
+      - name: Regress new tracking hygiene and family prototype state boundaries
+        if: ${{ hashFiles('tests/new-survival-modules.test.mjs') != '' }}
+        run: node --test tests/new-survival-modules.test.mjs
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)
         run: python -m unittest discover -s tests -p test_ue5_build_driver.py -v
+      - name: Reject stale playable scenes even when the editor process exits successfully
+        run: python -m unittest discover -s tests -p test_ue5_playable_package_driver.py -v
       - name: Prevent UE5.8 shared build settings regression
         run: python -m unittest discover -s tests -p test_ue58_target_settings.py -v
       - name: Guard native test include resolution in nested source files
@@ -87,6 +136,10 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_terrain_source.py -v
       - name: Validate 48km draft terrain seams and non-destructive generation
         run: python -m unittest discover -s tests -p test_ue5_playtest_terrain.py -v
+      - name: Validate additive RP catalogue and integer banknote values
+        run: python -m unittest discover -s tests -p test_ue5_rp_catalog.py -v
+      - name: Exercise runtime catalogue staging without modifying server saves
+        run: python -m unittest discover -s tests -p test_ue5_runtime_data.py -v
       - name: Verify config migration is non-destructive
         run: |
           python scripts/migrate-to-ue5.py
@@ -109,6 +162,8 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
           /tmp/archipelago-height
+      - name: Regress Windows GLB import path length and preserve source geometry and credits
+        run: python -m unittest discover -s tests -p test_ue5_short_import_source.py -v
       - name: Verify actual bridge geometry and reused texture bytes
         run: python -m unittest discover -s tests -p test_ue5_bridge_source.py -v
       - name: Regress capture camera target alignment (not Unreal rendering)

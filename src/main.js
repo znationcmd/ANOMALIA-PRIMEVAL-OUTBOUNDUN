@@ -1,3 +1,5 @@
+import {restoreVitals,tickVitals,startSleep} from './vitals-runtime.js';
+import {mountSurvivalIndicators} from './status-indicators.js';
 import worldMetrics from "./world-metrics.json";
 import {createConstructionUI} from "./construction-ui.js";
 import {createConstructionWorld} from "./construction-world.js";
@@ -46,7 +48,7 @@ const box=(w,h,d,material)=>new THREE.Mesh(new THREE.BoxGeometry(w,h,d),material
 const cylinder=(r1,r2,h,material)=>new THREE.Mesh(new THREE.CylinderGeometry(r1,r2,h,7),material);
 function meshBox(parent,x,y,z,w,h,d,material){const q=box(w,h,d,material);q.position.set(x,y,z);q.castShadow=!matchMedia("(pointer:coarse)").matches;q.receiveShadow=true;parent.add(q);return q}
 let saved;try{saved=JSON.parse(localStorage.getItem(STORAGE)||"null")}catch{}
-let state=normalizeState(saved);state.equipment={head:null,torso:"shirt",vest:null,legs:"jeans",feet:"boots",back:null,...saved?.equipment};
+let state=normalizeState(saved);restoreVitals(state,saved);state.equipment={head:null,torso:"shirt",vest:null,legs:"jeans",feet:"boots",back:null,...saved?.equipment};
 state.illness=saved?.illness||null;state.infection=Number(saved?.infection)||0;state.temperature=Number(saved?.temperature)||37;
 state.tamed=Array.isArray(saved?.tamed)?saved.tamed:[];state.dinoTrust=saved?.dinoTrust||{};
 state.mounted=saved?.mounted||null;state.weapon=saved?.weapon||"pistol";state.underground=null;
@@ -517,8 +519,15 @@ function mapScreen(){
  });
  openPanel();
 }
+let vitalsClock=0;
+const statusIndicators=mountSurvivalIndicators(document.querySelector('#hud')||document.body);
 function updateHud(dt){
+ if(started&&!paused)vitalsClock+=Math.max(0,dt);
+ const condition=tickVitals(state,vitalsClock,dt,{active:started&&!paused});
+ if(!window.anomaliaConsciousnessOverlay){const el=document.createElement('div');el.style.cssText='position:fixed;inset:0;background:#000;z-index:9999;display:none;align-items:center;justify-content:center;color:#fff;font:bold 22px sans-serif;pointer-events:none';document.body.append(el);window.anomaliaConsciousnessOverlay=el;}
+ const overlay=window.anomaliaConsciousnessOverlay;overlay.style.display=condition.sleeping||condition.unconscious?'flex':'none';overlay.textContent=condition.sleeping?'SOMMEIL · 30 secondes':'INCONSCIENT · '+Math.ceil(condition.unconsciousSeconds)+' s';
  hudTime+=dt;if(hudTime<.1)return;hudTime=0;
+ statusIndicators.update(state);
  const meters=[["health",state.health],["stamina",state.stamina],["hunger",state.hunger],["thirst",state.thirst]];
  for(const [id,value]of meters){const bar=$(id+"Bar"),label=$(id+"Value");if(bar)bar.style.width=value+"%";if(label)label.textContent=Math.round(value)}
  const {city,distance}=nearestCity(state.position.x,state.position.z);
@@ -542,7 +551,7 @@ function updateHud(dt){
  const beach=beachObjective(state);if(beach){$("questTitle").textContent=beach.title;$("questDesc").textContent=beach.description;}
 }
 function updatePlayer(dt){
- if(paused||!started||state.health<=0)return;
+ if(paused||!started||state.health<=0||state.sleeping||vitalsClock<state.unconsciousUntil)return;
  const forward=(keys.has("KeyW")||keys.has("ArrowUp")||keys.has("KeyZ")||touchState.w?1:0)-(keys.has("KeyS")||keys.has("ArrowDown")||touchState.s?1:0)+controllerMove.y;
  const strafe=(keys.has("KeyD")||keys.has("ArrowRight")||touchState.d?1:0)-(keys.has("KeyA")||keys.has("ArrowLeft")||keys.has("KeyQ")||touchState.a?1:0)+controllerMove.x;
  const driving=worldRuntime?.drive(forward,strafe,dt,keys);
@@ -759,6 +768,7 @@ worldRuntime=createWorldRuntime({state,scene,camera,renderer,heightAt:walkHeight
 });
 constructionUI=createConstructionUI({state,scene,camera,heightAt,world:constructionWorld,save,notice,panel:$('panel'),body:$('panelBody'),title:$('panelTitle'),open:openPanel,close:closePanel,cleanup:()=>{inventoryUI?.cleanup();worldRuntime?.cleanup();}});
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
+window.addEventListener('keydown',e=>{if(e.code==='KeyN'&&started&&!paused&&!e.repeat&&!e.target.matches?.('input,textarea,select')&&!e.target.isContentEditable){if(startSleep(state,vitalsClock))notice('Repos : réveil dans 30 secondes');}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
 for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 let lastAtmosphereUpdate=-10000;

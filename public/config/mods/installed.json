@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "description": "Template only; actual installed mods require per-user/per-server persistent manifests.",
+  "mods": [],
+  "status": "TEMPLATE_NOT_INSTALLATION_STATE"
+}

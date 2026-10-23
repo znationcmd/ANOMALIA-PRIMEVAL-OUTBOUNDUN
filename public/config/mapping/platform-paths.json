@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "description": "DayZ console-inspired ANOMALIA mapping paths. Logical aliases only; not actual Nitrado DayZ files.",
+  "aliases": {
+    "playstation": "dayzps_missions",
+    "xbox": "dayzxb_missions",
+    "pc": "anomalia_missions"
+  },
+  "mapFolderPattern": "dayzOffline.{mapId}",
+  "customDirectory": "custom",
+  "editorExportDirectory": "mapping/exports",
+  "mappingManifest": "mapping/manifest.json",
+  "supportedModes": [
+    "solo",
+    "cmd-hosting",
+    "dedicated"
+  ],
+  "status": "CONFIG_ONLY_NO_UNREAL_LOADER"
+}

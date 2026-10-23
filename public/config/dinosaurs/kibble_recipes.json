@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "description": "Six reference-inspired ARK kibble tiers plus original ANOMALIA mod-inspired recipe generation rules",
+  "standardRecipes": [
+    {
+      "id": "kibble_basic",
+      "output": {
+        "itemId": "kibble_basic",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "extra_small_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "mejoberry",
+          "quantity": 5
+        },
+        {
+          "itemId": "amarberry",
+          "quantity": 10
+        },
+        {
+          "itemId": "tintoberry",
+          "quantity": 10
+        },
+        {
+          "itemId": "cooked_meat",
+          "quantity": 1
+        },
+        {
+          "itemId": "fiber",
+          "quantity": 5
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "kibble_simple",
+      "output": {
+        "itemId": "kibble_simple",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "small_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "rockarrot",
+          "quantity": 2
+        },
+        {
+          "itemId": "cooked_fish_meat",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "kibble_regular",
+      "output": {
+        "itemId": "kibble_regular",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "medium_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "longrass",
+          "quantity": 2
+        },
+        {
+          "itemId": "savoroot",
+          "quantity": 2
+        },
+        {
+          "itemId": "cooked_meat_jerky",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "kibble_superior",
+      "output": {
+        "itemId": "kibble_superior",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "large_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "citronal",
+          "quantity": 2
+        },
+        {
+          "itemId": "rare_mushroom",
+          "quantity": 2
+        },
+        {
+          "itemId": "prime_meat_jerky",
+          "quantity": 1
+        },
+        {
+          "itemId": "sap",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "kibble_exceptional",
+      "output": {
+        "itemId": "kibble_exceptional",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "extra_large_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "mejoberry",
+          "quantity": 10
+        },
+        {
+          "itemId": "rare_flower",
+          "quantity": 1
+        },
+        {
+          "itemId": "focal_chili",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "kibble_extraordinary",
+      "output": {
+        "itemId": "kibble_extraordinary",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot",
+        "industrial_cooker"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "special_egg",
+          "quantity": 1
+        },
+        {
+          "itemId": "giant_bee_honey",
+          "quantity": 1
+        },
+        {
+          "itemId": "lazarus_chowder",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    }
+  ],
+  "modInspiredRecipeTemplate": {
+    "appliesToCatalog": "../dino_kibbles_catalog.json",
+    "generateForAll": true,
+    "station": [
+      "cooking_pot",
+      "industrial_cooker",
+      "genetic_cooker"
+    ],
+    "craftSeconds": 60,
+    "ingredientRules": [
+      {
+        "itemId": "berries_mixed",
+        "quantity": 10
+      },
+      {
+        "itemId": "fiber",
+        "quantity": 5
+      },
+      {
+        "itemId": "water",
+        "quantity": 1
+      },
+      {
+        "itemId": "dino_hide",
+        "quantity": 2
+      },
+      {
+        "itemId": "dino_egg_any",
+        "quantity": 1
+      },
+      {
+        "itemId": "tier_essence",
+        "quantity": 1
+      }
+    ],
+    "perTierOverride": true,
+    "notes": "Template for all 57 previously registered kibbles; exact recipes and output IDs must be generated and tested by the runtime; not currently crafted in UE5"
+  },
+  "waterSourceRequired": true,
+  "craftingStatus": "CONFIG_ONLY"
+}

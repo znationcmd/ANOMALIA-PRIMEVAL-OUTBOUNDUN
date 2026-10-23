@@ -1,0 +1,290 @@
+{
+  "schemaVersion": 1,
+  "scope": "Separate visual validation zone; no final photorealism or functional interior claims before native review",
+  "models": [
+    {
+      "id": "island_tree_02",
+      "source": "https://polyhaven.com/a/island_tree_02",
+      "author": "Poly Haven contributors",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceFile": "island_tree_02.gltf",
+      "files": [
+        {
+          "path": "island_tree_02.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/island_tree_02/island_tree_02_2k.gltf",
+          "sha256": "134b85d69f89fa6ad84555999ea02ae28ddf4713d4672e18e03d5917fd43ae62",
+          "bytes": 8545
+        },
+        {
+          "path": "textures/island_tree_02_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_nor_gl_2k.jpg",
+          "sha256": "3b088058cd9c8759f1ee223fad90f860257f574ae2ba7401cd4982c687b853cf",
+          "bytes": 4339456
+        },
+        {
+          "path": "textures/island_tree_02_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_diff_2k.jpg",
+          "sha256": "2ca2706adc5bde6bc46fa4a4680041a1797cf6684a31629259559935a97e0057",
+          "bytes": 2684467
+        },
+        {
+          "path": "textures/island_tree_02_arm_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_arm_2k.jpg",
+          "sha256": "89e20810f614231578314846acff92821249f4124f4aa6e2f630df45d7acb6b2",
+          "bytes": 2347246
+        },
+        {
+          "path": "textures/island_tree_02_leaves_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_leaves_nor_gl_2k.jpg",
+          "sha256": "efa74b8b59a7466a295bf210505560002990183817b6c33663f3ec0dd438dd73",
+          "bytes": 1378585
+        },
+        {
+          "path": "textures/island_tree_02_leaves_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_leaves_diff_2k.jpg",
+          "sha256": "e5c56ca13525aed76572852da5f69ae87cbee9e15abe2e1eff23adf92975f14a",
+          "bytes": 661175
+        },
+        {
+          "path": "textures/island_tree_02_leaves_arm_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_leaves_arm_2k.jpg",
+          "sha256": "cf4d604711d955d74a13b656bdbf840015ac38a71e24821849efade730634cc6",
+          "bytes": 1645169
+        },
+        {
+          "path": "textures/island_tree_02_branches_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_branches_nor_gl_2k.jpg",
+          "sha256": "e4cac77b4f35ad47ba4fcdb9061f91acf3318d9889dd259cb5e6e132b0ab60c7",
+          "bytes": 2437750
+        },
+        {
+          "path": "textures/island_tree_02_branches_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_branches_diff_2k.jpg",
+          "sha256": "52cb2c660983836249e3f31ad286ca1bab8033e93070569b23e1867e3ae70b4d",
+          "bytes": 1476655
+        },
+        {
+          "path": "textures/island_tree_02_branches_arm_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/island_tree_02/island_tree_02_branches_arm_2k.jpg",
+          "sha256": "a39d8291ba54adf1ca42f15abe2f622d0ac59fb13c87087a0fabc755b91dfee8",
+          "bytes": 1523257
+        },
+        {
+          "path": "island_tree_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/island_tree_02/island_tree_02.bin",
+          "sha256": "427d69ccc1ea12d1fb9c6af89691563b4a097f39a6f34c15be6e45ef5e5fd4ce",
+          "bytes": 40686576
+        }
+      ]
+    },
+    {
+      "id": "grass_medium_01",
+      "source": "https://polyhaven.com/a/grass_medium_01",
+      "author": "Poly Haven contributors",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceFile": "grass_medium_01.gltf",
+      "files": [
+        {
+          "path": "grass_medium_01.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/grass_medium_01/grass_medium_01_2k.gltf",
+          "sha256": "aed63929a83fb694e6884e3a5c0fdb962ab8cf9153830247c8201a482ff02664",
+          "bytes": 27110
+        },
+        {
+          "path": "textures/grass_medium_01_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_nor_gl_2k.jpg",
+          "sha256": "245349ce6d1910b3b7474da6013452a5be993f9058be78e17171a0866a6889e9",
+          "bytes": 3530394
+        },
+        {
+          "path": "textures/grass_medium_01_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_diff_2k.jpg",
+          "sha256": "f768aa68daf14f37a92dd96621628a5252b169f4d94b4d1cc830d62cd3ac9e68",
+          "bytes": 1166527
+        },
+        {
+          "path": "textures/grass_medium_01_arm_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/grass_medium_01/grass_medium_01_arm_2k.jpg",
+          "sha256": "7b593b1c470c1817b937bb3ca00da7e4b27ca00120e98b06b43bb3a7d5810aa1",
+          "bytes": 2256355
+        },
+        {
+          "path": "grass_medium_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/grass_medium_01/grass_medium_01.bin",
+          "sha256": "f4587cabdb96a2e96d8be644923dc954a248edfaaa717a0ff224cacb898bee1f",
+          "bytes": 1006632
+        }
+      ]
+    },
+    {
+      "id": "rock_moss_set_01",
+      "source": "https://polyhaven.com/a/rock_moss_set_01",
+      "author": "Poly Haven contributors",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceFile": "rock_moss_set_01.gltf",
+      "files": [
+        {
+          "path": "rock_moss_set_01.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/2k/rock_moss_set_01/rock_moss_set_01_2k.gltf",
+          "sha256": "794beaf2f4dc0ab155114f286049dc912a8f3287520965ca8bf6bb0d821ae3e2",
+          "bytes": 9987
+        },
+        {
+          "path": "rock_moss_set_01.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/gltf/8k/rock_moss_set_01/rock_moss_set_01.bin",
+          "sha256": "de8360e6175879aaf02c171911069cf5f1852547f9ca7f10e440085dbcc3315e",
+          "bytes": 1466380
+        },
+        {
+          "path": "textures/rock_moss_set_01_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rock_moss_set_01/rock_moss_set_01_diff_2k.jpg",
+          "sha256": "bdee6da8baba67bd7e85e414e669cd46aab9afaf755114fb5163f0e68775c3d6",
+          "bytes": 649415
+        },
+        {
+          "path": "textures/rock_moss_set_01_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rock_moss_set_01/rock_moss_set_01_nor_gl_2k.jpg",
+          "sha256": "f11c238a203eebd5e82da3a50468040a78d25fd2e46783c4ad79b1022b144c0d",
+          "bytes": 840957
+        },
+        {
+          "path": "textures/rock_moss_set_01_rough_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Models/jpg/2k/rock_moss_set_01/rock_moss_set_01_rough_2k.jpg",
+          "sha256": "a05a8bd9f2563cf55b738484b894671df7b2391aa02d66451366c5ad38077cd2",
+          "bytes": 293827
+        }
+      ]
+    },
+    {
+      "id": "forest_ground_04",
+      "source": "https://polyhaven.com/a/forest_ground_04",
+      "author": "Poly Haven contributors",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceFile": "forest_ground_04.gltf",
+      "files": [
+        {
+          "path": "forest_ground_04.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/2k/forest_ground_04/forest_ground_04_2k.gltf",
+          "sha256": "da47757cf724e56b85fe07d355ff3bc902d814bf18a526ab38e9aaf63ee5e92a",
+          "bytes": 2732
+        },
+        {
+          "path": "textures/forest_ground_04_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forest_ground_04/forest_ground_04_diff_2k.jpg",
+          "sha256": "24b8aaf4c8547305d80b0e029ec365219ab1b90748d4ca5651bdc9e75bfde5e6",
+          "bytes": 4529321
+        },
+        {
+          "path": "textures/forest_ground_04_rough_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forest_ground_04/forest_ground_04_rough_2k.jpg",
+          "sha256": "24194662948424c323c75e0918461ad9d38bc0a275022000144f248b3efb4119",
+          "bytes": 2509805
+        },
+        {
+          "path": "textures/forest_ground_04_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/forest_ground_04/forest_ground_04_nor_gl_2k.jpg",
+          "sha256": "b37ac799ed410976541e0011c246fca254e74eaa3f096ae7a7d74178db5a6d9b",
+          "bytes": 5288849
+        },
+        {
+          "path": "forest_ground_04.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/forest_ground_04/forest_ground_04.bin",
+          "sha256": "198883cb523fda223ea74c9b46b6cc7397783da818881924126266d37ebb7c9b",
+          "bytes": 2369652
+        }
+      ]
+    },
+    {
+      "id": "asphalt_02",
+      "source": "https://polyhaven.com/a/asphalt_02",
+      "author": "Poly Haven contributors",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "sourceFile": "asphalt_02.gltf",
+      "files": [
+        {
+          "path": "asphalt_02.gltf",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/2k/asphalt_02/asphalt_02_2k.gltf",
+          "sha256": "133d706a9b305aae6f8abb4e4d93f1ae7c0575c83ede5bc5f244d4c1a25c2d05",
+          "bytes": 2683
+        },
+        {
+          "path": "textures/asphalt_02_rough_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_rough_2k.jpg",
+          "sha256": "b9a516b61b7040a9245ac206642d5f767ad9589a0169c4a1668221429e8a998c",
+          "bytes": 2230457
+        },
+        {
+          "path": "textures/asphalt_02_nor_gl_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_nor_gl_2k.jpg",
+          "sha256": "ffe49db71a0fd34c1e259625df66a302a237597d6ef655307987ec4e45bc6f21",
+          "bytes": 4943950
+        },
+        {
+          "path": "textures/asphalt_02_diff_2k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/2k/asphalt_02/asphalt_02_diff_2k.jpg",
+          "sha256": "28f5ba8690553f192c0e5e1a5ff40f34765b4b93f4cc7059b1a3e9c795b6c28c",
+          "bytes": 3075676
+        },
+        {
+          "path": "asphalt_02.bin",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/gltf/8k/asphalt_02/asphalt_02.bin",
+          "sha256": "7447a3094b6ab987e720ccd0555a87fc6f336c28f1ab3213ea7e1e94d510135e",
+          "bytes": 2369812
+        }
+      ]
+    },
+    {
+      "id": "detached_house",
+      "source": "https://www.innerscene.com/api/library/detached-two-storey-house-66774933/download",
+      "author": "Innerscene",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.innerscene.com/tools/library/3d-parts/detached-two-storey-house-66774933",
+      "sourceFile": "validation-house.glb",
+      "files": [
+        {
+          "path": "validation-house.glb",
+          "url": "https://www.innerscene.com/api/library/detached-two-storey-house-66774933/download",
+          "sha256": "55901983c4c2629e7bc548777c695e73b6d48fd1db9a904840a88a301e87e838",
+          "bytes": 14526992
+        }
+      ]
+    },
+    {
+      "id": "concept_car",
+      "source": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/7d4ba189827916452eeadc82d4b712dbc6280a6f/Models/CarConcept/glTF-Binary/CarConcept.glb",
+      "author": "Eric Chadwick / Darmstadt Graphics Group GmbH, 2024",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "sourceFile": "validation-car.glb",
+      "files": [
+        {
+          "path": "validation-car.glb",
+          "url": "https://raw.githubusercontent.com/KhronosGroup/glTF-Sample-Assets/7d4ba189827916452eeadc82d4b712dbc6280a6f/Models/CarConcept/glTF-Binary/CarConcept.glb",
+          "sha256": "c272098089d78c5cd9fd9f24ff50ee8acf8d932c55f2d55fc10adb6c8998966b",
+          "bytes": 11778688
+        }
+      ]
+    },
+    {
+      "id": "box_truck",
+      "source": "https://www.innerscene.com/tools/library/3d-parts/7-5-t-class-box-truck-with-roll-up-door-12baea66",
+      "author": "Innerscene",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.innerscene.com/tools/library/terms",
+      "sourceFile": "validation-box-truck.glb",
+      "files": [
+        {
+          "path": "validation-box-truck.glb",
+          "url": "https://www.innerscene.com/api/library/7-5-t-class-box-truck-with-roll-up-door-12baea66/download",
+          "sha256": "2ad07a090e66c58c637599df23cb6b71fc6cae3ba58d37460b942f9ce8b93a27",
+          "bytes": 6063184
+        }
+      ]
+    }
+  ]
+}

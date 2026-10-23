@@ -37,8 +37,8 @@ class UE5InventorySourceTests(unittest.TestCase):
         for item_id in ("water", "food", "bandage", "wood", "stone", "rifle_ammo", "pistol", "rifle", "fishing_rod", "saddle"):
             with self.subTest(item=item_id):
                 self.assertIn(f'TEXT("{item_id}")', SOURCE)
-        self.assertIn("Width > 12", SOURCE)
-        self.assertIn("Height > 20", SOURCE)
+        self.assertIn("UAnomaliaStorageCatalog::IsValidGrid(Width,Height)", SOURCE)
+        self.assertIn("Width*Height>UAnomaliaStorageCatalog::MaxCells", SOURCE)
         self.assertIn("Compartments.Add(Pockets)", SOURCE)
         self.assertIn("ReplicatedUsing=OnRep_Compartments", HEADER)
         self.assertIn("DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments)", SOURCE)
@@ -53,6 +53,11 @@ class UE5InventorySourceTests(unittest.TestCase):
         # Native farm milk is a new UE5-only item until Work merges the JS homestead branch.
         self.assertEqual(ue_ids - {"milk"}, legacy_ids)
         self.assertIn("milk", ue_ids)
+        legacy_weights = dict(re.findall(r'^\s*([a-zA-Z_][a-zA-Z_0-9]*):\{label:[^\n]+?weight:([.0-9]+)', definitions, re.M))
+        native_weights = dict(re.findall(r'\{TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\),\s*([.0-9]+)f\}', weight_table))
+        for item_id, weight in legacy_weights.items():
+            with self.subTest(item=item_id):
+                self.assertAlmostEqual(float(native_weights[item_id]), float(weight), places=5)
 
     def test_inventory_component_is_attached_to_every_survivor(self):
         self.assertIn("TObjectPtr<UAnomaliaInventoryComponent> InventoryComponent", SURVIVOR_HEADER)

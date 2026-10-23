@@ -6,7 +6,7 @@
 
 TArray<FString> UAnomaliaPerformanceLibrary::GetGraphicsPresets()
 {
-    return {TEXT("PC_High"), TEXT("PS5_Target"), TEXT("XboxSeriesX_Target"), TEXT("Performance_Fallback")};
+    return {TEXT("PC_High"), TEXT("PC_Medium"), TEXT("PS5_Target"), TEXT("XboxSeriesX_Target"), TEXT("Performance_Fallback"), TEXT("XboxSeriesS_Target"), TEXT("Android_Mobile_Target"), TEXT("IOS_Mobile_Target")};
 }
 
 bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)
@@ -17,7 +17,7 @@ bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)
 
     // Standard Game.ini is included in packaged builds; presets never write to server files.
     const FString& Ini = GGameIni;
-    int32 MinPercent = 50, MaxPercent = 85;
+    int32 MinPercent = 50, MaxPercent = 85, FrameRate = 60;
     int32 View = 2, Shadow = 2, Effects = 2, Texture = 3, Foliage = 2;
     const FString SectionName = FString(TEXT("Anomalia.")) + PresetName;
     const TCHAR* Section = *SectionName;
@@ -28,6 +28,8 @@ bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)
     GConfig->GetInt(Section, TEXT("EffectsQuality"), Effects, Ini);
     GConfig->GetInt(Section, TEXT("TextureQuality"), Texture, Ini);
     GConfig->GetInt(Section, TEXT("FoliageQuality"), Foliage, Ini);
+    GConfig->GetInt(Section, TEXT("FrameRateLimit"), FrameRate, Ini);
+    if (FrameRate < 15 || FrameRate > 120) return false;
     if (MinPercent < 25 || MaxPercent > 100 || MinPercent > MaxPercent) return false;
     Settings->SetViewDistanceQuality(FMath::Clamp(View, 0, 4));
     Settings->SetShadowQuality(FMath::Clamp(Shadow, 0, 4));
@@ -36,7 +38,7 @@ bool UAnomaliaPerformanceLibrary::ApplyGraphicsPreset(const FString& PresetName)
     Settings->SetFoliageQuality(FMath::Clamp(Foliage, 0, 4));
     Settings->SetResolutionScaleValueEx(static_cast<float>(MaxPercent));
     Settings->SetDynamicResolutionEnabled(true);
-    Settings->SetFrameRateLimit(60.f);
+    Settings->SetFrameRateLimit(static_cast<float>(FrameRate));
     Settings->ApplyNonResolutionSettings();
     Settings->SaveSettings(); // local GameUserSettings.ini, never server config.
     return true;

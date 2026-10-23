@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "description": "Cooking and survival food recipes; ARK-inspired reference recipes and ANOMALIA originals",
+  "recipes": [
+    {
+      "id": "cooked_meat",
+      "output": {
+        "itemId": "cooked_meat",
+        "quantity": 1
+      },
+      "station": [
+        "campfire"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "raw_meat",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "cooked_fish",
+      "output": {
+        "itemId": "cooked_fish",
+        "quantity": 1
+      },
+      "station": [
+        "campfire"
+      ],
+      "craftSeconds": 30,
+      "ingredients": [
+        {
+          "itemId": "raw_fish",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "dino_hide_stew",
+      "output": {
+        "itemId": "dino_hide_stew",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "raw_meat",
+          "quantity": 2
+        },
+        {
+          "itemId": "berries_mixed",
+          "quantity": 10
+        },
+        {
+          "itemId": "dino_hide",
+          "quantity": 1
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "wild_berry_soup",
+      "output": {
+        "itemId": "wild_berry_soup",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 45,
+      "ingredients": [
+        {
+          "itemId": "berries_mixed",
+          "quantity": 15
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "hearty_meat_stew",
+      "output": {
+        "itemId": "hearty_meat_stew",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "cooked_meat",
+          "quantity": 3
+        },
+        {
+          "itemId": "potato",
+          "quantity": 2
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "healing_herbal_broth",
+      "output": {
+        "itemId": "healing_herbal_broth",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "herbs",
+          "quantity": 3
+        },
+        {
+          "itemId": "berries_mixed",
+          "quantity": 5
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "focal_chili",
+      "output": {
+        "itemId": "focal_chili",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "cooked_meat",
+          "quantity": 9
+        },
+        {
+          "itemId": "citronal",
+          "quantity": 5
+        },
+        {
+          "itemId": "amarberry",
+          "quantity": 20
+        },
+        {
+          "itemId": "azulberry",
+          "quantity": 20
+        },
+        {
+          "itemId": "tintoberry",
+          "quantity": 20
+        },
+        {
+          "itemId": "mejoberry",
+          "quantity": 10
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "lazarus_chowder",
+      "output": {
+        "itemId": "lazarus_chowder",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "cooked_meat",
+          "quantity": 9
+        },
+        {
+          "itemId": "savoroot",
+          "quantity": 5
+        },
+        {
+          "itemId": "longrass",
+          "quantity": 5
+        },
+        {
+          "itemId": "mejoberry",
+          "quantity": 10
+        },
+        {
+          "itemId": "narcotic",
+          "quantity": 2
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "medical_brew",
+      "output": {
+        "itemId": "medical_brew",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "tintoberry",
+          "quantity": 20
+        },
+        {
+          "itemId": "narcotic",
+          "quantity": 2
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    },
+    {
+      "id": "energy_brew",
+      "output": {
+        "itemId": "energy_brew",
+        "quantity": 1
+      },
+      "station": [
+        "cooking_pot"
+      ],
+      "craftSeconds": 60,
+      "ingredients": [
+        {
+          "itemId": "azulberry",
+          "quantity": 20
+        },
+        {
+          "itemId": "stimulant",
+          "quantity": 2
+        },
+        {
+          "itemId": "water",
+          "quantity": 1
+        }
+      ],
+      "status": "CONFIG_ONLY"
+    }
+  ],
+  "notes": [
+    "Dino hide stew is an original gameplay recipe, not an ARK recipe",
+    "Food and buff effects need server runtime implementation",
+    "Fuel, spoilage, cooking time, hydration and item inventory must be validated"
+  ],
+  "status": "CONFIG_ONLY"
+}

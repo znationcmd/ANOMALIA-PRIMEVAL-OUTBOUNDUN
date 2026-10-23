@@ -1,4 +1,5 @@
 #include "AnomaliaVehicleCatalog.h"
+#include "AnomaliaStorageCatalog.h"
 
 namespace
 {
@@ -12,7 +13,7 @@ namespace
         Result.Domain = Domain;
         Result.MaxSpeedKmh = MaxSpeed;
         Result.Seats = Seats;
-        Result.StorageSlots = Storage;
+        Result.StorageSlots = UAnomaliaStorageCatalog::GetVehicleCapacity(Result.Id,Storage);
         Result.bEmergencyVehicle = bEmergency;
         Result.bMilitaryVehicle = bMilitary;
         return Result;

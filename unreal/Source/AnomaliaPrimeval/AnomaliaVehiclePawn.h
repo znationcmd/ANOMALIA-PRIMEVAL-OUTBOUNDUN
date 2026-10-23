@@ -44,6 +44,10 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     FName VehicleId = FName(TEXT("car"));
 
+    /** Authored map art override; uses the existing movement, fuel and interaction systems. */
+    UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
+    TObjectPtr<UStaticMesh> PresentationMeshOverride;
+
     /** Flight/naval/rail movement; deliberately separate from legacy ground movement. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     TObjectPtr<UAnomaliaTransportMovement> TransportMovement;
@@ -99,6 +103,8 @@ public:
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle")
     bool HasDriver() const;
+    AAnomaliaSurvivor* GetStoredDriverSurvivor() const;
+    void InputPause();
 
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Vehicle")
     void OnVehicleConfigured(const FAnomaliaVehicleDefinition& Definition);

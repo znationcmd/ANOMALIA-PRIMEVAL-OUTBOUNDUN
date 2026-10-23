@@ -6,7 +6,11 @@ import math
 import os
 from pathlib import Path
 import time
+import sys
 import unreal
+
+sys.path.insert(0,str(Path(unreal.Paths.project_dir())/'Scripts'))
+from short_import_source import review_version
 
 GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
 if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1','Military2']:raise RuntimeError('Unsupported import group')
@@ -61,7 +65,7 @@ def tick(delta):
 
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
-    if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level('/Game/Maps/ANOMALIA_'+MAPS[GROUP]+'Review_v1'):raise RuntimeError('Missing review level')
+    if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level('/Game/Maps/ANOMALIA_'+MAPS[GROUP]+'Review_'+review_version(GROUP)):raise RuntimeError('Missing review level')
     spec=json.loads((Path(unreal.Paths.project_dir())/'SourceAssets'/GROUP/'manifest.json').read_text())
     actors={a.get_actor_label():a for a in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()}
     for item in spec['models']:

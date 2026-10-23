@@ -288,6 +288,7 @@ jobs:
             unreal/Content/Maps/ANOMALIA_AssetsShowcase_v1.umap
             unreal/Content/Anomalia/Buildings/Lot1/
             unreal/Content/Anomalia/OriginalImports/
+            unreal/Content/Anomalia/I/
             unreal/SourceAssets/Expansion1/
             unreal/SourceAssets/Metro1/
             unreal/SourceAssets/NamedVehicles1/
@@ -299,6 +300,8 @@ jobs:
             unreal/Content/Maps/ANOMALIA_MilitaryReview_v1.umap
             unreal/Content/Maps/ANOMALIA_NamedVehiclesReview_v1.umap
             unreal/Content/Anomalia/NamedVehicles1/
+            unreal/Content/Anomalia/NamedVehicles2/
+            unreal/Content/Maps/ANOMALIA_NamedVehiclesReview_v2.umap
             unreal/Content/Maps/ANOMALIA_MetroReview_v1.umap
             unreal/Content/Maps/ANOMALIA_MetroRailReview_v2.umap
             unreal/Content/Anomalia/Props/Metro1/

@@ -42,6 +42,13 @@ struct FAnomaliaServerSettings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="-50.0", ClampMax="60.0"))
     float AmbientTemperatureC = 20.f;
 
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowRPSubstances = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowTobacco = true;
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|RP")
+    bool bAllowAlcohol = true;
+
         // Intentionally no password/admin key in this Blueprint struct.
 };
 
@@ -63,6 +70,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Persistence")
     static bool SavePlayerProfile(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError);
+    /** Immutable content-addressed backup before migrating a player's legacy inventory layout. */
+    static bool BackupInventoryLayout(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError);
+
+    // Atomic server/map-scoped state, separate from player profiles and configuration.
+    static bool LoadWorldState(const FString& ServerId, const FString& StateId, FString& OutJson, FString& OutError);
+    static bool SaveWorldState(const FString& ServerId, const FString& StateId, const FString& Json, FString& OutError);
 
 private:
     static bool ValidId(const FString& Id);

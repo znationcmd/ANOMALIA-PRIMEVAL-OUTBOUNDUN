@@ -49,7 +49,35 @@ def finish(error=None):
     if 'packages' in locals():packages.clear()
     obj=package=None
     gc.collect()
-    unreal.SystemLibrary.quit_editor()
+    # Unload the large scene while editor/render systems still exist, after this
+    # capture callback has returned. Never save the temporary blank world.
+    state['exit_phase']='unload';state['exit_until']=time.monotonic()+1
+    state['exit_handle']=unreal.register_slate_post_tick_callback(exit_tick)
+
+def exit_tick(delta):
+    if time.monotonic()<state['exit_until']:return
+    handle=state.pop('exit_handle',None)
+    if handle is not None:unreal.unregister_slate_post_tick_callback(handle)
+    if state['exit_phase']=='unload':
+        try:
+            blank=unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
+            if not blank:raise RuntimeError('Cannot release capture world before shutdown')
+            blank=None
+            gc.collect()
+            report['teardown']={'worldReleasedBeforeEditorExit':True,'temporaryWorldSaved':False}
+        except Exception as exc:
+            report['state']='FAILED';report['error']='Capture world cleanup failed: '+str(exc)
+        REPORT.write_text(json.dumps(report,indent=2)+'\n')
+        state['exit_phase']='quit';state['exit_until']=time.monotonic()+2
+        state['exit_handle']=unreal.register_slate_post_tick_callback(exit_tick)
+        return
+    gc.collect()
+    # Let the command-line Python executor finish on its own next tick, after
+    # this callback returns, instead of issuing QUIT_EDITOR from Python/Slate.
+    report.setdefault('teardown',{})['pythonExecutorReleased']=True
+    REPORT.write_text(json.dumps(report,indent=2)+'\n')
+    unreal.EditorPythonScripting.set_keep_python_script_alive(False)
+
 def set_view():
     _,eye,target=views[state['index']];dx,dy,dz=[target[i]-eye[i] for i in range(3)]
     rotation=unreal.Rotator(pitch=math.degrees(math.atan2(dz,math.hypot(dx,dy))),yaw=math.degrees(math.atan2(dy,dx)),roll=0)

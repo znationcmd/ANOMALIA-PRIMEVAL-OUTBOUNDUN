@@ -4,6 +4,7 @@
 #include "Misc/FileHelper.h"
 #include "Misc/Guid.h"
 #include "Misc/Paths.h"
+#include "Misc/SecureHash.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -110,6 +111,12 @@ bool UAnomaliaConfigLibrary::LoadServerSettings(const FString& ServerId, FAnomal
     if (Server->TryGetNumberField(TEXT("timeMultiplier"), Number) && FMath::IsFinite(Number)) OutSettings.TimeMultiplier = FMath::Clamp(static_cast<float>(Number), 0.1f, 24.0f);
     bool bValue = false;
     if (Server->TryGetBoolField(TEXT("thirdPerson"), bValue)) OutSettings.bThirdPerson = bValue;
+    // A malformed explicit policy is denied rather than silently enabled.
+    auto Policy=[&](const TCHAR* Key,bool& Enabled)
+    { if(Server->HasField(Key)) { Enabled=false;Server->TryGetBoolField(Key,Enabled); } };
+    Policy(TEXT("allowRPSubstances"),OutSettings.bAllowRPSubstances);
+    Policy(TEXT("allowTobacco"),OutSettings.bAllowTobacco);
+    Policy(TEXT("allowAlcohol"),OutSettings.bAllowAlcohol);
     // Missing survival fields preserve the original gameplay defaults.
     const TSharedPtr<FJsonObject>* SurvivalPtr = nullptr;
     if (Root->TryGetObjectField(TEXT("survival"), SurvivalPtr) && SurvivalPtr && SurvivalPtr->IsValid())
@@ -159,6 +166,9 @@ bool UAnomaliaConfigLibrary::SaveServerSettings(const FString& ServerId, const F
     Server->SetNumberField(TEXT("maxPlayers"), Settings.MaxPlayers);
     Server->SetStringField(TEXT("mode"), Settings.Mode);
     Server->SetBoolField(TEXT("thirdPerson"), Settings.bThirdPerson);
+    Server->SetBoolField(TEXT("allowRPSubstances"), Settings.bAllowRPSubstances);
+    Server->SetBoolField(TEXT("allowTobacco"), Settings.bAllowTobacco);
+    Server->SetBoolField(TEXT("allowAlcohol"), Settings.bAllowAlcohol);
     Server->SetNumberField(TEXT("timeMultiplier"), Settings.TimeMultiplier);
     const TSharedPtr<FJsonObject>* PreviousSurvival = nullptr;
     TSharedPtr<FJsonObject> Survival = (Root->TryGetObjectField(TEXT("survival"), PreviousSurvival) && PreviousSurvival && PreviousSurvival->IsValid())
@@ -190,9 +200,44 @@ bool UAnomaliaConfigLibrary::LoadPlayerProfile(const FString& ServerId, const FS
     return true;
 }
 
+bool UAnomaliaConfigLibrary::BackupInventoryLayout(const FString& ServerId,const FString& PlayerId,const FString& Json,FString& OutError)
+{
+    if(!ValidId(ServerId) || !ValidId(PlayerId)) { OutError=TEXT("Invalid backup scope");return false; }
+    FTCHARToUTF8 Encoded(*(PlayerId+TEXT("|")+Json));
+    const FString Name=FSHA1::HashBuffer(Encoded.Get(),Encoded.Length()).ToString().ToLower()+TEXT(".json");
+    // Short immutable-backup directory also avoids the runner's long Windows paths.
+    const FString File=FPaths::Combine(ServerRoot(ServerId),TEXT("ib"),Name);
+    if(IFileManager::Get().FileExists(*File))
+    {
+        FString Existing;
+        if(FFileHelper::LoadFileToString(Existing,*File) && Existing==Json) return true;
+        OutError=TEXT("Existing inventory backup differs; preserved without overwriting");return false;
+    }
+    return WriteJsonSafely(File,Json,OutError);
+}
+
 bool UAnomaliaConfigLibrary::SavePlayerProfile(const FString& ServerId, const FString& PlayerId, const FString& Json, FString& OutError)
 {
     if (!ValidId(ServerId) || !ValidId(PlayerId)) { OutError = TEXT("Invalid profile scope"); return false; }
     const FString File = FPaths::Combine(ServerRoot(ServerId), TEXT("userProfile"), PlayerId + TEXT(".json"));
     return WriteJsonSafely(File, Json, OutError);
+}
+
+bool UAnomaliaConfigLibrary::LoadWorldState(const FString& ServerId, const FString& StateId, FString& OutJson, FString& OutError)
+{
+    OutJson.Empty(); OutError.Empty();
+    if (!ValidId(ServerId) || !ValidId(StateId)) { OutError = TEXT("Invalid world state scope"); return false; }
+    const FString File = FPaths::Combine(ServerRoot(ServerId), TEXT("World"), StateId + TEXT(".json"));
+    if (!IFileManager::Get().FileExists(*File)) { OutError = TEXT("World state not found"); return false; }
+    if (IFileManager::Get().FileSize(*File) > MaxProfileChars || !FFileHelper::LoadFileToString(OutJson, *File))
+    { OutError = TEXT("Cannot read world state"); return false; }
+    TSharedPtr<FJsonObject> Parsed;
+    if (!ParseObject(OutJson, Parsed)) { OutJson.Empty(); OutError = TEXT("Invalid world state"); return false; }
+    return true;
+}
+
+bool UAnomaliaConfigLibrary::SaveWorldState(const FString& ServerId, const FString& StateId, const FString& Json, FString& OutError)
+{
+    if (!ValidId(ServerId) || !ValidId(StateId)) { OutError = TEXT("Invalid world state scope"); return false; }
+    return WriteJsonSafely(FPaths::Combine(ServerRoot(ServerId), TEXT("World"), StateId + TEXT(".json")), Json, OutError);
 }

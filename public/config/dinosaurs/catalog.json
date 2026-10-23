@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "description": "Single canonical dinosaur config directory; existing root files remain as legacy sources for compatibility",
+  "legacySources": {
+    "species": "../dino_species_catalog.json",
+    "variants": "../dino_variants_catalog.json",
+    "moro": "../dino_moro_creatures_catalog.json",
+    "kibbles": "../dino_kibbles_catalog.json",
+    "tamingBreedingMounts": "../dino_taming_breeding_mounts.json",
+    "hybridBreeding": "../dino_hybrid_breeding.json"
+  },
+  "newSources": {
+    "kibbleRecipes": "kibble_recipes.json",
+    "cookingRecipes": "cooking_recipes.json",
+    "craftingResources": "crafting_resources.json"
+  },
+  "migrationStatus": "REFERENCE_INDEX_ONLY_NO_UE5_LOADER",
+  "notes": [
+    "Single folder for all dinosaur configuration entrypoints",
+    "Legacy configs are retained unchanged until all readers migrate",
+    "No creature, item or recipe is yet made functional by this index"
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "description": "ANOMALIA Editor map placement exports. Separate from DayZ object spawner format.",
+  "format": "anomalia-editor-placement-v1",
+  "activeWorld": "main",
+  "map": "procedural-48km",
+  "files": [],
+  "editorExportDirectory": "mapping/exports/",
+  "placementSchema": {
+    "id": "unique-placement-id",
+    "assetId": "original-anomalia-asset-id",
+    "transform": {
+      "location": {
+        "x": 0,
+        "y": 0,
+        "z": 0
+      },
+      "rotation": {
+        "pitch": 0,
+        "yaw": 0,
+        "roll": 0
+      },
+      "scale": {
+        "x": 1,
+        "y": 1,
+        "z": 1
+      }
+    },
+    "worldPartitionCell": null
+  },
+  "status": "SCHEMA_ONLY_NOT_CONNECTED_TO_UNREAL_EDITOR",
+  "notes": [
+    "ANOMALIA Editor must export/import the placements and server must load them; this manifest does not spawn anything yet",
+    "Use original ANOMALIA assets, not DayZ proprietary models"
+  ]
+}

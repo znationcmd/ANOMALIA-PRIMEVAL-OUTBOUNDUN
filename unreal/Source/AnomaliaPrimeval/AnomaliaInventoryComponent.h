@@ -2,9 +2,13 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "AnomaliaEconomySubsystem.h"
 #include "AnomaliaInventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
+struct FAnomaliaItemUseRule;
+class FJsonObject;
+class UAnomaliaSharedStorageSubsystem;
 
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
@@ -46,6 +50,10 @@ struct FAnomaliaInventoryCompartment
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     int32 Height = 0;
+
+    /** Migration overflow: existing items may be removed, never added through normal placement. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    bool bRecoveryOnly = false;
 };
 
 /** Server-authoritative inventory data model. A UMG screen and item-world actors remain separate tasks. */
@@ -56,6 +64,8 @@ class ANOMALIAPRIMEVAL_API UAnomaliaInventoryComponent : public UActorComponent
 
 public:
     UAnomaliaInventoryComponent();
+    /** Current persistence/replication bound. Cell capacity and number of stacks are distinct. */
+    static constexpr int32 MaxStacks = 512;
 
     UPROPERTY(ReplicatedUsing=OnRep_Stacks, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     TArray<FAnomaliaInventoryStack> Stacks;
@@ -76,6 +86,16 @@ public:
     bool ConfigureCompartment(FName Id, int32 Width, int32 Height);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool ConfigureCompartmentFromPreset(FName Id, FName PresetId);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    int32 GetUsedCells(FName ContainerId) const;
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    FIntPoint GetItemSize(FName ItemId, bool bRotated = false) const;
+    bool IsRecoveryContainer(FName ContainerId) const;
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryAddItem(FName ItemId, int32 Count);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
@@ -83,6 +103,10 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    /** Return the selected held stack to the first free compartment slot, without discarding it. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
+    bool TryStowStack(int32 StackId);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId);
@@ -97,15 +121,51 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory|Persistence")
     bool LoadInventoryFromPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError);
 
+    /** Serialize the current inventory into an existing profile without writing it. Server only. */
+    bool BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError);
+    /** Same representation for player, vehicle and world-container inventories. Trusted server API. */
+    TSharedPtr<FJsonObject> ExportInventoryObject() const;
+    bool LoadInventoryObject(const TSharedPtr<FJsonObject>& Inventory, FString& OutError);
+    bool IsPersistenceLocked() const { return bPersistenceLocked || bProfileRecoveryPending; }
+    void SetProfileRecoveryPending(bool Pending);
+
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    FString BankAccountId;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 BankBalanceCents = 0;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 NextBankSequence = 1;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    bool bBankingAvailable = false;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    FString BankMessage;
+
+    void RequestBankOperation(EAnomaliaBankAction Action, FName NoteId = NAME_None, const FString& RecipientId = FString(), int64 AmountCents = 0);
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction) override;
+
     /** Client UI requests; the owning actor's RPC ownership routes them to the server. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestStowStack(int32 StackId);
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestSplitStack(int32 StackId, int32 Count);
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
+
+    FString GetItemDisplayName(FName ItemId) const;
+    FString GetUseActionLabel(FName ItemId) const;
+    /** Client supplies only the selected stack and its displayed count, never effects or profile identity. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestUseStack(int32 StackId, int32 ExpectedCount);
+    /** Trusted server entry point. Persists the consumed unit and resulting vitals in one profile write. */
+    bool TryUseStack(int32 StackId, int32 ExpectedCount, const FString& ServerId, const FString& PlayerId, FString& OutError);
+
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    FString UseMessage;
 
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Inventory")
     void OnInventoryChanged();
@@ -120,7 +180,13 @@ protected:
     void OnRep_Compartments();
 
     UFUNCTION(Server, Reliable)
+    void ServerBankOperation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents, int64 Sequence);
+
+    UFUNCTION(Server, Reliable)
     void ServerRequestMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestStowStack(int32 StackId);
 
     UFUNCTION(Server, Reliable)
     void ServerRequestSplitStack(int32 StackId, int32 Count);
@@ -128,11 +194,24 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerRequestMergeStacks(int32 TargetStackId, int32 SourceStackId);
 
+    UFUNCTION(Server, Reliable)
+    void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
+
 private:
+    friend class UAnomaliaLootSubsystem;
+    friend class UAnomaliaEconomySubsystem;
+    friend class UAnomaliaSharedStorageSubsystem;
+    bool bPersistenceLocked = false;
+    bool bProfileRecoveryPending = false;
+    double NextBankRequestTime = 0;
+    double NextUseRequestTime = 0;
+    FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
+    bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
+    bool bSuppressNotifications = false;
     int32 NextStackId = 1;
-    static bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize);
+    bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;
-    bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const;
+    bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };

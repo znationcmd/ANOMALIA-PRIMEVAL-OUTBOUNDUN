@@ -1,7 +1,15 @@
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaStorageCatalog.h"
+#include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaConfigLibrary.h"
+#include "AnomaliaLootSubsystem.h"
+#include "AnomaliaSurvivor.h"
+#include "AnomaliaVitalsComponent.h"
+#include "AnomaliaGameMode.h"
+#include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
+#include "GameFramework/Controller.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -10,6 +18,8 @@
 UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
 {
     SetIsReplicatedByDefault(true);
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 1.f;
     FAnomaliaInventoryCompartment Pockets;
     Pockets.Id = TEXT("pockets");
     Pockets.Width = 6;
@@ -17,9 +27,49 @@ UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
     Compartments.Add(Pockets);
 }
 
-bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize)
+bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const
 {
     static const TMap<FName, float> Weights = {
+        // Storage parity with the additive JS resource catalogue; crafting is separate.
+        {TEXT("thatch"), 0.12f},
+        {TEXT("fungal_wood"), 0.6f},
+        {TEXT("flint"), 0.4f},
+        {TEXT("fur"), 0.3f},
+        {TEXT("wool"), 0.3f},
+        {TEXT("keratin"), 0.3f},
+        {TEXT("chitin"), 0.25f},
+        {TEXT("metal_ore"), 1.2f},
+        {TEXT("metal_ingot"), 1.f},
+        {TEXT("crystal"), 0.6f},
+        {TEXT("obsidian"), 0.8f},
+        {TEXT("oil"), 0.8f},
+        {TEXT("silica_pearls"), 0.2f},
+        {TEXT("charcoal"), 0.15f},
+        {TEXT("gunpowder"), 0.15f},
+        {TEXT("sparkpowder"), 0.15f},
+        {TEXT("cementing_paste"), 0.3f},
+        {TEXT("achatina_paste"), 0.3f},
+        {TEXT("electronics"), 0.2f},
+        {TEXT("polymer"), 0.3f},
+        {TEXT("organic_polymer"), 0.3f},
+        {TEXT("gasoline"), 0.7f},
+        {TEXT("absorbent_substrate"), 0.4f},
+        {TEXT("black_pearls"), 0.2f},
+        {TEXT("rare_mushroom"), 0.1f},
+        {TEXT("angler_gel"), 0.25f},
+        {TEXT("bio_toxin"), 0.2f},
+        {TEXT("leech_blood"), 0.2f},
+        {TEXT("woolly_rhino_horn"), 1.f},
+        {TEXT("sulfur"), 0.6f},
+        {TEXT("silk"), 0.15f},
+        {TEXT("sand"), 0.6f},
+        {TEXT("green_gem"), 0.3f},
+        {TEXT("blue_gem"), 0.3f},
+        {TEXT("red_gem"), 0.3f},
+        {TEXT("condensed_gas"), 0.7f},
+        {TEXT("element"), 0.5f},
+        {TEXT("element_shard"), 0.2f},
+        {TEXT("element_dust"), 0.05f},
         {TEXT("key_alpha"), .03f}, {TEXT("key_red"), .03f}, {TEXT("key_omega"), .03f},
         {TEXT("key_abyss"), .03f}, {TEXT("key_blue"), .03f}, {TEXT("key_bunker_alpha"), .03f},
         {TEXT("key_bunker_zero"), .03f}, {TEXT("key_container"), .03f},
@@ -40,7 +90,16 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
         {TEXT("helmet"), 1.9f}, {TEXT("backpack"), 2.6f}, {TEXT("bag"), 1.2f}, {TEXT("vest"), 2.2f}
     };
     const float* Weight = Weights.Find(ItemId);
-    if (!Weight) return false;
+    if (!Weight)
+    {
+        const UAnomaliaLootSubsystem* Loot = GetWorld() ? GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>() : nullptr;
+        const FAnomaliaLootItem* Definition = Loot ? Loot->FindItem(ItemId) : nullptr;
+        if (!Definition) return false;
+        OutWeightKg = Definition->WeightKg;
+        OutMaxStack = Definition->MaxStack;
+        OutSize = Definition->Size;
+        return true;
+    }
     OutWeightKg = *Weight;
     OutSize = FIntPoint(1, 1);
     OutMaxStack = 20;
@@ -56,6 +115,14 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
     else if (ItemId == TEXT("jacket") || ItemId == TEXT("coat") || ItemId == TEXT("shirt") || ItemId == TEXT("pants") ||
         ItemId == TEXT("jeans") || ItemId == TEXT("boots") || ItemId == TEXT("helmet") || ItemId == TEXT("backpack") ||
         ItemId == TEXT("bag") || ItemId == TEXT("vest")) OutSize = FIntPoint(2, 2);
+    // Requested ANOMALIA footprints also apply to the preserved generic survival IDs.
+    if(ItemId==TEXT("food")) OutSize={1,2};
+    else if(ItemId==TEXT("water") || ItemId==TEXT("pistol")) OutSize={1,3};
+    else if(ItemId==TEXT("rifle")) OutSize={3,3};
+    else if(ItemId==TEXT("medkit")) OutSize={2,3};
+    else if(ItemId==TEXT("jacket") || ItemId==TEXT("coat") || ItemId==TEXT("shirt")) OutSize={2,4};
+    else if(ItemId==TEXT("pants") || ItemId==TEXT("jeans") || ItemId==TEXT("vest")) OutSize={2,3};
+    else if(ItemId==TEXT("backpack") || ItemId==TEXT("bag")) OutSize={3,4};
     if (ItemId == TEXT("ammo") || ItemId == TEXT("rifle_ammo") || ItemId == TEXT("tranq_dart") ||
         ItemId == TEXT("wood") || ItemId == TEXT("stone") || ItemId == TEXT("scrap") || ItemId == TEXT("cloth") ||
         ItemId == TEXT("honey") || ItemId == TEXT("rare_flower") || ItemId == TEXT("sap") || ItemId == TEXT("vegetable") ||
@@ -78,8 +145,8 @@ float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
 
 bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, int32 Height)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || Id.IsNone() || Id == TEXT("hands") ||
-        Width < 1 || Width > 12 || Height < 1 || Height > 20) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Id.IsNone() || Id == TEXT("hands") ||
+        Id.ToString().StartsWith(TEXT("migration_recovery_")) || !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
     if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
     if (!Existing) Existing = &Compartments.AddDefaulted_GetRef();
@@ -91,6 +158,31 @@ bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, in
     return true;
 }
 
+bool UAnomaliaInventoryComponent::ConfigureCompartmentFromPreset(FName Id,FName PresetId)
+{
+    FIntPoint Grid;
+    return UAnomaliaStorageCatalog::GetGrid(PresetId,Grid) && ConfigureCompartment(Id,Grid.X,Grid.Y);
+}
+FIntPoint UAnomaliaInventoryComponent::GetItemSize(FName ItemId,bool bRotated) const
+{
+    float Weight=0;int32 Limit=0;FIntPoint Size=FIntPoint::ZeroValue;
+    if(!GetItemRules(ItemId,Weight,Limit,Size)) return FIntPoint::ZeroValue;
+    if(bRotated) Swap(Size.X,Size.Y);
+    return Size;
+}
+int32 UAnomaliaInventoryComponent::GetUsedCells(FName ContainerId) const
+{
+    int32 Cells=0;
+    for(const auto& Stack:Stacks) if(Stack.ContainerId==ContainerId)
+    { const auto Size=GetItemSize(Stack.ItemId,Stack.bRotated);Cells+=Size.X*Size.Y; }
+    return Cells;
+}
+bool UAnomaliaInventoryComponent::IsRecoveryContainer(FName ContainerId) const
+{
+    const auto* Box=Compartments.FindByPredicate([&](const auto& C){return C.Id==ContainerId;});
+    return Box && Box->bRecoveryOnly;
+}
+
 bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate,
     const FAnomaliaInventoryStack& Stack, FName ContainerId, int32 X, int32 Y, bool bRotate) const
 {
@@ -100,7 +192,7 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
     float Weight = 0.f;
     int32 MaxStack = 0;
     FIntPoint Size;
-    if (!Box || !GetItemRules(Stack.ItemId, Weight, MaxStack, Size)) return false;
+    if (!Box || (Box->bRecoveryOnly && Stack.ContainerId!=ContainerId) || !GetItemRules(Stack.ItemId, Weight, MaxStack, Size)) return false;
     if (bRotate) Swap(Size.X, Size.Y);
     if (X < 0 || Y < 0 || X + Size.X > Box->Width || Y + Size.Y > Box->Height) return false;
     for (const FAnomaliaInventoryStack& Other : Candidate)
@@ -116,23 +208,48 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
     return true;
 }
 
-bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack) const
+bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery) const
 {
     for (const FAnomaliaInventoryCompartment& Box : Compartments)
+    {
+        if(Box.bRecoveryOnly && !bIncludeRecovery) continue;
+        if(!UAnomaliaStorageCatalog::IsValidGrid(Box.Width,Box.Height)) return false;
+        // One compact occupancy map per compartment. Large grids do not scan every
+        // existing stack again for each candidate cell, and contain no UI widgets.
+        TBitArray<> Occupied(false,Box.Width*Box.Height);
+        for(const auto& Other:Candidate)
+        {
+            if(Other.StackId==Stack.StackId || Other.ContainerId!=Box.Id) continue;
+            const auto Size=GetItemSize(Other.ItemId,Other.bRotated);
+            if(Size.X<=0 || Size.Y<=0 || Other.X<0 || Other.Y<0 || Other.X+Size.X>Box.Width || Other.Y+Size.Y>Box.Height) return false;
+            for(int32 Y=Other.Y;Y<Other.Y+Size.Y;++Y)
+                for(int32 X=Other.X;X<Other.X+Size.X;++X) Occupied[Y*Box.Width+X]=true;
+        }
+        const auto OriginalSize=GetItemSize(Stack.ItemId);
+        if(OriginalSize.X<=0 || OriginalSize.Y<=0) return false;
         for (int32 Y = 0; Y < Box.Height; ++Y)
             for (int32 X = 0; X < Box.Width; ++X)
                 for (int32 Rotation = 0; Rotation < 2; ++Rotation)
-                    if (CanPlace(Candidate, Stack, Box.Id, X, Y, Rotation == 1))
                     {
-                        Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
-                        return true;
+                        auto Size=OriginalSize;if(Rotation==1) Swap(Size.X,Size.Y);
+                        if(X+Size.X>Box.Width || Y+Size.Y>Box.Height) continue;
+                        bool Free=true;
+                        for(int32 DY=0;DY<Size.Y && Free;++DY)
+                            for(int32 DX=0;DX<Size.X;++DX) if(Occupied[(Y+DY)*Box.Width+X+DX]) { Free=false;break; }
+                        if(Free)
+                        {
+                            Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
+                            return true;
+                        }
                     }
+    }
     return false;
 }
 
 void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candidate)
 {
     Stacks = MoveTemp(Candidate);
+    if (bSuppressNotifications) return;
     if (GetOwner()) GetOwner()->ForceNetUpdate();
     OnInventoryChanged();
     OnInventoryUpdated.Broadcast();
@@ -140,7 +257,7 @@ void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candi
 
 bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || Count < 1) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Count < 1) return false;
     float ItemWeight = 0.f;
     int32 MaxStack = 0;
     FIntPoint Size;
@@ -150,13 +267,15 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     int32 CandidateNextId = NextStackId;
     for (FAnomaliaInventoryStack& Stack : Candidate)
     {
-        if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || Stack.Count >= MaxStack) continue;
+        if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
         Stack.Count += Added; Remaining -= Added;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
     }
     while (Remaining > 0)
     {
+        // Never accept live contents that the persistence reader cannot restore.
+        if(Candidate.Num()>=MaxStacks) return false;
         FAnomaliaInventoryStack NewStack;
         if (CandidateNextId >= MAX_int32) return false;
         NewStack.StackId = CandidateNextId++;
@@ -173,7 +292,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 
 bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || ItemId.IsNone() || Count < 1) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || ItemId.IsNone() || Count < 1) return false;
     int32 Available = 0;
     for (const FAnomaliaInventoryStack& Stack : Stacks)
         if (Stack.ItemId == ItemId && Stack.Count > 0) Available += Stack.Count;
@@ -195,7 +314,7 @@ bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
 
 bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Stack = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
     if (!Stack || !CanPlace(Candidate, *Stack, ContainerId, X, Y, bRotate)) return false;
@@ -204,13 +323,23 @@ bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId,
     return true;
 }
 
+bool UAnomaliaInventoryComponent::TryStowStack(int32 StackId)
+{
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
+    TArray<FAnomaliaInventoryStack> Candidate = Stacks;
+    auto* Stack = Candidate.FindByPredicate([&](const auto& S) { return S.StackId == StackId; });
+    if (!Stack || Stack->ContainerId != TEXT("hands") || !FindPlacement(Candidate, *Stack)) return false;
+    Commit(MoveTemp(Candidate));
+    return true;
+}
+
 bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int32& OutNewStackId)
 {
     OutNewStackId = 0;
-    if (!GetOwner() || !GetOwner()->HasAuthority()) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
-    if (!Source || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
+    if (!Source || Candidate.Num()>=MaxStacks || NextStackId >= MAX_int32 || Count < 1 || Count >= Source->Count || Source->ContainerId == TEXT("hands")) return false;
     Source->Count -= Count;
     FAnomaliaInventoryStack Piece = *Source;
     Piece.StackId = NextStackId;
@@ -225,11 +354,12 @@ bool UAnomaliaInventoryComponent::TrySplitStack(int32 StackId, int32 Count, int3
 
 bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 SourceStackId)
 {
-    if (!GetOwner() || !GetOwner()->HasAuthority() || TargetStackId == SourceStackId) return false;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || TargetStackId == SourceStackId) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
     if (!Target || !Source || Target->ItemId != Source->ItemId || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
+    if(IsRecoveryContainer(Target->ContainerId) && !IsRecoveryContainer(Source->ContainerId)) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
     Target->Count += Source->Count;
@@ -240,6 +370,50 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
 
 bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError)
 {
+    if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked())
+    { OutError = TEXT("Inventory persistence is unavailable or locked for recovery"); return false; }
+    FString Serialized;
+    return BuildInventoryProfile(ServerId, PlayerId, Serialized, OutError) &&
+        UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, OutError);
+}
+
+TSharedPtr<FJsonObject> UAnomaliaInventoryComponent::ExportInventoryObject() const
+{
+    TSharedPtr<FJsonObject> Inventory = MakeShared<FJsonObject>();
+    Inventory->SetNumberField(TEXT("schemaVersion"), 1);
+    Inventory->SetNumberField(TEXT("layoutVersion"), 2);
+    Inventory->SetNumberField(TEXT("weightCapacityKg"), WeightCapacityKg);
+    TArray<TSharedPtr<FJsonValue>> CompartmentRows;
+    for (const FAnomaliaInventoryCompartment& Box : Compartments)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetStringField(TEXT("id"), Box.Id.ToString());
+        Row->SetNumberField(TEXT("width"), Box.Width);
+        Row->SetNumberField(TEXT("height"), Box.Height);
+        Row->SetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly);
+        CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
+    TArray<TSharedPtr<FJsonValue>> StackRows;
+    for (const FAnomaliaInventoryStack& Stack : Stacks)
+    {
+        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
+        Row->SetNumberField(TEXT("stackId"), Stack.StackId);
+        Row->SetStringField(TEXT("itemId"), Stack.ItemId.ToString());
+        Row->SetNumberField(TEXT("count"), Stack.Count);
+        Row->SetStringField(TEXT("containerId"), Stack.ContainerId.ToString());
+        Row->SetNumberField(TEXT("x"), Stack.X);
+        Row->SetNumberField(TEXT("y"), Stack.Y);
+        Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
+        StackRows.Add(MakeShared<FJsonValueObject>(Row));
+    }
+    Inventory->SetArrayField(TEXT("stacks"), StackRows);
+    return Inventory;
+}
+
+bool UAnomaliaInventoryComponent::BuildInventoryProfile(const FString& ServerId, const FString& PlayerId, FString& OutJson, FString& OutError)
+{
+    OutJson.Empty();
     OutError.Empty();
     if (!GetOwner() || !GetOwner()->HasAuthority()) { OutError = TEXT("Inventory persistence requires server authority"); return false; }
 
@@ -261,33 +435,7 @@ bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& Se
         return false;
     }
 
-    TSharedPtr<FJsonObject> Inventory = MakeShared<FJsonObject>();
-    Inventory->SetNumberField(TEXT("schemaVersion"), 1);
-    Inventory->SetNumberField(TEXT("weightCapacityKg"), WeightCapacityKg);
-    TArray<TSharedPtr<FJsonValue>> CompartmentRows;
-    for (const FAnomaliaInventoryCompartment& Box : Compartments)
-    {
-        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
-        Row->SetStringField(TEXT("id"), Box.Id.ToString());
-        Row->SetNumberField(TEXT("width"), Box.Width);
-        Row->SetNumberField(TEXT("height"), Box.Height);
-        CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
-    }
-    Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
-    TArray<TSharedPtr<FJsonValue>> StackRows;
-    for (const FAnomaliaInventoryStack& Stack : Stacks)
-    {
-        TSharedPtr<FJsonObject> Row = MakeShared<FJsonObject>();
-        Row->SetNumberField(TEXT("stackId"), Stack.StackId);
-        Row->SetStringField(TEXT("itemId"), Stack.ItemId.ToString());
-        Row->SetNumberField(TEXT("count"), Stack.Count);
-        Row->SetStringField(TEXT("containerId"), Stack.ContainerId.ToString());
-        Row->SetNumberField(TEXT("x"), Stack.X);
-        Row->SetNumberField(TEXT("y"), Stack.Y);
-        Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
-        StackRows.Add(MakeShared<FJsonValueObject>(Row));
-    }
-    Inventory->SetArrayField(TEXT("stacks"), StackRows);
+    TSharedPtr<FJsonObject> Inventory = ExportInventoryObject();
     Profile->SetObjectField(TEXT("inventory"), Inventory);
 
     FString Serialized;
@@ -297,13 +445,14 @@ bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& Se
         OutError = TEXT("Could not serialize inventory profile");
         return false;
     }
-    return UAnomaliaConfigLibrary::SavePlayerProfile(ServerId, PlayerId, Serialized, OutError);
+    OutJson = MoveTemp(Serialized);
+    return true;
 }
 
 bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& ServerId, const FString& PlayerId, FString& OutError)
 {
     OutError.Empty();
-    if (!GetOwner() || !GetOwner()->HasAuthority()) { OutError = TEXT("Inventory persistence requires server authority"); return false; }
+    if (!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked) { OutError = TEXT("Inventory persistence requires server authority"); return false; }
     FString Raw;
     if (!UAnomaliaConfigLibrary::LoadPlayerProfile(ServerId, PlayerId, Raw, OutError)) return false;
     const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Raw);
@@ -315,8 +464,26 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         OutError = TEXT("Player profile has no saved inventory");
         return false;
     }
-    const TSharedPtr<FJsonObject>& Inventory = *InventoryPtr;
+    double Layout=1;
+    if(!(*InventoryPtr)->HasField(TEXT("layoutVersion")))
+    {
+        if(!UAnomaliaConfigLibrary::BackupInventoryLayout(ServerId,PlayerId,Raw,OutError)) return false;
+    }
+    else if((*InventoryPtr)->TryGetNumberField(TEXT("layoutVersion"),Layout) && Layout<2)
+        if(!UAnomaliaConfigLibrary::BackupInventoryLayout(ServerId,PlayerId,Raw,OutError)) return false;
+    return LoadInventoryObject(*InventoryPtr,OutError);
+}
+
+bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObject>& Inventory,FString& OutError)
+{
+    OutError.Empty();
+    if(!GetOwner() || !GetOwner()->HasAuthority() || bPersistenceLocked || !Inventory.IsValid())
+    { OutError=TEXT("Inventory snapshot requires available authority");return false; }
     double SchemaVersion = 0.0;
+    double LayoutVersion = 1;
+    if(Inventory->HasField(TEXT("layoutVersion")) &&
+        (!Inventory->TryGetNumberField(TEXT("layoutVersion"),LayoutVersion) || (LayoutVersion!=1 && LayoutVersion!=2)))
+    { OutError=TEXT("Unsupported inventory layout version");return false; }
     double SavedCapacity = 0.0;
     if (!Inventory->TryGetNumberField(TEXT("schemaVersion"), SchemaVersion) || SchemaVersion != 1.0 ||
         !Inventory->TryGetNumberField(TEXT("weightCapacityKg"), SavedCapacity) || !FMath::IsFinite(SavedCapacity) || SavedCapacity < 0.1 || SavedCapacity > 500.0)
@@ -326,8 +493,8 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
     }
     const TArray<TSharedPtr<FJsonValue>>* CompartmentRows = nullptr;
     const TArray<TSharedPtr<FJsonValue>>* StackRows = nullptr;
-    if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 64 ||
-        !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > 512)
+    if (!Inventory->TryGetArrayField(TEXT("compartments"), CompartmentRows) || !CompartmentRows || CompartmentRows->Num() < 1 || CompartmentRows->Num() > 128 ||
+        !Inventory->TryGetArrayField(TEXT("stacks"), StackRows) || !StackRows || StackRows->Num() > MaxStacks)
     {
         OutError = TEXT("Invalid inventory arrays in profile");
         return false;
@@ -342,7 +509,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         FString IdText;
         double Width = 0.0, Height = 0.0;
         if (!Row->TryGetStringField(TEXT("id"), IdText) || !Row->TryGetNumberField(TEXT("width"), Width) || !Row->TryGetNumberField(TEXT("height"), Height) ||
-            !FMath::IsFinite(Width) || !FMath::IsFinite(Height) || Width < 1 || Width > 12 || Height < 1 || Height > 20 ||
+            !FMath::IsFinite(Width) || !FMath::IsFinite(Height) || Width < 1 || Width > UAnomaliaStorageCatalog::MaxDimension || Height < 1 || Height > UAnomaliaStorageCatalog::MaxDimension || Width*Height>UAnomaliaStorageCatalog::MaxCells ||
             !FMath::IsNearlyEqual(Width, static_cast<double>(FMath::RoundToInt(Width))) ||
             !FMath::IsNearlyEqual(Height, static_cast<double>(FMath::RoundToInt(Height))))
         { OutError = TEXT("Invalid inventory compartment dimensions"); return false; }
@@ -351,6 +518,10 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         SeenCompartments.Add(Id);
         FAnomaliaInventoryCompartment Box;
         Box.Id = Id; Box.Width = FMath::RoundToInt(Width); Box.Height = FMath::RoundToInt(Height);
+        if(Row->HasField(TEXT("recoveryOnly")) && !Row->TryGetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly))
+        { OutError=TEXT("Invalid migration compartment flag");return false; }
+        if(Box.bRecoveryOnly!=IdText.StartsWith(TEXT("migration_recovery_")))
+        { OutError=TEXT("Invalid reserved migration compartment");return false; }
         LoadedCompartments.Add(Box);
     }
 
@@ -370,7 +541,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
             !Row->TryGetStringField(TEXT("itemId"), ItemText) || !Row->TryGetStringField(TEXT("containerId"), ContainerText) ||
             !Row->TryGetBoolField(TEXT("rotated"), bRotated) || !FMath::IsFinite(StackId) || !FMath::IsFinite(Count) ||
             !FMath::IsFinite(X) || !FMath::IsFinite(Y) || StackId < 1 || StackId >= MAX_int32 || Count < 1 || Count > 100000 ||
-            X < 0 || X > 12 || Y < 0 || Y > 20 ||
+            X < 0 || X >= UAnomaliaStorageCatalog::MaxDimension || Y < 0 || Y >= UAnomaliaStorageCatalog::MaxDimension ||
             !FMath::IsNearlyEqual(StackId, static_cast<double>(FMath::RoundToInt(StackId))) ||
             !FMath::IsNearlyEqual(Count, static_cast<double>(FMath::RoundToInt(Count))) ||
             !FMath::IsNearlyEqual(X, static_cast<double>(FMath::RoundToInt(X))) ||
@@ -391,14 +562,73 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
 
     const TArray<FAnomaliaInventoryCompartment> PreviousCompartments = Compartments;
     Compartments = LoadedCompartments;
+    bool ValidLayout=true;
     for (const FAnomaliaInventoryStack& Stack : LoadedStacks)
     {
         if (!CanPlace(LoadedStacks, Stack, Stack.ContainerId, Stack.X, Stack.Y, Stack.bRotated))
+            ValidLayout=false;
+    }
+    if(!ValidLayout && LayoutVersion!=1)
+    {
+        Compartments=PreviousCompartments;
+        OutError=TEXT("Saved inventory layout overlaps or exceeds its compartments");return false;
+    }
+    if(!ValidLayout)
+    {
+        const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+        auto LegacySize=[&](const FAnomaliaInventoryStack& S)
         {
-            Compartments = PreviousCompartments;
-            OutError = TEXT("Saved inventory layout overlaps or exceeds its compartments");
-            return false;
+            FIntPoint Size(1,1);
+            // The previous catalogue used 1x1 definitions; generic legacy IDs
+            // had a small number of larger native footprints.
+            if(!(Loot && Loot->FindItem(S.ItemId)))
+            {
+                if(S.ItemId==TEXT("wood")) Size={1,3};
+                else if(S.ItemId==TEXT("rifle") || S.ItemId==TEXT("fishing_rod")) Size={2,5};
+                else if(S.ItemId==TEXT("saddle")) Size={3,3};
+                else if(S.ItemId==TEXT("pistol") || S.ItemId==TEXT("jacket") || S.ItemId==TEXT("coat") ||
+                    S.ItemId==TEXT("shirt") || S.ItemId==TEXT("pants") || S.ItemId==TEXT("jeans") || S.ItemId==TEXT("boots") ||
+                    S.ItemId==TEXT("helmet") || S.ItemId==TEXT("backpack") || S.ItemId==TEXT("bag") || S.ItemId==TEXT("vest")) Size={2,2};
+            }
+            if(S.bRotated) Swap(Size.X,Size.Y);return Size;
+        };
+        // Migration repairs only geometry changed by this version, not corrupt
+        // legacy overlaps, missing compartments or multiple held objects.
+        for(int32 Index=0;Index<LoadedStacks.Num();++Index)
+        {
+            const auto& S=LoadedStacks[Index];const auto Size=LegacySize(S);
+            const auto* Box=Compartments.FindByPredicate([&](const auto& C){return C.Id==S.ContainerId;});
+            bool Valid=S.ContainerId==TEXT("hands") || (Box && S.X+Size.X<=Box->Width && S.Y+Size.Y<=Box->Height);
+            for(int32 OtherIndex=0;OtherIndex<Index && Valid;++OtherIndex)
+            {
+                const auto& Other=LoadedStacks[OtherIndex];if(Other.ContainerId!=S.ContainerId) continue;
+                const auto OtherSize=LegacySize(Other);
+                if(S.ContainerId==TEXT("hands") || (S.X<Other.X+OtherSize.X && S.X+Size.X>Other.X && S.Y<Other.Y+OtherSize.Y && S.Y+Size.Y>Other.Y)) Valid=false;
+            }
+            if(!Valid) { Compartments=PreviousCompartments;OutError=TEXT("Malformed legacy inventory preserved without migration");return false; }
         }
+        TArray<FAnomaliaInventoryStack> Repacked;
+        for(auto Stack:LoadedStacks)
+        {
+            if(Stack.ContainerId==TEXT("hands")) { Repacked.Add(Stack);continue; }
+            if(!CanPlace(Repacked,Stack,Stack.ContainerId,Stack.X,Stack.Y,Stack.bRotated) && !FindPlacement(Repacked,Stack))
+            {
+                if(!FindPlacement(Repacked,Stack,true))
+                {
+                    if(Compartments.Num()>=128) { Compartments=PreviousCompartments;OutError=TEXT("Legacy recovery compartment limit reached; profile preserved");return false; }
+                    FAnomaliaInventoryCompartment Recovery;
+                    int32 Index=0;do { Recovery.Id=FName(*FString::Printf(TEXT("migration_recovery_%d"),Index++)); }
+                    while(Compartments.ContainsByPredicate([&](const auto& C){return C.Id==Recovery.Id;}));
+                    Recovery.Width=1000;Recovery.Height=100;Recovery.bRecoveryOnly=true;
+                    Compartments.Add(Recovery);
+                    if(!FindPlacement(Repacked,Stack,true))
+                    { Compartments=PreviousCompartments;OutError=TEXT("Unable to preserve legacy item placement");return false; }
+                }
+            }
+            Repacked.Add(Stack);
+        }
+        LoadedStacks=MoveTemp(Repacked);
+        UseMessage=TEXT("Ancien rangement adapté : les éventuels objets en récupération peuvent être retirés sans perte.");
     }
     WeightCapacityKg = static_cast<float>(SavedCapacity);
     NextStackId = MaxSeenStackId + 1;
@@ -412,6 +642,19 @@ bool UAnomaliaInventoryComponent::RequestMoveStack(int32 StackId, FName Containe
     if (GetOwner()->HasAuthority()) return TryMoveStack(StackId, ContainerId, X, Y, bRotate);
     ServerRequestMoveStack(StackId, ContainerId, X, Y, bRotate);
     return true;
+}
+
+bool UAnomaliaInventoryComponent::RequestStowStack(int32 StackId)
+{
+    if (!GetOwner()) return false;
+    if (GetOwner()->HasAuthority()) return TryStowStack(StackId);
+    ServerRequestStowStack(StackId);
+    return true;
+}
+
+void UAnomaliaInventoryComponent::ServerRequestStowStack_Implementation(int32 StackId)
+{
+    TryStowStack(StackId);
 }
 
 bool UAnomaliaInventoryComponent::RequestSplitStack(int32 StackId, int32 Count)
@@ -446,6 +689,147 @@ void UAnomaliaInventoryComponent::ServerRequestMergeStacks_Implementation(int32 
     TryMergeStacks(TargetStackId, SourceStackId);
 }
 
+FAnomaliaItemUseRule UAnomaliaInventoryComponent::GetUseRule(FName ItemId) const
+{
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    if(const auto* Item=Loot?Loot->FindItem(ItemId):nullptr) return Item->Use;
+    // Preserve the existing generic survival item IDs alongside the full loot catalogue.
+    FAnomaliaItemUseRule Rule;
+    if(ItemId==TEXT("food") || ItemId==TEXT("meat") || ItemId==TEXT("cooked_meat") || ItemId==TEXT("cooked_fish"))
+    { Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("food")?27.f:34.f; }
+    else if(ItemId==TEXT("berry")) { Rule.Action=TEXT("eat");Rule.Hunger=7.f;Rule.Thirst=3.f; }
+    else if(ItemId==TEXT("water")) { Rule.Action=TEXT("drink");Rule.Thirst=38.f; }
+    else if(ItemId==TEXT("bandage") || ItemId==TEXT("medkit"))
+    { Rule.Action=TEXT("heal");Rule.Health=ItemId==TEXT("medkit")?50.f:19.f; }
+    return Rule;
+}
+
+FString UAnomaliaInventoryComponent::GetItemDisplayName(FName ItemId) const
+{
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    const auto* Item=Loot?Loot->FindItem(ItemId):nullptr;
+    return Item?Item->DisplayName:ItemId.ToString();
+}
+
+FString UAnomaliaInventoryComponent::GetUseActionLabel(FName ItemId) const
+{
+    const auto Rule=GetUseRule(ItemId);
+    if(!Rule.IsUsable()) return FString();
+    return Rule.Action==TEXT("eat")?TEXT("Manger") : Rule.Action==TEXT("drink")?TEXT("Boire"):
+        Rule.Action==TEXT("smoke")?TEXT("Fumer (RP)"):Rule.Action==TEXT("rp")?TEXT("Utiliser (RP)"):
+        Rule.Action==TEXT("purify")?TEXT("Traiter l’eau (jeu)"):TEXT("Soigner / examiner");
+}
+
+bool UAnomaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError)
+{
+    OutError.Empty();
+    auto* Survivor=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    const auto* Economy=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>():nullptr;
+    if(!Survivor || !Survivor->HasAuthority() || IsPersistenceLocked() || bSuppressNotifications ||
+       Survivor->Health<=0 || Survivor->bSleeping || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
+       (Economy && Economy->HasPendingPlayer(PlayerId)))
+    { OutError=TEXT("Utilisation indisponible pendant une sauvegarde, le sommeil ou sans personnage vivant.");return false; }
+    const auto* Stack=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack || ExpectedCount<1 || Stack->Count!=ExpectedCount)
+    { OutError=TEXT("La pile a changé : sélectionnez de nouveau l’objet.");return false; }
+    const FName ItemId=Stack->ItemId;
+    const auto Rule=GetUseRule(ItemId);
+    if(!Rule.IsUsable()) { OutError=TEXT("Cet objet nécessite une autre interaction.");return false; }
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(Mode && ((Rule.RestrictedGroup==TEXT("substances") && !Mode->ActiveServerSettings.bAllowRPSubstances) ||
+        (Rule.RestrictedGroup==TEXT("tobacco") && !Mode->ActiveServerSettings.bAllowTobacco) ||
+        (Rule.RestrictedGroup==TEXT("alcohol") && !Mode->ActiveServerSettings.bAllowAlcohol)))
+    { OutError=TEXT("Cette catégorie est désactivée dans les règles de cette partie.");return false; }
+    if(!Rule.RequiredItem.IsNone() && !Stacks.ContainsByPredicate([&](const auto& S)
+        { return S.Count>0 && (S.ItemId==Rule.RequiredItem || (Rule.RequiredItem==TEXT("lighter") && S.ItemId==TEXT("matches"))); }))
+    { OutError=TEXT("Matériel nécessaire : ")+GetItemDisplayName(Rule.RequiredItem);return false; }
+    auto* Effects=Survivor->ItemEffectsComponent.Get();
+    FAnomaliaItemEffectsState NextEffects;
+    if(!Effects || !Effects->PreviewUse(Rule.Effect,NextEffects))
+    { OutError=TEXT("État des effets invalide.");return false; }
+    if(!FMath::IsFinite(Survivor->Hunger) || !FMath::IsFinite(Survivor->Thirst) || !FMath::IsFinite(Survivor->Health))
+    { OutError=TEXT("État du personnage invalide.");return false; }
+    const float Food=FMath::Clamp(Survivor->Hunger+Rule.Hunger,0.f,100.f);
+    const float Water=FMath::Clamp(Survivor->Thirst+Rule.Thirst,0.f,100.f);
+    const float HP=FMath::Clamp(Survivor->Health+Rule.Health,0.f,100.f);
+    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects) && Rule.Action!=TEXT("purify"))
+    { OutError=TEXT("Aucun besoin à restaurer : l’objet est conservé.");return false; }
+
+    const auto Before=Stacks;const int32 BeforeId=NextStackId;
+    auto Rollback=[&](){Stacks=Before;NextStackId=BeforeId;bSuppressNotifications=false;};
+    bSuppressNotifications=true;
+    auto* Selected=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    --Selected->Count;
+    Stacks.RemoveAll([](const auto& S){return S.Count<=0;});
+    if(Rule.Action==TEXT("purify") && !TryRemoveItem(Rule.RequiredItem,1))
+    { Rollback();OutError=TEXT("La bouteille d’eau non traitée n’est plus disponible.");return false; }
+    if(!Rule.ReturnItem.IsNone() && !TryAddItem(Rule.ReturnItem,1))
+    { Rollback();OutError=TEXT("Faites de la place pour le contenant vide. L’objet est conservé.");return false; }
+    FString Raw;
+    if(!BuildInventoryProfile(ServerId,PlayerId,Raw,OutError)) { Rollback();return false; }
+    const auto After=Stacks;const int32 AfterId=NextStackId;
+    Rollback();
+    TSharedPtr<FJsonObject> Profile;
+    if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Profile) || !Profile.IsValid())
+    { OutError=TEXT("Profil de sauvegarde invalide.");return false; }
+    TSharedPtr<FJsonObject> Survival=MakeShared<FJsonObject>();
+    const TSharedPtr<FJsonObject>* Existing=nullptr;
+    if(Profile->HasField(TEXT("survival")))
+    {
+        if(!Profile->TryGetObjectField(TEXT("survival"),Existing) || !Existing || !Existing->IsValid())
+        { OutError=TEXT("Données de survie existantes invalides : profil conservé.");return false; }
+        Survival=*Existing;
+    }
+    Survival->SetNumberField(TEXT("hunger"),Food);Survival->SetNumberField(TEXT("thirst"),Water);
+    Survival->SetNumberField(TEXT("health"),HP);Survival->SetNumberField(TEXT("fatigue"),Survivor->Fatigue);
+    if(const auto* Vitals=Survivor->VitalsComponent.Get())
+    {
+        Survival->SetNumberField(TEXT("stamina"),Vitals->Stamina);
+        Survival->SetNumberField(TEXT("bodyTemperatureC"),Vitals->BodyTemperatureC);
+    }
+    Profile->SetObjectField(TEXT("survival"),Survival);
+    if(!UAnomaliaItemEffectsComponent::WriteState(Survival,NextEffects,OutError)) return false;
+    Raw.Empty();
+    if(!FJsonSerializer::Serialize(Profile.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw)) ||
+       !UAnomaliaConfigLibrary::SavePlayerProfile(ServerId,PlayerId,Raw,OutError)) return false;
+    // Publish both sides only after their single combined profile write succeeds.
+    Survivor->Hunger=Food;Survivor->Thirst=Water;Survivor->Health=HP;
+    Effects->ApplyState(NextEffects);
+    NextStackId=AfterId;UseMessage=TEXT("Utilisé : ")+GetItemDisplayName(ItemId);
+    if(Rule.Effect==TEXT("diagnostic"))
+        UseMessage=FString::Printf(TEXT("Bilan de jeu — sang : %.0f %%, douleur : %.0f %%, infection fictive : %.0f %%"),NextEffects.Blood,NextEffects.Pain,NextEffects.Infection);
+    auto Committed=After;Commit(MoveTemp(Committed));Survivor->OnSurvivalChanged();
+    return true;
+}
+
+bool UAnomaliaInventoryComponent::UseFromOwningPlayer(int32 StackId,int32 ExpectedCount)
+{
+    const auto* Survivor=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(!Survivor || !Survivor->HasAuthority() || !Mode || !Survivor->GetController() ||
+       Survivor->GetController()->GetPawn()!=Survivor) return false;
+    const double Now=GetWorld()->GetRealTimeSeconds();
+    if(Now<NextUseRequestTime) return false;
+    NextUseRequestTime=Now+.2;
+    FString Error;
+    const bool Accepted=TryUseStack(StackId,ExpectedCount,Mode->ServerId,Mode->GetPersistentPlayerId(Survivor->GetController()),Error);
+    if(!Accepted) { UseMessage=Error;OnInventoryUpdated.Broadcast();GetOwner()->ForceNetUpdate(); }
+    return Accepted;
+}
+
+bool UAnomaliaInventoryComponent::RequestUseStack(int32 StackId,int32 ExpectedCount)
+{
+    if(!GetOwner()) return false;
+    if(GetOwner()->HasAuthority()) return UseFromOwningPlayer(StackId,ExpectedCount);
+    ServerRequestUseStack(StackId,ExpectedCount);return true;
+}
+
+void UAnomaliaInventoryComponent::ServerRequestUseStack_Implementation(int32 StackId,int32 ExpectedCount)
+{
+    UseFromOwningPlayer(StackId,ExpectedCount);
+}
+
 void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 
@@ -455,4 +839,45 @@ void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
     DOREPLIFETIME(UAnomaliaInventoryComponent, Stacks);
     DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments);
     DOREPLIFETIME(UAnomaliaInventoryComponent, WeightCapacityKg);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankAccountId, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankBalanceCents, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, NextBankSequence, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, bBankingAvailable, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, BankMessage, COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, UseMessage, COND_OwnerOnly);
+}
+
+void UAnomaliaInventoryComponent::SetProfileRecoveryPending(bool Pending)
+{
+    if (GetOwner() && GetOwner()->HasAuthority()) bProfileRecoveryPending = Pending;
+}
+void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, TickFunction);
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld()) return;
+    const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
+    auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    if (Survivor && Mode && Economy && Survivor->GetController())
+        Economy->RefreshAccount(this, Mode->GetPersistentPlayerId(Survivor->GetController()));
+}
+void UAnomaliaInventoryComponent::RequestBankOperation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents)
+{
+    if (!GetOwner()) return;
+    if (GetOwner()->HasAuthority()) ServerBankOperation_Implementation(Action, NoteId, RecipientId, AmountCents, NextBankSequence);
+    else ServerBankOperation(Action, NoteId, RecipientId, AmountCents, NextBankSequence);
+}
+void UAnomaliaInventoryComponent::ServerBankOperation_Implementation(EAnomaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents, int64 Sequence)
+{
+    const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode = GetWorld() ? GetWorld()->GetAuthGameMode<AAnomaliaGameMode>() : nullptr;
+    auto* Economy = GetWorld() ? GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>() : nullptr;
+    if (!GetOwner() || !GetOwner()->HasAuthority() || !Survivor || !Mode || !Economy || !Survivor->GetController() || RecipientId.Len() > 64) return;
+    const double RequestTime = GetWorld()->GetRealTimeSeconds();
+    if (RequestTime < NextBankRequestTime) return;
+    NextBankRequestTime = RequestTime + .2;
+    FString Error;
+    const bool Accepted = Economy->Execute(this, Mode->GetPersistentPlayerId(Survivor->GetController()), Action, NoteId, RecipientId, AmountCents, Sequence, Error);
+    BankMessage = Accepted ? (IsPersistenceLocked() ? TEXT("Transaction enregistrée ; reprise en cours.") : TEXT("Transaction enregistrée.")) : Error;
+    OnInventoryUpdated.Broadcast(); GetOwner()->ForceNetUpdate();
 }

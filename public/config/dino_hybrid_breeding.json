@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "description": "Cross-species hybrid breeding and genetic engineering design; not implemented in Unreal",
+  "enabled": false,
+  "perServerOverride": true,
+  "sourceCatalogs": [
+    "dino_species_catalog.json",
+    "dino_moro_creatures_catalog.json",
+    "dino_variants_catalog.json"
+  ],
+  "naturalBreeding": {
+    "enabled": true,
+    "sameSpecies": true,
+    "crossVariant": true,
+    "crossSpecies": false,
+    "inheritStats": true,
+    "inheritColors": true,
+    "mutations": true
+  },
+  "hybridization": {
+    "enabled": true,
+    "method": "genetic_lab",
+    "allowCrossSpecies": true,
+    "requireTwoParentGenomes": true,
+    "requireDnaSamples": true,
+    "requireIncubation": true,
+    "defaultIncubationSeconds": 7200,
+    "defaultSuccessChance": 0.35,
+    "inheritStatWeights": {
+      "parentA": 0.5,
+      "parentB": 0.5
+    },
+    "inheritAppearance": true,
+    "inheritAbilities": true,
+    "hybridCanBreed": true,
+    "hybridCanBeTamed": true,
+    "hybridCanBeRidden": true,
+    "saddleRequired": true,
+    "hybridNaming": "player_custom",
+    "serverAuthoritative": true,
+    "persistGenetics": true,
+    "spawnInWild": false,
+    "requireCompatibilityRule": true,
+    "compatibilityRules": [],
+    "dnaSources": [
+      "creature_sample",
+      "boss_event_reward"
+    ],
+    "safetyLimits": {
+      "maxGeneration": 12,
+      "maxInheritedAbilities": 3,
+      "maxStatMultiplier": 3
+    }
+  },
+  "specialRules": {
+    "moro_rex_skeletal_bone_costume": {
+      "cosmeticOnly": true,
+      "baseCreatureId": "moro_moro_rex"
+    },
+    "moro_apex_minions": {
+      "dnaDropEnabled": true
+    },
+    "moro_demonic_reaper_queen": {
+      "bossDnaSource": true
+    }
+  },
+  "implementationStatus": "CONFIGURATION_ONLY",
+  "notes": [
+    "Cross-species genetic lab combinations require explicit compatibility rules to avoid invalid or unbalanced hybrids",
+    "No third-party creature assets are included or licensed by this configuration",
+    "All mount, breeding, AI, models, networking and persistence require UE5 implementation"
+  ]
+}

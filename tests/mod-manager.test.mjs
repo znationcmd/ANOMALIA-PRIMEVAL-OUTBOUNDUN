@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {resolveMods,validatePlacementManifest} from '../src/mod-manager.js';
+const make=(id,deps=[])=>({id,version:'1.0.0',sha256:'a'.repeat(64),dependencies:deps,compatibility:['solo','cmd-hosting','dedicated'],signed:true});
+const result=resolveMods(['vehicles'],[make('vehicles',['base']),make('base')],[]);
+assert.deepEqual(result.downloads.map(m=>m.id),['base','vehicles']);
+assert.equal(resolveMods(['base'],[make('base')],[make('base')]).downloads.length,0);
+assert.throws(()=>resolveMods(['bad'],[make('bad',['bad'])]));
+assert.throws(()=>resolveMods(['base'],[{...make('base'),signed:false}]));
+assert.equal(validatePlacementManifest({files:['maps/city.json']}),true);
+assert.throws(()=>validatePlacementManifest({files:['../escape.json']}));
+console.log('mod-manager: OK');
+
+for(const file of ['C:escape.json','https:escape.json','maps/a.json?x.json','maps/%2e%2e/a.json','maps//a.json','maps/./a.json','maps/a\0.json'])assert.throws(()=>validatePlacementManifest({files:[file]}),file);

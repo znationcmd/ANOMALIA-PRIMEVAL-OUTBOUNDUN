@@ -1,5 +1,7 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaSessionWidget.h"
+#include "GameFramework/PlayerController.h"
 #include "Vehicles/AnomaliaTransportMovement.h"
 #include "Vehicles/AnomaliaRailCarriage.h"
 #include "Vehicles/AnomaliaTransportEnvironment.h"
@@ -45,6 +47,7 @@ AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
     InteriorCamera->bUsePawnControlRotation = true;
     InteriorCamera->SetAutoActivate(false);
     AutoPossessPlayer = EAutoReceiveInput::Disabled;
+    AutoPossessAI = EAutoPossessAI::Disabled; // Parked level vehicles must remain available to the player.
 }
 
 void AAnomaliaVehiclePawn::BeginPlay()
@@ -107,8 +110,12 @@ void AAnomaliaVehiclePawn::RefreshVehicleVisual()
     // IDs come from the fixed server-authorized catalogue, never from an arbitrary client path.
     const FString Id=VehicleId.ToString();
     const FString Package=TEXT("/Game/Anomalia/Vehicles/")+Id+TEXT("/SM_")+Id;
-    if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
-    UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    UStaticMesh* Mesh=PresentationMeshOverride.Get();
+    if(!Mesh)
+    {
+        if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
+        Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    }
     if(!Mesh) return;
     Body->SetStaticMesh(Mesh);
     const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
@@ -226,7 +233,8 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     }
     else
     {
-        if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
+        if(BrakeAxis>0.f) Movement->Velocity=FMath::VInterpConstantTo(Movement->Velocity,FVector::ZeroVector,DeltaSeconds,Movement->Deceleration*4.f);
+        else if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
         if(bPowered && FMath::Abs(SteeringAxis)>KINDA_SMALL_NUMBER)
             AddActorWorldRotation(FRotator(0,SteeringAxis*65.f*DeltaSeconds,0));
     }
@@ -303,6 +311,7 @@ void AAnomaliaVehiclePawn::InputCamera()
 
 void AAnomaliaVehiclePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
+    PlayerInputComponent->BindAction(TEXT("Pause"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputPause);
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     PlayerInputComponent->BindAxis(TEXT("MoveForward"),this,&AAnomaliaVehiclePawn::InputForward);
     PlayerInputComponent->BindAxis(TEXT("MoveRight"),this,&AAnomaliaVehiclePawn::InputSteering);
@@ -320,6 +329,7 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationMeshOverride);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
 }
@@ -368,3 +378,6 @@ void AAnomaliaVehiclePawn::UpdateMetroCoaches()
         Coach->SetActorTransform(Track->GetTransformAtDistanceAlongSpline(Wrapped,ESplineCoordinateSpace::World,false),false,nullptr,ETeleportType::TeleportPhysics);
     }
 }
+
+AAnomaliaSurvivor* AAnomaliaVehiclePawn::GetStoredDriverSurvivor() const { return ParkedSurvivor.Get(); }
+void AAnomaliaVehiclePawn::InputPause() { UAnomaliaSessionWidget::Open(Cast<APlayerController>(Controller)); }

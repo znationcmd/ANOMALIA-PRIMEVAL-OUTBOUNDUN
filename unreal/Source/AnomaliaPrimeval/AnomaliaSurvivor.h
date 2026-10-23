@@ -8,7 +8,9 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
+class UAnomaliaStatusWidget;
 class UAnomaliaVitalsComponent;
+class UAnomaliaItemEffectsComponent;
 class AAnomaliaHomesteadStation;
 
 UCLASS()
@@ -17,6 +19,7 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
     GENERATED_BODY()
 public:
     AAnomaliaSurvivor();
+    void CloseInventory();
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
@@ -30,8 +33,14 @@ public:
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
 
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaStatusWidget> StatusWidget;
+
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Survival")
     TObjectPtr<UAnomaliaVitalsComponent> VitalsComponent;
+
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|ItemEffects")
+    TObjectPtr<UAnomaliaItemEffectsComponent> ItemEffectsComponent;
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -49,6 +58,9 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
     bool bSleeping = false;
 
+    UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
+    float SleepRemainingSeconds = 0.f;
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Rest")
     void OnRestChanged();
 
@@ -64,6 +76,8 @@ public:
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
     virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void EndPlay(const EEndPlayReason::Type Reason) override;
+    virtual float TakeDamage(float Amount, const FDamageEvent& Event, AController* InstigatorController, AActor* Causer) override;
 
 protected:
     UFUNCTION()
@@ -77,11 +91,15 @@ private:
     void MoveRight(float Value);
     void Turn(float Value);
     void LookUp(float Value);
+    void TurnRate(float Value);
+    void LookUpRate(float Value);
     void InputInteract();
     void InputInventory();
     void StartSprint();
     void StopSprint();
     void InputRest();
+    void InputPause();
+    void InputCamera();
 
     TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
 
