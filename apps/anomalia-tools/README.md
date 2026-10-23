@@ -47,3 +47,64 @@ Les trois applications restent séparées : CMD Studio, ANOMALIA Editor, ANOMALI
 ## Icône officielle Windows — 0.1.1
 
 Le logo ANOMALIA Tools métallique orange/noir sélectionné est utilisé pour l'exécutable, l'installateur NSIS, les raccourcis du Bureau/menu Démarrer et la fenêtre/barre des tâches Windows. L'icône carrée reprend le symbole A, l'engrenage et les outils croisés du logo original pour rester lisible à petite taille. Le script `npm run prepare:icon` convertit `assets/anomalia-tools-icon.png` en `assets/anomalia-tools.ico` multi-résolutions (16 à 256 px). Réinstaller la version 0.1.1 pour actualiser l'icône. Aucune autre application CMD ou ANOMALIA n'est modifiée.
+
+## ANOMALIA Tools 0.2.0 — interface professionnelle et mises à jour Windows
+
+Le **véritable logiciel Electron** a été modernisé intégralement, avec un design
+graphite et cuivre/orange assorti au logo ANOMALIA Tools. L'interface comprend
+désormais une barre latérale plus structurée, un nouvel accueil, des compteurs
+réels de projets et de fichiers, des cartes de modules plus lisibles, ainsi
+qu'une présentation unifiée du Workbench, des modèles 3D, des terrains, de
+l'économie, des textures et des pipelines ZIP.
+
+Les commandes existantes et leurs API locales sont conservées. Les outils ne
+sont pas simulés : les limites fonctionnelles indiquées dans chaque page
+subsistent. Les modèles 3D GLB conservent leur prévisualisation réelle sous
+Three.js ; les autres formats et les heightmaps ne deviennent pas
+automatiquement photoréalistes.
+
+### Mises à jour automatiques
+
+**ANOMALIA Tools pour Windows**, à partir de 0.2.0, interroge son propre
+canal de publication officiel 12 secondes après le lancement puis toutes
+les **6 heures**. Lorsqu'une nouvelle version est disponible, le téléchargement
+s'effectue en arrière-plan. Après téléchargement, l'installation se produit
+lorsqu'on ferme normalement le logiciel, ou avec le bouton d'installation
+dans la nouvelle page « Mises à jour ». La version 0.1.1 doit être mise à
+jour manuellement une dernière fois vers 0.2.0.
+
+Canal public de ANOMALIA Tools uniquement :
+https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/tag/anomalia-tools-latest
+
+La publication est gérée par le workflow
+`.github/workflows/anomalia-tools-release.yml`, lancé à la création d'un
+tag `anomalia-tools/vX.Y.Z` pour une version contrôlée. Il compile et teste
+l'application, charge le Setup et les fichiers blockmap, puis publie
+`latest.yml` **en dernier**. Les fichiers et identifiants de CMD Studio et
+ANOMALIA Editor restent totalement distincts.
+
+**Activation réelle :** le canal `anomalia-tools-latest` doit d'abord
+exister et contenir un installateur et un manifeste valide. Sans cette
+première publication, les vérifications afficheront une erreur non bloquante
+et aucune installation automatique n'aura lieu. Les utilisateurs doivent
+conserver leurs propres sauvegardes avant une mise à jour majeure.
+
+**Sécurité :** HTTPS via GitHub Releases, empreintes SHA-512 vérifiées par
+electron-updater et impossibilité de revenir à une version plus ancienne
+par la fonction automatique. Les installeurs Windows ne disposent pas encore
+d'une signature commerciale Authenticode. Leur acceptation par SmartScreen
+et leur mise à jour doivent être validées sur une vraie machine Windows ;
+une empreinte seule ne remplace pas une signature Authenticode de confiance.
+
+### Validation
+
+    cd apps/anomalia-tools
+    npm install
+    npm test
+    npm run build
+    npm run package:win
+
+La compilation Windows de la branche de développement produit un fichier
+d'installation manuel en artefact GitHub Actions. Il ne publie aucune
+mise à jour publique sans tag de version. Aucun fichier d'autres
+utilisateurs ou des autres applications CMD/ANOMALIA n'est modifié.
