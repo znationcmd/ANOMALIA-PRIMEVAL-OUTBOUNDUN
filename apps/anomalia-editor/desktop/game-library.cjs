@@ -10,7 +10,7 @@ const IGNORE=new Set(['.git','.svn','node_modules','Binaries','Intermediate','Sa
 const MAX_ENTRIES=35000;
 function category(name,kind){
   const s=name.toLowerCase();
-  if(kind==='map'||kind==='unreal-map'||kind==='plan')return 'Cartes et secteurs';
+  if(kind==='map'||kind==='unreal-map'||kind==='plan'||kind==='heightmap')return 'Cartes et secteurs';
   if(/vehic|vehicle|car|auto|sedan|bmw|truck|camion|van|suv|moto|bike|kart|buggy|quad|train|metro|helico|helicopt|aircraft|plane|avion|boat|jet.?ski|zodiac|submarine|tank|armored|ambulance|police|fire.?engine/.test(s))return 'Véhicules';
   if(/hous|maison|home|villa|building|batiment|apartment|immeuble|hlm|residence|warehouse|garage|bunker|shop|hospital|hangar|military|caserne|station|school/.test(s))return 'Bâtiments';
   if(/road|route|street|highway|bridge|pont|tunnel|rail|railway|track|sidewalk|pavement/.test(s))return 'Routes et infrastructures';
@@ -22,6 +22,7 @@ function category(name,kind){
 function kindFor(filename){
   const lower=filename.toLowerCase();
   if(lower.endsWith('.anomalia.json'))return 'map';
+  if(/(height.?map|heightfield|terrain.?height|landscape.?height)/.test(lower)&&/\.(png|jpe?g|webp)$/.test(lower))return 'heightmap';
   if(lower.endsWith('.json')&&/(population.plan|world.plan|map.plan|world.index)/.test(lower))return 'plan';
   const ext=path.extname(filename).toLowerCase();
   if(ext==='.umap')return 'unreal-map';
@@ -105,7 +106,8 @@ class GameLibrary{
                 name:file.name,relative,rootTag:source.tag,kind,category:category(relative,kind),
                 bytes:info.size,mtimeMs:Math.round(info.mtimeMs),
                 canPlace:kind==='glb'&&info.size<=80*1024*1024,
-                canOpen:kind==='map'&&info.size<=45*1024*1024};
+                canOpen:kind==='map'&&info.size<=45*1024*1024,
+                canTerrain:kind==='heightmap'&&info.size<=32*1024*1024};
               entries.push(item);
             }
           }
@@ -130,16 +132,16 @@ class GameLibrary{
     if(!this.index.has(id))await this.scan();
     const item=this.index.get(id);
     if(!item)throw Error('Fichier absent du catalogue. Actualise la bibliothèque.');
-    if(!item.canPlace&&!item.canOpen)throw Error('Cette ressource doit être convertie ou ouverte dans Unreal Engine avant son utilisation.');
+    if(!item.canPlace&&!item.canOpen&&!item.canTerrain)throw Error('Cette ressource doit être convertie ou ouverte dans Unreal Engine avant son utilisation.');
     const root=await fs.promises.realpath(item.rootTag==='pack'?this.packRoot:this.root);
     const full=await fs.promises.realpath(path.join(root,...item.relative.split('/')));
     if(!isInside(root,full))throw Error('Chemin non autorisé.');
     const info=await fs.promises.stat(full);
-    const limit=item.canPlace?80*1024*1024:45*1024*1024;
+    const limit=item.canPlace?80*1024*1024:item.canTerrain?32*1024*1024:45*1024*1024;
     if(!info.isFile()||info.size>limit)throw Error('Ressource trop volumineuse.');
     const data=await fs.promises.readFile(full);
     if(item.canPlace&&data.subarray(0,4).toString()!=='glTF')throw Error('Signature GLB incorrecte.');
-    return {name:item.name,kind:item.kind,data:item.canPlace?data.toString('base64'):data.toString('utf8'),bytes:data.length};
+    return {name:item.name,kind:item.kind,data:item.canPlace||item.canTerrain?data.toString('base64'):data.toString('utf8'),bytes:data.length};
   }
 }
 module.exports={GameLibrary,category,kindFor,isInside,MAX_ENTRIES};
