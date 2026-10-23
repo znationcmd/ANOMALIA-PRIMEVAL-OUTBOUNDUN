@@ -30,3 +30,24 @@ Do not research, import, commission or implement: combine harvesters (moissonneu
 
 ## Integration acceptance criteria
 Each model must be individually checked for provenance, download rights, game-use license, attribution, textures, topology, cockpit/interior, separate movable parts, scale, collisions, LODs and performance. No third-party binary committed to public GitHub without redistribution rights. Existing ANOMALIA UE 5.8 game code, saves, branches and assets must remain untouched unless changes are safe and reviewed. No model is marked integrated until a working UE editor scene, movement, physics, multiplayer and packaged Windows build have been tested.
+
+## Follow-up research — 23 October 2026
+Owner exclusions above remain authoritative. Tractors and agricultural trailers remain requested; only the three specified agricultural machine categories are excluded. Freight wagons remain requested; excluded container ships are maritime vessels, not railway wagons.
+
+### Additional rail candidates
+| Candidate | Source | Evidence and remaining work |
+| --- | --- | --- |
+| Diesel locomotive M62 | https://sketchfab.com/3d-models/diesel-locomotive-m62-a923943868db43f382fe8edaab358d75 | Search index advertises free download and CC Attribution. Direct page returned HTTP 403 during research. Treat as a lead only; topology, interior, textures and actual download still unverified. |
+| EMD-SD40 diesel electric locomotive | https://sketchfab.com/3d-models/emd-sd40-diesel-electric-locomotive-7271826d3a584a22849c949a7755f79d | Search index advertises CC Attribution and permission to download/edit; NoAI marked. Direct page returned HTTP 403. No generative AI processing; inspect license and files before normal game integration. |
+| Romanian 060 DA diesel locomotive | https://sketchfab.com/3d-models/060-da-diesel-locomotive-7ec2fb3bf0664da5979a55a86f5cdbc5 | Search index advertises free download and CC Attribution, author aocrisan. Direct page returned HTTP 403. Cabin and movable parts unknown. |
+| British Rail Mark 3 passenger carriage | https://sketchfab.com/3d-models/train-mk-3-br-swallow-livery-std-2nd-6a801e7437de4457bcfae459d086dd4d | Author timblewee; directly opened listing: CC Attribution, 344.5k triangles. Author explicitly says interior needs improvement. Candidate requiring completion, not a finished passenger vehicle. |
+| Train Carriage | https://sketchfab.com/3d-models/train-carriage-9937b74270244602b0e1e9744683644a | Author Yevhenii Levchenko / Parkerdos; search index: CC Attribution, 170.8k triangles, Blender modeling and Substance texturing. Direct page returned HTTP 403; interior unverified. |
+| Post WW3 Tatra Style Tram | https://sketchfab.com/3d-models/post-ww3-tatra-style-tram-12de7f85eb1848e082bcbd552a028e09 | Author futaba_blender; directly opened listing: CC Attribution, PBR, 326.5k triangles. Post-apocalyptic interpretation inspired by Tatra, not a validated replica. Inspect interior, movable doors and bogies. |
+| Metro Train 3D - Free Model | https://sketchfab.com/3d-models/metro-train-3d-free-model-c6bfec7c75b147909a39de96045495c5 | Author kane_sk06; indexed listing: CC Attribution, PBR, 382.8k triangles. Previously mentioned in conversation; retained for comparison with other metro candidates, not counted as newly discovered. |
+
+### Snowmobile and submarine corrections
+- Artec Snowmobile: https://www.artec3d.com/3d-models/snowmobile — manufacturer page confirms detailed real-world scan, free OBJ 109.51 MB and other formats, attribution to Artec 3D plus source link. Download not performed in this follow-up. Scan does not establish separated skis/tracks, animation rig or game-ready topology. Check the downloaded archive for usable texture files and applicable license text.
+- Soviet Submarine by BlenderVoyage: https://blendervoyage.itch.io/soviet-submarine — creator page confirms Akula-class subject, free SovietSub.zip (10 MB), model and textures, commercial use with attribution / CC BY 4.0. Editable Blender source is separately priced at $2 or more; do not purchase. Page labels asset low-poly; photorealism and accessible interior are NOT confirmed. Retain as a fallback exterior candidate rather than claiming a complete realistic submarine.
+
+### Actual outcome of this follow-up
+Only source research and this document changed. No model archive downloaded, no third-party asset uploaded, no Unreal import, no new playable train/submarine/snowmobile and no Windows build validation. Prioritize inspecting one locomotive plus one carriage, one full metro car and the detailed snowmobile scan before expanding the source list further.
