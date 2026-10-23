@@ -231,7 +231,9 @@ class Studio {
     let executable, args = [];
     if (tool === 'blender') executable = assertFile(this.settingsData.blenderPath);
     else if (tool === 'unreal') {
-      executable = assertFile(this.settingsData.unrealPath);
+      const configured = assertFile(this.settingsData.unrealPath);
+      const graphical = configured.replace(/UnrealEditor-Cmd\.exe$/i, 'UnrealEditor.exe');
+      executable = fs.existsSync(graphical) ? graphical : configured;
       args = this.settingsData.activeProject ? [assertFile(this.settingsData.activeProject, '.uproject')] : [];
     } else throw new Error('Logiciel inconnu.');
     const child = spawn(executable, args, { detached: true, stdio: 'ignore', shell: false });
