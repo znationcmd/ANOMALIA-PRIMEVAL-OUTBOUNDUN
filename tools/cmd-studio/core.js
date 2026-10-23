@@ -240,6 +240,17 @@ class Studio {
     child.unref();
     return { ok: true, started: tool };
   }
+  previewAsset({ id } = {}) {
+    const asset=this.assetById(id);
+    const format=String(asset.format||'').toLowerCase();
+    if(!['glb','png','jpg','jpeg'].includes(format))
+      throw new Error('Prévisualisation disponible uniquement pour GLB, PNG ou JPEG. Convertis les autres modèles en GLB avec Blender.');
+    const size=fs.statSync(asset.path).size;
+    if(size<=0||size>24*1024*1024)
+      throw new Error('Le visualiseur accepte uniquement les fichiers jusqu’à 24 Mo. Le modèle reste dans la bibliothèque.');
+    return {id:asset.id,name:asset.name,format,license:asset.license,size,
+      data:fs.readFileSync(asset.path).toString('base64')};
+  }
   openAsset({ id } = {}) {
     const asset = this.assetById(id);
     const command = process.platform === 'win32' ? 'explorer.exe' : process.platform === 'darwin' ? 'open' : 'xdg-open';
