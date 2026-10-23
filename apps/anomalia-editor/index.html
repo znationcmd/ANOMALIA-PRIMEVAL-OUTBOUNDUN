@@ -13,8 +13,16 @@
       <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
     </div>
   </header>
-  <div class="workspace">
-    <aside class="left">
+  <div class="workspace" id="editorWorkspace">
+    <nav class="activityRail" aria-label="Disposition de l'éditeur">
+      <span class="railTitle">OUTILS</span>
+      <button id="toggleLibrary" class="railButton active" type="button" aria-label="Afficher ou masquer la bibliothèque" aria-controls="editorLibrary" aria-expanded="true" title="Bibliothèque 3D"><span aria-hidden="true">▦</span><small>Objets</small></button>
+      <button id="toggleInspector" class="railButton active" type="button" aria-label="Afficher ou masquer l'inspecteur" aria-controls="editorInspector" aria-expanded="true" title="Inspecteur"><span aria-hidden="true">⚙</span><small>Détails</small></button>
+      <span class="railSpacer"></span>
+      <button id="toggleFocus" class="railButton" type="button" aria-label="Mode concentration sur la scène" aria-pressed="false" title="Mode concentration"><span aria-hidden="true">⛶</span><small>Focus</small></button>
+      <button id="resetLayout" class="railButton" type="button" aria-label="Réinitialiser les panneaux" title="Disposition par défaut"><span aria-hidden="true">↺</span><small>Reset</small></button>
+    </nav>
+    <aside class="left" id="editorLibrary">
       <div class="paneHeading"><div><span class="paneOverline">ASSET LIBRARY</span><strong>Catalogue 3D</strong></div><small>CRÉATION</small></div><p class="paneIntro">Choisis un objet, puis place-le dans ton univers.</p>
       <input id="assetSearch" class="searchAsset" placeholder="Rechercher un objet..." aria-label="Chercher des objets">
       <div id="categoryBar" class="categories"></div>
@@ -23,23 +31,25 @@
       <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTLINER</span><strong>Hiérarchie</strong></div><span id="count">0 objet</span></div>
       <div id="hierarchy" class="hierarchy"></div>
     </aside>
+    <div id="librarySplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner la bibliothèque" tabindex="0" aria-valuemin="210" aria-valuemax="440" aria-valuenow="258"></div>
     <section class="stage">
-      <div class="workspaceRibbon"><span><i class="liveDot"></i> ESPACE DE CRÉATION</span><span>ÉDITEUR DE MONDE · 3D TEMPS RÉEL</span></div>
+      <div class="workspaceRibbon"><span><i class="liveDot"></i> ESPACE DE CRÉATION <span class="ribbonDivider">/</span> PERSPECTIVE</span><span class="ribbonActions"><span class="ribbonHelp">Q Sélection · W Déplacer · E Rotation · R Échelle</span><button id="ribbonFocus" type="button" title="Agrandir la vue 3D">⛶ Agrandir la scène</button></span></div>
       <div class="tools">
-        <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)">Sélection</button><button id="moveTool" title="Déplacer (W)">Déplacer</button><button id="rotateTool" title="Rotation (E)">Rotation</button><button id="scaleTool" title="Échelle (R)">Échelle</button><button id="brushTool" title="Pinceau (B)">Pinceau</button></div>
+        <div class="toolsPart"><button id="selectTool" class="selected" title="Sélection (Q)"><span aria-hidden="true">⌖</span> Sélection <kbd>Q</kbd></button><button id="moveTool" title="Déplacer (W)"><span aria-hidden="true">✥</span> Déplacer <kbd>W</kbd></button><button id="rotateTool" title="Rotation (E)"><span aria-hidden="true">↻</span> Rotation <kbd>E</kbd></button><button id="scaleTool" title="Échelle (R)"><span aria-hidden="true">⤢</span> Échelle <kbd>R</kbd></button><button id="brushTool" title="Pinceau (B)"><span aria-hidden="true">◌</span> Pinceau <kbd>B</kbd></button></div>
         <div class="toolsPart"><label><input id="snap" type="checkbox" checked> Aimantation</label><select id="snapSize" title="Pas de grille"><option value="0.5">0,5 m</option><option value="1" selected>1 m</option><option value="5">5 m</option></select></div>
         <div class="toolsPart end"><button id="undo" title="Annuler (Ctrl+Z)">↶</button><button id="redo" title="Rétablir (Ctrl+Y)">↷</button><button id="duplicate" title="Dupliquer (Ctrl+D)">Dupliquer</button><button id="delete" title="Supprimer (Suppr)">Supprimer</button></div>
       </div>
       <div id="viewport" aria-label="Vue 3D interactive">
         <div class="viewportLabel"><span class="viewportTag">● LIVE VIEWPORT</span><span id="modeLabel">SÉLECTION</span></div><div class="viewportInfo"><strong>ANOMALIA / SCENE VIEW</strong><small>Perspective · Rendu local</small></div>
         <div id="crosshair">＋</div>
-        <div class="viewportTips" id="viewportTips">Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
+        <div class="viewportTips" id="viewportTips"><span class="viewportTipHeading">NAVIGATION 3D</span>Clic : sélectionner · clic droit + déplacer : caméra · molette : zoom</div>
         <div class="compass">N<br>◉</div>
       </div>
       <div class="status"><span class="statusReady"><i class="liveDot"></i> PRÊT</span><span id="statusMessage">Éditeur prêt. Les données sont enregistrées uniquement sur cet appareil.</span><span id="coords">X 0.0 · Y 0.0 · Z 0.0</span></div>
     </section>
-    <aside class="right">
-      <div class="paneHeading"><div><span class="paneOverline">OBJECT INSPECTOR</span><strong>Propriétés</strong></div><small>ÉDITION</small></div>
+    <div id="inspectorSplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner l'inspecteur" tabindex="0" aria-valuemin="245" aria-valuemax="460" aria-valuenow="312"></div>
+    <aside class="right" id="editorInspector">
+      <div class="paneHeading"><div><span class="paneOverline">OBJECT INSPECTOR</span><strong>Propriétés</strong></div><small>ÉDITION</small></div><div class="inspectorSubheading">Transformations précises de l'objet sélectionné</div>
       <div id="noSelection" class="noSelection"><div class="inspectorIllustration">⬡</div><strong>Aucun objet sélectionné</strong><p>Clique sur un élément de la scène ou de la hiérarchie pour accéder à ses paramètres.</p></div>
       <div id="inspector" hidden>
         <label class="fieldLabel" for="objectName">NOM DE L'OBJET</label><input id="objectName" class="full" maxlength="90">

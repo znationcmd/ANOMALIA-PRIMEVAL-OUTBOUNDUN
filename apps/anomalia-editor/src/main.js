@@ -5,6 +5,7 @@ import { PRESETS, History, newProject, makeObject, cloneProject, validateProject
 import { createEditorMesh } from './meshes.js';
 import './style.css';
 import './updates-ui.js';
+import './workspace-layout.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
