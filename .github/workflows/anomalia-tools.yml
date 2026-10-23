@@ -1,0 +1,59 @@
+name: ANOMALIA Tools - Tests et Installateur Windows
+
+on:
+  push:
+    branches:
+      - feature/anomalia-tools-standalone-20261023
+    paths:
+      - 'apps/anomalia-tools/**'
+      - '.github/workflows/anomalia-tools.yml'
+  pull_request:
+    paths:
+      - 'apps/anomalia-tools/**'
+      - '.github/workflows/anomalia-tools.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tests securite, terrain, economie et archives
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/anomalia-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer dependencies
+        run: npm install --no-audit --no-fund
+      - name: Tests unitaires
+        run: npm test
+      - name: Compiler interface
+        run: npm run build
+
+  windows:
+    name: Installer Windows ANOMALIA Tools
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/anomalia-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer dependencies
+        run: npm install --no-audit --no-fund
+      - name: Executer les tests
+        run: npm test
+      - name: Construire le programme Windows
+        run: npm run package:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Tools-Installateur-Windows
+          path: apps/anomalia-tools/release/*.exe
+          if-no-files-found: error
