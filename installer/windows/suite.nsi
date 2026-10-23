@@ -4,15 +4,15 @@ Unicode true
   !error "Passer /DREPO_ROOT=chemin-du-depot a makensis"
 !endif
 
-Name "ANOMALIA - Installation des trois applications"
-OutFile "${REPO_ROOT}\release\Installer-ANOMALIA-3-applications.exe"
-BrandingText "ANOMALIA | Installation de la suite"
+Name "ANOMALIA - Mise a niveau des trois applications"
+OutFile "${REPO_ROOT}\release\Mise-a-jour-ANOMALIA-depuis-011.exe"
+BrandingText "ANOMALIA | Mise a niveau de 0.1.1"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
 ShowInstDetails show
 InstallDir "$LOCALAPPDATA\ANOMALIA-Suite"
 
-!define MUI_WELCOMEPAGE_TITLE "Installer les trois applications ANOMALIA"
+!define MUI_WELCOMEPAGE_TITLE "Mettre a jour les trois applications ANOMALIA"
 !define MUI_WELCOMEPAGE_TEXT "Ce programme installe automatiquement CMD Studio 0.1.1, ANOMALIA Editor 0.1.1 et ANOMALIA Tools 0.1.1 sur ce compte Windows.$\r$\n$\r$\nIl n'accède pas aux fichiers des autres utilisateurs, ne publie aucune donnée et n'installe aucun service permanent."
 !insertmacro MUI_PAGE_WELCOME
 !insertmacro MUI_PAGE_INSTFILES
@@ -21,12 +21,13 @@ InstallDir "$LOCALAPPDATA\ANOMALIA-Suite"
 
 Section "Installer les applications" MainSection
   InitPluginsDir
+  DetailPrint "Mise a niveau par-dessus les installations existantes, sans suppression des dossiers de projets." 
   SetOutPath "$PLUGINSDIR"
-  File "/oname=CMD-Studio-Setup.exe" "${REPO_ROOT}\installers\studio\CMD Studio Setup 0.1.1.exe"
-  File "/oname=ANOMALIA-Editor-Setup.exe" "${REPO_ROOT}\installers\editor\ANOMALIA Editor Setup 0.1.1.exe"
-  File "/oname=ANOMALIA-Tools-Setup.exe" "${REPO_ROOT}\installers\tools\ANOMALIA Tools Setup 0.1.1.exe"
+  File "/oname=CMD-Studio-Setup.exe" "${REPO_ROOT}\installers\studio\CMD Studio Setup 0.2.1.exe"
+  File "/oname=ANOMALIA-Editor-Setup.exe" "${REPO_ROOT}\installers\editor\ANOMALIA Editor Setup 0.3.0.exe"
+  File "/oname=ANOMALIA-Tools-Setup.exe" "${REPO_ROOT}\installers\tools\ANOMALIA Tools Setup 0.2.0.exe"
 
-  DetailPrint "1/3 Installation de CMD Studio 0.1.1..."
+  DetailPrint "1/3 Mise a niveau de CMD Studio vers 0.2.1..."
   ExecWait '"$PLUGINSDIR\CMD-Studio-Setup.exe" /S' $0
   StrCmp $0 "0" studio_ok
     MessageBox MB_OK|MB_ICONSTOP "L'installation de CMD Studio a echoue (code $0). Les autres applications ne sont pas installees."
@@ -46,5 +47,5 @@ Section "Installer les applications" MainSection
     MessageBox MB_OK|MB_ICONSTOP "L'installation d'ANOMALIA Tools a echoue (code $0). Les installations precedentes ont ete conservees."
     Abort
   tools_ok:
-    DetailPrint "Installation terminee : CMD Studio, ANOMALIA Editor, ANOMALIA Tools."
+    DetailPrint "Mise a niveau terminee : CMD Studio 0.2.1, ANOMALIA Editor 0.3.0 et ANOMALIA Tools 0.2.0."
 SectionEnd
