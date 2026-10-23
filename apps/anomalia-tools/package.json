@@ -1,6 +1,6 @@
 {
   "name": "anomalia-tools",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "description": "ANOMALIA Tools - outils locaux de création de mods et ressources pour ANOMALIA",
   "main": "main.cjs",
@@ -56,7 +56,8 @@
       "installerIcon": "assets/anomalia-tools.ico",
       "uninstallerIcon": "assets/anomalia-tools.ico",
       "installerHeaderIcon": "assets/anomalia-tools.ico",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ANOMALIA-Tools-Setup-${version}.${ext}"
     },
     "publish": [
       {
