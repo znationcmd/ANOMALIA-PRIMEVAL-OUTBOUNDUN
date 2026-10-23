@@ -67,7 +67,8 @@ jobs:
       - name: Fabriquer un seul EXE
         shell: pwsh
         run: |
-          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" "/V3" "installer\windows\suite.nsi"
+          $root = (Get-Location).Path
+          & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" "/V3" "/DREPO_ROOT=$root" "installer\windows\suite.nsi"
           if ($LASTEXITCODE -ne 0) { throw "Compilation NSIS echouee" }
           if (!(Test-Path -LiteralPath "release/Installer-ANOMALIA-3-applications.exe")) {
             throw "Installateur final non trouve"
