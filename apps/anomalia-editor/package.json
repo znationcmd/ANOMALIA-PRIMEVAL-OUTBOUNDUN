@@ -10,7 +10,7 @@
     "preview": "vite preview --host 127.0.0.1",
     "test": "node --test tests/*.test.js",
     "desktop:dev": "npm run build && npm run prepare:icon && electron .",
-    "desktop:package": "npm run build && npm run prepare:icon && electron-builder --win nsis",
+    "desktop:package": "npm run build && npm run prepare:icon && electron-builder --win nsis --publish never",
     "prepare:icon": "node desktop/prepare-icon.cjs"
   },
   "dependencies": {
