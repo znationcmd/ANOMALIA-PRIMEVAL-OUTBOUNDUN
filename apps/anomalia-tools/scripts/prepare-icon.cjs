@@ -1,6 +1,6 @@
 'use strict';
 // Génère les icônes Windows à partir du symbole du logo ANOMALIA Tools approuvé.
-// La source est un recadrage du logo original : lettre A et cube central, sans le texte.
+// La source est un recadrage du logo orange métallique : emblème A, engrenage, clé et tournevis.
 const fs=require('node:fs');
 const path=require('node:path');
 const {PNG}=require('pngjs');
