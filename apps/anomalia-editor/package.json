@@ -1,6 +1,6 @@
 {
   "name": "anomalia-editor",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "private": true,
   "description": "Éditeur de scènes 3D indépendant inspiré du flux de travail de DayZ Editor",
   "type": "module",
@@ -8,7 +8,7 @@
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "node --test tests/*.test.js",
+    "test": "node --test tests/*.test.js tests/*.test.cjs",
     "desktop:dev": "npm run build && npm run prepare:icon && electron .",
     "desktop:package": "npm run build && npm run prepare:icon && electron-builder --win nsis --publish never",
     "prepare:icon": "node desktop/prepare-icon.cjs"
