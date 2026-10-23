@@ -435,3 +435,7 @@ bindGameLibrary({
     toast('Secteur ANOMALIA ouvert : '+map.name);
   }
 });
+
+if ('serviceWorker' in navigator && !window.anomaliaDesktop && (location.protocol==='https:'||location.hostname==='localhost')) {
+  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}
