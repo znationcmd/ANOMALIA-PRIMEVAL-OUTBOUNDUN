@@ -186,3 +186,7 @@ footer{background:#0e1926;border-color:#32465a;color:#8297a9;height:40px;letter-
 }
 @media(max-height:790px){.shell{min-height:590px}.content{padding-top:17px}.workbench,.previewGrid{height:calc(100vh - 210px);min-height:310px}.hero{min-height:240px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{transition:none!important;animation:none!important}}
+
+/* Le logo officiel choisi par le propriétaire figure aussi dans l'interface. */
+.brandBadge{background:#162333 url('../assets/anomalia-tools-icon.png') center/cover no-repeat;border:1px solid #c9996b;box-shadow:0 0 0 1px #32291f,0 7px 22px #a96c4652}
+.brandBadge .brandSymbol,.brandBadge .brandPlus{display:none}
