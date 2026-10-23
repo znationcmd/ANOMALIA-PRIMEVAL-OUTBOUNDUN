@@ -4,14 +4,14 @@ const path=require('node:path');
 const {AnomaliaTools}=require('./core.cjs');
 let toolsApp;let win;
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
-  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod','openProjectFolder']);
+  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',webPreferences:{
       preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true
     }});
   win.setMenuBarVisibility(false);
-  win.loadFile(path.join(__dirname,'ui','index.html'));
+  win.loadFile(path.join(__dirname,'dist','index.html'));
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
 }
