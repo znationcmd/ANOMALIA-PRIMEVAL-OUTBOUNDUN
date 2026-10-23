@@ -1,0 +1,56 @@
+name: ANOMALIA Editor 0.4 - apercu visuel World Forge
+on:
+  push:
+    branches:
+      - feature/anomalia-editor-worldforge-dayz-workspace-20261023
+    paths:
+      - "apps/anomalia-editor/**"
+      - ".github/workflows/anomalia-editor-worldforge-visual.yml"
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    name: Captures de la vraie interface 1600x900 et 390x844
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/anomalia-editor
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Installer et tester le vrai code
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build
+      - name: Installer le navigateur Chromium de test
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Demarrer la veritable PWA Vite
+        shell: bash
+        run: |
+          npm run preview -- --host 127.0.0.1 > /tmp/anomalia-editor-vite.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4174/ >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/anomalia-editor-vite.log
+          exit 1
+      - name: Capturer interface Desktop reelle
+        run: |
+          mkdir -p screenshots
+          npx playwright screenshot --browser chromium --viewport-size "1600,900" --wait-for-timeout 1800 \
+            http://127.0.0.1:4174/ screenshots/worldforge-desktop-1600x900.png
+      - name: Capturer interface smartphone reelle
+        run: |
+          npx playwright screenshot --browser chromium --viewport-size "390,844" --wait-for-timeout 1800 \
+            http://127.0.0.1:4174/ screenshots/worldforge-mobile-390x844.png
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Editor-04-Preuves-Visuelles
+          path: apps/anomalia-editor/screenshots/*.png
+          if-no-files-found: error
