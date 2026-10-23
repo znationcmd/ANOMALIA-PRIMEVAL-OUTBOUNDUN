@@ -3,9 +3,11 @@ on:
   push:
     tags:
       - 'anomalia-editor/v*'
-  workflow_dispatch:
 permissions:
   contents: write
+concurrency:
+  group: anomalia-editor-public-release
+  cancel-in-progress: false
 
 jobs:
   windows-release:
