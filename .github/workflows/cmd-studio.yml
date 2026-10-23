@@ -1,0 +1,53 @@
+name: CMD Studio - tests & Windows
+on:
+  push:
+    paths:
+      - 'tools/cmd-studio/**'
+      - '.github/workflows/cmd-studio.yml'
+  pull_request:
+    paths:
+      - 'tools/cmd-studio/**'
+      - '.github/workflows/cmd-studio.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Tester la bibliothèque et les ponts locaux
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tools/cmd-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tests unitaires sans installation
+        run: node --test tests/*.test.js
+
+  windows:
+    name: Fabriquer l'installateur Windows
+    if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: tools/cmd-studio
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Installer les dépendances
+        run: npm install --no-audit --no-fund
+      - name: Tester
+        run: npm test
+      - name: Fabriquer l'installateur NSIS
+        run: npm run package:win
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CMD-Studio-Installateur-Windows
+          path: tools/cmd-studio/release/*.exe
+          if-no-files-found: error
