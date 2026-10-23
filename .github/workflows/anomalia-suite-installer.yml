@@ -100,6 +100,30 @@ jobs:
           $size=(Get-Item $bundle).Length
           if($size -lt 220000000){throw "Installateur suspect : taille insuffisante "+$size}
           Write-Host ("Installateur 3-en-1 termine : "+$size+" octets")
+      - name: Test reel du programme 3-en-1 sur ce Windows temporaire
+        shell: pwsh
+        run: |
+          $ErrorActionPreference="Stop"
+          $bundle=(Resolve-Path "release/Installer-ANOMALIA-Trois-Applications-AutoMAJ.exe").Path
+          Write-Host "Testing silent installation of the entire three-app suite..."
+          $job=Start-Process -FilePath $bundle -ArgumentList "/S" -PassThru -Wait
+          if($job.ExitCode -ne 0){throw "L'installation 3-en-1 a echoue (code "+$job.ExitCode+")"}
+          $entries=@(Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\Uninstall\*" -ErrorAction SilentlyContinue)
+          $names=@($entries | Where-Object { $_.DisplayName } | Select-Object -ExpandProperty DisplayName)
+          Write-Host ("Windows registered apps: "+($names -join ", "))
+          foreach($name in @("CMD Studio","ANOMALIA Editor","ANOMALIA Tools")){
+            if(-not @($names | Where-Object { $_ -like "*$name*" }).Count){
+              throw "L'application n'est pas enregistree apres l'installateur : "+$name
+            }
+            Write-Host ("INSTALLED "+$name)
+          }
+          $folder=Join-Path $env:LOCALAPPDATA "Programs"
+          if(-not(Test-Path $folder)){throw "Dossier Windows Programs absent"}
+          $updaterFiles=@(Get-ChildItem $folder -Filter "app-update.yml" -File -Recurse -ErrorAction SilentlyContinue)
+          if($updaterFiles.Count -lt 2){
+            throw "Les deux applications publiques ne contiennent pas leurs manifestes electron-updater"
+          }
+          Write-Host ("Auto-update manifests installed: "+$updaterFiles.Count)
       - uses: actions/upload-artifact@v4
         with:
           name: ANOMALIA-Installeur-Unique-3-Logiciels-AutoMAJ
