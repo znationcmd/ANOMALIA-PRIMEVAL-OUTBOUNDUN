@@ -119,7 +119,7 @@ textures, cartes et secteurs sont classés automatiquement d'après leur
 chemin et leurs extensions.
 
 - Modèles GLB réels : ajout volontaire dans la scène avec « Placer »,
-  jusqu'à 14 Mo par GLB, pour éviter de superposer tous les modèles.
+  jusqu'à 48 Mo par GLB, pour éviter de superposer tous les modèles.
 - Secteurs au format ANOMALIA JSON : ouverture après confirmation et
   sauvegarde de la scène précédente recommandée, jusqu'à 45 Mo.
 - Cartes Unreal .umap et ressources .uasset : visibles dans le catalogue,
@@ -143,3 +143,13 @@ mais n'importe pas tout le dépôt du jeu à partir d'Internet et ne
 télécharge pas d'assets soumis à licence sans autorisation.
 
 Tests : npm install, npm test, npm run build puis npm run desktop:package.
+
+**Optimisation :** les modèles placés depuis la Bibliothèque du jeu sont
+référencés par identifiant local plutôt que recopiés en base64 dans chaque
+objet. Un même GLB peut être utilisé plusieurs fois avec préchargement
+et clonage, ce qui évite de multiplier sa taille dans les sauvegardes.
+La scène contenant ces références dépend néanmoins du dossier lié : pour
+partager une carte avec une autre personne, fournir aussi les fichiers GLB
+correspondants et choisir le dossier correct dans sa version de l'éditeur.
+Les modèles GLB importés directement avec le bouton d'import classique
+continuent d'être intégrés à la scène comme auparavant.
