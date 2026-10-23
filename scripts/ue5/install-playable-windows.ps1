@@ -45,7 +45,7 @@ try {
     & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=300).returncode)' $exe "/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=$visualScope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaVisualReview=$visualProbe"
     if ($LASTEXITCODE -ne 0) { throw 'Installed imported-art process failed.' }
     $visualNative=Get-Content -LiteralPath $visualProbe -Raw | ConvertFrom-Json
-    if ($visualNative.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED' -or @($visualNative.screenshots).Count -ne 3) { throw 'Installed imported-art validation failed.' }
+    if ($visualNative.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED' -or @($visualNative.screenshots).Count -ne 8 -or -not $visualNative.dayAndNightCaptured) { throw 'Installed imported-art validation failed.' }
     foreach($image in $visualNative.screenshots) { if (-not (Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 10000) { throw 'Installed imported-art screenshot missing.' } }
     $report.installedVisualReview=$visualNative
     $observed=([IO.Path]::GetFullPath($native.savedDir)).TrimEnd('\','/')

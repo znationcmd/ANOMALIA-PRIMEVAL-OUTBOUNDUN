@@ -21,6 +21,9 @@ private:
     FVector Before=FVector::ZeroVector,CarStart=FVector::ZeroVector;
     TWeakObjectPtr<AAnomaliaSurvivor> Survivor;
     TWeakObjectPtr<AAnomaliaVehiclePawn> Car;
+    TArray<TWeakObjectPtr<AAnomaliaVehiclePawn>> Vehicles;
+    int32 VehicleIndex=0;
+    bool bNight=false;
     TArray<TWeakObjectPtr<ACameraActor>> Cameras;
     TArray<FString> Screenshots,Checks,MeshPaths;
     void Finish(const FString& Error=FString());

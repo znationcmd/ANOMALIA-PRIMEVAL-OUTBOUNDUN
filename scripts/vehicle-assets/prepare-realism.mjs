@@ -9,7 +9,7 @@ import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const registry=JSON.parse(await readFile(path.join(root,'docs/art/realism-validation-sources.json'),'utf8'));
 const cache=path.join(root,'unreal/Saved/RealismSourceCache');
-const output=path.join(root,'unreal/SourceAssets/RealismValidation_v1');await mkdir(output,{recursive:true});
+const output=path.join(root,'unreal/SourceAssets/RealismValidation_v2');await mkdir(output,{recursive:true});
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);
 const sha=b=>createHash('sha256').update(b).digest('hex');
 async function preserve(file,data){try{if(!Buffer.from(data).equals(await readFile(file)))throw Error('Existing prepared art preserved: '+file);}catch(e){if(e.code!=='ENOENT')throw e;await writeFile(file,data);}}
@@ -24,7 +24,14 @@ function plane(doc,id,terrain){
  }
  for(let z=0;z<n;z++)for(let x=0;x<n;x++){const a=z*(n+1)+x,b=a+1,c=a+n+1,d=c+1;indices.push(a,c,b,b,c,d);}
  const accessor=(type,data)=>doc.createAccessor().setType(type).setArray(data).setBuffer(buffer);
- return doc.createMesh(id).addPrimitive(doc.createPrimitive().setAttribute('POSITION',accessor(Accessor.Type.VEC3,new Float32Array(points))).setAttribute('NORMAL',accessor(Accessor.Type.VEC3,new Float32Array(normals))).setAttribute('TEXCOORD_0',accessor(Accessor.Type.VEC2,new Float32Array(uv))).setIndices(accessor(Accessor.Type.SCALAR,new Uint32Array(indices))).setMaterial(r.listMaterials()[0]));
+ const mesh=doc.createMesh(id).addPrimitive(doc.createPrimitive().setAttribute('POSITION',accessor(Accessor.Type.VEC3,new Float32Array(points))).setAttribute('NORMAL',accessor(Accessor.Type.VEC3,new Float32Array(normals))).setAttribute('TEXCOORD_0',accessor(Accessor.Type.VEC2,new Float32Array(uv))).setIndices(accessor(Accessor.Type.SCALAR,new Uint32Array(indices))).setMaterial(r.listMaterials()[0]));
+ if(!terrain){
+  const p=[],normal=[],tri=[];
+  const strip=(x,z0,z1,w)=>{const start=p.length/3;p.push(x-w/2,.004,z0,x+w/2,.004,z0,x-w/2,.004,z1,x+w/2,.004,z1);for(let i=0;i<4;i++)normal.push(0,1,0);tri.push(start,start+2,start+1,start+1,start+2,start+3);};
+  strip(-3.6,-100,100,.1);strip(3.6,-100,100,.1);for(let z=-96;z<96;z+=8)strip(0,z,z+3.5,.12);
+  mesh.addPrimitive(doc.createPrimitive().setAttribute('POSITION',accessor(Accessor.Type.VEC3,new Float32Array(p))).setAttribute('NORMAL',accessor(Accessor.Type.VEC3,new Float32Array(normal))).setIndices(accessor(Accessor.Type.SCALAR,new Uint32Array(tri))).setMaterial(doc.createMaterial('ANOMALIA road marking paint').setBaseColorFactor([.76,.75,.67,1]).setMetallicFactor(0).setRoughnessFactor(.85)));
+ }
+ return mesh;
 }
 const models=[],credits=['# ANOMALIA visual validation assets','Prepared for native review, not a declaration of final photorealism.','Powered by Poly Haven — https://polyhaven.com',''];
 for(const entry of registry.models){
@@ -56,6 +63,8 @@ for(const entry of registry.models){
  }
  for(const n of scene.listChildren())scene.removeChild(n);
  scene.addChild(doc.createNode(entry.id).setMesh(mesh));
+ // The truck source faces -X; orient its cabin toward glTF +Z before Unreal conversion.
+ if(entry.id==='box_truck')transformMesh(mesh,[0,0,-1,0,0,1,0,0,1,0,0,0,0,0,0,1]);
  for(const extension of r.listExtensionsUsed())if(extension.extensionName==='KHR_materials_variants')extension.dispose();
  await doc.transform(prune());
  let bounds=getBounds(scene);
@@ -63,6 +72,7 @@ for(const entry of registry.models){
  bounds=getBounds(scene);const dims=bounds.max.map((v,i)=>v-bounds.min[i]);
  if(entry.id==='detached_house' && (Math.max(...dims)<10||Math.max(...dims)>20))throw Error('House scale not in metres');
  if(entry.id==='concept_car' && (Math.max(...dims)<3||Math.max(...dims)>7))throw Error('Car scale not in metres');
+ if(entry.id==='box_truck' && (Math.max(...dims)<6||Math.max(...dims)>10))throw Error('Truck scale not in metres');
  const bytes=await io.writeBinary(doc);await preserve(path.join(output,entry.id+'.glb'),bytes);
  const triangles=mesh.listPrimitives().reduce((s,p)=>s+(p.getIndices()?.getCount()||p.getAttribute('POSITION').getCount())/3,0);
  models.push({id:entry.id,file:entry.id+'.glb',sha256:sha(bytes),bytes:bytes.length,triangles,dimensionsMetresYUp:dims,objectPath:'/Game/Anomalia/VisualValidation_v1/'+entry.id+'/SM_'+entry.id,source:entry.source,author:entry.author,license:entry.license,licenseUrl:entry.licenseUrl});

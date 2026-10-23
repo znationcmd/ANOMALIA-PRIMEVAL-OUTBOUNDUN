@@ -29,10 +29,10 @@ try:
     visual_receipt=out/('realism-scene-'+uuid.uuid4().hex+'.json')
     os.environ['ANOMALIA_REALISM_SCENE_REPORT']=str(visual_receipt)
     run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
-         '-abslog='+str(out/'create-realism-editor.log'),'-run=pythonscript',
-         '-script='+str(ROOT/'unreal/Scripts/create_realism_validation.py')],'create-realism',900)
+         '-abslog='+str(out/'create-realism-editor.log'),
+         '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/create_realism_validation.py')],'create-realism',900)
     visual_scene=json.loads(visual_receipt.read_text(encoding='utf-8'))
-    if visual_scene.get('state')!='REALISM_VALIDATION_MAP_SAVED_NOT_PLAYTESTED' or visual_scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or len(visual_scene.get('models',[]))!=7:
+    if visual_scene.get('state')!='REALISM_VALIDATION_MAP_SAVED_NOT_PLAYTESTED' or visual_scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or len(visual_scene.get('models',[]))!=8:
         raise RuntimeError('Fresh imported-art scene receipt missing or invalid')
     report['visualScene']=visual_scene
     visual_map='/Game/Maps/ANOMALIA_VisualValidation_v1'
@@ -65,7 +65,7 @@ try:
     run([exe,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
          '-AnomaliaVisualReview='+str(visual_probe),'-abslog='+str(out/'packaged-visual-engine.log')],'packaged-visual',300)
     visual=json.loads(visual_probe.read_text(encoding='utf-8-sig'))
-    if visual.get('state')!='PACKAGED_VISUAL_REVIEW_PASSED' or len(visual.get('screenshots',[]))!=3:
+    if visual.get('state')!='PACKAGED_VISUAL_REVIEW_PASSED' or len(visual.get('screenshots',[]))!=8 or not visual.get('dayAndNightCaptured'):
         raise RuntimeError('Real Windows visual review failed: '+visual.get('error','missing screenshots'))
     if any(not Path(p).is_file() or Path(p).stat().st_size<10000 for p in visual['screenshots']):raise RuntimeError('Missing actual Windows visual capture')
     report['visualReview']=visual

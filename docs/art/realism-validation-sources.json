@@ -269,6 +269,22 @@
           "bytes": 11778688
         }
       ]
+    },
+    {
+      "id": "box_truck",
+      "source": "https://www.innerscene.com/tools/library/3d-parts/7-5-t-class-box-truck-with-roll-up-door-12baea66",
+      "author": "Innerscene",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://www.innerscene.com/tools/library/terms",
+      "sourceFile": "validation-box-truck.glb",
+      "files": [
+        {
+          "path": "validation-box-truck.glb",
+          "url": "https://www.innerscene.com/api/library/7-5-t-class-box-truck-with-roll-up-door-12baea66/download",
+          "sha256": "2ad07a090e66c58c637599df23cb6b71fc6cae3ba58d37460b942f9ce8b93a27",
+          "bytes": 6063184
+        }
+      ]
     }
   ]
 }

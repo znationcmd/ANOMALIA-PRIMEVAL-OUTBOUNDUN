@@ -3,6 +3,11 @@
 #include "AnomaliaVehiclePawn.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
+#include "Engine/DirectionalLight.h"
+#include "Engine/SkyLight.h"
+#include "Components/DirectionalLightComponent.h"
+#include "Components/SkyLightComponent.h"
+#include "Components/LightComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "Camera/CameraActor.h"
@@ -30,6 +35,7 @@ void AAnomaliaVisualReviewProbe::Finish(const FString& Error)
     auto Array=[](const TArray<FString>& Values){TArray<TSharedPtr<FJsonValue>> Result;for(const auto& V:Values)Result.Add(MakeShared<FJsonValueString>(V));return Result;};
     Report->SetArrayField(TEXT("screenshots"),Array(Screenshots));Report->SetArrayField(TEXT("checks"),Array(Checks));Report->SetArrayField(TEXT("loadedMeshPaths"),Array(MeshPaths));
     Report->SetBoolField(TEXT("finalPhotorealismApproved"),false);
+    Report->SetBoolField(TEXT("dayAndNightCaptured"),bNight && Screenshots.Num()==8);
     Report->SetNumberField(TEXT("measuredCameraFrames"),MeasuredFrames);
     Report->SetNumberField(TEXT("averageFrameMs"),MeasuredFrames>0?MeasuredSeconds*1000/MeasuredFrames:0);
     Report->SetNumberField(TEXT("worstFrameMs"),WorstFrame*1000);
@@ -59,7 +65,7 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
             if(!It->ActorHasTag(TEXT("ANOMALIA_VisualValidation_v1_Owner")))continue;
             // Editor camera visualization meshes are not visible scene art.
             if(auto* Camera=Cast<ACameraActor>(*It)){Cameras.Add(Camera);continue;}
-            if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(*It))Car=Vehicle;
+            if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(*It))Vehicles.Add(Vehicle);
             if(auto* Component=It->FindComponentByClass<UStaticMeshComponent>())
             {
                 UStaticMesh* Mesh=Component->GetStaticMesh();if(!Mesh){Finish(TEXT("Missing cooked review art"));return;}
@@ -73,8 +79,11 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
                 House|=Path.Contains(TEXT("/detached_house/"));Terrain|=Path.Contains(TEXT("/forest_ground_04/"));Road|=Path.Contains(TEXT("/asphalt_02/"));
             }
         }
-        if(!House||!Terrain||!Road||Trees<18||Grass<24||Rocks<3||MeshPaths.Num()!=7||Cameras.Num()!=3||!Car.IsValid()||Car->Body->GetStaticMesh()!=Car->PresentationMeshOverride.Get())
+        bool VehicleArt=Vehicles.Num()==2;
+        for(const auto& Vehicle:Vehicles)VehicleArt&=Vehicle.IsValid() && Vehicle->PresentationMeshOverride && Vehicle->Body->GetStaticMesh()==Vehicle->PresentationMeshOverride.Get();
+        if(!House||!Terrain||!Road||Trees<18||Grass<24||Rocks<3||MeshPaths.Num()!=8||Cameras.Num()!=4||!VehicleArt)
         {Finish(TEXT("Incomplete imported-art review scene or vehicle binding"));return;}
+        Car=Vehicles[0];
         Checks.Add(TEXT("cooked_house_tree_grass_rock_terrain_road_and_detailed_car"));
         Checks.Add(TEXT("no_engine_basic_shape_fallbacks_in_review_scene"));
         Before=Survivor->GetActorLocation();PC->SetControlRotation(FRotator::ZeroRotator);Input(EKeys::W,IE_Pressed);Next=Now+1;Phase=1;return;
@@ -97,20 +106,36 @@ void AAnomaliaVisualReviewProbe::Tick(float Dt)
     if(Phase==3)
     {
         if(PC->GetPawn()!=Survivor.Get()){Finish(TEXT("Detailed vehicle exit failed"));return;}
-        Checks.Add(TEXT("detailed_vehicle_enter_accelerate_exit_preserves_survivor"));
+        Checks.Add(TEXT("detailed_")+Car->VehicleId.ToString()+TEXT("_enter_accelerate_exit_preserves_survivor"));
         Car->Movement->StopMovementImmediately();Car->SetActorLocation(CarStart,false,nullptr,ETeleportType::TeleportPhysics);
+        if(++VehicleIndex<Vehicles.Num())
+        {
+            Car=Vehicles[VehicleIndex];CarStart=Car->GetActorLocation();
+            Survivor->SetActorLocation(CarStart+FVector(0,220,100),false,nullptr,ETeleportType::TeleportPhysics);
+            if(!Car->EnterVehicle(PC,Survivor.Get())){Finish(TEXT("Detailed truck cannot be entered"));return;}
+            Input(EKeys::W,IE_Pressed);Next=Now+1;Phase=2;return;
+        }
         Survivor->SetActorLocation(FVector(6000,-6000,150),false,nullptr,ETeleportType::TeleportPhysics);
         Phase=4;
     }
     if(Phase==4)
     {
-        if(Shot>=Cameras.Num()){Finish();return;}
+        if(Shot>=Cameras.Num())
+        {
+            if(bNight){Checks.Add(TEXT("actual_day_and_night_camera_captures"));Finish();return;}
+            for(TActorIterator<ADirectionalLight> It(GetWorld());It;++It)if(It->ActorHasTag(TEXT("ReviewSun")))
+            {It->SetActorRotation(FRotator(35,-45,0));It->GetLightComponent()->SetIntensity(.08f);}
+            for(TActorIterator<ASkyLight> It(GetWorld());It;++It)if(It->ActorHasTag(TEXT("ReviewSky")))It->GetLightComponent()->SetIntensity(.08f);
+            for(TActorIterator<AActor> It(GetWorld());It;++It)if(It->ActorHasTag(TEXT("ReviewNightLight")))
+                if(auto* Light=It->FindComponentByClass<ULightComponent>())Light->SetVisibility(true);
+            bNight=true;Shot=0;Next=Now+6;return;
+        }
         PC->SetViewTarget(Cameras[Shot].Get());Next=Now+4;Phase=5;return;
     }
     if(Phase==5)
     {
         FString File;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaVisualReview="),File);
-        const FString Image=FPaths::Combine(FPaths::GetPath(File),FString::Printf(TEXT("visual-review-%d.png"),Shot));
+        const FString Image=FPaths::Combine(FPaths::GetPath(File),FString::Printf(TEXT("visual-review-%s-%d.png"),bNight?TEXT("night"):TEXT("day"),Shot));
         FScreenshotRequest::RequestScreenshot(Image,false,false);Screenshots.Add(Image);Next=Now+2;Phase=6;return;
     }
     if(Phase==6)

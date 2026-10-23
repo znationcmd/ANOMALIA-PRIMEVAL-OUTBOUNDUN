@@ -19,6 +19,7 @@ A separate map, `/Game/Maps/ANOMALIA_VisualValidation_v1`, uses these pinned sou
 | Forest Ground 04 | Poly Haven | CC0 | Original undulating ANOMALIA terrain, tiled source PBR maps |
 | Asphalt 02 | Poly Haven | CC0 | Original ANOMALIA road geometry, tiled source PBR maps |
 | Car Concept | Eric Chadwick / Darmstadt Graphics Group GmbH, 2024 | CC BY 4.0 | Detailed static body/interior on existing vehicle pawn; excluded logo texture removed |
+| 7.5 t box truck | Innerscene original | CC0 | Detailed cabin/interior and body on the existing transport-truck pawn |
 
 Full URLs, source sizes and SHA-256 digests are in `realism-validation-sources.json`.
 Prepared data stays outside git; the Windows runner downloads matching sources,
@@ -30,7 +31,7 @@ vehicle replacements are not completed by this batch.
 
 ## Verification and delivery gates
 
-Seven prepared GLBs pass structural glTF validation with zero errors. Foliage and
+The initial seven prepared GLBs passed structural glTF validation with zero errors. Foliage and
 surface UV warnings still require actual image review. Distant mesh LODs are built
 inside Unreal to keep detailed source meshes from rendering at full density afar.
 
@@ -60,3 +61,22 @@ input remain compatible. Oxygen and consciousness are not fabricated: their
 underlying systems still need implementation/integration. The complete requested
 main menu, Editor, Tools and Mods overhaul remains separate work; no inactive
 button is added to imply those systems are completed.
+
+## 23 October extension
+
+The demonstration now includes the pinned 7.5-tonne box truck with seats, dashboard
+and cabin details, on the existing transport-truck pawn. Its source faces -X, so
+geometry is oriented before Unreal import. The road includes original edge lines
+and centre dashes over the licensed asphalt material.
+
+The review exercises entry, acceleration and exit of both detailed vehicles, then
+captures four viewpoints in daylight and again at night with exterior lighting.
+Observed frame times accompany the eight real screenshots. This does not claim
+final Chaos suspensions, wheel animation, doors, sounds or accurate vehicle collision
+hulls; the existing prototype movement remains until those systems are replaced.
+
+The first import identified that `StaticMeshEditorSubsystem` is unavailable in the
+Python commandlet context. Scene assembly now runs in the full Editor Python
+context, with a fresh receipt still required. Prepared v2 sources and `_r2` canonical
+assets preserve earlier partial outputs; map ownership is saved before assembly,
+and owned partial maps can resume without deleting previous actors or saves.

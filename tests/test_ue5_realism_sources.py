@@ -9,8 +9,8 @@ prepare=importlib.util.module_from_spec(spec);spec.loader.exec_module(prepare)
 class RealismSourceTests(unittest.TestCase):
     def test_registry_pins_every_download_and_license(self):
         models=json.loads((ROOT/'docs/art/realism-validation-sources.json').read_text())['models']
-        self.assertEqual(len(models),7)
-        self.assertEqual(len({m['id']for m in models}),7)
+        self.assertEqual(len(models),8)
+        self.assertEqual(len({m['id']for m in models}),8)
         for model in models:
             self.assertIn(model['license'],{'CC0-1.0','CC-BY-4.0'})
             self.assertTrue(model['author'])
