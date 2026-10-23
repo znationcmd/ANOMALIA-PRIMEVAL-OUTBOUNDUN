@@ -43,3 +43,7 @@ L'édition du code est locale et non exécutable. Les ressources peuvent peser j
 Pour compiler un vrai mod jouable dans ANOMALIA, il faudra un SDK du jeu, des modules Unreal, un workflow de packaging UE5, des versions validées des assets et des tests dans le jeu. Cette première version prépare les données ; elle ne remplace pas Unreal Engine, Blender ou les outils de production professionnels.
 
 Les trois applications restent séparées : CMD Studio, ANOMALIA Editor, ANOMALIA Tools.
+
+## Icône officielle Windows — 0.1.1
+
+Le logo ANOMALIA Tools métallique orange/noir sélectionné est utilisé pour l'exécutable, l'installateur NSIS, les raccourcis du Bureau/menu Démarrer et la fenêtre/barre des tâches Windows. L'icône carrée reprend le symbole A, l'engrenage et les outils croisés du logo original pour rester lisible à petite taille. Le script `npm run prepare:icon` convertit `assets/anomalia-tools-icon.png` en `assets/anomalia-tools.ico` multi-résolutions (16 à 256 px). Réinstaller la version 0.1.1 pour actualiser l'icône. Aucune autre application CMD ou ANOMALIA n'est modifiée.
