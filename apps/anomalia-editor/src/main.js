@@ -6,6 +6,7 @@ import { createEditorMesh } from './meshes.js';
 import './style.css';
 import './updates-ui.js';
 import './workspace-layout.js';
+import { bindGameLibrary } from './game-library-ui.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -133,6 +134,17 @@ async function addModel(file,position={x:0,y:0,z:0}){
   const mesh=await createEditorMesh(item);
   const next=addToProject(history.project,item);
   if(history.commit(next)){objects.add(mesh);meshed.set(item.id,mesh);afterCommit();applySelection(item.id);}
+}
+async function addLinkedModel(item,position={x:0,y:0,z:0}){
+  if(history.project.objects.length>=4000)throw Error('Secteur saturé : utilise plusieurs secteurs ANOMALIA.');
+  if(!item.canPlace||item.kind!=='glb')throw Error('Seuls les vrais modèles GLB présents dans le dossier lié peuvent être placés.');
+  const object=makeObject('linked-glb',position,{libraryId:item.id,filename:item.name});
+  const mesh=await createEditorMesh(object);
+  const next=addToProject(history.project,object);
+  if(history.commit(next)){
+    objects.add(mesh);meshed.set(object.id,mesh);
+    afterCommit();applySelection(object.id);
+  }
 }
 async function rebuild(project) {
   const token=++rebuildToken;
@@ -408,3 +420,18 @@ async function start(){
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
 start();
+bindGameLibrary({
+  notify:toast,
+  placeGLB:async item=>{
+    await addLinkedModel(item,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
+    toast('Ressource liée ajoutée : '+item.name);
+  },
+  openMap:async text=>{
+    const map=validateProject(JSON.parse(text));
+    history.reset(map);
+    selectedId=null;
+    await rebuild(map);
+    afterCommit();
+    toast('Secteur ANOMALIA ouvert : '+map.name);
+  }
+});

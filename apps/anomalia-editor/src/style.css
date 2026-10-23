@@ -72,3 +72,32 @@
   .tools{min-width:0}
 }
 @media(max-height:750px){.catalog{max-height:27%;min-height:70px}.paneHeading{padding-top:12px;padding-bottom:10px}.top{height:65px}.railButton{min-height:49px}}
+
+
+/* Bibliothèque de jeu synchronisée — vrai inventaire du dossier de ressources. */
+.gameLibraryDock{border-top:1px solid #354e66;background:linear-gradient(155deg,#182a3d,#122235);flex:none;min-height:0}
+.gameLibraryDock .paneHeading{padding:12px 13px 9px}
+.gameLibraryDock .paneHeading strong{font-size:12px;color:#dbeaf8}
+.gameLibraryDock .paneOverline{font-size:8px;color:#c4a3ff}
+.gameLibraryDock .paneHeading>span{display:grid;place-items:center;min-width:24px;height:24px;border:1px solid #66809b;background:#233e58;border-radius:7px;font-weight:800;color:#cde7ff}
+.gameLibraryActions{display:flex;gap:7px;padding:4px 11px 7px}
+.gameLibraryActions button{border-radius:8px;min-height:34px;padding:7px 9px;font-size:10px}
+.gameLibraryActions button:first-child{flex:1;min-width:0;background:linear-gradient(110deg,#4d6bd4,#5352b4);border:1px solid #a5a6ff;color:#fff;font-weight:750}
+.gameLibraryActions button:last-child{width:35px;font-size:16px;color:#c4d9ff}
+.gameLibraryPath{padding:0 12px;color:#829fb6;line-height:1.55;font-size:9px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.gameLibraryMetrics{display:flex;flex-wrap:wrap;gap:5px;margin:9px 11px}
+.gameLibraryMetrics span{background:#20354a;border:1px solid #385773;border-radius:6px;padding:4px 6px;font-size:9px;color:#a8cbe0}
+#gameAssetSearch,#gameAssetCategory{display:block;width:calc(100% - 22px);margin:6px 11px;padding:7px 9px;font-size:10px;border-radius:7px;min-width:0}
+#gameAssetCategory{margin-top:7px;color:#bdcde1}
+.gameLibraryItems{height:clamp(100px,16vh,195px);overflow-y:auto;scrollbar-color:#516b85 #172639;scrollbar-width:thin;margin:8px 9px;border:1px solid #344d65;background:#102034;border-radius:9px}
+.gameLibraryItem{display:flex;align-items:center;gap:5px;justify-content:space-between;min-width:0;padding:8px;border-bottom:1px solid #294358}
+.gameLibraryItem:last-child{border-bottom:0}
+.gameLibraryItem:hover{background:#263f59}
+.gameItemMeta{flex:1;min-width:0;overflow:hidden}
+.gameItemMeta strong{display:block;font-size:10px;font-weight:750;color:#d9e8f7;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.gameItemMeta small{display:block;color:#8ca7bf;margin-top:3px;font-size:9px}
+.gameLibraryItem button{flex:none;font-size:9px;padding:6px 8px;color:#fff;background:#3b5281;border-color:#758dd6;border-radius:6px}
+.gameLibraryItem button:disabled{border-color:#3c4f61;background:#203346;color:#7d9aaf}
+.gameLibraryStatus{padding:8px 11px 10px;color:#9ab4c5;border-top:1px solid #354b61;font-size:9px;line-height:1.55}
+.libraryNotice{padding:12px;color:#94a9c3;font-size:10px;line-height:1.65}
+@media(max-height:900px){.gameLibraryItems{height:110px}.gameLibraryDock .paneHeading{padding:8px 11px 6px}.gameLibraryMetrics{margin:6px 11px}}

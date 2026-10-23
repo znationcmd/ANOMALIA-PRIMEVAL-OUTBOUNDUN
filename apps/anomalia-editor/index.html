@@ -28,6 +28,16 @@
       <div id="categoryBar" class="categories"></div>
       <div id="catalog" class="catalog"></div>
       <div class="leftBottom"><button id="importModel" class="wide accent">＋ Importer un modèle GLB</button><div class="hint"><span class="privacyDot"></span> Import local sécurisé · aucun transfert</div></div>
+      <section class="gameLibraryDock" id="gameLibraryDock" aria-label="Ressources synchronisées du jeu">
+        <div class="paneHeading borderTop"><div><span class="paneOverline">ANOMALIA / LIVE RESOURCES</span><strong>Bibliothèque du jeu</strong></div><span id="gameLibraryCount">0</span></div>
+        <div class="gameLibraryActions"><button type="button" id="linkGameFolder" class="dockAccent">Lier les fichiers ANOMALIA</button><button type="button" id="refreshGameFolder" title="Actualiser le catalogue">↻</button></div><div class="gameLibraryActions"><button type="button" id="importGamePack" class="dockAccent" title="Importer les véritables fichiers GLB, textures et licences depuis une archive ZIP téléchargée">＋ Importer un pack 3D ZIP</button></div>
+        <div id="gameLibraryFolder" class="gameLibraryPath">Aucun dossier lié — choisis le dossier des modèles téléchargés ou du projet Unreal.</div>
+        <div class="gameLibraryMetrics"><span id="gameModelsCount">0 modèles</span><span id="gameMapsCount">0 cartes</span><span id="gameUnreadableCount">0 fichiers Unreal</span></div>
+        <input id="gameAssetSearch" placeholder="Véhicule, bâtiment, route, objet, carte..." maxlength="120" aria-label="Filtrer les ressources synchronisées">
+        <select id="gameAssetCategory" aria-label="Catégorie des ressources synchronisées"><option value="">Toutes les catégories</option></select>
+        <div id="gameLibraryItems" class="gameLibraryItems"><div class="libraryNotice">Le catalogue se mettra à jour automatiquement toutes les 45 secondes après la première association d'un dossier.</div></div>
+        <div id="gameLibraryStatus" class="gameLibraryStatus" role="status" aria-live="polite">Les ressources restent sur ton ordinateur. Aucune copie automatique n’est ajoutée à ta scène.</div>
+      </section>
       <div class="paneHeading borderTop"><div><span class="paneOverline">SCENE OUTLINER</span><strong>Hiérarchie</strong></div><span id="count">0 objet</span></div>
       <div id="hierarchy" class="hierarchy"></div>
     </aside>

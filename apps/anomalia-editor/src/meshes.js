@@ -1,5 +1,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
+const linkedModels=new Map();
 
 const mats = {
   wall:new THREE.MeshStandardMaterial({color:'#b5b9be',roughness:.9}),
@@ -115,7 +117,23 @@ function decodeBase64(base64) {
 export async function createEditorMesh(item) {
   const group=new THREE.Group();
   group.userData.editorId=item.id;group.name=item.name;
-  if(item.preset==='custom-glb'){
+  if(item.preset==='linked-glb'){
+    const api=window.anomaliaDesktop?.gameLibrary;
+    if(!api)throw new Error('Ressource liée disponible uniquement dans ANOMALIA Editor Windows.');
+    let loaded=linkedModels.get(item.asset.libraryId);
+    if(!loaded){
+      const payload=await api.read(item.asset.libraryId);
+      if(payload.kind!=='glb')throw new Error('Ce fichier lié n’est plus un GLB valide.');
+      const data=decodeBase64(payload.data);
+      const gltf=await new GLTFLoader().parseAsync(data,'');
+      loaded=gltf.scene;
+      linkedModels.set(item.asset.libraryId,loaded);
+      if(linkedModels.size>16)linkedModels.delete(linkedModels.keys().next().value);
+    }
+    const copy=cloneSkeleton(loaded);
+    group.add(copy);
+    copy.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;}});
+  } else if(item.preset==='custom-glb'){
     try {
       const data=decodeBase64(item.asset.data);
       const gltf=await new GLTFLoader().parseAsync(data,'');
