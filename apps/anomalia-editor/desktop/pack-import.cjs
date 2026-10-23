@@ -70,6 +70,37 @@ async function unzipSafe(filename,destination){
     zip.readEntry();
   });
 }
+async function verifyKnownManifests(directory){
+  const candidates=[
+    path.join(directory,'conversion-receipt.json'),
+    path.join(directory,'manifest.json')
+  ];
+  for(const dir of await fs.promises.readdir(directory,{withFileTypes:true})){
+    if(dir.isDirectory())candidates.push(path.join(directory,dir.name,'manifest.json'));
+  }
+  let verified=0;
+  for(const file of candidates){
+    let stat;
+    try{stat=await fs.promises.stat(file);}catch{continue;}
+    if(!stat.isFile()||stat.size>3*1024*1024)throw Error('Manifeste de ressources trop volumineux.');
+    const manifest=JSON.parse(await fs.promises.readFile(file,'utf8'));
+    if(!Array.isArray(manifest.models))continue;
+    const parent=path.dirname(file);
+    for(const model of manifest.models){
+      if(!model||typeof model.file!=='string'||typeof model.sha256!=='string'||!(/^[a-f0-9]{64}$/.test(model.sha256)))
+        throw Error('Manifeste de ressources invalide.');
+      const target=path.join(parent,...safeEntry(model.file));
+      const real=await fs.promises.realpath(target);
+      const relative=path.relative(parent,real);
+      if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('Manifeste hors dossier autorisé.');
+      const info=await fs.promises.stat(real);
+      if(model.bytes!==undefined&&info.size!==model.bytes)throw Error('Taille invalide : '+model.file);
+      if(await digest(real)!==model.sha256)throw Error('Empreinte SHA-256 non conforme : '+model.file);
+      verified++;
+    }
+  }
+  return verified;
+}
 async function importArchive(filename,base){
   const resolved=path.resolve(filename);
   const stat=await fs.promises.lstat(resolved);
@@ -85,8 +116,9 @@ async function importArchive(filename,base){
   await fs.promises.mkdir(staging,{recursive:true});
   try{
     const result=await unzipSafe(resolved,staging);
+    const verified=await verifyKnownManifests(staging);
     await fs.promises.rename(staging,target);
-    return {duplicate:false,folder:target,sha256:hash,...result};
+    return {duplicate:false,folder:target,sha256:hash,verified,...result};
   }catch(e){
     await fs.promises.rm(staging,{recursive:true,force:true});
     throw e;
