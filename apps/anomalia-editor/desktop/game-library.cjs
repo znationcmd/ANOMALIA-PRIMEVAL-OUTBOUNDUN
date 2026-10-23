@@ -5,7 +5,7 @@ const os=require('node:os');
 const crypto=require('node:crypto');
 const {importArchive}=require('./pack-import.cjs');
 
-const ACCEPTED=new Set(['.glb','.gltf','.fbx','.obj','.usd','.usdz','.blend','.uasset','.umap','.png','.jpg','.jpeg','.webp','.tga']);
+const ACCEPTED=new Set(['.glb','.gltf','.fbx','.obj','.usd','.usdz','.blend','.uasset','.umap','.mhmat','.mhclo','.png','.jpg','.jpeg','.webp','.tga']);
 const IGNORE=new Set(['.git','.svn','node_modules','Binaries','Intermediate','Saved','DerivedDataCache','Build','dist','release','.vs','__pycache__']);
 const MAX_ENTRIES=35000;
 function category(name,kind){
@@ -16,7 +16,7 @@ function category(name,kind){
   if(/road|route|street|highway|bridge|pont|tunnel|rail|railway|track|sidewalk|pavement/.test(s))return 'Routes et infrastructures';
   if(/tree|arbre|pine|foliage|grass|herbe|rock|rocher|vegetation|forest|bush|nature|jungle/.test(s))return 'Nature';
   if(/texture|material|albedo|normal|roughness|metallic|basecolor|diffuse|_n\.|_d\./.test(s))return 'Matériaux et textures';
-  if(/weapon|gun|item|loot|food|nourriture|medical|medicine|vetement|cloth|money|argent|drug|drogue/.test(s))return 'Objets et équipements';
+  if(/weapon|gun|item|loot|food|nourriture|medical|medicine|vetement|cloth|money|argent|drug|drogue|dress|shoe|gloves?|hats?|suit|helmet|pants?|boots?|jacket|shirt|socks?|shirt|currency|euro|dollar|mh_clo|mh_dress|mh_shoes|mh_hats/.test(s))return 'Objets et équipements';
   return 'Autres ressources';
 }
 function kindFor(filename){
