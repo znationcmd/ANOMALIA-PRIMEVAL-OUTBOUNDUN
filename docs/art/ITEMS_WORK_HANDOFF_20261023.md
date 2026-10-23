@@ -21,3 +21,13 @@ Modèles ci-dessous repérés sur des fiches/index publics. Vérifier individuel
 - Accessoires fictifs pack : https://sketchfab.com/3d-models/drug-pack-af40636101a3437786e2998f96b716f4
 
 Ces pistes ne couvrent pas toute la demande : poursuivre vêtements, nourriture, médicaments, monnaie, accessoires, véhicules et bâtiments manquants en préservant les exclusions déjà enregistrées.
+
+## Récupération reproductible depuis le dépôt
+
+L'enregistrement durable des archives a échoué à l'étape de préparation. Les sources restent récupérables exactement grâce au reçu versionné. Depuis la racine du dépôt :
+
+```sh
+python scripts/ue5/restore-registered-item-sources.py
+```
+
+Le script restaure les URL et SHA-256 consignés vers unreal/Saved/ItemSourceCache, préserve les fichiers existants qui diffèrent et copie l'importeur à côté du reçu. Il n'importe rien dans UE. Dans Unreal Editor, exécuter ensuite unreal/Saved/ItemSourceCache/import_sources_ue5.py. Les 49 modèles originaux ont passé les vérifications de dépendances, textures et indices de géométrie (179 primitives). Les trois archives ont passé leur contrôle CRC ; l'importeur est vérifié syntaxiquement, pas exécuté dans UE.
