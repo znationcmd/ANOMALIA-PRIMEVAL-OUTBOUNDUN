@@ -5,6 +5,7 @@ import { PRESETS, History, newProject, makeObject, cloneProject, validateProject
 import { createEditorMesh } from './meshes.js';
 import './style.css';
 import './worldforge.css';
+import './world-real.css';
 import { createWorldForge } from './worldforge-ui.js';
 import { createTerrainWorld } from './terrain-world.js';
 import { bindWorldSources } from './world-source-ui.js';
@@ -16,8 +17,8 @@ import { bindGameLibrary } from './game-library-ui.js';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#10202a');
-scene.fog = new THREE.Fog('#10202a',115,350);
+scene.background = new THREE.Color('#86adb4');
+scene.fog = new THREE.FogExp2('#b0c4bb',.002);
 const stage = $('#viewport');
 const camera = new THREE.PerspectiveCamera(58,1,.1,1600);
 camera.position.set(25,23,28);
