@@ -7,9 +7,11 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import path from 'node:path';
 import {fileURLToPath} from 'node:url';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
-const registry=JSON.parse(await readFile(path.join(root,'docs/art/world-features-sources.json'),'utf8'));
-const input=path.join(root,'unreal/SourceAssets/WorldFeatures1');
-const output=path.join(root,'unreal/SourceAssets/WorldFeaturesPrepared_v1');
+const residential=process.argv.slice(2).includes('--residential');
+if(process.argv.slice(2).some(a=>a!=='--residential'))throw Error('Unknown preparation option');
+const registry=JSON.parse(await readFile(path.join(root,residential?'docs/art/residential-photogrammetry-sources.json':'docs/art/world-features-sources.json'),'utf8'));
+const input=path.join(root,residential?'unreal/SourceAssets/ResidentialPhotogrammetry_v1':'unreal/SourceAssets/WorldFeatures1');
+const output=path.join(root,residential?'unreal/SourceAssets/ResidentialPhotogrammetryPrepared_v1':'unreal/SourceAssets/WorldFeaturesPrepared_v1');
 await mkdir(output,{recursive:true});
 const sha=b=>createHash('sha256').update(b).digest('hex');
 async function preserve(file,data){
@@ -17,7 +19,7 @@ async function preserve(file,data){
  catch(e){if(e.code!=='ENOENT')throw e;await writeFile(file,data);}
 }
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS),models=[];
-const credits=['# World features for ANOMALIA','Distribution: AllenAI Objaverse, ODC-By. https://huggingface.co/datasets/allenai/objaverse',
+const credits=[residential?'# Photogrammetry buildings for ANOMALIA':'# World features for ANOMALIA','Distribution: AllenAI Objaverse, ODC-By. https://huggingface.co/datasets/allenai/objaverse',
  'Individual model licenses follow. Static transforms baked and geometry bottom centred; original source files retained.',
  'Units preserved from sources. Physical scale, access, collision and visual quality require native review.',''];
 for(const item of registry.models){
@@ -47,7 +49,7 @@ for(const item of registry.models){
  const bytes=await io.writeBinary(doc);await preserve(path.join(output,item.file),bytes);
  models.push({...item,sha256:sha(bytes),bytes:bytes.length,originalSha256:item.sha256,
   dimensionsSourceUnitsYUp:dims,triangles:mesh.listPrimitives().reduce((s,p)=>s+(p.getIndices()?.getCount()||p.getAttribute('POSITION').getCount())/3,0),
-  omittedLinePrimitives,state:'PREPARED_NOT_IMPORTED',objectPath:'/Game/Anomalia/WorldFeaturesReview_v1/'+item.id+'/SM_'+item.id});
+  omittedLinePrimitives,state:'PREPARED_NOT_IMPORTED',objectPath:(residential?'/Game/Anomalia/ResidentialPhotogrammetryReview_v1/':'/Game/Anomalia/WorldFeaturesReview_v1/')+item.id+'/SM_'+item.id});
  credits.push('## '+item.name,item.author,item.source,item.license+' — '+item.licenseUrl,
   'Changes: baked static transforms, bottom-centred geometry; omitted '+omittedLinePrimitives+' non-surface line primitives.','');
  console.log(item.id,bytes.length,dims);

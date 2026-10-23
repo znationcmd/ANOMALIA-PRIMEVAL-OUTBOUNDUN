@@ -4,11 +4,15 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import uuid
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-BASE = ROOT / 'unreal/SourceAssets/WorldFeatures1'
+RESIDENTIAL = '--residential' in sys.argv[1:]
+if any(arg != '--residential' for arg in sys.argv[1:]):
+    raise ValueError('Unknown acquisition option')
+BASE = ROOT / ('unreal/SourceAssets/ResidentialPhotogrammetry_v1' if RESIDENTIAL else 'unreal/SourceAssets/WorldFeatures1')
 
 def fetch(item):
     if item['license'] != 'CC-BY-4.0':
@@ -35,7 +39,7 @@ def fetch(item):
         part.unlink(missing_ok=True)
 
 def main():
-    registry = json.loads((ROOT / 'docs/art/world-features-sources.json').read_text())
+    registry = json.loads((ROOT / ('docs/art/residential-photogrammetry-sources.json' if RESIDENTIAL else 'docs/art/world-features-sources.json')).read_text())
     BASE.mkdir(parents=True, exist_ok=True)
     with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
         list(pool.map(fetch, registry['models']))

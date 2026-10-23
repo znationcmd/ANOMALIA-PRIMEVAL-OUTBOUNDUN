@@ -10,9 +10,13 @@ from pathlib import Path
 import unreal
 
 ROOT = Path(unreal.Paths.project_dir()).resolve()
-BASE = ROOT / 'SourceAssets/WorldFeaturesPrepared_v1'
-PACKAGE = '/Game/Maps/ANOMALIA_WorldFeaturesReview_v1'
-OWNER = unreal.Name('ANOMALIA_WorldFeaturesReview_v1')
+SOURCE_SET = os.environ.get('ANOMALIA_WORLD_FEATURE_SET', 'world-features')
+if SOURCE_SET not in ('world-features', 'residential-photogrammetry'):
+    raise RuntimeError('Unknown review source set')
+RESIDENTIAL = SOURCE_SET == 'residential-photogrammetry'
+BASE = ROOT / ('SourceAssets/ResidentialPhotogrammetryPrepared_v1' if RESIDENTIAL else 'SourceAssets/WorldFeaturesPrepared_v1')
+PACKAGE = '/Game/Maps/ANOMALIA_ResidentialPhotogrammetryReview_v1' if RESIDENTIAL else '/Game/Maps/ANOMALIA_WorldFeaturesReview_v1'
+OWNER = unreal.Name('ANOMALIA_ResidentialPhotogrammetryReview_v1' if RESIDENTIAL else 'ANOMALIA_WorldFeaturesReview_v1')
 OUT = Path(os.environ['ANOMALIA_WORLD_FEATURES_REPORT'])
 report = dict(state='FAILED', sourceCommit=os.environ.get('GITHUB_SHA'), map=PACKAGE,
               placedInArchipelago=False, scaleValidated=False, playtested=False, models=[])
