@@ -17,7 +17,7 @@ function createWindow() {
     width: 1440, height: 900, minWidth: 980, minHeight: 630,
     backgroundColor: '#0c0b18',
     title: 'CMD Studio — Game Creator',
-    icon: path.join(__dirname, 'resources', 'cmd-studio.ico'),
+    icon: path.join(__dirname, 'resources', 'cmd-studio-256.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
