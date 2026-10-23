@@ -33,7 +33,7 @@ jobs:
       - name: Demarrer la veritable PWA Vite
         shell: bash
         run: |
-          npm run preview -- --host 127.0.0.1 > /tmp/anomalia-editor-vite.log 2>&1 &
+          npm run preview -- --host 127.0.0.1 --port 4174 > /tmp/anomalia-editor-vite.log 2>&1 &
           for i in $(seq 1 45); do
             if curl -fsS http://127.0.0.1:4174/ >/dev/null; then exit 0; fi
             sleep 2
