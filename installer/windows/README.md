@@ -25,3 +25,39 @@ Aucune session de ChatGPT ne peut prendre la main sur l'ordinateur et exécuter 
 - Le dépôt GitHub est actuellement **public**. L'artefact de compilation peut donc être accessible à d'autres utilisateurs connectés à GitHub ; cette solution ne garantit pas l'exclusivité de distribution de CMD Studio. Pour vraiment restreindre CMD Studio à une seule personne, il faut une distribution privée, à traiter séparément.
 
 Pour refaire l'installateur, modifier les identifiants de workflow et les noms de fichiers dans `.github/workflows/anomalia-suite-installer.yml` et `installer/windows/suite.nsi` puis relancer le workflow sur la branche dédiée.
+
+
+## Mise à niveau unique depuis les trois versions 0.1.1
+
+Cet installateur a été mis à jour pour **recouvrir les installations existantes**
+sans les désinstaller manuellement :
+
+- CMD Studio : de 0.1.1 vers **0.2.1** (client de mise à jour privé intégré)
+- ANOMALIA Editor : de 0.1.1 vers **0.3.0** (client de mise à jour public intégré)
+- ANOMALIA Tools : de 0.1.1 vers **0.2.0** (client de mise à jour public intégré)
+
+Il embarque les trois vrais installateurs NSIS construits séparément dans
+GitHub Actions. Le programme exécute successivement chaque Setup via `/S`
+et arrête la séquence en cas d'erreur. **Fermer les trois applications avant
+de l'exécuter.** Il préserve les répertoires de données des logiciels : ce
+n'est pas une garantie absolue de conservation, il faut exporter les projets
+importants avant toute grosse mise à niveau.
+
+**Différence importante :** 0.1.1 n'intègre aucun client de mise à jour, donc
+on ne peut pas lui envoyer de mises à jour à distance depuis GitHub. Cette
+première mise à niveau nécessite forcément l'exécution locale d'un programme,
+soit volontairement par double-clic, soit par Work local sous le contrôle
+et l'autorisation de l'utilisateur.
+
+Pour les mises à jour **suivantes**, les clients embarqués vérifieront
+automatiquement les versions. Mais les canaux de publication ne sont pas
+encore tous actifs : GitHub Releases `anomalia-editor-latest` et
+`anomalia-tools-latest` ont encore besoin d'une première publication ;
+CMD Studio doit disposer de son serveur privé, de jetons et de clés de
+publication. La seule présence du client sur le PC ne suffit pas.
+
+**Confidentialité** : cet artefact combiné est construit dans un dépôt
+GitHub public et inclut CMD Studio personnel. Il n'assure pas une
+distribution privée de CMD Studio. Pour une distribution strictement privée,
+la génération d'un bundle doit se faire dans un espace de publication privé.
+Aucune application ne doit envoyer les fichiers utilisateurs à GitHub.

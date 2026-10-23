@@ -1,8 +1,8 @@
-name: ANOMALIA - Installateur unique Windows
+name: ANOMALIA - Mise a niveau unique depuis 0.1.1
 on:
   push:
     branches:
-      - feature/anomalia-suite-one-click-install-20261023
+      - feature/anomalia-one-time-upgrade-from-011-20261023
     paths:
       - 'installer/windows/**'
       - '.github/workflows/anomalia-suite-installer.yml'
@@ -16,27 +16,27 @@ permissions:
   actions: read
 jobs:
   installer:
-    name: Assembler le programme d'installation unique
+    name: Assembler le programme unique de mise a niveau
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          run-id: 39932307272
+          run-id: 39946723991
           name: CMD-Studio-Installateur-Windows
           repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
           github-token: ${{ github.token }}
           path: installers/studio
       - uses: actions/download-artifact@v4
         with:
-          run-id: 39934271449
+          run-id: 39960918861
           name: ANOMALIA-Editor-Installateur-Windows
           repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
           github-token: ${{ github.token }}
           path: installers/editor
       - uses: actions/download-artifact@v4
         with:
-          run-id: 39938400505
+          run-id: 39965724784
           name: ANOMALIA-Tools-Installateur-Windows
           repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
           github-token: ${{ github.token }}
@@ -45,9 +45,9 @@ jobs:
         shell: pwsh
         run: |
           $expected = @(
-            "installers/studio/CMD Studio Setup 0.1.1.exe",
-            "installers/editor/ANOMALIA Editor Setup 0.1.1.exe",
-            "installers/tools/ANOMALIA Tools Setup 0.1.1.exe"
+            "installers/studio/CMD Studio Setup 0.2.1.exe",
+            "installers/editor/ANOMALIA Editor Setup 0.3.0.exe",
+            "installers/tools/ANOMALIA Tools Setup 0.2.0.exe"
           )
           foreach ($file in $expected) {
             if (!(Test-Path -LiteralPath $file)) { throw "Installateur manquant : $file" }
@@ -70,11 +70,11 @@ jobs:
           $root = (Get-Location).Path
           & "${env:ProgramFiles(x86)}\NSIS\makensis.exe" "/V3" "/DREPO_ROOT=$root" "installer\windows\suite.nsi"
           if ($LASTEXITCODE -ne 0) { throw "Compilation NSIS echouee" }
-          if (!(Test-Path -LiteralPath "release/Installer-ANOMALIA-3-applications.exe")) {
+          if (!(Test-Path -LiteralPath "release/Mise-a-jour-ANOMALIA-depuis-011.exe")) {
             throw "Installateur final non trouve"
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: Installateur-ANOMALIA-3-Applications
-          path: release/Installer-ANOMALIA-3-applications.exe
+          name: Mise-a-niveau-ANOMALIA-3-Applications
+          path: release/Mise-a-jour-ANOMALIA-depuis-011.exe
           if-no-files-found: error
