@@ -21,3 +21,16 @@ Sources : https://static.makehumancommunity.org/assets/assetpacks.html ; https:/
 Unités : https://static.makehumancommunity.org/makehuman/docs/exports_and_file_formats.html
 
 UE : https://dev.epicgames.com/documentation/unreal-engine/importing-assets-using-interchange-in-unreal-engine
+
+## Livraison et reproduction
+
+Archive enregistrée : ANOMALIA_Items_Vetements_Batch2_UE5.zip, 345535874 octets, 104 GLB. Identifiant du fichier conservé dans asset-sourcing-register.json. Contrôle CRC réussi. Scripts vérifiés syntaxiquement ; géométrie de chaque GLB rechargée avec nombre de triangles conservé, indices dans les limites et coordonnées finies.
+
+Pour refaire la préparation depuis les sources officielles, utiliser Python avec trimesh==5.1.1, numpy==2.3.5, Pillow==12.3.0 et py7zr==1.1.4. Copier docs/art/item-source-batch2-download-receipt-20261023.json vers unreal/Saved/ItemBatch2/pinned-source-receipt.json pour activer la vérification des fichiers d'origine, puis :
+
+```sh
+python scripts/ue5/download-item-batch2.py unreal/Saved/ItemBatch2
+python scripts/ue5/prepare-item-batch2-glb.py unreal/Saved/ItemBatch2
+```
+
+Copier scripts/ue5/import-item-batch2.py à côté de conversion-receipt.json, puis l'exécuter dans Unreal Editor. Aucun import n'est lancé par les deux commandes de préparation. Vérifier le rapport avant de relier les assets au gameplay. Les vêtements historiques et fantaisie du pack ne doivent pas remplacer automatiquement les vêtements modernes demandés.
