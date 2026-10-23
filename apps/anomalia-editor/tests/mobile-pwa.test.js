@@ -22,6 +22,6 @@ test('panneaux 3D accessibles au tactile et positionnement local sauvegardé',()
 });
 test('éditeur natif Windows continue de garder les vrais outils',()=>{
  const source=read('src/main.js');
- for(const fn of ['addModel','createEditorMesh','saveProject','rebuild'])assert.ok(source.includes(fn));
+ for(const fn of ['addModel','createEditorMesh','validateProject','rebuild'])assert.ok(source.includes(fn));
  assert.match(source,/window.anomaliaDesktop/);
 });
