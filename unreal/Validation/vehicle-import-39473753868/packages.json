@@ -1,0 +1,28 @@
+{
+  "engine": "5.8.3",
+  "sourceCommit": "55085294c10904a445529a2918a27b8243bcbb64",
+  "run": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39473753868",
+  "artifactId": 12289136623,
+  "packages": [
+    {
+      "path": "unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/Materials/01_-_Default.uasset",
+      "bytes": 67803,
+      "sha256": "915372bc1c9978e424dfd9c60daaccfdded0ca865a846c0ae64491acd9f3e4f3"
+    },
+    {
+      "path": "unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/StaticMeshes/airliner_prepared.uasset",
+      "bytes": 239072,
+      "sha256": "ec1e084ac43c1c3d3e3119bed4240ca05781a53e8327f376397ad71e862f1915"
+    },
+    {
+      "path": "unreal/Content/Anomalia/Vehicles/Imports/airliner_297925c2bf8e4fc49e6646afc9495825/airliner_prepared/Textures/UV_1KLM_random01_no_logo.uasset",
+      "bytes": 697969,
+      "sha256": "257c37b8e89463ade6a235634da3b6f141d206b00c8d3249f13f0e0d89a43401"
+    },
+    {
+      "path": "unreal/Content/Anomalia/Vehicles/airliner/SM_airliner.uasset",
+      "bytes": 239558,
+      "sha256": "d4a0f0ebdcf27b004d1a6dbf0b849a457b1eed1c169758098217645923a0b332"
+    }
+  ]
+}

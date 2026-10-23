@@ -1,0 +1,88 @@
+{
+  "state": "REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED",
+  "sourceCommit": "91bfbbfadd3536b4e31152c7c955a6c53368859d",
+  "mapPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+  "requestedRHI": "D3D11 SM5",
+  "headless": false,
+  "screenshots": [
+    {
+      "file": "01_archipelago.png",
+      "sha256": "f23c906f89c8780610a00b6195b148a6373576799bdeea72d97d8828bd57d716",
+      "bytes": 467199,
+      "cameraCm": [
+        0,
+        0,
+        3200000
+      ],
+      "targetCm": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "02_snow_mountains.png",
+      "sha256": "d7742d1a397ce82a5c7144926b6d4a70442f4ef5c6c707f83f6db1a3b3e4a93e",
+      "bytes": 534945,
+      "cameraCm": [
+        -800000,
+        -1020000,
+        250000
+      ],
+      "targetCm": [
+        -575000,
+        -725000,
+        160000
+      ]
+    },
+    {
+      "file": "03_beach.png",
+      "sha256": "ec9f50c24022d3519bcfd23332cc5e9710c71a45eed2bd23370e2de17e675024",
+      "bytes": 502208,
+      "cameraCm": [
+        -1690000,
+        1020000,
+        1800
+      ],
+      "targetCm": [
+        -1660000,
+        985000,
+        600
+      ]
+    },
+    {
+      "file": "04_desert.png",
+      "sha256": "c2e1d078c2ebe42c92c1cc0116ed946dab9fc0e7f023c2cee77f39a38f370c91",
+      "bytes": 540129,
+      "cameraCm": [
+        1580000,
+        1190000,
+        11000
+      ],
+      "targetCm": [
+        1630000,
+        1230000,
+        4500
+      ]
+    },
+    {
+      "file": "05_detroit_bridge.png",
+      "sha256": "da2f255b1ef770923e6776e3f435daaab95c16dcec471fb5676c576a01641a74",
+      "bytes": 511667,
+      "cameraCm": [
+        1450000,
+        840000,
+        30000
+      ],
+      "targetCm": [
+        1475000,
+        900000,
+        3200
+      ]
+    }
+  ],
+  "gameplayValidated": false,
+  "performanceValidated": false,
+  "editorSlateDeltaMeanMs": 50.20726784721188,
+  "timingScope": "Editor Slate callback timing, not a gameplay FPS benchmark"
+}

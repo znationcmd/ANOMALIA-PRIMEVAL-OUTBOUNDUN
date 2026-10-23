@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "requestDate": "2026-10-21",
+  "addsToExistingGroupedRequests": 210,
+  "request": "Métro avec ses wagons, en plus de tous les véhicules militaires déjà demandés",
+  "vehicleId": "metro",
+  "coachModelId": "metro_wagon",
+  "defaultTrailingCoaches": 3,
+  "artState": "ORIGINAL_GEOMETRY_PROTOTYPE",
+  "movementState": "SERVER_OWNED_COACHES_FOLLOW_ROUTE_SPLINE",
+  "nativeCurvedRouteTest": "PASSED_IN_RUN_39618230923",
+  "nativeArtImport": "PASSED_IN_RUN_39618230923_TWO_MESHES_AND_GPU_CAPTURES",
+  "passengerTransportTested": false,
+  "doorsAnimated": false,
+  "sweptFullConsistCollisionTested": false,
+  "multiplayerTested": false,
+  "note": "Historic military reference art and generic military prototypes do not satisfy every exact military variant. All earlier requests remain outstanding until individually verified."
+}

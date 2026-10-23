@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Category": "Games",
-  "Description": "ANOMALIA PRIMEVAL OUTBOUNDUN — Unreal Engine 5 migration (C++ foundation)",
+  "Description": "ANOMALIA PRIMEVAL OUTBOUNDUN \u2014 Unreal Engine 5 migration (C++ foundation)",
   "Modules": [
     {
       "Name": "AnomaliaPrimeval",
@@ -24,6 +24,22 @@
     },
     {
       "Name": "PCG",
+      "Enabled": true
+    },
+    {
+      "Name": "PythonScriptPlugin",
+      "Enabled": true
+    },
+    {
+      "Name": "InterchangeEditor",
+      "Enabled": true
+    },
+    {
+      "Name": "InterchangeAssets",
+      "Enabled": true
+    },
+    {
+      "Name": "EditorScriptingUtilities",
       "Enabled": true
     }
   ]

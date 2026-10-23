@@ -1,0 +1,135 @@
+#include "AnomaliaVitalsComponent.h"
+#include "AnomaliaSurvivor.h"
+#include "AnomaliaGameMode.h"
+#include "Engine/World.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Net/UnrealNetwork.h"
+
+UAnomaliaVitalsComponent::UAnomaliaVitalsComponent()
+{
+    PrimaryComponentTick.bCanEverTick = true;
+    SetIsReplicatedByDefault(true);
+}
+
+void UAnomaliaVitalsComponent::RequestSprint(bool bWanted)
+{
+    AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    if (!Survivor || !Survivor->IsLocallyControlled()) return;
+    if (Survivor->HasAuthority())
+    {
+        bSprintRequested = bWanted && Survivor->Health > 0.f;
+    }
+    else
+    {
+        ServerRequestSprint(bWanted);
+    }
+}
+
+void UAnomaliaVitalsComponent::ServerRequestSprint_Implementation(bool bWanted)
+{
+    const AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    if (!Survivor || !Survivor->HasAuthority() || !Survivor->GetController()) return;
+    // Network ownership of this character component is enforced by Unreal RPC routing.
+    bSprintRequested = bWanted && Survivor->Health > 0.f;
+}
+
+void UAnomaliaVitalsComponent::RestoreVitals(float SavedStamina, float SavedTemperatureC)
+{
+    const AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    if (!Survivor || !Survivor->HasAuthority() ||
+        !FMath::IsFinite(SavedStamina) || !FMath::IsFinite(SavedTemperatureC)) return;
+
+    Stamina = FMath::Clamp(SavedStamina, 0.f, 100.f);
+    BodyTemperatureC = FMath::Clamp(SavedTemperatureC, 25.f, 45.f);
+    bExhausted = Stamina <= 0.f;
+    bSprintRequested = false;
+    bIsSprinting = false;
+    ApplyMovementSpeed();
+    OnVitalsChanged();
+}
+
+void UAnomaliaVitalsComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    if (!Survivor || !Survivor->HasAuthority() || DeltaTime <= 0.f) return;
+
+    // Avoid a huge drain caused by a hitch/resume from Windows sleep.
+    const float Step = FMath::Min(DeltaTime, 0.25f);
+    const AAnomaliaGameMode* Rules = Survivor->GetWorld()
+        ? Cast<AAnomaliaGameMode>(Survivor->GetWorld()->GetAuthGameMode()) : nullptr;
+    const float Ambient = Rules ? Rules->ActiveServerSettings.AmbientTemperatureC : 20.f;
+
+    const float PreviousStamina = Stamina;
+    const float PreviousBodyTemperature = BodyTemperatureC;
+
+    // Coarse first-pass physiology: calibrated ambient-to-body equilibrium.
+    // No weather volumes, wetness or insulating clothes yet.
+    const float TargetTemperature = FMath::Clamp(37.f + (Ambient - 20.f) * 0.08f, 30.f, 43.f);
+    BodyTemperatureC = FMath::FInterpConstantTo(BodyTemperatureC, TargetTemperature, Step, 0.02f);
+
+    if (Survivor->Health <= 0.f)
+    {
+        bSprintRequested = false;
+    }
+    if (bExhausted && Stamina >= 25.f) bExhausted = false;
+
+    const bool bMoving = Survivor->GetVelocity().SizeSquared2D() > FMath::Square(75.f);
+    const bool bCanSprint = bSprintRequested && !bExhausted && Stamina > 0.f &&
+                            Survivor->Health > 0.f && bMoving;
+    if (bCanSprint)
+    {
+        Stamina = FMath::Max(0.f, Stamina - SprintDrainPerSecond * Step);
+        if (Stamina <= 0.f) bExhausted = true;
+    }
+    else
+    {
+        Stamina = FMath::Min(100.f, Stamina + StaminaRecoveryPerSecond * Step);
+    }
+
+    const bool bNewSprint = bCanSprint && !bExhausted;
+    if (bIsSprinting != bNewSprint)
+    {
+        bIsSprinting = bNewSprint;
+        ApplyMovementSpeed();
+    }
+
+    // Temperature damage is authoritative; client profiles cannot set it.
+    if (BodyTemperatureC < 35.f || BodyTemperatureC > 40.f)
+    {
+        Survivor->Health = FMath::Max(0.f, Survivor->Health - 0.15f * Step);
+        Survivor->OnSurvivalChanged();
+    }
+
+    if (!FMath::IsNearlyEqual(PreviousStamina, Stamina, 0.01f) ||
+        !FMath::IsNearlyEqual(PreviousBodyTemperature, BodyTemperatureC, 0.001f))
+    {
+        OnVitalsChanged();
+    }
+}
+
+void UAnomaliaVitalsComponent::ApplyMovementSpeed()
+{
+    AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
+    if (!Survivor || !Survivor->GetCharacterMovement()) return;
+    Survivor->GetCharacterMovement()->MaxWalkSpeed = bIsSprinting ? SprintWalkSpeed : 450.f;
+}
+
+void UAnomaliaVitalsComponent::OnRep_Vitals()
+{
+    OnVitalsChanged();
+}
+
+void UAnomaliaVitalsComponent::OnRep_Sprinting()
+{
+    ApplyMovementSpeed();
+    OnVitalsChanged();
+}
+
+void UAnomaliaVitalsComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(UAnomaliaVitalsComponent, Stamina);
+    DOREPLIFETIME(UAnomaliaVitalsComponent, BodyTemperatureC);
+    DOREPLIFETIME(UAnomaliaVitalsComponent, bIsSprinting);
+}

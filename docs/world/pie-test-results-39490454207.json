@@ -1,0 +1,669 @@
+﻿{
+	"devices": [
+		{
+			"deviceName": "CMD",
+			"instance": "93FA828C4F9D5A24731E02A61D31DD27",
+			"instanceName": "CMD-2372",
+			"platform": "WindowsEditor",
+			"oSVersion": "Windows 11 (25H2) [10.0.26200.9711] ",
+			"model": "Default",
+			"gPU": "Intel(R) Iris(R) Xe Graphics",
+			"cPUModel": "11th Gen Intel(R) Core(TM) i5-1155G7 @ 2.50GHz",
+			"rAMInGB": 16,
+			"renderMode": "SM6",
+			"rHI": "",
+			"appInstanceLog": ""
+		}
+	],
+	"reportCreatedOn": "2026.10.20-20.21.14",
+	"succeeded": 1,
+	"succeededWithWarnings": 0,
+	"failed": 0,
+	"notRun": 0,
+	"inProcess": 0,
+	"totalDuration": 163.934326171875,
+	"comparisonExported": false,
+	"comparisonExportDirectory": "",
+	"tests": [
+		{
+			"testDisplayName": "ArchipelagoPIE",
+			"fullTestPath": "Anomalia.World.ArchipelagoPIE",
+			"tags": [],
+			"state": "Success",
+			"deviceInstance": [
+				"93FA828C4F9D5A24731E02A61D31DD27"
+			],
+			"duration": 163.934326171875,
+			"dateTime": "2026.10.20-20.18.30",
+			"entries": [
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Actual PIE walking distance 735.4 cm; no rendered visual/performance validation",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.18.34"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 0 at x=1350023.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 1 at x=1355037.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 2 at x=1360049.0",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 3 at x=1365059.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 4 at x=1370071.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.13"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 5 at x=1375014.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.15"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 6 at x=1380003.5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 7 at x=1385065.3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.19"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 8 at x=1390000.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 9 at x=1395059.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 10 at x=1400047.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.25"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 11 at x=1405027.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.27"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 12 at x=1410073.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.29"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 13 at x=1415052.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 14 at x=1420006.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.33"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 15 at x=1425036.2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.35"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 16 at x=1430017.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.37"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 17 at x=1435002.0",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.39"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 18 at x=1440009.3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.41"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 19 at x=1445033.7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.43"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 20 at x=1450013.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.45"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 21 at x=1455013.4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.47"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 22 at x=1460076.3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.49"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 23 at x=1465053.4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.51"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 24 at x=1470040.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.53"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 25 at x=1475059.5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.55"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 26 at x=1480035.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.57"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 27 at x=1485024.4",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.19.59"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 28 at x=1490072.2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.01"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 29 at x=1495016.5",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.03"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 30 at x=1500009.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.05"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 31 at x=1505068.7",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.07"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 32 at x=1510018.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.09"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 33 at x=1515044.3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.11"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 34 at x=1520022.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.13"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 35 at x=1525001.2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.15"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 36 at x=1530004.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.17"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 37 at x=1535026.3",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.19"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 38 at x=1540052.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.21"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 39 at x=1545034.0",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.23"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 40 at x=1550065.2",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.25"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 41 at x=1555035.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.27"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 42 at x=1560053.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.29"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 43 at x=1565032.6",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.31"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 44 at x=1570027.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.33"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 45 at x=1575052.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.44"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 46 at x=1580025.9",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.46"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 47 at x=1585006.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.48"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 48 at x=1590026.1",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.50"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Crossed bridge span 49 at x=1595042.8",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.20.52"
+				},
+				{
+					"event":
+					{
+						"type": "Info",
+						"message": "Continuous accelerated PIE bridge crossing 3490.4 metres, 50 spans; test speed 25m/s; no vehicle or multiplayer validation",
+						"context": "",
+						"artifact": "00000000000000000000000000000000"
+					},
+					"filename": "",
+					"lineNumber": -1,
+					"timestamp": "2026.10.20-20.21.14"
+				}
+			],
+			"warnings": 0,
+			"errors": 0,
+			"artifacts": []
+		}
+	]
+}

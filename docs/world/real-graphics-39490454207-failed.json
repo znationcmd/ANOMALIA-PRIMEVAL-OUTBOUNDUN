@@ -1,0 +1,20 @@
+{
+  "state": "FAILED",
+  "headless": false,
+  "command": [
+    "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+    "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaPrimeval.uproject",
+    "-d3d11",
+    "-sm5",
+    "-RenderOffscreen",
+    "-unattended",
+    "-nopause",
+    "-nosound",
+    "-ResX=1280",
+    "-ResY=720",
+    "-ExecutePythonScript=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Scripts\\capture_real_world.py",
+    "-abslog=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39490454207-1\\real-graphics\\editor-render.log"
+  ],
+  "exitCode": 3,
+  "error": "Real GPU capture failed or incomplete; inspect native logs"
+}

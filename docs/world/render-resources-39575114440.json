@@ -1,0 +1,962 @@
+{
+  "state": "REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED",
+  "sourceCommit": "c855336156e5c874e59308bd26b1087c6b03f35d",
+  "mapPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+  "requestedRHI": "D3D11 SM5",
+  "headless": false,
+  "screenshots": [
+    {
+      "file": "01_archipelago.png",
+      "sha256": "9d22e62a48bde6dde0cbdd8fa2b56e895238c2032e4403d12e580bde5d5ec29e",
+      "bytes": 544021,
+      "cameraCm": [
+        0,
+        0,
+        3200000
+      ],
+      "targetCm": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "file": "02_snow_mountains.png",
+      "sha256": "8492d587c4318c5d4432924909ba035855f21f5f55ff50dabd8b737df81d36ef",
+      "bytes": 536877,
+      "cameraCm": [
+        -800000,
+        -1020000,
+        250000
+      ],
+      "targetCm": [
+        -575000,
+        -725000,
+        160000
+      ]
+    },
+    {
+      "file": "03_beach.png",
+      "sha256": "c16b1b422ffcb09b2736f5ffc6185543e35cb3e20e4d27b2db34765445b20fce",
+      "bytes": 536066,
+      "cameraCm": [
+        -1690000,
+        1020000,
+        1800
+      ],
+      "targetCm": [
+        -1660000,
+        985000,
+        600
+      ]
+    },
+    {
+      "file": "04_desert.png",
+      "sha256": "88a7c251dfd8942659916fd4c6a9dfa842391931aafce05568cab2ad873b7956",
+      "bytes": 520416,
+      "cameraCm": [
+        1580000,
+        1190000,
+        11000
+      ],
+      "targetCm": [
+        1630000,
+        1230000,
+        4500
+      ]
+    },
+    {
+      "file": "05_detroit_bridge.png",
+      "sha256": "0c78642fd3099ac9bc4a62e46132d4a6ec5ca8c1276db6c74f79604def5fba8b",
+      "bytes": 580502,
+      "cameraCm": [
+        1450000,
+        840000,
+        30000
+      ],
+      "targetCm": [
+        1475000,
+        900000,
+        3200
+      ]
+    }
+  ],
+  "gameplayValidated": false,
+  "performanceValidated": false,
+  "partitionDescriptors": {
+    "total": 306,
+    "requested": 302,
+    "classes": [
+      "<Object '/Script/Engine.DirectionalLight' (0x00007FF43B7D5770) Class 'Class'>",
+      "<Object '/Script/Engine.PlayerStart' (0x00007FF43B873470) Class 'Class'>",
+      "<Object '/Script/Engine.SkyAtmosphere' (0x00007FF43B843270) Class 'Class'>",
+      "<Object '/Script/Engine.SkyLight' (0x00007FF43B824FF0) Class 'Class'>",
+      "<Object '/Script/Engine.StaticMeshActor' (0x00007FF43B7C14F0) Class 'Class'>",
+      "<Object '/Script/Engine.WorldDataLayers' (0x00007FF43B7D4AF0) Class 'Class'>",
+      "<Object '/Script/Engine.WorldPartitionMiniMap' (0x00007FF43B894670) Class 'Class'>",
+      "<Object '/Script/Landscape.Landscape' (0x00007FF43B7C6770) Class 'Class'>",
+      "<Object '/Script/Landscape.LandscapeStreamingProxy' (0x00007FF43B7C5D70) Class 'Class'>"
+    ]
+  },
+  "landscapeDiagnostics": {
+    "proxies": 145,
+    "components": 576,
+    "actors": [
+      {
+        "label": "ANOMALIA_OriginalArchipelago_48km",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_3_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_7_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_6_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_4_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_2_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_9_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_6_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_8_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_8_2_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_11_4_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_3_11_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_10_0_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_5_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_7_10_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_1_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_1_5_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      },
+      {
+        "label": "LandscapeStreamingProxy_0_9_0",
+        "hiddenInEditor": false,
+        "hiddenInGame": false
+      }
+    ]
+  },
+  "renderResourceRefresh": {
+    "state": "REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED",
+    "componentCount": 576,
+    "uniqueHeightmaps": 576,
+    "missingHeightmaps": 0,
+    "all576BoundsCenteredAtMinus2048Meters": true,
+    "registeredComponents": 576,
+    "visibleComponents": 576,
+    "sampleComponents": [
+      {
+        "component": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.LandscapeComponent_68",
+        "registered": true,
+        "visible": true,
+        "bounds": "X=1700000.000 Y=-1900000.000 Z=-204800.000 extent=X=100000.000 Y=100000.000 Z=800.000",
+        "heightmap": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.Heightmap_0",
+        "textureWidth": 32,
+        "textureHeight": 32,
+        "sourceWidth": 128,
+        "sourceHeight": 128,
+        "resourceBefore": true,
+        "materialBefore": "/Game/Anomalia/World/Archipelago_v2/M_BiomeBase.M_BiomeBase"
+      },
+      {
+        "component": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.LandscapeComponent_92",
+        "registered": true,
+        "visible": true,
+        "bounds": "X=1700000.000 Y=-1700000.000 Z=-204800.000 extent=X=100000.000 Y=100000.000 Z=800.000",
+        "heightmap": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.Heightmap_2",
+        "textureWidth": 32,
+        "textureHeight": 32,
+        "sourceWidth": 128,
+        "sourceHeight": 128,
+        "resourceBefore": true,
+        "materialBefore": "/Game/Anomalia/World/Archipelago_v2/M_BiomeBase.M_BiomeBase"
+      },
+      {
+        "component": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.LandscapeComponent_69",
+        "registered": true,
+        "visible": true,
+        "bounds": "X=1900000.000 Y=-1900000.000 Z=-204800.000 extent=X=100000.000 Y=100000.000 Z=800.000",
+        "heightmap": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.Heightmap_4",
+        "textureWidth": 32,
+        "textureHeight": 32,
+        "sourceWidth": 128,
+        "sourceHeight": 128,
+        "resourceBefore": true,
+        "materialBefore": "/Game/Anomalia/World/Archipelago_v2/M_BiomeBase.M_BiomeBase"
+      },
+      {
+        "component": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.LandscapeComponent_93",
+        "registered": true,
+        "visible": true,
+        "bounds": "X=1900000.000 Y=-1700000.000 Z=-204800.000 extent=X=100000.000 Y=100000.000 Z=800.000",
+        "heightmap": "/Game/Maps/ANOMALIA_Archipelago_v2.ANOMALIA_Archipelago_v2:PersistentLevel.LandscapeStreamingProxy_3N0BYTWWUVH085YBJ5D3L33O3_252_10_1_0.Heightmap_6",
+        "textureWidth": 32,
+        "textureHeight": 32,
+        "sourceWidth": 128,
+        "sourceHeight": 128,
+        "resourceBefore": true,
+        "materialBefore": "/Game/Anomalia/World/Archipelago_v2/M_BiomeBase.M_BiomeBase"
+      }
+    ]
+  },
+  "cameraChecks": [
+    {
+      "view": "01_archipelago",
+      "alignment": 1.0,
+      "eyeCm": [
+        0.0,
+        0.0,
+        3200000.0
+      ],
+      "pitch": -90.0,
+      "yaw": 0.0,
+      "roll": 0.0
+    },
+    {
+      "view": "02_snow_mountains",
+      "alignment": 0.9999999999999999,
+      "eyeCm": [
+        -800000.0,
+        -1020000.0,
+        250000.0
+      ],
+      "pitch": -13.635405540466309,
+      "yaw": 52.666805267333984,
+      "roll": 0.0
+    },
+    {
+      "view": "03_beach",
+      "alignment": 1.0,
+      "eyeCm": [
+        -1690000.0,
+        1020000.0,
+        1800.0
+      ],
+      "pitch": -1.4911671876907349,
+      "yaw": -49.398704528808594,
+      "roll": 0.0
+    },
+    {
+      "view": "04_desert",
+      "alignment": 1.0,
+      "eyeCm": [
+        1580000.0,
+        1190000.0,
+        11000.0
+      ],
+      "pitch": -5.796407222747803,
+      "yaw": 38.65980911254883,
+      "roll": 0.0
+    },
+    {
+      "view": "05_detroit_bridge",
+      "alignment": 1.0000000000000002,
+      "eyeCm": [
+        1450000.0,
+        840000.0,
+        30000.0
+      ],
+      "pitch": -22.40673065185547,
+      "yaw": 67.38013458251953,
+      "roll": 0.0
+    }
+  ],
+  "editorSlateDeltaMeanMs": 49.87951265326861,
+  "timingScope": "Editor Slate callback timing, not a gameplay FPS benchmark",
+  "visualReview": "TERRAIN_STILL_MISSING",
+  "rawEvidenceArtifactId": 12333393990,
+  "rawEvidenceSHA256": "5af9f01116411fb2f0429ed985556f3b406a1ea46f9fcceb627f230be98bbedf"
+}

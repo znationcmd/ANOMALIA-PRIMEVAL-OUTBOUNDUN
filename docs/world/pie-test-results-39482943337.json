@@ -1,0 +1,44 @@
+{
+  "run": 39482943337,
+  "sourceCommit": "c3c287a2607ef6a926b0f9a225698913956ed773",
+  "tests": [
+    {
+      "testDisplayName": "ArchipelagoPIE",
+      "fullTestPath": "Anomalia.World.ArchipelagoPIE",
+      "tags": [],
+      "state": "Success",
+      "deviceInstance": [
+        "17208E5C44CF127DCE54629987103408"
+      ],
+      "duration": 13.753405570983887,
+      "dateTime": "2026.10.20-19.28.34",
+      "entries": [
+        {
+          "event": {
+            "type": "Info",
+            "message": "Actual PIE walking distance 730.7 cm; no rendered visual/performance validation",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.20-19.28.37"
+        },
+        {
+          "event": {
+            "type": "Info",
+            "message": "Actual PIE bridge walking distance 641.8 cm",
+            "context": "",
+            "artifact": "00000000000000000000000000000000"
+          },
+          "filename": "",
+          "lineNumber": -1,
+          "timestamp": "2026.10.20-19.28.48"
+        }
+      ],
+      "warnings": 0,
+      "errors": 0,
+      "artifacts": []
+    }
+  ]
+}

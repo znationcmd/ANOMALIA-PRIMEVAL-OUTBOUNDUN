@@ -1,24 +1,314 @@
 name: UE5 native build (engine host required)
 on:
   workflow_dispatch:
+  push:
+    branches: ['ue5/integrate-world-homestead-20261020']
+    paths:
+      - 'unreal/**'
+      - 'scripts/ue5/**'
+      - 'scripts/vehicle-assets/**'
+      - 'scripts/military-assets/**'
+      - 'docs/vehicles/military-assets-sources.json'
+      - 'docs/vehicles/named-assets-sources.json'
+      - 'distribution/windows-editor/**'
+      - '.github/workflows/ue5-native-build.yml'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
 jobs:
   compile:
-    # Explicit dispatch only: public pull requests must not execute on this host.
+    # Trusted repository branch pushes only. Never execute public PR code on this host.
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/ue5/integrate-world-homestead-20261020')
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 120
     permissions:
       contents: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
       - name: Compile Editor and Game with installed Unreal Engine
-        shell: powershell
+        id: native_build
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
+          $ErrorActionPreference = 'Stop'
           if (-not $env:UE_ROOT) { throw 'Set UE_ROOT on the UE5 build host.' }
-          python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --run-tests
+          $enginePython = Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (-not (Test-Path -LiteralPath $enginePython)) { throw 'Unreal bundled Python is missing.' }
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output $evidence --run-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import vehicle model and verify native presentation binding
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -ItemType Directory -Path $evidence -Force | Out-Null
+          $env:ANOMALIA_VEHICLE_IMPORT_REPORT = Join-Path $evidence 'vehicle-import.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/import_vehicle_models.py'
+          $logPath = Join-Path $evidence 'vehicle-import.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          if (-not (Test-Path -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT)) { throw 'Vehicle import did not produce a report.' }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_VEHICLE_IMPORT_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -ne 'IMPORTED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or @($result.models).Count -ne 1 -or -not $result.models[0].nativePresentationBound) { throw 'Vehicle import or native model binding failed.' }
+      - name: Create original 48km archipelago in Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $map = Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap'
+          if (Test-Path -LiteralPath $map) {
+            $priorReports = Get-ChildItem 'unreal/Saved/BuildValidation/run-*/archipelago-world.json' -ErrorAction SilentlyContinue
+            $verified = @($priorReports | ForEach-Object { Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json } | Where-Object { $_.state -eq 'LEVEL_CREATED_NOT_PLAYTESTED' -and $_.mapPackage -eq '/Game/Maps/ANOMALIA_Archipelago_v2' -and $_.landscapeComponents -eq 576 -and $_.collisionComponents -eq 576 })
+            if ($verified.Count -eq 0) { throw 'Existing map preserved, but no successful creation report exists; inspect before modifying it.' }
+            Write-Host 'Previously created archipelago map preserved without modifications; this is not a new playtest.' 
+          } else {
+            $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+            $env:ANOMALIA_WORLD_REPORT = Join-Path $evidence 'archipelago-world.json'
+            $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+            $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+            $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_archipelago_world.py'
+            $logPath = Join-Path $evidence 'archipelago-world.log'
+            & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+            if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+            if (-not (Test-Path -LiteralPath $env:ANOMALIA_WORLD_REPORT)) { throw 'No native world report.' }
+            $result = Get-Content -LiteralPath $env:ANOMALIA_WORLD_REPORT -Raw | ConvertFrom-Json
+            if ($result.state -ne 'LEVEL_CREATED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA -or $result.landscapeComponents -ne 576 -or $result.collisionComponents -ne 576) { throw 'World generation failed.' }
+          }
+      - name: Import original bridge and append its spans to validated world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_BRIDGE_REPORT = Join-Path $evidence 'detroit-bridge.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_detroit_bridge.py'
+          $logPath = Join-Path $evidence 'detroit-bridge.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_BRIDGE_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('PLACED_NOT_PLAYTESTED','EXISTING_PLACEMENTS_PRESERVED') -or $result.spanCount -ne 50) { throw 'Bridge placement failed.' }
+      - name: Append terrain-following bridge access roads
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_ROADS_REPORT = Join-Path $evidence 'detroit-roads.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_bridge_roads.py'
+          $logPath = Join-Path $evidence 'detroit-roads.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_ROADS_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('PLACED_NOT_PLAYTESTED','EXISTING_PLACEMENTS_PRESERVED') -or $result.roadCount -ne 2) { throw 'Road placement failed.' }
+      - name: Test actual Play In Editor terrain collision movement and inventory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/run-world-playtest.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Capture real graphical Unreal views in DX11 SM5
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Generate import and capture 33 original vehicle and building prototypes
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/setup-node@v4
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        with:
+          node-version: '22'
+      - name: Prepare isolated project asset Python without system installation
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $enginePython scripts/military-assets/bootstrap-python.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare and import 36 credited car artist variants into separate review bays
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/NamedVehicles1 "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/named-gltf-structure.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
+          Copy-Item 'unreal/SourceAssets/NamedVehicles1/CREDITS.md' 'unreal/Content/ThirdPartyNotices/NamedVehicles1-CREDITS.md'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group NamedVehicles1 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare and import seven credited military visual references
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $assetPython = $env:ANOMALIA_ASSET_PYTHON_EXE
+          & $assetPython scripts/military-assets/prepare.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/Military1 "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/military-gltf-structure.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          New-Item -ItemType Directory -Force 'unreal/Content/ThirdPartyNotices' | Out-Null
+          Copy-Item 'unreal/SourceAssets/Military1/CREDITS.md' 'unreal/Content/ThirdPartyNotices/Military1-CREDITS.md'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group Military1 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import additional Humvee LCAC and Seawolf references
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          & $env:ANOMALIA_ASSET_PYTHON_EXE scripts/military-assets/prepare.py --group Military2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/Military2 "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/military-extra-gltf-structure.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          Copy-Item 'unreal/SourceAssets/Military2/CREDITS.md' 'unreal/Content/ThirdPartyNotices/Military2-CREDITS.md'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group Military2 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import original metro lead and coach and capture real GPU views
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-expansion-models.py --group Metro1 --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create separate closed metro track with native train and three runtime coaches
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_METRO_RAIL_REPORT = Join-Path $evidence 'metro-rail-review.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_metro_rail_review.py'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$evidence/metro-rail-review.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_METRO_RAIL_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('METRO_RAIL_REVIEW_CREATED_NOT_DRIVE_TESTED','EXISTING_METRO_RAIL_REVIEW_PRESERVED_NOT_DRIVE_TESTED') -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Metro review map creation failed.' }
+      - name: Import eight original models and test real GPU views and building collisions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/ue5/validate-original-lot1.py --engine-root "$env:UE_ROOT" --output $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Create independent urban review block with 28 buildings and open pool recesses
+        if: ${{ !cancelled() && steps.native_build.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_SETTLEMENT_REPORT = Join-Path $evidence 'urban-review.json'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_settlement_review.py'
+          $logPath = Join-Path $evidence 'urban-review.log'
+          & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result = Get-Content -LiteralPath $env:ANOMALIA_SETTLEMENT_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -notin @('URBAN_REVIEW_CREATED_NOT_PLAYTESTED','EXISTING_URBAN_REVIEW_PRESERVED_NOT_PLAYTESTED') -or $result.buildingCount -ne 28 -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Urban review generation failed.' }
+      - name: Collect exact Windows editor fault module without altering system settings
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/collect-editor-crash-info.ps1 -OutputPath (Join-Path $evidence 'editor-crash-modules.json')
+      - name: Retain read-only editor shutdown diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-editor-crash-diagnostics
+          path: unreal/Saved/BuildValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/editor-crash-modules.json
+          if-no-files-found: warn
+      - name: Install validated project and automatic PC update shortcuts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir $evidence
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Retain native compiler evidence
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: ue5-native-build-evidence
-          path: unreal/Saved/BuildValidation/
+          path: unreal/Saved/BuildValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/
           if-no-files-found: warn
+      - name: Retain imported vehicle assets with their materials
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-imported-vehicle-assets
+          path: |
+            unreal/Content/Anomalia/Vehicles/
+            unreal/Content/ThirdPartyNotices/
+          if-no-files-found: error
+      - name: Retain original archipelago map and external actors
+        if: success()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ue5-archipelago-world
+          path: |
+            unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap
+            unreal/Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2/
+            unreal/Content/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/
+            unreal/Content/Anomalia/World/Archipelago_v2/
+            unreal/Content/Anomalia/Infrastructure/Bridge/
+            unreal/Content/Anomalia/Infrastructure/Roads/
+            unreal/Content/Maps/ANOMALIA_AssetsShowcase_v1.umap
+            unreal/Content/Anomalia/Buildings/Lot1/
+            unreal/Content/Anomalia/OriginalImports/
+            unreal/SourceAssets/Expansion1/
+            unreal/SourceAssets/Metro1/
+            unreal/SourceAssets/NamedVehicles1/
+            unreal/SourceAssets/Military1/
+            unreal/SourceAssets/Military2/
+            unreal/Content/Anomalia/Military2/
+            unreal/Content/Maps/ANOMALIA_MilitaryExtraReview_v1.umap
+            unreal/Content/Anomalia/Military1/
+            unreal/Content/Maps/ANOMALIA_MilitaryReview_v1.umap
+            unreal/Content/Maps/ANOMALIA_NamedVehiclesReview_v1.umap
+            unreal/Content/Anomalia/NamedVehicles1/
+            unreal/Content/Maps/ANOMALIA_MetroReview_v1.umap
+            unreal/Content/Maps/ANOMALIA_MetroRailReview_v2.umap
+            unreal/Content/Anomalia/Props/Metro1/
+            unreal/Content/Maps/ANOMALIA_UrbanReview_v1.umap
+            unreal/Content/Anomalia/World/UrbanReview1/
+            unreal/Content/Maps/ANOMALIA_ExpansionReview_v1.umap
+            unreal/Content/Anomalia/Buildings/Expansion1/
+            unreal/Content/Anomalia/Props/Expansion1/
+            unreal/Content/Anomalia/Vehicles/quad/
+            unreal/Content/Anomalia/Vehicles/snowmobile/
+            unreal/Content/Anomalia/Vehicles/jetski/
+            unreal/Content/Anomalia/Vehicles/zodiac/
+          if-no-files-found: error

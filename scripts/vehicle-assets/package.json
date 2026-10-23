@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@gltf-transform/core": "4.5.1",
+    "@gltf-transform/extensions": "4.5.1",
+    "@gltf-transform/functions": "4.5.1",
+    "gltf-validator": "2.0.0-dev.3.10",
+    "meshoptimizer": "0.24.0"
+  },
+  "name": "anomalia-vehicle-assets",
+  "private": true,
+  "type": "module"
+}

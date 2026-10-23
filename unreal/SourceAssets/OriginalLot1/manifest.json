@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "author": "CMD / ANOMALIA",
+  "license": "Original project assets; redistribution subject to ANOMALIA project terms",
+  "models": [
+    {
+      "id": "quad",
+      "kind": "vehicle",
+      "file": "quad.glb",
+      "sha256": "8497223f8312b7b5db8f967acf7a6e305e941853113b0ec4aa2f774c2a3256b3",
+      "bytes": 428764,
+      "dimensionsMetresYUp": [
+        2.3,
+        1.1613999999999998,
+        1.5999999999999999
+      ],
+      "triangles": 17356,
+      "objectPath": "/Game/Anomalia/Vehicles/quad/SM_quad",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "snowmobile",
+      "kind": "vehicle",
+      "file": "snowmobile.glb",
+      "sha256": "61fa126cf9214d84de54125fd96cfe1040cf494c7b1f7a05686981bb41b8e737",
+      "bytes": 155424,
+      "dimensionsMetresYUp": [
+        2.9346000000000005,
+        1.2086,
+        1.26
+      ],
+      "triangles": 6096,
+      "objectPath": "/Game/Anomalia/Vehicles/snowmobile/SM_snowmobile",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "jetski",
+      "kind": "vehicle",
+      "file": "jetski.glb",
+      "sha256": "687d2a3f1157be54be3248b8ba7be49d52569c65b4373f887efb6df91f5328e1",
+      "bytes": 61588,
+      "dimensionsMetresYUp": [
+        3.17,
+        1.0802171754781262,
+        1.06
+      ],
+      "triangles": 2344,
+      "objectPath": "/Game/Anomalia/Vehicles/jetski/SM_jetski",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "zodiac",
+      "kind": "vehicle",
+      "file": "zodiac_v2.glb",
+      "sha256": "608a728658e72f4b73d24998d1fb8f7ba553293984f8c994f269d4c92f7ce4df",
+      "bytes": 218776,
+      "dimensionsMetresYUp": [
+        4.609999999999999,
+        1.17,
+        2.28
+      ],
+      "triangles": 8860,
+      "objectPath": "/Game/Anomalia/Vehicles/zodiac/SM_zodiac",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "coastal_house_v1",
+      "kind": "building",
+      "file": "coastal_house_v1.glb",
+      "sha256": "912e75bc5cffdc5d0c1aef239ae8a20b3d495f58b55a8f8d5a418e0dbbf1ee07",
+      "bytes": 121584,
+      "dimensionsMetresYUp": [
+        10.745425399043079,
+        5.1000000000000005,
+        9.85
+      ],
+      "triangles": 4708,
+      "objectPath": "/Game/Anomalia/Buildings/Lot1/SM_coastal_house_v1",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "garage_v1",
+      "kind": "building",
+      "file": "garage_v1.glb",
+      "sha256": "c361f0bb6567b05052978b2f1e34f92c6f0d7e429aa7351646e61de26dc6b1e2",
+      "bytes": 134092,
+      "dimensionsMetresYUp": [
+        8.754599348212363,
+        5.4225990226091465,
+        9.7
+      ],
+      "triangles": 5188,
+      "objectPath": "/Game/Anomalia/Buildings/Lot1/SM_garage_v1",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "hlm_8floors_v1",
+      "kind": "building",
+      "file": "hlm_8floors_v1_repaired.glb",
+      "sha256": "050c68162af7bfb7df40e343adcf180207089bafd037505bcca006cd31afd370",
+      "bytes": 1034508,
+      "dimensionsMetresYUp": [
+        18.6,
+        24.7,
+        13.8
+      ],
+      "triangles": 40192,
+      "objectPath": "/Game/Anomalia/Buildings/Lot1/SM_hlm_8floors_v1",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    },
+    {
+      "id": "beach_villa_pool_v1",
+      "kind": "building",
+      "file": "beach_villa_pool_v1_v2.glb",
+      "sha256": "d7dd08daa7a77bf8c71cbba684b320003643e6bb879bfccecb09adc727d8ceb1",
+      "bytes": 149964,
+      "dimensionsMetresYUp": [
+        10.745425399043079,
+        6.800000000000001,
+        16.950000000000003
+      ],
+      "triangles": 5772,
+      "objectPath": "/Game/Anomalia/Buildings/Lot1/SM_beach_villa_pool_v1",
+      "state": "SOURCE_ONLY",
+      "notes": "Original geometry and PBR colour materials; no textures, animation or driving validation."
+    }
+  ]
+}
