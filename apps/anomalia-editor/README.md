@@ -94,3 +94,15 @@ Les scènes des utilisateurs sont enregistrées dans IndexedDB, dans le contexte
     npm run desktop:package
 
 La compilation Windows génère `ANOMALIA Editor Setup 0.2.0.exe` et le manifeste de mise à jour `latest.yml` dans `release/` ; seul l'installateur sera partagé par la CI de vérification. Les mises à jour futures passent par le workflow de publication des versions validées.
+
+## Version 0.3.0 — espace de travail professionnel
+
+Deuxième refonte d'ANOMALIA Editor :
+- barre d'activité verticale pour ouvrir/masquer bibliothèque et inspecteur ;
+- panneaux ajustables par glisser-déposer ou touches fléchées sur le séparateur ;
+- mode concentration (plein espace 3D) et retour aux panneaux ;
+- bouton de réinitialisation de la disposition ;
+- disposition de panneaux conservée **localement** dans `localStorage`, sans modifier les fichiers de scène ni accéder aux autres utilisateurs ;
+- barre de transformations avec raccourcis Q/W/E/R/B, aide de navigation et meilleure lisibilité des champs X/Y/Z.
+
+Les fonctions de création 3D et le moteur Three.js ne changent pas. Les ressources géométriques de démonstration restent provisoires : ce travail ne prétend pas remplacer les modèles par des assets photoréalistes. La version 0.3.0 doit être compilée et testée avant publication de son installateur ; les mises à jour automatiques restent conditionnées au canal officiel de distribution.
