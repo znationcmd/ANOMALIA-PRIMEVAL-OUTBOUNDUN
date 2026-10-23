@@ -4,6 +4,8 @@ import { TransformControls } from 'three/addons/controls/TransformControls.js';
 import { PRESETS, History, newProject, makeObject, cloneProject, validateProject, makeCSV, addToProject, removeFromProject } from './model.js';
 import { createEditorMesh } from './meshes.js';
 import './style.css';
+import './worldforge.css';
+import { createWorldForge } from './worldforge-ui.js';
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
@@ -59,6 +61,20 @@ let rebuildToken=0;
 let saving=null;
 const meshed=new Map();
 let lastPointer=null;
+let prototypesVisible=true;
+function syncPrototypeVisibility(){
+  for(const item of history.project.objects){
+    const mesh=meshed.get(item.id);if(mesh)mesh.visible=prototypesVisible||item.preset==='custom-glb'||item.preset==='linked-glb';
+  }
+}
+function togglePrototypes(){
+  prototypesVisible=!prototypesVisible;
+  syncPrototypeVisibility();
+  if(!prototypesVisible)transforms.detach();
+  else if(selectedId&&meshed.get(selectedId)&&['move','rotate','scale'].includes(activeMode))transforms.attach(meshed.get(selectedId));
+  toast(prototypesVisible?'Prototypes réaffichés : ces formes ne sont pas des modèles photoréalistes.':'Prototypes masqués sans supprimer les objets ni les sauvegardes.');
+}
+
 
 const toast=(message,error=false)=>{
   const node=$('#toast');node.textContent=message;node.hidden=false;node.classList.toggle('error',error);
@@ -161,6 +177,7 @@ async function rebuild(project) {
   }
   applySelection(selectedId);
   renderHierarchy();
+  syncPrototypeVisibility();
   if(errors.length)toast('Certains modèles ne peuvent pas être affichés : '+errors.join(' ; ').slice(0,250),true);
 }
 function commitCurrent(transformOnly=false) {
@@ -200,7 +217,7 @@ renderer.domElement.addEventListener('pointermove',e=>{
 });
 function afterCommit(){
   $('#projectName').value=history.project.name;
-  renderHierarchy();renderInspector();updateCount();
+  renderHierarchy();renderInspector();updateCount();syncPrototypeVisibility();
   clearTimeout(saving);saving=setTimeout(()=>storeProject(history.project).catch(e=>toast('Sauvegarde locale impossible : '+e.message,true)),650);
 }
 function updateCount(){const n=history.project.objects.length;$('#count').textContent=n+' objet'+(n>1?'s':'');}
@@ -344,9 +361,21 @@ function resize(){
   renderer.setSize(w,h,false);
 }
 new ResizeObserver(resize).observe(stage);
-function animate(){
-  requestAnimationFrame(animate);orbit.update();renderer.render(scene,camera);
+let lastFrame=performance.now();
+function animate(now=performance.now()){
+  requestAnimationFrame(animate);
+  const delta=Math.min(0.1,Math.max(0,(now-lastFrame)/1000));lastFrame=now;
+  worldForge.tick(delta);
+  orbit.update();
+  renderer.render(scene,camera);
 }
+const worldForge=createWorldForge({
+  camera,orbit,grid,renderer,ground,scene,notify:toast,togglePrototypes,
+  openBrowser:()=>{
+    document.getElementById('toggleInspector')?.click();
+    document.getElementById('gameAssetSearch')?.focus();
+  }
+});
 for(const mode of ['select','move','rotate','scale','brush'])$('#'+mode+'Tool').onclick=()=>setActiveMode(mode);
 $('#undo').onclick=()=>stepHistory('undo');$('#redo').onclick=()=>stepHistory('redo');
 $('#duplicate').onclick=duplicateObject;$('#inspectorDuplicate').onclick=duplicateObject;
@@ -384,6 +413,7 @@ $('#fileModel').onchange=async e=>{
   e.target.value='';
 };
 window.addEventListener('keydown',e=>{
+  if(worldForge.isFlying())return;
   if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
   const ctrl=e.ctrlKey||e.metaKey;
   const key=e.key.toLowerCase();
