@@ -29,8 +29,13 @@ jobs:
         run: npm install --no-audit --no-fund
       - name: Tester les fonctions locales
         run: npm test
-      - name: Vérifier la compilation 3D
-        run: npm run build:viewer
+      - name: Compiler la version mobile installable
+        run: npm run build:mobile
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CMD-Studio-Mobile-PWA-Privee
+          path: tools/cmd-studio/mobile-dist
+          if-no-files-found: error
 
   windows:
     name: Fabriquer l'installateur Windows
