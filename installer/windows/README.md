@@ -1,27 +1,62 @@
-# Installateur Windows unique de la suite ANOMALIA
+# ANOMALIA Suite — installation Windows des trois logiciels
 
-Cette commande produit **un seul fichier .exe** qui installe automatiquement, sur le PC Windows de l'utilisateur qui le lance, les trois logiciels EXISTANTS :
+## Un seul EXE, trois logiciels
 
-- CMD Studio 0.1.1 (version personnelle)
-- ANOMALIA Editor 0.1.1
-- ANOMALIA Tools 0.1.1
+Le programme `Installer-ANOMALIA-Trois-Applications-AutoMAJ.exe` réunit :
 
-L'installeur principal contient les exécutables officiels issus des trois compilations GitHub Actions réussies. Chaque programme garde son dossier, ses projets et sa configuration indépendants. Aucun fichier des autres utilisateurs Windows n'est modifié. Les programmes ne sont pas copiés dans le dépôt ; seule leur récupération GitHub Actions à la compilation est configurée.
+| Programme | Version | Mise à jour après installation |
+| --- | --- | --- |
+| CMD Studio | 0.2.1 | Mécanisme installé, mais **source HTTPS privée + jeton requis** |
+| ANOMALIA Editor | 0.5.1 | Oui, via Release `anomalia-editor-latest` |
+| ANOMALIA Tools | 0.2.2 | Oui, via Release `anomalia-tools-latest` |
 
-## Installation sur le PC
+Il installe les trois applications successivement via les installateurs NSIS
+existants et leurs options silencieuses `/S`, dans le **profil Windows courant**.
+Aucun nettoyage des profils, projets, catalogues 3D ou sauvegardes n'est effectué.
+Le programme refuse de poursuivre si une des installations retourne une erreur ;
+les applications déjà traitées restent alors installées, et le bouton Reprendre
+n'est pas disponible. Fermer les trois applications avant de lancer le setup.
 
-1. Dans les artefacts du workflow `ANOMALIA - Installateur unique Windows`, télécharger le ZIP nommé `Installateur-ANOMALIA-3-Applications`.
-2. Décompresser le ZIP sur Windows.
-3. Double-cliquer sur `Installer-ANOMALIA-3-applications.exe` puis choisir **Installer**. Les trois installateurs seront lancés l'un après l'autre, avec l'option silencieuse `/S`. L'utilisateur n'a pas à saisir de commandes PowerShell ni à télécharger les trois programmes séparément.
-4. Les trois logiciels apparaîtront dans le menu Démarrer, et, selon les préférences Windows, sur le Bureau, avec leurs icônes respectives.
+**Important :** il s'agit d'une mise à niveau de transition, pas d'un service
+Windows administrateur ni d'un gestionnaire de lancement permanent. Il ne
+fusionne pas les trois logiciels en une application unique. Les raccourcis restent
+distincts. Les fonctionnalités de synchronisation entre appareils nécessitent
+encore leur infrastructure propre.
 
-Aucune session de ChatGPT ne peut prendre la main sur l'ordinateur et exécuter ce fichier à distance. Le lancement initial doit être effectué volontairement sur le PC. Windows SmartScreen peut afficher un avertissement puisque les installateurs ne sont pas signés commercialement ; ne pas contourner les protections Windows automatiquement.
+## Pourquoi CMD Studio ne se met pas encore à jour tout seul
 
-## Limites et confidentialité
+Le code du Studio contient déjà `electron-updater`, mais l'accès aux
+mises à jour est intentionnellement **privé**. La source doit fournir
+`latest.yml`, l'installateur et les blockmaps derrière une adresse HTTPS
+authentifiée, et CMD Studio exige une clé d'accès chiffrée avec le mécanisme
+Windows. Aucun flux public (GitHub Releases public) ne doit être utilisé pour
+CMD Studio sans permission expresse : le logiciel personnel n'est donc **pas
+publié** en Release dans ce dépôt public. Ce setup ne crée pas cette source.
+Le menu de mise à jour du Studio doit être configuré une fois.
 
-- Le bundle est un **installateur**, pas une fonction de mise à jour automatique en arrière-plan. Les versions embarquées sont celles vérifiées dans le workflow.
-- Les projets et sauvegardes existants ne sont pas supprimés par ce bundle. Ne pas confondre avec une garantie de restauration ; effectuer des sauvegardes avant une mise à jour.
-- Le bundle n'inclut pas Unreal Engine ni Blender. Il ne modifie pas les dépôts de développement des trois applications.
-- Le dépôt GitHub est actuellement **public**. L'artefact de compilation peut donc être accessible à d'autres utilisateurs connectés à GitHub ; cette solution ne garantit pas l'exclusivité de distribution de CMD Studio. Pour vraiment restreindre CMD Studio à une seule personne, il faut une distribution privée, à traiter séparément.
+Pour Editor et Tools, les URLs de mise à jour officielles sont déjà intégrées
+dans les versions installées. L'application contrôle les versions au démarrage,
+puis régulièrement, télécharge une version plus récente et l'installe à la
+fermeture lorsque le téléchargement a réussi. GitHub Actions publie les
+versions officielles après les tests. Les applications plus anciennes, comme
+0.1.1, ne savaient pas forcément effectuer ces mises à jour.
 
-Pour refaire l'installateur, modifier les identifiants de workflow et les noms de fichiers dans `.github/workflows/anomalia-suite-installer.yml` et `installer/windows/suite.nsi` puis relancer le workflow sur la branche dédiée.
+## Production et contrôle
+
+Workflow : `.github/workflows/anomalia-suite-installer.yml`
+
+1. Utilise l'installateur CMD Studio 0.2.1 **compilé antérieurement**, conservé
+   comme artefact GitHub Actions de la branche du Studio.
+2. Récupère `latest.yml` pour ANOMALIA Editor et ANOMALIA Tools depuis
+   leurs Releases officielles et vérifie la version exacte ainsi que le
+   `SHA-512` du fichier EXE téléchargé avant de l'intégrer.
+3. Assemble tous les fichiers en un seul EXE avec NSIS sous Windows et publie
+   l'artefact `ANOMALIA-Installeur-Unique-3-Logiciels-AutoMAJ`.
+4. Ce processus ne vérifie pas **à lui seul** les mises à niveau sur le vrai
+   PC de l'utilisateur : tester sur une machine Windows avant toute promesse
+   de compatibilité avec des chemins d'installation personnalisés.
+
+Ne jamais utiliser cet outil pour désinstaller les trois logiciels ou effacer
+les dossiers de projets. Le setup agrège des exécutables, mais ne possède pas
+les droits d'accéder à l'ordinateur du propriétaire sans que celui-ci lance
+explicitement l'installation.
