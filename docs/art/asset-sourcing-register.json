@@ -1208,6 +1208,239 @@
       "note": "Base candidate pour sac d'assaut; adaptation au corps à vérifier; page directe HTTP 403. Aucun fichier inspecté; licence, provenance, intérieur et réalisme à vérifier.",
       "downloadedThisTurn": false,
       "importedThisTurn": false
+    },
+    {
+      "id": "mh_shirts01",
+      "title": "shirts01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/shirts01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_pants01",
+      "title": "pants01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/pants01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [
+        "item:cargo_pants"
+      ],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_gloves01",
+      "title": "gloves01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/gloves01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_shoes01",
+      "title": "shoes01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/shoes01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_hats01",
+      "title": "hats01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/hats01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_hats02",
+      "title": "hats02",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/hats02.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [
+        "item:motorcycle_helmet"
+      ],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_masks01",
+      "title": "masks01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/masks01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_underwear04",
+      "title": "underwear04",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/underwear04.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_suits01",
+      "title": "suits01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/suits01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "mh_dress01",
+      "title": "dress01",
+      "url": "https://static.makehumancommunity.org/assets/assetpacks/dress01.html",
+      "domain": "static.makehumancommunity.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "oga_pills_mxc2",
+      "title": "Pills 3D Models",
+      "url": "https://opengameart.org/content/pills-3d-models",
+      "domain": "opengameart.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "oga_money_yughues",
+      "title": "Money",
+      "url": "https://opengameart.org/content/money",
+      "domain": "opengameart.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [
+        "item:rp_cash_bundle"
+      ],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "oga_cannabis_yughues",
+      "title": "Cannabis plants",
+      "url": "https://opengameart.org/content/cannabis-plants",
+      "domain": "opengameart.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [
+        "item:rp_substance_cannabis"
+      ],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "oga_syringe_arido",
+      "title": "Syringe",
+      "url": "https://opengameart.org/content/syringe",
+      "domain": "opengameart.org",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "FICHIERS_TELECHARGES",
+      "targets": [],
+      "note": "Maillages statiques candidats. Vérifier matériaux, proportions, adaptation au personnage et rendu UE. 12 vêtements avec en-têtes de licence contradictoires et 1 texture absente sont bloqués dans l'importeur.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
+    },
+    {
+      "id": "grab3d_pill_bottle",
+      "title": "Pill Bottle",
+      "url": "https://grab3d.com/models/props/pill-bottle/",
+      "domain": "grab3d.com",
+      "license": "CC0-1.0",
+      "evidence": "Page du fournisseur et fichiers téléchargés; reçus SHA-256 et conversion GLB versionnés.",
+      "access": "ECHEC_TELECHARGEMENT",
+      "targets": [],
+      "note": "HTTP 503; aucun fichier reçu.",
+      "downloadedThisTurn": false,
+      "importedThisTurn": false,
+      "sourceReceipt": "docs/art/item-source-batch2-download-receipt-20261023.json",
+      "conversionReceipt": "docs/art/item-source-batch2-conversion-receipt-20261023.json"
     }
   ],
   "items": [
@@ -2325,10 +2558,13 @@
       "displayName": "cargo pants",
       "category": "pants",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "A_RECHERCHER",
-      "sources": [],
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
+      "sources": [
+        "mh_pants01"
+      ],
       "meshImportedVerified": false,
-      "gameplayVerifiedByThisResearch": false
+      "gameplayVerifiedByThisResearch": false,
+      "sourceMatchNotes": "Correspondance candidate; variante et rendu à confirmer. Les plantes ne remplacent pas les sachets de produit et l'argent représente des dollars."
     },
     {
       "id": "combat_pants",
@@ -2415,10 +2651,13 @@
       "displayName": "motorcycle helmet",
       "category": "headwear",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "A_RECHERCHER",
-      "sources": [],
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
+      "sources": [
+        "mh_hats02"
+      ],
       "meshImportedVerified": false,
-      "gameplayVerifiedByThisResearch": false
+      "gameplayVerifiedByThisResearch": false,
+      "sourceMatchNotes": "Correspondance candidate; variante et rendu à confirmer. Les plantes ne remplacent pas les sachets de produit et l'argent représente des dollars."
     },
     {
       "id": "construction_helmet",
@@ -3712,10 +3951,13 @@
       "displayName": "Liasse RP scellée (objet, non convertible automatiquement)",
       "category": "rp_valuables",
       "sourceCatalog": "public/config/rp_items_catalog.json",
-      "status": "A_RECHERCHER",
-      "sources": [],
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
+      "sources": [
+        "oga_money_yughues"
+      ],
       "meshImportedVerified": false,
-      "gameplayVerifiedByThisResearch": false
+      "gameplayVerifiedByThisResearch": false,
+      "sourceMatchNotes": "Correspondance candidate; variante et rendu à confirmer. Les plantes ne remplacent pas les sachets de produit et l'argent représente des dollars."
     },
     {
       "id": "rp_jewellery",
@@ -4296,10 +4538,13 @@
       "displayName": "Cannabis — accessoire RP",
       "category": "rp_substances",
       "sourceCatalog": "public/config/rp_items_catalog.json",
-      "status": "A_RECHERCHER",
-      "sources": [],
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
+      "sources": [
+        "oga_cannabis_yughues"
+      ],
       "meshImportedVerified": false,
-      "gameplayVerifiedByThisResearch": false
+      "gameplayVerifiedByThisResearch": false,
+      "sourceMatchNotes": "Correspondance candidate; variante et rendu à confirmer. Les plantes ne remplacent pas les sachets de produit et l'argent représente des dollars."
     },
     {
       "id": "rp_substance_cannabis_resin",
@@ -4732,7 +4977,7 @@
     "Remorqueurs",
     "Porte-conteneurs (navires)"
   ],
-  "remaining": "49 sources complètes récupérées. Import et validation Unreal toujours à faire. Médicaments consommables, argent, drogues fictives et vêtements supplémentaires restent à compléter ; pistes Sketchfab bloquées par connexion non autorisée explicitement.",
+  "remaining": "Lot 1: 49 sources Poly Haven. Lot 2: 14 téléchargements d'origine, 104 modèles statiques GLB convertis et rechargés (92 vêtements/accessoires, 8 argent, 2 comprimés, 2 plantes). 91 modèles autorisés par les vérifications automatiques de staging ; 12 en attente d'examen de licence et 1 texture absente. Aucun import ou rendu UE5 vérifié. Les autres vêtements, soins, aliments et accessoires RP spécifiques restent à rechercher. Compte Sketchfab signalé par l'utilisateur, session non connectée dans ce navigateur.",
   "dayzSourcePolicy": {
     "artistSource": "https://dayz.com/article/general/DayZ-Team-Evolution-n2",
     "licenseSource": "https://www.bohemia.net/en/licenses/dayz-public-license-dpl",
@@ -4743,8 +4988,8 @@
     "polyHavenCC0Sources": 49,
     "indexedSketchfabCandidates": 20,
     "itemIds": 314,
-    "itemIdsWithCandidate": 35,
-    "itemIdsWithoutCandidate": 279,
+    "itemIdsWithCandidate": 39,
+    "itemIdsWithoutCandidate": 275,
     "vehicleGroupedStatusCounts": {
       "CANDIDAT_A_VERIFIER": 15,
       "A_RECHERCHER": 152,
@@ -4754,7 +4999,22 @@
     "noNewBinaryDownloads": false,
     "noNewUnrealImports": true,
     "downloadedModels": 49,
-    "downloadedBytes": 2856813476
+    "downloadedBytes": 2856813476,
+    "batch2": {
+      "downloadedSources": 14,
+      "failedDownloads": 1,
+      "convertedStaticModels": 104,
+      "clothingModels": 92,
+      "moneyModels": 8,
+      "pillModels": 2,
+      "cannabisPlantModels": 2,
+      "licenseHolds": 12,
+      "missingTextureHolds": 1,
+      "importEligible": 91,
+      "unrealImportsVerified": 0,
+      "archiveLibraryFileId": "libfile_83612c857e9c8191bdcc2d1155b60d7c"
+    },
+    "registeredSourcesTotal": 84
   },
   "downloadReceipt": "docs/art/item-source-download-receipt-20261023.json"
 }
