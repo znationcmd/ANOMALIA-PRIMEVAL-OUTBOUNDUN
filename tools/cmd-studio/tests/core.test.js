@@ -49,3 +49,21 @@ test('découverte de fichiers Poly Haven sans liens arbitraires', () => {
   assert.equal(candidates[0].extension,'.blend');
   assert.equal(filenameSafe('../../ test.v1'),'_______test_v1');
 });
+
+test('prévisualisation locale : vrai fichier GLB, sans accès aux autres dossiers', async t => {
+  const {dir,studio}=sandbox(t);
+  const glb=path.join(dir,'house.glb');
+  fs.writeFileSync(glb,Buffer.from('glTF012345'));
+  const asset=(await studio.import({files:[glb]}))[0];
+  const preview=studio.previewAsset({id:asset.id});
+  assert.equal(preview.format,'glb');
+  assert.equal(Buffer.from(preview.data,'base64').toString('utf8'),'glTF012345');
+  assert.throws(()=>studio.previewAsset({id:'other-user-asset'}),/Ressource absente/);
+});
+test('prévisualisation refusée pour formats non 3D visualisables', async t => {
+  const {dir,studio}=sandbox(t);
+  const other=path.join(dir,'shape.fbx');
+  fs.writeFileSync(other,'fake FBX');
+  const asset=(await studio.import({files:[other]}))[0];
+  assert.throws(()=>studio.previewAsset({id:asset.id}),/uniquement pour GLB/);
+});
