@@ -51,6 +51,7 @@ jobs:
             assert.match(manifest,/sha512:\s*[A-Za-z0-9+/=]{80,}/);
             const file=manifest.match(/^path:\s*(.+\.exe)\s*$/m)?.[1];
             assert.ok(file,'manifest must reference a Windows installer');
+            assert.ok(!/\s/.test(file),'Github release assets must use filenames without whitespace');
             const exeUrl='https://github.com/'+repo+'/releases/download/'+tag+'/'+encodeURIComponent(file);
             const download=await fetch(exeUrl,{method:'HEAD',redirect:'follow',headers:{'User-Agent':'ANOMALIA-UpdateFeed-Test'}});
             assert.equal(download.status,200,'installer download must respond HTTP 200');
