@@ -92,3 +92,69 @@ des traitements manuels pour les modèles complexes.
 
 CMD Studio demeure un projet distinct de ANOMALIA Editor et ANOMALIA
 Tools. Les projets et assets locaux restent privés au profil Windows.
+
+## CMD Studio 0.2.1 — mises à jour automatiques privées
+
+La version Windows de CMD Studio comprend dorénavant un système de mises à jour
+automatiques : recherche au démarrage (12 secondes après le lancement), puis
+toutes les **6 heures**, téléchargement en arrière-plan, indicateur de
+progression dans Paramètres et installation en fermant normalement le studio.
+Un bouton « Vérifier maintenant » et un bouton « Installer et redémarrer »
+permettent de déclencher le processus manuellement si souhaité.
+
+La version **0.2.1 doit être installée une fois** sur le PC. Les versions 0.2.0
+et antérieures n'incluent pas cet updater : elles ne peuvent pas se mettre à
+jour elles-mêmes. L'updater ne modifie pas le dossier de projets ni les
+données utilisateur (app.getPath('userData')).
+
+### Activation du canal privé
+
+Le dépôt source GitHub actuel est public, alors que CMD Studio est une
+application personnelle. Les artefacts Actions ne constituent pas un flux
+d'updates privé. **Ce mécanisme ne publie donc rien sur GitHub Releases.**
+Les mises à jour automatiques restent indiquées comme « Configuration
+requise » tant que le serveur privé ci-dessous n'est pas déployé.
+
+1. Héberger le serveur Node inclus dans
+   `tools/cmd-studio/private-update-server.cjs` derrière un vrai domaine HTTPS
+   (Railway ou hébergement déjà possédé) et un stockage persistant.
+   Variables requises :
+   - `CMD_STUDIO_UPDATE_STORAGE` = dossier de stockage persistant.
+   - `CMD_STUDIO_UPDATE_READ_TOKEN` = jeton aléatoire de lecture, 20 caractères
+     minimum, réservé au PC utilisateur.
+   - `CMD_STUDIO_UPDATE_WRITE_TOKEN` = **jeton différent** de publication,
+     réservé au pipeline GitHub, jamais au PC de l'utilisateur.
+   - `PORT` = port du serveur (injecté automatiquement par la plateforme).
+2. Dans GitHub Actions, configurer les secrets
+   `CMD_STUDIO_PRIVATE_FEED_URL` (ex. adresse HTTPS se terminant par
+   `/updates/cmd-studio/`), `CMD_STUDIO_PRIVATE_FEED_WRITE_TOKEN`
+   et `CMD_STUDIO_UPDATE_SIGNING_KEY_PEM`. Cette dernière valeur doit
+   être **la vraie clé privée Ed25519** correspondant à la clé publique
+   intégrée à `update-policy.cjs`. Ne jamais ajouter de clé privée dans
+   le code, dans les logs ou dans un artefact public.
+3. Un tag `cmd-studio/vX.Y.Z` déclenche
+   `.github/workflows/cmd-studio-private-update-release.yml` : tests,
+   signature des manifestes, compilation NSIS et publication des fichiers
+   uniquement sur le serveur HTTPS privé. Le fichier `latest.yml` est
+   publié **en dernier**, pour ne pas pointer vers un installateur absent.
+4. Dans CMD Studio installé, ouvrir Paramètres puis
+   « Mises à jour automatiques », saisir la même URL privée et le jeton
+   **de lecture**, et cocher l'activation. Le jeton est chiffré localement
+   via `safeStorage` d'Electron (profil Windows), jamais renvoyé à
+   l'interface en clair.
+
+**Sécurité** : les manifestes de mise à jour doivent être signés en Ed25519,
+vérifiés par une clé publique embarquée dans le programme et les fichiers sont
+vérifiés par SHA-512. Le serveur refuse tout accès sans jeton ; l'application
+n'accepte que les flux HTTPS avec authentification. La chaîne de publication
+refuse une clé de signature ne correspondant pas à la clé publique embarquée.
+
+**Limites actuelles** : le serveur privé n'est pas encore déployé et les
+secrets GitHub ne sont pas encore configurés. Il serait faux de prétendre
+que ton PC se met déjà à jour tout seul. Le binaire 0.2.1 fournit la
+fonctionnalité prête à activer quand l'hébergement privé est opérationnel.
+Le Windows installer actuel n'est pas signé par un certificat commercial
+Authenticode : SmartScreen peut demander une confirmation et le déploiement
+professionnel bénéficierait d'une signature Windows dédiée. Ne jamais
+désactiver la vérification cryptographique des manifests simplement pour
+faire passer une publication.
