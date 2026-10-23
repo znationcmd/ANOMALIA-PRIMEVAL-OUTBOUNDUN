@@ -10,7 +10,7 @@
     "package:win": "node scripts/prepare-icon.cjs && npm run build:art && npm run build:viewer && electron-builder --win nsis",
     "build:viewer": "node scripts/build-viewer.cjs",
     "build:art": "node scripts/download-art.cjs",
-    "build:mobile": "npm run build:viewer && node scripts/build-mobile.cjs"
+    "build:mobile": "npm run build:art && npm run build:viewer && node scripts/build-mobile.cjs"
   },
   "devDependencies": {
     "electron": "^33.4.11",
