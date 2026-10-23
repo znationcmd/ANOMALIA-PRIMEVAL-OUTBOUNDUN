@@ -73,6 +73,7 @@ try:
         meshes[item['id']] = mesh
         report['models'].append(dict(id=item['id'], objectPath=mesh.get_path_name(), dimensionsCm=dimensions,
                                      previewScale=min(1., 3000. / max(dimensions)),
+                                     productionPlacementAllowed=False, visualReview=item.get('visualReview'),
                                      materials=len(materials), lods=editor.get_lod_count(mesh),
                                      scaleReview='REQUIRED', accessReview='REQUIRED', license=item['license']))
     if unreal.EditorAssetLibrary.does_asset_exist(PACKAGE):

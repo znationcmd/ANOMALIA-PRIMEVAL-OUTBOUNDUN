@@ -8,11 +8,13 @@ Public redistribution: AllenAI Objaverse, ODC-By. Original authors and model lic
 | Southwark control bunker | artfletch | Interior scan, entrance and terrain cut needed |
 | O3/23 concrete bunker | matousekfoto | Exterior scan, ground-patch integration needed |
 | Underwater environment | ConradJustin | Local seabed scenery; not an entire ocean floor |
-| Copenhagen port scan | Hullken | Small scan fragment; not a complete usable port |
+| Copenhagen port scan | Hullken | Brick doorway scan, not dock infrastructure |
 | Anchor and winch | Thorus3D | Port detail |
-| Full Train Station | ajlakaos | Station scene requiring access and track checks |
+| Full Train Station | ajlakaos | Grey blockout in source preview; not photorealistic production art |
 | Modular subway platform | Pablo Campoy | Source units need calibration before world placement |
 | Railway station | Dolores | Suspect flat dimensions; quarantine until reviewed |
+
+Source thumbnails were inspected after preparation: the alleged port is a brick doorway; the Full Train Station preview is mostly grey blockout. Neither satisfies the requested photorealistic port/station as supplied. The detailed Dolores station thumbnail does not match its suspect distributed bounds; native verification is required. All models have productionPlacementAllowed=false until reviewed.
 
 The source subway platform is ~11,200 units long, while the train station is ~80 units long. These cannot both be treated as calibrated metres. The station by Dolores has approximately 3.66 × 0.055 × 0.11 source units and is **not approved for placement**. No automatic full-map placement conceals these issues.
 

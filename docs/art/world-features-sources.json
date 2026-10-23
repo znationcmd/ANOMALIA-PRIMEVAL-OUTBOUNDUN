@@ -20,7 +20,9 @@
       "textures": 1,
       "name": "Southwark Borough Control Bunker",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source thumbnail reviewed separately from native rendering; in-world integration remains unvalidated."
     },
     {
       "id": "bunker_o323",
@@ -39,7 +41,9 @@
       "textures": 2,
       "name": "Bunker O3/23/A-160 Z",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source thumbnail reviewed separately from native rendering; in-world integration remains unvalidated."
     },
     {
       "id": "underwater_environment",
@@ -58,7 +62,9 @@
       "textures": 28,
       "name": "Underwater environment",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source thumbnail reviewed separately from native rendering; in-world integration remains unvalidated."
     },
     {
       "id": "harbor_copenhagen",
@@ -77,7 +83,9 @@
       "textures": 8,
       "name": "Port",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source preview is an isolated brick doorway/facade scan near the port, not dock infrastructure."
     },
     {
       "id": "anchor_winch",
@@ -96,7 +104,9 @@
       "textures": 1,
       "name": "Anchor and winch",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source thumbnail reviewed separately from native rendering; in-world integration remains unvalidated."
     },
     {
       "id": "train_station_full",
@@ -115,7 +125,9 @@
       "textures": 3,
       "name": "Full Train Station",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source preview is a largely grey station blockout, not photorealistic production art."
     },
     {
       "id": "subway_platform_modular",
@@ -134,7 +146,9 @@
       "textures": 45,
       "name": "Subway platform modular",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Useful modular platform geometry in source preview; source units must be calibrated and station access is not established."
     },
     {
       "id": "railway_station",
@@ -153,7 +167,9 @@
       "textures": 8,
       "name": "Railway Station",
       "scaleReview": "REQUIRED",
-      "placementReview": "REQUIRED"
+      "placementReview": "REQUIRED",
+      "productionPlacementAllowed": false,
+      "visualReview": "Source preview shows a detailed station, but distributed GLB bounds are inconsistent; quarantine until native mesh inspection."
     }
   ]
 }

@@ -52,5 +52,13 @@ for(const item of registry.models){
   'Changes: baked static transforms, bottom-centred geometry; omitted '+omittedLinePrimitives+' non-surface line primitives.','');
  console.log(item.id,bytes.length,dims);
 }
-await preserve(path.join(output,'manifest.json'),Buffer.from(JSON.stringify({schemaVersion:1,models},null,2)+'\n'));
+const manifestPath=path.join(output,'manifest.json');
+// Review annotations may advance; any change to prepared model identity is rejected.
+try{
+ const previous=JSON.parse(await readFile(manifestPath,'utf8'));
+ if(previous.models.length!==models.length||previous.models.some((p,i)=>
+  ['id','sha256','originalSha256','objectPath','bytes'].some(k=>p[k]!==models[i][k])))
+  throw Error('Existing prepared manifest has a different model identity');
+}catch(e){if(e.code!=='ENOENT')throw e;}
+await writeFile(manifestPath,JSON.stringify({schemaVersion:1,models},null,2)+'\n');
 await preserve(path.join(output,'CREDITS.md'),Buffer.from(credits.join('\n')+'\n'));
