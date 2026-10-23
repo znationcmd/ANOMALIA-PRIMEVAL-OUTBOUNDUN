@@ -3,11 +3,13 @@ const {app,BrowserWindow,dialog,shell,ipcMain}=require('electron');
 const path=require('node:path');
 const {AnomaliaTools}=require('./core.cjs');
 let toolsApp;let win;
+if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
   'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
-    title:'ANOMALIA Tools',backgroundColor:'#10101b',webPreferences:{
+    title:'ANOMALIA Tools',backgroundColor:'#10101b',
+    icon:path.join(__dirname,'assets','anomalia-tools.ico'),webPreferences:{
       preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true
     }});
   win.setMenuBarVisibility(false);
