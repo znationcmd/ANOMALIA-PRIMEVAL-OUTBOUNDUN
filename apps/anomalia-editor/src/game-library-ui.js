@@ -14,6 +14,8 @@ export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
     return;
   }
   let all=[], busy=false;
+  let activeTerrain=null;
+  let reloadingTerrain=false;
   const categories=[
     'Cartes et secteurs','Véhicules','Bâtiments',
     'Routes et infrastructures','Nature','Objets et équipements',
@@ -51,7 +53,7 @@ export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
           act.disabled=true;
           try{
             await placeGLB(item);
-            updateMessage('Modèle réellement placé : '+item.name);
+            updateMessage('Prévisualisation de '+item.name+' : clique ensuite sur le terrain pour confirmer sa position.');
           }catch(e){notify('Import 3D impossible : '+e.message,true);}
           finally{act.disabled=false;}
         });
@@ -63,6 +65,7 @@ export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
             const payload=await library.read(item.id);
             if(payload.kind!=='heightmap')throw Error('Image de terrain invalide.');
             await openTerrain({item,payload});
+            activeTerrain={id:item.id,mtimeMs:item.mtimeMs,bytes:item.bytes};
             updateMessage('Relief réel importé : '+item.name+' (pas un fichier .umap Unreal).');
           }catch(e){notify('Relief indisponible : '+e.message,true);}
           finally{act.disabled=false;}
@@ -114,8 +117,23 @@ export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
     else updateMessage('Choisis un dossier du jeu pour activer la synchronisation.');
   }
   library.status().then(apply).catch(e=>updateMessage('Bibliothèque inaccessible : '+e.message));
-  library.subscribe(event=>{
-    if(event.type==='changed')apply(event);
+  library.subscribe(async event=>{
+    if(event.type==='changed'){
+      apply(event);
+      if(activeTerrain&&!reloadingTerrain){
+        const current=event.items?.find(x=>x.id===activeTerrain.id);
+        if(current?.canTerrain&&(current.mtimeMs!==activeTerrain.mtimeMs||current.bytes!==activeTerrain.bytes)){
+          reloadingTerrain=true;
+          try{
+            const payload=await library.read(current.id);
+            await openTerrain({item:current,payload});
+            activeTerrain={id:current.id,mtimeMs:current.mtimeMs,bytes:current.bytes};
+            updateMessage('Le relief a été rechargé automatiquement après modification du fichier : '+current.name);
+          }catch(e){notify('Actualisation du relief : '+e.message,true);}
+          finally{reloadingTerrain=false;}
+        }
+      }
+    }
     else if(event.type==='error')updateMessage(event.message);
   });
   $('#linkGameFolder').addEventListener('click',async()=>{
