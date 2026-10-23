@@ -62,6 +62,32 @@ let saving=null;
 const meshed=new Map();
 let lastPointer=null;
 let prototypesVisible=true;
+let pendingLinkedItem=null;
+let linkedPreview=null;
+let placementToken=0;
+function clearLinkedPreview(){
+  pendingLinkedItem=null;placementToken++;
+  if(linkedPreview){scene.remove(linkedPreview);linkedPreview=null;}
+}
+async function armLinkedPlacement(item){
+  clearLinkedPreview();
+  setActiveMode('select');
+  pendingLinkedItem=item;
+  const token=placementToken;
+  status('Placer '+item.name+' : clique sur le terrain · Échap pour annuler.');
+  try{
+    const temp={id:'worldforge-preview',preset:'linked-glb',name:item.name,
+      asset:{libraryId:item.id,filename:item.name},position:{x:0,y:0,z:0},
+      rotation:{x:0,y:0,z:0},scale:{x:1,y:1,z:1}};
+    const group=await createEditorMesh(temp);
+    if(token!==placementToken)return;
+    linkedPreview=group;
+    const helper=new THREE.BoxHelper(group,'#f4c27f');helper.name='Placement preview';
+    group.add(helper);
+    scene.add(group);
+  }catch(e){clearLinkedPreview();throw e;}
+}
+
 function syncPrototypeVisibility(){
   for(const item of history.project.objects){
     const mesh=meshed.get(item.id);if(mesh)mesh.visible=prototypesVisible||item.preset==='custom-glb'||item.preset==='linked-glb';
@@ -199,6 +225,18 @@ renderer.domElement.addEventListener('pointerdown',e=>{lastPointer={x:e.clientX,
 renderer.domElement.addEventListener('pointerup',async e=>{
   if(!lastPointer||lastPointer.button!==0||e.button!==0||Math.hypot(e.clientX-lastPointer.x,e.clientY-lastPointer.y)>5)return;
   if(transforms.dragging)return;
+  if(pendingLinkedItem){
+    const point=pickGround(e);
+    if(!point)return;
+    const item=pendingLinkedItem;
+    clearLinkedPreview();
+    try{
+      await addLinkedModel(item,point);
+      setActiveMode('move');
+      toast('Modèle placé : '+item.name+'. Ajuste avec le gizmo.');
+    }catch(err){toast('Placement impossible : '+err.message,true);}
+    return;
+  }
   if(activeMode==='brush'){
     const point=pickGround(e);if(!point)return;
     for(let i=0;i<3;i++){
@@ -213,6 +251,7 @@ renderer.domElement.addEventListener('pointerup',async e=>{
 });
 renderer.domElement.addEventListener('pointermove',e=>{
   const pos=pickGround(e);
+  if(pos&&linkedPreview)linkedPreview.position.set(pos.x,pos.y,pos.z);
   if(pos)$('#coords').textContent='X '+pos.x.toFixed(1)+' · Y '+pos.y.toFixed(1)+' · Z '+pos.z.toFixed(1);
 });
 function afterCommit(){
@@ -413,6 +452,7 @@ $('#fileModel').onchange=async e=>{
   e.target.value='';
 };
 window.addEventListener('keydown',e=>{
+  if(e.key==='Escape'&&pendingLinkedItem){clearLinkedPreview();status('Placement annulé.');return;}
   if(worldForge.isFlying())return;
   if(e.target instanceof HTMLInputElement||e.target instanceof HTMLSelectElement||e.target instanceof HTMLTextAreaElement)return;
   const ctrl=e.ctrlKey||e.metaKey;
@@ -453,8 +493,8 @@ start();
 bindGameLibrary({
   notify:toast,
   placeGLB:async item=>{
-    await addLinkedModel(item,{x:snapValue(orbit.target.x),y:0,z:snapValue(orbit.target.z)});
-    toast('Ressource liée ajoutée : '+item.name);
+    await armLinkedPlacement(item);
+    toast('Déplace la souris et clique dans la scène pour placer '+item.name+'.');
   },
   openMap:async text=>{
     const map=validateProject(JSON.parse(text));
