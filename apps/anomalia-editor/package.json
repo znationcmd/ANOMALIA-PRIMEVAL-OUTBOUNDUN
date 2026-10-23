@@ -1,6 +1,6 @@
 {
   "name": "anomalia-editor",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "private": true,
   "description": "Éditeur de scènes 3D indépendant inspiré du flux de travail de DayZ Editor",
   "type": "module",
@@ -14,12 +14,13 @@
     "prepare:icon": "node desktop/prepare-icon.cjs"
   },
   "dependencies": {
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "vite": "^5.4.19",
     "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.15.3",
     "pngjs": "^7.0.0"
   },
   "main": "desktop/main.cjs",
@@ -53,6 +54,7 @@
       "installerIcon": "assets/anomalia-editor.ico",
       "uninstallerIcon": "assets/anomalia-editor.ico",
       "installerHeaderIcon": "assets/anomalia-editor.ico"
-    }
+    },
+    "publish": null
   }
 }
