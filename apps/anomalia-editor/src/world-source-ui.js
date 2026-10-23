@@ -46,7 +46,11 @@ export function bindWorldSources({terrain,notify,onHeightmap,onClearTerrain}){
   find('linkRealWorld')?.addEventListener('click',link);
   find('launchRealWorld')?.addEventListener('click',open);
   find('openWorldNow')?.addEventListener('click',open);
-  if(api)api.status().then(updateWorld).catch(showError);
+  if(api){
+    api.status().then(updateWorld).catch(showError);
+    // Newly compiled UE5 maps are detected during the current editing session.
+    setInterval(()=>api.status().then(updateWorld).catch(()=>{}),60000);
+  }
   else updateWorld({linked:false,warning:'Les fichiers .umap ne peuvent être ouverts que depuis l’application Windows avec Unreal Engine installé.'});
 
   let loaded=false;
