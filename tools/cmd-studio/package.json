@@ -1,0 +1,24 @@
+{
+  "name": "cmd-studio",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CMD Studio Game Creator - atelier 3D local pour ANOMALIA et autres jeux",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test tests/*.test.js",
+    "package:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "fr.cmd.studio",
+    "productName": "CMD Studio",
+    "directories": {"output": "release"},
+    "files": ["main.js", "preload.js", "core.js", "ui/**", "scripts/**", "package.json"],
+    "win": {"target": [{"target": "nsis", "arch": ["x64"]}]},
+    "nsis": {"oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true}
+  }
+}
