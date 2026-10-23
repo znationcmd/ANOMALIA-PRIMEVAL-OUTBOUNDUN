@@ -75,7 +75,7 @@ class AnomaliaTools{
   }
   overview(){
     const projects=this.listProjects();
-    return {version:'0.1.0',privacy:'local-only',workspace:this.root,projects:projects.length,
+    return {version:require('./package.json').version,privacy:'local-only',workspace:this.root,projects:projects.length,
       modules:['Workbench','Object Builder','Terrain Builder','Central Economy','Textures','Addon Builder','Publisher']};
   }
   getProjectPath(id){
