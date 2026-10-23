@@ -1,0 +1,76 @@
+name: ANOMALIA Editor + Tools - applications mobiles PWA
+on:
+  push:
+    paths:
+      - ".github/workflows/anomalia-mobile-pwa-pages.yml"
+  schedule:
+    - cron: "10 3 * * *"
+  workflow_dispatch:
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+concurrency:
+  group: anomalia-mobile-pages
+  cancel-in-progress: false
+jobs:
+  publish-public-mobile-apps:
+    name: Construire et publier les PWA publiques iOS Android
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: \${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Recuperer ANOMALIA Editor mobile
+        uses: actions/checkout@v4
+        with:
+          ref: feature/anomalia-editor-mobile-pwa-20261023
+          path: editor
+      - name: Recuperer ANOMALIA Tools mobile
+        uses: actions/checkout@v4
+        with:
+          ref: feature/anomalia-tools-mobile-pwa-20261023
+          path: tools
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Tester et compiler Editor
+        working-directory: editor/apps/anomalia-editor
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build
+      - name: Tester et compiler Tools
+        working-directory: tools/apps/anomalia-tools
+        run: |
+          npm install --no-audit --no-fund
+          npm test
+          npm run build
+      - name: Preparer deux applications publiques distinctes
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p _site/editor _site/tools
+          cp -a editor/apps/anomalia-editor/dist/. _site/editor/
+          cp -a tools/apps/anomalia-tools/dist/. _site/tools/
+          cat > _site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="fr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+          <meta name="theme-color" content="#131b29">
+          <title>ANOMALIA · Applications mobiles</title>
+          <style>body{margin:0;background:#101725;color:#edf3ff;font:16px system-ui;display:grid;place-items:center;min-height:100vh;padding:20px}main{max-width:670px}h1{font-size:35px}a{display:block;padding:23px;border:1px solid #4b5d83;border-radius:16px;margin:15px 0;background:#1c2b43;color:#fff;text-decoration:none}a:hover{border-color:#a8afff}small{color:#b0c2d9}p{line-height:1.65}</style>
+          <main><small>CMD / ANOMALIA • CRÉATION 3D</small><h1>ANOMALIA sur mobile et tablette</h1>
+          <p>Deux applications PWA installables sur iPhone, iPad et Android. Les projets restent enregistrés localement sur chaque appareil.</p>
+          <a href="./editor/"><strong>ANOMALIA Editor</strong><p>Scènes 3D, modèles et édition tactile →</p></a>
+          <a href="./tools/"><strong>ANOMALIA Tools</strong><p>Workbench, terrains, assets et mods →</p></a>
+          <p><small>CMD Studio est une application privée. Elle n'est volontairement pas publiée ici. Unreal Engine et Blender natifs restent sur PC. Cette page ne synchronise pas les projets entre appareils.</small></p></main></html>
+          HTML
+      - uses: actions/configure-pages@v5
+        with:
+          enablement: true
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - name: Publier GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
