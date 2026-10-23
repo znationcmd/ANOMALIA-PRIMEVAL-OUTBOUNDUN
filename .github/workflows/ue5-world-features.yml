@@ -13,6 +13,8 @@ on:
       - 'scripts/world-features/place-exterior-bunkers.py'
       - 'scripts/world-features/settlement_roads.py'
       - 'scripts/world-features/build-settlement-roads.py'
+      - 'scripts/world-features/audit-detailed-world.py'
+      - 'scripts/world-features/run-visual-review.py'
       - 'docs/art/marine-terrain-sources.json'
       - '.github/workflows/ue5-world-features.yml'
 concurrency:
@@ -104,6 +106,30 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report = Get-Content $env:ANOMALIA_STREETS_REPORT -Raw | ConvertFrom-Json
           if ($report.state -ne 'TOWN_STREETS_SAVED_NOT_PLAYTESTED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.townsWithStreets -lt 20) { throw 'Fresh town street build receipt required.' }
+      - name: Check all saved detailed meshes and reject primitive placeholders
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_DETAILED_WORLD_REPORT = Join-Path $evidence 'detailed-mesh-audit.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/audit-detailed-world.py'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/detailed-mesh-audit.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_DETAILED_WORLD_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'DETAILED_MESH_AUDIT_PASSED_NOT_RENDERED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.savedHouseDescriptors -ne 4760 -or $report.enginePrimitivesFound -ne 0) { throw 'Fresh detailed geometry audit required.' }
+      - name: Render the detailed imported models and capture day and night views
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $enginePython scripts/world-features/run-visual-review.py --engine-root "$env:UE_ROOT" --output "$evidence/visual-render"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

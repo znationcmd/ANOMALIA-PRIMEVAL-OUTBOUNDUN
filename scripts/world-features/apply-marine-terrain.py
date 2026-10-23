@@ -40,10 +40,24 @@ try:
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     if not level.load_level(PACKAGE):
         raise RuntimeError('Owned populated world unavailable')
+    # World Partition reopens only loaded editor regions. Load terrain proxies
+    # explicitly before counting or assigning their material; leave towns streamed.
+    descriptors = unreal.WorldPartitionBlueprintLibrary.get_actor_descs()
+    if descriptors is None:
+        raise RuntimeError('World Partition actor descriptors unavailable')
+    terrain_guids = []
+    for descriptor in descriptors:
+        native_class = descriptor.get_editor_property('native_class')
+        if native_class and native_class.get_path_name() in {
+                '/Script/Landscape.Landscape', '/Script/Landscape.LandscapeStreamingProxy'}:
+            terrain_guids.append(descriptor.get_editor_property('guid'))
+    report['terrainActorDescriptors'] = len(terrain_guids)
+    unreal.WorldPartitionBlueprintLibrary.load_actors(terrain_guids)
     landscapes = [a for a in actors.get_all_level_actors() if isinstance(a, unreal.LandscapeProxy)]
     count = sum(len(a.get_components_by_class(unreal.LandscapeComponent)) for a in landscapes)
+    report['loadedTerrainComponents'] = count
     if count != 576 or not any(a.get_actor_label() == 'ANOMALIA_InhabitedArchipelago_48km' for a in landscapes):
-        raise RuntimeError('Expected owned complete 576-component terrain')
+        raise RuntimeError('Expected owned complete 576-component terrain; loaded ' + str(count))
     allowed = {ORIGINAL + '.M_PBRGround', DEST + '.M_LandShoreSeabed'}
     for a in landscapes:
         material = a.get_editor_property('landscape_material')
