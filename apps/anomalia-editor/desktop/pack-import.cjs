@@ -89,13 +89,15 @@ async function verifyKnownManifests(directory){
     for(const model of manifest.models){
       if(!model||typeof model.file!=='string'||typeof model.sha256!=='string'||!(/^[a-f0-9]{64}$/.test(model.sha256)))
         throw Error('Manifeste de ressources invalide.');
-      const target=path.join(parent,...safeEntry(model.file));
-      const real=await fs.promises.realpath(target);
-      const relative=path.relative(parent,real);
+      const target=path.resolve(parent,...safeEntry(model.file));
+      const relative=path.relative(parent,target);
       if(!relative||relative.startsWith('..')||path.isAbsolute(relative))throw Error('Manifeste hors dossier autorisé.');
-      const info=await fs.promises.stat(real);
+      // Staging est créé par l'importeur, les liens symboliques ZIP étant refusés :
+      // ne pas résoudre le chemin natif Windows à travers les jonctions temporaires.
+      const info=await fs.promises.lstat(target);
+      if(!info.isFile()||info.isSymbolicLink())throw Error('Fichier de manifeste non autorisé.');
       if(model.bytes!==undefined&&info.size!==model.bytes)throw Error('Taille invalide : '+model.file);
-      if(await digest(real)!==model.sha256)throw Error('Empreinte SHA-256 non conforme : '+model.file);
+      if(await digest(target)!==model.sha256)throw Error('Empreinte SHA-256 non conforme : '+model.file);
       verified++;
     }
   }
