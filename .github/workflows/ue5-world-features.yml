@@ -11,6 +11,8 @@ on:
       - 'scripts/world-features/prepare-marine-sources.py'
       - 'scripts/world-features/apply-marine-terrain.py'
       - 'scripts/world-features/place-exterior-bunkers.py'
+      - 'scripts/world-features/settlement_roads.py'
+      - 'scripts/world-features/build-settlement-roads.py'
       - 'docs/art/marine-terrain-sources.json'
       - '.github/workflows/ue5-world-features.yml'
 concurrency:
@@ -87,6 +89,21 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report = Get-Content $env:ANOMALIA_BUNKER_REPORT -Raw | ConvertFrom-Json
           if ($report.state -ne 'EXTERIOR_BUNKERS_SAVED_NOT_PLAYTESTED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.count -lt 1) { throw 'Fresh bunker placement receipt required.' }
+      - name: Build local 3D streets in the saved towns
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_STREETS_REPORT = Join-Path $evidence 'town-streets.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/build-settlement-roads.py'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/town-streets.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_STREETS_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'TOWN_STREETS_SAVED_NOT_PLAYTESTED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.townsWithStreets -lt 20) { throw 'Fresh town street build receipt required.' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:

@@ -46,7 +46,7 @@ try:
     surface = ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
     proposals = []
     for site in plan['settlements']:
-        e, n = site['east'] + 350., site['north'] + 350.
+        e, n = site['east'] + 365., site['north'] + 365.
         low, high = ground.ground_envelope(surface, e, n, width, depth)
         if low < 5 or high - low > .12:
             report['rejected'].append(dict(site=site['id'], reason='WET_OR_UNEVEN')); continue
@@ -70,6 +70,7 @@ try:
         if actor:
             if not isinstance(actor, unreal.StaticMeshActor) or OWNER not in actor.tags or actor.static_mesh_component.get_editor_property('static_mesh') != mesh:
                 raise RuntimeError('Existing artist actor preserved: ' + name)
+            actor.set_actor_location(unreal.Vector(item['east'] * 100, -item['north'] * 100, item['z'] * 100), False, False)
             report['placements'].append(dict(**item, existing=True)); continue
         actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(item['east'] * 100, -item['north'] * 100, item['z'] * 100))
         if not actor:
