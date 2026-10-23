@@ -29,9 +29,11 @@
       "targets": [
         "item:hatchet"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_wooden_axe",
@@ -45,9 +47,11 @@
       "targets": [
         "family:axes"
       ],
-      "note": "Hache générique; ne valide pas une hache de pompier exacte.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_screwdriver",
@@ -61,9 +65,11 @@
       "targets": [
         "item:screwdriver"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_flathead_screwdriver",
@@ -77,9 +83,11 @@
       "targets": [
         "item:screwdriver"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_pliers",
@@ -93,9 +101,11 @@
       "targets": [
         "item:pliers"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_crowbar_01",
@@ -109,9 +119,11 @@
       "targets": [
         "item:crowbar"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_sledgehammer_01",
@@ -125,9 +137,11 @@
       "targets": [
         "item:sledgehammer"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_handsaw_wood",
@@ -141,9 +155,11 @@
       "targets": [
         "item:handsaw"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_rusted_hacksaw",
@@ -157,9 +173,11 @@
       "targets": [
         "item:hacksaw"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_rusted_spade_01",
@@ -173,9 +191,11 @@
       "targets": [
         "item:shovel"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_pipe_wrench",
@@ -189,9 +209,11 @@
       "targets": [
         "item:wrench"
       ],
-      "note": "Variante de clé; vérifier si elle convient à l'objet wrench demandé.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_wooden_hammer_01",
@@ -205,9 +227,11 @@
       "targets": [
         "item:hammer"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_picke_dirty_01",
@@ -221,9 +245,11 @@
       "targets": [
         "item:pickaxe"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_binoculars",
@@ -237,9 +263,11 @@
       "targets": [
         "item:binoculars"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_portable_generator",
@@ -253,9 +281,11 @@
       "targets": [
         "item:generator"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_small_plastic_torch",
@@ -269,9 +299,11 @@
       "targets": [
         "item:flashlight"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_portable_searchlight",
@@ -285,9 +317,11 @@
       "targets": [
         "family:floodlights"
       ],
-      "note": "Projecteur portable; ne valide pas un projecteur de chantier sur pied.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_plastic_jerrycan",
@@ -301,9 +335,11 @@
       "targets": [
         "item:water_in_fuel_can"
       ],
-      "note": "Contenant candidat; n'ajoute aucune simulation de liquide ni contrôle de contamination.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_metal_jerrycan_green",
@@ -317,9 +353,11 @@
       "targets": [
         "item:water_in_fuel_can"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_Barrel_01",
@@ -333,9 +371,11 @@
       "targets": [
         "item:metal_barrel"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_Barrel_02",
@@ -349,9 +389,11 @@
       "targets": [
         "item:plastic_barrel"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_vintage_lighter",
@@ -365,9 +407,11 @@
       "targets": [
         "item:lighter"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_brass_pan_01",
@@ -381,9 +425,11 @@
       "targets": [
         "item:frying_pan"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_brass_pot_02",
@@ -397,9 +443,11 @@
       "targets": [
         "item:cooking_pot"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_food_apple_01",
@@ -413,9 +461,11 @@
       "targets": [
         "item:apple"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_food_pears_asian_01",
@@ -429,9 +479,11 @@
       "targets": [
         "item:pear"
       ],
-      "note": "Variété asiatique; correspondance à confirmer pour la poire générique.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_long_life_food",
@@ -446,9 +498,11 @@
         "item:canned_beans",
         "item:sardines"
       ],
-      "note": "Pack comprenant notamment conserves de haricots et sardines; vérifier fichiers séparés et étiquettes. Ne couvre pas toutes les conserves.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_wine_bottles_01",
@@ -465,9 +519,11 @@
         "item:rose_wine",
         "item:champagne"
       ],
-      "note": "Plusieurs bouteilles; vérifier chaque variante et adapter les étiquettes fictives. Une seule ressource commune.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_medical_box",
@@ -481,9 +537,11 @@
       "targets": [
         "item:rp_recovery_kit"
       ],
-      "note": "Contenant de trousse uniquement; ne valide pas chaque instrument ou médicament.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_medical_tape",
@@ -497,9 +555,11 @@
       "targets": [
         "family:medical"
       ],
-      "note": "Ruban adhésif médical, distinct du bandage stérile; ne pas remplacer silencieusement sterile_bandage.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_old_gas_mask",
@@ -513,9 +573,11 @@
       "targets": [
         "item:gas_mask"
       ],
-      "note": "Masque ancien, tube et filtre; adaptation au squelette et visibilité première personne requises.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_digital_wrist_watch",
@@ -529,9 +591,11 @@
       "targets": [
         "item:rp_watch"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_rubber_boots",
@@ -545,9 +609,11 @@
       "targets": [
         "family:boots"
       ],
-      "note": "Bottes en caoutchouc; ne remplace pas les rangers ou bottes militaires demandées.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_cigarette_pack",
@@ -561,9 +627,11 @@
       "targets": [
         "item:cigarette"
       ],
-      "note": "Cigarettes visibles dans un paquet; vérifier séparation des meshes; mégot et cigare restent distincts.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_propane_tank",
@@ -577,9 +645,11 @@
       "targets": [
         "family:gas_containers"
       ],
-      "note": "Grand réservoir; pas une cartouche de réchaud validée.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_old_tyre",
@@ -593,9 +663,11 @@
       "targets": [
         "family:vehicle_tyres"
       ],
-      "note": "Pneu générique, sans jante; ne couvre pas les roues exactes Ada/Gunter/Olga/Humvee.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_service_pistol",
@@ -609,9 +681,11 @@
       "targets": [
         "family:handguns"
       ],
-      "note": "Désignation générique; ne pas l'assimiler à un identifiant d'arme précis sans vérification.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_bolt_action_rifle_7_62",
@@ -625,9 +699,11 @@
       "targets": [
         "family:rifles"
       ],
-      "note": "Modèle précis non identifié; ne pas l'assimiler à Mosin, M24 ou autre arme nommée.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_Sofa_01",
@@ -642,9 +718,11 @@
         "env:decor_rooms",
         "homestead:Sofa"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_Shelf_01",
@@ -658,9 +736,11 @@
       "targets": [
         "env:decor_storage"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_painted_wooden_cabinet",
@@ -674,9 +754,11 @@
       "targets": [
         "env:decor_storage"
       ],
-      "note": "Meuble de rangement, pas une armoire haute validée.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_wooden_table_02",
@@ -691,9 +773,11 @@
         "env:decor_rooms",
         "homestead:Table"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_street_lamp_01",
@@ -708,9 +792,11 @@
         "env:decor_lights",
         "env:decor_street"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_modular_chainlink_fence",
@@ -725,9 +811,11 @@
         "env:decor_gardens",
         "homestead:Fence"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_pine_tree_01",
@@ -741,9 +829,11 @@
       "targets": [
         "env:nature_forest"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_fir_tree_01",
@@ -757,9 +847,11 @@
       "targets": [
         "env:nature_forest"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_fern_02",
@@ -773,9 +865,11 @@
       "targets": [
         "env:nature_ground"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_shrub_01",
@@ -789,9 +883,11 @@
       "targets": [
         "env:nature_ground"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "ph_watering_can_metal_01",
@@ -805,9 +901,11 @@
       "targets": [
         "family:farming_tools"
       ],
-      "note": "Modèle candidat détaillé; fichiers, collisions, échelle, animation et rendu Unreal non inspectés.",
-      "downloadedThisTurn": false,
-      "importedThisTurn": false
+      "note": "Sources glTF, buffers et textures effectivement téléchargés; dépendances vérifiées et SHA-256 consignés. Import UE, collisions, rig, gameplay et rendu à vérifier.",
+      "downloadedThisTurn": true,
+      "importedThisTurn": false,
+      "downloadStatus": "DOWNLOADED_DEPENDENCIES_CHECKED",
+      "sourceReceipt": "docs/art/item-source-download-receipt-20261023.json"
     },
     {
       "id": "v_f35",
@@ -1722,7 +1820,7 @@
       "displayName": "hatchet",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_hatchet"
       ],
@@ -1734,7 +1832,7 @@
       "displayName": "sledgehammer",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_sledgehammer_01"
       ],
@@ -1746,7 +1844,7 @@
       "displayName": "shovel",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_rusted_spade_01"
       ],
@@ -1758,7 +1856,7 @@
       "displayName": "pickaxe",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_picke_dirty_01"
       ],
@@ -1770,7 +1868,7 @@
       "displayName": "hacksaw",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_rusted_hacksaw"
       ],
@@ -1782,7 +1880,7 @@
       "displayName": "handsaw",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_handsaw_wood"
       ],
@@ -1794,7 +1892,7 @@
       "displayName": "screwdriver",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_screwdriver",
         "ph_flathead_screwdriver"
@@ -1807,7 +1905,7 @@
       "displayName": "pliers",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_pliers"
       ],
@@ -1819,7 +1917,7 @@
       "displayName": "crowbar",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_crowbar_01"
       ],
@@ -1831,7 +1929,7 @@
       "displayName": "hammer",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_wooden_hammer_01"
       ],
@@ -1843,7 +1941,7 @@
       "displayName": "wrench",
       "category": "tools",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_pipe_wrench"
       ],
@@ -2387,7 +2485,7 @@
       "displayName": "gas mask",
       "category": "headwear",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_old_gas_mask"
       ],
@@ -2699,7 +2797,7 @@
       "displayName": "Haricots en conserve",
       "category": "canned_food",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_long_life_food"
       ],
@@ -2711,7 +2809,7 @@
       "displayName": "Sardines en conserve",
       "category": "canned_food",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_long_life_food"
       ],
@@ -2803,7 +2901,7 @@
       "displayName": "Pomme",
       "category": "fresh_food",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_food_apple_01"
       ],
@@ -2815,7 +2913,7 @@
       "displayName": "Poire",
       "category": "fresh_food",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_food_pears_asian_01"
       ],
@@ -2947,7 +3045,7 @@
       "displayName": "Vin rouge RP",
       "category": "drinks",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_wine_bottles_01"
       ],
@@ -2959,7 +3057,7 @@
       "displayName": "Vin blanc RP",
       "category": "drinks",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_wine_bottles_01"
       ],
@@ -2971,7 +3069,7 @@
       "displayName": "Vin rosé RP",
       "category": "drinks",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_wine_bottles_01"
       ],
@@ -2983,7 +3081,7 @@
       "displayName": "Vin pétillant RP",
       "category": "drinks",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_wine_bottles_01"
       ],
@@ -3015,7 +3113,7 @@
       "displayName": "water in fuel can",
       "category": "drinks",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_plastic_jerrycan",
         "ph_metal_jerrycan_green"
@@ -3038,7 +3136,7 @@
       "displayName": "cooking pot",
       "category": "cooking",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_brass_pot_02"
       ],
@@ -3050,7 +3148,7 @@
       "displayName": "frying pan",
       "category": "cooking",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_brass_pan_01"
       ],
@@ -3102,7 +3200,7 @@
       "displayName": "lighter",
       "category": "cooking",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_vintage_lighter"
       ],
@@ -3144,7 +3242,7 @@
       "displayName": "plastic barrel",
       "category": "camping_storage",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_Barrel_02"
       ],
@@ -3156,7 +3254,7 @@
       "displayName": "metal barrel",
       "category": "camping_storage",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_Barrel_01"
       ],
@@ -3208,7 +3306,7 @@
       "displayName": "generator",
       "category": "power_lighting",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_portable_generator"
       ],
@@ -3260,7 +3358,7 @@
       "displayName": "flashlight",
       "category": "power_lighting",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_small_plastic_torch"
       ],
@@ -3332,7 +3430,7 @@
       "displayName": "binoculars",
       "category": "navigation",
       "sourceCatalog": "public/config/loot_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_binoculars"
       ],
@@ -3634,7 +3732,7 @@
       "displayName": "Montre",
       "category": "rp_valuables",
       "sourceCatalog": "public/config/rp_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_digital_wrist_watch"
       ],
@@ -3906,7 +4004,7 @@
       "displayName": "Trousse de soins RP — intoxication",
       "category": "medical_supplies",
       "sourceCatalog": "public/config/rp_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_medical_box"
       ],
@@ -4288,7 +4386,7 @@
       "displayName": "Cigarette",
       "category": "rp_tobacco",
       "sourceCatalog": "public/config/rp_items_catalog.json",
-      "status": "SOURCE_CANDIDATE_A_INSPECTER",
+      "status": "SOURCE_TELECHARGEE_IMPORT_UE_A_FAIRE",
       "sources": [
         "ph_cigarette_pack"
       ],
@@ -4634,7 +4732,7 @@
     "Remorqueurs",
     "Porte-conteneurs (navires)"
   ],
-  "remaining": "Aucun statut de cette recherche ne signifie un véhicule ou objet terminé. Tous les IDs sans source restent explicitement A_RECHERCHER; les sources indexées seulement ne sont pas validées.",
+  "remaining": "49 sources complètes récupérées. Import et validation Unreal toujours à faire. Médicaments consommables, argent, drogues fictives et vêtements supplémentaires restent à compléter ; pistes Sketchfab bloquées par connexion non autorisée explicitement.",
   "dayzSourcePolicy": {
     "artistSource": "https://dayz.com/article/general/DayZ-Team-Evolution-n2",
     "licenseSource": "https://www.bohemia.net/en/licenses/dayz-public-license-dpl",
@@ -4653,7 +4751,10 @@
       "REFERENCE_HISTORIQUE_SEULE": 11,
       "CANDIDAT_PARTIEL_A_VERIFIER": 32
     },
-    "noNewBinaryDownloads": true,
-    "noNewUnrealImports": true
-  }
+    "noNewBinaryDownloads": false,
+    "noNewUnrealImports": true,
+    "downloadedModels": 49,
+    "downloadedBytes": 2856813476
+  },
+  "downloadReceipt": "docs/art/item-source-download-receipt-20261023.json"
 }
