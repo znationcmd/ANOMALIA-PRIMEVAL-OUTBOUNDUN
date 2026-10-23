@@ -5,6 +5,7 @@ contextBridge.exposeInMainWorld('anomaliaDesktop',Object.freeze({
   gameLibrary:Object.freeze({
     status:()=>ipcRenderer.invoke('editor:library:status'),
     choose:()=>ipcRenderer.invoke('editor:library:choose'),
+    importPack:()=>ipcRenderer.invoke('editor:library:import-pack'),
     scan:()=>ipcRenderer.invoke('editor:library:scan'),
     read:id=>ipcRenderer.invoke('editor:library:read',id),
     subscribe:fn=>{
