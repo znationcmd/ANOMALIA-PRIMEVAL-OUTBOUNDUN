@@ -47,5 +47,5 @@ test('découverte de fichiers Poly Haven sans liens arbitraires', () => {
   const candidates=fileCandidates({blend:{'1k':{blend:{url:'https://cdn.polyhaven.com/x.blend',size:123}}}});
   assert.equal(candidates.length,1);
   assert.equal(candidates[0].extension,'.blend');
-  assert.equal(filenameSafe('../../ test.v1'),'______test_v1');
+  assert.equal(filenameSafe('../../ test.v1'),'_______test_v1');
 });
