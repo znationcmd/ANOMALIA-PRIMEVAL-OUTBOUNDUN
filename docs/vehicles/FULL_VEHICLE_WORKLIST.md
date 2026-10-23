@@ -352,7 +352,7 @@ Ces lignes ne s'additionnent pas aux 210 groupes; elles suivent aussi les demand
 | Formule 1 | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/formula-1-car-e89589184eac42c08028db5cba3f6499) [2](https://sketchfab.com/3d-models/mclaren-mp45-formula-1-3059d4532ecd48ca8da41e1cac971f22) |
 | Monster truck | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/free-monster-truck-model-96d16754451d4ca3a0b4c5252452f0b5) |
 | Motos routières | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/motorcycle-2a5922ce4283422d83c34d5bab5f65bf) [2](https://sketchfab.com/3d-models/motorcycle-135b505f55bb4da0b82b8987a34443b2) [3](https://sketchfab.com/3d-models/motorcycle-693e83d86e1e4e5b95e4314dbdd95d40) |
-| Motocross | PISTE PARTIELLE A VERIFIER | [1](https://sketchfab.com/3d-models/motorcycle-d2491be97414453ea6c1f2e13b6db4a5) |
+| Motocross | Candidats précis à vérifier, accès direct HTTP 403 | [1](https://sketchfab.com/3d-models/motorcycle-d2491be97414453ea6c1f2e13b6db4a5) [2](https://sketchfab.com/3d-models/free-honda-crf-450-c80f0e732e844580af412958c9d67315) [3](https://sketchfab.com/3d-models/ktm-450-exc-d4a99a39c0ff48378ba47af8f8b74dea) |
 | Jet-skis | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/jetski-collection-d261f758b40c45fdb03ddb57fe89a59e) [2](https://sketchfab.com/3d-models/jet-ski-bc7717b935534c6c8d7f8ff7eefb044d) |
 | Tracteurs | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/tractor-e9e844f2f9364044a181ce8f38a83dc3) [2](https://sketchfab.com/3d-models/farm-tractor-02836025b3994747b420d5b790f9512c) [3](https://sketchfab.com/3d-models/tractor-f1f01cf3d68f4630956fd89a3b1989b4) |
 | Ambulances | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/ambulance-emergency-vehicle-e0a1d9359f2b415c9d91e1d7815fdbaf) [2](https://sketchfab.com/3d-models/ambulance-41574a23a9ae4c9d990ffe672af6281e) |
@@ -367,7 +367,7 @@ Ces lignes ne s'additionnent pas aux 210 groupes; elles suivent aussi les demand
 | Métro et voitures | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/subway-car-r62a-eeccd33aab144e76937c1ebdbc1faa74) [2](https://sketchfab.com/3d-models/metro-wagon-9061849750014cd6ab5591b3484326b8) [3](https://sketchfab.com/3d-models/train-f5d3cce56a94426493cdfbcfbae931f5) [4](https://sketchfab.com/3d-models/subway-railcar-ezh-3-4ac2b9e0580b4536a5e503627b9c1b98) [5](https://sketchfab.com/3d-models/metro-train-3d-free-model-c6bfec7c75b147909a39de96045495c5) |
 | Tramway | CANDIDAT A VERIFIER | [1](https://sketchfab.com/3d-models/post-ww3-tatra-style-tram-12de7f85eb1848e082bcbd552a028e09) |
 | Gendarmerie française réaliste | A RECHERCHER | Aucune source individuelle retenue |
-| Buggy | A RECHERCHER | Aucune source individuelle retenue |
+| Buggy | Candidats précis à vérifier, accès direct HTTP 403 | [1](https://sketchfab.com/3d-models/apocalyptic-off-road-buggy-5aacc30acdc5455aac98f44f5bc8c043) |
 | Zodiac / semi-rigide | A RECHERCHER | Aucune source individuelle retenue |
 | Remorque agricole | A RECHERCHER | Aucune source individuelle retenue |
 | Dépanneuse | A RECHERCHER | Aucune source individuelle retenue |
@@ -387,3 +387,7 @@ Ces lignes ne s'additionnent pas aux 210 groupes; elles suivent aussi les demand
 - [Renault Megane Gendarmerie/Pompier](https://sketchfab.com/3d-models/renault-megane-iv-gendarmeriepompier-666475cef69c482ba2c6e075676a3c4e) : **ECARTE_DU_RESULTAT_PHOTOREALISTE**. Style low-poly/Minecraft indiqué par l'index; page directe HTTP 403.
 
 Les sources payantes, les collections sans fiche individuelle et les variantes stylisées n'établissent pas qu'un véhicule réaliste gratuit est trouvé. Un sous-marin générique Akula ne remplace pas automatiquement Suffren, Triomphant ou Virginia; une moto générique ne couvre pas les motos militaires demandées.
+
+## Monde, bâtiments et décoration
+
+Le suivi ne se limite pas aux véhicules. Voir [la liste des bâtiments, arbres, végétation, mobilier et décorations](../art/FULL_ENVIRONMENT_WORKLIST.md). Motocross et buggy restent obligatoires; les nouvelles sources Honda CRF 450, KTM 450 EXC et Apocalyptic Off Road Buggy ci-dessus sont des candidats, pas des remplacements déjà jouables.
