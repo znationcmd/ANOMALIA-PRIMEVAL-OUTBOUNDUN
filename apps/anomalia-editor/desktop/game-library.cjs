@@ -92,7 +92,7 @@ class GameLibrary{
             const item={id:crypto.createHash('sha256').update(relative.toLowerCase()).digest('hex').slice(0,24),
               name:file.name,relative,kind,category:category(relative,kind),
               bytes:info.size,mtimeMs:Math.round(info.mtimeMs),
-              canPlace:kind==='glb'&&info.size<=14*1024*1024,
+              canPlace:kind==='glb'&&info.size<=48*1024*1024,
               canOpen:kind==='map'&&info.size<=45*1024*1024};
             entries.push(item);
           }
@@ -109,6 +109,7 @@ class GameLibrary{
     }finally{this.loading=false;}
   }
   async read(id){
+    if(this.root&&!this.index.has(id))await this.scan();
     const item=this.index.get(id);
     if(!item)throw Error('Fichier absent du catalogue. Actualise la bibliothèque.');
     if(!item.canPlace&&!item.canOpen)throw Error('Cette ressource doit être convertie ou ouverte dans Unreal Engine avant son utilisation.');
@@ -116,7 +117,7 @@ class GameLibrary{
     const full=await fs.promises.realpath(path.join(root,...item.relative.split('/')));
     if(!isInside(root,full))throw Error('Chemin non autorisé.');
     const info=await fs.promises.stat(full);
-    const limit=item.canPlace?14*1024*1024:45*1024*1024;
+    const limit=item.canPlace?48*1024*1024:45*1024*1024;
     if(!info.isFile()||info.size>limit)throw Error('Ressource trop volumineuse.');
     const data=await fs.promises.readFile(full);
     if(item.canPlace&&data.subarray(0,4).toString()!=='glTF')throw Error('Signature GLB incorrecte.');
