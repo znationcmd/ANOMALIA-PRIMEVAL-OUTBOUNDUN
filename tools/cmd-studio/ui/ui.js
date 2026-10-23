@@ -138,6 +138,7 @@ async function selectPreview(item) {
   $('#previewLicense').textContent=item.license;
   $('#previewTriangles').textContent='Calcul en cours';
   $('#previewHint').textContent='Chargement de la ressource locale…';
+  $('#previewHint').classList.remove('viewerError');
   try{
     const resource=await api.call('previewAsset',{id:item.id});
     if(request!==previewRequest)return;
