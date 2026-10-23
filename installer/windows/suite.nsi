@@ -2,7 +2,7 @@ Unicode true
 !include "MUI2.nsh"
 
 Name "ANOMALIA - Installation des trois applications"
-OutFile "release\Installer-ANOMALIA-3-applications.exe"
+OutFile "${__FILEDIR__}\..\..\release\Installer-ANOMALIA-3-applications.exe"
 BrandingText "ANOMALIA | Installation de la suite"
 RequestExecutionLevel user
 SetCompressor /SOLID lzma
@@ -19,9 +19,9 @@ InstallDir "$LOCALAPPDATA\ANOMALIA-Suite"
 Section "Installer les applications" MainSection
   InitPluginsDir
   SetOutPath "$PLUGINSDIR"
-  File "/oname=CMD-Studio-Setup.exe" "installers\studio\CMD Studio Setup 0.1.1.exe"
-  File "/oname=ANOMALIA-Editor-Setup.exe" "installers\editor\ANOMALIA Editor Setup 0.1.1.exe"
-  File "/oname=ANOMALIA-Tools-Setup.exe" "installers\tools\ANOMALIA Tools Setup 0.1.1.exe"
+  File "/oname=CMD-Studio-Setup.exe" "${__FILEDIR__}\..\..\installers\studio\CMD Studio Setup 0.1.1.exe"
+  File "/oname=ANOMALIA-Editor-Setup.exe" "${__FILEDIR__}\..\..\installers\editor\ANOMALIA Editor Setup 0.1.1.exe"
+  File "/oname=ANOMALIA-Tools-Setup.exe" "${__FILEDIR__}\..\..\installers\tools\ANOMALIA Tools Setup 0.1.1.exe"
 
   DetailPrint "1/3 Installation de CMD Studio 0.1.1..."
   ExecWait '"$PLUGINSDIR\CMD-Studio-Setup.exe" /S' $0
