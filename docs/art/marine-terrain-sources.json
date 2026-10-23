@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "models": [
+    {
+      "id": "coast_sand_02",
+      "author": "Rob Tuytel",
+      "source": "https://polyhaven.com/a/coast_sand_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "physicalTileMetres": 15,
+      "files": [
+        {
+          "channel": "diff",
+          "path": "coast_sand_02_diff_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_02/coast_sand_02_diff_4k.jpg",
+          "bytes": 10132736,
+          "sha256": "53e8d16ab3bd4100d75a71eb79b17e9d6c3a0464a530883057af24ba73bf7262"
+        },
+        {
+          "channel": "nor_gl",
+          "path": "coast_sand_02_nor_gl_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_02/coast_sand_02_nor_gl_4k.jpg",
+          "bytes": 15867624,
+          "sha256": "24317543fd903822db8afc7ea4b263d329cec347b62985a34070bd0010b04c6e"
+        },
+        {
+          "channel": "rough",
+          "path": "coast_sand_02_rough_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_02/coast_sand_02_rough_4k.jpg",
+          "bytes": 5172282,
+          "sha256": "cc499415410e9f7e7eb8b72d42d35e007a2caaefda0fde3d2cf727acfd651ced"
+        }
+      ]
+    },
+    {
+      "id": "coast_sand_rocks_02",
+      "author": "Rob Tuytel",
+      "source": "https://polyhaven.com/a/coast_sand_rocks_02",
+      "license": "CC0-1.0",
+      "licenseUrl": "https://polyhaven.com/license",
+      "physicalTileMetres": 15,
+      "files": [
+        {
+          "channel": "diff",
+          "path": "coast_sand_rocks_02_diff_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_rocks_02/coast_sand_rocks_02_diff_4k.jpg",
+          "bytes": 8089445,
+          "sha256": "f53d96e878fdc7b58b7534c50ae7ff210ddf8961b92b65743ae16e93d2bb64a5"
+        },
+        {
+          "channel": "nor_gl",
+          "path": "coast_sand_rocks_02_nor_gl_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_rocks_02/coast_sand_rocks_02_nor_gl_4k.jpg",
+          "bytes": 17015327,
+          "sha256": "33b90180d04509502da63e8a20f3e00ac8b95e7e781fc825dd8103bf4d5dabc8"
+        },
+        {
+          "channel": "rough",
+          "path": "coast_sand_rocks_02_rough_4k.jpg",
+          "url": "https://dl.polyhaven.org/file/ph-assets/Textures/jpg/4k/coast_sand_rocks_02/coast_sand_rocks_02_rough_4k.jpg",
+          "bytes": 6291647,
+          "sha256": "7f7bf421b03f84c507ccacc7d9f15587869de8c64a818035382f6ec2a6048e3b"
+        }
+      ]
+    }
+  ]
+}

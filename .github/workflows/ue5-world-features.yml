@@ -7,6 +7,11 @@ on:
       - 'scripts/world-features/prepare-sources.py'
       - 'scripts/vehicle-assets/prepare-world-features.mjs'
       - 'scripts/world-features/import-review.py'
+      - 'scripts/world-features/run-editor-task.py'
+      - 'scripts/world-features/prepare-marine-sources.py'
+      - 'scripts/world-features/apply-marine-terrain.py'
+      - 'scripts/world-features/place-exterior-bunkers.py'
+      - 'docs/art/marine-terrain-sources.json'
       - '.github/workflows/ue5-world-features.yml'
 concurrency:
   group: anomalia-ue5-native-host
@@ -43,10 +48,45 @@ jobs:
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
           $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
           $script = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/import-review.py'
-          & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/import.log"
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $env:ANOMALIA_EDITOR_TASK = $script
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/import.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report = Get-Content $env:ANOMALIA_WORLD_FEATURES_REPORT -Raw | ConvertFrom-Json
           if ($report.state -ne 'IMPORTED_REVIEW_SAVED_SCALE_AND_ACCESS_UNVALIDATED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or @($report.models).Count -ne 8) { throw 'Fresh full import report required.' }
+      - name: Apply 4K shore and seabed material to the saved populated world
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $enginePython = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $enginePython scripts/world-features/prepare-marine-sources.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_MARINE_TERRAIN_REPORT = Join-Path $evidence 'marine-terrain.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/apply-marine-terrain.py'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/marine-terrain.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_MARINE_TERRAIN_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'MARINE_TERRAIN_MATERIAL_SAVED_NOT_RENDERED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.terrainComponents -ne 576) { throw 'Fresh complete marine material receipt required.' }
+      - name: Place imported exterior bunkers on the populated map
+        if: ${{ !cancelled() }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/WorldFeatures/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_BUNKER_REPORT = Join-Path $evidence 'exterior-bunkers.json'
+          $env:ANOMALIA_EDITOR_TASK = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/place-exterior-bunkers.py'
+          $wrapper = Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/exterior-bunkers.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content $env:ANOMALIA_BUNKER_REPORT -Raw | ConvertFrom-Json
+          if ($report.state -ne 'EXTERIOR_BUNKERS_SAVED_NOT_PLAYTESTED' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.count -lt 1) { throw 'Fresh bunker placement receipt required.' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
