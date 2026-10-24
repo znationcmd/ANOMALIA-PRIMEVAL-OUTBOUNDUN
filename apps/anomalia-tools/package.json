@@ -1,6 +1,6 @@
 {
   "name": "anomalia-tools",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "private": true,
   "description": "ANOMALIA Tools - outils locaux de création de mods et ressources pour ANOMALIA",
   "main": "main.cjs",
@@ -33,6 +33,7 @@
       "preload.cjs",
       "core.cjs",
       "native-mods.cjs",
+      "workshop.cjs",
       "dist/**",
       "package.json",
       "node_modules/**",
@@ -64,6 +65,14 @@
       {
         "provider": "generic",
         "url": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-tools-latest/"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "ANOMALIA Workshop",
+        "schemes": [
+          "anomalia-tools"
+        ]
       }
     ]
   }

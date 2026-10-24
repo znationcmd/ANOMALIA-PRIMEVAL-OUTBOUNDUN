@@ -5,9 +5,22 @@ const {AnomaliaTools}=require('./core.cjs');
 const {ToolsUpdater}=require('./updates.cjs');
 let toolsApp;let win;let updater;
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
+const ownInstance=app.requestSingleInstanceLock();
+if(!ownInstance)app.quit();
+if(ownInstance&&process.platform==='win32'&&app.isPackaged)app.setAsDefaultProtocolClient('anomalia-tools');
+const workshopDeepLink=argv=>argv.some(arg=>/^anomalia-tools:\/\/workshop\/?$/i.test(arg));
+app.on('second-instance',(_event,argv)=>{
+  if(workshopDeepLink(argv)&&win&&!win.isDestroyed()){
+    if(win.isMinimized())win.restore();
+    win.show();win.focus();
+    win.webContents.send('tools:navigate','workshop');
+  }
+});
+
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
   'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod',
-  'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod']);
+  'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod',
+  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',
@@ -19,7 +32,7 @@ function start(){
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
 }
-app.whenReady().then(()=>{
+if(ownInstance)app.whenReady().then(()=>{
   toolsApp=new AnomaliaTools(path.join(app.getPath('userData'),'private-workspaces'));
   updater=new ToolsUpdater();
   ipcMain.handle('tools:updates:status',()=>updater.status());
@@ -49,7 +62,7 @@ app.whenReady().then(()=>{
     if(path.resolve(choice.filePath)!==path.resolve(archive.path))fs.copyFileSync(archive.path,choice.filePath);
     return {saved:true,path:choice.filePath,manifest:archive.manifest};
   });
-  start();updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
+  start();if(workshopDeepLink(process.argv)){win.webContents.once('did-finish-load',()=>win.webContents.send('tools:navigate','workshop'));}updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
 });
 app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit();});
 

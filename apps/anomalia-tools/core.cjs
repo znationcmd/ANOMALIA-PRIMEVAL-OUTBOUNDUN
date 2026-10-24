@@ -6,6 +6,7 @@ const {pipeline}=require('node:stream/promises');
 const {PNG}=require('pngjs');
 const yazl=require('yazl');
 const native=require('./native-mods.cjs');
+const {Workshop}=require('./workshop.cjs');
 const SOURCE_EXT=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const ASSET_EXT=new Set(['.glb','.gltf','.fbx','.obj','.usd','.png','.jpg','.jpeg','.webp','.tga','.wav','.ogg','.json','.xml','.ini']);
 const PREVIEW_EXT=new Set(['.glb','.png','.jpg','.jpeg','.webp']);
@@ -219,6 +220,12 @@ class AnomaliaTools{
   async buildNativeMod({projectId,engineRoot=''}={}){
     return native.buildNativeMod(this.getProjectPath(projectId),projectId,engineRoot);
   }
+  workshop(){return new Workshop(this);}
+  listWorkshopMods(){return this.workshop().list();}
+  publishWorkshopMod(payload={}){return this.workshop().publish(payload);}
+  subscribeWorkshopMod(payload={}){return this.workshop().subscribe(payload);}
+  prepareWorkshopMod(payload={}){return this.workshop().install(payload);}
+  toggleWorkshopMod(payload={}){return this.workshop().toggle(payload);}
   async packageMod({projectId}={}){
     const root=this.getProjectPath(projectId);
     const files=this.listFiles({projectId}).filter(x=>x.type==='file'&&!x.path.startsWith('Dist/')&&

@@ -16,6 +16,8 @@
  <div class="navHeading">COMPILATION & EXPORT</div>
  <button data-tab="addon" class="nav"><span>◈</span> Addon Builder</button>
  <button data-tab="publisher" class="nav"><span>⬆</span> Publisher</button>
+ <div class="navHeading">ANOMALIA COMMUNITY</div>
+ <button data-tab="workshop" class="nav"><span>✦</span> ANOMALIA Workshop <small>MODS</small></button>
  <div class="navHeading">APPLICATION</div>
  <button data-tab="updates" class="nav"><span>↻</span> Mises à jour <small id="sidebarUpdateBadge">AUTO</small></button>
  <div class="grow"></div>
@@ -43,6 +45,47 @@
    <div class="cards" id="moduleCards"></div>
    <div class="sectionHeading"><div><small>LOCAL WORKSPACES</small><h3>Mes projets</h3></div><span id="projectCount">0 projet</span></div>
    <div id="projectsList" class="projectList"></div>
+  </section>
+  <section id="workshop" class="page workshopPage" hidden>
+   <div class="wsBanner">
+    <div class="wsBackground"></div>
+    <div class="wsTopline"><span class="wsStar">✦</span> ANOMALIA PRIMEVAL OUTBOUNDUN <span class="wsToplineEnd">WORKSHOP · CRÉATIONS LOCALES</span></div>
+    <div class="wsWelcome">
+     <div><span class="wsEyebrow">SURVIVRE · CRÉER · PARTAGER</span><h2>ANOMALIA<br><em>WORKSHOP</em></h2>
+      <p>Des mods qui prennent vie dans ton atelier. Prépare des plugins Unreal et gère ta propre bibliothèque.</p>
+      <div class="wsStats"><div><strong id="wsTotal">0</strong><span>Mods dans la bibliothèque</span></div><div><strong id="wsSubs">0</strong><span>Abonnements locaux</span></div><div><strong id="wsPrepared">0</strong><span>Plugins préparés</span></div></div>
+     </div>
+     <aside class="wsConnection"><div class="wsConnectionTitle"><span class="wsLed"></span> ÉTAT DE LA CONNEXION</div>
+      <div class="wsConnectionRow"><span>ANOMALIA Tools</span><strong class="wsGreen">Connecté</strong></div>
+      <div class="wsConnectionRow"><span>Chargeur du jeu UE5</span><strong class="wsAmber">Non connecté</strong></div>
+      <div class="wsConnectionRow"><span>ANOMALIA Editor</span><strong class="wsAmber">À relier</strong></div>
+      <div class="wsConnectionRow"><span>Workshop communautaire</span><strong class="wsAmber">À créer</strong></div>
+      <button type="button" id="wsManage" class="wsCrimson">Gérer mes mods ↗</button>
+     </aside>
+    </div>
+   </div>
+   <div class="wsSurface">
+    <div class="wsSectionHeader"><div><span class="wsSectionOver">DÉCOUVRIR</span><h3>Explorer les créations</h3></div><div class="wsToolbar"><input id="wsSearch" type="search" placeholder="Rechercher un mod local..." aria-label="Rechercher des mods"/><select id="wsOrder" aria-label="Trier les mods"><option value="recent">Récents</option><option value="name">Par nom</option><option value="category">Par catégorie</option></select><button id="wsReload" class="button" type="button">↻ Actualiser</button></div></div>
+    <div class="wsCategories" id="wsCategories"></div>
+    <div class="wsSectionHeader wsSubhead"><div><span class="wsSectionOver">LA BIBLIOTHÈQUE</span><h3>Mods disponibles <span id="wsVisibleCount"></span></h3></div><button id="wsCreate" type="button" class="wsCrimson">＋ Ajouter un mod local</button></div>
+    <div class="wsModGrid" id="wsModGrid"><p>Chargement du catalogue...</p></div>
+    <div class="wsFooterGrid">
+      <div class="wsPanel"><h3>Mes mods & créations</h3><p>Sélectionne l'un de tes projets pour l'ajouter à ta bibliothèque Workshop locale. Seules tes créations sont affichées : aucun faux mod communautaire.</p><div id="wsProjects"></div></div>
+      <div class="wsPanel"><h3>Installer pour ANOMALIA</h3><p>Les boutons sont reliés au générateur de plugins UE5 d'ANOMALIA Tools. Un mod doit être compilé avant de pouvoir être préparé. Le jeu ne charge pas encore automatiquement ces plugins.</p><div id="wsStatus" class="wsInfoLine">Bibliothèque locale opérationnelle · Jeu non connecté</div><button id="wsOpenAddon" type="button" class="button">Ouvrir Addon Builder →</button></div>
+    </div>
+   </div>
+   <div id="wsPublishPanel" class="wsPublishOverlay" hidden>
+    <div class="wsPublishCard" role="dialog" aria-modal="true" aria-labelledby="wsPublishTitle">
+      <h2 id="wsPublishTitle">Ajouter au Workshop local</h2><p>Cette opération est privée : elle n'envoie aucun fichier sur Internet.</p>
+      <form id="wsPublishForm" class="fields"><label>Projet source<select id="wsProjectSelect" required></select></label>
+       <label>Nom du mod<input id="wsModName" maxlength="90" required/></label>
+       <label>Catégorie<select id="wsModCategory"><option>Véhicules</option><option>Armes</option><option>Bâtiments</option><option>Créatures</option><option>Survie</option><option>Cartes</option><option>Vêtements</option><option>Outils</option><option selected>Autres</option></select></label>
+       <label>Version<input id="wsModVersion" value="0.1.0" pattern="[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?" required/></label>
+       <label>Description<textarea id="wsModDescription" maxlength="650" rows="3"></textarea></label>
+       <div class="actions end"><button type="button" class="button" id="wsCancelPublish">Annuler</button><button type="submit" class="wsCrimson">Ajouter à ma bibliothèque</button></div>
+      </form>
+    </div>
+   </div>
   </section>
   <section id="workbench" class="page" hidden>
    <div class="panelTitle"><div><h2>Workbench</h2><p>Éditeur de fichiers source, JSON, XML, INI et configurations pour ton mod.</p></div><button id="newSource" class="button">＋ Nouveau fichier</button></div>

@@ -190,3 +190,82 @@ footer{background:#0e1926;border-color:#32465a;color:#8297a9;height:40px;letter-
 /* Le logo officiel choisi par le propriétaire figure aussi dans l'interface. */
 .brandBadge{background:#162333 url('../assets/anomalia-tools-icon.png') center/cover no-repeat;border:1px solid #c9996b;box-shadow:0 0 0 1px #32291f,0 7px 22px #a96c4652}
 .brandBadge .brandSymbol,.brandBadge .brandPlus{display:none}
+
+
+/* ANOMALIA WORKSHOP — all counts and buttons are backed by the local Mod Library. */
+.sidebar .nav[data-tab="workshop"]{border-color:#742b23;background:linear-gradient(105deg,#3b1515,#1b151c);color:#ffb39a}
+.sidebar .nav[data-tab="workshop"].active{box-shadow:inset 3px 0 #ff5436,0 0 20px #fc3c1b23;border-color:#f45842}
+.workshopPage{--ember:#ff5535;--forge:#f9a05e;--wsPanel:#0b0e15;color:#f8f1ec;min-height:100%;margin:-27px -32px -48px}
+.workshopPage .wsBanner{min-height:365px;position:relative;isolation:isolate;overflow:hidden;background:#170c0e}
+.workshopPage .wsBackground{position:absolute;inset:0;z-index:-1;background:
+ linear-gradient(90deg,rgba(7,8,12,.95) 0%,rgba(9,8,12,.85) 28%,rgba(10,6,8,.14) 73%,rgba(7,7,11,.8) 100%),
+ linear-gradient(0deg,#080b10 0%,transparent 47%),
+ url('../workshop-world.svg') center 40%/cover no-repeat}
+.wsTopline{font-size:10px;letter-spacing:2px;color:#ffd2b5;display:flex;align-items:center;gap:9px;padding:18px 30px;background:#08080ba8;border-bottom:1px solid #8a2b2066}
+.wsStar{font-size:23px;color:#fa5032;text-shadow:0 0 18px #ff3e23}
+.wsToplineEnd{margin-left:auto;color:#d28a77}
+.wsWelcome{padding:27px 30px 35px;display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:20px;align-items:start}
+.wsEyebrow{font-size:10px;letter-spacing:3.4px;font-weight:900;color:#ff986e}
+.wsWelcome h2{font-family:Georgia,Palatino,serif;margin:10px 0 7px;font-size:clamp(42px,5.2vw,76px);line-height:.92;letter-spacing:2px;color:#faf1e8;text-shadow:0 3px 0 #842c23,0 0 34px #b72b2299}
+.wsWelcome h2 em{font-size:.67em;letter-spacing:7px;color:#ffbc87;font-style:normal;text-shadow:0 0 16px #fb391c,0 0 32px #d62918}
+.wsWelcome p{color:#ead5cb;font-size:13px;line-height:1.75;max-width:540px;margin:17px 0 19px}
+.wsStats{display:flex;gap:20px;flex-wrap:wrap}
+.wsStats div{border-left:2px solid #f4462e;padding-left:12px;display:flex;flex-direction:column}
+.wsStats strong{font-size:22px;color:#fff}
+.wsStats span{font-size:9px;color:#d5bdaf;letter-spacing:.35px}
+.wsConnection{background:linear-gradient(145deg,#0b0c10ec,#101014ef);border:1px solid #914538;border-radius:12px;box-shadow:0 15px 50px #000c,0 0 18px #b3231933;padding:18px}
+.wsConnectionTitle{font-size:12px;font-weight:900;letter-spacing:1px;border-bottom:1px solid #573329;padding-bottom:13px;margin-bottom:6px}
+.wsLed{display:inline-block;width:9px;height:9px;background:#43dc91;border-radius:100%;box-shadow:0 0 12px #4ee992;margin-right:8px}
+.wsConnectionRow{display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid #2c2929;padding:10px 0;gap:8px;font-size:10px}
+.wsConnectionRow span{color:#cbb6ae}.wsConnectionRow strong{font-size:10px}
+.wsGreen{color:#59eaaa}.wsAmber{color:#ffa177}
+.workshopPage .wsCrimson{border:1px solid #fe613f;background:linear-gradient(#9f291b,#5f1110);color:white;font-weight:750;box-shadow:inset 0 1px #ffc3a06a,0 0 17px #ff432b39}
+.workshopPage .wsCrimson:hover{background:linear-gradient(#c43b27,#7c1916);border-color:#ffae88}
+.wsConnection .wsCrimson{width:100%;margin-top:15px}
+.wsSurface{background:linear-gradient(180deg,#090d14,#101015 75%);border-top:1px solid #581f1d;padding:27px 25px 38px}
+.wsSectionHeader{display:flex;align-items:center;justify-content:space-between;gap:18px}
+.wsSectionOver{display:block;font-size:9px;letter-spacing:2.3px;color:#fb8060;font-weight:850}
+.wsSectionHeader h3{margin:3px 0 15px;font-size:21px;letter-spacing:.2px}
+.wsToolbar{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.wsToolbar input{min-width:220px;width:240px}.wsToolbar input,.wsToolbar select{background:#131820;border:1px solid #473331}
+.wsCategories{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px;margin:12px 0 29px}
+.wsCategory{position:relative;display:flex;flex-direction:column;align-items:flex-start;justify-content:end;min-height:94px;padding:11px 14px!important;border:1px solid #704039!important;border-radius:10px!important;overflow:hidden;background:linear-gradient(165deg,#362022,#13141b 65%,#121116)!important;text-align:left}
+.wsCategory:before{content:"";position:absolute;inset:0;opacity:.4;background:url('../workshop-world.svg') center/cover no-repeat;mix-blend-mode:screen}
+.wsCategory:nth-child(2n):before{transform:scaleX(-1)}
+.wsCategory>*{z-index:1;position:relative}
+.wsCategory strong{font-size:13px}.wsCategory small{font-size:10px;color:#e0ada0}.wsCategory .wsCatIcon{font-size:24px;color:#ffbd8a;text-shadow:0 0 12px #fb3c27}
+.wsCategory.active,.wsCategory:hover{border-color:#ff5435!important;box-shadow:inset 0 0 13px #ff462955,0 0 15px #e5432a48}
+.wsSubhead{margin-top:12px}
+.wsModGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;min-height:120px}
+.wsModCard{border:1px solid #6b3932;background:linear-gradient(155deg,#1d1a1c,#0c1116);border-radius:12px;overflow:hidden;box-shadow:0 12px 25px #0009}
+.wsCardArt{height:122px;background:
+ radial-gradient(ellipse at 75% 35%,#b7382388,transparent 50%),linear-gradient(18deg,#0b0d15b5,#22110d33),url('../workshop-world.svg') center/cover no-repeat;
+ display:flex;justify-content:space-between;align-items:start;padding:13px}
+.wsCardArt .wsTileGlyph{font-size:38px;text-shadow:0 2px 19px #fa5935}
+.wsCardArt .wsLabel{border:1px solid #995c46;background:#130d12b9;border-radius:6px;padding:4px 7px;font-size:9px}
+.wsCardBody{padding:13px}
+.wsCardHeading{display:flex;justify-content:space-between;gap:6px;align-items:start}
+.wsCardHeading h4{font-size:16px;line-height:1.25;margin:0;overflow-wrap:anywhere}
+.wsCardHeading small{font-size:9px;color:#ffb58f}
+.wsCardBody p{margin:9px 0;color:#b9b0b1;font-size:11px;min-height:34px;line-height:1.65}
+.wsChips{display:flex;gap:5px;flex-wrap:wrap;margin:12px 0}
+.wsChip{font-size:9px;color:#f0b4a4;border:1px solid #603b39;border-radius:5px;padding:3px 6px}
+.wsCardActions{display:flex;gap:7px;flex-wrap:wrap}
+.wsCardActions button{font-size:10px;padding:7px 9px;flex:1;white-space:normal}
+.wsMuted{font-size:10px;color:#c4ac9b}
+.wsEmpty{grid-column:1/-1;border:1px dashed #794d3e;padding:24px;background:#19171a;border-radius:12px;text-align:center;color:#e5b5a0}
+.wsFooterGrid{display:grid;grid-template-columns:1.25fr 1fr;gap:16px;margin-top:29px}
+.wsPanel{border:1px solid #503330;background:linear-gradient(140deg,#1b171a,#0c1015);padding:20px;border-radius:13px}
+.wsPanel h3{margin:0;font-size:18px}
+.wsPanel p{font-size:11px;line-height:1.75;color:#c4aca6}
+.wsProjectRow{display:flex;align-items:center;justify-content:space-between;gap:7px;border-top:1px solid #493735;padding:9px 0}
+.wsProjectRow span{font-size:12px;overflow-wrap:anywhere}
+.wsProjectRow button{font-size:10px;padding:7px 10px}
+.wsInfoLine{color:#ffb684;font-size:11px;padding:10px;border-left:2px solid #ff5b36;background:#47201834;margin:15px 0}
+.wsPublishOverlay{position:fixed;inset:0;z-index:100;background:#020307dd;display:grid;place-items:center;padding:14px}
+.wsPublishOverlay[hidden]{display:none}
+.wsPublishCard{width:min(490px,95vw);max-height:94vh;overflow:auto;border:1px solid #fd5738;background:linear-gradient(140deg,#21151b,#0c1118);padding:25px;border-radius:16px;box-shadow:0 25px 90px #000}
+.wsPublishCard h2{font-size:22px;margin:0}.wsPublishCard p{font-size:11px;color:#cbaea3}
+.wsPublishCard label{margin-top:8px}.wsPublishCard input,.wsPublishCard textarea,.wsPublishCard select{background:#13141b;border:1px solid #5b3b36}
+@media(max-width:1300px){.wsWelcome{grid-template-columns:minmax(0,1fr) 245px}.wsCategories{grid-template-columns:repeat(3,minmax(0,1fr))}.wsModGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wsToolbar input{width:180px;min-width:0}}
+@media(max-width:950px){.wsWelcome{grid-template-columns:1fr}.wsConnection{max-width:400px}.wsSectionHeader{align-items:start;flex-direction:column}.wsCategories{grid-template-columns:repeat(2,minmax(0,1fr))}.wsModGrid{grid-template-columns:1fr}.wsFooterGrid{grid-template-columns:1fr}.wsToolbar{flex-wrap:wrap}.wsToplineEnd{display:none}}
