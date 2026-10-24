@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "state": "SOURCE_REVIEWED_NATIVE_IMPORT_REQUIRED",
+  "models": [
+    {
+      "id": "wood_house_enterable",
+      "name": "Old House Wooden Enterable Rusty",
+      "author": "YadroGames",
+      "source": "https://sketchfab.com/3d-models/old-house-wooden-enterable-rusty-7f496b3002d24341a618408cb8221e8c",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-012/7f496b3002d24341a618408cb8221e8c.glb",
+      "bytes": 23465180,
+      "sha256": "bd3c7469ed414e8524130a401f20644e937a69a8ed86b308fb4c312c48b65091",
+      "file": "wood_house_enterable.glb",
+      "interiorGeometryObserved": true,
+      "doorElementsAuthored": false,
+      "productionPlacementAllowed": false
+    },
+    {
+      "id": "modular_shed_interior",
+      "name": "Free Modular Shed with interior",
+      "author": "denniswoo1993",
+      "source": "https://sketchfab.com/3d-models/free-modular-shed-with-interior-30b1eb71bb0e4b889160f8283e1750c1",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "url": "https://huggingface.co/datasets/Stable-X/ProSceneverse/resolve/main/shards/glbs/glbs-0008.tar",
+      "rangeStart": 13206995968,
+      "bytes": 40071480,
+      "sha256": "8af55300922dfb1aaacc2a99704c869f973c90ff50523f2f37b1ffdc368c0629",
+      "file": "modular_shed_interior.glb",
+      "interiorGeometryObserved": true,
+      "doorElementsAuthored": false,
+      "notes": "Original author describes hinge pivots. This OBJ-derived GLB has merged material groups and no retained hinge transforms; native door authoring is still necessary.",
+      "productionPlacementAllowed": false
+    },
+    {
+      "id": "sports_car_930_review",
+      "name": "FREE 1975 Porsche 911 (930) Turbo",
+      "author": "Lionsharp Studios / Karol Miklas",
+      "source": "https://sketchfab.com/3d-models/free-1975-porsche-911-930-turbo-8568d9d14a994b9cae59499f0dbed21e",
+      "license": "CC-BY-4.0",
+      "licenseUrl": "https://creativecommons.org/licenses/by/4.0/",
+      "url": "https://huggingface.co/datasets/allenai/objaverse/resolve/main/glbs/000-042/8568d9d14a994b9cae59499f0dbed21e.glb",
+      "bytes": 21969080,
+      "sha256": "ad7cb84e3bcf65eee57fdf99316f8fe0985906d876faa7581b2b169c2298885e",
+      "file": "sports_car_930_review.glb",
+      "notes": "Isolated technical review only. Author explicitly reserves vehicle-design rights to Porsche AG. CC BY for the 3D artwork alone is not complete branded-vehicle production clearance. No skeletal rig is present; no driving claim.",
+      "productionPlacementAllowed": false
+    }
+  ]
+}

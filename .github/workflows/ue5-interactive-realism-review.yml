@@ -1,0 +1,67 @@
+name: UE5 real buildings and vehicle asset review
+on:
+  push:
+    branches: ['ue5/realistic-interactive-assets-20261024']
+    paths: ['unreal/Scripts/*interactive*', 'unreal/Scripts/probe_interactive_review_install.py', 'scripts/ue5/*interactive*', 'scripts/vehicle-assets/prepare-interactive-realism.mjs', 'docs/art/interactive-realism-sources.json', '.github/workflows/ue5-interactive-realism-review.yml']
+  workflow_dispatch:
+jobs:
+  import-render-and-install-review:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/realistic-interactive-assets-20261024'
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify native project compatibility and gameplay regression suite
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/InteractiveRealismReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Download exact credited real models and preserve source textures and geometry
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-interactive-realism.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-interactive-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import actual Unreal models and capture six GPU views
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/InteractiveRealismReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-interactive-realism-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Add verified review models to owned Editor and reopen the installed map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $evidence="unreal/Saved/InteractiveRealismReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-interactive-realism-review.ps1 -ValidationDir "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-model-native-review-evidence
+          path: |
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/*.*
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/graphics/*.*
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+          if-no-files-found: error
