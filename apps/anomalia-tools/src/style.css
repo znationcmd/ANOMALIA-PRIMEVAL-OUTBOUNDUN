@@ -190,3 +190,94 @@ footer{background:#0e1926;border-color:#32465a;color:#8297a9;height:40px;letter-
 /* Le logo officiel choisi par le propriétaire figure aussi dans l'interface. */
 .brandBadge{background:#162333 url('../assets/anomalia-tools-icon.png') center/cover no-repeat;border:1px solid #c9996b;box-shadow:0 0 0 1px #32291f,0 7px 22px #a96c4652}
 .brandBadge .brandSymbol,.brandBadge .brandPlus{display:none}
+
+/* ANOMALIA Tools touch shell: same real project screens on iPhone, iPad and Android. */
+.mobileTop,.mobileBackdrop{display:none}
+@media(max-width:1030px){
+ body{overflow-x:hidden}
+ .shell{min-width:0}
+ .sidebar{width:214px}
+ .topbar{height:auto;min-height:80px;flex-wrap:wrap;gap:9px}
+ .headerActions{flex-wrap:wrap;gap:7px}
+ .content{padding:20px}
+ .hero h2{font-size:30px}
+ .heroArtwork{display:none}
+ .overviewStrip{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .workbench,.previewGrid{grid-template-columns:180px minmax(0,1fr)}
+ .updatesLayout{grid-template-columns:1fr}
+ .panelTitle{flex-wrap:wrap;gap:10px}
+}
+@media(max-width:770px){
+ html,body{width:100%;height:100%;max-width:100%;overscroll-behavior-x:none}
+ body{overflow:hidden}
+ .mobileTop{display:flex;position:relative;z-index:10;align-items:center;gap:10px;
+  height:53px;padding:5px 12px;padding-top:env(safe-area-inset-top,0px);
+  background:linear-gradient(105deg,#142536,#1b2d3e);border-bottom:1px solid #435b74}
+ .mobileTop button{height:37px;width:40px;flex:none;border-radius:9px;border:1px solid #68859c;font-size:18px}
+ .mobileTop b{font-size:13px;letter-spacing:.6px}
+ .mobileTop b em{font-style:normal;color:#f8b77b}
+ .mobileTop>span{margin-left:auto;color:#9bb2be;letter-spacing:1px;font-size:9px}
+ .mobileBackdrop:not([hidden]){display:block;position:fixed;inset:53px 0 0;background:#06101cbd;z-index:8;width:100%;height:auto;border:0}
+ .shell{display:block;height:calc(100dvh - 53px);min-height:0;overflow:hidden;min-width:0;width:100%}
+ .sidebar{position:fixed;z-index:9;left:0;top:53px;bottom:0;overflow-y:auto;width:min(290px,87vw);
+   transform:translateX(-105%);transition:transform .2s ease;border-right:1px solid #ad825e;box-shadow:8px 0 35px #0007}
+ .sidebar.mobileOpen{transform:translateX(0)}
+ .sidebar .grow{min-height:10px}
+ main{min-width:0;width:100%;height:100%;overflow:hidden}
+ .topbar{height:auto;min-height:73px;padding:12px 13px;display:flex;align-items:center;gap:10px}
+ .pageIntro h1{font-size:19px}
+ .pageIntro small{font-size:8px}
+ .headerActions{display:flex;align-items:center;gap:5px;justify-content:flex-end;min-width:0}
+ .headerActions label{display:none}
+ .headerActions select{width:min(175px,45vw);max-width:45vw;min-height:39px;font-size:10px}
+ .headerActions button{min-height:39px;padding:8px 9px;font-size:10px}
+ .content{padding:12px 10px 25px;height:auto;overflow:auto;flex:1}
+ .hero{min-height:0;padding:21px 17px;border-radius:15px}
+ .heroContent{max-width:100%}
+ .hero h2{font-size:clamp(24px,6vw,33px);letter-spacing:-.9px}
+ .hero p{font-size:11px;line-height:1.7}
+ .heroActions{gap:8px}
+ .heroActions button{min-height:43px}
+ .heroFootnote{font-size:8px}
+ .overviewStrip{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .overviewStrip>div{padding:13px 10px}
+ .overviewStrip strong{font-size:22px}
+ .overviewStrip span{font-size:8px}
+ .overviewStrip small{font-size:9px}
+ .cards{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .moduleCard{min-height:150px;padding:13px}
+ .moduleCard .glyph{width:40px;height:40px;margin-bottom:9px}
+ .moduleCard p{font-size:10px}
+ .panel{padding:14px;border-radius:12px}
+ .panelTitle h2{font-size:21px}
+ .panelTitle p{font-size:11px}
+ .workbench,.previewGrid{display:flex;flex-direction:column;height:auto;min-height:0;overflow:visible}
+ .fileBrowser,.assetBrowser{width:100%;max-height:210px;min-height:120px;overflow-y:auto;border-right:0;border-bottom:1px solid #47647c}
+ .codePanel,.viewerPanel{height:auto;min-height:280px;display:flex;flex-direction:column}
+ .codePanel textarea{height:clamp(300px,45vh,600px);flex:none;font-size:13px;line-height:1.8}
+ .codeBar,.viewerTop{padding:10px;gap:8px}
+ .codeBar button{font-size:10px;padding:8px}
+ .viewer{min-height:300px;height:330px;touch-action:none}
+ .terrainPreview{height:auto;min-height:245px}
+ .terrainPreview img{max-width:100%;height:auto}
+ .lootTable{display:block;overflow-x:auto;max-width:100%;scrollbar-width:thin}
+ .lootTable table{min-width:590px}
+ .lootTable th,.lootTable td{padding:8px 6px}
+ .lootTable input{min-width:72px}
+ .pipeline{display:flex;flex-wrap:wrap}
+ .pipeline div{min-width:100px}
+ .updatesLayout{display:grid;grid-template-columns:1fr}
+ .updateHeader{gap:12px}
+ .updateVisual{width:53px;height:53px;font-size:29px}
+ .updateHeader h3{font-size:16px}
+ .modalCard{max-width:calc(100vw - 26px);padding:18px}
+ #notice{margin:7px 10px 0;font-size:11px}
+ footer{height:auto;min-height:33px;padding:8px 10px;font-size:8px;line-height:1.6}
+}
+@media(max-width:390px){
+ .cards{grid-template-columns:1fr}
+ .headerActions select{width:122px}
+ .overviewStrip span{font-size:7px}
+ .moduleCard{min-height:120px}
+}
+@media(prefers-reduced-motion:reduce){.sidebar{transition:none}}

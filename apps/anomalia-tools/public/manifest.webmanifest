@@ -1,0 +1,19 @@
+{
+  "name": "ANOMALIA Tools — Atelier de création",
+  "short_name": "ANOMALIA Tools",
+  "description": "Outils de mods, ressources 3D et terrains, sur PC, iPhone et Android",
+  "lang": "fr",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0b1420",
+  "theme_color": "#14202d",
+  "icons": [
+    {
+      "src": "./icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

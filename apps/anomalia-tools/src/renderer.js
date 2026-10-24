@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
+import './mobile-api.js';
 import './updates-ui.js';
 
 const api=window.anomaliaTools;
@@ -312,3 +313,17 @@ async function init(){
   if(!projects.length){showModal();}
 }
 init();
+
+const mobileMenu=document.getElementById('mobileMenu'),mobileSidebar=document.getElementById('mobileSidebar'),mobileBackdrop=document.getElementById('mobileBackdrop');
+const toggleMenu=open=>{
+ mobileSidebar.classList.toggle('mobileOpen',open);
+ mobileMenu.setAttribute('aria-expanded',String(open));
+ mobileBackdrop.hidden=!open;
+};
+mobileMenu?.addEventListener('click',()=>toggleMenu(!mobileSidebar.classList.contains('mobileOpen')));
+mobileBackdrop?.addEventListener('click',()=>toggleMenu(false));
+document.querySelectorAll('[data-tab]').forEach(b=>b.addEventListener('click',()=>toggleMenu(false)));
+if('serviceWorker' in navigator && !window.process?.versions?.electron &&
+ (location.protocol==='https:'||location.hostname==='localhost')){
+ window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
+}

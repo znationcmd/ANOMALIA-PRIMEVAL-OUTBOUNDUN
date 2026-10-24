@@ -108,3 +108,29 @@ La compilation Windows de la branche de développement produit un fichier
 d'installation manuel en artefact GitHub Actions. Il ne publie aucune
 mise à jour publique sans tag de version. Aucun fichier d'autres
 utilisateurs ou des autres applications CMD/ANOMALIA n'est modifié.
+
+## ANOMALIA Tools Mobile — vraie PWA iOS et Android
+
+Les mêmes pages ANOMALIA Tools sont maintenant disponibles avec une interface
+tactile, une navigation à tiroir et un adaptateur navigateur local :
+- vrais projets, fichiers de code, économie et sauvegarde via IndexedDB ;
+- import et aperçu des modèles GLB (18 Mo pour la visionneuse), textures
+  et fichiers sources ; bibliothèque conservée sur le téléphone ;
+- Terrain Builder générant de vraies heightmaps PNG (128/256/512) ;
+- mod et manifest SHA-256 exportés sous forme de **véritables ZIP** en
+  utilisant `fflate`, limités à 90 Mo en mode mobile ;
+- PWA hors ligne, installable sur l'écran d'accueil et actualisée via
+  HTTPS sans exécutable Windows.
+
+`npm install && npm test && npm run build` produit `dist/`.
+Servir ce répertoire sur un vrai site **HTTPS**, puis iOS Safari →
+Partager → Sur l'écran d'accueil ; Android Chrome → Installer.
+
+**Important** : les projets sont privés **à chaque appareil**.
+Il n'existe pas encore de synchronisation automatique PC ↔ smartphone ↔
+tablette. Pour transférer un projet, exporter son package ZIP.
+Les dossiers Windows, le SDK Unreal, Blender et la compilation de mods
+en `.pak` ne sont pas exécutables directement sur mobile ; les archives
+exportées restent des archives de **sources**, non un mod UE5 compilé.
+Les versions du site installable se mettent à jour depuis l'hébergeur
+lorsque celui-ci publie un nouveau build, pas depuis un fichier EXE.
