@@ -329,9 +329,17 @@ bool AAnomaliaVehiclePawn::FindSafeDriverExit(const AAnomaliaSurvivor* Survivor,
         // only to allow tracing outward from a seated driver.
         if(FVector::Dist2D(Centre,GetActorLocation())<Collision->GetScaledSphereRadius()+Radius+5.f){Reject(TEXT("VEHICLE_CLEARANCE"));continue;}
         FHitResult PathHit;
-        const FVector Start(GetActorLocation().X,GetActorLocation().Y,Centre.Z);
-        if(GetWorld()->SweepSingleByChannel(PathHit,Start,Centre,FQuat::Identity,ECC_Pawn,
+        // Start above the vehicle's support plane, which can be a pavement
+        // higher than the destination road. A diagonal sweep starting at the
+        // destination height would falsely begin inside that pavement.
+        const float ClearanceZ=FMath::Max(Centre.Z,GetActorLocation().Z-Collision->GetScaledSphereRadius()+HalfHeight+2.f);
+        const FVector Start(GetActorLocation().X,GetActorLocation().Y,ClearanceZ);
+        const FVector HighEnd(Centre.X,Centre.Y,ClearanceZ);
+        if(GetWorld()->SweepSingleByChannel(PathHit,Start,HighEnd,FQuat::Identity,ECC_Pawn,
              FCollisionShape::MakeCapsule(Radius,HalfHeight),Query)){Reject(FString::Printf(TEXT("PATH_BLOCKED actor=%s at=%s normal=%s startPenetrating=%d "),*GetNameSafe(PathHit.GetActor()),*PathHit.ImpactPoint.ToCompactString(),*PathHit.ImpactNormal.ToCompactString(),PathHit.bStartPenetrating?1:0)+FloorInfo);continue;}
+        if(!HighEnd.Equals(Centre,.01f) && GetWorld()->SweepSingleByChannel(PathHit,HighEnd,Centre,FQuat::Identity,ECC_Pawn,
+             FCollisionShape::MakeCapsule(Radius,HalfHeight),Query)){Reject(TEXT("LOWERING_BLOCKED ")+FloorInfo);continue;}
+        if(Diagnostics)*Diagnostics+=TEXT("; SAFE ")+Centre.ToCompactString();
         Location=Centre;return true;
     }
     return false;
@@ -347,6 +355,7 @@ void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
     FVector ExitLocation;
     FString ExitDiagnostic;
     if(!FindSafeDriverExit(Survivor,ExitLocation,&ExitDiagnostic)){UE_LOG(LogTemp,Warning,TEXT("ANOMALIA vehicle exit refused: %s"),*ExitDiagnostic);return;}
+    if(!TransportMovement->IsTransport())Movement->StopMovementImmediately();
     Survivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     Survivor->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
     Survivor->SetActorEnableCollision(true);

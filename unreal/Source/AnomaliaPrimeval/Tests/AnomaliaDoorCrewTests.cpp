@@ -73,6 +73,16 @@ bool FAnomaliaCrewGeometryTest::RunTest(const FString&) {
     FVector Exit;V->DriverExitPoint->SetRelativeLocation(FVector(0,350,-160));
     TestTrue(TEXT("Authored clear floor exit found"),V->FindSafeDriverExit(S,Exit));
     TestTrue(TEXT("Exit feet rest above traced ground"),FMath::IsNearlyEqual(Exit.Z,S->GetCapsuleComponent()->GetScaledCapsuleHalfHeight()+2.f,.1f));
+    // Packaged-map regression: the car stands on an 8 cm pavement, while the
+    // destination is the lower road. Preserve floor and whole-capsule checks.
+    auto* Pavement=T.Box(FVector(0,0,4),FVector(200,150,4));
+    V->SetActorLocation(FVector(0,0,186));V->DriverExitPoint->SetRelativeLocation(FVector(0,350,-186));
+    TestTrue(TEXT("Exit from a raised pavement onto a clear lower road"),V->FindSafeDriverExit(S,Exit));
+    Pavement->Destroy();V->SetActorLocation(FVector(0,0,160));
+    V->DriverExitPoint->SetRelativeLocation(FVector(0,350,-160));
+    auto* PathWall=T.Box(FVector(0,175,150),FVector(120,10,150));
+    TestFalse(TEXT("Clear destination behind a wall is still refused"),V->FindSafeDriverExit(S,Exit));
+    PathWall->Destroy();
     auto* Obstacle=T.Box(FVector(0,350,150),FVector(100,100,150));
     TestFalse(TEXT("Blocked authored exit does not teleport into wall or choose arbitrary side"),V->FindSafeDriverExit(S,Exit));Obstacle->Destroy();
     V->DriverExitPoint->SetRelativeLocation(FVector(0,100,-160));
