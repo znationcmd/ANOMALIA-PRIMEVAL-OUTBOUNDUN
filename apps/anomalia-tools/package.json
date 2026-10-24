@@ -66,6 +66,14 @@
         "provider": "generic",
         "url": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-tools-latest/"
       }
+    ],
+    "protocols": [
+      {
+        "name": "ANOMALIA Workshop",
+        "schemes": [
+          "anomalia-tools"
+        ]
+      }
     ]
   }
 }
