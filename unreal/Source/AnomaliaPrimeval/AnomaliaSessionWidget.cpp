@@ -120,8 +120,8 @@ void UAnomaliaSessionWidget::SelectPage(int32 Index)
 {
     if(!Pages || Index<0 || Index>=Pages->GetChildrenCount()) return;
     Pages->SetActiveWidgetIndex(Index);
-    UButton* Navigation[]={HomeButton.Get(),OptionsButton.Get(),ModsButton.Get()};
-    for(int32 I=0;I<3;++I) if(Navigation[I]) Navigation[I]->SetBackgroundColor(I==Index?FLinearColor(.35,.32,.21,1):FLinearColor(.08,.10,.085,1));
+    UButton* PageButtons[]={HomeButton.Get(),OptionsButton.Get(),ModsButton.Get()};
+    for(int32 I=0;I<3;++I) if(PageButtons[I]) PageButtons[I]->SetBackgroundColor(I==Index?FLinearColor(.35f,.32f,.21f,1.f):FLinearColor(.08f,.10f,.085f,1.f));
 }
 void UAnomaliaSessionWidget::ShowHome() { SelectPage(0); }
 void UAnomaliaSessionWidget::ShowOptions() { SelectPage(1); }
