@@ -85,6 +85,14 @@ FString UAnomaliaWorldImportLibrary::GetArchipelagoActorDescriptors()
   Entry->SetStringField(TEXT("guid"),Desc.Guid.ToString(EGuidFormats::DigitsWithHyphens));
   Entry->SetStringField(TEXT("nativeClass"),Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString());
   Entry->SetBoolField(TEXT("owned"),IsOwnedDescriptor(Desc));
+  // Plain saved bounds support placement clearance without loading borrowed
+  // descriptor structs or every actor in the 48 km world into Python.
+  Entry->SetBoolField(TEXT("boundsValid"),Desc.Bounds.IsValid!=0);
+  if(Desc.Bounds.IsValid){
+   TArray<TSharedPtr<FJsonValue>> Min,Max;
+   for(int32 Axis=0;Axis<3;++Axis){Min.Add(MakeShared<FJsonValueNumber>(Desc.Bounds.Min[Axis]));Max.Add(MakeShared<FJsonValueNumber>(Desc.Bounds.Max[Axis]));}
+   Entry->SetArrayField(TEXT("boundsMinCm"),Min);Entry->SetArrayField(TEXT("boundsMaxCm"),Max);
+  }
   Entries.Add(MakeShared<FJsonValueObject>(Entry));
  }
  TSharedRef<FJsonObject> Result=MakeShared<FJsonObject>();

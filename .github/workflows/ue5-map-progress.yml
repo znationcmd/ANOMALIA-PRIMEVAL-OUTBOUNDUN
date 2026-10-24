@@ -5,6 +5,9 @@ on:
     branches: ['ue5/driveable-roster-city-20261023']
     paths:
       - '.github/workflows/ue5-map-progress.yml'
+      - 'unreal/Scripts/urban_greenery.py'
+      - 'unreal/Scripts/author_urban_greenery.py'
+      - 'scripts/ue5/run-urban-greenery.py'
 concurrency:
   group: anomalia-ue5-native-host
   # An explicit recovery commit can supersede an obsolete build still cooking.
@@ -38,6 +41,14 @@ jobs:
           $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $python scripts/ue5/run-residential-audit.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/residential-audit"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Add and independently reopen real urban trees and grass
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-urban-greenery.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/urban-greenery" --house-audit "$evidence/editor/residential-audit/residential-audit.json"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Independently reopen and inspect the populated map on the real GPU
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -65,6 +76,7 @@ jobs:
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-upgrade/*.*
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-audit/*.*
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/urban-greenery/*.*
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*.json
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.log
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.json
