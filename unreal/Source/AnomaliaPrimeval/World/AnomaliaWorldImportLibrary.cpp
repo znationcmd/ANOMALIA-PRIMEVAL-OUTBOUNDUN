@@ -18,6 +18,10 @@
 #include "WorldPartition/WorldPartitionBlueprintLibrary.h"
 #include "UObject/StructOnScope.h"
 #include "UObject/UnrealType.h"
+#include "UObject/MetaData.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/StaticMesh.h"
+#include "Components/StaticMeshComponent.h"
 #endif
 
 #if WITH_EDITOR
@@ -117,6 +121,102 @@ bool UAnomaliaWorldImportLibrary::SetArchipelagoActorsLoaded(const TArray<FStrin
  return true;
 #else
  return false;
+#endif
+}
+
+FString UAnomaliaWorldImportLibrary::AuditInhabitedResidential(const TArray<FString>& MeshPaths,const TArray<FString>& HouseLabels)
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2"))
+  return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ if(MeshPaths.Num()!=3)return TEXT("{\"state\":\"REFUSED_MESH_COUNT\"}");
+ TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
+ Report->SetStringField(TEXT("state"),TEXT("FAILED"));
+ auto VectorValues=[](const FVector& V){
+  TArray<TSharedPtr<FJsonValue>> Values;
+  Values.Add(MakeShared<FJsonValueNumber>(V.X));Values.Add(MakeShared<FJsonValueNumber>(V.Y));Values.Add(MakeShared<FJsonValueNumber>(V.Z));
+  return Values;
+ };
+ auto Finish=[&Report](){FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);FJsonSerializer::Serialize(Report,Writer);return Json;};
+ TArray<TSharedPtr<FJsonValue>> Meshes;
+ TSet<FString> UniqueMeshes;
+ // Validate all paths before loading any assets. No arbitrary external content.
+ for(const FString& Path:MeshPaths){
+  if(!Path.StartsWith(TEXT("/Game/")) || UniqueMeshes.Contains(Path))return Finish();
+  UniqueMeshes.Add(Path);
+ }
+ for(const FString& Path:MeshPaths){
+  UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*Path);
+  if(!Mesh)return Finish();
+  TSharedRef<FJsonObject> Row=MakeShared<FJsonObject>();
+  Row->SetStringField(TEXT("path"),Mesh->GetPathName());
+  Row->SetStringField(TEXT("sourceSha"),Mesh->GetOutermost()->GetMetaData().GetValue(Mesh,TEXT("AnomaliaWorldFeatureSha256")));
+  Row->SetStringField(TEXT("originalSha"),Mesh->GetOutermost()->GetMetaData().GetValue(Mesh,TEXT("AnomaliaRealismSha256")));
+  const FBoxSphereBounds Bounds=Mesh->GetBounds();
+  Row->SetArrayField(TEXT("origin"),VectorValues(Bounds.Origin));Row->SetArrayField(TEXT("extent"),VectorValues(Bounds.BoxExtent));
+  bool bMaterialsReady=!Mesh->GetStaticMaterials().IsEmpty();
+  for(const FStaticMaterial& Slot:Mesh->GetStaticMaterials())if(!Slot.MaterialInterface)bMaterialsReady=false;
+  Row->SetBoolField(TEXT("materialsReady"),bMaterialsReady);
+  Meshes.Add(MakeShared<FJsonValueObject>(Row));
+ }
+ Report->SetArrayField(TEXT("meshes"),Meshes);
+ TArray<FActorDesc> Descriptors;
+ if(!CopyPartitionDescriptors(Descriptors))return Finish();
+ TSet<FString> Expected;
+ if(HouseLabels.Num()!=4760)return Finish();
+ for(const FString& Label:HouseLabels){
+  if(!Label.StartsWith(TEXT("ANOMALIA_Inhabited1_")) || Expected.Contains(Label))return Finish();
+  Expected.Add(Label);
+ }
+ TArray<FActorDesc> Houses;TSet<FString> Labels;
+ for(const FActorDesc& Desc:Descriptors)if(Expected.Contains(Desc.Label.ToString())){
+  if(Labels.Contains(Desc.Label.ToString()))return Finish();
+  Labels.Add(Desc.Label.ToString());Houses.Add(Desc);
+ }
+ // The Python verifier checks exact plan identities. Do not stream a partial population.
+ if(Houses.Num()!=4760)return Finish();
+ TSet<FGuid> InitiallyLoaded;
+ for(TActorIterator<AActor> It(World);It;++It)InitiallyLoaded.Add(It->GetActorGuid());
+ TArray<TSharedPtr<FJsonValue>> Actors;
+ for(int32 Start=0;Start<Houses.Num();Start+=64){
+  TArray<FGuid> Load,Unload;TSet<FGuid> Requested;
+  for(int32 I=Start;I<FMath::Min(Start+64,Houses.Num());++I){
+   const FGuid Guid=Houses[I].Guid;Load.Add(Guid);Requested.Add(Guid);
+   if(!InitiallyLoaded.Contains(Guid))Unload.Add(Guid);
+  }
+  if(!StreamPartitionActors(Load,true)){StreamPartitionActors(Unload,false);return Finish();}
+  int32 Found=0;
+  // Only owned, short-lived native actor pointers exist inside this loop.
+  for(TActorIterator<AActor> It(World);It;++It)if(Requested.Contains(It->GetActorGuid())){
+   ++Found;AActor* Actor=*It;TSharedRef<FJsonObject> Row=MakeShared<FJsonObject>();
+   Row->SetStringField(TEXT("label"),Actor->GetActorLabel());
+   Row->SetArrayField(TEXT("location"),VectorValues(Actor->GetActorLocation()));
+   Row->SetArrayField(TEXT("scale"),VectorValues(Actor->GetActorScale3D()));
+   Row->SetNumberField(TEXT("yaw"),Actor->GetActorRotation().Yaw);
+   TArray<TSharedPtr<FJsonValue>> Tags;
+   for(const FName Tag:Actor->Tags)Tags.Add(MakeShared<FJsonValueString>(Tag.ToString()));
+   Row->SetArrayField(TEXT("tags"),Tags);
+   const AStaticMeshActor* House=Cast<AStaticMeshActor>(Actor);
+   const UStaticMeshComponent* Component=House ? House->GetStaticMeshComponent() : nullptr;
+   Row->SetStringField(TEXT("mesh"),Component && Component->GetStaticMesh() ? Component->GetStaticMesh()->GetPathName() : FString());
+   bool bOverrides=false;
+   if(Component)for(const auto& Material:Component->OverrideMaterials)if(Material)bOverrides=true;
+   Row->SetBoolField(TEXT("materialOverrides"),bOverrides);
+   Actors.Add(MakeShared<FJsonValueObject>(Row));
+  }
+  // Restore this batch even on a missing actor; no actor is saved or deleted.
+  const bool bRestored=StreamPartitionActors(Unload,false);
+  if(!bRestored || Found!=Load.Num())return Finish();
+ }
+ Report->SetArrayField(TEXT("actors"),Actors);
+ Report->SetNumberField(TEXT("houseCount"),Actors.Num());
+ Report->SetBoolField(TEXT("packagesSaved"),false);
+ Report->SetBoolField(TEXT("terrainModified"),false);
+ Report->SetStringField(TEXT("state"),TEXT("NATIVE_RESIDENTIAL_VALUES_COPIED"));
+ return Finish();
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
 #endif
 }
 
@@ -245,4 +345,3 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRef
  return TEXT("{\"state\":\"EDITOR_ONLY\"}");
 #endif
 }
-

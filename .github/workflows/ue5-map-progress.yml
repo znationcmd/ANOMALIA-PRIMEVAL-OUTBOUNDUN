@@ -28,13 +28,13 @@ jobs:
           $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Back up and verify the existing scanned-house replacements
+      - name: Independently audit saved scanned houses using copied native values
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
-          & $python scripts/ue5/run-residential-upgrade.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/residential-upgrade"
+          & $python scripts/ue5/run-residential-audit.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/residential-audit"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Independently reopen and inspect the populated map on the real GPU
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -62,6 +62,7 @@ jobs:
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-upgrade/*.*
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-audit/*.*
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*.json
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.log
             unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.json

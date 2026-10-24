@@ -26,7 +26,9 @@ public:
  /** Transient editor streaming only. Rejects the complete request if any GUID is invalid or unrelated. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static bool SetArchipelagoActorsLoaded(const TArray<FString>& ActorGuids, bool bLoaded);
+ /** Read-only house audit. All actor/mesh/struct lifetimes stay native; Python receives JSON only. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static FString AuditInhabitedResidential(const TArray<FString>& MeshPaths, const TArray<FString>& HouseLabels);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double ArchipelagoHeight(double EastMeters, double NorthMeters);
 };
-
