@@ -244,19 +244,19 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     AddLabel(LeftContent,TEXT("✦  ANOMALIA WORKFORGE"),14,Gold,10);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,0);
     // Native navigation controls, not decorative dead labels.
-    auto NavButton=[&](const TCHAR* Id,const FString& Caption,void (UAnomaliaSessionWidget::*Handler)())
+    auto NavButton=[&](const TCHAR* Id,const FString& Caption)
     {
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
         Button->SetBackgroundColor(Caption.Contains(TEXT("WORKFORGE"))?
             FLinearColor(.63f,.11f,.075f,1.f):FLinearColor(.075f,.070f,.080f,.95f));
         Button->SetContent(Label(Caption,13,Caption.Contains(TEXT("WORKFORGE"))?Gold:Soft));
         LeftContent->AddChildToVerticalBox(Button)->SetPadding(FMargin(2,5));
-        Button->OnClicked.AddDynamic(this,Handler);
+        return Button;
     };
-    NavButton(TEXT("WFNavHome"),TEXT("⌂   Accueil"),&UAnomaliaSessionWidget::CloseWorkshop);
-    NavButton(TEXT("WFNavForge"),TEXT("✦   WORKFORGE"),&UAnomaliaSessionWidget::WorkshopFilterAll);
-    NavButton(TEXT("WFNavMods"),TEXT("▦   Mes mods"),&UAnomaliaSessionWidget::WorkshopShowMyMods);
-    NavButton(TEXT("WFNavCategories"),TEXT("▤   Catégories"),&UAnomaliaSessionWidget::WorkshopFilterAll);
+    NavButton(TEXT("WFNavHome"),TEXT("⌂   Accueil"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::CloseWorkshop);
+    NavButton(TEXT("WFNavForge"),TEXT("✦   WORKFORGE"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterAll);
+    NavButton(TEXT("WFNavMods"),TEXT("▦   Mes mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopShowMyMods);
+    NavButton(TEXT("WFNavCategories"),TEXT("▤   Catégories"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterAll);
     AddLabel(LeftContent,TEXT("♧   Communauté  •  bientôt"),11,Soft,9);
     AddLabel(LeftContent,TEXT("⚙   Paramètres  •  bientôt"),11,Soft,9);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,12);
