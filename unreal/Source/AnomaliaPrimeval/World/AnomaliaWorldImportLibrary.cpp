@@ -16,11 +16,42 @@
 #include "EngineUtils.h"
 #include "UObject/Package.h"
 #include "WorldPartition/WorldPartitionBlueprintLibrary.h"
+#include "UObject/StructOnScope.h"
+#include "UObject/UnrealType.h"
 #endif
 
 #if WITH_EDITOR
 namespace
 {
+ // These Blueprint functions belong to a MinimalAPI engine class and are not
+ // exported by installed UE builds. Invoke the reflected functions with native
+ // owned parameter storage rather than retaining their structs in Python.
+ bool CopyPartitionDescriptors(TArray<FActorDesc>& Output)
+ {
+  UClass* Library=UWorldPartitionBlueprintLibrary::StaticClass();
+  UFunction* Function=Library->FindFunctionByName(TEXT("GetActorDescs"));
+  if(!Function)return false;
+  FArrayProperty* Array=FindFProperty<FArrayProperty>(Function,TEXT("OutActorDescs"));
+  FBoolProperty* Returned=FindFProperty<FBoolProperty>(Function,TEXT("ReturnValue"));
+  if(!Array || !Returned || Array->Inner->GetCPPType()!=TEXT("FActorDesc"))return false;
+  FStructOnScope Parameters(Function);
+  Library->GetDefaultObject()->ProcessEvent(Function,Parameters.GetStructMemory());
+  if(!Returned->GetPropertyValue_InContainer(Parameters.GetStructMemory()))return false;
+  Output=*Array->ContainerPtrToValuePtr<TArray<FActorDesc>>(Parameters.GetStructMemory());
+  return true;
+ }
+ bool StreamPartitionActors(const TArray<FGuid>& Guids,bool bLoaded)
+ {
+  UClass* Library=UWorldPartitionBlueprintLibrary::StaticClass();
+  UFunction* Function=Library->FindFunctionByName(bLoaded ? TEXT("LoadActors") : TEXT("UnloadActors"));
+  if(!Function)return false;
+  FArrayProperty* Array=FindFProperty<FArrayProperty>(Function,bLoaded ? TEXT("InActorsToLoad") : TEXT("InActorsToUnload"));
+  if(!Array || Array->Inner->GetCPPType()!=TEXT("FGuid"))return false;
+  FStructOnScope Parameters(Function);
+  *Array->ContainerPtrToValuePtr<TArray<FGuid>>(Parameters.GetStructMemory())=Guids;
+  Library->GetDefaultObject()->ProcessEvent(Function,Parameters.GetStructMemory());
+  return true;
+ }
  bool IsOwnedPartitionWorld()
  {
   const UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
@@ -42,7 +73,7 @@ FString UAnomaliaWorldImportLibrary::GetArchipelagoActorDescriptors()
 #if WITH_EDITOR
  if(!IsOwnedPartitionWorld())return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
  TArray<FActorDesc> Descriptors;
- if(!UWorldPartitionBlueprintLibrary::GetActorDescs(Descriptors))return TEXT("{\"state\":\"DESCRIPTORS_UNAVAILABLE\"}");
+ if(!CopyPartitionDescriptors(Descriptors))return TEXT("{\"state\":\"DESCRIPTORS_UNAVAILABLE\"}");
  TArray<TSharedPtr<FJsonValue>> Entries;
  for(const FActorDesc& Desc:Descriptors){
   TSharedRef<FJsonObject> Entry=MakeShared<FJsonObject>();
@@ -69,7 +100,7 @@ bool UAnomaliaWorldImportLibrary::SetArchipelagoActorsLoaded(const TArray<FStrin
 #if WITH_EDITOR
  if(!IsOwnedPartitionWorld() || ActorGuids.Num()>65536)return false;
  TArray<FActorDesc> Descriptors;
- if(!UWorldPartitionBlueprintLibrary::GetActorDescs(Descriptors))return false;
+ if(!CopyPartitionDescriptors(Descriptors))return false;
  TSet<FGuid> Allowed;
  for(const FActorDesc& Desc:Descriptors)if(IsOwnedDescriptor(Desc))Allowed.Add(Desc.Guid);
  TArray<FGuid> Requested;
@@ -81,8 +112,7 @@ bool UAnomaliaWorldImportLibrary::SetArchipelagoActorsLoaded(const TArray<FStrin
  }
  // Complete preflight above: never partially change streaming for a bad batch.
  if(!Requested.IsEmpty()){
-  if(bLoaded)UWorldPartitionBlueprintLibrary::LoadActors(Requested);
-  else UWorldPartitionBlueprintLibrary::UnloadActors(Requested);
+  return StreamPartitionActors(Requested,bLoaded);
  }
  return true;
 #else
