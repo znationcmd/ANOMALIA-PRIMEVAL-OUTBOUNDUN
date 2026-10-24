@@ -205,8 +205,8 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
         Parent->AddChildToHorizontalBox(SizeBox)->SetPadding(FMargin(4));
     };
 
-    WorkshopFrame=Box(Black,0);
-    WorkshopFrame->Rename(TEXT("WorkshopFullScreen"));
+    WorkshopFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("WorkshopFullScreen"));
+    WorkshopFrame->SetBrushColor(Black);WorkshopFrame->SetPadding(FMargin(0));
     auto* Anchor=Canvas->AddChildToCanvas(WorkshopFrame);
     Anchor->SetAnchors(FAnchors(.015f,.012f,.985f,.985f));
     Anchor->SetOffsets(FMargin(0.f));
@@ -286,6 +286,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     Center->AddChildToVerticalBox(CategoriesTitle)->SetPadding(FMargin(14,11,8,4));
     auto* Grid=WidgetTree->ConstructWidget<UUniformGridPanel>(UUniformGridPanel::StaticClass(),TEXT("WorkshopCategories"));
     Center->AddChildToVerticalBox(Grid)->SetPadding(FMargin(10,3,8,9));
+    Grid->SetSlotPadding(FMargin(3,4));
     const TArray<TTuple<FString,FString>> Cats={
       MakeTuple(FString(TEXT("✦  Tous")),FString(TEXT("Tous"))),
       MakeTuple(FString(TEXT("◈  Véhicules")),FString(TEXT("Véhicules"))),
@@ -300,7 +301,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
         const FString& Title=Cats[I].Get<0>();
         const FString& Key=Cats[I].Get<1>();
         auto* Card=Box(FLinearColor(.19f,.075f,.065f,.96f),7);
-        Grid->AddChildToUniformGrid(Card,I/4,I%4)->SetPadding(FMargin(3,4));
+        Grid->AddChildToUniformGrid(Card,I/4,I%4);
         auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(*FString::Printf(TEXT("WorkshopCategoryCard%d"),I)));
         B->SetBackgroundColor(FLinearColor(.29f,.12f,.09f,1.f));
         auto* Txt=Label(Title,15,Gold);Txt->SetJustification(ETextJustify::Center);
@@ -335,8 +336,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     WorkshopStatus=AddLabel(Center,TEXT("Recherche de créations locales..."),12,Cyan,3);
     auto* ContentScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopListScroll"));
     Center->AddChildToVerticalBox(ContentScroll)->SetPadding(FMargin(10,4));
-    WorkshopCards=Vertical();
-    WorkshopCards->Rename(TEXT("WorkshopCards"));
+    WorkshopCards=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("WorkshopCards"));
     ContentScroll->AddChild(WorkshopCards);
     auto* Note=Box(FLinearColor(.12f,.050f,.05f,.99f),10);
     Center->AddChildToVerticalBox(Note)->SetPadding(FMargin(10,8,10,13));
