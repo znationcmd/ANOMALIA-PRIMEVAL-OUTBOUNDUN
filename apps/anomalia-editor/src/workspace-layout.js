@@ -10,8 +10,8 @@ function load(){
     if(!data||typeof data!=='object')return {...defaults};
     return {
       library:data.library!==false,inspector:data.inspector!==false,focus:false,
-      leftWidth:clamp(Number(data.leftWidth)||248,210,440),
-      rightWidth:clamp(Number(data.rightWidth)||288,245,460)
+      leftWidth:clamp(Number(data.leftWidth)||216,210,440),
+      rightWidth:clamp(Number(data.rightWidth)||272,245,460)
     };
   }catch{return {...defaults};}
 }
