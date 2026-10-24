@@ -555,36 +555,27 @@ void UAnomaliaSessionWidget::OpenWorkshopHosting()
 }
 void UAnomaliaSessionWidget::RefreshWorkshop()
 {
-    if(!WorkshopCards || !WorkshopStatus || !WidgetTree) return;
+    if(!WorkshopCards || !WorkshopStatus || !WidgetTree)return;
     WorkshopCards->ClearChildren();
+
+    struct FWorkForgeCard
+    {
+        FString Id, Name, Author, Category, Version, Description, Preview;
+        bool bLocalTools=false;
+    };
+    TArray<FWorkForgeCard> Entries;
     const FString Search=WorkshopSearch?WorkshopSearch->GetText().ToString().TrimStartAndEnd():TEXT("");
     const FString Filter=WorkshopCategory?WorkshopCategory->GetSelectedOption():TEXT("Tous");
-    int32 Total=0,Visible=0;
-    auto Row=[&](const FString& Title,const FString& Details,bool Accent)
+    const FString Sort=WorkshopSort?WorkshopSort->GetSelectedOption():TEXT("Récents");
+    const auto Matches=[&](const FWorkForgeCard& Item)
     {
-        auto* Card=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-        Card->SetBrushColor(Accent?FLinearColor(.24f,.075f,.065f,.98f):FLinearColor(.075f,.067f,.092f,.98f));
-        Card->SetPadding(FMargin(14,11));
-        WorkshopCards->AddChildToVerticalBox(Card)->SetPadding(FMargin(3,4));
-        auto* Contents=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-        Card->SetContent(Contents);
-        for(const TPair<FString,int32>& Line:{TPair<FString,int32>(Title,18),TPair<FString,int32>(Details,12)})
-        {
-            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-            Text->SetText(FText::FromString(Line.Key));Text->SetAutoWrapText(true);
-            auto Font=Text->GetFont();Font.Size=Line.Value;Text->SetFont(Font);
-            Text->SetColorAndOpacity(FSlateColor(Line.Value==18?FLinearColor(1.f,.84f,.72f):FLinearColor(.8f,.67f,.65f)));
-            Contents->AddChildToVerticalBox(Text)->SetPadding(FMargin(0,3));
-        }
+        return (Filter.IsEmpty() || Filter==TEXT("Tous") || Filter.Equals(Item.Category,ESearchCase::IgnoreCase)) &&
+          (Search.IsEmpty() || Item.Name.Contains(Search,ESearchCase::IgnoreCase) ||
+            Item.Category.Contains(Search,ESearchCase::IgnoreCase) ||
+            Item.Description.Contains(Search,ESearchCase::IgnoreCase) ||
+            Item.Author.Contains(Search,ESearchCase::IgnoreCase));
     };
-    auto Matches=[&](const FString& Category,const FString& Name,const FString& Description)
-    {
-        return (Filter.IsEmpty() || Filter==TEXT("Tous") || Filter.Equals(Category,ESearchCase::IgnoreCase)) &&
-            (Search.IsEmpty() || Name.Contains(Search,ESearchCase::IgnoreCase) || Category.Contains(Search,ESearchCase::IgnoreCase) ||
-                Description.Contains(Search,ESearchCase::IgnoreCase));
-    };
-    // ANOMALIA Tools stores its real projects in Electron userData/private-workspaces.
-    // Never parse raw C++ mods or execute anything while displaying this catalogue.
+    // Real data only. Never invent subscribers, downloads, ratings, authors or published mods.
 #if PLATFORM_WINDOWS
     const FString AppData=FPlatformMisc::GetEnvironmentVariable(TEXT("APPDATA"));
     const TArray<FString> Workspaces={
@@ -593,67 +584,148 @@ void UAnomaliaSessionWidget::RefreshWorkshop()
     };
     for(const FString& Workspace:Workspaces)
     {
-        if(AppData.IsEmpty() || !IFileManager::Get().DirectoryExists(*Workspace)) continue;
+        if(AppData.IsEmpty() || !IFileManager::Get().DirectoryExists(*Workspace))continue;
         TArray<FString> Folders;IFileManager::Get().FindFiles(Folders,*(Workspace/TEXT("*")),false,true);
         Folders.Sort();int32 Scanned=0;
         for(const FString& Folder:Folders)
         {
-            if(++Scanned>500 || Total>=200) break;
-            // ANOMALIA Tools project IDs are user slugs plus UUID suffix, not fixed prefixes.
-            if(Folder.Len()<2 || Folder.Len()>100 || Folder==TEXT("_workshop")) continue;
-            bool ValidFolder=true;
-            for(const TCHAR C:Folder) if(!((C>=TEXT('a') && C<=TEXT('z')) ||
-                (C>=TEXT('0') && C<=TEXT('9')) || C==TEXT('-'))) { ValidFolder=false;break; }
-            if(!ValidFolder) continue;
+            if(++Scanned>500 || Entries.Num()>=180)break;
+            if(Folder.Len()<2 || Folder.Len()>100 || Folder==TEXT("_workshop"))continue;
+            bool ValidId=true;
+            for(const TCHAR C:Folder)
+                if(!((C>=TEXT('a') && C<=TEXT('z')) || (C>=TEXT('0') && C<=TEXT('9')) || C==TEXT('-')))
+                    {ValidId=false;break;}
+            if(!ValidId)continue;
             const FString File=FPaths::Combine(Workspace,Folder,TEXT("Config/workshop.json"));
             const int64 Size=IFileManager::Get().FileSize(*File);
-            if(Size<=0 || Size>64*1024) continue;
-            FString Data;if(!FFileHelper::LoadFileToString(Data,*File)) continue;
+            if(Size<=0 || Size>64*1024)continue;
+            FString Data;if(!FFileHelper::LoadFileToString(Data,*File))continue;
             TSharedPtr<FJsonObject> Json;
-            if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Data),Json) || !Json.IsValid()) continue;
-            FString Schema,Id,Name,Category,Description,Version;
+            if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Data),Json) || !Json.IsValid())continue;
+            FWorkForgeCard Card;
+            FString Schema;
             if(!Json->TryGetStringField(TEXT("schema"),Schema) || Schema!=TEXT("anomalia-workshop-entry") ||
-                !Json->TryGetStringField(TEXT("projectId"),Id) || Id!=Folder ||
-                !Json->TryGetStringField(TEXT("title"),Name) || Name.IsEmpty()) continue;
-            Json->TryGetStringField(TEXT("category"),Category);
-            Json->TryGetStringField(TEXT("description"),Description);
-            Json->TryGetStringField(TEXT("modVersion"),Version);
-            Name=Name.Left(90);Category=Category.Left(35);Description=Description.Left(180);
-            ++Total;
-            if(!Matches(Category,Name,Description)) continue;
-            ++Visible;
-            Row(Name+TEXT("   ·   ")+Category+TEXT("   v")+Version.Left(32),
-                Description+TEXT("\nCréation ANOMALIA Tools · plugin UE5 non activé dans le jeu"),true);
+                !Json->TryGetStringField(TEXT("projectId"),Card.Id) || Card.Id!=Folder ||
+                !Json->TryGetStringField(TEXT("title"),Card.Name) || Card.Name.IsEmpty())continue;
+            Json->TryGetStringField(TEXT("category"),Card.Category);
+            Json->TryGetStringField(TEXT("description"),Card.Description);
+            Json->TryGetStringField(TEXT("modVersion"),Card.Version);
+            Card.Name=Card.Name.Left(90);
+            Card.Category=Card.Category.Left(35);
+            Card.Description=Card.Description.Left(280);
+            Card.Version=Card.Version.Left(32);
+            Card.Author=TEXT("Votre création");
+            Card.bLocalTools=true;
+            Entries.Add(MoveTemp(Card));
         }
         break;
     }
 #endif
-    // Preserve the original local Saved/Mods manifests, clearly marked as unmounted.
     const FString Root=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Mods"));
     TArray<FString> Folders;IFileManager::Get().FindFiles(Folders,*(Root/TEXT("*")),false,true);Folders.Sort();
-    int32 Checked=0;
+    int32 Scanned=0;
     for(const FString& Folder:Folders)
     {
-        if(++Checked>200 || Total>=400) break;
+        if(++Scanned>200 || Entries.Num()>=300)break;
         const FString File=FPaths::Combine(Root,Folder,TEXT("manifest.json"));
         const int64 Size=IFileManager::Get().FileSize(*File);
-        if(Size<=0 || Size>256*1024) continue;
+        if(Size<=0 || Size>256*1024)continue;
         FString Json,Error;FAnomaliaModManifest Manifest;
         if(!FFileHelper::LoadFileToString(Json,*File) ||
             !FJsonObjectConverter::JsonObjectStringToUStruct(Json,&Manifest,0,0) ||
             !UAnomaliaModResolver::ValidateModManifest(Manifest,Error))continue;
-        ++Total;
-        const FString Category=TEXT("Autres");
-        if(!Matches(Category,Manifest.Id,FString()))continue;
-        ++Visible;
-        Row(Manifest.Id+TEXT("  ·  v")+Manifest.Version,
-            TEXT("Manifeste reconnu · paquet non authentifié · aucun mod chargé"),false);
+        FWorkForgeCard Card;
+        Card.Id=Manifest.Id.Left(100);
+        Card.Name=Manifest.Id.Left(90);
+        Card.Version=Manifest.Version.Left(32);
+        Card.Author=TEXT("Manifeste local");
+        Card.Category=TEXT("Autres");
+        Card.Description=TEXT("Fichier de mod local validé. Ce mod n'est pas encore chargé dans UE5.");
+        Entries.Add(MoveTemp(Card));
     }
-    WorkshopStatus->SetText(FText::FromString(FString::Printf(TEXT("WORKSHOP ANOMALIA    %d création(s) trouvée(s)  ·  %d affichée(s)  ·  Chargement UE5 non connecté"),
-        Total,Visible)));
-    if(Visible==0)
-        Row(TEXT("Aucun mod disponible dans cette catégorie"),
-            TEXT("Le Workshop est intégré au jeu. Créez un mod avec ANOMALIA Tools et publiez-le dans votre bibliothèque locale.\nAucun téléchargement ni installation automatique n’est simulé."),false);
+    const int32 Total=Entries.Num();
+    TArray<FWorkForgeCard> Visible;
+    for(const FWorkForgeCard& Card:Entries)if(Matches(Card))Visible.Add(Card);
+    if(Sort==TEXT("Nom A-Z"))
+        Visible.Sort([](const FWorkForgeCard& A,const FWorkForgeCard& B){return A.Name < B.Name;});
+    else if(Sort==TEXT("Catégorie"))
+        Visible.Sort([](const FWorkForgeCard& A,const FWorkForgeCard& B){return A.Category==B.Category ? A.Name<B.Name : A.Category<B.Category;});
+    else if(Sort==TEXT("Version"))
+        Visible.Sort([](const FWorkForgeCard& A,const FWorkForgeCard& B){return A.Version>B.Version;});
+
+    const FLinearColor Red(.58f,.11f,.075f,1.f),Gold(1.f,.79f,.60f,1.f),Soft(.82f,.74f,.70f,1.f);
+    auto* DefaultArt=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+    auto Text=[&](const FString& Caption,int32 Size,const FLinearColor& Color)
+    {
+        auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Label->SetText(FText::FromString(Caption));Label->SetAutoWrapText(true);
+        auto Font=Label->GetFont();Font.Size=Size;Label->SetFont(Font);
+        Label->SetColorAndOpacity(FSlateColor(Color));
+        return Label;
+    };
+    // Cards are genuine Slate/UMG widgets, not a screenshot or flattened mock-up.
+    for(int32 Index=0;Index<Visible.Num();Index+=3)
+    {
+        auto* CardsRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+        WorkshopCards->AddChildToVerticalBox(CardsRow)->SetPadding(FMargin(4,5));
+        for(int32 Col=0;Col<3;++Col)
+        {
+            if(Index+Col>=Visible.Num())break;
+            const FWorkForgeCard& Entry=Visible[Index+Col];
+            auto* Card=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+            Card->SetPadding(FMargin(1));
+            Card->SetBrushColor(FLinearColor(.34f,.12f,.09f,.98f));
+            auto* CardSlot=CardsRow->AddChildToHorizontalBox(Card);
+            CardSlot->SetPadding(FMargin(5,3));
+            CardSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+            auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+            Card->SetContent(Content);
+            auto* Art=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());
+            auto* ImageHeight=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+            ImageHeight->SetHeightOverride(128.f);
+            Content->AddChildToVerticalBox(ImageHeight);
+            ImageHeight->SetContent(Art);
+            if(DefaultArt)
+            {
+                auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+                Image->SetBrushFromTexture(DefaultArt,true);
+                Image->SetColorAndOpacity(FLinearColor(.83f,.48f,.37f,.90f));
+                Art->AddChildToOverlay(Image);
+            }
+            auto* Shade=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+            Shade->SetBrushColor(FLinearColor(.035f,.022f,.026f,.58f));
+            auto* ShadeContent=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+            Shade->SetContent(ShadeContent);
+            Art->AddChildToOverlay(Shade);
+            ShadeContent->AddChildToVerticalBox(Text(Entry.Category.IsEmpty()?TEXT("MOD ANOMALIA"):Entry.Category.ToUpper(),12,Gold))->SetPadding(FMargin(10,5));
+            ShadeContent->AddChildToVerticalBox(Text(Entry.Name,16,FLinearColor::White))->SetPadding(FMargin(10,25,10,0));
+
+            auto* DetailPanel=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+            DetailPanel->SetBrushColor(FLinearColor(.045f,.047f,.060f,.99f));
+            DetailPanel->SetPadding(FMargin(12,8));
+            Content->AddChildToVerticalBox(DetailPanel);
+            auto* Details=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+            DetailPanel->SetContent(Details);
+            Details->AddChildToVerticalBox(Text(TEXT("Par ")+Entry.Author,11,Soft))->SetPadding(FMargin(0,2));
+            Details->AddChildToVerticalBox(Text(Entry.Description.IsEmpty()?TEXT("Mod ANOMALIA"):Entry.Description,12,Gold))->SetPadding(FMargin(0,3));
+            Details->AddChildToVerticalBox(Text(TEXT("Version : ")+Entry.Version,11,Soft))->SetPadding(FMargin(0,4));
+            auto* Footer=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+            Footer->SetBrushColor(Red);Footer->SetPadding(FMargin(8,5));
+            Details->AddChildToVerticalBox(Footer)->SetPadding(FMargin(0,7,0,1));
+            Footer->SetContent(Text(TEXT("Installation UE5 indisponible  •  Voir ANOMALIA Tools"),11,FLinearColor::White));
+        }
+    }
+    WorkshopStatus->SetText(FText::FromString(FString::Printf(
+        TEXT("WORKFORGE • %d mod(s) locaux • %d affiché(s) • Catalogue communautaire non connecté • Aucun mod UE5 chargé"),
+        Total,Visible.Num())));
+    if(Visible.IsEmpty())
+    {
+        auto* Empty=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+        Empty->SetBrushColor(FLinearColor(.17f,.065f,.060f,.90f));
+        Empty->SetPadding(FMargin(16));
+        WorkshopCards->AddChildToVerticalBox(Empty)->SetPadding(FMargin(5,4));
+        Empty->SetContent(Text(TEXT("WORKFORGE EST PRÊT\n\nAucun mod disponible pour cette recherche.\nCréez une fiche dans ANOMALIA Tools pour voir sa carte ici.\nAucun mod communautaire ni téléchargement n'est inventé."),15,Gold));
+    }
 }
 
 void UAnomaliaSessionWidget::OpenModsFolder()
