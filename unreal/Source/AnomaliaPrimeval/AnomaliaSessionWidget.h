@@ -72,6 +72,9 @@ private:
     UFUNCTION() void WorkshopFilterCreatures();
     UFUNCTION() void WorkshopFilterSurvival();
     UFUNCTION() void WorkshopFilterMaps();
+    UFUNCTION() void WorkshopFilterGameplay();
+    UFUNCTION() void WorkshopFilterTools();
+    UFUNCTION() void WorkshopShowMyMods();
     UFUNCTION() void OpenModsFolder();
     UFUNCTION() void OpenWorldEditor();
     void SelectPage(int32 Index);
