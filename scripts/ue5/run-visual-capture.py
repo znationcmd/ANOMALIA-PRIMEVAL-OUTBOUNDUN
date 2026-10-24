@@ -1,17 +1,18 @@
 """Real GPU repair/save + independent reopen. NullRHI cannot satisfy this check."""
 import argparse,json,os,subprocess
 from pathlib import Path
-from world_snapshot import snapshot,sha256
+from world_snapshot import snapshot,sha256,INHABITED_PATHS,WORLD_PATHS
 
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--inhabited',action='store_true');a=p.parse_args()
  root=Path(__file__).resolve().parents[2];base=a.output.resolve()/'real-graphics';base.mkdir(parents=True,exist_ok=True)
- marker=root/'unreal/Saved/AnomaliaMigration/render-repair-v1.json'
- result=dict(state='FAILED',headless=False,sourceCommit=os.environ.get('GITHUB_SHA','manual'),phases=[])
+ package='/Game/Maps/ANOMALIA_Inhabited_v2' if a.inhabited else '/Game/Maps/ANOMALIA_Archipelago_v2'
+ marker=root/('unreal/Saved/AnomaliaMigration/render-repair-inhabited-v2.json' if a.inhabited else 'unreal/Saved/AnomaliaMigration/render-repair-v1.json')
+ result=dict(state='FAILED',headless=False,mapPackage=package,sourceCommit=os.environ.get('GITHUB_SHA','manual'),phases=[])
  def capture(phase,backup=None):
   out=base/phase;out.mkdir(exist_ok=False)
-  env=dict(os.environ,ANOMALIA_VISUAL_OUTPUT=str(out),ANOMALIA_RENDER_PHASE=phase)
+  env=dict(os.environ,ANOMALIA_VISUAL_OUTPUT=str(out),ANOMALIA_RENDER_PHASE=phase,ANOMALIA_CAPTURE_MAP=package)
   if backup:env['ANOMALIA_RENDER_BACKUP']=backup['archive']
   command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-d3d11','-sm5','-RenderOffscreen','-unattended','-nopause','-nosound','-ResX=1280','-ResY=720',f'-ExecutePythonScript={root/"unreal/Scripts/capture_real_world.py"}',f'-abslog={out/"editor-render.log"}']
   status=dict(phase=phase,command=command);result['phases'].append(status)
@@ -33,7 +34,7 @@ def main():
   return native
  try:
   if not marker.exists():
-   backup=snapshot(root/'unreal',base/'backup');result['backup']=backup
+   backup=snapshot(root/'unreal',base/'backup',INHABITED_PATHS if a.inhabited else WORLD_PATHS);result['backup']=backup
    (base/'backup-report.json').write_text(json.dumps(backup,indent=2)+'\n')
    capture('repair',backup)
   else:

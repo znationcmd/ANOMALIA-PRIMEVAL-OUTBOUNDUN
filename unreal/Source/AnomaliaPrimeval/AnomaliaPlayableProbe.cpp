@@ -119,7 +119,8 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Options=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionOptions")));
         auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
         auto* Refresh=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionRefreshMods")));
-        if(!Pages || !Mods || !Options || !Home || !Refresh || Pages->GetActiveWidgetIndex()!=0)
+        auto* WorldEditor=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionWorldEditor")));
+        if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor || Pages->GetActiveWidgetIndex()!=0)
         { Finish(TEXT("Main menu navigation or local mods page missing")); return; }
         Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
         if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused())

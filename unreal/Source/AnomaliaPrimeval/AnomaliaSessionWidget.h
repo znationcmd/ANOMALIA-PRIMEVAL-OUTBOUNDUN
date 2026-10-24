@@ -32,6 +32,7 @@ private:
     UFUNCTION() void ShowMods();
     UFUNCTION() void RefreshMods();
     UFUNCTION() void OpenModsFolder();
+    UFUNCTION() void OpenWorldEditor();
     void SelectPage(int32 Index);
     UFUNCTION() void Play();
     UFUNCTION() void ChangeQuality();

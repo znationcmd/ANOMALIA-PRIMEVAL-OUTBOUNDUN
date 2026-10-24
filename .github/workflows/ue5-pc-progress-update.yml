@@ -6,6 +6,13 @@ on:
     paths:
       - 'unreal/Source/**'
       - 'unreal/Config/**'
+      - 'unreal/Scripts/capture_real_world.py'
+      - 'unreal/Scripts/probe_installed_editor.py'
+      - 'distribution/windows-editor/**'
+      - 'scripts/ue5/install-pc-editor-update.ps1'
+      - 'scripts/ue5/verify-installed-project.py'
+      - 'scripts/ue5/run-visual-capture.py'
+      - 'scripts/ue5/world_snapshot.py'
       - 'scripts/ue5/package-playable-windows.py'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
@@ -19,7 +26,7 @@ jobs:
   update-owned-installed-game:
     if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 150
+    timeout-minutes: 180
     permissions:
       contents: read
     steps:
@@ -79,6 +86,23 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report=Get-Content "$evidence/package/installed-package-report.json" -Raw | ConvertFrom-Json
           if ($report.state -ne 'PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED' -or -not $report.activeVersionAndShortcutVerified -or $report.commit -ne $env:GITHUB_SHA) { throw 'PC update activation is not confirmed.' }
+      - name: Back up and verify the populated world with the actual GPU
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "$evidence/editor" --inhabited
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Synchronize the complete native project and open the installed populated map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir "$evidence/editor" -BuildValidationDir "$evidence/native" -MapPackage '/Game/Maps/ANOMALIA_Inhabited_v2'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report=Get-Content "$evidence/editor/pc-editor-update.json" -Raw | ConvertFrom-Json
+          if ($report.state -ne 'EDITOR_PROJECT_UPDATE_INSTALLED' -or $report.commit -ne $env:GITHUB_SHA) { throw 'Installed Editor synchronization not confirmed.' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -89,4 +113,9 @@ jobs:
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/*.json
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.png
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/pc-installed-graphics/*.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/pc-installed-graphics/*.png
           if-no-files-found: warn

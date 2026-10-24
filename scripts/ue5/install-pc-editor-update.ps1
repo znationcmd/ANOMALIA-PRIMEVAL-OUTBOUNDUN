@@ -1,8 +1,10 @@
-﻿param(
+param(
     [string]$SourceRoot = $env:GITHUB_WORKSPACE,
     [string]$EngineRoot = $env:UE_ROOT,
     [string]$Commit = $env:GITHUB_SHA,
-    [Parameter(Mandatory=$true)][string]$ValidationDir
+    [Parameter(Mandatory=$true)][string]$ValidationDir,
+    [string]$BuildValidationDir,
+    [ValidateSet('/Game/Maps/ANOMALIA_Archipelago_v2','/Game/Maps/ANOMALIA_Inhabited_v2')][string]$MapPackage='/Game/Maps/ANOMALIA_Archipelago_v2'
 )
 $ErrorActionPreference = 'Stop'
 $report = @{state='FAILED';commit=$Commit;packagedGame=$false;editorLaunchTested=$false;startupAfterRebootTested=$false}
@@ -12,7 +14,9 @@ try {
     $proofFile = Join-Path $ValidationDir 'real-graphics/capture-process-report.json'
     $proof = Get-Content -LiteralPath $proofFile -Raw | ConvertFrom-Json
     if ($proof.state -ne 'REOPENED_GPU_CAPTURES_AWAITING_REVIEW' -or $proof.sourceCommit -ne $Commit) { throw 'A fresh successful GPU reopen proof is required.' }
-    $native = Get-Content -LiteralPath (Join-Path $ValidationDir 'report.json') -Raw | ConvertFrom-Json
+    if (-not $BuildValidationDir) { $BuildValidationDir=$ValidationDir }
+    if ($MapPackage -eq '/Game/Maps/ANOMALIA_Inhabited_v2' -and $proof.mapPackage -ne $MapPackage) { throw 'GPU proof does not cover the populated world.' }
+    $native = Get-Content -LiteralPath (Join-Path $BuildValidationDir 'report.json') -Raw | ConvertFrom-Json
     if ($native.compilation -ne 'passed') { throw 'Native compilation is not validated.' }
     $verify = @($proof.phases | Where-Object { $_.phase -eq 'verify' })
     if ($verify.Count -ne 1 -or $verify[0].exitCode -ne 0 -or $verify[0].nativeReport.renderResourceRefresh.landscapesLayerMergeRequested -ne 0) { throw 'Independent reopen is not validated.' }
@@ -36,7 +40,7 @@ try {
     }
     $versions = Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
     $target = Join-Path $versions $Commit
-    $critical = @('AnomaliaPrimeval.uproject','Binaries/Win64/UnrealEditor-AnomaliaPrimeval.dll','Content/Maps/ANOMALIA_Archipelago_v2.umap','Config/DefaultEngine.ini')
+    $critical = @('AnomaliaPrimeval.uproject','Binaries/Win64/UnrealEditor-AnomaliaPrimeval.dll',('Content/'+$MapPackage.Substring(6)+'.umap'),'Config/DefaultEngine.ini')
     if (-not (Test-Path -LiteralPath $target)) {
         $stage = Join-Path $versions ('.staging-' + [Guid]::NewGuid().ToString('N'))
         New-Item -ItemType Directory -Path $stage | Out-Null
@@ -99,14 +103,14 @@ try {
     $env:ANOMALIA_PC_UPDATE_REPORT=Join-Path $ValidationDir 'pc-editor-open-probe.json'
     $enginePython=Join-Path $EngineRoot 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
     $copiedProject=Join-Path $target 'AnomaliaPrimeval.uproject'
-    & $enginePython (Join-Path $SourceRoot 'scripts/ue5/verify-installed-project.py') --engine-root $EngineRoot --project $copiedProject --saved $env:ANOMALIA_EXPECTED_SAVED --output $ValidationDir
+    & $enginePython (Join-Path $SourceRoot 'scripts/ue5/verify-installed-project.py') --engine-root $EngineRoot --project $copiedProject --saved $env:ANOMALIA_EXPECTED_SAVED --output $ValidationDir --map $MapPackage
     if ($LASTEXITCODE -ne 0) { throw 'Copied project native process verification failed; inspect pc-editor-open-process.json.' }
     $opened=Get-Content -LiteralPath $env:ANOMALIA_PC_UPDATE_REPORT -Raw | ConvertFrom-Json
     if ($opened.state -ne 'COPIED_EDITOR_PROJECT_OPENED_HEADLESS') { throw 'Copied project or shared saves failed validation.' }
     $report.installedProjectHeadlessOpenTested=$true
     $report.editorLaunchTested=$true
     $report.installedProjectDX11SM5Tested=$true
-    $active=@{state='VALIDATED_EDITOR_PROJECT_INSTALLED';commit=$Commit;project=(Join-Path $target 'AnomaliaPrimeval.uproject');engineRoot=$EngineRoot;userData=(Join-Path $base 'userdata');validation=$proofFile}
+    $active=@{state='VALIDATED_EDITOR_PROJECT_INSTALLED';commit=$Commit;project=(Join-Path $target 'AnomaliaPrimeval.uproject');engineRoot=$EngineRoot;mapPackage=$MapPackage;userData=(Join-Path $base 'userdata');validation=$proofFile}
     $temp=Join-Path $base ('active-'+[Guid]::NewGuid().ToString('N')+'.json')
     $active | ConvertTo-Json | Set-Content -LiteralPath $temp -Encoding UTF8
     $current=Join-Path $base 'active.json'

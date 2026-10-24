@@ -13,11 +13,17 @@ def sha256(path):
   for data in iter(lambda:f.read(1024*1024),b''):h.update(data)
  return h.hexdigest()
 
-def snapshot(project,output):
+INHABITED_PATHS=('Content/Maps/ANOMALIA_Inhabited_v2.umap',
+ 'Content/__ExternalActors__/Maps/ANOMALIA_Inhabited_v2',
+ 'Content/__ExternalObjects__/Maps/ANOMALIA_Inhabited_v2',
+ 'Content/Anomalia/Inhabited_v2')
+
+def snapshot(project,output,world_paths=WORLD_PATHS):
  project=Path(project).resolve();output=Path(output).resolve();output.mkdir(parents=True,exist_ok=True)
- if not (project/WORLD_PATHS[0]).is_file():raise RuntimeError('Existing map required; no replacement or generation')
+ if world_paths not in (WORLD_PATHS,INHABITED_PATHS):raise ValueError('Only known world packages may be backed up')
+ if not (project/world_paths[0]).is_file():raise RuntimeError('Existing map required; no replacement or generation')
  files=[]
- for name in WORLD_PATHS:
+ for name in world_paths:
   p=project/name
   candidates=[p] if p.is_file() else sorted(p.rglob('*')) if p.is_dir() else []
   for f in candidates:

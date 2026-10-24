@@ -74,7 +74,8 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRef
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))
+ if(!World || (World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") &&
+               World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")))
   return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
  TArray<ULandscapeComponent*> Components;
  for(TActorIterator<ALandscapeProxy> It(World);It;++It)

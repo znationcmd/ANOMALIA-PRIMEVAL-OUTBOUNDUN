@@ -5,6 +5,19 @@ SPEC=importlib.util.spec_from_file_location('snapshot',Path(__file__).resolve().
 MODULE=importlib.util.module_from_spec(SPEC);SPEC.loader.exec_module(MODULE)
 
 class SnapshotTests(unittest.TestCase):
+ def test_inhabited_backup_preserves_the_other_world_and_all_player_saves(self):
+  with tempfile.TemporaryDirectory() as d:
+   root=Path(d)/'unreal'
+   for scope,data in ((MODULE.WORLD_PATHS,b'original'),(MODULE.INHABITED_PATHS,b'populated')):
+    m=root/scope[0];m.parent.mkdir(parents=True,exist_ok=True);m.write_bytes(data)
+    a=root/scope[1]/'town.uasset';a.parent.mkdir(parents=True);a.write_bytes(data+b'-town')
+   result=MODULE.snapshot(root,Path(d)/'backup',MODULE.INHABITED_PATHS)
+   with zipfile.ZipFile(result['archive']) as z:
+    self.assertEqual(z.read(MODULE.INHABITED_PATHS[0]),b'populated')
+    self.assertNotIn(MODULE.WORLD_PATHS[0],z.namelist())
+    self.assertEqual(len(json.loads(z.read('snapshot-manifest.json'))),2)
+   self.assertEqual((root/MODULE.WORLD_PATHS[0]).read_bytes(),b'original')
+   with self.assertRaises(ValueError):MODULE.snapshot(root,Path(d)/'backup',('Saved/Servers',))
  def test_world_archive_is_complete_and_excludes_user_data(self):
   with tempfile.TemporaryDirectory() as d:
    root=Path(d)/'unreal';mapfile=root/MODULE.WORLD_PATHS[0];mapfile.parent.mkdir(parents=True);mapfile.write_bytes(b'existing-map')

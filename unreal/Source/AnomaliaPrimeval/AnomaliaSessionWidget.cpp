@@ -20,6 +20,10 @@
 #include "Misc/FileHelper.h"
 #include "JsonObjectConverter.h"
 #include "AnomaliaModResolver.h"
+#include "HAL/PlatformMisc.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonReader.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -77,6 +81,7 @@ void UAnomaliaSessionWidget::BuildLayout()
     HomeButton=Button(TEXT("SessionHome"),TEXT("Survivant")); HomeButton->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ShowHome);
     OptionsButton=Button(TEXT("SessionOptions"),TEXT("Options")); OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ShowOptions);
     ModsButton=Button(TEXT("SessionMods"),TEXT("Mods")); ModsButton->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ShowMods);
+    Button(TEXT("SessionWorldEditor"),TEXT("Éditeur de carte UE5"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorldEditor);
     Button(TEXT("SessionSaveQuit"),TEXT("Sauvegarder et quitter"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::SaveAndQuit);
     Button(TEXT("SessionQuit"),TEXT("Quitter sans nouvelle sauvegarde"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::Quit);
     Feedback=Label(TEXT("Sauvegarde automatique toutes les 2 minutes."));
@@ -155,6 +160,23 @@ void UAnomaliaSessionWidget::OpenModsFolder()
     const FString Root=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Mods")));
     if(IFileManager::Get().MakeDirectory(*Root,true)) FPlatformProcess::ExploreFolder(*Root);
     else if(Feedback) Feedback->SetText(FText::FromString(TEXT("Impossible d’ouvrir le dossier Mods.")));
+}
+void UAnomaliaSessionWidget::OpenWorldEditor()
+{
+#if PLATFORM_WINDOWS
+    const FString Root=FPaths::Combine(FPlatformMisc::GetEnvironmentVariable(TEXT("LOCALAPPDATA")),TEXT("CMD/ANOMALIA-UE5"));
+    FString OwnerJson,ActiveJson,Product,State; TSharedPtr<FJsonObject> Owner,Active;
+    const bool Valid=FFileHelper::LoadFileToString(OwnerJson,*(Root/TEXT("owner.json"))) &&
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(OwnerJson),Owner) && Owner.IsValid() &&
+        Owner->TryGetStringField(TEXT("product"),Product) && Product==TEXT("ANOMALIA-UE5-EDITOR-v1") &&
+        FFileHelper::LoadFileToString(ActiveJson,*(Root/TEXT("active.json"))) &&
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ActiveJson),Active) && Active.IsValid() &&
+        Active->TryGetStringField(TEXT("state"),State) && State==TEXT("VALIDATED_EDITOR_PROJECT_INSTALLED");
+    const FString Launcher=Root/TEXT("bootstrap/Launch-AnomaliaUE5.vbs");
+    if(Valid && FPaths::FileExists(Launcher) && FPlatformProcess::LaunchFileInDefaultExternalApplication(*Launcher))
+    { if(Feedback) Feedback->SetText(FText::FromString(TEXT("Ouverture du projet synchronisé dans Unreal Editor. Votre partie reste en pause."))); return; }
+#endif
+    if(Feedback) Feedback->SetText(FText::FromString(TEXT("Le projet Unreal synchronisé n’est pas disponible. Attendez la fin de la mise à jour de l’éditeur.")));
 }
 void UAnomaliaSessionWidget::Play()
 {

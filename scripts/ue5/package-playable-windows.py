@@ -53,7 +53,8 @@ try:
          '-d3d11','-sm5','-unattended','-nosound','-AnomaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
     if json.loads(editor_review.read_text(encoding='utf-8-sig')).get('state')!='PACKAGED_VISUAL_REVIEW_PASSED':
         raise RuntimeError('Imported-art scene failed in actual Editor game renderer')
-    archive=out/('package-'+uuid.uuid4().hex);archive.mkdir()
+    # Keep archive names short: nested Windows credit filenames exceeded MAX_PATH.
+    archive=out/('p-'+uuid.uuid4().hex[:12]);archive.mkdir()
     uat=a.engine_root/'Engine/Build/BatchFiles/RunUAT.bat'
     run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP+'+'+visual_map,'-prereqs'],'package',5400)
     executables=list(archive.glob('Windows/AnomaliaPrimeval.exe'))
@@ -86,7 +87,15 @@ try:
     if a.progress_art:
         notices=archive/'Windows/ThirdPartyNotices';notices.mkdir(parents=True,exist_ok=True)
         for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1'):
-            shutil.copyfile(ROOT/'unreal/SourceAssets'/group/'CREDITS.md',notices/(group+'-CREDITS.md'))
+            source=ROOT/'unreal/SourceAssets'/group/'CREDITS.md'
+            destination=notices/(group+'-CREDITS.md')
+            # Extended-length paths are needed on Windows even if UE accepts its own paths.
+            def copy_path(path):
+                full=str(path.resolve())
+                if os.name!='nt' or full.startswith('\\\\?\\'):return full
+                return '\\\\?\\UNC\\'+full[2:] if full.startswith('\\\\') else '\\\\?\\'+full
+            shutil.copyfile(copy_path(source),copy_path(destination))
+            if source.read_bytes()!=Path(copy_path(destination)).read_bytes():raise RuntimeError('Packaged attribution copy mismatch')
     report.update(state='PACKAGED_WINDOWS_SMOKE_PASSED',executable=str(exe),native=native,screenshot=str(image),archive=str(archive/'Windows'),limitations=['provisional_original_art','prototype_ground_vehicle_physics','drop_UI_not_implemented','item_specific_weapon_crafting_and_medical_systems_incomplete'])
 except Exception as error: report['error']=str(error)
 finally:

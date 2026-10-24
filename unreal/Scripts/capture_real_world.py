@@ -4,7 +4,9 @@ from pathlib import Path
 import unreal
 OUT=Path(os.environ['ANOMALIA_VISUAL_OUTPUT']);OUT.mkdir(parents=True,exist_ok=True)
 PHASE=os.environ.get('ANOMALIA_RENDER_PHASE','inspect')
-REPORT=OUT/'visual-report.json';PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
+REPORT=OUT/'visual-report.json';PACKAGE=os.environ.get('ANOMALIA_CAPTURE_MAP','/Game/Maps/ANOMALIA_Archipelago_v2')
+if PACKAGE not in ('/Game/Maps/ANOMALIA_Archipelago_v2','/Game/Maps/ANOMALIA_Inhabited_v2'):raise RuntimeError('Capture map is not an owned review target')
+WORLD_NAME=PACKAGE.rsplit('/',1)[1]
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,requestedRHI='D3D11 SM5',headless=False,screenshots=[],gameplayValidated=False,performanceValidated=False,renderPhase=PHASE)
 state=dict(index=0,task=None,until=time.monotonic()+45,frames=[],started=time.monotonic(),busy=False)
 # UE coordinates in centimetres; these are views of the real, unchanged archipelago.
@@ -27,7 +29,7 @@ def finish(error=None):
             packages={}
             for obj in [world]+landscapes+terrain_components:
                 package=obj.get_outermost();name=package.get_name()
-                allowed=name==PACKAGE or name.startswith('/Game/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2/') or name.startswith('/Game/__ExternalObjects__/Maps/ANOMALIA_Archipelago_v2/')
+                allowed=name==PACKAGE or name.startswith('/Game/__ExternalActors__/Maps/'+WORLD_NAME+'/') or name.startswith('/Game/__ExternalObjects__/Maps/'+WORLD_NAME+'/')
                 if not allowed:raise RuntimeError('Refusing to save unrelated package '+name)
                 packages[name]=package
             if not unreal.EditorLoadingAndSavingUtils.save_packages(list(packages.values()),False):raise RuntimeError('Scoped Landscape package save failed')
@@ -115,7 +117,7 @@ try:
     if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Real map unavailable')
     # Load known generated geometry for aerial captures without altering streaming rules on disk.
     desc=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
-    wanted=[d.guid for d in desc if 'Landscape' in str(d.native_class) or str(d.label).startswith('ANOMALIA_')]
+    wanted=[d.guid for d in desc if d.native_class.get_path_name() in ('/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy') or str(d.label).startswith('ANOMALIA_')]
     report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(str(d.native_class) for d in desc)))
     unreal.WorldPartitionBlueprintLibrary.load_actors(wanted)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -140,6 +142,14 @@ try:
     if min_z>=-10000 or max_z<=100000 or report['heightBoundsCheck']['flatSentinelComponents']:raise RuntimeError('Persisted Landscape render bounds do not contain archipelago relief')
     if report['renderResourceRefresh']['missingHeightmaps']:raise RuntimeError('Landscape heightmap data is missing')
     unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
+    if WORLD_NAME=='ANOMALIA_Inhabited_v2':
+        sites=unreal.AnomaliaWorldImportLibrary.inhabited_settlement_sites()
+        if len(sites)!=27:raise RuntimeError('Expected all 27 inhabited settlements')
+        for index,site_index in enumerate((0,13,26),start=1):
+            site=sites[site_index];e,n=site.x,site.y
+            z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(e,n)*100
+            views[index]=(f'0{index+1}_settlement_{site_index}',(e*100-18000,-n*100-18000,z+12000),(e*100,-n*100,z+200))
+        report['reviewScope']='Populated archipelago overview and three settlements; interiors and full-map gameplay not certified'
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:
     unreal.log_error(traceback.format_exc());finish(error)

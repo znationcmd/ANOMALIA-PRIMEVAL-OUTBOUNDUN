@@ -3,10 +3,10 @@ import argparse,hashlib,json,os,subprocess
 from pathlib import Path
 
 def main():
- p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--saved',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+ p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--project',type=Path,required=True);p.add_argument('--saved',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--map',default='/Game/Maps/ANOMALIA_Archipelago_v2',choices=['/Game/Maps/ANOMALIA_Archipelago_v2','/Game/Maps/ANOMALIA_Inhabited_v2']);a=p.parse_args()
  out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
  native=out/'pc-editor-open-probe.json'
- env=dict(os.environ,ANOMALIA_EXPECTED_SAVED=str(a.saved.resolve()),ANOMALIA_PC_UPDATE_REPORT=str(native))
+ env=dict(os.environ,ANOMALIA_EXPECTED_SAVED=str(a.saved.resolve()),ANOMALIA_PC_UPDATE_REPORT=str(native),ANOMALIA_CAPTURE_MAP=a.map)
  command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(a.project.resolve()),'-NullRHI','-unattended','-nopause','-nosound',f'-ExecutePythonScript={a.project.parent/"Scripts/probe_installed_editor.py"}',f'-abslog={out/"pc-editor-open.engine.log"}']
  report=dict(state='FAILED',headless=True,graphicalLaunchTested=False,command=command)
  try:
@@ -18,7 +18,7 @@ def main():
   report['nativeReport']=proof
   if run.returncode!=0 or proof.get('state')!='COPIED_EDITOR_PROJECT_OPENED_HEADLESS':raise RuntimeError('Copied project native exit/report failed')
   gpu=out/'pc-installed-graphics';gpu.mkdir(exist_ok=False)
-  gpu_env=dict(os.environ,ANOMALIA_VISUAL_OUTPUT=str(gpu),ANOMALIA_RENDER_PHASE='verify')
+  gpu_env=dict(os.environ,ANOMALIA_VISUAL_OUTPUT=str(gpu),ANOMALIA_RENDER_PHASE='verify',ANOMALIA_CAPTURE_MAP=a.map)
   gpu_command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(a.project.resolve()),'-d3d11','-sm5','-RenderOffscreen','-unattended','-nopause','-nosound','-ResX=1280','-ResY=720',f'-ExecutePythonScript={a.project.parent/"Scripts/capture_real_world.py"}',f'-abslog={gpu/"editor-render.log"}']
   report['graphicalCommand']=gpu_command
   with (gpu/'process.log').open('w',encoding='utf-8') as log:
