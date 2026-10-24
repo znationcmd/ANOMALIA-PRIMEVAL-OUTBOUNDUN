@@ -120,3 +120,20 @@ Un succès de BuildPlugin signifie seulement que le plugin a été compilé. Il 
 Le ZIP produit par l'Addon Builder classique reste une ARCHIVE DE SOURCES. Il n'est pas présenté comme un mod jouable. Les sources de chaque utilisateur restent privées et locales. Compiler uniquement des mods de confiance : du C++ provenant de tiers peut être dangereux.
 
 Validation : npm test et npm run build vérifient la logique et l'interface, mais la compilation de vrais mods reste à tester sur Windows avec Unreal Engine installé, puis en jeu après développement d'un chargeur ANOMALIA.
+
+## ANOMALIA Workshop 0.2.4 — interface reliée aux vrais mods locaux
+
+- Onglet Workshop aux couleurs ANOMALIA, fond volcanique original, recherche, catégories, cartes et bibliothèque « Mes mods ».
+- Les fiches proviennent exclusivement des vrais projets locaux de l'utilisateur. « Ajouter au Workshop » crée ou met à jour Config/workshop.json. Aucun chiffre communautaire fictif.
+- Les abonnements locaux et les états activé/désactivé sont conservés dans le fichier privé _workshop/library.json sous les données ANOMALIA Tools.
+- « Préparer le mod » exige un plugin UE5 compilé et son rapport de build par Addon Builder ; les fichiers sont vérifiés puis copiés dans _workshop/installed.
+- Un bouton Workshop · Mods dans le menu du jeu Windows tente d'ouvrir ANOMALIA Tools via le protocole sécurisé anomalia-tools://workshop. La version navigateur explique que la liaison Windows n'est pas accessible.
+- La version 0.2.4 installe le gestionnaire de protocole sur Windows et assure la mise à jour automatique depuis le canal anomalia-tools-latest.
+
+### Limitations encore visibles dans l'interface
+
+Le Workshop est connecté à l'atelier ANOMALIA Tools, **pas encore au chargeur UE5 du jeu, à ANOMALIA Editor ni à un service communautaire en ligne**. « Préparé » signifie uniquement copié dans la bibliothèque locale : aucun chargement runtime, installation serveur, multijoueur, signature de contenus tiers ou synchronisation distante n'est démontré. Les utilisateurs doivent vérifier les droits de distribution de leurs créations. Le bouton du menu du jeu dépend d'une nouvelle compilation/installation du jeu Windows.
+
+### Vérification
+
+npm test, npm run build, npm run package:win, puis tester sous Windows : créer un projet, créer une fiche Workshop, s'abonner, compiler un plugin avec une installation UE5 compatible, le préparer, et ouvrir le Workshop depuis le bouton Mods du jeu.
