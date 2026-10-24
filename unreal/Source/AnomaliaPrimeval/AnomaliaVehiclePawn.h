@@ -16,6 +16,7 @@ class AAnomaliaSurvivor;
 class AController;
 class AAnomaliaRailCarriage;
 class AAnomaliaRailTrack;
+class USceneComponent;
 
 /** Replicated, possessable prototype. Final Chaos wheel/flight/naval physics remain separate work. */
 UCLASS(Blueprintable)
@@ -61,6 +62,20 @@ public:
     /** Set its local transform to the real cockpit/helm once the vehicle mesh is integrated. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     TObjectPtr<UCameraComponent> InteriorCamera;
+
+    /** Set only for a model whose physical door, seat and exit were authored and checked. */
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Crew")
+    bool bUseAuthoredDriverPoints=false;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Crew")
+    TObjectPtr<USceneComponent> DriverEntryPoint;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Crew")
+    TObjectPtr<USceneComponent> DriverSeatPoint;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle|Crew")
+    TObjectPtr<USceneComponent> DriverExitPoint;
+
+    /** Server-side geometry checks used both before possession and on exit. */
+    bool CanEnterFrom(const AAnomaliaSurvivor* Survivor) const;
+    bool FindSafeDriverExit(const AAnomaliaSurvivor* Survivor, FVector& Location) const;
 
     virtual UPawnMovementComponent* GetMovementComponent() const override;
     virtual void UnPossessed() override;
@@ -166,3 +181,4 @@ private:
     void ClearControls();
     void ApplyDefinition();
 };
+

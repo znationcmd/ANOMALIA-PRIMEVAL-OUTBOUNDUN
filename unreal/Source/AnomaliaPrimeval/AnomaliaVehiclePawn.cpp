@@ -14,6 +14,9 @@
 #include "Components/InputComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SceneComponent.h"
+#include "Components/CapsuleComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -46,6 +49,12 @@ AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
     InteriorCamera->SetRelativeLocation(FVector(80.f,0.f,90.f));
     InteriorCamera->bUsePawnControlRotation = true;
     InteriorCamera->SetAutoActivate(false);
+    DriverEntryPoint=CreateDefaultSubobject<USceneComponent>(TEXT("DriverEntryPoint"));
+    DriverEntryPoint->SetupAttachment(Collision);
+    DriverSeatPoint=CreateDefaultSubobject<USceneComponent>(TEXT("DriverSeatPoint"));
+    DriverSeatPoint->SetupAttachment(Collision);
+    DriverExitPoint=CreateDefaultSubobject<USceneComponent>(TEXT("DriverExitPoint"));
+    DriverExitPoint->SetupAttachment(Collision);
     AutoPossessPlayer = EAutoReceiveInput::Disabled;
     AutoPossessAI = EAutoPossessAI::Disabled; // Parked level vehicles must remain available to the player.
 }
@@ -260,7 +269,7 @@ bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomalia
 {
     if (!HasAuthority() || !IsValid(DriverController) || !IsValid(Survivor) || HasDriver()) return false;
     if (Survivor->GetController() != DriverController || Survivor->Health <= 0.f) return false;
-    if (FVector::DistSquared(GetActorLocation(), Survivor->GetActorLocation()) > FMath::Square(450.f)) return false;
+    if (!CanEnterFrom(Survivor)) return false;
     ClearControls();
     LastControlReceived=GetWorld()->GetTimeSeconds();
     ParkedSurvivor = Survivor;
@@ -268,7 +277,61 @@ bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomalia
     if (GetController() != DriverController) { ParkedSurvivor.Reset(); return false; }
     Survivor->SetActorHiddenInGame(true);
     Survivor->SetActorEnableCollision(false);
+    if(bUseAuthoredDriverPoints)
+        Survivor->AttachToComponent(DriverSeatPoint,FAttachmentTransformRules::SnapToTargetNotIncludingScale);
     return true;
+}
+
+bool AAnomaliaVehiclePawn::CanEnterFrom(const AAnomaliaSurvivor* Survivor) const
+{
+    if(!IsValid(Survivor) || Survivor->GetWorld()!=GetWorld() || !GetWorld())return false;
+    const FVector Entry=bUseAuthoredDriverPoints?DriverEntryPoint->GetComponentLocation():GetActorLocation();
+    const float Range=bUseAuthoredDriverPoints?250.f:450.f;
+    if(FVector::DistSquared(Entry,Survivor->GetActorLocation())>FMath::Square(Range))return false;
+    FVector Eye;FRotator Rotation;Survivor->GetActorEyesViewPoint(Eye,Rotation);
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaVehicleEntry),true);
+    Query.AddIgnoredActor(this);Query.AddIgnoredActor(Survivor);FHitResult Hit;
+    return !GetWorld()->LineTraceSingleByChannel(Hit,Eye,Entry,ECC_Visibility,Query);
+}
+
+bool AAnomaliaVehiclePawn::FindSafeDriverExit(const AAnomaliaSurvivor* Survivor,FVector& Location) const
+{
+    if(!IsValid(Survivor) || Survivor->GetWorld()!=GetWorld() || !GetWorld())return false;
+    const auto* Capsule=Survivor->GetCapsuleComponent();
+    const float Radius=Capsule->GetScaledCapsuleRadius(),HalfHeight=Capsule->GetScaledCapsuleHalfHeight();
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaVehicleExit),false);
+    Query.AddIgnoredActor(this);Query.AddIgnoredActor(Survivor);
+    TArray<FVector> Candidates;
+    if(bUseAuthoredDriverPoints)Candidates.Add(DriverExitPoint->GetComponentLocation());
+    else
+    {
+        // Legacy models have no validated crew markers. Keep their compatibility
+        // path, but never blindly teleport a player through terrain or a wall.
+        for(const FVector Direction:{GetActorRightVector(),-GetActorRightVector(),-GetActorForwardVector()})
+            Candidates.Add(GetActorLocation()+Direction*350.f);
+    }
+    for(const FVector Candidate:Candidates)
+    {
+        FHitResult Floor;
+        if(!GetWorld()->LineTraceSingleByChannel(Floor,Candidate+FVector(0,0,HalfHeight+150.f),
+             Candidate-FVector(0,0,600.f),ECC_Pawn,Query))continue;
+        if(Floor.ImpactNormal.Z<Survivor->GetCharacterMovement()->GetWalkableFloorZ())continue;
+        const float ExpectedFloor=bUseAuthoredDriverPoints?Candidate.Z:GetActorLocation().Z-Collision->GetScaledSphereRadius();
+        if(Floor.ImpactPoint.Z>ExpectedFloor+Survivor->GetCharacterMovement()->MaxStepHeight ||
+           Floor.ImpactPoint.Z<ExpectedFloor-200.f)continue;
+        const FVector Centre(Floor.ImpactPoint.X,Floor.ImpactPoint.Y,Floor.ImpactPoint.Z+HalfHeight+2.f);
+        if(GetWorld()->OverlapBlockingTestByChannel(Centre,FQuat::Identity,ECC_Pawn,
+              FCollisionShape::MakeCapsule(Radius,HalfHeight),Query))continue;
+        // Refuse exit points overlapping our actual root, which is ignored above
+        // only to allow tracing outward from a seated driver.
+        if(FVector::Dist2D(Centre,GetActorLocation())<Collision->GetScaledSphereRadius()+Radius+5.f)continue;
+        FHitResult PathHit;
+        const FVector Start(GetActorLocation().X,GetActorLocation().Y,Centre.Z);
+        if(GetWorld()->SweepSingleByChannel(PathHit,Start,Centre,FQuat::Identity,ECC_Pawn,
+             FCollisionShape::MakeCapsule(Radius,HalfHeight),Query))continue;
+        Location=Centre;return true;
+    }
+    return false;
 }
 
 void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
@@ -278,7 +341,9 @@ void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
     AAnomaliaSurvivor* Survivor = ParkedSurvivor.Get();
     if (!IsValid(DriverController) || !IsValid(Survivor)) return;
     // Restore the existing character, preserving survival state and inventory references.
-    const FVector ExitLocation = GetActorLocation() + GetActorRightVector() * 350.f + FVector(0.f, 0.f, 120.f);
+    FVector ExitLocation;
+    if(!FindSafeDriverExit(Survivor,ExitLocation))return;
+    Survivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     Survivor->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
     Survivor->SetActorEnableCollision(true);
     Survivor->SetActorHiddenInGame(false);
@@ -381,3 +446,4 @@ void AAnomaliaVehiclePawn::UpdateMetroCoaches()
 
 AAnomaliaSurvivor* AAnomaliaVehiclePawn::GetStoredDriverSurvivor() const { return ParkedSurvivor.Get(); }
 void AAnomaliaVehiclePawn::InputPause() { UAnomaliaSessionWidget::Open(Cast<APlayerController>(Controller)); }
+
