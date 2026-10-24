@@ -10,6 +10,7 @@ on:
       - 'unreal/Content/Splash/**'
       - 'unreal/SourceAssets/Branding/**'
       - 'unreal/Scripts/import_game_branding.py'
+      - 'unreal/Scripts/import_workshop_branding.py'
       - 'scripts/ue5/prepare-game-branding.ps1'
       - 'unreal/Scripts/capture_real_world.py'
       - 'unreal/Scripts/probe_installed_editor.py'
@@ -99,6 +100,17 @@ jobs:
           $wrapper=Join-Path $env:GITHUB_WORKSPACE 'scripts/world-features/run-editor-task.py'
           & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/residential-import.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Import actual ANOMALIA Workshop emblem before cooking the native game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/import_workshop_branding.py'
+          if (-not (Test-Path -LiteralPath $editor)) {throw 'UE5 editor missing'}
+          if (-not (Test-Path -LiteralPath 'unreal/SourceAssets/Branding/workshop-logo.jpg')) {throw 'Workshop logo source missing'}
+          & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound
+          if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
       - name: Cook the actual game with the new houses trees and detailed vehicles and run GPU gameplay tests
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
