@@ -107,7 +107,7 @@ bool UAnomaliaCryoSubsystem::SaveStorage()
   const auto& T=Terminals[Key];
   auto Object=MakeShared<FJsonObject>();
   if(!ValidTerminal(T,ValidatedIds)||!FJsonObjectConverter::UStructToJsonObject(
-      FAnomaliaCryoTerminal::StaticStruct(),&T,Object.ToSharedRef(),0,0))
+      FAnomaliaCryoTerminal::StaticStruct(),&T,Object,0,0))
   {StorageError=TEXT("Invalid vault metadata; write refused");return false;}
   Values.Add(MakeShared<FJsonValueObject>(Object));
  }
