@@ -41,6 +41,14 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-interactive-realism.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: real-model-source-and-native-proof
+          path: |
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/report.json
+            unreal/Saved/InteractiveRealismReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+            unreal/SourceAssets/InteractiveRealismPrepared_v1/manifest.json
+            unreal/SourceAssets/InteractiveRealismPrepared_v1/CREDITS.md
       - name: Import actual Unreal models and capture six GPU views
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
