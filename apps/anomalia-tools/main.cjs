@@ -20,7 +20,8 @@ app.on('second-instance',(_event,argv)=>{
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
   'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod',
   'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod',
-  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod','exportWorkshopHostingManifest']);
+  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod','exportWorkshopHostingManifest',
+   'createWorkforgeProfile','activateWorkforgeProfile','setWorkforgeProfileMod','deleteWorkforgeProfile']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',
