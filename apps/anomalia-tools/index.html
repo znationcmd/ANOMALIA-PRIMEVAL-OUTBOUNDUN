@@ -79,7 +79,18 @@
   </section>
   <section id="addon" class="page" hidden>
    <div class="panelTitle"><div><h2>Addon Builder</h2><p>Crée des archives ZIP de sources avec manifeste SHA-256, sans ajouter d'autres utilisateurs ni effacer les fichiers.</p></div></div>
-   <div class="split"><div class="panel"><h3>Préparer une archive de mod</h3><p class="caption">Tous les fichiers du projet hors dossier Dist sont inclus avec leur empreinte SHA-256. L'archive est créée localement.</p><button id="buildAddon" class="primary fullWidth">Construire l'archive ZIP</button><div id="buildInfo" class="output">Aucune archive construite dans cette session.</div></div><div class="panel"><h3>Chaîne de création</h3><div class="pipeline"><div>1 <b>Sources / Config</b></div><div>2 <b>Ressources / Heightmaps</b></div><div>3 <b>Manifeste SHA-256</b></div><div>4 <b>Archive ZIP</b></div></div><p class="caption">Cela ne génère ni .pbo DayZ ni plugin .pak Unreal compilé : un pipeline SDK Unreal restera nécessaire.</p></div></div>
+   <div class="panel" id="nativeModPanel" style="margin-bottom:18px">
+    <h3>Plugin Unreal Engine 5 — compilation native</h3>
+    <p>Génère un véritable plugin <code>.uplugin</code> et son module C++, puis lance <code>RunUAT BuildPlugin</code> sur un PC Windows équipé d'Unreal Engine. Ne compile pas les ressources 3D, ne monte pas le plugin dans le jeu et ne publie rien automatiquement.</p>
+    <div class="actions"><button class="button" id="createNativeMod" type="button">Créer / vérifier le plugin UE5</button>
+      <button class="button" id="checkNativeMod" type="button">Vérifier environnement</button></div>
+    <label style="display:block;margin-top:14px">Dossier racine d'Unreal Engine (ex. C:&#92;Program Files&#92;Epic Games&#92;UE_5.8)
+      <input id="engineRoot" style="width:100%;margin-top:8px" placeholder="Chemin Windows vers UE_5.x (ou variable UE_ROOT)" autocomplete="off"></label>
+    <div class="actions" style="margin-top:12px"><button class="primary" id="buildNativeMod" type="button">Compiler le plugin sur ce PC</button></div>
+    <p class="caption">La compilation exécute du code C++ du projet local. N'utilise ce bouton que pour un projet que tu considères fiable. Le chargement dans ANOMALIA nécessite encore un système de mods côté jeu.</p>
+    <pre class="output" id="nativeBuildInfo" style="white-space:pre-wrap">Aucun plugin UE5 créé.</pre>
+  </div>
+  <div class="split"><div class="panel"><h3>Préparer une archive de mod</h3><p class="caption">Tous les fichiers du projet hors dossier Dist sont inclus avec leur empreinte SHA-256. L'archive est créée localement.</p><button id="buildAddon" class="primary fullWidth">Construire l'archive ZIP</button><div id="buildInfo" class="output">Aucune archive construite dans cette session.</div></div><div class="panel"><h3>Chaîne de création</h3><div class="pipeline"><div>1 <b>Sources / Config</b></div><div>2 <b>Ressources / Heightmaps</b></div><div>3 <b>Manifeste SHA-256</b></div><div>4 <b>Archive ZIP</b></div></div><p class="caption">Cela ne génère ni .pbo DayZ ni plugin .pak Unreal compilé : un pipeline SDK Unreal restera nécessaire.</p></div></div>
   </section>
   <section id="publisher" class="page" hidden>
    <div class="panelTitle"><div><h2>Publisher</h2><p>Prépare un package partageable avec des fichiers de ton projet et exporte-le manuellement.</p></div></div>

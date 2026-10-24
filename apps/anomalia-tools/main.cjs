@@ -6,7 +6,8 @@ const {ToolsUpdater}=require('./updates.cjs');
 let toolsApp;let win;let updater;
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
-  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod']);
+  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod',
+  'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',

@@ -108,3 +108,15 @@ La compilation Windows de la branche de développement produit un fichier
 d'installation manuel en artefact GitHub Actions. Il ne publie aucune
 mise à jour publique sans tag de version. Aucun fichier d'autres
 utilisateurs ou des autres applications CMD/ANOMALIA n'est modifié.
+
+## Mod UE5 natif : ANOMALIA Tools (version de développement)
+
+Dans Addon Builder, le bouton « Créer / vérifier le plugin UE5 » génère un squelette réel de plugin Unreal dans Plugins/ANM.../ (descripteur .uplugin, module C++ et Build.cs). Les fichiers existants ne sont jamais écrasés.
+
+« Vérifier environnement » contrôle le projet et RunUAT.bat d'Unreal Engine. « Compiler le plugin sur ce PC » lance explicitement RunUAT BuildPlugin pour Win64 après confirmation de l'utilisateur ; le code C++ du mod est alors compilé localement. Le poste Windows doit disposer d'Unreal Engine compatible, de Visual Studio et des SDK.
+
+Un succès de BuildPlugin signifie seulement que le plugin a été compilé. Il ne signifie PAS que les assets ont été cuisinés pour ANOMALIA, ni que le jeu possède un chargeur de mods, ni que le multijoueur est compatible. L'import GLB/FBX existant ne crée pas de .uasset : ces ressources doivent être importées dans Unreal Editor puis cuisinées avec le jeu cible.
+
+Le ZIP produit par l'Addon Builder classique reste une ARCHIVE DE SOURCES. Il n'est pas présenté comme un mod jouable. Les sources de chaque utilisateur restent privées et locales. Compiler uniquement des mods de confiance : du C++ provenant de tiers peut être dangereux.
+
+Validation : npm test et npm run build vérifient la logique et l'interface, mais la compilation de vrais mods reste à tester sur Windows avec Unreal Engine installé, puis en jeu après développement d'un chargeur ANOMALIA.

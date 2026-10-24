@@ -1,0 +1,37 @@
+name: ANOMALIA Tools — native plugin SDK tests
+on:
+  push:
+    branches:
+      - feature/anomalia-tools-native-mod-sdk-20261024
+    paths:
+      - "apps/anomalia-tools/**"
+      - ".github/workflows/anomalia-tools-native-mod-tests.yml"
+  pull_request:
+    branches:
+      - feature/anomalia-tools-premium-updates-20261023
+    paths:
+      - "apps/anomalia-tools/**"
+      - ".github/workflows/anomalia-tools-native-mod-tests.yml"
+permissions:
+  contents: read
+jobs:
+  tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: apps/anomalia-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+      - name: Run all unit tests including UE5 plugin bridge
+        run: npm test
+      - name: Build Electron UI
+        run: npm run build
