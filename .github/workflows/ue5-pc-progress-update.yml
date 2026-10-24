@@ -22,6 +22,7 @@ on:
       - 'scripts/ue5/run-visual-capture.py'
       - 'scripts/ue5/world_snapshot.py'
       - 'scripts/ue5/package-playable-windows.py'
+      - 'scripts/ue5/run-playable-interactions.py'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
       - 'docs/art/realism-validation-sources.json'
@@ -59,6 +60,20 @@ jobs:
           $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-interaction-proof
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+      - name: Verify playable-map interaction geometry before preparing or cooking assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-playable-interactions.py --engine-root "$env:UE_ROOT" --output "$evidence/interactions"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify pinned art and retain the imported realistic buildings
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -134,6 +149,7 @@ jobs:
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/*.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/interactions/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
@@ -145,3 +161,4 @@ jobs:
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/pc-installed-graphics/*.json
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/pc-installed-graphics/*.png
           if-no-files-found: warn
+

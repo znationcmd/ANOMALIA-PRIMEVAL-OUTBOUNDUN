@@ -329,9 +329,14 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
     if(Phase==10)
     {
         Input(EKeys::E,IE_Released); if(Now<Next) return;
-        if(PC->GetPawn()!=S) { Finish(TEXT("Vehicle exit failed")); return; }
+        if(PC->GetPawn()!=S) {
+            FVector Exit;FString Diagnostic;
+            Vehicles[VehicleIndex]->FindSafeDriverExit(S,Exit,&Diagnostic);
+            Finish(FString::Printf(TEXT("Vehicle exit failed index=%d: %s"),VehicleIndex,*Diagnostic));return;
+        }
         ++VehicleIndex; Phase=5; return;
     }
     if(Phase==8 && Now>=Next) Finish();
 #endif
 }
+

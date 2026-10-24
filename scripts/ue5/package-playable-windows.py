@@ -51,6 +51,16 @@ try:
         raise RuntimeError('Fresh imported-art scene receipt missing or invalid')
     report['visualScene']=visual_scene
     visual_map='/Game/Maps/ANOMALIA_VisualValidation_v1'
+    # Exercise the actual playable map before cooking. This catches interaction
+    # failures in its real collision layout without waiting for a packaged build.
+    interaction_probe=out/'editor-playable-smoke.json'
+    run([editor,project,MAP+'?AnomaliaServerId=playable-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
+         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaPlayableProbe='+str(interaction_probe),
+         '-abslog='+str(out/'editor-playable-engine.log'),*progress_flags],'editor-playable',180)
+    interaction=json.loads(interaction_probe.read_text(encoding='utf-8-sig'))
+    report['editorPlayable']=interaction
+    if interaction.get('state')!='PACKAGED_GAME_SMOKE_PASSED':
+        raise RuntimeError('Playable-map interaction preflight failed: '+interaction.get('error','missing checks'))
     editor_review=out/'editor-visual/review.json';editor_review.parent.mkdir()
     run([editor,project,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
          '-d3d11','-sm5','-unattended','-nosound','-AnomaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
@@ -108,3 +118,4 @@ finally:
     (out/'package-report.json').write_text(json.dumps(report,indent=2)+'\n')
     print(json.dumps(report,indent=2))
 raise SystemExit(0 if report['state']=='PACKAGED_WINDOWS_SMOKE_PASSED' else 1)
+

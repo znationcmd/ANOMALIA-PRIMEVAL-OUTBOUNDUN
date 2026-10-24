@@ -75,7 +75,7 @@ public:
 
     /** Server-side geometry checks used both before possession and on exit. */
     bool CanEnterFrom(const AAnomaliaSurvivor* Survivor) const;
-    bool FindSafeDriverExit(const AAnomaliaSurvivor* Survivor, FVector& Location) const;
+    bool FindSafeDriverExit(const AAnomaliaSurvivor* Survivor, FVector& Location, FString* Diagnostics=nullptr) const;
 
     virtual UPawnMovementComponent* GetMovementComponent() const override;
     virtual void UnPossessed() override;
