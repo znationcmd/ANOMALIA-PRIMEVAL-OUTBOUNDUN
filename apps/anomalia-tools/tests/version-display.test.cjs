@@ -17,7 +17,7 @@ test('sidebar, footer and updates page render actual installed version',()=>{
  assert.doesNotMatch(html,/ANOMALIA TOOLS 0\.2 ·/);
 });
 test('versioned package and stable update metadata are configured',()=>{
- assert.equal(pack.version,'0.2.2');
+ assert.equal(pack.version,'0.2.3');
  assert.equal(pack.build.appId,'fr.anomalia.tools');
  assert.match(pack.build.nsis.artifactName,/ANOMALIA-Tools-Setup/);
  assert.match(pack.build.publish[0].url,/anomalia-tools-latest/);
