@@ -241,10 +241,10 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     auto* Left=Box(FLinearColor(.030f,.027f,.037f,.98f),12);
     LeftWidth->SetContent(Left);
     auto* LeftContent=Vertical();Left->SetContent(LeftContent);
-    AddLabel(LeftContent,TEXT("✦  ATELIER ANOMALIA"),14,Gold,10);
+    AddLabel(LeftContent,TEXT("✦  ANOMALIA WORKFORGE"),14,Gold,10);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,0);
     AddLabel(LeftContent,TEXT("⌂   Accueil"),13,Soft,10);
-    AddLabel(LeftContent,TEXT("✦   WORKSHOP"),15,Gold,10);
+    AddLabel(LeftContent,TEXT("✦   WORKFORGE"),15,Gold,10);
     AddLabel(LeftContent,TEXT("▦   Mes mods"),13,Soft,10);
     AddLabel(LeftContent,TEXT("▤   Catégories"),13,Soft,10);
     AddLabel(LeftContent,TEXT("♧   Communauté"),13,Soft,10);
@@ -278,7 +278,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     HeroWrap->AddChildToOverlay(HeroText)->SetPadding(FMargin(16,12));
     AddLabel(HeroText,TEXT("CRÉER  ·  EXPLORER  ·  PERSONNALISER"),12,Gold,2);
     AddLabel(HeroText,TEXT("ANOMALIA"),38,FLinearColor(1.f,.95f,.84f),0);
-    AddLabel(HeroText,TEXT("W O R K S H O P"),29,FLinearColor(1.f,.49f,.27f),0);
+    AddLabel(HeroText,TEXT("W O R K F O R G E"),29,FLinearColor(1.f,.49f,.27f),0);
     AddLabel(HeroText,TEXT("Mods, créations et contenus pour votre monde ANOMALIA."),14,Soft,4);
     AddLabel(HeroText,TEXT("Développé pour les créateurs. Relié aux projets ANOMALIA Tools."),12,Soft,2);
 
@@ -331,6 +331,15 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
         WorkshopCategory->AddOption(Item);
     WorkshopCategory->SetSelectedOption(TEXT("Tous"));
     Filters->AddChildToHorizontalBox(WorkshopCategory)->SetPadding(FMargin(12,0,0,0));
+    WorkshopSort=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopSort"));
+    WorkshopSort->AddOption(TEXT("Récents"));
+    WorkshopSort->AddOption(TEXT("Nom A-Z"));
+    WorkshopSort->AddOption(TEXT("Catégorie"));
+    WorkshopSort->AddOption(TEXT("Version"));
+    WorkshopSort->SetSelectedOption(TEXT("Récents"));
+    Filters->AddChildToHorizontalBox(WorkshopSort)->SetPadding(FMargin(10,0,0,0));
+    WorkshopSort->OnSelectionChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopCategoryChanged);
+
     WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopSearchChanged);
     WorkshopCategory->OnSelectionChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopCategoryChanged);
     WorkshopStatus=AddLabel(Center,TEXT("Recherche de créations locales..."),12,Cyan,3);
@@ -340,7 +349,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     ContentScroll->AddChild(WorkshopCards);
     auto* Note=Box(FLinearColor(.12f,.050f,.05f,.99f),10);
     Center->AddChildToVerticalBox(Note)->SetPadding(FMargin(10,8,10,13));
-    Note->SetContent(Label(TEXT("Les mods sont des créations réelles de la bibliothèque. Le chargement en jeu et l'installation serveur UE5 ne sont pas encore disponibles."),11,Soft));
+    Note->SetContent(Label(TEXT("WORKFORGE : catalogue inspiré des ateliers de mods. Installation en jeu et synchronisation des serveurs non encore disponibles."),11,Soft));
 
     // Right rail: honest connection status, community preview and top mods (no invented scores).
     auto* RightSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
@@ -351,7 +360,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     auto* Connection=Box(FLinearColor(.13f,.055f,.052f,.96f),8);
     Right->AddChildToVerticalBox(Connection)->SetPadding(FMargin(0,4,0,11));
     auto* Connected=Vertical();Connection->SetContent(Connected);
-    AddLabel(Connected,TEXT("●  ATELIER ANOMALIA"),15,Gold,3);
+    AddLabel(Connected,TEXT("●  ANOMALIA WORKFORGE"),15,Gold,3);
     AddLabel(Connected,TEXT("Interface intégrée au jeu"),11,Cyan,3);
     AddLabel(Connected,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,4);
     AddLabel(Connected,TEXT("Workshop local       ✓ ACTIF"),11,FLinearColor(.48f,.92f,.65f),6);
