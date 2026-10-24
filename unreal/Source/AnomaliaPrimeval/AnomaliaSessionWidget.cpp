@@ -222,8 +222,8 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Titles);
     TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     AddLabel(Titles,TEXT("A N O M A L I A"),23,Gold,0);
-    AddLabel(Titles,TEXT("W O R K S H O P   •   S U R V I V R E   A U - D E L À   D U   M O N D E"),8,Soft,0);
-    const auto* HeaderNav=TEXT("ACCUEIL     WORKSHOP     MODS     COMMUNAUTÉ     ACTUALITÉS     AIDE");
+    AddLabel(Titles,TEXT("W O R K F O R G E   •   M O D S   &   C R É A T I O N S"),8,Soft,0);
+    const auto* HeaderNav=TEXT("ACCUEIL     WORKFORGE     MODS     CRÉATIONS     COMMUNAUTÉ");
     auto* Nav=Label(HeaderNav,12,Soft);
     auto* NavSlot=HeaderRow->AddChildToHorizontalBox(Nav);
     NavSlot->SetVerticalAlignment(VAlign_Center);NavSlot->SetPadding(FMargin(8));
@@ -243,12 +243,22 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     auto* LeftContent=Vertical();Left->SetContent(LeftContent);
     AddLabel(LeftContent,TEXT("✦  ANOMALIA WORKFORGE"),14,Gold,10);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,0);
-    AddLabel(LeftContent,TEXT("⌂   Accueil"),13,Soft,10);
-    AddLabel(LeftContent,TEXT("✦   WORKFORGE"),15,Gold,10);
-    AddLabel(LeftContent,TEXT("▦   Mes mods"),13,Soft,10);
-    AddLabel(LeftContent,TEXT("▤   Catégories"),13,Soft,10);
-    AddLabel(LeftContent,TEXT("♧   Communauté"),13,Soft,10);
-    AddLabel(LeftContent,TEXT("⚙   Paramètres"),13,Soft,10);
+    // Native navigation controls, not decorative dead labels.
+    auto NavButton=[&](const TCHAR* Id,const FString& Caption,void (UAnomaliaSessionWidget::*Handler)())
+    {
+        auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
+        Button->SetBackgroundColor(Caption.Contains(TEXT("WORKFORGE"))?
+            FLinearColor(.63f,.11f,.075f,1.f):FLinearColor(.075f,.070f,.080f,.95f));
+        Button->SetContent(Label(Caption,13,Caption.Contains(TEXT("WORKFORGE"))?Gold:Soft));
+        LeftContent->AddChildToVerticalBox(Button)->SetPadding(FMargin(2,5));
+        Button->OnClicked.AddDynamic(this,Handler);
+    };
+    NavButton(TEXT("WFNavHome"),TEXT("⌂   Accueil"),&UAnomaliaSessionWidget::CloseWorkshop);
+    NavButton(TEXT("WFNavForge"),TEXT("✦   WORKFORGE"),&UAnomaliaSessionWidget::WorkshopFilterAll);
+    NavButton(TEXT("WFNavMods"),TEXT("▦   Mes mods"),&UAnomaliaSessionWidget::WorkshopShowMyMods);
+    NavButton(TEXT("WFNavCategories"),TEXT("▤   Catégories"),&UAnomaliaSessionWidget::WorkshopFilterAll);
+    AddLabel(LeftContent,TEXT("♧   Communauté  •  bientôt"),11,Soft,9);
+    AddLabel(LeftContent,TEXT("⚙   Paramètres  •  bientôt"),11,Soft,9);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,12);
     if(Logo)
     {
@@ -294,14 +304,16 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
       MakeTuple(FString(TEXT("▣  Bâtiments")),FString(TEXT("Bâtiments"))),
       MakeTuple(FString(TEXT("◆  Créatures")),FString(TEXT("Créatures"))),
       MakeTuple(FString(TEXT("✺  Survie")),FString(TEXT("Survie"))),
-      MakeTuple(FString(TEXT("▤  Cartes")),FString(TEXT("Cartes")))
+      MakeTuple(FString(TEXT("▤  Cartes")),FString(TEXT("Cartes"))),
+      MakeTuple(FString(TEXT("✺  Gameplay")),FString(TEXT("Gameplay"))),
+      MakeTuple(FString(TEXT("⚙  Outils")),FString(TEXT("Outils")))
     };
     for(int32 I=0;I<Cats.Num();++I)
     {
         const FString& Title=Cats[I].Get<0>();
         const FString& Key=Cats[I].Get<1>();
         auto* Card=Box(FLinearColor(.19f,.075f,.065f,.96f),7);
-        Grid->AddChildToUniformGrid(Card,I/4,I%4);
+        Grid->AddChildToUniformGrid(Card,I/9,I%9);
         auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(*FString::Printf(TEXT("WorkshopCategoryCard%d"),I)));
         B->SetBackgroundColor(FLinearColor(.29f,.12f,.09f,1.f));
         auto* Txt=Label(Title,15,Gold);Txt->SetJustification(ETextJustify::Center);
@@ -314,6 +326,8 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
             case 4:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterCreatures);break;
             case 5:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterSurvival);break;
             case 6:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterMaps);break;
+            case 7:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterGameplay);break;
+            case 8:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterTools);break;
         }
     }
     auto* ContentHeader=Horizontal();
@@ -327,7 +341,7 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod, une catégorie...")));
     Filters->AddChildToHorizontalBox(WorkshopSearch)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     WorkshopCategory=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopCategory"));
-    for(const TCHAR* Item:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
+    for(const TCHAR* Item:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Gameplay"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
         WorkshopCategory->AddOption(Item);
     WorkshopCategory->SetSelectedOption(TEXT("Tous"));
     Filters->AddChildToHorizontalBox(WorkshopCategory)->SetPadding(FMargin(12,0,0,0));
@@ -373,6 +387,8 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
     Action(HostingRow,TEXT("WorkshopOpenHosting"),TEXT("CMD Hosting ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopHosting);
     auto* RefreshRow=Horizontal();Connected->AddChildToVerticalBox(RefreshRow);
     Action(RefreshRow,TEXT("WorkshopRefresh"),TEXT("↻ Actualiser"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshWorkshop);
+    auto* ManageRow=Horizontal();Connected->AddChildToVerticalBox(ManageRow);
+    Action(ManageRow,TEXT("WorkshopManageMods"),TEXT("Gérer mes mods  →"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopShowMyMods);
 
     auto* Community=Box(Panel,10);
     Right->AddChildToVerticalBox(Community)->SetPadding(FMargin(0,4,0,10));
@@ -523,6 +539,9 @@ void UAnomaliaSessionWidget::WorkshopFilterBuildings(){ if(WorkshopCategory) Wor
 void UAnomaliaSessionWidget::WorkshopFilterCreatures(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Créatures")); RefreshWorkshop(); }
 void UAnomaliaSessionWidget::WorkshopFilterSurvival(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Survie")); RefreshWorkshop(); }
 void UAnomaliaSessionWidget::WorkshopFilterMaps(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Cartes")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterGameplay(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Gameplay")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterTools(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Outils")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopShowMyMods(){ if(WorkshopSearch) WorkshopSearch->SetText(FText::GetEmpty()); if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous")); RefreshWorkshop(); }
 
 void UAnomaliaSessionWidget::CloseWorkshop()
 {
