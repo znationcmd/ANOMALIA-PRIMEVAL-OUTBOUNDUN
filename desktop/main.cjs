@@ -3,7 +3,7 @@
  * Bundled 3D assets use a secure, standard local application origin, allowing
  * offline ES modules and persistent saves without file:// CORS failures.
  */
-const {app,BrowserWindow,Menu,protocol,net,ipcMain}=require("electron");
+const {app,BrowserWindow,Menu,protocol,net,ipcMain,shell}=require("electron");
 const path=require("node:path");
 const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
@@ -44,6 +44,12 @@ function createGameWindow(){
 let multiplayerServer=null;const clientSockets=new Map();
 const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
+ ipcMain.handle('anomalia:open-workshop',async event=>{
+  validSender(event);
+  // Fixed trusted URL. A successful openExternal does not certify a running app.
+  try {await shell.openExternal('anomalia-tools://workshop');return {requested:true};}
+  catch {return {requested:false};}
+ });
  ipcMain.handle('anomalia:connect',async(event,token,address)=>{
   validSender(event);if(typeof token!=='string'||token.length>64)throw Error('Invalid socket token');const url=new URL(address);if(!['ws:','wss:'].includes(url.protocol)||url.username||url.password)throw Error('Invalid server address');
   const owner=event.sender.id,previous=clientSockets.get(owner);previous?.socket.close();
