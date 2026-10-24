@@ -111,6 +111,8 @@ app.whenReady().then(()=>{
  Menu.setApplicationMenu(null);
  createGameWindow();
  if(app.isPackaged){
+  // Dedicated game feed; editor and tools use different GitHub release channels.
+  autoUpdater.setFeedURL({provider:'generic',url:'https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-game-latest'});
   autoUpdater.autoDownload=true;
   autoUpdater.autoInstallOnAppQuit=true;
   autoUpdater.on("error",error=>console.warn("[ANOMALIA] Update unavailable:",error.message));
