@@ -1,0 +1,45 @@
+name: Verify in-game ANOMALIA Workshop
+on:
+  push:
+    branches: [fix/in-game-workshop-panel-20261024]
+  pull_request:
+    paths:
+      - "src/workshop-ui.js"
+      - "src/start-menu.js"
+      - "index.html"
+      - "desktop/workshop-library.cjs"
+      - "desktop/main.cjs"
+      - "desktop/preload.cjs"
+      - "tests/workshop-menu.test.mjs"
+      - "scripts/browser-smoke.mjs"
+      - ".github/workflows/workshop-in-game-tests.yml"
+permissions:
+  contents: read
+jobs:
+  unit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: Unit and security tests
+        run: npm test
+      - name: Build new Workshop into game
+        run: npm run build
+      - name: Assert packaged Workshop page
+        run: |
+          test -s dist/index.html
+          grep -q 'inGameWorkshop' dist/index.html
+          test -s dist/workshop-landscape.svg
+  windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - name: Windows unit tests
+        run: npm test
