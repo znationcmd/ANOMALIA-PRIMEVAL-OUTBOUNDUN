@@ -18,6 +18,7 @@ bool FAnomaliaCryoStorageTest::RunTest(const FString& Parameters)
     UWorld* World=UWorld::CreateWorld(EWorldType::Game,false);
     if(!TestNotNull(TEXT("Isolated test world"),World)) return false;
     auto* Storage=NewObject<UAnomaliaCryoSubsystem>(World);
+    TestFalse(TEXT("An unscoped world cannot mutate default server data"),Storage->RegisterTerminal(TEXT("unscoped"),TEXT("owner"),FVector::ZeroVector));
     const FString ServerId=TEXT("cryo-test-")+FGuid::NewGuid().ToString(EGuidFormats::Digits);
     TestTrue(TEXT("Isolated persistent scope"),Storage->StartPersistentStorage(ServerId));
     TestFalse(TEXT("Reject infinite position"),Storage->RegisterTerminal(TEXT("invalid"),TEXT("owner"),

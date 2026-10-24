@@ -46,7 +46,8 @@ bool UAnomaliaCryoSubsystem::EnsureStorage()
  if(bStorageReady)return true;
  if(!StorageServerId.IsEmpty())return StartPersistentStorage(StorageServerId);
  const auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
- return StartPersistentStorage(Mode?Mode->ServerId:TEXT("main"));
+ if(!Mode){StorageError=TEXT("Active ANOMALIA server scope unavailable");return false;}
+ return StartPersistentStorage(Mode->ServerId);
 }
 
 bool UAnomaliaCryoSubsystem::StartPersistentStorage(const FString& ServerId)
