@@ -277,7 +277,7 @@ async function nativeStatus(){
   if(!requireProject())return;
   const status=await safe(()=>api.call('getNativeModStatus',{projectId:currentId,engineRoot:nativeEngineRoot()}));
   if(!status)return;
-  $('#nativeBuildInfo').textContent='Plugin : '+status.plugin+'\\nSources : '+(status.valid?'valides':'incomplètes — '+status.validationError)+'\\nUnreal Engine : '+(status.engineFound?'détecté':'introuvable')+'\\nMachine Windows : '+(status.supportedHost?'oui':'non')+'\\nCompilation possible : '+(status.nativeBuildAvailable?'oui':'non')+'\\n'+status.note;
+  $('#nativeBuildInfo').textContent='Plugin : '+status.plugin+'\nSources : '+(status.valid?'valides':'incomplètes — '+status.validationError)+'\nUnreal Engine : '+(status.engineFound?'détecté':'introuvable')+'\nMachine Windows : '+(status.supportedHost?'oui':'non')+'\nCompilation possible : '+(status.nativeBuildAvailable?'oui':'non')+'\n'+status.note;
 }
 async function nativeCreate(){
   if(!requireProject())return;
@@ -293,7 +293,7 @@ async function nativeBuild(){
   $('#nativeBuildInfo').textContent='Compilation UE5 en cours — elle peut durer longtemps…';
   const result=await safe(()=>api.call('buildNativeMod',{projectId:currentId,engineRoot:nativeEngineRoot()}));
   if(!result)return;
-  $('#nativeBuildInfo').textContent='Compilation terminée : '+result.plugin+'\\nSortie : '+result.output+'\\n'+result.log+'\\nLe jeu ne charge pas automatiquement ce plugin.';
+  $('#nativeBuildInfo').textContent='Compilation terminée : '+result.plugin+'\nSortie : '+result.output+'\n'+result.log+'\nLe jeu ne charge pas automatiquement ce plugin.';
   msg('Plugin Unreal compilé. Le test de chargement dans ANOMALIA reste à faire.');await refreshFiles();
 }
 async function publish(){
