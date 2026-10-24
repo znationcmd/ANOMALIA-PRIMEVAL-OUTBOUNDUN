@@ -1,0 +1,27 @@
+name: UE5 read-only progress diagnostics
+on:
+  workflow_dispatch:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths: ['.github/workflows/ue5-progress-readonly-diagnostics.yml']
+jobs:
+  collect-existing-reports:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      # No checkout or world mutation: completed progress reports are immutable.
+      - uses: actions/upload-artifact@v4
+        with:
+          name: existing-world-reopen-diagnostics
+          retention-days: 7
+          if-no-files-found: error
+          path: |
+            unreal/Saved/PCProgress/run-*/editor/real-graphics/capture-process-report.json
+            unreal/Saved/PCProgress/run-*/editor/real-graphics/*/*.log
+            unreal/Saved/PCProgress/run-*/editor/real-graphics/*/visual-report.json
+            unreal/Saved/PCProgress/run-*/editor/residential-upgrade/*.json
+            unreal/Saved/PCProgress/run-*/editor/residential-upgrade/*.log
+            unreal/Saved/PCProgress/run-*/editor/pc-editor-*.json
+            unreal/Saved/PCProgress/run-*/editor/pc-editor-*.log
