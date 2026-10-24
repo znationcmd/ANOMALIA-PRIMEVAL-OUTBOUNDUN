@@ -35,7 +35,7 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
-AAnomaliaPlayableProbe::AAnomaliaPlayableProbe() { PrimaryActorTick.bCanEverTick=true; }
+AAnomaliaPlayableProbe::AAnomaliaPlayableProbe() { PrimaryActorTick.bCanEverTick=true; PrimaryActorTick.bTickEvenWhenPaused=true; }
 void AAnomaliaPlayableProbe::Finish(const FString& Error)
 {
     FString File; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),File);
