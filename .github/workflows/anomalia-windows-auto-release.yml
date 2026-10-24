@@ -37,7 +37,7 @@ jobs:
             branch: feature/anomalia-tools-premium-updates-20261023
             folder: apps/anomalia-tools
             tag: anomalia-tools-latest
-            min_version: 0.2.3
+            min_version: 0.2.4
     defaults:
       run:
         shell: pwsh
