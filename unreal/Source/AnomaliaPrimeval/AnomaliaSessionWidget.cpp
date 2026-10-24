@@ -24,6 +24,9 @@
 #include "Components/Spacer.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Components/UniformGridPanel.h"
+#include "Components/UniformGridSlot.h"
+
 #include "Styling/SlateTypes.h"
 
 #include "Engine/Texture2D.h"
@@ -138,6 +141,244 @@ FReply UAnomaliaSessionWidget::NativeOnMouseButtonDown(const FGeometry& Geometry
     if(bStartupIntro) { FinishIntro();return FReply::Handled(); }
     return Super::NativeOnMouseButtonDown(Geometry,Event);
 }
+void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
+{
+    if(!Canvas || !WidgetTree) return;
+    // Identical layout primitives to a professional game launcher, rendered by UMG in UE5.
+    const FLinearColor Black(.012f,.013f,.020f,.99f);
+    const FLinearColor Surface(.038f,.038f,.052f,.97f);
+    const FLinearColor Panel(.065f,.054f,.066f,.98f);
+    const FLinearColor Hot(.93f,.27f,.17f,1.f);
+    const FLinearColor Gold(1.f,.72f,.50f,1.f);
+    const FLinearColor Soft(.84f,.75f,.73f,1.f);
+    const FLinearColor Cyan(.17f,.88f,1.f,1.f);
+    auto* Logo=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_WorkshopLogo.T_WorkshopLogo"),nullptr,LOAD_NoWarn);
+    auto* Backdrop=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+
+    auto Label=[&](const FString& Value,int32 FontSize,const FLinearColor& Color)
+    {
+        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Text->SetText(FText::FromString(Value));
+        Text->SetAutoWrapText(true);
+        auto Font=Text->GetFont();Font.Size=FontSize;Text->SetFont(Font);
+        Text->SetColorAndOpacity(FSlateColor(Color));
+        return Text;
+    };
+    auto Box=[&](const FLinearColor& Color,float Padding)
+    {
+        auto* Border=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+        Border->SetBrushColor(Color);Border->SetPadding(FMargin(Padding));
+        return Border;
+    };
+    auto Vertical=[&]()
+    {
+        return WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    };
+    auto Horizontal=[&]()
+    {
+        return WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    };
+    auto AddLabel=[&](UVerticalBox* Root,const FString& Text,int32 Size,const FLinearColor& Color,float Pad=4.f)
+    {
+        auto* Widget=Label(Text,Size,Color);
+        Root->AddChildToVerticalBox(Widget)->SetPadding(FMargin(4.f,Pad));
+        return Widget;
+    };
+    auto Action=[&](UHorizontalBox* Parent,const TCHAR* Id,const FString& Title)
+    {
+        auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
+        B->SetBackgroundColor(FLinearColor(.43f,.075f,.065f,1.f));
+        auto* Caption=Label(Title,13,Gold);
+        B->SetContent(Caption);
+        auto* Slot=Parent->AddChildToHorizontalBox(B);
+        Slot->SetPadding(FMargin(5,6));
+        return B;
+    };
+    auto Picture=[&](UHorizontalBox* Parent,UTexture2D* Texture,const FVector2D Size)
+    {
+        if(!Texture) return;
+        auto* SizeBox=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+        SizeBox->SetWidthOverride(Size.X);SizeBox->SetHeightOverride(Size.Y);
+        auto* I=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+        I->SetBrushFromTexture(Texture,true);
+        SizeBox->SetContent(I);
+        Parent->AddChildToHorizontalBox(SizeBox)->SetPadding(FMargin(4));
+    };
+
+    WorkshopFrame=Box(Black,0);
+    WorkshopFrame->Rename(TEXT("WorkshopFullScreen"));
+    auto* Anchor=Canvas->AddChildToCanvas(WorkshopFrame);
+    Anchor->SetAnchors(FAnchors(.015f,.012f,.985f,.985f));
+    Anchor->SetOffsets(FMargin(0.f));
+    auto* Root=Vertical();
+    WorkshopFrame->SetContent(Root);
+
+    // Persistent top nav, matched to the user's launcher-style reference.
+    auto* Header=Box(FLinearColor(.022f,.018f,.025f,.995f),8);
+    Root->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,0,0,3));
+    auto* HeaderRow=Horizontal();Header->SetContent(HeaderRow);
+    Picture(HeaderRow,Logo,FVector2D(64,64));
+    auto* Titles=Vertical();
+    auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Titles);
+    TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    AddLabel(Titles,TEXT("A N O M A L I A"),23,Gold,0);
+    AddLabel(Titles,TEXT("W O R K S H O P   •   S U R V I V R E   A U - D E L À   D U   M O N D E"),8,Soft,0);
+    const auto* HeaderNav=TEXT("ACCUEIL     WORKSHOP     MODS     COMMUNAUTÉ     ACTUALITÉS     AIDE");
+    auto* Nav=Label(HeaderNav,12,Soft);
+    auto* NavSlot=HeaderRow->AddChildToHorizontalBox(Nav);
+    NavSlot->SetVerticalAlignment(VAlign_Center);NavSlot->SetPadding(FMargin(8));
+    Action(HeaderRow,TEXT("WorkshopReturn"),TEXT("← Retour au jeu"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::CloseWorkshop);
+
+    // Main viewport with genuine 3-column layout.
+    auto* Columns=Horizontal();
+    auto* BodySlot=Root->AddChildToVerticalBox(Columns);
+    BodySlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+
+    // Left rail, compact and scrollable, no fake interactive items.
+    auto* LeftWidth=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+    LeftWidth->SetWidthOverride(184.f);
+    Columns->AddChildToHorizontalBox(LeftWidth);
+    auto* Left=Box(FLinearColor(.030f,.027f,.037f,.98f),12);
+    LeftWidth->SetContent(Left);
+    auto* LeftContent=Vertical();Left->SetContent(LeftContent);
+    AddLabel(LeftContent,TEXT("✦  ATELIER ANOMALIA"),14,Gold,10);
+    AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,0);
+    AddLabel(LeftContent,TEXT("⌂   Accueil"),13,Soft,10);
+    AddLabel(LeftContent,TEXT("✦   WORKSHOP"),15,Gold,10);
+    AddLabel(LeftContent,TEXT("▦   Mes mods"),13,Soft,10);
+    AddLabel(LeftContent,TEXT("▤   Catégories"),13,Soft,10);
+    AddLabel(LeftContent,TEXT("♧   Communauté"),13,Soft,10);
+    AddLabel(LeftContent,TEXT("⚙   Paramètres"),13,Soft,10);
+    AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,12);
+    if(Logo)
+    {
+        auto* LogoImage=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+        LogoImage->SetBrushFromTexture(Logo,true);
+        LogoImage->SetDesiredSizeOverride(FVector2D(148,148));
+        LeftContent->AddChildToVerticalBox(LogoImage)->SetPadding(FMargin(0,8));
+    }
+    AddLabel(LeftContent,TEXT("SURVIVRE\nMODIFIER\nEXPLORER\nENSEMBLE"),10,Soft,8);
+
+    // Center scroll holds cinematic hero, category cards, and actual mod records.
+    auto* CenterScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopMainScroll"));
+    Columns->AddChildToHorizontalBox(CenterScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* Center=Vertical();CenterScroll->AddChild(Center);
+    auto* Hero=Box(FLinearColor(.14f,.04f,.042f,.98f),6);
+    Center->AddChildToVerticalBox(Hero)->SetPadding(FMargin(12,10,9,7));
+    auto* HeroWrap=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());Hero->SetContent(HeroWrap);
+    if(Backdrop)
+    {
+        auto* Background=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("WorkshopHeroBackdrop"));
+        Background->SetBrushFromTexture(Backdrop,true);
+        Background->SetDesiredSizeOverride(FVector2D(750.f,185.f));
+        Background->SetColorAndOpacity(FLinearColor(.72f,.23f,.18f,.35f));
+        HeroWrap->AddChildToOverlay(Background);
+    }
+    auto* HeroText=Vertical();
+    HeroWrap->AddChildToOverlay(HeroText)->SetPadding(FMargin(16,12));
+    AddLabel(HeroText,TEXT("CRÉER  ·  EXPLORER  ·  PERSONNALISER"),12,Gold,2);
+    AddLabel(HeroText,TEXT("ANOMALIA"),38,FLinearColor(1.f,.95f,.84f),0);
+    AddLabel(HeroText,TEXT("W O R K S H O P"),29,FLinearColor(1.f,.49f,.27f),0);
+    AddLabel(HeroText,TEXT("Mods, créations et contenus pour votre monde ANOMALIA."),14,Soft,4);
+    AddLabel(HeroText,TEXT("Développé pour les créateurs. Relié aux projets ANOMALIA Tools."),12,Soft,2);
+
+    auto* CategoriesTitle=Label(TEXT("CATÉGORIES DE MODS"),18,Gold);
+    Center->AddChildToVerticalBox(CategoriesTitle)->SetPadding(FMargin(14,11,8,4));
+    auto* Grid=WidgetTree->ConstructWidget<UUniformGridPanel>(UUniformGridPanel::StaticClass(),TEXT("WorkshopCategories"));
+    Center->AddChildToVerticalBox(Grid)->SetPadding(FMargin(10,3,8,9));
+    const TArray<TTuple<FString,FString>> Cats={
+      MakeTuple(FString(TEXT("✦  Tous")),FString(TEXT("Tous"))),
+      MakeTuple(FString(TEXT("◈  Véhicules")),FString(TEXT("Véhicules"))),
+      MakeTuple(FString(TEXT("⌁  Armes")),FString(TEXT("Armes"))),
+      MakeTuple(FString(TEXT("▣  Bâtiments")),FString(TEXT("Bâtiments"))),
+      MakeTuple(FString(TEXT("◆  Créatures")),FString(TEXT("Créatures"))),
+      MakeTuple(FString(TEXT("✺  Survie")),FString(TEXT("Survie"))),
+      MakeTuple(FString(TEXT("▤  Cartes")),FString(TEXT("Cartes")))
+    };
+    for(int32 I=0;I<Cats.Num();++I)
+    {
+        const FString& Title=Cats[I].Get<0>();
+        const FString& Key=Cats[I].Get<1>();
+        auto* Card=Box(FLinearColor(.19f,.075f,.065f,.96f),7);
+        Grid->AddChildToUniformGrid(Card,I/4,I%4)->SetPadding(FMargin(3,4));
+        auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(*FString::Printf(TEXT("WorkshopCategoryCard%d"),I)));
+        B->SetBackgroundColor(FLinearColor(.29f,.12f,.09f,1.f));
+        auto* Txt=Label(Title,15,Gold);Txt->SetJustification(ETextJustify::Center);
+        B->SetContent(Txt);Card->SetContent(B);
+        switch(I){
+            case 0:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterAll);break;
+            case 1:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterVehicles);break;
+            case 2:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterWeapons);break;
+            case 3:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterBuildings);break;
+            case 4:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterCreatures);break;
+            case 5:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterSurvival);break;
+            case 6:B->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopFilterMaps);break;
+        }
+    }
+    auto* ContentHeader=Horizontal();
+    Center->AddChildToVerticalBox(ContentHeader)->SetPadding(FMargin(10,7,10,5));
+    auto* SectionTitle=Label(TEXT("MODS DISPONIBLES"),18,Gold);
+    ContentHeader->AddChildToHorizontalBox(SectionTitle)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* SearchPanel=Box(Panel,7);
+    Center->AddChildToVerticalBox(SearchPanel)->SetPadding(FMargin(10,0,10,7));
+    auto* Filters=Horizontal();SearchPanel->SetContent(Filters);
+    WorkshopSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("WorkshopSearch"));
+    WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod, une catégorie...")));
+    Filters->AddChildToHorizontalBox(WorkshopSearch)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    WorkshopCategory=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopCategory"));
+    for(const TCHAR* Item:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
+        WorkshopCategory->AddOption(Item);
+    WorkshopCategory->SetSelectedOption(TEXT("Tous"));
+    Filters->AddChildToHorizontalBox(WorkshopCategory)->SetPadding(FMargin(12,0,0,0));
+    WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopSearchChanged);
+    WorkshopCategory->OnSelectionChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopCategoryChanged);
+    WorkshopStatus=AddLabel(Center,TEXT("Recherche de créations locales..."),12,Cyan,3);
+    auto* ContentScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopListScroll"));
+    Center->AddChildToVerticalBox(ContentScroll)->SetPadding(FMargin(10,4));
+    WorkshopCards=Vertical();
+    WorkshopCards->Rename(TEXT("WorkshopCards"));
+    ContentScroll->AddChild(WorkshopCards);
+    auto* Note=Box(FLinearColor(.12f,.050f,.05f,.99f),10);
+    Center->AddChildToVerticalBox(Note)->SetPadding(FMargin(10,8,10,13));
+    Note->SetContent(Label(TEXT("Les mods sont des créations réelles de la bibliothèque. Le chargement en jeu et l'installation serveur UE5 ne sont pas encore disponibles."),11,Soft));
+
+    // Right rail: honest connection status, community preview and top mods (no invented scores).
+    auto* RightSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+    RightSize->SetWidthOverride(255.f);
+    Columns->AddChildToHorizontalBox(RightSize);
+    auto* RightBg=Box(FLinearColor(.028f,.027f,.036f,.99f),9);RightSize->SetContent(RightBg);
+    auto* Right=Vertical();RightBg->SetContent(Right);
+    auto* Connection=Box(FLinearColor(.13f,.055f,.052f,.96f),8);
+    Right->AddChildToVerticalBox(Connection)->SetPadding(FMargin(0,4,0,11));
+    auto* Connected=Vertical();Connection->SetContent(Connected);
+    AddLabel(Connected,TEXT("●  ATELIER ANOMALIA"),15,Gold,3);
+    AddLabel(Connected,TEXT("Interface intégrée au jeu"),11,Cyan,3);
+    AddLabel(Connected,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,4);
+    AddLabel(Connected,TEXT("Workshop local       ✓ ACTIF"),11,FLinearColor(.48f,.92f,.65f),6);
+    AddLabel(Connected,TEXT("Synchronisation      Locale"),11,Soft,6);
+    AddLabel(Connected,TEXT("Chargement UE5       Non relié"),11,Gold,6);
+    AddLabel(Connected,TEXT("Communauté           En préparation"),11,Soft,6);
+    auto* ToolsRow=Horizontal();Connected->AddChildToVerticalBox(ToolsRow);
+    Action(ToolsRow,TEXT("WorkshopOpenTools"),TEXT("ANOMALIA Tools ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopTools);
+    auto* HostingRow=Horizontal();Connected->AddChildToVerticalBox(HostingRow);
+    Action(HostingRow,TEXT("WorkshopOpenHosting"),TEXT("CMD Hosting ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopHosting);
+    auto* RefreshRow=Horizontal();Connected->AddChildToVerticalBox(RefreshRow);
+    Action(RefreshRow,TEXT("WorkshopRefresh"),TEXT("↻ Actualiser"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshWorkshop);
+
+    auto* Community=Box(Panel,10);
+    Right->AddChildToVerticalBox(Community)->SetPadding(FMargin(0,4,0,10));
+    auto* C=Vertical();Community->SetContent(C);
+    AddLabel(C,TEXT("COMMUNAUTÉ"),16,Gold,4);
+    AddLabel(C,TEXT("Discussions   •   Guides   •   Créations"),11,Soft,5);
+    AddLabel(C,TEXT("Le fil communautaire n'est pas encore connecté."),11,Soft,8);
+    auto* Popular=Box(Panel,10);
+    Right->AddChildToVerticalBox(Popular)->SetPadding(FMargin(0,4));
+    auto* P=Vertical();Popular->SetContent(P);
+    AddLabel(P,TEXT("MODS LES MIEUX NOTÉS"),15,Gold,4);
+    AddLabel(P,TEXT("Les notes et les téléchargements apparaîtront après l'ouverture du catalogue communautaire."),11,Soft,8);
+    WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
+}
+
 void UAnomaliaSessionWidget::BuildLayout()
 {
     if(!WidgetTree || WidgetTree->RootWidget) return;
@@ -212,98 +453,8 @@ void UAnomaliaSessionWidget::BuildLayout()
     Button(TEXT("SessionRefreshMods"),TEXT("Actualiser la liste"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshMods);
     Button(TEXT("SessionOpenModsFolder"),TEXT("Ouvrir le dossier Mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenModsFolder);
     ModRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SessionModRows")); Rows->AddChildToVerticalBox(ModRows);
-    // Dedicated full-screen native UMG Workshop, NOT the web/Electron demo.
-    // The standard local-mods page is retained internally for compatibility.
-    WorkshopFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("WorkshopFullScreen"));
-    WorkshopFrame->SetBrushColor(FLinearColor(.023f,.018f,.031f,.98f));
-    WorkshopFrame->SetPadding(FMargin(18));
-    auto* WS=Canvas->AddChildToCanvas(WorkshopFrame);
-    WS->SetAnchors(FAnchors(.025f,.035f,.975f,.965f));
-    WS->SetOffsets(FMargin(0));
-    auto* Layout=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    WorkshopFrame->SetContent(Layout);
-    auto WSText=[&](UVerticalBox* Parent,const FString& Value,int32 Size,const FLinearColor& Color)
-    {
-        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        Text->SetText(FText::FromString(Value));Text->SetAutoWrapText(true);
-        auto Font=Text->GetFont();Font.Size=Size;Text->SetFont(Font);
-        Text->SetColorAndOpacity(FSlateColor(Color));
-        Parent->AddChildToVerticalBox(Text)->SetPadding(FMargin(4,5));
-        return Text;
-    };
-    auto WSButton=[&](UHorizontalBox* Parent,const TCHAR* Id,const FString& Value)
-    {
-        auto* Btn=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
-        Btn->SetBackgroundColor(FLinearColor(.46f,.11f,.075f,1.f));
-        auto* Txt=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        Txt->SetText(FText::FromString(Value));Txt->SetColorAndOpacity(FSlateColor(FLinearColor(.99f,.84f,.76f)));
-        auto Font=Txt->GetFont();Font.Size=14;Txt->SetFont(Font);Btn->SetContent(Txt);
-        Parent->AddChildToHorizontalBox(Btn)->SetPadding(FMargin(4,4));
-        return Btn;
-    };
-    // Red metallic navigation strip and an always-functional in-game back button.
-    auto* Top=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-    Top->SetBrushColor(FLinearColor(.13f,.046f,.06f,1.f));
-    Top->SetPadding(FMargin(16,9));
-    Layout->AddChildToVerticalBox(Top)->SetPadding(FMargin(0,0,0,10));
-    auto* TopRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Top->SetContent(TopRow);
-    auto* TopTitle=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    TopTitle->SetText(FText::FromString(TEXT("✦  ANOMALIA    WORKSHOP")));
-    auto TF=TopTitle->GetFont();TF.Size=26;TopTitle->SetFont(TF);
-    TopTitle->SetColorAndOpacity(FSlateColor(FLinearColor(.99f,.77f,.62f)));
-    auto* TitleSlot=TopRow->AddChildToHorizontalBox(TopTitle);
-    TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    WSButton(TopRow,TEXT("WorkshopReturn"),TEXT("← Retour au jeu"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::CloseWorkshop);
-
-    auto* Hero=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-    Hero->SetBrushColor(FLinearColor(.085f,.04f,.058f,.98f));Hero->SetPadding(FMargin(18,11));
-    Layout->AddChildToVerticalBox(Hero)->SetPadding(FMargin(0,0,0,12));
-    auto* HeroLayout=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Hero->SetContent(HeroLayout);
-    auto* HeroLeft=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    HeroLayout->AddChildToHorizontalBox(HeroLeft)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    WSText(HeroLeft,TEXT("SURVIVRE  ·  CRÉER  ·  PARTAGER"),13,FLinearColor(.99f,.57f,.43f));
-    WSText(HeroLeft,TEXT("ANOMALIA WORKSHOP"),32,FLinearColor(1.f,.82f,.67f));
-    WSText(HeroLeft,TEXT("Découvrez vos créations, véhicules, bâtiments et objets depuis le jeu."),15,FLinearColor(.86f,.70f,.65f));
-    WSText(HeroLeft,TEXT("Catalogue local réel · extensions Unreal compatibles uniquement"),11,FLinearColor(.97f,.55f,.43f));
-    if(auto* Art=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn))
-    {
-        auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
-        Image->SetBrushFromTexture(Art,true);
-        Image->SetColorAndOpacity(FLinearColor(1.f,.55f,.48f,.85f));
-        HeroLayout->AddChildToHorizontalBox(Image)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    }
-
-    auto* Actions=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-    Layout->AddChildToVerticalBox(Actions)->SetPadding(FMargin(0,0,0,12));
-    WSButton(Actions,TEXT("WorkshopOpenTools"),TEXT("ANOMALIA Tools ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopTools);
-    WSButton(Actions,TEXT("WorkshopOpenHosting"),TEXT("CMD Hosting ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopHosting);
-    WSButton(Actions,TEXT("WorkshopRefresh"),TEXT("↻ Actualiser les mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshWorkshop);
-    auto* Filters=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-    Layout->AddChildToVerticalBox(Filters)->SetPadding(FMargin(0,0,0,8));
-    WorkshopSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("WorkshopSearch"));
-    WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod dans le Workshop...")));
-    Filters->AddChildToHorizontalBox(WorkshopSearch)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    WorkshopCategory=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopCategory"));
-    for(const TCHAR* Category:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
-        WorkshopCategory->AddOption(Category);
-    WorkshopCategory->SetSelectedOption(TEXT("Tous"));
-    Filters->AddChildToHorizontalBox(WorkshopCategory)->SetPadding(FMargin(12,0,0,0));
-    WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopSearchChanged);
-    WorkshopCategory->OnSelectionChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopCategoryChanged);
-    WorkshopStatus=WSText(Layout,TEXT("Recherche de mods locaux..."),12,FLinearColor(.96f,.65f,.48f));
-    auto* Listing=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopListScroll"));
-    Layout->AddChildToVerticalBox(Listing)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    WorkshopCards=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("WorkshopCards"));
-    Listing->AddChild(WorkshopCards);
-    auto* Footer=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-    Footer->SetBrushColor(FLinearColor(.14f,.052f,.055f,1.f));Footer->SetPadding(FMargin(9,5));
-    Layout->AddChildToVerticalBox(Footer);
-    auto* Disclaimer=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    Disclaimer->SetAutoWrapText(true);
-    Disclaimer->SetText(FText::FromString(TEXT("Atelier ANOMALIA : les manifestes et créations réels sont visibles. Installation, téléchargement et chargement UE5 automatiques : pas encore connectés.")));
-    Disclaimer->SetColorAndOpacity(FSlateColor(FLinearColor(.94f,.66f,.57f)));
-    Footer->SetContent(Disclaimer);
-    WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
+    // Native Workshop rebuilt as a real premium three-column launcher.
+    BuildPremiumWorkshop(Canvas);
     SelectPage(0);
     ClosePage();
 }
@@ -356,6 +507,14 @@ void UAnomaliaSessionWidget::RefreshMods()
     }
     if(Count==0) AddRow(TEXT("Aucun manifeste local. Aucun mod tiers activé."));
 }
+void UAnomaliaSessionWidget::WorkshopFilterAll(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterVehicles(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Véhicules")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterWeapons(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Armes")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterBuildings(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Bâtiments")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterCreatures(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Créatures")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterSurvival(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Survie")); RefreshWorkshop(); }
+void UAnomaliaSessionWidget::WorkshopFilterMaps(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Cartes")); RefreshWorkshop(); }
+
 void UAnomaliaSessionWidget::CloseWorkshop()
 {
     if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
