@@ -21,7 +21,8 @@ Only the reviewed CC0 core pack is accepted. Pack metadata licenses are checked
 before extracting. Each exported preset records its macro settings, source
 garment checksums, output checksums, dimensions and skeleton count. Child
 presets use the generator's child-to-young age targets, not scaled adult meshes.
-All saved scenes and previews include a shirt, full-length trousers and shoes.
+All child scenes and previews include a shirt, full-length trousers and shoes.
+Adult presets include contemporary casual outfits and shoes.
 
 ## Reproduction
 
