@@ -1,0 +1,177 @@
+/* ANOMALIA Editor — desktop workbench reset.
+   All actions remain wired; secondary sections are folded rather than deleted. */
+:root{--bg:#0e1419;--panel:#161f27;--raised:#22303a;--raised2:#263743;--line:#36454f;--line-hi:#67818e;--text:#e4e9e9;--mute:#acb9bf;--accent:#b59471;--cyan:#9ebec0}
+.app{background:#10171d}
+.app .top{height:44px!important;min-height:44px!important;padding:0 9px!important;gap:7px!important;background:#18232c!important;
+border-bottom:1px solid #52616b;box-shadow:none;z-index:11;flex-wrap:nowrap;overflow:visible}
+.app .brand{min-width:156px;flex:0 0 auto;gap:8px}
+.app .brand .logo{height:29px;width:29px;border-radius:4px;font-size:18px;box-shadow:none}
+.app .brand b{font-size:11px!important;letter-spacing:.25px!important}
+.app .brand b span{color:#e6bf95}
+.app .brand small{display:none!important}
+.app .desktopMenu{order:2;flex:0 0 auto;margin:0;border-left:1px solid #42535e;padding-left:8px;gap:2px}
+.app .desktopMenu button{height:34px;padding:6px 12px!important;font-size:11px!important;border-radius:3px}
+.app .desktopMenu button:hover,.app .desktopMenu button[aria-expanded=true]{background:#324651;color:#f4e1c8}
+.app .project{order:3;flex:0 1 175px;min-width:105px;max-width:175px;margin-left:auto;gap:0}
+.app .projectCaption{display:none}
+.app .project #projectName{height:31px;min-height:31px!important;width:100%;padding:6px 10px;font-size:11px!important;
+background:#0f1920;border:1px solid #4a5b67;border-radius:3px}
+.app .topButtons{order:4;display:flex;flex:0 0 auto;margin:0;padding-left:8px;gap:5px;border-left:1px solid #40525e}
+.app .topButtons button{min-height:32px!important;height:32px;padding:5px 11px!important;font-size:11px!important;border:1px solid #4e6370;background:#263742;border-radius:3px}
+.app .topButtons #openMapLibrary{background:#475e69;border-color:#86979b;color:#fff}
+.app .topButtons #saveScene{background:#a17b54;border-color:#c69b6e;color:#fff7eb}
+.app .topButtons #newScene,.app .topButtons #openScene,.app .topButtons #openWorldNow,.app .topButtons #exportScene{display:none!important}
+.app .workspace{--library-width:216px;--inspector-width:272px;min-height:0;
+grid-template-columns:39px minmax(0,var(--library-width)) 3px minmax(0,1fr) 3px minmax(0,var(--inspector-width))!important;
+overflow:hidden!important}
+.app .workspace.hide-left{grid-template-columns:39px 0 0 minmax(0,1fr) 3px minmax(0,var(--inspector-width))!important}
+.app .workspace.hide-right{grid-template-columns:39px minmax(0,var(--library-width)) 3px minmax(0,1fr) 0 0!important}
+.app .workspace.hide-left.hide-right{grid-template-columns:39px 0 0 minmax(0,1fr) 0 0!important}
+.app .activityRail{padding:7px 3px;background:#131c23;border-right:1px solid #3c4b55;gap:5px}
+.app .railTitle{display:none}
+.app .railButton{min-height:42px;border-radius:3px;gap:1px;padding:3px 1px}
+.app .railButton>span{font-size:16px;line-height:1.05}
+.app .railButton small{font-size:8px}
+.app .railButton.active{background:#31414b;border:1px solid #758d9b;box-shadow:inset 2px 0 #ceae86}
+.app .splitter{background:#17212a;border-color:#2c3b45}
+.app .splitter:after{background:#607786}
+.app .left,.app .right{background:#161f27;border-color:#40515a}
+.app .explorerDock{overflow-y:auto;scrollbar-color:#465760 #151f28}
+.app .dockHeading{height:38px;min-height:38px;padding:6px 9px;gap:7px;background:#24323d;border-bottom:1px solid #4b5b65}
+.app .dockHeading strong{font-size:12px}
+.app .dockHeading small,.app .dockStat{display:none}
+.app .dockAccent{width:2px;background:#ceb08e}
+.app .explorerHint,.app .assetIntroduction{display:none!important}
+.app .dockSecond{margin-top:0;border-top:1px solid #44545e}
+.app .explorerTitle{padding:8px 9px!important;background:#18242d}
+.app .explorerTitle .paneOverline{display:none}
+.app .explorerTitle strong{font-size:11px}
+.app .explorerDock .hierarchy{min-height:150px;max-height:44vh;flex:1;padding:4px}
+.app .explorerDock .treeItem{min-height:28px;padding:5px 8px;font-size:11px}
+.app .explorerDock .paneHeading:not(.explorerTitle){padding:9px!important}
+.app .explorerDock .inspectorSubheading,.app .explorerDock .paneOverline{display:none}
+.app .explorerDock .noSelection{padding:12px 8px;margin:7px;color:#a4b3b8;border:1px dashed #50616d;background:#1b2933}
+.app .explorerDock .inspectorIllustration{width:31px;height:31px;border-radius:4px;font-size:18px;margin:0 0 5px}
+.app .explorerDock .noSelection p{font-size:9px}
+.app .explorerDock .three{gap:4px}
+.app .explorerDock .three input{padding:7px 3px;font-size:10px}
+.app .explorerDock .sectionTitle{margin:11px 0 8px}
+.app .explorerDock .exportPanel{padding:5px 9px}
+.app .explorerDock .exportPanel p,.app .explorerDock .privacy,.app .explorerDock .inspectorButtons .wide:not(#focusObject),.app #updaterPanel{display:none!important}
+.app .explorerDock .inspectorButtons{margin:10px 0}
+.app .stage{position:relative;min-width:0;background:#101920;box-shadow:none}
+.app .stage #worldSourceBar:not(.expanded){display:none!important}
+.app .stage #worldSourceBar.expanded{display:flex!important;position:absolute;z-index:20;top:41px;left:7px;right:7px;
+width:auto;gap:6px;flex-wrap:wrap;min-height:39px;padding:5px 8px;border:1px solid #7a8b95;background:#172530f5;
+border-radius:4px;box-shadow:0 10px 28px #000a}
+.app .stage .workspaceRibbon{display:none!important}
+.app .stage .tools{height:41px!important;min-height:41px!important;max-height:41px;align-items:center;
+background:#1b2831!important;border-bottom:1px solid #4a5b66;padding:3px 7px!important;gap:10px!important;
+flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+.app .stage .toolsPart{flex:0 0 auto;align-items:center;gap:3px}
+.app .stage .toolsPart:first-child{background:none!important;border:0!important;padding:0!important}
+.app .stage .toolsPart:first-child button{padding:6px 9px!important;min-height:31px!important;font-size:11px!important;
+border-radius:3px;background:transparent;border:1px solid transparent}
+.app .stage .toolsPart:first-child button.selected{color:#ffefd6;background:#55483b;border-color:#cfab7d}
+.app .stage .toolsPart:first-child button span{font-size:13px}
+.app .stage .toolsPart label{font-size:10px}
+.app .stage .toolsPart select{padding:5px;font-size:10px;border-radius:3px}
+.app .stage .toolsPart.end button{min-height:30px!important;padding:5px 7px;font-size:10px!important}
+.app .stage #viewport{background:#354f4e}
+.app .stage .viewportLabel{top:12px;left:12px;gap:5px}
+.app .stage .viewportTag{font-size:9px;padding:5px 7px;border-radius:3px;background:#0f2029b3}
+.app .stage .viewportLabel #modeLabel{font-size:9px;padding:5px 7px;border-radius:3px}
+.app .stage .viewportInfo,.app .stage .viewportTips,.app .stage .viewportCorner,.app .stage .mapScale{display:none!important}
+.app .stage .viewportQuickbar{top:10px;right:64px;border:1px solid #677d8b;border-radius:4px;padding:2px;gap:1px;background:#12202bd1}
+.app .stage .viewportQuickbar button{min-height:26px;padding:4px 7px;font-size:9px}
+.app .stage .viewportQuickbar #toggleLegacy,.app .stage .viewportQuickbar #centerWorld,.app .stage .viewportQuickbar #viewTop{display:none!important}
+.app .stage .compass{top:10px;right:12px;font-size:10px;padding:5px 8px;border-radius:3px}
+.app .stage .status{height:23px;min-height:23px!important;background:#15212a!important;color:#9fb0b9;
+border-top:1px solid #43545f;font-size:9px!important}
+.app .stage .statusReady{display:none}
+.app .stage #statusMessage{font-size:9px}
+.app .emptyWorld:not([hidden]){position:absolute;inset:auto auto 22px 17px;z-index:5;width:min(310px,calc(100% - 34px));
+padding:15px 13px;gap:6px;background:#111e27ed;border:1px solid #687982;border-radius:5px;
+box-shadow:0 8px 20px #0007;backdrop-filter:blur(8px);align-items:flex-start;text-align:left}
+.app .emptyWorld .emptyLogo,.app .emptyWorld>span{display:none}
+.app .emptyWorld h2{font-size:14px;font-weight:700;letter-spacing:0;margin:0}
+.app .emptyWorld p{font-size:10px;line-height:1.5;margin:0;color:#a9bac2}
+.app .emptyWorld .emptyActions{display:flex;gap:5px;margin:5px 0 0}
+.app .emptyWorld .emptyActions button{font-size:9px;min-height:28px;padding:5px 7px;border-radius:3px}
+.app .emptyWorld #emptyLinkFolder{display:none!important}
+.app .viewerNotice{left:12px;bottom:180px;max-width:340px;font-size:10px}
+.app .placeableDock{background:#151e27;border-left:1px solid #465764;overflow-y:auto}
+.app .placeableDock>.dockHeading{position:sticky;top:0;z-index:5}
+.app .advancedDisclosure{margin:0;border-bottom:1px solid #3e505a;background:#14212a}
+.app .advancedDisclosure>summary{padding:8px 10px;min-height:31px;display:flex;align-items:center;gap:7px;
+cursor:pointer;font-size:10px;color:#a9c0c9;list-style:none}
+.app .advancedDisclosure>summary:before{content:"▸";color:#d1b288;font-size:11px}
+.app .advancedDisclosure[open]>summary:before{content:"▾"}
+.app .advancedDisclosure>summary::-webkit-details-marker{display:none}
+.app #realWorldDock{margin:0;padding:9px;background:#15242e}
+.app #realWorldMaps{max-height:180px;overflow:auto}
+.app #gameLibraryDock{flex:1;min-height:0;background:#151f28;display:flex;flex-direction:column}
+.app #gameLibraryDock>.paneHeading{padding:10px 11px 8px!important;background:#1c2a34;border-bottom:1px solid #364955;margin:0}
+.app #gameLibraryDock .paneHeading strong{font-size:11px}
+.app #gameLibraryDock .paneOverline{display:none}
+.app #gameLibraryCount{font-size:10px;color:#b7c6cc}
+.app #gameLibraryDock .libraryQuick{display:flex;gap:5px;padding:9px 9px 4px;background:#16242f}
+.app #gameLibraryDock .libraryQuick button{flex:1;padding:7px 5px;font-size:10px;border-radius:3px;
+border:1px solid #546e78;background:#293d47;min-height:33px}
+.app #gameLibraryDock .libraryQuick button:first-child{color:#f7e6c9;border-color:#957957;background:#4a4138}
+.app #gameLibraryDock .libraryAdvanced{background:#182630}
+.app #gameLibraryDock .libraryAdvanced .gameLibraryActions{padding:6px 9px}
+.app #gameAssetSearch,.app #gameAssetCategory{font-size:11px!important;margin:6px 9px 0!important;width:calc(100% - 18px)!important;
+border-radius:3px!important;padding:8px!important;min-height:32px!important}
+.app #gameLibraryItems{min-height:125px;max-height:none!important;height:auto!important;flex:1;
+margin:8px!important;border:1px solid #344954;border-radius:3px;overflow-y:auto;scrollbar-color:#627784 #14222b}
+.app #gameLibraryItems .gameLibraryItem{min-height:42px;padding:6px;border-bottom:1px solid #2f404a;border-radius:0}
+.app #gameLibraryItems .gameItemMeta strong{font-size:11px}
+.app #gameLibraryItems .gameItemMeta small{font-size:9px}
+.app #gameLibraryStatus{font-size:9px;padding:5px 9px;background:#111b24;color:#8ca3ae;
+white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.app #prototypeDisclosure{flex:none;border-top:1px solid #3c4d59}
+.app #prototypeDisclosure>summary{min-height:34px!important;padding:7px 10px!important;background:#1b2932}
+.app #prototypeDisclosure>summary small{display:none!important}
+.app #prototypeDisclosure .demoCount{font-size:9px;padding:2px 5px}
+.app #prototypeDisclosure .catalog{max-height:180px}
+.app .menuPopup{border-radius:4px;background:#1a2934;border-color:#536976;z-index:1200}
+.app .menuPopup button{font-size:11px;min-height:31px;border-radius:3px}
+@media(min-width:821px) and (max-width:1190px){
+  .app .brand{min-width:122px}
+  .app .brand b{font-size:10px!important}
+  .app .desktopMenu button{padding:6px 8px!important}
+  .app .project{max-width:120px;flex-basis:120px}
+  .app .workspace{--library-width:204px;--inspector-width:248px}
+  .app .stage .toolsPart:first-child button{font-size:10px!important;padding:5px 6px!important}
+  .app .stage .tools{gap:5px!important}
+}
+@media(max-width:820px){
+  .app .top{min-height:49px!important;height:49px!important;padding:3px 6px!important;gap:5px!important}
+  .app .brand{min-width:99px}
+  .app .brand b{font-size:9px!important}
+  .app .project{max-width:92px;min-width:0;flex-basis:90px}
+  .app .topButtons{padding-left:0;border:0;gap:3px}
+  .app .topButtons #openMapLibrary{padding:4px 6px!important}
+  .app .topButtons #saveScene{display:none!important}
+  .app .desktopMenu{display:flex;order:5;position:absolute;top:49px;left:0;right:0;z-index:11;
+    background:#172530;border-bottom:1px solid #40525e;padding:2px 7px;overflow-x:auto}
+  .app .desktopMenu button{font-size:10px!important;padding:6px 9px!important}
+  .app .workspace,.app .workspace.hide-left,.app .workspace.hide-right,.app .workspace.hide-left.hide-right{
+    grid-template-columns:39px minmax(0,1fr)!important}
+  .app .stage{padding-top:32px}
+  .app .stage .tools{min-height:40px!important}
+  .app .stage .toolsPart:first-child button{font-size:0!important;padding:5px 8px!important;min-width:31px}
+  .app .stage .toolsPart:first-child button span{font-size:15px!important}
+  .app .stage .toolsPart.end #duplicate,.app .stage .toolsPart.end #delete{display:none!important}
+  .app .stage .viewportQuickbar{right:48px}
+  .app .stage .compass{right:8px}
+}
+@media(max-width:560px){
+  .app .project{display:none!important}
+  .app .topButtons{margin-left:auto}
+  .app .stage .toolsPart:nth-child(2){display:none}
+  .app .emptyWorld:not([hidden]){bottom:15px;left:10px;padding:10px;width:min(290px,calc(100% - 20px))}
+  .app #statusMessage{display:none}
+}
+@media(prefers-reduced-motion:reduce){.app .menuPopup,.app .stage .emptyWorld{transition:none}}
