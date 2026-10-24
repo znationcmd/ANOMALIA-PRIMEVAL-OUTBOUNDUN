@@ -67,20 +67,22 @@ try:
     if not old_mesh or unreal.EditorAssetLibrary.get_metadata_tag(old_mesh,'AnomaliaRealismSha256')!=original['sha256']:
         raise RuntimeError('Known original generated-house mesh required')
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);wp=unreal.WorldPartitionBlueprintLibrary
+    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);wp=unreal.AnomaliaWorldImportLibrary
     if not level.load_level(PACKAGE):raise RuntimeError('Existing populated world did not open')
-    descriptors=[d for d in wp.get_actor_descs() if str(d.label) in items]
-    if len(descriptors)!=len(items) or len({str(d.label) for d in descriptors})!=len(items):raise RuntimeError('Owned house descriptors missing or ambiguous')
-    descriptors.sort(key=lambda d:str(d.label))
+    snapshot=json.loads(wp.get_archipelago_actor_descriptors())
+    if snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
+    descriptors=[d for d in snapshot['actors'] if d['label'] in items]
+    if len(descriptors)!=len(items) or len({d['label'] for d in descriptors})!=len(items):raise RuntimeError('Owned house descriptors missing or ambiguous')
+    descriptors.sort(key=lambda d:d['label'])
     initially_loaded={a.get_actor_label() for a in actors.get_all_level_actors()}
     surface=ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
     records={};stats={'already':0,'replace':0,'artist-edit':0,'expanded-footprint-relief':0,'wet-or-high':0}
     def batch(start):
-        desc=descriptors[start:start+64];labels={str(d.label) for d in desc}
-        wp.load_actors([d.guid for d in desc])
+        desc=descriptors[start:start+64];labels={d['label'] for d in desc}
+        if not wp.set_archipelago_actors_loaded([d['guid'] for d in desc],True):raise RuntimeError('Owned house streaming request refused')
         loaded={a.get_actor_label():a for a in actors.get_all_level_actors() if a.get_actor_label() in labels}
         if set(loaded)!=labels:raise RuntimeError('Saved house batch did not fully load')
-        return loaded,[d.guid for d in desc if str(d.label) not in initially_loaded]
+        return loaded,[d['guid'] for d in desc if d['label'] not in initially_loaded]
     def unchanged(actor,mesh,location,scale,yaw):
         return (OWNER in actor.tags and isinstance(actor,unreal.StaticMeshActor) and
                 actor.static_mesh_component.get_editor_property('static_mesh')==mesh and
@@ -103,7 +105,9 @@ try:
                 stats[status]+=1
                 records[label]=dict(status=status,target=target,oldMesh=actor.static_mesh_component.get_editor_property('static_mesh').get_path_name() if isinstance(actor,unreal.StaticMeshActor) and actor.static_mesh_component.get_editor_property('static_mesh') else None,
                                     oldLocationCm=xyz(actor.get_actor_location()),oldScale=xyz(actor.get_actor_scale3d()),oldYaw=actor.get_actor_rotation().yaw,oldTags=[str(t) for t in actor.tags])
-        finally:wp.unload_actors(unload)
+        finally:
+            loaded.clear();actor=None
+            if not wp.set_archipelago_actors_loaded(unload,False):raise RuntimeError('Owned house unload refused')
     report['preflight']=stats
     if stats['already']+stats['replace']<4000:raise RuntimeError('Insufficient unchanged owned houses; preserve world for inspection')
     rollback=OUT.with_name('residential-transform-rollback.json')
@@ -130,10 +134,13 @@ try:
                 packages[name]=package
             if packages and not unreal.EditorLoadingAndSavingUtils.save_packages(list(packages.values()),False):raise RuntimeError('Scanned house packages did not save')
             report['replaced']+=sum(records[label]['status']=='replace' for label in loaded)
-        finally:wp.unload_actors(unload)
+        finally:
+            loaded.clear();actor=None;package=None;packages.clear()
+            if not wp.set_archipelago_actors_loaded(unload,False):raise RuntimeError('Owned house unload refused')
         unreal.log('Residential exterior upgrade saved: '+str(report['replaced']))
     report.update(state='OWNED_RESIDENTIAL_EXTERIORS_SAVED_REQUIRES_GPU_REVIEW',upgradedTotal=stats['already']+report['replaced'],originalsRetained=4760-stats['already']-report['replaced'])
 except Exception as error:
     report['error']=str(error);raise
 finally:
     OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(report,indent=2)+'\n')
+

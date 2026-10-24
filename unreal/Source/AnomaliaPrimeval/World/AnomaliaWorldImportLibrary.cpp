@@ -15,7 +15,80 @@
 #include "Engine/World.h"
 #include "EngineUtils.h"
 #include "UObject/Package.h"
+#include "WorldPartition/WorldPartitionBlueprintLibrary.h"
 #endif
+
+#if WITH_EDITOR
+namespace
+{
+ bool IsOwnedPartitionWorld()
+ {
+  const UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+  if(!World)return false;
+  const FString Name=World->GetPackage()->GetName();
+  return Name==TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") || Name==TEXT("/Game/Maps/ANOMALIA_Inhabited_v2");
+ }
+ bool IsOwnedDescriptor(const FActorDesc& Desc)
+ {
+  const FString NativeClass=Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString();
+  return Desc.Label.ToString().StartsWith(TEXT("ANOMALIA_")) ||
+   NativeClass==TEXT("/Script/Landscape.Landscape") || NativeClass==TEXT("/Script/Landscape.LandscapeStreamingProxy");
+ }
+}
+#endif
+
+FString UAnomaliaWorldImportLibrary::GetArchipelagoActorDescriptors()
+{
+#if WITH_EDITOR
+ if(!IsOwnedPartitionWorld())return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ TArray<FActorDesc> Descriptors;
+ if(!UWorldPartitionBlueprintLibrary::GetActorDescs(Descriptors))return TEXT("{\"state\":\"DESCRIPTORS_UNAVAILABLE\"}");
+ TArray<TSharedPtr<FJsonValue>> Entries;
+ for(const FActorDesc& Desc:Descriptors){
+  TSharedRef<FJsonObject> Entry=MakeShared<FJsonObject>();
+  Entry->SetStringField(TEXT("label"),Desc.Label.ToString());
+  Entry->SetStringField(TEXT("guid"),Desc.Guid.ToString(EGuidFormats::DigitsWithHyphens));
+  Entry->SetStringField(TEXT("nativeClass"),Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString());
+  Entry->SetBoolField(TEXT("owned"),IsOwnedDescriptor(Desc));
+  Entries.Add(MakeShared<FJsonValueObject>(Entry));
+ }
+ TSharedRef<FJsonObject> Result=MakeShared<FJsonObject>();
+ Result->SetStringField(TEXT("state"),TEXT("COPIED_DESCRIPTOR_VALUES"));
+ Result->SetArrayField(TEXT("actors"),Entries);
+ FString Output;
+ const TSharedRef<TJsonWriter<>> Writer=TJsonWriterFactory<>::Create(&Output);
+ FJsonSerializer::Serialize(Result,Writer);
+ return Output;
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
+#endif
+}
+
+bool UAnomaliaWorldImportLibrary::SetArchipelagoActorsLoaded(const TArray<FString>& ActorGuids,bool bLoaded)
+{
+#if WITH_EDITOR
+ if(!IsOwnedPartitionWorld() || ActorGuids.Num()>65536)return false;
+ TArray<FActorDesc> Descriptors;
+ if(!UWorldPartitionBlueprintLibrary::GetActorDescs(Descriptors))return false;
+ TSet<FGuid> Allowed;
+ for(const FActorDesc& Desc:Descriptors)if(IsOwnedDescriptor(Desc))Allowed.Add(Desc.Guid);
+ TArray<FGuid> Requested;
+ TSet<FGuid> Seen;
+ for(const FString& Text:ActorGuids){
+  FGuid Guid;
+  if(!FGuid::ParseExact(Text,EGuidFormats::DigitsWithHyphens,Guid) || !Allowed.Contains(Guid) || Seen.Contains(Guid))return false;
+  Requested.Add(Guid);Seen.Add(Guid);
+ }
+ // Complete preflight above: never partially change streaming for a bad batch.
+ if(!Requested.IsEmpty()){
+  if(bLoaded)UWorldPartitionBlueprintLibrary::LoadActors(Requested);
+  else UWorldPartitionBlueprintLibrary::UnloadActors(Requested);
+ }
+ return true;
+#else
+ return false;
+#endif
+}
 
 double UAnomaliaWorldImportLibrary::ArchipelagoHeight(double EastMeters,double NorthMeters)
 {
@@ -142,3 +215,4 @@ FString UAnomaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRef
  return TEXT("{\"state\":\"EDITOR_ONLY\"}");
 #endif
 }
+

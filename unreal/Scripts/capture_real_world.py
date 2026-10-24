@@ -86,7 +86,7 @@ def set_view():
         # Stream just the inspected town and nearby foliage. Loading every HISM
         # across 48km simultaneously hung the integrated D3D11 device on reopen.
         previous=state.pop('dynamic_guids',[])
-        if previous:wp.unload_actors(previous)
+        if previous and not wp.set_archipelago_actors_loaded(previous,False):raise RuntimeError('Prior view unload refused')
         east,north=target[0]/100,-target[1]/100
         nearest=min(sites,key=lambda p:math.hypot(p.x-east,p.y-north))
         prefix=None
@@ -94,12 +94,12 @@ def set_view():
             prefix=f'ANOMALIA_Inhabited1_settlement_{int((nearest.y+24000)//8000)}_{int((nearest.x+24000)//8000)}_house_'
         selected=[]
         for entry in streamable_desc:
-            label=str(entry.label)
-            if prefix and label.startswith(prefix):selected.append(entry.guid);continue
-            if entry.native_class.get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster':
+            label=entry['label']
+            if prefix and label.startswith(prefix):selected.append(entry['guid']);continue
+            if entry['nativeClass']=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster':
                 cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
-                if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry.guid)
-        if selected:wp.load_actors(selected)
+                if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry['guid'])
+        if selected and not wp.set_archipelago_actors_loaded(selected,True):raise RuntimeError('Nearby view load refused')
         state['dynamic_guids']=selected
         report.setdefault('streamedViewActors',[]).append(dict(view=views[state['index']][0],nearbyActors=len(selected),fullWorldForcedLoaded=False))
     rotation=unreal.Rotator(pitch=math.degrees(math.atan2(dz,math.hypot(dx,dy))),yaw=math.degrees(math.atan2(dy,dx)),roll=0)
@@ -136,14 +136,16 @@ try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
     if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Real map unavailable')
     # Load known generated geometry for aerial captures without altering streaming rules on disk.
-    desc=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
-    wp=unreal.WorldPartitionBlueprintLibrary
-    streamable_desc=[d for d in desc if '_house_' in str(d.label) or d.native_class.get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster'] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
-    dynamic_labels={str(d.label) for d in streamable_desc}
-    if streamable_desc:wp.unload_actors([d.guid for d in streamable_desc])
-    wanted=[d.guid for d in desc if (d.native_class.get_path_name() in ('/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy') or str(d.label).startswith('ANOMALIA_')) and str(d.label) not in dynamic_labels]
-    report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(str(d.native_class) for d in desc)))
-    unreal.WorldPartitionBlueprintLibrary.load_actors(wanted)
+    wp=unreal.AnomaliaWorldImportLibrary
+    descriptor_snapshot=json.loads(wp.get_archipelago_actor_descriptors())
+    if descriptor_snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
+    desc=descriptor_snapshot['actors']
+    streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
+    dynamic_labels={d['label'] for d in streamable_desc}
+    if streamable_desc and not wp.set_archipelago_actors_loaded([d['guid'] for d in streamable_desc],False):raise RuntimeError('Initial local-view unload refused')
+    wanted=[d['guid'] for d in desc if d['owned'] and d['label'] not in dynamic_labels]
+    report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(d['nativeClass'] for d in desc)),nativeDescriptorWrappersRetained=False)
+    if not wp.set_archipelago_actors_loaded(wanted,True):raise RuntimeError('Landscape and owned view load refused')
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     landscapes=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
     terrain_components=[c for a in landscapes for c in a.get_components_by_class(unreal.LandscapeComponent)]
@@ -177,3 +179,4 @@ try:
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:
     unreal.log_error(traceback.format_exc());finish(error)
+

@@ -20,6 +20,13 @@ public:
  /** Unsaved editor inspection/refresh only. Does not import heights or save packages. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static FString RefreshArchipelagoRenderResources(bool bRefresh = true);
+ /** Copy descriptor values to JSON; no borrowed FActorDesc/FGuid wrappers cross into Python. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static FString GetArchipelagoActorDescriptors();
+ /** Transient editor streaming only. Rejects the complete request if any GUID is invalid or unrelated. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static bool SetArchipelagoActorsLoaded(const TArray<FString>& ActorGuids, bool bLoaded);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double ArchipelagoHeight(double EastMeters, double NorthMeters);
 };
+
