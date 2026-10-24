@@ -4,6 +4,8 @@
 #include "AnomaliaSessionWidget.generated.h"
 class UButton;
 class UTextBlock;
+class UVerticalBox;
+class UWidgetSwitcher;
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaSessionWidget : public UUserWidget
 {
@@ -20,6 +22,17 @@ private:
     UPROPERTY() TObjectPtr<UButton> PlayButton;
     UPROPERTY() TObjectPtr<UTextBlock> QualityLabel;
     UPROPERTY() TObjectPtr<UTextBlock> Feedback;
+    UPROPERTY() TObjectPtr<UWidgetSwitcher> Pages;
+    UPROPERTY() TObjectPtr<UVerticalBox> ModRows;
+    UPROPERTY() TObjectPtr<UButton> HomeButton;
+    UPROPERTY() TObjectPtr<UButton> OptionsButton;
+    UPROPERTY() TObjectPtr<UButton> ModsButton;
+    UFUNCTION() void ShowHome();
+    UFUNCTION() void ShowOptions();
+    UFUNCTION() void ShowMods();
+    UFUNCTION() void RefreshMods();
+    UFUNCTION() void OpenModsFolder();
+    void SelectPage(int32 Index);
     UFUNCTION() void Play();
     UFUNCTION() void ChangeQuality();
     UFUNCTION() void Save();

@@ -12,6 +12,7 @@
 #include "AnomaliaConfigLibrary.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
+#include "Components/WidgetSwitcher.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
@@ -113,6 +114,32 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
+        auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Options=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionOptions")));
+        auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
+        auto* Refresh=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionRefreshMods")));
+        if(!Pages || !Mods || !Options || !Home || !Refresh || Pages->GetActiveWidgetIndex()!=0)
+        { Finish(TEXT("Main menu navigation or local mods page missing")); return; }
+        Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused())
+        { Finish(TEXT("Mods navigation did not show the local list while paused")); return; }
+        Options->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=1) { Finish(TEXT("Options navigation failed")); return; }
+        Home->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=0) { Finish(TEXT("Return from mods/options failed")); return; }
+        Checks.Add(TEXT("main_menu_mods_refresh_options_and_return"));
+        FString MenuReport; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),MenuReport);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(MenuReport,TEXT(""))+TEXT("-menu.png"),true,false);
+        Next=Now+2; Phase=18; return;
+    }
+    auto* S=Survivor.Get(); if(!S) { Finish(TEXT("Character destroyed")); return; }
+    if(Phase==18)
+    {
+        if(Now<Next) return;
+        auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Play) { Finish(TEXT("Main menu vanished before play")); return; }
         Play->OnClicked.Broadcast();
         if(Menu->IsInViewport() || GetWorld()->IsPaused()) { Finish(TEXT("Play button did not enter gameplay")); return; }
         Checks.Add(TEXT("main_menu_play_button"));
@@ -120,7 +147,6 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);
         Input(EKeys::W,IE_Pressed); Next=Now+1; Phase=1; return;
     }
-    auto* S=Survivor.Get(); if(!S) { Finish(TEXT("Character destroyed")); return; }
     if(Phase==1)
     {
         if(Now<Next) return; Input(EKeys::W,IE_Released);
