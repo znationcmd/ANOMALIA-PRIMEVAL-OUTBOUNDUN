@@ -7,6 +7,8 @@ class UTextBlock;
 class UVerticalBox;
 class UWidgetSwitcher;
 class ACameraActor;
+class UImage;
+class UBorder;
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaSessionWidget : public UUserWidget
 {
@@ -15,6 +17,8 @@ public:
     static UAnomaliaSessionWidget* Open(APlayerController* PC,bool MainMenu=false);
     virtual void NativeConstruct() override;
     virtual void NativeDestruct() override;
+    virtual void NativeTick(const FGeometry& Geometry,float DeltaTime) override;
+    virtual FReply NativeOnMouseButtonDown(const FGeometry& Geometry,const FPointerEvent& Event) override;
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event) override;
 private:
@@ -31,6 +35,15 @@ private:
     UPROPERTY() TObjectPtr<UButton> ModsButton;
     UPROPERTY() TObjectPtr<ACameraActor> MenuCamera;
     TWeakObjectPtr<AActor> PreviousViewTarget;
+    UPROPERTY() TObjectPtr<UImage> MenuArtwork;
+    UPROPERTY() TObjectPtr<UBorder> NavigationFrame;
+    UPROPERTY() TObjectPtr<UBorder> DetailsFrame;
+    UPROPERTY() TObjectPtr<UUserWidget> HiddenStatusWidget;
+    ESlateVisibility PreviousStatusVisibility=ESlateVisibility::Visible;
+    double IntroStarted=0;
+    bool bStartupIntro=false;
+    void FinishIntro();
+    UFUNCTION() void ClosePage();
     UFUNCTION() void ShowHome();
     UFUNCTION() void ShowOptions();
     UFUNCTION() void ShowMods();

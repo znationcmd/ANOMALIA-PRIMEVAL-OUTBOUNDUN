@@ -42,6 +42,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Installed game process failed.' }
     $native=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
     if ($native.state -ne 'PACKAGED_GAME_SMOKE_PASSED') { throw "Installed gameplay smoke failed: $($native.error)" }
+    if ($native.checks -notcontains 'user_branding_intro_animates_and_reveals_main_menu') { throw 'Installed intro and menu artwork did not pass.' }
     if ($proof.progressArt -and $native.checks -notcontains 'validated_progress_houses_and_twenty_real_trees') { throw 'Installed progress art is missing.' }
     if ($proof.visualReview.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED') { throw 'Imported-art package validation missing.' }
     $visualDir=Join-Path $ValidationDir 'installed-visual';New-Item -ItemType Directory -Path $visualDir -Force | Out-Null
@@ -80,11 +81,15 @@ try {
         $old=$shell.CreateShortcut($link)
         if (-not $old.TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated desktop shortcut preserved.' }
     }
-    $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.Description='ANOMALIA — version de test Windows autonome';$shortcut.Save()
+    $icon=Join-Path $target 'Anomalia.ico'
+    if (-not (Test-Path -LiteralPath $icon)) { throw 'Installed ANOMALIA logo missing.' }
+    $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.IconLocation=$icon+',0';$shortcut.Description='ANOMALIA — version de test Windows autonome';$shortcut.Save()
     $readback=Get-Content -LiteralPath $active -Raw | ConvertFrom-Json
     $desktop=$shell.CreateShortcut($link)
     if ($readback.commit -ne $Commit -or $readback.executable -ne $exe -or $desktop.TargetPath -ne $exe -or $desktop.WorkingDirectory -ne $target -or $desktop.Arguments -ne '-d3d11 -sm5') { throw 'Active version or desktop shortcut readback failed.' }
     $report.activeVersionAndShortcutVerified=$true
+    if ($shell.CreateShortcut($link).IconLocation -ne ($icon+',0')) { throw 'Windows logo shortcut readback failed.' }
+    $report.userIconVerified=$true
     $visualLink=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Validation visuelle.lnk'
     if (Test-Path -LiteralPath $visualLink) {
         if (-not $shell.CreateShortcut($visualLink).TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated visual shortcut preserved.' }

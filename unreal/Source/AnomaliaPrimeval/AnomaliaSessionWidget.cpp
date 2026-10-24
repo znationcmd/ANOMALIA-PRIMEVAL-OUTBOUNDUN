@@ -1,6 +1,7 @@
 #include "AnomaliaSessionWidget.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaStatusWidget.h"
 #include "Blueprint/WidgetTree.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Components/SafeZone.h"
@@ -14,6 +15,9 @@
 #include "Components/SizeBox.h"
 #include "Components/ScrollBox.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/Image.h"
+#include "Components/ScaleBox.h"
+#include "Engine/Texture2D.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/Paths.h"
@@ -44,6 +48,11 @@ UAnomaliaSessionWidget* UAnomaliaSessionWidget::Open(APlayerController* PC,bool 
     if(auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn())) S->CloseInventory();
     auto* Menu=CreateWidget<UAnomaliaSessionWidget>(PC,StaticClass()); if(!Menu) return nullptr;
     Menu->bMainMenu=MainMenu; Menu->AddToViewport(100);
+    if(MainMenu) if(auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn())) if(S->StatusWidget)
+    {
+        Menu->HiddenStatusWidget=S->StatusWidget;Menu->PreviousStatusVisibility=S->StatusWidget->GetVisibility();
+        S->StatusWidget->SetVisibility(ESlateVisibility::Hidden);
+    }
     UGameplayStatics::SetGamePaused(PC,true);
     FInputModeUIOnly Mode; Mode.SetWidgetToFocus(Menu->TakeWidget()); Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
     PC->SetInputMode(Mode); PC->bShowMouseCursor=true;
@@ -60,8 +69,14 @@ TSharedRef<SWidget> UAnomaliaSessionWidget::RebuildWidget()
 void UAnomaliaSessionWidget::NativeConstruct()
 {
     Super::NativeConstruct(); SetIsFocusable(true);
+    bStartupIntro=bMainMenu && MenuArtwork;
+    if(bStartupIntro)
+    {
+        IntroStarted=FPlatformTime::Seconds(); MenuArtwork->SetRenderOpacity(0.f);
+        if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Hidden);
+    }
     auto* PC=GetOwningPlayer();
-    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")))
+    if(bMainMenu && !MenuArtwork && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")))
     {
         for(TActorIterator<AActor> It(GetWorld());It;++It)
         {
@@ -85,6 +100,7 @@ void UAnomaliaSessionWidget::NativeConstruct()
 }
 void UAnomaliaSessionWidget::NativeDestruct()
 {
+    if(HiddenStatusWidget) { HiddenStatusWidget->SetVisibility(PreviousStatusVisibility);HiddenStatusWidget=nullptr; }
     if(MenuCamera)
     {
         if(auto* PC=GetOwningPlayer()) if(PreviousViewTarget.IsValid()) PC->SetViewTarget(PreviousViewTarget.Get());
@@ -92,14 +108,47 @@ void UAnomaliaSessionWidget::NativeDestruct()
     }
     Super::NativeDestruct();
 }
+void UAnomaliaSessionWidget::NativeTick(const FGeometry& Geometry,float DeltaTime)
+{
+    Super::NativeTick(Geometry,DeltaTime);
+    if(!bStartupIntro || !MenuArtwork) return;
+    const float Elapsed=static_cast<float>(FPlatformTime::Seconds()-IntroStarted);
+    const float Progress=FMath::Clamp(Elapsed/4.5f,0.f,1.f);
+    MenuArtwork->SetRenderOpacity(FMath::Clamp(Elapsed/1.2f,0.f,1.f));
+    MenuArtwork->SetRenderScale(FVector2D(.97f+.03f*Progress));
+    if(Elapsed>=4.5f) FinishIntro();
+}
+void UAnomaliaSessionWidget::FinishIntro()
+{
+    bStartupIntro=false;
+    if(MenuArtwork) { MenuArtwork->SetRenderOpacity(1.f);MenuArtwork->SetRenderScale(FVector2D(1.f,1.f)); }
+    if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
+}
+FReply UAnomaliaSessionWidget::NativeOnMouseButtonDown(const FGeometry& Geometry,const FPointerEvent& Event)
+{
+    if(bStartupIntro) { FinishIntro();return FReply::Handled(); }
+    return Super::NativeOnMouseButtonDown(Geometry,Event);
+}
 void UAnomaliaSessionWidget::BuildLayout()
 {
     if(!WidgetTree || WidgetTree->RootWidget) return;
     auto* Safe=WidgetTree->ConstructWidget<USafeZone>(USafeZone::StaticClass()); WidgetTree->RootWidget=Safe;
     auto* Canvas=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass()); Safe->SetContent(Canvas);
+    if(bMainMenu)
+    {
+        auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+        if(Texture)
+        {
+            auto* Matte=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Matte->SetBrushColor(FLinearColor::Black);Matte->SetPadding(FMargin(0));
+            auto* Slot=Canvas->AddChildToCanvas(Matte);Slot->SetAnchors(FAnchors(0,0,1,1));Slot->SetOffsets(FMargin(0));
+            auto* Fit=WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());Fit->SetStretch(EStretch::ScaleToFit);Matte->SetContent(Fit);
+            MenuArtwork=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("SessionMenuArtwork"));
+            MenuArtwork->SetBrushFromTexture(Texture,true);MenuArtwork->SetRenderTransformPivot(FVector2D(.5f,.5f));Fit->SetContent(MenuArtwork);
+        }
+    }
     // A narrow navigation rail keeps the actual 3D scene visible at the right.
-    auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass()); Frame->SetBrushColor(FLinearColor(.012,.016,.014,.88)); Frame->SetPadding(FMargin(24));
-    auto* FrameSlot=Canvas->AddChildToCanvas(Frame); FrameSlot->SetAnchors(FAnchors(.04,.06,.40,.94)); FrameSlot->SetOffsets(FMargin(0));
+    auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionNavigation"));NavigationFrame=Frame; Frame->SetBrushColor(FLinearColor(.012f,.016f,.014f,.82f)); Frame->SetPadding(FMargin(20));
+    auto* FrameSlot=Canvas->AddChildToCanvas(Frame); FrameSlot->SetAnchors(FAnchors(.035f,.12f,.31f,.77f)); FrameSlot->SetOffsets(FMargin(0));
     auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass()); Frame->SetContent(Scroll);
     auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Scroll->AddChild(Rows);
     auto Label=[&](const TCHAR* Text) { auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text)); auto Font=L->GetFont(); Font.Size=16; L->SetFont(Font); L->SetAutoWrapText(true); Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,6)); return L; };
@@ -124,10 +173,12 @@ void UAnomaliaSessionWidget::BuildLayout()
     Button(TEXT("SessionQuit"),TEXT("Quitter sans nouvelle sauvegarde"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::Quit);
     Feedback=Label(TEXT("Sauvegarde automatique toutes les 2 minutes."));
 
-    auto* Details=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass()); Details->SetPadding(FMargin(24));
+    auto* Details=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionDetailsFrame"));DetailsFrame=Details; Details->SetPadding(FMargin(24));
     Details->SetBrushColor(FLinearColor(.012,.016,.014,.80));
     auto* DetailsSlot=Canvas->AddChildToCanvas(Details); DetailsSlot->SetAnchors(FAnchors(.44,.48,.96,.94)); DetailsSlot->SetOffsets(FMargin(0));
-    auto* PageScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass()); Details->SetContent(PageScroll);
+    auto* DetailRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Details->SetContent(DetailRows);Rows=DetailRows;
+    Button(TEXT("SessionClosePage"),TEXT("Retour au menu"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ClosePage);
+    auto* PageScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());DetailRows->AddChildToVerticalBox(PageScroll);
     Pages=WidgetTree->ConstructWidget<UWidgetSwitcher>(UWidgetSwitcher::StaticClass(),TEXT("SessionPages")); PageScroll->AddChild(Pages);
     Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Pages->AddChild(Rows);
     Label(TEXT("VOTRE SURVIVANT"));
@@ -153,14 +204,17 @@ void UAnomaliaSessionWidget::BuildLayout()
     Button(TEXT("SessionOpenModsFolder"),TEXT("Ouvrir le dossier Mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenModsFolder);
     ModRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SessionModRows")); Rows->AddChildToVerticalBox(ModRows);
     SelectPage(0);
+    ClosePage();
 }
 void UAnomaliaSessionWidget::SelectPage(int32 Index)
 {
     if(!Pages || Index<0 || Index>=Pages->GetChildrenCount()) return;
     Pages->SetActiveWidgetIndex(Index);
+    FinishIntro();if(DetailsFrame)DetailsFrame->SetVisibility(ESlateVisibility::Visible);
     UButton* PageButtons[]={HomeButton.Get(),OptionsButton.Get(),ModsButton.Get()};
     for(int32 I=0;I<3;++I) if(PageButtons[I]) PageButtons[I]->SetBackgroundColor(I==Index?FLinearColor(.35f,.32f,.21f,1.f):FLinearColor(.08f,.10f,.085f,1.f));
 }
+void UAnomaliaSessionWidget::ClosePage() { if(DetailsFrame)DetailsFrame->SetVisibility(ESlateVisibility::Collapsed); }
 void UAnomaliaSessionWidget::ShowHome() { SelectPage(0); }
 void UAnomaliaSessionWidget::ShowOptions() { SelectPage(1); }
 void UAnomaliaSessionWidget::ShowMods() { RefreshMods(); SelectPage(2); }
@@ -218,6 +272,7 @@ void UAnomaliaSessionWidget::OpenWorldEditor()
 }
 void UAnomaliaSessionWidget::Play()
 {
+    FinishIntro();
     auto* PC=GetOwningPlayer(); if(!PC) return;
     RemoveFromParent(); UGameplayStatics::SetGamePaused(PC,false); PC->SetInputMode(FInputModeGameOnly()); PC->bShowMouseCursor=false;
 }
@@ -269,11 +324,12 @@ void UAnomaliaSessionWidget::ToggleItemPolicy(int32 Index)
 }
 FReply UAnomaliaSessionWidget::NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event)
 {
+    if(bStartupIntro) { FinishIntro();return FReply::Handled(); }
     if(Event.GetKey()==EKeys::Escape || Event.GetKey()==EKeys::Gamepad_FaceButton_Right)
     {
-        if(Pages && Pages->GetActiveWidgetIndex()!=0)
-        { ShowHome(); if(HomeButton) HomeButton->SetUserFocus(GetOwningPlayer()); }
-        else Play();
+        if(DetailsFrame && DetailsFrame->GetVisibility()!=ESlateVisibility::Collapsed)
+        { ClosePage(); if(HomeButton) HomeButton->SetUserFocus(GetOwningPlayer()); }
+        else if(!bMainMenu) Play();
         return FReply::Handled();
     }
     return Super::NativeOnKeyDown(Geometry,Event);

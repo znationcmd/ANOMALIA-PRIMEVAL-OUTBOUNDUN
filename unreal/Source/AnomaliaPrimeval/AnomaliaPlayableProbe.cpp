@@ -13,6 +13,8 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/Image.h"
+#include "Components/Border.h"
 #include "Engine/World.h"
 #include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
@@ -123,6 +125,30 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
+        auto* Art=Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")));
+        if(!Art || !Art->GetBrush().GetResourceObject() || !Art->GetBrush().GetResourceObject()->GetPathName().Contains(TEXT("/Branding/T_MenuBackdrop")))
+        { Finish(TEXT("User-provided main menu artwork is missing from the cooked game")); return; }
+        Next=Now+1;Phase=19;return;
+    }
+    if(Phase==19)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
+        auto* Art=Menu && Menu->WidgetTree?Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork"))):nullptr;
+        if(!Art || Art->GetRenderOpacity()<=0.f) { Finish(TEXT("Startup artwork animation did not advance while paused"));return; }
+        FString IntroReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),IntroReport);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(IntroReport,TEXT(""))+TEXT("-intro.png"),true,false);
+        Next=Now+5;Phase=20;return;
+    }
+    if(Phase==20)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        if(!Play || !Rail || Rail->GetVisibility()!=ESlateVisibility::Visible)
+        { Finish(TEXT("Startup animation did not reveal the main menu"));return; }
+        Checks.Add(TEXT("user_branding_intro_animates_and_reveals_main_menu"));
         auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
         auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
         auto* Options=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionOptions")));
@@ -138,6 +164,9 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         if(Pages->GetActiveWidgetIndex()!=1) { Finish(TEXT("Options navigation failed")); return; }
         Home->OnClicked.Broadcast();
         if(Pages->GetActiveWidgetIndex()!=0) { Finish(TEXT("Return from mods/options failed")); return; }
+        auto* Close=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionClosePage")));
+        if(!Close) { Finish(TEXT("Return-to-menu control missing"));return; }
+        Close->OnClicked.Broadcast();
         Checks.Add(TEXT("main_menu_mods_refresh_options_and_return"));
         FString MenuReport; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),MenuReport);
         FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(MenuReport,TEXT(""))+TEXT("-menu.png"),true,false);

@@ -27,6 +27,9 @@ try:
     if scene.get('state')!='PLAYABLE_LOOK_V2_SAVED' or scene.get('sourceCommit')!=os.environ.get('GITHUB_SHA') or not scene.get('dynamicLights'):
         raise RuntimeError('Fresh playable scene update receipt missing or invalid')
     report['scene']=scene
+    run([editor,project,'-NullRHI','-unattended','-nopause','-nosound',
+         '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/import_game_branding.py'),
+         '-abslog='+str(out/'branding-import.log')],'branding-import',300)
     progress_flags=['-AnomaliaProgressArt'] if a.progress_art else []
     if a.progress_art:
         os.environ['ANOMALIA_PROGRESS_ART_REPORT']=str(out/'progress-art.json')
@@ -61,12 +64,14 @@ try:
     executables=list(archive.glob('Windows/AnomaliaPrimeval.exe'))
     if len(executables)!=1:raise RuntimeError('Unique actual packaged executable not found')
     exe=executables[0];probe=out/'packaged-smoke.json'
+    shutil.copyfile(ROOT/'unreal/Build/Windows/Application.ico',archive/'Windows/Anomalia.ico')
     scope='playable-smoke-'+uuid.uuid4().hex
     run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log'),*progress_flags],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
     required={'native_inventory_tobacco_use_has_risk_and_returns_waste','native_inventory_food_use_consumes_one_and_restores_hunger','native_playable_look_v2_cooked_materials_and_lights','main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
     if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])):
         raise RuntimeError('Actual packaged gameplay smoke failed: '+native.get('error','missing checks'))
+    if 'user_branding_intro_animates_and_reveals_main_menu' not in native.get('checks',[]):raise RuntimeError('Cooked user branding and startup animation did not pass')
     if a.progress_art and 'validated_progress_houses_and_twenty_real_trees' not in native.get('checks',[]):
         raise RuntimeError('Cooked progress art was not verified by the executable')
     image=probe.with_suffix('.png')

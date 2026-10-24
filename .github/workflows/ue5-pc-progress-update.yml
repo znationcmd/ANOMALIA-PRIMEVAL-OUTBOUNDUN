@@ -6,6 +6,11 @@ on:
     paths:
       - 'unreal/Source/**'
       - 'unreal/Config/**'
+      - 'unreal/Build/Windows/Application.ico'
+      - 'unreal/Content/Splash/**'
+      - 'unreal/SourceAssets/Branding/**'
+      - 'unreal/Scripts/import_game_branding.py'
+      - 'scripts/ue5/prepare-game-branding.ps1'
       - 'unreal/Scripts/capture_real_world.py'
       - 'unreal/Scripts/probe_installed_editor.py'
       - 'unreal/Scripts/apply_residential_replacements.py'
@@ -40,6 +45,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Prepare the user application logo and launch splash
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: ./scripts/ue5/prepare-game-branding.ps1
       - name: Compile Editor and Game and pass the native gameplay tests
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -125,6 +133,8 @@ jobs:
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*.json
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.log
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-upgrade/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.json
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.png
