@@ -367,6 +367,16 @@ function renderWsCards(){
       if(r){msg(r.message);await refreshWorkshop();}
     };
     actions.append(prepare,sub);
+    if(mod.compiled){
+      const host=node('button','CMD Hosting ↗');
+      host.title='Exporter un manifeste de configuration pour CMD Hosting (sans installation automatique)';
+      host.onclick=async()=>{
+        const result=await safe(()=>api.exportHostingManifest(mod.id));
+        if(result?.saved)msg(result.note+' · '+result.file);
+      };
+      actions.append(host);
+    }
+
     if(mod.prepared){
       const toggle=node('button',mod.active?'Désactiver':'Activer');
       toggle.onclick=async()=>{

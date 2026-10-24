@@ -226,6 +226,7 @@ class AnomaliaTools{
   subscribeWorkshopMod(payload={}){return this.workshop().subscribe(payload);}
   prepareWorkshopMod(payload={}){return this.workshop().install(payload);}
   toggleWorkshopMod(payload={}){return this.workshop().toggle(payload);}
+  exportWorkshopHostingManifest(payload={}){return this.workshop().exportHostingManifest(payload);}
   async packageMod({projectId}={}){
     const root=this.getProjectPath(projectId);
     const files=this.listFiles({projectId}).filter(x=>x.type==='file'&&!x.path.startsWith('Dist/')&&
