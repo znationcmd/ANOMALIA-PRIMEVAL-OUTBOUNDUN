@@ -49,6 +49,7 @@ function setTab(tab){
   if(tab==='textures')renderTextures();
   if(tab==='terrain')renderTerrainFiles();
   if(tab==='economy')refreshEconomy();
+  if(tab==='addon')nativeStatus();
   if(tab==='home')renderProjects();
   if(viewer&&tab==='objects')requestAnimationFrame(()=>viewer.resize());
 }
@@ -271,6 +272,30 @@ async function packageMod(){
   const r=await safe(()=>api.call('packageMod',{projectId:currentId}));
   if(r){$('#buildInfo').textContent='Archive créée :\n'+r.path+'\n\n'+r.manifest.assets.length+' fichiers · '+(r.size/1048576).toFixed(2)+' Mo\nManifeste SHA-256 inclus';msg('Archive ZIP créée localement.');await refreshFiles();}
 }
+function nativeEngineRoot(){return $('#engineRoot')?.value.trim()||'';}
+async function nativeStatus(){
+  if(!requireProject())return;
+  const status=await safe(()=>api.call('getNativeModStatus',{projectId:currentId,engineRoot:nativeEngineRoot()}));
+  if(!status)return;
+  $('#nativeBuildInfo').textContent='Plugin : '+status.plugin+'\\nSources : '+(status.valid?'valides':'incomplètes — '+status.validationError)+'\\nUnreal Engine : '+(status.engineFound?'détecté':'introuvable')+'\\nMachine Windows : '+(status.supportedHost?'oui':'non')+'\\nCompilation possible : '+(status.nativeBuildAvailable?'oui':'non')+'\\n'+status.note;
+}
+async function nativeCreate(){
+  if(!requireProject())return;
+  const result=await safe(()=>api.call('scaffoldNativeMod',{projectId:currentId}));
+  if(!result)return;
+  await refreshFiles();await nativeStatus();
+  msg('Plugin '+result.plugin+' : '+result.created.length+' nouveau(x) fichier(s). Fichiers existants conservés.');
+}
+async function nativeBuild(){
+  if(!requireProject())return;
+  const confirmBuild=confirm('Compiler ce plugin natif C++ avec Unreal Engine sur ce PC ? Un mod inconnu peut contenir du code dangereux.');
+  if(!confirmBuild)return;
+  $('#nativeBuildInfo').textContent='Compilation UE5 en cours — elle peut durer longtemps…';
+  const result=await safe(()=>api.call('buildNativeMod',{projectId:currentId,engineRoot:nativeEngineRoot()}));
+  if(!result)return;
+  $('#nativeBuildInfo').textContent='Compilation terminée : '+result.plugin+'\\nSortie : '+result.output+'\\n'+result.log+'\\nLe jeu ne charge pas automatiquement ce plugin.';
+  msg('Plugin Unreal compilé. Le test de chargement dans ANOMALIA reste à faire.');await refreshFiles();
+}
 async function publish(){
   if(!requireProject())return;
   const r=await safe(()=>api.exportPackage(currentId));
@@ -302,6 +327,9 @@ $('#addLoot').onclick=()=>{
 };
 $('#saveEconomy').onclick=saveEconomy;
 $('#buildAddon').onclick=packageMod;
+$('#createNativeMod').onclick=nativeCreate;
+$('#checkNativeMod').onclick=nativeStatus;
+$('#buildNativeMod').onclick=nativeBuild;
 $('#exportMod').onclick=publish;
 window.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&activeTab==='workbench'){e.preventDefault();saveSource();}
