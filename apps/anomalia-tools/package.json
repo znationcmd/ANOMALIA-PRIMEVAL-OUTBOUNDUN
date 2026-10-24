@@ -1,24 +1,25 @@
 {
   "name": "anomalia-tools",
-  "version": "0.1.1",
+  "version": "0.2.4",
   "private": true,
   "description": "ANOMALIA Tools - outils locaux de création de mods et ressources pour ANOMALIA",
   "main": "main.cjs",
   "scripts": {
     "start": "npm run build && npm run prepare:icon && electron .",
     "test": "node --test tests/*.test.cjs",
-    "package:win": "npm run build && npm run prepare:icon && electron-builder --win nsis",
+    "package:win": "npm run build && npm run prepare:icon && electron-builder --win nsis --publish never",
     "build": "vite build",
     "prepare:icon": "node scripts/prepare-icon.cjs"
   },
   "dependencies": {
     "pngjs": "^7.0.0",
     "yazl": "^3.3.1",
-    "three": "^0.169.0"
+    "three": "^0.169.0",
+    "electron-updater": "^6.8.9"
   },
   "devDependencies": {
     "electron": "^33.4.11",
-    "electron-builder": "^25.1.8",
+    "electron-builder": "^26.15.3",
     "vite": "^5.4.19"
   },
   "build": {
@@ -31,10 +32,13 @@
       "main.cjs",
       "preload.cjs",
       "core.cjs",
+      "native-mods.cjs",
+      "workshop.cjs",
       "dist/**",
       "package.json",
       "node_modules/**",
-      "assets/**"
+      "assets/**",
+      "updates.cjs"
     ],
     "win": {
       "target": [
@@ -53,7 +57,23 @@
       "createDesktopShortcut": true,
       "installerIcon": "assets/anomalia-tools.ico",
       "uninstallerIcon": "assets/anomalia-tools.ico",
-      "installerHeaderIcon": "assets/anomalia-tools.ico"
-    }
+      "installerHeaderIcon": "assets/anomalia-tools.ico",
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ANOMALIA-Tools-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "generic",
+        "url": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-tools-latest/"
+      }
+    ],
+    "protocols": [
+      {
+        "name": "ANOMALIA Workshop",
+        "schemes": [
+          "anomalia-tools"
+        ]
+      }
+    ]
   }
 }

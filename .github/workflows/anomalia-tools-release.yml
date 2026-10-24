@@ -1,0 +1,75 @@
+name: ANOMALIA Tools - Publication automatique Windows
+on:
+  push:
+    tags:
+      - 'anomalia-tools/v*'
+permissions:
+  contents: write
+concurrency:
+  group: anomalia-tools-release
+  cancel-in-progress: false
+jobs:
+  release:
+    name: Tester et publier uniquement ANOMALIA Tools
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/anomalia-tools
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Correspondance obligatoire entre tag et version
+        shell: pwsh
+        run: |
+          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          if ("refs/tags/anomalia-tools/v$v" -ne "$env:GITHUB_REF") {
+            throw "Tag incorrect pour ANOMALIA Tools : $v"
+          }
+      - name: Installer les dépendances
+        run: npm install --no-audit --no-fund
+      - name: Exécuter les tests et la compilation Web
+        run: |
+          npm test
+          npm run build
+      - name: Générer l'installateur et le manifeste
+        run: npm run package:win
+      - name: Vérifier les empreintes et la présence des exécutables
+        shell: pwsh
+        run: |
+          $meta = "release/latest.yml"
+          if (!(Test-Path $meta)) { throw "latest.yml introuvable" }
+          $contents = Get-Content $meta -Raw
+          if ($contents -notmatch "(?m)^version:\s*" -or $contents -notmatch "(?m)^\s*sha512:") { throw "Manifeste incomplet" }
+          if (!(Get-ChildItem release -File | Where-Object { $_.Name -match 'ANOMALIA Tools Setup.*\.exe$' })) {
+            throw "Le programme Windows n'a pas été généré"
+          }
+      - name: Créer le canal public réservé à ANOMALIA Tools
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "ANOMALIA Tools - Windows" --notes "Canal public de mises à jour ANOMALIA Tools. Aucun projet d'utilisateur n'est inclus."
+            if ($LASTEXITCODE -ne 0) { throw "La release n'a pas été créée" }
+          }
+      - name: Uploader l'installateur et son blockmap
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = Get-ChildItem release -File | Where-Object { $_.Name -match '\.exe(\.blockmap)?$' }
+          foreach ($file in $assets) {
+            gh release upload anomalia-tools-latest $file.FullName --repo "$env:GITHUB_REPOSITORY" --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Upload interrompu : $($file.Name)" }
+          }
+      - name: Publier le manifeste DERNIER
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload anomalia-tools-latest (Resolve-Path release/latest.yml).Path --repo "$env:GITHUB_REPOSITORY" --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Le manifeste latest.yml n'a pas été publié" }
+          Write-Host "Canal ANOMALIA Tools mis à jour."

@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
+import './updates-ui.js';
 
 const api=window.anomaliaTools;
 const $=s=>document.querySelector(s);
@@ -15,7 +16,7 @@ const MODS=[
   ['addon','◈','Addon Builder','Archives de mods et manifestes'],
   ['publisher','⬆','Publisher','Exporter tes packages en ZIP']
 ];
-const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title]))};
+const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),workshop:'ANOMALIA Workshop',updates:'Mises à jour'};
 const SOURCE=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const TEXTURES=['.png','.jpg','.jpeg','.webp','.tga'];
 let projects=[],currentId='',files=[],fileOpen='',economy={items:[]},activeTab='home';
@@ -48,6 +49,8 @@ function setTab(tab){
   if(tab==='textures')renderTextures();
   if(tab==='terrain')renderTerrainFiles();
   if(tab==='economy')refreshEconomy();
+  if(tab==='addon')nativeStatus();
+  if(tab==='workshop')refreshWorkshop();
   if(tab==='home')renderProjects();
   if(viewer&&tab==='objects')requestAnimationFrame(()=>viewer.resize());
 }
@@ -61,11 +64,15 @@ async function refreshProjects(select=null){
   else if(!projects.some(p=>p.id===currentId))currentId=projects[0]?.id||'';
   picker.value=currentId;
   $('#projectCount').textContent=projects.length+' projet'+(projects.length>1?'s':'');
+  $('#overviewProjectTotal').textContent=projects.length;
+  $('#sidebarWorkspaceName').textContent=projects.find(p=>p.id===currentId)?.name||'Aucun projet actif';
   renderProjects();
   await refreshFiles();
 }
 async function refreshFiles(){
   files=currentId?await api.call('listFiles',{projectId:currentId}):[];
+  $('#overviewFileTotal').textContent=files.filter(f=>f.type==='file').length;
+  $('#sidebarWorkspaceName').textContent=projects.find(p=>p.id===currentId)?.name||'Aucun projet actif';
   renderFiles();renderAssets();renderTextures();renderTerrainFiles();
 }
 function renderProjects(){
@@ -266,6 +273,151 @@ async function packageMod(){
   const r=await safe(()=>api.call('packageMod',{projectId:currentId}));
   if(r){$('#buildInfo').textContent='Archive créée :\n'+r.path+'\n\n'+r.manifest.assets.length+' fichiers · '+(r.size/1048576).toFixed(2)+' Mo\nManifeste SHA-256 inclus';msg('Archive ZIP créée localement.');await refreshFiles();}
 }
+function nativeEngineRoot(){return $('#engineRoot')?.value.trim()||'';}
+async function nativeStatus(){
+  if(!requireProject())return;
+  const status=await safe(()=>api.call('getNativeModStatus',{projectId:currentId,engineRoot:nativeEngineRoot()}));
+  if(!status)return;
+  $('#nativeBuildInfo').textContent='Plugin : '+status.plugin+'\nSources : '+(status.valid?'valides':'incomplètes — '+status.validationError)+'\nUnreal Engine : '+(status.engineFound?'détecté':'introuvable')+'\nMachine Windows : '+(status.supportedHost?'oui':'non')+'\nCompilation possible : '+(status.nativeBuildAvailable?'oui':'non')+'\n'+status.note;
+}
+async function nativeCreate(){
+  if(!requireProject())return;
+  const result=await safe(()=>api.call('scaffoldNativeMod',{projectId:currentId}));
+  if(!result)return;
+  await refreshFiles();await nativeStatus();
+  msg('Plugin '+result.plugin+' : '+result.created.length+' nouveau(x) fichier(s). Fichiers existants conservés.');
+}
+async function nativeBuild(){
+  if(!requireProject())return;
+  const confirmBuild=confirm('Compiler ce plugin natif C++ avec Unreal Engine sur ce PC ? Un mod inconnu peut contenir du code dangereux.');
+  if(!confirmBuild)return;
+  $('#nativeBuildInfo').textContent='Compilation UE5 en cours — elle peut durer longtemps…';
+  const result=await safe(()=>api.call('buildNativeMod',{projectId:currentId,engineRoot:nativeEngineRoot()}));
+  if(!result)return;
+  $('#nativeBuildInfo').textContent='Compilation terminée : '+result.plugin+'\nSortie : '+result.output+'\n'+result.log+'\nLe jeu ne charge pas automatiquement ce plugin.';
+  msg('Plugin Unreal compilé. Le test de chargement dans ANOMALIA reste à faire.');await refreshFiles();
+}
+
+let wsData=null,wsActiveCategory='Tous',wsManagerOnly=false;
+const WS_ICONS={'Tous':'✦','Véhicules':'◈','Armes':'⌁','Bâtiments':'▣','Créatures':'◆','Survie':'✺','Cartes':'▤','Vêtements':'▥','Outils':'⚙','Autres':'⬡'};
+async function refreshWorkshop(){
+  const data=await safe(()=>api.call('listWorkshopMods'));
+  if(!data)return;
+  wsData=data;
+  $('#wsTotal').textContent=data.stats.total;
+  $('#wsSubs').textContent=data.stats.subscribed;
+  $('#wsPrepared').textContent=data.stats.prepared;
+  $('#wsStatus').textContent=data.connection.message;
+  renderWsCategories();renderWsCards();renderWsProjects();
+}
+function renderWsCategories(){
+  const panel=$('#wsCategories');panel.replaceChildren();
+  for(const name of ['Tous',...wsData.categories]){
+    const count=name==='Tous'?wsData.entries.length:wsData.entries.filter(x=>x.category===name).length;
+    const b=node('button','','wsCategory'+(wsActiveCategory===name?' active':''));
+    b.type='button';b.append(node('span',WS_ICONS[name]||'✦','wsCatIcon'),node('strong',name),node('small',count+' mod'+(count===1?'':'s')));
+    b.onclick=()=>{wsActiveCategory=name;renderWsCategories();renderWsCards();};
+    panel.append(b);
+  }
+}
+function wsCompare(a,b,sort){
+  if(sort==='name')return a.title.localeCompare(b.title,'fr');
+  if(sort==='category')return a.category.localeCompare(b.category,'fr')||a.title.localeCompare(b.title,'fr');
+  return String(b.updatedAt).localeCompare(String(a.updatedAt));
+}
+function renderWsCards(){
+  const panel=$('#wsModGrid');panel.replaceChildren();
+  if(!wsData)return;
+  const search=$('#wsSearch').value.trim().toLocaleLowerCase('fr');
+  const filter=wsData.entries
+    .filter(x=>(wsActiveCategory==='Tous'||x.category===wsActiveCategory)&&(!wsManagerOnly||x.prepared)&&
+      (!search||[x.title,x.author,x.description,x.category].some(t=>String(t).toLocaleLowerCase('fr').includes(search))))
+    .sort((a,b)=>wsCompare(a,b,$('#wsOrder').value));
+  $('#wsVisibleCount').textContent='('+filter.length+')';
+  if(!filter.length){
+    const empty=node('div','','wsEmpty');
+    empty.append(node('strong',wsData.entries.length?'Aucun mod pour ces filtres.':'Aucun mod publié dans ta bibliothèque.'));
+    empty.append(node('p',wsData.entries.length?'Modifie les catégories ou la recherche.':'Choisis un projet dans « Mes mods & créations » puis ajoute-le au Workshop. Les fiches représentent uniquement tes vrais projets.'));
+    panel.append(empty);return;
+  }
+  for(const mod of filter){
+    const card=node('article','','wsModCard');
+    const art=node('div','','wsCardArt');
+    art.append(node('span',WS_ICONS[mod.category]||'✦','wsTileGlyph'),node('span',mod.category,'wsLabel'));
+    const body=node('div','','wsCardBody');
+    const title=node('div','','wsCardHeading');
+    title.append(node('h4',mod.title),node('small','v'+mod.version));
+    body.append(title,node('p',mod.description||'Création ANOMALIA locale — aucune description disponible.'));
+    const chips=node('div','','wsChips');
+    for(const label of [mod.compiled?'Plugin UE5 compilé':'Sources du mod',mod.prepared?'Préparé dans la bibliothèque':'Non préparé',mod.active?'Activé localement':'Jeu non chargé']){
+      chips.append(node('span',label,'wsChip'));
+    }
+    body.append(chips);
+    const actions=node('div','','wsCardActions');
+    const sub=node('button',mod.subscribed?'✓ Abonné':'☆ S’abonner');
+    sub.onclick=async()=>{
+      const r=await safe(()=>api.call('subscribeWorkshopMod',{projectId:mod.id,value:!mod.subscribed}));
+      if(r){msg(r.subscribed?'Abonnement local enregistré.':'Abonnement local annulé.');await refreshWorkshop();}
+    };
+    const prepare=node('button',mod.compiled?(mod.prepared?'↻ Mettre à jour':'↓ Préparer le mod'):'⚒ Compiler d’abord','wsCrimson');
+    prepare.onclick=async()=>{
+      currentId=mod.id;$('#activeProject').value=mod.id;await refreshFiles();renderProjects();
+      if(!mod.compiled){setTab('addon');msg('Ce mod doit être compilé dans Addon Builder avant son installation locale.',true);return;}
+      const r=await safe(()=>api.call('prepareWorkshopMod',{projectId:mod.id}));
+      if(r){msg(r.message);await refreshWorkshop();}
+    };
+    actions.append(prepare,sub);
+    if(mod.prepared){
+      const toggle=node('button',mod.active?'Désactiver':'Activer');
+      toggle.onclick=async()=>{
+        const r=await safe(()=>api.call('toggleWorkshopMod',{projectId:mod.id,enabled:!mod.active}));
+        if(r){msg(r.note);await refreshWorkshop();}
+      };
+      actions.append(toggle);
+    }
+    const edit=node('button','Modifier fiche');
+    edit.onclick=()=>openWsPublish(mod.id);
+    actions.append(edit);body.append(actions);card.append(art,body);panel.append(card);
+  }
+}
+function renderWsProjects(){
+  const box=$('#wsProjects');box.replaceChildren();
+  if(!wsData.projects.length){box.append(node('div','Aucun projet : crée un mod depuis le bouton Nouveau projet.','wsMuted'));return;}
+  for(const project of wsData.projects){
+    const row=node('div','','wsProjectRow');
+    row.append(node('span',project.name));
+    const published=wsData.entries.some(x=>x.id===project.id);
+    const btn=node('button',published?'Modifier fiche':'Ajouter au Workshop',published?'button':'wsCrimson');
+    btn.onclick=()=>openWsPublish(project.id);
+    row.append(btn);box.append(row);
+  }
+}
+function openWsPublish(projectId=null){
+  if(!wsData?.projects?.length){showModal();msg('Crée d’abord ton projet de mod dans ANOMALIA Tools.');return;}
+  const picker=$('#wsProjectSelect');picker.replaceChildren();
+  for(const project of wsData.projects)picker.add(new Option(project.name,project.id));
+  picker.value=projectId&&wsData.projects.some(x=>x.id===projectId)?projectId:(currentId||wsData.projects[0].id);
+  if(!picker.value)picker.value=wsData.projects[0].id;
+  function populate(){
+    const project=wsData.projects.find(x=>x.id===picker.value);
+    const existing=wsData.entries.find(x=>x.id===picker.value);
+    $('#wsModName').value=existing?.title||project?.name||'';
+    $('#wsModCategory').value=existing?.category||'Autres';
+    $('#wsModVersion').value=existing?.version||'0.1.0';
+    $('#wsModDescription').value=existing?.description||project?.description||'';
+  }
+  picker.onchange=populate;populate();
+  $('#wsPublishPanel').hidden=false;$('#wsModName').focus();
+}
+async function saveWsPublish(e){
+  e.preventDefault();
+  const data={projectId:$('#wsProjectSelect').value,title:$('#wsModName').value,
+    category:$('#wsModCategory').value,version:$('#wsModVersion').value,
+    description:$('#wsModDescription').value};
+  const result=await safe(()=>api.call('publishWorkshopMod',data));
+  if(result){$('#wsPublishPanel').hidden=true;msg('Mod ajouté à ton Workshop local. Aucune publication sur Internet.');await refreshWorkshop();}
+}
+
 async function publish(){
   if(!requireProject())return;
   const r=await safe(()=>api.exportPackage(currentId));
@@ -276,6 +428,7 @@ async function publish(){
 }
 $$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
 $('#newProject').onclick=$('#heroCreate').onclick=showModal;
+$('#heroExplore').onclick=()=>setTab('workbench');
 $('#cancelModal').onclick=hideModal;
 $('#createForm').onsubmit=async e=>{
   e.preventDefault();
@@ -296,7 +449,20 @@ $('#addLoot').onclick=()=>{
 };
 $('#saveEconomy').onclick=saveEconomy;
 $('#buildAddon').onclick=packageMod;
+$('#createNativeMod').onclick=nativeCreate;
+$('#checkNativeMod').onclick=nativeStatus;
+$('#buildNativeMod').onclick=nativeBuild;
 $('#exportMod').onclick=publish;
+$('#wsSearch').oninput=renderWsCards;
+$('#wsOrder').onchange=renderWsCards;
+$('#wsReload').onclick=refreshWorkshop;
+$('#wsCreate').onclick=()=>openWsPublish();
+$('#wsManage').onclick=()=>{wsManagerOnly=!wsManagerOnly;$('#wsManage').textContent=wsManagerOnly?'Voir tous les mods ↗':'Gérer mes mods ↗';renderWsCards();};
+$('#wsOpenAddon').onclick=()=>{setTab('addon');};
+$('#wsPublishForm').onsubmit=saveWsPublish;
+$('#wsCancelPublish').onclick=()=>{$('#wsPublishPanel').hidden=true;};
+
+api.onNavigate?.(tab=>{if(tab==='workshop')setTab('workshop');});
 window.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&activeTab==='workbench'){e.preventDefault();saveSource();}
 });

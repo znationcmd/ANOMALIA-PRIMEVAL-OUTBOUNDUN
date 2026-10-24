@@ -1,48 +1,102 @@
 <!doctype html><html lang="fr"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
-<title>ANOMALIA Tools — Creative Development Suite</title></head><body>
+<title>ANOMALIA Tools — Professional Development Suite</title></head><body>
 <div class="shell">
 <aside class="sidebar">
- <div class="brand"><div class="brandBadge">A<span>+</span></div><div><strong>ANOMALIA <em>TOOLS</em></strong><small>CREATIVE DEVELOPMENT SUITE</small></div></div>
- <div class="version">APPLICATION AUTONOME · 0.1.0</div>
- <div class="navHeading">PROJET</div>
+ <div class="brand"><div class="brandBadge"><span class="brandSymbol">A</span><span class="brandPlus">+</span></div><div><strong>ANOMALIA <em>TOOLS</em></strong><small>PROFESSIONAL DEVELOPMENT SUITE</small></div></div>
+ <div class="version"><span class="versionLine"></span> VERSION <strong id="appSidebarVersion" aria-label="Version installée">—</strong> · WINDOWS WORKSTATION</div>
+ <div class="navHeading">ESPACE DE TRAVAIL</div>
  <button data-tab="home" class="nav active"><span>◩</span> Vue d'ensemble</button>
  <button data-tab="workbench" class="nav"><span>⌘</span> Workbench <small>Code</small></button>
  <button data-tab="objects" class="nav"><span>⬡</span> Object Builder <small>3D</small></button>
  <button data-tab="terrain" class="nav"><span>▥</span> Terrain Builder</button>
  <button data-tab="economy" class="nav"><span>◇</span> Central Economy</button>
  <button data-tab="textures" class="nav"><span>▨</span> Texture Tools</button>
- <div class="navHeading">PRODUCTION</div>
+ <div class="navHeading">COMPILATION & EXPORT</div>
  <button data-tab="addon" class="nav"><span>◈</span> Addon Builder</button>
  <button data-tab="publisher" class="nav"><span>⬆</span> Publisher</button>
+ <div class="navHeading">ANOMALIA COMMUNITY</div>
+ <button data-tab="workshop" class="nav"><span>✦</span> ANOMALIA Workshop <small>MODS</small></button>
+ <div class="navHeading">APPLICATION</div>
+ <button data-tab="updates" class="nav"><span>↻</span> Mises à jour <small id="sidebarUpdateBadge">AUTO</small></button>
  <div class="grow"></div>
+ <div class="sidebarWorkspace"><span class="workspaceDot"></span><div><b>STUDIO LOCAL</b><small id="sidebarWorkspaceName">Aucun projet actif</small></div></div>
  <div class="privacy"><span class="greenDot"></span> Espace de travail privé<small>Aucun fichier partagé entre utilisateurs.</small></div>
 </aside>
 <main>
  <header class="topbar">
-   <div class="pageIntro"><small>ANOMALIA / MODDING PIPELINE</small><h1 id="pageTitle">Vue d'ensemble</h1></div>
+   <div class="pageIntro"><small>ANOMALIA <span class="breadcrumbDivider">/</span> CREATION PIPELINE</small><h1 id="pageTitle">Vue d'ensemble</h1></div>
    <div class="headerActions"><label>PROJET ACTIF</label><select id="activeProject"><option value="">Choisir un projet...</option></select><button id="newProject" class="primary">＋ Nouveau projet</button></div>
  </header>
  <div id="notice" role="status" aria-live="polite" hidden></div>
  <div class="content">
   <section id="home" class="page">
-   <div class="hero"><div><div class="eyebrow">ANOMALIA TOOLS / WORKSPACE LOCAL</div><h2>Construis les outils.<br><span>Crée ton univers.</span></h2><p>Une suite de développement de mods avec Workbench, ressources 3D, terrains, économie et création de packages.</p><button id="heroCreate" class="primary">Créer mon premier projet →</button></div><div class="heroSymbol">A</div></div>
-   <div class="sectionHeading"><h3>Outils disponibles</h3><span>7 modules autonomes</span></div>
+   <div class="hero">
+   <div class="heroContent"><div class="eyebrow"><span class="eyebrowDot"></span> ANOMALIA TOOLS · WORLD CREATION</div>
+   <h2>Les outils de ton monde.<br><span>La précision d'un studio.</span></h2>
+   <p>De l'écriture de scripts à la construction de modèles, de paysages et de mods : un atelier de production unifié, local et conçu pour ANOMALIA.</p>
+   <div class="heroActions"><button id="heroCreate" class="primary">Créer un projet <span aria-hidden="true">↗</span></button><button id="heroExplore" class="heroSecondary" type="button">Explorer les outils <span aria-hidden="true">→</span></button></div>
+   <span class="heroFootnote">WORKSPACE PRIVÉ · AUCUN TRANSFERT AUTOMATIQUE</span></div>
+   <div class="heroArtwork" aria-hidden="true"><div class="technicalRing ringOuter"></div><div class="technicalRing ringInner"></div><div class="heroCore">A<span>+</span></div><div class="artMicro">ANOMALIA / TOOLS <span>VERSION 02</span></div></div>
+   </div>
+   <div class="overviewStrip"><div><span>PROJETS ENREGISTRÉS</span><strong id="overviewProjectTotal">0</strong><small>Sur ton compte Windows</small></div><div><span>FICHIERS DU PROJET</span><strong id="overviewFileTotal">0</strong><small>Bibliothèque locale active</small></div><div><span>MODULES DISPONIBLES</span><strong>7</strong><small>Outils de production</small></div><div><span>CONFIDENTIALITÉ</span><strong class="privacyMetric">Locale</strong><small>Aucune synchronisation imposée</small></div></div>
+   <div class="sectionHeading"><div><small>PRODUCTION TOOLKIT</small><h3>Atelier de création</h3></div><span>7 modules distincts · fonctions réelles</span></div>
    <div class="cards" id="moduleCards"></div>
-   <div class="sectionHeading"><h3>Mes projets</h3><span id="projectCount">0 projet</span></div>
+   <div class="sectionHeading"><div><small>LOCAL WORKSPACES</small><h3>Mes projets</h3></div><span id="projectCount">0 projet</span></div>
    <div id="projectsList" class="projectList"></div>
+  </section>
+  <section id="workshop" class="page workshopPage" hidden>
+   <div class="wsBanner">
+    <div class="wsBackground"></div>
+    <div class="wsTopline"><span class="wsStar">✦</span> ANOMALIA PRIMEVAL OUTBOUNDUN <span class="wsToplineEnd">WORKSHOP · CRÉATIONS LOCALES</span></div>
+    <div class="wsWelcome">
+     <div><span class="wsEyebrow">SURVIVRE · CRÉER · PARTAGER</span><h2>ANOMALIA<br><em>WORKSHOP</em></h2>
+      <p>Des mods qui prennent vie dans ton atelier. Prépare des plugins Unreal et gère ta propre bibliothèque.</p>
+      <div class="wsStats"><div><strong id="wsTotal">0</strong><span>Mods dans la bibliothèque</span></div><div><strong id="wsSubs">0</strong><span>Abonnements locaux</span></div><div><strong id="wsPrepared">0</strong><span>Plugins préparés</span></div></div>
+     </div>
+     <aside class="wsConnection"><div class="wsConnectionTitle"><span class="wsLed"></span> ÉTAT DE LA CONNEXION</div>
+      <div class="wsConnectionRow"><span>ANOMALIA Tools</span><strong class="wsGreen">Connecté</strong></div>
+      <div class="wsConnectionRow"><span>Chargeur du jeu UE5</span><strong class="wsAmber">Non connecté</strong></div>
+      <div class="wsConnectionRow"><span>ANOMALIA Editor</span><strong class="wsAmber">À relier</strong></div>
+      <div class="wsConnectionRow"><span>Workshop communautaire</span><strong class="wsAmber">À créer</strong></div>
+      <button type="button" id="wsManage" class="wsCrimson">Gérer mes mods ↗</button>
+     </aside>
+    </div>
+   </div>
+   <div class="wsSurface">
+    <div class="wsSectionHeader"><div><span class="wsSectionOver">DÉCOUVRIR</span><h3>Explorer les créations</h3></div><div class="wsToolbar"><input id="wsSearch" type="search" placeholder="Rechercher un mod local..." aria-label="Rechercher des mods"/><select id="wsOrder" aria-label="Trier les mods"><option value="recent">Récents</option><option value="name">Par nom</option><option value="category">Par catégorie</option></select><button id="wsReload" class="button" type="button">↻ Actualiser</button></div></div>
+    <div class="wsCategories" id="wsCategories"></div>
+    <div class="wsSectionHeader wsSubhead"><div><span class="wsSectionOver">LA BIBLIOTHÈQUE</span><h3>Mods disponibles <span id="wsVisibleCount"></span></h3></div><button id="wsCreate" type="button" class="wsCrimson">＋ Ajouter un mod local</button></div>
+    <div class="wsModGrid" id="wsModGrid"><p>Chargement du catalogue...</p></div>
+    <div class="wsFooterGrid">
+      <div class="wsPanel"><h3>Mes mods & créations</h3><p>Sélectionne l'un de tes projets pour l'ajouter à ta bibliothèque Workshop locale. Seules tes créations sont affichées : aucun faux mod communautaire.</p><div id="wsProjects"></div></div>
+      <div class="wsPanel"><h3>Installer pour ANOMALIA</h3><p>Les boutons sont reliés au générateur de plugins UE5 d'ANOMALIA Tools. Un mod doit être compilé avant de pouvoir être préparé. Le jeu ne charge pas encore automatiquement ces plugins.</p><div id="wsStatus" class="wsInfoLine">Bibliothèque locale opérationnelle · Jeu non connecté</div><button id="wsOpenAddon" type="button" class="button">Ouvrir Addon Builder →</button></div>
+    </div>
+   </div>
+   <div id="wsPublishPanel" class="wsPublishOverlay" hidden>
+    <div class="wsPublishCard" role="dialog" aria-modal="true" aria-labelledby="wsPublishTitle">
+      <h2 id="wsPublishTitle">Ajouter au Workshop local</h2><p>Cette opération est privée : elle n'envoie aucun fichier sur Internet.</p>
+      <form id="wsPublishForm" class="fields"><label>Projet source<select id="wsProjectSelect" required></select></label>
+       <label>Nom du mod<input id="wsModName" maxlength="90" required/></label>
+       <label>Catégorie<select id="wsModCategory"><option>Véhicules</option><option>Armes</option><option>Bâtiments</option><option>Créatures</option><option>Survie</option><option>Cartes</option><option>Vêtements</option><option>Outils</option><option selected>Autres</option></select></label>
+       <label>Version<input id="wsModVersion" value="0.1.0" pattern="[0-9]+\.[0-9]+\.[0-9]+(-[a-zA-Z0-9.-]+)?" required/></label>
+       <label>Description<textarea id="wsModDescription" maxlength="650" rows="3"></textarea></label>
+       <div class="actions end"><button type="button" class="button" id="wsCancelPublish">Annuler</button><button type="submit" class="wsCrimson">Ajouter à ma bibliothèque</button></div>
+      </form>
+    </div>
+   </div>
   </section>
   <section id="workbench" class="page" hidden>
    <div class="panelTitle"><div><h2>Workbench</h2><p>Éditeur de fichiers source, JSON, XML, INI et configurations pour ton mod.</p></div><button id="newSource" class="button">＋ Nouveau fichier</button></div>
    <div class="workbench">
-    <div class="fileBrowser"><div class="subheading">FICHIERS DU PROJET</div><div id="filesList"></div></div>
-    <div class="codePanel"><div class="codeBar"><span id="fileTitle">Aucun fichier sélectionné</span><button id="saveFile" class="primary">Enregistrer le fichier</button></div><textarea id="sourceEditor" spellcheck="false" placeholder="Choisis un fichier à modifier..." aria-label="Éditeur de code"></textarea><div class="editorFoot">Fichiers modifiables jusqu'à 2 Mo. Aucun script n'est exécuté depuis l'éditeur.</div></div>
+    <div class="fileBrowser"><div class="subheading"><span>EXPLORATEUR DE PROJET</span><small>FICHIERS LOCAUX</small></div><div id="filesList"></div></div>
+    <div class="codePanel"><div class="codeBar"><span class="codeTab"><span class="fileTabDot"></span><span id="fileTitle">Aucun fichier sélectionné</span></span><button id="saveFile" class="primary">Enregistrer le fichier</button></div><textarea id="sourceEditor" spellcheck="false" placeholder="Choisis un fichier à modifier..." aria-label="Éditeur de code"></textarea><div class="editorFoot">Fichiers modifiables jusqu'à 2 Mo. Aucun script n'est exécuté depuis l'éditeur.</div></div>
    </div>
   </section>
   <section id="objects" class="page" hidden>
    <div class="panelTitle"><div><h2>Object Builder</h2><p>Importe et prévisualise des modèles GLB ; conserve les autres formats comme sources à traiter dans Blender/Unreal.</p></div><button id="import3D" class="primary">＋ Importer des fichiers 3D</button></div>
-   <div class="previewGrid"><div class="assetBrowser"><div class="subheading">FICHIERS 3D</div><div id="modelsList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="modelTitle">Aucun objet sélectionné</strong><span>APERÇU 3D · GLB</span></div><div id="modelView" class="viewer"><div id="modelEmpty">Sélectionne un fichier GLB pour l'afficher en 3D.</div></div><p class="viewerFoot">Aperçu visuel uniquement : l'édition des sommets, LOD, os, collisions et matériaux Unreal n'est pas encore disponible.</p></div></div>
+   <div class="previewGrid"><div class="assetBrowser"><div class="subheading"><span>RESSOURCES 3D</span><small>FICHIERS DU PROJET</small></div><div id="modelsList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="modelTitle">Aucun objet sélectionné</strong><span class="viewerBadge">GLB · PBR VIEWPORT</span></div><div id="modelView" class="viewer"><div id="modelEmpty">Sélectionne un fichier GLB pour l'afficher en 3D.</div></div><p class="viewerFoot">Aperçu visuel uniquement : l'édition des sommets, LOD, os, collisions et matériaux Unreal n'est pas encore disponible.</p></div></div>
   </section>
   <section id="terrain" class="page" hidden>
    <div class="panelTitle"><div><h2>Terrain Builder</h2><p>Génère une vraie heightmap PNG en niveaux de gris, prête à être affinée pour un paysage UE5.</p></div></div>
@@ -64,18 +118,41 @@
   </section>
   <section id="textures" class="page" hidden>
    <div class="panelTitle"><div><h2>Texture Tools</h2><p>Inspection de textures PNG/JPEG/WebP, dimensions et aperçu sans connexion Internet.</p></div><button id="importTexture" class="primary">＋ Importer des textures</button></div>
-   <div class="previewGrid"><div class="assetBrowser"><div class="subheading">TEXTURES DISPONIBLES</div><div id="texturesList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="textureTitle">Aucune texture</strong><span>APERÇU D'IMAGE</span></div><div class="viewer" id="textureView"><div id="textureEmpty">Choisis une texture pour l'inspecter.</div></div><div id="textureMeta" class="viewerFoot">L'export natif PAA/EDDS nécessite les logiciels officiels et n'est pas simulé ici.</div></div></div>
+   <div class="previewGrid"><div class="assetBrowser"><div class="subheading"><span>BIBLIOTHÈQUE DE TEXTURES</span><small>APERÇU LOCAL</small></div><div id="texturesList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="textureTitle">Aucune texture</strong><span class="viewerBadge">TEXTURE INSPECTOR</span></div><div class="viewer" id="textureView"><div id="textureEmpty">Choisis une texture pour l'inspecter.</div></div><div id="textureMeta" class="viewerFoot">L'export natif PAA/EDDS nécessite les logiciels officiels et n'est pas simulé ici.</div></div></div>
   </section>
   <section id="addon" class="page" hidden>
    <div class="panelTitle"><div><h2>Addon Builder</h2><p>Crée des archives ZIP de sources avec manifeste SHA-256, sans ajouter d'autres utilisateurs ni effacer les fichiers.</p></div></div>
-   <div class="split"><div class="panel"><h3>Préparer une archive de mod</h3><p class="caption">Tous les fichiers du projet hors dossier Dist sont inclus avec leur empreinte SHA-256. L'archive est créée localement.</p><button id="buildAddon" class="primary fullWidth">Construire l'archive ZIP</button><div id="buildInfo" class="output">Aucune archive construite dans cette session.</div></div><div class="panel"><h3>Chaîne de création</h3><div class="pipeline"><div>1 <b>Sources / Config</b></div><div>2 <b>Ressources / Heightmaps</b></div><div>3 <b>Manifeste SHA-256</b></div><div>4 <b>Archive ZIP</b></div></div><p class="caption">Cela ne génère ni .pbo DayZ ni plugin .pak Unreal compilé : un pipeline SDK Unreal restera nécessaire.</p></div></div>
+   <div class="panel" id="nativeModPanel" style="margin-bottom:18px">
+    <h3>Plugin Unreal Engine 5 — compilation native</h3>
+    <p>Génère un véritable plugin <code>.uplugin</code> et son module C++, puis lance <code>RunUAT BuildPlugin</code> sur un PC Windows équipé d'Unreal Engine. Ne compile pas les ressources 3D, ne monte pas le plugin dans le jeu et ne publie rien automatiquement.</p>
+    <div class="actions"><button class="button" id="createNativeMod" type="button">Créer / vérifier le plugin UE5</button>
+      <button class="button" id="checkNativeMod" type="button">Vérifier environnement</button></div>
+    <label style="display:block;margin-top:14px">Dossier racine d'Unreal Engine (ex. C:&#92;Program Files&#92;Epic Games&#92;UE_5.8)
+      <input id="engineRoot" style="width:100%;margin-top:8px" placeholder="Chemin Windows vers UE_5.x (ou variable UE_ROOT)" autocomplete="off"></label>
+    <div class="actions" style="margin-top:12px"><button class="primary" id="buildNativeMod" type="button">Compiler le plugin sur ce PC</button></div>
+    <p class="caption">La compilation exécute du code C++ du projet local. N'utilise ce bouton que pour un projet que tu considères fiable. Le chargement dans ANOMALIA nécessite encore un système de mods côté jeu.</p>
+    <pre class="output" id="nativeBuildInfo" style="white-space:pre-wrap">Aucun plugin UE5 créé.</pre>
+  </div>
+  <div class="split"><div class="panel"><h3>Préparer une archive de mod</h3><p class="caption">Tous les fichiers du projet hors dossier Dist sont inclus avec leur empreinte SHA-256. L'archive est créée localement.</p><button id="buildAddon" class="primary fullWidth">Construire l'archive ZIP</button><div id="buildInfo" class="output">Aucune archive construite dans cette session.</div></div><div class="panel"><h3>Chaîne de création</h3><div class="pipeline"><div>1 <b>Sources / Config</b></div><div>2 <b>Ressources / Heightmaps</b></div><div>3 <b>Manifeste SHA-256</b></div><div>4 <b>Archive ZIP</b></div></div><p class="caption">Cela ne génère ni .pbo DayZ ni plugin .pak Unreal compilé : un pipeline SDK Unreal restera nécessaire.</p></div></div>
   </section>
   <section id="publisher" class="page" hidden>
    <div class="panelTitle"><div><h2>Publisher</h2><p>Prépare un package partageable avec des fichiers de ton projet et exporte-le manuellement.</p></div></div>
    <div class="split"><div class="panel"><h3>Exporter mon mod</h3><p>Enregistre un fichier ZIP sur ton PC, que tu pourras contrôler puis distribuer toi-même.</p><button id="exportMod" class="primary fullWidth">Exporter mon mod en ZIP</button><div id="publishInfo" class="output">Aucune publication en ligne n'est effectuée automatiquement.</div></div><div class="panel"><h3>Sécurité de publication</h3><p class="caption">Les sources restent privées tant que tu ne choisis pas de les partager. Aucun Steam Workshop ni serveur public n'est connecté. Les droits sur les modèles et textures sont à vérifier avant toute diffusion.</p><div class="safeBox">◉ Aucune clé Steam ou Epic demandée. Aucun projet tiers consulté.</div></div></div>
   </section>
+  <section id="updates" class="page" hidden>
+    <div class="panelTitle"><div><small class="sectionOverline">APPLICATION & MAINTENANCE</small><h2>Mises à jour de ANOMALIA Tools</h2><p>Le logiciel vérifie les versions officielles dans un canal séparé de CMD Studio et ANOMALIA Editor.</p></div><span id="updateVersion" class="versionPill">v—</span></div>
+    <div class="updatesLayout">
+      <div class="panel updateMain">
+        <div class="updateHeader"><div class="updateVisual" aria-hidden="true">↻</div><div><small>MISE À JOUR WINDOWS</small><h3 id="updateStatusTitle">Statut du logiciel</h3><p id="updateMessage" role="status" aria-live="polite">Chargement du système de mise à jour…</p></div></div>
+        <div class="updateProgress" id="updateProgress" hidden><span>Progression du téléchargement</span><span id="updatePercentage">0 %</span><div class="updateTrack"><div id="updateProgressFill"></div></div></div>
+        <div class="actions updateActions"><button id="checkUpdates" class="primary" type="button">Vérifier maintenant</button><button id="installUpdates" type="button" hidden>Installer et redémarrer</button></div>
+        <div class="updateDetail"><span>VÉRIFICATION AUTOMATIQUE</span><b>Au démarrage, puis toutes les 6 heures</b></div><div class="updateDetail"><span>INSTALLATION</span><b>À la fermeture après téléchargement</b></div>
+      </div>
+      <div class="panel releaseInfo"><small class="sectionOverline">SÉCURITÉ DE LA DISTRIBUTION</small><h3>Un canal officiel, un seul logiciel.</h3><p>Les nouvelles versions seront proposées depuis la publication officielle ANOMALIA Tools. Aucun fichier de CMD Studio ou d’ANOMALIA Editor n'est téléchargé ici.</p><div class="safeBox">✓ Tes projets, mods et fichiers locaux restent dans ton profil Windows.</div><p class="caption">La première publication sur le canal officiel est nécessaire pour activer les futures mises à jour. Les installateurs ne disposent pas encore de signature Windows Authenticode commerciale.</p></div>
+    </div>
+  </section>
  </div>
- <footer><span>ANOMALIA TOOLS 0.1 · LOGICIEL SÉPARÉ DE CMD STUDIO ET ANOMALIA EDITOR</span><span>PROJETS LOCAUX · DONNÉES PRIVÉES</span></footer>
+ <footer><span>ANOMALIA TOOLS <strong id="appFooterVersion" aria-label="Version installée">—</strong> · SUITE DE PRODUCTION INDÉPENDANTE</span><span>PROJETS LOCAUX · DONNÉES PRIVÉES</span></footer>
 </main></div>
 <div id="modal" class="modal" hidden><div class="modalCard"><h2>Nouveau projet ANOMALIA</h2><p>Un dossier privé est créé uniquement pour ce compte Windows.</p><form id="createForm"><label>Nom du mod ou projet<input id="newName" maxlength="55" placeholder="Mon Mod ANOMALIA" required></label><label>Description<input id="newDescription" maxlength="260" placeholder="Description (facultative)"></label><div class="actions end"><button type="button" id="cancelModal">Annuler</button><button class="primary" type="submit">Créer mon projet</button></div></form></div></div>
 <script type="module" src="/src/renderer.js"></script>
