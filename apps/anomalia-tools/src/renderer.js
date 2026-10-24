@@ -462,6 +462,7 @@ $('#wsOpenAddon').onclick=()=>{setTab('addon');};
 $('#wsPublishForm').onsubmit=saveWsPublish;
 $('#wsCancelPublish').onclick=()=>{$('#wsPublishPanel').hidden=true;};
 
+api.onNavigate?.(tab=>{if(tab==='workshop')setTab('workshop');});
 window.addEventListener('keydown',e=>{
   if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'&&activeTab==='workbench'){e.preventDefault();saveSource();}
 });
