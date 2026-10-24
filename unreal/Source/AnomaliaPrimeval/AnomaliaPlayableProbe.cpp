@@ -94,17 +94,22 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
         if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaProgressArt")))
         {
-            int32 Houses=0,Trees=0;
+            int32 Houses=0,Trees=0,HiddenCrowns=0;
             for(TActorIterator<AActor> It(GetWorld());It;++It)
             {
                 if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1")))continue;
                 auto* Component=It->FindComponentByClass<UStaticMeshComponent>();
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressHiddenCrown_v1")))
+                {
+                    if(!Component || Component->IsVisible()) { Finish(TEXT("Provisional spherical canopy is still visible")); return; }
+                    ++HiddenCrowns; continue;
+                }
                 const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
                 if(It->ActorHasTag(TEXT("ANOMALIA_ProgressTree_v1")))
                 {if(Path.StartsWith(TEXT("/Game/Anomalia/VerifiedProps_v1/"))||Path.Contains(TEXT("/island_tree_02/")))++Trees;}
                 else if(Path.StartsWith(TEXT("/Game/Anomalia/ResidentialPhotogrammetryReview_v1/")))++Houses;
             }
-            if(Houses!=2||Trees!=20){Finish(TEXT("New cooked houses or real trees missing"));return;}
+            if(Houses!=2||Trees!=20||HiddenCrowns!=60){Finish(TEXT("New cooked art missing or provisional crowns still present"));return;}
             Checks.Add(TEXT("validated_progress_houses_and_twenty_real_trees"));
         }
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
@@ -142,7 +147,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play) { Finish(TEXT("Main menu vanished before play")); return; }
         Play->OnClicked.Broadcast();
-        if(Menu->IsInViewport() || GetWorld()->IsPaused()) { Finish(TEXT("Play button did not enter gameplay")); return; }
+        if(Menu->IsInViewport() || GetWorld()->IsPaused() || PC->GetViewTarget()!=PC->GetPawn()) { Finish(TEXT("Play button did not restore gameplay and its camera")); return; }
         Checks.Add(TEXT("main_menu_play_button"));
         Checks.Add(TEXT("native_world_HUD_and_three_vehicle_meshes"));
         Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);

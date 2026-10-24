@@ -63,7 +63,15 @@ try:
         trunk.set_actor_scale3d(unreal.Vector(tree_scale,tree_scale,tree_scale))
         trunk.set_actor_location(unreal.Vector(position.x,position.y,-(b.origin.z-b.box_extent.z)*tree_scale),False,False)
         trunk.tags=list(set(list(trunk.tags)+[TAG,unreal.Name('ANOMALIA_ProgressTree_v1')]))
-        crown.set_actor_hidden_in_game(True)
+        # The look-v2 scene adds two more spherical canopies per original tree.
+        # Retain all actors, but hide every provisional crown component explicitly.
+        for label in ('PlayableTreeCrown'+str(index),'PlayableLook_v2_Canopy'+str(index),'PlayableLook_v2_CanopyTip'+str(index)):
+            old=present.get(label)
+            if not old or OWNER not in old.tags:raise RuntimeError('Owned provisional canopy required: '+label)
+            old.set_actor_hidden_in_game(True)
+            old.static_mesh_component.set_visibility(False,True)
+            old.static_mesh_component.set_hidden_in_game(True,True)
+            old.tags=list(set(list(old.tags)+[TAG,unreal.Name('ANOMALIA_ProgressHiddenCrown_v1')]))
         report['trees']+=1
     real=json.loads((ROOT/'SourceAssets/RealismValidation_v2/manifest.json').read_text())
     for vehicle_id,source_id in [('car','concept_car'),('transport_truck','box_truck')]:

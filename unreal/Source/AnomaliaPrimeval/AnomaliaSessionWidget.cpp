@@ -24,6 +24,13 @@
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonReader.h"
+#include "Camera/CameraActor.h"
+#include "Camera/CameraComponent.h"
+#include "Camera/PlayerCameraManager.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Kismet/KismetSystemLibrary.h"
@@ -53,6 +60,37 @@ TSharedRef<SWidget> UAnomaliaSessionWidget::RebuildWidget()
 void UAnomaliaSessionWidget::NativeConstruct()
 {
     Super::NativeConstruct(); SetIsFocusable(true);
+    auto* PC=GetOwningPlayer();
+    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")))
+    {
+        for(TActorIterator<AActor> It(GetWorld());It;++It)
+        {
+            if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1"))) continue;
+            const auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
+            if(!Mesh || !Mesh->GetStaticMesh() || !Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/country_house_scan/"))) continue;
+            FVector Center,Extent; It->GetActorBounds(false,Center,Extent);
+            const double Distance=FMath::Max(1800.,Extent.Size2D()*1.6);
+            const FVector Eye=Center+FVector(Distance,-Distance,FMath::Max(180.,Extent.Z*.4));
+            FActorSpawnParameters Params; Params.ObjectFlags|=RF_Transient;
+            MenuCamera=GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(),Eye,(Center-Eye).Rotation(),Params);
+            if(MenuCamera)
+            {
+                MenuCamera->GetCameraComponent()->SetFieldOfView(60.f);
+                PreviousViewTarget=PC->GetViewTarget(); PC->SetViewTarget(MenuCamera);
+                if(PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
+            }
+            break;
+        }
+    }
+}
+void UAnomaliaSessionWidget::NativeDestruct()
+{
+    if(MenuCamera)
+    {
+        if(auto* PC=GetOwningPlayer()) if(PreviousViewTarget.IsValid()) PC->SetViewTarget(PreviousViewTarget.Get());
+        MenuCamera->Destroy(); MenuCamera=nullptr; PreviousViewTarget.Reset();
+    }
+    Super::NativeDestruct();
 }
 void UAnomaliaSessionWidget::BuildLayout()
 {

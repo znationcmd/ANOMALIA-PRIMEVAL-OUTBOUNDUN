@@ -6,6 +6,7 @@ class UButton;
 class UTextBlock;
 class UVerticalBox;
 class UWidgetSwitcher;
+class ACameraActor;
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaSessionWidget : public UUserWidget
 {
@@ -13,6 +14,7 @@ class ANOMALIAPRIMEVAL_API UAnomaliaSessionWidget : public UUserWidget
 public:
     static UAnomaliaSessionWidget* Open(APlayerController* PC,bool MainMenu=false);
     virtual void NativeConstruct() override;
+    virtual void NativeDestruct() override;
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event) override;
 private:
@@ -27,6 +29,8 @@ private:
     UPROPERTY() TObjectPtr<UButton> HomeButton;
     UPROPERTY() TObjectPtr<UButton> OptionsButton;
     UPROPERTY() TObjectPtr<UButton> ModsButton;
+    UPROPERTY() TObjectPtr<ACameraActor> MenuCamera;
+    TWeakObjectPtr<AActor> PreviousViewTarget;
     UFUNCTION() void ShowHome();
     UFUNCTION() void ShowOptions();
     UFUNCTION() void ShowMods();
