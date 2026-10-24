@@ -17,6 +17,15 @@
 #include "Components/WidgetSwitcher.h"
 #include "Components/Image.h"
 #include "Components/ScaleBox.h"
+#include "Components/HorizontalBox.h"
+#include "Components/HorizontalBoxSlot.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
+#include "Components/Spacer.h"
+#include "Components/Overlay.h"
+#include "Components/OverlaySlot.h"
+#include "Styling/SlateTypes.h"
+
 #include "Engine/Texture2D.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
@@ -203,6 +212,98 @@ void UAnomaliaSessionWidget::BuildLayout()
     Button(TEXT("SessionRefreshMods"),TEXT("Actualiser la liste"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshMods);
     Button(TEXT("SessionOpenModsFolder"),TEXT("Ouvrir le dossier Mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenModsFolder);
     ModRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SessionModRows")); Rows->AddChildToVerticalBox(ModRows);
+    // Dedicated full-screen native UMG Workshop, NOT the web/Electron demo.
+    // The standard local-mods page is retained internally for compatibility.
+    WorkshopFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("WorkshopFullScreen"));
+    WorkshopFrame->SetBrushColor(FLinearColor(.023f,.018f,.031f,.98f));
+    WorkshopFrame->SetPadding(FMargin(18));
+    auto* WS=Canvas->AddChildToCanvas(WorkshopFrame);
+    WS->SetAnchors(FAnchors(.025f,.035f,.975f,.965f));
+    WS->SetOffsets(FMargin(0));
+    auto* Layout=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    WorkshopFrame->SetContent(Layout);
+    auto WSText=[&](UVerticalBox* Parent,const FString& Value,int32 Size,const FLinearColor& Color)
+    {
+        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Text->SetText(FText::FromString(Value));Text->SetAutoWrapText(true);
+        auto Font=Text->GetFont();Font.Size=Size;Text->SetFont(Font);
+        Text->SetColorAndOpacity(FSlateColor(Color));
+        Parent->AddChildToVerticalBox(Text)->SetPadding(FMargin(4,5));
+        return Text;
+    };
+    auto WSButton=[&](UHorizontalBox* Parent,const TCHAR* Id,const FString& Value)
+    {
+        auto* Btn=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
+        Btn->SetBackgroundColor(FLinearColor(.46f,.11f,.075f,1.f));
+        auto* Txt=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Txt->SetText(FText::FromString(Value));Txt->SetColorAndOpacity(FSlateColor(FLinearColor(.99f,.84f,.76f)));
+        auto Font=Txt->GetFont();Font.Size=14;Txt->SetFont(Font);Btn->SetContent(Txt);
+        Parent->AddChildToHorizontalBox(Btn)->SetPadding(FMargin(4,4));
+        return Btn;
+    };
+    // Red metallic navigation strip and an always-functional in-game back button.
+    auto* Top=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+    Top->SetBrushColor(FLinearColor(.13f,.046f,.06f,1.f));
+    Top->SetPadding(FMargin(16,9));
+    Layout->AddChildToVerticalBox(Top)->SetPadding(FMargin(0,0,0,10));
+    auto* TopRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Top->SetContent(TopRow);
+    auto* TopTitle=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    TopTitle->SetText(FText::FromString(TEXT("✦  ANOMALIA    WORKSHOP")));
+    auto TF=TopTitle->GetFont();TF.Size=26;TopTitle->SetFont(TF);
+    TopTitle->SetColorAndOpacity(FSlateColor(FLinearColor(.99f,.77f,.62f)));
+    auto* TitleSlot=TopRow->AddChildToHorizontalBox(TopTitle);
+    TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    WSButton(TopRow,TEXT("WorkshopReturn"),TEXT("← Retour au jeu"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::CloseWorkshop);
+
+    auto* Hero=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+    Hero->SetBrushColor(FLinearColor(.085f,.04f,.058f,.98f));Hero->SetPadding(FMargin(18,11));
+    Layout->AddChildToVerticalBox(Hero)->SetPadding(FMargin(0,0,0,12));
+    auto* HeroLayout=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Hero->SetContent(HeroLayout);
+    auto* HeroLeft=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    HeroLayout->AddChildToHorizontalBox(HeroLeft)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    WSText(HeroLeft,TEXT("SURVIVRE  ·  CRÉER  ·  PARTAGER"),13,FLinearColor(.99f,.57f,.43f));
+    WSText(HeroLeft,TEXT("ANOMALIA WORKSHOP"),32,FLinearColor(1.f,.82f,.67f));
+    WSText(HeroLeft,TEXT("Découvrez vos créations, véhicules, bâtiments et objets depuis le jeu."),15,FLinearColor(.86f,.70f,.65f));
+    WSText(HeroLeft,TEXT("Catalogue local réel · extensions Unreal compatibles uniquement"),11,FLinearColor(.97f,.55f,.43f));
+    if(auto* Art=LoadObject<UTexture2D>(nullptr,TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn))
+    {
+        auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+        Image->SetBrushFromTexture(Art,true);
+        Image->SetColorAndOpacity(FLinearColor(1.f,.55f,.48f,.85f));
+        HeroLayout->AddChildToHorizontalBox(Image)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    }
+
+    auto* Actions=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    Layout->AddChildToVerticalBox(Actions)->SetPadding(FMargin(0,0,0,12));
+    WSButton(Actions,TEXT("WorkshopOpenTools"),TEXT("ANOMALIA Tools ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopTools);
+    WSButton(Actions,TEXT("WorkshopOpenHosting"),TEXT("CMD Hosting ↗"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::OpenWorkshopHosting);
+    WSButton(Actions,TEXT("WorkshopRefresh"),TEXT("↻ Actualiser les mods"))->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::RefreshWorkshop);
+    auto* Filters=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    Layout->AddChildToVerticalBox(Filters)->SetPadding(FMargin(0,0,0,8));
+    WorkshopSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("WorkshopSearch"));
+    WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod dans le Workshop...")));
+    Filters->AddChildToHorizontalBox(WorkshopSearch)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    WorkshopCategory=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopCategory"));
+    for(const TCHAR* Category:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
+        WorkshopCategory->AddOption(Category);
+    WorkshopCategory->SetSelectedOption(TEXT("Tous"));
+    Filters->AddChildToHorizontalBox(WorkshopCategory)->SetPadding(FMargin(12,0,0,0));
+    WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopSearchChanged);
+    WorkshopCategory->OnSelectionChanged.AddDynamic(this,&UAnomaliaSessionWidget::WorkshopCategoryChanged);
+    WorkshopStatus=WSText(Layout,TEXT("Recherche de mods locaux..."),12,FLinearColor(.96f,.65f,.48f));
+    auto* Listing=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopListScroll"));
+    Layout->AddChildToVerticalBox(Listing)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    WorkshopCards=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("WorkshopCards"));
+    Listing->AddChild(WorkshopCards);
+    auto* Footer=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+    Footer->SetBrushColor(FLinearColor(.14f,.052f,.055f,1.f));Footer->SetPadding(FMargin(9,5));
+    Layout->AddChildToVerticalBox(Footer);
+    auto* Disclaimer=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    Disclaimer->SetAutoWrapText(true);
+    Disclaimer->SetText(FText::FromString(TEXT("Atelier ANOMALIA : les manifestes et créations réels sont visibles. Installation, téléchargement et chargement UE5 automatiques : pas encore connectés.")));
+    Disclaimer->SetColorAndOpacity(FSlateColor(FLinearColor(.94f,.66f,.57f)));
+    Footer->SetContent(Disclaimer);
+    WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
     SelectPage(0);
     ClosePage();
 }
@@ -210,6 +311,7 @@ void UAnomaliaSessionWidget::SelectPage(int32 Index)
 {
     if(!Pages || Index<0 || Index>=Pages->GetChildrenCount()) return;
     Pages->SetActiveWidgetIndex(Index);
+    if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
     FinishIntro();if(DetailsFrame)DetailsFrame->SetVisibility(ESlateVisibility::Visible);
     UButton* PageButtons[]={HomeButton.Get(),OptionsButton.Get(),ModsButton.Get()};
     for(int32 I=0;I<3;++I) if(PageButtons[I]) PageButtons[I]->SetBackgroundColor(I==Index?FLinearColor(.35f,.32f,.21f,1.f):FLinearColor(.08f,.10f,.085f,1.f));
@@ -217,7 +319,14 @@ void UAnomaliaSessionWidget::SelectPage(int32 Index)
 void UAnomaliaSessionWidget::ClosePage() { if(DetailsFrame)DetailsFrame->SetVisibility(ESlateVisibility::Collapsed); }
 void UAnomaliaSessionWidget::ShowHome() { SelectPage(0); }
 void UAnomaliaSessionWidget::ShowOptions() { SelectPage(1); }
-void UAnomaliaSessionWidget::ShowMods() { RefreshMods(); SelectPage(2); }
+void UAnomaliaSessionWidget::ShowMods()
+{
+    // Preserve the original page index for gamepad/menu navigation and tests.
+    RefreshMods(); SelectPage(2);
+    if(DetailsFrame) DetailsFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Visible);
+    RefreshWorkshop();
+}
 void UAnomaliaSessionWidget::RefreshMods()
 {
     if(!ModRows) return;
@@ -247,6 +356,134 @@ void UAnomaliaSessionWidget::RefreshMods()
     }
     if(Count==0) AddRow(TEXT("Aucun manifeste local. Aucun mod tiers activé."));
 }
+void UAnomaliaSessionWidget::CloseWorkshop()
+{
+    if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(DetailsFrame) DetailsFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(ModsButton) ModsButton->SetUserFocus(GetOwningPlayer());
+}
+void UAnomaliaSessionWidget::WorkshopSearchChanged(const FText&)
+{
+    if(WorkshopFrame && WorkshopFrame->GetVisibility()==ESlateVisibility::Visible) RefreshWorkshop();
+}
+void UAnomaliaSessionWidget::WorkshopCategoryChanged(FString,ESelectInfo::Type)
+{
+    if(WorkshopFrame && WorkshopFrame->GetVisibility()==ESlateVisibility::Visible) RefreshWorkshop();
+}
+void UAnomaliaSessionWidget::OpenWorkshopTools()
+{
+#if PLATFORM_WINDOWS
+    // Secondary action only. The actual Workshop UI runs inside UE5.
+    FPlatformProcess::LaunchURL(TEXT("anomalia-tools://workshop"),nullptr,nullptr);
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(TEXT("Ouverture d’ANOMALIA Tools demandée (si installé sur Windows).")));
+#else
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(TEXT("ANOMALIA Tools est disponible pour Windows.")));
+#endif
+}
+void UAnomaliaSessionWidget::OpenWorkshopHosting()
+{
+    FPlatformProcess::LaunchURL(TEXT("https://cmd-hosting-web-production.up.railway.app/#cmdMods"),nullptr,nullptr);
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(TEXT("Page CMD Hosting ouverte dans votre navigateur. Installation serveur non disponible.")));
+}
+void UAnomaliaSessionWidget::RefreshWorkshop()
+{
+    if(!WorkshopCards || !WorkshopStatus || !WidgetTree) return;
+    WorkshopCards->ClearChildren();
+    const FString Search=WorkshopSearch?WorkshopSearch->GetText().ToString().TrimStartAndEnd():TEXT("");
+    const FString Filter=WorkshopCategory?WorkshopCategory->GetSelectedOption():TEXT("Tous");
+    int32 Total=0,Visible=0;
+    auto Row=[&](const FString& Title,const FString& Details,bool Accent)
+    {
+        auto* Card=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+        Card->SetBrushColor(Accent?FLinearColor(.24f,.075f,.065f,.98f):FLinearColor(.075f,.067f,.092f,.98f));
+        Card->SetPadding(FMargin(14,11));
+        WorkshopCards->AddChildToVerticalBox(Card)->SetPadding(FMargin(3,4));
+        auto* Contents=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+        Card->SetContent(Contents);
+        for(const TPair<FString,int32>& Line:{TPair<FString,int32>(Title,18),TPair<FString,int32>(Details,12)})
+        {
+            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Text->SetText(FText::FromString(Line.Key));Text->SetAutoWrapText(true);
+            auto Font=Text->GetFont();Font.Size=Line.Value;Text->SetFont(Font);
+            Text->SetColorAndOpacity(FSlateColor(Line.Value==18?FLinearColor(1.f,.84f,.72f):FLinearColor(.8f,.67f,.65f)));
+            Contents->AddChildToVerticalBox(Text)->SetPadding(FMargin(0,3));
+        }
+    };
+    auto Matches=[&](const FString& Category,const FString& Name,const FString& Description)
+    {
+        return (Filter.IsEmpty() || Filter==TEXT("Tous") || Filter.Equals(Category,ESearchCase::IgnoreCase)) &&
+            (Search.IsEmpty() || Name.Contains(Search,ESearchCase::IgnoreCase) || Category.Contains(Search,ESearchCase::IgnoreCase) ||
+                Description.Contains(Search,ESearchCase::IgnoreCase));
+    };
+    // ANOMALIA Tools stores its real projects in Electron userData/private-workspaces.
+    // Never parse raw C++ mods or execute anything while displaying this catalogue.
+#if PLATFORM_WINDOWS
+    const FString AppData=FPlatformMisc::GetEnvironmentVariable(TEXT("APPDATA"));
+    const TArray<FString> Workspaces={
+        FPaths::Combine(AppData,TEXT("ANOMALIA Tools"),TEXT("private-workspaces")),
+        FPaths::Combine(AppData,TEXT("anomalia-tools"),TEXT("private-workspaces"))
+    };
+    for(const FString& Workspace:Workspaces)
+    {
+        if(AppData.IsEmpty() || !IFileManager::Get().DirectoryExists(*Workspace)) continue;
+        TArray<FString> Folders;IFileManager::Get().FindFiles(Folders,*(Workspace/TEXT("*")),false,true);
+        Folders.Sort();int32 Scanned=0;
+        for(const FString& Folder:Folders)
+        {
+            if(++Scanned>500 || Total>=200) break;
+            if(Folder.Len()>100 || !Folder.StartsWith(TEXT("mod-")) && !Folder.StartsWith(TEXT("project-")) &&
+                !Folder.StartsWith(TEXT("anomalia-"))) continue;
+            const FString File=FPaths::Combine(Workspace,Folder,TEXT("Config/workshop.json"));
+            const int64 Size=IFileManager::Get().FileSize(*File);
+            if(Size<=0 || Size>64*1024) continue;
+            FString Data;if(!FFileHelper::LoadFileToString(Data,*File)) continue;
+            TSharedPtr<FJsonObject> Json;
+            if(!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Data),Json) || !Json.IsValid()) continue;
+            FString Schema,Id,Name,Category,Description,Version;
+            if(!Json->TryGetStringField(TEXT("schema"),Schema) || Schema!=TEXT("anomalia-workshop-entry") ||
+                !Json->TryGetStringField(TEXT("projectId"),Id) || Id!=Folder ||
+                !Json->TryGetStringField(TEXT("title"),Name) || Name.IsEmpty()) continue;
+            Json->TryGetStringField(TEXT("category"),Category);
+            Json->TryGetStringField(TEXT("description"),Description);
+            Json->TryGetStringField(TEXT("modVersion"),Version);
+            Name=Name.Left(90);Category=Category.Left(35);Description=Description.Left(180);
+            ++Total;
+            if(!Matches(Category,Name,Description)) continue;
+            ++Visible;
+            Row(Name+TEXT("   ·   ")+Category+TEXT("   v")+Version.Left(32),
+                Description+TEXT("\nCréation ANOMALIA Tools · plugin UE5 non activé dans le jeu"),true);
+        }
+        break;
+    }
+#endif
+    // Preserve the original local Saved/Mods manifests, clearly marked as unmounted.
+    const FString Root=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Mods"));
+    TArray<FString> Folders;IFileManager::Get().FindFiles(Folders,*(Root/TEXT("*")),false,true);Folders.Sort();
+    int32 Checked=0;
+    for(const FString& Folder:Folders)
+    {
+        if(++Checked>200 || Total>=400) break;
+        const FString File=FPaths::Combine(Root,Folder,TEXT("manifest.json"));
+        const int64 Size=IFileManager::Get().FileSize(*File);
+        if(Size<=0 || Size>256*1024) continue;
+        FString Json,Error;FAnomaliaModManifest Manifest;
+        if(!FFileHelper::LoadFileToString(Json,*File) ||
+            !FJsonObjectConverter::JsonObjectStringToUStruct(Json,&Manifest,0,0) ||
+            !UAnomaliaModResolver::ValidateModManifest(Manifest,Error))continue;
+        ++Total;
+        const FString Category=TEXT("Autres");
+        if(!Matches(Category,Manifest.Id,FString()))continue;
+        ++Visible;
+        Row(Manifest.Id+TEXT("  ·  v")+Manifest.Version,
+            TEXT("Manifeste reconnu · paquet non authentifié · aucun mod chargé"),false);
+    }
+    WorkshopStatus->SetText(FText::FromString(FString::Printf(TEXT("WORKSHOP ANOMALIA    %d création(s) trouvée(s)  ·  %d affichée(s)  ·  Chargement UE5 non connecté"),
+        Total,Visible)));
+    if(Visible==0)
+        Row(TEXT("Aucun mod disponible dans cette catégorie"),
+            TEXT("Le Workshop est intégré au jeu. Créez un mod avec ANOMALIA Tools et publiez-le dans votre bibliothèque locale.\nAucun téléchargement ni installation automatique n’est simulé."),false);
+}
+
 void UAnomaliaSessionWidget::OpenModsFolder()
 {
     const FString Root=FPaths::ConvertRelativePathToFull(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Mods")));
