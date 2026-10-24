@@ -4,6 +4,7 @@ on:
     branches:
       - feature/anomalia-editor-worldforge-dayz-workspace-20261023
       - feature/anomalia-editor-actual-world-bridge-20261023
+      - feature/anomalia-editor-map-launcher-pro-20261024
     paths:
       - "apps/anomalia-editor/**"
       - ".github/workflows/anomalia-editor-worldforge-visual.yml"
@@ -46,6 +47,10 @@ jobs:
           mkdir -p screenshots
           npx playwright screenshot --browser chromium --viewport-size "1600,900" --wait-for-timeout 1800 \
             http://127.0.0.1:4174/ screenshots/worldforge-desktop-1600x900.png
+      - name: Capturer le vrai bureau compact 1366x768
+        run: |
+          mkdir -p screenshots
+          node -e "const {chromium}=require('playwright'); (async()=>{const b=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader']});const p=await b.newPage({viewport:{width:1366,height:768},deviceScaleFactor:1});await p.goto('http://127.0.0.1:4174/',{waitUntil:'networkidle'});await p.locator('#mapResume').click();await p.waitForTimeout(900);await p.screenshot({path:'screenshots/editor-compact-1366x768.png'});await b.close()})().catch(e=>{console.error(e);process.exit(1)})"
       - name: Capturer interface smartphone reelle
         run: |
           npx playwright screenshot --browser chromium --viewport-size "390,844" --wait-for-timeout 1800 \
