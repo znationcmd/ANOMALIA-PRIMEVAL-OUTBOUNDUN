@@ -2,6 +2,8 @@
 const fs=require('node:fs');
 const path=require('node:path');
 const {shell}=require('electron');
+const {spawn}=require('node:child_process');
+const {discoverInstalledProject}=require('./installed-project.cjs');
 const IGNORE=new Set(['Intermediate','Saved','Binaries','DerivedDataCache','Build','node_modules','.git']);
 const MAX_MAPS=250;
 class UnrealBridge{
@@ -16,7 +18,7 @@ class UnrealBridge{
   const real=await fs.promises.realpath(projectPath);
   const info=await fs.promises.lstat(real);
   if(!info.isFile()||info.isSymbolicLink()||info.size>1024*1024)throw Error('Fichier projet Unreal non valide.');
-  const raw=await fs.promises.readFile(real,'utf8'),config=JSON.parse(raw);
+  const raw=await fs.promises.readFile(real,'utf8'),config=JSON.parse(raw.replace(/^\uFEFF/,''));
   if(!config||typeof config!=='object'||!Array.isArray(config.Modules))throw Error('Fichier .uproject invalide ou incomplet.');
   const content=path.join(path.dirname(real),'Content');
   const maps=[];
@@ -44,6 +46,10 @@ class UnrealBridge{
     note:'Les fichiers .umap doivent être ouverts dans Unreal Engine. ANOMALIA Editor ne les convertit pas en scènes Three.js.'};
  }
  async status(){
+  try{
+   const installed=discoverInstalledProject();
+   if(installed)return {...await this.inspectProject(installed.project),...installed};
+  }catch(error){return {linked:false,maps:[],mapCount:0,warning:error.message};}
   if(!this.linked)return {linked:false,maps:[],mapCount:0};
   try{return await this.inspectProject(this.linked);}
   catch{return {linked:false,maps:[],mapCount:0,warning:'Le projet Unreal lié est inaccessible. Relie le fichier .uproject.'};}
@@ -57,9 +63,24 @@ class UnrealBridge{
   this.linked=data.project;
   return data;
  }
- async launch(){
+ async launch(selectedMap){
   const data=await this.status();
   if(!data.linked)throw Error('Liaison du projet UE5 requise.');
+  if(data.automatic){
+   const relative=selectedMap||data.mapPackage.replace('/Game/','')+'.umap';
+   if(typeof relative!=='string'||!(/^[A-Za-z0-9_\/-]+\.umap$/.test(relative))||!data.maps.includes(relative))throw Error('Carte absente du projet actif.');
+   const map='/Game/'+relative.slice(0,-5);
+   if(typeof data.engineRoot!=='string'||!path.isAbsolute(data.engineRoot))throw Error('Moteur Unreal installé introuvable.');
+   const editor=path.join(data.engineRoot,'Engine','Binaries','Win64','UnrealEditor.exe');
+   if(!(await fs.promises.stat(editor)).isFile())throw Error('Unreal Editor est absent.');
+   // No shell expansion. Map arguments are drawn exclusively from the scanned project.
+   await new Promise((resolve,reject)=>{
+    const child=spawn(editor,[data.project,map,'-d3d11','-sm5'],{shell:false,detached:true,stdio:'ignore',cwd:data.projectRoot});
+    child.once('error',reject);child.once('spawn',()=>{child.unref();resolve();});
+   });
+   return {launched:true,projectName:data.projectName,engine:data.engine,mapPackage:map,commit:data.commit};
+  }
+  if(selectedMap)throw Error('Le choix de carte nécessite le projet installé synchronisé.');
   // Open the actual Unreal project through the registered Epic/Unreal Windows file handler.
   // Never interpret raw user-provided commands or paths as shell arguments.
   const error=await shell.openPath(data.project);

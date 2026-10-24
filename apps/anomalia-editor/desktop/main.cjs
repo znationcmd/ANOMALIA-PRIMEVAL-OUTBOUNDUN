@@ -37,7 +37,7 @@ app.whenReady().then(()=>{
     if(choice.canceled||!choice.filePaths.length)return {cancelled:true};
     return unrealBridge.link(choice.filePaths[0]);
   });
-  ipcMain.handle('editor:unreal:open',()=>unrealBridge.launch());
+  ipcMain.handle('editor:unreal:open',(_event,map)=>unrealBridge.launch(map));
   ipcMain.handle('editor:library:status',()=>gameLibrary.getStatus());
   ipcMain.handle('editor:library:scan',()=>gameLibrary.scan());
   ipcMain.handle('editor:library:read',(_event,id)=>gameLibrary.read(id));

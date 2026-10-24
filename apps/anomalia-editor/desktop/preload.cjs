@@ -5,7 +5,7 @@ contextBridge.exposeInMainWorld('anomaliaDesktop',Object.freeze({
   unreal:Object.freeze({
     status:()=>ipcRenderer.invoke('editor:unreal:status'),
     link:()=>ipcRenderer.invoke('editor:unreal:link'),
-    open:()=>ipcRenderer.invoke('editor:unreal:open')
+    open:map=>ipcRenderer.invoke('editor:unreal:open',map)
   }),
   gameLibrary:Object.freeze({
     status:()=>ipcRenderer.invoke('editor:library:status'),

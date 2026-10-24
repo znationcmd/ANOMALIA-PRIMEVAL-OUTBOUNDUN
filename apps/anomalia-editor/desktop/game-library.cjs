@@ -4,9 +4,10 @@ const path=require('node:path');
 const os=require('node:os');
 const crypto=require('node:crypto');
 const {importArchive}=require('./pack-import.cjs');
+const {discoverInstalledProject}=require('./installed-project.cjs');
 
 const ACCEPTED=new Set(['.glb','.gltf','.fbx','.obj','.usd','.usdz','.blend','.uasset','.umap','.mhmat','.mhclo','.png','.jpg','.jpeg','.webp','.tga']);
-const IGNORE=new Set(['.git','.svn','node_modules','Binaries','Intermediate','Saved','DerivedDataCache','Build','dist','release','.vs','__pycache__']);
+const IGNORE=new Set(['.git','.svn','node_modules','Binaries','Intermediate','Saved','DerivedDataCache','Build','dist','release','.vs','__pycache__','__ExternalActors__','__ExternalObjects__']);
 const MAX_ENTRIES=35000;
 function category(name,kind){
   const s=name.toLowerCase();
@@ -61,7 +62,8 @@ class GameLibrary{
   getStatus(){
     const counts={};
     for(const o of this.items)counts[o.category]=(counts[o.category]||0)+1;
-    return {configured:Boolean(this.root)||fs.existsSync(this.packRoot),folder:this.root,
+    return {configured:Boolean(this.root)||Boolean(this.installed)||fs.existsSync(this.packRoot),folder:this.root||this.installed?.projectRoot||'',
+      installedCommit:this.installed?.commit||null,automaticProject:Boolean(this.installed),syncWarning:this.syncWarning||null,
       packsFolder:this.packRoot,packCount:this.items.filter(o=>o.rootTag==='pack').length,items:this.items,counts,
       total:this.items.length,syncedAt:this.syncedAt||null};
   }
@@ -69,7 +71,10 @@ class GameLibrary{
     if(this.loading)return {changed:false,...this.getStatus()};
     this.loading=true;
     try{
+      this.syncWarning='';
+      try{this.installed=discoverInstalledProject();}catch(error){this.installed=null;this.syncWarning=error.message;}
       const sources=[
+        ...(this.installed?[{tag:'native',dir:this.installed.projectRoot}]:[]),
         ...(this.root?[{tag:'game',dir:this.root}]:[]),
         ...(fs.existsSync(this.packRoot)?[{tag:'pack',dir:this.packRoot}]:[])
       ];
@@ -114,7 +119,7 @@ class GameLibrary{
         }
       }
       entries.sort((a,b)=>a.category.localeCompare(b.category,'fr')||a.name.localeCompare(b.name,'fr'));
-      const signature=crypto.createHash('sha256').update(entries.map(x=>x.id+':'+x.bytes+':'+x.mtimeMs).join('|')).digest('hex');
+      const signature=crypto.createHash('sha256').update((this.installed?.commit||'')+'|'+entries.map(x=>x.id+':'+x.bytes+':'+x.mtimeMs).join('|')).digest('hex');
       const changed=signature!==this.signature;
       this.signature=signature;
       this.items=entries;
@@ -133,7 +138,11 @@ class GameLibrary{
     const item=this.index.get(id);
     if(!item)throw Error('Fichier absent du catalogue. Actualise la bibliothèque.');
     if(!item.canPlace&&!item.canOpen&&!item.canTerrain)throw Error('Cette ressource doit être convertie ou ouverte dans Unreal Engine avant son utilisation.');
-    const root=await fs.promises.realpath(item.rootTag==='pack'?this.packRoot:this.root);
+    if(item.rootTag==='native'){
+      const current=discoverInstalledProject();
+      if(!current||current.commit!==this.installed?.commit)throw Error('Le projet a été mis à jour. Actualise le catalogue.');
+    }
+    const root=await fs.promises.realpath(item.rootTag==='pack'?this.packRoot:item.rootTag==='native'?this.installed.projectRoot:this.root);
     const full=await fs.promises.realpath(path.join(root,...item.relative.split('/')));
     if(!isInside(root,full))throw Error('Chemin non autorisé.');
     const info=await fs.promises.stat(full);

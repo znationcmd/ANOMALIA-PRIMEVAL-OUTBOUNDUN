@@ -14,13 +14,14 @@ export function bindWorldSources({terrain,notify,onHeightmap,onClearTerrain}){
       announce(status?.warning||'Projet Unreal non lié. Associe AnomaliaPrimeval.uproject une seule fois.');
       return;
     }
-    announce('Projet : '+status.projectName+' · Unreal '+status.engine+
-      ' · '+status.mapCount+' fichiers de carte .umap détectés.');
+    announce((status.automatic?'Synchronisé automatiquement · '+status.commit.slice(0,8)+' · ':'Projet lié · ')+status.projectName+' · Unreal '+status.engine+
+      ' · '+status.mapCount+' cartes détectées.');
     const preview=status.maps.slice(0,12);
     for(const file of preview){
-      const row=document.createElement('div');
+      const row=document.createElement(status.automatic?'button':'div');
       row.className='worldMapEntry';row.textContent='◇ '+file;
-      row.title='Carte Unreal native : cliquer sur « Ouvrir la vraie carte » pour ouvrir UE5.';
+      row.title=status.automatic?'Ouvrir cette carte dans Unreal Editor':'Carte Unreal native : ouvrir le projet dans UE5.';
+      if(status.automatic)row.addEventListener('click',()=>open(file));
       maps.append(row);
     }
     if(status.mapCount>12){
@@ -34,12 +35,12 @@ export function bindWorldSources({terrain,notify,onHeightmap,onClearTerrain}){
     if(!api)return desktopRequired();
     try{const r=await api.link();if(!r.cancelled)updateWorld(r);}catch(err){showError(err);}
   }
-  async function open(){
+  async function open(selectedMap){
     if(!api)return desktopRequired();
     try{
       const status=await api.status();
       if(!status.linked)return link();
-      const result=await api.open();
+      const result=await api.open(typeof selectedMap==='string'?selectedMap:undefined);
       notify('Ouverture du véritable projet '+result.projectName+' dans Unreal Engine. Ce logiciel reste disponible pour les secteurs JSON/GLB.');
     }catch(err){showError(err);}
   }
