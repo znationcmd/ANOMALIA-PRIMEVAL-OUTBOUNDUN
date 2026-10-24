@@ -13,12 +13,15 @@ import { saveTerrain,loadTerrain as loadTerrainCache,clearTerrain as clearTerrai
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
+import { createMapLauncher } from './map-launcher.js';
+import './map-launcher.css';
+import './editor-clean.css';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#86adb4');
-scene.fog = new THREE.FogExp2('#b0c4bb',.002);
+scene.background = new THREE.Color('#293943');
+scene.fog = new THREE.FogExp2('#293943',.0018);
 const stage = $('#viewport');
 const camera = new THREE.PerspectiveCamera(58,1,.1,1600);
 camera.position.set(25,23,28);
@@ -45,11 +48,11 @@ sun.shadow.camera.top=90;sun.shadow.camera.bottom=-90;
 sun.shadow.bias=-.0002;
 scene.add(sun);
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(800,800),
-  new THREE.MeshStandardMaterial({color:'#49654b',roughness:1}));
+  new THREE.MeshStandardMaterial({color:'#3c4b52',roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.position.y=-.07;
 ground.receiveShadow=true;scene.add(ground);
-const grid=new THREE.GridHelper(800,800,'#8ca58c','#6f826e');
-grid.position.y=-.05;grid.material.transparent=true;grid.material.opacity=.23;scene.add(grid);
+const grid=new THREE.GridHelper(800,80,'#e1bf96','#8baab4');
+grid.position.y=-.04;grid.material.transparent=true;grid.material.opacity=.54;scene.add(grid);
 const terrainWorld=createTerrainWorld({ground,grid,scene,camera,orbit});
 const objects=new THREE.Group();scene.add(objects);
 const raycaster=new THREE.Raycaster();
@@ -436,7 +439,11 @@ async function storeProject(project) {
   const db=await openDatabase();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('projects','readwrite');
-    tx.objectStore('projects').put(project,'last-opened');
+    const store=tx.objectStore('projects');
+    store.put(project,'last-opened');
+    // Index permanent par carte : le changement de carte ne détruit plus l'ancienne.
+    if(typeof project.createdAt==='string'&&project.createdAt.length<=128)
+      store.put(project,'scene:'+project.createdAt);
     tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};
   });
 }
@@ -446,6 +453,41 @@ async function restoreProject() {
     const tx=db.transaction('projects','readonly');
     const req=tx.objectStore('projects').get('last-opened');
     req.onsuccess=()=>{db.close();resolve(req.result||null);};req.onerror=()=>{db.close();reject(req.error);};
+  });
+}
+async function listLocalScenes(){
+  const db=await openDatabase();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction('projects','readonly');
+    const cursor=tx.objectStore('projects').openCursor();
+    const records=[];
+    cursor.onsuccess=()=>{
+      const entry=cursor.result;
+      if(!entry)return;
+      if(typeof entry.key==='string'&&entry.key.startsWith('scene:')){
+        const project=entry.value;
+        try{
+          const valid=validateProject(project);
+          records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,edited:valid.createdAt});
+        }catch{ /* corrupted scene hidden, originals are not destroyed */ }
+      }
+      entry.continue();
+    };
+    tx.oncomplete=()=>{db.close();records.sort((a,b)=>b.edited.localeCompare(a.edited));resolve(records);};
+    tx.onerror=()=>{db.close();reject(tx.error);};
+  });
+}
+async function readLocalScene(id){
+  if(typeof id!=='string'||!id||id.length>128)throw Error('Identifiant de carte invalide.');
+  const db=await openDatabase();
+  return new Promise((resolve,reject)=>{
+    const tx=db.transaction('projects','readonly');
+    const req=tx.objectStore('projects').get('scene:'+id);
+    req.onsuccess=()=>{db.close();try{
+      if(!req.result)throw Error('La carte n’existe plus dans ce profil.');
+      resolve(validateProject(req.result));
+    }catch(error){reject(error);}};
+    req.onerror=()=>{db.close();reject(req.error);};
   });
 }
 function resize(){
@@ -519,18 +561,27 @@ $('#projectName').addEventListener('change',()=>{
 });
 $('#saveScene').onclick=async()=>{await storeProject(history.project);toast('Sauvegardé en privé dans ce navigateur.');};
 $('#saveAs').onclick=exportJSON;$('#exportScene').onclick=exportJSON;$('#exportCSV').onclick=exportCSV;
-$('#newScene').onclick=async()=>{
-  if(history.project.objects.length&&!confirm('Créer une nouvelle carte ? Exporte d’abord la carte actuelle si tu veux la conserver.'))return;
-  history.reset(newProject());selectedId=null;await rebuild(history.project);await restoreTerrainForScene();afterCommit();
-  toast('Nouvelle carte créée.');
-};
+async function createNewScene(){
+  if(history.project.objects.length&&!confirm('Créer une nouvelle carte ? La scène actuelle restera enregistrée dans Mes mondes.'))return false;
+  await storeProject(history.project);
+  history.reset(newProject());selectedId=null;
+  await rebuild(history.project);await restoreTerrainForScene();afterCommit();
+  await storeProject(history.project);
+  toast('Nouvelle carte créée. Elle est disponible dans Mes mondes.');
+  return true;
+}
+$('#newScene').onclick=createNewScene;
 $('#openScene').onclick=()=>$('#fileOpen').click();
 $('#fileOpen').onchange=async e=>{
   const file=e.target.files?.[0];if(!file)return;
   try{
     if(file.size>45*1024*1024)throw new Error('Projet trop volumineux (45 Mo maximum).');
     const parsed=validateProject(JSON.parse(await file.text()));
-    history.reset(parsed);selectedId=null;await rebuild(parsed);await restoreTerrainForScene();afterCommit();toast('Projet ouvert : '+parsed.name);
+    await storeProject(history.project);
+    history.reset(parsed);selectedId=null;await rebuild(parsed);await restoreTerrainForScene();afterCommit();
+    await storeProject(history.project);
+    mapLauncher.close();
+    toast('Projet ouvert : '+parsed.name);
   }catch(err){toast('Fichier invalide : '+err.message,true);}
   e.target.value='';
 };
@@ -561,6 +612,34 @@ window.addEventListener('keydown',e=>{
   else if(key==='b'){setActiveMode('brush');}
   else if(key==='f'){focusObject();}
 });
+const mapLauncher=createMapLauncher({
+  listLocal:listLocalScenes,
+  onResume:async()=>true,
+  onNew:createNewScene,
+  onImport:()=>$('#openScene').click(),
+  onLink:async()=>{
+    const api=window.anomaliaDesktop?.unreal;
+    if(!api)throw Error('Liaison du projet Unreal disponible uniquement sur Windows.');
+    return api.link();
+  },
+  onOpenUnreal:async path=>{
+    const api=window.anomaliaDesktop?.unreal;
+    if(!api)throw Error('Unreal Engine 5 sur Windows est requis pour les cartes .umap.');
+    return api.open(path);
+  },
+  onOpenLocal:async id=>{
+    if(history.project.objects.length&&!confirm('Ouvrir cette carte ? La scène courante est enregistrée dans Mes mondes.'))return false;
+    await storeProject(history.project);
+    const sceneToOpen=await readLocalScene(id);
+    history.reset(sceneToOpen);selectedId=null;
+    await rebuild(sceneToOpen);await restoreTerrainForScene();afterCommit();
+    await storeProject(history.project);
+    status('Carte chargée : '+sceneToOpen.name);
+    return true;
+  },
+  notify:toast
+});
+$('#openMapLibrary').addEventListener('click',()=>mapLauncher.show());
 async function start(){
   renderCatalog();resize();animate();
   try{
@@ -575,8 +654,11 @@ async function start(){
       status('Nouvelle scène vide. Importe de vrais modèles 3D ou une carte ANOMALIA.');
     }
     await restoreTerrainForScene();
+    await storeProject(history.project);
     updateCount();
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
+  // Lancement sur le choix des vraies cartes, comme un éditeur de mondes dédié.
+  mapLauncher.show();
 }
 start();
 bindGameLibrary({
@@ -600,6 +682,8 @@ bindGameLibrary({
     await rebuild(map);
     await restoreTerrainForScene();
     afterCommit();
+    await storeProject(history.project);
+    mapLauncher.close();
     toast('Secteur ANOMALIA ouvert : '+map.name);
   }
 });

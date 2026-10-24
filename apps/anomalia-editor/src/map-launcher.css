@@ -1,0 +1,77 @@
+/* ANOMALIA Editor / carte picker — independent artwork and UI, no DayZ assets. */
+.mapLauncher[hidden], .mapLoading[hidden]{display:none!important}
+.mapLauncher{position:fixed;inset:0;overflow-y:auto;z-index:150;background:#080e14;color:#eaf0f2;font-family:"Segoe UI Variable","Segoe UI",system-ui,sans-serif;scrollbar-color:#3f5a65 #0c131a}
+.mapHero{position:relative;min-height:clamp(325px,44vh,475px);display:flex;flex-direction:column;overflow:hidden;
+background:
+  linear-gradient(90deg,rgba(7,12,18,.98) 1%,rgba(8,15,20,.92) 34%,rgba(7,15,21,.26) 80%),
+  linear-gradient(0deg,#0a1319 0%,transparent 35%),
+  radial-gradient(ellipse at 73% 64%,#78948a55,transparent 35%),
+  repeating-linear-gradient(144deg,transparent 0px,transparent 19px,#71957f16 21px,#213d3933 44px),
+  linear-gradient(132deg,#15272c,#345656 65%,#192a31);}
+.mapHero:before{content:"";position:absolute;right:-12%;bottom:-52%;width:74vw;height:74vw;border-radius:50%;
+border:1px solid #bed1c72e;box-shadow:0 0 0 80px #aac3b00d,0 0 0 160px #aac3b008,0 0 0 240px #aac3b006;
+transform:skew(-12deg) rotate(-22deg);pointer-events:none}
+.mapHero:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.14;background:repeating-linear-gradient(0deg,transparent,transparent 3px,#000 4px)}
+.mapHeroTop{z-index:1;display:flex;align-items:center;justify-content:space-between;padding:27px clamp(20px,4vw,64px);gap:20px}
+.mapIdentity{display:flex;align-items:center;gap:13px}
+.mapMonogram,.mapLoadingIcon{display:grid;place-items:center;font-size:30px;font-weight:900;color:#fbefd8;background:linear-gradient(145deg,#926b48,#372b28);border:1px solid #d7aa74;box-shadow:0 0 26px #cf9e6540,inset 0 1px #ffe1ad85;border-radius:9px;height:54px;width:54px}
+.mapIdentity strong{display:block;font-weight:850;font-size:17px;letter-spacing:1.6px;white-space:nowrap}
+.mapIdentity em{font-style:normal;color:#e3bd8b}
+.mapIdentity small{display:block;color:#bacace;font-size:9px;font-weight:800;letter-spacing:2.2px;margin-top:5px}
+.mapClose{font-size:11px;border:1px solid #73858b88;border-radius:5px;background:#111e25a6;color:#e4ecef;padding:11px 15px;backdrop-filter:blur(8px)}
+.mapClose:hover{border-color:#d9b58f;color:white;background:#2e3535}
+.mapHeroContent{z-index:1;flex:1;display:flex;flex-direction:column;justify-content:center;align-items:flex-start;padding:16px clamp(20px,7vw,105px) 36px}
+.mapEyebrow{font-size:10px;letter-spacing:2px;color:#e5b988;font-weight:750}
+.mapHeroContent h1{font-size:clamp(35px,5vw,65px);font-weight:770;letter-spacing:-2px;margin:14px 0 8px;line-height:1.1;text-shadow:0 3px 14px #0009}
+.mapHeroContent p{max-width:590px;font-size:14px;line-height:1.6;color:#c2d0d2;margin:6px 0 25px}
+.mapHeroActions{display:flex;flex-wrap:wrap;gap:10px}
+.mapHeroActions button{min-height:43px;padding:10px 18px;font-size:12px;border:1px solid #667e82;background:#15242dd9;color:#e6f0ef;border-radius:5px}
+.mapHeroActions button:hover{background:#29444b;border-color:#bed5d4}
+.mapHeroActions .mapPrimary{background:#a37d54;color:#fff9e8;border-color:#e7bd86;font-weight:750}
+.mapHeroActions .mapPrimary:hover{background:#c09968}
+.mapHeroBottom{z-index:1;display:flex;justify-content:space-between;padding:12px clamp(20px,4vw,64px);font-size:9px;letter-spacing:2px;color:#b6c9c7;border-top:1px solid #ffffff22}
+.mapPickerBody{padding:31px clamp(20px,4.3vw,70px) 40px;max-width:1750px;margin:auto}
+.mapPickerHeading{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin-bottom:19px}
+.mapPickerHeading small{font-size:9px;color:#e0ad7c;font-weight:800;letter-spacing:1.8px}
+.mapPickerHeading h2{font-size:25px;font-weight:760;letter-spacing:-.4px;margin:6px 0 0}
+.mapCount{font-size:11px;color:#adbdc5;background:#111c25;border:1px solid #31454f;padding:8px 11px;border-radius:4px}
+.mapPickerToolbar{display:flex;align-items:center;gap:14px;margin-bottom:22px;flex-wrap:wrap}
+.mapFilters{display:flex;align-items:center;padding:4px;background:#111d27;border:1px solid #32424b;border-radius:5px;gap:3px}
+.mapFilters button{background:transparent;border:0;color:#a7bbc3;font-size:11px;padding:10px 15px;border-radius:4px}
+.mapFilters button.active{background:#39515c;color:#fff;border:1px solid #8ca5a9}
+.mapFilters button:hover{color:white;background:#2b3c48}
+.mapSearchLabel{display:flex;gap:9px;align-items:center;min-height:40px;min-width:210px;max-width:390px;flex:1;padding:0 12px;border:1px solid #3b5460;border-radius:4px;background:#111c25}
+.mapSearchIcon{font-size:20px;color:#8baab5}
+.mapSearchLabel input{width:100%;min-width:0;background:transparent;border:0;outline:none;box-shadow:none;font-size:11px;padding:10px 0;color:#edf3f4}
+.mapRefresh{padding:10px 14px;font-size:11px}
+.mapPickerGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(245px,1fr));gap:15px;align-items:stretch;min-height:170px}
+.mapCard{text-align:left;display:flex;flex-direction:column;padding:0;overflow:hidden;background:#101d26;border:1px solid #354b56;border-radius:6px;min-width:0;box-shadow:0 8px 25px #0004;transition:transform .16s,border-color .16s,box-shadow .16s}
+.mapCard:hover,.mapCard:focus-visible{transform:translateY(-3px);border-color:#d8b07f;box-shadow:0 14px 26px #0008;outline-offset:2px}
+.mapCover{position:relative;display:flex;min-height:147px;align-items:center;justify-content:center;overflow:hidden;isolation:isolate;
+background:linear-gradient(0deg,#07131ace,transparent 80%),radial-gradient(ellipse at 64% 40%,#8a9a8588,transparent 50%),repeating-linear-gradient(135deg,#2e4e4842 0 6px,#29433a49 6px 18px,#101b2577 18px 27px),linear-gradient(155deg,#344b4b,#16252c)}
+.mapCover:after{content:"";position:absolute;inset:0;background:linear-gradient(120deg,transparent 34%,#e3eac014 45%,transparent 61%);pointer-events:none}
+.mapLocal .mapCover{background:linear-gradient(0deg,#0b1625df,transparent 80%),radial-gradient(ellipse at 65% 50%,#7479ab68,transparent 40%),repeating-linear-gradient(35deg,#294654 0 8px,#243741 9px 22px),linear-gradient(120deg,#1c3c50,#121e2a)}
+.mapCategory{position:absolute;top:11px;left:11px;z-index:1;background:#111b20d9;border:1px solid #a5afa873;border-radius:3px;padding:5px 8px;font-size:8px;color:#f0ddd0;font-weight:850;letter-spacing:1px}
+.mapCoverEmblem{font-size:39px;color:#fff9edc9;font-weight:900;letter-spacing:2px;text-shadow:0 3px 24px #000b;border:1px solid #d3e1d37f;padding:9px 15px;background:#121d27a8;border-radius:4px}
+.mapVisualNote{position:absolute;right:11px;bottom:10px;font-size:9px;color:#e4eef1b9}
+.mapCardDetail{padding:15px;display:flex;flex-direction:column;gap:7px;min-height:113px;flex:1}
+.mapCardDetail strong{font-size:14px;color:#f1f2ed;font-weight:750;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.mapCardDetail small{font-size:10px;color:#91aeb9;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:100%}
+.mapCardOpen{font-size:10px;color:#e7b981;font-weight:750;letter-spacing:.2px;margin-top:auto;padding-top:7px}
+.mapNoResults{grid-column:1/-1;text-align:center;padding:35px 22px;border:1px dashed #405762;background:#121c25;border-radius:5px;color:#e2eaed;display:flex;flex-direction:column;justify-content:center;gap:8px}
+.mapNoResults strong{font-size:16px}.mapNoResults p{color:#93acb9;font-size:12px;line-height:1.7;margin:0}
+.mapFooter{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:24px;padding:15px 0;border-top:1px solid #283b45;color:#91acb4;font-size:10px;flex-wrap:wrap}
+.mapFooter button{font-size:11px;background:#263d47;border:1px solid #4f7787;padding:11px 14px}
+.mapLoading{position:fixed;z-index:3;inset:0;background:linear-gradient(130deg,#08121aed,#142833f2);display:grid;place-items:center;padding:20px;backdrop-filter:blur(16px)}
+.mapLoadingPlate{width:min(520px,94vw);padding:35px;border:1px solid #67818a;background:linear-gradient(140deg,#182935,#111b26);box-shadow:0 25px 70px #0009;border-radius:8px;display:flex;align-items:center;flex-direction:column;gap:13px;text-align:center}
+.mapLoadingIcon{margin-bottom:10px;width:70px;height:70px;font-size:37px}
+.mapLoadingPlate h2{font-size:22px;color:#f3f2e8;letter-spacing:-.4px;margin:12px 0 0}
+.mapLoadingPlate p{margin:0;font-size:12px;color:#b7cad1;line-height:1.6}
+.mapLoadingTrack{height:6px;overflow:hidden;border-radius:9px;background:#0b151d;width:100%;margin-top:14px}
+.mapLoadingIndeterminate{height:100%;width:42%;background:linear-gradient(90deg,transparent,#cda170,#f4d3a4,transparent);animation:mapLoadingMotion 1.45s ease-in-out infinite}
+.mapLoadingPlate small{color:#869fac;font-size:10px;line-height:1.5}
+.mapLoadingPlate button{margin-top:7px;padding:11px 17px;border-color:#b5a68c;background:#2e4247}
+@keyframes mapLoadingMotion{from{transform:translateX(-110%)}to{transform:translateX(300%)}}
+body.mapLauncherVisible{overflow:hidden}
+@media(max-width:620px){.mapHero{min-height:350px}.mapHeroTop{padding:19px}.mapIdentity strong{font-size:13px}.mapIdentity small{font-size:7px}.mapMonogram{height:42px;width:42px;font-size:25px}.mapClose span{display:none}.mapHeroContent{padding:10px 20px 25px}.mapHeroContent h1{font-size:37px}.mapHeroContent p{font-size:12px}.mapHeroActions button{font-size:11px;padding:9px 12px}.mapPickerBody{padding:22px 15px}.mapPickerToolbar{align-items:stretch}.mapFilters{width:100%}.mapFilters button{flex:1;padding:10px 5px;font-size:10px}.mapSearchLabel{max-width:unset}.mapPickerGrid{grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px}}
+@media(prefers-reduced-motion:reduce){.mapLoadingIndeterminate{animation:none;width:100%}.mapCard{transition:none}}

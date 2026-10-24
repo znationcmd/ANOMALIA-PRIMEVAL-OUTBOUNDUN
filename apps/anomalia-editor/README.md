@@ -1,3 +1,13 @@
+## Version 0.5.3 — lancement cartes et éditeur compact (branche de travail)
+
+- Au lancement, un écran ANOMALIA permet de choisir les scènes locales enregistrées et les véritables cartes détectées dans le projet UE5.
+- Les cartes ANOMALIA JSON se chargent dans l’éditeur 3D intégré. Les fichiers Unreal `.umap` ouvrent toujours Unreal Editor sur Windows ; ils ne sont **pas** rendus par la vue Three.js.
+- Écran portable : une seule barre supérieure compacte, commandes Fichier / Éditer / Voir / Éditeur, outils 3D essentiels, explorateur à gauche, bibliothèque 3D à droite.
+- Réglages des modèles, liste technique Unreal et paramètres de relief sont repliés à l’ouverture mais accessibles depuis les menus.
+- Chaque scène locale sauvegardée apparaît dans Mes mondes au lieu d’être écrasée lors du changement de carte. Les scènes utilisent IndexedDB et restent privées.
+- Le sélecteur affiche un indicateur de chargement réel (indéterminé), sans inventer de pourcentage.
+- La disponibilité sur les ordinateurs dépend de la validation CI puis d’une publication Windows signée ou non signée via le canal d’auto-update. Une modification GitHub seule ne remplace pas un programme Windows déjà installé.
+
 # ANOMALIA Editor 0.1 — éditeur de cartes 3D autonome
 
 **Application publique, distincte de CMD Studio (outil privé du créateur).**
