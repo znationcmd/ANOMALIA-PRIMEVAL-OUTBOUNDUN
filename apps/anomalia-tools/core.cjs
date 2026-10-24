@@ -5,6 +5,7 @@ const crypto=require('node:crypto');
 const {pipeline}=require('node:stream/promises');
 const {PNG}=require('pngjs');
 const yazl=require('yazl');
+const native=require('./native-mods.cjs');
 const SOURCE_EXT=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const ASSET_EXT=new Set(['.glb','.gltf','.fbx','.obj','.usd','.png','.jpg','.jpeg','.webp','.tga','.wav','.ogg','.json','.xml','.ini']);
 const PREVIEW_EXT=new Set(['.glb','.png','.jpg','.jpeg','.webp']);
@@ -203,6 +204,20 @@ class AnomaliaTools{
       note:'Heightmap de base. À rescaler/adapter aux paysages UE5 avant un import Landscape.'};
     atomicJSON(json,meta);
     return {image:'Content/Terrain/'+filename+'.png',metadata:'Content/Terrain/'+filename+'.json',resolution};
+  }
+  scaffoldNativeMod({projectId}={}){
+    const root=this.getProjectPath(projectId);
+    const project=readJSON(path.join(root,'anomalia.project.json'),{});
+    return native.scaffoldNativeMod(root,projectId,project.name||'ANOMALIA Mod');
+  }
+  getNativeModStatus({projectId,engineRoot=''}={}){
+    return native.buildStatus(this.getProjectPath(projectId),projectId,engineRoot);
+  }
+  validateNativeMod({projectId}={}){
+    return native.validateNativeMod(this.getProjectPath(projectId),projectId);
+  }
+  async buildNativeMod({projectId,engineRoot=''}={}){
+    return native.buildNativeMod(this.getProjectPath(projectId),projectId,engineRoot);
   }
   async packageMod({projectId}={}){
     const root=this.getProjectPath(projectId);
