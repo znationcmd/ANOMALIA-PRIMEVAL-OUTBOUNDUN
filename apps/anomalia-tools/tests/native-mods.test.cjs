@@ -72,6 +72,6 @@ test('source ZIP remains distinct from native plugin build',async t=>{
 test('Windows installer includes the native bridge and uses a newer updater version',()=>{
   const pkg=require('../package.json');
   assert.ok(pkg.build.files.includes('native-mods.cjs'),'native bridge must be packaged with Electron');
-  assert.equal(pkg.version,'0.2.4');
+  assert.equal(pkg.version,'0.2.5');
   assert.match(pkg.build.publish[0].url,/anomalia-tools-latest/);
 });
