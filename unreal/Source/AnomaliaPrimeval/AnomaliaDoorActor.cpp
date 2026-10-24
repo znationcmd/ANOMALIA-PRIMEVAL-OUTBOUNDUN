@@ -88,9 +88,9 @@ void AAnomaliaDoorActor::Tick(float Dt)
     if(FMath::IsNearlyEqual(DoorAngleDegrees,Target,.01f))SetActorTickEnabled(false);
 }
 
-void AAnomaliaDoorActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Props) const
+void AAnomaliaDoorActor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Props);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaDoorActor,bLocked);DOREPLIFETIME(AAnomaliaDoorActor,bTargetOpen);
     DOREPLIFETIME(AAnomaliaDoorActor,DoorAngleDegrees);DOREPLIFETIME(AAnomaliaDoorActor,bObstructed);
 }
