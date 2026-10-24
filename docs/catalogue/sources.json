@@ -1,0 +1,83 @@
+{
+  "schemaVersion": 1,
+  "maps": {
+    "chernarusplus": "Chernarus",
+    "enoch": "Livonia",
+    "sakhal": "Sakhal",
+    "nasdara": "Nasdara"
+  },
+  "repositories": [
+    {
+      "id": "official-ce",
+      "directory": "dayz-official",
+      "url": "https://github.com/BohemiaInteractive/DayZ-Central-Economy",
+      "license": "ADPL-SA: Arma/DayZ only, no UE asset reuse",
+      "mod": "DayZ_officiel",
+      "revision": "f220b2918b1d79a5055b1ee9be70c0ec1516e876"
+    },
+    {
+      "id": "official-scripts",
+      "directory": "dayz-scripts",
+      "url": "https://github.com/BohemiaInteractive/DayZ-Script-Diff",
+      "license": "Bohemia source: reference metadata only, no UE asset reuse",
+      "mod": "DayZ_officiel",
+      "revision": "e8204c69fcfd056ea29a9728990fd9f7941ce8a6"
+    },
+    {
+      "id": "expansion-missions",
+      "directory": "expansion-missions",
+      "url": "https://github.com/ExpansionModTeam/DayZ-Expansion-Missions",
+      "license": "Author mission templates: no UE asset permission inferred",
+      "mod": "DayZ-Expansion-Shared",
+      "revision": "248dd215738550bff9cc3b5a0c84c5e895074712"
+    },
+    {
+      "id": "expansion-source",
+      "directory": "expansion-source",
+      "url": "https://github.com/salutesh/DayZ-Expansion-Scripts",
+      "license": "Expansion source license; no UE asset permission inferred",
+      "mod": "DayZ-Expansion",
+      "revision": "14fd692bd7eb46df05853ea31ee3d481239a826c"
+    },
+    {
+      "id": "terje",
+      "directory": "terje-mods",
+      "url": "https://github.com/TerjeBruoygard/TerjeMods",
+      "license": "CC-BY-NC-4.0; vanilla resources retain Bohemia restrictions",
+      "mod": "TerjeMods",
+      "revision": "e924a028ac68bd433786c4394ee5ec4759998984"
+    },
+    {
+      "id": "rag-wikis",
+      "directory": "rag-wikis",
+      "url": "https://github.com/Tyson89/RaG-Mod-Wikis",
+      "license": "Author documentation only; mod repack not permitted",
+      "mod": "RaG",
+      "revision": "b57926b5d29caa53edc6c92a44250b003e7d2cbf"
+    },
+    {
+      "id": "community-market",
+      "directory": "expansion-community-market",
+      "url": "https://github.com/ExpansionModTeam/DayZ-Expansion-Unofficial-Market-Settings",
+      "license": "Community references; neither class definition nor asset license proof",
+      "mod": "Community_Market",
+      "revision": "fdf7815b1a97f9ae717e2022199102af8c3945c7"
+    },
+    {
+      "id": "traderplus",
+      "directory": "traderplus-source",
+      "url": "https://github.com/TheDmitri/TraderPlusV1",
+      "license": "No UE asset permission inferred; historical V1 source",
+      "mod": "TraderPlus",
+      "revision": "d0cd39f105fba57104bf93798129626228a263e6"
+    },
+    {
+      "id": "gebsfish",
+      "directory": "gebsfish-source",
+      "url": "https://github.com/PackJC/gebsfish",
+      "license": "Check repository LICENSE independently; metadata only",
+      "mod": "gebsfish",
+      "revision": "a222db2ffdcfd4713b2ceb6ec0389d26cec82262"
+    }
+  ]
+}
