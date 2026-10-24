@@ -128,7 +128,7 @@ export function createMapLauncher({listLocal,onOpenLocal,onNew,onResume,onImport
       return;
     }
     busy('Chargement de '+entry.title,'Restauration des objets 3D et du relief enregistré…');
-    try{await onOpenLocal(entry.key);endBusy();close();}
+    try{const loaded=await onOpenLocal(entry.key);endBusy();if(loaded!==false)close();}
     catch(e){endBusy();notify('Ouverture impossible : '+e.message,true);}
   }
   async function runLocal(action,title,description){
