@@ -46,7 +46,7 @@ jobs:
           $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "$evidence/editor" --inhabited
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Update owned native Editor project after map verification
+      - name: Verify and activate the copied native Editor with scoped Maps inspection
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
