@@ -39,6 +39,7 @@ private:
     UPROPERTY() TObjectPtr<UVerticalBox> WorkshopCards;
     UPROPERTY() TObjectPtr<UEditableTextBox> WorkshopSearch;
     UPROPERTY() TObjectPtr<UComboBoxString> WorkshopCategory;
+    UPROPERTY() TObjectPtr<UComboBoxString> WorkshopSort;
     UPROPERTY() TObjectPtr<UTextBlock> WorkshopStatus;
     UPROPERTY() TObjectPtr<UButton> HomeButton;
     UPROPERTY() TObjectPtr<UButton> OptionsButton;
