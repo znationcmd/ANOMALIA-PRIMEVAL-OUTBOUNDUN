@@ -120,3 +120,44 @@ test('Windows game menu opens a registered ANOMALIA Tools Workshop deep link',()
   assert.match(toolsMain,/requestSingleInstanceLock/);
   assert.match(toolsMain,/tools:navigate/);
 });
+
+test('WorkForge modpack profiles persist and never claim game installation',t=>{
+  const {root,tools,id}=init(t);
+  tools.publishWorkshopMod({projectId:id,title:'Voiture',version:'1.0.0'});
+  const created=tools.createWorkforgeProfile({name:'Survie réaliste'});
+  assert.equal(created.gameLoaded,false);
+  assert.ok(created.id.startsWith('profile-'));
+  const added=tools.setWorkforgeProfileMod({profileId:created.id,projectId:id,value:true});
+  assert.equal(added.inProfile,true);
+  const second=tools.createWorkforgeProfile({name:'Serveur RP'});
+  tools.activateWorkforgeProfile({profileId:second.id});
+  const fresh=new AnomaliaTools(root);
+  const listed=fresh.listWorkshopMods();
+  assert.equal(listed.activeProfile,second.id);
+  assert.deepEqual(listed.profiles.find(p=>p.id===created.id).mods,[id]);
+  assert.deepEqual(listed.profiles.find(p=>p.id===second.id).mods,[]);
+  assert.equal(listed.connection.game,false);
+  fresh.setWorkforgeProfileMod({profileId:created.id,projectId:id,value:false});
+  assert.deepEqual(fresh.listWorkshopMods().profiles.find(p=>p.id===created.id).mods,[]);
+  fresh.deleteWorkforgeProfile({profileId:second.id});
+  assert.equal(fresh.listWorkshopMods().activeProfile,created.id);
+  assert.equal(fresh.listWorkshopMods().entries.length,1,'Removing profile must keep mods');
+});
+test('WorkForge rejects unknown mods, unsafe profiles and invalid names',t=>{
+  const {tools}=init(t);
+  assert.throws(()=>tools.createWorkforgeProfile({name:'  '}),/Nom de profil/);
+  const profile=tools.createWorkforgeProfile({name:'Construction'});
+  assert.throws(()=>tools.activateWorkforgeProfile({profileId:'not-found'}),/introuvable/);
+  assert.throws(()=>tools.setWorkforgeProfileMod({profileId:profile.id,projectId:'non-existent',value:true}),/introuvable/);
+  assert.throws(()=>tools.setWorkforgeProfileMod({profileId:profile.id,projectId:'non-existent',value:'yes'}),/invalide/);
+  assert.throws(()=>tools.deleteWorkforgeProfile({profileId:'other'}),/introuvable/);
+  const html=fs.readFileSync(path.resolve(__dirname,'../index.html'),'utf8');
+  const renderer=fs.readFileSync(path.resolve(__dirname,'../src/renderer.js'),'utf8');
+  const main=fs.readFileSync(path.resolve(__dirname,'../main.cjs'),'utf8');
+  assert.match(html,/ANOMALIA WorkForge/);
+  assert.match(html,/wsProfileCreate/);
+  for(const method of ['createWorkforgeProfile','activateWorkforgeProfile','setWorkforgeProfileMod','deleteWorkforgeProfile']){
+    assert.match(main,new RegExp(method));
+    assert.match(renderer,new RegExp(method));
+  }
+});

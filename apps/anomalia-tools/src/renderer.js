@@ -16,7 +16,7 @@ const MODS=[
   ['addon','◈','Addon Builder','Archives de mods et manifestes'],
   ['publisher','⬆','Publisher','Exporter tes packages en ZIP']
 ];
-const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),workshop:'ANOMALIA Workshop',updates:'Mises à jour'};
+const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),workshop:'ANOMALIA WorkForge',updates:'Mises à jour'};
 const SOURCE=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const TEXTURES=['.png','.jpg','.jpeg','.webp','.tga'];
 let projects=[],currentId='',files=[],fileOpen='',economy={items:[]},activeTab='home';
@@ -308,7 +308,7 @@ async function refreshWorkshop(){
   $('#wsSubs').textContent=data.stats.subscribed;
   $('#wsPrepared').textContent=data.stats.prepared;
   $('#wsStatus').textContent=data.connection.message;
-  renderWsCategories();renderWsCards();renderWsProjects();
+  renderWsCategories();renderWsCards();renderWsProjects();renderWsProfiles();
 }
 function renderWsCategories(){
   const panel=$('#wsCategories');panel.replaceChildren();
@@ -367,6 +367,19 @@ function renderWsCards(){
       if(r){msg(r.message);await refreshWorkshop();}
     };
     actions.append(prepare,sub);
+    const currentProfile=wsData.profiles?.find(p=>p.id===wsData.activeProfile);
+    if(currentProfile){
+      const inProfile=currentProfile.mods.includes(mod.id);
+      const profileButton=node('button',inProfile?'− Retirer du profil':'+ Ajouter au profil');
+      profileButton.title='Collection locale uniquement — aucun changement sur le jeu';
+      profileButton.onclick=async()=>{
+        const r=await safe(()=>api.call('setWorkforgeProfileMod',{
+          profileId:currentProfile.id,projectId:mod.id,value:!inProfile
+        }));
+        if(r){msg('Profil local mis à jour. Le jeu ne charge pas encore ce profil.');await refreshWorkshop();}
+      };
+      actions.append(profileButton);
+    }
     if(mod.compiled){
       const host=node('button','CMD Hosting ↗');
       host.title='Exporter un manifeste de configuration pour CMD Hosting (sans installation automatique)';
@@ -402,6 +415,34 @@ function renderWsProjects(){
     row.append(btn);box.append(row);
   }
 }
+function renderWsProfiles(){
+  const select=$('#wsProfileSelect'),details=$('#wsProfileMods');
+  select.replaceChildren();
+  const profiles=wsData?.profiles||[];
+  if(!profiles.length){
+    select.disabled=true;
+    $('#wsProfileActivate').disabled=true;
+    $('#wsProfileDelete').disabled=true;
+    details.textContent='Aucun profil. Crée un profil pour classer tes créations.';
+    return;
+  }
+  select.disabled=false;
+  $('#wsProfileActivate').disabled=false;
+  $('#wsProfileDelete').disabled=false;
+  for(const profile of profiles){
+    select.add(new Option(profile.name+(profile.id===wsData.activeProfile?' · actif':''),profile.id));
+  }
+  select.value=wsData.activeProfile||profiles[0].id;
+  const explain=()=>{
+    const p=profiles.find(profile=>profile.id===select.value);
+    const titles=p?.mods.map(id=>wsData.entries.find(mod=>mod.id===id)?.title||id)||[];
+    details.textContent=(p?.id===wsData.activeProfile?'Profil sélectionné · ':'Profil non actif · ')+
+      titles.length+' mod(s) : '+(titles.join(', ')||'aucun')+
+      '. Bibliothèque ANOMALIA Tools uniquement, pas de chargement UE5.';
+  };
+  select.onchange=explain;
+  explain();
+}
 function openWsPublish(projectId=null){
   if(!wsData?.projects?.length){showModal();msg('Crée d’abord ton projet de mod dans ANOMALIA Tools.');return;}
   const picker=$('#wsProjectSelect');picker.replaceChildren();
@@ -425,7 +466,7 @@ async function saveWsPublish(e){
     category:$('#wsModCategory').value,version:$('#wsModVersion').value,
     description:$('#wsModDescription').value};
   const result=await safe(()=>api.call('publishWorkshopMod',data));
-  if(result){$('#wsPublishPanel').hidden=true;msg('Mod ajouté à ton Workshop local. Aucune publication sur Internet.');await refreshWorkshop();}
+  if(result){$('#wsPublishPanel').hidden=true;msg('Mod ajouté à WorkForge local. Aucune publication sur Internet.');await refreshWorkshop();}
 }
 
 async function publish(){
@@ -463,6 +504,22 @@ $('#createNativeMod').onclick=nativeCreate;
 $('#checkNativeMod').onclick=nativeStatus;
 $('#buildNativeMod').onclick=nativeBuild;
 $('#exportMod').onclick=publish;
+$('#wsProfileCreate').onsubmit=async e=>{
+  e.preventDefault();
+  const name=$('#wsProfileName').value.trim();
+  const r=await safe(()=>api.call('createWorkforgeProfile',{name}));
+  if(r){$('#wsProfileName').value='';msg(r.note);await refreshWorkshop();}
+};
+$('#wsProfileActivate').onclick=async()=>{
+  const r=await safe(()=>api.call('activateWorkforgeProfile',{profileId:$('#wsProfileSelect').value}));
+  if(r){msg(r.note);await refreshWorkshop();}
+};
+$('#wsProfileDelete').onclick=async()=>{
+  const select=$('#wsProfileSelect'),p=wsData?.profiles?.find(p=>p.id===select.value);
+  if(!p||!confirm('Supprimer le profil local « '+p.name+' » ? Les fichiers de mods restent conservés.'))return;
+  const r=await safe(()=>api.call('deleteWorkforgeProfile',{profileId:p.id}));
+  if(r){msg('Profil supprimé, mods et projets conservés.');await refreshWorkshop();}
+};
 $('#wsSearch').oninput=renderWsCards;
 $('#wsOrder').onchange=renderWsCards;
 $('#wsReload').onclick=refreshWorkshop;

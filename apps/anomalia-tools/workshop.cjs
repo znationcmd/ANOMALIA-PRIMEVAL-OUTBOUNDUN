@@ -53,7 +53,9 @@ class Workshop{
   state(){
     const data=readJSON(this.stateFile,{});
     return {subscriptions:Array.isArray(data.subscriptions)?data.subscriptions:[],
-      installed:data.installed&&typeof data.installed==='object'&&!Array.isArray(data.installed)?data.installed:{}};
+      installed:data.installed&&typeof data.installed==='object'&&!Array.isArray(data.installed)?data.installed:{},
+      profiles:data.profiles&&typeof data.profiles==='object'&&!Array.isArray(data.profiles)?data.profiles:{},
+      activeProfile:typeof data.activeProfile==='string'?data.activeProfile:null};
   }
   save(data){atomicJSON(this.stateFile,{schema:'anomalia-workshop-local',version:1,...data});}
   published(projectId){
@@ -95,11 +97,52 @@ class Workshop{
         visibility:'local-only'});
     }
     return {entries:result,projects:this.tools.listProjects(),
+      profiles:Object.entries(state.profiles).map(([id,p])=>({id,name:p.name,mods:p.mods.filter(x=>result.some(e=>e.id===x)),createdAt:p.createdAt})),
+      activeProfile:state.activeProfile&&state.profiles[state.activeProfile]?state.activeProfile:null,
       stats:{total:result.length,subscribed:result.filter(e=>e.subscribed).length,
         prepared:result.filter(e=>e.prepared).length},
       connection:{tools:true,game:false,editor:false,community:false,
         message:'Bibliothèque de mods locale synchronisée avec ANOMALIA Tools. Le chargeur du jeu et la plateforme communautaire ne sont pas encore connectés.'},
       categories:[...CATEGORIES]};
+  }
+  createProfile({name}={}){
+    if(typeof name!=='string'||!name.trim()||name.trim().length>60)throw Error('Nom de profil invalide (60 caractères maximum)');
+    const state=this.state();
+    if(Object.keys(state.profiles).length>=32)throw Error('Limite de 32 profils locaux atteinte');
+    const id='profile-'+crypto.randomUUID();
+    state.profiles[id]={name:name.trim(),mods:[],createdAt:new Date().toISOString()};
+    if(!state.activeProfile)state.activeProfile=id;
+    this.save(state);
+    return {id,name:state.profiles[id].name,activeProfile:state.activeProfile,
+      gameLoaded:false,note:'Profil créé dans ANOMALIA Tools uniquement. Le jeu ne charge pas encore automatiquement ces mods.'};
+  }
+  activateProfile({profileId}={}){
+    const state=this.state();
+    if(typeof profileId!=='string'||!Object.hasOwn(state.profiles,profileId))throw Error('Profil local introuvable');
+    state.activeProfile=profileId;
+    this.save(state);
+    return {activeProfile:profileId,gameLoaded:false,
+      note:'Profil actif dans la bibliothèque locale, non transmis au chargeur Unreal.'};
+  }
+  setProfileMod({profileId,projectId,value=true}={}){
+    safeId(projectId);
+    if(typeof value!=='boolean')throw Error('Action de profil invalide');
+    const state=this.state();
+    if(typeof profileId!=='string'||!Object.hasOwn(state.profiles,profileId))throw Error('Profil local introuvable');
+    if(value&&!this.published(projectId))throw Error('Mod local introuvable');
+    const profile=state.profiles[profileId];
+    profile.mods=profile.mods.filter(id=>id!==projectId);
+    if(value)profile.mods.push(projectId);
+    this.save(state);
+    return {profileId,projectId,inProfile:value,gameLoaded:false};
+  }
+  deleteProfile({profileId}={}){
+    const state=this.state();
+    if(typeof profileId!=='string'||!Object.hasOwn(state.profiles,profileId))throw Error('Profil local introuvable');
+    delete state.profiles[profileId];
+    if(state.activeProfile===profileId)state.activeProfile=Object.keys(state.profiles)[0]||null;
+    this.save(state);
+    return {deleted:true,activeProfile:state.activeProfile};
   }
   subscribe({projectId,value=true}={}){
     safeId(projectId);
