@@ -28,7 +28,7 @@ jobs:
           $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      - name: Independently audit saved scanned houses using copied native values
+      - name: Audit saved houses with native values and no retained native Python callbacks
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'

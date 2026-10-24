@@ -75,7 +75,10 @@ try:
     if len(descriptors)!=len(items) or len({d['label'] for d in descriptors})!=len(items):raise RuntimeError('Owned house descriptors missing or ambiguous')
     descriptors.sort(key=lambda d:d['label'])
     initially_loaded={a.get_actor_label() for a in actors.get_all_level_actors()}
-    surface=ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
+    def height(east,north):
+        # Do not retain UE 5.8 bound native callables in cached Python closures.
+        return unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(east,north)
+    surface=ground.sampled_surface(height)
     records={};stats={'already':0,'replace':0,'artist-edit':0,'expanded-footprint-relief':0,'wet-or-high':0}
     def batch(start):
         desc=descriptors[start:start+64];labels={d['label'] for d in desc}
@@ -143,4 +146,3 @@ except Exception as error:
     report['error']=str(error);raise
 finally:
     OUT.parent.mkdir(parents=True,exist_ok=True);OUT.write_text(json.dumps(report,indent=2)+'\n')
-

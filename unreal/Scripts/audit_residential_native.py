@@ -53,7 +53,12 @@ try:
     native=json.loads(unreal.AnomaliaWorldImportLibrary.audit_inhabited_residential(
         [m['objectPath'] for m in models.values()]+[original['objectPath']],sorted(items)))
     OUT.with_name('residential-native-values.json').write_text(json.dumps(native,indent=2))
-    surface=ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
+    # UE 5.8's bound native callable has a reported CPython GC layout defect.
+    # Never retain it inside the cached/cyclic terrain closures. Resolve and call
+    # it transiently through a normal Python function instead.
+    def height(east,north):
+        return unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(east,north)
+    surface=ground.sampled_surface(height)
     counts=checker.verify(native,items,models,original,layout,surface,ground.ground_envelope)
     report.update(state='SAVED_RESIDENTIAL_NATIVE_AUDIT_PASSED',counts=counts,planSha256=sha256(plan_file))
 except Exception as error:
