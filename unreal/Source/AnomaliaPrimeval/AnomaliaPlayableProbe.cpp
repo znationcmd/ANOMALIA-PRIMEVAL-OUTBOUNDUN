@@ -158,8 +158,27 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor || Pages->GetActiveWidgetIndex()!=0)
         { Finish(TEXT("Main menu navigation or local mods page missing")); return; }
         Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
-        if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused())
-        { Finish(TEXT("Mods navigation did not show the local list while paused")); return; }
+        const auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        const auto* WorkshopCards=Cast<UVerticalBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCards")));
+        auto* WorkshopReturn=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        auto* WorkshopCategory=Menu->WidgetTree->FindWidget(TEXT("WorkshopCategory"));
+        auto* WorkshopSearch=Menu->WidgetTree->FindWidget(TEXT("WorkshopSearch"));
+        auto* WorkshopTools=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenTools")));
+        auto* WorkshopHosting=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenHosting")));
+        if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused() ||
+            !Workshop || Workshop->GetVisibility()!=ESlateVisibility::Visible || !WorkshopCards ||
+            WorkshopCards->GetChildrenCount()==0 || !WorkshopReturn || !WorkshopSearch ||
+            !WorkshopCategory || !WorkshopTools || !WorkshopHosting)
+        { Finish(TEXT("Native in-game Workshop missing or not visible when Mods is clicked"));return; }
+        Checks.Add(TEXT("real_unreal_workshop_opened_inside_game_with_search_categories_and_cards"));
+        FString WorkshopReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaPlayableProbe="),WorkshopReport);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(WorkshopReport,TEXT(""))+TEXT("-workshop.png"),true,false);
+        WorkshopReturn->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
+        { Finish(TEXT("Native Workshop return button failed to close"));return; }
+        Mods->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
+        { Finish(TEXT("Native Workshop did not reopen"));return; }
         Options->OnClicked.Broadcast();
         if(Pages->GetActiveWidgetIndex()!=1) { Finish(TEXT("Options navigation failed")); return; }
         Home->OnClicked.Broadcast();
