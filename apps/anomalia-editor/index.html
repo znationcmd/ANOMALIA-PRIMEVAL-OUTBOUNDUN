@@ -7,8 +7,7 @@
 <div class="app"><div class="mobileAppBanner"><span>ANOMALIA EDITOR <strong>· MOBILE WORKSPACE</strong></span><span>TOUCH · 3D</span></div>
   <header class="top">
     <div class="brand"><span class="logo">A</span><div><b>ANOMALIA <span>EDITOR</span></b><small>WORLD BUILDER · 3D SCENE AUTHORING</small></div></div>
-    <div class="project"><span class="projectCaption">SCÈNE ACTIVE</span><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div>
-    <nav class="desktopMenu" aria-label="Menus de l’éditeur"><button id="menuFile" type="button" aria-haspopup="menu" aria-expanded="false">Fichier</button><button id="menuEdit" type="button" aria-haspopup="menu" aria-expanded="false">Éditer</button><button id="menuView" type="button" aria-haspopup="menu" aria-expanded="false">Voir</button><button id="menuAssets" type="button" aria-haspopup="menu" aria-expanded="false">Éditeur</button></nav><div class="topButtons"><button id="openMapLibrary" type="button" title="Choisir ou charger une carte ANOMALIA">▦ Cartes</button><button id="openWorldNow" class="realWorldAction" title="Ouvrir la vraie carte ANOMALIA dans Unreal Engine 5">◈ Monde UE5</button>
+    <nav class="desktopMenu" aria-label="Menus de l’éditeur"><button id="menuFile" type="button" aria-haspopup="menu" aria-expanded="false">Fichier</button><button id="menuEdit" type="button" aria-haspopup="menu" aria-expanded="false">Éditer</button><button id="menuView" type="button" aria-haspopup="menu" aria-expanded="false">Voir</button><button id="menuAssets" type="button" aria-haspopup="menu" aria-expanded="false">Éditeur</button></nav><div class="project"><span class="projectCaption">CARTE ACTIVE</span><input id="projectName" maxlength="80" spellcheck="false" aria-label="Nom de la scène" value="Nouvelle carte"></div><div class="topButtons"><button id="openMapLibrary" type="button" title="Choisir ou charger une carte ANOMALIA">▦ Cartes</button><button id="openWorldNow" class="realWorldAction" title="Ouvrir la vraie carte ANOMALIA dans Unreal Engine 5">◈ Monde UE5</button>
       <button id="newScene" title="Nouveau projet">Nouveau</button><button id="saveScene" title="Sauvegarder localement">Enregistrer</button>
       <button id="openScene" title="Ouvrir un projet exporté">Ouvrir</button><button id="exportScene" class="accent" title="Exporter la scène">Exporter JSON</button>
     </div>
@@ -75,18 +74,21 @@
     <div id="inspectorSplitter" class="splitter" role="separator" aria-orientation="vertical" aria-label="Redimensionner l'inspecteur" tabindex="0" aria-valuemin="245" aria-valuemax="460" aria-valuenow="312"></div>
     <aside class="right placeableDock" id="editorInspector" aria-label="Objets à placer">
       <div class="dockHeading"><span class="dockAccent"></span><div><small>ANOMALIA / PLACEMENTS</small><strong>Objets à placer</strong></div><span class="dockStat">GLB / UE5</span></div>
-      <div class="assetIntroduction">Les nouveaux modèles réels sont détectés automatiquement.</div>
+      <details class="advancedDisclosure" id="unrealMapsDisclosure"><summary>Cartes et secteurs UE5</summary>
       <section id="realWorldDock" class="realWorldDock">
         <div class="worldTitle"><span class="worldActiveLed"></span><strong>CARTE ANOMALIA / UNREAL 5</strong></div>
         <p id="realWorldInfo">Aucune carte Unreal associée à cet éditeur. Associe le projet .uproject pour retrouver ses véritables secteurs.</p>
         <div id="realWorldMaps" class="realWorldMaps"></div>
         <div class="worldActions"><button id="linkRealWorld" type="button">Lier le projet UE5</button><button id="launchRealWorld" type="button" class="worldLaunch" disabled>Ouvrir la vraie carte</button></div>
-      </section>
+      </section></details>
       <section class="gameLibraryDock isPrimary" id="gameLibraryDock" aria-label="Ressources synchronisées du jeu">
         <div class="paneHeading borderTop"><div><span class="paneOverline">ANOMALIA / LIVE RESOURCES</span><strong>Bibliothèque du jeu</strong></div><span id="gameLibraryCount">0</span></div>
+        <div class="libraryQuick"><button type="button" id="quickImportGLB" title="Importer directement un modèle 3D GLB">＋ Importer GLB</button><button type="button" id="quickLibrarySettings" title="Afficher les options de synchronisation des ressources">⚙ Sources 3D</button></div>
+        <details class="advancedDisclosure libraryAdvanced" id="librarySourceSettings"><summary>Réglages du catalogue et import ZIP</summary>
         <div class="gameLibraryActions"><button type="button" id="linkGameFolder" class="dockAccent">Lier les fichiers ANOMALIA</button><button type="button" id="refreshGameFolder" title="Actualiser le catalogue">↻</button></div><div class="gameLibraryActions"><button type="button" id="importGamePack" class="dockAccent" title="Importer les véritables fichiers GLB, textures et licences depuis une archive ZIP téléchargée">＋ Importer un pack 3D ZIP</button></div>
         <div id="gameLibraryFolder" class="gameLibraryPath">Aucun dossier lié — choisis le dossier des modèles téléchargés ou du projet Unreal.</div>
         <div class="gameLibraryMetrics"><span id="gameModelsCount">0 modèles</span><span id="gameMapsCount">0 cartes</span><span id="gameUnreadableCount">0 fichiers Unreal</span></div>
+        </details>
         <input id="gameAssetSearch" placeholder="Véhicule, bâtiment, route, objet, carte..." maxlength="120" aria-label="Filtrer les ressources synchronisées">
         <select id="gameAssetCategory" aria-label="Catégorie des ressources synchronisées"><option value="">Toutes les catégories</option></select>
         <div id="gameLibraryItems" class="gameLibraryItems"><div class="libraryNotice">Le catalogue se mettra à jour automatiquement toutes les 45 secondes après la première association d'un dossier.</div></div>
