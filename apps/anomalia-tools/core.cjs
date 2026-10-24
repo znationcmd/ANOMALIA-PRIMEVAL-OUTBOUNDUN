@@ -222,6 +222,10 @@ class AnomaliaTools{
   }
   workshop(){return new Workshop(this);}
   listWorkshopMods(){return this.workshop().list();}
+  createWorkforgeProfile(payload={}){return this.workshop().createProfile(payload);}
+  activateWorkforgeProfile(payload={}){return this.workshop().activateProfile(payload);}
+  setWorkforgeProfileMod(payload={}){return this.workshop().setProfileMod(payload);}
+  deleteWorkforgeProfile(payload={}){return this.workshop().deleteProfile(payload);}
   publishWorkshopMod(payload={}){return this.workshop().publish(payload);}
   subscribeWorkshopMod(payload={}){return this.workshop().subscribe(payload);}
   prepareWorkshopMod(payload={}){return this.workshop().install(payload);}
