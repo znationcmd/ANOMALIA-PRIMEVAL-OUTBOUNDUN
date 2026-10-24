@@ -9,6 +9,16 @@ def main():
     if proof.exists():raise RuntimeError('Fresh interaction output required')
     report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),packagedGameTested=False,fullMapComplete=False)
     try:
+        # Read only the installed vendor's template folders, never user documents
+        # or private engine source. A ready vehicle rig may already be available.
+        templates=[]
+        for folder in ('FeaturePacks','Templates'):
+            base=a.engine_root/folder
+            if not base.is_dir():continue
+            for file in base.rglob('*'):
+                if file.is_file() and 'vehicle' in str(file.relative_to(a.engine_root)).lower() and file.suffix.lower() in ('.upack','.zip','.uasset'):
+                    templates.append(dict(path=str(file.relative_to(a.engine_root)),bytes=file.stat().st_size))
+        report['installedVehicleTemplateFiles']=templates[:60]
         command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),
             '/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=playable-smoke-'+uuid.uuid4().hex,
             '-game','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
