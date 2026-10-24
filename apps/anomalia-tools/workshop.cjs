@@ -154,6 +154,30 @@ class Workshop{
       throw e;
     }
   }
+  exportHostingManifest({projectId}={}){
+    safeId(projectId);
+    const mod=this.published(projectId);
+    if(!mod)throw Error('Ajoute ce mod au Workshop local avant export CMD Hosting');
+    const project=this.tools.getProjectPath(projectId);
+    const p=filesFor(project,projectId);
+    const descriptor=path.join(p.output,p.name+'.uplugin');
+    const report=path.join(project,'Dist',p.name+'-native-build.json');
+    if(!ordinary(descriptor)||!ordinary(report))throw Error('Compile ce plugin Unreal avant de préparer sa fiche CMD Hosting');
+    const proof=readJSON(report,{});
+    if(proof.schema!=='anomalia-native-build'||proof.projectId!==projectId||
+      proof.plugin!==p.name||proof.platform!=='Win64')throw Error('Rapport de compilation UE5 invalide');
+    const info=treeFiles(p.output);
+    if(info.files.length<2)throw Error('Plugin compilé incomplet');
+    // No local paths, auth tokens, binaries, or remotely deployable URLs in the hand-off.
+    return {schema:'anomalia-hosting-mod-handoff',version:1,target:'cmd-hosting',
+      game:'anomalia-primeval-outboundun',source:'anomalia-tools-workshop',
+      mod:{id:projectId,name:mod.title,version:mod.modVersion,category:mod.category,plugin:p.name,
+        platform:'Win64',files:info.files.map(f=>({path:f.rel,size:f.bytes,sha256:f.sha256})),
+        totalBytes:info.bytes},
+      generatedAt:new Date().toISOString(),
+      deployment:{ready:false,mode:'manifest-only',requires:'Dedicated ANOMALIA UE5 server agent and approved mod loader'},
+      note:'Manifeste de transfert sans binaire. CMD Hosting ne peut pas installer ce plugin sur un serveur tant que le chargeur ANOMALIA et un agent dédié ne sont pas validés.'};
+  }
   toggle({projectId,enabled}={}){
     safeId(projectId);
     if(typeof enabled!=='boolean')throw Error('État du mod invalide');
