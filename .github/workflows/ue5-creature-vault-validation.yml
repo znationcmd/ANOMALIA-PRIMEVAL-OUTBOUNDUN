@@ -19,6 +19,12 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Retain previous failed automation process diagnostics for recovery
+        uses: actions/upload-artifact@v4
+        with:
+          name: previous-vault-automation-diagnostics
+          path: unreal/Saved/CreatureVaultValidation/run-40122002563-1/automation-*/*.log
+          if-no-files-found: warn
       - name: Compile Editor and Game and execute the actual Unreal native tests
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -50,4 +56,5 @@ jobs:
           path: |
             unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/*.*
             unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/automation-*/index.json
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/automation-*/*.log
           if-no-files-found: error
