@@ -269,3 +269,15 @@ footer{background:#0e1926;border-color:#32465a;color:#8297a9;height:40px;letter-
 .wsPublishCard label{margin-top:8px}.wsPublishCard input,.wsPublishCard textarea,.wsPublishCard select{background:#13141b;border:1px solid #5b3b36}
 @media(max-width:1300px){.wsWelcome{grid-template-columns:minmax(0,1fr) 245px}.wsCategories{grid-template-columns:repeat(3,minmax(0,1fr))}.wsModGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.wsToolbar input{width:180px;min-width:0}}
 @media(max-width:950px){.wsWelcome{grid-template-columns:1fr}.wsConnection{max-width:400px}.wsSectionHeader{align-items:start;flex-direction:column}.wsCategories{grid-template-columns:repeat(2,minmax(0,1fr))}.wsModGrid{grid-template-columns:1fr}.wsFooterGrid{grid-template-columns:1fr}.wsToolbar{flex-wrap:wrap}.wsToplineEnd{display:none}}
+
+/* WorkForge local modpack collections — aligned with the existing Workshop visual language. */
+.wsProfileForm{display:flex;align-items:end;gap:10px;margin:12px 0}
+.wsProfileForm label{flex:1;min-width:0}
+.wsProfileForm input{width:100%;background:#101318;border:1px solid #855049}
+.wsProfileForm button{min-height:37px}
+.wsProfileControls{display:flex;align-items:center;gap:7px;flex-wrap:wrap;margin:10px 0}
+.wsProfileControls select{flex:1;min-width:135px;color:#fff;background:#101318;border-color:#79443c}
+.wsProfileControls button{flex-shrink:0}
+.wsProfileControls button:disabled{opacity:.42;cursor:not-allowed}
+#wsProfileMods{line-height:1.55;overflow-wrap:anywhere}
+@media(max-width:700px){.wsProfileForm{flex-direction:column;align-items:stretch}.wsProfileControls{align-items:stretch;flex-direction:column}.wsProfileControls select{width:100%}}
