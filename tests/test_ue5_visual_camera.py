@@ -28,7 +28,7 @@ class CameraTests(unittest.TestCase):
                 return self.eye, self.rotation
         editor = Editor()
         unreal = SimpleNamespace(Rotator=Rotator, Vector=lambda x,y,z:SimpleNamespace(x=x,y=y,z=z), get_editor_subsystem=lambda _:editor, UnrealEditorSubsystem=None)
-        env = dict(math=math, unreal=unreal, views=views, state={'index':0}, report={})
+        env = dict(math=math, unreal=unreal, views=views, state={'index':0}, report={},WORLD_NAME='ANOMALIA_Archipelago_v2')
         exec(compile(ast.Module(body=[fn], type_ignores=[]), '<capture-camera>', 'exec'), env)
         for i, (name, eye, target) in enumerate(views):
             with self.subTest(view=name):

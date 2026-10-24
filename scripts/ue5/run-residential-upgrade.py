@@ -15,8 +15,8 @@ def main():
         backup_file=out/'backup-report.json';backup_file.write_text(json.dumps(backup,indent=2)+'\n')
         native=out/'residential-upgrade.json'
         if native.exists():raise RuntimeError('Use a fresh output directory; existing evidence preserved')
-        env=dict(os.environ,ANOMALIA_RESIDENTIAL_BACKUP_REPORT=str(backup_file),ANOMALIA_RESIDENTIAL_UPGRADE_REPORT=str(native))
-        command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-run=pythonscript','-script='+str(root/'unreal/Scripts/apply_residential_replacements.py'),'-abslog='+str(out/'residential-upgrade.engine.log')]
+        env=dict(os.environ,ANOMALIA_RESIDENTIAL_BACKUP_REPORT=str(backup_file),ANOMALIA_RESIDENTIAL_UPGRADE_REPORT=str(native),ANOMALIA_EDITOR_TASK=str(root/'unreal/Scripts/apply_residential_replacements.py'))
+        command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+str(root/'scripts/world-features/run-editor-task.py'),'-abslog='+str(out/'residential-upgrade.engine.log')]
         with (out/'process.log').open('w',encoding='utf-8') as stream:
             run=subprocess.run(command,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=1800,check=False)
         result=json.loads(native.read_text()) if native.is_file() else {}

@@ -140,7 +140,7 @@ void UAnomaliaSessionWidget::BuildLayout()
         if(Texture)
         {
             auto* Matte=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Matte->SetBrushColor(FLinearColor::Black);Matte->SetPadding(FMargin(0));
-            auto* Slot=Canvas->AddChildToCanvas(Matte);Slot->SetAnchors(FAnchors(0,0,1,1));Slot->SetOffsets(FMargin(0));
+            auto* BackdropCanvasSlot=Canvas->AddChildToCanvas(Matte);BackdropCanvasSlot->SetAnchors(FAnchors(0,0,1,1));BackdropCanvasSlot->SetOffsets(FMargin(0));
             auto* Fit=WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());Fit->SetStretch(EStretch::ScaleToFit);Matte->SetContent(Fit);
             MenuArtwork=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("SessionMenuArtwork"));
             MenuArtwork->SetBrushFromTexture(Texture,true);MenuArtwork->SetRenderTransformPivot(FVector2D(.5f,.5f));Fit->SetContent(MenuArtwork);

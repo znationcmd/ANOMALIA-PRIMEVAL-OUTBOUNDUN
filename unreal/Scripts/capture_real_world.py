@@ -1,5 +1,5 @@
 """Capture only real Unreal viewport pixels from the existing map; no synthetic images."""
-import gc,hashlib,json,math,os,time,traceback
+import gc,hashlib,json,math,os,re,time,traceback
 from pathlib import Path
 import unreal
 OUT=Path(os.environ['ANOMALIA_VISUAL_OUTPUT']);OUT.mkdir(parents=True,exist_ok=True)
@@ -46,7 +46,7 @@ def finish(error=None):
     state['task']=None
     # Release retained Python wrappers while their editor objects are still alive.
     # In particular, Landscape components must not outlive native World teardown.
-    for key in ('world','landscapes','terrain_components','actors','desc','wanted','a','c'):
+    for key in ('world','landscapes','terrain_components','actors','desc','wanted','a','c','streamable_desc','wp','sites'):
         globals().pop(key,None)
     if 'packages' in locals():packages.clear()
     obj=package=None
@@ -82,6 +82,26 @@ def exit_tick(delta):
 
 def set_view():
     _,eye,target=views[state['index']];dx,dy,dz=[target[i]-eye[i] for i in range(3)]
+    if WORLD_NAME=='ANOMALIA_Inhabited_v2':
+        # Stream just the inspected town and nearby foliage. Loading every HISM
+        # across 48km simultaneously hung the integrated D3D11 device on reopen.
+        previous=state.pop('dynamic_guids',[])
+        if previous:wp.unload_actors(previous)
+        east,north=target[0]/100,-target[1]/100
+        nearest=min(sites,key=lambda p:math.hypot(p.x-east,p.y-north))
+        prefix=None
+        if math.hypot(nearest.x-east,nearest.y-north)<1200:
+            prefix=f'ANOMALIA_Inhabited1_settlement_{int((nearest.y+24000)//8000)}_{int((nearest.x+24000)//8000)}_house_'
+        selected=[]
+        for entry in streamable_desc:
+            label=str(entry.label)
+            if prefix and label.startswith(prefix):selected.append(entry.guid);continue
+            if entry.native_class.get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster':
+                cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
+                if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry.guid)
+        if selected:wp.load_actors(selected)
+        state['dynamic_guids']=selected
+        report.setdefault('streamedViewActors',[]).append(dict(view=views[state['index']][0],nearbyActors=len(selected),fullWorldForcedLoaded=False))
     rotation=unreal.Rotator(pitch=math.degrees(math.atan2(dz,math.hypot(dx,dy))),yaw=math.degrees(math.atan2(dy,dx)),roll=0)
     editor=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
     editor.set_level_viewport_camera_info(unreal.Vector(*eye),rotation)
@@ -117,7 +137,11 @@ try:
     if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Real map unavailable')
     # Load known generated geometry for aerial captures without altering streaming rules on disk.
     desc=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
-    wanted=[d.guid for d in desc if d.native_class.get_path_name() in ('/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy') or str(d.label).startswith('ANOMALIA_')]
+    wp=unreal.WorldPartitionBlueprintLibrary
+    streamable_desc=[d for d in desc if '_house_' in str(d.label) or d.native_class.get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster'] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
+    dynamic_labels={str(d.label) for d in streamable_desc}
+    if streamable_desc:wp.unload_actors([d.guid for d in streamable_desc])
+    wanted=[d.guid for d in desc if (d.native_class.get_path_name() in ('/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy') or str(d.label).startswith('ANOMALIA_')) and str(d.label) not in dynamic_labels]
     report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(str(d.native_class) for d in desc)))
     unreal.WorldPartitionBlueprintLibrary.load_actors(wanted)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
