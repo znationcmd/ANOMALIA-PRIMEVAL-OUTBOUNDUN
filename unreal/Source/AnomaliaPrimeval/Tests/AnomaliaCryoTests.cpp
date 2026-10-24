@@ -116,7 +116,11 @@ bool FAnomaliaCryoPersistenceTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Unsupported file remains byte-identical"),Preserved,Future);
         Root->SetNumberField(TEXT("schemaVersion"),1);
         auto Values=Root->GetArrayField(TEXT("terminals"));
-        if(Values.Num()>0)Values.Add(Values[0]);
+        if(Values.Num()>0)
+        {
+            const auto Repeated=Values[0];
+            Values.Add(Repeated);
+        }
         Root->SetArrayField(TEXT("terminals"),Values);
         FString Duplicate;
         FJsonSerializer::Serialize(Root.ToSharedRef(),TJsonWriterFactory<>::Create(&Duplicate));
