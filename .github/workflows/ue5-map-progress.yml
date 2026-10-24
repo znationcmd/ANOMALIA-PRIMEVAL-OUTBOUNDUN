@@ -1,0 +1,70 @@
+name: UE5 populated map validation and owned Editor update
+on:
+  workflow_dispatch:
+  push:
+    branches: ['ue5/driveable-roster-city-20261023']
+    paths:
+      - '.github/workflows/ue5-map-progress.yml'
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  validate-and-synchronize-populated-map:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile installed-engine targets and verify native gameplay contracts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Back up and verify the existing scanned-house replacements
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-residential-upgrade.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/residential-upgrade"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Independently reopen and inspect the populated map on the real GPU
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "$evidence/editor" --inhabited
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Update owned native Editor project after map verification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $evidence="unreal/Saved/MapProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & ./scripts/ue5/install-pc-editor-update.ps1 -ValidationDir "$evidence/editor" -BuildValidationDir "$evidence/native" -MapPackage '/Game/Maps/ANOMALIA_Inhabited_v2'
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report=Get-Content "$evidence/editor/pc-editor-update.json" -Raw | ConvertFrom-Json
+          if ($report.state -ne 'EDITOR_PROJECT_UPDATE_INSTALLED' -or $report.commit -ne $env:GITHUB_SHA) { throw 'Native populated-map update is not confirmed.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: populated-map-evidence
+          path: |
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/*.*
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/residential-upgrade/*.*
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*.json
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.log
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.json
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/real-graphics/*/*.png
+            unreal/Saved/MapProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/editor/pc-installed-graphics/*.*
+          if-no-files-found: warn
