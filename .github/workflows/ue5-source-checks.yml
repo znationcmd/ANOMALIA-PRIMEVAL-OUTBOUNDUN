@@ -26,6 +26,7 @@ on:
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
+      - 'tests/test_ue5_native_workshop_menu.py'
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_playable_package_driver.py'
       - 'tests/test_ue5_visual_camera.py'
@@ -69,6 +70,7 @@ on:
       - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
+      - 'tests/test_ue5_native_workshop_menu.py'
       - 'tests/test_ue5_build_driver.py'
       - 'tests/test_ue5_playable_package_driver.py'
       - 'tests/test_ue5_visual_camera.py'
@@ -108,6 +110,8 @@ jobs:
         run: node --test tests/new-survival-modules.test.mjs
       - name: Check migration and vehicle catalog
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
+      - name: Verify the real UE5 Workshop replaces the old local Mods screen
+        run: python -m unittest discover -s tests -p test_ue5_native_workshop_menu.py -v
       - name: Test build driver failure reporting (not a native build)
         run: python -m unittest discover -s tests -p test_ue5_build_driver.py -v
       - name: Reject stale playable scenes even when the editor process exits successfully
