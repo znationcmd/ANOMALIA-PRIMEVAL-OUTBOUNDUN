@@ -53,7 +53,12 @@ export function createWorldForge({camera,orbit,grid,renderer,ground,scene,openBr
       ['Ouvrir le projet Unreal','',()=>clickTarget('openWorldNow')],
       ['Relief : charger un PNG','',()=>clickTarget('chooseHeightmap')],
       ['Réglages du relief','',()=>find('worldSourceBar')?.classList.toggle('expanded')],
-      ['Réglages des ressources','',()=>{const panel=find('librarySourceSettings');if(panel)panel.open=true;clickTarget('toggleInspector');}],
+      ['Réglages des ressources','',()=>{
+        const panel=find('librarySourceSettings');
+        if(panel)panel.open=true;
+        if(find('editorWorkspace')?.classList.contains('hide-right'))clickTarget('toggleInspector');
+        panel?.scrollIntoView({block:'nearest'});
+      }],
       ['Importer GLB','',()=>clickTarget('importModel')],
       ['Importer ZIP de modèles','',()=>clickTarget('importGamePack')],
       ['Lier le dossier du jeu','',()=>clickTarget('linkGameFolder')],
