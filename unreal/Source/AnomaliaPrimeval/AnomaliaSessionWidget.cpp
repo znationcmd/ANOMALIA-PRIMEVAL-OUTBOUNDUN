@@ -431,8 +431,12 @@ void UAnomaliaSessionWidget::RefreshWorkshop()
         for(const FString& Folder:Folders)
         {
             if(++Scanned>500 || Total>=200) break;
-            if(Folder.Len()>100 || !Folder.StartsWith(TEXT("mod-")) && !Folder.StartsWith(TEXT("project-")) &&
-                !Folder.StartsWith(TEXT("anomalia-"))) continue;
+            // ANOMALIA Tools project IDs are user slugs plus UUID suffix, not fixed prefixes.
+            if(Folder.Len()<2 || Folder.Len()>100 || Folder==TEXT("_workshop")) continue;
+            bool ValidFolder=true;
+            for(const TCHAR C:Folder) if(!((C>=TEXT('a') && C<=TEXT('z')) ||
+                (C>=TEXT('0') && C<=TEXT('9')) || C==TEXT('-'))) { ValidFolder=false;break; }
+            if(!ValidFolder) continue;
             const FString File=FPaths::Combine(Workspace,Folder,TEXT("Config/workshop.json"));
             const int64 Size=IFileManager::Get().FileSize(*File);
             if(Size<=0 || Size>64*1024) continue;
