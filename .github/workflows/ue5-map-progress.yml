@@ -7,7 +7,9 @@ on:
       - '.github/workflows/ue5-map-progress.yml'
 concurrency:
   group: anomalia-ue5-native-host
-  cancel-in-progress: false
+  # An explicit recovery commit can supersede an obsolete build still cooking.
+  # Normal map edits keep the existing non-interrupting update behavior.
+  cancel-in-progress: ${{ startsWith(github.event.head_commit.message, '[map-recovery]') }}
 jobs:
   validate-and-synchronize-populated-map:
     if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
