@@ -164,10 +164,10 @@ void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
         Text->SetColorAndOpacity(FSlateColor(Color));
         return Text;
     };
-    auto Box=[&](const FLinearColor& Color,float Padding)
+    auto Box=[&](const FLinearColor& Color,float InnerPadding)
     {
         auto* Border=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-        Border->SetBrushColor(Color);Border->SetPadding(FMargin(Padding));
+        Border->SetBrushColor(Color);Border->SetPadding(FMargin(InnerPadding));
         return Border;
     };
     auto Vertical=[&]()
