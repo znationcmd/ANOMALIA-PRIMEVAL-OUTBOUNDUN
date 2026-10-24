@@ -75,6 +75,11 @@ app.whenReady().then(()=>{
   return {url:`ws://localhost:${port}`,addresses,adminKey:next.adminKey,mode:next.mode};
  });
  ipcMain.handle('anomalia:stop',async event=>{validSender(event);if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}return true;});
+ ipcMain.handle('anomalia:workshop:list',event=>{
+  validSender(event);
+  const {listLocalWorkshop}=require('./workshop-library.cjs');
+  return listLocalWorkshop(app.getPath('appData'));
+ });
  const bundleDir=path.resolve(__dirname,"..","dist");
  let activeProfile="solo";
  const configRoot=path.join(app.getPath("userData"),"profiles");
