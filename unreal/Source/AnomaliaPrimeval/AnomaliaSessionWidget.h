@@ -10,6 +10,7 @@ class UWidgetSwitcher;
 class ACameraActor;
 class UImage;
 class UBorder;
+class UCanvasPanel;
 class UComboBoxString;
 class UEditableTextBox;
 UCLASS()
@@ -26,6 +27,7 @@ public:
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry,const FKeyEvent& Event) override;
 private:
     void BuildLayout();
+    void BuildPremiumWorkshop(UCanvasPanel* Canvas);
     bool bMainMenu=false;
     int32 Quality=1;
     UPROPERTY() TObjectPtr<UButton> PlayButton;
@@ -62,6 +64,13 @@ private:
     UFUNCTION() void CloseWorkshop();
     UFUNCTION() void OpenWorkshopTools();
     UFUNCTION() void OpenWorkshopHosting();
+    UFUNCTION() void WorkshopFilterAll();
+    UFUNCTION() void WorkshopFilterVehicles();
+    UFUNCTION() void WorkshopFilterWeapons();
+    UFUNCTION() void WorkshopFilterBuildings();
+    UFUNCTION() void WorkshopFilterCreatures();
+    UFUNCTION() void WorkshopFilterSurvival();
+    UFUNCTION() void WorkshopFilterMaps();
     UFUNCTION() void OpenModsFolder();
     UFUNCTION() void OpenWorldEditor();
     void SelectPage(int32 Index);
