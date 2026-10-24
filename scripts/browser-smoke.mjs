@@ -29,6 +29,19 @@ try{
  await page.goto(base,{waitUntil:'domcontentloaded',timeout:60000});
  await page.waitForSelector('#startBtn');
  await safeScreenshot(page,'test-results/00-main-menu.png');
+ await page.click('#startWorkshopBtn');
+ await page.waitForSelector('#inGameWorkshop:visible',{timeout:10000});
+ assert.equal(await page.locator('#inGameWorkshop h2').textContent(),'ANOMALIAWORKSHOP');
+ assert.ok((await page.locator('#igwMessage').textContent()).length>0);
+ await page.fill('#igwSearch','véhicule');
+ await page.getByRole('button',{name:/Véhicules/}).first().click();
+ await safeScreenshot(page,'test-results/00-workshop-in-game.png');
+ await page.click('#igwClose');
+ assert.equal(await page.locator('#inGameWorkshop').isVisible(),false,'Workshop back button must return to menu');
+ await page.click('#startWorkshopBtn');
+ await page.keyboard.press('Escape');
+ assert.equal(await page.locator('#inGameWorkshop').isVisible(),false,'Escape must close Workshop');
+
  await page.click('#settingsBtn');
  for(const [language,label] of [['de','Solo spielen'],['ru','Одиночная игра'],['it','Gioca da solo'],['en','Play solo'],['ja','ソロプレイ'],['zh','单人游戏'],['es','Jugar solo'],['fr','Jouer en solo']]){await page.selectOption('#menuLanguage',language);assert.equal(await page.locator('#startBtn').textContent(),label);}
  await page.locator('#menuSettings .menu-back').click();

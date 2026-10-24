@@ -14,6 +14,62 @@
       <p class="small">Prototype jouable sur PC · WASD déplacer · Souris regarder · E interagir · M carte · I inventaire · B construire · Échap libérer la souris</p>
     </div>
   </div>
+
+  <section id="inGameWorkshop" class="in-game-workshop" role="dialog" aria-modal="true" aria-label="ANOMALIA Workshop" hidden>
+    <div class="igw-shell">
+      <header class="igw-nav">
+        <div class="igw-logo"><span>✦</span> ANOMALIA <b>WORKSHOP</b></div>
+        <div class="igw-navRight"><span class="igw-beta">MODULE INTÉGRÉ AU JEU</span><button id="igwClose" type="button">✕ &nbsp; Retour au menu</button></div>
+      </header>
+      <div class="igw-scroll">
+        <section class="igw-hero">
+          <div class="igw-heroText">
+            <span class="igw-eyebrow">CRÉER · EXPLORER · PERSONNALISER</span>
+            <h2>ANOMALIA<em>WORKSHOP</em></h2>
+            <p>Retrouve tes créations, véhicules, bâtiments et objets au cœur de l'univers ANOMALIA. Le Workshop est directement intégré dans le jeu.</p>
+            <div class="igw-numbers">
+              <div><strong id="igwCount">0</strong><small>Mods locaux</small></div>
+              <div><strong id="igwSaved">0</strong><small>Abonnements</small></div>
+              <div><strong id="igwReady">0</strong><small>Plugins préparés</small></div>
+            </div>
+          </div>
+          <aside class="igw-connection">
+            <strong class="igw-boxHead">ÉTAT DU WORKSHOP</strong>
+            <div><span>Interface du Workshop</span><b class="igw-green">Intégrée</b></div>
+            <div><span>Catalogue communautaire</span><b class="igw-warn">Non connecté</b></div>
+            <div><span>Bibliothèque ANOMALIA Tools</span><b id="igwToolsState" class="igw-warn">Vérification…</b></div>
+            <div><span>Chargement des mods UE5</span><b class="igw-warn">À développer</b></div>
+            <button id="igwOpenTools" type="button" class="igw-primary">Gérer dans ANOMALIA Tools ↗</button>
+          </aside>
+        </section>
+        <main class="igw-main">
+          <div class="igw-titlebar">
+            <div><span>TES CRÉATIONS</span><h3>Explorer les mods</h3></div>
+            <div class="igw-search">
+              <input id="igwSearch" type="search" placeholder="Rechercher un mod…" aria-label="Rechercher dans le Workshop">
+              <button id="igwRefresh" type="button">↻ Actualiser</button>
+            </div>
+          </div>
+          <div class="igw-categories" id="igwCategories" aria-label="Catégories de mods"></div>
+          <div class="igw-titlebar igw-minor">
+            <div><span>BIBLIOTHÈQUE</span><h3>Mods disponibles <small id="igwVisible">(0)</small></h3></div>
+          </div>
+          <p id="igwMessage" class="igw-status" role="status">Chargement du Workshop…</p>
+          <div id="igwGrid" class="igw-grid" aria-live="polite"></div>
+          <footer class="igw-bottom">
+            <div><h3>ANOMALIA Tools</h3>
+              <p>Crée et compile des mods dans ANOMALIA Tools. Tes fiches de projets apparaissent ici si la bibliothèque Windows est disponible.</p>
+              <a id="igwDownloadTools" href="https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/tag/anomalia-tools-latest" target="_blank" rel="noopener noreferrer">Télécharger ANOMALIA Tools ↗</a>
+            </div>
+            <div><h3>CMD Hosting</h3>
+              <p>Prépare les manifestes de tes mods pour CMD Hosting. Le déploiement UE5 sur les serveurs dédiés n'est pas encore actif.</p>
+              <a id="igwHosting" href="https://cmd-hosting-web-production.up.railway.app/#cmdMods" target="_blank" rel="noopener noreferrer">CMD Hosting · Mods ↗</a>
+            </div>
+          </footer>
+        </main>
+      </div>
+    </div>
+  </section>
   <div id="hud" class="hidden">
     <header class="topbar">
       <div class="brand">ANOMALIA <b>PRIMEVAL</b> OUTBOUNDUN <span class="alpha">ALPHA</span></div>
