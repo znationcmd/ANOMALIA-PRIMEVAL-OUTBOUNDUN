@@ -56,7 +56,7 @@ private:
     UFUNCTION() void ShowOptions();
     UFUNCTION() void ShowMods();
     UFUNCTION() void RefreshMods();
-    void RefreshWorkshop();
+    UFUNCTION() void RefreshWorkshop();
     UFUNCTION() void WorkshopSearchChanged(const FText& NewText);
     UFUNCTION() void WorkshopCategoryChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void CloseWorkshop();
