@@ -170,6 +170,8 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_visual_camera.py -v
       - name: Verify immutable world snapshots exclude player saves
         run: python -m unittest discover -s tests -p test_ue5_world_snapshot.py -v
+      - name: Verify scanned exteriors fit the existing town parcels and preserve rejected slopes
+        run: python -m unittest discover -s tests -p test_ue5_residential_replacement.py -v
       - name: Verify all eight original GLB source identities and dimensions
         run: python -m unittest discover -s tests -p test_ue5_original_lot1.py -v
       - name: Generate and verify 33 original prototype meshes without third-party dependencies

@@ -1,5 +1,6 @@
 name: UE5 licensed world features import
 on:
+  workflow_dispatch:
   push:
     branches: ['ue5/driveable-roster-city-20261023']
     paths:
@@ -13,11 +14,9 @@ on:
       - 'scripts/world-features/place-exterior-bunkers.py'
       - 'scripts/world-features/settlement_roads.py'
       - 'scripts/world-features/build-settlement-roads.py'
-      - 'scripts/world-features/audit-detailed-world.py'
       - 'scripts/world-features/run-visual-review.py'
       - 'scripts/world-features/configure-detailed-rendering.py'
       - 'docs/art/marine-terrain-sources.json'
-      - '.github/workflows/ue5-world-features.yml'
 concurrency:
   group: anomalia-ue5-native-host
   cancel-in-progress: false

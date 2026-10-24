@@ -24,7 +24,8 @@ try:
         raise RuntimeError('Saved World Partition descriptors required')
     known = {}
     for folder, tag, suffix in [('RealismValidation_v2', 'AnomaliaRealismSha256', '_r2'),
-                                 ('WorldFeaturesPrepared_v1', 'AnomaliaWorldFeatureSha256', '')]:
+                                 ('WorldFeaturesPrepared_v1', 'AnomaliaWorldFeatureSha256', ''),
+                                 ('ResidentialPhotogrammetryPrepared_v1', 'AnomaliaWorldFeatureSha256', '')]:
         manifest = json.loads((ROOT / 'SourceAssets' / folder / 'manifest.json').read_text())
         for item in manifest['models']:
             path = item['objectPath'] + suffix
