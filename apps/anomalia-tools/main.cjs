@@ -5,7 +5,9 @@ const {AnomaliaTools}=require('./core.cjs');
 const {ToolsUpdater}=require('./updates.cjs');
 let toolsApp;let win;let updater;
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
-if(process.platform==='win32'&&app.isPackaged)app.setAsDefaultProtocolClient('anomalia-tools');
+const ownInstance=app.requestSingleInstanceLock();
+if(!ownInstance)app.quit();
+if(ownInstance&&process.platform==='win32'&&app.isPackaged)app.setAsDefaultProtocolClient('anomalia-tools');
 const workshopDeepLink=argv=>argv.some(arg=>/^anomalia-tools:\/\/workshop\/?$/i.test(arg));
 app.on('second-instance',(_event,argv)=>{
   if(workshopDeepLink(argv)&&win&&!win.isDestroyed()){
@@ -30,7 +32,7 @@ function start(){
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
 }
-app.whenReady().then(()=>{
+if(ownInstance)app.whenReady().then(()=>{
   toolsApp=new AnomaliaTools(path.join(app.getPath('userData'),'private-workspaces'));
   updater=new ToolsUpdater();
   ipcMain.handle('tools:updates:status',()=>updater.status());
