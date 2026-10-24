@@ -57,6 +57,13 @@ test('local installation accepts matching compiled plugin evidence, verifies cop
   fs.writeFileSync(path.join(p.output,'Binaries','Win64',plugin+'.dll'),'test fixture only: not an Unreal binary');
   fs.writeFileSync(path.join(project,'Dist',plugin+'-native-build.json'),JSON.stringify({schema:'anomalia-native-build',plugin,projectId:id,platform:'Win64'}));
   assert.equal(tools.listWorkshopMods().entries[0].compiled,true);
+  const handoff=tools.exportWorkshopHostingManifest({projectId:id});
+  assert.equal(handoff.schema,'anomalia-hosting-mod-handoff');
+  assert.equal(handoff.game,'anomalia-primeval-outboundun');
+  assert.equal(handoff.deployment.ready,false);
+  assert.equal(handoff.mod.files.length,2);
+  assert.ok(handoff.mod.files.every(f=>!path.isAbsolute(f.path)&&f.sha256.length===64));
+  assert.ok(!JSON.stringify(handoff).includes(root),'Do not expose private absolute paths');
   const prepared=tools.prepareWorkshopMod({projectId:id});
   assert.equal(prepared.prepared,true);
   assert.equal(prepared.gameLoaded,false);
@@ -85,6 +92,8 @@ test('Workshop installed application includes backing module, page and events',(
   const js=fs.readFileSync(path.resolve(__dirname,'../src/renderer.js'),'utf8');
   const electron=fs.readFileSync(path.resolve(__dirname,'../main.cjs'),'utf8');
   assert.ok(pkg.build.files.includes('workshop.cjs'));
+  assert.match(electron,/tools:exportHostingManifest/);
+  assert.match(js,/exportHostingManifest/);
   assert.equal(pkg.version,'0.2.4');
   for(const id of ['wsModGrid','wsCategories','wsPublishForm','wsSearch','wsConnection','wsProjectSelect']){
     assert.ok(id==='wsConnection'||html.includes('id="'+id+'"'),'Missing Workshop HTML '+id);
