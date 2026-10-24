@@ -1,7 +1,7 @@
 // Catalogue local ANOMALIA : ajout automatique des nouvelles ressources disponibles,
 // placement sur action explicite. Les fichiers Unreal .umap/.uasset ne sont pas
 // des GLB et ne sont jamais présentés comme des scènes Three.js importées.
-export function bindGameLibrary({placeGLB,openMap,notify}){
+export function bindGameLibrary({placeGLB,openMap,openTerrain,notify}){
   const library=window.anomaliaDesktop?.gameLibrary;
   const $=s=>document.querySelector(s);
   const items=$('#gameLibraryItems'),count=$('#gameLibraryCount');
@@ -14,6 +14,8 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
     return;
   }
   let all=[], busy=false;
+  let activeTerrain=null;
+  let reloadingTerrain=false;
   const categories=[
     'Cartes et secteurs','Véhicules','Bâtiments',
     'Routes et infrastructures','Nature','Objets et équipements',
@@ -51,8 +53,21 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
           act.disabled=true;
           try{
             await placeGLB(item);
-            updateMessage('Modèle réellement placé : '+item.name);
+            updateMessage('Prévisualisation de '+item.name+' : clique ensuite sur le terrain pour confirmer sa position.');
           }catch(e){notify('Import 3D impossible : '+e.message,true);}
+          finally{act.disabled=false;}
+        });
+      }else if(item.canTerrain){
+        act.textContent='Terrain';act.title='Afficher le vrai relief PNG/JPG/WebP dans la vue 3D (secteur Three.js).';
+        act.addEventListener('click',async()=>{
+          act.disabled=true;
+          try{
+            const payload=await library.read(item.id);
+            if(payload.kind!=='heightmap')throw Error('Image de terrain invalide.');
+            await openTerrain({item,payload});
+            activeTerrain={id:item.id,mtimeMs:item.mtimeMs,bytes:item.bytes};
+            updateMessage('Relief réel importé : '+item.name+' (pas un fichier .umap Unreal).');
+          }catch(e){notify('Relief indisponible : '+e.message,true);}
           finally{act.disabled=false;}
         });
       }else if(item.canOpen){
@@ -91,7 +106,7 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
        'Aucun dossier lié — sélectionne celui du jeu ou importe un pack ZIP.');
     $('#gameLibraryFolder').title=status.folder||'';
     $('#gameModelsCount').textContent=all.filter(x=>x.kind==='glb').length+' modèles GLB';
-    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map','plan'].includes(x.kind)).length+' cartes/secteurs/plans';
+    $('#gameMapsCount').textContent=all.filter(x=>['map','unreal-map','plan','heightmap'].includes(x.kind)).length+' cartes/secteurs/plans';
     $('#gameUnreadableCount').textContent=all.filter(x=>x.kind==='unreal-asset'||x.kind==='unreal-map').length+' fichiers Unreal';
     const selected=category.value;
     category.replaceChildren(new Option('Toutes les catégories',''));
@@ -102,8 +117,23 @@ export function bindGameLibrary({placeGLB,openMap,notify}){
     else updateMessage('Choisis un dossier du jeu pour activer la synchronisation.');
   }
   library.status().then(apply).catch(e=>updateMessage('Bibliothèque inaccessible : '+e.message));
-  library.subscribe(event=>{
-    if(event.type==='changed')apply(event);
+  library.subscribe(async event=>{
+    if(event.type==='changed'){
+      apply(event);
+      if(activeTerrain&&!reloadingTerrain){
+        const current=event.items?.find(x=>x.id===activeTerrain.id);
+        if(current?.canTerrain&&(current.mtimeMs!==activeTerrain.mtimeMs||current.bytes!==activeTerrain.bytes)){
+          reloadingTerrain=true;
+          try{
+            const payload=await library.read(current.id);
+            await openTerrain({item:current,payload});
+            activeTerrain={id:current.id,mtimeMs:current.mtimeMs,bytes:current.bytes};
+            updateMessage('Le relief a été rechargé automatiquement après modification du fichier : '+current.name);
+          }catch(e){notify('Actualisation du relief : '+e.message,true);}
+          finally{reloadingTerrain=false;}
+        }
+      }
+    }
     else if(event.type==='error')updateMessage(event.message);
   });
   $('#linkGameFolder').addEventListener('click',async()=>{

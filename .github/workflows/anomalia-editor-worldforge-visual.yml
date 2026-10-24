@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/anomalia-editor-worldforge-dayz-workspace-20261023
+      - feature/anomalia-editor-actual-world-bridge-20261023
     paths:
       - "apps/anomalia-editor/**"
       - ".github/workflows/anomalia-editor-worldforge-visual.yml"

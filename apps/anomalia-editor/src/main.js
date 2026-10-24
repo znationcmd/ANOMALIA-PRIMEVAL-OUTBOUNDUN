@@ -5,7 +5,11 @@ import { PRESETS, History, newProject, makeObject, cloneProject, validateProject
 import { createEditorMesh } from './meshes.js';
 import './style.css';
 import './worldforge.css';
+import './world-real.css';
 import { createWorldForge } from './worldforge-ui.js';
+import { createTerrainWorld } from './terrain-world.js';
+import { bindWorldSources } from './world-source-ui.js';
+import { saveTerrain,loadTerrain as loadTerrainCache,clearTerrain as clearTerrainCache } from './terrain-cache.js';
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
@@ -13,8 +17,8 @@ import { bindGameLibrary } from './game-library-ui.js';
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#10202a');
-scene.fog = new THREE.Fog('#10202a',115,350);
+scene.background = new THREE.Color('#86adb4');
+scene.fog = new THREE.FogExp2('#b0c4bb',.002);
 const stage = $('#viewport');
 const camera = new THREE.PerspectiveCamera(58,1,.1,1600);
 camera.position.set(25,23,28);
@@ -46,6 +50,7 @@ ground.rotation.x=-Math.PI/2;ground.position.y=-.07;
 ground.receiveShadow=true;scene.add(ground);
 const grid=new THREE.GridHelper(800,800,'#8ca58c','#6f826e');
 grid.position.y=-.05;grid.material.transparent=true;grid.material.opacity=.23;scene.add(grid);
+const terrainWorld=createTerrainWorld({ground,grid,scene,camera,orbit});
 const objects=new THREE.Group();scene.add(objects);
 const raycaster=new THREE.Raycaster();
 const cursor=new THREE.Vector2();
@@ -61,7 +66,7 @@ let rebuildToken=0;
 let saving=null;
 const meshed=new Map();
 let lastPointer=null;
-let prototypesVisible=true;
+let prototypesVisible=false;
 let pendingLinkedItem=null;
 let replaceTargetId=null;
 let linkedPreview=null;
@@ -92,6 +97,12 @@ async function armLinkedPlacement(item){
 }
 
 function syncPrototypeVisibility(){
+  const toggle=$('#toggleLegacy');
+  if(toggle){
+    toggle.classList.toggle('on',prototypesVisible);
+    toggle.setAttribute('aria-pressed',String(prototypesVisible));
+    toggle.textContent=prototypesVisible?'▣ Masquer prototypes':'◇ Voir prototypes';
+  }
   for(const item of history.project.objects){
     const mesh=meshed.get(item.id);if(mesh)mesh.visible=prototypesVisible||item.preset==='custom-glb'||item.preset==='linked-glb';
   }
@@ -101,6 +112,7 @@ function togglePrototypes(){
   syncPrototypeVisibility();
   if(!prototypesVisible)transforms.detach();
   else if(selectedId&&meshed.get(selectedId)&&['move','rotate','scale'].includes(activeMode))transforms.attach(meshed.get(selectedId));
+  updateCount();
   toast(prototypesVisible?'Prototypes réaffichés : ces formes ne sont pas des modèles photoréalistes.':'Prototypes masqués sans supprimer les objets ni les sauvegardes.');
 }
 
@@ -122,7 +134,12 @@ function setActiveMode(mode){
 }
 function getObject(id){return history.project.objects.find(o=>o.id===id);}
 function applySelection(id) {
-  selectedId=getObject(id)?id:null;
+  const candidate=getObject(id);
+  if(candidate&&!['linked-glb','custom-glb'].includes(candidate.preset)&&!prototypesVisible){
+    prototypesVisible=true;syncPrototypeVisibility();
+    toast('Prototype réaffiché pour modification. Utilise « Remplacer par un vrai modèle GLB ».');
+  }
+  selectedId=candidate?id:null;
   if(replaceTargetId&&replaceTargetId!==selectedId)replaceTargetId=null;
   const mesh=selectedId?meshed.get(selectedId):null;
   if(mesh&&['move','rotate','scale'].includes(activeMode)){
@@ -286,7 +303,15 @@ function afterCommit(){
 function updateCount(){
   const n=history.project.objects.length;
   $('#count').textContent=n+' objet'+(n>1?'s':'');
-  const empty=$('#emptyWorld');if(empty)empty.hidden=n>0||Boolean(pendingLinkedItem);
+  const genuine=history.project.objects.filter(o=>['linked-glb','custom-glb'].includes(o.preset)).length;
+  const prototypes=n-genuine;
+  const empty=$('#emptyWorld');
+  if(empty)empty.hidden=genuine>0||terrainWorld.hasTerrain()||(n>0&&prototypesVisible)||Boolean(pendingLinkedItem);
+  const hint=$('#viewerNotice');
+  if(hint){
+    hint.hidden=!(prototypes>0&&!prototypesVisible);
+    hint.textContent=prototypes+' prototypes géométriques masqués (aucun objet supprimé). Clique sur « Voir prototypes » pour les retrouver.';
+  }
 }
 function renderCatalog() {
   const categories=['Tous',...new Set(PRESETS.map(p=>p.category))];
@@ -438,6 +463,29 @@ function animate(now=performance.now()){
   orbit.update();
   renderer.render(scene,camera);
 }
+const worldSources=bindWorldSources({
+  terrain:terrainWorld,notify:toast,
+  onHeightmap:async(blob,info)=>{
+    await saveTerrain(history.project.createdAt,blob,{width:info.width,relief:info.relief,name:info.name});
+    updateCount();
+  },
+  onClearTerrain:async()=>{
+    await clearTerrainCache(history.project.createdAt);
+    updateCount();
+  }
+});
+async function restoreTerrainForScene(){
+  terrainWorld.clear();
+  worldSources.labelTerrain(null);
+  try{
+    const cache=await loadTerrainCache(history.project.createdAt);
+    if(cache?.blob){
+      const info=await terrainWorld.load(cache.blob,cache.settings);
+      worldSources.labelTerrain(info);
+    }
+  }catch(err){toast('Relief local indisponible : '+err.message,true);}
+  updateCount();
+}
 const worldForge=createWorldForge({
   camera,orbit,grid,renderer,ground,scene,notify:toast,togglePrototypes,
   openBrowser:()=>{
@@ -450,6 +498,7 @@ for(const mode of ['select','move','rotate','scale','brush'])$('#'+mode+'Tool').
 $('#undo').onclick=()=>stepHistory('undo');$('#redo').onclick=()=>stepHistory('redo');
 $('#duplicate').onclick=duplicateObject;$('#inspectorDuplicate').onclick=duplicateObject;
 $('#delete').onclick=removeSelected;$('#focusObject').onclick=focusObject;
+$('#toggleLegacy').onclick=togglePrototypes;
 $('#replaceSelected').onclick=()=>{
   if(!selectedId)return toast('Sélectionne un objet de la scène à remplacer.',true);
   replaceTargetId=selectedId;
@@ -472,7 +521,7 @@ $('#saveScene').onclick=async()=>{await storeProject(history.project);toast('Sau
 $('#saveAs').onclick=exportJSON;$('#exportScene').onclick=exportJSON;$('#exportCSV').onclick=exportCSV;
 $('#newScene').onclick=async()=>{
   if(history.project.objects.length&&!confirm('Créer une nouvelle carte ? Exporte d’abord la carte actuelle si tu veux la conserver.'))return;
-  history.reset(newProject());selectedId=null;await rebuild(history.project);afterCommit();
+  history.reset(newProject());selectedId=null;await rebuild(history.project);await restoreTerrainForScene();afterCommit();
   toast('Nouvelle carte créée.');
 };
 $('#openScene').onclick=()=>$('#fileOpen').click();
@@ -481,7 +530,7 @@ $('#fileOpen').onchange=async e=>{
   try{
     if(file.size>45*1024*1024)throw new Error('Projet trop volumineux (45 Mo maximum).');
     const parsed=validateProject(JSON.parse(await file.text()));
-    history.reset(parsed);selectedId=null;await rebuild(parsed);afterCommit();toast('Projet ouvert : '+parsed.name);
+    history.reset(parsed);selectedId=null;await rebuild(parsed);await restoreTerrainForScene();afterCommit();toast('Projet ouvert : '+parsed.name);
   }catch(err){toast('Fichier invalide : '+err.message,true);}
   e.target.value='';
 };
@@ -525,12 +574,20 @@ async function start(){
       await storeProject(history.project);
       status('Nouvelle scène vide. Importe de vrais modèles 3D ou une carte ANOMALIA.');
     }
+    await restoreTerrainForScene();
     updateCount();
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
 start();
 bindGameLibrary({
   notify:toast,
+  openTerrain:async({item,payload})=>{
+    const raw=atob(payload.data);
+    const bytes=new Uint8Array(raw.length);
+    for(let i=0;i<raw.length;i++)bytes[i]=raw.charCodeAt(i);
+    const type=/\.(jpe?g)$/i.test(item.name)?'image/jpeg':/\.webp$/i.test(item.name)?'image/webp':'image/png';
+    await worldSources.loadTerrain(new Blob([bytes],{type}),item.name);
+  },
   placeGLB:async item=>{
     if(replaceTargetId)return replaceWithRealModel(item);
     await armLinkedPlacement(item);
@@ -541,6 +598,7 @@ bindGameLibrary({
     history.reset(map);
     selectedId=null;
     await rebuild(map);
+    await restoreTerrainForScene();
     afterCommit();
     toast('Secteur ANOMALIA ouvert : '+map.name);
   }

@@ -1,6 +1,6 @@
 {
   "name": "anomalia-editor",
-  "version": "0.4.0",
+  "version": "0.5.2",
   "private": true,
   "description": "Éditeur de scènes 3D indépendant inspiré du flux de travail de DayZ Editor",
   "type": "module",
@@ -56,7 +56,8 @@
       "installerIcon": "assets/anomalia-editor.ico",
       "uninstallerIcon": "assets/anomalia-editor.ico",
       "installerHeaderIcon": "assets/anomalia-editor.ico",
-      "deleteAppDataOnUninstall": false
+      "deleteAppDataOnUninstall": false,
+      "artifactName": "ANOMALIA-Editor-Setup-${version}.${ext}"
     },
     "publish": [
       {
