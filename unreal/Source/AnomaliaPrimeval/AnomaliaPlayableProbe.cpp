@@ -55,7 +55,11 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
     Super::Tick(Dt);
 #if !UE_BUILD_SHIPPING
     const double Now=FPlatformTime::Seconds(); if(Started==0) { Started=Now; Next=Now+3; }
-    if(Now-Started>90) { Finish(FString::Printf(TEXT("Timed out phase %d"),Phase)); return; }
+    if(Now-Started>90)
+    {
+        const auto* WaitingSurvivor=Survivor.Get(); const auto* WaitingLoot=GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
+        Finish(FString::Printf(TEXT("Timed out phase %d (character=%s HUD=%d lootReady=%d)"),Phase,*GetNameSafe(WaitingSurvivor),WaitingSurvivor && WaitingSurvivor->StatusWidget?1:0,WaitingLoot && WaitingLoot->IsReady()?1:0)); return;
+    }
     auto* PC=GetWorld()->GetFirstPlayerController(); if(!PC) return;
     auto Input=[PC](FKey Key,EInputEvent Event) { PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed?1.0:0.0,Key.IsGamepadKey(),FInputDeviceId::CreateFromInternalId(0))); };
     if(Phase==0)

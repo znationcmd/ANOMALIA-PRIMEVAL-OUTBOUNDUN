@@ -1,5 +1,5 @@
 """Cook a real Windows test build, then launch its executable with an isolated GPU smoke test."""
-import argparse,json,os,subprocess,uuid,shutil
+import argparse,json,os,subprocess,uuid,shutil,tempfile
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[2]
@@ -53,8 +53,9 @@ try:
          '-d3d11','-sm5','-unattended','-nosound','-AnomaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
     if json.loads(editor_review.read_text(encoding='utf-8-sig')).get('state')!='PACKAGED_VISUAL_REVIEW_PASSED':
         raise RuntimeError('Imported-art scene failed in actual Editor game renderer')
-    # Keep archive names short: nested Windows credit filenames exceeded MAX_PATH.
-    archive=out/('p-'+uuid.uuid4().hex[:12]);archive.mkdir()
+    # Execute outside the deeply nested repository/evidence path. UE gameplay
+    # writes server/map-scoped JSON plus atomic temporary suffixes under Saved.
+    archive=Path(tempfile.mkdtemp(prefix='anomalia-win-',dir=os.environ.get('RUNNER_TEMP'))).resolve()
     uat=a.engine_root/'Engine/Build/BatchFiles/RunUAT.bat'
     run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP+'+'+visual_map,'-prereqs'],'package',5400)
     executables=list(archive.glob('Windows/AnomaliaPrimeval.exe'))

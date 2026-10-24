@@ -18,7 +18,9 @@ try {
     $saved=Join-Path $base 'userdata/Saved';New-Item -ItemType Directory -Path $saved -Force | Out-Null
     $hashes=@{};foreach($f in Get-ChildItem -LiteralPath $saved -Recurse -File) { $hashes[$f.FullName]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash }
     $versions=Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
-    $target=Join-Path $versions ($Commit+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8))
+    # The full commit remains in active.json. A shorter unique folder leaves
+    # room for native server/map/profile names and atomic-save GUID suffixes.
+    $target=Join-Path $versions ($Commit.Substring(0,12)+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8))
     $testSaved=Join-Path $base ('validation/'+[Guid]::NewGuid().ToString('N')+'/Saved')
     New-Item -ItemType Directory -Path $testSaved -Force | Out-Null
     if (-not (Test-Path -LiteralPath $target)) {
