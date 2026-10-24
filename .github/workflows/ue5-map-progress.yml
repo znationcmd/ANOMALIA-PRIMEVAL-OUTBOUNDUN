@@ -10,6 +10,7 @@ on:
       - 'unreal/Scripts/author_urban_greenery.py'
       - 'scripts/ue5/run-urban-greenery.py'
 concurrency:
+  # Marker commits run only this Editor validation; the game packager skips them.
   group: anomalia-ue5-native-host
   # An explicit recovery commit can supersede an obsolete build still cooking.
   # Normal map edits keep the existing non-interrupting update behavior.

@@ -32,7 +32,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   update-owned-installed-game:
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    # Explicit Editor-map recovery is handled by ue5-map-progress.yml. Avoid
+    # replacing its pending run in the shared native-host concurrency group.
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && !startsWith(github.event.head_commit.message, '[map-recovery]')
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 180
     permissions:
