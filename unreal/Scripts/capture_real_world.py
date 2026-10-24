@@ -17,6 +17,10 @@ views=[
  ('04_desert',(1580000,1190000,11000),(1630000,1230000,4500)),
  ('05_detroit_bridge',(1450000,840000,30000),(1475000,900000,3200)),
 ]
+def street_review_view(east,north,height_metres):
+    if not all(math.isfinite(v) for v in (east,north,height_metres)):raise ValueError('Finite street camera position required')
+    z=height_metres*100
+    return ('05_town_street',(east*100,-(north+100)*100,z+180),(east*100,-(north-30)*100,z+180))
 def finish(error=None):
     if state.get("finishing"):return
     state["finishing"]=True;state["busy"]=True
@@ -175,7 +179,9 @@ try:
             site=sites[site_index];e,n=site.x,site.y
             z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(e,n)*100
             views[index]=(f'0{index+1}_settlement_{site_index}',(e*100-18000,-n*100-18000,z+12000),(e*100,-n*100,z+200))
-        report['reviewScope']='Populated archipelago overview and three settlements; interiors and full-map gameplay not certified'
+        report['reviewScope']='Populated archipelago overview, three settlements and a street-height view; interiors and full-map gameplay not certified'
+        e,n=sites[13].x,sites[13].y
+        views[4]=street_review_view(e,n,unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(e,n))
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:
     unreal.log_error(traceback.format_exc());finish(error)

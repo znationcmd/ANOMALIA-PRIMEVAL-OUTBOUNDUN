@@ -6,6 +6,7 @@ on:
     paths:
       - '.github/workflows/ue5-map-progress.yml'
       - 'unreal/Scripts/urban_greenery.py'
+      - 'unreal/Scripts/capture_real_world.py'
       - 'unreal/Scripts/author_urban_greenery.py'
       - 'scripts/ue5/run-urban-greenery.py'
 concurrency:

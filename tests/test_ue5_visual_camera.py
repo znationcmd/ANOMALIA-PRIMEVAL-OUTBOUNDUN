@@ -18,6 +18,17 @@ class Rotator:
         return SimpleNamespace(x=math.cos(p)*math.cos(y), y=math.cos(p)*math.sin(y), z=math.sin(p))
 
 class CameraTests(unittest.TestCase):
+    def test_street_review_is_at_eye_height_in_the_reserved_road(self):
+        source=ast.parse((ROOT/'unreal/Scripts/capture_real_world.py').read_text())
+        fn=next(n for n in source.body if isinstance(n,ast.FunctionDef) and n.name=='street_review_view')
+        env=dict(math=math)
+        exec(compile(ast.Module(body=[fn],type_ignores=[]),'<street-review>','exec'),env)
+        name,eye,target=env['street_review_view'](17900,-6100,80)
+        self.assertEqual(name,'05_town_street')
+        self.assertEqual(eye[0],17900*100);self.assertEqual(target[0],eye[0])
+        self.assertEqual(eye[2]-8000,180);self.assertEqual(target[2],eye[2])
+        self.assertEqual(math.dist(eye,target),13000)
+        with self.assertRaises(ValueError):env['street_review_view'](0,0,float('nan'))
     def test_inhabited_views_stream_only_nearest_town_and_local_foliage(self):
         source=ast.parse((ROOT/'unreal/Scripts/capture_real_world.py').read_text())
         fn=next(n for n in source.body if isinstance(n,ast.FunctionDef) and n.name=='set_view')
@@ -69,4 +80,3 @@ class CameraTests(unittest.TestCase):
 
 if __name__ == '__main__':
     unittest.main()
-
