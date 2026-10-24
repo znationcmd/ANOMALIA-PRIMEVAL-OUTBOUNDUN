@@ -32,23 +32,23 @@ test('repeated scaffolding never overwrites author files',t=>{
   assert.equal(api.scaffoldNativeMod({projectId}).created.length,0);
   assert.match(fs.readFileSync(cpp,'utf8'),/user extension/);
 });
-test('broken module descriptor is rejected and does not compile',t=>{
+test('broken module descriptor is rejected and does not compile',async t=>{
   const {api,projectId,root}=setup(t);
   const r=api.scaffoldNativeMod({projectId});
   const descriptor=path.join(root,r.descriptor);
   fs.writeFileSync(descriptor,'{"FileVersion":1,"Modules":[]}');
   assert.throws(()=>api.validateNativeMod({projectId}),/incompatible/);
   assert.equal(api.getNativeModStatus({projectId}).valid,false);
-  assert.throws(()=>api.buildNativeMod({projectId}),/incompatible/);
+  await assert.rejects(()=>api.buildNativeMod({projectId}),/incompatible/);
 });
-test('native build requires Unreal RunUAT and never reports ZIP as cooked content',t=>{
+test('native build requires Unreal RunUAT and never reports ZIP as cooked content',async t=>{
   const {api,projectId}=setup(t);
   api.scaffoldNativeMod({projectId});
   const state=api.getNativeModStatus({projectId,engineRoot:'Z:/missing-ue'});
   assert.equal(state.nativeBuildAvailable,false);
   assert.equal(state.engineFound,false);
   assert.match(state.note,/mod cuit/);
-  assert.throws(()=>api.buildNativeMod({projectId,engineRoot:'Z:/missing-ue'}),/Windows|RunUAT/);
+  await assert.rejects(()=>api.buildNativeMod({projectId,engineRoot:'Z:/missing-ue'}),/Windows|RunUAT/);
 });
 test('no unsafe project IDs or symbolic plugin output paths',t=>{
   const {api,projectId,root}=setup(t);
