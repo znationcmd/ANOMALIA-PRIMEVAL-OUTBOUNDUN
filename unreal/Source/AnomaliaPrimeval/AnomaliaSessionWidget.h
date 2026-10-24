@@ -1,6 +1,7 @@
 #pragma once
 #include "CoreMinimal.h"
 #include "Blueprint/UserWidget.h"
+#include "Components/ComboBoxString.h"
 #include "AnomaliaSessionWidget.generated.h"
 class UButton;
 class UTextBlock;
@@ -9,6 +10,8 @@ class UWidgetSwitcher;
 class ACameraActor;
 class UImage;
 class UBorder;
+class UComboBoxString;
+class UEditableTextBox;
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaSessionWidget : public UUserWidget
 {
@@ -30,6 +33,11 @@ private:
     UPROPERTY() TObjectPtr<UTextBlock> Feedback;
     UPROPERTY() TObjectPtr<UWidgetSwitcher> Pages;
     UPROPERTY() TObjectPtr<UVerticalBox> ModRows;
+    UPROPERTY() TObjectPtr<UBorder> WorkshopFrame;
+    UPROPERTY() TObjectPtr<UVerticalBox> WorkshopCards;
+    UPROPERTY() TObjectPtr<UEditableTextBox> WorkshopSearch;
+    UPROPERTY() TObjectPtr<UComboBoxString> WorkshopCategory;
+    UPROPERTY() TObjectPtr<UTextBlock> WorkshopStatus;
     UPROPERTY() TObjectPtr<UButton> HomeButton;
     UPROPERTY() TObjectPtr<UButton> OptionsButton;
     UPROPERTY() TObjectPtr<UButton> ModsButton;
@@ -48,6 +56,12 @@ private:
     UFUNCTION() void ShowOptions();
     UFUNCTION() void ShowMods();
     UFUNCTION() void RefreshMods();
+    void RefreshWorkshop();
+    UFUNCTION() void WorkshopSearchChanged(const FText& NewText);
+    UFUNCTION() void WorkshopCategoryChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION() void CloseWorkshop();
+    UFUNCTION() void OpenWorkshopTools();
+    UFUNCTION() void OpenWorkshopHosting();
     UFUNCTION() void OpenModsFolder();
     UFUNCTION() void OpenWorldEditor();
     void SelectPage(int32 Index);
