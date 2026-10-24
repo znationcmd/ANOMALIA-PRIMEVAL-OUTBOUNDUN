@@ -96,3 +96,18 @@ test('Workshop installed application includes backing module, page and events',(
   assert.match(html,/ANOMALIA/);
   assert.doesNotMatch(html,/158K membres|2 347 mods/);
 });
+
+test('Windows game menu opens a registered ANOMALIA Tools Workshop deep link',()=>{
+  const projectRoot=path.resolve(__dirname,'../../..');
+  const menu=fs.readFileSync(path.join(projectRoot,'src','start-menu.js'),'utf8');
+  const gameMain=fs.readFileSync(path.join(projectRoot,'desktop','main.cjs'),'utf8');
+  const gamePreload=fs.readFileSync(path.join(projectRoot,'desktop','preload.cjs'),'utf8');
+  const toolsMain=fs.readFileSync(path.join(projectRoot,'apps','anomalia-tools','main.cjs'),'utf8');
+  assert.match(menu,/startWorkshopBtn/);
+  assert.match(menu,/anomaliaServer\.openWorkshop/);
+  assert.match(gameMain,/anomalia:open-workshop/);
+  assert.match(gameMain,/anomalia-tools:\/\/workshop/);
+  assert.match(gamePreload,/openWorkshop/);
+  assert.match(toolsMain,/requestSingleInstanceLock/);
+  assert.match(toolsMain,/tools:navigate/);
+});
