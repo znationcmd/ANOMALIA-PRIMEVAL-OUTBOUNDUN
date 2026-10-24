@@ -1,0 +1,37 @@
+name: UE5 Creature Vault native validation
+on:
+  push:
+    branches: ['ue5/creature-vault-persistence-20261024']
+    paths: ['unreal/Source/**', 'scripts/ue5/validate-build.py', '.github/workflows/ue5-creature-vault-validation.yml']
+  workflow_dispatch:
+jobs:
+  validate-native:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/creature-vault-persistence-20261024'
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile Editor and Game and execute the actual Unreal native tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/CreatureVaultValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: creature-vault-native-evidence
+          path: |
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/*.*
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/automation-*/index.json
+          if-no-files-found: error

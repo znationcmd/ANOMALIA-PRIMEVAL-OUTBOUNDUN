@@ -37,6 +37,11 @@ class ANOMALIAPRIMEVAL_API UAnomaliaCryoSubsystem : public UWorldSubsystem
 {
  GENERATED_BODY()
 public:
+ /** Server-only metadata persistence. Does not serialize or spawn a creature actor. */
+ bool StartPersistentStorage(const FString& ServerId);
+ virtual void OnWorldBeginPlay(UWorld& InWorld) override;
+ UFUNCTION(BlueprintPure,Category="Anomalia|Cryo")
+ FString GetStorageError() const { return StorageError; }
  UFUNCTION(BlueprintCallable,Category="Anomalia|Cryo")
  bool RegisterTerminal(const FString& Id,const FString& OwnerId,FVector Location);
  /** Caller MUST provide authenticated actor identity/admin role from server state. */
@@ -50,6 +55,11 @@ public:
  UFUNCTION(BlueprintPure,Category="Anomalia|Cryo")
  bool GetTerminal(const FString& TerminalId,FAnomaliaCryoTerminal& OutTerminal) const;
 private:
+ FString StorageServerId;
+ FString StorageError;
+ bool bStorageReady=false;
+ bool EnsureStorage();
+ bool SaveStorage();
  TMap<FString,FAnomaliaCryoTerminal> Terminals;
  TSet<FString> StoredCreatureIds;
  bool CanAccess(const FAnomaliaCryoTerminal& Terminal,const FString& ActorId,bool bAdmin) const;
