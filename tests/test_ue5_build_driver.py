@@ -66,8 +66,17 @@ class BuildDriverTests(unittest.TestCase):
     def test_all_expected_native_results_still_do_not_claim_playable_game(self):
         code, report = self.run_native_fixture({"tests": [
             {"fullTestPath": name, "state": "Success"} for name in
-            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics")]})
+            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics",
+             "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry")]})
         self.assertEqual(code, 0)
         self.assertEqual(report["nativeTests"], "passed")
         self.assertEqual(report["execution"], "not_run")
         self.assertEqual(report["worldPlayable"], "not_verified")
+
+    def test_legacy_success_report_without_interaction_tests_is_rejected(self):
+        code, report = self.run_native_fixture({"tests": [
+            {"fullTestPath": name, "state": "Success"} for name in
+            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics")]})
+        self.assertEqual(code, 1)
+        self.assertEqual(report["nativeTests"], "failed")
+
