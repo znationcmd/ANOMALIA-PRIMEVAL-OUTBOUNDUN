@@ -4,6 +4,12 @@ contextBridge.exposeInMainWorld('anomaliaTools',Object.freeze({
   call:(method,payload)=>ipcRenderer.invoke('tools:call',method,payload),
   chooseAssets:()=>ipcRenderer.invoke('tools:chooseAssets'),
   openFolder:id=>ipcRenderer.invoke('tools:openFolder',id),
+  onNavigate:fn=>{
+    if(typeof fn!=='function')throw Error('Invalid listener');
+    const listener=(_event,tab)=>fn(tab);
+    ipcRenderer.on('tools:navigate',listener);
+    return ()=>ipcRenderer.removeListener('tools:navigate',listener);
+  },
   exportPackage:id=>ipcRenderer.invoke('tools:exportPackage',id),
   updates:Object.freeze({
     status:()=>ipcRenderer.invoke('tools:updates:status'),
