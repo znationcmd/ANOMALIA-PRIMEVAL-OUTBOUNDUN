@@ -43,3 +43,16 @@ jobs:
       - run: npm install --no-audit --no-fund
       - name: Windows unit tests
         run: npm test
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - run: npm install --no-audit --no-fund
+      - run: npm run build
+      - run: npx playwright install --with-deps chromium
+      - name: Click Mods and exercise the page
+        run: node scripts/workshop-browser-smoke.mjs
