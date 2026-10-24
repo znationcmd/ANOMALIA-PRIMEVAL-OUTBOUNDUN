@@ -20,7 +20,7 @@ app.on('second-instance',(_event,argv)=>{
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
   'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod',
   'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod',
-  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod']);
+  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod','exportWorkshopHostingManifest']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',
@@ -41,6 +41,19 @@ if(ownInstance)app.whenReady().then(()=>{
   ipcMain.handle('tools:call',async(_,method,payload={})=>{
     if(!allowed.has(method)||typeof toolsApp[method]!=='function')throw Error('Commande interdite');
     return toolsApp[method](payload);
+  });
+  ipcMain.handle('tools:exportHostingManifest',async(_event,projectId)=>{
+    const manifest=toolsApp.exportWorkshopHostingManifest({projectId});
+    const choice=await dialog.showSaveDialog(win,{
+      defaultPath:'ANOMALIA-CMD-Hosting-'+manifest.mod.id+'.json',
+      filters:[{name:'ANOMALIA CMD Hosting (JSON)',extensions:['json']}]
+    });
+    if(choice.canceled||!choice.filePath)return {cancelled:true};
+    const fs=require('node:fs');
+    // The dialog destination is explicitly selected by the user.
+    fs.writeFileSync(choice.filePath,JSON.stringify(manifest,null,2)+'\n',{encoding:'utf8',flag:'w'});
+    return {saved:true,file:choice.filePath,mod:manifest.mod.name,
+      note:'Fiche exportée, non installée sur le serveur.'};
   });
   ipcMain.handle('tools:chooseAssets',async()=>{
     const result=await dialog.showOpenDialog(win,{properties:['openFile','multiSelections'],filters:[{
