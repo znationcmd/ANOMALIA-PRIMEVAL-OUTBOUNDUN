@@ -20,7 +20,7 @@ jobs:
             minimum: 0.5.0
           - app: tools
             tag: anomalia-tools-latest
-            minimum: 0.2.2
+            minimum: 0.2.3
     steps:
       - uses: actions/setup-node@v4
         with:
