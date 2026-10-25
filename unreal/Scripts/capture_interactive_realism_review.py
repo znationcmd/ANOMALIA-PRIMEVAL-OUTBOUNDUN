@@ -87,8 +87,9 @@ def set_view():
 def tick(delta):
     # These native APIs may pump Slate; re-entry must never schedule nested captures.
     if state['busy']:return
+    state['busy']=True
     try:
-        if time.monotonic()-state['started']>780:raise RuntimeError('Visual capture timed out')
+        if time.monotonic()-state['started']>1560:raise RuntimeError('Visual capture timed out')
         if time.monotonic()<state['until']:return
         state['frames'].append(float(delta))
         if state['task'] is None:
@@ -96,15 +97,18 @@ def tick(delta):
             name,eye,target=views[state['index']]
             task=unreal.AutomationLibrary.take_high_res_screenshot(1280,720,str(OUT/(name+'.png')),delay=1.,force_game_view=True)
             if not task or not task.is_valid_task():raise RuntimeError('Unreal viewport screenshot task unavailable')
-            state['task']=task;state['busy']=False;return
+            state['task']=task;state['task_started']=time.monotonic();return
+        if time.monotonic()-state['task_started']>180:raise RuntimeError('Unreal screenshot task timed out: '+views[state['index']][0])
         if not state['task'].is_task_done():return
         name,eye,target=views[state['index']];file=OUT/(name+'.png')
         if not file.is_file() or file.stat().st_size<4096:raise RuntimeError('Missing/empty real screenshot '+name)
         report['screenshots'].append(dict(file=file.name,sha256=hashlib.sha256(file.read_bytes()).hexdigest(),bytes=file.stat().st_size,cameraCm=eye,targetCm=target))
         state['index']+=1
         if state['index']==len(views):finish();return
-        state['task']=None;set_view();state['until']=time.monotonic()+15
-    except Exception as error:state['busy']=False;unreal.log_error(traceback.format_exc());finish(error)
+        state['task']=None;state['until']=time.monotonic()+15;set_view()
+    except Exception as error:unreal.log_error(traceback.format_exc());finish(error)
+    finally:
+        if not state.get('finishing'):state['busy']=False
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
     if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Review map not found')
@@ -127,4 +131,5 @@ try:
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:
     unreal.log_error(traceback.format_exc());finish(error)
+
 

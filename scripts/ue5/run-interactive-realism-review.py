@@ -21,7 +21,7 @@ def main():
     env['ANOMALIA_VISUAL_OUTPUT'] = str(output / 'graphics')
     phases = [
         ('import', 'UnrealEditor-Cmd.exe', 'import_interactive_realism_review.py', ['-NullRHI'], 900),
-        ('graphics', 'UnrealEditor.exe', 'capture_interactive_realism_review.py', ['-d3d11', '-sm5', '-windowed', '-ResX=1280', '-ResY=720'], 900)
+        ('graphics', 'UnrealEditor.exe', 'capture_interactive_realism_review.py', ['-d3d11', '-sm5', '-windowed', '-ResX=1280', '-ResY=720'], 1800)
     ]
     report = dict(state='FAILED', sourceCommit=env.get('GITHUB_SHA'), gameplayTested=False, phases=[])
     try:
@@ -53,3 +53,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
