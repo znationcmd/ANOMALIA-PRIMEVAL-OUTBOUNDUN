@@ -42,6 +42,7 @@
     <button class="navItem" data-view="search"><svg><use href="#i-search"/></svg> Explorer les modèles</button>
     <button class="navItem" data-view="assets"><svg><use href="#i-cube"/></svg> Bibliothèque 3D <span id="sidebarAssetCount" class="navCount">0</span></button>
     <button class="navItem" data-view="projects"><svg><use href="#i-folder"/></svg> Mes projets</button>
+    <button class="navItem navAnomalia" id="navAnomalia" data-go="projects"><svg><use href="#i-spark"/></svg> ANOMALIA <span class="navCount">UE5</span></button>
   </nav>
   <div class="sidebarLabel">PRODUCTION</div>
   <nav class="sideNav" aria-label="Outils de production">
@@ -86,6 +87,17 @@
     <article class="stat"><span class="statIcon"><svg><use href="#i-folder"/></svg></span><div class="statLabel">Projets Unreal</div><b id="statProjects">0</b><small>Projets enregistrés</small></article>
     <article class="stat"><span class="statIcon"><svg><use href="#i-tool"/></svg></span><div class="statLabel">Blender</div><b id="statBlender">—</b><small>Connexion locale</small></article>
     <article class="stat"><span class="statIcon"><svg><use href="#i-spark"/></svg></span><div class="statLabel">Unreal Engine</div><b id="statUnreal">—</b><small>Connexion locale</small></article>
+  </div>
+  <div class="anomaliaFeatured" id="anomaliaDashboard" aria-label="Projet ANOMALIA PRIMEVAL OUTBOUNDUN">
+    <div class="anomaliaArt"><img src="generated/anomalia-logo.jpg" alt="Logo original ANOMALIA" onerror="this.style.display='none'"></div>
+    <div class="anomaliaDetails"><span class="sectionKicker">PROJET PHARE · UNREAL ENGINE 5</span>
+      <h2>ANOMALIA <span>PRIMEVAL OUTBOUNDUN</span></h2>
+      <p>Retrouve ton projet de survie, ses modèles et ses fichiers Unreal depuis CMD Studio.</p>
+      <small id="anomaliaDashboardStatus" role="status">Vérification du projet local…</small>
+      <code id="anomaliaDashboardPath">Non associé au PC</code>
+    </div>
+    <div class="anomaliaActions"><button class="btn primary" id="anomaliaDashboardAction">Associer ANOMALIA</button>
+      <button class="btn subtle" data-go="projects">Voir le projet</button></div>
   </div>
   <div class="sectionHead"><div><span class="sectionKicker">ACCÈS RAPIDE</span><h2>À toi de créer</h2></div></div>
   <div class="quickGrid">
@@ -132,7 +144,7 @@
 </section>
 <section id="projects" class="page" hidden>
   <div class="pageIntro"><div><span class="sectionKicker">PROJETS ET MONDES</span><h2>Mes projets Unreal Engine</h2><p>Associe tes véritables projets .uproject sans changer leurs fichiers.</p></div><button class="btn primary" id="chooseProject"><svg><use href="#i-folder"/></svg> Ajouter un projet</button></div>
-  <div class="projectShowcase"><span class="heroEyebrow">ANOMALIA / WORLD BUILDING</span><h3>Un monde à construire.</h3><p>Associe ANOMALIA ou un autre projet UE5, puis prépare tes ressources dans CMD Studio.</p></div>
+  <div class="projectShowcase"><span class="heroEyebrow">ANOMALIA / WORLD BUILDING</span><h3>ANOMALIA PRIMEVAL OUTBOUNDUN</h3><p>Le projet principal de CMD Studio. Il s'affiche même avant l'association des fichiers Unreal sur ce PC.</p></div>
   <div id="projectList" class="listStack"></div>
 </section>
 <section id="tools" class="page" hidden>
