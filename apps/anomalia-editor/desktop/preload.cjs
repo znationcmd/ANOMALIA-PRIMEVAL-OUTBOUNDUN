@@ -26,6 +26,16 @@ contextBridge.exposeInMainWorld('anomaliaDesktop',Object.freeze({
     status:()=>ipcRenderer.invoke('editor:updates:status'),
     check:()=>ipcRenderer.invoke('editor:updates:check'),
     install:()=>ipcRenderer.invoke('editor:updates:install'),
+    onPrepareInstall:listener=>{
+      if(typeof listener!=='function')throw Error('Gestion de sauvegarde invalide');
+      const handler=(_event,request)=>listener(request);
+      ipcRenderer.on('editor:updates:prepare-install',handler);
+      return ()=>ipcRenderer.removeListener('editor:updates:prepare-install',handler);
+    },
+    confirmSaved:(id,saved)=>{
+      if(typeof id!=='string'||id.length>128)return;
+      ipcRenderer.send('editor:updates:saved',{id,saved:saved===true});
+    },
     subscribe:listener=>{
       if(typeof listener!=='function')throw Error('Invalid listener');
       const handler=(_event,s)=>listener(s);
