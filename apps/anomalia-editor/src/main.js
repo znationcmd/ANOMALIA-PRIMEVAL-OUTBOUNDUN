@@ -509,7 +509,7 @@ async function listLocalScenes(){
         try{
           const valid=validateProject(project);
           const preview=typeof project._editorPreview==='string'&&
-            /^data:image\\/jpeg;base64,[a-zA-Z0-9+/=]+$/.test(project._editorPreview)&&
+            /^data:image\/jpeg;base64,[a-zA-Z0-9+/=]+$/.test(project._editorPreview)&&
             project._editorPreview.length<175000?project._editorPreview:null;
           records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,
             edited:valid.createdAt,preview});
