@@ -28,7 +28,7 @@ scene.background = new THREE.Color('#8dbad3');
 scene.fog = new THREE.FogExp2('#b5ccbd',.0018);
 const stage = $('#viewport');
 const camera = new THREE.PerspectiveCamera(58,1,.1,1600);
-camera.position.set(25,23,28);
+camera.position.set(24,7,40);
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false, powerPreference:'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
@@ -39,7 +39,7 @@ stage.prepend(renderer.domElement);
 renderer.domElement.classList.add('canvas');
 const orbit=new OrbitControls(camera,renderer.domElement);
 orbit.enableDamping=true;orbit.dampingFactor=.08;
-orbit.target.set(0,0,0);orbit.maxPolarAngle=Math.PI/2-.02;
+orbit.target.set(0,2,-30);orbit.maxPolarAngle=Math.PI/2-.02;
 orbit.maxDistance=350;orbit.minDistance=1;
 orbit.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};
 orbit.update();
@@ -51,8 +51,27 @@ sun.shadow.camera.left=-90;sun.shadow.camera.right=90;
 sun.shadow.camera.top=90;sun.shadow.camera.bottom=-90;
 sun.shadow.bias=-.0002;
 scene.add(sun);
+// Herbe du viewport : motif PBR procédural sobre, jusqu'au chargement d'un vrai terrain.
+const soil=document.createElement('canvas');soil.width=256;soil.height=256;
+const soilCtx=soil.getContext('2d');
+soilCtx.fillStyle='#667d51';soilCtx.fillRect(0,0,256,256);
+let grassSeed=32917;
+function seededGrass(){grassSeed=(Math.imul(grassSeed,1664525)+1013904223)>>>0;return grassSeed/4294967296;}
+for(let i=0;i<26000;i++){
+  const x=seededGrass()*256,y=seededGrass()*256;
+  const tone=seededGrass();
+  soilCtx.fillStyle=tone>.72?'#a3a66f':tone>.36?'#718850':'#526f43';
+  soilCtx.globalAlpha=.13+seededGrass()*.35;
+  soilCtx.fillRect(x,y,1+seededGrass()*3,1+seededGrass()*2);
+}
+soilCtx.globalAlpha=1;
+const soilTexture=new THREE.CanvasTexture(soil);
+soilTexture.colorSpace=THREE.SRGBColorSpace;
+soilTexture.wrapS=soilTexture.wrapT=THREE.RepeatWrapping;
+soilTexture.repeat.set(55,55);
+soilTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(800,800),
-  new THREE.MeshStandardMaterial({color:'#617955',roughness:1}));
+  new THREE.MeshStandardMaterial({map:soilTexture,color:'#d8dbb9',roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.position.y=-.07;
 ground.receiveShadow=true;scene.add(ground);
 const grid=new THREE.GridHelper(800,80,'#b6c89d','#6d8760');
