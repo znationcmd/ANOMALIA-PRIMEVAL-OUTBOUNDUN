@@ -95,6 +95,7 @@ async function refresh(){
     $('#libraryPath').textContent=settings.libraryPath;
     renderAssets(assets);
     renderProjects(projects);
+    paintAnomalia(projects.featured);
   } catch(e){notice('Impossible de charger les données locales : '+e.message,true);}
 }
 function assetCard(item) {
@@ -156,20 +157,70 @@ async function selectPreview(item) {
     notice('Prévisualisation impossible : '+e.message,true);
   }
 }
-function renderProjects(data){
-  const panel=$('#projectList');panel.replaceChildren();
-  if(!data.items.length){
-    const placeholder=empty(panel,'Aucun projet enregistré','Ajoute le fichier .uproject d’ANOMALIA ou d’un autre jeu Unreal Engine pour le retrouver ici.');
-    placeholder.append(button('Ajouter un projet Unreal',chooseProject,'primary','folder'));
+function paintAnomalia(featured){
+  const linked=Boolean(featured?.available);
+  $('#anomaliaDashboardStatus').textContent=linked?'Projet Unreal local disponible':'Projet affiché · fichiers Unreal à associer';
+  $('#anomaliaDashboardPath').textContent=linked?featured.path:'Sélectionne AnomaliaPrimeval.uproject sur ce PC';
+  $('#anomaliaDashboardAction').textContent=linked?'Ouvrir dans Unreal':'Associer ANOMALIA';
+  $('#anomaliaDashboard').classList.toggle('projectLinked',linked);
+}
+async function chooseAnomaliaProject(){
+  const files=await api.pick('project');
+  if(!files.length)return;
+  // Don't silently assign an unrelated game to the permanent ANOMALIA card.
+  if(!/[\\/]AnomaliaPrimeval\.uproject$/i.test(files[0])){
+    notice('Choisis le fichier AnomaliaPrimeval.uproject du projet Unreal ANOMALIA.',true);
     return;
   }
-  for(const project of data.items){
-    const card=el('article','projectRow');
-    const text=el('div');
-    text.append(el('b','',project.name),el('small','',project.path));
-    const status=el('span','rendererTag',project.path===data.active?'PROJET ACTIF':'ENREGISTRÉ');
-    card.append(text,status);
-    panel.append(card);
+  const result=await perform('Association des fichiers Unreal ANOMALIA',()=>api.call('addProject',{file:files[0]}));
+  if(result){await refresh();navigate('projects');}
+}
+async function openAnomalia(){
+  let feature;
+  try{feature=(await api.call('projects')).featured;}
+  catch(error){notice('Projet ANOMALIA : '+error.message,true);return;}
+  if(!feature?.available){navigate('projects');await chooseAnomaliaProject();return;}
+  let selected;
+  if(feature.linked)selected=await perform('Sélection du projet ANOMALIA',()=>api.call('selectProject',{file:feature.path}));
+  else selected=await perform('Association du projet ANOMALIA détecté',()=>api.call('addProject',{file:feature.path}));
+  if(!selected)return;
+  await refresh();
+  try{
+    await api.call('openTool',{tool:'unreal'});
+    notice('Projet ANOMALIA ouvert dans Unreal Engine.');
+  }catch(error){
+    navigate('settings');
+    notice('ANOMALIA associé, mais Unreal Engine doit être configuré : '+error.message,true);
+  }
+}
+function renderProjects(data){
+  const panel=$('#projectList');panel.replaceChildren();
+  const feature=data.featured;
+  const card=el('article','projectRow anomaliaProjectRow');
+  const emblem=el('div','anomaliaProjectLogo');
+  const mark=el('img');
+  mark.src='generated/anomalia-logo.jpg';
+  mark.alt='Logo ANOMALIA';
+  mark.addEventListener('error',()=>mark.remove());
+  emblem.append(mark);
+  const details=el('div','anomaliaProjectInfo');
+  details.append(el('span','sectionKicker','PROJET PRINCIPAL · UE5'),el('b','','ANOMALIA PRIMEVAL OUTBOUNDUN'),
+    el('small','',feature?.available?feature.path:'Projet à associer à ses fichiers locaux .uproject'));
+  const status=el('span','rendererTag',feature?.available?'DISPONIBLE SUR CE PC':'À ASSOCIER');
+  const actions=el('div','anomaliaProjectActions');
+  actions.append(button(feature?.available?'Ouvrir dans Unreal':'Associer ANOMALIA',
+    feature?.available?openAnomalia:chooseAnomaliaProject,'primary','folder'));
+  if(feature?.available)actions.append(button('Changer de dossier',chooseAnomaliaProject));
+  card.append(emblem,details,status,actions);
+  panel.append(card);
+  for(const project of data.items.filter(p=>!/[\\/]AnomaliaPrimeval\.uproject$/i.test(p.path))){
+    const other=el('article','projectRow');
+    const details=el('div');
+    details.append(el('b','',project.name),el('small','',project.path));
+    const status=el('span','rendererTag',!project.available?'FICHIER ABSENT':project.path===data.active?'PROJET ACTIF':'ENREGISTRÉ');
+    const actions=button('Utiliser',async()=>{const result=await perform('Sélection du projet',()=>api.call('selectProject',{file:project.path}));if(result)await refresh();});
+    other.append(details,status,actions);
+    panel.append(other);
   }
 }
 function secureThumb(src,parent){
@@ -243,6 +294,13 @@ $('#projectBadge').addEventListener('click',()=>navigate('projects'));
 $('#quickImport').addEventListener('click',importLocal);
 $('#assetImport').addEventListener('click',importLocal);
 $('#chooseProject').addEventListener('click',chooseProject);
+$('#anomaliaDashboardAction').addEventListener('click',async()=>{
+  const featured=(await api.call('projects')).featured;
+  if(featured?.available)await openAnomalia();
+  else await chooseAnomaliaProject();
+});
+const anomaliaLogo=$('#anomaliaDashboard .anomaliaArt img');
+anomaliaLogo?.addEventListener('error',()=>anomaliaLogo.remove());
 $('#chooseBlender').addEventListener('click',()=>chooseExecutable('blenderPath','blender'));
 $('#chooseUnreal').addEventListener('click',()=>chooseExecutable('unrealPath','unreal'));
 $('#launchBlender').addEventListener('click',()=>perform('Lancement de Blender',()=>api.call('openTool',{tool:'blender'})));
