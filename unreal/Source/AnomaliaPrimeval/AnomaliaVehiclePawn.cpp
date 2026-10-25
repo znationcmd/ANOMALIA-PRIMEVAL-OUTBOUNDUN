@@ -127,7 +127,8 @@ void AAnomaliaVehiclePawn::RefreshVehicleVisual()
     }
     if(!Mesh) return;
     Body->SetStaticMesh(Mesh);
-    const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
+    const float ArtYaw=FMath::IsFinite(PresentationYawDegrees)?PresentationYawDegrees:0.f;
+    const FRotator Orientation(0,(VehicleId==FName(TEXT("airliner"))?180.f:0.f)+ArtYaw,0);
     const FBoxSphereBounds Bounds=Mesh->GetBounds();
     const FVector BottomCenter(Bounds.Origin.X,Bounds.Origin.Y,Bounds.Origin.Z-Bounds.BoxExtent.Z);
     Body->SetRelativeRotation(Orientation);
@@ -408,6 +409,7 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
     DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationMeshOverride);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationYawDegrees);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
 }

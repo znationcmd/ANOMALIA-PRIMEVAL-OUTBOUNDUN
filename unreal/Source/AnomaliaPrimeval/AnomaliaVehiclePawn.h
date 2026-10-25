@@ -48,6 +48,9 @@ public:
     /** Authored map art override; uses the existing movement, fuel and interaction systems. */
     UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     TObjectPtr<UStaticMesh> PresentationMeshOverride;
+    /** Mesh forward-axis correction, independent of the authoritative vehicle heading. */
+    UPROPERTY(ReplicatedUsing=OnRep_VehicleId, EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
+    float PresentationYawDegrees=0.f;
 
     /** Flight/naval/rail movement; deliberately separate from legacy ground movement. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")

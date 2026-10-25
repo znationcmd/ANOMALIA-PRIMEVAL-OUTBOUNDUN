@@ -102,7 +102,7 @@ try:
     report['visualReview']=visual
     if a.progress_art:
         notices=archive/'Windows/ThirdPartyNotices';notices.mkdir(parents=True,exist_ok=True)
-        for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1','PlayableLandscape_v1'):
+        for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1','PlayableLandscape_v2'):
             source=ROOT/'unreal/SourceAssets'/group/'CREDITS.md'
             destination=notices/(group+'-CREDITS.md')
             # Extended-length paths are needed on Windows even if UE accepts its own paths.

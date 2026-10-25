@@ -93,7 +93,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
                 auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
                 auto* Material=Mesh?Mesh->GetMaterial(0):nullptr;
                 Meadow=Material && (Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow")) ||
-                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_v1/SM_PlayableTerrain"))));
+                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_v2/SM_PlayableTerrain"))));
             }
             if(It->ActorHasTag(TEXT("PlayableSun")) || It->ActorHasTag(TEXT("PlayableSky")))
                 if(auto* Light=It->FindComponentByClass<ULightComponentBase>())
@@ -117,15 +117,20 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
                 const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
                 if(It->ActorHasTag(TEXT("ANOMALIA_PlayableTerrain_v1")))
                 {
-                    if(!Path.Contains(TEXT("/PlayableLandscape_v1/SM_PlayableTerrain")) || !Component->IsCollisionEnabled() || !Component->GetMaterial(0))
+                    if(!Path.Contains(TEXT("/PlayableLandscape_v2/SM_PlayableTerrain")) || !Component->IsCollisionEnabled() || !Component->GetMaterial(0))
                     {Finish(TEXT("Cooked colliding PBR terrain missing"));return;}
                     FHitResult Hit;FCollisionQueryParams Query;Query.bTraceComplex=true;Query.AddIgnoredActor(S);
                     if(!GetWorld()->LineTraceSingleByChannel(Hit,FVector(0,-400,500),FVector(0,-400,-500),ECC_Visibility,Query) || Hit.GetActor()!=*It || FMath::Abs(Hit.Location.Z)>2)
-                    {Finish(TEXT("Actual playable ground collision or flat spawn parcel invalid"));return;}
+                    {Finish(FString::Printf(TEXT("Actual playable ground collision or flat spawn parcel invalid: actor=%s z=%.2f expected=%s"),*GetNameSafe(Hit.GetActor()),Hit.Location.Z,*It->GetName()));return;}
                     ++Surfaces;
                 }
                 if(It->ActorHasTag(TEXT("ANOMALIA_PlayableRoad_v1")))
-                {if(!Path.Contains(TEXT("/asphalt_02/")) || !Component->IsCollisionEnabled()){Finish(TEXT("Cooked PBR road missing"));return;}++Surfaces;}
+                {
+                    const FVector RoadExtent=Component->Bounds.BoxExtent;
+                    if(!Path.Contains(TEXT("/asphalt_02/")) || !Component->IsCollisionEnabled() || RoadExtent.X<9000 || RoadExtent.Y>500)
+                    {Finish(TEXT("Cooked PBR road missing or wrong forward axis"));return;}
+                    ++Surfaces;
+                }
                 if(It->ActorHasTag(TEXT("ANOMALIA_ForestTree_v1")))
                 {if(!Path.StartsWith(TEXT("/Game/Anomalia/VerifiedProps_v1/")) && !Path.Contains(TEXT("/island_tree_02/"))){Finish(TEXT("Real perimeter tree missing"));return;}++ForestTrees;}
                 if(It->ActorHasTag(TEXT("ANOMALIA_ForestGrass_v1")))
@@ -153,6 +158,11 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
             { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }
         if(Vehicles.Num()!=3) { Finish(TEXT("Expected three cooked vehicles")); return; }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaProgressArt")))
+            for(const auto& Vehicle:Vehicles)
+                if((Vehicle->VehicleId==TEXT("car") || Vehicle->VehicleId==TEXT("transport_truck")) &&
+                   !FMath::IsNearlyEqual(Vehicle->Body->GetRelativeRotation().Yaw,90.f,.01f))
+                {Finish(TEXT("Detailed vehicle art is not aligned with driving direction"));return;}
         auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
         auto* BuildLabel=Menu && Menu->WidgetTree?Cast<UTextBlock>(Menu->WidgetTree->FindWidget(TEXT("SessionBuildIdentity"))):nullptr;
         if(!BuildLabel || !BuildLabel->GetText().ToString().StartsWith(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)))

@@ -45,7 +45,7 @@ try:
     if str(OWNER) not in present:raise RuntimeError('Owned playable zone required')
     # Replace the original ground cube with a real, colliding terrain mesh.
     # Source materials remain those of the verified CC0 forest ground.
-    landscape_base=ROOT/'SourceAssets/PlayableLandscape_v1'
+    landscape_base=ROOT/'SourceAssets/PlayableLandscape_v2'
     landscape=json.loads((landscape_base/'manifest.json').read_text())
     source=landscape_base/landscape['file']
     if hashlib.sha256(source.read_bytes()).hexdigest()!=landscape['sha256']:
@@ -57,7 +57,7 @@ try:
             raise RuntimeError('Existing artist terrain preserved')
     else:
         task=unreal.AssetImportTask();task.filename=str(source)
-        task.destination_path='/Game/Anomalia/PlayableLandscape_v1/Import'
+        task.destination_path='/Game/Anomalia/PlayableLandscape_v2/Import'
         task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
         unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task]);task.get_objects()
         imported=[unreal.load_asset(p) for p in unreal.EditorAssetLibrary.list_assets(task.destination_path,recursive=True,include_folder=False)]
@@ -85,7 +85,7 @@ try:
         actor.static_mesh_component.set_editor_property('override_materials',[])
         actor.static_mesh_component.set_collision_profile_name('BlockAll')
         actor.set_actor_scale3d(unreal.Vector(1,1,1));actor.set_actor_location(unreal.Vector(*position),False,False)
-        actor.set_actor_rotation(unreal.Rotator(),False)
+        actor.set_actor_rotation(unreal.Rotator(yaw=90 if label=='PlayableRoad' else 0),False)
         actor.tags=list(set(list(actor.tags)+[TAG,unreal.Name(tag)]))
     report['terrain']=True;report['road']=True
     # Road markings are part of the real road mesh. Retain old actors, hidden.
@@ -93,10 +93,10 @@ try:
         if label.startswith(('PlayableLook_v2_RoadDash','PlayableLook_v2_RoadEdge')) and OWNER in actor.tags:
             actor.set_actor_hidden_in_game(True);actor.static_mesh_component.set_visibility(False,True)
     def surface_height(x_cm,y_cm):
-        x=-y_cm/100.;z=x_cm/100.
+        x=x_cm/100.;z=-y_cm/100.
         def smooth(v):
             t=max(0.,min(1.,v));return t*t*(3-2*t)
-        return 100*smooth(max(abs(x)-57,abs(z)-68)/16)*smooth((abs(x-15)-6)/10)*(1.8+1.4*math.sin(x*.055)*math.cos(z*.043))
+        return 100*smooth(max(abs(x)-68,abs(z)-57)/16)*smooth((abs(z-15)-6)/10)*(1.8+1.4*math.sin(x*.055)*math.cos(z*.043))
     def forest_actor(label,mesh,x,y,scale,tag,yaw):
         actor=present.get(label)
         if actor:
@@ -200,6 +200,7 @@ try:
         candidates=[a for a in present.values() if OWNER in a.tags and a.get_class().get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaVehiclePawn' and str(a.get_editor_property('vehicle_id'))==vehicle_id]
         if len(candidates)!=1:raise RuntimeError('Unique existing playable vehicle required')
         vehicle=candidates[0];vehicle.set_editor_property('presentation_mesh_override',mesh)
+        vehicle.set_editor_property('presentation_yaw_degrees',90.)
         if not vehicle.configure_vehicle(unreal.Name(vehicle_id)):raise RuntimeError('Detailed vehicle binding failed')
         report['vehicles'].append(vehicle_id)
     if not level.save_current_level() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('Playable progress art did not save')
