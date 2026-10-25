@@ -8,6 +8,35 @@ let gameLibrary;
 let gameLibraryTimer;
 let unrealBridge;
 const path=require('node:path');
+const {randomUUID}=require('node:crypto');
+
+// Every visible editor must confirm a completed IndexedDB write before restart.
+// On timeout/failure the downloaded installer stays pending; user data is never removed.
+async function saveWindowsBeforeUpdate(){
+  const windows=BrowserWindow.getAllWindows().filter(w=>!w.isDestroyed()&&!w.webContents.isDestroyed());
+  if(!windows.length)return true;
+  const results=await Promise.all(windows.map(win=>new Promise(resolve=>{
+    const id=randomUUID();
+    let completed=false;
+    const finish=saved=>{
+      if(completed)return;
+      completed=true;
+      clearTimeout(timeout);
+      ipcMain.removeListener('editor:updates:saved',onSaved);
+      resolve(saved);
+    };
+    const onSaved=(event,response)=>{
+      if(event.sender!==win.webContents||response?.id!==id)return;
+      finish(response.saved===true);
+    };
+    ipcMain.on('editor:updates:saved',onSaved);
+    const timeout=setTimeout(()=>finish(false),15000);
+    try{win.webContents.send('editor:updates:prepare-install',{id});}
+    catch{finish(false);}
+  })));
+  return results.every(Boolean);
+}
+
 app.setName('ANOMALIA Editor');
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.editor');
 function createWindow(){
@@ -27,7 +56,7 @@ function createWindow(){
   window.webContents.on('will-navigate',event=>event.preventDefault());
 }
 app.whenReady().then(()=>{
-  editorUpdates=new EditorUpdates();
+  editorUpdates=new EditorUpdates({prepareForRestart:saveWindowsBeforeUpdate});
   gameLibrary=new GameLibrary(app.getPath('userData'));
   unrealBridge=new UnrealBridge(app.getPath('userData'));
   ipcMain.handle('editor:unreal:status',()=>unrealBridge.status());
