@@ -35,7 +35,15 @@ try:
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not level.load_level(package): raise RuntimeError('Cannot open validated population map')
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    imported='/Game/Anomalia/Infrastructure/OriginalSigns_v1'
+    descriptors=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+    terrain_guids=[]
+    for descriptor in descriptors:
+        cls=descriptor.get_editor_property('native_class')
+        if cls and cls.get_path_name() in ['/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy']:
+            terrain_guids.append(descriptor.get_editor_property('guid'))
+    unreal.WorldPartitionBlueprintLibrary.load_actors(terrain_guids)
+    report['loadedTerrainDescriptors']=len(terrain_guids)
+    imported='/Game/Anomalia/Infrastructure/OriginalSigns_v1' 
     manifest=ROOT/'Saved/ReactiveValidation/sign-import.json'
     if manifest.exists():
         old=json.loads(manifest.read_text())
@@ -63,7 +71,7 @@ try:
             if old.get_class()!=native or OWNER not in old.tags: raise RuntimeError('Unowned sign actor preserved: '+label)
             if str(old.get_editor_property('place_id'))!=item['id']: raise RuntimeError('Existing sign identity conflict')
             report['placements'].append(dict(**item,existing=True));continue
-        e,n=item['east']*100,item['north']*100
+        e,n=item['east']*100,-item['north']*100
         if any(abs(item['east']-b['east'])<b['width']/2+4 and abs(item['north']-b['north'])<b['depth']/2+4 for b in plan['buildings']):
             report['rejected'].append(dict(id=item['signId'],reason='BUILDING_CLEARANCE'));continue
         expected_z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(item['east'],item['north'])*100
@@ -73,6 +81,7 @@ try:
             actors.destroy_actor(actor)
             report['rejected'].append(dict(id=item['signId'],reason='NO_MATCHING_LOADED_DRY_GROUND'));continue
         actor.set_actor_label(label);actor.tags=[OWNER]
+        actor.set_editor_property('is_spatially_loaded',False)
         actor.set_editor_property('place_id',unreal.Name(item['id']))
         actor.set_editor_property('place_name',unreal.Text(item['name']))
         board=actor.get_editor_property('board');board.set_static_mesh(mesh)
@@ -81,7 +90,7 @@ try:
         report['placements'].append(dict(**item,existing=False))
     if not level.save_all_dirty_levels(): raise RuntimeError('Cannot save named signage')
     if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True): raise RuntimeError('Cannot save external sign actors')
-    report['state']='NAMED_SIGNS_SAVED_NOT_PLAYTESTED'
+    report['state']='NAMED_SIGNS_SAVED_NOT_PLAYTESTED' if not report['rejected'] else 'PARTIAL_NAMED_SIGNS_SAVED_NOT_PLAYTESTED'
 except Exception as error:
     report['error']=str(error)
     raise
