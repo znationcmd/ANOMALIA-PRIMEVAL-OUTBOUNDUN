@@ -17,6 +17,7 @@
 #include "HAL/FileManager.h"
 #include "Engine/World.h"
 #include "Components/CapsuleComponent.h"
+#include "Engine/StaticMesh.h"
 
 namespace
 {
@@ -209,7 +210,7 @@ bool UAnomaliaWorldStateSubsystem::Interact(AAnomaliaWorldMechanism* Actor,AAnom
     {
         if(Current->Repair==EAnomaliaRepairState::Repaired || Current->RepairEndsUtc>0 ||
            D->Materials.IsEmpty() || !ValidRecipe(D->Materials) || !FMath::IsFinite(D->RepairSeconds) ||
-           D->RepairSeconds<0 || D->RepairSeconds>86400) return false;
+           D->RepairSeconds<0 || D->RepairSeconds>86400 || !D->RepairedMesh.LoadSynchronous()) return false;
         bool Complete=true;
         for(const auto& Need:D->Materials)
         {
@@ -218,7 +219,9 @@ bool UAnomaliaWorldStateSubsystem::Interact(AAnomaliaWorldMechanism* Actor,AAnom
             if(Units>0) {Cost.Add(Need.Key,Units);Current->AddDeposited(Need.Key,Units);}
             Complete &= Current->GetDeposited(Need.Key)>=Need.Value;
         }
-        if(Cost.IsEmpty()) return false;
+        // An administrator may reduce a recipe after earlier collective deposits.
+        // Already-satisfied work can finish without charging a fictitious extra unit.
+        if(Cost.IsEmpty() && !Complete) return false;
         Current->Repair=EAnomaliaRepairState::Repairing;
         if(Complete) Current->RepairEndsUtc=NowUtc()+FMath::Max(1.f,D->RepairSeconds);
     }

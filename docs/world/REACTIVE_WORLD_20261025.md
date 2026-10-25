@@ -68,7 +68,11 @@ pieds et fixations métalliques. Il n'utilise aucune œuvre téléchargée.
 panneaux aux entrées des localités issues du plan de population validé. Il refuse
 les identités en conflit et les espaces d'import non possédés, conserve les panneaux
 existants et rejette les points sans terrain chargé correspondant ou trop proches
-des bâtiments. Ce script n'a pas encore été exécuté/contrôlé graphiquement.
+des bâtiments. Première exécution réelle : **46 panneaux enregistrés pour 26 localités** sur
+`ANOMALIA_Inhabited_v2`, avec 8 entrées refusées pour absence de sol sec compatible.
+Le second passage cherche des alternatives dans les couloirs de la même localité,
+puis près de ses parcelles réellement bâties. Le rendu graphique n'est pas encore
+contrôlé. Preuve : `docs/world/named-signs-40174606857.json`.
 Les noms des bases et ports sont configurables avec les mêmes acteurs ; aucun
 placement militaire ou portuaire inexistant n'est annoncé comme achevé.
 
@@ -82,9 +86,13 @@ placement militaire ou portuaire inexistant n'est annoncé comme achevé.
 - Preuve du commit `c10abd2b770894bbe49db21eb0148e57a7cd5f0f` :
   [exécution 40173632649](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40173632649),
   Editor et Game **compilés sous UE5.8.3**, **22 tests natifs réussis**, dont
-  `ReactiveWorldPersistenceAndPower` sans erreur ni avertissement. L'ajout POI
-  ultérieur passe dans une validation distincte, encore en cours à cet instant.
-- Suite locale : **123 tests réussis** (ces tests Python ne sont pas des playtests).
+  `ReactiveWorldPersistenceAndPower` sans erreur ni avertissement.
+- Preuve du commit `f512684ccd69c8d684062a56526c8bb68023bc02` :
+  [exécution 40174606857](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40174606857),
+  Editor et Game compilés ; **23 tests natifs réussis**, y compris
+  `POIResourceExclusivity` et la stabilité de l'identité des cartes entre sessions
+  PIE. Le placement des panneaux se déroule après cette validation native.
+- Suite locale : **124 tests réussis** (ces tests Python ne sont pas des playtests).
 - Les premières compilations ont identifié des erreurs d'en-têtes, de réplication
   de dictionnaires et d'API : corrigées, aucune réussite native inventée.
 - Ce workflow ne copie pas une build non validée dans le jeu installé et ne publie

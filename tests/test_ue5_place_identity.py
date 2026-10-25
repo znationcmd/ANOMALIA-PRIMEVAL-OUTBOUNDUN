@@ -43,4 +43,18 @@ class PlaceIdentityTests(unittest.TestCase):
         self.assertAlmostEqual(max(p['max'][0] for p in positions),1.4,places=5)
         self.assertAlmostEqual(max(p['max'][1] for p in positions),2.325,places=5)
 
+    def test_coastal_entrances_can_move_into_the_same_towns_reserved_corridor(self):
+        signs=identity.settlement_signs({'settlements':[dict(id='settlement_0_4',east=1000,north=2000,buildingCount=120)]})
+        for item in signs:
+            rows=list(identity.sign_candidates(item))
+            self.assertEqual(rows[0],dict(east=item['east'],north=item['north']))
+            self.assertEqual(len({(r['east'],r['north']) for r in rows}),40)
+            self.assertTrue(all(abs(r['east']-1000)<=18 and abs(r['north']-2000)<=410 for r in rows))
+            self.assertTrue(any(r['north']==2000 for r in rows))
+        buildings=[dict(id='settlement_0_4_house_1_1',east=1250,north=1800,width=10,depth=12),
+                   dict(id='settlement_0_5_house_1_1',east=9000,north=9000,width=10,depth=12)]
+        fallback=list(identity.sign_candidates(signs[0],buildings))[40:]
+        self.assertEqual(len(fallback),4)
+        self.assertTrue(all(abs(r['east']-1250)<=9.5 and abs(r['north']-1800)<=10.5 for r in fallback))
+
 if __name__=='__main__': unittest.main()

@@ -64,30 +64,45 @@ try:
     bounds=mesh.get_bounds();size=bounds.box_extent*2
     if not (270<max(size.x,size.y)<290 and 230<size.z<235): raise RuntimeError('Imported sign is not full scale')
     existing={a.get_actor_label():a for a in actors.get_all_level_actors()}
+    used=[a.get_actor_location() for a in existing.values() if a.get_class()==native]
     for item in proposals:
         label='ANOMALIA_Sign_'+item['signId']
         if label in existing:
             old=existing[label]
             if old.get_class()!=native or OWNER not in old.tags: raise RuntimeError('Unowned sign actor preserved: '+label)
             if str(old.get_editor_property('place_id'))!=item['id']: raise RuntimeError('Existing sign identity conflict')
+            # Repair an empty label from an earlier authoring pass without replacing authored text.
+            for field in ['front_text','back_text']:
+                label_component=old.get_editor_property(field)
+                if not str(label_component.get_editor_property('text')):
+                    label_component.set_text(old.get_editor_property('place_name'))
             report['placements'].append(dict(**item,existing=True));continue
-        e,n=item['east']*100,-item['north']*100
-        if any(abs(item['east']-b['east'])<b['width']/2+4 and abs(item['north']-b['north'])<b['depth']/2+4 for b in plan['buildings']):
-            report['rejected'].append(dict(id=item['signId'],reason='BUILDING_CLEARANCE'));continue
-        expected_z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(item['east'],item['north'])*100
-        actor=actors.spawn_actor_from_class(native,unreal.Vector(e,n,expected_z),unreal.Rotator(0,item['yaw'],0))
-        if not actor: raise RuntimeError('Cannot spawn original native sign')
-        if not actor.snap_to_ground(expected_z):
-            actors.destroy_actor(actor)
-            report['rejected'].append(dict(id=item['signId'],reason='NO_MATCHING_LOADED_DRY_GROUND'));continue
+        actor=None; chosen=None
+        for candidate in identity.sign_candidates(item,plan['buildings']):
+            e,n=candidate['east']*100,-candidate['north']*100
+            if any((e-p.x)**2+(n-p.y)**2<500**2 for p in used): continue
+            if any(abs(candidate['east']-b['east'])<b['width']/2+4 and abs(candidate['north']-b['north'])<b['depth']/2+4 for b in plan['buildings']): continue
+            expected_z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(candidate['east'],candidate['north'])*100
+            attempt=actors.spawn_actor_from_class(native,unreal.Vector(e,n,expected_z),unreal.Rotator(0,item['yaw'],0))
+            if not attempt: raise RuntimeError('Cannot spawn original native sign')
+            if attempt.snap_to_ground(expected_z):
+                actor=attempt;chosen=candidate;break
+            actors.destroy_actor(attempt)
+        if not actor:
+            report['rejected'].append(dict(id=item['signId'],reason='NO_DRY_CLEAR_CORRIDOR_IN_SAME_TOWN'));continue
         actor.set_actor_label(label);actor.tags=[OWNER]
         actor.set_editor_property('is_spatially_loaded',False)
         actor.set_editor_property('place_id',unreal.Name(item['id']))
         actor.set_editor_property('place_name',unreal.Text(item['name']))
         board=actor.get_editor_property('board');board.set_static_mesh(mesh)
         if size.x>size.y: board.set_relative_rotation(unreal.Rotator(0,90,0),False,True)
-        # Plate orientation is independent of the native text facing.
-        report['placements'].append(dict(**item,existing=False))
+        # Explicitly populate the actual scene text after setting the saved place properties.
+        for field in ['front_text','back_text']:
+            text=actor.get_editor_property(field)
+            text.set_text(unreal.Text(item['name']))
+            text.set_world_size(min(22,380/max(1,len(item['name']))))
+        used.append(actor.get_actor_location())
+        report['placements'].append(dict(**item,existing=False,actualEast=chosen['east'],actualNorth=chosen['north']))
     if not level.save_all_dirty_levels(): raise RuntimeError('Cannot save named signage')
     if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True): raise RuntimeError('Cannot save external sign actors')
     report['state']='NAMED_SIGNS_SAVED_NOT_PLAYTESTED' if not report['rejected'] else 'PARTIAL_NAMED_SIGNS_SAVED_NOT_PLAYTESTED'
