@@ -1,5 +1,5 @@
 /**
- * ANOMALIA Workshop, rendered inside the game's own UI on Windows and web.
+ * ANOMALIA WorkForge, rendered inside the game's own UI on Windows and web.
  * The installed Windows game can display the real local ANOMALIA Tools catalogue.
  * A compiled plugin is never presented as already loaded into UE5.
  */
@@ -13,14 +13,27 @@ function make(tag,cls='',label=''){
 }
 export function createWorkshopPanel(){
  const page=document.getElementById('inGameWorkshop');
- if(!page)throw Error('Page Workshop absente du jeu');
+ if(!page)throw Error('Page WorkForge absente du jeu');
  const $=id=>page.querySelector('#'+id);
- let category='Tous',catalog={available:false,mods:[]},requestId=0;
+ let category='Tous',catalog={available:false,mods:[]},requestId=0,onlyFavorites=false;
+ const favoriteKey='anomalia-workforge-favorites-v1';
+ let favoriteIds=new Set();
+ try{
+   const saved=JSON.parse(localStorage.getItem(favoriteKey)||'[]');
+   if(Array.isArray(saved))favoriteIds=new Set(saved.filter(id=>typeof id==='string'&&/^[a-z0-9][a-z0-9-]{1,100}$/.test(id)).slice(0,1000));
+ }catch{favoriteIds=new Set();}
+ function toggleFavorite(id){
+   if(!/^[a-z0-9][a-z0-9-]{1,100}$/.test(String(id)))return;
+   if(favoriteIds.has(id))favoriteIds.delete(id);else favoriteIds.add(id);
+   try{localStorage.setItem(favoriteKey,JSON.stringify([...favoriteIds]));}
+   catch{$('igwMessage').textContent='Les favoris sont disponibles dans cette session, mais le stockage local est inaccessible.';}
+   counts();render();
+ }
  function isOpen(){return !page.hidden;}
  function close(){page.hidden=true;}
  function counts(){
   $('igwCount').textContent=String(catalog.mods.length);
-  $('igwSaved').textContent=String(catalog.mods.filter(m=>m.subscribed).length);
+  $('igwSaved').textContent=String(catalog.mods.filter(m=>favoriteIds.has(m.id)).length);
   $('igwReady').textContent=String(catalog.mods.filter(m=>m.prepared).length);
  }
  function categories(){
@@ -38,14 +51,15 @@ export function createWorkshopPanel(){
   const grid=$('igwGrid');grid.replaceChildren();
   const needle=$('igwSearch').value.trim().toLocaleLowerCase('fr');
   const mods=catalog.mods.filter(m=>(category==='Tous'||m.category===category)&&
+   (!onlyFavorites||favoriteIds.has(m.id))&&
    (!needle||[m.title,m.category,m.version,m.description].some(v=>String(v||'').toLocaleLowerCase('fr').includes(needle))));
   $('igwVisible').textContent='('+mods.length+')';
   if(!mods.length){
    const empty=make('div','igw-empty');
    empty.append(make('span','igw-emptyIcon','✦'),
-      make('h4','',catalog.mods.length?'Aucun résultat':'Ton Workshop est ouvert'),
+      make('h4','',catalog.mods.length?'Aucun résultat':'WorkForge est ouvert'),
       make('p','',catalog.mods.length?'Change ta recherche ou la catégorie.':
-       'Aucun mod n’est encore publié dans ta bibliothèque locale. Crée un projet ANOMALIA Tools et ajoute-le au Workshop pour qu’il apparaisse ici.'),
+       'Aucun mod n’est encore publié dans ta bibliothèque locale. Crée un projet ANOMALIA Tools et ajoute-le à ta bibliothèque WorkForge pour qu’il apparaisse ici.'),
       make('p','igw-hint','Aucun faux mod affiché. Le chargeur des plugins Unreal Engine 5 reste à développer.'));
    grid.append(empty);
    return;
@@ -63,6 +77,13 @@ export function createWorkshopPanel(){
    chips.append(make('span','',mod.prepared?'Plugin préparé':'Sources du mod'),
       make('span','',mod.subscribed?'✓ Abonné':'Non abonné'));
    content.append(chips,make('p','igw-hint','État dans le jeu : plugin non chargé'));
+   const actions=make('div','igw-cardActions');
+   const favorite=make('button','igw-favorite',favoriteIds.has(mod.id)?'★ Retirer des favoris':'☆ Ajouter aux favoris');
+   favorite.type='button';favorite.setAttribute('aria-pressed',String(favoriteIds.has(mod.id)));
+   favorite.setAttribute('aria-label',favoriteIds.has(mod.id)?'Retirer '+mod.title+' des favoris':'Ajouter '+mod.title+' aux favoris');
+   favorite.onclick=()=>toggleFavorite(mod.id);
+   actions.append(favorite);
+   content.append(actions);
    card.append(art,content);grid.append(card);
   }
  }
@@ -72,7 +93,7 @@ export function createWorkshopPanel(){
   let result;
   try{
    result=window.anomaliaWorkshop?.list?await window.anomaliaWorkshop.list():
-    {available:false,mods:[],message:'Le Workshop est ouvert dans le jeu. Sur le navigateur, la bibliothèque de mods Windows ne peut pas être lue.'};
+    {available:false,mods:[],message:'WorkForge est ouvert dans le jeu. Le navigateur ne peut pas lire la bibliothèque de mods Windows.'};
   }catch(error){
    result={available:false,mods:[],message:'Lecture impossible : '+(error?.message||'erreur locale')};
   }
@@ -85,26 +106,32 @@ export function createWorkshopPanel(){
  }
  function open(){
   page.hidden=false;
-  category='Tous';$('igwSearch').value='';
+  category='Tous';onlyFavorites=false;$('igwSearch').value='';$('igwFavorites').setAttribute('aria-pressed','false');
   categories();render();
   refresh();
   $('igwClose').focus();
  }
  $('igwClose').onclick=close;
  $('igwRefresh').onclick=refresh;
+ $('igwFavorites').onclick=()=>{
+   onlyFavorites=!onlyFavorites;
+   $('igwFavorites').setAttribute('aria-pressed',String(onlyFavorites));
+   $('igwFavorites').textContent=onlyFavorites?'★ Tous les mods':'☆ Mes favoris';
+   render();
+ };
  $('igwSearch').oninput=render;
  $('igwOpenTools').onclick=async()=>{
   if(!window.anomaliaServer?.openWorkshop){
-   $('igwMessage').textContent='ANOMALIA Tools est une application Windows distincte. Le Workshop reste ouvert dans le jeu.';
+   $('igwMessage').textContent='ANOMALIA Tools est une application Windows distincte. WorkForge reste ouvert dans le jeu.';
    return;
   }
   try{
    const outcome=await window.anomaliaServer.openWorkshop();
    $('igwMessage').textContent=outcome?.requested?
-    'Ouverture d’ANOMALIA Tools demandée ; le Workshop intégré reste visible ici.':
-    'ANOMALIA Tools n’a pas pu être lancé, mais le Workshop intégré fonctionne.';
+    'Ouverture d’ANOMALIA Tools demandée ; WorkForge reste ouvert dans le jeu.':
+    'ANOMALIA Tools n’a pas pu être lancé, mais WorkForge reste utilisable.';
   }catch{
-   $('igwMessage').textContent='ANOMALIA Tools n’a pas pu être lancé ; le Workshop intégré reste ouvert.';
+   $('igwMessage').textContent='ANOMALIA Tools n’a pas pu être lancé ; WorkForge reste ouvert.';
   }
  };
  document.addEventListener('keydown',event=>{

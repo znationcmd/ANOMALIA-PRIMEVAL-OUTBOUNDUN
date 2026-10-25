@@ -57,3 +57,18 @@ test('no local mods still returns usable page, symbolic links are ignored',t=>{
  mkdirSync(base,{recursive:true});symlinkSync(appData,join(base,'fake-mod-123'),'dir');
  assert.equal(listLocalWorkshop(appData).mods.length,0);
 });
+
+test('WorkForge is branded in real Windows game and keeps local favorites',()=>{
+ const menu=read('../src/start-menu.js');
+ const ui=read('../src/workshop-ui.js');
+ const html=read('../index.html');
+ const pkg=JSON.parse(read('../package.json'));
+ assert.equal(pkg.version,'0.7.2');
+ assert.match(menu,/WORKFORGE · Mods/);
+ assert.match(html,/ANOMALIA <b>WORKFORGE<\/b>/);
+ assert.match(html,/id="igwFavorites"/);
+ assert.match(ui,/anomalia-workforge-favorites-v1/);
+ assert.match(ui,/localStorage\.setItem/);
+ assert.match(ui,/toggleFavorite\(mod\.id\)/);
+ assert.doesNotMatch(ui,/loadedInGame:true/);
+});

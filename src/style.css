@@ -80,3 +80,42 @@ background:linear-gradient(90deg,#0b0b11f4 0%,#120e15e4 40%,#230c1182 82%,#0a081
 .igw-bottom a{color:#ffd5b8;text-decoration:none;border:1px solid #984b3b;display:inline-flex;padding:9px 11px;border-radius:6px;background:#31181d}
 @media(max-width:1050px){.igw-categories{grid-template-columns:repeat(3,minmax(0,1fr))}.igw-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.igw-hero{grid-template-columns:1fr}.igw-connection{max-width:450px}.igw-beta{display:none}}
 @media(max-width:650px){.igw-nav{height:55px}.igw-logo{font-size:12px}.igw-logo span{font-size:15px;margin-right:3px}#igwClose{padding:7px;font-size:10px}.igw-hero{padding:19px;min-height:unset}.igw-hero h2{font-size:clamp(34px,11vw,52px)}.igw-numbers{gap:15px}.igw-titlebar{align-items:stretch;flex-direction:column}.igw-search{flex-wrap:wrap}.igw-categories{grid-template-columns:repeat(2,minmax(0,1fr))}.igw-grid,.igw-bottom{grid-template-columns:1fr}.igw-main{padding:13px}}
+
+
+/* WORKFORGE integrated into the actual ANOMALIA Game executable.
+   Original ANOMALIA theme; compact, readable on 1366x768 Windows laptops. */
+#inGameWorkshop .igw-nav{background:linear-gradient(110deg,#111a28,#1c1726 50%,#0b151f);border-bottom-color:#9870b4}
+#inGameWorkshop .igw-logo{letter-spacing:.07em}
+#inGameWorkshop .igw-logo b{background:linear-gradient(90deg,#ffc08a,#bd8efc);color:transparent;background-clip:text}
+#inGameWorkshop .igw-hero{min-height:285px;padding:clamp(15px,2.5vw,34px);
+ background-image:linear-gradient(115deg,#151c2bc9,#17132299),url('/workshop-landscape.svg');
+ background-size:cover;background-position:center}
+#inGameWorkshop .igw-hero h2{font-size:clamp(29px,4vw,64px);margin:12px 0 5px}
+#inGameWorkshop .igw-heroText p{margin:12px 0 15px}
+#inGameWorkshop .igw-connection{box-shadow:0 8px 25px #0506118a;border:1px solid #906c9c}
+#inGameWorkshop .igw-categories{grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-bottom:15px}
+#inGameWorkshop .igw-category{min-height:72px;padding:8px 11px}
+#inGameWorkshop .igw-category .igw-icon{font-size:20px}
+#inGameWorkshop .igw-search{flex-wrap:wrap;justify-content:flex-end}
+#inGameWorkshop #igwFavorites{min-height:37px;padding:7px 11px;border:1px solid #946db6;
+ background:#2b2138;color:#eddaf9;font-size:11px;font-weight:700}
+#inGameWorkshop #igwFavorites[aria-pressed="true"]{background:#62406e;color:#fff;border-color:#d8a6f5}
+#inGameWorkshop .igw-cardActions{display:flex;gap:8px;margin-top:10px}
+#inGameWorkshop .igw-favorite{display:block;width:100%;font-size:11px;white-space:normal;
+ text-align:center;padding:8px 12px;border:1px solid #9974ac;background:#251e37;color:#f8dff2;
+ border-radius:6px}
+#inGameWorkshop .igw-favorite[aria-pressed="true"]{border-color:#e8a27a;background:#493149;color:#ffe1b6}
+#inGameWorkshop .igw-scroll{scrollbar-color:#826997 #171527;scrollbar-width:thin}
+#inGameWorkshop button:focus-visible{outline:2px solid #f3c7ff;outline-offset:2px}
+@media(max-width:950px){
+ #inGameWorkshop .igw-hero{grid-template-columns:1fr}
+ #inGameWorkshop .igw-categories{grid-template-columns:repeat(3,minmax(0,1fr))}
+ #inGameWorkshop .igw-connection{margin:0}
+}
+@media(max-width:620px){
+ #inGameWorkshop .igw-navRight .igw-beta{display:none}
+ #inGameWorkshop .igw-categories{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #inGameWorkshop .igw-grid{grid-template-columns:1fr}
+ #inGameWorkshop .igw-titlebar{align-items:flex-start;flex-direction:column}
+ #inGameWorkshop .igw-search{justify-content:flex-start}
+}
