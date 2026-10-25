@@ -198,6 +198,7 @@ protected:
     void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
 
 private:
+    friend class UAnomaliaWorldStateSubsystem;
     friend class UAnomaliaLootSubsystem;
     friend class UAnomaliaEconomySubsystem;
     friend class UAnomaliaSharedStorageSubsystem;

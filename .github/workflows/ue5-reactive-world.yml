@@ -1,0 +1,35 @@
+name: UE5 reactive world native validation
+on:
+  push:
+    branches: ['ue5/reactive-world-expeditions-20261025']
+    paths: ['unreal/Source/**', 'scripts/ue5/**', '.github/workflows/ue5-reactive-world.yml']
+  workflow_dispatch:
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile Editor and Game and execute native regression suite
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if (-not $env:UE_ROOT) { throw 'Installed UE_ROOT required.' }
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/ReactiveValidation/run-$env:GITHUB_RUN_ID" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: reactive-world-native-evidence
+          path: unreal/Saved/ReactiveValidation/run-${{ github.run_id }}/
+          if-no-files-found: error

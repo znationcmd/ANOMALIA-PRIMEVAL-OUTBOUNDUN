@@ -1,0 +1,89 @@
+#if WITH_DEV_AUTOMATION_TESTS
+#include "Misc/AutomationTest.h"
+#include "../ReactiveWorld/AnomaliaWorldStateSubsystem.h"
+#include "../ReactiveWorld/AnomaliaWorldMechanism.h"
+#include "../ReactiveWorld/AnomaliaWorldDefinition.h"
+#include "../AnomaliaConfigLibrary.h"
+#include "Engine/World.h"
+#include "Dom/JsonObject.h"
+#include "Misc/Guid.h"
+#include "Misc/DateTime.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
+
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaReactiveWorldTest,"Anomalia.Native.ReactiveWorldPersistenceAndPower",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
+{
+    const FString Server=TEXT("reactive-")+FGuid::NewGuid().ToString(EGuidFormats::Digits).Left(16);
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);
+    if(!TestNotNull(TEXT("Native world"),World)) return false;
+    auto* Store=World->GetSubsystem<UAnomaliaWorldStateSubsystem>();FString Error;
+    if(!TestNotNull(TEXT("Native state subsystem"),Store)) {World->DestroyWorld(false);return false;}
+    TestTrue(TEXT("Initialize isolated server state"),Store->Configure(Server,TEXT("test-map"),Error));
+    auto Make=[&](const TCHAR* Id,EAnomaliaWorldMechanism Kind,float X)
+    {
+        auto* A=World->SpawnActor<AAnomaliaWorldMechanism>(FVector(X,0,0),FRotator::ZeroRotator);
+        A->StableId=FName(Id);A->Definition=NewObject<UAnomaliaWorldDefinition>(A);A->Definition->Kind=Kind;
+        TestTrue(TEXT("Register stable native actor"),Store->Register(A));return A;
+    };
+    auto* Generator=Make(TEXT("generator"),EAnomaliaWorldMechanism::Generator,0);
+    auto* Relay=Make(TEXT("relay"),EAnomaliaWorldMechanism::Junction,100);
+    auto* Lamp=Make(TEXT("lamp"),EAnomaliaWorldMechanism::Consumer,200);
+    Generator->Definition->OutputWatts=1000;Lamp->Definition->DemandWatts=100;
+    auto& Fuel=Store->States.FindChecked(Generator->StableId);Fuel.FuelSeconds=10;Fuel.bSwitchedOn=true;
+    Store->RefreshActors();
+    TestFalse(TEXT("Proximity alone does not supply a lamp"),Lamp->bPowered);
+    Generator->ConnectedNodeIds.Add(Relay->StableId);Relay->ConnectedNodeIds.Add(Lamp->StableId);
+    Store->RefreshActors();TestTrue(TEXT("Explicit cable path supplies real device"),Lamp->bPowered);
+    Lamp->Definition->DemandWatts=1001;Store->RefreshActors();
+    TestTrue(TEXT("Overload detected"),Lamp->bOverloaded);TestFalse(TEXT("Overload cuts device power"),Lamp->bPowered);
+    Lamp->Definition->DemandWatts=100;Store->Unregister(Relay);
+    TestFalse(TEXT("Unloaded relay disconnects consumers"),Lamp->bPowered);
+    TestTrue(TEXT("Relay restored after cell reload"),Store->Register(Relay));TestTrue(TEXT("Reload restores cable path"),Lamp->bPowered);
+    Fuel.FuelSeconds=0;Store->RefreshActors();TestFalse(TEXT("Empty generator cannot supply devices"),Lamp->bPowered);
+    auto* Bridge=Make(TEXT("bridge"),EAnomaliaWorldMechanism::Repair,400);
+    auto& Repair=Store->States.FindChecked(Bridge->StableId);
+    Repair.Deposited.Add(TEXT("scrap"),100);Repair.Deposited.Add(TEXT("wood"),50);
+    Repair.Repair=EAnomaliaRepairState::Repairing;Repair.RepairEndsUtc=FDateTime::UtcNow().ToUnixTimestamp()-1;
+    Store->Tick(1.1f);
+    TestTrue(TEXT("Repair deadline completes on server"),Store->FindState(Bridge->StableId)->Repair==EAnomaliaRepairState::Repaired);
+    Store->Unregister(Bridge);
+    TestEqual(TEXT("Deposits survive streaming out"),Store->FindState(Bridge->StableId)->Deposited.FindRef(TEXT("scrap")),100);
+    TestTrue(TEXT("Start configured server event"),Store->StartWorldEvent(TEXT("electromagnetic_storm"),60));
+    TestTrue(TEXT("Event is active server side"),Store->IsEventActive(TEXT("electromagnetic_storm")));
+    TestFalse(TEXT("Different event cannot authorize a portal"),Store->IsEventActive(TEXT("chemical_storm")));
+    TestTrue(TEXT("Persist before restart"),Store->Save(Error));
+    auto* Restart=NewObject<UAnomaliaWorldStateSubsystem>(World);
+    TestTrue(TEXT("Read same server/map after restart"),Restart->Configure(Server,TEXT("test-map"),Error));
+    const auto* Loaded=Restart->FindState(TEXT("bridge"));
+    if(TestNotNull(TEXT("Bridge restored"),Loaded))
+    {
+        TestTrue(TEXT("Repaired state restored"),Loaded->Repair==EAnomaliaRepairState::Repaired);
+        TestEqual(TEXT("Consumed materials not reset"),Loaded->Deposited.FindRef(TEXT("wood")),50);
+    }
+    TestTrue(TEXT("Event deadline survives restart"),Restart->IsEventActive(TEXT("electromagnetic_storm")));
+    // Simulate process loss immediately after the durable intent and before profile publication.
+    Restart->Pending=MakeShared<FJsonObject>();Restart->Pending->SetStringField(TEXT("playerId"),TEXT("test-player"));
+    Restart->Pending->SetStringField(TEXT("profileAfter"),TEXT("{\"marker\":\"committed-once\"}"));
+    TestTrue(TEXT("Durable transaction intent"),Restart->Save(Error));
+    auto* Recovered=NewObject<UAnomaliaWorldStateSubsystem>(World);
+    TestTrue(TEXT("Restart replays pending profile"),Recovered->Configure(Server,TEXT("test-map"),Error));
+    FString Profile;
+    TestTrue(TEXT("Recovered profile exists"),UAnomaliaConfigLibrary::LoadPlayerProfile(Server,TEXT("test-player"),Profile,Error));
+    TestEqual(TEXT("Exact post-transaction profile published"),Profile,FString(TEXT("{\"marker\":\"committed-once\"}")));
+    TestFalse(TEXT("Recovered journal no longer locks player"),Recovered->HasPendingPlayer(TEXT("test-player")));
+    auto* OtherMap=NewObject<UAnomaliaWorldStateSubsystem>(World);
+    TestTrue(TEXT("Separate map scope"),OtherMap->Configure(Server,TEXT("other-map"),Error));
+    TestNull(TEXT("World state isolated by map"),OtherMap->FindState(TEXT("bridge")));
+    const FString OriginalFile=FPaths::Combine(UAnomaliaConfigLibrary::ServerRoot(Server),TEXT("World"),Store->StateId+TEXT(".json"));
+    TestTrue(TEXT("Seed unsupported future schema"),UAnomaliaConfigLibrary::SaveWorldState(Server,Store->StateId,TEXT("{\"schemaVersion\":999}"),Error));
+    auto* Future=NewObject<UAnomaliaWorldStateSubsystem>(World);
+    TestFalse(TEXT("Unsupported save fails closed"),Future->Configure(Server,TEXT("test-map"),Error));
+    FString Preserved;TestTrue(TEXT("Original future save remains readable"),UAnomaliaConfigLibrary::LoadWorldState(Server,Store->StateId,Preserved,Error));
+    TestEqual(TEXT("Future save never overwritten"),Preserved,FString(TEXT("{\"schemaVersion\":999}")));
+    World->DestroyWorld(false);
+    IFileManager::Get().DeleteDirectory(*UAnomaliaConfigLibrary::ServerRoot(Server),false,true);
+    return true;
+}
+#endif

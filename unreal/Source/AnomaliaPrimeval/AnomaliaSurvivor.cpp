@@ -1,3 +1,4 @@
+#include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaDoorActor.h"
@@ -299,7 +300,10 @@ void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
     FCollisionQueryParams DoorQuery(SCENE_QUERY_STAT(AnomaliaDoorTarget),true);
     DoorQuery.AddIgnoredActor(this);FHitResult DoorHit;
     if(GetWorld()->LineTraceSingleByChannel(DoorHit,Eye,Eye+GetControlRotation().Vector()*300.f,ECC_Visibility,DoorQuery))
+    {
+        if(auto* Mechanism=Cast<AAnomaliaWorldMechanism>(DoorHit.GetActor())) {Mechanism->TryInteract(this);return;}
         if(auto* Door=Cast<AAnomaliaDoorActor>(DoorHit.GetActor())){Door->TryToggle(this);return;}
+    }
     // The client sends no item ID, count, player identity or arbitrary world target.
     if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
     {
