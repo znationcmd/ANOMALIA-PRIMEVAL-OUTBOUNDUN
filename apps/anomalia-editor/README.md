@@ -1,3 +1,13 @@
+## Version 0.5.3 — lancement cartes et éditeur compact (branche de travail)
+
+- Au lancement, un écran ANOMALIA permet de choisir les scènes locales enregistrées et les véritables cartes détectées dans le projet UE5.
+- Les cartes ANOMALIA JSON se chargent dans l’éditeur 3D intégré. Les fichiers Unreal `.umap` ouvrent toujours Unreal Editor sur Windows ; ils ne sont **pas** rendus par la vue Three.js.
+- Écran portable : une seule barre supérieure compacte, commandes Fichier / Éditer / Voir / Éditeur, outils 3D essentiels, explorateur à gauche, bibliothèque 3D à droite.
+- Réglages des modèles, liste technique Unreal et paramètres de relief sont repliés à l’ouverture mais accessibles depuis les menus.
+- Chaque scène locale sauvegardée apparaît dans Mes mondes au lieu d’être écrasée lors du changement de carte. Les scènes utilisent IndexedDB et restent privées.
+- Le sélecteur affiche un indicateur de chargement réel (indéterminé), sans inventer de pourcentage.
+- La disponibilité sur les ordinateurs dépend de la validation CI puis d’une publication Windows signée ou non signée via le canal d’auto-update. Une modification GitHub seule ne remplace pas un programme Windows déjà installé.
+
 # ANOMALIA Editor 0.1 — éditeur de cartes 3D autonome
 
 **Application publique, distincte de CMD Studio (outil privé du créateur).**
@@ -265,3 +275,73 @@ pour mettre à jour la 0.4.0 à distance. Une machine possédant 0.1.1 ou 0.3.x
 **ne reçoit pas automatiquement ce nouveau code** sans canal de publication
 actif ou installation de la nouvelle version. Vérifier les commandes et le
 rendu 3D dans la vraie fenêtre Windows avant de fusionner cette branche.
+
+## ANOMALIA Editor 0.5 — vrai monde Unreal / aperçu de relief
+
+Cette version corrige un point essentiel de la refonte : ANOMALIA Editor était
+un éditeur Three.js de **petite scène de démonstration** et non un programme
+qui ouvrait automatiquement le véritable monde de jeu. Il ne peut pas charger
+directement des `.umap` ni des `.uasset` et ne doit jamais prétendre le faire.
+
+### Vraie carte du jeu (Windows)
+
+Dans le panneau droit « CARTE ANOMALIA / UNREAL 5 », sélectionner
+« Lier le projet UE5 » et choisir **le véritable fichier
+`AnomaliaPrimeval.uproject`** sur le PC. L'application valide le projet,
+répertorie jusqu'à 250 cartes `.umap` dans son dossier Content, conserve le
+chemin dans les paramètres privés de l'application, et met à jour cette
+liste toutes les **60 secondes**.
+
+« Ouvrir la vraie carte » utilise l'association Windows `.uproject` pour
+ouvrir le **véritable Unreal Editor 5** et son projet avec World Partition.
+La carte s'ouvre dans **Unreal Engine**, pas à l'intérieur du viewport
+Three.js d'ANOMALIA Editor. Il faut que UE5 et les ressources réelles du
+jeu soient présents sur ce même PC. Si Windows ne sait pas ouvrir un
+`.uproject`, installer/associer Unreal Engine puis relancer.
+
+Le plugin DayZ Editor fonctionne autrement, car il est exécuté dans le
+moteur du jeu DayZ lui-même : il peut afficher le monde natif et les
+ressources chargées dans ce moteur. Une vraie parité de ce type pour
+ANOMALIA nécessiterait un éditeur/in-game tool UE5 intégré au jeu
+(ou Pixel Streaming UE5 correctement configuré), et pas un navigateur
+Three.js prétendant afficher un fichier Unreal.
+
+### Aperçu de terrains depuis les vrais fichiers
+
+« Charger un relief PNG » accepte une vraie heightmap PNG/JPEG/WebP
+de 16 à 8192 px (fichier de 32 Mo maximum), avec échelle 512 m à 4,8 km.
+Le moteur Three.js produit un relief 3D maillé avec normales, ombres
+et matériaux colorisés **depuis les altitudes réelles de cette image**,
+jusqu'à 257×257 sommets. Le rendu est une **prévisualisation** et ne
+reproduit pas Nanite/Lumen/World Partition. Il utilise les valeurs
+de luminance décodées par le navigateur (precision 8 bits) et n'est
+pas adapté comme export final d'un paysage UE5 16 bits.
+
+Dans le catalogue de modèles, tout fichier dont le nom contient
+`heightmap`, `terrainheight`, `landscapeheight` ou
+`heightfield` au format PNG/JPEG/WebP est reconnu. On peut
+l'ouvrir via « Terrain », le recharger lorsqu'il change dans le
+dossier associé, et retrouver le relief local après redémarrage,
+grâce au cache IndexedDB privé **lié à cette scène**.
+
+Les fichiers `.umap`, les routes du véritable monde Unreal, les
+dépendances du paysage et les milliers de bâtiments ne sont pas
+automatiquement convertis par ce mécanisme. Ils restent utilisables
+et modifiables dans le véritable Unreal Editor.
+
+### Prototypes restaurés
+
+Les scènes précédentes et leurs coordonnées ne sont ni supprimées ni
+remplacées. Les maisons/arbres/voitures géométriques provisoires sont
+simplement **masqués par défaut** ; un bouton « Voir prototypes » permet
+de les réafficher et de sélectionner chaque objet pour le remplacer
+par un vrai modèle GLB tout en gardant position/rotation/échelle.
+
+Le panneau DayZ-style est désormais plus compact, avec vue 3D dominante,
+inventaire des ressources et panneau du monde réel clairement séparé,
+sans reproduction du code ou des assets de DayZ Editor.
+
+Le canal de mises à jour automatiques de Windows doit encore recevoir
+des releases officielles signées/validées. Compiler le setup 0.5.0 ne
+l'installe **pas** sur l'ordinateur de l'utilisateur ni ne lui pousse
+une mise à jour silencieuse tant que cette distribution n'est pas prête.

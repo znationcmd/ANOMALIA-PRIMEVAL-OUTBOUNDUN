@@ -13,7 +13,7 @@ test('interface DayZ-style : grand viewport, panneaux scenes/propriétés et vra
   assert.ok(h.indexOf('id="gameLibraryItems"',right)>right);
   assert.ok(h.indexOf('id="catalog"',right)>right);
   assert.match(css,/\.workspace\.hide-left/);
-  assert.match(read('src/workspace-layout.js'),/library:false,inspector:true/);
+  assert.match(read('src/workspace-layout.js'),/library:true,inspector:true/);
 });
 test('les prototypes ne sont plus le catalogue principal ni la carte de première ouverture',()=>{
   assert.match(h,/<details class="prototypeDisclosure"/);

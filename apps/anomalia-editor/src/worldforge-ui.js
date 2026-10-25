@@ -19,14 +19,22 @@ export function createWorldForge({camera,orbit,grid,renderer,ground,scene,openBr
   const groups={
     menuFile:[
       ['Nouvelle carte','Ctrl+N',()=>clickTarget('newScene')],
-      ['Ouvrir une scène','Ctrl+O',()=>clickTarget('openScene')],
+      ['Choisir une carte','',()=>clickTarget('openMapLibrary')],
+      ['Ouvrir une scène JSON','Ctrl+O',()=>clickTarget('openScene')],
+      ['Importer un modèle GLB','',()=>clickTarget('importModel')],
+      ['Importer un pack ZIP','',()=>clickTarget('importGamePack')],
       ['Enregistrer','Ctrl+S',()=>clickTarget('saveScene')],
+      ['Enregistrer sous…','',()=>clickTarget('saveAs')],
       ['Exporter ANOMALIA JSON','',()=>clickTarget('exportScene')],
       ['Exporter placements CSV','',()=>clickTarget('exportCSV')]
     ],
     menuEdit:[
       ['Annuler','Ctrl+Z',()=>clickTarget('undo')],
       ['Rétablir','Ctrl+Y',()=>clickTarget('redo')],
+      ['Sélectionner','Q',()=>clickTarget('selectTool')],
+      ['Déplacer','W',()=>clickTarget('moveTool')],
+      ['Rotation','E',()=>clickTarget('rotateTool')],
+      ['Échelle','R',()=>clickTarget('scaleTool')],
       ['Dupliquer','Ctrl+D',()=>clickTarget('duplicate')],
       ['Supprimer la sélection','Suppr',()=>clickTarget('delete')]
     ],
@@ -36,10 +44,21 @@ export function createWorldForge({camera,orbit,grid,renderer,ground,scene,openBr
       ['Grille de placement','',()=>clickTarget('toggleGrid')],
       ['Ombres dans la vue','',()=>clickTarget('toggleShadows')],
       ['Masquer/afficher les prototypes','',togglePrototypes],
-      ['Vue immersive','',()=>clickTarget('ribbonFocus')]
+      ['Vue immersive','',()=>clickTarget('ribbonFocus')],
+      ['Voir les cartes','',()=>clickTarget('openMapLibrary')]
     ],
     menuAssets:[
       ['Afficher les objets disponibles','',openBrowser],
+      ['Choisir la carte','',()=>clickTarget('openMapLibrary')],
+      ['Ouvrir le projet Unreal','',()=>clickTarget('openWorldNow')],
+      ['Relief : charger un PNG','',()=>clickTarget('chooseHeightmap')],
+      ['Réglages du relief','',()=>find('worldSourceBar')?.classList.toggle('expanded')],
+      ['Réglages des ressources','',()=>{
+        const panel=find('librarySourceSettings');
+        if(panel)panel.open=true;
+        if(find('editorWorkspace')?.classList.contains('hide-right'))clickTarget('toggleInspector');
+        panel?.scrollIntoView({block:'nearest'});
+      }],
       ['Importer GLB','',()=>clickTarget('importModel')],
       ['Importer ZIP de modèles','',()=>clickTarget('importGamePack')],
       ['Lier le dossier du jeu','',()=>clickTarget('linkGameFolder')],
@@ -74,8 +93,11 @@ export function createWorldForge({camera,orbit,grid,renderer,ground,scene,openBr
       popup.append(button);
     }
     const rect=anchor.getBoundingClientRect();
-    const width=214;
-    popup.style.top=Math.min(rect.bottom+3,innerHeight-15-popup.children.length*34)+'px';
+    const width=254;
+    popup.style.width=width+'px';
+    popup.style.maxHeight=Math.max(130,innerHeight-76)+'px';
+    popup.style.overflowY='auto';
+    popup.style.top=Math.max(4,Math.min(rect.bottom+3,innerHeight-12-Math.min(popup.children.length*34+14,innerHeight-76)))+'px';
     popup.style.left=Math.max(5,Math.min(rect.left,innerWidth-width-8))+'px';
     popup.hidden=false;
     popup.querySelector('button')?.focus();

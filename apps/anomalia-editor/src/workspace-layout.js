@@ -1,8 +1,8 @@
 // Professional workspace layout: visual preferences only, never project data.
 // The app remains fully local and does not access any other user's files.
 const workspace=document.getElementById('editorWorkspace');
-const defaults={library:false,inspector:true,focus:false,leftWidth:248,rightWidth:288};
-const storageKey='anomalia-editor-worldforge-layout-v2';
+const defaults={library:true,inspector:true,focus:false,leftWidth:216,rightWidth:272};
+const storageKey='anomalia-editor-clean-layout-v3';
 const clamp=(n,min,max)=>Math.min(max,Math.max(min,n));
 function load(){
   try{
@@ -10,8 +10,8 @@ function load(){
     if(!data||typeof data!=='object')return {...defaults};
     return {
       library:data.library!==false,inspector:data.inspector!==false,focus:false,
-      leftWidth:clamp(Number(data.leftWidth)||248,210,440),
-      rightWidth:clamp(Number(data.rightWidth)||288,245,460)
+      leftWidth:clamp(Number(data.leftWidth)||216,210,440),
+      rightWidth:clamp(Number(data.rightWidth)||272,245,460)
     };
   }catch{return {...defaults};}
 }
@@ -64,6 +64,11 @@ document.getElementById('toggleLibrary').addEventListener('click',()=>togglePane
 document.getElementById('toggleInspector').addEventListener('click',()=>togglePanel('inspector'));
 document.getElementById('toggleFocus').addEventListener('click',focus);
 document.getElementById('ribbonFocus').addEventListener('click',focus);
+document.getElementById('quickImportGLB')?.addEventListener('click',()=>document.getElementById('importModel')?.click());
+document.getElementById('quickLibrarySettings')?.addEventListener('click',()=>{
+  const disclosure=document.getElementById('librarySourceSettings');
+  if(disclosure){disclosure.open=!disclosure.open;if(disclosure.open)disclosure.scrollIntoView({block:'nearest'});}
+});
 document.getElementById('resetLayout').addEventListener('click',()=>{
   state={...defaults};prior=null;save();render();
 });

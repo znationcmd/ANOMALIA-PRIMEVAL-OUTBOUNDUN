@@ -1,10 +1,12 @@
 'use strict';
 const { app, BrowserWindow, ipcMain, dialog } = require('electron');
 const { GameLibrary } = require('./game-library.cjs');
+const { UnrealBridge } = require('./ue5-bridge.cjs');
 const { EditorUpdates } = require('./updates.cjs');
 let editorUpdates;
 let gameLibrary;
 let gameLibraryTimer;
+let unrealBridge;
 const path=require('node:path');
 app.setName('ANOMALIA Editor');
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.editor');
@@ -27,6 +29,15 @@ function createWindow(){
 app.whenReady().then(()=>{
   editorUpdates=new EditorUpdates();
   gameLibrary=new GameLibrary(app.getPath('userData'));
+  unrealBridge=new UnrealBridge(app.getPath('userData'));
+  ipcMain.handle('editor:unreal:status',()=>unrealBridge.status());
+  ipcMain.handle('editor:unreal:link',async()=>{
+    const current=BrowserWindow.getFocusedWindow()||BrowserWindow.getAllWindows()[0];
+    const choice=await dialog.showOpenDialog(current,{title:'Lier la véritable carte ANOMALIA Unreal Engine',properties:['openFile'],filters:[{name:'Projet Unreal Engine',extensions:['uproject']}],buttonLabel:'Lier la carte UE5'});
+    if(choice.canceled||!choice.filePaths.length)return {cancelled:true};
+    return unrealBridge.link(choice.filePaths[0]);
+  });
+  ipcMain.handle('editor:unreal:open',(_event,map)=>unrealBridge.launch(map));
   ipcMain.handle('editor:library:status',()=>gameLibrary.getStatus());
   ipcMain.handle('editor:library:scan',()=>gameLibrary.scan());
   ipcMain.handle('editor:library:read',(_event,id)=>gameLibrary.read(id));
