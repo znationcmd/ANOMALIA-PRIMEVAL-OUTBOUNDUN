@@ -7,6 +7,7 @@ const {PNG}=require('pngjs');
 const yazl=require('yazl');
 const native=require('./native-mods.cjs');
 const {Workshop}=require('./workshop.cjs');
+const utilities=require('./utilities.cjs');
 const SOURCE_EXT=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const ASSET_EXT=new Set(['.glb','.gltf','.fbx','.obj','.usd','.png','.jpg','.jpeg','.webp','.tga','.wav','.ogg','.json','.xml','.ini']);
 const PREVIEW_EXT=new Set(['.glb','.png','.jpg','.jpeg','.webp']);
@@ -75,6 +76,9 @@ class AnomaliaTools{
     this.root=path.resolve(dataDir);
     fs.mkdirSync(this.root,{recursive:true});
   }
+  processTerrain(options={}){return utilities.processTerrain(this.getProjectPath(options.projectId),options);}
+  convertTexture(options={}){return utilities.convertTexture(this.getProjectPath(options.projectId),options);}
+  convertConfig(options={}){return utilities.convertConfig(this.getProjectPath(options.projectId),options);}
   overview(){
     const projects=this.listProjects();
     return {version:require('./package.json').version,privacy:'local-only',workspace:this.root,projects:projects.length,
