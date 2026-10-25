@@ -125,13 +125,14 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         Chassis->SetMassOverrideInKg(NAME_None,ChaosMovement->Mass,true);
         ChaosMovement->SetComponentTickEnabled(HasAuthority());
         ChaosMovement->RecreatePhysicsState();
-        // Chaos simulates wheel/suspension forces itself. Physical wheel bodies
-        // must not also become a competing ragdoll against the chassis.
-        for(const FName Bone:WheelBones)
-        {
-            Chassis->SetAllBodiesBelowSimulatePhysics(Bone,false,true);
-            Chassis->SetAllBodiesBelowPhysicsDisabled(Bone,true,true);
-        }
+        // Chaos owns suspension and wheel contacts. Template rigs also contain
+        // axle/damper bodies outside the four wheel subtrees; leaving those
+        // active creates a competing ragdoll and can overturn the chassis.
+        // Keep only the root chassis body active without editing shared art.
+        const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
+        Chassis->SetAllBodiesBelowSimulatePhysics(RootBone,false,false);
+        Chassis->SetAllBodiesBelowPhysicsDisabled(RootBone,true,false);
+        Chassis->SetMassOverrideInKg(RootBone,ChaosMovement->Mass,true);
         for(int32 Index=0;Index<ChaosMovement->Wheels.Num();++Index)
             ChaosMovement->SetWheelRadius(Index,WheelRadiusCm);
         // This pawn deliberately preserves ANOMALIA's existing crew/fuel base.
