@@ -37,7 +37,12 @@ namespace
            !FMath::IsFinite(S.FuelSeconds) || S.FuelSeconds<0 || S.FuelSeconds>31536000 ||
            !FMath::IsFinite(S.RepairEndsUtc) || S.RepairEndsUtc<0 ||
            !FMath::IsFinite(S.PortalEndsUtc) || S.PortalEndsUtc<0) return false;
-        for(const auto& Pair:S.Deposited) if(!SafeId(Pair.Key.ToString()) || Pair.Value<0 || Pair.Value>1000000) return false;
+        TSet<FName> Seen;
+        for(const auto& Pair:S.Deposited)
+        {
+            if(!SafeId(Pair.Key.ToString()) || Pair.Key.IsNone() || Seen.Contains(Pair.Key) || Pair.Value<0 || Pair.Value>1000000) return false;
+            Seen.Add(Pair.Key);
+        }
         return true;
     }
     bool ValidRecipe(const TMap<FName,int32>& Recipe)
@@ -81,8 +86,8 @@ bool UAnomaliaWorldStateSubsystem::Read(const FString& Raw,FString& Error)
     TMap<FName,FAnomaliaMechanismState> Loaded;
     for(const auto& Row:(*Rows)->Values)
     {
-        const auto Object=Row.Value->AsObject();FAnomaliaMechanismState S;
-        if(!SafeId(Row.Key) || !Object.IsValid() || !FJsonObjectConverter::JsonObjectToUStruct(Object.ToSharedRef(),&S,0,0) || !ValidState(S))
+        const auto Object=Row.Value.IsValid() && Row.Value->Type==EJson::Object?Row.Value->AsObject():nullptr;FAnomaliaMechanismState S;
+        if(!SafeId(Row.Key) || Loaded.Contains(FName(*Row.Key)) || !Object.IsValid() || !FJsonObjectConverter::JsonObjectToUStruct(Object.ToSharedRef(),&S,0,0) || !ValidState(S))
         {Error=TEXT("Invalid mechanism state; original file preserved");return false;}
         Loaded.Add(FName(*Row.Key),S);
     }
@@ -200,10 +205,10 @@ bool UAnomaliaWorldStateSubsystem::Interact(AAnomaliaWorldMechanism* Actor,AAnom
         bool Complete=true;
         for(const auto& Need:D->Materials)
         {
-            const int32 Remaining=FMath::Max(0,Need.Value-Current->Deposited.FindRef(Need.Key));
+            const int32 Remaining=FMath::Max(0,Need.Value-Current->GetDeposited(Need.Key));
             const int32 Units=int32(FMath::Min<int64>(Remaining,Count(Need.Key)));
-            if(Units>0) {Cost.Add(Need.Key,Units);Current->Deposited.FindOrAdd(Need.Key)+=Units;}
-            Complete &= Current->Deposited.FindRef(Need.Key)>=Need.Value;
+            if(Units>0) {Cost.Add(Need.Key,Units);Current->AddDeposited(Need.Key,Units);}
+            Complete &= Current->GetDeposited(Need.Key)>=Need.Value;
         }
         if(Cost.IsEmpty()) return false;
         Current->Repair=EAnomaliaRepairState::Repairing;

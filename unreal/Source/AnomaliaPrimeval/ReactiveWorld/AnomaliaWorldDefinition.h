@@ -37,18 +37,29 @@ public:
 };
 
 USTRUCT(BlueprintType)
+struct FAnomaliaMaterialDeposit
+{
+    GENERATED_BODY()
+    UPROPERTY(BlueprintReadOnly) FName Key;
+    UPROPERTY(BlueprintReadOnly) int32 Value = 0;
+};
+
+USTRUCT(BlueprintType)
 struct FAnomaliaMechanismState
 {
     GENERATED_BODY()
     UPROPERTY(BlueprintReadOnly) EAnomaliaRepairState Repair = EAnomaliaRepairState::Destroyed;
-    UPROPERTY(BlueprintReadOnly) TMap<FName,int32> Deposited;
+    UPROPERTY(BlueprintReadOnly) TArray<FAnomaliaMaterialDeposit> Deposited;
     UPROPERTY(BlueprintReadOnly) double RepairEndsUtc = 0;
     UPROPERTY(BlueprintReadOnly) double FuelSeconds = 0;
     UPROPERTY(BlueprintReadOnly) bool bSwitchedOn = false;
     UPROPERTY(BlueprintReadOnly) bool bUnlocked = false;
     UPROPERTY(BlueprintReadOnly) double PortalEndsUtc = 0;
-    bool NetSerialize(FArchive& Ar, UPackageMap* Map, bool& bOutSuccess);
+    int32 GetDeposited(FName Id) const
+    { for(const auto& Pair:Deposited) if(Pair.Key==Id) return Pair.Value;return 0; }
+    void AddDeposited(FName Id,int32 Units)
+    {
+        for(auto& Pair:Deposited) if(Pair.Key==Id) {Pair.Value+=Units;return;}
+        FAnomaliaMaterialDeposit Pair;Pair.Key=Id;Pair.Value=Units;Deposited.Add(Pair);
+    }
 };
-
-template<> struct TStructOpsTypeTraits<FAnomaliaMechanismState> : public TStructOpsTypeTraitsBase2<FAnomaliaMechanismState>
-{ enum { WithNetSerializer = true }; };

@@ -1,5 +1,5 @@
-#include "ReactiveWorld/AnomaliaWorldStateSubsystem.h"
 #include "AnomaliaGameMode.h"
+#include "ReactiveWorld/AnomaliaWorldStateSubsystem.h"
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaPlayableProbe.h"

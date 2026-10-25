@@ -44,12 +44,12 @@ bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
     Fuel.FuelSeconds=0;Store->RefreshActors();TestFalse(TEXT("Empty generator cannot supply devices"),Lamp->bPowered);
     auto* Bridge=Make(TEXT("bridge"),EAnomaliaWorldMechanism::Repair,400);
     auto& Repair=Store->States.FindChecked(Bridge->StableId);
-    Repair.Deposited.Add(TEXT("scrap"),100);Repair.Deposited.Add(TEXT("wood"),50);
+    Repair.AddDeposited(TEXT("scrap"),100);Repair.AddDeposited(TEXT("wood"),50);
     Repair.Repair=EAnomaliaRepairState::Repairing;Repair.RepairEndsUtc=FDateTime::UtcNow().ToUnixTimestamp()-1;
     Store->Tick(1.1f);
     TestTrue(TEXT("Repair deadline completes on server"),Store->FindState(Bridge->StableId)->Repair==EAnomaliaRepairState::Repaired);
     Store->Unregister(Bridge);
-    TestEqual(TEXT("Deposits survive streaming out"),Store->FindState(Bridge->StableId)->Deposited.FindRef(TEXT("scrap")),100);
+    TestEqual(TEXT("Deposits survive streaming out"),Store->FindState(Bridge->StableId)->GetDeposited(TEXT("scrap")),100);
     TestTrue(TEXT("Start configured server event"),Store->StartWorldEvent(TEXT("electromagnetic_storm"),60));
     TestTrue(TEXT("Event is active server side"),Store->IsEventActive(TEXT("electromagnetic_storm")));
     TestFalse(TEXT("Different event cannot authorize a portal"),Store->IsEventActive(TEXT("chemical_storm")));
@@ -60,7 +60,7 @@ bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
     if(TestNotNull(TEXT("Bridge restored"),Loaded))
     {
         TestTrue(TEXT("Repaired state restored"),Loaded->Repair==EAnomaliaRepairState::Repaired);
-        TestEqual(TEXT("Consumed materials not reset"),Loaded->Deposited.FindRef(TEXT("wood")),50);
+        TestEqual(TEXT("Consumed materials not reset"),Loaded->GetDeposited(TEXT("wood")),50);
     }
     TestTrue(TEXT("Event deadline survives restart"),Restart->IsEventActive(TEXT("electromagnetic_storm")));
     // Simulate process loss immediately after the durable intent and before profile publication.

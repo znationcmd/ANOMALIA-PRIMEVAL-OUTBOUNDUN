@@ -82,7 +82,7 @@ void AAnomaliaWorldMechanism::OnRep_State()
         else if(Definition->RepairStages.Num())
         {
             double Total=0,Done=0;
-            for(const auto& Need:Definition->Materials) {Total+=Need.Value;Done+=State.Deposited.FindRef(Need.Key);}
+            for(const auto& Need:Definition->Materials) {Total+=Need.Value;Done+=State.GetDeposited(Need.Key);}
             const int32 Index=FMath::Clamp(FMath::FloorToInt(Total>0?Done/Total*Definition->RepairStages.Num():0),0,Definition->RepairStages.Num()-1);
             Mesh=Definition->RepairStages[Index];
         }

@@ -1,5 +1,5 @@
-#include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaSurvivor.h"
+#include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaDoorActor.h"
 #include "AnomaliaGameMode.h"
