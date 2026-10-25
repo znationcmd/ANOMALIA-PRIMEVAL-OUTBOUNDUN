@@ -24,7 +24,7 @@ struct FAnomaliaLootItem
     FString DisplayName, Category;
     TSet<FString> Categories;
     TSet<FString> AllowedPOIs;
-    bool IsAllowedAtPOI(const FString& Id) const { return AllowedPOIs.IsEmpty() || AllowedPOIs.Contains(Id); }
+    bool IsAllowedAtPOI(const FString& POI) const { return AllowedPOIs.IsEmpty() || AllowedPOIs.Contains(POI); }
     bool MatchesAnyCategory(const TSet<FString>& Allowed) const
     { for (const auto& Name : Categories) if (Allowed.Contains(Name)) return true; return false; }
     int32 MinTier = 1, MaxTier = 5, Quantity = 1, Nominal = 1, Minimum = 0;

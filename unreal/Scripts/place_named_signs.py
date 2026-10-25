@@ -43,7 +43,7 @@ try:
             terrain_guids.append(descriptor.get_editor_property('guid'))
     unreal.WorldPartitionBlueprintLibrary.load_actors(terrain_guids)
     report['loadedTerrainDescriptors']=len(terrain_guids)
-    imported='/Game/Anomalia/Infrastructure/OriginalSigns_v1' 
+    imported='/Game/Anomalia/Infrastructure/OriginalSigns_v1'
     manifest=ROOT/'Saved/ReactiveValidation/sign-import.json'
     if manifest.exists():
         old=json.loads(manifest.read_text())
