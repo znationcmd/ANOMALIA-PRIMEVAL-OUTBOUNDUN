@@ -1,4 +1,4 @@
-name: UE5 validated progress automatic PC update
+name: UE5 native demo validation — no installation
 on:
   workflow_dispatch:
   push:
@@ -130,6 +130,7 @@ jobs:
           & $python scripts/ue5/package-playable-windows.py --engine-root "$env:UE_ROOT" --output "$evidence/package" --progress-art
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Update the existing owned PC installation only after the new executable passes
+        if: false # User priority: validate the new UE5 demo without replacing installed game.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -150,7 +151,7 @@ jobs:
           if-no-files-found: warn
       - name: Back up and replace owned repeated houses with verified scanned exteriors
         id: residential_update
-        if: ${{ !cancelled() && steps.native_build.outcome == 'success' && steps.art_import.outcome == 'success' }}
+        if: false # Preserve installed/editor content while the new demo is under validation.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -160,7 +161,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Back up and verify the populated world with the actual GPU
         id: editor_visual
-        if: ${{ !cancelled() && steps.residential_update.outcome == 'success' }}
+        if: false # No installed-world authoring in the demo validation channel.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -169,7 +170,7 @@ jobs:
           & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "$evidence/editor" --inhabited
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Synchronize the complete native project and open the installed populated map
-        if: ${{ !cancelled() && steps.editor_visual.outcome == 'success' }}
+        if: false # No installed Editor project replacement before demo approval.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
