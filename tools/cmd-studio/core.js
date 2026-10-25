@@ -108,7 +108,7 @@ class Studio {
     return this.projects();
   }
   projects() {
-    const saved = this.settingsData.projects.find(p =>
+    const saved = [...this.settingsData.projects].reverse().find(p =>
       path.basename(p.path).toLowerCase() === ANOMALIA_UPROJECT.toLowerCase());
     const sourceCandidate = path.resolve(this.scriptsDir, '..','..','..','unreal',ANOMALIA_UPROJECT);
     const detected = fs.existsSync(sourceCandidate) && fs.statSync(sourceCandidate).isFile() ? sourceCandidate : '';
