@@ -21,7 +21,7 @@ private:
     int32 FrameCount=0;
     FString PendingError;
     int32 Phase=0;
-    double Started=0, PhaseStarted=0, LastSample=0;
+    double Started=0, PhaseStarted=0, LastSample=0, WallStarted=0;
     float StraightSpeed=0, TurnYaw=0, BrakeStartSpeed=0;
     FVector StartLocation=FVector::ZeroVector;
     FString ReportFile;

@@ -32,7 +32,8 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
         FParse::Value(FCommandLine::Get(),TEXT("AnomaliaChaosProbe="),ReportFile) && !ReportFile.IsEmpty();
 #endif
     SetActorTickEnabled(bEnabled);
-    Started=PhaseStarted=FPlatformTime::Seconds();
+    Started=PhaseStarted=GetWorld()->GetTimeSeconds();
+    WallStarted=FPlatformTime::Seconds();
     bRecordFrames=FParse::Param(FCommandLine::Get(),TEXT("AnomaliaRecordDriving"));
     if(bEnabled && bRecordFrames)IFileManager::Get().MakeDirectory(*FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("frames")),true);
 }
@@ -52,6 +53,8 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetStringField(TEXT("buildCommit"),TEXT(ANOMALIA_BUILD_COMMIT));
     Report->SetNumberField(TEXT("recordedViewportFrames"),FrameCount);
     Report->SetNumberField(TEXT("captureFramesPerSecond"),5);
+    Report->SetStringField(TEXT("physicsPhaseClock"),TEXT("world_simulation_seconds"));
+    Report->SetNumberField(TEXT("wallElapsedSeconds"),FPlatformTime::Seconds()-WallStarted);
     Report->SetBoolField(TEXT("packagedGameTested"),false);
     Report->SetBoolField(TEXT("multiplayerTested"),false);
     Report->SetBoolField(TEXT("entryAnimationTested"),false);
@@ -68,7 +71,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if(!bEnabled) return;
-    const double Now=FPlatformTime::Seconds();
+    const double Now=GetWorld()->GetTimeSeconds();
     if(bFinishing){Finish(PendingError);return;}
     // Capture only the actual Unreal viewport, after physical acceleration passed.
     // Never capture the user's desktop, and never synthesize a demonstration.
@@ -77,7 +80,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("frames"),FString::Printf(TEXT("frame-%05d.png"),FrameCount++)),false,false);
         LastFrame=Now;
     }
-    if(Now-Started>75) { Finish(TEXT("Actual Chaos driving timed out")); return; }
+    if(Now-Started>75 || FPlatformTime::Seconds()-WallStarted>240)
+    { Finish(TEXT("Actual Chaos driving timed out")); return; }
     auto* PC=GetWorld()->GetFirstPlayerController();
     if(!PC) return;
     if(Phase==0)
@@ -111,6 +115,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     if(Now-LastSample>.2)
     {
         auto Sample=MakeShared<FJsonObject>(); Sample->SetNumberField(TEXT("seconds"),Now-Started);
+        Sample->SetNumberField(TEXT("frameDeltaSeconds"),DeltaSeconds);
+        Sample->SetNumberField(TEXT("wallElapsedSeconds"),FPlatformTime::Seconds()-WallStarted);
         Sample->SetNumberField(TEXT("phase"),Phase); Sample->SetNumberField(TEXT("speedCmPerSecond"),Speed);
         Sample->SetNumberField(TEXT("gear"),Physics->GetCurrentGear()); Sample->SetNumberField(TEXT("wheelContacts"),Contacts);
         Sample->SetNumberField(TEXT("summedWheelAngularSpeed"),Rotation);
