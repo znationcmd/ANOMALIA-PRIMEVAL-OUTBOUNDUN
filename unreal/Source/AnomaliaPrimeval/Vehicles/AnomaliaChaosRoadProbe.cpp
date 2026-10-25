@@ -73,7 +73,6 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(!V->EnterVehicle(PC,S) || PC->GetPawn()!=V) { Finish(TEXT("Existing crew possession failed")); return; }
         AddTickPrerequisiteActor(PC);
         V->AddTickPrerequisiteActor(this);
-        V->ChaosMovement->AddTickPrerequisiteActor(V);
         Checks.Add(TEXT("real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement"));
         Checks.Add(TEXT("existing_character_and_inventory_preserved_on_entry"));
         StartLocation=V->GetActorLocation(); Phase=1; PhaseStarted=Now;
@@ -83,7 +82,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     auto* Physics=V->ChaosMovement.Get();
     const float Speed=Physics->GetForwardSpeed();
     int32 Contacts=0; float Rotation=0;
-    for(auto* Wheel:Physics->Wheels) if(Wheel) { if(!Wheel->IsInAir()) ++Contacts; Rotation+=FMath::Abs(Wheel->GetWheelAngularVelocity()); }
+    for(const auto& Wheel:Physics->Wheels) if(Wheel) { if(!Wheel->IsInAir()) ++Contacts; Rotation+=FMath::Abs(Wheel->GetWheelAngularVelocity()); }
     if(Now-LastSample>.2)
     {
         auto Sample=MakeShared<FJsonObject>(); Sample->SetNumberField(TEXT("seconds"),Now-Started);
