@@ -43,7 +43,7 @@ try {
     $native=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
     if ($native.state -ne 'PACKAGED_GAME_SMOKE_PASSED') { throw "Installed gameplay smoke failed: $($native.error)" }
     if ($native.checks -notcontains 'user_branding_intro_animates_and_reveals_main_menu') { throw 'Installed intro and menu artwork did not pass.' }
-    if ($proof.progressArt -and $native.checks -notcontains 'validated_progress_houses_and_twenty_real_trees') { throw 'Installed progress art is missing.' }
+    if ($proof.progressArt -and ($native.checks -notcontains 'validated_progress_houses_and_twenty_real_trees' -or $native.checks -notcontains 'validated_progress_real_rocks_and_ground_foliage')) { throw 'Installed progress art is missing.' }
     if ($proof.visualReview.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED') { throw 'Imported-art package validation missing.' }
     $visualDir=Join-Path $ValidationDir 'installed-visual';New-Item -ItemType Directory -Path $visualDir -Force | Out-Null
     $visualProbe=Join-Path $visualDir 'review.json'

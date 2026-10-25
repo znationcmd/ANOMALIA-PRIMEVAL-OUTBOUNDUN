@@ -15,7 +15,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025'
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025' && !startsWith(github.event.head_commit.message, '[pc-update]')
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 60
     permissions:

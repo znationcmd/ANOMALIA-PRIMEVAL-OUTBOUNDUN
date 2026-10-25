@@ -100,7 +100,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
         if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaProgressArt")))
         {
-            int32 Houses=0,Trees=0,HiddenCrowns=0;
+            int32 Houses=0,Trees=0,HiddenCrowns=0,Rocks=0,GroundFoliage=0,HiddenBackground=0;
             for(TActorIterator<AActor> It(GetWorld());It;++It)
             {
                 if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1")))continue;
@@ -111,12 +111,21 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
                     ++HiddenCrowns; continue;
                 }
                 const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressRock_v1")))
+                {if(Path.Contains(TEXT("/rock_moss_set_01/")))++Rocks;else {Finish(TEXT("Real rock geometry missing"));return;}}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressGroundFoliage_v1")))
+                {if(Path.Contains(TEXT("/grass_medium_01/")))++GroundFoliage;else {Finish(TEXT("Real ground foliage missing"));return;}}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressHiddenBackground_v1")))
+                {if(!Component || Component->IsVisible()){Finish(TEXT("Provisional spherical background still visible"));return;}++HiddenBackground;}
                 if(It->ActorHasTag(TEXT("ANOMALIA_ProgressTree_v1")))
                 {if(Path.StartsWith(TEXT("/Game/Anomalia/VerifiedProps_v1/"))||Path.Contains(TEXT("/island_tree_02/")))++Trees;}
                 else if(Path.StartsWith(TEXT("/Game/Anomalia/ResidentialPhotogrammetryReview_v1/")))++Houses;
             }
             if(Houses!=2||Trees!=20||HiddenCrowns!=60){Finish(TEXT("New cooked art missing or provisional crowns still present"));return;}
             Checks.Add(TEXT("validated_progress_houses_and_twenty_real_trees"));
+            if(Rocks!=24 || GroundFoliage!=24 || HiddenBackground!=12)
+            {Finish(TEXT("Real terrain decoration upgrade missing from cooked game"));return;}
+            Checks.Add(TEXT("validated_progress_real_rocks_and_ground_foliage"));
         }
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
@@ -155,7 +164,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
         auto* Refresh=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionRefreshMods")));
         auto* WorldEditor=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionWorldEditor")));
-        if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor || Pages->GetActiveWidgetIndex()!=0)
+        if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor)
         {
             TArray<UWidget*> Observed;Menu->WidgetTree->GetAllWidgets(Observed);FString Names;
             for(const auto* Widget:Observed)
@@ -163,6 +172,10 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
             Finish(FString::Printf(TEXT("Main menu navigation or local mods page missing (pages=%d mods=%d options=%d home=%d refresh=%d editor=%d active=%d widgets=%s)"),
                 Pages?1:0,Mods?1:0,Options?1:0,Home?1:0,Refresh?1:0,WorldEditor?1:0,Pages?Pages->GetActiveWidgetIndex():-1,*Names));return;
         }
+        // Establish the menu's starting page through its real user control. A stale
+        // selected page must not block an otherwise valid installed-game update.
+        Home->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=0) {Finish(TEXT("Survivant navigation did not restore the home page"));return;}
         Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
         const auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
         const auto* WorkshopCards=Cast<UVerticalBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCards")));

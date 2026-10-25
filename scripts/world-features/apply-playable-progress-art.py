@@ -8,7 +8,7 @@ ROOT=Path(unreal.Paths.project_dir()).resolve()
 OUT=Path(os.environ['ANOMALIA_PROGRESS_ART_REPORT'])
 OWNER=unreal.Name('ANOMALIA_Playable_v1_Owner')
 TAG=unreal.Name('ANOMALIA_ProgressArt_v1')
-report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),fullMapComplete=False,houses=[],trees=0,vehicles=[])
+report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),fullMapComplete=False,houses=[],trees=0,vehicles=[],rocks=0,groundFoliage=0,hiddenBackgroundPrototypes=0)
 try:
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
@@ -74,6 +74,41 @@ try:
             old.tags=list(set(list(old.tags)+[TAG,unreal.Name('ANOMALIA_ProgressHiddenCrown_v1')]))
         report['trees']+=1
     real=json.loads((ROOT/'SourceAssets/RealismValidation_v2/manifest.json').read_text())
+    for prefix,source_id,target_size,tag,field in [
+        ('PlayableLook_v2_Rock','rock_moss_set_01',130.,'ANOMALIA_ProgressRock_v1','rocks'),
+        ('PlayableLook_v2_Shrub','grass_medium_01',200.,'ANOMALIA_ProgressGroundFoliage_v1','groundFoliage')]:
+        item=next(m for m in real['models'] if m['id']==source_id)
+        mesh=unreal.load_asset(item['objectPath']+'_r2')
+        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=item['sha256']:
+            raise RuntimeError('Source-verified realistic terrain prop required: '+source_id)
+        settings=editor.get_nanite_settings(mesh)
+        if settings.get_editor_property('enabled'):
+            settings.set_editor_property('enabled',False);editor.set_nanite_settings(mesh,settings,apply_changes=True)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,only_if_is_dirty=False):raise RuntimeError('Terrain prop settings did not save')
+        bounds=mesh.get_bounds();extent=bounds.box_extent
+        largest=max(extent.x,extent.y,extent.z)*2
+        if largest<=0:raise RuntimeError('Empty terrain prop bounds')
+        scale=target_size/largest
+        for index in range(24):
+            actor=present.get(prefix+str(index))
+            if not actor or OWNER not in actor.tags or not isinstance(actor,unreal.StaticMeshActor):
+                raise RuntimeError('Owned original terrain prop required')
+            position=actor.get_actor_location()
+            actor.static_mesh_component.set_static_mesh(mesh)
+            actor.static_mesh_component.set_editor_property('override_materials',[])
+            actor.static_mesh_component.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
+            actor.set_actor_scale3d(unreal.Vector(scale,scale,scale))
+            actor.set_actor_location(unreal.Vector(position.x,position.y,(extent.z-bounds.origin.z)*scale+2),False,False)
+            actor.tags=list(set(list(actor.tags)+[TAG,unreal.Name(tag)]))
+            report[field]+=1
+    for index in range(12):
+        actor=present.get('PlayableLook_v2_BackgroundHill'+str(index))
+        if not actor or OWNER not in actor.tags:raise RuntimeError('Owned background prototype required')
+        actor.set_actor_hidden_in_game(True)
+        actor.static_mesh_component.set_visibility(False,True)
+        actor.static_mesh_component.set_hidden_in_game(True,True)
+        actor.tags=list(set(list(actor.tags)+[TAG,unreal.Name('ANOMALIA_ProgressHiddenBackground_v1')]))
+        report['hiddenBackgroundPrototypes']+=1
     for vehicle_id,source_id in [('car','concept_car'),('transport_truck','box_truck')]:
         item=next(m for m in real['models'] if m['id']==source_id)
         mesh=unreal.load_asset(item['objectPath']+'_r2')

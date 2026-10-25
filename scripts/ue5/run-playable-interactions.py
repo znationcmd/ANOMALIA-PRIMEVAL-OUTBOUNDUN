@@ -3,7 +3,7 @@ import argparse,json,os,subprocess,uuid
 from pathlib import Path
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--progress-art',action='store_true');a=p.parse_args()
     root=Path(__file__).resolve().parents[2];out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
     proof=out/'smoke.json'
     if proof.exists():raise RuntimeError('Fresh interaction output required')
@@ -22,7 +22,8 @@ def main():
         command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),
             '/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=playable-smoke-'+uuid.uuid4().hex,
             '-game','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
-            '-AnomaliaProgressArt','-AnomaliaPlayableProbe='+str(proof),'-abslog='+str(out/'engine.log')]
+            '-AnomaliaPlayableProbe='+str(proof),'-abslog='+str(out/'engine.log')]
+        if a.progress_art: command.append('-AnomaliaProgressArt')
         with (out/'process.log').open('w',encoding='utf-8') as stream:
             run=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT,timeout=180,check=False)
         report['exitCode']=run.returncode
