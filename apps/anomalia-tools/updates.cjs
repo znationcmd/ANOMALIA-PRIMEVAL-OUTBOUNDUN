@@ -6,7 +6,7 @@ const FEED='https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/
 const PERIOD=6*3600*1000;
 class ToolsUpdater{
   constructor(){
-    this.timer=null;this.checking=false;this.initialTimer=null;this.stopping=false;
+    this.timer=null;this.checking=false;this.initialTimer=null;this.stopping=false;this.lastCheck=0;
     this.state={phase:'initialisation',message:'Vérification du service de mise à jour.',currentVersion:app.getVersion(),progress:0};
     autoUpdater.autoDownload=true;
     autoUpdater.autoInstallOnAppQuit=true;
@@ -39,6 +39,7 @@ class ToolsUpdater{
       return this.status();
     }
     if(this.checking||this.state.phase==='prete')return this.status();
+    this.lastCheck=Date.now();
     this.checking=true;
     try{await autoUpdater.checkForUpdates();return this.status();}
     catch(err){this.emit('erreur',this.sanitizeError(err));return this.status();}
@@ -50,7 +51,11 @@ class ToolsUpdater{
     }
     this.emit('veille','Vérification au démarrage et toutes les 6 heures.');
     this.timer=setInterval(()=>this.check().catch(()=>{}),PERIOD);
-    this.initialTimer=setTimeout(()=>this.check().catch(()=>{}),12000);
+    this.initialTimer=setTimeout(()=>this.check().catch(()=>{}),1500);
+  }
+  checkOnFocus(){
+    if(this.stopping||this.checking||this.state.phase==='prete'||Date.now()-this.lastCheck<5*60*1000)return;
+    void this.check();
   }
   installNow(){
     if(this.state.phase!=='prete')throw Error('Aucune mise à jour téléchargée n’est prête.');
