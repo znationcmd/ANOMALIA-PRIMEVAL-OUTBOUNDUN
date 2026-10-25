@@ -33,13 +33,25 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
 #endif
     SetActorTickEnabled(bEnabled);
     Started=PhaseStarted=FPlatformTime::Seconds();
+    bRecordFrames=FParse::Param(FCommandLine::Get(),TEXT("AnomaliaRecordDriving"));
+    if(bEnabled && bRecordFrames)IFileManager::Get().MakeDirectory(*FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("frames")),true);
 }
 void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
 {
+    if(!bFinishing)
+    {
+        bFinishing=true;PendingError=Error;FinishAt=FPlatformTime::Seconds()+2;
+        FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-final-viewport.png")),false,false);
+        return;
+    }
+    if(FPlatformTime::Seconds()<FinishAt)return;
     auto Report=MakeShared<FJsonObject>();
     Report->SetStringField(TEXT("state"),Error.IsEmpty()?TEXT("CHAOS_ROAD_PHYSICS_DRIVE_PASSED"):TEXT("FAILED"));
     Report->SetStringField(TEXT("error"),Error);
     Report->SetStringField(TEXT("map"),GetWorld()->GetMapName());
+    Report->SetStringField(TEXT("buildCommit"),TEXT(ANOMALIA_BUILD_COMMIT));
+    Report->SetNumberField(TEXT("recordedViewportFrames"),FrameCount);
+    Report->SetNumberField(TEXT("captureFramesPerSecond"),5);
     Report->SetBoolField(TEXT("packagedGameTested"),false);
     Report->SetBoolField(TEXT("multiplayerTested"),false);
     Report->SetBoolField(TEXT("entryAnimationTested"),false);
@@ -57,6 +69,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     if(!bEnabled) return;
     const double Now=FPlatformTime::Seconds();
+    if(bFinishing){Finish(PendingError);return;}
+    // Capture only the actual Unreal viewport, after physical acceleration passed.
+    // Never capture the user's desktop, and never synthesize a demonstration.
+    if(bRecordFrames && Phase>=2 && Now-LastFrame>=.2)
+    {
+        FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("frames"),FString::Printf(TEXT("frame-%05d.png"),FrameCount++)),false,false);
+        LastFrame=Now;
+    }
     if(Now-Started>75) { Finish(TEXT("Actual Chaos driving timed out")); return; }
     auto* PC=GetWorld()->GetFirstPlayerController();
     if(!PC) return;

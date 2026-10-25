@@ -92,7 +92,9 @@ jobs:
         if: always()
         with:
           name: native-demo-physics-evidence
-          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/chaos/*.*
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/chaos/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/chaos/frames/*.png
           if-no-files-found: warn
       - name: Verify playable-map interaction geometry before preparing or cooking assets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}

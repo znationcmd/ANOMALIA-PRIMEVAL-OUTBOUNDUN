@@ -1,5 +1,5 @@
 """Compile separately, then require native rig import and observable actual Chaos driving."""
-import argparse,json,os,subprocess,uuid
+import argparse,json,os,subprocess,uuid,shutil
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[2]
 
@@ -21,11 +21,21 @@ def main():
         raise RuntimeError('Native real rig import not verified: '+str(report.get('error')))
     scope='chaos-smoke-'+uuid.uuid4().hex
     run('drive',[report['map']+'?AnomaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720',
-        '-AnomaliaChaosProbe='+str(out/'drive-report.json')],900)
+        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),'-AnomaliaRecordDriving'],900)
     drive=json.loads((out/'drive-report.json').read_text(encoding='utf-8-sig'))
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
+    video=None;video_error=None
+    encoder=shutil.which('ffmpeg')
+    if encoder and drive.get('recordedViewportFrames',0)>=10:
+        result=subprocess.run([encoder,'-y','-framerate','5','-i',str(out/'frames/frame-%05d.png'),
+            '-c:v','libx264','-pix_fmt','yuv420p','-movflags','+faststart',str(out/'actual-chaos-driving.mp4')],
+            stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=120,check=False)
+        if result.returncode==0:video=str(out/'actual-chaos-driving.mp4')
+        else:video_error='Installed video encoder failed; actual viewport frames retained'
+    else:video_error='No installed ffmpeg encoder or insufficient actual viewport frames'
     (out/'review-report.json').write_text(json.dumps(dict(state='CHAOS_EDITOR_GAME_PHYSICAL_DRIVE_VERIFIED',
+        video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
         installed=False,multiplayerTested=False,productionMapModified=False),indent=2)+'\n')
 
