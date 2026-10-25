@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "runId": 40176847036,
+  "artifactId": 12593625683,
+  "artifactSha256": "1a5741eece28c3aa3cdc38881fd3a571bd653cffda02bd3e940094fe1f24b6aa",
+  "sourceCommit": "12477c96cc9cf6d57ff9b90a14fedabb175eee1c",
+  "reports": {
+    "editor/pc-editor-open-process.json": {
+      "state": "COPIED_EDITOR_PROJECT_GPU_VERIFIED",
+      "graphicalLaunchTested": true
+    },
+    "editor/pc-editor-update.json": {
+      "state": "EDITOR_PROJECT_UPDATE_INSTALLED",
+      "commit": "12477c96cc9cf6d57ff9b90a14fedabb175eee1c",
+      "existingServerFilesPreserved": 5928,
+      "installedProjectHeadlessOpenTested": true,
+      "runnerListenerIdsUnchanged": true
+    },
+    "package/installed-package-report.json": {
+      "state": "PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED",
+      "commit": "12477c96cc9cf6d57ff9b90a14fedabb175eee1c",
+      "previousCommit": "656489fff4c2c833058073f23f1ef5e1418007cc",
+      "activeVersionAndShortcutVerified": true,
+      "updatedExistingInstallation": true,
+      "existingUserFilesPreserved": 54,
+      "validationSaveIsolationVerified": true,
+      "installedChecks": [
+        "native_playable_look_v2_cooked_materials_and_lights",
+        "validated_progress_houses_and_twenty_real_trees",
+        "validated_progress_real_rocks_and_ground_foliage",
+        "user_branding_intro_animates_and_reveals_main_menu",
+        "real_unreal_workshop_opened_inside_game_with_search_categories_and_cards",
+        "main_menu_mods_refresh_options_and_return",
+        "main_menu_play_button",
+        "native_world_HUD_and_three_vehicle_meshes",
+        "keyboard_character_movement",
+        "walk_through_house_doorway",
+        "world_pickup_into_native_inventory",
+        "native_inventory_food_use_consumes_one_and_restores_hunger",
+        "native_inventory_tobacco_use_has_risk_and_returns_waste",
+        "native_inventory_open_close",
+        "explicit_local_profile_save",
+        "three_vehicle_enter_accelerate_steer_exit"
+      ]
+    },
+    "package/package-report.json": {
+      "state": "PACKAGED_WINDOWS_SMOKE_PASSED",
+      "sourceCommit": "12477c96cc9cf6d57ff9b90a14fedabb175eee1c",
+      "progressArt": {
+        "state": "PROGRESS_ART_SAVED_REQUIRES_PACKAGED_GAME_TEST",
+        "sourceCommit": "12477c96cc9cf6d57ff9b90a14fedabb175eee1c",
+        "fullMapComplete": false,
+        "houses": [
+          {
+            "id": "country_house_scan",
+            "mesh": "/Game/Anomalia/ResidentialPhotogrammetryReview_v1/country_house_scan/SM_country_house_scan.SM_country_house_scan",
+            "exteriorOnly": true,
+            "scaleMethod": "Uniform artistic height calibration"
+          },
+          {
+            "id": "abandoned_brick_house_scan",
+            "mesh": "/Game/Anomalia/ResidentialPhotogrammetryReview_v1/abandoned_brick_house_scan/SM_abandoned_brick_house_scan.SM_abandoned_brick_house_scan",
+            "exteriorOnly": true,
+            "scaleMethod": "Uniform artistic height calibration"
+          }
+        ],
+        "trees": 20,
+        "vehicles": [
+          "car",
+          "transport_truck"
+        ],
+        "rocks": 24,
+        "groundFoliage": 24,
+        "hiddenBackgroundPrototypes": 12
+      }
+    }
+  },
+  "manualVisualReview": {
+    "source": "package/installed-smoke-a865ac4878904f7d86f207f2745a10b3.png",
+    "actualInstalledGame": true,
+    "photorealismApproved": false,
+    "notes": [
+      "Detailed truck body and active survival HUD are visible.",
+      "Truck wheel/road vertical alignment still needs correction.",
+      "Current game view remains a development zone, not a finished photorealistic open world."
+    ]
+  }
+}

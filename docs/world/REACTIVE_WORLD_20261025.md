@@ -175,7 +175,7 @@ Une publication dédiée `[pc-update]`, commit
 `12477c96cc9cf6d57ff9b90a14fedabb175eee1c`, a lancé le run `40176847036` pour mettre
 à jour l'installation existante après validation. L'étape d'installation Windows a **réussi** : la copie installée a passé ses
 essais et le raccourci/version active ont été relus sur ce commit. L'aperçu
-Editor se synchronise séparément après ses contrôles GPU. Aucun téléchargement
+Editor a également été installé et rouvert avec vérification GPU (`COPIED_EDITOR_PROJECT_GPU_VERIFIED`). Aucun téléchargement
 manuel demandé à l'utilisateur. Une fenêtre de l'ancienne version doit être
 fermée puis le raccourci relancé pour utiliser la nouvelle version.
 
@@ -184,3 +184,23 @@ petite zone `ANOMALIA_Playable_v1`. La grande carte `ANOMALIA_Inhabited_v2` est
 configurée dans l'aperçu Editor ; elle n'est pas encore livrée en jeu complet avec
 le loot et les expéditions. Les photos de la PR #31 ne prouvent pas leur présence
 sur cette petite carte jouable.
+
+### Résultat d'installation vérifié
+
+Run `40176847036` entièrement **réussi**. Le jeu installé est passé de `656489f…`
+à **`12477c9…`**. La version active et le raccourci ont été relus ; les 54 fichiers
+existants de données du jeu et les 5 928 fichiers serveur de l'aperçu Editor ont
+été conservés. Le nouvel exécutable installé a vérifié WorkForge, les contrôles,
+le ramassage, l'inventaire, les sauvegardes et trois véhicules. Les 24 rochers et
+24 végétations au sol réels ont été constatés par le jeu installé, en plus des
+20 arbres et deux maisons scannées déjà prévus par cette zone.
+
+La copie de la grande carte dans l'aperçu installé a également passé l'ouverture
+native et la vérification GPU. Preuve filtrée et empreinte d'archive :
+`docs/world/installed-update-40176847036.json`.
+
+**La refonte graphique n'est pas terminée.** La capture du jeu réellement installé
+montre notamment un décalage apparent entre les roues du camion et la chaussée.
+La physique actuelle et certains modèles restent provisoires ; la PR Chaos #37
+n'a pas encore validé le contact roue/sol. Aucune qualité « 16K photoréaliste »
+n'est déduite de ces tests de fonctionnement.
