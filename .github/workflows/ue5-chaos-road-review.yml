@@ -1,0 +1,51 @@
+name: UE5 actual Chaos road driving validation
+on:
+  push:
+    branches: ['ue5/chaos-road-driving-20261025']
+    paths: ['unreal/Source/**', 'unreal/Scripts/create_chaos_road_review.py', 'scripts/ue5/*chaos*', '.github/workflows/ue5-chaos-road-review.yml']
+  workflow_dispatch:
+jobs:
+  compile-and-drive-real-skeletal-vehicle:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/chaos-road-driving-20261025'
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile real Editor and Game and run native regression suite
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/ChaosRoadReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Prepare real locally installed licensed template art without publishing engine assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/ChaosRoadReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Require physical acceleration steering braking reverse and preserved driver exit
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/ChaosRoadReview/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chaos-real-driving-evidence
+          path: |
+            unreal/Saved/ChaosRoadReview/run-${{ github.run_id }}-${{ github.run_attempt }}/*.*
+            unreal/Saved/ChaosRoadReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/ChaosRoadReview/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+          if-no-files-found: error

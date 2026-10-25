@@ -67,7 +67,7 @@ class BuildDriverTests(unittest.TestCase):
         code, report = self.run_native_fixture({"tests": [
             {"fullTestPath": name, "state": "Success"} for name in
             ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics",
-             "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry")]})
+             "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry", "Anomalia.Native.ChaosRoadConfiguration")]})
         self.assertEqual(code, 0)
         self.assertEqual(report["nativeTests"], "passed")
         self.assertEqual(report["execution"], "not_run")
@@ -79,4 +79,5 @@ class BuildDriverTests(unittest.TestCase):
             ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics")]})
         self.assertEqual(code, 1)
         self.assertEqual(report["nativeTests"], "failed")
+
 
