@@ -28,3 +28,6 @@ unreal/Content/Anomalia/Data/
 # Local Python verification caches
 __pycache__/
 *.pyc
+
+# Native executable identity is generated from the validated CI source commit.
+unreal/Build/AnomaliaSourceCommit.generated.txt

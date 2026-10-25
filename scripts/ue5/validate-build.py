@@ -41,6 +41,17 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
         report["error"] = f"Runtime data staging failed: {error}"
         save()
         return 2
+    # UBT tracks this file as an external Build.cs dependency. A new source SHA
+    # invalidates cached rules and produces a fresh executable identity.
+    import re
+    commit = os.environ.get("GITHUB_SHA", "local")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        commit = "local"
+    stamp = ROOT / "unreal/Build/AnomaliaSourceCommit.generated.txt"
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    if not stamp.is_file() or stamp.read_text(encoding="utf-8") != commit:
+        stamp.write_text(commit, encoding="utf-8")
+    report["buildCommit"] = commit
     project = ROOT / "unreal/AnomaliaPrimeval.uproject"
     report["compilation"] = "running"
     save()

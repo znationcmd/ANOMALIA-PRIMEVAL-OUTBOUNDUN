@@ -26,6 +26,7 @@ on:
       - 'scripts/ue5/run-playable-interactions.py'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
+      - 'scripts/vehicle-assets/*playable*'
       - 'docs/art/realism-validation-sources.json'
       - 'docs/art/residential-photogrammetry-sources.json'
       - '.github/workflows/ue5-pc-progress-update.yml'
@@ -90,6 +91,8 @@ jobs:
           npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-playable-landscape.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-world-features.mjs --residential
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

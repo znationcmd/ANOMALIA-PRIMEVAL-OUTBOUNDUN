@@ -12,10 +12,12 @@
 #include "AnomaliaConfigLibrary.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
+#include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/Image.h"
 #include "Components/Border.h"
 #include "Engine/World.h"
+#include "CollisionQueryParams.h"
 #include "Engine/StaticMesh.h"
 #include "EngineUtils.h"
 #include "Engine/GameViewportClient.h"
@@ -44,6 +46,7 @@ void AAnomaliaPlayableProbe::Finish(const FString& Error)
     TSharedPtr<FJsonObject> Report=MakeShared<FJsonObject>(); Report->SetStringField(TEXT("state"),Error.IsEmpty()?TEXT("PACKAGED_GAME_SMOKE_PASSED"):TEXT("FAILED"));
     Report->SetStringField(TEXT("error"),Error); Report->SetStringField(TEXT("savedDir"),FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
     Report->SetStringField(TEXT("map"),GetWorld()->GetMapName());
+    Report->SetStringField(TEXT("buildCommit"),TEXT(ANOMALIA_BUILD_COMMIT));
     TArray<TSharedPtr<FJsonValue>> Rows; for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
     Report->SetArrayField(TEXT("checks"),Rows); FString Json;
     FJsonSerializer::Serialize(Report.ToSharedRef(),TJsonWriterFactory<>::Create(&Json));
@@ -89,7 +92,8 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
             {
                 auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
                 auto* Material=Mesh?Mesh->GetMaterial(0):nullptr;
-                Meadow=Material && Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow"));
+                Meadow=Material && (Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow")) ||
+                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_v1/SM_PlayableTerrain"))));
             }
             if(It->ActorHasTag(TEXT("PlayableSun")) || It->ActorHasTag(TEXT("PlayableSky")))
                 if(auto* Light=It->FindComponentByClass<ULightComponentBase>())
@@ -100,7 +104,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
         if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaProgressArt")))
         {
-            int32 Houses=0,Trees=0,HiddenCrowns=0,Rocks=0,GroundFoliage=0,HiddenBackground=0;
+            int32 Houses=0,Trees=0,HiddenCrowns=0,Rocks=0,GroundFoliage=0,HiddenBackground=0,ForestTrees=0,ForestGrass=0,Surfaces=0;
             for(TActorIterator<AActor> It(GetWorld());It;++It)
             {
                 if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1")))continue;
@@ -111,6 +115,21 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
                     ++HiddenCrowns; continue;
                 }
                 const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
+                if(It->ActorHasTag(TEXT("ANOMALIA_PlayableTerrain_v1")))
+                {
+                    if(!Path.Contains(TEXT("/PlayableLandscape_v1/SM_PlayableTerrain")) || !Component->IsCollisionEnabled() || !Component->GetMaterial(0))
+                    {Finish(TEXT("Cooked colliding PBR terrain missing"));return;}
+                    FHitResult Hit;FCollisionQueryParams Query;Query.bTraceComplex=true;Query.AddIgnoredActor(S);
+                    if(!GetWorld()->LineTraceSingleByChannel(Hit,FVector(0,-400,500),FVector(0,-400,-500),ECC_Visibility,Query) || Hit.GetActor()!=*It || FMath::Abs(Hit.Location.Z)>2)
+                    {Finish(TEXT("Actual playable ground collision or flat spawn parcel invalid"));return;}
+                    ++Surfaces;
+                }
+                if(It->ActorHasTag(TEXT("ANOMALIA_PlayableRoad_v1")))
+                {if(!Path.Contains(TEXT("/asphalt_02/")) || !Component->IsCollisionEnabled()){Finish(TEXT("Cooked PBR road missing"));return;}++Surfaces;}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ForestTree_v1")))
+                {if(!Path.StartsWith(TEXT("/Game/Anomalia/VerifiedProps_v1/")) && !Path.Contains(TEXT("/island_tree_02/"))){Finish(TEXT("Real perimeter tree missing"));return;}++ForestTrees;}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ForestGrass_v1")))
+                {if(!Path.Contains(TEXT("/grass_medium_01/"))){Finish(TEXT("Real understory missing"));return;}++ForestGrass;}
                 if(It->ActorHasTag(TEXT("ANOMALIA_ProgressRock_v1")))
                 {if(Path.Contains(TEXT("/rock_moss_set_01/")))++Rocks;else {Finish(TEXT("Real rock geometry missing"));return;}}
                 if(It->ActorHasTag(TEXT("ANOMALIA_ProgressGroundFoliage_v1")))
@@ -126,12 +145,19 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
             if(Rocks!=24 || GroundFoliage!=24 || HiddenBackground!=12)
             {Finish(TEXT("Real terrain decoration upgrade missing from cooked game"));return;}
             Checks.Add(TEXT("validated_progress_real_rocks_and_ground_foliage"));
+            if(Surfaces!=2 || ForestTrees!=32 || ForestGrass!=96)
+            {Finish(TEXT("Playable landscape revision missing from cooked game"));return;}
+            Checks.Add(TEXT("validated_playable_pbr_landscape_and_forest"));
         }
         for(TActorIterator<AAnomaliaVehiclePawn> It(GetWorld());It;++It)
             if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
             { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }
         if(Vehicles.Num()!=3) { Finish(TEXT("Expected three cooked vehicles")); return; }
         auto* Menu=UAnomaliaSessionWidget::Open(PC,true);
+        auto* BuildLabel=Menu && Menu->WidgetTree?Cast<UTextBlock>(Menu->WidgetTree->FindWidget(TEXT("SessionBuildIdentity"))):nullptr;
+        if(!BuildLabel || !BuildLabel->GetText().ToString().StartsWith(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)))
+        {Finish(TEXT("Visible executable build identity missing"));return;}
+        Checks.Add(TEXT("visible_executable_build_identity"));
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
         auto* Art=Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")));
