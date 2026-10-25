@@ -25,7 +25,16 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Read active installations and ANOMALIA shortcut targets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: ./scripts/ue5/inspect-owned-installations.ps1 -OutputPath "unreal/Saved/ReactiveValidation/run-$env:GITHUB_RUN_ID/installed-state.json"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: active-anomalia-installations
+          path: unreal/Saved/ReactiveValidation/run-${{ github.run_id }}/installed-state.json
+          if-no-files-found: error
       - name: Compile Editor and Game and execute native regression suite
+        id: native_core
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
@@ -69,3 +78,17 @@ jobs:
           name: original-native-sign-assets
           path: unreal/Content/Anomalia/Infrastructure/OriginalSigns_v1/
           if-no-files-found: error
+      - name: Diagnose actual menu and graphics in the existing playable map
+        if: ${{ !cancelled() && steps.native_core.outcome == 'success' }}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/run-playable-interactions.py --engine-root "$env:UE_ROOT" --output "unreal/Saved/ReactiveValidation/run-$env:GITHUB_RUN_ID/installed-update-preflight"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: installed-update-preflight
+          path: unreal/Saved/ReactiveValidation/run-${{ github.run_id }}/installed-update-preflight/
+          if-no-files-found: warn

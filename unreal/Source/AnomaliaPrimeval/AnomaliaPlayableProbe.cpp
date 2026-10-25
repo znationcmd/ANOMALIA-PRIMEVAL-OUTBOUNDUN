@@ -156,7 +156,13 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
         auto* Refresh=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionRefreshMods")));
         auto* WorldEditor=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionWorldEditor")));
         if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor || Pages->GetActiveWidgetIndex()!=0)
-        { Finish(TEXT("Main menu navigation or local mods page missing")); return; }
+        {
+            TArray<UWidget*> Observed;Menu->WidgetTree->GetAllWidgets(Observed);FString Names;
+            for(const auto* Widget:Observed)
+                if(Widget && Widget->GetName().StartsWith(TEXT("Session"))) Names+=Widget->GetName()+TEXT(";");
+            Finish(FString::Printf(TEXT("Main menu navigation or local mods page missing (pages=%d mods=%d options=%d home=%d refresh=%d editor=%d active=%d widgets=%s)"),
+                Pages?1:0,Mods?1:0,Options?1:0,Home?1:0,Refresh?1:0,WorldEditor?1:0,Pages?Pages->GetActiveWidgetIndex():-1,*Names));return;
+        }
         Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
         const auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
         const auto* WorkshopCards=Cast<UVerticalBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCards")));
