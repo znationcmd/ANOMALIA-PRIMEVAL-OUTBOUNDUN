@@ -10,10 +10,11 @@ if(updater&&panel){
     lastState=s;
     $('#editorVersion').textContent='v'+(s.currentVersion||'—');
     $('#updateState').textContent=s.message||'Statut des mises à jour inconnu.';
-    const progress=s.phase==='telechargement'||s.phase==='prete';
+    const progress=['telechargement','prete','sauvegarde','installation'].includes(s.phase);
     $('#updateProgress').hidden=!progress;
     $('#updateProgressFill').style.width=Math.max(0,Math.min(100,Number(s.progress||0)))+'%';
-    $('#installUpdate').hidden=s.phase!=='prete';
+    $('#installUpdate').hidden=s.phase!=='prete'||s.applyWhenSaved;
+    $('#installUpdate').textContent=s.applyWhenSaved?'Application automatique':'Installer et redémarrer';
   };
   updater.status().then(render).catch(()=>{$('#updateState').textContent='Mises à jour indisponibles sur cet appareil.';});
   updater.subscribe(render);
@@ -52,7 +53,8 @@ if(mainUpdateButton){
       mainUpdateButton.disabled=true;
       try{
         if(info?.phase==='prete'){
-          if(confirm('La version '+(info.nextVersion||'nouvelle')+' est prête. Installer et redémarrer ANOMALIA Editor ?'))await updater.install();
+          // Backup and installation are already handled in the main Electron process.
+          if(!info.applyWhenSaved&&confirm('La version '+(info.nextVersion||'nouvelle')+' est prête. Installer et redémarrer ANOMALIA Editor ?'))await updater.install();
           return;
         }
         const status=await updater.check();
