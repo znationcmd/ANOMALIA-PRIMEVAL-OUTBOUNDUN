@@ -1,8 +1,13 @@
 name: ANOMALIA Tools - Publication automatique Windows
 on:
   push:
+    branches:
+      - feature/anomalia-tools-premium-updates-20261023
     tags:
       - 'anomalia-tools/v*'
+    paths:
+      - 'apps/anomalia-tools/**'
+      - '.github/workflows/anomalia-tools-release.yml'
 permissions:
   contents: write
 concurrency:
@@ -24,8 +29,11 @@ jobs:
         shell: pwsh
         run: |
           $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          if ("refs/tags/anomalia-tools/v$v" -ne "$env:GITHUB_REF") {
+          if ($env:GITHUB_REF.StartsWith('refs/tags/') -and "refs/tags/anomalia-tools/v$v" -ne "$env:GITHUB_REF") {
             throw "Tag incorrect pour ANOMALIA Tools : $v"
+          }
+          if ($env:GITHUB_REF.StartsWith('refs/heads/') -and $env:GITHUB_REF -ne 'refs/heads/feature/anomalia-tools-premium-updates-20261023') {
+            throw "Branche de publication non autorisée : $env:GITHUB_REF"
           }
       - name: Installer les dépendances
         run: npm install --no-audit --no-fund
@@ -42,7 +50,7 @@ jobs:
           if (!(Test-Path $meta)) { throw "latest.yml introuvable" }
           $contents = Get-Content $meta -Raw
           if ($contents -notmatch "(?m)^version:\s*" -or $contents -notmatch "(?m)^\s*sha512:") { throw "Manifeste incomplet" }
-          if (!(Get-ChildItem release -File | Where-Object { $_.Name -match 'ANOMALIA Tools Setup.*\.exe$' })) {
+          if (!(Get-ChildItem release -File | Where-Object { $_.Name -match 'ANOMALIA[-. ]Tools[-. ]Setup.*\.exe })) {
             throw "Le programme Windows n'a pas été généré"
           }
       - name: Créer le canal public réservé à ANOMALIA Tools
@@ -54,6 +62,75 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             gh release create anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "ANOMALIA Tools - Windows" --notes "Canal public de mises à jour ANOMALIA Tools. Aucun projet d'utilisateur n'est inclus."
             if ($LASTEXITCODE -ne 0) { throw "La release n'a pas été créée" }
+          }
+      - name: Refuser une mise à jour plus ancienne que celle installée
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $version=[version](Get-Content package.json -Raw | ConvertFrom-Json).version
+          $existing=Join-Path $env:RUNNER_TEMP 'previous-tools-release'
+          New-Item -ItemType Directory -Force -Path $existing | Out-Null
+          gh release download anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" --pattern latest.yml --dir $existing
+          if ($LASTEXITCODE -eq 0) {
+            $raw=Get-Content (Join-Path $existing 'latest.yml') -Raw
+            $match=[regex]::Match($raw,'(?m)^version:\s*[''"]?(\d+\.\d+\.\d+)')
+            if ($match.Success -and [version]$match.Groups[1].Value -ge $version) {
+              throw "Version $version non supérieure à $($match.Groups[1].Value) : éviter de casser les mises à jour"
+            }
+          } else {
+            Write-Host "Premier manifeste de mises à jour."
+          }
+      - name: Uploader l'installateur et son blockmap
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $assets = Get-ChildItem release -File | Where-Object { $_.Name -match '\.exe(\.blockmap)?$' }
+          foreach ($file in $assets) {
+            gh release upload anomalia-tools-latest $file.FullName --repo "$env:GITHUB_REPOSITORY" --clobber
+            if ($LASTEXITCODE -ne 0) { throw "Upload interrompu : $($file.Name)" }
+          }
+      - name: Publier le manifeste DERNIER
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload anomalia-tools-latest (Resolve-Path release/latest.yml).Path --repo "$env:GITHUB_REPOSITORY" --clobber
+          if ($LASTEXITCODE -ne 0) { throw "Le manifeste latest.yml n'a pas été publié" }
+          Write-Host "Canal ANOMALIA Tools mis à jour."
+ })) {
+            throw "Le programme Windows n'a pas été généré"
+          }
+      - name: Créer le canal public réservé à ANOMALIA Tools
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release view anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            gh release create anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" --target "$env:GITHUB_SHA" --title "ANOMALIA Tools - Windows" --notes "Canal public de mises à jour ANOMALIA Tools. Aucun projet d'utilisateur n'est inclus."
+            if ($LASTEXITCODE -ne 0) { throw "La release n'a pas été créée" }
+          }
+      - name: Refuser une mise à jour plus ancienne que celle installée
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $version=[version](Get-Content package.json -Raw | ConvertFrom-Json).version
+          $existing=Join-Path $env:RUNNER_TEMP 'previous-tools-release'
+          New-Item -ItemType Directory -Force -Path $existing | Out-Null
+          gh release download anomalia-tools-latest --repo "$env:GITHUB_REPOSITORY" --pattern latest.yml --dir $existing
+          if ($LASTEXITCODE -eq 0) {
+            $raw=Get-Content (Join-Path $existing 'latest.yml') -Raw
+            $match=[regex]::Match($raw,'(?m)^version:\s*[''"]?(\d+\.\d+\.\d+)')
+            if ($match.Success -and [version]$match.Groups[1].Value -ge $version) {
+              throw "Version $version non supérieure à $($match.Groups[1].Value) : éviter de casser les mises à jour"
+            }
+          } else {
+            Write-Host "Premier manifeste de mises à jour."
           }
       - name: Uploader l'installateur et son blockmap
         shell: pwsh
