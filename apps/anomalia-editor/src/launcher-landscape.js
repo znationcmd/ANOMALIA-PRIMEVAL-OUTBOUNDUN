@@ -42,34 +42,36 @@ export function createLandscapeBackdrop(container){
    gradient.addColorStop(0,colors[0]);gradient.addColorStop(1,colors[1]);
    ctx.fillStyle=gradient;ctx.fill();
   }
-  // Ligne de bocage au loin : feuillus de tailles variées et ombres atmosphériques.
+  // Rideau de conifères et arbustes aux contours irréguliers.
+  // Aucune canopée sphérique ni objet géométrique de démonstration.
   function tree(x,y,scale,far=false){
-    const trunk=scale*(far?0.9:1.5);
-    ctx.fillStyle=far?'#576a58':'#3a4939';
-    ctx.fillRect(x-trunk*.19,y-scale*.95,trunk*.4,scale*1.15);
-    const canopy=ctx.createRadialGradient(x-scale*.16,y-scale*1.7,scale*.08,x,y-scale*1.6,scale*1.17);
-    canopy.addColorStop(0,far?'#607e67':'#426747');
-    canopy.addColorStop(.67,far?'#58755d':'#345c36');
-    canopy.addColorStop(1,'#233f2d');
-    ctx.fillStyle=canopy;
-    for(let k=0;k<7;k++){
-      const theta=(k/7)*Math.PI*2;
-      const dx=Math.cos(theta)*scale*.39,dy=Math.sin(theta)*scale*.22;
-      ctx.beginPath();ctx.ellipse(x+dx,y-scale*1.75+dy,scale*(.55+random()*.25),scale*(.53+random()*.20),-.12,0,Math.PI*2);ctx.fill();
-    }
-    // Feuilles éclairées, non sphères géométriques en jeu.
-    for(let k=0;k<(far?15:40);k++){
-      const dx=(random()-.5)*scale*1.8,dy=(random()-.5)*scale*.95;
-      if(dx*dx/(scale*scale*1.2)+dy*dy/(scale*scale*.65)>1)continue;
-      ctx.fillStyle=random()>.5?'#c2ca8c52':'#9bb76d66';
-      ctx.fillRect(x+dx,y-scale*1.75+dy,Math.max(.6,scale*.07),Math.max(.5,scale*.04));
+    const h=scale*(2.4+random()*.55),span=scale*(.62+random()*.25);
+    const top=y-h,stem=far?'#425747':'#324d3a';
+    ctx.strokeStyle=stem;ctx.lineWidth=Math.max(.6,scale*.15);
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x+scale*.08,top+scale*.08);ctx.stroke();
+    for(let row=0;row<16;row++){
+      const u=row/16,yy=top+u*h*.92;
+      const reach=span*(.22+.88*u)*(0.70+random()*.45);
+      for(const dir of [-1,1]){
+        ctx.strokeStyle=random()>.55?(far?'#526f57':'#355b3e'):(far?'#69836c':'#4b6f4c');
+        ctx.lineWidth=Math.max(.5,scale*(far?.055:.075));
+        ctx.beginPath();ctx.moveTo(x,yy+scale*.04);
+        ctx.lineTo(x+reach*dir,yy+scale*(.08+.09*random()));ctx.stroke();
+        for(let leaf=0;leaf<4;leaf++){
+          const progress=(leaf+.35)/4;
+          const bx=x+reach*progress*dir,by=yy+progress*scale*.08;
+          ctx.strokeStyle=random()>.48?'#88a5748a':'#3b6148bb';
+          ctx.lineWidth=Math.max(.4,scale*.036);
+          ctx.beginPath();ctx.moveTo(bx,by);
+          ctx.lineTo(bx+dir*scale*.13,by-scale*(.16+.07*random()));
+          ctx.stroke();
+        }
+      }
     }
   }
-  for(let i=0;i<280;i++){
-    const x=random()*W;
-    const y=horizon+H*.012+random()*H*.095;
-    const scale=(3+random()*8)*(1+(y-horizon)/H);
-    tree(x,y,scale,true);
+  for(let i=0;i<180;i++){
+    const x=random()*W,y=horizon+H*.009+random()*H*.09;
+    tree(x,y,(2.4+random()*5.5)*(1+(y-horizon)/H),true);
   }
   // Champ d'herbes dense. Variations locales, lumière et brins, sans modèle 3D simulé.
   for(let i=0;i<18500;i++){
@@ -85,8 +87,8 @@ export function createLandscapeBackdrop(container){
     ctx.quadraticCurveTo(x+(random()-.5)*6,y-length*.52,x+(random()-.4)*11,y-length);
     ctx.stroke();
   }
-  // Arbustes et arbres au premier plan, selon la profondeur.
-  for(let i=0;i<38;i++){
+  // Végétation parcimonieuse au premier plan.
+  for(let i=0;i<16;i++){
     const x=random()*W,y=horizon+H*.1+random()*H*.20;
     tree(x,y,8+random()*18*(1+(y-horizon)/H),false);
   }
