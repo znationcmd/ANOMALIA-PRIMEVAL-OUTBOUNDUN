@@ -108,7 +108,7 @@ bool FAnomaliaPOIResourceTest::RunTest(const FString& Parameters)
     if(!TestNotNull(TEXT("Existing inventory resource for isolated test"),Resource)) {World->DestroyWorld(false);return false;}
     Resource->bEnabled=true;Resource->Nominal=100;Resource->Minimum=0;Resource->Quantity=1;
     Resource->AllowedPOIs.Add(TEXT("quarry-east"));Resource->AllowedPOIs.Add(TEXT("quarry-west"));
-    Resource->Categories.Reset();Resource->Categories.Add(TEXT("food"));Resource->MinTier=1;Resource->MaxTier=5;
+    Resource->Categories.Reset();Resource->Categories.Add(TEXT("canned_food"));Resource->MinTier=1;Resource->MaxTier=5;
     const TArray<FString> POIs{TEXT("quarry-east"),TEXT("quarry-west"),TEXT("")};
     TArray<FString> Points;
     for(int32 I=0;I<3;++I)
