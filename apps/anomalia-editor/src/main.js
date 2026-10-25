@@ -732,6 +732,21 @@ bindGameLibrary({
   }
 });
 
+// Auto-update handshake. Save the complete active ANOMALIA scene before
+// Electron replaces the installed Windows binaries and restarts the app.
+const updateBridge=window.anomaliaDesktop?.updates;
+updateBridge?.onPrepareInstall?.(async request=>{
+  let saved=false;
+  try{
+    await storeProject(history.project);
+    saved=true;
+  }catch(error){
+    toast('Sauvegarde requise avant mise à jour : '+error.message,true);
+  }finally{
+    updateBridge.confirmSaved(request?.id,saved);
+  }
+});
+
 if ('serviceWorker' in navigator && !window.anomaliaDesktop && (location.protocol==='https:'||location.hostname==='localhost')) {
   window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
 }
