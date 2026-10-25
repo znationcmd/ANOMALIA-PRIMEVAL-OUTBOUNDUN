@@ -34,7 +34,19 @@ const assert=require('node:assert/strict');
   await nav.evaluate(el=>{el.scrollTop=el.scrollHeight;});
   const final=await nav.evaluate(x=>x.scrollTop);
   assert.ok(final>0,'sidebar must scroll to its last buttons');
+  console.log('Renderer errors at startup',JSON.stringify(errors));
+  console.log('Navigation binding',await page.evaluate(()=>({
+    title:document.querySelector('#pageTitle')?.textContent,
+    root:document.querySelector('#systemStatus')?.outerHTML.slice(0,150),
+    navHandler:typeof document.querySelector('[data-tab="systemStatus"]')?.onclick
+  })));
   await page.locator('[data-tab="systemStatus"]').click();
+  console.log('Status after click',await page.evaluate(()=>({
+    title:document.querySelector('#pageTitle')?.textContent,
+    hidden:document.querySelector('#systemStatus')?.hidden,
+    style:getComputedStyle(document.querySelector('#systemStatus')).display,
+    errors:window.__errors || null
+  })));
   assert.equal(await page.locator('#systemStatus').isVisible(),true);
   await page.locator('[data-utility="terrainProcessor"]').click();
   assert.equal(await page.locator('#utilities').isVisible(),true);
