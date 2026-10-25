@@ -5,6 +5,9 @@ const crypto=require('node:crypto');
 const {pipeline}=require('node:stream/promises');
 const {PNG}=require('pngjs');
 const yazl=require('yazl');
+const native=require('./native-mods.cjs');
+const {Workshop}=require('./workshop.cjs');
+const utilities=require('./utilities.cjs');
 const SOURCE_EXT=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const ASSET_EXT=new Set(['.glb','.gltf','.fbx','.obj','.usd','.png','.jpg','.jpeg','.webp','.tga','.wav','.ogg','.json','.xml','.ini']);
 const PREVIEW_EXT=new Set(['.glb','.png','.jpg','.jpeg','.webp']);
@@ -73,9 +76,12 @@ class AnomaliaTools{
     this.root=path.resolve(dataDir);
     fs.mkdirSync(this.root,{recursive:true});
   }
+  processTerrain(options={}){return utilities.processTerrain(this.getProjectPath(options.projectId),options);}
+  convertTexture(options={}){return utilities.convertTexture(this.getProjectPath(options.projectId),options);}
+  convertConfig(options={}){return utilities.convertConfig(this.getProjectPath(options.projectId),options);}
   overview(){
     const projects=this.listProjects();
-    return {version:'0.1.0',privacy:'local-only',workspace:this.root,projects:projects.length,
+    return {version:require('./package.json').version,privacy:'local-only',workspace:this.root,projects:projects.length,
       modules:['Workbench','Object Builder','Terrain Builder','Central Economy','Textures','Addon Builder','Publisher']};
   }
   getProjectPath(id){
@@ -204,6 +210,27 @@ class AnomaliaTools{
     atomicJSON(json,meta);
     return {image:'Content/Terrain/'+filename+'.png',metadata:'Content/Terrain/'+filename+'.json',resolution};
   }
+  scaffoldNativeMod({projectId}={}){
+    const root=this.getProjectPath(projectId);
+    const project=readJSON(path.join(root,'anomalia.project.json'),{});
+    return native.scaffoldNativeMod(root,projectId,project.name||'ANOMALIA Mod');
+  }
+  getNativeModStatus({projectId,engineRoot=''}={}){
+    return native.buildStatus(this.getProjectPath(projectId),projectId,engineRoot);
+  }
+  validateNativeMod({projectId}={}){
+    return native.validateNativeMod(this.getProjectPath(projectId),projectId);
+  }
+  async buildNativeMod({projectId,engineRoot=''}={}){
+    return native.buildNativeMod(this.getProjectPath(projectId),projectId,engineRoot);
+  }
+  workshop(){return new Workshop(this);}
+  listWorkshopMods(){return this.workshop().list();}
+  publishWorkshopMod(payload={}){return this.workshop().publish(payload);}
+  subscribeWorkshopMod(payload={}){return this.workshop().subscribe(payload);}
+  prepareWorkshopMod(payload={}){return this.workshop().install(payload);}
+  toggleWorkshopMod(payload={}){return this.workshop().toggle(payload);}
+  exportWorkshopHostingManifest(payload={}){return this.workshop().exportHostingManifest(payload);}
   async packageMod({projectId}={}){
     const root=this.getProjectPath(projectId);
     const files=this.listFiles({projectId}).filter(x=>x.type==='file'&&!x.path.startsWith('Dist/')&&

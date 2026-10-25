@@ -2,10 +2,25 @@
 const {app,BrowserWindow,dialog,shell,ipcMain}=require('electron');
 const path=require('node:path');
 const {AnomaliaTools}=require('./core.cjs');
-let toolsApp;let win;
+const {ToolsUpdater}=require('./updates.cjs');
+let toolsApp;let win;let updater;
 if(process.platform==='win32')app.setAppUserModelId('fr.anomalia.tools');
+const ownInstance=app.requestSingleInstanceLock();
+if(!ownInstance)app.quit();
+if(ownInstance&&process.platform==='win32'&&app.isPackaged)app.setAsDefaultProtocolClient('anomalia-tools');
+const workshopDeepLink=argv=>argv.some(arg=>/^anomalia-tools:\/\/workshop\/?$/i.test(arg));
+app.on('second-instance',(_event,argv)=>{
+  if(workshopDeepLink(argv)&&win&&!win.isDestroyed()){
+    if(win.isMinimized())win.restore();
+    win.show();win.focus();
+    win.webContents.send('tools:navigate','workshop');
+  }
+});
+
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
-  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod']);
+  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','processTerrain','convertTexture','convertConfig','packageMod',
+  'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod',
+  'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod','exportWorkshopHostingManifest']);
 function start(){
   win=new BrowserWindow({width:1550,height:940,minWidth:1040,minHeight:710,
     title:'ANOMALIA Tools',backgroundColor:'#10101b',
@@ -17,11 +32,28 @@ function start(){
   win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
   win.webContents.on('will-navigate',e=>e.preventDefault());
 }
-app.whenReady().then(()=>{
+if(ownInstance)app.whenReady().then(()=>{
   toolsApp=new AnomaliaTools(path.join(app.getPath('userData'),'private-workspaces'));
+  updater=new ToolsUpdater();
+  ipcMain.handle('tools:updates:status',()=>updater.status());
+  ipcMain.handle('tools:updates:check',()=>updater.check());
+  ipcMain.handle('tools:updates:install',()=>updater.installNow());
   ipcMain.handle('tools:call',async(_,method,payload={})=>{
     if(!allowed.has(method)||typeof toolsApp[method]!=='function')throw Error('Commande interdite');
     return toolsApp[method](payload);
+  });
+  ipcMain.handle('tools:exportHostingManifest',async(_event,projectId)=>{
+    const manifest=toolsApp.exportWorkshopHostingManifest({projectId});
+    const choice=await dialog.showSaveDialog(win,{
+      defaultPath:'ANOMALIA-CMD-Hosting-'+manifest.mod.id+'.json',
+      filters:[{name:'ANOMALIA CMD Hosting (JSON)',extensions:['json']}]
+    });
+    if(choice.canceled||!choice.filePath)return {cancelled:true};
+    const fs=require('node:fs');
+    // The dialog destination is explicitly selected by the user.
+    fs.writeFileSync(choice.filePath,JSON.stringify(manifest,null,2)+'\n',{encoding:'utf8',flag:'w'});
+    return {saved:true,file:choice.filePath,mod:manifest.mod.name,
+      note:'Fiche exportée, non installée sur le serveur.'};
   });
   ipcMain.handle('tools:chooseAssets',async()=>{
     const result=await dialog.showOpenDialog(win,{properties:['openFile','multiSelections'],filters:[{
@@ -43,6 +75,10 @@ app.whenReady().then(()=>{
     if(path.resolve(choice.filePath)!==path.resolve(archive.path))fs.copyFileSync(archive.path,choice.filePath);
     return {saved:true,path:choice.filePath,manifest:archive.manifest};
   });
-  start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
+  start();
+  win.on('focus',()=>updater.checkOnFocus());
+  if(workshopDeepLink(process.argv)){win.webContents.once('did-finish-load',()=>win.webContents.send('tools:navigate','workshop'));}updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
 });
 app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit();});
+
+app.on('before-quit',()=>updater?.stop());
