@@ -30,3 +30,44 @@ if(updater&&panel){
     catch{$('#updateState').textContent='Installation impossible pour le moment.';}
   };
 }
+
+// Commande de mise à jour toujours accessible depuis la barre principale.
+// L'ancien panneau de maintenance peut être replié, mais pas le contrôle.
+const mainUpdateButton=document.getElementById('checkUpdatesMain');
+if(mainUpdateButton){
+  mainUpdateButton.hidden=!updater;
+  if(updater){
+    let info=null;
+    updater.status().then(state=>{
+      info=state;
+      mainUpdateButton.title='ANOMALIA Editor v'+(state.currentVersion||'?')+' — '+(state.message||'mises à jour');
+    }).catch(()=>{mainUpdateButton.title='Mise à jour Windows indisponible';});
+    updater.subscribe(state=>{
+      info=state;
+      mainUpdateButton.title='ANOMALIA Editor v'+(state.currentVersion||'?')+' — '+(state.message||'');
+      if(state.phase==='prete')mainUpdateButton.classList.add('updateReady');
+      else mainUpdateButton.classList.remove('updateReady');
+    });
+    mainUpdateButton.addEventListener('click',async()=>{
+      mainUpdateButton.disabled=true;
+      try{
+        if(info?.phase==='prete'){
+          if(confirm('La version '+(info.nextVersion||'nouvelle')+' est prête. Installer et redémarrer ANOMALIA Editor ?'))await updater.install();
+          return;
+        }
+        const status=await updater.check();
+        info=status;
+        const message=status.message||'Mise à jour vérifiée.';
+        mainUpdateButton.title=message;
+        const toast=document.getElementById('toast');
+        if(toast){
+          toast.textContent='ANOMALIA Editor v'+(status.currentVersion||'?')+' — '+message;
+          toast.hidden=false;
+          setTimeout(()=>{if(toast.textContent.includes(message))toast.hidden=true;},5000);
+        }
+      }catch(error){
+        mainUpdateButton.title='Impossible de vérifier les mises à jour.';
+      }finally{mainUpdateButton.disabled=false;}
+    });
+  }
+}
