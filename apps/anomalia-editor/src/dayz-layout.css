@@ -1,0 +1,240 @@
+/* ANOMALIA Editor / interface étroite d'édition, inspirée des captures de référence.
+   Le code, les modèles, le logo et les assets DayZ ne sont pas copiés. */
+:root{--dz-toolbar:#3b456b;--dz-line:#7180a4;--dz-text:#eef3ff;--dz-panel:#314879bf}
+.top{
+  display:grid!important;grid-template-columns:minmax(300px,1fr) auto minmax(100px,230px);
+  grid-template-rows:26px 31px;height:57px!important;min-height:57px!important;
+  padding:0 7px!important;gap:0 8px!important;background:#303b63!important;border-bottom:1px solid #818bb5!important;
+  box-shadow:none!important
+}
+.desktopMenu{grid-row:1;grid-column:1/3;align-self:stretch;display:flex!important;
+  border:0!important;padding:0!important;gap:0!important;align-items:stretch!important}
+.desktopMenu button{border:0!important;border-radius:0!important;background:transparent!important;
+  color:#e5ebfc!important;font-size:12px!important;padding:4px 12px!important;
+  font-weight:700!important;text-shadow:0 1px 3px #18284a}
+.desktopMenu button:hover,.desktopMenu button[aria-expanded=true]{background:#5873a4!important;color:#fff!important}
+.top .brand{grid-column:3;grid-row:1;justify-self:end;align-self:center;
+  min-width:0!important;gap:6px!important;padding-right:3px}
+.top .brand .logo{width:22px!important;height:22px!important;font-size:14px!important;box-shadow:none!important;border-radius:3px!important}
+.top .brand b{font-size:11px!important;letter-spacing:0!important;white-space:nowrap!important}
+.top .brand small{display:none!important}
+.top .project{grid-column:3;grid-row:2;justify-self:end;align-self:center;max-width:215px;min-width:80px!important}
+.top .projectCaption{display:none!important}
+.top .project input{height:23px!important;min-height:23px!important;font-size:10px!important;
+  border-color:#697ca3;background:#202c4b!important;border-radius:2px!important;padding:3px 7px!important}
+.top .topButtons{grid-column:1/3;grid-row:2;align-self:stretch;
+  border:0!important;padding:1px 0!important;display:flex!important;align-items:center!important;
+  justify-content:flex-start!important;gap:2px!important;margin:0!important;overflow:hidden}
+.top .topButtons button{font-size:0!important;width:30px!important;height:27px!important;min-height:27px!important;
+  padding:0!important;border:1px solid transparent!important;border-radius:2px!important;color:#e5edff!important;
+  background:transparent!important;box-shadow:none!important;flex:none!important}
+.top .topButtons button:hover{background:#6077a2!important;border-color:#a8bce2!important}
+.top .topButtons button:before{display:block;font-size:18px!important;line-height:24px;font-weight:400;letter-spacing:0}
+.top #openMapLibrary:before{content:"▦"}
+.top #openWorldNow:before{content:"⬡"}
+.top #newScene:before{content:"▤"}
+.top #saveScene:before{content:"▣"}
+.top #openScene:before{content:"⇧"}
+.top #exportScene:before{content:"⇩"}
+.top .topButtons #exportScene{background:#425b86!important}
+.top .topButtons button[disabled]{opacity:.4;cursor:not-allowed}
+.workspace,.workspace.hide-left,.workspace.hide-right,.workspace.hide-left.hide-right{
+  grid-template-columns:0 minmax(0,var(--library-width,235px)) 3px minmax(0,1fr) 3px minmax(0,var(--inspector-width,250px))!important;
+  background:#243655;min-width:0!important;overflow:hidden!important
+}
+.workspace.hide-left{grid-template-columns:0 0 0 minmax(0,1fr) 3px minmax(0,var(--inspector-width,250px))!important}
+.workspace.hide-right{grid-template-columns:0 minmax(0,var(--library-width,235px)) 3px minmax(0,1fr) 0 0!important}
+.workspace.hide-left.hide-right{grid-template-columns:0 0 0 minmax(0,1fr) 0 0!important}
+.activityRail{display:none!important}
+.left,.right{background:linear-gradient(180deg,#566a9dd1,#3a507db5)!important;color:#f1f5ff!important;
+  backdrop-filter:blur(5px);border-color:#8098bb!important}
+.left .dockHeading,.right .dockHeading,
+.left .paneHeading,.right .paneHeading{background:#415684c4!important;padding:8px 9px!important;border-color:#8ba0c3!important}
+.left .dockHeading strong,.right .dockHeading strong,.left .paneHeading strong,.right .paneHeading strong{font-size:11px!important}
+.left .dockHeading small,.right .dockHeading small,.left .paneOverline,.right .paneOverline{font-size:8px!important;color:#d6e0fd!important}
+.left .explorerHint,.right .explorerHint,.left .assetIntroduction,.right .assetIntroduction{background:#34497880!important;
+  font-size:10px;color:#e1ebfb;padding:8px 9px!important}
+.left .dockAccent,.right .dockAccent{background:#adc5f3!important}
+.placeableDock{overflow-y:auto!important;scrollbar-color:#a2b4da #425782}
+.explorerDock{overflow-y:auto!important;scrollbar-color:#a2b4da #425782}
+.explorerDock .treeItem{color:#e9eefb!important;padding:5px 10px!important;font-size:11px!important;min-height:25px!important}
+.explorerDock .treeItem:hover{background:#647eadd9!important}
+.explorerDock .treeItem.active{background:#7999c5aa!important;color:#fff!important;border-color:#bfdaff!important}
+.placeableDock .gameLibraryDock,.placeableDock .realWorldDock{background:#374e7d55;border-color:#94a6cb}
+.gameLibraryDock .gameLibraryItem{background:#30436b8c!important;border-color:#8195b9!important;color:#eaf0ff}
+.gameLibraryItem strong{color:#f0f5ff!important;font-size:10px!important}
+.gameLibraryItem small,.gameLibraryPath,.gameLibraryStatus,.gameLibraryMetrics,.gameLibraryDock .libraryNotice{color:#c6d7f4!important}
+.gameLibraryDock button{font-size:10px!important;min-height:26px!important}
+.gameLibraryDock input,.gameLibraryDock select{background:#25345ad9!important;border-color:#9aaccf!important;color:#eff5ff!important}
+.right #inspector{padding:0 12px 18px}
+.right .noSelection{background:#2e4875bd;border-color:#819dc2;color:#ecf2ff}
+.stage{background:#709bc0;box-shadow:none!important}
+.workspaceRibbon{display:none!important}
+.stage .tools{min-height:33px!important;max-height:43px!important;overflow:hidden;padding:1px 5px!important;
+  background:#39496fd9!important;border-bottom:1px solid #849ac1!important;flex-wrap:nowrap!important;gap:6px!important}
+.stage .toolsPart:first-child{border:0!important;background:transparent!important;padding:0!important;gap:1px!important}
+.stage .toolsPart:first-child button,.stage .toolsPart.end button{
+  min-height:27px!important;height:27px!important;min-width:30px;border-radius:2px!important;
+  border:1px solid transparent!important;background:transparent!important;font-size:0!important;
+  padding:2px 4px!important;box-shadow:none!important;color:#f2f5ff!important
+}
+.stage .toolsPart:first-child button span{font-size:18px!important;margin:0!important;color:#fff}
+.stage .toolsPart:first-child button.selected{background:#718fc1!important;border-color:#c7d7f7!important}
+.stage .toolsPart.end button{font-size:11px!important}
+.stage .toolsPart:first-child kbd{display:none!important}
+.stage .toolsPart select{font-size:10px!important;min-height:25px!important;padding:3px!important}
+.stage .toolsPart label{color:#f1f5ff!important;font-size:10px!important}
+.stage #viewport{background:linear-gradient(180deg,#80b1e5,#c9d8dc 45%,#879d68 51%,#516c4a)!important}
+.stage #viewport:after{box-shadow:none!important}
+.stage .worldSourceBar{min-height:25px!important;padding:3px 8px!important;gap:8px}
+.stage .worldSourceBar strong{font-size:9px!important}
+.stage .worldSourceBar button,.stage .worldSourceBar select{font-size:9px!important;padding:3px!important}
+.stage .viewportQuickbar{top:4px!important;right:5px!important;max-width:50%;gap:2px!important}
+.stage .viewportQuickbar button{font-size:9px!important;min-height:25px;padding:4px!important;border-radius:2px}
+.stage .viewportLabel{top:7px!important;left:7px!important;font-size:9px!important}
+.stage .viewportTag{padding:4px 6px!important;border-radius:2px!important}
+.stage .viewportInfo{display:none!important}
+.stage .viewportTips{font-size:9px!important;opacity:.85;left:5px!important;bottom:5px!important;padding:5px!important}
+.stage .viewportCorner{display:none!important}
+.stage .compass{top:7px!important;right:37%!important;background:transparent!important;
+  border:0!important;padding:0!important;box-shadow:none!important;color:#f5f7fb!important}
+.stage .status{min-height:22px!important;padding:0 8px!important;gap:8px!important;background:#465986c7!important;
+  color:#e6effe!important;font-size:9px!important}
+.menuPopup{background:#465883f5!important;border:1px solid #a4b4d8!important;padding:2px!important;
+  width:240px!important;box-shadow:0 5px 16px #08142cbb!important;border-radius:0!important;z-index:1000}
+.menuPopup button{color:#fff!important;font-size:11px!important;min-height:27px!important;padding:4px 7px!important;
+  border-radius:0!important}
+.menuPopup button:hover{background:#7895c9!important}
+.menuPopup kbd{color:#dce5f7!important}
+/* Sélecteur DayZ-like : paysage derrière, petite fenêtre centrale, trois aperçus à la fois. */
+.mapLauncher{position:fixed!important;inset:0!important;z-index:150!important;background:transparent!important;
+  display:block!important;overflow:hidden!important;isolation:isolate}
+.mapLauncher:before{content:"";position:fixed;inset:0;z-index:-1;
+  background:linear-gradient(90deg,#22345642,#6681a911 48%,#253b5e35),linear-gradient(0deg,#15254459,transparent 58%);
+  pointer-events:none}
+.mapHero{position:fixed!important;inset:0!important;min-height:0!important;display:block!important;
+  background:transparent!important;border:0!important;pointer-events:none!important;z-index:1!important}
+.mapHero:before,.mapHero:after{display:none!important}
+.mapHeroTop{position:absolute;top:23px;left:23px;right:23px;padding:0!important;pointer-events:none}
+.mapIdentity{padding:7px 10px!important;background:#364978a8;border:1px solid #b3c9ed55;backdrop-filter:blur(5px)}
+.mapMonogram{height:27px!important;width:27px!important;font-size:18px!important;border-radius:1px!important;box-shadow:none!important}
+.mapIdentity strong{font-size:11px!important;letter-spacing:.5px!important}
+.mapIdentity small{display:none!important}
+.mapClose{pointer-events:auto!important;font-size:10px!important;padding:7px 10px!important;border-radius:0!important}
+.mapHeroContent{position:absolute;top:73px;left:23px;padding:0!important;display:block!important;
+  width:auto!important;height:auto!important;flex:none!important}
+.mapHeroContent h1,.mapHeroContent p,.mapHeroContent .mapEyebrow{display:none!important}
+.mapHeroActions{display:flex!important;gap:3px!important;flex-wrap:nowrap!important;pointer-events:auto!important;
+  padding:4px;background:#405587bb;border:1px solid #91afd477}
+.mapHeroActions button{font-size:10px!important;min-height:25px!important;padding:5px 9px!important;
+  border-radius:0!important;background:#4e6799b9!important;border-color:#97abd199!important}
+.mapHeroActions button.mapPrimary{background:#7796c0!important;border-color:#b5caee!important;color:white!important}
+.mapHeroBottom{display:none!important}
+.mapPickerBody{position:fixed!important;z-index:2!important;left:50%!important;top:50%!important;
+  transform:translate(-50%,-50%)!important;margin:0!important;width:min(700px,85vw)!important;
+  max-width:none!important;padding:0!important;background:#586d9ac9!important;
+  border:1px solid #9fb4da!important;box-shadow:0 12px 32px #0d1c3a88!important;
+  backdrop-filter:blur(8px);max-height:min(74vh,540px);display:flex!important;flex-direction:column!important;
+  overflow:hidden!important}
+.mapPickerHeading{margin:0!important;min-height:26px!important;flex:none;padding:3px 9px!important;
+  background:#49639c!important;border-bottom:1px solid #c3d3eeaa!important;align-items:center!important}
+.mapPickerHeading small{display:none!important}
+.mapPickerHeading h2{font-size:12px!important;color:#f4f7ff!important;font-weight:650!important;margin:0!important;letter-spacing:0!important}
+.mapCount{font-size:9px!important;border:0!important;background:transparent!important;color:#dce7fb!important;padding:0!important}
+.mapPickerToolbar{margin:0!important;flex:none;padding:5px 8px!important;gap:5px!important;
+  border-bottom:1px solid #99add1!important;background:#526896cf}
+.mapFilters{padding:0!important;background:transparent!important;border:0!important;border-radius:0!important;gap:1px!important}
+.mapFilters button{padding:4px 9px!important;border-radius:0!important;font-size:10px!important;color:#e8f0ff!important}
+.mapFilters button.active{background:#7697cf!important;border:1px solid #c9d9f8!important}
+.mapSearchLabel{min-height:23px!important;flex:1!important;max-width:none!important;padding:0 7px!important;
+  border-radius:0!important;background:#293d68!important;border-color:#96b2d8!important}
+.mapSearchLabel input{font-size:10px!important;padding:4px 0!important}
+.mapSearchIcon{font-size:12px!important}
+.mapRefresh{font-size:9px!important;padding:4px 8px!important;border-radius:0!important}
+.mapPickerGrid{flex:1!important;min-height:195px!important;max-height:315px!important;overflow:auto!important;
+  display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:6px!important;
+  padding:9px!important;background:#667ca2bb!important;align-items:start!important;scrollbar-color:#a3b8e3 #47618e}
+.mapCard{border-radius:0!important;border:1px solid #b2c4e4!important;background:#536991d9!important;
+  box-shadow:none!important;transform:none!important;transition:none!important}
+.mapCard:hover,.mapCard:focus-visible{border-color:white!important;box-shadow:0 0 0 2px #e0ecff89!important;transform:none!important}
+.mapCover{min-height:102px!important;background:linear-gradient(160deg,#4e648b,#8ba0bb,#263b62)!important}
+.mapCover:after{display:none!important}
+.mapLocal .mapCover{background:linear-gradient(160deg,#54727b,#a0b5a4,#3b5a6b)!important}
+.mapCategory{top:3px!important;left:3px!important;font-size:7px!important;padding:2px 4px!important;
+  border-radius:0!important;background:#334976a9!important}
+.mapCoverEmblem{font-size:25px!important;border:0!important;background:transparent!important;text-shadow:0 3px 8px #273955!important}
+.mapVisualNote{font-size:8px!important;right:4px!important;bottom:4px!important}
+.mapCardDetail{padding:5px 6px!important;gap:3px!important;min-height:42px!important;
+  background:#465d8ea9!important}
+.mapCardDetail strong{font-size:10px!important}
+.mapCardDetail small{font-size:8px!important;color:#e1e7f7!important}
+.mapCardOpen{font-size:8px!important;margin:0!important;padding:0!important;color:#fcf7ea!important}
+.mapNoResults{background:#50658db8!important;color:white!important;border-color:#becdf0!important;
+  border-radius:0!important;min-height:155px!important;padding:15px!important}
+.mapNoResults strong{font-size:13px!important}
+.mapNoResults p{color:#e1e7f3!important;font-size:10px!important}
+.mapFooter{margin:0!important;flex:none;padding:6px 9px!important;border-top:1px solid #aebcde;
+  color:#f0f3ff!important;background:#415b8f!important;font-size:9px!important}
+.mapFooter button{padding:5px 7px!important;font-size:9px!important;border-radius:0!important;background:#647ca7!important}
+.mapLoading{position:fixed!important;inset:0!important;z-index:4!important;
+  background:linear-gradient(0deg,#131d3299,transparent 60%),linear-gradient(90deg,#0b1835c2,#1a38605c,#0b1835b8)!important;
+  backdrop-filter:blur(3px)!important;display:flex!important;align-items:flex-end!important;justify-content:center!important;
+  padding:0!important}
+.mapLoadingPlate{height:100%;width:100%!important;max-width:none!important;
+  background:transparent!important;border:0!important;box-shadow:none!important;
+  border-radius:0!important;padding:0 22px 19px!important;gap:4px!important;
+  display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:center!important}
+.mapLoadingPlate .mapLoadingIcon{position:absolute;right:45px;top:50px;font-size:32px!important;
+  height:61px!important;width:61px!important}
+.mapLoadingPlate .mapEyebrow{position:absolute;right:30px;top:118px;font-size:18px!important;color:white!important;
+  font-weight:900!important;letter-spacing:1px!important}
+.mapLoadingPlate h2{font-size:11px!important;margin:0!important;color:#fff!important}
+.mapLoadingPlate p{font-size:9px!important}
+.mapLoadingTrack{height:3px!important;border:0!important;background:#b8c0c466!important;
+  border-radius:0!important;margin-top:7px!important;order:2!important}
+.mapLoadingIndeterminate{background:#d65c66!important}
+.mapLoadingPlate small{font-size:9px!important;order:3!important;color:#dae5f4!important}
+.mapLoadingPlate button{order:4!important;border-radius:0!important;font-size:10px!important;padding:7px 11px!important}
+body.mapLauncherVisible{overflow:hidden}
+body.mapLauncherVisible .top,body.mapLauncherVisible .activityRail,
+body.mapLauncherVisible #editorLibrary,body.mapLauncherVisible #editorInspector,
+body.mapLauncherVisible #librarySplitter,body.mapLauncherVisible #inspectorSplitter,
+body.mapLauncherVisible .workspaceRibbon,body.mapLauncherVisible .tools,
+body.mapLauncherVisible .worldSourceBar,body.mapLauncherVisible .status,
+body.mapLauncherVisible .viewportQuickbar,body.mapLauncherVisible .viewportLabel,
+body.mapLauncherVisible .viewportTips,body.mapLauncherVisible .emptyWorld,
+body.mapLauncherVisible .viewerNotice,body.mapLauncherVisible .mapScale,
+body.mapLauncherVisible .viewportCorner{display:none!important}
+body.mapLauncherVisible .workspace{display:block!important;position:fixed!important;inset:0!important;
+  width:100vw!important;height:100dvh!important;z-index:0!important}
+body.mapLauncherVisible .stage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important;
+  margin:0!important;padding:0!important;display:block!important;z-index:0!important}
+body.mapLauncherVisible #viewport{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+body.mapLauncherVisible .compass{display:none!important}
+@media(max-width:1150px){
+ .workspace,.workspace.hide-left,.workspace.hide-right,.workspace.hide-left.hide-right{
+ --library-width:200px;--inspector-width:215px}
+ .stage .toolsPart.end{display:none}
+}
+@media(max-width:760px){
+ .top{display:flex!important;height:52px!important;min-height:52px!important;flex-wrap:wrap!important}
+ .top .desktopMenu{width:100%;height:22px;flex:none}
+ .top .desktopMenu button{font-size:10px!important;padding:3px 8px!important}
+ .top .topButtons{height:28px;flex:1}
+ .top .brand,.top .project{display:none!important}
+ .workspace:not(.hide-left):not(.hide-right){min-width:0!important}
+ .mapHeroTop{top:10px;left:10px;right:10px}
+ .mapHeroContent{top:57px;left:10px}
+ .mapHeroActions{max-width:calc(100vw - 20px);overflow-x:auto}
+ .mapHeroActions button{font-size:9px!important;white-space:nowrap}
+ .mapPickerBody{width:calc(100vw - 20px)!important;max-height:65vh!important}
+ .mapPickerGrid{grid-template-columns:repeat(2,minmax(0,1fr))!important;min-height:120px!important}
+ .mapCover{min-height:77px!important}
+ .mapPickerToolbar{flex-wrap:wrap!important}
+ .mapFilters{width:100%!important}
+ .mapFilters button{flex:1!important}
+ .mapFooter #mapPickerInfo{display:none}
+ .mapLoadingPlate .mapEyebrow{right:20px!important;top:94px!important;font-size:14px!important}
+ .mapLoadingPlate .mapLoadingIcon{top:27px;right:27px}
+}
+@media(prefers-reduced-motion:reduce){.mapLoadingIndeterminate{animation:none!important;width:100%!important}}
