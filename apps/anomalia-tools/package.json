@@ -1,6 +1,6 @@
 {
   "name": "anomalia-tools",
-  "version": "0.2.5",
+  "version": "0.2.6",
   "private": true,
   "description": "ANOMALIA Tools - outils locaux de création de mods et ressources pour ANOMALIA",
   "main": "main.cjs",
@@ -33,6 +33,7 @@
       "preload.cjs",
       "core.cjs",
       "native-mods.cjs",
+      "utilities.cjs",
       "workshop.cjs",
       "dist/**",
       "package.json",

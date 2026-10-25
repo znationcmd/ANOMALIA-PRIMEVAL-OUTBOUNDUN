@@ -18,7 +18,7 @@ app.on('second-instance',(_event,argv)=>{
 });
 
 const allowed=new Set(['overview','listProjects','createProject','listFiles','readText','writeText',
-  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','packageMod',
+  'getEconomy','saveEconomy','importAssets','previewAsset','generateTerrain','processTerrain','convertTexture','convertConfig','packageMod',
   'scaffoldNativeMod','getNativeModStatus','validateNativeMod','buildNativeMod',
   'listWorkshopMods','publishWorkshopMod','subscribeWorkshopMod','prepareWorkshopMod','toggleWorkshopMod','exportWorkshopHostingManifest']);
 function start(){

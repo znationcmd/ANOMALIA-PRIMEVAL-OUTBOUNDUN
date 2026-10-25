@@ -34,6 +34,30 @@ jobs:
         run: npm test
       - name: Compiler interface
         run: npm run build
+      - name: Installer Chromium pour vérifier le vrai rendu
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install --with-deps chromium
+      - name: Démarrer ANOMALIA Tools pour vérifier les boutons
+        shell: bash
+        run: |
+          npm run build
+          npx vite preview --host 127.0.0.1 --port 4175 > /tmp/anomalia-tools-preview.log 2>&1 &
+          for i in $(seq 1 45); do
+            if curl -fsS http://127.0.0.1:4175/ >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          cat /tmp/anomalia-tools-preview.log
+          exit 1
+      - name: Vérifier 1366x768, les menus et le défilement
+        run: |
+          mkdir -p screenshots
+          node scripts/smoke-ui.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Tools-026-Captures-Reelles
+          path: apps/anomalia-tools/screenshots/*.png
+          if-no-files-found: error
 
   windows:
     name: Installer Windows ANOMALIA Tools

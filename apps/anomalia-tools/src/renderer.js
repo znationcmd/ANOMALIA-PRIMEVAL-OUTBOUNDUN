@@ -3,6 +3,8 @@ import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import './style.css';
 import './updates-ui.js';
+import './tools-workspace-fix.css';
+import {setupToolsUtilities} from './utilities-ui.js';
 
 const api=window.anomaliaTools;
 const $=s=>document.querySelector(s);
@@ -16,11 +18,13 @@ const MODS=[
   ['addon','◈','Addon Builder','Archives de mods et manifestes'],
   ['publisher','⬆','Publisher','Exporter tes packages en ZIP']
 ];
-const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),workshop:'ANOMALIA Workshop',updates:'Mises à jour'};
+const titles={home:"Vue d'ensemble",...Object.fromEntries(MODS.map(([id,,title])=>[id,title])),workshop:'ANOMALIA Workshop',utilities:'Utilitaires',systemStatus:'Statut des outils',updates:'Mises à jour'};
 const SOURCE=new Set(['.js','.ts','.json','.xml','.ini','.cfg','.cpp','.h','.hpp','.cs','.txt','.md','.py','.uproject','.uplugin']);
 const TEXTURES=['.png','.jpg','.jpeg','.webp','.tga'];
 let projects=[],currentId='',files=[],fileOpen='',economy={items:[]},activeTab='home';
 let viewer=null;
+let activeUtility='terrainProcessor';
+let utilities;
 function node(tag,text='',className=''){
   const item=document.createElement(tag);
   if(text)item.textContent=text;
@@ -52,6 +56,8 @@ function setTab(tab){
   if(tab==='addon')nativeStatus();
   if(tab==='workshop')refreshWorkshop();
   if(tab==='home')renderProjects();
+  if(tab==='systemStatus')utilities.refreshStatus();
+  if(tab==='utilities')utilities.select(activeUtility);
   if(viewer&&tab==='objects')requestAnimationFrame(()=>viewer.resize());
 }
 function showModal(){$('#modal').hidden=false;$('#newName').focus();}
@@ -436,7 +442,14 @@ async function publish(){
     msg('Package exporté sur ton ordinateur.');
   }
 }
-$$('[data-tab]').forEach(b=>b.onclick=()=>setTab(b.dataset.tab));
+utilities=setupToolsUtilities({
+  api,getProjectId:()=>currentId,getFiles:()=>files,getProjects:()=>projects,
+  refreshFiles,showTab:setTab,showModal,notify:msg
+});
+$$('[data-tab]').forEach(b=>b.onclick=()=>{
+  if(b.dataset.tab==='utilities'&&b.dataset.utility)activeUtility=b.dataset.utility;
+  setTab(b.dataset.tab);
+});
 $('#newProject').onclick=$('#heroCreate').onclick=showModal;
 $('#heroExplore').onclick=()=>setTab('workbench');
 $('#cancelModal').onclick=hideModal;
@@ -479,6 +492,7 @@ window.addEventListener('keydown',e=>{
 async function init(){
   renderModules();
   const result=await safe(()=>refreshProjects());
+  utilities.refreshSources();
   if(!projects.length){showModal();}
 }
 init();
