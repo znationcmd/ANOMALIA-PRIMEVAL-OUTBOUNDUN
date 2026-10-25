@@ -446,7 +446,7 @@ utilities=setupToolsUtilities({
   api,getProjectId:()=>currentId,getFiles:()=>files,getProjects:()=>projects,
   refreshFiles,showTab:setTab,showModal,notify:msg
 });
-$('[data-tab]').forEach(b=>b.onclick=()=>{
+$$('[data-tab]').forEach(b=>b.onclick=()=>{
   if(b.dataset.tab==='utilities'&&b.dataset.utility)activeUtility=b.dataset.utility;
   setTab(b.dataset.tab);
 });
