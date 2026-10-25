@@ -1,0 +1,122 @@
+/* Correctif final de cascade : editor-clean.css était plus spécifique et décalait les docks.
+   Trois zones réelles : bibliothèque (gauche), viewport (centre), scène/propriétés (droite). */
+.app .top{
+ display:grid!important;grid-template-columns:minmax(0,1fr) 230px!important;
+ grid-template-rows:25px 32px!important;height:57px!important;min-height:57px!important;
+ padding:0 6px!important;gap:0 4px!important;background:#3c4a78!important;
+ border-bottom:1px solid #91a9d8!important;box-shadow:none!important;overflow:visible!important
+}
+.app .top .desktopMenu{grid-column:1!important;grid-row:1!important;order:unset!important;
+ display:flex!important;gap:0!important;border:0!important;padding:0!important;margin:0!important;
+ align-items:stretch!important;height:25px!important}
+.app .top .desktopMenu button{min-height:25px!important;height:25px!important;font-size:12px!important;
+ font-weight:700!important;padding:3px 12px!important;color:#f2f4ff!important;
+ background:transparent!important;border:0!important;border-radius:0!important}
+.app .top .desktopMenu button:hover,.app .top .desktopMenu button[aria-expanded=true]{background:#6f88b8!important}
+.app .top .brand{grid-column:2!important;grid-row:1!important;align-self:center!important;justify-self:end!important;
+ order:unset!important;min-width:0!important;flex:none!important;margin:0!important;gap:5px!important}
+.app .top .brand .logo{width:22px!important;height:22px!important;font-size:14px!important;border-radius:2px!important}
+.app .top .brand b{font-size:11px!important;white-space:nowrap!important;color:#f1f6ff!important}
+.app .top .topButtons{grid-column:1!important;grid-row:2!important;
+ order:unset!important;display:flex!important;align-items:center!important;
+ border:0!important;margin:0!important;padding:1px 0!important;gap:2px!important;overflow:visible!important}
+.app .top .topButtons button,.app .top .topButtons #newScene,.app .top .topButtons #openScene,
+.app .top .topButtons #openWorldNow,.app .top .topButtons #exportScene{
+ display:block!important;width:31px!important;min-width:31px!important;
+ height:28px!important;min-height:28px!important;padding:0!important;
+ background:transparent!important;border:1px solid transparent!important;
+ border-radius:2px!important;color:#f4f6ff!important;font-size:0!important;box-shadow:none!important
+}
+.app .top .topButtons #openMapLibrary{background:#708bbe!important;border-color:#b5c7e8!important}
+.app .top .topButtons button:hover{background:#7993c5!important;border-color:#becdef!important}
+.app .top .topButtons #saveScene{background:#5d79a4!important;border-color:#98b6e8!important}
+.app .top .topButtons button:before{font-size:18px!important;line-height:24px!important}
+.app .top .project{grid-column:2!important;grid-row:2!important;order:unset!important;
+ display:block!important;margin:0!important;align-self:center!important;justify-self:end!important;
+ min-width:0!important;width:200px!important;max-width:200px!important}
+.app .top .project #projectName{height:25px!important;min-height:25px!important;font-size:10px!important;
+ padding:3px 6px!important;background:#2d3b64!important;border-color:#8599c9!important;color:#edf4ff!important}
+.app .workspace,.app .workspace.hide-left,.app .workspace.hide-right,.app .workspace.hide-left.hide-right{
+ display:grid!important;min-width:0!important;overflow:hidden!important;
+ grid-template-columns:minmax(160px,var(--library-width,220px)) 3px minmax(0,1fr) 3px minmax(170px,var(--inspector-width,245px))!important;
+ background:#2f456d!important
+}
+.app .workspace.hide-left{grid-template-columns:0 0 minmax(0,1fr) 3px minmax(170px,var(--inspector-width,245px))!important}
+.app .workspace.hide-right{grid-template-columns:minmax(160px,var(--library-width,220px)) 3px minmax(0,1fr) 0 0!important}
+.app .workspace.hide-left.hide-right{grid-template-columns:0 0 minmax(0,1fr) 0 0!important}
+.app .activityRail{display:none!important}
+.app .left,.app .right{min-width:0!important;min-height:0!important;overflow-y:auto!important;
+ background:linear-gradient(180deg,#485f92e6,#334a76df)!important;border-color:#7e97c3!important;
+ backdrop-filter:blur(5px)!important;scrollbar-color:#a3b6d9 #395079!important}
+.app .dockHeading,.app .paneHeading{background:#3d5382c9!important;border-color:#849ccb!important}
+.app .dockHeading strong,.app .paneHeading strong{color:#eef3ff!important}
+.app .realWorldDock,.app .gameLibraryDock,.app .advancedDisclosure,.app .placeableDock,
+.app .explorerDock{border-color:#879dc6!important}
+.app .advancedDisclosure{background:#394e7a9c!important}
+.app .advancedDisclosure>summary{color:#e4ebff!important;border-bottom:1px solid #8ca1cd88!important}
+.app .stage{min-width:0!important;min-height:0!important;background:#84b4d5!important}
+.app .stage .tools{height:36px!important;min-height:36px!important;max-height:36px!important;
+ padding:1px 5px!important;gap:5px!important;overflow-x:auto!important;flex-wrap:nowrap!important;
+ background:#3b4f7ed9!important;border-bottom:1px solid #a2b6df!important}
+.app .stage .toolsPart:first-child button{
+ min-width:29px!important;min-height:29px!important;height:29px!important;padding:1px 5px!important;
+ font-size:0!important;color:#f2f7ff!important;border-radius:2px!important;background:transparent!important
+}
+.app .stage .toolsPart:first-child button span{font-size:19px!important;color:#f4f7ff!important;margin:0!important}
+.app .stage .toolsPart:first-child button.selected{background:#6c8dbf!important;border-color:#d0e0f6!important}
+.app .stage .toolsPart:first-child button kbd{display:none!important}
+.app .stage .toolsPart.end button{font-size:10px!important;min-height:27px!important;
+ height:27px!important;padding:3px 6px!important;background:#536b9a!important;border-radius:2px!important}
+.app .stage .toolsPart label{color:#f3f7ff!important}
+.app .stage .toolsPart select{background:#253e6bc9!important;color:#fff!important;border-color:#8199cc!important}
+.app .stage .status{background:#465f91d9!important;color:#edf3ff!important}
+.app .stage #viewport{background:linear-gradient(180deg,#85bce7,#c0d3df 50%,#688354 51%,#455a39)!important}
+.app .stage .viewportQuickbar{background:#394d80b9!important;border-color:#98b2d6!important}
+.app .stage .compass{background:#3c4d7d77!important;border-color:#718ac3!important}
+.app .explorerDock .noSelection{background:#3a5281c2!important;border:1px dashed #a4b6d8!important;color:#eaf0ff!important}
+.app .explorerDock .treeItem{color:#f0f3ff!important}
+.app .explorerDock .treeItem.active{background:#688ab6!important;border-color:#c0d1ed!important}
+.app .gameLibraryDock input,.app .gameLibraryDock select{color:#ecf4ff!important;background:#344a7eb8!important}
+.app .placeableDock .gameLibraryItem,.app .realWorldDock .worldMapEntry{color:#eef4ff!important;background:#435b88cc!important}
+.app .stage .emptyWorld:not([hidden]){background:#2e416dbd!important;border-color:#a0b6d3!important}
+.app .menuPopup{background:#455987f7!important;border-color:#b0c4ed!important}
+.mapLauncher .mapLandscape{
+ position:fixed;inset:0;width:100%;height:100%;z-index:-2!important;pointer-events:none;display:block;
+ filter:saturate(.9) contrast(.96)
+}
+.mapLauncher:before{background:linear-gradient(0deg,#273c5370,#233e5f15 55%,#19283f27),
+ linear-gradient(90deg,#243b5c33,transparent 45%,#233b5966)!important}
+.mapLauncher .mapPickerGrid{max-height:230px!important;min-height:175px!important}
+.mapLauncher .mapPickerBody{max-height:min(68vh,410px)!important}
+.mapLauncher .mapHeroActions{box-shadow:0 5px 16px #21385880}
+.mapLauncher .mapPickerHeading h2{font-weight:750!important}
+.mapLauncher .mapPickerHeading{background:#49649d!important}
+.mapLauncher .mapNoResults{min-height:145px!important}
+.mapLauncher .mapFooter{flex-wrap:nowrap!important}
+.mapLauncher .mapFooter #mapPickerInfo{font-size:9px!important;line-height:1.3!important;min-width:0!important}
+.mapLauncher .mapFooter button{white-space:nowrap!important}
+body.mapLauncherVisible .app .workspace{display:block!important;position:fixed!important;inset:0!important;
+ width:100vw!important;height:100dvh!important}
+body.mapLauncherVisible .app .stage{position:fixed!important;inset:0!important;width:100vw!important;height:100dvh!important}
+body.mapLauncherVisible .app .stage #viewport{position:absolute!important;inset:0!important;width:100%!important;height:100%!important}
+@media(max-width:950px){
+ .app .workspace,.app .workspace.hide-left,.app .workspace.hide-right,.app .workspace.hide-left.hide-right{--library-width:185px;--inspector-width:205px}
+ .app .top{grid-template-columns:1fr 170px!important}
+ .app .top .project{width:160px!important}
+ .app .stage .toolsPart.end{display:none!important}
+}
+@media(max-width:760px){
+ .app .top{grid-template-columns:1fr!important;height:58px!important;min-height:58px!important}
+ .app .top .desktopMenu{grid-row:1!important;grid-column:1!important;justify-content:center!important}
+ .app .top .topButtons{grid-row:2!important;grid-column:1!important;justify-content:center!important}
+ .app .top .brand,.app .top .project{display:none!important}
+ .app .workspace,.app .workspace.hide-left,.app .workspace.hide-right,.app .workspace.hide-left.hide-right{
+  display:block!important;min-width:0!important;position:relative!important}
+ .app .left,.app .right{position:absolute;top:0;bottom:0;z-index:15;width:min(78vw,300px)!important;max-width:300px!important}
+ .app .left{left:0}.app .right{right:0}
+ .app .stage{position:absolute;inset:0;z-index:1}
+ .app .splitter{display:none!important}
+ .mapLauncher .mapPickerBody{max-height:63vh!important}
+ .mapLauncher .mapHeroActions button{padding:4px 6px!important}
+ body.mapLauncherVisible .app .stage{inset:0!important;position:fixed!important}
+}
