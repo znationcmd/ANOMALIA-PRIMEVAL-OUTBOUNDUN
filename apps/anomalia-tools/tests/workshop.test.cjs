@@ -94,7 +94,7 @@ test('Workshop installed application includes backing module, page and events',(
   assert.ok(pkg.build.files.includes('workshop.cjs'));
   assert.match(electron,/tools:exportHostingManifest/);
   assert.match(js,/exportHostingManifest/);
-  assert.equal(pkg.version,'0.2.6');
+  assert.equal(pkg.version,'0.2.7');
   for(const id of ['wsModGrid','wsCategories','wsPublishForm','wsSearch','wsConnection','wsProjectSelect']){
     assert.ok(id==='wsConnection'||html.includes('id="'+id+'"'),'Missing Workshop HTML '+id);
   }
