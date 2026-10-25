@@ -81,6 +81,12 @@ export function createMapLauncher({listLocal,onOpenLocal,onNew,onResume,onImport
     category.textContent=entry.type==='ue5'?'UNREAL ENGINE 5':'SCÈNE ANOMALIA';
     const emblem=document.createElement('span');emblem.className='mapCoverEmblem';
     emblem.textContent=entry.type==='ue5'?'UE5':'A';
+    if(entry.type==='local'&&entry.preview){
+      const image=document.createElement('img');image.className='mapActualPreview';
+      image.src=entry.preview;image.alt='Aperçu enregistré de '+entry.title;
+      image.decoding='async';cover.append(image);
+      emblem.hidden=true;
+    }
     const visualNote=document.createElement('span');visualNote.className='mapVisualNote';
     visualNote.textContent=entry.type==='ue5'?'Carte native détectée':'Scène enregistrée';
     cover.append(category,emblem,visualNote);
@@ -93,12 +99,33 @@ export function createMapLauncher({listLocal,onOpenLocal,onNew,onResume,onImport
     button.addEventListener('click',async()=>openEntry(entry));
     return button;
   }
+  function actionCard(title,subtitle,action,icon){
+    const button=document.createElement('button');button.type='button';button.className='mapCard mapActionCard';
+    const cover=document.createElement('span');cover.className='mapCover';
+    const emblem=document.createElement('span');emblem.className='mapCoverEmblem';
+    emblem.textContent=icon;cover.append(emblem);
+    const detail=document.createElement('span');detail.className='mapCardDetail';
+    const heading=document.createElement('strong');heading.textContent=title;
+    const note=document.createElement('small');note.textContent=subtitle;
+    const call=document.createElement('span');call.className='mapCardOpen';call.textContent='Sélectionner →';
+    detail.append(heading,note,call);button.append(cover,detail);
+    button.addEventListener('click',action);
+    return button;
+  }
   function render(){
     const visible=filterMapCatalog(state.items,state.kind,state.search);
     grid.replaceChildren();
     $('#mapCount').textContent=state.items.length+' carte'+(state.items.length>1?'s':'')+' disponible'+(state.items.length>1?'s':'');
     for(const entry of visible.slice(0,250))grid.append(card(entry));
-    if(!visible.length){
+    // Les espaces restants sont des ACTIONS identifiées, pas des fausses cartes.
+    // Trois vignettes au démarrage comme le navigateur de cartes de la référence.
+    if(state.kind==='all'&&!state.search&&visible.length<3){
+      grid.append(actionCard('Importer une carte','Fichier .anomalia.json existant',
+        ()=>{if(!state.busy)onImport();},'⇧'));
+      if(visible.length<2)grid.append(actionCard('Cartes Unreal Engine 5','Associer les cartes natives .umap',
+        async()=>{try{await onLink();await refresh();}catch(e){notify('Unreal Engine : '+e.message,true);}},'UE5'));
+    }
+    if(!visible.length&&state.kind!=='all'){
       const empty=document.createElement('div');empty.className='mapNoResults';
       const head=document.createElement('strong');head.textContent=state.items.length?'Aucune carte ne correspond à cette recherche.':'Aucune carte enregistrée pour le moment.';
       const note=document.createElement('p');
