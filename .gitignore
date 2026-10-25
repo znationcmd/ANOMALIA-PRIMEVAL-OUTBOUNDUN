@@ -31,3 +31,6 @@ __pycache__/
 
 # Native executable identity is generated from the validated CI source commit.
 unreal/Build/AnomaliaSourceCommit.generated.txt
+
+# Reproducible, source-hash-verified CC0 sedan derivatives; import remains separate.
+unreal/SourceAssets/NativeDemoSedan_v1/
