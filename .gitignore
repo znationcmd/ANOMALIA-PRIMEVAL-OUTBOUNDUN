@@ -24,3 +24,7 @@ Thumbs.db
 
 # Generated, hash-owned copies of public/config runtime defaults.
 unreal/Content/Anomalia/Data/
+
+# Local Python verification caches
+__pycache__/
+*.pyc

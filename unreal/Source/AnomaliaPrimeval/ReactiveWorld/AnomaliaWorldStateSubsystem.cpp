@@ -65,7 +65,7 @@ bool UAnomaliaWorldStateSubsystem::Configure(const FString& Server,const FString
     const FString Id=TEXT("reactive-")+FSHA1::HashBuffer(Encoded.Get(),Encoded.Length()).ToString().ToLower().Left(24);
     if(bConfigured) return ServerId==Server && StateId==Id && bReady;
     bConfigured=true;ServerId=Server;StateId=Id;
-    const FString File=FPaths::Combine(UAnomaliaConfigLibrary::ServerRoot(Server),TEXT("World"),StateId+TEXT(".json"));
+    const FString File=FPaths::Combine(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Servers"),Server),TEXT("World"),StateId+TEXT(".json"));
     if(IFileManager::Get().FileExists(*File))
     {
         FString Raw;
@@ -87,7 +87,7 @@ bool UAnomaliaWorldStateSubsystem::Read(const FString& Raw,FString& Error)
     for(const auto& Row:(*Rows)->Values)
     {
         const auto Object=Row.Value.IsValid() && Row.Value->Type==EJson::Object?Row.Value->AsObject():nullptr;FAnomaliaMechanismState S;
-        if(!SafeId(Row.Key) || Loaded.Contains(FName(*Row.Key)) || !Object.IsValid() || !FJsonObjectConverter::JsonObjectToUStruct(Object.ToSharedRef(),&S,0,0) || !ValidState(S))
+        if(!SafeId(FString(*Row.Key)) || Loaded.Contains(FName(*Row.Key)) || !Object.IsValid() || !FJsonObjectConverter::JsonObjectToUStruct(Object.ToSharedRef(),&S,0,0) || !ValidState(S))
         {Error=TEXT("Invalid mechanism state; original file preserved");return false;}
         Loaded.Add(FName(*Row.Key),S);
     }
@@ -110,7 +110,7 @@ bool UAnomaliaWorldStateSubsystem::Save(FString& Error)
     for(const auto& Pair:States)
     {
         auto Row=MakeShared<FJsonObject>();
-        if(!ValidState(Pair.Value) || !FJsonObjectConverter::UStructToJsonObject(FAnomaliaMechanismState::StaticStruct(),&Pair.Value,Row.ToSharedRef(),0,0)) return false;
+        if(!ValidState(Pair.Value) || !FJsonObjectConverter::UStructToJsonObject(FAnomaliaMechanismState::StaticStruct(),&Pair.Value,Row,0,0)) return false;
         Rows->SetObjectField(Pair.Key.ToString(),Row);
     }
     Root->SetObjectField(TEXT("mechanisms"),Rows);Root->SetStringField(TEXT("event"),Event.IsNone()?TEXT(""):Event.ToString());

@@ -93,9 +93,9 @@ void AAnomaliaWorldMechanism::OnRep_State()
     }
     OnWorldStateChanged();
 }
-void AAnomaliaWorldMechanism::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Props) const
+void AAnomaliaWorldMechanism::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Props);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaWorldMechanism,State);DOREPLIFETIME(AAnomaliaWorldMechanism,bPowered);
     DOREPLIFETIME(AAnomaliaWorldMechanism,bOverloaded);DOREPLIFETIME(AAnomaliaWorldMechanism,ActiveWorldEvent);
     DOREPLIFETIME(AAnomaliaWorldMechanism,WorldEventEndsUtc);

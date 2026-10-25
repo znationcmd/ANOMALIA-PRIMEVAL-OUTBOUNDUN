@@ -76,14 +76,14 @@ bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
     auto* OtherMap=NewObject<UAnomaliaWorldStateSubsystem>(World);
     TestTrue(TEXT("Separate map scope"),OtherMap->Configure(Server,TEXT("other-map"),Error));
     TestNull(TEXT("World state isolated by map"),OtherMap->FindState(TEXT("bridge")));
-    const FString OriginalFile=FPaths::Combine(UAnomaliaConfigLibrary::ServerRoot(Server),TEXT("World"),Store->StateId+TEXT(".json"));
+    const FString OriginalFile=FPaths::Combine(FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Servers"),Server),TEXT("World"),Store->StateId+TEXT(".json"));
     TestTrue(TEXT("Seed unsupported future schema"),UAnomaliaConfigLibrary::SaveWorldState(Server,Store->StateId,TEXT("{\"schemaVersion\":999}"),Error));
     auto* Future=NewObject<UAnomaliaWorldStateSubsystem>(World);
     TestFalse(TEXT("Unsupported save fails closed"),Future->Configure(Server,TEXT("test-map"),Error));
     FString Preserved;TestTrue(TEXT("Original future save remains readable"),UAnomaliaConfigLibrary::LoadWorldState(Server,Store->StateId,Preserved,Error));
     TestEqual(TEXT("Future save never overwritten"),Preserved,FString(TEXT("{\"schemaVersion\":999}")));
     World->DestroyWorld(false);
-    IFileManager::Get().DeleteDirectory(*UAnomaliaConfigLibrary::ServerRoot(Server),false,true);
+    IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Servers"),Server),false,true);
     return true;
 }
 #endif
