@@ -1,10 +1,28 @@
 // Les mises à jour sont gérées dans le processus Electron principal.
 // Ce module n'expose aucun accès système au navigateur et ne télécharge rien.
 const updates=window.anomaliaTools?.updates;
+const toolbar=document.querySelector('.topbar');
+const updateButton=document.createElement('button');
+updateButton.type='button';
+updateButton.id='quickUpdateCheck';
+updateButton.className='update-quick-control';
+updateButton.textContent='⟳ Vérifier les mises à jour';
+updateButton.title='Vérifier, télécharger et appliquer la mise à jour Windows sans nouvel installateur';
+updateButton.setAttribute('aria-label','Mise à jour automatique ANOMALIA Tools');
+if(toolbar)toolbar.append(updateButton);
 const $=selector=>document.querySelector(selector);
 function paint(state){
   if(!state)return;
   const installedVersion=state.currentVersion||'—';
+  const phases={initialisation:'Initialisation',veille:'Vérification automatique',verification:'Recherche',
+    disponible:'Téléchargement en préparation',telechargement:'Téléchargement',prete:'À installer',
+    'a-jour':'À jour',erreur:'Échec réseau'};
+  updateButton.textContent='⟳ v'+installedVersion+' · '+(phases[state.phase]||'Mises à jour')+
+    (state.phase==='telechargement'?' '+Math.round(state.progress||0)+' %':'');
+  updateButton.title=(state.message||'')+
+    (state.phase==='prete'?' — cliquer pour installer et redémarrer':' — cliquer pour vérifier');
+  updateButton.classList.toggle('updateReady',state.phase==='prete');
+  updateButton.classList.toggle('updateError',state.phase==='erreur');
   $('#updateVersion').textContent='v'+installedVersion;
   document.getElementById('appSidebarVersion').textContent=installedVersion;
   document.getElementById('appFooterVersion').textContent=installedVersion;
@@ -24,6 +42,17 @@ function paint(state){
   $('#sidebarUpdateBadge').textContent=state.phase==='prete'?'PRÊT':state.phase==='telechargement'?'↓':'AUTO';
 }
 if(updates){
+  updateButton.onclick=async()=>{
+    if(updateButton.disabled)return;
+    if(updateButton.classList.contains('updateReady')){
+      if(window.confirm('Installer automatiquement la version téléchargée et redémarrer ANOMALIA Tools ?'))await updates.install();
+      return;
+    }
+    updateButton.disabled=true;
+    try{paint(await updates.check());}
+    catch{updateButton.title='Impossible de vérifier la mise à jour. Ouvre Mises à jour pour le détail.';}
+    finally{updateButton.disabled=false;}
+  };
   updates.status().then(paint).catch(()=>{
     $('#updateMessage').textContent='Statut des mises à jour indisponible.';
   });
