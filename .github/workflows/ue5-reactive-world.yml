@@ -2,7 +2,13 @@ name: UE5 reactive world native validation
 on:
   push:
     branches: ['ue5/reactive-world-expeditions-20261025']
-    paths: ['unreal/Source/**', 'scripts/ue5/**', '.github/workflows/ue5-reactive-world.yml']
+    paths:
+      - 'unreal/Source/**'
+      - 'scripts/ue5/**'
+      - '.github/workflows/ue5-reactive-world.yml'
+      - 'unreal/Scripts/place_named_signs.py'
+      - 'unreal/Scripts/place_identity.py'
+      - 'scripts/world-features/build-place-sign.py'
   workflow_dispatch:
 concurrency:
   group: anomalia-ue5-native-host
@@ -11,7 +17,7 @@ jobs:
   native:
     if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 45
+    timeout-minutes: 60
     permissions:
       contents: read
     steps:
@@ -32,4 +38,34 @@ jobs:
         with:
           name: reactive-world-native-evidence
           path: unreal/Saved/ReactiveValidation/run-${{ github.run_id }}/
+          if-no-files-found: error
+      - name: Author original full-scale sign source and append validated native sign placements
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $python = Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/world-features/build-place-sign.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $env:ANOMALIA_SIGN_REPORT = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/ReactiveValidation/run-$env:GITHUB_RUN_ID/place-signs.json"
+          $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $script = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/place_named_signs.py'
+          & $editor $project "-ExecutePythonScript=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:GITHUB_WORKSPACE/unreal/Saved/ReactiveValidation/run-$env:GITHUB_RUN_ID/signs.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $report = Get-Content -LiteralPath $env:ANOMALIA_SIGN_REPORT -Raw | ConvertFrom-Json
+          if ($report.sourceCommit -ne $env:GITHUB_SHA -or @($report.placements).Count -eq 0) { throw 'No current native sign placements verified.' }
+          if (@($report.rejected).Count -ne 0) { throw 'Some entrance signs remain unplaced; inspect the retained report.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: named-signs-native-evidence
+          path: |
+            unreal/Saved/ReactiveValidation/run-${{ github.run_id }}/
+            unreal/SourceAssets/OriginalSigns_v1/
+          if-no-files-found: error
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: original-native-sign-assets
+          path: unreal/Content/Anomalia/Infrastructure/OriginalSigns_v1/
           if-no-files-found: error

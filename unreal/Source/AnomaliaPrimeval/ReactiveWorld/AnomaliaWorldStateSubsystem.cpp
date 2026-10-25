@@ -61,7 +61,15 @@ bool UAnomaliaWorldStateSubsystem::Configure(const FString& Server,const FString
 {
     Error.Empty();
     if(!GetWorld() || GetWorld()->GetNetMode()==NM_Client || !SafeId(Server) || Map.IsEmpty()) return false;
-    FTCHARToUTF8 Encoded(*Map);
+    FString MapLeaf=FPaths::GetBaseFilename(Map);
+    if(MapLeaf.StartsWith(TEXT("UEDPIE_")))
+    {
+        const int32 End=MapLeaf.Find(TEXT("_"),ESearchCase::CaseSensitive,ESearchDir::FromStart,7);
+        const FString Instance=End>7?MapLeaf.Mid(7,End-7):FString();
+        if(!Instance.IsEmpty() && Instance.IsNumeric()) MapLeaf=MapLeaf.Mid(End+1);
+    }
+    const FString MapKey=FPaths::GetPath(Map).IsEmpty()?MapLeaf:FPaths::Combine(FPaths::GetPath(Map),MapLeaf);
+    FTCHARToUTF8 Encoded(*MapKey);
     const FString Id=TEXT("reactive-")+FSHA1::HashBuffer(Encoded.Get(),Encoded.Length()).ToString().ToLower().Left(24);
     if(bConfigured) return ServerId==Server && StateId==Id && bReady;
     bConfigured=true;ServerId=Server;StateId=Id;

@@ -66,6 +66,9 @@ bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
         TestEqual(TEXT("Consumed materials not reset"),Loaded->GetDeposited(TEXT("wood")),50);
     }
     TestTrue(TEXT("Event deadline survives restart"),Restart->IsEventActive(TEXT("electromagnetic_storm")));
+    auto* PIE=NewObject<UAnomaliaWorldStateSubsystem>(World);
+    TestTrue(TEXT("PIE instance number does not change map persistence identity"),PIE->Configure(Server,TEXT("UEDPIE_7_test-map"),Error));
+    TestNotNull(TEXT("Same bridge restored across PIE instances"),PIE->FindState(TEXT("bridge")));
     // Simulate process loss immediately after the durable intent and before profile publication.
     Restart->Pending=MakeShared<FJsonObject>();Restart->Pending->SetStringField(TEXT("playerId"),TEXT("test-player"));
     Restart->Pending->SetStringField(TEXT("profileAfter"),TEXT("{\"marker\":\"committed-once\"}"));
