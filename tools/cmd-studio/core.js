@@ -6,6 +6,8 @@ const { spawn } = require('node:child_process');
 const { pipeline } = require('node:stream/promises');
 const { Readable, Transform } = require('node:stream');
 
+const ANOMALIA_UPROJECT = 'AnomaliaPrimeval.uproject';
+const ANOMALIA_TITLE = 'ANOMALIA PRIMEVAL OUTBOUNDUN';
 const FORMATS = new Set(['.glb','.gltf','.fbx','.obj','.blend','.usd','.usdz','.png','.jpg','.jpeg','.tga','.exr','.hdr']);
 const UNREAL_FORMATS = new Set(['.glb','.gltf','.fbx','.obj','.usd']);
 const MAX_DOWNLOAD = 350 * 1024 * 1024;
@@ -100,12 +102,34 @@ class Studio {
   addProject({ file } = {}) {
     const project = assertFile(file, '.uproject');
     if (!this.settingsData.projects.some(p => p.path === project))
-      this.settingsData.projects.push({ name: path.basename(project, '.uproject'), path: project });
+      this.settingsData.projects.push({ name: path.basename(project).toLowerCase() === ANOMALIA_UPROJECT.toLowerCase() ? ANOMALIA_TITLE : path.basename(project, '.uproject'), path: project });
     this.settingsData.activeProject = project;
     atomicWrite(this.configPath, this.settingsData);
     return this.projects();
   }
-  projects() { return { items: this.settingsData.projects, active: this.settingsData.activeProject }; }
+  projects() {
+    const saved = [...this.settingsData.projects].reverse().find(p =>
+      path.basename(p.path).toLowerCase() === ANOMALIA_UPROJECT.toLowerCase());
+    const sourceCandidate = path.resolve(this.scriptsDir, '..','..','..','unreal',ANOMALIA_UPROJECT);
+    const detected = fs.existsSync(sourceCandidate) && fs.statSync(sourceCandidate).isFile() ? sourceCandidate : '';
+    const known = saved?.path || detected;
+    return {
+      items: this.settingsData.projects.map(p => ({ ...p, available: fs.existsSync(p.path) })),
+      active: this.settingsData.activeProject,
+      featured: { id:'anomalia-primeval', name:ANOMALIA_TITLE, engine:'Unreal Engine 5',
+        path: known || '', available:Boolean(known && fs.existsSync(known)),
+        linked:Boolean(saved), detected:Boolean(!saved && detected),
+        status: known && fs.existsSync(known) ? 'disponible' : 'a-associer' }
+    };
+  }
+  selectProject({ file } = {}) {
+    const existing = this.settingsData.projects.find(p => p.path === file);
+    if (!existing) throw new Error('Projet non enregistré : associe d’abord son fichier .uproject.');
+    assertFile(existing.path, '.uproject');
+    this.settingsData.activeProject = existing.path;
+    atomicWrite(this.configPath, this.settingsData);
+    return this.projects();
+  }
   assets() { return [...this.catalog].reverse(); }
   async recordAsset(file, metadata = {}) {
     const resolved = assertFile(file);

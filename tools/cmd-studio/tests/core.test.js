@@ -67,3 +67,53 @@ test('prévisualisation refusée pour formats non 3D visualisables', async t => 
   const asset=(await studio.import({files:[other]}))[0];
   assert.throws(()=>studio.previewAsset({id:asset.id}),/uniquement pour GLB/);
 });
+
+test('ANOMALIA apparaît par défaut sans inventer un fichier local existant', t => {
+  const {dir}=sandbox(t);
+  const fakeScripts=path.join(dir,'tools','cmd-studio','scripts');
+  const localStudio=new Studio(dir,fakeScripts);
+  const featured=localStudio.projects().featured;
+  assert.equal(featured.name,'ANOMALIA PRIMEVAL OUTBOUNDUN');
+  assert.equal(featured.available,false);
+  assert.equal(featured.linked,false);
+  assert.equal(featured.status,'a-associer');
+  assert.equal(localStudio.projects().items.length,0);
+});
+
+test('ANOMALIA lié à un véritable .uproject et sélection conservée sans toucher au projet', t => {
+  const {dir}=sandbox(t);
+  const localStudio=new Studio(dir,path.join(dir,'scripts'));
+  const unreal=path.join(dir,'AnomaliaPrimeval.uproject');
+  const original='{"FileVersion":3,"Description":"Test UE5"}';
+  fs.writeFileSync(unreal,original);
+  localStudio.addProject({file:unreal});
+  assert.equal(localStudio.projects().featured.linked,true);
+  assert.equal(localStudio.projects().featured.available,true);
+  assert.equal(localStudio.projects().featured.name,'ANOMALIA PRIMEVAL OUTBOUNDUN');
+  assert.equal(localStudio.projects().items[0].name,'ANOMALIA PRIMEVAL OUTBOUNDUN');
+  const other=path.join(dir,'AutreJeu.uproject');
+  fs.writeFileSync(other,'{"FileVersion":3}');
+  localStudio.addProject({file:other});
+  assert.equal(localStudio.projects().active,other);
+  localStudio.selectProject({file:unreal});
+  assert.equal(localStudio.projects().active,unreal);
+  assert.equal(fs.readFileSync(unreal,'utf8'),original);
+  const reopened=new Studio(dir,path.join(dir,'scripts'));
+  assert.equal(reopened.projects().active,unreal);
+  assert.equal(reopened.projects().featured.linked,true);
+  assert.throws(()=>localStudio.selectProject({file:path.join(dir,'missing.uproject')}),/non enregistré/);
+});
+
+test('CMD Studio montre ANOMALIA sur son accueil, dans le menu et les projets', () => {
+  const html=fs.readFileSync(path.join(__dirname,'..','ui','index.html'),'utf8');
+  const ui=fs.readFileSync(path.join(__dirname,'..','ui','ui.js'),'utf8');
+  const main=fs.readFileSync(path.join(__dirname,'..','main.js'),'utf8');
+  assert.match(html,/id="navAnomalia"/);
+  assert.match(html,/id="anomaliaDashboard"/);
+  assert.match(html,/generated\/anomalia-logo\.jpg/);
+  assert.match(ui,/function renderProjects\(data\)/);
+  assert.match(ui,/chooseAnomaliaProject/);
+  assert.match(ui,/openAnomalia/);
+  assert.match(main,/'selectProject'/);
+  assert.doesNotMatch(html,/onerror=/);
+});

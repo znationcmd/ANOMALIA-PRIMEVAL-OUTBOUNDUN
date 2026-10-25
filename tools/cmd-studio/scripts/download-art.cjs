@@ -13,6 +13,14 @@ const images = [
 ];
 const dir = path.join(__dirname,'..','ui','generated');
 fs.mkdirSync(dir,{recursive:true});
+// Original ANOMALIA branding shipped with this repository, not a placeholder image.
+// The app remains usable with its gradient fallback if the image is unavailable.
+const anomaliaLogo=path.resolve(__dirname,'..','..','..','public','anomalia-logo.jpg');
+if(fs.existsSync(anomaliaLogo)){
+  fs.copyFileSync(anomaliaLogo,path.join(dir,'anomalia-logo.jpg'));
+  console.log('Logo original ANOMALIA intégré à CMD Studio.');
+}
+
 function fetchPhoto(id,width,dest){
   return new Promise((resolve,reject)=>{
     const url='https://images.unsplash.com/'+id+'?w='+width+'&q=78&fit=crop&fm=jpg';
