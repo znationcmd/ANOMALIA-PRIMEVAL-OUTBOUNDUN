@@ -27,3 +27,32 @@
 .updatePrivacy{display:flex;align-items:start;gap:10px;color:#91acc2;font-size:10px;line-height:1.8;margin:20px 0 0}
 .updatePrivacy svg{width:17px;height:17px;color:#70debc}
 @media(max-width:1250px){.updateForm{grid-template-columns:1fr}}
+
+/* ANOMALIA pinned game project, shown independently of local file association. */
+.navAnomalia{border-color:#513974b8;background:linear-gradient(90deg,#261c42a1,#152f4b84);color:#ddd2ff;font-weight:700}
+.navAnomalia:hover{background:#3a265e;color:#fff}
+.anomaliaFeatured{display:flex;align-items:center;gap:22px;min-height:194px;margin:18px 0 28px;
+ padding:20px 24px;border:1px solid #6856a7;border-radius:18px;
+ background:radial-gradient(ellipse at 0 10%,#553b8b50,transparent 55%),linear-gradient(115deg,#1a1939,#141e32 64%,#0b2638);
+ box-shadow:0 13px 38px #0004,inset 0 1px #ffffff24}
+.anomaliaFeatured.projectLinked{border-color:#5794a9}
+.anomaliaArt,.anomaliaProjectLogo{flex:none;display:grid;place-items:center;overflow:hidden;width:128px;height:128px;
+ border:1px solid #7669bd;border-radius:16px;background:linear-gradient(155deg,#593473,#131d3c)}
+.anomaliaArt img,.anomaliaProjectLogo img{max-width:100%;max-height:100%;width:100%;height:100%;object-fit:contain}
+.anomaliaDetails{flex:1;min-width:0}
+.anomaliaDetails h2{font-size:23px;line-height:1.18;letter-spacing:1px;margin:8px 0}
+.anomaliaDetails h2 span{display:block;color:#cdc3ff}
+.anomaliaDetails p{font-size:12px;color:#b7c4e2;margin:8px 0 10px;line-height:1.6}
+.anomaliaDetails small{display:block;color:#7fe2cd;font-size:11px}
+.anomaliaDetails code{display:block;overflow-wrap:anywhere;font:10px/1.6 Consolas,monospace;color:#aab8d3;margin-top:5px}
+.anomaliaActions{display:flex;flex-direction:column;gap:9px;min-width:156px}
+.anomaliaProjectRow{gap:17px;align-items:center;flex-wrap:wrap;border-color:#5d5493}
+.anomaliaProjectLogo{width:70px;height:70px;border-radius:12px}
+.anomaliaProjectInfo{display:flex;flex:1;min-width:180px;flex-direction:column;gap:6px}
+.anomaliaProjectInfo b{font-size:15px;color:#fff}
+.anomaliaProjectInfo small{font-size:11px;color:#90a5c8;overflow-wrap:anywhere}
+.anomaliaProjectActions{display:flex;flex-direction:column;gap:7px}
+@media(max-width:1120px){.anomaliaFeatured{gap:13px;padding:15px;flex-wrap:wrap}
+ .anomaliaArt{width:90px;height:90px}.anomaliaActions{width:100%;flex-direction:row}
+ .anomaliaDetails h2{font-size:19px}}
+@media(max-width:900px){.anomaliaFeatured{align-items:flex-start}.anomaliaActions .btn{flex:1}}
