@@ -32,6 +32,14 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     Collision->SetupAttachment(Chassis);
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Body->SetVisibility(false); Body->SetHiddenInGame(true);
+    RoadGlass=CreateDefaultSubobject<UStaticMeshComponent>(TEXT("RoadGlass"));RoadGlass->SetupAttachment(Chassis);
+    RoadGlass->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+    const TCHAR* WheelNames[]={TEXT("RoadWheelFL"),TEXT("RoadWheelFR"),TEXT("RoadWheelRL"),TEXT("RoadWheelRR")};
+    for(int32 Index=0;Index<4;++Index)
+    {
+        auto* Wheel=CreateDefaultSubobject<UStaticMeshComponent>(FName(WheelNames[Index]));
+        Wheel->SetupAttachment(Chassis);Wheel->SetCollisionEnabled(ECollisionEnabled::NoCollision);RoadWheels.Add(Wheel);
+    }
     Chassis->SetCollisionProfileName(TEXT("Vehicle"));
     Chassis->SetSimulatePhysics(false); // A validated Physics Asset must exist first.
     Chassis->SetIsReplicated(true);
@@ -67,7 +75,7 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
 
 bool AAnomaliaChaosRoadVehicle::HasValidRoadRig() const
 {
-    if(!RoadMesh || !RoadMesh->GetPhysicsAsset() || !RoadAnimation ||
+    if(!RoadMesh || !RoadMesh->GetPhysicsAsset() || !RoadBodyMesh || !RoadWheelMesh || !RoadAnimation ||
        !RoadAnimation->IsChildOf(UVehicleAnimationInstance::StaticClass()) || WheelBones.Num()!=4 ||
        !FMath::IsFinite(WheelRadiusCm) || WheelRadiusCm<10.f || WheelRadiusCm>100.f) return false;
     TSet<FName> Unique;
@@ -87,6 +95,19 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     Body->SetVisibility(false); Body->SetHiddenInGame(true);
     Chassis->SetSkeletalMesh(RoadMesh);
     Chassis->SetAnimInstanceClass(RoadAnimation);
+    Body->SetStaticMesh(RoadBodyMesh);Body->SetRelativeTransform(FTransform::Identity);
+    Body->SetVisibility(RoadBodyMesh!=nullptr);Body->SetHiddenInGame(RoadBodyMesh==nullptr);
+    RoadGlass->SetStaticMesh(RoadGlassMesh);RoadGlass->SetVisibility(RoadGlassMesh!=nullptr);
+    for(int32 Index=0;Index<RoadWheels.Num();++Index)
+    {
+        RoadWheels[Index]->SetStaticMesh(RoadWheelMesh);
+        if(WheelBones.IsValidIndex(Index))
+        {
+            const FString VisualName=WheelBones[Index].ToString().Replace(TEXT("Phys"),TEXT("Vis"));
+            const FName VisualBone=Chassis->GetBoneIndex(FName(*VisualName))!=INDEX_NONE?FName(*VisualName):WheelBones[Index];
+            RoadWheels[Index]->AttachToComponent(Chassis,FAttachmentTransformRules::SnapToTargetNotIncludingScale,VisualBone);
+        }
+    }
     ChaosMovement->WheelSetups.Reset();
     if(!HasValidRoadRig()) { Chassis->SetSimulatePhysics(false); return; }
     for(int32 Index=0;Index<4;++Index)
@@ -132,7 +153,8 @@ bool AAnomaliaChaosRoadVehicle::ConfigureVehicle(FName NewVehicleId)
 {
     FAnomaliaVehicleDefinition Definition;
     if(!UAnomaliaVehicleCatalog::FindVehicleDefinition(NewVehicleId,Definition) || Definition.Domain!=EAnomaliaVehicleDomain::Ground) return false;
-    return Super::ConfigureVehicle(NewVehicleId);
+    if(!Super::ConfigureVehicle(NewVehicleId))return false;
+    ApplyRoadRig();return true;
 }
 bool AAnomaliaChaosRoadVehicle::IsChaosDriveReady() const { return IsDriveReady(); }
 bool AAnomaliaChaosRoadVehicle::IsDriveReady() const

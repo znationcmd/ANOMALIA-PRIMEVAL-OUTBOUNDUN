@@ -18,11 +18,11 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);args=p.parse_args()
     source=args.engine_root/'Templates/TemplateResources/Standard/Vehicles/Content'
-    choices=[('SportsCar','SKM_SportsCar','SportsCar_AnimBP','SM_SportsCar_Tire'),
-             ('OffroadCar','SKM_Offroad','Offroad_AnimBP','SM_Offroad_Tire')]
-    selected=next((row for row in choices if all((source/row[0]/(name+'.uasset')).is_file() for name in row[1:])),None)
+    choices=[('SportsCar','SKM_SportsCar','ABP_SportsCar','SM_SportsCar_Wheel','SM_SportsCar','SM_SportsCar_Glass'),
+             ('OffroadCar','SKM_Offroad','Offroad_AnimBP','SM_Offroad_Tire','SM_Offroad_Body',None)]
+    selected=next((row for row in choices if all((source/row[0]/(name+'.uasset')).is_file() for name in row[1:5])),None)
     if not selected:raise RuntimeError('A complete installed vehicle skeletal/animation/tire set is required')
-    family,mesh_name,animation_name,tire_name=selected
+    family,mesh_name,animation_name,tire_name,body_name,glass_name=selected
     mesh=source/family/(mesh_name+'.uasset')
     raw=mesh.read_bytes()
     strings=raw.decode('latin1')+'\n'+raw.decode('utf-16-le',errors='ignore')
@@ -50,7 +50,8 @@ def main():
     args.output.mkdir(parents=True,exist_ok=True)
     report=dict(state='INSTALLED_TEMPLATE_COPIED_FOR_LOCAL_CHAOS_REVIEW',meshPackage=package,
         referenceTemplate=family,animationClass=prefix+family+'/'+animation_name+'.'+animation_name+'_C',
-        tirePackage=prefix+family+'/'+tire_name,
+        tirePackage=prefix+family+'/'+tire_name,bodyPackage=prefix+family+'/'+body_name,
+        glassPackage=prefix+family+'/'+glass_name if glass_name else None,
         source='Installed Unreal Engine vehicle template; Epic Unreal Engine license',
         engineFilesModified=False,engineAssetsUploaded=False,
         installedTemplateAssets=[str(p.relative_to(source)) for p in sorted(source.rglob('*.uasset'))],

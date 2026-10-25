@@ -9,8 +9,9 @@ report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),productionM
 try:
     source=json.loads((OUT/'template-source.json').read_text())
     mesh=unreal.load_asset(source['meshPackage']);animation=unreal.load_class(None,source['animationClass'])
-    tire=unreal.load_asset(source['tirePackage'])
-    if not mesh or not animation or not tire:raise RuntimeError('Real template rig, animation or tires missing')
+    tire=unreal.load_asset(source['tirePackage']);body_art=unreal.load_asset(source['bodyPackage'])
+    glass_art=unreal.load_asset(source['glassPackage']) if source.get('glassPackage') else None
+    if not mesh or not animation or not tire or not body_art:raise RuntimeError('Real template rig, animation or tires missing')
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     if unreal.EditorAssetLibrary.does_asset_exist(PACKAGE):
         if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Cannot reopen owned review')
@@ -30,6 +31,8 @@ try:
     car=spawn(unreal.AnomaliaChaosRoadVehicle,(0,0,100))
     # This licensed template is a physics fixture, not the requested final sedan.
     car.set_editor_property('road_mesh',mesh);car.set_editor_property('road_animation',animation)
+    car.set_editor_property('road_body_mesh',body_art);car.set_editor_property('road_wheel_mesh',tire)
+    car.set_editor_property('road_glass_mesh',glass_art)
     chassis=car.get_editor_property('chassis');chassis.set_skeletal_mesh(mesh)
     bones=[]
     for i in range(chassis.get_num_bones()):
@@ -83,12 +86,14 @@ try:
     if len(candidates)!=4:
         import re
         candidates=[b for b in bones if re.fullmatch(r'wheel[_-]?(FL|FR|RL|RR|BL|BR)',b['name'],re.IGNORECASE)]
+    if len(candidates)!=4:
+        candidates=[b for b in bones if 'wheel' in b['name'].lower() and b['name'].lower().startswith('phys')]
     if len(candidates)!=4:raise RuntimeError('Four unambiguous wheel bones required; see recorded actual skeleton')
     by_x=sorted(candidates,key=lambda b:b['positionCm'][0],reverse=True)
     front=sorted(by_x[:2],key=lambda b:b['positionCm'][1]);rear=sorted(by_x[2:],key=lambda b:b['positionCm'][1])
     if min(x['positionCm'][0] for x in front)-max(x['positionCm'][0] for x in rear)<100:raise RuntimeError('Wheel axles are not longitudinally separated')
     selected=front+rear
-    bounds=tire.get_bounds();radius=max(bounds.box_extent.x,bounds.box_extent.z)
+    bounds=tire.get_bounds();radius=max(bounds.box_extent.x,bounds.box_extent.y,bounds.box_extent.z)
     if radius<10 or radius>100:raise RuntimeError('Measured real tire radius is outside supported road bounds')
     car.set_editor_property('wheel_bones',[unreal.Name(b['name']) for b in selected])
     car.set_editor_property('wheel_radius_cm',radius)

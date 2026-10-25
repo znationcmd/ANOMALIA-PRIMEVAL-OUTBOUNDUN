@@ -8,6 +8,8 @@
 class UChaosWheeledVehicleMovementComponent;
 class USkeletalMeshComponent;
 class USkeletalMesh;
+class UStaticMesh;
+class UStaticMeshComponent;
 class UAnimInstance;
 
 UCLASS()
@@ -41,6 +43,12 @@ public:
     TObjectPtr<USkeletalMesh> RoadMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
     TSubclassOf<UAnimInstance> RoadAnimation;
+    /** Licensed modular art, assembled on the actual animated skeleton. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadBodyMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadWheelMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadGlassMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMeshComponent> RoadGlass;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMeshComponent>> RoadWheels;
     /** Front left, front right, rear left, rear right. Names come from the actual rig. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
     TArray<FName> WheelBones;
