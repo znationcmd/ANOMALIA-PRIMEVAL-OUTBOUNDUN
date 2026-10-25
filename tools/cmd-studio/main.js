@@ -11,7 +11,7 @@ if (process.platform === 'win32') app.setAppUserModelId('fr.cmd.studio');
 const ACTIONS = new Set([
   'status', 'settings', 'configure', 'assets', 'import', 'search',
   'downloadPolyHaven', 'convertBlender', 'importUnreal', 'openTool',
-  'openAsset', 'previewAsset', 'projects', 'addProject'
+  'openAsset', 'previewAsset', 'projects', 'addProject', 'selectProject'
 ]);
 
 function createWindow() {
