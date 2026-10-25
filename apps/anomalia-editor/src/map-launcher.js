@@ -1,4 +1,5 @@
 import {buildMapCatalog,filterMapCatalog} from './map-catalog.js';
+import { createLandscapeBackdrop } from './launcher-landscape.js';
 
 // Écran de choix des cartes : aucun fond DayZ, aucune carte ou progression fictive.
 // Les .umap se lancent dans Unreal Editor ; seules les scènes ANOMALIA JSON
@@ -21,7 +22,7 @@ export function createMapLauncher({listLocal,onOpenLocal,onNew,onResume,onImport
           <button id="mapImportFile" type="button">⇧ Importer .anomalia.json</button></div>
       </div><div class="mapHeroBottom"><span>3D WORLD BUILDER</span><span>LOCAL / UE5</span></div>
     </div>
-    <div class="mapPickerBody"><div class="mapPickerHeading"><div><small>BIBLIOTHÈQUE DE CARTES</small><h2>Mes mondes</h2></div><span id="mapCount" class="mapCount">Recherche des cartes…</span></div>
+    <div class="mapPickerBody"><div class="mapPickerHeading"><div><small>BIBLIOTHÈQUE DE CARTES</small><h2>Cartes disponibles</h2></div><span id="mapCount" class="mapCount">Recherche des cartes…</span></div>
       <div class="mapPickerToolbar"><div class="mapFilters" role="group" aria-label="Filtrer les cartes">
         <button type="button" data-filter="all" class="active" aria-pressed="true">Toutes</button>
         <button type="button" data-filter="local" aria-pressed="false">Scènes locales</button>
@@ -42,6 +43,7 @@ export function createMapLauncher({listLocal,onOpenLocal,onNew,onResume,onImport
       </div>
     </div>`;
   document.body.append(layer);
+  createLandscapeBackdrop(layer);
   const $=selector=>layer.querySelector(selector);
   const state={kind:'all',search:'',items:[],unreal:null,busy:false};
   const grid=$('#mapPickerGrid');
