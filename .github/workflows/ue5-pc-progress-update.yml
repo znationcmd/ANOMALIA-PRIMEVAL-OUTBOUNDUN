@@ -9,6 +9,10 @@ on:
       - 'unreal/Build/Windows/Application.ico'
       - 'unreal/Content/Splash/**'
       - 'unreal/SourceAssets/Branding/**'
+      - 'unreal/Scripts/**'
+      - 'public/config/**'
+      - 'scripts/vehicle-assets/**'
+      - 'scripts/world-features/**'
       - 'unreal/Scripts/import_game_branding.py'
       - 'unreal/Scripts/import_workshop_branding.py'
       - 'scripts/ue5/prepare-game-branding.ps1'
@@ -34,7 +38,7 @@ jobs:
   update-owned-installed-game:
     # Explicit Editor-map recovery is handled by ue5-map-progress.yml. Avoid
     # replacing its pending run in the shared native-host concurrency group.
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && !startsWith(github.event.head_commit.message, '[map-recovery]') && (github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/ue5/driveable-roster-city-20261023' || startsWith(github.event.head_commit.message, '[pc-update]'))
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && !startsWith(github.event.head_commit.message, '[map-recovery]') && !startsWith(github.event.head_commit.message, '[ci-config]') && !startsWith(github.event.head_commit.message, '[native-only]')
     # Acquire the host only for an enabled job. A skipped workflow must not
     # replace the Editor validation waiting in GitHub's single pending slot.
     concurrency:

@@ -1,6 +1,7 @@
 """Tests of build orchestration only; no Unreal compilation is simulated as evidence."""
 import importlib.util
 import json
+import os
 from pathlib import Path
 import tempfile
 import unittest
@@ -34,6 +35,23 @@ class BuildDriverTests(unittest.TestCase):
             report = json.loads((root / "evidence/report.json").read_text())
             self.assertEqual(report["compilation"], "failed")
             self.assertEqual(report["execution"], "not_run")
+
+    def test_new_source_commit_invalidates_native_identity_dependency(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            batch=root/'engine/Engine/Build/BatchFiles/Linux';batch.mkdir(parents=True)
+            (batch/'Build.sh').touch()
+            (root/'engine/Engine/Build/Build.version').write_text('{"MajorVersion":5}')
+            with patch.object(driver,'ROOT',root), patch.object(driver.sys,'platform','linux'), \
+                 patch('runpy.run_path',return_value={'stage':lambda _:None}), \
+                 patch.object(driver.subprocess,'run') as run:
+                run.return_value.returncode=0
+                for commit in ('a'*40,'b'*40,'untrusted\\"value'):
+                    with patch.dict(os.environ,{'GITHUB_SHA':commit}):
+                        self.assertEqual(driver.validate(root/'engine',root/'evidence'),0)
+                    expected=commit if len(commit)==40 else 'local'
+                    self.assertEqual((root/'unreal/Build/AnomaliaSourceCommit.generated.txt').read_text(),expected)
+                    self.assertEqual(json.loads((root/'evidence/report.json').read_text())['buildCommit'],expected)
 
     def run_native_fixture(self, native_result):
         with tempfile.TemporaryDirectory() as directory, patch.object(driver.sys, "platform", "linux"):

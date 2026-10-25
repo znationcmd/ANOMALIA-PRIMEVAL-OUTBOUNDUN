@@ -12,7 +12,7 @@ on:
   workflow_dispatch:
 jobs:
   native:
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025' && !startsWith(github.event.head_commit.message, '[pc-update]') && !startsWith(github.event.head_commit.message, '[ci-config]')
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025' && (github.event_name == 'workflow_dispatch' || startsWith(github.event.head_commit.message, '[native-only]'))
     # A skipped validation must not occupy or replace an install's pending host slot.
     concurrency:
       group: anomalia-ue5-native-host
