@@ -15,16 +15,20 @@ import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
 import { createMapLauncher } from './map-launcher.js';
 import './map-launcher.css';
+import { activateReferenceLayout } from './reference-layout.js';
+import './dayz-layout.css';
 import './editor-clean.css';
+import './dayz-final.css';
 
+activateReferenceLayout();
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const scene = new THREE.Scene();
-scene.background = new THREE.Color('#293943');
-scene.fog = new THREE.FogExp2('#293943',.0018);
+scene.background = new THREE.Color('#8dbad3');
+scene.fog = new THREE.FogExp2('#b5ccbd',.0018);
 const stage = $('#viewport');
 const camera = new THREE.PerspectiveCamera(58,1,.1,1600);
-camera.position.set(25,23,28);
+camera.position.set(24,7,40);
 const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:false, powerPreference:'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio,2));
 renderer.shadowMap.enabled=true;
@@ -35,7 +39,7 @@ stage.prepend(renderer.domElement);
 renderer.domElement.classList.add('canvas');
 const orbit=new OrbitControls(camera,renderer.domElement);
 orbit.enableDamping=true;orbit.dampingFactor=.08;
-orbit.target.set(0,0,0);orbit.maxPolarAngle=Math.PI/2-.02;
+orbit.target.set(0,2,-30);orbit.maxPolarAngle=Math.PI/2-.02;
 orbit.maxDistance=350;orbit.minDistance=1;
 orbit.mouseButtons={LEFT:THREE.MOUSE.PAN,MIDDLE:THREE.MOUSE.DOLLY,RIGHT:THREE.MOUSE.ROTATE};
 orbit.update();
@@ -47,12 +51,31 @@ sun.shadow.camera.left=-90;sun.shadow.camera.right=90;
 sun.shadow.camera.top=90;sun.shadow.camera.bottom=-90;
 sun.shadow.bias=-.0002;
 scene.add(sun);
+// Herbe du viewport : motif PBR procédural sobre, jusqu'au chargement d'un vrai terrain.
+const soil=document.createElement('canvas');soil.width=256;soil.height=256;
+const soilCtx=soil.getContext('2d');
+soilCtx.fillStyle='#667d51';soilCtx.fillRect(0,0,256,256);
+let grassSeed=32917;
+function seededGrass(){grassSeed=(Math.imul(grassSeed,1664525)+1013904223)>>>0;return grassSeed/4294967296;}
+for(let i=0;i<26000;i++){
+  const x=seededGrass()*256,y=seededGrass()*256;
+  const tone=seededGrass();
+  soilCtx.fillStyle=tone>.72?'#a3a66f':tone>.36?'#718850':'#526f43';
+  soilCtx.globalAlpha=.13+seededGrass()*.35;
+  soilCtx.fillRect(x,y,1+seededGrass()*3,1+seededGrass()*2);
+}
+soilCtx.globalAlpha=1;
+const soilTexture=new THREE.CanvasTexture(soil);
+soilTexture.colorSpace=THREE.SRGBColorSpace;
+soilTexture.wrapS=soilTexture.wrapT=THREE.RepeatWrapping;
+soilTexture.repeat.set(55,55);
+soilTexture.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());
 const ground=new THREE.Mesh(new THREE.PlaneGeometry(800,800),
-  new THREE.MeshStandardMaterial({color:'#3c4b52',roughness:1}));
+  new THREE.MeshStandardMaterial({map:soilTexture,color:'#d8dbb9',roughness:1}));
 ground.rotation.x=-Math.PI/2;ground.position.y=-.07;
 ground.receiveShadow=true;scene.add(ground);
-const grid=new THREE.GridHelper(800,80,'#e1bf96','#8baab4');
-grid.position.y=-.04;grid.material.transparent=true;grid.material.opacity=.54;scene.add(grid);
+const grid=new THREE.GridHelper(800,80,'#b6c89d','#6d8760');
+grid.position.y=-.04;grid.material.transparent=true;grid.material.opacity=.16;scene.add(grid);
 const terrainWorld=createTerrainWorld({ground,grid,scene,camera,orbit});
 const objects=new THREE.Group();scene.add(objects);
 const raycaster=new THREE.Raycaster();
@@ -435,15 +458,32 @@ function openDatabase(){
     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
   });
 }
+function snapshotCurrentViewport(project){
+  // Local map cover is captured from the real scene displayed in Three.js;
+  // never fabricate a screenshot of a UE5 .umap.
+  if(project?.createdAt!==history.project.createdAt)return null;
+  try {
+    const canvas=document.createElement('canvas');
+    canvas.width=320;canvas.height=180;
+    const context=canvas.getContext('2d',{alpha:false});
+    if(!context||renderer.domElement.width<32||renderer.domElement.height<32)return null;
+    renderer.render(scene,camera);
+    context.drawImage(renderer.domElement,0,0,canvas.width,canvas.height);
+    const preview=canvas.toDataURL('image/jpeg',.68);
+    return preview.length<175000?preview:null;
+  }catch{return null;}
+}
 async function storeProject(project) {
   const db=await openDatabase();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('projects','readwrite');
     const store=tx.objectStore('projects');
-    store.put(project,'last-opened');
+    const preview=snapshotCurrentViewport(project);
+    const saved=preview?{...project,_editorPreview:preview}:project;
+    store.put(saved,'last-opened');
     // Index permanent par carte : le changement de carte ne détruit plus l'ancienne.
     if(typeof project.createdAt==='string'&&project.createdAt.length<=128)
-      store.put(project,'scene:'+project.createdAt);
+      store.put(saved,'scene:'+project.createdAt);
     tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};
   });
 }
@@ -468,7 +508,11 @@ async function listLocalScenes(){
         const project=entry.value;
         try{
           const valid=validateProject(project);
-          records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,edited:valid.createdAt});
+          const preview=typeof project._editorPreview==='string'&&
+            /^data:image\/jpeg;base64,[a-zA-Z0-9+/=]+$/.test(project._editorPreview)&&
+            project._editorPreview.length<175000?project._editorPreview:null;
+          records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,
+            edited:valid.createdAt,preview});
         }catch{ /* corrupted scene hidden, originals are not destroyed */ }
       }
       entry.continue();

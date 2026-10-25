@@ -42,6 +42,8 @@ jobs:
           done
           cat /tmp/anomalia-editor-vite.log
           exit 1
+      - name: Tester le vrai parcours des cartes et menus
+        run: node scripts/e2e-map-flow.cjs
       - name: Capturer interface Desktop reelle
         run: |
           mkdir -p screenshots

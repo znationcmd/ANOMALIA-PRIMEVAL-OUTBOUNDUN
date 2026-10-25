@@ -6,7 +6,7 @@ export function buildMapCatalog(localScenes=[],unrealStatus=null){
   const safeScenes=scenes.filter(x=>x&&typeof x.id==='string'&&typeof x.name==='string')
     .map(x=>({id:'local:'+x.id,key:x.id,title:x.name||'Carte sans nom',
       type:'local',subtitle:x.objects===1?'1 objet':(x.objects||0)+' objets',
-      edited:x.edited||'',description:'Scène ANOMALIA locale · chargement intégré'}));
+      edited:x.edited||'',preview:typeof x.preview==='string'&&/^data:image\/jpeg;base64,/.test(x.preview)?x.preview:null,description:'Scène ANOMALIA locale · chargement intégré'}));
   const safeMaps=maps.filter(x=>typeof x==='string'&&/^[A-Za-z0-9_/-]+\.umap$/.test(x))
     .map(x=>({id:'ue5:'+x,key:x,title:x.split('/').pop().replace(/\.umap$/i,'').replace(/[_-]+/g,' '),
       type:'ue5',subtitle:x,edited:'',description:'Carte Unreal native · ouverture dans UE5'}));
