@@ -6,7 +6,8 @@
 <aside class="sidebar">
  <div class="brand"><div class="brandBadge"><span class="brandSymbol">A</span><span class="brandPlus">+</span></div><div><strong>ANOMALIA <em>TOOLS</em></strong><small>PROFESSIONAL DEVELOPMENT SUITE</small></div></div>
  <div class="version"><span class="versionLine"></span> VERSION <strong id="appSidebarVersion" aria-label="Version installée">—</strong> · WINDOWS WORKSTATION</div>
- <div class="navHeading">ESPACE DE TRAVAIL</div>
+ <div class="sidebarNav" id="toolsNavigation" role="navigation" aria-label="Navigation ANOMALIA">
+  <div class="navHeading">ESPACE DE TRAVAIL</div>
  <button data-tab="home" class="nav active"><span>◩</span> Vue d'ensemble</button>
  <button data-tab="workbench" class="nav"><span>⌘</span> Workbench <small>Code</small></button>
  <button data-tab="objects" class="nav"><span>⬡</span> Object Builder <small>3D</small></button>
@@ -16,16 +17,32 @@
  <div class="navHeading">COMPILATION & EXPORT</div>
  <button data-tab="addon" class="nav"><span>◈</span> Addon Builder</button>
  <button data-tab="publisher" class="nav"><span>⬆</span> Publisher</button>
- <div class="navHeading">ANOMALIA COMMUNITY</div>
+ <div class="navHeading">UTILITAIRES</div>
+<button type="button" data-tab="utilities" data-utility="terrainProcessor" class="nav"><span>▤</span> Terrain Processor <small>PNG</small></button>
+<button type="button" data-tab="utilities" data-utility="bankrev" class="nav"><span>▣</span> BankRev <small>Compat.</small></button>
+<button type="button" data-tab="utilities" data-utility="imagepaa" class="nav"><span>▧</span> Image To PAA <small>TGA</small></button>
+<button type="button" data-tab="utilities" data-utility="cfgconvert" class="nav"><span>⌁</span> Cfg Convert <small>JSON</small></button>
+<button type="button" data-tab="utilities" data-utility="dsutils" class="nav"><span>✧</span> DS Utils <small>Compat.</small></button>
+<button type="button" data-tab="utilities" data-utility="texview" class="nav"><span>▥</span> Tex View <small>Images</small></button>
+<button type="button" data-tab="utilities" data-utility="navmesh" class="nav"><span>⌘</span> Nav Mesh Generator <small>UE5</small></button>
+<div class="navHeading">ANOMALIA COMMUNITY</div>
  <button data-tab="workshop" class="nav"><span>✦</span> ANOMALIA Workshop <small>MODS</small></button>
- <div class="navHeading">APPLICATION</div>
+ <div class="navHeading">STATUT & APPLICATION</div>
+<button type="button" data-tab="systemStatus" class="nav"><span>◉</span> État des outils <small>INFO</small></button>
  <button data-tab="updates" class="nav"><span>↻</span> Mises à jour <small id="sidebarUpdateBadge">AUTO</small></button>
- <div class="grow"></div>
+ </div><div class="grow" aria-hidden="true"></div>
  <div class="sidebarWorkspace"><span class="workspaceDot"></span><div><b>STUDIO LOCAL</b><small id="sidebarWorkspaceName">Aucun projet actif</small></div></div>
  <div class="privacy"><span class="greenDot"></span> Espace de travail privé<small>Aucun fichier partagé entre utilisateurs.</small></div>
 </aside>
 <main>
- <header class="topbar">
+ <div class="toolsMenuBar" aria-label="Menus ANOMALIA Tools">
+  <button type="button" data-tools-menu="file">File</button><button type="button" data-tools-menu="view">View</button>
+  <button type="button" data-tools-menu="settings">Settings</button><button type="button" data-tools-menu="tools">Tools</button>
+  <button type="button" data-tools-menu="help">Help</button>
+  <span class="toolsMenuStatus">ANOMALIA TOOLS · WINDOWS</span>
+  <div id="toolsMenuDropdown" class="toolsMenuDropdown" role="menu" hidden></div>
+</div>
+<header class="topbar">
    <div class="pageIntro"><small>ANOMALIA <span class="breadcrumbDivider">/</span> CREATION PIPELINE</small><h1 id="pageTitle">Vue d'ensemble</h1></div>
    <div class="headerActions"><label>PROJET ACTIF</label><select id="activeProject"><option value="">Choisir un projet...</option></select><button id="newProject" class="primary">＋ Nouveau projet</button></div>
  </header>
@@ -139,7 +156,19 @@
    <div class="panelTitle"><div><h2>Publisher</h2><p>Prépare un package partageable avec des fichiers de ton projet et exporte-le manuellement.</p></div></div>
    <div class="split"><div class="panel"><h3>Exporter mon mod</h3><p>Enregistre un fichier ZIP sur ton PC, que tu pourras contrôler puis distribuer toi-même.</p><button id="exportMod" class="primary fullWidth">Exporter mon mod en ZIP</button><div id="publishInfo" class="output">Aucune publication en ligne n'est effectuée automatiquement.</div></div><div class="panel"><h3>Sécurité de publication</h3><p class="caption">Les sources restent privées tant que tu ne choisis pas de les partager. Aucun Steam Workshop ni serveur public n'est connecté. Les droits sur les modèles et textures sont à vérifier avant toute diffusion.</p><div class="safeBox">◉ Aucune clé Steam ou Epic demandée. Aucun projet tiers consulté.</div></div></div>
   </section>
-  <section id="updates" class="page" hidden>
+  <section id="utilities" class="page utilityPage" hidden>
+<div class="panelTitle"><div><small class="sectionOverline">ANOMALIA / UTILITAIRES</small><h2 id="utilityTitle">Utilitaires</h2><p>Fonctions natives Unreal et outils de compatibilité clairement identifiés.</p></div></div>
+<div class="utilityLayout"><nav class="utilityIndex" aria-label="Choisir un utilitaire"><button type="button" data-util-select="terrainProcessor">Terrain Processor</button><button type="button" data-util-select="bankrev">BankRev</button><button type="button" data-util-select="imagepaa">Image To PAA</button><button type="button" data-util-select="cfgconvert">Cfg Convert</button><button type="button" data-util-select="dsutils">DS Utils</button><button type="button" data-util-select="texview">Tex View</button><button type="button" data-util-select="navmesh">Nav Mesh Generator</button></nav>
+<div class="utilityMain"><section class="panel utilPanel" id="utility-terrainProcessor" data-util-panel="terrainProcessor" hidden><h3>Terrain Processor</h3><p>Traitement réel des heightmaps PNG dans Content/Terrain.</p><label>Image PNG<select id="utilTerrainSource"></select></label><label>Opération<select id="utilTerrainMode"><option value="normalize">Normaliser l'altitude</option><option value="invert">Inverser le relief</option><option value="smooth">Lisser le terrain</option></select></label><button type="button" id="utilTerrainRun" class="primary">Traiter la heightmap</button><p class="caption">Crée un nouveau PNG, conserve la source.</p></section>
+<section class="panel utilPanel" id="utility-bankrev" data-util-panel="bankrev" hidden><h3>BankRev — compatibilité</h3><p>Le format PBO propriétaire de DayZ n’est pas extrait par ANOMALIA Tools. Aucun résultat fictif.</p><button type="button" data-util-go="addon">Ouvrir Addon Builder ANOMALIA</button></section>
+<section class="panel utilPanel" id="utility-imagepaa" data-util-panel="imagepaa" hidden><h3>Image To PAA — alternative Unreal</h3><p>Unreal Engine utilise notamment TGA et PNG, pas les textures PAA de DayZ.</p><label>Texture PNG<select id="utilTextureSource"></select></label><button type="button" id="utilTextureRun" class="primary">Convertir PNG → TGA 32 bits</button><button type="button" data-util-go="textures">Ouvrir Texture Tools</button></section>
+<section class="panel utilPanel" id="utility-cfgconvert" data-util-panel="cfgconvert" hidden><h3>Cfg Convert — configuration</h3><p>Conversion réelle de la syntaxe INI/CFG et des objets JSON locaux en JSON ANOMALIA. Les CFG binaires DayZ ne sont pas pris en charge.</p><label>Fichier source<select id="utilConfigSource"></select></label><button type="button" id="utilConfigRun" class="primary">Convertir en JSON</button><button type="button" data-util-go="workbench">Ouvrir Workbench</button></section>
+<section class="panel utilPanel" id="utility-dsutils" data-util-panel="dsutils" hidden><h3>DS Utils — sécurité</h3><p>Les signatures DayZ BISIGN et le format PBO ne sont pas compatibles avec les plugins Unreal. Les manifestes SHA-256 ne sont pas des signatures numériques.</p><button type="button" data-util-go="addon">Voir manifestes du module Addon</button></section>
+<section class="panel utilPanel" id="utility-texview" data-util-panel="texview" hidden><h3>Tex View — ANOMALIA</h3><p>Le visualiseur local existe déjà dans Texture Tools pour PNG, JPG et WebP.</p><button type="button" data-util-go="textures" class="primary">Ouvrir le visualiseur de textures</button></section>
+<section class="panel utilPanel" id="utility-navmesh" data-util-panel="navmesh" hidden><h3>Nav Mesh Generator — UE5</h3><p>La génération d’un NavMesh natif doit être exécutée dans Unreal Engine, pas simulée dans une interface.</p><p>Dans le niveau Unreal, placer un <strong>Nav Mesh Bounds Volume</strong>, couvrir les surfaces accessibles, construire la navigation, puis tester les IA. Pour les ponts réparables, actualiser les données de navigation.</p><button type="button" data-util-go="terrain">Ouvrir Terrain Builder</button></section><div class="output" id="utilityResult" role="status" aria-live="polite">Sélectionne un projet pour utiliser les conversions.</div></div></div></section>
+<section id="systemStatus" class="page" hidden><div class="panelTitle"><div><small class="sectionOverline">ENVIRONNEMENT</small><h2>Statut des outils</h2><p>État réel des projets et outils disponibles.</p></div><button id="utilRefreshStatus" type="button">Actualiser</button></div>
+<div class="statusTiles"><div class="panel"><h3>Tools</h3><p id="utilStatusTools">Chargement…</p></div><div class="panel"><h3>Workdrive</h3><p id="utilStatusWorkdrive">Chargement…</p></div><div class="panel"><h3>Unreal Engine</h3><p id="utilStatusUnreal">Vérification non disponible</p></div><div class="panel"><h3>Assets ANOMALIA</h3><p id="utilStatusAssets">Chargement…</p></div></div></section>
+<section id="updates" class="page" hidden>
     <div class="panelTitle"><div><small class="sectionOverline">APPLICATION & MAINTENANCE</small><h2>Mises à jour de ANOMALIA Tools</h2><p>Le logiciel vérifie les versions officielles dans un canal séparé de CMD Studio et ANOMALIA Editor.</p></div><span id="updateVersion" class="versionPill">v—</span></div>
     <div class="updatesLayout">
       <div class="panel updateMain">
