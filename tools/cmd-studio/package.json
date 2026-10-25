@@ -1,6 +1,6 @@
 {
   "name": "cmd-studio",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "private": true,
   "description": "CMD Studio Game Creator - atelier 3D local pour ANOMALIA et autres jeux",
   "main": "main.js",
