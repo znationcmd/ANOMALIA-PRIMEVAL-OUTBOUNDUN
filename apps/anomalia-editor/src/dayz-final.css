@@ -133,3 +133,8 @@ body.mapLauncherVisible .app .stage #viewport{position:absolute!important;inset:
 .mapLauncher .mapActionCard .mapCoverEmblem{font-size:27px!important;color:#dfeafa!important;
  border:1px solid #bdd1f98f!important;background:#21365784!important;padding:6px 11px!important}
 .mapLauncher .mapCard:focus-visible{outline:2px solid #fff!important;outline-offset:2px!important}
+
+/* Version Windows : bouton de vérification à côté de Cartes/Ouvrir/Enregistrer. */
+.app .top .topButtons #checkUpdatesMain:before{content:"⟳";font-size:20px!important;line-height:25px!important}
+.app .top .topButtons #checkUpdatesMain.updateReady{background:#477e65!important;border-color:#c7ead9!important;color:#fff!important}
+.app .top .topButtons #checkUpdatesMain[hidden]{display:none!important}
