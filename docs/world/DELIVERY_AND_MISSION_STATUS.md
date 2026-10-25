@@ -1,5 +1,10 @@
 # ANOMALIA — livraison suivie et critères de jeu réel
 
+**Priorité utilisateur actualisée : canal de validation unique, sans remplacement du jeu installé.**
+Les étapes d’installation du jeu et du projet Editor sont désactivées pendant la
+validation de la nouvelle démonstration. Les indications de livraison automatique
+ci-dessous décrivent le mécanisme précédent, actuellement suspendu.
+
 Branche de travail/livraison : `ue5/reactive-world-expeditions-20261025`.
 Pull Request : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/38
 
@@ -102,3 +107,25 @@ Cartes absentes/consommées, tempête terminée, portail fermé, destination occ
 Monture : mort/déconnexion, sortie obstruée, caméra, selle et permissions.
 Chaque future déclaration doit associer le commit à une preuve native fraîche,
 puis à une preuve de jeu réel ; une compilation seule ne clôture pas ces critères.
+
+## Étape 4 bis — architecture universelle après la première berline
+
+Condition de départ : berline complète testée dans UE5.8, pas seulement une
+configuration ou un test de véhicule de référence. Les corrections des fonctions
+partagées doivent bénéficier aux véhicules déjà intégrés qui utilisent ces mêmes
+classes/composants. Un nouveau nom de catalogue n'est pas un véhicule accepté.
+
+- Réutiliser moteur/carburant/transmission, freinage, direction, suspensions, dégâts,
+  panneaux mobiles, sièges/passagers, entrées/sorties animées, caméras, inventaire,
+  réparation, sauvegarde et validation réseau lorsque ces fonctions sont compatibles.
+- Garder les profils et modèles propres à chaque véhicule ; distinguer notamment
+  motos/quads/poids lourds. La mer et le vol gardent leur simulation spécialisée.
+- Ne pas étendre aux autres véhicules avant que la berline passe contacts roues,
+  accélération, direction, freinage, marche arrière, obstacles, animations, carburant,
+  dégâts et sauvegarde/rechargement dans le jeu natif.
+- Pour chaque intégration ultérieure : vrai modèle licencié et riggé, configuration,
+  essai de conduite, collisions, entrée/sortie, persistance et tests multijoueurs.
+
+Les travaux de `ue5/chaos-road-driving-20261025` sont intégrés dans cette branche
+pour poursuivre cette validation sans dispersion. Le modèle Epic Offroad sert de
+référence technique à la physique ; il n'est pas présenté comme la berline finale.

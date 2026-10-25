@@ -9,7 +9,7 @@ public class AnomaliaPrimeval : ModuleRules
         if (!System.Text.RegularExpressions.Regex.IsMatch(Commit, "^[0-9a-f]{40}$")) Commit = "local";
         PrivateDefinitions.Add("ANOMALIA_BUILD_COMMIT=\"" + Commit + "\"");
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
-        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "Json", "JsonUtilities" });
+        PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "Json", "JsonUtilities", "ChaosVehicles" });
         // FUniqueNetIdRepl / FUniqueNetIdWrapper::ToString() used for per-player persistence.
         PrivateDependencyModuleNames.Add("CoreOnline");
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
