@@ -93,7 +93,7 @@ void AAnomaliaPlayableProbe::Tick(float Dt)
                 auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
                 auto* Material=Mesh?Mesh->GetMaterial(0):nullptr;
                 Meadow=Material && (Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow")) ||
-                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_v2/SM_PlayableTerrain"))));
+                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_"))));
             }
             if(It->ActorHasTag(TEXT("PlayableSun")) || It->ActorHasTag(TEXT("PlayableSky")))
                 if(auto* Light=It->FindComponentByClass<ULightComponentBase>())
