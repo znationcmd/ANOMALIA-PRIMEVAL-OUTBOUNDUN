@@ -15,8 +15,11 @@ import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
 import { createMapLauncher } from './map-launcher.js';
 import './map-launcher.css';
+import { activateReferenceLayout } from './reference-layout.js';
+import './dayz-layout.css';
 import './editor-clean.css';
 
+activateReferenceLayout();
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
 const scene = new THREE.Scene();
