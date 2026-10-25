@@ -87,7 +87,7 @@ try:
         import re
         candidates=[b for b in bones if re.fullmatch(r'wheel[_-]?(FL|FR|RL|RR|BL|BR)',b['name'],re.IGNORECASE)]
     if len(candidates)!=4:
-        candidates=[b for b in bones if 'wheel' in b['name'].lower() and b['name'].lower().startswith('phys')]
+        candidates=[b for b in bones if re.fullmatch(r'Phys_?Wheel[_-]?(FL|FR|RL|RR|BL|BR)',b['name'],re.IGNORECASE)]
     if len(candidates)!=4:raise RuntimeError('Four unambiguous wheel bones required; see recorded actual skeleton')
     by_x=sorted(candidates,key=lambda b:b['positionCm'][0],reverse=True)
     front=sorted(by_x[:2],key=lambda b:b['positionCm'][1]);rear=sorted(by_x[2:],key=lambda b:b['positionCm'][1])
