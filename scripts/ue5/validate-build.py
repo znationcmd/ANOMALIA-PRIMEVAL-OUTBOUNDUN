@@ -84,7 +84,7 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
             data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
             rows = data.get("tests", [])
             expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics"}
-            expected.update({"Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry"})
+            expected.update({"Anomalia.Native.POIResourceExclusivity", "Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry"})
             if require_loot_tests:
                 expected.update({"Anomalia.Native.LootCatalog", "Anomalia.Native.LootTransactions", "Anomalia.Native.LootJournalRecovery", "Anomalia.Native.RPBankTransactions", "Anomalia.Native.ItemConsumption", "Anomalia.Native.ItemEffects", "Anomalia.Native.StorageGrids", "Anomalia.Native.InventoryLayoutMigration"})
             passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}

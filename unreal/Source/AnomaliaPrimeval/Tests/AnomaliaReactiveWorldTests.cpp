@@ -10,6 +10,9 @@
 #include "Misc/DateTime.h"
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
+#include "../AnomaliaLootSubsystem.h"
+#include "../AnomaliaLootPickup.h"
+#include "EngineUtils.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaReactiveWorldTest,"Anomalia.Native.ReactiveWorldPersistenceAndPower",
     EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
@@ -82,6 +85,47 @@ bool FAnomaliaReactiveWorldTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Unsupported save fails closed"),Future->Configure(Server,TEXT("test-map"),Error));
     FString Preserved;TestTrue(TEXT("Original future save remains readable"),UAnomaliaConfigLibrary::LoadWorldState(Server,Store->StateId,Preserved,Error));
     TestEqual(TEXT("Future save never overwritten"),Preserved,FString(TEXT("{\"schemaVersion\":999}")));
+    World->DestroyWorld(false);
+    IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Servers"),Server),false,true);
+    return true;
+}
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaPOIResourceTest,"Anomalia.Native.POIResourceExclusivity",
+    EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+bool FAnomaliaPOIResourceTest::RunTest(const FString& Parameters)
+{
+    const FString Server=TEXT("poi-")+FGuid::NewGuid().ToString(EGuidFormats::Digits).Left(20);FString Error;
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);
+    if(!TestNotNull(TEXT("POI test world"),World)) return false;
+    auto* Loot=World->GetSubsystem<UAnomaliaLootSubsystem>();
+    if(!Loot || !TestTrue(TEXT("Configure actual native loot system"),Loot->Configure(Server,TEXT("ANOMALIA_LootReview_v1"),Error)))
+    {World->DestroyWorld(false);return false;}
+    if(!TestTrue(TEXT("Three real existing loot points"),Loot->Spawns.Num()>=3)) {World->DestroyWorld(false);return false;}
+    for(auto& Pair:Loot->Items) Pair.Value.bEnabled=false;
+    auto* Resource=Loot->Items.Find(TEXT("canned_beans"));
+    if(!TestNotNull(TEXT("Existing inventory resource for isolated test"),Resource)) {World->DestroyWorld(false);return false;}
+    Resource->bEnabled=true;Resource->Nominal=100;Resource->Minimum=0;Resource->Quantity=1;
+    Resource->AllowedPOIs.Add(TEXT("quarry-east"));Resource->AllowedPOIs.Add(TEXT("quarry-west"));
+    Resource->Categories.Reset();Resource->Categories.Add(TEXT("food"));Resource->MinTier=1;Resource->MaxTier=5;
+    const TArray<FString> POIs{TEXT("quarry-east"),TEXT("quarry-west"),TEXT("")};
+    TArray<FString> Points;
+    for(int32 I=0;I<3;++I)
+    {
+        Loot->Spawns[I].POIId=POIs[I];Loot->Spawns[I].Tier=1;
+        Loot->Spawns[I].Categories.Reset();Points.Add(Loot->Spawns[I].Id);
+    }
+    Loot->Spawns.SetNum(3);Loot->RefreshLoot();
+    TSet<FString> Spawned;
+    for(TActorIterator<AAnomaliaLootPickup> It(World);It;++It)
+        if(!It->IsActorBeingDestroyed() && It->ItemId==Resource->Id) Spawned.Add(It->SpawnId);
+    TestTrue(TEXT("First regional supply point spawns through real native loot"),Spawned.Contains(Points[0]));
+    TestTrue(TEXT("Alternative POI prevents single-site monopoly"),Spawned.Contains(Points[1]));
+    TestFalse(TEXT("Exclusive resource absent outside allowed POIs"),Spawned.Contains(Points[2]));
+    TestEqual(TEXT("Exactly two approved supply points"),Spawned.Num(),2);
+    Loot->Spawns[0].POIId=TEXT("civilian-town");Loot->RefreshLoot();
+    bool Old=false;
+    for(TActorIterator<AAnomaliaLootPickup> It(World);It;++It)
+        if(!It->IsActorBeingDestroyed() && It->SpawnId==Points[0]) Old=true;
+    TestFalse(TEXT("Changed region rule withdraws previously spawned unauthorized pickup"),Old);
     World->DestroyWorld(false);
     IFileManager::Get().DeleteDirectory(*FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Servers"),Server),false,true);
     return true;

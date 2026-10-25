@@ -68,7 +68,7 @@ class BuildDriverTests(unittest.TestCase):
             {"fullTestPath": name, "state": "Success"} for name in
             ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics",
              "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry",
-             "Anomalia.Native.ReactiveWorldPersistenceAndPower")]})
+             "Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.POIResourceExclusivity")]})
         self.assertEqual(code, 0)
         self.assertEqual(report["nativeTests"], "passed")
         self.assertEqual(report["execution"], "not_run")

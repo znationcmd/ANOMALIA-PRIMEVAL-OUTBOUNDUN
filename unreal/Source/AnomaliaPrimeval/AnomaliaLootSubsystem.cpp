@@ -135,6 +135,19 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         { Error = TEXT("Invalid or duplicate loot item: ") + Id; return false; }
         Item.Id = FName(*Id); Item.MinTier = static_cast<int32>(Min); Item.MaxTier = static_cast<int32>(Max);
         Item.Quantity = static_cast<int32>(Quantity); Item.Nominal = static_cast<int32>(Nominal); Item.Minimum = static_cast<int32>(Minimum);
+        if(Row->HasField(TEXT("allowedPOIs")))
+        {
+            const TArray<TSharedPtr<FJsonValue>>* Allowed=nullptr;
+            if(!Row->TryGetArrayField(TEXT("allowedPOIs"),Allowed) || !Allowed || Allowed->IsEmpty() || Allowed->Num()>64)
+            {Error=TEXT("Invalid POI resource rule: ")+Id;return false;}
+            for(const auto& Entry:*Allowed)
+            {
+                FString POI;
+                if(!Entry.IsValid() || !Entry->TryGetString(POI) || !LootSafeId(POI) || Item.AllowedPOIs.Contains(POI))
+                {Error=TEXT("Invalid or duplicate POI resource identity: ")+Id;return false;}
+                Item.AllowedPOIs.Add(POI);
+            }
+        }
         // Explicit physical metadata is optional; no fabricated weapon behaviour is implied.
         double Weight = 1, Stack = 20, Width = 1, Height = 1;
         if ((Row->HasField(TEXT("weightKg")) && !LootNumber(Row, TEXT("weightKg"), Weight, .001, 500)) ||
@@ -173,6 +186,10 @@ bool UAnomaliaLootSubsystem::LoadCatalog(const FString& File, FString& Error, bo
         Item.Categories.Add(Item.Category);
         if (auto* Existing = Candidate.Find(Item.Id))
         {
+            if(Existing->AllowedPOIs.Num()!=Item.AllowedPOIs.Num())
+            {Error=TEXT("Conflicting POI resource rules: ")+Id;return false;}
+            for(const auto& POI:Item.AllowedPOIs)
+                if(!Existing->AllowedPOIs.Contains(POI)) {Error=TEXT("Conflicting POI resource rules: ")+Id;return false;}
             // One existing battery is listed in both lighting and engine-parts categories.
             // Preserve both categories as one physical item; conflicting data must fail closed.
             if (Existing->DisplayName != Item.DisplayName || Existing->MinTier != Item.MinTier || Existing->MaxTier != Item.MaxTier ||
@@ -279,6 +296,8 @@ bool UAnomaliaLootSubsystem::Configure(const FString& InServerId, const FString&
         const FString Unique = Map + TEXT(":") + Spawn.Id;
         if (Ids.Contains(Unique)) { Error = TEXT("Duplicate loot spawn identity"); return false; }
         Ids.Add(Unique);
+        if(Row->HasField(TEXT("poiId")) && (!Row->TryGetStringField(TEXT("poiId"),Spawn.POIId) || !LootSafeId(Spawn.POIId)))
+        {Error=TEXT("Invalid spawn POI identity");return false;}
         const TArray<TSharedPtr<FJsonValue>>* Categories = nullptr;
         if (Row->HasField(TEXT("categories")))
         {
@@ -397,7 +416,8 @@ void UAnomaliaLootSubsystem::RefreshLoot()
     {
         const auto Row = Points->GetObjectField(Spawn.Id);
         const FString Current = Row->GetStringField(TEXT("itemId"));
-        if (!Current.IsEmpty() && Time >= Row->GetNumberField(TEXT("expiresAt")))
+        const auto* CurrentItem=Current.IsEmpty()?nullptr:FindItem(FName(*Current));
+        if (!Current.IsEmpty() && (Time >= Row->GetNumberField(TEXT("expiresAt")) || !CurrentItem || !CurrentItem->IsAllowedAtPOI(Spawn.POIId)))
         {
             const auto* Item = FindItem(FName(*Current));
             Row->SetStringField(TEXT("itemId"), TEXT("")); Row->SetNumberField(TEXT("count"), 0);
@@ -409,7 +429,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
         for (const auto& Pair : Items)
         {
             const auto& Item = Pair.Value;
-            if (!Item.bEnabled || Item.Nominal < 1 || Spawn.Tier < Item.MinTier || Spawn.Tier > Item.MaxTier ||
+            if (!Item.bEnabled || !Item.IsAllowedAtPOI(Spawn.POIId) || Item.Nominal < 1 || Spawn.Tier < Item.MinTier || Spawn.Tier > Item.MaxTier ||
                 !Item.MatchesAnyCategory(TierCategories[Spawn.Tier]) ||
                 (Spawn.Categories.Num() && !Item.MatchesAnyCategory(Spawn.Categories))) continue;
             int32 Existing = 0;
@@ -504,6 +524,8 @@ bool UAnomaliaLootSubsystem::TryCollect(AAnomaliaLootPickup* Pickup, AAnomaliaSu
     if (!Inventory || Inventory->IsPersistenceLocked() || (Economy && Economy->HasPendingPlayer(PlayerId))) return false;
     const auto Point = State->GetObjectField(TEXT("points"))->GetObjectField(Pickup->SpawnId);
     const auto* Item = FindItem(Pickup->ItemId);
+    const auto* Spawn=Spawns.FindByPredicate([&](const auto& S){return S.Id==Pickup->SpawnId;});
+    if(!Spawn || !Item || !Item->IsAllowedAtPOI(Spawn->POIId)) return false;
     if (!Item || Point->GetStringField(TEXT("itemId")) != Pickup->ItemId.ToString() ||
         Point->GetStringField(TEXT("generation")) != Pickup->Generation ||
         Point->GetNumberField(TEXT("count")) != Pickup->Count || LootNow() >= Point->GetNumberField(TEXT("expiresAt"))) return false;

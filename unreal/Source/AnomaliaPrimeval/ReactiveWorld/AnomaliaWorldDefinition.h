@@ -16,6 +16,8 @@ class ANOMALIAPRIMEVAL_API UAnomaliaWorldDefinition : public UDataAsset
 {
     GENERATED_BODY()
 public:
+    UAnomaliaWorldDefinition()
+    { Materials.Add(TEXT("metal_sheet"),100);Materials.Add(TEXT("plank"),50); }
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName DefinitionId;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) EAnomaliaWorldMechanism Kind = EAnomaliaWorldMechanism::Repair;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TMap<FName,int32> Materials;
