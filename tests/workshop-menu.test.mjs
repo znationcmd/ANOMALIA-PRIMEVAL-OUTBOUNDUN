@@ -63,7 +63,7 @@ test('WorkForge is branded in real Windows game and keeps local favorites',()=>{
  const ui=read('../src/workshop-ui.js');
  const html=read('../index.html');
  const pkg=JSON.parse(read('../package.json'));
- assert.equal(pkg.version,'0.7.2');
+ assert.equal(pkg.version,'0.7.3');
  assert.match(menu,/WORKFORGE · Mods/);
  assert.match(html,/ANOMALIA <b>WORKFORGE<\/b>/);
  assert.match(html,/id="igwFavorites"/);

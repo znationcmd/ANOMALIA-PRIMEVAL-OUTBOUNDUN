@@ -11,6 +11,16 @@ const {createHash}=require("node:crypto");
 const {autoUpdater}=require("electron-updater");
 
 const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
+const updateState={phase:'initialisation',currentVersion:app.getVersion(),message:'Préparation des mises à jour du jeu.'};
+let activeUpdateCheck=false;
+let updateReady=false;
+let lastUpdateCheck=0;
+function publishUpdate(phase,message,extra={}){
+ Object.assign(updateState,{phase,currentVersion:app.getVersion(),message,...extra});
+ for(const win of BrowserWindow.getAllWindows())
+  if(!win.isDestroyed()&&!win.webContents.isDestroyed())win.webContents.send('anomalia:update:status',{...updateState});
+}
+
 const SCHEME="anomalia";
 protocol.registerSchemesAsPrivileged([
  {scheme:SCHEME,privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}
@@ -44,6 +54,22 @@ function createGameWindow(){
 let multiplayerServer=null;const clientSockets=new Map();
 const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
+ ipcMain.handle('anomalia:update:status',event=>{validSender(event);return {...updateState};});
+ ipcMain.handle('anomalia:update:check',async event=>{
+  validSender(event);
+  if(!app.isPackaged||process.platform!=='win32')return {...updateState};
+  if(updateReady||activeUpdateCheck)return {...updateState};
+  await runUpdateCheck();
+  return {...updateState};
+ });
+ ipcMain.handle('anomalia:update:install',event=>{
+  validSender(event);
+  if(!updateReady)throw Error('Mise à jour non téléchargée.');
+  // The installed build remains functional if the user does not choose to install immediately.
+  setImmediate(()=>autoUpdater.quitAndInstall(false,true));
+  return {started:true};
+ });
+
  ipcMain.handle('anomalia:open-workshop',async event=>{
   validSender(event);
   // Fixed trusted URL. A successful openExternal does not certify a running app.
@@ -110,17 +136,41 @@ app.whenReady().then(()=>{
  });
  Menu.setApplicationMenu(null);
  createGameWindow();
- if(app.isPackaged){
-  // Dedicated game feed; editor and tools use different GitHub release channels.
-  autoUpdater.setFeedURL({provider:'generic',url:'https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-game-latest'});
+ async function runUpdateCheck(){
+  if(activeUpdateCheck||updateReady||!app.isPackaged||process.platform!=='win32')return;
+  activeUpdateCheck=true;lastUpdateCheck=Date.now();
+  try{await autoUpdater.checkForUpdates();}
+  catch(error){
+   const message=String(error?.message||'');
+   const sanitized=/404|not found/i.test(message)?'Canal de mise à jour inaccessible (404).':
+    /ETIMEDOUT|ECONNRESET|ENOTFOUND|net::/i.test(message)?'Connexion indisponible. Nouvelle tentative automatique.':
+    'Vérification indisponible. Le jeu installé reste utilisable.';
+   publishUpdate('erreur',sanitized);
+  }finally{activeUpdateCheck=false;}
+ }
+ if(app.isPackaged&&process.platform==='win32'){
+  // Actual release feed verified as anonymously accessible. Never open an installer browser page.
+  autoUpdater.setFeedURL({provider:'generic',url:'https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/anomalia-game-latest/'});
   autoUpdater.autoDownload=true;
   autoUpdater.autoInstallOnAppQuit=true;
-  autoUpdater.on("error",error=>console.warn("[ANOMALIA] Update unavailable:",error.message));
-  autoUpdater.on("update-downloaded",()=>console.log("[ANOMALIA] New version downloaded; will install on quit"));
-  const checkUpdates=()=>autoUpdater.checkForUpdates().catch(error=>console.warn("[ANOMALIA] Update check:",error.message));
-  setTimeout(checkUpdates,15000).unref?.();
-  setInterval(checkUpdates,6*60*60*1000).unref?.();
- }
+  autoUpdater.allowDowngrade=false;
+  autoUpdater.allowPrerelease=false;
+  autoUpdater.on('checking-for-update',()=>publishUpdate('verification','Recherche de la dernière version Windows…'));
+  autoUpdater.on('update-available',data=>publishUpdate('disponible','Version '+data.version+' disponible. Téléchargement automatique.',{nextVersion:data.version}));
+  autoUpdater.on('download-progress',progress=>publishUpdate('telechargement','Téléchargement en cours : '+Math.round(progress.percent||0)+' %',{percent:Math.round(progress.percent||0)}));
+  autoUpdater.on('update-not-available',()=>publishUpdate('a-jour','ANOMALIA Game est à jour.'));
+  autoUpdater.on('update-downloaded',data=>{
+   updateReady=true;
+   publishUpdate('prete','Version '+data.version+' téléchargée. Installation automatique à la fermeture du jeu.',{nextVersion:data.version,percent:100});
+  });
+  autoUpdater.on('error',error=>{console.warn('[ANOMALIA] Update failed:',error.message);publishUpdate('erreur','Erreur de mise à jour. Le jeu reste disponible. Ouvre la vérification pour réessayer.');});
+  publishUpdate('veille','Recherche automatique au démarrage et toutes les 6 heures.');
+  setTimeout(()=>{void runUpdateCheck();},1500).unref?.();
+  setInterval(()=>{void runUpdateCheck();},6*60*60*1000).unref?.();
+  for(const game of BrowserWindow.getAllWindows()){
+   game.on('focus',()=>{if(Date.now()-lastUpdateCheck>5*60*1000)void runUpdateCheck();});
+  }
+ }else publishUpdate('developpement','Mise à jour automatique réservée à la version Windows installée.');
  app.on("activate",()=>{if(!BrowserWindow.getAllWindows().length)createGameWindow()});
 });
 app.on("window-all-closed",()=>{if(multiplayerServer){multiplayerServer.close().catch(()=>{});multiplayerServer=null;}if(process.platform!=="darwin")app.quit()});

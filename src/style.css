@@ -119,3 +119,16 @@ background:linear-gradient(90deg,#0b0b11f4 0%,#120e15e4 40%,#230c1182 82%,#0a081
  #inGameWorkshop .igw-titlebar{align-items:flex-start;flex-direction:column}
  #inGameWorkshop .igw-search{justify-content:flex-start}
 }
+
+/* Installed Windows update state — visible next to the real game launch buttons. */
+#menuHome .game-updates{display:flex;flex-direction:column;align-items:stretch;gap:5px;
+ background:#111c27dd;border:1px solid #6984978a;border-radius:7px;
+ padding:10px 12px;margin:12px 0 0;color:#e6edf5;max-width:100%}
+#menuHome .game-updates p{font:500 11px/1.5 system-ui,sans-serif;color:#d5e3ee;
+ margin:0;white-space:normal;overflow-wrap:anywhere}
+#menuHome .game-updates button{background:#233951;color:#e8f6ff;border:1px solid #809cbb;
+ border-radius:5px;min-height:32px;padding:6px 9px;font-size:11px;width:100%}
+#menuHome .game-updates button:hover{background:#375a77}
+#menuHome .game-updates.game-update-ready{border-color:#8ac3a4;background:#173528de}
+#menuHome .game-updates.game-update-error{border-color:#cb8870}
+#menuHome .game-updates button[hidden]{display:none!important}

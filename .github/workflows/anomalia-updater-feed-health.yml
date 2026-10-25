@@ -1,0 +1,31 @@
+name: Verify public ANOMALIA updater feeds
+on:
+  push:
+    branches: [fix/anomalia-visible-updates-20261025]
+    paths: ['.github/workflows/anomalia-updater-feed-health.yml','desktop/**','apps/anomalia-tools/**']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check BOTH installed-app update channels via anonymous HTTPS
+        shell: bash
+        run: |
+          set -euo pipefail
+          for item in "tools 0.2.6 anomalia-tools-latest" "game 0.7.2 anomalia-game-latest"; do
+            read -r title expected tag <<< "$item"
+            url="https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/$tag/latest.yml"
+            echo "Checking $title public feed"
+            curl --retry 3 --retry-all-errors --fail --show-error --location --max-time 45 --output /tmp/"$title"-latest.yml "$url"
+            cat /tmp/"$title"-latest.yml
+            grep -Eq "^version: ['\"]?$expected(['\"])?$" /tmp/"$title"-latest.yml || exit 21
+            grep -Eq '^[[:space:]]+sha512: [A-Za-z0-9+/=]{80,}$' /tmp/"$title"-latest.yml || exit 22
+            filename=$(sed -n -E 's/^path: (.*\.exe)/\1/p' /tmp/"$title"-latest.yml | head -1)
+            [ -n "$filename" ] || exit 23
+            echo "Checking installer $filename is downloadable without credentials"
+            curl --retry 3 --fail --show-error --location --max-time 40 -r 0-1023 --output /dev/null "$url" || true
+            curl --retry 3 --fail --show-error --location --max-time 40 -r 0-1023 --output /tmp/"$title"-exe-probe "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/releases/download/$tag/$filename"
+            [ -s /tmp/"$title"-exe-probe ] || exit 24
+          done
