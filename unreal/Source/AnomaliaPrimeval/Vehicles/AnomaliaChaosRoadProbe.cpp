@@ -6,8 +6,10 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "Engine/World.h"
 #include "EngineUtils.h"
+#include "UnrealClient.h"
 #include "Misc/CommandLine.h"
 #include "Misc/Parse.h"
 #include "Misc/FileHelper.h"
@@ -73,6 +75,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(!V->EnterVehicle(PC,S) || PC->GetPawn()!=V) { Finish(TEXT("Existing crew possession failed")); return; }
         AddTickPrerequisiteActor(PC);
         V->AddTickPrerequisiteActor(this);
+        V->CameraBoom->SetRelativeLocation(FVector(0,0,120));
+        PC->SetControlRotation(FRotator(-12,0,0));
         Checks.Add(TEXT("real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement"));
         Checks.Add(TEXT("existing_character_and_inventory_preserved_on_entry"));
         StartLocation=V->GetActorLocation(); Phase=1; PhaseStarted=Now;
@@ -104,6 +108,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Speed<500.f || FVector::Dist2D(StartLocation,V->GetActorLocation())<500.f || Contacts<3 || Rotation<1.f)
             { Finish(TEXT("Physical acceleration/wheel contact/rotation failed")); return; }
             Checks.Add(TEXT("physical_acceleration_translation_and_rotating_contact_wheels"));
+            FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("chaos-actual-driving.png")),false,false);
             StraightSpeed=Speed; TurnYaw=V->GetActorRotation().Yaw; Phase=2; PhaseStarted=Now;
         }
     }

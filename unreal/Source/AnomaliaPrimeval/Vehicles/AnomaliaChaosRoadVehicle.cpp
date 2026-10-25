@@ -41,7 +41,9 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     ChaosMovement=CreateDefaultSubobject<UChaosWheeledVehicleMovementComponent>(TEXT("ChaosRoadMovement"));
     ChaosMovement->SetUpdatedComponent(Chassis);
     ChaosMovement->SetIsReplicated(true);
-    ChaosMovement->SetRequiresControllerForInputs(true);
+    // Server feeds every input through the existing validated driver flow.
+    // Driverless physics must still receive its parking brake after unpossession.
+    ChaosMovement->SetRequiresControllerForInputs(false);
     ChaosMovement->Mass=1500.f;
     ChaosMovement->bReverseAsBrake=false;
     ChaosMovement->EngineSetup.MaxTorque=500.f;
