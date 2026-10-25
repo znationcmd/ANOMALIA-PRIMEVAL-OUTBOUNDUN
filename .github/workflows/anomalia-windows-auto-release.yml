@@ -1,4 +1,5 @@
 name: Publication Windows - mise a jour automatique Editor et Tools
+# Les versions Windows sont publiées sur les canaux existants, sans exiger de nouvel installateur manuel.
 on:
   push:
     branches: [main]
@@ -37,7 +38,7 @@ jobs:
             branch: feature/anomalia-tools-premium-updates-20261023
             folder: apps/anomalia-tools
             tag: anomalia-tools-latest
-            min_version: 0.2.5
+            min_version: 0.2.6
     defaults:
       run:
         shell: pwsh
