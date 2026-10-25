@@ -1,8 +1,8 @@
 {
   "name": "anomalia-editor",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "private": true,
-  "description": "Éditeur de cartes 3D ANOMALIA avec sélecteur de mondes et menus compacts",
+  "description": "ANOMALIA Editor — cartes, menus compacts, bibliothèque et mise à jour Windows",
   "type": "module",
   "scripts": {
     "dev": "vite --host 127.0.0.1",
