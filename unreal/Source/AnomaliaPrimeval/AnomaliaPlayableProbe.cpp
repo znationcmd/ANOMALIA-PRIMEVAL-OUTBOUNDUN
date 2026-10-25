@@ -14,6 +14,7 @@
 #include "Components/Button.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
+#include "Components/VerticalBox.h"
 #include "Components/Image.h"
 #include "Components/Border.h"
 #include "Engine/World.h"
