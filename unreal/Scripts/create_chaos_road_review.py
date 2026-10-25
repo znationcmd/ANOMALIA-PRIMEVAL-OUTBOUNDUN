@@ -32,7 +32,10 @@ try:
         pos=t.translation
         bones.append(dict(name=str(name),positionCm=[pos.x,pos.y,pos.z]))
     report['bones']=bones
-    candidates=[b for b in bones if 'wheel' in b['name'].lower() and not any(x in b['name'].lower() for x in ('susp','brake','steer','hub'))]
+    # Native inspection confirms separate physical and visual wheel hierarchies.
+    # Chaos must drive PhysWheel; the template Control Rig animates VisWheel.
+    physics_bones={'PhysWheel_FL','PhysWheel_FR','PhysWheel_BL','PhysWheel_BR'}
+    candidates=[b for b in bones if b['name'] in physics_bones]
     if len(candidates)!=4:raise RuntimeError('Four unambiguous wheel bones required; see recorded actual skeleton')
     by_x=sorted(candidates,key=lambda b:b['positionCm'][0],reverse=True)
     front=sorted(by_x[:2],key=lambda b:b['positionCm'][1]);rear=sorted(by_x[2:],key=lambda b:b['positionCm'][1])
