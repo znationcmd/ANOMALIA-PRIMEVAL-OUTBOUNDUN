@@ -55,9 +55,9 @@ try:
         except Exception as error:info['geometryReadError']=str(error)
         report['physicsBodies'].append(info)
     # Inspect the installed vendor Blueprint configuration; never alter it.
+    report['referenceTemplate']=source.get('referenceTemplate','OffroadCar')
     report['templateBlueprints']=[]
-    for path in unreal.EditorAssetLibrary.list_assets('/Game/Vehicles/OffroadCar',recursive=True,include_folder=False):
-        if 'BP_' not in path:continue
+    for path in unreal.EditorAssetLibrary.list_assets('/Game/Vehicles/'+source.get('referenceTemplate','OffroadCar'),recursive=True,include_folder=False):
         blueprint=unreal.load_asset(path)
         if not isinstance(blueprint,unreal.Blueprint):continue
         generated=unreal.EditorAssetLibrary.load_blueprint_class(path)
@@ -80,6 +80,9 @@ try:
     # Chaos must drive PhysWheel; the template Control Rig animates VisWheel.
     physics_bones={'PhysWheel_FL','PhysWheel_FR','PhysWheel_BL','PhysWheel_BR'}
     candidates=[b for b in bones if b['name'] in physics_bones]
+    if len(candidates)!=4:
+        import re
+        candidates=[b for b in bones if re.fullmatch(r'wheel[_-]?(FL|FR|RL|RR|BL|BR)',b['name'],re.IGNORECASE)]
     if len(candidates)!=4:raise RuntimeError('Four unambiguous wheel bones required; see recorded actual skeleton')
     by_x=sorted(candidates,key=lambda b:b['positionCm'][0],reverse=True)
     front=sorted(by_x[:2],key=lambda b:b['positionCm'][1]);rear=sorted(by_x[2:],key=lambda b:b['positionCm'][1])

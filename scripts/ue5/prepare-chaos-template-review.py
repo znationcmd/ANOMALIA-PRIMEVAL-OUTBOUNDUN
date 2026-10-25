@@ -18,21 +18,25 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True);args=p.parse_args()
     source=args.engine_root/'Templates/TemplateResources/Standard/Vehicles/Content'
-    mesh=source/'OffroadCar/SKM_Offroad.uasset'
+    choices=[('SportsCar','SKM_SportsCar','SportsCar_AnimBP','SM_SportsCar_Tire'),
+             ('OffroadCar','SKM_Offroad','Offroad_AnimBP','SM_Offroad_Tire')]
+    selected=next((row for row in choices if all((source/row[0]/(name+'.uasset')).is_file() for name in row[1:])),None)
+    if not selected:raise RuntimeError('A complete installed vehicle skeletal/animation/tire set is required')
+    family,mesh_name,animation_name,tire_name=selected
+    mesh=source/family/(mesh_name+'.uasset')
     raw=mesh.read_bytes()
     strings=raw.decode('latin1')+'\n'+raw.decode('utf-16-le',errors='ignore')
     packages=set(re.findall(r'/Game/[A-Za-z0-9_/]+',strings))
-    identities={x for x in packages if x.endswith('/OffroadCar/SKM_Offroad')}
+    identities={x for x in packages if x.endswith('/'+family+'/'+mesh_name)}
     if len(identities)!=1: raise RuntimeError('Cannot establish unique installed template package: '+str(sorted(identities)))
-    package=identities.pop();prefix=package[:-len('OffroadCar/SKM_Offroad')]
+    package=identities.pop();prefix=package[:-len(family+'/'+mesh_name)]
     relative=prefix.removeprefix('/Game/').strip('/')
     if '..' in relative.split('/'):raise RuntimeError('Invalid template mount prefix')
     destination=ROOT/'unreal/Content'/relative
     copies=[]
-    for folder in ('OffroadCar','SportsCar/Materials','SportsCar/Textures','PhysicsMaterials'):
+    for folder in ('OffroadCar','SportsCar','PhysicsMaterials'):
         origin=source/folder
         if not origin.is_dir():
-            if folder=='SportsCar/Textures':continue
             raise RuntimeError('Missing template dependency folder '+folder)
         for path in sorted(origin.rglob('*')):
             if path.is_file():
@@ -45,10 +49,11 @@ def main():
         if not target.exists():shutil.copy2(path,target)
     args.output.mkdir(parents=True,exist_ok=True)
     report=dict(state='INSTALLED_TEMPLATE_COPIED_FOR_LOCAL_CHAOS_REVIEW',meshPackage=package,
-        animationClass=prefix+'OffroadCar/Offroad_AnimBP.Offroad_AnimBP_C',
-        tirePackage=prefix+'OffroadCar/SM_Offroad_Tire',
+        referenceTemplate=family,animationClass=prefix+family+'/'+animation_name+'.'+animation_name+'_C',
+        tirePackage=prefix+family+'/'+tire_name,
         source='Installed Unreal Engine vehicle template; Epic Unreal Engine license',
         engineFilesModified=False,engineAssetsUploaded=False,
+        installedTemplateAssets=[str(p.relative_to(source)) for p in sorted(source.rglob('*.uasset'))],
         files=[dict(path=str(b.relative_to(ROOT)),sha256=digest(b)) for a,b in copies])
     (args.output/'template-source.json').write_text(json.dumps(report,indent=2)+'\n')
 
