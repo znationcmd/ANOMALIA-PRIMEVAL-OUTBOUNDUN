@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
+#include "CollisionQueryParams.h"
 #include "GameFramework/FloatingPawnMovement.h"
 
 UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
@@ -168,7 +169,17 @@ bool AAnomaliaChaosRoadVehicle::CanDriverExitNow() const
 }
 float AAnomaliaChaosRoadVehicle::GetExpectedSupportFloorZ() const
 {
-    return Chassis->Bounds.Origin.Z-Chassis->Bounds.BoxExtent.Z;
+    // A suspension rig's render bounds can extend well below the support plane.
+    // Use the actual floor instead of rejecting every safe exit from that rig.
+    if(GetWorld())
+    {
+        FHitResult Floor;FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaRoadSupport),true);
+        Query.AddIgnoredActor(this);
+        const FVector Origin=GetActorLocation();
+        if(GetWorld()->LineTraceSingleByChannel(Floor,Origin+FVector(0,0,50),Origin-FVector(0,0,600),ECC_Pawn,Query) && Floor.ImpactNormal.Z>.5f)
+            return Floor.ImpactPoint.Z;
+    }
+    return GetActorLocation().Z-WheelRadiusCm;
 }
 void AAnomaliaChaosRoadVehicle::SimulateRoadDrive(float DeltaSeconds,float Throttle,float Steering,float Brake,
     bool bPowered,bool bDriverMissing)
