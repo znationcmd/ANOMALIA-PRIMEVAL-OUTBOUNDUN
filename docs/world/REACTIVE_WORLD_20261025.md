@@ -71,8 +71,10 @@ existants et rejette les points sans terrain chargé correspondant ou trop proch
 des bâtiments. Première exécution réelle : **46 panneaux enregistrés pour 26 localités** sur
 `ANOMALIA_Inhabited_v2`, avec 8 entrées refusées pour absence de sol sec compatible.
 Le second passage cherche des alternatives dans les couloirs de la même localité,
-puis près de ses parcelles réellement bâties. Le rendu graphique n'est pas encore
-contrôlé. Preuve : `docs/world/named-signs-40174606857.json`.
+puis près de ses parcelles réellement bâties. **Le second passage a enregistré
+54 panneaux pour les 27 localités, sans rejet** (run `40176065521`). Preuves :
+`docs/world/named-signs-40174606857.json` puis
+`docs/world/named-signs-40176065521.json`. Le rendu graphique reste à contrôler.
 Les noms des bases et ports sont configurables avec les mêmes acteurs ; aucun
 placement militaire ou portuaire inexistant n'est annoncé comme achevé.
 
@@ -142,3 +144,43 @@ La PR #37 compile, mais son essai de conduite réel échoue encore sur le contac
 roue/sol (0 contact dans les mesures). Elle n'est donc pas présentée comme conduite
 Chaos validée. Détails et empreintes des captures :
 `docs/art/native-assets-visual-review-20261025.json`.
+
+## Écart avec le jeu installé : diagnostic et correction en cours
+
+Le contrôle en lecture seule du PC (run `40176065521`) observe le jeu et son
+raccourci actifs sur le commit `656489fff4c2c833058073f23f1ef5e1418007cc`.
+Le jeu ouvert utilise bien cette ancienne version ; aucune mise à jour installée
+n'est déduite de la seule compilation d'une branche.
+
+La dernière chaîne de production (`40131567570`, commit `250a9b7`) s'est arrêtée
+avant le cook sur le contrôle du menu. Installation de l'exécutable et copie du
+projet Editor ont été sautées. Le nouvel essai réel (`40176065521`) a passé le
+parcours du menu WorkForge et les interactions dans le renderer du jeu Editor.
+
+La correction de chaîne :
+
+- Contrôle géométrique avant import distinct du contrôle des nouveaux assets.
+- Import du vrai catalogue 3D avant son utilisation dans la scène jouable.
+- Retour explicite à la page Survivant par le bouton réel avant de tester Mods,
+  Options et les retours ; diagnostics précis si un contrôle manque.
+- 24 rochers et 24 anciennes sphères de buissons remplacés par les modèles CC0
+  vérifiés `rock_moss_set_01` et `grass_medium_01`, avec textures et échelle métrique.
+- 12 collines sphériques de fond conservées dans les sources mais masquées.
+- Ces nouveaux éléments doivent être vérifiés par l'exécutable cuisiné **et** par
+  sa copie installée avant activation de la nouvelle version.
+- L'aperçu Editor validé peut se synchroniser indépendamment d'un échec du paquet
+  Windows ; chacun conserve ses propres preuves d'installation.
+
+Une publication dédiée `[pc-update]`, commit
+`12477c96cc9cf6d57ff9b90a14fedabb175eee1c`, a lancé le run `40176847036` pour mettre
+à jour l'installation existante après validation. L'étape d'installation Windows a **réussi** : la copie installée a passé ses
+essais et le raccourci/version active ont été relus sur ce commit. L'aperçu
+Editor se synchronise séparément après ses contrôles GPU. Aucun téléchargement
+manuel demandé à l'utilisateur. Une fenêtre de l'ancienne version doit être
+fermée puis le raccourci relancé pour utiliser la nouvelle version.
+
+Limite de contenu toujours explicite : l'exécutable livré ouvre actuellement la
+petite zone `ANOMALIA_Playable_v1`. La grande carte `ANOMALIA_Inhabited_v2` est
+configurée dans l'aperçu Editor ; elle n'est pas encore livrée en jeu complet avec
+le loot et les expéditions. Les photos de la PR #31 ne prouvent pas leur présence
+sur cette petite carte jouable.

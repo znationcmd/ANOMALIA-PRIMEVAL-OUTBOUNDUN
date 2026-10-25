@@ -131,6 +131,16 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report=Get-Content "$evidence/package/installed-package-report.json" -Raw | ConvertFrom-Json
           if ($report.state -ne 'PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED' -or -not $report.activeVersionAndShortcutVerified -or $report.commit -ne $env:GITHUB_SHA) { throw 'PC update activation is not confirmed.' }
+      - name: Retain packaged-game installation evidence before the large Editor validation
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: packaged-game-and-install-evidence
+          retention-days: 7
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
+          if-no-files-found: warn
       - name: Back up and replace owned repeated houses with verified scanned exteriors
         id: residential_update
         if: ${{ !cancelled() && steps.native_build.outcome == 'success' && steps.art_import.outcome == 'success' }}

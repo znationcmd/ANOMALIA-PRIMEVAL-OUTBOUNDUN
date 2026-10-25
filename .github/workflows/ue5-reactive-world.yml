@@ -10,12 +10,13 @@ on:
       - 'unreal/Scripts/place_identity.py'
       - 'scripts/world-features/build-place-sign.py'
   workflow_dispatch:
-concurrency:
-  group: anomalia-ue5-native-host
-  cancel-in-progress: false
 jobs:
   native:
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025' && !startsWith(github.event.head_commit.message, '[pc-update]')
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/reactive-world-expeditions-20261025' && !startsWith(github.event.head_commit.message, '[pc-update]') && !startsWith(github.event.head_commit.message, '[ci-config]')
+    # A skipped validation must not occupy or replace an install's pending host slot.
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 60
     permissions:
