@@ -45,6 +45,11 @@ FString UAnomaliaConfigLibrary::ServerRoot(const FString& ServerId)
 bool UAnomaliaConfigLibrary::WriteJsonSafely(const FString& File, const FString& Json, FString& OutError)
 {
     OutError.Empty();
+    if (IFileManager::Get().DirectoryExists(*File))
+    {
+        OutError = TEXT("JSON target is a directory; preserved");
+        return false;
+    }
     if (Json.Len() > MaxProfileChars)
     {
         OutError = TEXT("JSON too large");

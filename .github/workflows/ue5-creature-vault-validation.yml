@@ -1,0 +1,60 @@
+name: UE5 Creature Vault native validation
+on:
+  push:
+    branches: ['ue5/creature-vault-persistence-20261024']
+    paths: ['unreal/Source/**', 'unreal/Scripts/import_creature_review.py', 'scripts/ue5/**', '.github/workflows/ue5-creature-vault-validation.yml']
+  workflow_dispatch:
+jobs:
+  validate-native:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/ue5/creature-vault-persistence-20261024'
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Retain previous failed automation process diagnostics for recovery
+        uses: actions/upload-artifact@v4
+        with:
+          name: previous-vault-automation-diagnostics
+          path: unreal/Saved/CreatureVaultValidation/run-40122002563-1/automation-*/*.log
+          if-no-files-found: warn
+      - name: Compile Editor and Game and execute the actual Unreal native tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/CreatureVaultValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Verify and import the credited skeletal dinosaur into isolated review assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-creature-review.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence=Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/CreatureVaultValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          $env:ANOMALIA_CREATURE_IMPORT_REPORT=Join-Path $evidence 'creature-import.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/import_creature_review.py'
+          & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/creature-import.log"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $result=Get-Content $env:ANOMALIA_CREATURE_IMPORT_REPORT -Raw | ConvertFrom-Json
+          if ($result.state -ne 'SKELETAL_CREATURE_IMPORTED_NOT_PLAYTESTED' -or $result.sourceCommit -ne $env:GITHUB_SHA) { throw 'Native creature asset import not verified.' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: creature-vault-native-evidence
+          path: |
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/*.*
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/automation-*/index.json
+            unreal/Saved/CreatureVaultValidation/run-${{ github.run_id }}-${{ github.run_attempt }}/automation-*/*.log
+          if-no-files-found: error
