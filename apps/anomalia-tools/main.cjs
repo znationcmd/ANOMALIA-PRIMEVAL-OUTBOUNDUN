@@ -75,7 +75,9 @@ if(ownInstance)app.whenReady().then(()=>{
     if(path.resolve(choice.filePath)!==path.resolve(archive.path))fs.copyFileSync(archive.path,choice.filePath);
     return {saved:true,path:choice.filePath,manifest:archive.manifest};
   });
-  start();if(workshopDeepLink(process.argv)){win.webContents.once('did-finish-load',()=>win.webContents.send('tools:navigate','workshop'));}updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
+  start();
+  win.on('focus',()=>updater.checkOnFocus());
+  if(workshopDeepLink(process.argv)){win.webContents.once('did-finish-load',()=>win.webContents.send('tools:navigate','workshop'));}updater.start();app.on('activate',()=>{if(!BrowserWindow.getAllWindows().length)start();});
 });
 app.on('window-all-closed',()=>{if(process.platform!=='darwin')app.quit();});
 
