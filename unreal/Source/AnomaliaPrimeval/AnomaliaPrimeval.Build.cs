@@ -11,7 +11,7 @@ public class AnomaliaPrimeval : ModuleRules
         PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
         PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "Slate", "SlateCore", "Json", "JsonUtilities", "ChaosVehicles" });
         // FUniqueNetIdRepl / FUniqueNetIdWrapper::ToString() used for per-player persistence.
-        PrivateDependencyModuleNames.Add("CoreOnline");
+        PrivateDependencyModuleNames.AddRange(new string[] { "CoreOnline", "PhysicsCore" });
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
     }
 }

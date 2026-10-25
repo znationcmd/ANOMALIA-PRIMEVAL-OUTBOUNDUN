@@ -11,6 +11,7 @@ class USkeletalMesh;
 class UStaticMesh;
 class UStaticMeshComponent;
 class UAnimInstance;
+class UPhysicsAsset;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaRoadFrontWheel : public UChaosVehicleWheel
@@ -71,5 +72,7 @@ protected:
     virtual void SimulateRoadDrive(float DeltaSeconds,float Throttle,float Steering,float Brake,
         bool bPowered,bool bDriverMissing) override;
 private:
+    /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
+    UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;
     void ApplyRoadRig();
 };

@@ -6,6 +6,10 @@
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
+#include "Engine/StaticMesh.h"
+#include "PhysicsEngine/PhysicsAsset.h"
+#include "PhysicsEngine/SkeletalBodySetup.h"
+#include "PhysicsEngine/AggregateGeom.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "GameFramework/FloatingPawnMovement.h"
@@ -121,18 +125,29 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     ChaosMovement->SetUpdatedComponent(Chassis);
     if(GetWorld() && GetWorld()->IsGameWorld())
     {
+        // A road chassis is one rigid body, not the template's articulated
+        // suspension ragdoll. Override this component only; keep shared art intact.
+        const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
+        RuntimeChassisPhysics=NewObject<UPhysicsAsset>(this,NAME_None,RF_Transient);
+        USkeletalBodySetup* ChassisBody=NewObject<USkeletalBodySetup>(RuntimeChassisPhysics);
+        ChassisBody->BoneName=RootBone;
+        ChassisBody->PhysicsType=PhysType_Simulated;
+        const FBoxSphereBounds ArtBounds=RoadBodyMesh->GetBounds();
+        FKBoxElem Shape;
+        Shape.X=FMath::Clamp(float(ArtBounds.BoxExtent.X)*1.5f,100.f,1000.f);
+        Shape.Y=FMath::Clamp(float(ArtBounds.BoxExtent.Y)*1.5f,60.f,400.f);
+        Shape.Z=FMath::Clamp(float(ArtBounds.BoxExtent.Z),20.f,60.f);
+        // Keep the underside above the contact patch; wheels carry the vehicle.
+        Shape.Center=FVector(ArtBounds.Origin.X,ArtBounds.Origin.Y,WheelRadiusCm*.5f+Shape.Z*.5f);
+        ChassisBody->AggGeom.BoxElems.Add(Shape);
+        RuntimeChassisPhysics->SkeletalBodySetups.Add(ChassisBody);
+        RuntimeChassisPhysics->BoundsBodies.Add(0);
+        RuntimeChassisPhysics->BodySetupIndexMap.Add(RootBone,0);
+        Chassis->SetPhysicsAsset(RuntimeChassisPhysics,true);
         Chassis->SetSimulatePhysics(HasAuthority());
-        Chassis->SetMassOverrideInKg(NAME_None,ChaosMovement->Mass,true);
+        Chassis->SetMassOverrideInKg(RootBone,ChaosMovement->Mass,true);
         ChaosMovement->SetComponentTickEnabled(HasAuthority());
         ChaosMovement->RecreatePhysicsState();
-        // Chaos owns suspension and wheel contacts. Template rigs also contain
-        // axle/damper bodies outside the four wheel subtrees; leaving those
-        // active creates a competing ragdoll and can overturn the chassis.
-        // Keep only the root chassis body active without editing shared art.
-        const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
-        Chassis->SetAllBodiesBelowSimulatePhysics(RootBone,false,false);
-        Chassis->SetAllBodiesBelowPhysicsDisabled(RootBone,true,false);
-        Chassis->SetMassOverrideInKg(RootBone,ChaosMovement->Mass,true);
         for(int32 Index=0;Index<ChaosMovement->Wheels.Num();++Index)
             ChaosMovement->SetWheelRadius(Index,WheelRadiusCm);
         // This pawn deliberately preserves ANOMALIA's existing crew/fuel base.
