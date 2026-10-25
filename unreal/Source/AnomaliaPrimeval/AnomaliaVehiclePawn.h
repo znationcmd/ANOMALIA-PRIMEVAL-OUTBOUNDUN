@@ -108,7 +108,7 @@ public:
 
     /** Only the server may select a vehicle type. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Vehicle")
-    bool ConfigureVehicle(FName NewVehicleId);
+    virtual bool ConfigureVehicle(FName NewVehicleId);
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle")
     FAnomaliaVehicleDefinition GetVehicleDefinition() const;
@@ -121,6 +121,10 @@ public:
     AAnomaliaSurvivor* GetStoredDriverSurvivor() const;
     void InputPause();
 
+    /** Trusted server controls, also used by native physical driving validation. */
+    bool SetDriverControlsOnServer(AController* Driver, float Throttle, float Steering, float Brake);
+    bool ExitDriverOnServer(AController* Driver);
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Vehicle")
     void OnVehicleConfigured(const FAnomaliaVehicleDefinition& Definition);
 
@@ -130,6 +134,12 @@ public:
 
 protected:
     virtual void BeginPlay() override;
+    virtual bool UsesPhysicsRoadSimulation() const { return false; }
+    virtual bool IsDriveReady() const { return true; }
+    virtual bool CanDriverExitNow() const { return true; }
+    virtual float GetExpectedSupportFloorZ() const;
+    virtual void SimulateRoadDrive(float DeltaSeconds, float Throttle, float Steering, float Brake,
+        bool bPowered, bool bDriverMissing);
 
     UFUNCTION()
     void OnRep_VehicleId();
@@ -181,4 +191,5 @@ private:
     void ClearControls();
     void ApplyDefinition();
 };
+
 
