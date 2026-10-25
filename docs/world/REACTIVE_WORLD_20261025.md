@@ -118,3 +118,19 @@ pas ces essais.
   existantes et ne présente pas un modèle de revue comme véhicule réaliste fini.
   Habitacles, portières, animations, conduite et intérieurs visitables restent à
   valider dans leurs parcours Unreal respectifs.
+
+### Contrôle des vrais modèles poursuivi le 25 octobre
+
+Les trois captures Unreal de la PR #31 ont été téléchargées et inspectées : maison
+bois à étage/balcon, abri de jardin détaillé avec panneaux solaires, voiture sportive.
+Ce sont de vrais modèles importés. Le rendu présente encore des hautes lumières
+brûlées et un fond de revue noir ; la voiture est trop sombre pour valider son
+habitacle. L'abri inclut son propre jardin sur dalle et ne convient pas à un
+remplacement générique de toutes les maisons. La longueur déclarée de la voiture
+(623,3 cm) exige aussi une revue d'échelle. Aucun test d'entrée, d'animation de
+porte ou de navigation intérieure n'est déduit de ces images.
+
+La PR #37 compile, mais son essai de conduite réel échoue encore sur le contact
+roue/sol (0 contact dans les mesures). Elle n'est donc pas présentée comme conduite
+Chaos validée. Détails et empreintes des captures :
+`docs/art/native-assets-visual-review-20261025.json`.

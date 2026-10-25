@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewedOn": "2026-10-25",
+  "sourceBranch": "ue5/realistic-interactive-assets-20261024",
+  "sourceCommit": "49640620824d11b472cb0c82c999f307aad4df3e",
+  "runId": 40170163406,
+  "artifactId": 12590955076,
+  "evidenceType": "actual Unreal viewport PNGs visually inspected",
+  "gameplayApproved": false,
+  "productionApproved": false,
+  "models": [
+    {
+      "id": "wood_house_enterable",
+      "image": "wood_house_enterable_front.png",
+      "sha256": "b2c656726ed6332c8801a8df4be4d224649b7cdb0db30f31dd9b0789e12057f7",
+      "visible": [
+        "Detailed wooden and corrugated exterior",
+        "Two storeys and visible exterior stairs/balcony",
+        "Material textures rendered in Unreal"
+      ],
+      "remaining": [
+        "Interior traversal not demonstrated",
+        "Roof highlights overexposed",
+        "Door motion and collision navigation not verified"
+      ]
+    },
+    {
+      "id": "modular_shed_interior",
+      "image": "modular_shed_interior_front.png",
+      "sha256": "0fd7210051923f13309c02159256394dc36f8955f29942a940939871075fc9af",
+      "visible": [
+        "Detailed timber garden structure",
+        "Solar panels, windows and planting/fence attached to the asset"
+      ],
+      "remaining": [
+        "Includes its own garden slab; not approved as a generic house replacement",
+        "Interior access and door motion not verified",
+        "Bright lighting and black review background remain"
+      ]
+    },
+    {
+      "id": "sports_car_930_review",
+      "image": "sports_car_930_review_front.png",
+      "sha256": "27569737636775373ba18a12dffb9eefd77942d7fee2af6640d53dee1128d15c",
+      "visible": [
+        "Detailed car body, glazing, wheels and rear spoiler"
+      ],
+      "remaining": [
+        "Dark rear three-quarter view despite front filename; cannot approve cockpit or all surfaces",
+        "Reported longitudinal bounds 623.3 cm require a scale review",
+        "Design rights separately restricted in existing source register; distribution not approved",
+        "No door, seat, rig or driving test shown"
+      ]
+    }
+  ],
+  "chaosReview": {
+    "runId": 40172007869,
+    "sourceCommit": "ae104bdfb850839b694c3ad3e056ff14ec66b5b4",
+    "compilation": "passed",
+    "driving": "failed",
+    "blockingEvidence": "Physical acceleration/wheel contact/rotation failed; sampled wheelContacts remained zero",
+    "productionReplacementApproved": false
+  }
+}
