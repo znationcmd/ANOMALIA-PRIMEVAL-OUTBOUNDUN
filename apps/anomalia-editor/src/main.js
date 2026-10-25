@@ -458,15 +458,32 @@ function openDatabase(){
     req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);
   });
 }
+function snapshotCurrentViewport(project){
+  // Local map cover is captured from the real scene displayed in Three.js;
+  // never fabricate a screenshot of a UE5 .umap.
+  if(project?.createdAt!==history.project.createdAt)return null;
+  try {
+    const canvas=document.createElement('canvas');
+    canvas.width=320;canvas.height=180;
+    const context=canvas.getContext('2d',{alpha:false});
+    if(!context||renderer.domElement.width<32||renderer.domElement.height<32)return null;
+    renderer.render(scene,camera);
+    context.drawImage(renderer.domElement,0,0,canvas.width,canvas.height);
+    const preview=canvas.toDataURL('image/jpeg',.68);
+    return preview.length<175000?preview:null;
+  }catch{return null;}
+}
 async function storeProject(project) {
   const db=await openDatabase();
   return new Promise((resolve,reject)=>{
     const tx=db.transaction('projects','readwrite');
     const store=tx.objectStore('projects');
-    store.put(project,'last-opened');
+    const preview=snapshotCurrentViewport(project);
+    const saved=preview?{...project,_editorPreview:preview}:project;
+    store.put(saved,'last-opened');
     // Index permanent par carte : le changement de carte ne détruit plus l'ancienne.
     if(typeof project.createdAt==='string'&&project.createdAt.length<=128)
-      store.put(project,'scene:'+project.createdAt);
+      store.put(saved,'scene:'+project.createdAt);
     tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>{db.close();reject(tx.error);};
   });
 }
@@ -491,7 +508,11 @@ async function listLocalScenes(){
         const project=entry.value;
         try{
           const valid=validateProject(project);
-          records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,edited:valid.createdAt});
+          const preview=typeof project._editorPreview==='string'&&
+            /^data:image\\/jpeg;base64,[a-zA-Z0-9+/=]+$/.test(project._editorPreview)&&
+            project._editorPreview.length<175000?project._editorPreview:null;
+          records.push({id:entry.key.slice(6),name:valid.name,objects:valid.objects.length,
+            edited:valid.createdAt,preview});
         }catch{ /* corrupted scene hidden, originals are not destroyed */ }
       }
       entry.continue();
