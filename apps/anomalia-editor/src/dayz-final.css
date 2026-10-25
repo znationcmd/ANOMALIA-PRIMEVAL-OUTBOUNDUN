@@ -120,3 +120,16 @@ body.mapLauncherVisible .app .stage #viewport{position:absolute!important;inset:
  .mapLauncher .mapHeroActions button{padding:4px 6px!important}
  body.mapLauncherVisible .app .stage{inset:0!important;position:fixed!important}
 }
+
+/* Les vignettes affichent une capture véritable de la scène enregistrée,
+   jamais une image d'illustration présentée comme carte jouable. */
+.mapLauncher .mapCover{isolation:isolate}
+.mapLauncher .mapActualPreview{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+ z-index:0;display:block;filter:saturate(.88) contrast(1.06)}
+.mapLauncher .mapCover:has(.mapActualPreview)::before{content:'';position:absolute;inset:0;z-index:1;
+ background:linear-gradient(0deg,#14243d96,transparent 45%);pointer-events:none}
+.mapLauncher .mapCover:has(.mapActualPreview) .mapCategory,.mapLauncher .mapCover:has(.mapActualPreview) .mapVisualNote{z-index:2}
+.mapLauncher .mapActionCard .mapCover{background:repeating-linear-gradient(135deg,#415b85 0 2px,#4b638b 2px 15px)!important}
+.mapLauncher .mapActionCard .mapCoverEmblem{font-size:27px!important;color:#dfeafa!important;
+ border:1px solid #bdd1f98f!important;background:#21365784!important;padding:6px 11px!important}
+.mapLauncher .mapCard:focus-visible{outline:2px solid #fff!important;outline-offset:2px!important}
