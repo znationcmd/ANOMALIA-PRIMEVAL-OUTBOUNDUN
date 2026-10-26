@@ -19,6 +19,9 @@ UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
     WheelRadius=40.f; WheelWidth=28.f; WheelMass=20.f;
     bAffectedBySteering=true; bAffectedByEngine=true; bAffectedByBrake=true;
     bAffectedByHandbrake=false; MaxSteerAngle=35.f;
+    // A finite tire contact sweep avoids intermittent point-ray support at speed.
+    SweepShape=ESweepShape::Spherecast;
+    bABSEnabled=true;
     SpringRate=25000.f; SpringPreload=50.f;
     SuspensionDampingRatio=.6f; SuspensionMaxRaise=20.f; SuspensionMaxDrop=20.f;
     RollbarScaling=.15f; FrictionForceMultiplier=2.f;

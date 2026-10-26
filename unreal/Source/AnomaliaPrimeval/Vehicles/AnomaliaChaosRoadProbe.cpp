@@ -128,14 +128,23 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
         Sample->SetNumberField(TEXT("physicalMassKg"),V->Chassis->GetMass());
         TArray<TSharedPtr<FJsonValue>> WheelGeometry;
-        for(const FName Bone:V->WheelBones)
+        for(int32 WheelIndex=0;WheelIndex<V->WheelBones.Num();++WheelIndex)
         {
+            const FName Bone=V->WheelBones[WheelIndex];
             const FVector Hub=V->Chassis->GetSocketLocation(Bone);
             FHitResult Floor;FCollisionQueryParams Query;Query.AddIgnoredActor(V);Query.AddIgnoredActor(Survivor.Get());
             const bool bHit=GetWorld()->LineTraceSingleByChannel(Floor,Hub+FVector(0,0,100),Hub-FVector(0,0,600),ECC_Visibility,Query);
             auto Row=MakeShared<FJsonObject>();Row->SetStringField(TEXT("bone"),Bone.ToString());
             Row->SetNumberField(TEXT("hubZ"),Hub.Z);Row->SetBoolField(TEXT("floorHit"),bHit);
             Row->SetNumberField(TEXT("floorZ"),Floor.Location.Z);Row->SetStringField(TEXT("floorActor"),GetNameSafe(Floor.GetActor()));
+            const FWheelStatus& Status=Physics->GetWheelState(WheelIndex);
+            Row->SetBoolField(TEXT("chaosContact"),Status.bInContact);
+            Row->SetBoolField(TEXT("chaosStateValid"),Status.bIsValid);
+            Row->SetNumberField(TEXT("springForce"),Status.SpringForce);
+            Row->SetNumberField(TEXT("suspensionLengthNormalized"),Status.NormalizedSuspensionLength);
+            Row->SetNumberField(TEXT("brakeTorque"),Status.BrakeTorque);
+            Row->SetNumberField(TEXT("driveTorque"),Status.DriveTorque);
+            Row->SetBoolField(TEXT("absActivated"),Status.bABSActivated);
             WheelGeometry.Add(MakeShared<FJsonValueObject>(Row));
         }
         Sample->SetArrayField(TEXT("wheelGeometry"),WheelGeometry);
