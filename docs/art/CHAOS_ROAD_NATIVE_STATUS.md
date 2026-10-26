@@ -61,13 +61,14 @@ They do not inherit an arbitrary skeletal bind rotation. The continuous native
 guard checks each visible axle against the vehicle's steered lateral direction.
 The genuine viewport captures are retained with each driving artifact.
 
-The next native validation extends these existing physical checks with refusal
+Run 40310935421 extends these existing physical checks with refusal
 to exit at speed, actual fuel depletion, full accelerator input with an empty
 tank, invalid refuel rejection, and resumed physical acceleration after server
-refueling. These additional cases are pending until the new Windows run passes.
+refueling. All twelve checks passed on both reference and original sedan under
+UE 5.8.3, commit 862e7167e075a3121fe328b005affcbf15fad665.
 Only the isolated review fixture adjusts fuel; no existing installation or save
 is changed. Refueling here exercises the trusted server API; it does not claim
-an inventory-backed fuel-can interaction or a complete ignition/starter system.
+an inventory-backed fuel-can interaction or a complete mechanical starter system.
 
 ## Explicit road engine ignition
 
@@ -82,8 +83,25 @@ This change leaves the other vehicle simulation types' existing power rules inta
 The extended native probe must prove accelerator input with ignition off, driver
 start, actual depletion/stall, refusal to restart empty, refueling without automatic
 restart, explicit driver restart and acceleration, and explicit shutdown. The new
-ignition code is pending native compilation and execution. It is a functional
-power/input gate, not finished starter animation/audio, battery or engine damage.
+ignition code compiled in Editor and Game with UE 5.8.3 and passed actual game
+execution in run 40311556355, commit 68dcaeb5391d1efb83a74437b76d25f8cde24d3e.
+All sixteen checks passed with both reference and original sedan. All measured
+visible tire axles remained aligned (152 reference samples, 150 sedan samples).
+The driver APIs are exercised in game; a manual keyboard/gamepad session and
+multiplayer session have not been verified. This is a functional power/input
+gate, not finished starter animation/audio, battery or engine damage.
+
+Evidence retained in that successful run:
+- `native-interaction-proof`, artifact 12645436324: native compilation/automation.
+- `native-demo-physics-evidence`, artifact 12644688689: reference driving report
+  and genuine Unreal viewport captures.
+- `native-sedan-drive-evidence`, artifact 12645695973: original sedan driving
+  report and genuine Unreal viewport captures.
+
+154 local Python tests passed as supplementary source/tool checks. The new engine
+and fuel work has not been packaged or installed. It does not complete production
+roads, doors/entry animations, fuel-can inventory transactions, network gameplay,
+mechanical damage or persistent vehicle saves.
 
 ## Account-free original sedan preparation
 
