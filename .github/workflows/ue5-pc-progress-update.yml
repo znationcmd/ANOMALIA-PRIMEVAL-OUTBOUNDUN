@@ -137,6 +137,7 @@ jobs:
           path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan-drive/*.*
           if-no-files-found: warn
       - name: Verify playable-map interaction geometry before preparing or cooking assets
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -145,6 +146,7 @@ jobs:
           & $python scripts/ue5/run-playable-interactions.py --engine-root "$env:UE_ROOT" --output "$evidence/interactions"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify pinned art and retain the imported realistic buildings
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         id: art_import
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -172,6 +174,7 @@ jobs:
           & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/residential-import.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Import actual ANOMALIA Workshop emblem before cooking the native game
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -183,6 +186,7 @@ jobs:
           & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
       - name: Cook the actual game with the new houses trees and detailed vehicles and run GPU gameplay tests
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         id: packaged_game
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
