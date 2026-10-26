@@ -1,5 +1,12 @@
 # BMW E39 — same model, native driving and driver door
 
+Current work: the remaining three doors, bonnet and boot lid are prepared in
+`BMWE39Review_v3`, with eleven parts total. The previous driver leaf and all
+four wheels are byte-identical. Horizontal/vertical axes and five stable extra
+panel components are wired into the native actor. New Windows import, motion,
+collision and regression acceptance is pending; the verified v2 results below
+do not yet validate these five new panels.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.

@@ -14,6 +14,8 @@ public:
     UAnomaliaVehiclePanelComponent();
     UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") FName PanelId=TEXT("driver_door");
     UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") float OpenAngleDegrees=70.f;
+    /** Chassis-local hinge axis: Z for doors, Y for bonnet/boot panels. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") FVector LocalHingeAxis=FVector::UpVector;
     UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") float DegreesPerSecond=80.f;
     UPROPERTY(Replicated,VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") bool bOpen=false;
     UPROPERTY(Replicated,EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") bool bLocked=false;

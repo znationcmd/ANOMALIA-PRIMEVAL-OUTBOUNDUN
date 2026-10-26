@@ -50,6 +50,12 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     Chassis=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChaosChassis"));
     SetRootComponent(Chassis);
     DriverDoor=CreateDefaultSubobject<UAnomaliaVehiclePanelComponent>(TEXT("DriverDoor"));DriverDoor->SetupAttachment(Chassis);
+    const TCHAR* PanelNames[]={TEXT("RoadPanel1"),TEXT("RoadPanel2"),TEXT("RoadPanel3"),TEXT("RoadPanel4"),TEXT("RoadPanel5")};
+    for(const TCHAR* Name:PanelNames)
+    {
+        auto* Panel=CreateDefaultSubobject<UAnomaliaVehiclePanelComponent>(FName(Name));
+        Panel->SetupAttachment(Chassis);AdditionalPanels.Add(Panel);
+    }
     Collision->SetupAttachment(Chassis);
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Body->SetVisibility(false); Body->SetHiddenInGame(true);
@@ -118,6 +124,16 @@ bool AAnomaliaChaosRoadVehicle::HasValidRoadRig() const
     if(!RoadMesh || !RoadMesh->GetPhysicsAsset() || !RoadBodyMesh || !RoadWheelMesh || !RoadAnimation ||
        !RoadAnimation->IsChildOf(UVehicleAnimationInstance::StaticClass()) || WheelBones.Num()!=4 ||
        !FMath::IsFinite(WheelRadiusCm) || WheelRadiusCm<10.f || WheelRadiusCm>100.f) return false;
+    if(AdditionalPanelDefinitions.Num()>AdditionalPanels.Num())return false;
+    TSet<FName> PanelIds;PanelIds.Add(TEXT("driver_door"));
+    for(const auto& Panel:AdditionalPanelDefinitions)
+    {
+        if(!Panel.Mesh || Panel.PanelId.IsNone() || PanelIds.Contains(Panel.PanelId) ||
+           Panel.PivotCm.ContainsNaN() || Panel.PivotCm.GetAbsMax()>1000.f ||
+           Panel.HingeAxis.ContainsNaN() || Panel.HingeAxis.SizeSquared()<SMALL_NUMBER ||
+           !FMath::IsFinite(Panel.OpenAngleDegrees) || FMath::Abs(Panel.OpenAngleDegrees)>170.f)return false;
+        PanelIds.Add(Panel.PanelId);
+    }
     TSet<FName> Unique;
     if(RoadWheelMeshes.Num()!=0 || RoadWheelHubTargetsCm.Num()!=0)
     {
@@ -166,6 +182,25 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     DriverDoor->SetStaticMesh(DriverDoorMesh);DriverDoor->SetRelativeLocation(DriverDoorPivotCm);
     DriverDoor->SetVisibility(DriverDoorMesh!=nullptr);DriverDoor->SetHiddenInGame(DriverDoorMesh==nullptr);
     DriverDoor->SetCollisionEnabled(DriverDoorMesh?ECollisionEnabled::QueryAndPhysics:ECollisionEnabled::NoCollision);
+    TSet<FName> PanelIds;PanelIds.Add(DriverDoor->PanelId);
+    for(int32 Index=0;Index<AdditionalPanels.Num();++Index)
+    {
+        auto* Panel=AdditionalPanels[Index].Get();
+        const auto* Definition=AdditionalPanelDefinitions.IsValidIndex(Index)?&AdditionalPanelDefinitions[Index]:nullptr;
+        const bool bValid=Definition && Definition->Mesh && !Definition->PanelId.IsNone() &&
+            !PanelIds.Contains(Definition->PanelId) && !Definition->HingeAxis.ContainsNaN() &&
+            Definition->HingeAxis.SizeSquared()>SMALL_NUMBER && !Definition->PivotCm.ContainsNaN() &&
+            FMath::IsFinite(Definition->OpenAngleDegrees) && FMath::Abs(Definition->OpenAngleDegrees)<=170.f;
+        Panel->SetStaticMesh(bValid?Definition->Mesh:nullptr);
+        Panel->SetVisibility(bValid);Panel->SetHiddenInGame(!bValid);
+        Panel->SetCollisionEnabled(bValid?ECollisionEnabled::QueryAndPhysics:ECollisionEnabled::NoCollision);
+        if(bValid)
+        {
+            PanelIds.Add(Definition->PanelId);Panel->PanelId=Definition->PanelId;
+            Panel->SetRelativeLocation(Definition->PivotCm);Panel->LocalHingeAxis=Definition->HingeAxis.GetSafeNormal();
+            Panel->OpenAngleDegrees=Definition->OpenAngleDegrees;
+        }
+    }
     for(int32 Index=0;Index<RoadWheels.Num();++Index)
     {
         RoadWheels[Index]->SetStaticMesh(bAuthoredWheels?RoadWheelMeshes[Index]:RoadWheelMesh);
@@ -199,6 +234,8 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         ChassisBody->PhysicsType=PhysType_Simulated;
         FBox ClosedArtBox=RoadBodyMesh->GetBounds().GetBox();
         if(DriverDoorMesh)ClosedArtBox+=DriverDoorMesh->GetBounds().GetBox().ShiftBy(DriverDoorPivotCm);
+        for(const auto& Panel:AdditionalPanels)if(Panel && Panel->GetStaticMesh())
+            ClosedArtBox+=Panel->GetStaticMesh()->GetBounds().GetBox().ShiftBy(Panel->GetRelativeLocation());
         const FBoxSphereBounds ArtBounds(ClosedArtBox);
         FKBoxElem Shape;
         Shape.X=FMath::Clamp(float(ArtBounds.BoxExtent.X)*1.5f,100.f,1000.f);

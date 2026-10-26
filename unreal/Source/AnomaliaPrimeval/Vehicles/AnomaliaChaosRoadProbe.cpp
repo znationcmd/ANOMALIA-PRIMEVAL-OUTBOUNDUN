@@ -32,6 +32,17 @@
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
 
+namespace
+{
+bool ReadPanelFixtureVector(const TSharedPtr<FJsonObject>& Object,const TCHAR* Key,FVector& Out)
+{
+    const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
+    if(!Object.IsValid() || !Object->TryGetArrayField(Key,Values) || !Values || Values->Num()!=3)return false;
+    Out=FVector((*Values)[0]->AsNumber(),(*Values)[1]->AsNumber(),(*Values)[2]->AsNumber());
+    return !Out.ContainsNaN() && Out.GetAbsMax()<1000;
+}
+}
+
 AAnomaliaChaosRoadProbe::AAnomaliaChaosRoadProbe() { PrimaryActorTick.bCanEverTick=true; }
 void AAnomaliaChaosRoadProbe::ObserveExitedMovement(float DeltaSeconds,FVector InitialLocation,FVector InitialVelocity)
 {
@@ -106,6 +117,9 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetNumberField(TEXT("observedExitCharacterSpeedCmPerSecond"),ObservedExitSpeed);
     Report->SetArrayField(TEXT("brakingMeasurements"),BrakingMeasurements);
     Report->SetBoolField(TEXT("driverDoorReviewed"),bDriverDoorReviewed);
+    TArray<TSharedPtr<FJsonValue>> PanelIds;
+    for(const auto& Id:ValidatedAdditionalPanelIds)PanelIds.Add(MakeShared<FJsonValueString>(Id));
+    Report->SetArrayField(TEXT("validatedAdditionalPanelIds"),PanelIds);
     if(const auto* Setting=IConsoleManager::Get().FindConsoleVariable(TEXT("p.Vehicle.DisableConstraintSuspension")))
         Report->SetNumberField(TEXT("constraintSuspensionDisabled"),Setting->GetInt());
     if(Car.IsValid())
@@ -166,6 +180,34 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         { Finish(TEXT("High speed exit did not retain the original character and vehicle momentum")); return; }
         Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
         Finish();return;
+    }
+    if(Phase==40 || Phase==41)
+    {
+        auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());auto* Panel=PanelUnderReview.Get();
+        if(!V || !S || !Panel){Finish(TEXT("Additional E39 panel review lost its real actor"));return;}
+        if(Now-PhaseStarted<1.5)return;
+        const FVector Point=V->Chassis->GetComponentTransform().TransformPosition(PanelApertureLocalCm);
+        const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaAdditionalPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
+        const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Point+Outward*180,Point-Outward*50,ECC_Visibility,Query);
+        const FString Id=Panel->PanelId.ToString();
+        if(Phase==40)
+        {
+            const FQuat Expected(Panel->LocalHingeAxis.GetSafeNormal(),FMath::DegreesToRadians(Panel->OpenAngleDegrees));
+            if(!Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees-Panel->OpenAngleDegrees)>1.f ||
+               !Panel->GetRelativeTransform().GetRotation().Equals(Expected,.01f) || !Panel->IsVisible() || (bHit && Hit.GetComponent()==Panel))
+            {Finish(TEXT("Additional panel failed real axis/open-aperture check: ")+Id);return;}
+            Checks.Add(TEXT("panel_")+Id+TEXT("_rotates_on_authored_axis_and_clears_access"));
+            FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-panel-")+Id+TEXT("-open.png")),false,false);
+            FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->Bounds.Origin-Eye).Rotation());
+            if(!Panel->TryToggle(S)){Finish(TEXT("Targeted server panel close rejected: ")+Id);return;}
+            Phase=41;PhaseStarted=Now;return;
+        }
+        if(Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees)>1.f ||
+           !Panel->GetRelativeTransform().GetRotation().Equals(FQuat::Identity,.01f) || !bHit || Hit.GetComponent()!=Panel)
+        {Finish(TEXT("Additional panel failed closed collision restoration: ")+Id);return;}
+        Checks.Add(TEXT("panel_")+Id+TEXT("_closes_and_restores_real_collision"));
+        ValidatedAdditionalPanelIds.Add(Id);++AdditionalPanelIndex;Phase=0;PhaseStarted=Now-4;
     }
     if(Phase==32 || Phase==33)
     {
@@ -234,7 +276,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             const TSharedPtr<FJsonObject>* Bounds=nullptr;
             const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
             const bool bE39Review=GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1"));
-            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v2/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
+            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v3/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
             if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),ManifestRelative)) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ManifestText),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetObjectField(TEXT("closedBodyBoundsCm"),Bounds) || !Bounds || !Bounds->IsValid() ||
@@ -245,6 +287,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             const FVector ExpectedMax((*Maximum)[0]->AsNumber(),(*Maximum)[1]->AsNumber(),(*Maximum)[2]->AsNumber());
             FBox ClosedBox=V->RoadBodyMesh->GetBounds().GetBox();
             ClosedBox+=V->DriverDoorMesh->GetBounds().GetBox().ShiftBy(V->DriverDoorPivotCm);
+            for(const auto& Panel:V->AdditionalPanels)if(Panel && Panel->GetStaticMesh())
+                ClosedBox+=Panel->GetStaticMesh()->GetBounds().GetBox().ShiftBy(Panel->GetRelativeLocation());
             if(!ClosedBox.Min.Equals(ExpectedMin,1.f) || !ClosedBox.Max.Equals(ExpectedMax,1.f))
             {Finish(TEXT("Closed door does not recompose the original body bounds: wrong hinge side or pivot"));return;}
             Checks.Add(TEXT("closed_driver_door_recomposes_original_body_bounds"));
@@ -254,18 +298,16 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(bE39Review)
             {
                 const TArray<TSharedPtr<FJsonValue>>* Panels=nullptr;
-                if(!Manifest->TryGetArrayField(TEXT("panels"),Panels) || !Panels || Panels->Num()!=1)
-                {Finish(TEXT("E39 driver leaf review configuration missing"));return;}
-                const TSharedPtr<FJsonObject> Panel=(*Panels)[0]->AsObject();
-                const auto ReadFixtureVector=[](const TSharedPtr<FJsonObject>& Object,const TCHAR* Key,FVector& Out)
+                if(!Manifest->TryGetArrayField(TEXT("panels"),Panels) || !Panels || Panels->Num()!=6)
+                {Finish(TEXT("E39 six-panel review configuration missing"));return;}
+                TSharedPtr<FJsonObject> Panel;
+                for(const auto& Value:*Panels)
                 {
-                    const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
-                    if(!Object.IsValid() || !Object->TryGetArrayField(Key,Values) || !Values || Values->Num()!=3)return false;
-                    Out=FVector((*Values)[0]->AsNumber(),(*Values)[1]->AsNumber(),(*Values)[2]->AsNumber());
-                    return !Out.ContainsNaN() && Out.GetAbsMax()<1000;
-                };
-                if(!ReadFixtureVector(Panel,TEXT("apertureCm"),DoorApertureLocalCm) ||
-                   !ReadFixtureVector(Panel,TEXT("fixtureStandCm"),StandLocalCm))
+                    const auto Object=Value->AsObject();FString Id;
+                    if(Object.IsValid() && Object->TryGetStringField(TEXT("id"),Id) && Id==TEXT("door_driver"))Panel=Object;
+                }
+                if(!ReadPanelFixtureVector(Panel,TEXT("apertureCm"),DoorApertureLocalCm) ||
+                   !ReadPanelFixtureVector(Panel,TEXT("fixtureStandCm"),StandLocalCm))
                 {Finish(TEXT("E39 driver leaf fixture vectors invalid"));return;}
             }
             const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocalCm);
@@ -283,6 +325,52 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Door->bLocked=false;Checks.Add(TEXT("locked_driver_door_rejects_server_interaction"));
             if(!Door->TryToggle(S)){Finish(TEXT("Server targeted driver door opening rejected"));return;}
             Phase=30;PhaseStarted=Now;return;
+        }
+        if(GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1")) && !bAdditionalPanelsReviewed)
+        {
+            FString Text;TSharedPtr<FJsonObject> Manifest;const TArray<TSharedPtr<FJsonValue>>* Configs=nullptr;
+            if(!FFileHelper::LoadFileToString(Text,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/BMWE39Review_v3/manifest.json"))) ||
+               !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Manifest) || !Manifest.IsValid() ||
+               !Manifest->TryGetArrayField(TEXT("panels"),Configs) || !Configs || Configs->Num()!=6)
+            {Finish(TEXT("E39 complete panel review manifest missing"));return;}
+            TArray<TSharedPtr<FJsonObject>> Additional;
+            for(const auto& Value:*Configs)
+            {
+                const auto Config=Value->AsObject();FString Id;
+                if(!Config.IsValid() || !Config->TryGetStringField(TEXT("id"),Id)){Finish(TEXT("Invalid E39 panel identity"));return;}
+                if(Id!=TEXT("door_driver"))Additional.Add(Config);
+            }
+            if(Additional.Num()!=5){Finish(TEXT("Five extra E39 panel definitions required"));return;}
+            if(AdditionalPanelIndex>=Additional.Num())bAdditionalPanelsReviewed=true;
+            else
+            {
+                const auto Config=Additional[AdditionalPanelIndex];const FName Id(*Config->GetStringField(TEXT("id")));
+                UAnomaliaVehiclePanelComponent* Panel=nullptr;
+                for(const auto& Candidate:V->AdditionalPanels)if(Candidate && Candidate->PanelId==Id)Panel=Candidate;
+                FVector StandLocal,Axis,Pivot;
+                if(!Panel || !Panel->GetStaticMesh() || Panel->GetCollisionEnabled()!=ECollisionEnabled::QueryAndPhysics ||
+                   !ReadPanelFixtureVector(Config,TEXT("apertureCm"),PanelApertureLocalCm) ||
+                   !ReadPanelFixtureVector(Config,TEXT("traceOutward"),PanelTraceOutward) || PanelTraceOutward.IsNearlyZero() ||
+                   !ReadPanelFixtureVector(Config,TEXT("fixtureStandCm"),StandLocal) ||
+                   !ReadPanelFixtureVector(Config,TEXT("hingeAxis"),Axis) || !ReadPanelFixtureVector(Config,TEXT("pivotCm"),Pivot) ||
+                   !Panel->LocalHingeAxis.Equals(Axis.GetSafeNormal(),.001f) || !Panel->GetRelativeLocation().Equals(Pivot,.1f))
+                {Finish(TEXT("Authored E39 panel/axis/fixture missing: ")+Id.ToString());return;}
+                PanelUnderReview=Panel;
+                Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_installed_with_authored_hinge_axis"));
+                const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocal);
+                if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true)){Finish(TEXT("Panel fixture stand is blocked"));return;}
+                FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->Bounds.Origin-Eye).Rotation());
+                const FVector Point=V->Chassis->GetComponentTransform().TransformPosition(PanelApertureLocalCm);
+                const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();
+                FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaAdditionalPanelClosed),false);Query.AddIgnoredActor(S);FHitResult Hit;
+                if(!GetWorld()->LineTraceSingleByChannel(Hit,Point+Outward*180,Point-Outward*50,ECC_Visibility,Query) || Hit.GetComponent()!=Panel)
+                {Finish(TEXT("Closed panel does not block the authored access trace: ")+Id.ToString());return;}
+                Panel->bLocked=true;
+                if(Panel->TryToggle(S) || Panel->bOpen){Finish(TEXT("Locked panel accepted targeted opening"));return;}
+                Panel->bLocked=false;Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_closed_collision_and_server_lock_verified"));
+                if(!Panel->TryToggle(S)){Finish(TEXT("Targeted server panel opening rejected: ")+Id.ToString());return;}
+                Phase=40;PhaseStarted=Now;return;
+            }
         }
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);

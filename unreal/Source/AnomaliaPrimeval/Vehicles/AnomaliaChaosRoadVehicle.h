@@ -39,6 +39,18 @@ public:
     UAnomaliaRoadRearWheel();
 };
 
+/** Native/Blueprint reusable panel configuration; identity is stable within the vehicle. */
+USTRUCT(BlueprintType)
+struct ANOMALIAPRIMEVAL_API FAnomaliaRoadPanelDefinition
+{
+    GENERATED_BODY()
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") FName PanelId;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") TObjectPtr<UStaticMesh> Mesh=nullptr;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") FVector PivotCm=FVector::ZeroVector;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") FVector HingeAxis=FVector::UpVector;
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Panel") float OpenAngleDegrees=70.f;
+};
+
 /** Actual skeletal Chaos road simulation. Missing art/rig refuses driving; no block fallback. */
 UCLASS(Blueprintable)
 class ANOMALIAPRIMEVAL_API AAnomaliaChaosRoadVehicle : public AAnomaliaVehiclePawn
@@ -61,6 +73,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UStaticMesh> DriverDoorMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") FVector DriverDoorPivotCm=FVector(129,-88.5,94);
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UAnomaliaVehiclePanelComponent> DriverDoor;
+    /** Five extra default subobjects keep replication identities stable on server and clients. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Chaos|Panels") TArray<FAnomaliaRoadPanelDefinition> AdditionalPanelDefinitions;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Chaos|Panels") TArray<TObjectPtr<UAnomaliaVehiclePanelComponent>> AdditionalPanels;
     /** Optional individually modelled wheels, paired with authored chassis-space hubs. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMesh>> RoadWheelMeshes;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<FVector> RoadWheelHubTargetsCm;

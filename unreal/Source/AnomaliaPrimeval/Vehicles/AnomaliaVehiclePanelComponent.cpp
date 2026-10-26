@@ -32,7 +32,7 @@ bool UAnomaliaVehiclePanelComponent::TryToggle(AAnomaliaSurvivor* User)
 bool UAnomaliaVehiclePanelComponent::IsPoseBlocked(float Angle) const
 {
     if(!GetStaticMesh() || !GetAttachParent())return true;
-    const FTransform Pose(FRotator(0,Angle,0),GetRelativeLocation(),GetRelativeScale3D());
+    const FTransform Pose(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(Angle)),GetRelativeLocation(),GetRelativeScale3D());
     const FTransform WorldPose=Pose*GetAttachParent()->GetComponentTransform();
     const auto Local=GetStaticMesh()->GetBounds();
     FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaPanelObstruction),false);Query.AddIgnoredActor(GetOwner());
@@ -65,11 +65,11 @@ void UAnomaliaVehiclePanelComponent::TickComponent(float Delta,ELevelTick Type,F
         VisualAngle=AngleDegrees;
     }
     else VisualAngle=FMath::FInterpConstantTo(VisualAngle,AngleDegrees,Delta,FMath::Max(1.f,DegreesPerSecond)*1.5f);
-    SetRelativeRotation(FRotator(0,VisualAngle,0));
+    SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)));
 }
 void UAnomaliaVehiclePanelComponent::OnRep_Angle()
 {
-    if(!bReceivedAngle){VisualAngle=AngleDegrees;SetRelativeRotation(FRotator(0,VisualAngle,0));bReceivedAngle=true;}
+    if(!bReceivedAngle){VisualAngle=AngleDegrees;SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)));bReceivedAngle=true;}
 }
 void UAnomaliaVehiclePanelComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

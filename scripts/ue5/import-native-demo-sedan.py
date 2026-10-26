@@ -26,8 +26,8 @@ def main():
     if result.returncode:raise RuntimeError('Unreal sedan import process failed: '+str(result.returncode))
     report=json.loads((output/'sedan-import-report.json').read_text(encoding='utf-8-sig'))
     if (report['state']!=('E39_STATIC_PARTS_IMPORTED_NOT_DRIVEN' if args.e39 else 'CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN') or
-        report['sourceCommit']!=env.get('GITHUB_SHA') or len(report['models'])!=6):
+        report['sourceCommit']!=env.get('GITHUB_SHA') or len(report['models'])!=(11 if args.e39 else 6)):
         raise RuntimeError('Real sedan part import not verified: '+str(report.get('error')))
-    print('Six same-E39 parts imported, including real driver leaf; opening and gameplay remain unverified.' if args.e39 else 'Six CC0 sedan parts imported, including separate driver door; gameplay remains unverified.')
+    print('Eleven same-E39 parts imported, including six panels; opening and gameplay remain unverified.' if args.e39 else 'Six CC0 sedan parts imported, including separate driver door; gameplay remains unverified.')
 
 if __name__=='__main__':main()

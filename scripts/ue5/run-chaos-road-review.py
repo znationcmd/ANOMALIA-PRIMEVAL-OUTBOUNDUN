@@ -73,6 +73,10 @@ def main():
             'driver_door_closes_and_restores_actual_collision'}
         if not drive.get('driverDoorReviewed') or not panels.issubset(drive.get('checks',[])):
             raise RuntimeError('Selected sedan requires a real animated driver door and moving collision')
+    if args.e39:
+        expected={'door_front_right','door_rear_left','door_rear_right','hood','trunk'}
+        if set(drive.get('validatedAdditionalPanelIds',[]))!=expected:
+            raise RuntimeError('All five additional E39 panels must pass real moving-collision checks')
     if drive.get('constraintSuspensionDisabled')!=1:
         raise RuntimeError('Calibrated force-based suspension was not active in the actual game')
     video=None;video_error=None

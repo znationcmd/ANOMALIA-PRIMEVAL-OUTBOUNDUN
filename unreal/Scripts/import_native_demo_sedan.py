@@ -8,7 +8,7 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
-NAMESPACE="BMWE39Review_v2" if E39 else "NativeDemoSedan_v3"
+NAMESPACE="BMWE39Review_v3" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
@@ -24,15 +24,20 @@ try:
         raise RuntimeError('Reviewed licensed source identity required')
     models=manifest['models']
     expected={'body','door_driver','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
+    if E39:expected.update({'door_front_right','door_rear_left','door_rear_right','hood','trunk'})
     if len(models)!=len(expected) or {m['id'] for m in models}!=expected:raise RuntimeError('Complete expected part set required')
     partition=None
     if E39:
-        partition=manifest['sourceCoverage']['partition']
-        if (manifest['schemaVersion']!=2 or partition['doorSurfaceArea']<1 or
-            abs(partition['originalSurfaceArea']-partition['doorSurfaceArea']-partition['remainingSurfaceArea'])>1e-6 or
-            manifest['parentBodySha256']!='c84fb90ba58503986336784991c183031fd2e45a85b8636310c06ebf293b88a9' or
-            len(manifest['panels'])!=1):
-            raise RuntimeError('Same E39 driver leaf and original surface coverage required')
+        partition=manifest['surfacePartition']
+        previous=json.loads((ROOT/'SourceAssets/BMWE39Review_v2/manifest.json').read_text())
+        if (manifest['schemaVersion']!=3 or abs(partition['sourceArea']-sum(partition['areas'].values()))>1e-6 or
+            manifest['parentBodySha256']!=next(m['sha256'] for m in previous['models'] if m['id']=='body') or
+            {p['id'] for p in manifest['panels']}!={'door_driver','door_front_right','door_rear_left','door_rear_right','hood','trunk'}):
+            raise RuntimeError('Same E39 complete panel partition required')
+        for old in previous['models']:
+            if old['id']=='door_driver' or old['id'].startswith('wheel_'):
+                if next(m['sha256'] for m in models if m['id']==old['id'])!=old['sha256']:
+                    raise RuntimeError('Validated E39 driver leaf and wheels must remain unchanged')
     else:
         coverage=manifest['sourceCoverage'];partition=coverage['partition']
         if (manifest['schemaVersion']!=3 or coverage['nodes']!=304 or partition['doorSurfaceArea']<.5 or
@@ -77,7 +82,7 @@ try:
                 raise RuntimeError('Imported handedness/pivot differs: '+name+' '+str(actual_origin)+' expected '+str(expected_origin))
         if mesh.get_num_triangles(0)<100 or len(mesh.static_materials)<1:
             raise RuntimeError('Detailed geometry and imported materials required: '+name)
-        if name=='door_driver' and editor.get_simple_collision_count(mesh)==0:
+        if name in {p['id'] for p in manifest.get('panels',[{'id':'door_driver'}])} and editor.get_simple_collision_count(mesh)==0:
             if editor.add_simple_collisions(mesh,unreal.ScriptCollisionShapeType.NDOP26)<0:
                 raise RuntimeError('Driver door needs moving convex collision')
         # Keep D3D11 compatibility for the current validation host. This does not

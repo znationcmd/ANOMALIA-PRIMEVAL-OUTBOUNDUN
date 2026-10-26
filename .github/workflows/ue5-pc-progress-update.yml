@@ -165,7 +165,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-bmw-e39-panels.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v2
+          node scripts/vehicle-assets/prepare-bmw-e39-all-panels.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v3
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/e39"
           & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence" --e39

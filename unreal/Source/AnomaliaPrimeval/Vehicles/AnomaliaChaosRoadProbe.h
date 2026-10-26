@@ -7,6 +7,7 @@ class AAnomaliaChaosRoadVehicle;
 class AAnomaliaSurvivor;
 class UPhysicalMaterial;
 class UStaticMeshComponent;
+class UAnomaliaVehiclePanelComponent;
 
 /** Runs only with an explicit command line, isolated server ID and dedicated review map. */
 UCLASS()
@@ -22,6 +23,12 @@ private:
     bool bSignalSeenOn=false, bSignalSeenOff=false;
     bool bRearDriveObserved=false;
     bool bDriverDoorReviewed=false;
+    bool bAdditionalPanelsReviewed=false;
+    int32 AdditionalPanelIndex=0;
+    TArray<FString> ValidatedAdditionalPanelIds;
+    TWeakObjectPtr<UAnomaliaVehiclePanelComponent> PanelUnderReview;
+    FVector PanelApertureLocalCm=FVector::ZeroVector;
+    FVector PanelTraceOutward=FVector::UpVector;
     FVector DoorApertureLocalCm=FVector(50,-90,110);
     float OriginalFuelConsumption=.045f;
     double BrakeMeasuredStarted=0, BrakePathCm=0;

@@ -16,7 +16,7 @@ try:
     if not mesh or not animation or not tire or not body_art:raise RuntimeError('Real template rig, animation or tires missing')
     sedan=None;sedan_parts={}
     if SEDAN or E39:
-        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets'/('BMWE39Review_v2' if E39 else 'NativeDemoSedan_v3')/'manifest.json').read_text())
+        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets'/('BMWE39Review_v3' if E39 else 'NativeDemoSedan_v3')/'manifest.json').read_text())
         for part in sedan['models']:
             asset=unreal.load_asset(part['objectPath'])
             if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaNativeSedanSha256')!=part['sha256']:
@@ -48,6 +48,18 @@ try:
         car.set_editor_property('driver_door_mesh',sedan_parts['door_driver'])
         car.set_editor_property('driver_door_pivot_cm',unreal.Vector(*sedan['panels'][0]['pivotCm']))
         car.get_editor_property('driver_door').set_editor_property('open_angle_degrees',sedan['panels'][0]['openAngleDegrees'])
+        definitions=[]
+        if E39:
+            for panel in sedan['panels']:
+                if panel['id']=='door_driver':continue
+                definition=unreal.AnomaliaRoadPanelDefinition()
+                definition.set_editor_property('panel_id',unreal.Name(panel['id']))
+                definition.set_editor_property('mesh',sedan_parts[panel['id']])
+                definition.set_editor_property('pivot_cm',unreal.Vector(*panel['pivotCm']))
+                definition.set_editor_property('hinge_axis',unreal.Vector(*panel['hingeAxis']))
+                definition.set_editor_property('open_angle_degrees',panel['openAngleDegrees'])
+                definitions.append(definition)
+        car.set_editor_property('additional_panel_definitions',definitions)
         car.set_editor_property('road_wheel_meshes',[sedan_parts[k] for k in ('wheel_fl','wheel_fr','wheel_rl','wheel_rr')])
         car.set_editor_property('road_wheel_hub_targets_cm',[unreal.Vector(*hub) for hub in sedan['wheelHubsCm']])
     chassis=car.get_editor_property('chassis');chassis.set_skeletal_mesh(mesh)
