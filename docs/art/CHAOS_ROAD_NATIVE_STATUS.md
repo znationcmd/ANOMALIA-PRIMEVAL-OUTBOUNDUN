@@ -118,13 +118,13 @@ rigging, driving or a final DayZ-style vehicle. The generated manifest records t
 limits explicitly. No Sketchfab, Google or Epic sign-in is needed for this source.
 
 Not yet approved: production fleet replacement, packaged Windows installation, network
-prediction, multiplayer, manual clutch/gears, entry/exit animations, moving portières,
+prediction, multiplayer, manual clutch, entry/exit animations, moving portières,
 mechanical repairs or vehicle persistence. No claim of full DayZ parity is made.
 
 Snow, desert storms, foliage wind/audio, buildings and non-road vehicle physics are
 separate work; this change does not label them complete.
 
-## Driver controls and unrestricted moving exit (native validation pending)
+## Driver controls and unrestricted moving exit (native validation passed)
 
 The road pawn now allows exit at any speed, per the current requested gameplay.
 The existing floor, capsule-clearance and obstacle checks still choose the exit
@@ -145,8 +145,23 @@ The native probe requires actual first/second gear driving, a stop using the
 handbrake without service brake, real light activation/blinking, then an exit
 above 2200 cm/s (79.2 km/h), restoring the same survivor with inherited movement.
 There is no gameplay speed limit on exit; the threshold is a proving-ground test.
-Compilation/gameplay for these new changes are pending. The prior sixteen-check
-ignition result does not validate this new revision.
+Editor and Game compiled with UE 5.8.3. Run 40315639102 passed all 21 actual game
+checks on both reference and original sedan, source commit
+`a4aba5fa312c972e15b0f29755b9d3ea441e580a`. The initial test exceeded the old
+500 m proving surface; the owned engineering surface is now 1000 m wide. No
+production terrain is changed. The test retains physical wheel-contact and
+free-exit checks. The character movement update records inherited speed before
+later ground friction slows it, without injecting character movement in the probe.
+
+Measured exit speeds: reference 3154.34 cm/s (113.56 km/h), character 3163.45 cm/s;
+original sedan 3825.01 cm/s (137.70 km/h), character 3833.59 cm/s. There is no
+runtime speed cap. Reports and real viewport captures are retained in that run:
+reference artifact 12646652894, sedan artifact 12646703734, native build/tests
+artifact 12646917478. Local source/tool tests: 154 passed.
+
+These results cover standalone proving-ground driving and driver APIs. They do
+not verify a manual keyboard/gamepad session, night-time optics, network play,
+animations, impact injury, production-road driving or a new packaged installation.
 
 Additional requested work, not declared implemented: animated wipers (source
 does contain separate arms/blades), replaceable wheels/doors/hood/trunk with item
