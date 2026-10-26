@@ -97,6 +97,8 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
         Profile->SetNumberField(TEXT("peakTorqueNm"),Car->ChaosMovement->EngineSetup.MaxTorque);
         Profile->SetNumberField(TEXT("dragCoefficient"),Car->ChaosMovement->DragCoefficient);
         Profile->SetBoolField(TEXT("rearWheelDriveObserved"),bRearDriveObserved);
+        Profile->SetNumberField(TEXT("linearDamping"),Car->Chassis->GetLinearDamping());
+        Profile->SetNumberField(TEXT("angularDamping"),Car->Chassis->GetAngularDamping());
         Report->SetObjectField(TEXT("vehicleProfile"),Profile);
     }
     TArray<TSharedPtr<FJsonValue>> Rows;
@@ -194,6 +196,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("wallElapsedSeconds"),FPlatformTime::Seconds()-WallStarted);
         Sample->SetNumberField(TEXT("phase"),Phase); Sample->SetNumberField(TEXT("speedCmPerSecond"),Speed);
         Sample->SetNumberField(TEXT("gear"),Physics->GetCurrentGear()); Sample->SetNumberField(TEXT("wheelContacts"),Contacts);
+        Sample->SetBoolField(TEXT("automaticTransmissionActive"),Physics->GetUseAutoGears());
+        Sample->SetNumberField(TEXT("engineRpm"),Physics->GetEngineRotationSpeed());
+        Sample->SetNumberField(TEXT("dragMagnitudeEngineUnits"),Physics->DebugDragMagnitude);
         Sample->SetNumberField(TEXT("summedWheelAngularSpeed"),Rotation);
         Sample->SetNumberField(TEXT("yaw"),V->GetActorRotation().Yaw);
         Sample->SetNumberField(TEXT("distanceCm"),FVector::Dist2D(StartLocation,V->GetActorLocation()));
@@ -232,6 +237,16 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Row->SetNumberField(TEXT("slipAngle"),Status.SlipAngle);
             Row->SetBoolField(TEXT("slipping"),Status.bIsSlipping);
             Row->SetBoolField(TEXT("skidding"),Status.bIsSkidding);
+            if(Physics->Wheels.IsValidIndex(WheelIndex) && Physics->Wheels[WheelIndex])
+            {
+                const auto* Wheel=Physics->Wheels[WheelIndex].Get();
+                Row->SetNumberField(TEXT("wheelLoadRatio"),Wheel->WheelLoadRatio);
+                Row->SetNumberField(TEXT("debugTireLoadEngineUnits"),Wheel->DebugTireLoad);
+                Row->SetNumberField(TEXT("debugLongForceEngineUnits"),Wheel->DebugLongForce);
+                Row->SetNumberField(TEXT("debugLatForceEngineUnits"),Wheel->DebugLatForce);
+                Row->SetNumberField(TEXT("steerAngleDegrees"),Wheel->GetSteerAngle());
+                Row->SetBoolField(TEXT("tractionControlEnabled"),Wheel->bTractionControlEnabled);
+            }
             WheelGeometry.Add(MakeShared<FJsonValueObject>(Row));
         }
         Sample->SetArrayField(TEXT("wheelGeometry"),WheelGeometry);

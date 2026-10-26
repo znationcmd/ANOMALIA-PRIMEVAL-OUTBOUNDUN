@@ -31,6 +31,7 @@ UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
     SpringRate=45000.f; SpringPreload=50.f;
     SuspensionDampingRatio=.6f; SuspensionMaxRaise=12.f; SuspensionMaxDrop=10.f;
     RollbarScaling=.15f; FrictionForceMultiplier=1.f;
+    WheelLoadRatio=1.f; bTractionControlEnabled=false;
     MaxBrakeTorque=1800.f; MaxHandBrakeTorque=0.f;
 }
 
@@ -97,9 +98,10 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     auto& Gears=ChaosMovement->TransmissionSetup;
     Gears.bUseAutomaticGears=true; Gears.bUseAutoReverse=false;
     Gears.ForwardGearRatios={3.5f,2.2f,1.5f,1.f,.8f}; Gears.ReverseGearRatios={3.3f};
-    Gears.FinalRatio=3.5f; Gears.ChangeUpRPM=5500.f; Gears.ChangeDownRPM=1800.f;
+    Gears.FinalRatio=3.5f; Gears.ChangeUpRPM=4500.f; Gears.ChangeDownRPM=1800.f;
     Gears.GearChangeTime=.25f; Gears.TransmissionEfficiency=.94f;
     ChaosMovement->DifferentialSetup.DifferentialType=EVehicleDifferential::RearWheelDrive;
+    ChaosMovement->SteeringSetup.SteeringType=ESteeringType::Ackermann;
     auto* SteeringCurve=ChaosMovement->SteeringSetup.SteeringCurve.GetRichCurve();
     SteeringCurve->Reset(); // Chaos's steering curve speed axis is MPH.
     SteeringCurve->AddKey(0.f,1.f); SteeringCurve->AddKey(30.f,.7f);
