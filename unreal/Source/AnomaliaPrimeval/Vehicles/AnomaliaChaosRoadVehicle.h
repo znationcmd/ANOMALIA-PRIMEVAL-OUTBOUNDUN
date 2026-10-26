@@ -14,6 +14,7 @@ class UAnimInstance;
 class UPhysicsAsset;
 class USpotLightComponent;
 class UPointLightComponent;
+class UAnomaliaVehiclePanelComponent;
 
 UENUM(BlueprintType)
 enum class EAnomaliaRoadAction : uint8
@@ -57,6 +58,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadBodyMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadWheelMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadGlassMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UStaticMesh> DriverDoorMesh;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") FVector DriverDoorPivotCm=FVector(129,88.5,94);
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UAnomaliaVehiclePanelComponent> DriverDoor;
     /** Optional individually modelled wheels, paired with authored chassis-space hubs. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMesh>> RoadWheelMeshes;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<FVector> RoadWheelHubTargetsCm;

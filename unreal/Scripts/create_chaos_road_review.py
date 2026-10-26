@@ -15,7 +15,7 @@ try:
     if not mesh or not animation or not tire or not body_art:raise RuntimeError('Real template rig, animation or tires missing')
     sedan=None;sedan_parts={}
     if SEDAN:
-        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets/NativeDemoSedan_v1/manifest.json').read_text())
+        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets/NativeDemoSedan_v2/manifest.json').read_text())
         for part in sedan['models']:
             asset=unreal.load_asset(part['objectPath'])
             if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaNativeSedanSha256')!=part['sha256']:
@@ -44,6 +44,8 @@ try:
     car.set_editor_property('road_body_mesh',body_art);car.set_editor_property('road_wheel_mesh',tire)
     car.set_editor_property('road_glass_mesh',glass_art)
     if SEDAN:
+        car.set_editor_property('driver_door_mesh',sedan_parts['door_driver'])
+        car.set_editor_property('driver_door_pivot_cm',unreal.Vector(*sedan['panels'][0]['pivotCm']))
         car.set_editor_property('road_wheel_meshes',[sedan_parts[k] for k in ('wheel_fl','wheel_fr','wheel_rl','wheel_rr')])
         car.set_editor_property('road_wheel_hub_targets_cm',[unreal.Vector(*hub) for hub in sedan['wheelHubsCm']])
     chassis=car.get_editor_property('chassis');chassis.set_skeletal_mesh(mesh)

@@ -7,7 +7,7 @@ from pathlib import Path
 import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
-BASE=ROOT/'SourceAssets/NativeDemoSedan_v1'
+BASE=ROOT/'SourceAssets/NativeDemoSedan_v2'
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
 TAG='AnomaliaNativeSedanSha256'
@@ -19,15 +19,18 @@ try:
     if source['license']!='CC0-1.0' or source['sha256']!='feb0be31d153ddb42dc15ae52a651e214e85ab67e31bec4282b00f9d47c9b597':
         raise RuntimeError('Reviewed original CC0 source identity required')
     models=manifest['models']
-    expected={'body','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
-    if len(models)!=5 or {m['id'] for m in models}!=expected or sum(m['sourceNodes'] for m in models)!=304:
-        raise RuntimeError('Complete source geometry must be retained across five parts')
+    expected={'body','door_driver','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
+    coverage=manifest['sourceCoverage'];partition=coverage['partition']
+    if (manifest['schemaVersion']!=2 or len(models)!=6 or {m['id'] for m in models}!=expected or
+        coverage['nodes']!=304 or partition['doorSurfaceArea']<.5 or
+        abs(partition['originalSurfaceArea']-partition['doorSurfaceArea']-partition['remainingSurfaceArea'])>1e-6):
+        raise RuntimeError('Original surface partition and separate driver door required')
     editor=unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
     for model in models:
         name=model['id'];path=BASE/(name+'.glb')
         if model['file']!=name+'.glb' or path.stat().st_size!=model['bytes'] or hashlib.sha256(path.read_bytes()).hexdigest()!=model['sha256']:
             raise RuntimeError('Prepared part integrity mismatch: '+name)
-        destination='/Game/Anomalia/NativeDemoSedan_v1/'+name+'/SM_'+name
+        destination='/Game/Anomalia/NativeDemoSedan_v2/'+name+'/SM_'+name
         if model['objectPath']!=destination:raise RuntimeError('Unexpected canonical sedan namespace')
         if unreal.EditorAssetLibrary.does_asset_exist(destination):
             mesh=unreal.load_asset(destination)
@@ -37,7 +40,7 @@ try:
             # The import namespace is separate from the canonical assets. Never
             # replace an asset, including leftovers from an interrupted import.
             task=unreal.AssetImportTask();task.filename=str(path)
-            task.destination_path='/Game/Anomalia/NativeDemoSedan_v1/Imports/'+name
+            task.destination_path='/Game/Anomalia/NativeDemoSedan_v2/Imports/'+name
             task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
             objects=task.get_objects()
@@ -55,6 +58,9 @@ try:
             raise RuntimeError('Imported axes or scale are incorrect: '+name+' '+str(actual))
         if mesh.get_num_triangles(0)<100 or len(mesh.static_materials)<1:
             raise RuntimeError('Detailed geometry and imported materials required: '+name)
+        if name=='door_driver' and editor.get_simple_collision_count(mesh)==0:
+            if editor.add_simple_collisions(mesh,unreal.ScriptCollisionShapeType.NDOP26)<0:
+                raise RuntimeError('Driver door needs moving convex collision')
         # Keep D3D11 compatibility for the current validation host. This does not
         # claim Nanite/Lumen acceptance or final presentation quality.
         settings=editor.get_nanite_settings(mesh)
@@ -65,7 +71,7 @@ try:
         report['models'].append(dict(id=name,path=mesh.get_path_name(),triangles=mesh.get_num_triangles(0),
             dimensionsCm=actual,materials=len(mesh.static_materials),sha256=model['sha256']))
     report.update(state='CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN',source=source,
-        wheelHubsCm=manifest['wheelHubsCm'])
+        wheelHubsCm=manifest['wheelHubsCm'],panels=manifest['panels'],surfacePartition=partition)
 except Exception as error:
     report['error']=str(error);unreal.log_error(traceback.format_exc())
 finally:

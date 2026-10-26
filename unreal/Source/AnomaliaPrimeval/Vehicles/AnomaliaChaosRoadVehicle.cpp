@@ -1,5 +1,6 @@
 #include "AnomaliaChaosRoadVehicle.h"
 #include "AnomaliaTransportMovement.h"
+#include "AnomaliaVehiclePanelComponent.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
 #include "VehicleAnimationInstance.h"
 #include "Components/SkeletalMeshComponent.h"
@@ -48,6 +49,7 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
 {
     Chassis=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChaosChassis"));
     SetRootComponent(Chassis);
+    DriverDoor=CreateDefaultSubobject<UAnomaliaVehiclePanelComponent>(TEXT("DriverDoor"));DriverDoor->SetupAttachment(Chassis);
     Collision->SetupAttachment(Chassis);
     Collision->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     Body->SetVisibility(false); Body->SetHiddenInGame(true);
@@ -161,6 +163,9 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     Body->SetStaticMesh(RoadBodyMesh);Body->SetRelativeTransform(FTransform::Identity);
     Body->SetVisibility(RoadBodyMesh!=nullptr);Body->SetHiddenInGame(RoadBodyMesh==nullptr);
     RoadGlass->SetStaticMesh(RoadGlassMesh);RoadGlass->SetVisibility(RoadGlassMesh!=nullptr);
+    DriverDoor->SetStaticMesh(DriverDoorMesh);DriverDoor->SetRelativeLocation(DriverDoorPivotCm);
+    DriverDoor->SetVisibility(DriverDoorMesh!=nullptr);DriverDoor->SetHiddenInGame(DriverDoorMesh==nullptr);
+    DriverDoor->SetCollisionEnabled(DriverDoorMesh?ECollisionEnabled::QueryAndPhysics:ECollisionEnabled::NoCollision);
     for(int32 Index=0;Index<RoadWheels.Num();++Index)
     {
         RoadWheels[Index]->SetStaticMesh(bAuthoredWheels?RoadWheelMeshes[Index]:RoadWheelMesh);
@@ -192,7 +197,9 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         USkeletalBodySetup* ChassisBody=NewObject<USkeletalBodySetup>(RuntimeChassisPhysics);
         ChassisBody->BoneName=RootBone;
         ChassisBody->PhysicsType=PhysType_Simulated;
-        const FBoxSphereBounds ArtBounds=RoadBodyMesh->GetBounds();
+        FBox ClosedArtBox=RoadBodyMesh->GetBounds().GetBox();
+        if(DriverDoorMesh)ClosedArtBox+=DriverDoorMesh->GetBounds().GetBox().ShiftBy(DriverDoorPivotCm);
+        const FBoxSphereBounds ArtBounds(ClosedArtBox);
         FKBoxElem Shape;
         Shape.X=FMath::Clamp(float(ArtBounds.BoxExtent.X)*1.5f,100.f,1000.f);
         Shape.Y=FMath::Clamp(float(ArtBounds.BoxExtent.Y)*1.5f,60.f,400.f);

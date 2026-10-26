@@ -2,6 +2,7 @@
 #include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaDoorActor.h"
+#include "Vehicles/AnomaliaVehiclePanelComponent.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaLootSubsystem.h"
@@ -301,6 +302,7 @@ void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
     DoorQuery.AddIgnoredActor(this);FHitResult DoorHit;
     if(GetWorld()->LineTraceSingleByChannel(DoorHit,Eye,Eye+GetControlRotation().Vector()*300.f,ECC_Visibility,DoorQuery))
     {
+        if(auto* Panel=Cast<UAnomaliaVehiclePanelComponent>(DoorHit.GetComponent())){Panel->TryToggle(this);return;}
         if(auto* Mechanism=Cast<AAnomaliaWorldMechanism>(DoorHit.GetActor())) {Mechanism->TryInteract(this);return;}
         if(auto* Door=Cast<AAnomaliaDoorActor>(DoorHit.GetActor())){Door->TryToggle(this);return;}
     }

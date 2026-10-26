@@ -111,6 +111,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-native-demo-sedan.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test scripts/vehicle-assets/panel-geometry.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-native-demo-panels.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/NativeDemoSedan_v2
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan"
           & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }

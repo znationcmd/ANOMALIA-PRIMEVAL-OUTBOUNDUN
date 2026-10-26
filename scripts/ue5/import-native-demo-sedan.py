@@ -24,8 +24,8 @@ def main():
     if result.returncode:raise RuntimeError('Unreal sedan import process failed: '+str(result.returncode))
     report=json.loads((output/'sedan-import-report.json').read_text(encoding='utf-8-sig'))
     if (report['state']!='CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN' or
-        report['sourceCommit']!=env.get('GITHUB_SHA') or len(report['models'])!=5):
+        report['sourceCommit']!=env.get('GITHUB_SHA') or len(report['models'])!=6):
         raise RuntimeError('Real sedan part import not verified: '+str(report.get('error')))
-    print('Five original CC0 sedan parts imported in Unreal; rigging and gameplay remain unverified.')
+    print('Six CC0 sedan parts imported, including separate driver door; gameplay remains unverified.')
 
 if __name__=='__main__':main()

@@ -63,6 +63,12 @@ def main():
         raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
     if len(drive.get('brakingMeasurements',[]))!=3:
         raise RuntimeError('Three measured physical braking runs are required')
+    if args.sedan:
+        panels={'separate_licensed_driver_door_mesh_installed','closed_driver_door_has_actual_collision',
+            'locked_driver_door_rejects_server_interaction','driver_door_rotates_at_hinge_and_collision_leaves_aperture',
+            'driver_door_closes_and_restores_actual_collision'}
+        if not drive.get('driverDoorReviewed') or not panels.issubset(drive.get('checks',[])):
+            raise RuntimeError('Original sedan requires a real animated driver door and moving collision')
     if drive.get('constraintSuspensionDisabled')!=1:
         raise RuntimeError('Calibrated force-based suspension was not active in the actual game')
     video=None;video_error=None
@@ -81,6 +87,6 @@ def main():
         video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
         installed=False,multiplayerTested=False,productionMapModified=False,
-        originalSedanArt=args.sedan,entryAnimationTested=False,openingDoorsTested=False),indent=2)+'\n')
+        originalSedanArt=args.sedan,entryAnimationTested=False,openingDoorsTested=drive.get('driverDoorReviewed',False)),indent=2)+'\n')
 
 if __name__=='__main__':main()

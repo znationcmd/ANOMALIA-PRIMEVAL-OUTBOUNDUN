@@ -21,6 +21,7 @@ private:
     bool bEnabled=false, bFinishing=false, bRecordFrames=false;
     bool bSignalSeenOn=false, bSignalSeenOff=false;
     bool bRearDriveObserved=false;
+    bool bDriverDoorReviewed=false;
     float OriginalFuelConsumption=.045f;
     double BrakeMeasuredStarted=0, BrakePathCm=0;
     double AccelerationDuration=0;

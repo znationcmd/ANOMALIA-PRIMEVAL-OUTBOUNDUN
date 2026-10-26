@@ -1,5 +1,7 @@
 #include "AnomaliaChaosRoadProbe.h"
 #include "AnomaliaChaosRoadVehicle.h"
+#include "AnomaliaVehiclePanelComponent.h"
+#include "Engine/StaticMesh.h"
 #include "../AnomaliaGameMode.h"
 #include "../AnomaliaSurvivor.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
@@ -101,6 +103,7 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetNumberField(TEXT("exitVehicleSpeedCmPerSecond"),ExitVehicleSpeed);
     Report->SetNumberField(TEXT("observedExitCharacterSpeedCmPerSecond"),ObservedExitSpeed);
     Report->SetArrayField(TEXT("brakingMeasurements"),BrakingMeasurements);
+    Report->SetBoolField(TEXT("driverDoorReviewed"),bDriverDoorReviewed);
     if(const auto* Setting=IConsoleManager::Get().FindConsoleVariable(TEXT("p.Vehicle.DisableConstraintSuspension")))
         Report->SetNumberField(TEXT("constraintSuspensionDisabled"),Setting->GetInt());
     if(Car.IsValid())
@@ -162,18 +165,69 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
         Finish();return;
     }
+    if(Phase==30 || Phase==31)
+    {
+        auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());
+        if(!V || !S || !V->DriverDoorMesh){Finish(TEXT("Door review lost the real survivor or imported mesh"));return;}
+        if(Now-PhaseStarted<1.5)return;
+        auto* Door=V->DriverDoor.Get();
+        const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,90,110));
+        FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaDoorApertureReview),false);Query.AddIgnoredActor(S);
+        FHitResult Hit;const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Opening+V->GetActorRightVector()*180,
+            Opening-V->GetActorRightVector()*50,ECC_Visibility,Query);
+        if(Phase==30)
+        {
+            if(!Door->bOpen || Door->bObstructed || FMath::Abs(Door->AngleDegrees-Door->OpenAngleDegrees)>1.f ||
+               (bHit && Hit.GetComponent()==Door) || !Door->IsVisible())
+            {Finish(TEXT("Real driver door did not rotate open and clear the original aperture"));return;}
+            Checks.Add(TEXT("driver_door_rotates_at_hinge_and_collision_leaves_aperture"));
+            FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-driver-door-open.png")),false,false);
+            FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Door->Bounds.Origin-Eye).Rotation());
+            if(!Door->TryToggle(S)){Finish(TEXT("Server targeted interaction could not close open driver door"));return;}
+            Phase=31;PhaseStarted=Now;return;
+        }
+        if(Door->bOpen || Door->bObstructed || FMath::Abs(Door->AngleDegrees)>1.f || !bHit || Hit.GetComponent()!=Door)
+        {Finish(TEXT("Closed driver door did not restore actual collision"));return;}
+        Checks.Add(TEXT("driver_door_closes_and_restores_actual_collision"));
+        bDriverDoorReviewed=true;Phase=0;
+    }
     if(Phase==0)
     {
         if(Now-PhaseStarted<4) return;
         auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());
         if(!S) return;
-        for(TActorIterator<AAnomaliaChaosRoadVehicle> It(GetWorld());It;++It)
+        if(!Car.IsValid())for(TActorIterator<AAnomaliaChaosRoadVehicle> It(GetWorld());It;++It)
         { if(Car.IsValid()) { Finish(TEXT("Review vehicle is not unique")); return; } Car=*It; }
         auto* V=Car.Get();
         if(!V || !V->IsChaosDriveReady()) { Finish(TEXT("Actual skeletal rig/Chaos physics is not ready")); return; }
         if(FVector::DotProduct(V->Chassis->GetUpVector(),FVector::UpVector)<.85f)
         {Finish(TEXT("Review chassis did not settle upright before driving"));return;}
         if(V->Movement->IsComponentTickEnabled()) { Finish(TEXT("Legacy floating movement is still enabled")); return; }
+        if(V->DriverDoorMesh && !bDriverDoorReviewed)
+        {
+            auto* Door=V->DriverDoor.Get();
+            if(Door->GetStaticMesh()!=V->DriverDoorMesh || Door->GetCollisionEnabled()!=ECollisionEnabled::QueryAndPhysics ||
+               !Door->GetRelativeLocation().Equals(V->DriverDoorPivotCm,.1f))
+            {Finish(TEXT("Actual hinge-centred imported driver door is not installed"));return;}
+            Checks.Add(TEXT("separate_licensed_driver_door_mesh_installed"));
+            // Only fixture positioning: opening and closing use the same targeted
+            // server interaction as the survivor's E key, never assigned angles.
+            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,310,100));
+            if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true))
+            {Finish(TEXT("Door interaction fixture position is blocked"));return;}
+            FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Door->Bounds.Origin-Eye).Rotation());
+            const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,90,110));
+            FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaClosedPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
+            if(!GetWorld()->LineTraceSingleByChannel(Hit,Opening+V->GetActorRightVector()*180,
+               Opening-V->GetActorRightVector()*50,ECC_Visibility,Query) || Hit.GetComponent()!=Door)
+            {Finish(TEXT("Closed real driver door does not block the aperture trace"));return;}
+            Checks.Add(TEXT("closed_driver_door_has_actual_collision"));
+            Door->bLocked=true;
+            if(Door->TryToggle(S) || Door->bOpen){Finish(TEXT("Locked driver door accepted opening"));return;}
+            Door->bLocked=false;Checks.Add(TEXT("locked_driver_door_rejects_server_interaction"));
+            if(!Door->TryToggle(S)){Finish(TEXT("Server targeted driver door opening rejected"));return;}
+            Phase=30;PhaseStarted=Now;return;
+        }
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);
         Survivor=S;
