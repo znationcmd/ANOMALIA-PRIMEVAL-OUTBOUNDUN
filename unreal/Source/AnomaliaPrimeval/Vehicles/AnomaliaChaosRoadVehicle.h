@@ -63,6 +63,14 @@ public:
     virtual bool ConfigureVehicle(FName NewVehicleId) override;
     virtual void OnConstruction(const FTransform& Transform) override;
     virtual void Tick(float DeltaSeconds) override;
+    virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    /** Starts stopped. Only the current server-validated driver may change ignition. */
+    UPROPERTY(ReplicatedUsing=OnRep_EngineRunning, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Engine")
+    bool bEngineRunning=false;
+    bool SetEngineRunningOnServer(AController* Driver, bool bRunning);
+    UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Chaos|Engine")
+    void OnEngineRunningChanged(bool bRunning);
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos") bool AreWheelVisualsUpright() const;
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos")
     bool HasValidRoadRig() const;
@@ -71,12 +79,17 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual bool UsesPhysicsRoadSimulation() const override { return true; }
+    virtual bool IsEngineProvidingPower() const override { return bEngineRunning; }
     virtual bool IsDriveReady() const override;
     virtual bool CanDriverExitNow() const override;
     virtual float GetExpectedSupportFloorZ() const override;
     virtual void SimulateRoadDrive(float DeltaSeconds,float Throttle,float Steering,float Brake,
         bool bPowered,bool bDriverMissing) override;
 private:
+    void InputIgnition();
+    UFUNCTION(Server, Reliable) void ServerToggleIgnition();
+    UFUNCTION() void OnRep_EngineRunning();
+    void SetEngineState(bool bRunning);
     /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
     UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;
     FTransform ReferenceBoneTransform(FName Bone) const;

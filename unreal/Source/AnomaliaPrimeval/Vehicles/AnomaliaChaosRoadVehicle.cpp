@@ -13,6 +13,9 @@
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "GameFramework/FloatingPawnMovement.h"
+#include "Components/InputComponent.h"
+#include "GameFramework/Controller.h"
+#include "Net/UnrealNetwork.h"
 
 UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
 {
@@ -289,7 +292,10 @@ void AAnomaliaChaosRoadVehicle::SimulateRoadDrive(float DeltaSeconds,float Throt
     bool bPowered,bool bDriverMissing)
 {
     if(!HasAuthority() || !IsDriveReady()) return;
-    float Demand=bPowered?FMath::Abs(Throttle):0.f;
+    // A stalled or switched-off engine needs an explicit driver restart.
+    // Replenishing fuel alone must never restart a parked vehicle.
+    if(bDriverMissing || !HasFuel()) SetEngineState(false);
+    float Demand=bPowered && bEngineRunning?FMath::Abs(Throttle):0.f;
     const float Speed=ChaosMovement->GetForwardSpeed();
     const int32 DesiredGear=Throttle<-.05f?-1:1;
     if(Demand>.05f && ((DesiredGear<0 && Speed>30.f)||(DesiredGear>0 && Speed<-30.f)))
@@ -301,4 +307,36 @@ void AAnomaliaChaosRoadVehicle::SimulateRoadDrive(float DeltaSeconds,float Throt
     ChaosMovement->SetSteeringInput(Steering);
     ChaosMovement->SetBrakeInput(bDriverMissing?1.f:Brake);
     ChaosMovement->SetHandbrakeInput(bDriverMissing);
+}
+
+void AAnomaliaChaosRoadVehicle::SetEngineState(bool bRunning)
+{
+    if(!HasAuthority() || bEngineRunning==bRunning)return;
+    bEngineRunning=bRunning; OnRep_EngineRunning(); ForceNetUpdate();
+}
+bool AAnomaliaChaosRoadVehicle::SetEngineRunningOnServer(AController* Driver,bool bRunning)
+{
+    if(!HasAuthority() || !IsValid(Driver) || Driver!=GetController() || Driver->GetPawn()!=this ||
+       !Driver->IsPlayerController() || (bRunning && (!IsDriveReady() || !HasFuel())))return false;
+    SetEngineState(bRunning);return bEngineRunning==bRunning;
+}
+void AAnomaliaChaosRoadVehicle::OnRep_EngineRunning(){OnEngineRunningChanged(bEngineRunning);}
+void AAnomaliaChaosRoadVehicle::InputIgnition()
+{
+    if(!IsLocallyControlled())return;
+    if(HasAuthority())ServerToggleIgnition_Implementation();else ServerToggleIgnition();
+}
+void AAnomaliaChaosRoadVehicle::ServerToggleIgnition_Implementation()
+{
+    SetEngineRunningOnServer(GetController(),!bEngineRunning);
+}
+void AAnomaliaChaosRoadVehicle::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
+{
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
+    PlayerInputComponent->BindAction(TEXT("VehicleIgnition"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIgnition);
+}
+void AAnomaliaChaosRoadVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+    DOREPLIFETIME(AAnomaliaChaosRoadVehicle,bEngineRunning);
 }

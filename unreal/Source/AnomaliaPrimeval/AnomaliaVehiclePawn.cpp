@@ -232,7 +232,7 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     if (!bDriver || bStale) ClearControls();
     const FAnomaliaVehicleDefinition Definition=GetVehicleDefinition();
     if (Definition.Id.IsNone()) return;
-    const bool bPowered=bDriver && !bStale && FuelPercent > KINDA_SMALL_NUMBER;
+    const bool bPowered=bDriver && !bStale && FuelPercent > KINDA_SMALL_NUMBER && IsEngineProvidingPower();
     if (TransportMovement->IsTransport())
     {
         AnomaliaTransport::Controls Controls;

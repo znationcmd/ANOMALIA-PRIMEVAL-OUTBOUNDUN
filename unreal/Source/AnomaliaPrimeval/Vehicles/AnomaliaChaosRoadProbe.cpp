@@ -99,13 +99,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);
         Survivor=S;
         if(!V->EnterVehicle(PC,S) || PC->GetPawn()!=V) { Finish(TEXT("Existing crew possession failed")); return; }
+        if(V->bEngineRunning) { Finish(TEXT("Parked review engine started without driver ignition")); return; }
         AddTickPrerequisiteActor(PC);
         V->AddTickPrerequisiteActor(this);
         V->CameraBoom->SetRelativeLocation(FVector(0,0,120));
         PC->SetControlRotation(FRotator(-12,0,0));
         Checks.Add(TEXT("real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement"));
         Checks.Add(TEXT("existing_character_and_inventory_preserved_on_entry"));
-        StartLocation=V->GetActorLocation(); Phase=1; PhaseStarted=Now;
+        StartLocation=V->GetActorLocation(); Phase=10; PhaseStarted=Now;
     }
     auto* V=Car.Get();
     if(!V || PC->GetPawn()!=V) { Finish(TEXT("Vehicle possession was lost")); return; }
@@ -126,6 +127,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("distanceCm"),FVector::Dist2D(StartLocation,V->GetActorLocation()));
         Sample->SetNumberField(TEXT("fuelPercent"),V->FuelPercent);
         Sample->SetNumberField(TEXT("appliedThrottle"),Physics->GetThrottleInput());
+        Sample->SetBoolField(TEXT("engineRunning"),V->bEngineRunning);
         Sample->SetNumberField(TEXT("chassisZ"),V->GetActorLocation().Z);
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
@@ -156,7 +158,19 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     }
     const double Elapsed=Now-PhaseStarted;
     float Throttle=0,Steering=0,Brake=0;
-    if(Phase==1)
+    if(Phase==10)
+    {
+        Throttle=1.f;
+        if(Physics->GetThrottleInput()>.01f || FMath::Abs(Speed)>100.f || V->FuelPercent<100.f)
+        { Finish(TEXT("Switched-off engine propels the vehicle or consumes fuel")); return; }
+        if(Elapsed>2)
+        {
+            Checks.Add(TEXT("engine_off_blocks_full_accelerator_without_fuel_consumption"));
+            if(!V->SetEngineRunningOnServer(PC,true)) { Finish(TEXT("Driver ignition failed")); return; }
+            Checks.Add(TEXT("current_driver_can_start_engine_on_server")); Phase=1; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==1)
     {
         Throttle=.8f;
         if(Elapsed>6)
@@ -225,7 +239,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Throttle=.8f; Brake=1.f;
         if(Elapsed>2)
         {
-            if(V->HasFuel() || V->FuelPercent!=0.f || Physics->GetThrottleInput()>.01f)
+            if(V->HasFuel() || V->FuelPercent!=0.f || Physics->GetThrottleInput()>.01f || V->bEngineRunning ||
+                V->SetEngineRunningOnServer(PC,true))
             { Finish(TEXT("Real fuel depletion did not cut Chaos throttle")); return; }
             Checks.Add(TEXT("server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle"));
             EmptyTankLocation=V->GetActorLocation(); Phase=7; PhaseStarted=Now;
@@ -245,6 +260,18 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(!V->RefuelOnServer(25.f) || !FMath::IsNearlyEqual(V->FuelPercent,25.f))
             { Finish(TEXT("Authoritative refuel did not restore the requested fuel")); return; }
             Checks.Add(TEXT("server_refuel_rejects_invalid_amounts_and_restores_fuel"));
+            Phase=11; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==11)
+    {
+        Throttle=1.f;
+        if(V->bEngineRunning || Physics->GetThrottleInput()>.01f || FMath::Abs(Speed)>100.f || V->FuelPercent!=25.f)
+        { Finish(TEXT("Refueling restarted the stalled engine without ignition")); return; }
+        if(Elapsed>2)
+        {
+            Checks.Add(TEXT("refuel_requires_explicit_driver_restart_after_stall"));
+            if(!V->SetEngineRunningOnServer(PC,true)) { Finish(TEXT("Driver restart after refuel failed")); return; }
             Phase=8; PhaseStarted=Now;
         }
     }
@@ -256,6 +283,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Speed<500.f || Contacts<3 || Rotation<1.f || V->FuelPercent>=25.f || !V->HasFuel())
             { Finish(TEXT("Refuel did not restore actual wheel-driven acceleration and fuel consumption")); return; }
             Checks.Add(TEXT("refuel_restores_physical_acceleration_and_fuel_consumption"));
+            if(!V->SetEngineRunningOnServer(PC,false) || V->bEngineRunning)
+            { Finish(TEXT("Driver could not switch off the engine")); return; }
+            Checks.Add(TEXT("current_driver_can_switch_engine_off"));
             Phase=9; PhaseStarted=Now;
         }
     }

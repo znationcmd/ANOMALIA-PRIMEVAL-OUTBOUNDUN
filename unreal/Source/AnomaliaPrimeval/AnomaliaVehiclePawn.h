@@ -138,6 +138,7 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual bool UsesPhysicsRoadSimulation() const { return false; }
+    virtual bool IsEngineProvidingPower() const { return true; }
     virtual bool IsDriveReady() const { return true; }
     virtual bool CanDriverExitNow() const { return true; }
     virtual float GetExpectedSupportFloorZ() const;

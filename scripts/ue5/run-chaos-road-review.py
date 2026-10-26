@@ -35,6 +35,10 @@ def main():
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
     required={
+        'engine_off_blocks_full_accelerator_without_fuel_consumption',
+        'current_driver_can_start_engine_on_server',
+        'current_driver_can_switch_engine_off',
+        'refuel_requires_explicit_driver_restart_after_stall',
         'moving_vehicle_refuses_exit_and_keeps_original_driver',
         'server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle',
         'empty_tank_cannot_accelerate_under_full_driver_input',

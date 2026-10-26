@@ -69,6 +69,22 @@ Only the isolated review fixture adjusts fuel; no existing installation or save
 is changed. Refueling here exercises the trusted server API; it does not claim
 an inventory-backed fuel-can interaction or a complete ignition/starter system.
 
+## Explicit road engine ignition
+
+The Chaos road pawn now starts with its engine off. The possessed driver's R
+action (gamepad top face button) sends a reliable server request; the server
+validates the current player controller, possession, road rig and available fuel.
+Engine state is replicated and exposes a Blueprint event for later sound/UI art.
+An off engine supplies no throttle and consumes no driving fuel. Fuel exhaustion
+stalls it; refueling alone cannot restart it. Driverless road vehicles shut down.
+This change leaves the other vehicle simulation types' existing power rules intact.
+
+The extended native probe must prove accelerator input with ignition off, driver
+start, actual depletion/stall, refusal to restart empty, refueling without automatic
+restart, explicit driver restart and acceleration, and explicit shutdown. The new
+ignition code is pending native compilation and execution. It is a functional
+power/input gate, not finished starter animation/audio, battery or engine damage.
+
 ## Account-free original sedan preparation
 
 `docs/art/native-demo-sedan-source.json` pins an original Innerscene CC0 sedan by
