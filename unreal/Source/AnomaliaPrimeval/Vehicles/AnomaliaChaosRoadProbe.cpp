@@ -199,7 +199,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             {Finish(TEXT("Additional panel failed real axis/open-aperture check: ")+Id);return;}
             Checks.Add(TEXT("panel_")+Id+TEXT("_rotates_on_authored_axis_and_clears_access"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-panel-")+Id+TEXT("-open.png")),false,false);
-            FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->Bounds.Origin-Eye).Rotation());
+            FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm)-Eye).Rotation());
             if(!Panel->TryToggle(S)){Finish(TEXT("Targeted server panel close rejected: ")+Id);return;}
             Phase=41;PhaseStarted=Now;return;
         }
@@ -276,7 +276,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             const TSharedPtr<FJsonObject>* Bounds=nullptr;
             const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
             const bool bE39Review=GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1"));
-            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v3/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
+            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v4/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
             if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),ManifestRelative)) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ManifestText),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetObjectField(TEXT("closedBodyBoundsCm"),Bounds) || !Bounds || !Bounds->IsValid() ||
@@ -329,7 +329,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1")) && !bAdditionalPanelsReviewed)
         {
             FString Text;TSharedPtr<FJsonObject> Manifest;const TArray<TSharedPtr<FJsonValue>>* Configs=nullptr;
-            if(!FFileHelper::LoadFileToString(Text,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/BMWE39Review_v3/manifest.json"))) ||
+            if(!FFileHelper::LoadFileToString(Text,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/BMWE39Review_v4/manifest.json"))) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetArrayField(TEXT("panels"),Configs) || !Configs || Configs->Num()!=6)
             {Finish(TEXT("E39 complete panel review manifest missing"));return;}
@@ -347,19 +347,20 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 const auto Config=Additional[AdditionalPanelIndex];const FName Id(*Config->GetStringField(TEXT("id")));
                 UAnomaliaVehiclePanelComponent* Panel=nullptr;
                 for(const auto& Candidate:V->AdditionalPanels)if(Candidate && Candidate->PanelId==Id)Panel=Candidate;
-                FVector StandLocal,Axis,Pivot;
+                FVector StandLocal,Axis,Pivot,Aim;
                 if(!Panel || !Panel->GetStaticMesh() || Panel->GetCollisionEnabled()!=ECollisionEnabled::QueryAndPhysics ||
                    !ReadPanelFixtureVector(Config,TEXT("apertureCm"),PanelApertureLocalCm) ||
                    !ReadPanelFixtureVector(Config,TEXT("traceOutward"),PanelTraceOutward) || PanelTraceOutward.IsNearlyZero() ||
                    !ReadPanelFixtureVector(Config,TEXT("fixtureStandCm"),StandLocal) ||
+                   !ReadPanelFixtureVector(Config,TEXT("fixtureAimCm"),Aim) ||
                    !ReadPanelFixtureVector(Config,TEXT("hingeAxis"),Axis) || !ReadPanelFixtureVector(Config,TEXT("pivotCm"),Pivot) ||
                    !Panel->LocalHingeAxis.Equals(Axis.GetSafeNormal(),.001f) || !Panel->GetRelativeLocation().Equals(Pivot,.1f))
                 {Finish(TEXT("Authored E39 panel/axis/fixture missing: ")+Id.ToString());return;}
-                PanelUnderReview=Panel;
+                PanelUnderReview=Panel;PanelAimInMeshCm=Aim-Pivot;
                 Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_installed_with_authored_hinge_axis"));
                 const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocal);
                 if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true)){Finish(TEXT("Panel fixture stand is blocked"));return;}
-                FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->Bounds.Origin-Eye).Rotation());
+                FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm)-Eye).Rotation());
                 const FVector Point=V->Chassis->GetComponentTransform().TransformPosition(PanelApertureLocalCm);
                 const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();
                 FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaAdditionalPanelClosed),false);Query.AddIgnoredActor(S);FHitResult Hit;

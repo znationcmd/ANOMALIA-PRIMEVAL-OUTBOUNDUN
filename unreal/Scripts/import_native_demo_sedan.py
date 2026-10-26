@@ -8,7 +8,7 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
-NAMESPACE="BMWE39Review_v3" if E39 else "NativeDemoSedan_v3"
+NAMESPACE="BMWE39Review_v4" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
@@ -30,7 +30,7 @@ try:
     if E39:
         partition=manifest['surfacePartition']
         previous=json.loads((ROOT/'SourceAssets/BMWE39Review_v2/manifest.json').read_text())
-        if (manifest['schemaVersion']!=3 or abs(partition['sourceArea']-sum(partition['areas'].values()))>1e-6 or
+        if (manifest['schemaVersion']!=4 or abs(partition['sourceArea']-sum(partition['areas'].values()))>1e-6 or
             manifest['parentBodySha256']!=next(m['sha256'] for m in previous['models'] if m['id']=='body') or
             {p['id'] for p in manifest['panels']}!={'door_driver','door_front_right','door_rear_left','door_rear_right','hood','trunk'}):
             raise RuntimeError('Same E39 complete panel partition required')
