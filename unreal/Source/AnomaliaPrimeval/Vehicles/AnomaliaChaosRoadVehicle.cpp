@@ -25,8 +25,9 @@ UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
     WheelRadius=40.f; WheelWidth=23.3f; WheelMass=20.f;
     bAffectedBySteering=true; bAffectedByEngine=false; bAffectedByBrake=true;
     bAffectedByHandbrake=false; MaxSteerAngle=35.f;
-    // A finite tire contact sweep avoids intermittent point-ray support at speed.
-    SweepShape=ESweepShape::Spherecast;
+    // Use the native suspension ray: the prior sphere sweep reported contact
+    // with almost zero spring load at full droop, masking tire-load coupling.
+    SweepShape=ESweepShape::Raycast;
     bABSEnabled=true;
     SpringRate=45000.f; SpringPreload=50.f;
     SuspensionDampingRatio=.6f; SuspensionMaxRaise=12.f; SuspensionMaxDrop=10.f;
