@@ -49,7 +49,8 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
     const auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
     bEnabled=Mode && GetNetMode()==NM_Standalone && Mode->ServerId.StartsWith(TEXT("chaos-smoke-")) &&
         (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_ChaosRoadReview_v2")) ||
-         GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_SedanDriveReview_v1"))) &&
+         GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_SedanDriveReview_v1")) ||
+         GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1"))) &&
         FParse::Value(FCommandLine::Get(),TEXT("AnomaliaChaosProbe="),ReportFile) && !ReportFile.IsEmpty();
 #endif
     SetActorTickEnabled(bEnabled);
@@ -66,7 +67,8 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
         DrySurface=NewObject<UPhysicalMaterial>(this);DrySurface->Friction=.9f;DrySurface->StaticFriction=.9f;DrySurface->Restitution=0;
         LowGripSurface=NewObject<UPhysicalMaterial>(this);LowGripSurface->Friction=.45f;LowGripSurface->StaticFriction=.45f;LowGripSurface->Restitution=0;
         for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)
-            if(It->Tags.Contains(FName(TEXT("ANOMALIA_ChaosRoadReview_v2"))) || It->Tags.Contains(FName(TEXT("ANOMALIA_SedanDriveReview_v1"))))
+            if(It->Tags.Contains(FName(TEXT("ANOMALIA_ChaosRoadReview_v2"))) || It->Tags.Contains(FName(TEXT("ANOMALIA_SedanDriveReview_v1"))) ||
+               It->Tags.Contains(FName(TEXT("ANOMALIA_E39DriveReview_v1"))))
             {
                 if(ProvingSurface){Finish(TEXT("Review ground is not unique"));return;}
                 ProvingSurface=It->GetStaticMeshComponent();ProvingSurface->SetPhysMaterialOverride(DrySurface);
