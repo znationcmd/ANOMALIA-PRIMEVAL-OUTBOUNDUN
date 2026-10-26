@@ -5,7 +5,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} fr
 import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {panelShell} from './panel-shell.mjs';
 import {triangleIslands} from './mesh-islands.mjs';import {partitionTriangle,triangulate,area,gltfToUnreal} from './panel-geometry.mjs';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v4');
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v5');
 const previous=JSON.parse(await readFile(path.join(base,'manifest.json'),'utf8')),parent=previous.models.find(m=>m.id==='body');
 const hash=b=>createHash('sha256').update(b).digest('hex'),bytes=await readFile(path.join(base,parent.file));
 if(previous.source.sha256!=='984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d'||hash(bytes)!==parent.sha256)throw Error('Same reviewed E39 with validated driver leaf required');
@@ -90,7 +90,7 @@ for(const selection of ['body',...defs.map(d=>d.id)]){
   }
   append(selected,p.getMaterial());
   if(selection!=='body'&&selected.length&&(name==='body'||name==='window')){
-   const extra=panelShell(selected,name==='window'?.0015:.018);
+   const extra=panelShell(selected,name==='window'?.0015:.0012);
    const innerMaterial=name==='window'?p.getMaterial():doc.getRoot().listMaterials().find(m=>m.getName()==='mottled')??p.getMaterial();
    append(extra.skin,innerMaterial);append(extra.rim,innerMaterial);
    shell.skinTriangles+=extra.skin.length;shell.rimTriangles+=extra.rim.length;
@@ -101,11 +101,11 @@ for(const selection of ['body',...defs.map(d=>d.id)]){
  const def=defs.find(d=>d.id===selection);if(def)transformMesh(mesh,[1,0,0,0,0,1,0,0,0,0,1,0,...def.pivot.map(v=>-v),1]);
  for(const n of scene.listChildren())scene.removeChild(n);scene.addChild(doc.createNode(selection).setMesh(mesh));await doc.transform(prune());
  const data=await io.writeBinary(doc),b=getBounds(scene);await preserve(selection+'.glb',data);
- models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v4/'+selection+'/SM_'+selection});
+ models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v5/'+selection+'/SM_'+selection});
  partition={sourceArea,areas,triangles:counts};
 }
-for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v4/'+m.id+'/SM_'+m.id});}
+for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v5/'+m.id+'/SM_'+m.id});}
 const panels=[{...previous.panels[0],hingeAxis:[0,0,1]},...defs.map(d=>({id:d.id,pivotCm:gltfToUnreal(d.pivot),hingeAxis:d.axis,openAngleDegrees:d.angle,apertureCm:d.aperture,traceOutward:d.normal,fixtureStandCm:d.stand,fixtureAimCm:d.id.startsWith('door_rear')?[-70,d.pivot[2]*100,75]:gltfToUnreal(models.find(m=>m.id===d.id).originMetresYUp.map((v,i)=>v+d.pivot[i]))}))];
 const manifest={schemaVersion:4,source:previous.source,parentBodySha256:parent.sha256,models,panels,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm:previous.closedBodyBoundsCm,surfacePartition:partition,driverDoorPartition:previous.sourceCoverage.partition,completeVehicleAccepted:false,gameplayVerified:false};
-await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (18 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
+await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (1.2 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
 console.log(JSON.stringify({state:'SAME_E39_ALL_PANELS_PREPARED_NOT_GAME_VERIFIED',partition,panels:panels.map(p=>p.id)}));

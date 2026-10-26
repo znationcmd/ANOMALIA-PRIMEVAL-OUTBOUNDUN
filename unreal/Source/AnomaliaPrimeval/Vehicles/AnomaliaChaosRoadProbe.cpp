@@ -276,7 +276,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             const TSharedPtr<FJsonObject>* Bounds=nullptr;
             const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
             const bool bE39Review=GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1"));
-            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v4/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
+            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v5/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
             if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),ManifestRelative)) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ManifestText),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetObjectField(TEXT("closedBodyBoundsCm"),Bounds) || !Bounds || !Bounds->IsValid() ||
@@ -329,7 +329,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1")) && !bAdditionalPanelsReviewed)
         {
             FString Text;TSharedPtr<FJsonObject> Manifest;const TArray<TSharedPtr<FJsonValue>>* Configs=nullptr;
-            if(!FFileHelper::LoadFileToString(Text,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/BMWE39Review_v4/manifest.json"))) ||
+            if(!FFileHelper::LoadFileToString(Text,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/BMWE39Review_v5/manifest.json"))) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Text),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetArrayField(TEXT("panels"),Configs) || !Configs || Configs->Num()!=6)
             {Finish(TEXT("E39 complete panel review manifest missing"));return;}

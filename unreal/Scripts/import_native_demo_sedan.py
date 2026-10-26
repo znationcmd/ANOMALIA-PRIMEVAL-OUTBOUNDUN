@@ -8,7 +8,7 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
-NAMESPACE="BMWE39Review_v4" if E39 else "NativeDemoSedan_v3"
+NAMESPACE="BMWE39Review_v5" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
