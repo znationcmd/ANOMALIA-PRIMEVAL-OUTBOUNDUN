@@ -25,6 +25,15 @@
 #include "Serialization/JsonWriter.h"
 
 AAnomaliaChaosRoadProbe::AAnomaliaChaosRoadProbe() { PrimaryActorTick.bCanEverTick=true; }
+void AAnomaliaChaosRoadProbe::ObserveExitedMovement(float DeltaSeconds,FVector InitialLocation,FVector InitialVelocity)
+{
+    if(!bEnabled || Phase!=14 || !Survivor.IsValid() || DeltaSeconds<=0)return;
+    // Observe the actual movement update that consumes LaunchCharacter, before
+    // later ground friction naturally slows the character. Do not inject motion.
+    ObservedExitSpeed=FMath::Max(ObservedExitSpeed,float(InitialVelocity.Size2D()));
+    ObservedExitSpeed=FMath::Max(ObservedExitSpeed,float(Survivor->GetCharacterMovement()->Velocity.Size2D()));
+    ObservedExitSpeed=FMath::Max(ObservedExitSpeed,float(FVector::Dist2D(InitialLocation,Survivor->GetActorLocation())/DeltaSeconds));
+}
 void AAnomaliaChaosRoadProbe::BeginPlay()
 {
     Super::BeginPlay();
@@ -63,6 +72,8 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetBoolField(TEXT("multiplayerTested"),false);
     Report->SetBoolField(TEXT("entryAnimationTested"),false);
     Report->SetNumberField(TEXT("phase"),Phase);
+    Report->SetNumberField(TEXT("exitVehicleSpeedCmPerSecond"),ExitVehicleSpeed);
+    Report->SetNumberField(TEXT("observedExitCharacterSpeedCmPerSecond"),ObservedExitSpeed);
     TArray<TSharedPtr<FJsonValue>> Rows;
     for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
     Report->SetArrayField(TEXT("checks"),Rows); Report->SetArrayField(TEXT("physicsSamples"),Samples);
@@ -91,7 +102,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     if(Phase==14)
     {
         if(Now-PhaseStarted<.25)return;
-        if(PC->GetPawn()!=Survivor.Get() || Survivor->GetCharacterMovement()->Velocity.Size()<1000.f)
+        if(PC->GetPawn()!=Survivor.Get() || ObservedExitSpeed<1000.f)
         { Finish(TEXT("High speed exit did not retain the original character and vehicle momentum")); return; }
         Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
         Finish();return;
@@ -109,6 +120,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);
         Survivor=S;
+        S->OnCharacterMovementUpdated.AddDynamic(this,&AAnomaliaChaosRoadProbe::ObserveExitedMovement);
         if(!V->EnterVehicle(PC,S) || PC->GetPawn()!=V) { Finish(TEXT("Existing crew possession failed")); return; }
         if(V->bEngineRunning) { Finish(TEXT("Parked review engine started without driver ignition")); return; }
         AddTickPrerequisiteActor(PC);
@@ -333,7 +345,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Throttle=1.f;
         if(Elapsed>8)
         {
-            if(Speed<2200.f || !V->ExitDriverOnServer(PC) || PC->GetPawn()!=Survivor.Get())
+            ExitVehicleSpeed=Speed;
+            if(Speed<2200.f || Contacts<3 || !V->ExitDriverOnServer(PC) || PC->GetPawn()!=Survivor.Get())
             { Finish(TEXT("Exit at actual high speed failed")); return; }
             Phase=14;PhaseStarted=Now;return; // Allow the character to consume its pending launch.
         }

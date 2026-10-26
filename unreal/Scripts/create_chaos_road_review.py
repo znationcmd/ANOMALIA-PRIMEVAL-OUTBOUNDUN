@@ -114,7 +114,9 @@ try:
     # A plain proving surface is a test fixture, never a substitute for production scenery.
     ground=spawn(unreal.StaticMeshActor,(0,0,-50))
     ground.static_mesh_component.set_static_mesh(unreal.load_asset('/Engine/BasicShapes/Cube'))
-    ground.set_actor_scale3d(unreal.Vector(500,500,1))
+    # The extended repeated driving/exit sequence needs a longer proving surface.
+    # This remains a plain engineering fixture, not the production 1 km2 zone.
+    ground.set_actor_scale3d(unreal.Vector(1000,1000,1))
     ground.static_mesh_component.set_collision_profile_name('BlockAll')
     spawn(unreal.PlayerStart,(0,-350,200))
     spawn(unreal.AnomaliaChaosRoadProbe,(0,0,300))

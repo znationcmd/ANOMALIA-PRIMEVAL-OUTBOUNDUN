@@ -24,6 +24,8 @@ private:
     int32 Phase=0;
     double Started=0, PhaseStarted=0, LastSample=0, WallStarted=0;
     float StraightSpeed=0, TurnYaw=0, BrakeStartSpeed=0;
+    float ExitVehicleSpeed=0, ObservedExitSpeed=0;
+    UFUNCTION() void ObserveExitedMovement(float DeltaSeconds,FVector InitialLocation,FVector InitialVelocity);
     FVector StartLocation=FVector::ZeroVector;
     FVector EmptyTankLocation=FVector::ZeroVector;
     FString ReportFile;
