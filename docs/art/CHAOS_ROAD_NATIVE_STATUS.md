@@ -202,3 +202,16 @@ This revision is not yet compiled/tested in Unreal. Previous 21-check results do
 not validate the new calibration. Wet-weather visuals, loose terrain, bumps,
 different loads/tires, high-speed cornering, steering-wheel feel and multiplayer
 still require dedicated driving validation.
+
+First calibration run 40318994684 compiled successfully but failed to reach
+80 km/h in the reference test. Measured first stop: 50.008 km/h, 33.509 m,
+4.179 s, equivalent 0.294g. The rear axle torque and contact friction 0.9 were
+observed; sustained rear slip and first gear held below the previous shift
+threshold require correction. This is not accepted as completed road simulation.
+
+Revision 322b917 explicitly uses load-dependent tire grip (WheelLoadRatio 1),
+traction control disabled, Ackermann steering, and a 4500 RPM upshift threshold.
+It adds RPM, actual automatic-mode state, aerodynamic drag, damping and per-wheel
+force/load telemetry to diagnose the behaviour. Native validation is pending;
+the power, mass, friction multiplier and measured-braking criteria are not boosted
+or bypassed to make the check pass.
