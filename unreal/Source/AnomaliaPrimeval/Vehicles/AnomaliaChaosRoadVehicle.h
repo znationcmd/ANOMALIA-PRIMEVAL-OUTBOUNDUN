@@ -48,6 +48,9 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadBodyMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadWheelMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadGlassMesh;
+    /** Optional individually modelled wheels, paired with authored chassis-space hubs. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMesh>> RoadWheelMeshes;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<FVector> RoadWheelHubTargetsCm;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMeshComponent> RoadGlass;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMeshComponent>> RoadWheels;
     /** Front left, front right, rear left, rear right. Names come from the actual rig. */
@@ -74,5 +77,6 @@ protected:
 private:
     /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
     UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;
+    FTransform ReferenceBoneTransform(FName Bone) const;
     void ApplyRoadRig();
 };

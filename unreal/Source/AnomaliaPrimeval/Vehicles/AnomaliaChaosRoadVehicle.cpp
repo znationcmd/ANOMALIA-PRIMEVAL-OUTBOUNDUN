@@ -87,12 +87,32 @@ bool AAnomaliaChaosRoadVehicle::HasValidRoadRig() const
        !RoadAnimation->IsChildOf(UVehicleAnimationInstance::StaticClass()) || WheelBones.Num()!=4 ||
        !FMath::IsFinite(WheelRadiusCm) || WheelRadiusCm<10.f || WheelRadiusCm>100.f) return false;
     TSet<FName> Unique;
+    if(RoadWheelMeshes.Num()!=0 || RoadWheelHubTargetsCm.Num()!=0)
+    {
+        if(RoadWheelMeshes.Num()!=4 || RoadWheelHubTargetsCm.Num()!=4)return false;
+        for(int32 Index=0;Index<4;++Index)
+            if(!RoadWheelMeshes[Index] || RoadWheelHubTargetsCm[Index].ContainsNaN() ||
+               RoadWheelHubTargetsCm[Index].GetAbsMax()>1000.f)return false;
+    }
     for(const FName Bone:WheelBones)
     {
         if(Bone.IsNone() || Unique.Contains(Bone) || RoadMesh->GetRefSkeleton().FindBoneIndex(Bone)==INDEX_NONE) return false;
         Unique.Add(Bone);
     }
     return true;
+}
+
+FTransform AAnomaliaChaosRoadVehicle::ReferenceBoneTransform(FName Bone) const
+{
+    const FReferenceSkeleton& Skeleton=RoadMesh->GetRefSkeleton();
+    int32 Index=Skeleton.FindBoneIndex(Bone);
+    FTransform Result=FTransform::Identity;
+    while(Index!=INDEX_NONE)
+    {
+        Result=Result*Skeleton.GetRefBonePose()[Index];
+        Index=Skeleton.GetParentIndex(Index);
+    }
+    return Result;
 }
 
 void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
@@ -103,17 +123,28 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     Body->SetVisibility(false); Body->SetHiddenInGame(true);
     Chassis->SetSkeletalMesh(RoadMesh);
     Chassis->SetAnimInstanceClass(RoadAnimation);
+    const bool bAuthoredWheels=RoadWheelMeshes.Num()==4 && RoadWheelHubTargetsCm.Num()==4;
+    // Modular original art follows a real animated skeleton, with its vendor
+    // suspension geometry hidden. Hidden bones must continue to refresh.
+    Chassis->SetVisibility(!bAuthoredWheels,false);
+    Chassis->VisibilityBasedAnimTickOption=EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
     Body->SetStaticMesh(RoadBodyMesh);Body->SetRelativeTransform(FTransform::Identity);
     Body->SetVisibility(RoadBodyMesh!=nullptr);Body->SetHiddenInGame(RoadBodyMesh==nullptr);
     RoadGlass->SetStaticMesh(RoadGlassMesh);RoadGlass->SetVisibility(RoadGlassMesh!=nullptr);
     for(int32 Index=0;Index<RoadWheels.Num();++Index)
     {
-        RoadWheels[Index]->SetStaticMesh(RoadWheelMesh);
+        RoadWheels[Index]->SetStaticMesh(bAuthoredWheels?RoadWheelMeshes[Index]:RoadWheelMesh);
         if(WheelBones.IsValidIndex(Index))
         {
             const FString VisualName=WheelBones[Index].ToString().Replace(TEXT("Phys"),TEXT("Vis"));
             const FName VisualBone=Chassis->GetBoneIndex(FName(*VisualName))!=INDEX_NONE?FName(*VisualName):WheelBones[Index];
             RoadWheels[Index]->AttachToComponent(Chassis,FAttachmentTransformRules::SnapToTargetNotIncludingScale,VisualBone);
+            if(bAuthoredWheels && RoadMesh)
+            {
+                const FTransform Reference=ReferenceBoneTransform(VisualBone);
+                RoadWheels[Index]->SetRelativeLocation(Reference.InverseTransformPosition(RoadWheelHubTargetsCm[Index]));
+                RoadWheels[Index]->SetRelativeRotation(Reference.GetRotation().Inverse());
+            }
         }
     }
     ChaosMovement->WheelSetups.Reset();
@@ -122,6 +153,8 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     {
         FChaosWheelSetup Setup;
         Setup.BoneName=WheelBones[Index];
+        if(bAuthoredWheels)
+            Setup.AdditionalOffset=RoadWheelHubTargetsCm[Index]-ReferenceBoneTransform(WheelBones[Index]).GetTranslation();
         Setup.WheelClass=Index<2?UAnomaliaRoadFrontWheel::StaticClass():UAnomaliaRoadRearWheel::StaticClass();
         ChaosMovement->WheelSetups.Add(Setup);
     }

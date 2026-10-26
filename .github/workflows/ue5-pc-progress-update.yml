@@ -120,6 +120,22 @@ jobs:
           name: native-sedan-import-evidence
           path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan/*.*
           if-no-files-found: warn
+      - name: Require the same physical driving checks with the original sedan art
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan-drive"
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --sedan
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-sedan-drive-evidence
+          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan-drive/*.*
+          if-no-files-found: warn
       - name: Verify playable-map interaction geometry before preparing or cooking assets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |

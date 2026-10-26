@@ -7,9 +7,11 @@ def main():
     p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True)
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--record-driving',action='store_true',help='Opt-in continuous viewport recording; can significantly slow rendering')
+    p.add_argument('--sedan',action='store_true',help='Use the separately imported original sedan art and authored wheel hubs')
     args=p.parse_args()
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env['ANOMALIA_CHAOS_OUTPUT']=str(out)
+    env['ANOMALIA_CHAOS_USE_SEDAN']='1' if args.sedan else '0'
     project=ROOT/'unreal/AnomaliaPrimeval.uproject'
     exe=args.engine_root/'Engine/Binaries/Win64/UnrealEditor.exe'
     def run(name,arguments,timeout):
@@ -45,6 +47,7 @@ def main():
     (out/'review-report.json').write_text(json.dumps(dict(state='CHAOS_EDITOR_GAME_PHYSICAL_DRIVE_VERIFIED',
         video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
-        installed=False,multiplayerTested=False,productionMapModified=False),indent=2)+'\n')
+        installed=False,multiplayerTested=False,productionMapModified=False,
+        originalSedanArt=args.sedan,entryAnimationTested=False,openingDoorsTested=False),indent=2)+'\n')
 
 if __name__=='__main__':main()

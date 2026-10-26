@@ -28,7 +28,8 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
 #if !UE_BUILD_SHIPPING
     const auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
     bEnabled=Mode && GetNetMode()==NM_Standalone && Mode->ServerId.StartsWith(TEXT("chaos-smoke-")) &&
-        GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_ChaosRoadReview_v2")) &&
+        (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_ChaosRoadReview_v2")) ||
+         GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_SedanDriveReview_v1"))) &&
         FParse::Value(FCommandLine::Get(),TEXT("AnomaliaChaosProbe="),ReportFile) && !ReportFile.IsEmpty();
 #endif
     SetActorTickEnabled(bEnabled);

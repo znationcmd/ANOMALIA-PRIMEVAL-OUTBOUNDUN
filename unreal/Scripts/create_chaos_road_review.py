@@ -3,8 +3,9 @@ import json,os,traceback
 from pathlib import Path
 import unreal
 OUT=Path(os.environ['ANOMALIA_CHAOS_OUTPUT'])
-PACKAGE='/Game/Maps/ANOMALIA_ChaosRoadReview_v2'
-OWNER='ANOMALIA_ChaosRoadReview_v2'
+SEDAN=os.environ.get('ANOMALIA_CHAOS_USE_SEDAN')=='1'
+OWNER='ANOMALIA_SedanDriveReview_v1' if SEDAN else 'ANOMALIA_ChaosRoadReview_v2'
+PACKAGE='/Game/Maps/'+OWNER
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),productionMapModified=False)
 try:
     source=json.loads((OUT/'template-source.json').read_text())
@@ -12,6 +13,15 @@ try:
     tire=unreal.load_asset(source['tirePackage']);body_art=unreal.load_asset(source['bodyPackage'])
     glass_art=unreal.load_asset(source['glassPackage']) if source.get('glassPackage') else None
     if not mesh or not animation or not tire or not body_art:raise RuntimeError('Real template rig, animation or tires missing')
+    sedan=None;sedan_parts={}
+    if SEDAN:
+        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets/NativeDemoSedan_v1/manifest.json').read_text())
+        for part in sedan['models']:
+            asset=unreal.load_asset(part['objectPath'])
+            if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaNativeSedanSha256')!=part['sha256']:
+                raise RuntimeError('Source-verified native sedan part required: '+part['id'])
+            sedan_parts[part['id']]=asset
+        body_art=sedan_parts['body'];tire=sedan_parts['wheel_fl'];glass_art=None
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     if unreal.EditorAssetLibrary.does_asset_exist(PACKAGE):
         if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Cannot reopen owned review')
@@ -33,6 +43,9 @@ try:
     car.set_editor_property('road_mesh',mesh);car.set_editor_property('road_animation',animation)
     car.set_editor_property('road_body_mesh',body_art);car.set_editor_property('road_wheel_mesh',tire)
     car.set_editor_property('road_glass_mesh',glass_art)
+    if SEDAN:
+        car.set_editor_property('road_wheel_meshes',[sedan_parts[k] for k in ('wheel_fl','wheel_fr','wheel_rl','wheel_rr')])
+        car.set_editor_property('road_wheel_hub_targets_cm',[unreal.Vector(*hub) for hub in sedan['wheelHubsCm']])
     chassis=car.get_editor_property('chassis');chassis.set_skeletal_mesh(mesh)
     bones=[]
     for i in range(chassis.get_num_bones()):
@@ -111,6 +124,10 @@ try:
     report.update(state='REAL_SKELETAL_CHAOS_REVIEW_MAP_SAVED_NOT_DRIVEN',map=PACKAGE,
         mesh=mesh.get_path_name(),animationClass=animation.get_path_name(),wheelBones=selected,wheelRadiusCm=radius,
         gameplayTested=False,productionPlacementAllowed=False)
+    report['originalSedanArt']=SEDAN
+    if SEDAN:
+        report['sedanSource']=sedan['source'];report['sedanWheelHubsCm']=sedan['wheelHubsCm']
+        report['openingDoorsTested']=False;report['entryAnimationTested']=False
 except Exception as e:
     report['error']=str(e);unreal.log_error(traceback.format_exc())
 finally:(OUT/'rig-import-report.json').write_text(json.dumps(report,indent=2)+'\n')
