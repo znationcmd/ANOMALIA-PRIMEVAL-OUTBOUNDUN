@@ -181,7 +181,9 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
     RoadGlass->SetStaticMesh(RoadGlassMesh);RoadGlass->SetVisibility(RoadGlassMesh!=nullptr);
     DriverDoor->SetStaticMesh(DriverDoorMesh);DriverDoor->SetRelativeLocation(DriverDoorPivotCm);
     DriverDoor->SetVisibility(DriverDoorMesh!=nullptr);DriverDoor->SetHiddenInGame(DriverDoorMesh==nullptr);
-    DriverDoor->SetCollisionEnabled(DriverDoorMesh?ECollisionEnabled::QueryAndPhysics:ECollisionEnabled::NoCollision);
+    // Kinematic leaves block character sweeps and interaction traces, but are
+    // not separate rigid solver bodies coupled to the simulated chassis.
+    DriverDoor->SetCollisionEnabled(DriverDoorMesh?ECollisionEnabled::QueryOnly:ECollisionEnabled::NoCollision);
     TSet<FName> PanelIds;PanelIds.Add(DriverDoor->PanelId);
     for(int32 Index=0;Index<AdditionalPanels.Num();++Index)
     {
@@ -193,7 +195,7 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
             FMath::IsFinite(Definition->OpenAngleDegrees) && FMath::Abs(Definition->OpenAngleDegrees)<=170.f;
         Panel->SetStaticMesh(bValid?Definition->Mesh:nullptr);
         Panel->SetVisibility(bValid);Panel->SetHiddenInGame(!bValid);
-        Panel->SetCollisionEnabled(bValid?ECollisionEnabled::QueryAndPhysics:ECollisionEnabled::NoCollision);
+        Panel->SetCollisionEnabled(bValid?ECollisionEnabled::QueryOnly:ECollisionEnabled::NoCollision);
         if(bValid)
         {
             PanelIds.Add(Definition->PanelId);Panel->PanelId=Definition->PanelId;

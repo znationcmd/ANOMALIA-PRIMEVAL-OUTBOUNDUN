@@ -27,6 +27,8 @@ private:
     int32 AdditionalPanelIndex=0;
     TArray<FString> ValidatedAdditionalPanelIds;
     TWeakObjectPtr<UAnomaliaVehiclePanelComponent> PanelUnderReview;
+    FVector PanelReviewStart=FVector::ZeroVector;
+    float PanelMaxDriftCm=0,PanelMaxSpeedCmPerSecond=0;
     FVector PanelAimInMeshCm=FVector::ZeroVector;
     FVector PanelApertureLocalCm=FVector::ZeroVector;
     FVector PanelTraceOutward=FVector::UpVector;

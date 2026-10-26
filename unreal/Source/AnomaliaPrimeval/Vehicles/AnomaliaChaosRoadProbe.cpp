@@ -120,6 +120,8 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     TArray<TSharedPtr<FJsonValue>> PanelIds;
     for(const auto& Id:ValidatedAdditionalPanelIds)PanelIds.Add(MakeShared<FJsonValueString>(Id));
     Report->SetArrayField(TEXT("validatedAdditionalPanelIds"),PanelIds);
+    Report->SetNumberField(TEXT("panelMaxChassisDriftCm"),PanelMaxDriftCm);
+    Report->SetNumberField(TEXT("panelMaxChassisSpeedCmPerSecond"),PanelMaxSpeedCmPerSecond);
     if(const auto* Setting=IConsoleManager::Get().FindConsoleVariable(TEXT("p.Vehicle.DisableConstraintSuspension")))
         Report->SetNumberField(TEXT("constraintSuspensionDisabled"),Setting->GetInt());
     if(Car.IsValid())
@@ -185,6 +187,11 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     {
         auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());auto* Panel=PanelUnderReview.Get();
         if(!V || !S || !Panel){Finish(TEXT("Additional E39 panel review lost its real actor"));return;}
+        PanelMaxDriftCm=FMath::Max(PanelMaxDriftCm,float(FVector::Dist(V->GetActorLocation(),PanelReviewStart)));
+        PanelMaxSpeedCmPerSecond=FMath::Max(PanelMaxSpeedCmPerSecond,float(V->Chassis->GetPhysicsLinearVelocity().Size()));
+        if(PanelMaxDriftCm>50.f || PanelMaxSpeedCmPerSecond>100.f)
+        {Finish(FString::Printf(TEXT("Panel review destabilized chassis: %s drift=%.2f cm speed=%.2f cm/s vehicle=%s survivor=%s"),
+            *Panel->PanelId.ToString(),PanelMaxDriftCm,PanelMaxSpeedCmPerSecond,*V->GetActorLocation().ToString(),*S->GetActorLocation().ToString()));return;}
         if(Now-PhaseStarted<1.5)return;
         const FVector Point=V->Chassis->GetComponentTransform().TransformPosition(PanelApertureLocalCm);
         const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();
@@ -200,7 +207,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Checks.Add(TEXT("panel_")+Id+TEXT("_rotates_on_authored_axis_and_clears_access"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-panel-")+Id+TEXT("-open.png")),false,false);
             FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm)-Eye).Rotation());
-            if(!Panel->TryToggle(S)){Finish(TEXT("Targeted server panel close rejected: ")+Id);return;}
+            if(!Panel->TryToggle(S))
+            {
+                FCollisionQueryParams AimQuery(SCENE_QUERY_STAT(AnomaliaPanelCloseDiagnostic),true);AimQuery.AddIgnoredActor(S);FHitResult AimHit;
+                const FVector Aim=Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm);
+                GetWorld()->LineTraceSingleByChannel(AimHit,Eye,Eye+(Aim-Eye).GetSafeNormal()*300.f,ECC_Visibility,AimQuery);
+                Finish(FString::Printf(TEXT("Targeted server panel close rejected: %s eye=%s aim=%s hit=%s distance=%.2f cm"),
+                    *Id,*Eye.ToString(),*Aim.ToString(),*GetNameSafe(AimHit.GetComponent()),FVector::Dist(S->GetActorLocation(),Panel->Bounds.Origin)));return;
+            }
             Phase=41;PhaseStarted=Now;return;
         }
         if(Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees)>1.f ||
@@ -348,7 +362,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 UAnomaliaVehiclePanelComponent* Panel=nullptr;
                 for(const auto& Candidate:V->AdditionalPanels)if(Candidate && Candidate->PanelId==Id)Panel=Candidate;
                 FVector StandLocal,Axis,Pivot,Aim;
-                if(!Panel || !Panel->GetStaticMesh() || Panel->GetCollisionEnabled()!=ECollisionEnabled::QueryAndPhysics ||
+                if(!Panel || !Panel->GetStaticMesh() || Panel->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || Panel->IsSimulatingPhysics() || Panel->BodyInstance.bAutoWeld ||
                    !ReadPanelFixtureVector(Config,TEXT("apertureCm"),PanelApertureLocalCm) ||
                    !ReadPanelFixtureVector(Config,TEXT("traceOutward"),PanelTraceOutward) || PanelTraceOutward.IsNearlyZero() ||
                    !ReadPanelFixtureVector(Config,TEXT("fixtureStandCm"),StandLocal) ||
@@ -356,7 +370,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                    !ReadPanelFixtureVector(Config,TEXT("hingeAxis"),Axis) || !ReadPanelFixtureVector(Config,TEXT("pivotCm"),Pivot) ||
                    !Panel->LocalHingeAxis.Equals(Axis.GetSafeNormal(),.001f) || !Panel->GetRelativeLocation().Equals(Pivot,.1f))
                 {Finish(TEXT("Authored E39 panel/axis/fixture missing: ")+Id.ToString());return;}
-                PanelUnderReview=Panel;PanelAimInMeshCm=Aim-Pivot;
+                PanelUnderReview=Panel;PanelAimInMeshCm=Aim-Pivot;PanelReviewStart=V->GetActorLocation();
                 Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_installed_with_authored_hinge_axis"));
                 const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocal);
                 if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true)){Finish(TEXT("Panel fixture stand is blocked"));return;}
