@@ -9,7 +9,7 @@ def main():
     p.add_argument('--record-driving',action='store_true',help='Opt-in continuous viewport recording; can significantly slow rendering')
     p.add_argument('--sedan',action='store_true',help='Use the separately imported original sedan art and authored wheel hubs')
     p.add_argument('--force-suspension',action='store_true',help='Isolated diagnostic: compare native force-based suspension without changing project configuration')
-    p.add_argument("--e39",action="store_true",help="Isolated E39 visual/physical candidate; animated doors not accepted")
+    p.add_argument("--e39",action="store_true",help="Same E39 variant with real driver leaf and required native door checks")
     args=p.parse_args()
     if args.e39 and args.sedan:p.error("Select a single art variant")
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
@@ -66,13 +66,13 @@ def main():
         raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
     if len(drive.get('brakingMeasurements',[]))!=3:
         raise RuntimeError('Three measured physical braking runs are required')
-    if args.sedan:
+    if args.sedan or args.e39:
         panels={'separate_licensed_driver_door_mesh_installed','closed_driver_door_has_actual_collision',
             'closed_driver_door_recomposes_original_body_bounds','current_driver_opens_and_closes_real_door_from_seat',
             'locked_driver_door_rejects_server_interaction','driver_door_rotates_at_hinge_and_collision_leaves_aperture',
             'driver_door_closes_and_restores_actual_collision'}
         if not drive.get('driverDoorReviewed') or not panels.issubset(drive.get('checks',[])):
-            raise RuntimeError('Original sedan requires a real animated driver door and moving collision')
+            raise RuntimeError('Selected sedan requires a real animated driver door and moving collision')
     if drive.get('constraintSuspensionDisabled')!=1:
         raise RuntimeError('Calibrated force-based suspension was not active in the actual game')
     video=None;video_error=None

@@ -1,5 +1,16 @@
 # BMW E39 — native candidate validation
 
+Current work: **retain this E39 model**. A same-source driver leaf is now
+prepared in `BMWE39Review_v2`, preserving v1 and all four validated wheels.
+Its real opening/closing and driving checks are pending a new Windows run.
+The successful v1 results below remain historical evidence, not proof that
+the new driver door already works.
+
+Complete and verify the E39 before extending to the other requested models.
+Each later vehicle needs its own detailed source, native import, correct
+physics for its category, interior/crew/interaction setup and in-game acceptance.
+Shared components are reused; catalogue names alone do not count as delivery.
+
 The E39 is a separate review variant. The previously validated Graphite sedan,
 its opening driver door, the production map, installation and saves are preserved.
 

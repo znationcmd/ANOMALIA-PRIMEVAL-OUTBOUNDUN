@@ -22,6 +22,7 @@ private:
     bool bSignalSeenOn=false, bSignalSeenOff=false;
     bool bRearDriveObserved=false;
     bool bDriverDoorReviewed=false;
+    FVector DoorApertureLocalCm=FVector(50,-90,110);
     float OriginalFuelConsumption=.045f;
     double BrakeMeasuredStarted=0, BrakePathCm=0;
     double AccelerationDuration=0;

@@ -8,7 +8,7 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
-NAMESPACE="BMWE39Review_v1" if E39 else "NativeDemoSedan_v3"
+NAMESPACE="BMWE39Review_v2" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
@@ -23,13 +23,16 @@ try:
     if source['license']!=expected_license or source['sha256']!=expected_hash:
         raise RuntimeError('Reviewed licensed source identity required')
     models=manifest['models']
-    expected={'body','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
-    if not E39:expected.add('door_driver')
+    expected={'body','door_driver','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
     if len(models)!=len(expected) or {m['id'] for m in models}!=expected:raise RuntimeError('Complete expected part set required')
     partition=None
     if E39:
-        if manifest['schemaVersion']!=1 or manifest['sourceTriangles']!=manifest['exportedTriangles'] or manifest['interactiveDoors']:
-            raise RuntimeError('Reviewed E39 source coverage required')
+        partition=manifest['sourceCoverage']['partition']
+        if (manifest['schemaVersion']!=2 or partition['doorSurfaceArea']<1 or
+            abs(partition['originalSurfaceArea']-partition['doorSurfaceArea']-partition['remainingSurfaceArea'])>1e-6 or
+            manifest['parentBodySha256']!='c84fb90ba58503986336784991c183031fd2e45a85b8636310c06ebf293b88a9' or
+            len(manifest['panels'])!=1):
+            raise RuntimeError('Same E39 driver leaf and original surface coverage required')
     else:
         coverage=manifest['sourceCoverage'];partition=coverage['partition']
         if (manifest['schemaVersion']!=3 or coverage['nodes']!=304 or partition['doorSurfaceArea']<.5 or

@@ -191,7 +191,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(!V || !S || !V->DriverDoorMesh){Finish(TEXT("Door review lost the real survivor or imported mesh"));return;}
         if(Now-PhaseStarted<1.5)return;
         auto* Door=V->DriverDoor.Get();
-        const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,-90,110));
+        const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(DoorApertureLocalCm);
         FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaDoorApertureReview),false);Query.AddIgnoredActor(S);
         FHitResult Hit;const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Opening-V->GetActorRightVector()*180,
             Opening+V->GetActorRightVector()*50,ECC_Visibility,Query);
@@ -233,7 +233,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             FString ManifestText;TSharedPtr<FJsonObject> Manifest;
             const TSharedPtr<FJsonObject>* Bounds=nullptr;
             const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
-            if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json"))) ||
+            const bool bE39Review=GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_E39DriveReview_v1"));
+            const TCHAR* ManifestRelative=bE39Review?TEXT("SourceAssets/BMWE39Review_v2/manifest.json"):TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json");
+            if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),ManifestRelative)) ||
                !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ManifestText),Manifest) || !Manifest.IsValid() ||
                !Manifest->TryGetObjectField(TEXT("closedBodyBoundsCm"),Bounds) || !Bounds || !Bounds->IsValid() ||
                !(*Bounds)->TryGetArrayField(TEXT("min"),Minimum) || !(*Bounds)->TryGetArrayField(TEXT("max"),Maximum) ||
@@ -248,11 +250,29 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Checks.Add(TEXT("closed_driver_door_recomposes_original_body_bounds"));
             // Only fixture positioning: opening and closing use the same targeted
             // server interaction as the survivor's E key, never assigned angles.
-            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(FVector(240,-240,100));
+            FVector StandLocalCm(240,-240,100);
+            if(bE39Review)
+            {
+                const TArray<TSharedPtr<FJsonValue>>* Panels=nullptr;
+                if(!Manifest->TryGetArrayField(TEXT("panels"),Panels) || !Panels || Panels->Num()!=1)
+                {Finish(TEXT("E39 driver leaf review configuration missing"));return;}
+                const TSharedPtr<FJsonObject> Panel=(*Panels)[0]->AsObject();
+                const auto ReadFixtureVector=[](const TSharedPtr<FJsonObject>& Object,const TCHAR* Key,FVector& Out)
+                {
+                    const TArray<TSharedPtr<FJsonValue>>* Values=nullptr;
+                    if(!Object.IsValid() || !Object->TryGetArrayField(Key,Values) || !Values || Values->Num()!=3)return false;
+                    Out=FVector((*Values)[0]->AsNumber(),(*Values)[1]->AsNumber(),(*Values)[2]->AsNumber());
+                    return !Out.ContainsNaN() && Out.GetAbsMax()<1000;
+                };
+                if(!ReadFixtureVector(Panel,TEXT("apertureCm"),DoorApertureLocalCm) ||
+                   !ReadFixtureVector(Panel,TEXT("fixtureStandCm"),StandLocalCm))
+                {Finish(TEXT("E39 driver leaf fixture vectors invalid"));return;}
+            }
+            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocalCm);
             if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true))
             {Finish(TEXT("Door interaction fixture position is blocked"));return;}
             FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Door->Bounds.Origin-Eye).Rotation());
-            const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,-90,110));
+            const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(DoorApertureLocalCm);
             FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaClosedPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
             if(!GetWorld()->LineTraceSingleByChannel(Hit,Opening-V->GetActorRightVector()*180,
                Opening+V->GetActorRightVector()*50,ECC_Visibility,Query) || Hit.GetComponent()!=Door)
