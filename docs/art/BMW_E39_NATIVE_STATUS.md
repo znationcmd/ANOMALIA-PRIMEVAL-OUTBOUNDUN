@@ -1,104 +1,116 @@
-# BMW E39 — native candidate validation
+# BMW E39 — same model, native driving and driver door
 
-Current work: **retain this E39 model**. A same-source driver leaf is now
-prepared in `BMWE39Review_v2`, preserving v1 and all four validated wheels.
-Its real opening/closing and driving checks are pending a new Windows run.
-The successful v1 results below remain historical evidence, not proof that
-the new driver door already works.
+**Keep this E39.** The same Black Snow source, body, interior and four wheels
+are retained. v2 derives a driver leaf from that model; it does not substitute
+a different car. v1 and its successful driving evidence remain preserved.
 
-Complete and verify the E39 before extending to the other requested models.
-Each later vehicle needs its own detailed source, native import, correct
-physics for its category, interior/crew/interaction setup and in-game acceptance.
-Shared components are reused; catalogue names alone do not count as delivery.
+Complete and verify the E39 before extending to the other requested vehicles.
+Each later model needs a detailed licensed source, native import, appropriate
+physics for its category, interior/crew/interactions and actual game acceptance.
+Reuse compatible components; catalogue names alone do not count as delivery.
 
-The E39 is a separate review variant. The previously validated Graphite sedan,
-its opening driver door, the production map, installation and saves are preserved.
+## Latest real UE 5.8.3 acceptance — 2026-10-26
 
-Source: **BMW E39 Free**, Black Snow,
+Code: `87f6a0d24372ff013f642f7d480cddf7eea43a05`.
+[Windows workflow 40399566771](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40399566771)
+completed successfully. Machine-readable evidence:
+`docs/art/bmw-e39-driver-door-native-validation-20261026.json`.
+
+| Stage | Verified result |
+| --- | --- |
+| Local checks | 126 Python tests and seven geometry tests pass |
+| Prepared parts | Six GLB files, zero Khronos errors/warnings; repeat preparation preserves identical files |
+| UE compilation | Editor and Game, UE 5.8.3, both exit code 0 |
+| Native tests | 24 pass: 19 without warnings, five with warnings, zero failures |
+| Real import | Body/interior, real driver leaf and four original wheels in a separate v2 namespace |
+| Actual E39 gameplay | 33 checks pass, including seven driver-door checks, 318 physics samples |
+| Visual inspection | Real viewport capture inspected: same red E39, driver leaf open on the correct side, cabin opening and original rims visible |
+| Existing vehicles | Reference driving and the Graphite driving/driver-door requirements pass in the same workflow |
+| Complete vehicle, multiplayer, package, installation | Not accepted/not performed |
+
+The source door includes its painted surfaces, glass, mirror and inner lining.
+Disconnected authored islands are retained whole; shared window-frame surfaces
+are partitioned with interpolated original attributes. The source body surface
+area, 79.649182720245 m², is conserved between the leaf (1.911817677998 m²) and
+remaining body (77.737365042248 m²). Closed body + hinge-offset leaf recompose
+the original native bounds; all four wheel files remain byte-identical to v1.
+
+Hinge: chassis-local `(92.4, -80, 90)` cm, +70° opening. The existing generic
+`UAnomaliaVehiclePanelComponent` supplies server-owned angular motion, moving
+convex collision, locking, obstruction checks and replicated angle/state.
+The E39 review uses the same targeted server interaction as E outside and the
+same owning-driver O command inside. No invisible-panel opening substitute.
+The six-part importer alone does not count as an opening or gameplay test.
+
+The actual game verifies the installed panel, original closed bounds,
+closed/open/restored collision, locked rejection, and operation from the seat,
+then repeats real Chaos acceleration, steering, gears, braking, handbrake,
+lights, fuel depletion/refuelling and moving exit with the original survivor.
+
+| Measured E39 braking on controlled surface | Distance | Time |
+| --- | ---: | ---: |
+| 50.30 km/h, friction 0.9 | 12.17 m | 1.70 s |
+| 80.07 km/h, friction 0.9 | 29.53 m | 2.64 s |
+| 80.15 km/h, friction 0.45 | 55.69 m | 5.03 s |
+
+The same calibrated 1500 kg/320 Nm prototype profile is reused. These results
+prove functioning Chaos physics on the proving ground, not complete real-world
+BMW calibration. The engineering surface is not the requested photoreal zone.
+Continuous recording is disabled on the validation host; screenshots are actual
+Unreal captures, not generated imagery. Only `driver_door` is validated:
+`openingDoorsTested=true` does not mean that every vehicle panel is complete.
+
+## Source and preservation
+
+**BMW E39 Free**, Black Snow:
 https://sketchfab.com/3d-models/bmw-e39-free-531a5a93da5d493d9918eb36f011c20d
 
-License: CC BY 4.0, https://creativecommons.org/licenses/by/4.0/.
-The source file embeds the same creator, license and source URL. Attribution
-remains in each derived GLB and CREDITS.md and is attached to imported meshes.
-The registered anonymous redistribution is pinned in
-`docs/vehicles/named-assets-sources.json`, commit
+CC BY 4.0: https://creativecommons.org/licenses/by/4.0/.
+The GLB embeds the creator, license and original URL. Attribution remains in
+all derivatives, CREDITS.md and imported asset metadata. Anonymous redistribution
+is pinned in `docs/vehicles/named-assets-sources.json`, commit
 `0a56de377f02f2574d781f6920fed08d6423ec2f` of `pedrosoandre/carros`.
-Source SHA256: `984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d`.
+Source SHA256:
+`984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d`.
 
-## Implemented locally
+Original v1 preparation deep-copies shared wheel geometry before transformation,
+corrects forward axis and ground origin, preserves the body/cabin and separates
+four authored wheel assemblies. Brake calipers remain on the chassis.
+Hash, scale and origin guards preserve artist assets. The Graphite sedan and
+its door, production map, installation and saves remain intact.
 
-- Anonymous verified source download, preserving any existing different file.
-- Original body/interior and four separate authored wheel assemblies; brake
-  calipers remain on the chassis. This does not create a proprietary BMW rig.
-- Deep copies of shared wheel geometry before baking each node transform.
-- +X forward/+Y right/+Z up after Unreal import, metre-to-centimetre checks,
-  real tire centres, ground-origin correction and hash-guarded asset namespace.
-- 109,044 source-instance triangles retained across five parts. Structural
-  Khronos validation: five parts, zero errors and zero warnings.
-- Reuse the native Chaos road vehicle, its fuel, lights, gears, braking and exit
-  code on `/Game/Maps/ANOMALIA_E39DriveReview_v1`.
-- Dedicated E39 import/driving evidence in the existing Windows validation
-  workflow; all original sedan driving and driver-door requirements remain.
-
-## Real UE 5.8.3 acceptance — 2026-10-26
-
-Code commit: `4a89150609985ae3b03702d834724346f71f2051`.
-[Windows workflow 40394672391](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40394672391)
-completed successfully. The receipt is
-`docs/art/bmw-e39-native-validation-20261026.json`.
-
-| Stage | Actual result |
-| --- | --- |
-| Local source checks | 126 Python tests; five existing panel-geometry tests pass |
-| glTF preparation | Five parts, zero Khronos errors/warnings; repeat preparation preserves identical files |
-| UE compilation | Editor and Game targets, UE 5.8.3, exit code 0 |
-| Native regression tests | 24 pass: 19 without warnings, five with warnings, zero failures |
-| E39 import | Five meshes imported; body/interior 75,564 triangles/46 materials, each wheel 8,370 triangles/four materials |
-| E39 gameplay | 26 actual Chaos checks pass, 305 physics samples, real rendered screenshots |
-| Existing sedan | Its original driving and seven driver-door acceptance gates pass in the same workflow |
-| Packaged release, multiplayer, installation | Not performed |
-
-Measured dry braking: 50.14 km/h to rest in **12.14 m**, 80.27 km/h
-in **29.47 m**. Lower friction (0.45) at 80.25 km/h requires **56.10 m**.
-These are observations on the controlled proving surface, not a claim that
-an E39-specific simulation profile or real-world BMW performance is complete.
-The car shares the previously calibrated 1500 kg/320 Nm road prototype profile.
-
-The initial attempt (40392007599) imported the E39 successfully but timed out
-without driving measurements: the new map was missing from the native probe's
-explicit map/owned-ground allowlist. The corrected build retains standalone,
-non-shipping, owned-map and random `chaos-smoke-` server-scope guards. Only the
-successful corrected run above is accepted as driving evidence.
+Historical v1 driving: code `4a89150609985ae3b03702d834724346f71f2051`, successful
+[workflow 40394672391](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40394672391),
+26 driving checks, receipt `docs/art/bmw-e39-native-validation-20261026.json`.
+The earlier failed run 40392007599 imported v1 but timed out with the probe
+inactive; it is not driving evidence. The corrected probe retains standalone,
+non-shipping, explicit owned-map and temporary server-scope guards.
 
 ## Still unfinished
 
-The E39 is not a completed playable catalogue vehicle. Its doors, hood and trunk
-are not yet separated/animated; entry/exit animations and exact seat placement
-are unfinished. The existing sedan and its functional driver door remain intact.
-The source interior is present, but complete accessibility is not accepted.
+The E39 is not yet a completed playable catalogue vehicle. Three other doors,
+hood and trunk, exact seat positioning, entry/exit animations and a visible
+animated human driver remain unfinished. Entry currently uses the existing
+crew possession path; the complete animation/access sequence is not accepted.
 
-Actual screenshots show a recognizable red E39 with its original wheels and
-cabin. Photorealism is **not accepted**: source paint is very glossy, glass is
-dark, source texture detail is limited, and the image uses a plain engineering
-proving surface. No claim of Lumen/Nanite, final PBR presentation or a populated
-photoreal world is made. The host is Intel Iris Xe/D3D11; target-PC performance
-has not been accepted. Continuous video recording is disabled on this test
-host; the retained images are actual Unreal viewport captures.
+Source paint is very glossy, glass is dark and texture detail is limited.
+Frame/seam finishing, interior presentation, realistic sounds and final PBR
+quality remain to review. Photorealism is not accepted. The host is Intel Iris
+Xe/D3D11; no Nanite/Lumen or target-PC performance acceptance is claimed.
 
-Manual keyboard/gamepad sessions, multiplayer, mechanical persistence, damage,
-part replacement, wipers, packaged Windows acceptance, production-map and Editor
-catalogue integration remain incomplete. No installation or save was replaced.
+Manual keyboard/gamepad sessions, multiplayer, vehicle/panel persistence,
+locks/keys, damage, replaceable parts, repairs, dirt, wipers, packaged Windows
+acceptance, production-map and Editor-catalogue integration remain incomplete.
+No existing installation or save was replaced, no force push or expense.
 
 ## Reproduce
 
 1. `python scripts/ue5/prepare-bmw-e39.py`
 2. `npm ci --prefix scripts/vehicle-assets --no-audit --no-fund`
 3. `node scripts/vehicle-assets/prepare-bmw-e39.mjs`
-4. `node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v1`
-5. On the UE Windows host: run `import-native-demo-sedan.py --e39`, then
+4. `node --test scripts/vehicle-assets/mesh-islands.test.mjs scripts/vehicle-assets/panel-geometry.test.mjs`
+5. `node scripts/vehicle-assets/prepare-bmw-e39-panels.mjs`
+6. `node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v2`
+7. On the UE Windows host: run `import-native-demo-sedan.py --e39`, then
    `prepare-chaos-template-review.py`, then `run-chaos-road-review.py --e39`,
    each with `--engine-root` and the same fresh `--output` directory.
-
-The E39 variant explicitly reports openingDoorsTested=false until real animated
-panels are implemented and verified. It cannot satisfy the original sedan's
-seven driver-door acceptance checks by omitting its door mesh.
