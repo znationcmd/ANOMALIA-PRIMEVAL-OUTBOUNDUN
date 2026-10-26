@@ -1,11 +1,11 @@
-# Portière conducteur réelle — validation native en cours
+# Portière conducteur réelle — validation native réussie
 
 La carrosserie CC0 d'origine contient une coque continue et des lignes de joints,
 pas des ouvrants. La révision v3 découpe réellement la portière côté volant
 (-Y après import Unreal), au lieu d'animer une poignée sur une coque encore fermée.
 Les fichiers et assets v1/v2 sont conservés dans leurs propres espaces de noms.
 
-## Implémenté, pas encore validé dans Unreal
+## Implémenté et vérifié sur le terrain de validation Unreal
 
 - Maillage de porte séparé avec la tôle d'origine, vitre, joint, poignée et
   rétroviseur ; pivot sur charnière, bord extrudé et peau intérieure de 4,5 cm.
@@ -34,7 +34,7 @@ opposé/roue/toit/porte arrière. Les six fichiers passent le validateur Khronos
 glTF sans erreur ni avertissement. Les 154 tests Python passent également.
 Ces résultats ne constituent pas une compilation Unreal ou un essai en jeu.
 
-## Critères Unreal avant déclaration de livraison
+## Vérifications Unreal effectuées
 
 Compiler Editor/Game ; vérifier en jeu la porte fermée bloquant un tracé, le
 verrouillage refusant l'interaction, l'ouverture réelle de 70 degrés autour de la
@@ -63,6 +63,39 @@ les fichiers suivis modifiés et leur patch hors du checkout avant l'étape de
 changement de version ; chaque copie est vérifiée par empreinte. Une sauvegarde
 existante n'est jamais remplacée. Cette protection n'altère pas le jeu installé.
 
+## Résultat confirmé de la révision v3
+
+Exécution 40373839123 réussie, source
+`ba6cf00dc9c4c1c7ccccdc9a6bbb4027489946ba`. Editor et Game compilés sur Windows
+avec UE 5.8.3 ; 24 tests natifs passent (19 sans avertissement, cinq avec
+avertissements, zéro échec). Le véhicule de référence passe 26 contrôles et la
+berline v3 passe 33 contrôles dans le vrai jeu.
+
+Les sept contrôles supplémentaires de la berline vérifient le vrai maillage de
+porte, la recomposition des bornes d'origine en position fermée, la collision
+fermée, le refus d'ouverture verrouillée, la rotation sur charnière et la sortie
+de la collision hors de l'ouverture, la fermeture rétablissant la collision,
+puis l'ouverture/fermeture commandée par le conducteur depuis son siège.
+
+Les API serveur employées par E et O sont exercées par le test automatisé ;
+aucune affectation directe de l'angle ne simule l'ouverture. La nouvelle capture
+réelle d'Unreal a été inspectée : portière du côté conducteur, ouverture visible
+vers l'habitacle et jante extérieure visible. L'import vérifie les origines des
+deux maillages, en plus des dimensions et empreintes. Les anciens résultats v2
+ne sont pas présentés comme preuve d'acceptation visuelle.
+
+Freinage de cette berline : 50,55 km/h en 12,32 m / 1,73 s / 0,816g ;
+80,00 km/h en 29,61 m / 2,64 s / 0,850g ; adhérence réduite, 80,05 km/h en
+56,00 m / 5,07 s / 0,450g. Sortie en roulant mesurée à 2629,38 cm/s
+(94,66 km/h), sans limite de vitesse de sortie imposée au gameplay.
+
+Preuves du run : compilation/tests 12674341653 ; référence 12674651293 ;
+import de six pièces 12673922596 ; conduite de la berline et capture réelle
+`actual-driver-door-open.png` dans 12674816990. Les rapports portent
+diagnosticOnly=false, packagedGameTested=false et installed=false.
+La sauvegarde préalable des modifications suivies a aussi été exécutée avec
+succès hors du checkout sur le PC de validation.
+
 ## Non terminé
 
 Les trois autres portières, capot et coffre restent intégrés à la carrosserie.
@@ -72,3 +105,7 @@ pas encore une séquence d'entrée animée : la possession de conduite existante
 est conservée. Seule la carte d'essai reçoit cet assemblage v3 à ce stade ; le
 jeu installé et les sauvegardes ne sont pas remplacés. Le contrôle de fermeture
 depuis le siège est ajouté en v3 ; il n'inclut pas encore une animation du bras.
+Les commandes clavier/manette manuelles, le multijoueur à deux clients et
+l'arrêt de porte contre un personnage en jeu restent à éprouver séparément.
+Les vitres du modèle source sont déclarées opaques : transparence, matériaux
+et finitions de l'habitacle restent à reprendre avant une acceptation graphique.

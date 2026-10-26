@@ -8,7 +8,33 @@ ci-dessous décrivent le mécanisme précédent, actuellement suspendu.
 Branche de travail/livraison : `ue5/reactive-world-expeditions-20261025`.
 Pull Request : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/38
 
-## Dernière validation réelle — 26 octobre 2026
+## Dernière validation réelle — portière conducteur, 26 octobre 2026
+
+Source `ba6cf00dc9c4c1c7ccccdc9a6bbb4027489946ba`, exécution réussie
+https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40373839123.
+Editor et Game compilés avec UE 5.8.3 ; 24 tests natifs passent (cinq avec
+avertissements), ainsi que 154 tests Python et cinq tests de géométrie. Six
+maillages glTF sans erreur/avertissement sont réellement importés dans Unreal.
+
+La berline v3 passe 33 contrôles en jeu et le véhicule de référence 26. Sa
+portière conducteur possède une vraie découpe de carrosserie, un maillage avec
+vitre/joints/rétroviseur, une charnière et une collision mobile. E à l'extérieur
+et O depuis le siège emploient des commandes validées par le serveur. Les tests
+automatisés exercent ces API et la capture réelle montre l'ouverture du bon côté.
+Une première inversion de côté a été rejetée après inspection visuelle malgré
+ses tests techniques réussis ; le contrôle de recomposition du modèle fermé et
+les origines d'import vérifiées couvrent maintenant cette erreur.
+
+Freinage mesuré de cette version : 12,32 m depuis 50,55 km/h, 29,61 m depuis
+80,00 km/h et 56,00 m depuis 80,05 km/h à adhérence réduite. Voir
+`docs/art/SEDAN_DRIVER_DOOR_NATIVE_STATUS.md` pour les identifiants des preuves.
+Cette validation reste limitée à la scène d'essai solo. Autres ouvrants,
+animations humaines, transparence des vitres, dégâts, persistance automobile,
+réseau, routes et zone photoréaliste restent inachevés. Aucun package de cette
+version n'est installé. Les modifications locales suivies du checkout de
+validation sont désormais sauvegardées avant récupération des prochaines versions.
+
+## Validation physique précédente — 26 octobre 2026
 
 Source `bf4cacbe22ba879825ff882c55745332854b8760`, exécution réussie
 https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40349559923.
