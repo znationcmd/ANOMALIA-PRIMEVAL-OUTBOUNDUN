@@ -22,21 +22,22 @@
 
 UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
 {
-    WheelRadius=40.f; WheelWidth=28.f; WheelMass=20.f;
-    bAffectedBySteering=true; bAffectedByEngine=true; bAffectedByBrake=true;
+    WheelRadius=40.f; WheelWidth=23.3f; WheelMass=20.f;
+    bAffectedBySteering=true; bAffectedByEngine=false; bAffectedByBrake=true;
     bAffectedByHandbrake=false; MaxSteerAngle=35.f;
     // A finite tire contact sweep avoids intermittent point-ray support at speed.
     SweepShape=ESweepShape::Spherecast;
     bABSEnabled=true;
-    SpringRate=25000.f; SpringPreload=50.f;
-    SuspensionDampingRatio=.6f; SuspensionMaxRaise=20.f; SuspensionMaxDrop=20.f;
-    RollbarScaling=.15f; FrictionForceMultiplier=2.f;
-    MaxBrakeTorque=4000.f; MaxHandBrakeTorque=6000.f;
+    SpringRate=45000.f; SpringPreload=50.f;
+    SuspensionDampingRatio=.6f; SuspensionMaxRaise=12.f; SuspensionMaxDrop=10.f;
+    RollbarScaling=.15f; FrictionForceMultiplier=1.f;
+    MaxBrakeTorque=1800.f; MaxHandBrakeTorque=0.f;
 }
 
 UAnomaliaRoadRearWheel::UAnomaliaRoadRearWheel()
 {
     bAffectedBySteering=false; MaxSteerAngle=0.f; bAffectedByHandbrake=true;
+    bAffectedByEngine=true; MaxBrakeTorque=1000.f; MaxHandBrakeTorque=2200.f;
 }
 
 AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
@@ -84,7 +85,10 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     ChaosMovement->SetRequiresControllerForInputs(false);
     ChaosMovement->Mass=1500.f;
     ChaosMovement->bReverseAsBrake=false;
-    ChaosMovement->EngineSetup.MaxTorque=500.f;
+    ChaosMovement->DragCoefficient=.3f;
+    ChaosMovement->ChassisWidth=182.f; ChaosMovement->ChassisHeight=145.f;
+    ChaosMovement->DownforceCoefficient=0.f; // Road sedan, no artificial aero grip.
+    ChaosMovement->EngineSetup.MaxTorque=320.f;
     ChaosMovement->EngineSetup.MaxRPM=6500.f;
     ChaosMovement->EngineSetup.EngineIdleRPM=800.f;
     auto* Torque=ChaosMovement->EngineSetup.TorqueCurve.GetRichCurve();
@@ -95,8 +99,7 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     Gears.ForwardGearRatios={3.5f,2.2f,1.5f,1.f,.8f}; Gears.ReverseGearRatios={3.3f};
     Gears.FinalRatio=3.5f; Gears.ChangeUpRPM=5500.f; Gears.ChangeDownRPM=1800.f;
     Gears.GearChangeTime=.25f; Gears.TransmissionEfficiency=.94f;
-    ChaosMovement->DifferentialSetup.DifferentialType=EVehicleDifferential::AllWheelDrive;
-    ChaosMovement->DifferentialSetup.FrontRearSplit=.5f;
+    ChaosMovement->DifferentialSetup.DifferentialType=EVehicleDifferential::RearWheelDrive;
     auto* SteeringCurve=ChaosMovement->SteeringSetup.SteeringCurve.GetRichCurve();
     SteeringCurve->Reset(); // Chaos's steering curve speed axis is MPH.
     SteeringCurve->AddKey(0.f,1.f); SteeringCurve->AddKey(30.f,.7f);

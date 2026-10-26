@@ -10,6 +10,9 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Components/SpotLightComponent.h"
 #include "Components/PointLightComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMeshActor.h"
+#include "PhysicalMaterials/PhysicalMaterial.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "EngineUtils.h"
@@ -45,6 +48,18 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
         FParse::Value(FCommandLine::Get(),TEXT("AnomaliaChaosProbe="),ReportFile) && !ReportFile.IsEmpty();
 #endif
     SetActorTickEnabled(bEnabled);
+    if(bEnabled)
+    {
+        DrySurface=NewObject<UPhysicalMaterial>(this);DrySurface->Friction=.9f;DrySurface->StaticFriction=.9f;DrySurface->Restitution=0;
+        LowGripSurface=NewObject<UPhysicalMaterial>(this);LowGripSurface->Friction=.45f;LowGripSurface->StaticFriction=.45f;LowGripSurface->Restitution=0;
+        for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)
+            if(It->Tags.Contains(FName(TEXT("ANOMALIA_ChaosRoadReview_v2"))) || It->Tags.Contains(FName(TEXT("ANOMALIA_SedanDriveReview_v1"))))
+            {
+                if(ProvingSurface){Finish(TEXT("Review ground is not unique"));return;}
+                ProvingSurface=It->GetStaticMeshComponent();ProvingSurface->SetPhysMaterialOverride(DrySurface);
+            }
+        if(!ProvingSurface){Finish(TEXT("Owned physics proving surface missing"));return;}
+    }
     Started=PhaseStarted=GetWorld()->GetTimeSeconds();
     WallStarted=FPlatformTime::Seconds();
     bRecordFrames=FParse::Param(FCommandLine::Get(),TEXT("AnomaliaRecordDriving"));
@@ -74,6 +89,16 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetNumberField(TEXT("phase"),Phase);
     Report->SetNumberField(TEXT("exitVehicleSpeedCmPerSecond"),ExitVehicleSpeed);
     Report->SetNumberField(TEXT("observedExitCharacterSpeedCmPerSecond"),ObservedExitSpeed);
+    Report->SetArrayField(TEXT("brakingMeasurements"),BrakingMeasurements);
+    if(Car.IsValid())
+    {
+        auto Profile=MakeShared<FJsonObject>();
+        Profile->SetNumberField(TEXT("massKg"),Car->Chassis->GetMass());
+        Profile->SetNumberField(TEXT("peakTorqueNm"),Car->ChaosMovement->EngineSetup.MaxTorque);
+        Profile->SetNumberField(TEXT("dragCoefficient"),Car->ChaosMovement->DragCoefficient);
+        Profile->SetBoolField(TEXT("rearWheelDriveObserved"),bRearDriveObserved);
+        Report->SetObjectField(TEXT("vehicleProfile"),Profile);
+    }
     TArray<TSharedPtr<FJsonValue>> Rows;
     for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
     Report->SetArrayField(TEXT("checks"),Rows); Report->SetArrayField(TEXT("physicsSamples"),Samples);
@@ -95,7 +120,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("frames"),FString::Printf(TEXT("frame-%05d.png"),FrameCount++)),false,false);
         LastFrame=Now;
     }
-    if(Now-Started>75 || FPlatformTime::Seconds()-WallStarted>240)
+    if(Now-Started>150 || FPlatformTime::Seconds()-WallStarted>360)
     { Finish(TEXT("Actual Chaos driving timed out")); return; }
     auto* PC=GetWorld()->GetFirstPlayerController();
     if(!PC) return;
@@ -120,6 +145,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);
         Survivor=S;
+        OriginalFuelConsumption=V->FuelConsumptionPerSecond;
         S->OnCharacterMovementUpdated.AddDynamic(this,&AAnomaliaChaosRoadProbe::ObserveExitedMovement);
         if(!V->EnterVehicle(PC,S) || PC->GetPawn()!=V) { Finish(TEXT("Existing crew possession failed")); return; }
         if(V->bEngineRunning) { Finish(TEXT("Parked review engine started without driver ignition")); return; }
@@ -149,6 +175,16 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         bSignalSeenOn|=V->IndicatorLights[0]->IsVisible();bSignalSeenOff|=!V->IndicatorLights[0]->IsVisible();
     }
     const float Speed=Physics->GetForwardSpeed();
+    const FVector Velocity=V->Chassis->GetPhysicsLinearVelocity();
+    const FVector Acceleration=bHasPreviousVelocity && DeltaSeconds>0?(Velocity-PreviousVelocity)/DeltaSeconds:FVector::ZeroVector;
+    PreviousVelocity=Velocity;bHasPreviousVelocity=true;
+    if(Phase==1 && Physics->Wheels.Num()==4)
+    {
+        const float FrontTorque=FMath::Abs(Physics->GetWheelState(0).DriveTorque)+FMath::Abs(Physics->GetWheelState(1).DriveTorque);
+        const float RearTorque=FMath::Abs(Physics->GetWheelState(2).DriveTorque)+FMath::Abs(Physics->GetWheelState(3).DriveTorque);
+        if(FrontTorque>1.f){Finish(TEXT("Propulsion profile unexpectedly drives front wheels"));return;}
+        bRearDriveObserved|=RearTorque>1.f;
+    }
     int32 Contacts=0; float Rotation=0;
     for(const auto& Wheel:Physics->Wheels) if(Wheel) { if(!Wheel->IsInAir()) ++Contacts; Rotation+=FMath::Abs(Wheel->GetWheelAngularVelocity()); }
     if(Now-LastSample>.2)
@@ -171,6 +207,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
         Sample->SetNumberField(TEXT("physicalMassKg"),V->Chassis->GetMass());
+        Sample->SetNumberField(TEXT("longitudinalAccelerationG"),FVector::DotProduct(Acceleration,V->GetActorForwardVector())/980.665);
+        Sample->SetNumberField(TEXT("lateralAccelerationG"),FVector::DotProduct(Acceleration,V->GetActorRightVector())/980.665);
         Sample->SetBoolField(TEXT("visibleTireAxlesUpright"),V->AreWheelVisualsUpright());
         TArray<TSharedPtr<FJsonValue>> WheelGeometry;
         for(int32 WheelIndex=0;WheelIndex<V->WheelBones.Num();++WheelIndex)
@@ -190,6 +228,10 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Row->SetNumberField(TEXT("brakeTorque"),Status.BrakeTorque);
             Row->SetNumberField(TEXT("driveTorque"),Status.DriveTorque);
             Row->SetBoolField(TEXT("absActivated"),Status.bABSActivated);
+            Row->SetNumberField(TEXT("surfaceFriction"),Status.PhysMaterial.IsValid()?Status.PhysMaterial->Friction:-1.f);
+            Row->SetNumberField(TEXT("slipAngle"),Status.SlipAngle);
+            Row->SetBoolField(TEXT("slipping"),Status.bIsSlipping);
+            Row->SetBoolField(TEXT("skidding"),Status.bIsSkidding);
             WheelGeometry.Add(MakeShared<FJsonValueObject>(Row));
         }
         Sample->SetArrayField(TEXT("wheelGeometry"),WheelGeometry);
@@ -220,6 +262,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(!V->bManualGears || Physics->GetCurrentGear()!=1 || !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearUp))
             { Finish(TEXT("Actual manual first gear driving or upshift failed")); return; }
             Checks.Add(TEXT("manual_first_gear_drives_physical_vehicle"));
+            if(!bRearDriveObserved){Finish(TEXT("Rear axle engine torque was not observed"));return;}
+            Checks.Add(TEXT("rear_wheel_drive_observed_in_actual_wheel_torques"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("chaos-actual-driving.png")),false,false);
             StraightSpeed=Speed; TurnYaw=V->GetActorRotation().Yaw; Phase=2; PhaseStarted=Now;
         }
@@ -269,7 +313,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 Checks.Add(TEXT("safe_exit_restores_same_survivor"));
                 if(!V->EnterVehicle(PC,Survivor.Get()) || !V->SetEngineRunningOnServer(PC,true))
                 { Finish(TEXT("Re-entry for high-speed exit validation failed")); return; }
-                Phase=12;PhaseStarted=Now;
+                if(!V->ConfigureRuntimeTuning(V->FuelPercent,OriginalFuelConsumption,V->SpeedMultiplier))
+                { Finish(TEXT("Cannot restore isolated fuel consumption after depletion test"));return; }
+                Phase=20;PhaseStarted=Now;
             }
         }
         else if(Elapsed>8) { Finish(TEXT("Physical braking exceeded stopping deadline")); return; }
@@ -340,16 +386,65 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Phase=9; PhaseStarted=Now;
         }
     }
+    else if(Phase==20 || Phase==22 || Phase==24)
+    {
+        Throttle=1.f;
+        const float Target=Phase==20?50.f/0.036f:80.f/0.036f;
+        if(Speed>=Target && Contacts>=3)
+        {
+            MeasuredBrakeInitialSpeed=Speed;BrakePathCm=0;BrakeMeasuredStarted=Now;
+            AccelerationDuration=Elapsed;
+            PreviousMeasuredBrakeLocation=V->GetActorLocation();++Phase;PhaseStarted=Now;
+            Throttle=0;Brake=1.f;
+        }
+        else if(Elapsed>20){Finish(TEXT("Simulation profile failed to reach measured braking speed"));return;}
+    }
+    else if(Phase==21 || Phase==23 || Phase==25)
+    {
+        Brake=1.f;
+        BrakePathCm+=FVector::Dist2D(PreviousMeasuredBrakeLocation,V->GetActorLocation());
+        PreviousMeasuredBrakeLocation=V->GetActorLocation();
+        if(FMath::Abs(Speed)<30.f && Velocity.Size()<50.f)
+        {
+            const double MeanG=FMath::Square(double(MeasuredBrakeInitialSpeed))/(2*FMath::Max(1.,BrakePathCm)*980.665);
+            auto Row=MakeShared<FJsonObject>();Row->SetNumberField(TEXT("initialKmh"),MeasuredBrakeInitialSpeed*.036);
+            Row->SetNumberField(TEXT("distanceMetres"),BrakePathCm/100);
+            Row->SetNumberField(TEXT("seconds"),Now-BrakeMeasuredStarted);Row->SetNumberField(TEXT("meanDecelerationG"),MeanG);
+            Row->SetNumberField(TEXT("accelerationSecondsToTarget"),AccelerationDuration);
+            Row->SetNumberField(TEXT("surfaceFriction"),Phase==25?.45:.9);
+            BrakingMeasurements.Add(MakeShared<FJsonValueObject>(Row));
+            if(MeanG<.25 || MeanG>1.2 || Contacts<3)
+            {Finish(TEXT("Measured road braking is outside the declared sedan envelope"));return;}
+            if(Phase==21){Checks.Add(TEXT("measured_dry_braking_from_50_kmh"));Phase=22;}
+            else if(Phase==23)
+            {
+                if(BrakePathCm<BrakingMeasurements[0]->AsObject()->GetNumberField(TEXT("distanceMetres"))*100*1.5)
+                {Finish(TEXT("Higher speed did not increase physical stopping distance"));return;}
+                Dry80DistanceCm=BrakePathCm;Checks.Add(TEXT("measured_dry_braking_from_80_kmh"));
+                ProvingSurface->SetPhysMaterialOverride(LowGripSurface);Phase=24;
+            }
+            else
+            {
+                if(BrakePathCm<Dry80DistanceCm*1.3)
+                {Finish(TEXT("Lower surface friction did not increase actual stopping distance"));return;}
+                Checks.Add(TEXT("lower_grip_increases_actual_80_kmh_stopping_distance"));
+                ProvingSurface->SetPhysMaterialOverride(DrySurface);Phase=12;
+            }
+            PhaseStarted=Now;
+        }
+        else if(Elapsed>12){Finish(TEXT("Measured braking did not physically stop the sedan"));return;}
+    }
     else if(Phase==12)
     {
         Throttle=1.f;
-        if(Elapsed>8)
+        if(Elapsed>8 && Speed>=2200.f)
         {
             ExitVehicleSpeed=Speed;
             if(Speed<2200.f || Contacts<3 || !V->ExitDriverOnServer(PC) || PC->GetPawn()!=Survivor.Get())
             { Finish(TEXT("Exit at actual high speed failed")); return; }
             Phase=14;PhaseStarted=Now;return; // Allow the character to consume its pending launch.
         }
+        else if(Elapsed>20){Finish(TEXT("Simulation profile did not reach high-speed exit test speed"));return;}
     }
     if(!V->SetDriverControlsOnServer(PC,Throttle,Steering,Brake)) Finish(TEXT("Authoritative control input rejected"));
 }

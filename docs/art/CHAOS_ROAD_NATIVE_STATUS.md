@@ -169,3 +169,36 @@ transactions and persistence, dirt/washing materials, collision deformation,
 panel/glass/tire damage and appropriate sounds/animations. Door, hood and trunk
 seams in the current source are not separated opening body panels. These require
 actual mesh work and runtime validation, not only configuration flags.
+
+## Measured road-simulation calibration (pending native validation)
+
+The initial validation tune used 500 Nm, AWD and a 2x tire friction multiplier.
+The new unbranded road-sedan target uses 1500 kg, 320 Nm and rear-wheel drive,
+with actual front engine torque disabled and rear torque enabled. Tire friction
+multiplier is 1.0. Service brake torque is 1800 Nm front / 1000 Nm rear, handbrake
+2200 Nm rear. Springs are 45000 N/m with 12 cm raise / 10 cm drop, damping 0.6.
+Drag coefficient 0.30 and chassis section 182 x 145 cm feed actual aerodynamic
+drag; no downforce is added for road-sedan grip. These are original tuning targets,
+not certified measurements or manufacturer specifications for a named real car.
+
+An explicit standalone probe, only in owned proving maps and isolated save scopes,
+assigns per-component transient physical materials with friction 0.9 / 0.45. Shared
+engine assets, production terrain and existing installations remain untouched.
+The test requires observed rear-only engine torque, actual stops from 50 and
+80 km/h on the higher-grip surface, then an 80 km/h stop on lower grip. It measures
+actual chassis path/time and equivalent mean deceleration, not a programmed stop.
+Lower grip must lengthen stopping distance by at least 30%; the faster dry stop
+must exceed the slower dry stop by at least 50%. Broad road-sedan acceptance range
+is 0.25–1.2g mean deceleration. These checks detect implausible results; they do not
+certify a complete professional tire model or reproduce every real-world condition.
+
+Samples add longitudinal/lateral acceleration, actual contact friction, slip/skid
+and spring loads. Acceleration-to-target times are reported alongside each stop.
+The longer sequence needs a 2 km wide engineering surface and a larger total
+watchdog; individual driving/braking deadlines and the unrestricted-speed exit
+rule remain. Fuel consumption is restored after the isolated depletion test.
+
+This revision is not yet compiled/tested in Unreal. Previous 21-check results do
+not validate the new calibration. Wet-weather visuals, loose terrain, bumps,
+different loads/tires, high-speed cornering, steering-wheel feel and multiplayer
+still require dedicated driving validation.

@@ -35,6 +35,10 @@ def main():
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
     required={
+        'rear_wheel_drive_observed_in_actual_wheel_torques',
+        'measured_dry_braking_from_50_kmh',
+        'measured_dry_braking_from_80_kmh',
+        'lower_grip_increases_actual_80_kmh_stopping_distance',
         'engine_off_blocks_full_accelerator_without_fuel_consumption',
         'current_driver_can_start_engine_on_server',
         'current_driver_can_switch_engine_off',
@@ -53,6 +57,8 @@ def main():
     }
     if drive.get('buildCommit')!=env.get('GITHUB_SHA') or not required.issubset(drive.get('checks',[])):
         raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
+    if len(drive.get('brakingMeasurements',[]))!=3:
+        raise RuntimeError('Three measured physical braking runs are required')
     video=None;video_error=None
     encoder=shutil.which('ffmpeg')
     if encoder and drive.get('recordedViewportFrames',0)>=10:
