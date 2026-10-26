@@ -152,6 +152,30 @@ jobs:
           name: native-sedan-import-evidence
           path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan/*.*
           if-no-files-found: warn
+      - name: Import licensed account-free BMW E39 candidate without replacing the accepted sedan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-bmw-e39.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-bmw-e39.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v1
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/e39"
+          & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence" --e39
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --e39
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-e39-candidate-evidence
+          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/e39/*.*
+          if-no-files-found: warn
       - name: Require the same physical driving checks with the original sedan art
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |

@@ -1,4 +1,4 @@
-"""Import the pinned original CC0 sedan parts; do not alter a map or installation."""
+"""Import pinned licensed sedan parts; do not alter a map or installation."""
 import hashlib
 import json
 import os
@@ -7,7 +7,9 @@ from pathlib import Path
 import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
-BASE=ROOT/'SourceAssets/NativeDemoSedan_v3'
+E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
+NAMESPACE="BMWE39Review_v1" if E39 else "NativeDemoSedan_v3"
+BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
 TAG='AnomaliaNativeSedanSha256'
@@ -16,21 +18,29 @@ report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),models=[],
 try:
     manifest=json.loads((BASE/'manifest.json').read_text())
     source=manifest['source']
-    if source['license']!='CC0-1.0' or source['sha256']!='feb0be31d153ddb42dc15ae52a651e214e85ab67e31bec4282b00f9d47c9b597':
-        raise RuntimeError('Reviewed original CC0 source identity required')
+    expected_license='CC-BY-4.0' if E39 else 'CC0-1.0'
+    expected_hash='984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d' if E39 else 'feb0be31d153ddb42dc15ae52a651e214e85ab67e31bec4282b00f9d47c9b597'
+    if source['license']!=expected_license or source['sha256']!=expected_hash:
+        raise RuntimeError('Reviewed licensed source identity required')
     models=manifest['models']
-    expected={'body','door_driver','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
-    coverage=manifest['sourceCoverage'];partition=coverage['partition']
-    if (manifest['schemaVersion']!=3 or len(models)!=6 or {m['id'] for m in models}!=expected or
-        coverage['nodes']!=304 or partition['doorSurfaceArea']<.5 or
-        abs(partition['originalSurfaceArea']-partition['doorSurfaceArea']-partition['remainingSurfaceArea'])>1e-6):
-        raise RuntimeError('Original surface partition and separate driver door required')
+    expected={'body','wheel_fl','wheel_fr','wheel_rl','wheel_rr'}
+    if not E39:expected.add('door_driver')
+    if len(models)!=len(expected) or {m['id'] for m in models}!=expected:raise RuntimeError('Complete expected part set required')
+    partition=None
+    if E39:
+        if manifest['schemaVersion']!=1 or manifest['sourceTriangles']!=manifest['exportedTriangles'] or manifest['interactiveDoors']:
+            raise RuntimeError('Reviewed E39 source coverage required')
+    else:
+        coverage=manifest['sourceCoverage'];partition=coverage['partition']
+        if (manifest['schemaVersion']!=3 or coverage['nodes']!=304 or partition['doorSurfaceArea']<.5 or
+            abs(partition['originalSurfaceArea']-partition['doorSurfaceArea']-partition['remainingSurfaceArea'])>1e-6):
+            raise RuntimeError('Original surface partition and separate driver door required')
     editor=unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
     for model in models:
         name=model['id'];path=BASE/(name+'.glb')
         if model['file']!=name+'.glb' or path.stat().st_size!=model['bytes'] or hashlib.sha256(path.read_bytes()).hexdigest()!=model['sha256']:
             raise RuntimeError('Prepared part integrity mismatch: '+name)
-        destination='/Game/Anomalia/NativeDemoSedan_v3/'+name+'/SM_'+name
+        destination='/Game/Anomalia/'+NAMESPACE+'/'+name+'/SM_'+name
         if model['objectPath']!=destination:raise RuntimeError('Unexpected canonical sedan namespace')
         if unreal.EditorAssetLibrary.does_asset_exist(destination):
             mesh=unreal.load_asset(destination)
@@ -40,7 +50,7 @@ try:
             # The import namespace is separate from the canonical assets. Never
             # replace an asset, including leftovers from an interrupted import.
             task=unreal.AssetImportTask();task.filename=str(path)
-            task.destination_path='/Game/Anomalia/NativeDemoSedan_v3/Imports/'+name
+            task.destination_path='/Game/Anomalia/'+NAMESPACE+'/Imports/'+name
             task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
             unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
             objects=task.get_objects()
@@ -49,7 +59,8 @@ try:
             mesh=unreal.EditorAssetLibrary.duplicate_asset(candidates[0].get_path_name(),destination)
             if not mesh:raise RuntimeError('Canonical part creation failed: '+name)
             unreal.EditorAssetLibrary.set_metadata_tag(mesh,TAG,model['sha256'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaSourceLicense','CC0-1.0')
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaSourceLicense',source['license'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaAttribution',source['author']+' / '+source['source']+' / '+source['license'])
         bounds=mesh.get_bounds()
         actual=[bounds.box_extent.x*2,bounds.box_extent.y*2,bounds.box_extent.z*2]
         # glTF uses metres/Y up; Unreal uses centimetres/Z up.
@@ -76,8 +87,8 @@ try:
         report['models'].append(dict(id=name,path=mesh.get_path_name(),triangles=mesh.get_num_triangles(0),
             dimensionsCm=actual,originCm=[bounds.origin.x,bounds.origin.y,bounds.origin.z],
             materials=len(mesh.static_materials),sha256=model['sha256']))
-    report.update(state='CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN',source=source,
-        wheelHubsCm=manifest['wheelHubsCm'],panels=manifest['panels'],surfacePartition=partition)
+    report.update(state='E39_STATIC_PARTS_IMPORTED_NOT_DRIVEN' if E39 else 'CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN',source=source,
+        wheelHubsCm=manifest['wheelHubsCm'],panels=manifest.get('panels',[]),surfacePartition=partition)
 except Exception as error:
     report['error']=str(error);unreal.log_error(traceback.format_exc())
 finally:

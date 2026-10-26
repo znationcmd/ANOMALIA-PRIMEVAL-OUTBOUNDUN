@@ -9,10 +9,13 @@ def main():
     p.add_argument('--record-driving',action='store_true',help='Opt-in continuous viewport recording; can significantly slow rendering')
     p.add_argument('--sedan',action='store_true',help='Use the separately imported original sedan art and authored wheel hubs')
     p.add_argument('--force-suspension',action='store_true',help='Isolated diagnostic: compare native force-based suspension without changing project configuration')
+    p.add_argument("--e39",action="store_true",help="Isolated E39 visual/physical candidate; animated doors not accepted")
     args=p.parse_args()
+    if args.e39 and args.sedan:p.error("Select a single art variant")
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env['ANOMALIA_CHAOS_OUTPUT']=str(out)
     env['ANOMALIA_CHAOS_USE_SEDAN']='1' if args.sedan else '0'
+    env['ANOMALIA_CHAOS_USE_E39']='1' if args.e39 else '0'
     project=ROOT/'unreal/AnomaliaPrimeval.uproject'
     exe=args.engine_root/'Engine/Binaries/Win64/UnrealEditor.exe'
     def run(name,arguments,timeout):
@@ -88,6 +91,6 @@ def main():
         video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
         installed=False,multiplayerTested=False,productionMapModified=False,
-        originalSedanArt=args.sedan,entryAnimationTested=False,openingDoorsTested=drive.get('driverDoorReviewed',False)),indent=2)+'\n')
+        originalSedanArt=args.sedan,e39Candidate=args.e39,entryAnimationTested=False,openingDoorsTested=drive.get('driverDoorReviewed',False)),indent=2)+'\n')
 
 if __name__=='__main__':main()
