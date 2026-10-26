@@ -75,6 +75,8 @@ def main():
     else:video_error=('Continuous recording disabled for physics acceptance; actual phase screenshots retained' if not args.record_driving
         else 'No installed ffmpeg encoder or insufficient actual viewport frames')
     (out/'review-report.json').write_text(json.dumps(dict(state='CHAOS_EDITOR_GAME_PHYSICAL_DRIVE_VERIFIED',
+        diagnosticOnly=args.force_suspension,
+        constraintSuspensionDisabled=drive.get('constraintSuspensionDisabled'),
         video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
         installed=False,multiplayerTested=False,productionMapModified=False,

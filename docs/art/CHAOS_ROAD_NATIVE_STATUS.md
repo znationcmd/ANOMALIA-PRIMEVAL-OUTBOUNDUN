@@ -255,3 +255,17 @@ Project configuration, other running processes, existing saves and installations
 are unchanged. The test still uses the same mass, torque, load-dependent grip,
 real wheel forces and all driving/braking gates. This is an experiment, not an
 accepted production configuration or a claim that handling is fixed.
+
+Run 40346122884 compiled but the force-suspension experiment failed. Its report
+confirms the override was active (value 1); the vehicle overturned during settling
+before the first acceleration. Artifact 12661321992 preserves this failure. This
+mode is not adopted in production configuration.
+
+The next calibration candidate reduces the wheel SpringRate API property from
+45000 to 450 and exports both that property and GetPhysicsSuspensionConfig's
+converted stiffness/preload, plus the expected evenly distributed static load
+in engine force units. The working hypothesis is a stiffness unit conversion
+and integration mismatch, not a request for more grip. It remains unverified
+until the native values and real driving results are available. A new initial
+upright-settling check rejects an overturned car before crew entry. Successful
+force-mode comparison reports are explicitly marked diagnosticOnly.

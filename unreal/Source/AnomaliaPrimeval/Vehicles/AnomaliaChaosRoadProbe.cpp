@@ -113,6 +113,20 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
         Profile->SetNumberField(TEXT("linearDamping"),Car->Chassis->GetLinearDamping());
         Profile->SetNumberField(TEXT("angularDamping"),Car->Chassis->GetAngularDamping());
         Profile->SetStringField(TEXT("rootBindTransform"),Car->RoadMesh->GetRefSkeleton().GetRefBonePose()[0].ToString());
+        TArray<TSharedPtr<FJsonValue>> SuspensionConfig;
+        for(auto& Wheel:Car->ChaosMovement->Wheels)
+        {
+            if(!Wheel)continue;
+            const auto& Config=Wheel->GetPhysicsSuspensionConfig();
+            auto Row=MakeShared<FJsonObject>();
+            Row->SetNumberField(TEXT("wheelSpringRateProperty"),Wheel->SpringRate);
+            Row->SetNumberField(TEXT("convertedSpringRate"),Config.SpringRate);
+            Row->SetNumberField(TEXT("convertedSpringPreload"),Config.SpringPreload);
+            Row->SetNumberField(TEXT("dampingRatio"),Config.DampingRatio);
+            Row->SetNumberField(TEXT("expectedEvenStaticLoadEngineUnits"),Car->Chassis->GetMass()*FMath::Abs(GetWorld()->GetGravityZ())/4.f);
+            SuspensionConfig.Add(MakeShared<FJsonValueObject>(Row));
+        }
+        Profile->SetArrayField(TEXT("suspensionConfiguration"),SuspensionConfig);
         Report->SetObjectField(TEXT("vehicleProfile"),Profile);
     }
     TArray<TSharedPtr<FJsonValue>> Rows;
@@ -157,6 +171,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         { if(Car.IsValid()) { Finish(TEXT("Review vehicle is not unique")); return; } Car=*It; }
         auto* V=Car.Get();
         if(!V || !V->IsChaosDriveReady()) { Finish(TEXT("Actual skeletal rig/Chaos physics is not ready")); return; }
+        if(FVector::DotProduct(V->Chassis->GetUpVector(),FVector::UpVector)<.85f)
+        {Finish(TEXT("Review chassis did not settle upright before driving"));return;}
         if(V->Movement->IsComponentTickEnabled()) { Finish(TEXT("Legacy floating movement is still enabled")); return; }
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);

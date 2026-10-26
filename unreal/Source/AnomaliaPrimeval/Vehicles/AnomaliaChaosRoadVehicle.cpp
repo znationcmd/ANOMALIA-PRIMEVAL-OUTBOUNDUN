@@ -29,7 +29,10 @@ UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
     // with almost zero spring load at full droop, masking tire-load coupling.
     SweepShape=ESweepShape::Raycast;
     bABSEnabled=true;
-    SpringRate=45000.f; SpringPreload=50.f;
+    // Calibration candidate: inspect the converted Chaos stiffness in the
+    // native report. The prior API value 45000 destabilized force suspension.
+    // Do not label this a verified physical rate until that measurement passes.
+    SpringRate=450.f; SpringPreload=50.f;
     SuspensionDampingRatio=.6f; SuspensionMaxRaise=12.f; SuspensionMaxDrop=10.f;
     RollbarScaling=.15f; FrictionForceMultiplier=1.f;
     WheelLoadRatio=1.f; bTractionControlEnabled=false;
