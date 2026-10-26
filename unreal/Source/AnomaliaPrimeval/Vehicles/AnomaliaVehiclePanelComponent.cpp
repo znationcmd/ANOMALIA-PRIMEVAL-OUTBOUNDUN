@@ -50,6 +50,7 @@ void UAnomaliaVehiclePanelComponent::TickComponent(float Delta,ELevelTick Type,F
         for(int32 Step=1;Step<=Steps;++Step)
         {
             const float Pose=FMath::Lerp(Start,Next,float(Step)/Steps);
+            if(FMath::IsNearlyEqual(Pose,AngleDegrees))continue;
             if(IsPoseBlocked(Pose)){bObstructed=true;break;}
             AngleDegrees=Pose;
         }
@@ -62,9 +63,9 @@ void UAnomaliaVehiclePanelComponent::OnRep_Angle()
 {
     if(!bReceivedAngle){VisualAngle=AngleDegrees;SetRelativeRotation(FRotator(0,VisualAngle,0));bReceivedAngle=true;}
 }
-void UAnomaliaVehiclePanelComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Props) const
+void UAnomaliaVehiclePanelComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Props);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UAnomaliaVehiclePanelComponent,bOpen);DOREPLIFETIME(UAnomaliaVehiclePanelComponent,bLocked);
     DOREPLIFETIME(UAnomaliaVehiclePanelComponent,bObstructed);DOREPLIFETIME(UAnomaliaVehiclePanelComponent,AngleDegrees);
 }

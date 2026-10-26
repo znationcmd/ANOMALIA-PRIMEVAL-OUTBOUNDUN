@@ -41,6 +41,11 @@ collision. Utiliser la même interaction serveur que E, sans assigner l'angle
 dans le test. Conserver une capture réelle de la porte ouverte. La même berline
 doit repasser les 26 contrôles de conduite, y compris freinage et sortie rapide.
 
+Premier essai natif 40370309818, source f01ca18 : compilation Editor refusée,
+erreur C2065 dans le nouveau composant. La macro DOREPLIFETIME attend le paramètre
+OutLifetimeProps ; le paramètre avait un autre nom. Correction soumise ensuite.
+Aucun test d'ouverture en jeu n'a été exécuté par cet essai échoué.
+
 ## Non terminé
 
 Les trois autres portières, capot et coffre restent intégrés à la carrosserie.
