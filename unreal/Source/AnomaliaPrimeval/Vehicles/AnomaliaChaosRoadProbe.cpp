@@ -165,16 +165,34 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
         Finish();return;
     }
+    if(Phase==32 || Phase==33)
+    {
+        auto* V=Car.Get();
+        if(!V || PC->GetPawn()!=V){Finish(TEXT("Driver door control lost its valid driver"));return;}
+        if(Now-PhaseStarted<1.5)return;
+        auto* Door=V->DriverDoor.Get();
+        const float Expected=Phase==32?Door->OpenAngleDegrees:0.f;
+        if(Door->bObstructed || FMath::Abs(Door->AngleDegrees-Expected)>1.f)
+        {Finish(TEXT("Current driver could not operate the real hinged door"));return;}
+        if(Phase==32)
+        {
+            if(!V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::DriverDoor))
+            {Finish(TEXT("Current driver door-close command rejected"));return;}
+            Phase=33;PhaseStarted=Now;return;
+        }
+        Checks.Add(TEXT("current_driver_opens_and_closes_real_door_from_seat"));
+        Phase=10;PhaseStarted=Now;
+    }
     if(Phase==30 || Phase==31)
     {
         auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());
         if(!V || !S || !V->DriverDoorMesh){Finish(TEXT("Door review lost the real survivor or imported mesh"));return;}
         if(Now-PhaseStarted<1.5)return;
         auto* Door=V->DriverDoor.Get();
-        const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,90,110));
+        const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,-90,110));
         FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaDoorApertureReview),false);Query.AddIgnoredActor(S);
-        FHitResult Hit;const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Opening+V->GetActorRightVector()*180,
-            Opening-V->GetActorRightVector()*50,ECC_Visibility,Query);
+        FHitResult Hit;const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Opening-V->GetActorRightVector()*180,
+            Opening+V->GetActorRightVector()*50,ECC_Visibility,Query);
         if(Phase==30)
         {
             if(!Door->bOpen || Door->bObstructed || FMath::Abs(Door->AngleDegrees-Door->OpenAngleDegrees)>1.f ||
@@ -210,16 +228,32 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                !Door->GetRelativeLocation().Equals(V->DriverDoorPivotCm,.1f))
             {Finish(TEXT("Actual hinge-centred imported driver door is not installed"));return;}
             Checks.Add(TEXT("separate_licensed_driver_door_mesh_installed"));
+            FString ManifestText;TSharedPtr<FJsonObject> Manifest;
+            const TSharedPtr<FJsonObject>* Bounds=nullptr;
+            const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
+            if(!FFileHelper::LoadFileToString(ManifestText,*FPaths::Combine(FPaths::ProjectDir(),TEXT("SourceAssets/NativeDemoSedan_v3/manifest.json"))) ||
+               !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(ManifestText),Manifest) || !Manifest.IsValid() ||
+               !Manifest->TryGetObjectField(TEXT("closedBodyBoundsCm"),Bounds) || !Bounds || !Bounds->IsValid() ||
+               !(*Bounds)->TryGetArrayField(TEXT("min"),Minimum) || !(*Bounds)->TryGetArrayField(TEXT("max"),Maximum) ||
+               !Minimum || !Maximum || Minimum->Num()!=3 || Maximum->Num()!=3)
+            {Finish(TEXT("Original closed body bounds are unavailable for recomposition verification"));return;}
+            const FVector ExpectedMin((*Minimum)[0]->AsNumber(),(*Minimum)[1]->AsNumber(),(*Minimum)[2]->AsNumber());
+            const FVector ExpectedMax((*Maximum)[0]->AsNumber(),(*Maximum)[1]->AsNumber(),(*Maximum)[2]->AsNumber());
+            FBox ClosedBox=V->RoadBodyMesh->GetBounds().GetBox();
+            ClosedBox+=V->DriverDoorMesh->GetBounds().GetBox().ShiftBy(V->DriverDoorPivotCm);
+            if(!ClosedBox.Min.Equals(ExpectedMin,1.f) || !ClosedBox.Max.Equals(ExpectedMax,1.f))
+            {Finish(TEXT("Closed door does not recompose the original body bounds: wrong hinge side or pivot"));return;}
+            Checks.Add(TEXT("closed_driver_door_recomposes_original_body_bounds"));
             // Only fixture positioning: opening and closing use the same targeted
             // server interaction as the survivor's E key, never assigned angles.
-            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,310,100));
+            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(FVector(240,-240,100));
             if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true))
             {Finish(TEXT("Door interaction fixture position is blocked"));return;}
             FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Door->Bounds.Origin-Eye).Rotation());
-            const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,90,110));
+            const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(FVector(50,-90,110));
             FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaClosedPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
-            if(!GetWorld()->LineTraceSingleByChannel(Hit,Opening+V->GetActorRightVector()*180,
-               Opening-V->GetActorRightVector()*50,ECC_Visibility,Query) || Hit.GetComponent()!=Door)
+            if(!GetWorld()->LineTraceSingleByChannel(Hit,Opening-V->GetActorRightVector()*180,
+               Opening+V->GetActorRightVector()*50,ECC_Visibility,Query) || Hit.GetComponent()!=Door)
             {Finish(TEXT("Closed real driver door does not block the aperture trace"));return;}
             Checks.Add(TEXT("closed_driver_door_has_actual_collision"));
             Door->bLocked=true;
@@ -251,6 +285,12 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
            !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearUp) ||
            !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearDown) || !V->bManualGears || V->ChaosMovement->GetUseAutoGears())
         { Finish(TEXT("Manual gear selection failed")); return; }
+        if(V->DriverDoorMesh)
+        {
+            if(!V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::DriverDoor))
+            {Finish(TEXT("Current driver door-open command rejected"));return;}
+            Phase=32;PhaseStarted=Now;return;
+        }
     }
     auto* V=Car.Get();
     if(!V || PC->GetPawn()!=V) { Finish(TEXT("Vehicle possession was lost")); return; }

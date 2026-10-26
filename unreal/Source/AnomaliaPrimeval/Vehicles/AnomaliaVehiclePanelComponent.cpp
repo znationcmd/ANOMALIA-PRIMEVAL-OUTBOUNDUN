@@ -3,6 +3,7 @@
 #include "Engine/StaticMesh.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/Pawn.h"
 #include "CollisionQueryParams.h"
 #include "Net/UnrealNetwork.h"
 
@@ -37,6 +38,13 @@ bool UAnomaliaVehiclePanelComponent::IsPoseBlocked(float Angle) const
     FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaPanelObstruction),false);Query.AddIgnoredActor(GetOwner());
     return GetWorld()->OverlapBlockingTestByChannel(WorldPose.TransformPosition(Local.Origin),WorldPose.GetRotation(),
         ECC_Pawn,FCollisionShape::MakeBox(Local.BoxExtent*WorldPose.GetScale3D().GetAbs()),Query);
+}
+bool UAnomaliaVehiclePanelComponent::TryToggleFromDriver(AController* Driver)
+{
+    const auto* Vehicle=Cast<APawn>(GetOwner());
+    if(!Vehicle || !Vehicle->HasAuthority() || !GetStaticMesh() || bLocked || !IsValid(Driver) ||
+       !Driver->IsPlayerController() || Driver->GetPawn()!=Vehicle || Vehicle->GetController()!=Driver)return false;
+    bOpen=!bOpen;bObstructed=false;GetOwner()->ForceNetUpdate();return true;
 }
 void UAnomaliaVehiclePanelComponent::TickComponent(float Delta,ELevelTick Type,FActorComponentTickFunction* Function)
 {

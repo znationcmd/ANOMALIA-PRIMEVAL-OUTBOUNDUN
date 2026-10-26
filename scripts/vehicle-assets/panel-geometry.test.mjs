@@ -1,7 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {partitionTriangle,triangulate,area,boundaryEdges,driverDoorPlanes} from './panel-geometry.mjs';
+import {partitionTriangle,triangulate,area,boundaryEdges,driverDoorPlanes,gltfToUnreal} from './panel-geometry.mjs';
 const vertex=(x,y,z=1)=>({POSITION:[x,y,z],NORMAL:[0,0,1],TEXCOORD_0:[x,y]});
+test('forward correction and import handedness place the source driver hinge on negative Y',()=>{
+ const source=[-1.29,.94,.885],forwardCorrected=[-source[0],source[1],-source[2]];
+ assert.deepEqual(gltfToUnreal(forwardCorrected),[129,-88.5,94]);
+});
 test('partial cut preserves area and interpolated UV coordinates',()=>{
  const original=[vertex(-2,0),vertex(2,0),vertex(0,2)];
  const p=partitionTriangle(original,[v=>v[0]+.5,v=>.5-v[0],v=>v[1]-.2]);

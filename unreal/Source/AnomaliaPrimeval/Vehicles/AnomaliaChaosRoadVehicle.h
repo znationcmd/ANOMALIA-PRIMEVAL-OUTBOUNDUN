@@ -20,7 +20,7 @@ UENUM(BlueprintType)
 enum class EAnomaliaRoadAction : uint8
 {
     GearUp, GearDown, ToggleGearMode, HandbrakeOn, HandbrakeOff,
-    Headlights, IndicatorLeft, IndicatorRight, HazardLights
+    Headlights, IndicatorLeft, IndicatorRight, HazardLights, DriverDoor
 };
 
 UCLASS()
@@ -59,7 +59,7 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadWheelMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TObjectPtr<UStaticMesh> RoadGlassMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UStaticMesh> DriverDoorMesh;
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") FVector DriverDoorPivotCm=FVector(129,88.5,94);
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") FVector DriverDoorPivotCm=FVector(129,-88.5,94);
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Panels") TObjectPtr<UAnomaliaVehiclePanelComponent> DriverDoor;
     /** Optional individually modelled wheels, paired with authored chassis-space hubs. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TObjectPtr<UStaticMesh>> RoadWheelMeshes;
@@ -118,6 +118,7 @@ private:
     void InputGearUp(); void InputGearDown(); void InputGearMode();
     void InputHandbrakeOn(); void InputHandbrakeOff(); void InputHeadlights();
     void InputIndicatorLeft(); void InputIndicatorRight(); void InputHazardLights();
+    void InputDriverDoor();
     void UpdateRoadLights();
     /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
     UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;

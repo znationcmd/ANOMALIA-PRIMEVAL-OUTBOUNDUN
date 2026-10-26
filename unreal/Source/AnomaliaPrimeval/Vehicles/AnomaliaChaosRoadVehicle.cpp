@@ -386,6 +386,7 @@ void AAnomaliaChaosRoadVehicle::SetupPlayerInputComponent(UInputComponent* Playe
     PlayerInputComponent->BindAction(TEXT("VehicleIndicatorLeft"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIndicatorLeft);
     PlayerInputComponent->BindAction(TEXT("VehicleIndicatorRight"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIndicatorRight);
     PlayerInputComponent->BindAction(TEXT("VehicleHazards"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputHazardLights);
+    PlayerInputComponent->BindAction(TEXT("VehicleDoor"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputDriverDoor);
 }
 void AAnomaliaChaosRoadVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -420,6 +421,7 @@ bool AAnomaliaChaosRoadVehicle::ExecuteRoadActionOnServer(AController* Driver,EA
     case EAnomaliaRoadAction::IndicatorLeft:IndicatorMode=IndicatorMode==1?0:1;break;
     case EAnomaliaRoadAction::IndicatorRight:IndicatorMode=IndicatorMode==2?0:2;break;
     case EAnomaliaRoadAction::HazardLights:IndicatorMode=IndicatorMode==3?0:3;break;
+    case EAnomaliaRoadAction::DriverDoor:return DriverDoor->TryToggleFromDriver(Driver);
     default:return false;
     }
     OnRep_RoadControls();ForceNetUpdate();return true;
@@ -439,6 +441,7 @@ void AAnomaliaChaosRoadVehicle::InputHeadlights(){SendRoadAction(EAnomaliaRoadAc
 void AAnomaliaChaosRoadVehicle::InputIndicatorLeft(){SendRoadAction(EAnomaliaRoadAction::IndicatorLeft);}
 void AAnomaliaChaosRoadVehicle::InputIndicatorRight(){SendRoadAction(EAnomaliaRoadAction::IndicatorRight);}
 void AAnomaliaChaosRoadVehicle::InputHazardLights(){SendRoadAction(EAnomaliaRoadAction::HazardLights);}
+void AAnomaliaChaosRoadVehicle::InputDriverDoor(){SendRoadAction(EAnomaliaRoadAction::DriverDoor);}
 void AAnomaliaChaosRoadVehicle::OnRep_RoadControls(){UpdateRoadLights();}
 void AAnomaliaChaosRoadVehicle::UpdateRoadLights()
 {

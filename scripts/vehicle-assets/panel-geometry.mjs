@@ -44,3 +44,5 @@ export const driverDoorPlanes=[
  // Follow the original front shut-line around the wheel arch.
  p=>p[0]+1.29, p=>p[0]+1.25+(p[1]-.75)*(.25/.452),
 ];
+// Unreal's imported static-mesh coordinates: centimetres, Z up, handedness swap.
+export const gltfToUnreal=p=>[p[0]*100,p[2]*100,p[1]*100];

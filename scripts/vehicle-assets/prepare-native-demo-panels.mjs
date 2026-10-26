@@ -6,7 +6,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import {partitionTriangle,triangulate,area,boundaryEdges,driverDoorPlanes} from './panel-geometry.mjs';
+import {partitionTriangle,triangulate,area,boundaryEdges,driverDoorPlanes,gltfToUnreal} from './panel-geometry.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..');
 const source=JSON.parse(await readFile(path.join(root,'docs/art/native-demo-sedan-source.json'),'utf8'));
 const bytes=await readFile(path.join(root,'unreal/Saved/NativeDemoSedanSource/graphite_sedan.glb'));
@@ -14,12 +14,15 @@ const hash=b=>createHash('sha256').update(b).digest('hex');
 if(bytes.length!==source.bytes||hash(bytes)!==source.sha256)throw Error('Pinned CC0 source required');
 const base=path.join(root,'unreal/SourceAssets/NativeDemoSedan_v1');
 const previous=JSON.parse(await readFile(path.join(base,'manifest.json'),'utf8'));
-const out=path.join(root,'unreal/SourceAssets/NativeDemoSedan_v2');await mkdir(out,{recursive:true});
+const out=path.join(root,'unreal/SourceAssets/NativeDemoSedan_v3');await mkdir(out,{recursive:true});
 async function preserve(name,data){
  try{if(!Buffer.from(data).equals(await readFile(path.join(out,name))))throw Error('Existing prepared panel art preserved: '+name);}
  catch(e){if(e.code!=='ENOENT')throw e;await writeFile(path.join(out,name),data);}
 }
 const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);
+const originalClosed=await io.read(path.join(base,'body.glb'));
+const originalBounds=getBounds(originalClosed.getRoot().getDefaultScene());
+const closedBodyBoundsCm={min:gltfToUnreal(originalBounds.min),max:gltfToUnreal(originalBounds.max)};
 const pivot=[-1.29,.94,.885],models=[];let partitionReport;
 for(const selection of ['body','door_driver']){
  const doc=await io.readBinary(bytes);await doc.transform(dequantize(),flatten({cleanup:false}));
@@ -91,17 +94,24 @@ for(const selection of ['body','door_driver']){
  await preserve(selection+'.glb',result);
  models.push({id:selection,file:selection+'.glb',sha256:hash(result),bytes:result.length,
   sourceNodes:304,dimensionsMetresYUp:bounds.max.map((x,i)=>x-bounds.min[i]),
-  objectPath:'/Game/Anomalia/NativeDemoSedan_v2/'+selection+'/SM_'+selection});
+  originMetresYUp:bounds.max.map((x,i)=>(x+bounds.min[i])/2),
+  objectPath:'/Game/Anomalia/NativeDemoSedan_v3/'+selection+'/SM_'+selection});
  partitionReport={originalSurfaceArea:originalArea,doorSurfaceArea:cutArea,remainingSurfaceArea:remainingArea,cutTriangles,boundaryEdges:edges.length};
 }
 for(const model of previous.models.filter(m=>m.id.startsWith('wheel_'))){
- const data=await readFile(path.join(base,model.file));if(hash(data)!==model.sha256)throw Error('Original wheels changed');
- await preserve(model.file,data);models.push({...model,objectPath:model.objectPath.replace('_v1/','_v2/')});
+ // The original v1 side labels assumed the opposite glTF-to-Unreal Y mapping.
+ // Swap each axle's source wheel so rim faces, not only wheel centres, match.
+ const paired={wheel_fl:'wheel_fr',wheel_fr:'wheel_fl',wheel_rl:'wheel_rr',wheel_rr:'wheel_rl'};
+ const original=previous.models.find(m=>m.id===paired[model.id]);
+ const data=await readFile(path.join(base,original.file));if(hash(data)!==original.sha256)throw Error('Original wheels changed');
+ await preserve(model.file,data);models.push({...original,id:model.id,file:model.file,
+  objectPath:'/Game/Anomalia/NativeDemoSedan_v3/'+model.id+'/SM_'+model.id});
 }
-const manifest={schemaVersion:2,source,models,wheelHubsCm:previous.wheelHubsCm,
+const manifest={schemaVersion:3,source,models,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm,
+ importCoordinateMapping:'UE_cm=[glTF_X,glTF_Z,glTF_Y]*100',
  sourceCoverage:{nodes:304,partition:partitionReport},rigged:false,interactiveDoors:false,gameplayVerified:false,
- panels:[{id:'door_driver',pivotCm:[129,88.5,94],openAngleDegrees:-70,speedDegreesPerSecond:80,
-  side:'positive_Y_matches_original_steering_wheel',outerThicknessCm:4.5}]};
+ panels:[{id:'door_driver',pivotCm:gltfToUnreal([-pivot[0],pivot[1],-pivot[2]]),openAngleDegrees:70,speedDegreesPerSecond:80,
+  side:'negative_Y_matches_imported_steering_wheel',outerThicknessCm:4.5}]};
 await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');
 await preserve('CREDITS.md','# Original ANOMALIA sedan with cut driver door\n\n'+source.author+'\n'+source.source+'\nCC0-1.0 — '+source.licenseUrl+'\n\nChanges: original continuous body surface partitioned without removing its area, driver door skin separated with original glass/mirror/trim, extruded inner skin and opening edges, hinge-centred local coordinates. Original source and v1 assets retained. Only the driver door is separated; other doors, hood and trunk remain unfinished.\n');
 console.log(JSON.stringify({state:'REAL_DRIVER_DOOR_MESH_PREPARED_NOT_UNREAL_VERIFIED',partition:partitionReport,models:models.map(m=>({id:m.id,bytes:m.bytes}))},null,2));

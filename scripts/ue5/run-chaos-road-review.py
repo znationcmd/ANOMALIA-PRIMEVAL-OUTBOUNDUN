@@ -65,6 +65,7 @@ def main():
         raise RuntimeError('Three measured physical braking runs are required')
     if args.sedan:
         panels={'separate_licensed_driver_door_mesh_installed','closed_driver_door_has_actual_collision',
+            'closed_driver_door_recomposes_original_body_bounds','current_driver_opens_and_closes_real_door_from_seat',
             'locked_driver_door_rejects_server_interaction','driver_door_rotates_at_hinge_and_collision_leaves_aperture',
             'driver_door_closes_and_restores_actual_collision'}
         if not drive.get('driverDoorReviewed') or not panels.issubset(drive.get('checks',[])):
