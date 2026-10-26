@@ -125,6 +125,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("yaw"),V->GetActorRotation().Yaw);
         Sample->SetNumberField(TEXT("distanceCm"),FVector::Dist2D(StartLocation,V->GetActorLocation()));
         Sample->SetNumberField(TEXT("fuelPercent"),V->FuelPercent);
+        Sample->SetNumberField(TEXT("appliedThrottle"),Physics->GetThrottleInput());
         Sample->SetNumberField(TEXT("chassisZ"),V->GetActorLocation().Z);
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
@@ -163,6 +164,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Speed<500.f || FVector::Dist2D(StartLocation,V->GetActorLocation())<500.f || Contacts<3 || Rotation<1.f)
             { Finish(TEXT("Physical acceleration/wheel contact/rotation failed")); return; }
             Checks.Add(TEXT("physical_acceleration_translation_and_rotating_contact_wheels"));
+            if(V->ExitDriverOnServer(PC) || PC->GetPawn()!=V || V->GetStoredDriverSurvivor()!=Survivor.Get())
+            { Finish(TEXT("Moving vehicle allowed an unsafe driver exit")); return; }
+            Checks.Add(TEXT("moving_vehicle_refuses_exit_and_keeps_original_driver"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("chaos-actual-driving.png")),false,false);
             StraightSpeed=Speed; TurnYaw=V->GetActorRotation().Yaw; Phase=2; PhaseStarted=Now;
         }
@@ -178,7 +182,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             BrakeStartSpeed=FMath::Abs(Speed); Phase=3; PhaseStarted=Now;
         }
     }
-    else if(Phase==3 || Phase==5)
+    else if(Phase==3 || Phase==5 || Phase==9)
     {
         Brake=1.f;
         if(Elapsed>2 && FMath::Abs(Speed)<50.f && V->Chassis->GetPhysicsLinearVelocity().Size()<100.f)
@@ -188,6 +192,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 if(BrakeStartSpeed<200.f || FMath::Abs(Speed)>BrakeStartSpeed*.25f)
                 { Finish(TEXT("Service brake did not reduce physical speed")); return; }
                 Checks.Add(TEXT("service_brake_stops_the_physical_chassis")); Phase=4; PhaseStarted=Now;
+            }
+            else if(Phase==5)
+            {
+                // Isolated fixture tuning only: exhaust real server fuel while
+                // holding the physical brake, then challenge the empty engine.
+                if(!V->ConfigureRuntimeTuning(.15f,1.f,1.f))
+                { Finish(TEXT("Isolated fuel depletion setup was refused")); return; }
+                Phase=6; PhaseStarted=Now;
             }
             else
             {
@@ -206,6 +218,45 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Physics->GetCurrentGear()!=-1 || Speed> -150.f)
             { Finish(TEXT("Physical reverse gear failed")); return; }
             Checks.Add(TEXT("reverse_gear_drives_chassis_backwards")); Phase=5; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==6)
+    {
+        Throttle=.8f; Brake=1.f;
+        if(Elapsed>2)
+        {
+            if(V->HasFuel() || V->FuelPercent!=0.f || Physics->GetThrottleInput()>.01f)
+            { Finish(TEXT("Real fuel depletion did not cut Chaos throttle")); return; }
+            Checks.Add(TEXT("server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle"));
+            EmptyTankLocation=V->GetActorLocation(); Phase=7; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==7)
+    {
+        Throttle=1.f;
+        if(Physics->GetThrottleInput()>.01f || FMath::Abs(Speed)>100.f ||
+            FVector::Dist2D(EmptyTankLocation,V->GetActorLocation())>100.f)
+        { Finish(TEXT("Empty tank still propels the physical vehicle")); return; }
+        if(Elapsed>3)
+        {
+            Checks.Add(TEXT("empty_tank_cannot_accelerate_under_full_driver_input"));
+            if(V->RefuelOnServer(-1.f) || V->RefuelOnServer(0.f) || V->FuelPercent!=0.f)
+            { Finish(TEXT("Invalid refuel amount changed the empty tank")); return; }
+            if(!V->RefuelOnServer(25.f) || !FMath::IsNearlyEqual(V->FuelPercent,25.f))
+            { Finish(TEXT("Authoritative refuel did not restore the requested fuel")); return; }
+            Checks.Add(TEXT("server_refuel_rejects_invalid_amounts_and_restores_fuel"));
+            Phase=8; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==8)
+    {
+        Throttle=.8f;
+        if(Elapsed>4)
+        {
+            if(Speed<500.f || Contacts<3 || Rotation<1.f || V->FuelPercent>=25.f || !V->HasFuel())
+            { Finish(TEXT("Refuel did not restore actual wheel-driven acceleration and fuel consumption")); return; }
+            Checks.Add(TEXT("refuel_restores_physical_acceleration_and_fuel_consumption"));
+            Phase=9; PhaseStarted=Now;
         }
     }
     if(!V->SetDriverControlsOnServer(PC,Throttle,Steering,Brake)) Finish(TEXT("Authoritative control input rejected"));

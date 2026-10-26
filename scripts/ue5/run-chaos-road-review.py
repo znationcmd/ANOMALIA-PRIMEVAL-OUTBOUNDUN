@@ -34,6 +34,16 @@ def main():
     drive=json.loads((out/'drive-report.json').read_text(encoding='utf-8-sig'))
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
+    required={
+        'moving_vehicle_refuses_exit_and_keeps_original_driver',
+        'server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle',
+        'empty_tank_cannot_accelerate_under_full_driver_input',
+        'server_refuel_rejects_invalid_amounts_and_restores_fuel',
+        'refuel_restores_physical_acceleration_and_fuel_consumption',
+        'safe_exit_restores_same_survivor',
+    }
+    if drive.get('buildCommit')!=env.get('GITHUB_SHA') or not required.issubset(drive.get('checks',[])):
+        raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
     video=None;video_error=None
     encoder=shutil.which('ffmpeg')
     if encoder and drive.get('recordedViewportFrames',0)>=10:

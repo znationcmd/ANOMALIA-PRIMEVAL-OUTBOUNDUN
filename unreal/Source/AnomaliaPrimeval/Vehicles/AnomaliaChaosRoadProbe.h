@@ -24,6 +24,7 @@ private:
     double Started=0, PhaseStarted=0, LastSample=0, WallStarted=0;
     float StraightSpeed=0, TurnYaw=0, BrakeStartSpeed=0;
     FVector StartLocation=FVector::ZeroVector;
+    FVector EmptyTankLocation=FVector::ZeroVector;
     FString ReportFile;
     TWeakObjectPtr<AAnomaliaChaosRoadVehicle> Car;
     TWeakObjectPtr<AAnomaliaSurvivor> Survivor;

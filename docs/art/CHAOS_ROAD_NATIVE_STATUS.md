@@ -20,9 +20,8 @@ not production map scenery.
 The actual game process must prove acceleration, physical translation, rotating wheels
 in contact with the ground, heading change under steering, braking, reverse and safe
 restoration of the original survivor. JSON records measured samples, not simulated test
-results. Editor and Game compilation passed on Windows with UE 5.8.3 in run
-40195507582. The physical driving gate failed; this vehicle is not approved for
-production. Compilation does not establish drivable behaviour.
+results. Early runs compiled but failed driving. Subsequent physical acceptance
+is recorded below. Compilation alone does not establish drivable behaviour.
 
 ## Real driving acceptance — 26 October 2026
 
@@ -45,7 +44,30 @@ vehicle damage/persistence, photorealistic scene, or packaged game. The overall
 workflow failed later during the sedan import: PowerShell did not wait for the
 GUI Editor process before reading its report. A blocking Python subprocess driver
 now waits for actual process completion and validates the source identity/report.
-That import correction has not yet passed in Unreal.
+That import correction subsequently passed in Unreal, in run 40303679561.
+
+## Original sedan and corrected wheel orientation
+
+Run 40304980199 passed the same real driving checks with the source-verified
+original CC0 sedan body and four individual wheel meshes. The original static
+art is assembled on the locally installed licensed skeletal Chaos rig. It is
+not an original fully rigged sedan asset with opening door panels.
+
+Run 40308148891, commit 8811670afa0ea1703a677a02fe4307974c5d928b,
+compiled Editor and Game with UE 5.8.3 and passed both reference and original
+sedan driving. Visual wheel transforms now use measured tire axle orientation,
+authored hub positions and actual Chaos suspension, steer and rotation values.
+They do not inherit an arbitrary skeletal bind rotation. The continuous native
+guard checks each visible axle against the vehicle's steered lateral direction.
+The genuine viewport captures are retained with each driving artifact.
+
+The next native validation extends these existing physical checks with refusal
+to exit at speed, actual fuel depletion, full accelerator input with an empty
+tank, invalid refuel rejection, and resumed physical acceleration after server
+refueling. These additional cases are pending until the new Windows run passes.
+Only the isolated review fixture adjusts fuel; no existing installation or save
+is changed. Refueling here exercises the trusted server API; it does not claim
+an inventory-backed fuel-can interaction or a complete ignition/starter system.
 
 ## Account-free original sedan preparation
 
