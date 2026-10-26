@@ -1,0 +1,31 @@
+"""Wait for the real Unreal import process before validating its evidence."""
+import argparse
+import json
+import os
+import subprocess
+from pathlib import Path
+
+ROOT=Path(__file__).resolve().parents[2]
+
+def main():
+    parser=argparse.ArgumentParser()
+    parser.add_argument('--engine-root',type=Path,required=True)
+    parser.add_argument('--output',type=Path,required=True)
+    args=parser.parse_args()
+    output=args.output.resolve();output.mkdir(parents=True,exist_ok=True)
+    env=os.environ.copy();env['ANOMALIA_SEDAN_OUTPUT']=str(output)
+    editor=args.engine_root/'Engine/Binaries/Win64/UnrealEditor.exe'
+    with (output/'import-process.log').open('w',encoding='utf-8') as log:
+        result=subprocess.run([str(editor),str(ROOT/'unreal/AnomaliaPrimeval.uproject'),
+            '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/import_native_demo_sedan.py'),
+            '-NullRHI','-unattended','-nopause','-nosound','-nosplash',
+            '-abslog='+str(output/'import.log')],env=env,stdout=log,stderr=subprocess.STDOUT,
+            timeout=900,check=False)
+    if result.returncode:raise RuntimeError('Unreal sedan import process failed: '+str(result.returncode))
+    report=json.loads((output/'sedan-import-report.json').read_text(encoding='utf-8-sig'))
+    if (report['state']!='CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN' or
+        report['sourceCommit']!=env.get('GITHUB_SHA') or len(report['models'])!=5):
+        raise RuntimeError('Real sedan part import not verified: '+str(report.get('error')))
+    print('Five original CC0 sedan parts imported in Unreal; rigging and gameplay remain unverified.')
+
+if __name__=='__main__':main()

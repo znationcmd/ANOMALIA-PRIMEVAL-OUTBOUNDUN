@@ -24,10 +24,28 @@ results. Editor and Game compilation passed on Windows with UE 5.8.3 in run
 40195507582. The physical driving gate failed; this vehicle is not approved for
 production. Compilation does not establish drivable behaviour.
 
-The next correction disables non-root skeletal bodies, including axle and damper
-branches outside the wheel subtrees. Only the chassis remains physically active;
-Chaos supplies suspension and wheel contact forces. This correction must pass the
-same unmodified acceleration, steering, braking, reverse and safe-exit gate.
+## Real driving acceptance — 26 October 2026
+
+Run 40302457850, commit d62969a67215fad3358953e5a21f77c3e410a8c3:
+Editor and Game compiled with UE 5.8.3. The actual Unreal game process passed
+all seven checks: real skeletal/four-wheel Chaos configuration, preservation of
+the survivor/inventory on entry, physical acceleration with rotating contact
+wheels, steering, service-brake stop, reverse and safe exit restoring the same
+survivor. The full report and genuine viewport screenshots are retained in the
+`native-demo-physics-evidence` artifact, ID 12641187281.
+
+The correction combines a dedicated per-instance chassis Physics Asset, bounded
+physics substeps, spherical tire sweeps and ABS. Shared vendor assets remain
+unchanged. Continuous recording is opt-in because its GPU readback/PNG overhead
+significantly slowed the previous test. Phase screenshots remain enabled.
+
+This verifies a single isolated flat proving ground with the Epic reference
+vehicle, not the final original sedan, production roads, multiplayer, animations,
+vehicle damage/persistence, photorealistic scene, or packaged game. The overall
+workflow failed later during the sedan import: PowerShell did not wait for the
+GUI Editor process before reading its report. A blocking Python subprocess driver
+now waits for actual process completion and validates the source identity/report.
+That import correction has not yet passed in Unreal.
 
 ## Account-free original sedan preparation
 

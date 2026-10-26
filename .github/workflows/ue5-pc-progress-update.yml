@@ -30,6 +30,7 @@ on:
       - 'scripts/ue5/run-playable-interactions.py'
       - 'scripts/ue5/run-chaos-road-review.py'
       - 'scripts/ue5/prepare-native-demo-sedan.py'
+      - 'scripts/ue5/import-native-demo-sedan.py'
       - 'docs/art/native-demo-sedan-source.json'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
@@ -110,13 +111,9 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-native-demo-sedan.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $env:ANOMALIA_SEDAN_OUTPUT=[IO.Path]::GetFullPath("unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan")
-          New-Item -ItemType Directory -Force -Path $env:ANOMALIA_SEDAN_OUTPUT | Out-Null
-          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor.exe'
-          & $editor "$PWD/unreal/AnomaliaPrimeval.uproject" "-ExecutePythonScript=$PWD/unreal/Scripts/import_native_demo_sedan.py" -NullRHI -unattended -nopause -nosound -nosplash "-abslog=$env:ANOMALIA_SEDAN_OUTPUT/import.log"
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan"
+          & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          $report=Get-Content (Join-Path $env:ANOMALIA_SEDAN_OUTPUT 'sedan-import-report.json') -Raw | ConvertFrom-Json
-          if ($report.state -ne 'CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN' -or $report.sourceCommit -ne $env:GITHUB_SHA -or $report.models.Count -ne 5) { throw 'Real sedan part import not verified' }
       - uses: actions/upload-artifact@v4
         if: always()
         with:
