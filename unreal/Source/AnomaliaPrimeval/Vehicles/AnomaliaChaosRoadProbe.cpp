@@ -282,7 +282,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(V->DriverDoorMesh && !bDriverDoorReviewed)
         {
             auto* Door=V->DriverDoor.Get();
-            if(Door->GetStaticMesh()!=V->DriverDoorMesh || Door->GetCollisionEnabled()!=ECollisionEnabled::QueryAndPhysics ||
+            if(Door->GetStaticMesh()!=V->DriverDoorMesh || Door->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || Door->IsSimulatingPhysics() || Door->BodyInstance.bAutoWeld ||
                !Door->GetRelativeLocation().Equals(V->DriverDoorPivotCm,.1f))
             {Finish(TEXT("Actual hinge-centred imported driver door is not installed"));return;}
             Checks.Add(TEXT("separate_licensed_driver_door_mesh_installed"));
