@@ -300,7 +300,7 @@ run, artifact 12662162946. Measured stops: 50.43 km/h in 12.25 m / 1.715 s /
 with the original survivor retaining momentum. This is measured gameplay with
 the original sedan art, not merely a C++ configuration test.
 
-### Default project integration (native revalidation pending)
+### Default project integration (native revalidation passed)
 
 The native force-based suspension mode is now selected in DefaultEngine.ini,
 rather than only in a diagnostic command line. The current project has one Chaos
@@ -309,8 +309,8 @@ Normal review commands no longer pass the diagnostic override. Reports must stil
 verify the effective runtime mode. A new settled-load gate requires four loaded
 wheels within suspension travel and total support within 15% of actual chassis
 weight before ignition. Dry-braking acceptance now requires at least 0.5g, while
-low-grip acceptance retains 0.25g. Both prior measured runs meet these limits, but
-the default configuration and new gate require their own actual native run.
+low-grip acceptance retains 0.25g. Both prior measured runs meet these limits.
+The default configuration and new gate subsequently passed the native run below.
 
 The native test also checks the engine's stiffness conversion to catch a future
 engine change. Force-based suspension does not use constraint hard stops; chassis
@@ -318,3 +318,30 @@ collision remains active. Bumps, bottoming, rough terrain, varying physics rates
 loads, network play and production roads are not yet accepted. Doors, entry/exit
 animations, photoreal scenery and a newly packaged/installed build remain separate
 unfinished work. No existing installation or save has been replaced.
+
+### Confirmed default-configuration result
+
+Run 40349559923 completed successfully for source
+`bf4cacbe22ba879825ff882c55745332854b8760`. UE 5.8.3 Windows Editor and Game
+compiled, with 24 native tests passing (19 without warnings, five with warnings,
+zero failed). Both actual reference and original-sedan driving runs passed all
+26 checks, including the new settled-load gate and tighter dry-braking limits.
+Both reports have diagnosticOnly false and verify the effective native suspension
+mode without a command-line override. Local Python suite: 154 passed.
+
+| Default-config original sedan | Measured initial speed | Distance | Time | Mean deceleration |
+| --- | ---: | ---: | ---: | ---: |
+| Higher grip (0.9) | 50.39 km/h | 12.23 m | 1.73 s | 0.817g |
+| Higher grip (0.9) | 80.28 km/h | 29.80 m | 2.68 s | 0.851g |
+| Lower grip (0.45) | 80.02 km/h | 55.97 m | 5.06 s | 0.450g |
+
+Reference stops measured 13.13 / 31.40 / 57.06 m respectively. Sedan moving exit
+was measured at 2638.29 cm/s (94.98 km/h), with original survivor motion observed
+at 2647.03 cm/s. These are test measurements, not a gameplay exit speed limit.
+
+Artifacts in that run: native compilation/tests 12663502459, reference physical
+drive 12664290425, original sedan import 12663713109, original sedan physical
+drive and real viewport captures 12664331432. No continuous video recorded.
+The existing installation, production map and saves remain unchanged. This
+confirms calibrated standalone flat-surface driving, not a complete sedan,
+photoreal world, network session or newly packaged Windows release.

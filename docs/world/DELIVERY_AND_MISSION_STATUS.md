@@ -8,6 +8,29 @@ ci-dessous décrivent le mécanisme précédent, actuellement suspendu.
 Branche de travail/livraison : `ue5/reactive-world-expeditions-20261025`.
 Pull Request : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/38
 
+## Dernière validation réelle — 26 octobre 2026
+
+Source `bf4cacbe22ba879825ff882c55745332854b8760`, exécution réussie
+https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40349559923.
+Editor et Game compilés avec UE 5.8.3 ; 24 tests natifs passent (cinq avec
+avertissements), ainsi que 154 tests Python locaux. Le véhicule de référence et
+la berline d'art original passent chacun 26 contrôles dans le vrai jeu, avec les
+paramètres normaux du projet, sans option de diagnostic.
+
+Le ressort transmis au moteur et le mode de suspension sont corrigés : les roues
+portent réellement le châssis et leur adhérence dépend de leur charge. Freinages
+mesurés de la berline : 12,23 m depuis 50,39 km/h, 29,80 m depuis 80,28 km/h,
+55,97 m depuis 80,02 km/h à adhérence réduite. Contact, panne/ravitaillement,
+rapports, frein à main, phares/clignotants et sortie rapide avec élan passent
+également. Rapports et captures réelles : `docs/art/CHAOS_ROAD_NATIVE_STATUS.md`.
+
+Cette étape valide la conduite calibrée sur terrain plat en solo. Elle ne clôture
+pas les ouvrants/animations, dégâts, sauvegarde automobile, réseau, conduite sur
+routes et obstacles, maison aménagée, forêt photoréaliste ou démonstration 1 km².
+Aucun nouveau package ni remplacement du jeu installé. L'aéroport apocalyptique,
+les ULM 2/4, l'aéroglisseur fermé de huit places et le parachutisme sont enregistrés
+dans `APOCALYPTIC_AIRPORT_ULM_HOVERCRAFT_PARACHUTE.md`, à réaliser ensuite.
+
 ## Livraison et version réellement lancée
 
 Les changements du runtime, des configurations, des scripts de scène et de
