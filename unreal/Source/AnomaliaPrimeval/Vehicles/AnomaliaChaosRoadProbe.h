@@ -17,6 +17,7 @@ public:
     virtual void Tick(float DeltaSeconds) override;
 private:
     bool bEnabled=false, bFinishing=false, bRecordFrames=false;
+    bool bSignalSeenOn=false, bSignalSeenOff=false;
     double FinishAt=0, LastFrame=0;
     int32 FrameCount=0;
     FString PendingError;

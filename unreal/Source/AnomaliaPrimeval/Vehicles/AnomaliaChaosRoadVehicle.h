@@ -12,6 +12,15 @@ class UStaticMesh;
 class UStaticMeshComponent;
 class UAnimInstance;
 class UPhysicsAsset;
+class USpotLightComponent;
+class UPointLightComponent;
+
+UENUM(BlueprintType)
+enum class EAnomaliaRoadAction : uint8
+{
+    GearUp, GearDown, ToggleGearMode, HandbrakeOn, HandbrakeOff,
+    Headlights, IndicatorLeft, IndicatorRight, HazardLights
+};
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaRoadFrontWheel : public UChaosVehicleWheel
@@ -69,6 +78,14 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_EngineRunning, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Engine")
     bool bEngineRunning=false;
     bool SetEngineRunningOnServer(AController* Driver, bool bRunning);
+    bool ExecuteRoadActionOnServer(AController* Driver, EAnomaliaRoadAction Action);
+    UPROPERTY(ReplicatedUsing=OnRep_RoadControls, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Controls") bool bManualGears=false;
+    UPROPERTY(ReplicatedUsing=OnRep_RoadControls, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Controls") bool bHandbrakeHeld=false;
+    UPROPERTY(ReplicatedUsing=OnRep_RoadControls, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") bool bHeadlightsOn=false;
+    /** 0 off, 1 left, 2 right, 3 hazards. Server owns this state. */
+    UPROPERTY(ReplicatedUsing=OnRep_RoadControls, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") uint8 IndicatorMode=0;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") TArray<TObjectPtr<USpotLightComponent>> Headlights;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") TArray<TObjectPtr<UPointLightComponent>> IndicatorLights;
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Chaos|Engine")
     void OnEngineRunningChanged(bool bRunning);
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos") bool AreWheelVisualsUpright() const;
@@ -82,6 +99,7 @@ protected:
     virtual bool IsEngineProvidingPower() const override { return bEngineRunning; }
     virtual bool IsDriveReady() const override;
     virtual bool CanDriverExitNow() const override;
+    virtual FVector GetDriverExitVelocity() const override;
     virtual float GetExpectedSupportFloorZ() const override;
     virtual void SimulateRoadDrive(float DeltaSeconds,float Throttle,float Steering,float Brake,
         bool bPowered,bool bDriverMissing) override;
@@ -90,6 +108,13 @@ private:
     UFUNCTION(Server, Reliable) void ServerToggleIgnition();
     UFUNCTION() void OnRep_EngineRunning();
     void SetEngineState(bool bRunning);
+    UFUNCTION(Server, Reliable) void ServerRoadAction(EAnomaliaRoadAction Action);
+    UFUNCTION() void OnRep_RoadControls();
+    void SendRoadAction(EAnomaliaRoadAction Action);
+    void InputGearUp(); void InputGearDown(); void InputGearMode();
+    void InputHandbrakeOn(); void InputHandbrakeOff(); void InputHeadlights();
+    void InputIndicatorLeft(); void InputIndicatorRight(); void InputHazardLights();
+    void UpdateRoadLights();
     /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
     UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;
     FTransform ReferenceBoneTransform(FName Bone) const;

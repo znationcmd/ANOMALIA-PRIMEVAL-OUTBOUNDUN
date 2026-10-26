@@ -123,3 +123,34 @@ mechanical repairs or vehicle persistence. No claim of full DayZ parity is made.
 
 Snow, desert storms, foliage wind/audio, buildings and non-road vehicle physics are
 separate work; this change does not label them complete.
+
+## Driver controls and unrestricted moving exit (native validation pending)
+
+The road pawn now allows exit at any speed, per the current requested gameplay.
+The existing floor, capsule-clearance and obstacle checks still choose the exit
+position. The existing survivor receives the chassis' actual linear velocity;
+the unattended car coasts instead of receiving an immediate full brake at speed.
+Earlier reports of refusing a moving exit describe the previous version only.
+
+Commands, validated against the current driver and replicated by the server:
+- Page Up / Page Down: select real Chaos gears; M: automatic/manual mode.
+  Manual W/Z accelerates in the selected gear; S brakes. Selection includes
+  neutral and reverse, within the actual configured gear count. No clutch yet.
+- Space: hold the rear-wheel handbrake (release to disengage).
+- L: real front spot lights. Comma/Period: left/right signals; H: hazards.
+  Four actual amber light components blink against server time. Dedicated lens
+  emissive materials and night-time visual acceptance remain incomplete.
+
+The native probe requires actual first/second gear driving, a stop using the
+handbrake without service brake, real light activation/blinking, then an exit
+above 2200 cm/s (79.2 km/h), restoring the same survivor with inherited movement.
+There is no gameplay speed limit on exit; the threshold is a proving-ground test.
+Compilation/gameplay for these new changes are pending. The prior sixteen-check
+ignition result does not validate this new revision.
+
+Additional requested work, not declared implemented: animated wipers (source
+does contain separate arms/blades), replaceable wheels/doors/hood/trunk with item
+transactions and persistence, dirt/washing materials, collision deformation,
+panel/glass/tire damage and appropriate sounds/animations. Door, hood and trunk
+seams in the current source are not separated opening body panels. These require
+actual mesh work and runtime validation, not only configuration flags.

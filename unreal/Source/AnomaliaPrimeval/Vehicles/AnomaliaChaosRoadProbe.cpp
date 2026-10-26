@@ -7,6 +7,9 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Components/SpotLightComponent.h"
+#include "Components/PointLightComponent.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "EngineUtils.h"
@@ -85,6 +88,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     { Finish(TEXT("Actual Chaos driving timed out")); return; }
     auto* PC=GetWorld()->GetFirstPlayerController();
     if(!PC) return;
+    if(Phase==14)
+    {
+        if(Now-PhaseStarted<.25)return;
+        if(PC->GetPawn()!=Survivor.Get() || Survivor->GetCharacterMovement()->Velocity.Size()<1000.f)
+        { Finish(TEXT("High speed exit did not retain the original character and vehicle momentum")); return; }
+        Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
+        Finish();return;
+    }
     if(Phase==0)
     {
         if(Now-PhaseStarted<4) return;
@@ -107,11 +118,24 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Checks.Add(TEXT("real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement"));
         Checks.Add(TEXT("existing_character_and_inventory_preserved_on_entry"));
         StartLocation=V->GetActorLocation(); Phase=10; PhaseStarted=Now;
+        if(!V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::Headlights) || !V->bHeadlightsOn || V->Headlights.Num()!=2 ||
+           !V->Headlights[0]->IsVisible() || V->Headlights[0]->Intensity<=0.f)
+        { Finish(TEXT("Real headlight components did not activate")); return; }
+        Checks.Add(TEXT("driver_activates_real_headlight_components"));
+        V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::HazardLights);
+        if(!V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearUp) ||
+           !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearUp) ||
+           !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearDown) || !V->bManualGears || V->ChaosMovement->GetUseAutoGears())
+        { Finish(TEXT("Manual gear selection failed")); return; }
     }
     auto* V=Car.Get();
     if(!V || PC->GetPawn()!=V) { Finish(TEXT("Vehicle possession was lost")); return; }
     if(!V->AreWheelVisualsUpright()) { Finish(TEXT("Visible tire axle is not aligned with the vehicle lateral plane")); return; }
     auto* Physics=V->ChaosMovement.Get();
+    if(V->IndicatorLights.Num()==4 && V->IndicatorMode==3)
+    {
+        bSignalSeenOn|=V->IndicatorLights[0]->IsVisible();bSignalSeenOff|=!V->IndicatorLights[0]->IsVisible();
+    }
     const float Speed=Physics->GetForwardSpeed();
     int32 Contacts=0; float Rotation=0;
     for(const auto& Wheel:Physics->Wheels) if(Wheel) { if(!Wheel->IsInAir()) ++Contacts; Rotation+=FMath::Abs(Wheel->GetWheelAngularVelocity()); }
@@ -128,6 +152,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("fuelPercent"),V->FuelPercent);
         Sample->SetNumberField(TEXT("appliedThrottle"),Physics->GetThrottleInput());
         Sample->SetBoolField(TEXT("engineRunning"),V->bEngineRunning);
+        Sample->SetBoolField(TEXT("manualGears"),V->bManualGears);
+        Sample->SetBoolField(TEXT("handbrakeInput"),Physics->GetHandbrakeInput());
+        Sample->SetBoolField(TEXT("headlightsOn"),V->bHeadlightsOn);
         Sample->SetNumberField(TEXT("chassisZ"),V->GetActorLocation().Z);
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
@@ -178,9 +205,9 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Speed<500.f || FVector::Dist2D(StartLocation,V->GetActorLocation())<500.f || Contacts<3 || Rotation<1.f)
             { Finish(TEXT("Physical acceleration/wheel contact/rotation failed")); return; }
             Checks.Add(TEXT("physical_acceleration_translation_and_rotating_contact_wheels"));
-            if(V->ExitDriverOnServer(PC) || PC->GetPawn()!=V || V->GetStoredDriverSurvivor()!=Survivor.Get())
-            { Finish(TEXT("Moving vehicle allowed an unsafe driver exit")); return; }
-            Checks.Add(TEXT("moving_vehicle_refuses_exit_and_keeps_original_driver"));
+            if(!V->bManualGears || Physics->GetCurrentGear()!=1 || !V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::GearUp))
+            { Finish(TEXT("Actual manual first gear driving or upshift failed")); return; }
+            Checks.Add(TEXT("manual_first_gear_drives_physical_vehicle"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("chaos-actual-driving.png")),false,false);
             StraightSpeed=Speed; TurnYaw=V->GetActorRotation().Yaw; Phase=2; PhaseStarted=Now;
         }
@@ -193,12 +220,16 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(FMath::Abs(FMath::FindDeltaAngleDegrees(TurnYaw,V->GetActorRotation().Yaw))<5.f)
             { Finish(TEXT("Physical steering did not change trajectory")); return; }
             Checks.Add(TEXT("physical_steering_changes_vehicle_heading"));
+            if(Physics->GetCurrentGear()!=2 || !bSignalSeenOn || !bSignalSeenOff)
+            { Finish(TEXT("Actual second gear or blinking signal components not observed")); return; }
+            Checks.Add(TEXT("manual_upshift_changes_actual_Chaos_gear"));
+            Checks.Add(TEXT("hazard_light_components_flash_on_and_off"));
             BrakeStartSpeed=FMath::Abs(Speed); Phase=3; PhaseStarted=Now;
         }
     }
     else if(Phase==3 || Phase==5 || Phase==9)
     {
-        Brake=1.f;
+        Brake=Phase==5?0.f:1.f;
         if(Elapsed>2 && FMath::Abs(Speed)<50.f && V->Chassis->GetPhysicsLinearVelocity().Size()<100.f)
         {
             if(Phase==3)
@@ -206,9 +237,13 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 if(BrakeStartSpeed<200.f || FMath::Abs(Speed)>BrakeStartSpeed*.25f)
                 { Finish(TEXT("Service brake did not reduce physical speed")); return; }
                 Checks.Add(TEXT("service_brake_stops_the_physical_chassis")); Phase=4; PhaseStarted=Now;
+                V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::ToggleGearMode);
             }
             else if(Phase==5)
             {
+                if(!Physics->GetHandbrakeInput()) { Finish(TEXT("Rear handbrake input was not applied")); return; }
+                Checks.Add(TEXT("rear_wheel_handbrake_stops_physical_vehicle"));
+                V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::HandbrakeOff);
                 // Isolated fixture tuning only: exhaust real server fuel while
                 // holding the physical brake, then challenge the empty engine.
                 if(!V->ConfigureRuntimeTuning(.15f,1.f,1.f))
@@ -219,7 +254,10 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             {
                 if(!V->ExitDriverOnServer(PC) || PC->GetPawn()!=Survivor.Get())
                 { Finish(TEXT("Safe crew exit did not restore original survivor")); return; }
-                Checks.Add(TEXT("safe_exit_restores_same_survivor")); Finish(); return;
+                Checks.Add(TEXT("safe_exit_restores_same_survivor"));
+                if(!V->EnterVehicle(PC,Survivor.Get()) || !V->SetEngineRunningOnServer(PC,true))
+                { Finish(TEXT("Re-entry for high-speed exit validation failed")); return; }
+                Phase=12;PhaseStarted=Now;
             }
         }
         else if(Elapsed>8) { Finish(TEXT("Physical braking exceeded stopping deadline")); return; }
@@ -232,6 +270,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(Physics->GetCurrentGear()!=-1 || Speed> -150.f)
             { Finish(TEXT("Physical reverse gear failed")); return; }
             Checks.Add(TEXT("reverse_gear_drives_chassis_backwards")); Phase=5; PhaseStarted=Now;
+            V->ExecuteRoadActionOnServer(PC,EAnomaliaRoadAction::HandbrakeOn);
         }
     }
     else if(Phase==6)
@@ -287,6 +326,16 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             { Finish(TEXT("Driver could not switch off the engine")); return; }
             Checks.Add(TEXT("current_driver_can_switch_engine_off"));
             Phase=9; PhaseStarted=Now;
+        }
+    }
+    else if(Phase==12)
+    {
+        Throttle=1.f;
+        if(Elapsed>8)
+        {
+            if(Speed<2200.f || !V->ExitDriverOnServer(PC) || PC->GetPawn()!=Survivor.Get())
+            { Finish(TEXT("Exit at actual high speed failed")); return; }
+            Phase=14;PhaseStarted=Now;return; // Allow the character to consume its pending launch.
         }
     }
     if(!V->SetDriverControlsOnServer(PC,Throttle,Steering,Brake)) Finish(TEXT("Authoritative control input rejected"));

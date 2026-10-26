@@ -16,6 +16,9 @@
 #include "Components/InputComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
+#include "Components/SpotLightComponent.h"
+#include "Components/PointLightComponent.h"
+#include "GameFramework/GameStateBase.h"
 
 UAnomaliaRoadFrontWheel::UAnomaliaRoadFrontWheel()
 {
@@ -52,6 +55,22 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
         Wheel->SetupAttachment(Chassis);Wheel->SetCollisionEnabled(ECollisionEnabled::NoCollision);RoadWheels.Add(Wheel);
     }
     Chassis->SetCollisionProfileName(TEXT("Vehicle"));
+    for(int32 Index=0;Index<2;++Index)
+    {
+        auto* Light=CreateDefaultSubobject<USpotLightComponent>(Index==0?TEXT("HeadlightLeft"):TEXT("HeadlightRight"));
+        Light->SetupAttachment(Chassis);Light->SetRelativeLocation(FVector(230,Index==0?-72:72,65));
+        Light->SetRelativeRotation(FRotator(-4,0,0));Light->SetIntensity(50000.f);
+        Light->SetAttenuationRadius(6000.f);Light->SetInnerConeAngle(18);Light->SetOuterConeAngle(38);
+        Light->SetVisibility(false);Headlights.Add(Light);
+    }
+    const TCHAR* Signals[]={TEXT("FrontLeftSignal"),TEXT("FrontRightSignal"),TEXT("RearLeftSignal"),TEXT("RearRightSignal")};
+    for(int32 Index=0;Index<4;++Index)
+    {
+        auto* Light=CreateDefaultSubobject<UPointLightComponent>(Signals[Index]);Light->SetupAttachment(Chassis);
+        Light->SetRelativeLocation(FVector(Index<2?233:-233,Index%2==0?-85:85,65));
+        Light->SetLightColor(FLinearColor(1.f,.25f,.015f));Light->SetIntensity(300.f);
+        Light->SetAttenuationRadius(100.f);Light->SetCastShadows(false);Light->SetVisibility(false);IndicatorLights.Add(Light);
+    }
     Chassis->SetSimulatePhysics(false); // A validated Physics Asset must exist first.
     Chassis->SetIsReplicated(true);
     Movement->SetAutoActivate(false); Movement->PrimaryComponentTick.bStartWithTickEnabled=false;
@@ -189,6 +208,7 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
             Animation->SetWheeledVehicleComponent(ChaosMovement);
     }
     UpdateWheelVisuals();
+    UpdateRoadLights();
 }
 
 namespace
@@ -246,6 +266,7 @@ void AAnomaliaChaosRoadVehicle::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     UpdateWheelVisuals();
+    UpdateRoadLights();
 }
 
 void AAnomaliaChaosRoadVehicle::OnConstruction(const FTransform& Transform)
@@ -272,8 +293,9 @@ bool AAnomaliaChaosRoadVehicle::IsDriveReady() const
 }
 bool AAnomaliaChaosRoadVehicle::CanDriverExitNow() const
 {
-    return FMath::Abs(ChaosMovement->GetForwardSpeed())<100.f && Chassis->GetPhysicsLinearVelocity().Size()<150.f;
+    return true; // Requested gameplay: exiting is allowed at any speed.
 }
+FVector AAnomaliaChaosRoadVehicle::GetDriverExitVelocity() const { return Chassis->GetPhysicsLinearVelocity(); }
 float AAnomaliaChaosRoadVehicle::GetExpectedSupportFloorZ() const
 {
     // A suspension rig's render bounds can extend well below the support plane.
@@ -295,18 +317,20 @@ void AAnomaliaChaosRoadVehicle::SimulateRoadDrive(float DeltaSeconds,float Throt
     // A stalled or switched-off engine needs an explicit driver restart.
     // Replenishing fuel alone must never restart a parked vehicle.
     if(bDriverMissing || !HasFuel()) SetEngineState(false);
-    float Demand=bPowered && bEngineRunning?FMath::Abs(Throttle):0.f;
+    float Demand=bPowered && bEngineRunning?(bManualGears?FMath::Max(0.f,Throttle):FMath::Abs(Throttle)):0.f;
+    if(bManualGears && Throttle<0.f)Brake=FMath::Max(Brake,-Throttle);
     const float Speed=ChaosMovement->GetForwardSpeed();
-    const int32 DesiredGear=Throttle<-.05f?-1:1;
+    const int32 DesiredGear=bManualGears?ChaosMovement->GetTargetGear():(Throttle<-.05f?-1:1);
     if(Demand>.05f && ((DesiredGear<0 && Speed>30.f)||(DesiredGear>0 && Speed<-30.f)))
     { Demand=0.f; Brake=1.f; }
-    else if(Demand>.05f && FMath::Abs(Speed)<30.f &&
+    else if(!bManualGears && Demand>.05f && FMath::Abs(Speed)<30.f &&
        ((DesiredGear<0 && ChaosMovement->GetCurrentGear()>=0)||(DesiredGear>0 && ChaosMovement->GetCurrentGear()<=0)))
         ChaosMovement->SetTargetGear(DesiredGear,true);
     ChaosMovement->SetThrottleInput(Demand);
     ChaosMovement->SetSteeringInput(Steering);
-    ChaosMovement->SetBrakeInput(bDriverMissing?1.f:Brake);
-    ChaosMovement->SetHandbrakeInput(bDriverMissing);
+    const bool bPark=bDriverMissing && Chassis->GetPhysicsLinearVelocity().Size()<100.f;
+    ChaosMovement->SetBrakeInput(bPark?1.f:Brake);
+    ChaosMovement->SetHandbrakeInput(bPark || bHandbrakeHeld);
 }
 
 void AAnomaliaChaosRoadVehicle::SetEngineState(bool bRunning)
@@ -334,9 +358,75 @@ void AAnomaliaChaosRoadVehicle::SetupPlayerInputComponent(UInputComponent* Playe
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
     PlayerInputComponent->BindAction(TEXT("VehicleIgnition"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIgnition);
+    PlayerInputComponent->BindAction(TEXT("VehicleGearUp"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputGearUp);
+    PlayerInputComponent->BindAction(TEXT("VehicleGearDown"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputGearDown);
+    PlayerInputComponent->BindAction(TEXT("VehicleGearMode"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputGearMode);
+    PlayerInputComponent->BindAction(TEXT("VehicleHandbrake"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputHandbrakeOn);
+    PlayerInputComponent->BindAction(TEXT("VehicleHandbrake"),IE_Released,this,&AAnomaliaChaosRoadVehicle::InputHandbrakeOff);
+    PlayerInputComponent->BindAction(TEXT("VehicleHeadlights"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputHeadlights);
+    PlayerInputComponent->BindAction(TEXT("VehicleIndicatorLeft"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIndicatorLeft);
+    PlayerInputComponent->BindAction(TEXT("VehicleIndicatorRight"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputIndicatorRight);
+    PlayerInputComponent->BindAction(TEXT("VehicleHazards"),IE_Pressed,this,&AAnomaliaChaosRoadVehicle::InputHazardLights);
 }
 void AAnomaliaChaosRoadVehicle::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaChaosRoadVehicle,bEngineRunning);
+    DOREPLIFETIME(AAnomaliaChaosRoadVehicle,bManualGears);
+    DOREPLIFETIME(AAnomaliaChaosRoadVehicle,bHandbrakeHeld);
+    DOREPLIFETIME(AAnomaliaChaosRoadVehicle,bHeadlightsOn);
+    DOREPLIFETIME(AAnomaliaChaosRoadVehicle,IndicatorMode);
+}
+
+bool AAnomaliaChaosRoadVehicle::ExecuteRoadActionOnServer(AController* Driver,EAnomaliaRoadAction Action)
+{
+    if(!HasAuthority() || !IsValid(Driver) || Driver!=GetController() || Driver->GetPawn()!=this || !Driver->IsPlayerController())return false;
+    switch(Action)
+    {
+    case EAnomaliaRoadAction::GearUp:
+    case EAnomaliaRoadAction::GearDown:
+    {
+        if(!IsDriveReady())return false;
+        const int32 Gear=ChaosMovement->GetTargetGear()+(Action==EAnomaliaRoadAction::GearUp?1:-1);
+        if(Gear< -1 || Gear>ChaosMovement->TransmissionSetup.ForwardGearRatios.Num())return false;
+        const float Speed=ChaosMovement->GetForwardSpeed();
+        if((Gear<0 && Speed>100.f)||(Gear>0 && Speed< -100.f))return false;
+        bManualGears=true;ChaosMovement->SetUseAutomaticGears(false);ChaosMovement->SetTargetGear(Gear,false);break;
+    }
+    case EAnomaliaRoadAction::ToggleGearMode:
+        bManualGears=!bManualGears;ChaosMovement->SetUseAutomaticGears(!bManualGears);break;
+    case EAnomaliaRoadAction::HandbrakeOn:bHandbrakeHeld=true;break;
+    case EAnomaliaRoadAction::HandbrakeOff:bHandbrakeHeld=false;break;
+    case EAnomaliaRoadAction::Headlights:bHeadlightsOn=!bHeadlightsOn;break;
+    case EAnomaliaRoadAction::IndicatorLeft:IndicatorMode=IndicatorMode==1?0:1;break;
+    case EAnomaliaRoadAction::IndicatorRight:IndicatorMode=IndicatorMode==2?0:2;break;
+    case EAnomaliaRoadAction::HazardLights:IndicatorMode=IndicatorMode==3?0:3;break;
+    default:return false;
+    }
+    OnRep_RoadControls();ForceNetUpdate();return true;
+}
+void AAnomaliaChaosRoadVehicle::SendRoadAction(EAnomaliaRoadAction Action)
+{
+    if(!IsLocallyControlled())return;
+    if(HasAuthority())ExecuteRoadActionOnServer(GetController(),Action);else ServerRoadAction(Action);
+}
+void AAnomaliaChaosRoadVehicle::ServerRoadAction_Implementation(EAnomaliaRoadAction Action){ExecuteRoadActionOnServer(GetController(),Action);}
+void AAnomaliaChaosRoadVehicle::InputGearUp(){SendRoadAction(EAnomaliaRoadAction::GearUp);}
+void AAnomaliaChaosRoadVehicle::InputGearDown(){SendRoadAction(EAnomaliaRoadAction::GearDown);}
+void AAnomaliaChaosRoadVehicle::InputGearMode(){SendRoadAction(EAnomaliaRoadAction::ToggleGearMode);}
+void AAnomaliaChaosRoadVehicle::InputHandbrakeOn(){SendRoadAction(EAnomaliaRoadAction::HandbrakeOn);}
+void AAnomaliaChaosRoadVehicle::InputHandbrakeOff(){SendRoadAction(EAnomaliaRoadAction::HandbrakeOff);}
+void AAnomaliaChaosRoadVehicle::InputHeadlights(){SendRoadAction(EAnomaliaRoadAction::Headlights);}
+void AAnomaliaChaosRoadVehicle::InputIndicatorLeft(){SendRoadAction(EAnomaliaRoadAction::IndicatorLeft);}
+void AAnomaliaChaosRoadVehicle::InputIndicatorRight(){SendRoadAction(EAnomaliaRoadAction::IndicatorRight);}
+void AAnomaliaChaosRoadVehicle::InputHazardLights(){SendRoadAction(EAnomaliaRoadAction::HazardLights);}
+void AAnomaliaChaosRoadVehicle::OnRep_RoadControls(){UpdateRoadLights();}
+void AAnomaliaChaosRoadVehicle::UpdateRoadLights()
+{
+    for(const auto& Light:Headlights)if(Light)Light->SetVisibility(bHeadlightsOn);
+    const auto* State=GetWorld()?GetWorld()->GetGameState():nullptr;
+    const double Time=State?State->GetServerWorldTimeSeconds():(GetWorld()?GetWorld()->GetTimeSeconds():0);
+    const bool bFlash=FMath::Fmod(Time,.8)<.4;
+    for(int32 Index=0;Index<IndicatorLights.Num();++Index)
+        if(IndicatorLights[Index])IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
 }

@@ -141,6 +141,7 @@ protected:
     virtual bool IsEngineProvidingPower() const { return true; }
     virtual bool IsDriveReady() const { return true; }
     virtual bool CanDriverExitNow() const { return true; }
+    virtual FVector GetDriverExitVelocity() const { return FVector::ZeroVector; }
     virtual float GetExpectedSupportFloorZ() const;
     virtual void SimulateRoadDrive(float DeltaSeconds, float Throttle, float Steering, float Brake,
         bool bPowered, bool bDriverMissing);

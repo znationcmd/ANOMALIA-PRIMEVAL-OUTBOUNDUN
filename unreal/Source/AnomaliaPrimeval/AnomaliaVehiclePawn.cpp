@@ -353,12 +353,15 @@ void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
     FVector ExitLocation;
     FString ExitDiagnostic;
     if(!FindSafeDriverExit(Survivor,ExitLocation,&ExitDiagnostic)){UE_LOG(LogTemp,Warning,TEXT("ANOMALIA vehicle exit refused: %s"),*ExitDiagnostic);return;}
+    const FVector ExitVelocity=GetDriverExitVelocity();
     if(!TransportMovement->IsTransport())Movement->StopMovementImmediately();
     Survivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     Survivor->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
     Survivor->SetActorEnableCollision(true);
     Survivor->SetActorHiddenInGame(false);
     DriverController->Possess(Survivor);
+    if(DriverController->GetPawn()==Survivor && !ExitVelocity.IsNearlyZero())
+        Survivor->LaunchCharacter(ExitVelocity,true,true);
     if (GetController() == nullptr) { ParkedSurvivor.Reset(); ForwardAxis = 0.f; SteeringAxis = 0.f; }
 }
 
