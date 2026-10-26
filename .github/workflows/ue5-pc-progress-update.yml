@@ -28,6 +28,7 @@ on:
       - 'scripts/ue5/world_snapshot.py'
       - 'scripts/ue5/package-playable-windows.py'
       - 'scripts/ue5/run-playable-interactions.py'
+      - 'scripts/ue5/run-chaos-road-review.py'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
       - 'scripts/vehicle-assets/*playable*'

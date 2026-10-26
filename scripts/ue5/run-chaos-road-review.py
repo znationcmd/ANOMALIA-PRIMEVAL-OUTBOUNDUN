@@ -5,7 +5,9 @@ ROOT=Path(__file__).resolve().parents[2]
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True)
-    p.add_argument('--output',type=Path,required=True);args=p.parse_args()
+    p.add_argument('--output',type=Path,required=True)
+    p.add_argument('--record-driving',action='store_true',help='Opt-in continuous viewport recording; can significantly slow rendering')
+    args=p.parse_args()
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env['ANOMALIA_CHAOS_OUTPUT']=str(out)
     project=ROOT/'unreal/AnomaliaPrimeval.uproject'
@@ -20,8 +22,13 @@ def main():
     if report['state']!='REAL_SKELETAL_CHAOS_REVIEW_MAP_SAVED_NOT_DRIVEN' or report['sourceCommit']!=env.get('GITHUB_SHA'):
         raise RuntimeError('Native real rig import not verified: '+str(report.get('error')))
     scope='chaos-smoke-'+uuid.uuid4().hex
+    # Continuous GPU readback + PNG compression stalls this validation host.
+    # Run the unchanged physical acceptance gates without that observer overhead.
+    # Phase/final screenshots are still captured by the probe. Recording is an
+    # explicit additional run, not a condition for proving actual wheel physics.
+    capture=['-AnomaliaRecordDriving'] if args.record_driving else []
     run('drive',[report['map']+'?AnomaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720',
-        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),'-AnomaliaRecordDriving'],900)
+        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),*capture],900)
     drive=json.loads((out/'drive-report.json').read_text(encoding='utf-8-sig'))
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
@@ -33,7 +40,8 @@ def main():
             stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=120,check=False)
         if result.returncode==0:video=str(out/'actual-chaos-driving.mp4')
         else:video_error='Installed video encoder failed; actual viewport frames retained'
-    else:video_error='No installed ffmpeg encoder or insufficient actual viewport frames'
+    else:video_error=('Continuous recording disabled for physics acceptance; actual phase screenshots retained' if not args.record_driving
+        else 'No installed ffmpeg encoder or insufficient actual viewport frames')
     (out/'review-report.json').write_text(json.dumps(dict(state='CHAOS_EDITOR_GAME_PHYSICAL_DRIVE_VERIFIED',
         video=video,videoError=video_error,
         sourceCommit=env.get('GITHUB_SHA'),profileScope=scope,packagedGameTested=False,
