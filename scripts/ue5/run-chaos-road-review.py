@@ -38,6 +38,7 @@ def main():
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
     required={
+        'settled_spring_forces_balance_actual_chassis_weight',
         'rear_wheel_drive_observed_in_actual_wheel_torques',
         'measured_dry_braking_from_50_kmh',
         'measured_dry_braking_from_80_kmh',
@@ -62,8 +63,8 @@ def main():
         raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
     if len(drive.get('brakingMeasurements',[]))!=3:
         raise RuntimeError('Three measured physical braking runs are required')
-    if args.force_suspension and drive.get('constraintSuspensionDisabled')!=1:
-        raise RuntimeError('Force-based suspension diagnostic was not active in the actual game')
+    if drive.get('constraintSuspensionDisabled')!=1:
+        raise RuntimeError('Calibrated force-based suspension was not active in the actual game')
     video=None;video_error=None
     encoder=shutil.which('ffmpeg')
     if encoder and drive.get('recordedViewportFrames',0)>=10:

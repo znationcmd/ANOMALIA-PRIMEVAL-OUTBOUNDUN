@@ -298,6 +298,19 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         { Finish(TEXT("Switched-off engine propels the vehicle or consumes fuel")); return; }
         if(Elapsed>2)
         {
+            float SupportForce=0.f;
+            for(int32 WheelIndex=0;WheelIndex<Physics->Wheels.Num();++WheelIndex)
+            {
+                const auto& Wheel=Physics->GetWheelState(WheelIndex);
+                if(!Wheel.bInContact || Wheel.NormalizedSuspensionLength<.05f || Wheel.NormalizedSuspensionLength>.95f ||
+                   !FMath::IsFinite(Wheel.SpringForce) || Wheel.SpringForce<=0.f)
+                {Finish(TEXT("Parked suspension is not supporting four loaded wheels within travel"));return;}
+                SupportForce+=Wheel.SpringForce;
+            }
+            const float Weight=V->Chassis->GetMass()*FMath::Abs(GetWorld()->GetGravityZ());
+            if(Physics->Wheels.Num()!=4 || FMath::Abs(SupportForce-Weight)>Weight*.15f)
+            {Finish(TEXT("Settled spring forces do not balance actual chassis weight"));return;}
+            Checks.Add(TEXT("settled_spring_forces_balance_actual_chassis_weight"));
             Checks.Add(TEXT("engine_off_blocks_full_accelerator_without_fuel_consumption"));
             if(!V->SetEngineRunningOnServer(PC,true)) { Finish(TEXT("Driver ignition failed")); return; }
             Checks.Add(TEXT("current_driver_can_start_engine_on_server")); Phase=1; PhaseStarted=Now;
@@ -465,7 +478,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Row->SetNumberField(TEXT("accelerationSecondsToTarget"),AccelerationDuration);
             Row->SetNumberField(TEXT("surfaceFriction"),Phase==25?.45:.9);
             BrakingMeasurements.Add(MakeShared<FJsonValueObject>(Row));
-            if(MeanG<.25 || MeanG>1.2 || Contacts<3)
+            const double MinimumMeanG=Phase==25?.25:.5;
+            if(MeanG<MinimumMeanG || MeanG>1.2 || Contacts<3)
             {Finish(TEXT("Measured road braking is outside the declared sedan envelope"));return;}
             if(Phase==21){Checks.Add(TEXT("measured_dry_braking_from_50_kmh"));Phase=22;}
             else if(Phase==23)

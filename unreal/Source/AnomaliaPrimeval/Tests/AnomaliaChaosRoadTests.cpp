@@ -21,6 +21,8 @@ bool FAnomaliaChaosRoadTest::RunTest(const FString&)
     auto* Controller=World->SpawnActor<APlayerController>(); Controller->Possess(Survivor);
     TestTrue(TEXT("Real Chaos component is the movement provider"),Car->GetMovementComponent()==Car->ChaosMovement);
     TestTrue(TEXT("Skeletal chassis is collision root"),Car->GetRootComponent()==Car->Chassis);
+    auto* Wheel=NewObject<UAnomaliaRoadFrontWheel>();
+    TestEqual(TEXT("Engine conversion preserves calibrated spring stiffness"),Wheel->GetPhysicsSuspensionConfig().SpringRate,45000.f);
     TestFalse(TEXT("No rig does not become a fake playable car"),Car->IsChaosDriveReady());
     TestFalse(TEXT("Parked engine starts switched off"),Car->bEngineRunning);
     TestFalse(TEXT("Non-driver cannot start the engine"),Car->SetEngineRunningOnServer(Controller,true));

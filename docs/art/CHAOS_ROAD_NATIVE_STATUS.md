@@ -176,7 +176,8 @@ The initial validation tune used 500 Nm, AWD and a 2x tire friction multiplier.
 The new unbranded road-sedan target uses 1500 kg, 320 Nm and rear-wheel drive,
 with actual front engine torque disabled and rear torque enabled. Tire friction
 multiplier is 1.0. Service brake torque is 1800 Nm front / 1000 Nm rear, handbrake
-2200 Nm rear. Springs are 45000 N/m with 12 cm raise / 10 cm drop, damping 0.6.
+2200 Nm rear. The calibrated spring configuration uses API SpringRate 450,
+converted stiffness 45000 in UE 5.8.3, 12 cm raise / 10 cm drop and damping 0.6.
 Drag coefficient 0.30 and chassis section 182 x 145 cm feed actual aerodynamic
 drag; no downforce is added for road-sedan grip. These are original tuning targets,
 not certified measurements or manufacturer specifications for a named real car.
@@ -189,7 +190,8 @@ The test requires observed rear-only engine torque, actual stops from 50 and
 actual chassis path/time and equivalent mean deceleration, not a programmed stop.
 Lower grip must lengthen stopping distance by at least 30%; the faster dry stop
 must exceed the slower dry stop by at least 50%. Broad road-sedan acceptance range
-is 0.25–1.2g mean deceleration. These checks detect implausible results; they do not
+was initially 0.25–1.2g mean deceleration; the final calibration tightens the dry
+minimum to 0.5g (low-grip minimum remains 0.25g). These checks detect implausible results; they do not
 certify a complete professional tire model or reproduce every real-world condition.
 
 Samples add longitudinal/lateral acceleration, actual contact friction, slip/skid
@@ -269,3 +271,50 @@ and integration mismatch, not a request for more grip. It remains unverified
 until the native values and real driving results are available. A new initial
 upright-settling check rejects an overturned car before crew entry. Successful
 force-mode comparison reports are explicitly marked diagnosticOnly.
+
+### First successful calibrated comparison (reference rig)
+
+Run 40347406045, source 8293ebd, compiled Editor/Game and passed the reference
+vehicle's 25 actual driving checks in the explicit force-suspension comparison.
+Artifact 12661829164 contains its report and real viewport captures. The report
+verifies API SpringRate 450 becomes converted stiffness 45000, preload 5000 and
+damping ratio 0.6. Settled wheel forces total approximately 1,470,000 engine force
+units, matching 1500 kg at gravity 980 cm/s², with normalized suspension lengths
+around 0.60–0.65 instead of full extension. This supports the unit-conversion
+diagnosis; the previous 45000 API value was not a valid calibrated spring rate.
+
+| Measured reference stop | Distance | Time | Equivalent mean deceleration |
+| --- | ---: | ---: | ---: |
+| 50.14 km/h, friction 0.9 | 13.05 m | 1.83 s | 0.758g |
+| 80.27 km/h, friction 0.9 | 31.56 m | 2.81 s | 0.803g |
+| 80.09 km/h, friction 0.45 | 56.89 m | 5.14 s | 0.444g |
+
+Rear-only drive torque, fuel/ignition, manual gears, actual lights, physical
+steering, service/handbrake/reverse and moving exit also passed. Exit was measured
+at 2631.85 cm/s (94.75 km/h), with the original survivor retaining momentum.
+This is an isolated flat-surface comparison, not completed simulation acceptance.
+The original sedan subsequently passed the same 25 checks in that successful
+run, artifact 12662162946. Measured stops: 50.43 km/h in 12.25 m / 1.715 s /
+0.817g; 80.00 km/h in 29.59 m / 2.637 s / 0.851g; reduced grip 80.00 km/h in
+55.91 m / 5.064 s / 0.450g. Actual high-speed exit: 2623.54 cm/s (94.45 km/h),
+with the original survivor retaining momentum. This is measured gameplay with
+the original sedan art, not merely a C++ configuration test.
+
+### Default project integration (native revalidation pending)
+
+The native force-based suspension mode is now selected in DefaultEngine.ini,
+rather than only in a diagnostic command line. The current project has one Chaos
+road movement class; other transport movement implementations remain intact.
+Normal review commands no longer pass the diagnostic override. Reports must still
+verify the effective runtime mode. A new settled-load gate requires four loaded
+wheels within suspension travel and total support within 15% of actual chassis
+weight before ignition. Dry-braking acceptance now requires at least 0.5g, while
+low-grip acceptance retains 0.25g. Both prior measured runs meet these limits, but
+the default configuration and new gate require their own actual native run.
+
+The native test also checks the engine's stiffness conversion to catch a future
+engine change. Force-based suspension does not use constraint hard stops; chassis
+collision remains active. Bumps, bottoming, rough terrain, varying physics rates,
+loads, network play and production roads are not yet accepted. Doors, entry/exit
+animations, photoreal scenery and a newly packaged/installed build remain separate
+unfinished work. No existing installation or save has been replaced.
