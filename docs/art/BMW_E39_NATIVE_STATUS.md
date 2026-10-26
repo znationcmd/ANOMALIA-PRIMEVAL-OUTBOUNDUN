@@ -29,17 +29,54 @@ Source SHA256: `984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d
 - Dedicated E39 import/driving evidence in the existing Windows validation
   workflow; all original sedan driving and driver-door requirements remain.
 
-## Acceptance pending
+## Real UE 5.8.3 acceptance — 2026-10-26
 
-UE import, compilation and real gameplay acceptance are pending the Windows run.
-A prepared GLB is not proof of any of these.
+Code commit: `4a89150609985ae3b03702d834724346f71f2051`.
+[Windows workflow 40394672391](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40394672391)
+completed successfully. The receipt is
+`docs/art/bmw-e39-native-validation-20261026.json`.
 
-The E39 has not been declared a completed playable catalogue vehicle. Its doors,
-hood and trunk are not yet separated/animated; entry/exit animations and exact
-seat placement are unfinished. Interior geometry exists but its visual quality
-must be inspected in actual Unreal captures. Materials are source materials,
-not a claim of photoreal approval. Multiplayer, mechanical persistence, packaged
-Windows acceptance and production-map integration remain incomplete.
+| Stage | Actual result |
+| --- | --- |
+| Local source checks | 126 Python tests; five existing panel-geometry tests pass |
+| glTF preparation | Five parts, zero Khronos errors/warnings; repeat preparation preserves identical files |
+| UE compilation | Editor and Game targets, UE 5.8.3, exit code 0 |
+| Native regression tests | 24 pass: 19 without warnings, five with warnings, zero failures |
+| E39 import | Five meshes imported; body/interior 75,564 triangles/46 materials, each wheel 8,370 triangles/four materials |
+| E39 gameplay | 26 actual Chaos checks pass, 305 physics samples, real rendered screenshots |
+| Existing sedan | Its original driving and seven driver-door acceptance gates pass in the same workflow |
+| Packaged release, multiplayer, installation | Not performed |
+
+Measured dry braking: 50.14 km/h to rest in **12.14 m**, 80.27 km/h
+in **29.47 m**. Lower friction (0.45) at 80.25 km/h requires **56.10 m**.
+These are observations on the controlled proving surface, not a claim that
+an E39-specific simulation profile or real-world BMW performance is complete.
+The car shares the previously calibrated 1500 kg/320 Nm road prototype profile.
+
+The initial attempt (40392007599) imported the E39 successfully but timed out
+without driving measurements: the new map was missing from the native probe's
+explicit map/owned-ground allowlist. The corrected build retains standalone,
+non-shipping, owned-map and random `chaos-smoke-` server-scope guards. Only the
+successful corrected run above is accepted as driving evidence.
+
+## Still unfinished
+
+The E39 is not a completed playable catalogue vehicle. Its doors, hood and trunk
+are not yet separated/animated; entry/exit animations and exact seat placement
+are unfinished. The existing sedan and its functional driver door remain intact.
+The source interior is present, but complete accessibility is not accepted.
+
+Actual screenshots show a recognizable red E39 with its original wheels and
+cabin. Photorealism is **not accepted**: source paint is very glossy, glass is
+dark, source texture detail is limited, and the image uses a plain engineering
+proving surface. No claim of Lumen/Nanite, final PBR presentation or a populated
+photoreal world is made. The host is Intel Iris Xe/D3D11; target-PC performance
+has not been accepted. Continuous video recording is disabled on this test
+host; the retained images are actual Unreal viewport captures.
+
+Manual keyboard/gamepad sessions, multiplayer, mechanical persistence, damage,
+part replacement, wipers, packaged Windows acceptance, production-map and Editor
+catalogue integration remain incomplete. No installation or save was replaced.
 
 ## Reproduce
 
