@@ -62,6 +62,8 @@ public:
     virtual UPawnMovementComponent* GetMovementComponent() const override;
     virtual bool ConfigureVehicle(FName NewVehicleId) override;
     virtual void OnConstruction(const FTransform& Transform) override;
+    virtual void Tick(float DeltaSeconds) override;
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos") bool AreWheelVisualsUpright() const;
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos")
     bool HasValidRoadRig() const;
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos")
@@ -78,5 +80,6 @@ private:
     /** Per-instance chassis collision; never modifies a shared source Physics Asset. */
     UPROPERTY(Transient) TObjectPtr<UPhysicsAsset> RuntimeChassisPhysics;
     FTransform ReferenceBoneTransform(FName Bone) const;
+    void UpdateWheelVisuals();
     void ApplyRoadRig();
 };

@@ -109,6 +109,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     }
     auto* V=Car.Get();
     if(!V || PC->GetPawn()!=V) { Finish(TEXT("Vehicle possession was lost")); return; }
+    if(!V->AreWheelVisualsUpright()) { Finish(TEXT("Visible tire axle is not aligned with the vehicle lateral plane")); return; }
     auto* Physics=V->ChaosMovement.Get();
     const float Speed=Physics->GetForwardSpeed();
     int32 Contacts=0; float Rotation=0;
@@ -128,6 +129,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
         Sample->SetNumberField(TEXT("physicalMassKg"),V->Chassis->GetMass());
+        Sample->SetBoolField(TEXT("visibleTireAxlesUpright"),V->AreWheelVisualsUpright());
         TArray<TSharedPtr<FJsonValue>> WheelGeometry;
         for(int32 WheelIndex=0;WheelIndex<V->WheelBones.Num();++WheelIndex)
         {

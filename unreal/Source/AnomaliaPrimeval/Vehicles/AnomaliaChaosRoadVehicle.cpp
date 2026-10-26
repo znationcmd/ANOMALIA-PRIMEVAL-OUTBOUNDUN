@@ -136,15 +136,9 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         RoadWheels[Index]->SetStaticMesh(bAuthoredWheels?RoadWheelMeshes[Index]:RoadWheelMesh);
         if(WheelBones.IsValidIndex(Index))
         {
-            const FString VisualName=WheelBones[Index].ToString().Replace(TEXT("Phys"),TEXT("Vis"));
-            const FName VisualBone=Chassis->GetBoneIndex(FName(*VisualName))!=INDEX_NONE?FName(*VisualName):WheelBones[Index];
-            RoadWheels[Index]->AttachToComponent(Chassis,FAttachmentTransformRules::SnapToTargetNotIncludingScale,VisualBone);
-            if(bAuthoredWheels && RoadMesh)
-            {
-                const FTransform Reference=ReferenceBoneTransform(VisualBone);
-                RoadWheels[Index]->SetRelativeLocation(Reference.InverseTransformPosition(RoadWheelHubTargetsCm[Index]));
-                RoadWheels[Index]->SetRelativeRotation(Reference.GetRotation().Inverse());
-            }
+            // Static wheel art has its own axle convention. Do not inherit the
+            // rig bone's bind rotation: that laid the reference tires on their sides.
+            RoadWheels[Index]->AttachToComponent(Chassis,FAttachmentTransformRules::SnapToTargetNotIncludingScale);
         }
     }
     ChaosMovement->WheelSetups.Reset();
@@ -191,6 +185,57 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         if(auto* Animation=Cast<UVehicleAnimationInstance>(Chassis->GetAnimInstance()))
             Animation->SetWheeledVehicleComponent(ChaosMovement);
     }
+    UpdateWheelVisuals();
+}
+
+namespace
+{
+    FVector TireAxle(const UStaticMesh* Mesh)
+    {
+        const FVector Extent=Mesh->GetBounds().BoxExtent;
+        if(Extent.X<Extent.Y && Extent.X<Extent.Z)return FVector::ForwardVector;
+        if(Extent.Z<Extent.Y && Extent.Z<Extent.X)return FVector::UpVector;
+        return FVector::RightVector;
+    }
+}
+
+void AAnomaliaChaosRoadVehicle::UpdateWheelVisuals()
+{
+    if(!HasValidRoadRig())return;
+    const bool bAuthored=RoadWheelHubTargetsCm.Num()==4;
+    for(int32 Index=0;Index<RoadWheels.Num();++Index)
+    {
+        UStaticMeshComponent* Visual=RoadWheels[Index];
+        if(!Visual || !Visual->GetStaticMesh())continue;
+        auto* Wheel=ChaosMovement->Wheels.IsValidIndex(Index)?ChaosMovement->Wheels[Index].Get():nullptr;
+        FVector Hub=bAuthored?RoadWheelHubTargetsCm[Index]:ReferenceBoneTransform(WheelBones[Index]).GetTranslation();
+        if(Wheel)Hub.Z+=Wheel->GetSuspensionOffset();
+        const FQuat ArtToAxle=FQuat::FindBetweenNormals(TireAxle(Visual->GetStaticMesh()),FVector::RightVector);
+        // Native Chaos values drive the actual steering, spin and suspension.
+        // No extra bind-pose rotation or duplicated authored hub offset is applied.
+        const FRotator Motion(Wheel?Wheel->GetRotationAngle():0.f,Wheel?Wheel->GetSteerAngle():0.f,0.f);
+        Visual->SetRelativeLocation(Hub);
+        Visual->SetRelativeRotation(Motion.Quaternion()*ArtToAxle);
+    }
+}
+
+bool AAnomaliaChaosRoadVehicle::AreWheelVisualsUpright() const
+{
+    if(RoadWheels.Num()!=4)return false;
+    const FVector Up=Chassis->GetUpVector();
+    for(const auto& Visual:RoadWheels)
+    {
+        if(!Visual || !Visual->GetStaticMesh())return false;
+        const FVector Axle=Visual->GetComponentQuat().RotateVector(TireAxle(Visual->GetStaticMesh()));
+        if(FMath::Abs(FVector::DotProduct(Axle,Up))>.1f)return false;
+    }
+    return true;
+}
+
+void AAnomaliaChaosRoadVehicle::Tick(float DeltaSeconds)
+{
+    Super::Tick(DeltaSeconds);
+    UpdateWheelVisuals();
 }
 
 void AAnomaliaChaosRoadVehicle::OnConstruction(const FTransform& Transform)
