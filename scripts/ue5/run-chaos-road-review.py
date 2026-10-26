@@ -8,6 +8,7 @@ def main():
     p.add_argument('--output',type=Path,required=True)
     p.add_argument('--record-driving',action='store_true',help='Opt-in continuous viewport recording; can significantly slow rendering')
     p.add_argument('--sedan',action='store_true',help='Use the separately imported original sedan art and authored wheel hubs')
+    p.add_argument('--force-suspension',action='store_true',help='Isolated diagnostic: compare native force-based suspension without changing project configuration')
     args=p.parse_args()
     out=args.output.resolve();out.mkdir(parents=True,exist_ok=True)
     env=os.environ.copy();env['ANOMALIA_CHAOS_OUTPUT']=str(out)
@@ -29,8 +30,10 @@ def main():
     # Phase/final screenshots are still captured by the probe. Recording is an
     # explicit additional run, not a condition for proving actual wheel physics.
     capture=['-AnomaliaRecordDriving'] if args.record_driving else []
+    suspension=(['-ini:Engine:[ConsoleVariables]:p.Vehicle.DisableConstraintSuspension=1',
+        '-AnomaliaForceSuspensionReview'] if args.force_suspension else [])
     run('drive',[report['map']+'?AnomaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720',
-        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),*capture],900)
+        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),*capture,*suspension],900)
     drive=json.loads((out/'drive-report.json').read_text(encoding='utf-8-sig'))
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
@@ -59,6 +62,8 @@ def main():
         raise RuntimeError('Current native build must pass depletion/refuel and driver safety checks')
     if len(drive.get('brakingMeasurements',[]))!=3:
         raise RuntimeError('Three measured physical braking runs are required')
+    if args.force_suspension and drive.get('constraintSuspensionDisabled')!=1:
+        raise RuntimeError('Force-based suspension diagnostic was not active in the actual game')
     video=None;video_error=None
     encoder=shutil.which('ffmpeg')
     if encoder and drive.get('recordedViewportFrames',0)>=10:

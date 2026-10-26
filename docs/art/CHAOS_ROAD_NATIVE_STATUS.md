@@ -198,8 +198,9 @@ The longer sequence needs a 2 km wide engineering surface and a larger total
 watchdog; individual driving/braking deadlines and the unrestricted-speed exit
 rule remain. Fuel consumption is restored after the isolated depletion test.
 
-This revision is not yet compiled/tested in Unreal. Previous 21-check results do
-not validate the new calibration. Wet-weather visuals, loose terrain, bumps,
+The calibration revisions have compiled in Unreal, but their driving checks have
+not passed. Previous 21-check results do not validate the new calibration.
+Wet-weather visuals, loose terrain, bumps,
 different loads/tires, high-speed cornering, steering-wheel feel and multiplayer
 still require dedicated driving validation.
 
@@ -212,6 +213,45 @@ threshold require correction. This is not accepted as completed road simulation.
 Revision 322b917 explicitly uses load-dependent tire grip (WheelLoadRatio 1),
 traction control disabled, Ackermann steering, and a 4500 RPM upshift threshold.
 It adds RPM, actual automatic-mode state, aerodynamic drag, damping and per-wheel
-force/load telemetry to diagnose the behaviour. Native validation is pending;
+force/load telemetry to diagnose the behaviour. Its native acceleration check failed;
 the power, mass, friction multiplier and measured-braking criteria are not boosted
 or bypassed to make the check pass.
+
+### Suspension diagnosis and interrupted raycast validation
+
+Run 40320803824 (322b917) compiled Editor/Game but failed the first acceleration
+check with load-dependent grip: approximately 205 cm/s after six seconds, almost
+full suspension extension and very small reported spring forces. This is a failed
+simulation tune, not accepted handling.
+
+Revision 82c98ab transforms the per-instance collision box from component space
+into the root bone's bind space and measures actual world-space body bounds.
+Run 40321876259 compiled but again failed acceleration. The measured reference
+root bind was identity, with the body bottom about 42 cm above the proving ground.
+Thus the reference chassis was not scraping the floor; this change alone did not
+resolve the suspension load problem. The box-space correction remains applicable
+to non-identity rigs.
+
+Revision 3f01104 changes suspension sweeps from spherecasts to native raycasts,
+retaining full load-dependent tire friction and the same physical acceptance
+checks. Run 40322451316 attempt 1 stopped during the compile step; no downloadable
+job log or artifact was available on inspection. Its incomplete step record is
+not evidence of a compiler error or a completed driving test. Attempt 2 was
+requested on 26 October 2026 and picked up by ANOMALIA-PC. Raycast results remain
+pending until that run supplies native compilation and driving evidence.
+
+Attempt 2 now confirms UE 5.8.3 Editor/Game compilation and 24 native tests
+(19 without warnings, five with warnings, zero failed). Artifact 12661103437
+contains the native report. The actual reference driving test still fails in
+phase 1: 221.74 cm/s after six seconds, near-full suspension extension, and the
+chassis collision remains clear of the ground. Artifact 12661760638 contains
+the failed actual driving report. Raycasts alone did not correct the problem.
+
+The next diagnostic explicitly opts the two isolated review processes into
+Chaos's native force-based suspension using a command-line Engine configuration
+override, `p.Vehicle.DisableConstraintSuspension=1`. The probe verifies and records
+the actual variable; a missing or ineffective override fails the comparison.
+Project configuration, other running processes, existing saves and installations
+are unchanged. The test still uses the same mass, torque, load-dependent grip,
+real wheel forces and all driving/braking gates. This is an experiment, not an
+accepted production configuration or a claim that handling is fixed.

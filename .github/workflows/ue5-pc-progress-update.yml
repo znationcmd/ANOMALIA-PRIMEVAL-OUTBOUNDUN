@@ -90,7 +90,7 @@ jobs:
         run: |
           $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
           $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/chaos"
-          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --force-suspension
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()
@@ -128,7 +128,7 @@ jobs:
           $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan-drive"
           & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --sedan
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --sedan --force-suspension
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - uses: actions/upload-artifact@v4
         if: always()

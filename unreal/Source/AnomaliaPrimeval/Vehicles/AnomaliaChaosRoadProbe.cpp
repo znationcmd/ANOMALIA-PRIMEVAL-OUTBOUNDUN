@@ -25,6 +25,7 @@
 #include "Misc/Paths.h"
 #include "HAL/FileManager.h"
 #include "HAL/PlatformMisc.h"
+#include "HAL/IConsoleManager.h"
 #include "Dom/JsonObject.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -52,6 +53,14 @@ void AAnomaliaChaosRoadProbe::BeginPlay()
     SetActorTickEnabled(bEnabled);
     if(bEnabled)
     {
+        // Observe a process-local startup override; never modify the shared
+        // project/engine configuration or disable suspension forces themselves.
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaForceSuspensionReview")))
+        {
+            const auto* Setting=IConsoleManager::Get().FindConsoleVariable(TEXT("p.Vehicle.DisableConstraintSuspension"));
+            if(!Setting || Setting->GetInt()!=1)
+            {Finish(TEXT("Requested force-suspension comparison is not active"));return;}
+        }
         DrySurface=NewObject<UPhysicalMaterial>(this);DrySurface->Friction=.9f;DrySurface->StaticFriction=.9f;DrySurface->Restitution=0;
         LowGripSurface=NewObject<UPhysicalMaterial>(this);LowGripSurface->Friction=.45f;LowGripSurface->StaticFriction=.45f;LowGripSurface->Restitution=0;
         for(TActorIterator<AStaticMeshActor> It(GetWorld());It;++It)
@@ -92,6 +101,8 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     Report->SetNumberField(TEXT("exitVehicleSpeedCmPerSecond"),ExitVehicleSpeed);
     Report->SetNumberField(TEXT("observedExitCharacterSpeedCmPerSecond"),ObservedExitSpeed);
     Report->SetArrayField(TEXT("brakingMeasurements"),BrakingMeasurements);
+    if(const auto* Setting=IConsoleManager::Get().FindConsoleVariable(TEXT("p.Vehicle.DisableConstraintSuspension")))
+        Report->SetNumberField(TEXT("constraintSuspensionDisabled"),Setting->GetInt());
     if(Car.IsValid())
     {
         auto Profile=MakeShared<FJsonObject>();
