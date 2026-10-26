@@ -195,7 +195,11 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         Shape.Y=FMath::Clamp(float(ArtBounds.BoxExtent.Y)*1.5f,60.f,400.f);
         Shape.Z=FMath::Clamp(float(ArtBounds.BoxExtent.Z),20.f,60.f);
         // Keep the underside above the contact patch; wheels carry the vehicle.
-        Shape.Center=FVector(ArtBounds.Origin.X,ArtBounds.Origin.Y,WheelRadiusCm*.5f+Shape.Z*.5f);
+        const FTransform RootBind=ReferenceBoneTransform(RootBone);
+        // Art bounds are component-space; a Physics Asset shape is bone-space.
+        // Cancel the actual root bind rotation instead of assuming identity.
+        Shape.Center=RootBind.InverseTransformPosition(FVector(ArtBounds.Origin.X,ArtBounds.Origin.Y,WheelRadiusCm*.5f+Shape.Z*.5f));
+        Shape.Rotation=RootBind.InverseTransformRotation(FQuat::Identity).Rotator();
         ChassisBody->AggGeom.BoxElems.Add(Shape);
         RuntimeChassisPhysics->SkeletalBodySetups.Add(ChassisBody);
         RuntimeChassisPhysics->BoundsBodies.Add(0);

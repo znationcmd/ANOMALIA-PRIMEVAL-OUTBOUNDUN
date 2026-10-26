@@ -13,6 +13,8 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMeshActor.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
+#include "PhysicsEngine/BodyInstance.h"
+#include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "EngineUtils.h"
@@ -99,6 +101,7 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
         Profile->SetBoolField(TEXT("rearWheelDriveObserved"),bRearDriveObserved);
         Profile->SetNumberField(TEXT("linearDamping"),Car->Chassis->GetLinearDamping());
         Profile->SetNumberField(TEXT("angularDamping"),Car->Chassis->GetAngularDamping());
+        Profile->SetStringField(TEXT("rootBindTransform"),Car->RoadMesh->GetRefSkeleton().GetRefBonePose()[0].ToString());
         Report->SetObjectField(TEXT("vehicleProfile"),Profile);
     }
     TArray<TSharedPtr<FJsonValue>> Rows;
@@ -212,6 +215,13 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Sample->SetNumberField(TEXT("pitch"),V->GetActorRotation().Pitch);
         Sample->SetNumberField(TEXT("roll"),V->GetActorRotation().Roll);
         Sample->SetNumberField(TEXT("physicalMassKg"),V->Chassis->GetMass());
+        if(auto* Body=V->Chassis->GetBodyInstance())
+        {
+            const FBox Bounds=Body->GetBodyBounds();
+            Sample->SetNumberField(TEXT("physicsBodyBottomZ"),Bounds.Min.Z);
+            Sample->SetNumberField(TEXT("physicsBodyTopZ"),Bounds.Max.Z);
+            Sample->SetNumberField(TEXT("physicsCenterOfMassZ"),Body->GetCOMPosition().Z);
+        }
         Sample->SetNumberField(TEXT("longitudinalAccelerationG"),FVector::DotProduct(Acceleration,V->GetActorForwardVector())/980.665);
         Sample->SetNumberField(TEXT("lateralAccelerationG"),FVector::DotProduct(Acceleration,V->GetActorRightVector())/980.665);
         Sample->SetBoolField(TEXT("visibleTireAxlesUpright"),V->AreWheelVisualsUpright());
