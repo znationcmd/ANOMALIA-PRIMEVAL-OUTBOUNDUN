@@ -46,6 +46,12 @@ erreur C2065 dans le nouveau composant. La macro DOREPLIFETIME attend le paramè
 OutLifetimeProps ; le paramètre avait un autre nom. Correction soumise ensuite.
 Aucun test d'ouverture en jeu n'a été exécuté par cet essai échoué.
 
+Les journaux montrent aussi des configurations suivies modifiées dans le checkout
+du PC de validation avant récupération du code. La chaîne sauvegarde désormais
+les fichiers suivis modifiés et leur patch hors du checkout avant l'étape de
+changement de version ; chaque copie est vérifiée par empreinte. Une sauvegarde
+existante n'est jamais remplacée. Cette protection n'altère pas le jeu installé.
+
 ## Non terminé
 
 Les trois autres portières, capot et coffre restent intégrés à la carrosserie.

@@ -53,6 +53,32 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Preserve local tracked edits before changing the validation checkout
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if (Test-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE '.git')) {
+            $anomaliaChanges=@(& git -c core.quotepath=false -C "$env:GITHUB_WORKSPACE" diff --name-only HEAD -- .)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect existing validation edits' }
+            if ($anomaliaChanges.Count -gt 0) {
+              $anomaliaBackup=Join-Path (Split-Path -Parent $env:GITHUB_WORKSPACE) "ANOMALIA-validation-backups/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              if (Test-Path -LiteralPath $anomaliaBackup) { throw 'Existing backup preserved; refusing replacement' }
+              New-Item -ItemType Directory -Path $anomaliaBackup | Out-Null
+              foreach ($anomaliaRelative in $anomaliaChanges) {
+                $anomaliaSource=Join-Path $env:GITHUB_WORKSPACE $anomaliaRelative
+                if (Test-Path -LiteralPath $anomaliaSource -PathType Leaf) {
+                  $anomaliaCopy=Join-Path (Join-Path $anomaliaBackup 'files') $anomaliaRelative
+                  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $anomaliaCopy) | Out-Null
+                  Copy-Item -LiteralPath $anomaliaSource -Destination $anomaliaCopy
+                  if ((Get-FileHash -LiteralPath $anomaliaSource).Hash -ne (Get-FileHash -LiteralPath $anomaliaCopy).Hash) { throw 'Local edit backup verification failed' }
+                }
+              }
+              $anomaliaPatch=(& git -C "$env:GITHUB_WORKSPACE" diff --binary HEAD -- .) -join "`n"
+              if ($LASTEXITCODE -ne 0) { throw 'Cannot preserve tracked deletion/index state' }
+              [System.IO.File]::WriteAllText((Join-Path $anomaliaBackup 'tracked-edits.patch'),$anomaliaPatch+"`n",(New-Object System.Text.UTF8Encoding($false)))
+              Write-Host "Preserved local tracked edits outside checkout: $anomaliaBackup"
+            }
+          }
       - uses: actions/checkout@v4
         with:
           clean: false
