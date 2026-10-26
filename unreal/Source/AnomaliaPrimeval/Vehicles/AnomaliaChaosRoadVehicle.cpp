@@ -223,11 +223,18 @@ bool AAnomaliaChaosRoadVehicle::AreWheelVisualsUpright() const
 {
     if(RoadWheels.Num()!=4)return false;
     const FVector Up=Chassis->GetUpVector();
-    for(const auto& Visual:RoadWheels)
+    for(int32 Index=0;Index<RoadWheels.Num();++Index)
     {
+        const auto& Visual=RoadWheels[Index];
         if(!Visual || !Visual->GetStaticMesh())return false;
         const FVector Axle=Visual->GetComponentQuat().RotateVector(TireAxle(Visual->GetStaticMesh()));
         if(FMath::Abs(FVector::DotProduct(Axle,Up))>.1f)return false;
+        auto* Wheel=ChaosMovement->Wheels.IsValidIndex(Index)?ChaosMovement->Wheels[Index].Get():nullptr;
+        const FQuat Steer=FRotator(0,Wheel?Wheel->GetSteerAngle():0.f,0).Quaternion();
+        const FVector Expected=Chassis->GetComponentQuat().RotateVector(Steer.RotateVector(FVector::RightVector));
+        // Allow one frame of steering interpolation; reject a 90-degree
+        // sideways mounting even when the tire itself is standing upright.
+        if(FMath::Abs(FVector::DotProduct(Axle,Expected))<.95f)return false;
     }
     return true;
 }
