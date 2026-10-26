@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
-  "updated": "2026-10-21",
+  "updated": "2026-10-26",
   "purpose": "Requirements index only. The compiled generic catalogue remains separate.",
-  "groupedRequestCount": 210,
+  "groupedRequestCount": 229,
   "individualVariantCount": null,
   "registers": [
     {
@@ -12,6 +12,10 @@
     {
       "file": "requested-models-2026-10-21.json",
       "groupedRequestCount": 54
+    },
+    {
+      "file": "requested-models-2026-10-26.json",
+      "groupedRequestCount": 19
     }
   ],
   "variantPolicy": "A grouped request can contain multiple variants. No count of individually implemented vehicles is inferred.",

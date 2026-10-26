@@ -18,7 +18,7 @@ LINKS={
  'naval_landing_craft_air_cushion':['lcac'],
  'submarines_classe_seawolf':['seawolf']
 }
-LABELS={'military_aircraft':'Avions militaires','military_helicopters':'Hélicoptères militaires','naval':'Navires militaires','submarines':'Sous-marins','military_motorcycles':'Motos militaires','armored_tactical':'Chars et blindés','military_trucks':'Camions militaires','air_defense':'Défense antiaérienne','anti_tank':'Véhicules antichars','coastal_defense':'Défense côtière','civilian_and_utility_aliases':'Véhicules et alias supplémentaires','audi':'Audi','mercedes_benz':'Mercedes-Benz','bmw':'BMW','bmw_3_generations':'BMW Série 3 par génération','bmw_5_generations':'BMW Série 5 par génération','bmw_7_generations':'BMW Série 7 par génération','bmw_iconic_coupes':'BMW coupés','bmw_x_generations':'BMW X par génération'}
+LABELS={'user_expansion_20261026':'Demandes complémentaires du 26 octobre 2026','military_aircraft':'Avions militaires','military_helicopters':'Hélicoptères militaires','naval':'Navires militaires','submarines':'Sous-marins','military_motorcycles':'Motos militaires','armored_tactical':'Chars et blindés','military_trucks':'Camions militaires','air_defense':'Défense antiaérienne','anti_tank':'Véhicules antichars','coastal_defense':'Défense côtière','civilian_and_utility_aliases':'Véhicules et alias supplémentaires','audi':'Audi','mercedes_benz':'Mercedes-Benz','bmw':'BMW','bmw_3_generations':'BMW Série 3 par génération','bmw_5_generations':'BMW Série 5 par génération','bmw_7_generations':'BMW Série 7 par génération','bmw_iconic_coupes':'BMW coupés','bmw_x_generations':'BMW X par génération'}
 
 def build():
     folder=ROOT/'docs/vehicles';index=json.loads((folder/'requested-models-index.json').read_text());rows=[];earlier=[]

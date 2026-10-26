@@ -16,6 +16,7 @@
 #include "Engine/StaticMeshActor.h"
 #include "PhysicalMaterials/PhysicalMaterial.h"
 #include "PhysicsEngine/BodyInstance.h"
+#include "PhysicsEngine/PhysicsSettings.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
@@ -153,6 +154,10 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     TArray<TSharedPtr<FJsonValue>> Rows;
     for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
     Report->SetArrayField(TEXT("checks"),Rows); Report->SetArrayField(TEXT("physicsSamples"),Samples);
+    Report->SetArrayField(TEXT("stationarySamples"),IdleSamples);
+    Report->SetBoolField(TEXT("stationaryReviewed"),bIdleReviewed);
+    Report->SetBoolField(TEXT("asyncPhysics"),UPhysicsSettings::Get()->bTickPhysicsAsync);
+    Report->SetNumberField(TEXT("asyncFixedTimeStepSize"),UPhysicsSettings::Get()->AsyncFixedTimeStepSize);
     FString Raw; FJsonSerializer::Serialize(Report,TJsonWriterFactory<>::Create(&Raw));
     IFileManager::Get().MakeDirectory(*FPaths::GetPath(ReportFile),true);
     FFileHelper::SaveStringToFile(Raw,*ReportFile);
@@ -282,6 +287,28 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(FVector::DotProduct(V->Chassis->GetUpVector(),FVector::UpVector)<.85f)
         {Finish(TEXT("Review chassis did not settle upright before driving"));return;}
         if(V->Movement->IsComponentTickEnabled()) { Finish(TEXT("Legacy floating movement is still enabled")); return; }
+        if(!bIdleReviewed)
+        {
+            if(!UPhysicsSettings::Get()->bTickPhysicsAsync || !FMath::IsNearlyEqual(UPhysicsSettings::Get()->AsyncFixedTimeStepSize,1.f/120.f,.000001f))
+            {Finish(TEXT("Fixed asynchronous physics cadence is not configured"));return;}
+            if(IdleStarted==0){IdleStarted=Now;IdleStartLocation=V->GetActorLocation();}
+            const FVector Velocity=V->Chassis->GetPhysicsLinearVelocity();
+            if(Now-LastIdleSample>=.2)
+            {
+                auto Sample=MakeShared<FJsonObject>();Sample->SetNumberField(TEXT("seconds"),Now-IdleStarted);
+                Sample->SetNumberField(TEXT("frameDeltaSeconds"),DeltaSeconds);
+                Sample->SetStringField(TEXT("location"),V->GetActorLocation().ToString());
+                Sample->SetStringField(TEXT("velocity"),Velocity.ToString());
+                Sample->SetNumberField(TEXT("speedCmPerSecond"),Velocity.Size());
+                Sample->SetNumberField(TEXT("driftCm"),FVector::Dist(V->GetActorLocation(),IdleStartLocation));
+                IdleSamples.Add(MakeShared<FJsonValueObject>(Sample));LastIdleSample=Now;
+            }
+            if(Velocity.Size()>100.f || FVector::Dist(V->GetActorLocation(),IdleStartLocation)>50.f)
+            {Finish(FString::Printf(TEXT("Unoccupied stationary chassis is unstable before opening panels: velocity=%s location=%s"),
+                *Velocity.ToString(),*V->GetActorLocation().ToString()));return;}
+            if(Now-IdleStarted<20)return;
+            Checks.Add(TEXT("unoccupied_chassis_stable_for_20_seconds_with_fixed_async_physics"));bIdleReviewed=true;
+        }
         if(V->DriverDoorMesh && !bDriverDoorReviewed)
         {
             auto* Door=V->DriverDoor.Get();

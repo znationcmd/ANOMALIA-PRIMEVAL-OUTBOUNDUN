@@ -1,11 +1,59 @@
 # BMW E39 — same model, native driving and driver door
 
 Current work: the remaining three doors, bonnet and boot lid are prepared in
-`BMWE39Review_v3`, with eleven parts total. The previous driver leaf and all
+`BMWE39Review_v5`, with eleven parts total. The previous driver leaf and all
 four wheels are byte-identical. Horizontal/vertical axes and five stable extra
-panel components are wired into the native actor. New Windows import, motion,
-collision and regression acceptance is pending; the verified v2 results below
-do not yet validate these five new panels.
+panel components are wired into the native actor.
+
+First all-panel attempt, code `44246f7115d4fce34417c923654dac46ac4094ae`,
+[workflow 40404336275](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40404336275),
+compiled both targets and passed native tests/reference driving. It imported
+all eleven E39 parts, verified the driver/front-passenger doors, then failed
+on targeted rear-left opening. That failure is not whole-vehicle acceptance.
+
+Correction `1bdccbdd92c6a2f70e4afadb0eadad15158a4a50` uses real rear-door
+surface targets in the test fixture instead of bounding-box centres, which
+can lie behind one-sided interior geometry. Gameplay still requires the actual
+server ray hit, distance and player validation. New painted panels gain inward
+1.2 mm metal skins and edge strips; glass gains 1.5 mm inner skins. Original exterior
+area conservation and added shell area/counts are recorded separately. The
+source, driver leaf and wheels remain intact. Local validation: 126 Python
+checks, nine geometry tests, eleven GLBs with zero Khronos errors/warnings.
+The v4 native run
+[40407227685](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40407227685)
+compiled both targets and passed 24 native tests/reference driving, but its
+original-bounds gate rejected an overly thick added mirror-housing skin.
+Current correction `ffcf39b5923f3fff0c5addc7c405fafb58b32967` uses 1.2 mm metal;
+the composed local envelope matches the original to under 0.000001 cm, while
+the unchanged native tolerance remains 1 cm. No production art was overwritten.
+The v5 run
+[40408724048](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40408724048)
+passed compilation, native tests, import and the original-bounds gate. Driver,
+front-passenger and rear-left cycles passed. Rear-right opened but its closing
+interaction failed; the final viewport shows the chassis had been launched.
+That is a failed physical test, not accepted gameplay.
+
+The next correction keeps moving leaves out of the rigid-body solver with
+`QueryOnly` collision, retaining character sweeps, visible mesh interaction
+rays and obstruction queries. They are kinematic animated leaves; neither
+mass nor impulses should be coupled back into the chassis. Native review now
+requires the same policy for all six leaves, capsule-sweep blocking when closed,
+a clear swept aperture when open, and chassis drift/speed bounds during every
+extra-panel cycle. Run
+[40410289425](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40410289425),
+code `2e9d90ac2766739c5dda93fca0c0dc3f4bf746bc`, compiled Editor/Game and
+passed native tests/reference driving. Its stronger gate failed at front-right:
+5.76 cm chassis drift and 121.40 cm/s speed. Query-only leaf collision therefore
+does not establish that the stationary instability is fixed.
+
+Next validation configures native asynchronous physics at 120 Hz, independent
+of rendering/readback stalls, and adds a twenty-second unoccupied stationary
+observation before any panel interaction on every review vehicle. It records
+idle samples and the actual loaded physics settings; all previous contact,
+driving, opening, capsule-collision and stability gates remain required.
+This latest physics configuration and extended idle gate are not yet compiled
+or accepted; do not report the E39 as completed. The verified v2 results below do not validate these changes
+or the five new panels.
 
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute

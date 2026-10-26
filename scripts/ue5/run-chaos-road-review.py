@@ -41,6 +41,7 @@ def main():
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))
     required={
+        'unoccupied_chassis_stable_for_20_seconds_with_fixed_async_physics',
         'settled_spring_forces_balance_actual_chassis_weight',
         'rear_wheel_drive_observed_in_actual_wheel_torques',
         'measured_dry_braking_from_50_kmh',
@@ -77,6 +78,8 @@ def main():
         expected={'door_front_right','door_rear_left','door_rear_right','hood','trunk'}
         if set(drive.get('validatedAdditionalPanelIds',[]))!=expected:
             raise RuntimeError('All five additional E39 panels must pass real moving-collision checks')
+    if not drive.get('stationaryReviewed') or not drive.get('asyncPhysics') or abs(drive.get('asyncFixedTimeStepSize',0)-1/120)>1e-6:
+        raise RuntimeError('Stationary acceptance requires real fixed-cadence asynchronous physics')
     if drive.get('constraintSuspensionDisabled')!=1:
         raise RuntimeError('Calibrated force-based suspension was not active in the actual game')
     video=None;video_error=None

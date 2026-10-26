@@ -27,6 +27,10 @@ private:
     int32 AdditionalPanelIndex=0;
     TArray<FString> ValidatedAdditionalPanelIds;
     TWeakObjectPtr<UAnomaliaVehiclePanelComponent> PanelUnderReview;
+    bool bIdleReviewed=false;
+    double IdleStarted=0,LastIdleSample=0;
+    FVector IdleStartLocation=FVector::ZeroVector;
+    TArray<TSharedPtr<FJsonValue>> IdleSamples;
     FVector PanelReviewStart=FVector::ZeroVector;
     float PanelMaxDriftCm=0,PanelMaxSpeedCmPerSecond=0;
     FVector PanelAimInMeshCm=FVector::ZeroVector;

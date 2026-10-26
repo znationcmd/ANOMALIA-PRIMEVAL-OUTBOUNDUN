@@ -8,6 +8,18 @@ ci-dessous décrivent le mécanisme précédent, actuellement suspendu.
 Branche de travail/livraison : `ue5/reactive-world-expeditions-20261025`.
 Pull Request : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/38
 
+## Demandes complémentaires conservées — 26 octobre 2026
+
+Les 19 précisions/modèles supplémentaires sont enregistrés dans
+`docs/vehicles/requested-models-2026-10-26.json` ; la liste consolidée conserve
+229 demandes groupées, les demandes génériques antérieures et le métro.
+L'enregistrement ne vaut ni import ni validation jouable. La même E39 doit être
+terminée avant les autres véhicules. La grande prison complète avec promenade
+est décrite dans `MAJOR_PRISON_REQUIREMENTS_20261026.md`, à réaliser ensuite.
+L'état réel de l'E39 et de ses essais est suivi dans
+`docs/art/BMW_E39_NATIVE_STATUS.md` ; les validations historiques ci-dessous
+ne constituent pas l'acceptation des nouveaux ouvrants.
+
 ## Dernière validation réelle — portière conducteur, 26 octobre 2026
 
 Source `ba6cf00dc9c4c1c7ccccdc9a6bbb4027489946ba`, exécution réussie
