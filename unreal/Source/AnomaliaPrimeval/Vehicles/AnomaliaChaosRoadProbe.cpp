@@ -197,12 +197,15 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();
         FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaAdditionalPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
         const bool bHit=GetWorld()->LineTraceSingleByChannel(Hit,Point+Outward*180,Point-Outward*50,ECC_Visibility,Query);
+        FHitResult PawnHit;
+        const bool bPawnHit=GetWorld()->SweepSingleByChannel(PawnHit,Point+Outward*180,Point-Outward*50,FQuat::Identity,
+            ECC_Pawn,FCollisionShape::MakeCapsule(5.f,10.f),Query);
         const FString Id=Panel->PanelId.ToString();
         if(Phase==40)
         {
             const FQuat Expected(Panel->LocalHingeAxis.GetSafeNormal(),FMath::DegreesToRadians(Panel->OpenAngleDegrees));
             if(!Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees-Panel->OpenAngleDegrees)>1.f ||
-               !Panel->GetRelativeTransform().GetRotation().Equals(Expected,.01f) || !Panel->IsVisible() || (bHit && Hit.GetComponent()==Panel))
+               !Panel->GetRelativeTransform().GetRotation().Equals(Expected,.01f) || !Panel->IsVisible() || (bHit && Hit.GetComponent()==Panel) || (bPawnHit && PawnHit.GetComponent()==Panel))
             {Finish(TEXT("Additional panel failed real axis/open-aperture check: ")+Id);return;}
             Checks.Add(TEXT("panel_")+Id+TEXT("_rotates_on_authored_axis_and_clears_access"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-panel-")+Id+TEXT("-open.png")),false,false);
@@ -218,7 +221,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             Phase=41;PhaseStarted=Now;return;
         }
         if(Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees)>1.f ||
-           !Panel->GetRelativeTransform().GetRotation().Equals(FQuat::Identity,.01f) || !bHit || Hit.GetComponent()!=Panel)
+           !Panel->GetRelativeTransform().GetRotation().Equals(FQuat::Identity,.01f) || !bHit || Hit.GetComponent()!=Panel || !bPawnHit || PawnHit.GetComponent()!=Panel)
         {Finish(TEXT("Additional panel failed closed collision restoration: ")+Id);return;}
         Checks.Add(TEXT("panel_")+Id+TEXT("_closes_and_restores_real_collision"));
         ValidatedAdditionalPanelIds.Add(Id);++AdditionalPanelIndex;Phase=0;PhaseStarted=Now-4;
@@ -380,6 +383,10 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaAdditionalPanelClosed),false);Query.AddIgnoredActor(S);FHitResult Hit;
                 if(!GetWorld()->LineTraceSingleByChannel(Hit,Point+Outward*180,Point-Outward*50,ECC_Visibility,Query) || Hit.GetComponent()!=Panel)
                 {Finish(TEXT("Closed panel does not block the authored access trace: ")+Id.ToString());return;}
+                FHitResult PawnHit;
+                if(!GetWorld()->SweepSingleByChannel(PawnHit,Point+Outward*180,Point-Outward*50,FQuat::Identity,
+                    ECC_Pawn,FCollisionShape::MakeCapsule(5.f,10.f),Query) || PawnHit.GetComponent()!=Panel)
+                {Finish(TEXT("Closed panel does not block a character collision sweep: ")+Id.ToString());return;}
                 Panel->bLocked=true;
                 if(Panel->TryToggle(S) || Panel->bOpen){Finish(TEXT("Locked panel accepted targeted opening"));return;}
                 Panel->bLocked=false;Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_closed_collision_and_server_lock_verified"));
