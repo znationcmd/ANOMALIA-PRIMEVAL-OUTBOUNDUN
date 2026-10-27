@@ -174,9 +174,6 @@ try:
         if a.get_actor_label()=="ANOMALIA test floor":
             a.set_actor_scale3d(unreal.Vector(200,200,.2))
     actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
-    settings=unreal.get_default_object(unreal.LevelEditorPlaySettings)
-    settings.set_editor_property("play_number_of_clients",1)
-    settings.set_editor_property("play_net_mode",unreal.PlayNetMode.PIE_STANDALONE)
     w=worlds.get_editor_world()
     for command in ("r.DynamicGlobalIlluminationMethod 0","r.ReflectionMethod 0",
                     "r.Shadow.Virtual.Enable 0","r.Nanite 0","t.MaxFPS 30"):
