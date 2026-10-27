@@ -36,7 +36,7 @@ jobs:
           const blocked=chosen.filter(s=>!priority.some(id=>s.id.startsWith(id))).map(s=>({id:s.id,reason:'Deferred large pack: low disk space; source left in cache'}));
           const selected=chosen.filter(s=>priority.some(id=>s.id.startsWith(id))).sort((a,b)=>priority.findIndex(id=>a.id.startsWith(id))-priority.findIndex(id=>b.id.startsWith(id)));
           let bytes=0;
-          for(const s of selected){s.files=files(s.dir);for(const p of s.files)bytes+=fs.statSync(p).size;}
+          for(const s of selected){s.files=files(s.dir).filter(p=>!/[.](zip|7z|rar)$/i.test(p));for(const p of s.files)bytes+=fs.statSync(p).size;}
           const stat=fs.statfsSync(path.parse(root).root);const free=stat.bavail*stat.bsize;
           if(bytes>20*1024**3||free<bytes+10*1024**3)throw Error('Insufficient staging budget: '+bytes+' bytes; free '+free);
           const report={time:new Date().toISOString(),sourceBytes:bytes,deferredSources:blocked,sourcePacks:[],imports:[],originalSourcesModified:false,publicAssetUpload:false};
