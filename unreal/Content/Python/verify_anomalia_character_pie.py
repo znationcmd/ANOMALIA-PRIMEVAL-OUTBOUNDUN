@@ -52,7 +52,7 @@ def finish(error=None):
 
 def phase(name):
     s["phase"] = name
-    s["phase_at"] = time.monotonic()
+    s["phase_at"] = unreal.GameplayStatics.get_time_seconds(s["world"])
 
 def begin_actor():
     name = names[s["index"]]
@@ -99,7 +99,13 @@ def tick(delta):
             report["world"]=w.get_path_name()
             begin_actor()
             return
-        actor=s["actor"];row=s["row"];elapsed=now-s["phase_at"]
+        actor=s["actor"];row=s["row"];elapsed=unreal.GameplayStatics.get_time_seconds(s["world"])-s["phase_at"]
+        row["runtimeMovementMode"]=str(s["movement"].get_editor_property("movement_mode"))
+        row["runtimeMaxWalkSpeedCmS"]=s["movement"].get_editor_property("max_walk_speed")
+        row["inputIgnored"]=actor.is_move_input_ignored()
+        row["lastPositionCm"]=pos(actor)
+        row["phase"]=s["phase"]
+        row["phaseSimulationSeconds"]=elapsed
         velocity=actor.get_velocity()
         speed=(velocity.x**2+velocity.y**2)**0.5
         t=s["mesh"].get_bone_transform("hand_l",unreal.RelativeTransformSpace.RTS_COMPONENT).translation
@@ -184,7 +190,7 @@ try:
     actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
     w=worlds.get_editor_world()
     for command in ("r.DynamicGlobalIlluminationMethod 0","r.ReflectionMethod 0",
-                    "r.Shadow.Virtual.Enable 0","r.Nanite 0","t.MaxFPS 30"):
+                    "r.Shadow.Virtual.Enable 0","r.Nanite 0","t.MaxFPS 30","t.IdleWhenNotForeground 0","Slate.bAllowThrottling 0"):
         unreal.SystemLibrary.execute_console_command(w,command)
     editor.editor_request_begin_play()
     s["handle"]=unreal.register_slate_post_tick_callback(tick)
