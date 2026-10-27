@@ -40,6 +40,8 @@ try:
         a=actors.spawn_actor_from_class(cls,unreal.Vector(*location))
         a.set_actor_label(label);a.tags=[unreal.Name(OWNER)];return a
     car=spawn(unreal.AnomaliaChaosRoadVehicle,(0,0,100))
+    car.get_editor_property('survival_systems').set_editor_property('enabled',E39)
+    if E39:car.get_editor_property('survival_systems').set_editor_property('battery_access_panel',unreal.Name('trunk'))
     # This licensed template is a physics fixture, not the requested final sedan.
     car.set_editor_property('road_mesh',mesh);car.set_editor_property('road_animation',animation)
     car.set_editor_property('road_body_mesh',body_art);car.set_editor_property('road_wheel_mesh',tire)

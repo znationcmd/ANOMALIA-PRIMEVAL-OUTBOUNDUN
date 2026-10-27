@@ -5,6 +5,8 @@
 #include "ChaosVehicleWheel.h"
 #include "AnomaliaChaosRoadVehicle.generated.h"
 
+class UAnomaliaVehicleSurvivalComponent;
+class UAnomaliaInventoryComponent;
 class UChaosWheeledVehicleMovementComponent;
 class USkeletalMeshComponent;
 class USkeletalMesh;
@@ -58,6 +60,8 @@ class ANOMALIAPRIMEVAL_API AAnomaliaChaosRoadVehicle : public AAnomaliaVehiclePa
     GENERATED_BODY()
 public:
     AAnomaliaChaosRoadVehicle();
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Vehicle|Maintenance") TObjectPtr<UAnomaliaVehicleSurvivalComponent> SurvivalSystems;
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Vehicle|Cargo") TObjectPtr<UAnomaliaInventoryComponent> CargoInventory;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
     TObjectPtr<USkeletalMeshComponent> Chassis;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
@@ -140,4 +144,6 @@ private:
     FTransform ReferenceBoneTransform(FName Bone) const;
     void UpdateWheelVisuals();
     void ApplyRoadRig();
+    UFUNCTION() void UpdateCargoPhysicalMass();
+    float LastCargoMassKg=-1.f;
 };

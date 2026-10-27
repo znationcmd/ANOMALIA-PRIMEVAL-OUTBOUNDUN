@@ -1,4 +1,5 @@
 #include "AnomaliaSurvivor.h"
+#include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaDoorActor.h"
@@ -369,3 +370,18 @@ void AAnomaliaSurvivor::InputCamera()
     CameraBoom->SocketOffset=First?FVector(0,0,65):FVector::ZeroVector;
 }
 
+
+
+bool AAnomaliaSurvivor::RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount)
+{
+    if(!IsLocallyControlled()||!Vehicle)return false;
+    if(HasAuthority())ServerVehicleService_Implementation(Vehicle,Action,StackId,ExpectedCount);
+    else ServerVehicleService(Vehicle,Action,StackId,ExpectedCount);return true;
+}
+void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount)
+{
+    if(!InventoryComponent||!GetController()||GetController()->GetPawn()!=this)return;
+    FString Error;const bool Accepted=IsValid(Vehicle)&&Vehicle->GetWorld()==GetWorld()&&Vehicle->SurvivalSystems->Execute(this,Action,StackId,ExpectedCount,Error);
+    InventoryComponent->UseMessage=Accepted?TEXT("Échange véhicule enregistré."):Error.IsEmpty()?TEXT("Action véhicule indisponible."):Error;
+    InventoryComponent->OnInventoryUpdated.Broadcast();ForceNetUpdate();
+}

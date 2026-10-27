@@ -1,4 +1,7 @@
 #include "AnomaliaChaosRoadVehicle.h"
+#include "AnomaliaVehicleSurvival.h"
+#include "../AnomaliaInventoryComponent.h"
+#include "../AnomaliaSurvivor.h"
 #include "AnomaliaTransportMovement.h"
 #include "AnomaliaVehiclePanelComponent.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
@@ -47,6 +50,11 @@ UAnomaliaRoadRearWheel::UAnomaliaRoadRearWheel()
 
 AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
 {
+    SurvivalSystems=CreateDefaultSubobject<UAnomaliaVehicleSurvivalComponent>(TEXT("VehicleSurvival"));
+    CargoInventory=CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("VehicleCargo"));
+    CargoInventory->Compartments.Reset();FAnomaliaInventoryCompartment CargoBox;
+    CargoBox.Id=TEXT("cargo");CargoBox.Width=20;CargoBox.Height=50;CargoInventory->Compartments.Add(CargoBox);
+    CargoInventory->WeightCapacityKg=100.f;
     Chassis=CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("ChaosChassis"));
     SetRootComponent(Chassis);
     DriverDoor=CreateDefaultSubobject<UAnomaliaVehiclePanelComponent>(TEXT("DriverDoor"));DriverDoor->SetupAttachment(Chassis);
@@ -328,6 +336,11 @@ void AAnomaliaChaosRoadVehicle::Tick(float DeltaSeconds)
     Super::Tick(DeltaSeconds);
     UpdateWheelVisuals();
     UpdateRoadLights();
+    if(HasAuthority() && IsDriveReady())
+    {
+        SurvivalSystems->SimulateEngine(DeltaSeconds,ChaosMovement->GetThrottleInput());
+        UpdateCargoPhysicalMass();
+    }
 }
 
 void AAnomaliaChaosRoadVehicle::OnConstruction(const FTransform& Transform)
@@ -337,6 +350,8 @@ void AAnomaliaChaosRoadVehicle::OnConstruction(const FTransform& Transform)
 void AAnomaliaChaosRoadVehicle::BeginPlay()
 {
     Super::BeginPlay(); ApplyRoadRig();
+    CargoInventory->OnInventoryUpdated.AddDynamic(this,&AAnomaliaChaosRoadVehicle::UpdateCargoPhysicalMass);
+    UpdateCargoPhysicalMass();
 }
 UPawnMovementComponent* AAnomaliaChaosRoadVehicle::GetMovementComponent() const { return ChaosMovement; }
 bool AAnomaliaChaosRoadVehicle::ConfigureVehicle(FName NewVehicleId)
@@ -397,12 +412,13 @@ void AAnomaliaChaosRoadVehicle::SimulateRoadDrive(float DeltaSeconds,float Throt
 void AAnomaliaChaosRoadVehicle::SetEngineState(bool bRunning)
 {
     if(!HasAuthority() || bEngineRunning==bRunning)return;
-    bEngineRunning=bRunning; OnRep_EngineRunning(); ForceNetUpdate();
+    bEngineRunning=bRunning;if(!bRunning)ChaosMovement->SetThrottleInput(0.f);OnRep_EngineRunning(); ForceNetUpdate();
 }
 bool AAnomaliaChaosRoadVehicle::SetEngineRunningOnServer(AController* Driver,bool bRunning)
 {
     if(!HasAuthority() || !IsValid(Driver) || Driver!=GetController() || Driver->GetPawn()!=this ||
-       !Driver->IsPlayerController() || (bRunning && (!IsDriveReady() || !HasFuel())))return false;
+       !Driver->IsPlayerController() || (bRunning && (!IsDriveReady() || !HasFuel() || !SurvivalSystems->CanStart(GetStoredDriverSurvivor()))))return false;
+    if(bRunning&&!bEngineRunning&&SurvivalSystems->bEnabled)SurvivalSystems->State.BatteryCharge=FMath::Max(0.f,SurvivalSystems->State.BatteryCharge-.002f);
     SetEngineState(bRunning);return bEngineRunning==bRunning;
 }
 void AAnomaliaChaosRoadVehicle::OnRep_EngineRunning(){OnEngineRunningChanged(bEngineRunning);}
@@ -493,4 +509,12 @@ void AAnomaliaChaosRoadVehicle::UpdateRoadLights()
     const bool bFlash=FMath::Fmod(Time,.8)<.4;
     for(int32 Index=0;Index<IndicatorLights.Num();++Index)
         if(IndicatorLights[Index])IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
+}
+
+void AAnomaliaChaosRoadVehicle::UpdateCargoPhysicalMass()
+{
+    if(!HasAuthority()||!IsDriveReady())return;
+    const float CargoMass=CargoInventory->GetCurrentWeightKg();
+    if(!FMath::IsFinite(CargoMass)||CargoMass<0||FMath::IsNearlyEqual(CargoMass,LastCargoMassKg,.001f))return;
+    Chassis->SetMassOverrideInKg(NAME_None,ChaosMovement->Mass+CargoMass,true);LastCargoMassKg=CargoMass;
 }

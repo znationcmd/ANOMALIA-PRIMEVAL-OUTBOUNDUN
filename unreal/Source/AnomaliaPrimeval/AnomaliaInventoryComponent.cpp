@@ -29,6 +29,10 @@ UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
 
 bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const
 {
+    FGuid KeyIdentity;
+    const FString KeyName=ItemId.ToString();
+    if(KeyName.StartsWith(TEXT("vehicle_key_")) && FGuid::ParseExact(KeyName.Mid(12),EGuidFormats::Digits,KeyIdentity) && KeyIdentity.IsValid())
+    { OutWeightKg=.03f;OutMaxStack=1;OutSize=FIntPoint(1,1);return true; }
     static const TMap<FName, float> Weights = {
         // Storage parity with the additive JS resource catalogue; crafting is separate.
         {TEXT("thatch"), 0.12f},
@@ -310,6 +314,28 @@ bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
     Candidate.RemoveAll([](const FAnomaliaInventoryStack& Stack) { return Stack.Count <= 0; });
     Commit(MoveTemp(Candidate));
     return true;
+}
+
+bool UAnomaliaInventoryComponent::TryTransferStackTo(int32 StackId,int32 ExpectedCount,UAnomaliaInventoryComponent* Destination,bool bToHands)
+{
+    if(!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || !Destination || Destination==this ||
+       !Destination->GetOwner() || !Destination->GetOwner()->HasAuthority() || Destination->IsPersistenceLocked() ||
+       Destination->Stacks.Num()>=MaxStacks || Destination->NextStackId>=MAX_int32)return false;
+    const auto* Existing=Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==StackId;});
+    if(!Existing || ExpectedCount<1 || Existing->Count!=ExpectedCount)return false;
+    float Weight=0;int32 Limit=0;FIntPoint Size;
+    if(!GetItemRules(Existing->ItemId,Weight,Limit,Size) ||
+       Destination->GetCurrentWeightKg()+Weight*Existing->Count>Destination->WeightCapacityKg+KINDA_SMALL_NUMBER)return false;
+    auto Piece=*Existing;Piece.StackId=Destination->NextStackId;Piece.ContainerId=NAME_None;Piece.bRotated=false;
+    auto To=Destination->Stacks;
+    if(bToHands)
+    {
+        Piece.ContainerId=TEXT("hands");Piece.X=Piece.Y=0;
+        if(!Destination->CanPlace(To,Piece,Piece.ContainerId,0,0,false))return false;
+    }
+    else if(!Destination->FindPlacement(To,Piece))return false;
+    To.Add(Piece);auto From=Stacks;From.RemoveAll([&](const auto& Stack){return Stack.StackId==StackId;});
+    ++Destination->NextStackId;Destination->Commit(MoveTemp(To));Commit(MoveTemp(From));return true;
 }
 
 bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate)
@@ -706,6 +732,7 @@ FAnomaliaItemUseRule UAnomaliaInventoryComponent::GetUseRule(FName ItemId) const
 
 FString UAnomaliaInventoryComponent::GetItemDisplayName(FName ItemId) const
 {
+    if(ItemId.ToString().StartsWith(TEXT("vehicle_key_")))return TEXT("Clé véhicule · ")+ItemId.ToString().Right(6);
     const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
     const auto* Item=Loot?Loot->FindItem(ItemId):nullptr;
     return Item?Item->DisplayName:ItemId.ToString();

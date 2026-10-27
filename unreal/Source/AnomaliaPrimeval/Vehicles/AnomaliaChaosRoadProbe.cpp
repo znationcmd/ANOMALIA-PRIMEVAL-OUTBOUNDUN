@@ -1,3 +1,5 @@
+#include "AnomaliaVehicleSurvival.h"
+#include "../AnomaliaInventoryComponent.h"
 #include "AnomaliaChaosRoadProbe.h"
 #include "AnomaliaChaosRoadVehicle.h"
 #include "AnomaliaVehiclePanelComponent.h"
@@ -300,6 +302,47 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             if(!Panel->bOpen || Panel->bObstructed || FMath::Abs(Panel->AngleDegrees-Panel->OpenAngleDegrees)>1.f ||
                !Panel->GetRelativeTransform().GetRotation().Equals(Expected,.01f) || !Panel->IsVisible() || (bHit && Hit.GetComponent()==Panel) || (bPawnHit && PawnHit.GetComponent()==Panel))
             {Finish(TEXT("Additional panel failed real axis/open-aperture check: ")+Id);return;}
+            if(V->SurvivalSystems->bEnabled && (Id==TEXT("hood") || Id==TEXT("trunk")))
+            {
+                auto* Systems=V->SurvivalSystems.Get();FString ServiceError;
+                if(!Systems->State.bKeyIssued && !Systems->Execute(S,EAnomaliaVehicleServiceAction::TakeInitialKey,0,0,ServiceError))
+                {Finish(TEXT("Physical vehicle key claim failed: ")+ServiceError);return;}
+                if(!Systems->HasPhysicalKey(S) || !Systems->CanStart(S))
+                {Finish(TEXT("Matching carried key and complete parts must permit ignition"));return;}
+                if(Id==TEXT("hood"))
+                {
+                    for(const auto Pair:{TPair<EAnomaliaVehicleServiceAction,EAnomaliaVehicleServiceAction>(EAnomaliaVehicleServiceAction::RemoveRadiator,EAnomaliaVehicleServiceAction::InstallRadiator),
+                        TPair<EAnomaliaVehicleServiceAction,EAnomaliaVehicleServiceAction>(EAnomaliaVehicleServiceAction::RemoveSparkPlug,EAnomaliaVehicleServiceAction::InstallSparkPlug)})
+                    {
+                        if(!Systems->Execute(S,Pair.Key,0,0,ServiceError) || Systems->CanStart(S) ||
+                           !Systems->Execute(S,Pair.Value,0,0,ServiceError) || !Systems->CanStart(S))
+                        {Finish(TEXT("Real inventory removal/reinstallation did not gate ignition: ")+ServiceError);return;}
+                    }
+                    if(!S->InventoryComponent->TryAddItem(TEXT("water"),4)){Finish(TEXT("Coolant review water does not fit"));return;}
+                    for(int32 Fill=0;Fill<4;++Fill)if(!Systems->Execute(S,EAnomaliaVehicleServiceAction::FillCoolant,0,0,ServiceError))
+                    {Finish(TEXT("Radiator refill inventory exchange failed: ")+ServiceError);return;}
+                    Checks.Add(TEXT("hood_open_inventory_radiator_and_spark_plug_removal_blocks_real_ignition"));
+                }
+                else
+                {
+                    if(!Systems->Execute(S,EAnomaliaVehicleServiceAction::RemoveBattery,0,0,ServiceError) || Systems->CanStart(S) ||
+                       !Systems->Execute(S,EAnomaliaVehicleServiceAction::InstallBattery,0,0,ServiceError) || !Systems->CanStart(S))
+                    {Finish(TEXT("Boot battery removal/reinstallation did not gate ignition: ")+ServiceError);return;}
+                    if(!S->InventoryComponent->TryAddItem(TEXT("wood"),1)){Finish(TEXT("Cargo review item does not fit"));return;}
+                    const auto* Item=S->InventoryComponent->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("wood");});
+                    if(!Item || !Systems->Execute(S,EAnomaliaVehicleServiceAction::Deposit,Item->StackId,Item->Count,ServiceError))
+                    {Finish(TEXT("Open boot deposit failed: ")+ServiceError);return;}
+                    if(V->Chassis->GetMass()<=V->ChaosMovement->Mass)
+                    {Finish(TEXT("Stored cargo did not increase actual chassis mass"));return;}
+                    const auto* Stored=V->CargoInventory->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("wood");});
+                    if(!Stored || !Systems->Execute(S,EAnomaliaVehicleServiceAction::Withdraw,Stored->StackId,Stored->Count,ServiceError) || V->CargoInventory->Stacks.Num()!=0)
+                    {Finish(TEXT("Open boot withdrawal failed or duplicated cargo: ")+ServiceError);return;}
+                    if(!FMath::IsNearlyEqual(V->Chassis->GetMass(),V->ChaosMovement->Mass,.1f))
+                    {Finish(TEXT("Empty cargo did not restore the actual chassis mass"));return;}
+                    if(!S->InventoryComponent->TryRemoveItem(TEXT("wood"),1)){Finish(TEXT("Restored cargo item missing from survivor"));return;}
+                    Checks.Add(TEXT("trunk_open_inventory_battery_and_journaled_cargo_exchange_verified"));
+                }
+            }
             Checks.Add(TEXT("panel_")+Id+TEXT("_rotates_on_authored_axis_and_clears_access"));
             FScreenshotRequest::RequestScreenshot(FPaths::Combine(FPaths::GetPath(ReportFile),TEXT("actual-panel-")+Id+TEXT("-open.png")),false,false);
             FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm)-Eye).Rotation());
@@ -548,6 +591,15 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 if(!Panel->TryToggle(S)){Finish(TEXT("Targeted server panel opening rejected: ")+Id.ToString());return;}
                 Phase=40;PhaseStarted=Now;return;
             }
+        }
+        if(V->SurvivalSystems->bEnabled)
+        {
+            auto* Systems=V->SurvivalSystems.Get();FString ServiceError;
+            if(!Systems->Execute(S,EAnomaliaVehicleServiceAction::ToggleLock,0,0,ServiceError) || !Systems->State.bLocked || !V->DriverDoor->bLocked || Systems->CanStart(S) ||
+               !Systems->Execute(S,EAnomaliaVehicleServiceAction::ToggleLock,0,0,ServiceError) || Systems->State.bLocked || V->DriverDoor->bLocked || !Systems->CanStart(S) ||
+               Systems->Execute(S,EAnomaliaVehicleServiceAction::Deposit,1,1,ServiceError))
+            {Finish(TEXT("Carried key locking or closed boot access gate failed: ")+ServiceError);return;}
+            Checks.Add(TEXT("matching_physical_key_locks_actual_panels_and_closed_boot_blocks_cargo"));
         }
         // Fixture setup only. Driving below never assigns actor transforms or velocities.
         S->TeleportTo(V->GetActorLocation()+FVector(0,-350,150),FRotator::ZeroRotator,false,true);

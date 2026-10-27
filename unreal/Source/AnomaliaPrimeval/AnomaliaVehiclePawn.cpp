@@ -1,4 +1,5 @@
 #include "AnomaliaVehiclePawn.h"
+#include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaSessionWidget.h"
 #include "GameFramework/PlayerController.h"
@@ -282,6 +283,8 @@ bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomalia
 
 bool AAnomaliaVehiclePawn::CanEnterFrom(const AAnomaliaSurvivor* Survivor) const
 {
+    const auto* Services=FindComponentByClass<UAnomaliaVehicleSurvivalComponent>();
+    if(Services && Services->bEnabled && Services->State.bLocked)return false;
     if(!IsValid(Survivor) || Survivor->GetWorld()!=GetWorld() || !GetWorld())return false;
     const FVector Entry=bUseAuthoredDriverPoints?DriverEntryPoint->GetComponentLocation():GetActorLocation();
     const float Range=bUseAuthoredDriverPoints?250.f:450.f;
