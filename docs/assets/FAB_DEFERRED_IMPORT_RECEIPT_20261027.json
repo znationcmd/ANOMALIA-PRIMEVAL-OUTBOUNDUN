@@ -1,0 +1,107 @@
+{
+  "state": "IMPORT_FINISHED_WITH_ERRORS",
+  "namespace": "/Game/Anomalia/ImportedFab/Batch_40568581362",
+  "sources": [
+    {
+      "id": "04dd168f-405d-428d-b2ee-3678fcf34358",
+      "source": "fbx\\source_extracted\\Fbx3DSmax_extracted\\Fbx3DSmax\\Monkey_B3.Fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "0a3cdd5d-775d-4de5-ad37-28637527ba49",
+      "source": "sm_subwaycar.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 5
+    },
+    {
+      "id": "1db0b7e1-20a5-45e9-87b7-a40492123ccf",
+      "source": "rigged_cargo_container.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 5
+    },
+    {
+      "id": "540888de-d0cd-4b2d-99d3-ee9a9150d5a2",
+      "source": "marcopolo_ideale_770.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 35
+    },
+    {
+      "id": "56171623-ffb9-4648-99b6-86f93760191d",
+      "source": "submarine_extracted\\source\\submarin .fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 26
+    },
+    {
+      "id": "580b0425-f3b6-401f-b0c1-7a67cf9eada0",
+      "source": "compact-hatchback_extracted\\source\\Unity2Skfb_extracted\\Unity2Skfb.gltf",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 17
+    },
+    {
+      "id": "6564d907-1da4-4a74-96a4-e96fe5531833",
+      "source": "ski_patrol_snowmobile_medpoly.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 9
+    },
+    {
+      "id": "898242a2-9776-4de4-812d-75a15ddda9e0",
+      "source": "gold_coast_glink_light_rail_tram_flexity_2.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 8
+    },
+    {
+      "id": "941619bd-9609-41f2-850a-2153d88d8595",
+      "source": "super_yacht02.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 24
+    },
+    {
+      "id": "b4bbde3c-a1b1-4726-9b5c-0ac6fc894034",
+      "source": "fbx\\track.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 55
+    },
+    {
+      "id": "ce988a2e-0335-42f4-b8fd-a50d2e4e24be",
+      "source": "low_poly_uss_nimitz_extracted\\source\\model.gltf",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 30
+    },
+    {
+      "id": "cf1d0177-9b00-4fe3-ac45-04ae3795b828",
+      "source": "oh_1_fbx.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 51
+    },
+    {
+      "id": "d68905bd",
+      "source": "glb\\converted\\fsb_operator.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 41
+    },
+    {
+      "id": "01a64d14",
+      "source": "fbx\\shepherdvalley_cow_fbx_extracted\\RSG_Shepherd_Pack_FBX\\Cow\\SK_Cow.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "f8703026",
+      "source": "fbx\\navy_better_fbx.fbx",
+      "status": "FAILED",
+      "error": "No mesh imported from model source"
+    }
+  ],
+  "errors": [
+    {
+      "source": "fbx\\navy_better_fbx.fbx",
+      "error": "No mesh imported from model source"
+    }
+  ],
+  "workflowRun": 40568581362,
+  "artifact": 12763744399,
+  "gameplay": "not_run",
+  "visualReview": "not_run",
+  "installedProject": "not_copied"
+}
