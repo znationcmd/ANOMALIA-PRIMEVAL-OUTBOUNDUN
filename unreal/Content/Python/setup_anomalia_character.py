@@ -28,11 +28,11 @@ PROFILES = {
         "mesh": PACK_ROOTS[0] + "/Meshes/SKM_Quinn",
         "animation": PACK_ROOTS[0] + "/Animations/ABP_Quinn",
     },
-    # These bodies are inventoried, but animation paths must be verified in UE.
+    # Quantum has sequences but no compatible AnimBlueprint in the installed pack.
     "Quantum": {"mesh": "/Game/QuantumCharacter/Mesh/SKM_QuantumCharacter", "animation": None},
     "Survival": {
         "mesh": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Body",
-        "animation": None,
+        "animation": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/ABP_Quinn",
     },
 }
 
