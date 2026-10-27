@@ -13,7 +13,8 @@ La sélection photographiée est enregistrée dans USER_FAB_SELECTION_20261027.j
 | 40571617245 | Six sources Poly Haven effectivement téléchargées sur le PC : pommes, poires, conserves, vin, boîte médicale et ruban médical ; SHA-256 et dépendances glTF vérifiés. |
 | 40571935754 | Six sources Poly Haven importées/sauvegardées/rechargées, 20 meshes ; zéro erreur dans le rapport d’import. |
 | 40572389726 | Archives originales CC0 de comprimés mxc2 et de plantes Yughues téléchargées, hashées et extraites dans de nouveaux dossiers. |
-| 40573064314 | Import des quatre modèles de comprimés/plantes lancé ; consulter le résultat avant d’en annoncer le succès. |
+| 40573064314 | Quatre modèles importés/sauvegardés/rechargés : deux comprimés et deux plantes, un mesh chacun ; rapport d’import sans erreur. |
+| 40573339647 | Six captures GPU réelles des dix sources de nourriture/vin/médical/comprimés/plantes ; rapport et galerie sauvegardés. |
 
 Les imports sont dans la copie native de validation : C:\ANOMALIA-Validation\c40543166274\unreal. Ils ne sont pas encore copiés dans le Content du projet installé. Les sources sont conservées dans C:\ANOMALIA\FabImports.
 
@@ -23,6 +24,7 @@ Les slots de matériaux non vides ne suffisent pas à valider les textures : le 
 
 - 40568460995 : cinq captures et une galerie séparée sauvegardée. Jerrican, caisses, Mauser et plusieurs GLB texturés ; défauts des FBX constatés.
 - 40571772475 : sept nouvelles captures après réparation, avec le tramway, le métro et le bus. Captures inspectées : armes corrigées texturées ; bus visible ; tramway avec éléments séparés à assembler ; métro toujours sans textures.
+- 40573339647 : six captures inspectées. Fruits, conserves/lait, quatre bouteilles de vin, boîte de secours, ruban médical et deux comprimés visibles. Les deux plantes présentent un matériau par défaut en damier et des cartes de feuilles opaques : textures/masque alpha à corriger avant acceptation. La boîte de secours utilise un symbole blanc sur fond vert. Les dimensions des comprimés importés sont surdimensionnées pour du loot et doivent être ajustées lors de l’intégration ; aucune échelle réelle n’est validée.
 - L’éclairage de ces galeries est sommaire. Les échelles normalisées sont uniquement celles des aperçus ; les meshes sources ne sont pas redimensionnés.
 - Les variantes d’accessoires de la M4 sont des pièces séparées et ne constituent pas encore une arme configurée et fonctionnelle.
 - Le journal du premier contrôle GPU contient 20 messages LogAutomationTest « Condition failed » dont l’origine reste à isoler. Les captures ont été produites ; cela ne constitue pas une recette globale sans erreurs.
