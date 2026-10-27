@@ -82,6 +82,7 @@ protected:
 
 private:
     bool bSprintRequested = false;
+    UPROPERTY(ReplicatedUsing=OnRep_PaceStep)
     bool bExhausted = false;
     void ApplyMovementSpeed();
 };

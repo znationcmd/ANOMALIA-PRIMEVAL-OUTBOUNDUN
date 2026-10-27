@@ -76,7 +76,7 @@ float UAnomaliaVitalsComponent::GetPlannedWalkSpeed() const
     if (!Survivor) return 450.f;
     const float LoadKg = Survivor->InventoryComponent ? Survivor->InventoryComponent->GetCurrentWeightKg() : 0.f;
     const float InjuryScale = Survivor->ItemEffectsComponent ? Survivor->ItemEffectsComponent->GetMovementScale() : 1.f;
-    const uint8 EffectiveStep = (Stamina <= 0.f && PaceStep >= 5) ? 4 : PaceStep;
+    const uint8 EffectiveStep = ((bExhausted || Stamina <= 0.f) && PaceStep >= 5) ? 4 : PaceStep;
     return CalculateTacticalSpeed(EffectiveStep, LoadKg, Survivor->Fatigue, InjuryScale);
 }
 
@@ -131,10 +131,11 @@ void UAnomaliaVitalsComponent::TickComponent(float DeltaTime, ELevelTick TickTyp
         Stamina = FMath::Max(0.f, Stamina - SprintDrainPerSecond * (1.f + LoadKg * .018f) * Step);
         if (Stamina <= 0.f) bExhausted = true;
     }
-    else if (bMoving && PaceStep >= 5 && !Survivor->bIsCrouched)
+    else if (bMoving && PaceStep >= 5 && !Survivor->bIsCrouched && !bExhausted && Stamina > 0.f)
     {
-        // Fast tactical movement is sustainable only for a limited period.
+        // Fast tactical movement must eventually require recovery, not oscillate near zero stamina.
         Stamina = FMath::Max(0.f, Stamina - (PaceStep == 6 ? 3.0f : 1.4f) * (1.f + LoadKg * .012f) * Step);
+        if (Stamina <= 0.f) bExhausted = true;
     }
     else
     {
@@ -208,4 +209,5 @@ void UAnomaliaVitalsComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProper
     DOREPLIFETIME(UAnomaliaVitalsComponent, BodyTemperatureC);
     DOREPLIFETIME(UAnomaliaVitalsComponent, bIsSprinting);
     DOREPLIFETIME(UAnomaliaVitalsComponent, PaceStep);
+    DOREPLIFETIME(UAnomaliaVitalsComponent, bExhausted);
 }
