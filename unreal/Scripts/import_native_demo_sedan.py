@@ -8,7 +8,7 @@ import unreal
 
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 E39=os.environ.get("ANOMALIA_SEDAN_USE_E39")=="1"
-NAMESPACE="BMWE39Review_v6" if E39 else "NativeDemoSedan_v3"
+NAMESPACE="BMWE39Review_v7" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
@@ -30,7 +30,7 @@ try:
     if E39:
         partition=manifest['surfacePartition']
         previous=json.loads((ROOT/'SourceAssets/BMWE39Review_v2/manifest.json').read_text())
-        if (manifest['schemaVersion']!=5 or manifest.get('compartmentRefinement',{}).get('fixedBodyMaterials')!=['mottled','frame'] or abs(partition['sourceArea']-sum(partition['areas'].values()))>1e-6 or
+        if (manifest['schemaVersion']!=6 or manifest.get('cargoGeometryAudit',{}).get('state')!='CPU_MESH_SIGHTLINES_PASSED_NOT_UNREAL_OR_VISUAL_ACCEPTANCE' or len(manifest.get('cargoGeometryAudit',{}).get('rows',[]))!=6 or manifest.get('compartmentRefinement',{}).get('fixedBodyMaterials')!=['frame'] or manifest.get('compartmentRefinement',{}).get('movingLidLiningMaterial')!='mottled' or abs(partition['sourceArea']-sum(partition['areas'].values()))>1e-6 or
             manifest['parentBodySha256']!=next(m['sha256'] for m in previous['models'] if m['id']=='body') or
             {p['id'] for p in manifest['panels']}!={'door_driver','door_front_right','door_rear_left','door_rear_right','hood','trunk'}):
             raise RuntimeError('Same E39 complete panel partition required')
@@ -96,7 +96,7 @@ try:
             dimensionsCm=actual,originCm=[bounds.origin.x,bounds.origin.y,bounds.origin.z],
             materials=len(mesh.static_materials),sha256=model['sha256']))
     report.update(state='E39_STATIC_PARTS_IMPORTED_NOT_DRIVEN' if E39 else 'CC0_SEDAN_STATIC_PARTS_IMPORTED_NOT_DRIVEN',source=source,
-        wheelHubsCm=manifest['wheelHubsCm'],panels=manifest.get('panels',[]),surfacePartition=partition)
+        cargoGeometryAudit=manifest.get('cargoGeometryAudit'),wheelHubsCm=manifest['wheelHubsCm'],panels=manifest.get('panels',[]),surfacePartition=partition)
 except Exception as error:
     report['error']=str(error);unreal.log_error(traceback.format_exc())
 finally:

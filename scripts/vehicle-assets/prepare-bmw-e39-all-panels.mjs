@@ -3,9 +3,10 @@ import {NodeIO} from '@gltf-transform/core';import {ALL_EXTENSIONS} from '@gltf-
 import {getBounds,prune,transformMesh} from '@gltf-transform/functions';
 import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} from 'node:crypto';
 import path from 'node:path';import {fileURLToPath} from 'node:url';
+import {auditCargoVisibility} from './audit-bmw-e39-cargo.mjs';
 import {panelShell} from './panel-shell.mjs';
 import {triangleIslands} from './mesh-islands.mjs';import {partitionTriangle,triangulate,area,gltfToUnreal} from './panel-geometry.mjs';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v6');
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v7');
 const previous=JSON.parse(await readFile(path.join(base,'manifest.json'),'utf8')),parent=previous.models.find(m=>m.id==='body');
 const hash=b=>createHash('sha256').update(b).digest('hex'),bytes=await readFile(path.join(base,parent.file));
 if(previous.source.sha256!=='984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d'||hash(bytes)!==parent.sha256)throw Error('Same reviewed E39 with validated driver leaf required');
@@ -52,7 +53,7 @@ function wholePanel(g,name){
  const width=Math.max(Math.abs(g.min[2]),Math.abs(g.max[2]));
  if(name==='body'&&g.min[0]>.90&&g.max[0]<2.33&&g.min[1]>.50&&g.max[1]<1.02&&width<.80)return 'hood';
  if(name==='emblem'&&g.min[0]>2.1&&g.min[1]>.65&&width<.1)return 'hood';
- // Felt cargo lining and the aperture frame remain fixed to the body.
+ // Cargo tub/frame stays fixed; lid felt is clipped to the painted lid envelope.
  if(name!=='mottled'&&name!=='frame'&&g.min[0]>-2.34&&g.max[0]<-1.72&&g.min[1]>.62&&g.max[1]<1.065&&width<.65)return 'trunk';
  return null;
 }
@@ -64,7 +65,7 @@ function rulesFor(g,name){
   if(frame||(side&&g.min[1]>.70))rules.push({id:d.id,planes:frame?[...d.framePlanes,p=>p[1]-.99]:d.framePlanes});
  }
  if(hoodTrim.has(name)&&g.min[0]>2.05&&g.max[0]<2.35)rules.push({id:'hood',planes:hoodPlanes});
- if((trunkTrim.has(name)&&g.max[0]<-2&&g.min[1]>.65&&g.max[1]<.95))rules.push({id:'trunk',planes:trunkPlanes});
+ if(name==='mottled'||(trunkTrim.has(name)&&g.max[0]<-2&&g.min[1]>.65&&g.max[1]<.95))rules.push({id:'trunk',planes:trunkPlanes});
  return rules;
 }
 let partition;const models=[],fixtureAimOverrides={};
@@ -111,10 +112,10 @@ for(const selection of ['body',...defs.map(d=>d.id)]){
  const def=defs.find(d=>d.id===selection);if(def)transformMesh(mesh,[1,0,0,0,0,1,0,0,0,0,1,0,...def.pivot.map(v=>-v),1]);
  for(const n of scene.listChildren())scene.removeChild(n);scene.addChild(doc.createNode(selection).setMesh(mesh));await doc.transform(prune());
  const data=await io.writeBinary(doc),b=getBounds(scene);await preserve(selection+'.glb',data);
- models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v6/'+selection+'/SM_'+selection});
+ models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v7/'+selection+'/SM_'+selection});
  partition={sourceArea,areas,triangles:counts};
 }
-for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v6/'+m.id+'/SM_'+m.id});}
+for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v7/'+m.id+'/SM_'+m.id});}
 const acceptedV5=JSON.parse(await readFile(path.join(root,'docs/art/bmw-e39-accepted-v5-parts.json'),'utf8'));
 if(acceptedV5.sourceSha256!==previous.source.sha256)throw Error('Accepted source identity changed');
 for(const model of models.filter(m=>m.id!=='body'&&m.id!=='trunk')){
@@ -124,6 +125,7 @@ if(Math.abs(partition.sourceArea-acceptedV5.surfacePartition.sourceArea)>1e-6||p
 const retainedFixedArea=acceptedV5.surfacePartition.areas.trunk-partition.areas.trunk;
 if(!fixtureAimOverrides.trunk)throw Error('Original rear-facing boot paint required for actual interaction aim');
 const panels=[{...previous.panels[0],hingeAxis:[0,0,1]},...defs.map(d=>({id:d.id,pivotCm:gltfToUnreal(d.pivot),hingeAxis:d.axis,openAngleDegrees:d.angle,apertureCm:d.aperture,traceOutward:d.normal,fixtureStandCm:d.stand,fixtureAimCm:d.id==='trunk'?gltfToUnreal(fixtureAimOverrides.trunk):d.id.startsWith('door_rear')?[-70,d.pivot[2]*100,75]:gltfToUnreal(models.find(m=>m.id===d.id).originMetresYUp.map((v,i)=>v+d.pivot[i]))}))];
-const manifest={schemaVersion:5,compartmentRefinement:{acceptedV5CodeCommit:acceptedV5.acceptedCodeCommit,retainedFixedOriginalAreaSquareMetres:retainedFixedArea,fixedBodyMaterials:['mottled','frame'],description:'Original boot lining and aperture frame remain on the chassis; painted lid skin stays movable.'},source:previous.source,parentBodySha256:parent.sha256,models,panels,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm:previous.closedBodyBoundsCm,surfacePartition:partition,driverDoorPartition:previous.sourceCoverage.partition,completeVehicleAccepted:false,gameplayVerified:false};
-await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: original boot felt lining and aperture frame retained on the fixed body; same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (1.2 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
+const cargoGeometryAudit=await auditCargoVisibility(out,panels.find(p=>p.id==='trunk'));
+const manifest={schemaVersion:6,cargoGeometryAudit,compartmentRefinement:{acceptedV5CodeCommit:acceptedV5.acceptedCodeCommit,retainedFixedOriginalAreaSquareMetres:retainedFixedArea,fixedBodyMaterials:['frame'],movingLidLiningMaterial:'mottled',description:'Original cargo tub and aperture frame stay fixed; felt in the painted lid envelope moves with the lid.'},source:previous.source,parentBodySha256:parent.sha256,models,panels,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm:previous.closedBodyBoundsCm,surfacePartition:partition,driverDoorPartition:previous.sourceCoverage.partition,completeVehicleAccepted:false,gameplayVerified:false};
+await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: original cargo tub and aperture frame retained on the fixed body; original felt within the painted lid envelope follows the lid; same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (1.2 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
 console.log(JSON.stringify({state:'SAME_E39_ALL_PANELS_PREPARED_NOT_GAME_VERIFIED',partition,panels:panels.map(p=>p.id)}));

@@ -32,6 +32,23 @@ end of the run. Native artifacts: build `12730321731`, reference `12730577186`,
 E39 `12729594152`. Authoritative v5 receipt:
 `docs/art/bmw-e39-six-panels-native-validation-20261027.json`.
 
+## v7 cargo-lining correction — native validation pending
+
+Source geometry inspection distinguishes the original `frame` cargo tub from
+`mottled` lining on the lid. v6 incorrectly leaves the latter covering the
+opening. v7 keeps the tub/frame fixed while restoring lid-envelope felt to the
+moving lid. Only body and boot files change; nine accepted parts remain
+byte-identical. Original surface area is conserved; no replacement car or
+invented cargo box is introduced. v5/v6 namespaces and proofs remain intact.
+
+A new exact mesh audit casts three rear eye-height sightlines at the original
+cargo floor, with the lid closed and open. It rejects v6 (first open hit is the
+fixed opaque lining) and passes v7 (closed first hit is lid; open first hit is
+the original fixed cargo floor). This CPU audit is not native or visual
+acceptance. Eleven GLBs have no Khronos errors/warnings and 154 Python tests
+pass. Native acceptance and actual viewport inspection remain pending.
+Receipt: `docs/art/bmw-e39-cargo-lining-v7-20261027.json`.
+
 ## Latest v6 native mechanical acceptance — visual finish incomplete
 
 Code `c05f0963bd596ecdf282e17538e4dc67f2275ca0`,

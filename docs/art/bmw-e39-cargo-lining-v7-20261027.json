@@ -1,0 +1,150 @@
+{
+  "schemaVersion": 1,
+  "state": "PREPARED_GEOMETRY_VALIDATED_NOT_NATIVE_ACCEPTED",
+  "namespace": "BMWE39Review_v7",
+  "baselineNativeCodeCommit": "c05f0963bd596ecdf282e17538e4dc67f2275ca0",
+  "baselineWorkflowRun": 40498160021,
+  "sameSourceSHA256": "984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d",
+  "unchangedParts": [
+    "door_front_right",
+    "door_rear_left",
+    "door_rear_right",
+    "hood",
+    "door_driver",
+    "wheel_fl",
+    "wheel_fr",
+    "wheel_rl",
+    "wheel_rr"
+  ],
+  "changedParts": [
+    "body",
+    "trunk"
+  ],
+  "surfaceAreaPreserved": true,
+  "surfacePartition": {
+    "sourceArea": 77.73736505703,
+    "areas": {
+      "body": 69.42827439331795,
+      "door_front_right": 1.6709591469709193,
+      "door_rear_left": 1.0163379672856623,
+      "door_rear_right": 1.016810707437397,
+      "hood": 2.0918636965860595,
+      "trunk": 2.5131191454328077
+    },
+    "triangles": {
+      "body": 63383,
+      "door_front_right": 3751,
+      "door_rear_left": 1010,
+      "door_rear_right": 1171,
+      "hood": 2882,
+      "trunk": 3383
+    }
+  },
+  "fixedCargoTubMaterial": "frame",
+  "movingLidFeltMaterial": "mottled",
+  "originalAreaTransferredFromFixedBodyToLidSquareMetres": 1.185658202743167,
+  "cargoGeometryAudit": {
+    "state": "CPU_MESH_SIGHTLINES_PASSED_NOT_UNREAL_OR_VISUAL_ACCEPTANCE",
+    "rows": [
+      {
+        "angleDegrees": 0,
+        "lateralMetres": -0.25,
+        "first": {
+          "fraction": 0.8453535752534941,
+          "part": "trunk",
+          "material": "body",
+          "pointMetresYUp": [
+            -2.3121777075538503,
+            0.7453676392617156,
+            -0.25
+          ]
+        }
+      },
+      {
+        "angleDegrees": 0,
+        "lateralMetres": 0,
+        "first": {
+          "fraction": 0.8601911683122262,
+          "part": "trunk",
+          "material": "body",
+          "pointMetresYUp": [
+            -2.286063543770482,
+            0.7314203017865074,
+            0
+          ]
+        }
+      },
+      {
+        "angleDegrees": 0,
+        "lateralMetres": 0.25,
+        "first": {
+          "fraction": 0.8453561655779886,
+          "part": "trunk",
+          "material": "body",
+          "pointMetresYUp": [
+            -2.31217314858274,
+            0.7453652043566906,
+            0.25
+          ]
+        }
+      },
+      {
+        "angleDegrees": 65,
+        "lateralMetres": -0.25,
+        "first": {
+          "fraction": 0.9457424167593906,
+          "part": "body",
+          "material": "frame",
+          "pointMetresYUp": [
+            -2.1354933465034724,
+            0.6510021282461728,
+            -0.25
+          ]
+        }
+      },
+      {
+        "angleDegrees": 65,
+        "lateralMetres": 0,
+        "first": {
+          "fraction": 0.9478793404328971,
+          "part": "body",
+          "material": "frame",
+          "pointMetresYUp": [
+            -2.131732360838101,
+            0.6489934199930767,
+            0
+          ]
+        }
+      },
+      {
+        "angleDegrees": 65,
+        "lateralMetres": 0.25,
+        "first": {
+          "fraction": 0.9457424167593904,
+          "part": "body",
+          "material": "frame",
+          "pointMetresYUp": [
+            -2.135493346503473,
+            0.651002128246173,
+            0.25
+          ]
+        }
+      }
+    ]
+  },
+  "auditRejectsPreviousV6": {
+    "angleDegrees": 65,
+    "lateralMetres": -0.25,
+    "wrongFirstSurface": "fixed-body mottled lid lining",
+    "wrongHitHeightMetres": 0.7240063893698258
+  },
+  "glbFiles": 11,
+  "khronosErrors": 0,
+  "khronosWarnings": 0,
+  "pythonTests": 154,
+  "nativeGameplayAccepted": false,
+  "visualFinishAccepted": false,
+  "detailedEngineImplemented": false,
+  "entryAnimationImplemented": false,
+  "installed": false
+}
