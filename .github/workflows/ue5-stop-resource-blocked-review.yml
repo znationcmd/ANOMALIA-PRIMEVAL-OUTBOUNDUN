@@ -1,0 +1,30 @@
+name: Stop only ANOMALIA continuation run after verified host resource exhaustion
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-stop-resource-blocked-review.yml']
+permissions:
+  actions: write
+  contents: read
+jobs:
+  stop-own-review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Cancel only the agent-started E39 continuation after out-of-memory crash
+        shell: node {0}
+        env:
+          GH_ACTION_TOKEN: ${{ github.token }}
+        run: |
+          (async()=>{
+          const base='https://api.github.com/repos/'+process.env.GITHUB_REPOSITORY;
+          const headers={Authorization:'Bearer '+process.env.GH_ACTION_TOKEN,Accept:'application/vnd.github+json'};
+          const id=40587487588;
+          const r=await fetch(base+'/actions/runs/'+id,{headers});if(!r.ok)throw Error('Cannot verify review run');
+          const run=await r.json();
+          if(run.head_sha!=='5aa341b215a6198b3fb568375df8deefd9dc0e1a'||run.head_branch!=='ue5/e39-cargo-visibility-audit-20261027'||run.name!=='ANOMALIA actual E39 key maintenance and cargo drive continuation')throw Error('Unexpected run; no cancellation');
+          if(run.status==='completed'){console.log('Already completed: '+run.conclusion);return;}
+          const result=await fetch(base+'/actions/runs/'+id+'/cancel',{method:'POST',headers});
+          if(result.status!==202)throw Error('Cancellation response '+result.status);
+          console.log('Cancellation requested for only '+id+' after character run 40587325434 exhausted RAM and pagefile. User editor processes are not targeted.');
+          })().catch(e=>{console.error(e.message);process.exit(1)});
