@@ -56,9 +56,9 @@ class CharacterSetupPreflight(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeError, "skeleton mismatch"):
             setup.prepare("Manny", setup.PROFILES["Manny"])
 
-    def test_unverified_animation_blocks_survival_creation(self):
+    def test_unverified_animation_blocks_quantum_creation(self):
         with self.assertRaisesRegex(RuntimeError, "verified animation"):
-            setup.prepare("Survival", setup.PROFILES["Survival"])
+            setup.prepare("Quantum", setup.PROFILES["Quantum"])
 
     def test_verified_pair_yields_exact_named_target(self):
         prepared = setup.prepare("Quinn", setup.PROFILES["Quinn"])
