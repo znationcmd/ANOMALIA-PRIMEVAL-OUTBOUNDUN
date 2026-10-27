@@ -8,19 +8,23 @@
       "title": "Gold Coast G:Link Light Rail Tram",
       "cacheId": "898242a2-9776-4de4-812d-75a15ddda9e0",
       "source": "gold_coast_glink_light_rail_tram_flexity_2.glb",
-      "status": "LOCAL_FILE_FOUND_DEFERRED_BATCH_IN_PROGRESS"
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362
     },
     {
       "title": "Subway Car (TTC)",
       "cacheId": "0a3cdd5d-775d-4de5-ad37-28637527ba49",
       "source": "sm_subwaycar.fbx",
-      "status": "LOCAL_FILE_FOUND_DEFERRED_BATCH_IN_PROGRESS"
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362,
+      "materialIssue": "FBX produced materials but no Texture2D; visual/material validation still required."
     },
     {
       "title": "Marcopolo Ideale 770",
       "cacheId": "540888de-d0cd-4b2d-99d3-ee9a9150d5a2",
       "source": "marcopolo_ideale_770.glb",
-      "status": "LOCAL_FILE_FOUND_DEFERRED_BATCH_IN_PROGRESS"
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362
     },
     {
       "title": "City Subway Train Modular",
@@ -239,5 +243,11 @@
       "reason": "Description says GTA IV and license is non-commercial; not used."
     }
   ],
-  "gameplayAcceptance": "No new vehicle driving, transit passenger doors, consuming items, medical effects, persistence or multiplayer validated by this sourcing record."
+  "gameplayAcceptance": "No new vehicle driving, transit passenger doors, consuming items, medical effects, persistence or multiplayer validated by this sourcing record.",
+  "deferredBatchResult": {
+    "modelsSucceeded": 14,
+    "modelsFailed": 1,
+    "failedSource": "navy_better_fbx.fbx",
+    "failureReason": "Multiple skeleton root bones; original file preserved."
+  }
 }
