@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "state": "PREPARED_STRUCTURALLY_VALIDATED_NOT_NATIVE_ACCEPTED",
+  "state": "NATIVE_MECHANICAL_ACCEPTANCE_PASSED_VISUAL_FINISH_INCOMPLETE",
   "baselineAcceptedCodeCommit": "e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea",
   "baselineWorkflowRun": 40493715250,
   "sourceSHA256": "984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d",
@@ -78,9 +78,98 @@
   "khronosErrors": 0,
   "khronosWarnings": 0,
   "pythonTests": 154,
-  "nativeGameplayAccepted": false,
+  "nativeGameplayAccepted": true,
   "visualFinishAccepted": false,
   "engineBayDetailed": false,
   "humanAnimationsImplemented": false,
-  "installed": false
+  "installed": false,
+  "nativeCodeCommit": "c05f0963bd596ecdf282e17538e4dc67f2275ca0",
+  "workflowRun": 40498160021,
+  "workflowConclusion": "success",
+  "nativeArtifactId": 12731679797,
+  "nativeChecks": 61,
+  "physicsSamples": 324,
+  "panelSamples": 328,
+  "panelMaxChassisDriftCm": 0.4330466687679291,
+  "panelMaxChassisSpeedCmPerSecond": 0.0843033418059349,
+  "brakingMeasurements": [
+    {
+      "initialKmh": 50.221291992187496,
+      "distanceMetres": 13.293306690157092,
+      "seconds": 1.803083598613739,
+      "meanDecelerationG": 0.7464265267084241,
+      "accelerationSecondsToTarget": 3.2998750992119312,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.31022558593749,
+      "distanceMetres": 30.65509628146414,
+      "seconds": 2.700401298701763,
+      "meanDecelerationG": 0.8277197813406452,
+      "accelerationSecondsToTarget": 6.633533302694559,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.21322070312499,
+      "distanceMetres": 57.29854884312921,
+      "seconds": 5.078702200204134,
+      "meanDecelerationG": 0.4417663306670375,
+      "accelerationSecondsToTarget": 10.139765102416277,
+      "surfaceFriction": 0.45
+    }
+  ],
+  "finalPanelStates": [
+    {
+      "id": "driver_door",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+    },
+    {
+      "id": "door_front_right",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+    },
+    {
+      "id": "door_rear_left",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+    },
+    {
+      "id": "door_rear_right",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+    },
+    {
+      "id": "hood",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+    },
+    {
+      "id": "trunk",
+      "open": false,
+      "obstructed": false,
+      "angleDegrees": 0,
+      "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+    }
+  ],
+  "packagedGameTested": false,
+  "multiplayerTested": false,
+  "entryAnimationTested": false,
+  "productionMapModified": false,
+  "viewportInspection": {
+    "file": "actual-panel-trunk-open.png",
+    "artifactId": 12731679797,
+    "inspected": true,
+    "observation": "Original lining remains fixed while the painted boot lid rises. A broad opaque inner surface still obscures the cargo opening; usable detailed cargo-volume finish is not accepted."
+  }
 }

@@ -1,6 +1,6 @@
 # BMW E39 — same model, six opening leaves and native driving
 
-## Current accepted native scope — 27 October 2026
+## Accepted v5 native baseline — 27 October 2026
 
 Code `e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea`,
 [Windows run 40493715250](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40493715250).
@@ -29,27 +29,38 @@ The boot-open viewport was inspected: the same red E39 remains on the proving
 ground, with the actual lid raised. Engine-bay and boot finishes are visibly
 incomplete. All six leaves are closed, unobstructed and at zero degrees at the
 end of the run. Native artifacts: build `12730321731`, reference `12730577186`,
-E39 `12729594152`. Authoritative current receipt:
+E39 `12729594152`. Authoritative v5 receipt:
 `docs/art/bmw-e39-six-panels-native-validation-20261027.json`.
 
-## Compartment finish candidate — v6, not yet native accepted
+## Latest v6 native mechanical acceptance — visual finish incomplete
+
+Code `c05f0963bd596ecdf282e17538e4dc67f2275ca0`,
+[Windows run 40498160021](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40498160021),
+completed successfully under UE 5.8.3, including Editor/Game compilation,
+native tests, reference driving, E39 driving and original-sedan regression.
+The same E39 passes 61 gameplay checks, 324 driving samples and 328 panel
+samples. Maximum panel-cycle chassis drift is 0.43305 cm; speed is
+0.08431 cm/s. All six leaves finish closed and unobstructed. Actual braking
+from 80.31 km/h at friction 0.9 takes 30.6551 m; from 80.21 km/h at friction
+0.45 takes 57.2985 m. Native E39 artifact: `12731679797`.
 
 The accepted v5 source hashes are pinned in `bmw-e39-accepted-v5-parts.json`
-and were compared with the real Windows import report. In the v5 preparation,
-2.48663 square metres of original felt lining and aperture frame were assigned
-to the moving boot lid. v6 leaves these original surfaces on the fixed body.
+and were compared with the real Windows import report. v6 leaves 2.48663
+square metres of original lining and aperture frame on the fixed body.
 Only body/lid files change; four wheels, four doors and bonnet are byte-identical.
-Original surface area, closed bounds, source identity and axle positions remain
-preserved. v5 assets and acceptance evidence remain intact in their namespace.
+Original area, closed bounds, source identity and axle positions are preserved.
+The real rear-facing painted-lid target passes native aimed interactions.
 
-A target selected from an actual rear-facing painted lid triangle replaces its
-volume centre for automated interaction. Six CPU ray checks hit the real lid
-in closed/open positions over three eye heights; they do not establish native
-collision or gameplay acceptance. Eleven GLBs have zero Khronos errors/warnings,
-and 154 Python tests pass. Native import, all 61 gameplay checks and viewport
-inspection still need to run for v6. Receipt:
-`docs/art/bmw-e39-compartment-candidate-20261027.json`.
-This refinement does not add a detailed engine or human animations.
+The actual `actual-panel-trunk-open.png` viewport was inspected. The painted
+lid rises without carrying the entire lining, but a broad opaque inner surface
+still obscures the cargo opening. Detailed usable cargo-volume finish is **not
+accepted**. This is a mechanical refinement, not a completed boot interior.
+Eleven GLBs have zero Khronos errors/warnings and 154 Python tests pass.
+Receipt: `docs/art/bmw-e39-compartment-candidate-20261027.json`.
+Detailed engine bay, human animations, multiplayer and packaged/installed
+acceptance remain unfinished. No production map or installed game was changed.
+The v5 acceptance above remains the historical baseline, with its own exact
+measurements and artifacts; do not attribute those measurements to v6.
 
 ## Earlier attempts (not accepted at the time)
 
