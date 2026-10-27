@@ -1,0 +1,43 @@
+{
+  "state": "IMPORT_FINISHED",
+  "namespace": "/Game/Anomalia/ImportedFab/Batch_40571935754",
+  "sources": [
+    {
+      "id": "ph_food_apple_01",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "ph_food_pears_asian_01",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 5
+    },
+    {
+      "id": "ph_long_life_food",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 4
+    },
+    {
+      "id": "ph_wine_bottles_01",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 4
+    },
+    {
+      "id": "ph_medical_box",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 5
+    },
+    {
+      "id": "ph_medical_tape",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    }
+  ],
+  "errors": [],
+  "workflowRun": 40571935754,
+  "artifact": 12766940862,
+  "downloadRun": 40571617245,
+  "gameplay": "not_run",
+  "visualReview": "not_run",
+  "installedProject": "not_copied"
+}
