@@ -183,8 +183,8 @@ void UAnomaliaVehicleSurvivalComponent::OnRep_State(FAnomaliaVehicleSurvivalStat
     Previous.bBattery!=State.bBattery||Previous.bRadiator!=State.bRadiator||Previous.bSparkPlug!=State.bSparkPlug||
     !FMath::IsNearlyEqual(Previous.Coolant,State.Coolant,.001f))OnServicesUpdated.Broadcast();
 }
-void UAnomaliaVehicleSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Out) const
-{Super::GetLifetimeReplicatedProps(Out);DOREPLIFETIME(UAnomaliaVehicleSurvivalComponent,State);DOREPLIFETIME(UAnomaliaVehicleSurvivalComponent,bReady);}
+void UAnomaliaVehicleSurvivalComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
+{Super::GetLifetimeReplicatedProps(OutLifetimeProps);DOREPLIFETIME(UAnomaliaVehicleSurvivalComponent,State);DOREPLIFETIME(UAnomaliaVehicleSurvivalComponent,bReady);}
 
 bool UAnomaliaVehicleServiceSubsystem::DoesSupportWorldType(EWorldType::Type Type) const{return Type==EWorldType::Game||Type==EWorldType::PIE;}
 TStatId UAnomaliaVehicleServiceSubsystem::GetStatId() const{RETURN_QUICK_DECLARE_CYCLE_STAT(UAnomaliaVehicleServiceSubsystem,STATGROUP_Tickables);}
