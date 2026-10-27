@@ -184,8 +184,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 5,
       "requiredBytes": 3642264,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     },
     {
       "id": "ph_food_pears_asian_01",
@@ -193,8 +196,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 5,
       "requiredBytes": 16254873,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     },
     {
       "id": "ph_long_life_food",
@@ -202,8 +208,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 5,
       "requiredBytes": 22425932,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     },
     {
       "id": "ph_wine_bottles_01",
@@ -211,8 +220,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 15,
       "requiredBytes": 44621833,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     },
     {
       "id": "ph_medical_box",
@@ -220,8 +232,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 5,
       "requiredBytes": 26365694,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     },
     {
       "id": "ph_medical_tape",
@@ -229,8 +244,11 @@
       "license": "CC0-1.0",
       "requiredFiles": 5,
       "requiredBytes": 23733090,
-      "status": "EXACT_HASH_DOWNLOAD_QUEUED_ON_PC",
-      "unrealImported": false
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
     }
   ],
   "rejected": [
@@ -249,5 +267,11 @@
     "modelsFailed": 1,
     "failedSource": "navy_better_fbx.fbx",
     "failureReason": "Multiple skeleton root bones; original file preserved."
+  },
+  "pbrRepair": {
+    "run": 40569633783,
+    "state": "EXACT_TEXTURE_SETS_CONNECTED_NEEDS_GPU_REVIEW",
+    "packs": 7,
+    "originalSourcesModified": false
   }
 }
