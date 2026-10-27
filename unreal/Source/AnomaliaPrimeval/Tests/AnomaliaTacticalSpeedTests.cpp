@@ -4,6 +4,7 @@
 #include "../AnomaliaVitalsComponent.h"
 #include "Engine/World.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Components/CapsuleComponent.h"
 
 IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaTacticalSpeedTest,
     "Anomalia.Native.TacticalMovement.SpeedLoadFatigueAndCrouch",

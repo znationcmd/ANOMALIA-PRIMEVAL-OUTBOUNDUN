@@ -76,7 +76,8 @@ float UAnomaliaVitalsComponent::GetPlannedWalkSpeed() const
     if (!Survivor) return 450.f;
     const float LoadKg = Survivor->InventoryComponent ? Survivor->InventoryComponent->GetCurrentWeightKg() : 0.f;
     const float InjuryScale = Survivor->ItemEffectsComponent ? Survivor->ItemEffectsComponent->GetMovementScale() : 1.f;
-    return CalculateTacticalSpeed(PaceStep, LoadKg, Survivor->Fatigue, InjuryScale);
+    const uint8 EffectiveStep = (Stamina <= 0.f && PaceStep >= 5) ? 4 : PaceStep;
+    return CalculateTacticalSpeed(EffectiveStep, LoadKg, Survivor->Fatigue, InjuryScale);
 }
 
 void UAnomaliaVitalsComponent::RestoreVitals(float SavedStamina, float SavedTemperatureC)
@@ -171,7 +172,10 @@ void UAnomaliaVitalsComponent::ApplyMovementSpeed()
     if (!Survivor || !Survivor->GetCharacterMovement()) return;
     const float TacticalSpeed = GetPlannedWalkSpeed();
     const float Baseline = CalculateTacticalSpeed(4, 0.f, 0.f, 1.f);
-    const float Scale = TacticalSpeed / FMath::Max(1.f, Baseline);
+    const float LoadKg = Survivor->InventoryComponent ? Survivor->InventoryComponent->GetCurrentWeightKg() : 0.f;
+    const float InjuryScale = Survivor->ItemEffectsComponent ? Survivor->ItemEffectsComponent->GetMovementScale() : 1.f;
+    // Sprint is the existing independent high-speed mode, not derived from the walk pace step.
+    const float Scale = CalculateTacticalSpeed(4, LoadKg, Survivor->Fatigue, InjuryScale) / Baseline;
     UCharacterMovementComponent* Move = Survivor->GetCharacterMovement();
     Move->MaxWalkSpeed = bIsSprinting ? SprintWalkSpeed * Scale : TacticalSpeed;
     Move->MaxWalkSpeedCrouched = TacticalSpeed * .55f;
