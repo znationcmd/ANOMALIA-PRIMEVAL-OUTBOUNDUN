@@ -13,11 +13,15 @@ jobs:
       group: anomalia-ue5-native-host
       cancel-in-progress: false
     env:
-      ANOMALIA_STAGE: character-validation-${{ github.run_id }}
+      ANOMALIA_STAGE: c${{ github.run_id }}
     steps:
       - uses: actions/checkout@v4
+        env:
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.longpaths
+          GIT_CONFIG_VALUE_0: 'true'
         with:
-          path: character-validation-${{ github.run_id }}
+          path: c${{ github.run_id }}
           clean: false
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -27,7 +31,11 @@ jobs:
         shell: node {0}
         run: |
           const fs=require('fs'),path=require('path'),cp=require('child_process');
-          const stage=path.join(process.env.GITHUB_WORKSPACE,process.env.ANOMALIA_STAGE);
+          const checkout=path.join(process.env.GITHUB_WORKSPACE,process.env.ANOMALIA_STAGE);
+          const stage=path.join('C:\\ANOMALIA-Validation',process.env.ANOMALIA_STAGE);
+          if(fs.existsSync(stage)) throw Error('Validation directory exists; refusing overwrite');
+          fs.mkdirSync(path.dirname(stage),{recursive:true});
+          fs.cpSync(checkout,stage,{recursive:true,errorOnExist:true,force:false,filter:p=>path.basename(p)!=='.git'});
           const engine=process.env.UE_ROOT || 'C:\\Program Files\\Epic Games\\UE_5.8';
           const local='C:\\ANOMALIA\\unreal';
           const output=path.join(stage,'unreal','Saved','CharacterValidation');
@@ -59,5 +67,5 @@ jobs:
         if: always()
         with:
           name: character-isolated-validation
-          path: ${{ github.workspace }}/character-validation-${{ github.run_id }}/unreal/Saved/CharacterValidation
+          path: C:/ANOMALIA-Validation/c${{ github.run_id }}/unreal/Saved/CharacterValidation
           if-no-files-found: warn
