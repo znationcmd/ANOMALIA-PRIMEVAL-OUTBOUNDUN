@@ -56,8 +56,9 @@ def phase(name):
 
 def begin_actor():
     name = names[s["index"]]
-    cls = unreal.EditorAssetLibrary.load_blueprint_class("/Game/Anomalia/Characters/BP_Anomalia_"+name)
-    actors = unreal.GameplayStatics.get_all_actors_of_class(s["world"], cls)
+    cls = s["classes"][name]
+    actors = [a for a in unreal.GameplayStatics.get_all_actors_of_class(s["world"], cls)
+              if unreal.Name("ANOMALIA_PIE_"+name) in a.tags]
     require(len(actors) == 1, "Expected one placed test pawn for "+name)
     actor = actors[0]
     actor.set_actor_location(unreal.Vector(-1500, s["index"]*400, 110), False, True)
@@ -152,7 +153,7 @@ def tick(delta):
                 row["inventoryAddRemoveApple"]=True
                 row["endCm"]=pos(actor)
                 if row["name"]=="Survival":
-                    garment=unreal.load_asset("/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Jacket")
+                    garment=s["jacket"]
                     require(actor.set_clothing_mesh("Jacket",None),"Runtime jacket removal failed")
                     require(actor.get_editor_property("jacket_mesh").get_editor_property("skeletal_mesh_asset") is None,"Jacket remains")
                     require(actor.set_clothing_mesh("Jacket",garment),"Runtime jacket re-equip failed")
@@ -169,8 +170,15 @@ def tick(delta):
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
     require(editor.load_level("/Game/Anomalia/CharacterTests/L_Anomalia_Characters"),"Missing isolated character test map")
+    s["classes"]={n:unreal.EditorAssetLibrary.load_blueprint_class("/Game/Anomalia/Characters/BP_Anomalia_"+n) for n in names}
+    require(all(s["classes"].values()),"Test Blueprint classes failed to load before PIE")
+    s["jacket"]=unreal.load_asset("/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Jacket")
+    require(s["jacket"] is not None,"Jacket must preload before PIE")
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     for a in actors.get_all_level_actors():
+        for n in names:
+            if a.get_actor_label()=="ANOMALIA_TEST_"+n:
+                a.tags=list(a.tags)+[unreal.Name("ANOMALIA_PIE_"+n)]
         if a.get_actor_label()=="ANOMALIA test floor":
             a.set_actor_scale3d(unreal.Vector(200,200,.2))
     actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
