@@ -1,0 +1,105 @@
+{
+  "schemaVersion": 1,
+  "acceptedCodeCommit": "e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea",
+  "acceptedWorkflowRun": 40493715250,
+  "sourceSha256": "984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d",
+  "models": [
+    {
+      "id": "body",
+      "sha256": "2582c020e229cea377304eaf3e49628b252f76a81316fcb8d9de442d549a6d6f"
+    },
+    {
+      "id": "door_front_right",
+      "sha256": "874055b70f23af633a1feac3248c4d72e464fd1185a87eec7986efbc649e1b47"
+    },
+    {
+      "id": "door_rear_left",
+      "sha256": "6c9d7f8d1dd1770e8c1afde8b0ec9e6e53367eac6e31177dee47bd621725cfed"
+    },
+    {
+      "id": "door_rear_right",
+      "sha256": "1dee897ba8a10182c52551a016fcc5c4c6bbad5fba87a210db91a2a3edf3dd58"
+    },
+    {
+      "id": "hood",
+      "sha256": "e985135085528f93521314ba9cf762dc27a77daa035c4fb79762d2b6a0f7f2f6"
+    },
+    {
+      "id": "trunk",
+      "sha256": "67c7b8c197022b152ef8636af521ae467f71b8cfb7c89745de900ce5d757c23c"
+    },
+    {
+      "id": "door_driver",
+      "sha256": "9d9f17ece424f0c400d0891e488672dd203b17539d924e670b2fb3e6c00b19e9"
+    },
+    {
+      "id": "wheel_fl",
+      "sha256": "e1a77eab77fd73af59886f76a8fb00050a2e00a97f5edafd2dc1a22eb693f6ee"
+    },
+    {
+      "id": "wheel_fr",
+      "sha256": "0e2564fdcc234ff6e07164126c3217d6a35636d5e3d6c550a055951c0f85ad5b"
+    },
+    {
+      "id": "wheel_rl",
+      "sha256": "37b2a48d35a0afb04fd4ec2be68c1100b0153cef65497db2d763bf5de2bc8e7d"
+    },
+    {
+      "id": "wheel_rr",
+      "sha256": "413b7047de34179dcf74fd0ac21221d354da3a1e9d390b20e7aa5058db3c25cd"
+    }
+  ],
+  "surfacePartition": {
+    "sourceArea": 77.73736505703,
+    "areas": {
+      "body": 68.1273005049931,
+      "door_front_right": 1.6709591469709193,
+      "door_rear_left": 1.0163379672856623,
+      "door_rear_right": 1.016810707437397,
+      "hood": 2.0918636965860595,
+      "trunk": 3.8140930337573438
+    },
+    "triangles": {
+      "body": 63204,
+      "door_front_right": 3751,
+      "door_rear_left": 1010,
+      "door_rear_right": 1171,
+      "hood": 2882,
+      "trunk": 3372
+    }
+  },
+  "closedBodyBoundsCm": {
+    "min": [
+      -239.82226848602295,
+      -100.21657943725586,
+      13.246054947376251
+    ],
+    "max": [
+      237.19472885131836,
+      99.65963959693909,
+      143.108868598938
+    ]
+  },
+  "wheelHubsCm": [
+    [
+      151.8785938087546,
+      -75.80654947346235,
+      33.31912008825621
+    ],
+    [
+      152.04623511644215,
+      74.97660955632847,
+      33.319119776762804
+    ],
+    [
+      -131.44473359870977,
+      -75.80654947346235,
+      33.31912008825621
+    ],
+    [
+      -131.27709229102223,
+      74.97660955632847,
+      33.319119776762804
+    ]
+  ]
+}

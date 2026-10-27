@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "state": "PREPARED_STRUCTURALLY_VALIDATED_NOT_NATIVE_ACCEPTED",
+  "baselineAcceptedCodeCommit": "e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea",
+  "baselineWorkflowRun": 40493715250,
+  "sourceSHA256": "984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d",
+  "namespace": "BMWE39Review_v6",
+  "unchangedParts": [
+    "door_front_right",
+    "door_rear_left",
+    "door_rear_right",
+    "hood",
+    "door_driver",
+    "wheel_fl",
+    "wheel_fr",
+    "wheel_rl",
+    "wheel_rr"
+  ],
+  "changedParts": [
+    "body",
+    "trunk"
+  ],
+  "sameClosedBounds": true,
+  "sameWheelHubs": true,
+  "sourceSurfaceAreaSquareMetres": 77.73736505703,
+  "retainedFixedOriginalAreaSquareMetres": 2.486632091067703,
+  "fixedBodyMaterials": [
+    "mottled",
+    "frame"
+  ],
+  "bootInteractionAimCm": [
+    -231.67394002278647,
+    0.25187921710312366,
+    87.19576597213745
+  ],
+  "cpuInteractionAimAudit": {
+    "state": "CPU_GEOMETRY_RAY_CHECKED_NOT_UNREAL_ACCEPTANCE",
+    "rows": [
+      {
+        "angleDegrees": 0,
+        "eyeZCm": 140,
+        "hitPanel": "trunk",
+        "distanceCm": 157.4451349942799
+      },
+      {
+        "angleDegrees": 0,
+        "eyeZCm": 154,
+        "hitPanel": "trunk",
+        "distanceCm": 162.67602492614785
+      },
+      {
+        "angleDegrees": 0,
+        "eyeZCm": 180,
+        "hitPanel": "trunk",
+        "distanceCm": 174.96659467096035
+      },
+      {
+        "angleDegrees": 65,
+        "eyeZCm": 140,
+        "hitPanel": "trunk",
+        "distanceCm": 164.54870337600823
+      },
+      {
+        "angleDegrees": 65,
+        "eyeZCm": 154,
+        "hitPanel": "trunk",
+        "distanceCm": 164.26572688276252
+      },
+      {
+        "angleDegrees": 65,
+        "eyeZCm": 180,
+        "hitPanel": "trunk",
+        "distanceCm": 166.84897912913192
+      }
+    ]
+  },
+  "glbFiles": 11,
+  "khronosErrors": 0,
+  "khronosWarnings": 0,
+  "pythonTests": 154,
+  "nativeGameplayAccepted": false,
+  "visualFinishAccepted": false,
+  "engineBayDetailed": false,
+  "humanAnimationsImplemented": false,
+  "installed": false
+}

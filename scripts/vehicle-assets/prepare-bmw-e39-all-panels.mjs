@@ -5,7 +5,7 @@ import {readFile,writeFile,mkdir} from 'node:fs/promises';import {createHash} fr
 import path from 'node:path';import {fileURLToPath} from 'node:url';
 import {panelShell} from './panel-shell.mjs';
 import {triangleIslands} from './mesh-islands.mjs';import {partitionTriangle,triangulate,area,gltfToUnreal} from './panel-geometry.mjs';
-const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v5');
+const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),base=path.join(root,'unreal/SourceAssets/BMWE39Review_v2'),out=path.join(root,'unreal/SourceAssets/BMWE39Review_v6');
 const previous=JSON.parse(await readFile(path.join(base,'manifest.json'),'utf8')),parent=previous.models.find(m=>m.id==='body');
 const hash=b=>createHash('sha256').update(b).digest('hex'),bytes=await readFile(path.join(base,parent.file));
 if(previous.source.sha256!=='984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d'||hash(bytes)!==parent.sha256)throw Error('Same reviewed E39 with validated driver leaf required');
@@ -42,7 +42,7 @@ for(const def of defs.filter(x=>x.side)){
 const hoodPlanes=[p=>p[0]-2.05,p=>2.35-p[0],p=>p[1]-.52,p=>1.02-p[1],p=>p[2]+.33,p=>.33-p[2]];
 const trunkPlanes=[p=>p[0]+2.34,p=>-1.72-p[0],p=>p[1]-.62,p=>1.065-p[1],p=>p[2]+.615,p=>.615-p[2]];
 const hoodTrim=new Set(['black','chrome','matte_colors','matte_colors.001','matte_colors.002','frame','plastic','reflector']);
-const trunkTrim=new Set(['detail_glass_clear','detail_glass_red','lights_glass','plastic2','reflector','reverse_light_lod0','mirrorRight','tail_light_lod0','frame']);
+const trunkTrim=new Set(['detail_glass_clear','detail_glass_red','lights_glass','plastic2','reflector','reverse_light_lod0','mirrorRight','tail_light_lod0']);
 function wholePanel(g,name){
  for(const d of defs.filter(x=>x.side)){
   const side=d.side<0?g.max[2]<-.55:g.min[2]>.55,deep=d.side<0?g.max[2]<-.66:g.min[2]>.66;
@@ -52,7 +52,8 @@ function wholePanel(g,name){
  const width=Math.max(Math.abs(g.min[2]),Math.abs(g.max[2]));
  if(name==='body'&&g.min[0]>.90&&g.max[0]<2.33&&g.min[1]>.50&&g.max[1]<1.02&&width<.80)return 'hood';
  if(name==='emblem'&&g.min[0]>2.1&&g.min[1]>.65&&width<.1)return 'hood';
- if(g.min[0]>-2.34&&g.max[0]<-1.72&&g.min[1]>.62&&g.max[1]<1.065&&width<.65)return 'trunk';
+ // Felt cargo lining and the aperture frame remain fixed to the body.
+ if(name!=='mottled'&&name!=='frame'&&g.min[0]>-2.34&&g.max[0]<-1.72&&g.min[1]>.62&&g.max[1]<1.065&&width<.65)return 'trunk';
  return null;
 }
 function rulesFor(g,name){
@@ -63,10 +64,10 @@ function rulesFor(g,name){
   if(frame||(side&&g.min[1]>.70))rules.push({id:d.id,planes:frame?[...d.framePlanes,p=>p[1]-.99]:d.framePlanes});
  }
  if(hoodTrim.has(name)&&g.min[0]>2.05&&g.max[0]<2.35)rules.push({id:'hood',planes:hoodPlanes});
- if((trunkTrim.has(name)&&g.max[0]<-2&&g.min[1]>.65&&g.max[1]<.95)||(name==='mottled'&&g.max[0]<-1.72&&g.min[1]>.62&&g.max[1]<1.065))rules.push({id:'trunk',planes:trunkPlanes});
+ if((trunkTrim.has(name)&&g.max[0]<-2&&g.min[1]>.65&&g.max[1]<.95))rules.push({id:'trunk',planes:trunkPlanes});
  return rules;
 }
-let partition;const models=[];
+let partition;const models=[],fixtureAimOverrides={};
 for(const selection of ['body',...defs.map(d=>d.id)]){
  const doc=await io.readBinary(bytes),scene=doc.getRoot().getDefaultScene(),original=scene.listChildren()[0].getMesh(),mesh=doc.createMesh(selection),buffer=doc.getRoot().listBuffers()[0];
  const areas=Object.fromEntries(['body',...defs.map(d=>d.id)].map(x=>[x,0])),counts={...areas};let sourceArea=0;const shell={skinTriangles:0,rimTriangles:0,addedArea:0};
@@ -88,6 +89,15 @@ for(const selection of ['body',...defs.map(d=>d.id)]){
     accept('body',rest);
    }
   }
+  if(selection==='trunk'&&name==='body'&&selected.length){
+   const target=[-2.32,.85,0];let best=Infinity;
+   for(const triangle of selected){
+    const normalX=triangle.reduce((n,v)=>n+v.NORMAL[0],0)/3;if(normalX>-.5)continue;
+    const point=[0,1,2].map(i=>triangle.reduce((n,v)=>n+v.POSITION[i],0)/3);
+    const distance=point.reduce((n,v,i)=>n+(v-target[i])**2,0);
+    if(distance<best){best=distance;fixtureAimOverrides.trunk=point;}
+   }
+  }
   append(selected,p.getMaterial());
   if(selection!=='body'&&selected.length&&(name==='body'||name==='window')){
    const extra=panelShell(selected,name==='window'?.0015:.0012);
@@ -101,11 +111,19 @@ for(const selection of ['body',...defs.map(d=>d.id)]){
  const def=defs.find(d=>d.id===selection);if(def)transformMesh(mesh,[1,0,0,0,0,1,0,0,0,0,1,0,...def.pivot.map(v=>-v),1]);
  for(const n of scene.listChildren())scene.removeChild(n);scene.addChild(doc.createNode(selection).setMesh(mesh));await doc.transform(prune());
  const data=await io.writeBinary(doc),b=getBounds(scene);await preserve(selection+'.glb',data);
- models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v5/'+selection+'/SM_'+selection});
+ models.push({id:selection,file:selection+'.glb',bytes:data.length,sha256:hash(data),triangles:counts[selection]+shell.skinTriangles+shell.rimTriangles,originalTriangles:counts[selection],addedShell:shell,dimensionsMetresYUp:b.max.map((v,i)=>v-b.min[i]),originMetresYUp:b.max.map((v,i)=>(v+b.min[i])/2),objectPath:'/Game/Anomalia/BMWE39Review_v6/'+selection+'/SM_'+selection});
  partition={sourceArea,areas,triangles:counts};
 }
-for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v5/'+m.id+'/SM_'+m.id});}
-const panels=[{...previous.panels[0],hingeAxis:[0,0,1]},...defs.map(d=>({id:d.id,pivotCm:gltfToUnreal(d.pivot),hingeAxis:d.axis,openAngleDegrees:d.angle,apertureCm:d.aperture,traceOutward:d.normal,fixtureStandCm:d.stand,fixtureAimCm:d.id.startsWith('door_rear')?[-70,d.pivot[2]*100,75]:gltfToUnreal(models.find(m=>m.id===d.id).originMetresYUp.map((v,i)=>v+d.pivot[i]))}))];
-const manifest={schemaVersion:4,source:previous.source,parentBodySha256:parent.sha256,models,panels,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm:previous.closedBodyBoundsCm,surfacePartition:partition,driverDoorPartition:previous.sourceCoverage.partition,completeVehicleAccepted:false,gameplayVerified:false};
-await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (1.2 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
+for(const m of previous.models.filter(m=>m.id==='door_driver'||m.id.startsWith('wheel_'))){const b=await readFile(path.join(base,m.file));if(hash(b)!==m.sha256)throw Error('Validated E39 part changed');await preserve(m.file,b);models.push({...m,objectPath:'/Game/Anomalia/BMWE39Review_v6/'+m.id+'/SM_'+m.id});}
+const acceptedV5=JSON.parse(await readFile(path.join(root,'docs/art/bmw-e39-accepted-v5-parts.json'),'utf8'));
+if(acceptedV5.sourceSha256!==previous.source.sha256)throw Error('Accepted source identity changed');
+for(const model of models.filter(m=>m.id!=='body'&&m.id!=='trunk')){
+ if(model.sha256!==acceptedV5.models.find(m=>m.id===model.id)?.sha256)throw Error('Accepted E39 leaf/wheel changed: '+model.id);
+}
+if(Math.abs(partition.sourceArea-acceptedV5.surfacePartition.sourceArea)>1e-6||partition.areas.trunk>=acceptedV5.surfacePartition.areas.trunk)throw Error('Original fixed compartment surfaces were not retained');
+const retainedFixedArea=acceptedV5.surfacePartition.areas.trunk-partition.areas.trunk;
+if(!fixtureAimOverrides.trunk)throw Error('Original rear-facing boot paint required for actual interaction aim');
+const panels=[{...previous.panels[0],hingeAxis:[0,0,1]},...defs.map(d=>({id:d.id,pivotCm:gltfToUnreal(d.pivot),hingeAxis:d.axis,openAngleDegrees:d.angle,apertureCm:d.aperture,traceOutward:d.normal,fixtureStandCm:d.stand,fixtureAimCm:d.id==='trunk'?gltfToUnreal(fixtureAimOverrides.trunk):d.id.startsWith('door_rear')?[-70,d.pivot[2]*100,75]:gltfToUnreal(models.find(m=>m.id===d.id).originMetresYUp.map((v,i)=>v+d.pivot[i]))}))];
+const manifest={schemaVersion:5,compartmentRefinement:{acceptedV5CodeCommit:acceptedV5.acceptedCodeCommit,retainedFixedOriginalAreaSquareMetres:retainedFixedArea,fixedBodyMaterials:['mottled','frame'],description:'Original boot lining and aperture frame remain on the chassis; painted lid skin stays movable.'},source:previous.source,parentBodySha256:parent.sha256,models,panels,wheelHubsCm:previous.wheelHubsCm,closedBodyBoundsCm:previous.closedBodyBoundsCm,surfacePartition:partition,driverDoorPartition:previous.sourceCoverage.partition,completeVehicleAccepted:false,gameplayVerified:false};
+await preserve('manifest.json',JSON.stringify(manifest,null,2)+'\n');await preserve('CREDITS.md',(await readFile(path.join(base,'CREDITS.md'),'utf8'))+'\nAdditional changes: original boot felt lining and aperture frame retained on the fixed body; same-source passenger/rear leaves, hood and trunk separated with authored glazing silhouettes and conserved original area. Added inward metal skins (1.2 mm) and glass skins (1.5 mm) close formerly one-sided surfaces; added geometry is accounted separately. Driver leaf and four wheels remain byte-identical to v2. Native motion/collision/interactions and final art still require acceptance.\n');
 console.log(JSON.stringify({state:'SAME_E39_ALL_PANELS_PREPARED_NOT_GAME_VERIFIED',partition,panels:panels.map(p=>p.id)}));

@@ -16,7 +16,7 @@ try:
     if not mesh or not animation or not tire or not body_art:raise RuntimeError('Real template rig, animation or tires missing')
     sedan=None;sedan_parts={}
     if SEDAN or E39:
-        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets'/('BMWE39Review_v5' if E39 else 'NativeDemoSedan_v3')/'manifest.json').read_text())
+        sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets'/('BMWE39Review_v6' if E39 else 'NativeDemoSedan_v3')/'manifest.json').read_text())
         for part in sedan['models']:
             asset=unreal.load_asset(part['objectPath'])
             if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaNativeSedanSha256')!=part['sha256']:

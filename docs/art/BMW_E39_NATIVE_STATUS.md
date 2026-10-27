@@ -32,6 +32,25 @@ end of the run. Native artifacts: build `12730321731`, reference `12730577186`,
 E39 `12729594152`. Authoritative current receipt:
 `docs/art/bmw-e39-six-panels-native-validation-20261027.json`.
 
+## Compartment finish candidate — v6, not yet native accepted
+
+The accepted v5 source hashes are pinned in `bmw-e39-accepted-v5-parts.json`
+and were compared with the real Windows import report. In the v5 preparation,
+2.48663 square metres of original felt lining and aperture frame were assigned
+to the moving boot lid. v6 leaves these original surfaces on the fixed body.
+Only body/lid files change; four wheels, four doors and bonnet are byte-identical.
+Original surface area, closed bounds, source identity and axle positions remain
+preserved. v5 assets and acceptance evidence remain intact in their namespace.
+
+A target selected from an actual rear-facing painted lid triangle replaces its
+volume centre for automated interaction. Six CPU ray checks hit the real lid
+in closed/open positions over three eye heights; they do not establish native
+collision or gameplay acceptance. Eleven GLBs have zero Khronos errors/warnings,
+and 154 Python tests pass. Native import, all 61 gameplay checks and viewport
+inspection still need to run for v6. Receipt:
+`docs/art/bmw-e39-compartment-candidate-20261027.json`.
+This refinement does not add a detailed engine or human animations.
+
 ## Earlier attempts (not accepted at the time)
 
 
