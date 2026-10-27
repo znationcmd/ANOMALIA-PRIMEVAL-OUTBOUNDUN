@@ -36,9 +36,9 @@ jobs:
           for(const s of chosen){s.files=files(s.dir);for(const p of s.files)bytes+=fs.statSync(p).size;}
           const stat=fs.statfsSync(path.parse(root).root);const free=stat.bavail*stat.bsize;
           if(bytes>20*1024**3||free<bytes+10*1024**3)throw Error('Insufficient staging budget: '+bytes+' bytes; free '+free);
-          const report={time:new Date().toISOString(),sourceBytes:bytes,sourcePacks:[],imports:[],originalSourcesModified:false,publicAssetUpload:false};
+          const report={time:new Date().toISOString(),sourceBytes:bytes,deferredSources:blocked,sourcePacks:[],imports:[],originalSourcesModified:false,publicAssetUpload:false};
           const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
-          for(const s of chosen){
+          for(const s of selected){
            const dest=path.join(root,'Sources',s.id);fs.mkdirSync(dest,{recursive:true});
            const pack={id:s.id,original:s.dir,staged:dest,files:[]};report.sourcePacks.push(pack);
            for(const p of s.files){const rel=path.relative(s.dir,p),d=path.join(dest,rel),before=fs.statSync(p);const b=fs.readFileSync(p);fs.mkdirSync(path.dirname(d),{recursive:true});fs.writeFileSync(d,b,{flag:'wx'});const digest=hash(b),after=fs.statSync(p);
