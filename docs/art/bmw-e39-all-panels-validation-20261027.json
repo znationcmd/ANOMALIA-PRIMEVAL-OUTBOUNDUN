@@ -14,8 +14,11 @@
   "attempt2": {
     "requestedDate": "2026-10-27",
     "jobId": 122061181473,
-    "state": "queued",
-    "runnerAssigned": false
+    "state": "completed",
+    "runnerAssigned": true,
+    "conclusion": "failure",
+    "completedUtc": "2026-10-27T07:26:15Z",
+    "e39Artifact": 12717285107
   },
   "engineVersion": {
     "MajorVersion": 5,
@@ -55,7 +58,13 @@
     "asyncFixedTimeStepSize": 0.00833333283662796
   },
   "latestE39": {
-    "state": "NOT_RUN_INTERRUPTED_BEFORE_E39_STAGE",
+    "state": "FAILED",
+    "error": "Panel review destabilized chassis: door_front_right drift=6.17 cm speed=126.18 cm/s vehicle=X=-6.716 Y=3.777 Z=1.871 survivor=X=207.757 Y=230.172 Z=99.167",
+    "stationaryReviewed": true,
+    "driverDoorReviewed": true,
+    "validatedAdditionalPanelIds": [],
+    "panelMaxChassisDriftCm": 6.167149543762207,
+    "panelMaxChassisSpeedCmPerSecond": 126.18402862548828,
     "allSixPanelsAccepted": false,
     "completeVehicleAccepted": false
   },
@@ -83,5 +92,12 @@
     "requirementsRegistered": true,
     "implemented": false,
     "gameTested": false
+  },
+  "nextCorrection": {
+    "state": "PREPARED_NOT_NATIVE_VERIFIED",
+    "dedicatedPanelObjectChannel": "VehiclePanel",
+    "suspensionIgnoresPanelChannel": true,
+    "perFramePanelWheelForceEvidence": true,
+    "stabilityLimitsUnchanged": true
   }
 }

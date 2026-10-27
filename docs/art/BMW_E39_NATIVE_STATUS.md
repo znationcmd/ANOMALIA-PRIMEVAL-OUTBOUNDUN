@@ -60,15 +60,27 @@ followed by 322 physical driving samples. The loaded async step is 0.008333333 s
 
 The run ended with failure at 22:46:08 UTC on 26 October, while GitHub still
 reported the preceding original-sedan preparation/import step as in progress.
-No E39 stage, cleanup steps or final job log are available. The exact cause of
-the interruption is undetermined; do not report a confirmed import-code error,
-runner failure or power loss. Attempt 2 was requested on 27 October; job
-`122061181473` is queued with no runner assigned at the status check.
+Attempt 1 has no final job log, and its exact interruption cause remains unknown.
+Attempt 2 completed on 27 October at 07:26 UTC on `ANOMALIA-PC`.
+It compiled both targets, passed native tests/reference driving and imported
+all eleven E39 parts. The E39 passed the twenty-second idle and driver-leaf
+checks, then failed the front-right panel stability gate: drift 6.16715 cm,
+speed 126.18403 cm/s. Evidence artifact: `12717285107`, job `122061181473`.
+The async cadence therefore did not resolve opening-cycle instability.
+
+The next diagnostic correction places kinematic leaves on a dedicated
+`VehiclePanel` object channel and explicitly excludes only that channel from
+Chaos suspension ray queries. Character blocking and visibility interaction
+remain enabled; dynamic road surfaces remain eligible for wheel support.
+This is a hypothesis under test, not a confirmed cause. Per-frame panel-phase
+position, velocity, delta time, leaf angle and four wheel spring/contact outputs
+are retained before the unchanged stability gate, including the failing frame.
+Native compilation and acceptance of this correction are still pending.
 
 This latest E39 configuration has therefore not passed six-panel acceptance.
-The interrupted run is not still executing. Receipt:
-`docs/art/bmw-e39-all-panels-validation-20261027.json`. Do not install or report
-the E39 as completed. The verified v2 results below do not validate these changes
+Receipt: `docs/art/bmw-e39-all-panels-validation-20261027.json`.
+Do not install or report the E39 as completed.
+The verified v2 results below do not validate these changes
 or the five new panels.
 
 **Keep this E39.** The same Black Snow source, body, interior and four wheels

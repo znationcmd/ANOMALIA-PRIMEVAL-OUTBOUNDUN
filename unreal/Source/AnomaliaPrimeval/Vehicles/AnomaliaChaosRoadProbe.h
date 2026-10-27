@@ -31,6 +31,7 @@ private:
     double IdleStarted=0,LastIdleSample=0;
     FVector IdleStartLocation=FVector::ZeroVector;
     TArray<TSharedPtr<FJsonValue>> IdleSamples;
+    TArray<TSharedPtr<FJsonValue>> PanelSamples;
     FVector PanelReviewStart=FVector::ZeroVector;
     float PanelMaxDriftCm=0,PanelMaxSpeedCmPerSecond=0;
     FVector PanelAimInMeshCm=FVector::ZeroVector;

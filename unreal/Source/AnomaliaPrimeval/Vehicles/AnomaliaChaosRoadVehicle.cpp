@@ -95,6 +95,9 @@ AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
     // Server feeds every input through the existing validated driver flow.
     // Driverless physics must still receive its parking brake after unpossession.
     ChaosMovement->SetRequiresControllerForInputs(false);
+    // Animated leaves are queries for characters, never suspension support.
+    // Keep dynamic road surfaces enabled; exclude only the dedicated panel type.
+    ChaosMovement->SetWheelTraceResponseToChannel(ECC_GameTraceChannel1,ECR_Ignore);
     ChaosMovement->Mass=1500.f;
     ChaosMovement->bReverseAsBrake=false;
     ChaosMovement->DragCoefficient=.3f;

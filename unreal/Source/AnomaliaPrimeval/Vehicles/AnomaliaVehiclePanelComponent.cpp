@@ -12,7 +12,7 @@ UAnomaliaVehiclePanelComponent::UAnomaliaVehiclePanelComponent()
     PrimaryComponentTick.bCanEverTick=true;SetIsReplicatedByDefault(true);
     SetMobility(EComponentMobility::Movable);
     BodyInstance.bAutoWeld=false; // Moving panel collision must not become chassis mass/collision.
-    SetCollisionEnabled(ECollisionEnabled::NoCollision);SetCollisionObjectType(ECC_WorldDynamic);
+    SetCollisionEnabled(ECollisionEnabled::NoCollision);SetCollisionObjectType(ECC_GameTraceChannel1);
     SetCollisionResponseToAllChannels(ECR_Ignore);
     SetCollisionResponseToChannel(ECC_Pawn,ECR_Block);SetCollisionResponseToChannel(ECC_Visibility,ECR_Block);
     SetGenerateOverlapEvents(false);SetCanEverAffectNavigation(false);

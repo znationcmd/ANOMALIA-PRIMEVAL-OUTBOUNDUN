@@ -155,6 +155,7 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
     for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
     Report->SetArrayField(TEXT("checks"),Rows); Report->SetArrayField(TEXT("physicsSamples"),Samples);
     Report->SetArrayField(TEXT("stationarySamples"),IdleSamples);
+    Report->SetArrayField(TEXT("panelSamples"),PanelSamples);
     Report->SetBoolField(TEXT("stationaryReviewed"),bIdleReviewed);
     Report->SetBoolField(TEXT("asyncPhysics"),UPhysicsSettings::Get()->bTickPhysicsAsync);
     Report->SetNumberField(TEXT("asyncFixedTimeStepSize"),UPhysicsSettings::Get()->AsyncFixedTimeStepSize);
@@ -194,6 +195,30 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         if(!V || !S || !Panel){Finish(TEXT("Additional E39 panel review lost its real actor"));return;}
         PanelMaxDriftCm=FMath::Max(PanelMaxDriftCm,float(FVector::Dist(V->GetActorLocation(),PanelReviewStart)));
         PanelMaxSpeedCmPerSecond=FMath::Max(PanelMaxSpeedCmPerSecond,float(V->Chassis->GetPhysicsLinearVelocity().Size()));
+        // Retain the actual contact/force output before the stability gate,
+        // including the failing frame. Never reset velocity or relax limits.
+        auto PanelSample=MakeShared<FJsonObject>();
+        PanelSample->SetStringField(TEXT("panel"),Panel->PanelId.ToString());
+        PanelSample->SetNumberField(TEXT("phase"),Phase);
+        PanelSample->SetNumberField(TEXT("seconds"),Now-PhaseStarted);
+        PanelSample->SetNumberField(TEXT("frameDeltaSeconds"),DeltaSeconds);
+        PanelSample->SetNumberField(TEXT("angleDegrees"),Panel->AngleDegrees);
+        PanelSample->SetStringField(TEXT("location"),V->GetActorLocation().ToString());
+        PanelSample->SetStringField(TEXT("velocity"),V->Chassis->GetPhysicsLinearVelocity().ToString());
+        PanelSample->SetNumberField(TEXT("driftCm"),FVector::Dist(V->GetActorLocation(),PanelReviewStart));
+        TArray<TSharedPtr<FJsonValue>> WheelSamples;
+        for(int32 Index=0;Index<V->ChaosMovement->Wheels.Num();++Index)
+        {
+            const FWheelStatus& Status=V->ChaosMovement->GetWheelState(Index);
+            auto WheelSample=MakeShared<FJsonObject>();
+            WheelSample->SetNumberField(TEXT("wheel"),Index);
+            WheelSample->SetBoolField(TEXT("contact"),Status.bInContact);
+            WheelSample->SetNumberField(TEXT("springForce"),Status.SpringForce);
+            WheelSample->SetNumberField(TEXT("suspensionLengthNormalized"),Status.NormalizedSuspensionLength);
+            WheelSamples.Add(MakeShared<FJsonValueObject>(WheelSample));
+        }
+        PanelSample->SetArrayField(TEXT("wheels"),WheelSamples);
+        PanelSamples.Add(MakeShared<FJsonValueObject>(PanelSample));
         if(PanelMaxDriftCm>50.f || PanelMaxSpeedCmPerSecond>100.f)
         {Finish(FString::Printf(TEXT("Panel review destabilized chassis: %s drift=%.2f cm speed=%.2f cm/s vehicle=%s survivor=%s"),
             *Panel->PanelId.ToString(),PanelMaxDriftCm,PanelMaxSpeedCmPerSecond,*V->GetActorLocation().ToString(),*S->GetActorLocation().ToString()));return;}
@@ -313,6 +338,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         {
             auto* Door=V->DriverDoor.Get();
             if(Door->GetStaticMesh()!=V->DriverDoorMesh || Door->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || Door->IsSimulatingPhysics() || Door->BodyInstance.bAutoWeld ||
+               Door->GetCollisionObjectType()!=ECC_GameTraceChannel1 ||
+               V->ChaosMovement->WheelTraceCollisionResponses.GetResponse(ECC_GameTraceChannel1)!=ECR_Ignore ||
                !Door->GetRelativeLocation().Equals(V->DriverDoorPivotCm,.1f))
             {Finish(TEXT("Actual hinge-centred imported driver door is not installed"));return;}
             Checks.Add(TEXT("separate_licensed_driver_door_mesh_installed"));
@@ -393,6 +420,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 for(const auto& Candidate:V->AdditionalPanels)if(Candidate && Candidate->PanelId==Id)Panel=Candidate;
                 FVector StandLocal,Axis,Pivot,Aim;
                 if(!Panel || !Panel->GetStaticMesh() || Panel->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || Panel->IsSimulatingPhysics() || Panel->BodyInstance.bAutoWeld ||
+                   Panel->GetCollisionObjectType()!=ECC_GameTraceChannel1 ||
                    !ReadPanelFixtureVector(Config,TEXT("apertureCm"),PanelApertureLocalCm) ||
                    !ReadPanelFixtureVector(Config,TEXT("traceOutward"),PanelTraceOutward) || PanelTraceOutward.IsNearlyZero() ||
                    !ReadPanelFixtureVector(Config,TEXT("fixtureStandCm"),StandLocal) ||
