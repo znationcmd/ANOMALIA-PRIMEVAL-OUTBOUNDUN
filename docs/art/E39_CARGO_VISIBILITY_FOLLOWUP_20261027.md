@@ -46,3 +46,13 @@ Les tests d’îlots, de découpe et de fermeture des peaux des panneaux sont co
 Les corrections de compilation trouvées dans le composant de survie des
 véhicules sont suivies séparément avec les validations natives de la PR #44.
 La même E39 rouge, ses roues et ses six ouvrants sont conservés.
+
+## Contrôles exécutés après ce rapport initial
+
+Le run Windows 40549172851 a produit quatre nouvelles captures GPU : coffre fermé, vue arrière ouverte, vue oblique et vue du dessus. Les vues oblique et du dessus ont été inspectées : le fond et les parois du coffre sont visibles. L’intérieur reste peu détaillé visuellement, mais la surface observée ne justifie pas de supprimer la cuve du coffre.
+
+Ces captures réutilisent les onze meshes v7 et vérifient leurs métadonnées SHA. Elles sont une prévisualisation statique dans un monde d’éditeur non sauvegardé, avec pivots d’origine ; elles ne sont pas un nouvel essai de conduite ou de réseau.
+
+Le run natif 40546939481 de la PR #44 a également réussi le test VehicleKeyPartsCargoAndRecovery, parmi 26 tests natifs. Cette preuve porte sur les sources corrigées et le monde de test isolé ; elle ne remplace pas un essai GPU des nouveaux services sur le code e6b7967 ou une vérification dans le jeu installé.
+
+Restent : finition des matériaux, compartiment moteur/habitacle, animations du conducteur, multijoueur, persistance en session et paquet installé. Aucun remplacement de la BMW existante n’est effectué.
