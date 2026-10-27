@@ -65,15 +65,11 @@ void UAnomaliaVehiclePanelComponent::TickComponent(float Delta,ELevelTick Type,F
         VisualAngle=AngleDegrees;
     }
     else VisualAngle=FMath::FInterpConstantTo(VisualAngle,AngleDegrees,Delta,FMath::Max(1.f,DegreesPerSecond)*1.5f);
-    // Query-only leaf motion must update geometry without synthesizing a
-    // rigid-body velocity from its animated pose, including on attached bodies.
-    // The angular path has already passed the obstruction samples above.
-    SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)),
-        false,nullptr,ETeleportType::TeleportPhysics);
+    SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)));
 }
 void UAnomaliaVehiclePanelComponent::OnRep_Angle()
 {
-    if(!bReceivedAngle){VisualAngle=AngleDegrees;SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)),false,nullptr,ETeleportType::TeleportPhysics);bReceivedAngle=true;}
+    if(!bReceivedAngle){VisualAngle=AngleDegrees;SetRelativeRotation(FQuat(LocalHingeAxis.GetSafeNormal(SMALL_NUMBER,FVector::UpVector),FMath::DegreesToRadians(VisualAngle)));bReceivedAngle=true;}
 }
 void UAnomaliaVehiclePanelComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {

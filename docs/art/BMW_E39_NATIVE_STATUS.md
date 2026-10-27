@@ -150,6 +150,28 @@ recorded on every panel sample to detect hidden native coupling. No chassis
 velocity/transform is assigned or clamped. This is an unverified hypothesis;
 complete six-panel, walking-contact and driving acceptance is still required.
 
+## Pose-mode native attempt — 27 October 2026
+
+Revision `337a36efad731b1217a22ae4eb4f7404ec408495`, run `40478504861`,
+compiled Editor/Game and passed native tests/reference driving. Eleven parts
+imported, idle/driver checks passed, then front-right opening failed stability:
+24.43 cm drift and 626.67 cm/s speed. Artifact `12722358347` records distinct
+raw/effective `RoadPanel1` bodies and `WeldParent=false`. Neither a hidden weld
+nor the proposed pose mode is established as the root cause.
+
+The impulses occur within the first two samples after the test character is
+relocated across the vehicle. The next candidate isolates this fixture action
+before commanding any opening. Only while placing the test character, its
+collision is disabled, movement/base reset and its collision recreated at the
+destination. It is restored before four seconds of normal simulation; the same
+50 cm / 100 cm/s chassis limits must pass before the server opening command.
+Those six pre-opening acceptance checks are required by the Python driver.
+All real opening, closing, capsule blocking, walking and driving gates remain.
+No vehicle transform/velocity is set, and no collision is disabled during a
+measured interaction. Production character movement is unchanged. The unproven
+production panel-pose change is removed. This remains a hypothesis under test;
+no complete E39 or six-panel acceptance is claimed.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.

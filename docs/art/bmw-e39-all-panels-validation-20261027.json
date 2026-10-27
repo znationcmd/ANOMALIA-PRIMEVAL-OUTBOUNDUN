@@ -59,18 +59,11 @@
   },
   "latestE39": {
     "state": "FAILED",
-    "error": "Panel review destabilized chassis: trunk drift=766.95 cm speed=22532.03 cm/s vehicle=X=-779.102 Y=-11.660 Z=35.759 survivor=X=-393.435 Y=-4.701 Z=97.377",
+    "error": "Panel review destabilized chassis: door_front_right drift=24.43 cm speed=626.67 cm/s vehicle=X=-21.071 Y=15.002 Z=2.157 survivor=X=207.801 Y=230.170 Z=98.558",
     "driverDoorReviewed": true,
-    "validatedAdditionalPanelIds": [
-      "door_front_right",
-      "door_rear_left",
-      "door_rear_right",
-      "hood"
-    ],
-    "panelMaxChassisDriftCm": 766.9539184570312,
-    "panelMaxChassisSpeedCmPerSecond": 22532.025390625,
-    "reviewFixtureInitializedClosed": true,
-    "reviewKeyboardInputIsolated": true,
+    "validatedAdditionalPanelIds": [],
+    "panelMaxChassisDriftCm": 24.42592430114746,
+    "panelMaxChassisSpeedCmPerSecond": 626.6660766601562,
     "allSixPanelsAccepted": false,
     "completeVehicleAccepted": false
   },
@@ -101,11 +94,12 @@
   },
   "nextCorrection": {
     "state": "PREPARED_NOT_NATIVE_VERIFIED",
-    "panelPosePhysicsMode": "TeleportPhysics",
-    "obstructionSamplingRetained": true,
-    "rawAndEffectiveNativePanelBodyTelemetry": true,
-    "globalCharacterPushExperimentRemoved": true,
-    "stabilityLimitsUnchanged": true
+    "fixtureOnlyCharacterRelocation": "temporarily disable character collision only during placement, reset character movement/base, recreate at destination",
+    "characterCollisionRestoredBeforeMeasurement": true,
+    "settleSecondsBeforeEveryPanelOpening": 4,
+    "sameChassisStabilityLimitsBeforeOpening": true,
+    "unprovenProductionPoseChangeRemoved": true,
+    "vehicleTransformsAndVelocitiesNeverReset": true
   },
   "panelChannelAttempt": {
     "codeCommit": "7a8602c474f05383d83777101a738fdf98f9f1a8",
@@ -175,5 +169,25 @@
     },
     "characterAutoPhysicsPushEnabled": false,
     "survivorHorizontalVelocityBeforeFailure": 0
+  },
+  "panelPoseAttempt": {
+    "codeCommit": "337a36efad731b1217a22ae4eb4f7404ec408495",
+    "workflowRun": 40478504861,
+    "jobId": 122102594719,
+    "artifact": 12722358347,
+    "compilation": "passed",
+    "nativeTests": "passed",
+    "referenceVehicle": "passed",
+    "e39": {
+      "state": "FAILED",
+      "error": "Panel review destabilized chassis: door_front_right drift=24.43 cm speed=626.67 cm/s vehicle=X=-21.071 Y=15.002 Z=2.157 survivor=X=207.801 Y=230.170 Z=98.558",
+      "driverDoorReviewed": true,
+      "validatedAdditionalPanelIds": [],
+      "panelMaxChassisDriftCm": 24.42592430114746,
+      "panelMaxChassisSpeedCmPerSecond": 626.6660766601562
+    },
+    "rawPanelBodyWelded": false,
+    "rawPanelBodyOwner": "RoadPanel1",
+    "effectivePanelBodyOwner": "RoadPanel1"
   }
 }

@@ -42,6 +42,22 @@ bool ReadPanelFixtureVector(const TSharedPtr<FJsonObject>& Object,const TCHAR* K
     Out=FVector((*Values)[0]->AsNumber(),(*Values)[1]->AsNumber(),(*Values)[2]->AsNumber());
     return !Out.ContainsNaN() && Out.GetAbsMax()<1000;
 }
+
+bool PlaceReviewSurvivor(AAnomaliaSurvivor* Survivor,const FVector& Destination)
+{
+    if(!Survivor || !Survivor->GetActorEnableCollision())return false;
+    // Fixture relocation only, never a gameplay move. Recreate the character's
+    // collision at the destination rather than moving its kinematic body across
+    // the car between successive sides. The vehicle is never moved or reset.
+    Survivor->SetActorEnableCollision(false);
+    Survivor->GetCharacterMovement()->StopMovementImmediately();
+    Survivor->SetBase(nullptr);
+    const bool Placed=Survivor->SetActorLocationAndRotation(Destination,FRotator::ZeroRotator,
+        false,nullptr,ETeleportType::TeleportPhysics);
+    Survivor->SetActorEnableCollision(true);
+    return Placed;
+}
+
 }
 
 AAnomaliaChaosRoadProbe::AAnomaliaChaosRoadProbe() { PrimaryActorTick.bCanEverTick=true; }
@@ -408,7 +424,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                V->ChaosMovement->WheelTraceCollisionResponses.GetResponse(ECC_GameTraceChannel1)!=ECR_Ignore ||
                !Door->GetRelativeLocation().Equals(V->DriverDoorPivotCm,.1f))
             {Finish(TEXT("Actual hinge-centred imported driver door is not installed"));return;}
-            Checks.Add(TEXT("separate_licensed_driver_door_mesh_installed"));
+            Checks.AddUnique(TEXT("separate_licensed_driver_door_mesh_installed"));
             FString ManifestText;TSharedPtr<FJsonObject> Manifest;
             const TSharedPtr<FJsonObject>* Bounds=nullptr;
             const TArray<TSharedPtr<FJsonValue>> *Minimum=nullptr,*Maximum=nullptr;
@@ -428,7 +444,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 ClosedBox+=Panel->GetStaticMesh()->GetBounds().GetBox().ShiftBy(Panel->GetRelativeLocation());
             if(!ClosedBox.Min.Equals(ExpectedMin,1.f) || !ClosedBox.Max.Equals(ExpectedMax,1.f))
             {Finish(TEXT("Closed door does not recompose the original body bounds: wrong hinge side or pivot"));return;}
-            Checks.Add(TEXT("closed_driver_door_recomposes_original_body_bounds"));
+            Checks.AddUnique(TEXT("closed_driver_door_recomposes_original_body_bounds"));
             // Only fixture positioning: opening and closing use the same targeted
             // server interaction as the survivor's E key, never assigned angles.
             FVector StandLocalCm(240,-240,100);
@@ -447,9 +463,18 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                    !ReadPanelFixtureVector(Panel,TEXT("fixtureStandCm"),StandLocalCm))
                 {Finish(TEXT("E39 driver leaf fixture vectors invalid"));return;}
             }
-            const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocalCm);
-            if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true))
-            {Finish(TEXT("Door interaction fixture position is blocked"));return;}
+            if(PanelUnderReview.Get()!=Door)
+            {
+                PanelUnderReview=Door;PanelReviewStart=V->GetActorLocation();
+                const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocalCm);
+                if(!PlaceReviewSurvivor(S,Stand)){Finish(TEXT("Driver fixture relocation failed"));return;}
+                // Phase 0 requires four seconds before re-entering this block.
+                // All character collision is enabled throughout that interval.
+                PhaseStarted=Now;return;
+            }
+            if(FVector::Dist(V->GetActorLocation(),PanelReviewStart)>50.f || V->Chassis->GetPhysicsLinearVelocity().Size()>100.f)
+            {Finish(TEXT("Driver fixture relocation destabilized chassis before any opening command"));return;}
+            Checks.AddUnique(TEXT("driver_fixture_settled_with_character_collision_before_opening"));
             FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Door->Bounds.Origin-Eye).Rotation());
             const FVector Opening=V->Chassis->GetComponentTransform().TransformPosition(DoorApertureLocalCm);
             FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaClosedPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
@@ -495,10 +520,18 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                    !ReadPanelFixtureVector(Config,TEXT("hingeAxis"),Axis) || !ReadPanelFixtureVector(Config,TEXT("pivotCm"),Pivot) ||
                    !Panel->LocalHingeAxis.Equals(Axis.GetSafeNormal(),.001f) || !Panel->GetRelativeLocation().Equals(Pivot,.1f))
                 {Finish(TEXT("Authored E39 panel/axis/fixture missing: ")+Id.ToString());return;}
-                PanelUnderReview=Panel;PanelAimInMeshCm=Aim-Pivot;PanelReviewStart=V->GetActorLocation();
+                PanelAimInMeshCm=Aim-Pivot;
+                if(PanelUnderReview.Get()!=Panel)
+                {
+                    PanelUnderReview=Panel;PanelReviewStart=V->GetActorLocation();
+                    const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocal);
+                    if(!PlaceReviewSurvivor(S,Stand)){Finish(TEXT("Panel fixture relocation failed"));return;}
+                    PhaseStarted=Now;return;
+                }
+                if(FVector::Dist(V->GetActorLocation(),PanelReviewStart)>50.f || V->Chassis->GetPhysicsLinearVelocity().Size()>100.f)
+                {Finish(TEXT("Panel fixture relocation destabilized chassis before opening: ")+Id.ToString());return;}
+                Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_fixture_settled_with_character_collision_before_opening"));
                 Checks.Add(TEXT("panel_")+Id.ToString()+TEXT("_installed_with_authored_hinge_axis"));
-                const FVector Stand=V->Chassis->GetComponentTransform().TransformPosition(StandLocal);
-                if(!S->TeleportTo(Stand,FRotator::ZeroRotator,false,true)){Finish(TEXT("Panel fixture stand is blocked"));return;}
                 FVector Eye;FRotator View;S->GetActorEyesViewPoint(Eye,View);PC->SetControlRotation((Panel->GetComponentTransform().TransformPosition(PanelAimInMeshCm)-Eye).Rotation());
                 const FVector Point=V->Chassis->GetComponentTransform().TransformPosition(PanelApertureLocalCm);
                 const FVector Outward=V->Chassis->GetComponentTransform().TransformVectorNoScale(PanelTraceOutward).GetSafeNormal();

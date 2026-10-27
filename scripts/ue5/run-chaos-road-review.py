@@ -78,6 +78,10 @@ def main():
         if 'survivor_walks_into_closed_trunk_without_launching_chassis' not in drive.get('checks',[]):
             raise RuntimeError('Real character walking must remain blocked without launching the chassis')
         expected={'door_front_right','door_rear_left','door_rear_right','hood','trunk'}
+        placements={'panel_'+panel+'_fixture_settled_with_character_collision_before_opening' for panel in expected}
+        placements.add('driver_fixture_settled_with_character_collision_before_opening')
+        if not placements.issubset(drive.get('checks',[])):
+            raise RuntimeError('Every panel fixture must settle with character collision active before opening')
         if set(drive.get('validatedAdditionalPanelIds',[]))!=expected:
             raise RuntimeError('All five additional E39 panels must pass real moving-collision checks')
     if not drive.get('stationaryReviewed') or not drive.get('asyncPhysics') or abs(drive.get('asyncFixedTimeStepSize',0)-1/120)>1e-6:
