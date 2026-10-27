@@ -63,14 +63,14 @@ def begin_actor():
     actor = actors[0]
     actor.set_actor_location(unreal.Vector(-1500, s["index"]*400, 110), False, True)
     s["pc"].possess(actor)
-    require(s["pc"].get_pawn() == actor and actor.is_locally_controlled(), "Possession failed "+name)
+    require(actor.get_controller() == s["pc"] and actor.is_locally_controlled(), "Possession failed "+name)
     mesh = actor.get_editor_property("mesh")
     require(mesh.get_anim_instance() is not None, "No runtime AnimInstance "+name)
     require(actor.get_editor_property("follow_camera").is_active(), "Inactive follow camera "+name)
     inv = actor.get_editor_property("inventory_component")
     require(inv is not None, "No runtime inventory "+name)
     s.update(actor=actor, mesh=mesh, inv=inv, vitals=actor.get_editor_property("vitals_component"),
-             movement=actor.get_character_movement())
+             movement=actor.get_editor_property("character_movement"))
     row={"name":name,"pawn":actor.get_path_name(),"possessed":True,
          "animationInstance":mesh.get_anim_instance().get_class().get_path_name(),
          "cameraActive":True,"startCm":pos(actor),"maxWalkSpeedObserved":0.0,
