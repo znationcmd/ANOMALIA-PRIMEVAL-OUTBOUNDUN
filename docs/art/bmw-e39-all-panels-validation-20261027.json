@@ -59,16 +59,9 @@
   },
   "latestE39": {
     "state": "FAILED",
-    "error": "Panel review destabilized chassis: trunk drift=725.77 cm speed=28508.43 cm/s vehicle=X=-729.891 Y=-26.692 Z=28.593 survivor=X=-385.206 Y=-17.503 Z=97.808",
-    "driverDoorReviewed": true,
-    "validatedAdditionalPanelIds": [
-      "door_front_right",
-      "door_rear_left",
-      "door_rear_right",
-      "hood"
-    ],
-    "panelMaxChassisDriftCm": 725.7744750976562,
-    "panelMaxChassisSpeedCmPerSecond": 28508.43359375,
+    "error": "Closed real driver door does not block the aperture trace",
+    "driverDoorReviewed": false,
+    "validatedAdditionalPanelIds": [],
     "allSixPanelsAccepted": false,
     "completeVehicleAccepted": false
   },
@@ -99,10 +92,10 @@
   },
   "nextCorrection": {
     "state": "PREPARED_NOT_NATIVE_VERIFIED",
-    "disableAutomaticCharacterPhysicsPush": true,
-    "characterBlockingRetained": true,
-    "realClosedTrunkWalkingRequired": true,
-    "survivorVelocityAndBaseTelemetry": true,
+    "scope": "isolated standalone proving-ground probe only",
+    "initializeFixtureLeavesClosedBeforeIdle": true,
+    "disableLivePawnInputDuringAutomatedReview": true,
+    "retainActualFinalLeafStates": true,
     "stabilityLimitsUnchanged": true
   },
   "panelChannelAttempt": {
@@ -130,5 +123,22 @@
       "panelMaxChassisDriftCm": 725.7744750976562,
       "panelMaxChassisSpeedCmPerSecond": 28508.43359375
     }
+  },
+  "characterPushAttempt": {
+    "codeCommit": "93f05797062a108ef4431f9771a06a3d47454086",
+    "workflowRun": 40472920370,
+    "jobId": 122084092384,
+    "artifact": 12720450349,
+    "compilation": "passed",
+    "nativeTests": "passed",
+    "referenceVehicle": "passed",
+    "e39": {
+      "state": "FAILED",
+      "error": "Closed real driver door does not block the aperture trace",
+      "driverDoorReviewed": false,
+      "validatedAdditionalPanelIds": []
+    },
+    "stationaryReviewed": true,
+    "captureObservation": "Driver leaf appears open before the first commanded opening; initial state and live input are not yet isolated"
   }
 }

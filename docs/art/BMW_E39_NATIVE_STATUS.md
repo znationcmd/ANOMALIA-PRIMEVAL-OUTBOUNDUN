@@ -109,6 +109,25 @@ and leave chassis drift/speed under the existing limits. Panel telemetry also
 records survivor velocity, location and movement base. This correction still
 requires native compilation and gameplay acceptance.
 
+## Character-push native attempt — 27 October 2026
+
+Revision `93f05797062a108ef4431f9771a06a3d47454086`, run `40472920370`,
+compiled Editor/Game, passed native tests and reference driving, and imported
+the E39. Its idle observation passed. It failed at the first closed-driver-leaf
+aperture check, before the commanded opening, so it did not test the boot or
+walking-contact acceptance. Artifact `12720450349` retains the actual report
+and viewport. The viewport shows the driver leaf already open. This is not
+proof of a missing closed-leaf collider or a successful push-force correction.
+Whether stored fixture state or live keyboard input caused the open leaf is
+not yet determined.
+
+The next change affects only the explicit standalone proving-ground probe:
+initialize its fixture leaves closed before the twenty-second idle observation,
+disable live pawn keyboard input during the automated review, and retain final
+open/angle/obstruction states in every report. Measured opening/closing still
+uses the same targeted server commands; normal production input is unchanged.
+No stability/collision threshold is relaxed. Native verification is pending.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.

@@ -127,6 +127,20 @@ void AAnomaliaChaosRoadProbe::Finish(const FString& Error)
         Report->SetNumberField(TEXT("constraintSuspensionDisabled"),Setting->GetInt());
     if(Car.IsValid())
     {
+        Report->SetBoolField(TEXT("reviewFixtureInitializedClosed"),IdleStarted>0);
+        Report->SetBoolField(TEXT("reviewKeyboardInputIsolated"),true);
+        TArray<TSharedPtr<FJsonValue>> LeafStates;
+        TArray<UAnomaliaVehiclePanelComponent*> Leaves={Car->DriverDoor.Get()};
+        for(const auto& Leaf:Car->AdditionalPanels)Leaves.Add(Leaf.Get());
+        for(const auto* Leaf:Leaves)if(Leaf)
+        {
+            auto State=MakeShared<FJsonObject>();State->SetStringField(TEXT("id"),Leaf->PanelId.ToString());
+            State->SetBoolField(TEXT("open"),Leaf->bOpen);State->SetBoolField(TEXT("obstructed"),Leaf->bObstructed);
+            State->SetNumberField(TEXT("angleDegrees"),Leaf->AngleDegrees);
+            State->SetStringField(TEXT("relativeRotation"),Leaf->GetRelativeRotation().ToString());
+            LeafStates.Add(MakeShared<FJsonValueObject>(State));
+        }
+        Report->SetArrayField(TEXT("finalPanelStates"),LeafStates);
         auto Profile=MakeShared<FJsonObject>();
         Profile->SetNumberField(TEXT("massKg"),Car->Chassis->GetMass());
         Profile->SetNumberField(TEXT("peakTorqueNm"),Car->ChaosMovement->EngineSetup.MaxTorque);
@@ -181,6 +195,11 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
     { Finish(TEXT("Actual Chaos driving timed out")); return; }
     auto* PC=GetWorld()->GetFirstPlayerController();
     if(!PC) return;
+    // This actor is enabled only on the explicit isolated standalone test map.
+    // Native server actions below supply the test commands. Live host keyboard
+    // input must not change a leaf while its closed state is being measured.
+    if(PC->GetPawn())PC->GetPawn()->DisableInput(PC);
+    if(!PC->IsLookInputIgnored())PC->SetIgnoreLookInput(true);
     if(Phase==14)
     {
         if(Now-PhaseStarted<.25)return;
@@ -346,7 +365,19 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         {
             if(!UPhysicsSettings::Get()->bTickPhysicsAsync || !FMath::IsNearlyEqual(UPhysicsSettings::Get()->AsyncFixedTimeStepSize,1.f/120.f,.000001f))
             {Finish(TEXT("Fixed asynchronous physics cadence is not configured"));return;}
-            if(IdleStarted==0){IdleStarted=Now;IdleStartLocation=V->GetActorLocation();}
+            if(IdleStarted==0)
+            {
+                // Fixture initialization, before twenty seconds of observation.
+                // Every measured cycle still uses targeted server interactions.
+                TArray<UAnomaliaVehiclePanelComponent*> Leaves={V->DriverDoor.Get()};
+                for(const auto& Leaf:V->AdditionalPanels)Leaves.Add(Leaf.Get());
+                for(auto* Leaf:Leaves)if(Leaf)
+                {
+                    Leaf->bOpen=false;Leaf->bLocked=false;Leaf->bObstructed=false;
+                    Leaf->AngleDegrees=0.f;Leaf->SetRelativeRotation(FQuat::Identity);
+                }
+                IdleStarted=Now;IdleStartLocation=V->GetActorLocation();
+            }
             const FVector Velocity=V->Chassis->GetPhysicsLinearVelocity();
             if(Now-LastIdleSample>=.2)
             {
@@ -419,7 +450,8 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
             FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaClosedPanelReview),false);Query.AddIgnoredActor(S);FHitResult Hit;
             if(!GetWorld()->LineTraceSingleByChannel(Hit,Opening-V->GetActorRightVector()*180,
                Opening+V->GetActorRightVector()*50,ECC_Visibility,Query) || Hit.GetComponent()!=Door)
-            {Finish(TEXT("Closed real driver door does not block the aperture trace"));return;}
+            {Finish(FString::Printf(TEXT("Closed real driver door does not block the aperture trace: open=%d angle=%.2f rotation=%s hit=%s"),
+                Door->bOpen,Door->AngleDegrees,*Door->GetRelativeRotation().ToString(),*GetNameSafe(Hit.GetComponent())));return;}
             Checks.Add(TEXT("closed_driver_door_has_actual_collision"));
             Door->bLocked=true;
             if(Door->TryToggle(S) || Door->bOpen){Finish(TEXT("Locked driver door accepted opening"));return;}
