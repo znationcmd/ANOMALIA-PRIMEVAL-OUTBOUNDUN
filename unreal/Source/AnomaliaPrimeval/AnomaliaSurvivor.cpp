@@ -1,6 +1,9 @@
 #include "AnomaliaSurvivor.h"
+#include "Vehicles/AnomaliaChaosRoadVehicle.h"
+#include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaDoorActor.h"
+#include "Vehicles/AnomaliaVehiclePanelComponent.h"
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaLootSubsystem.h"
@@ -299,7 +302,11 @@ void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
     FCollisionQueryParams DoorQuery(SCENE_QUERY_STAT(AnomaliaDoorTarget),true);
     DoorQuery.AddIgnoredActor(this);FHitResult DoorHit;
     if(GetWorld()->LineTraceSingleByChannel(DoorHit,Eye,Eye+GetControlRotation().Vector()*300.f,ECC_Visibility,DoorQuery))
+    {
+        if(auto* Panel=Cast<UAnomaliaVehiclePanelComponent>(DoorHit.GetComponent())){Panel->TryToggle(this);return;}
+        if(auto* Mechanism=Cast<AAnomaliaWorldMechanism>(DoorHit.GetActor())) {Mechanism->TryInteract(this);return;}
         if(auto* Door=Cast<AAnomaliaDoorActor>(DoorHit.GetActor())){Door->TryToggle(this);return;}
+    }
     // The client sends no item ID, count, player identity or arbitrary world target.
     if (auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>())
     {
@@ -363,3 +370,18 @@ void AAnomaliaSurvivor::InputCamera()
     CameraBoom->SocketOffset=First?FVector(0,0,65):FVector::ZeroVector;
 }
 
+
+
+bool AAnomaliaSurvivor::RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount)
+{
+    if(!IsLocallyControlled()||!Vehicle)return false;
+    if(HasAuthority())ServerVehicleService_Implementation(Vehicle,Action,StackId,ExpectedCount);
+    else ServerVehicleService(Vehicle,Action,StackId,ExpectedCount);return true;
+}
+void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount)
+{
+    if(!InventoryComponent||!GetController()||GetController()->GetPawn()!=this)return;
+    FString Error;const bool Accepted=IsValid(Vehicle)&&Vehicle->GetWorld()==GetWorld()&&Vehicle->SurvivalSystems->Execute(this,Action,StackId,ExpectedCount,Error);
+    InventoryComponent->UseMessage=Accepted?TEXT("Échange véhicule enregistré."):Error.IsEmpty()?TEXT("Action véhicule indisponible."):Error;
+    InventoryComponent->OnInventoryUpdated.Broadcast();ForceNetUpdate();
+}

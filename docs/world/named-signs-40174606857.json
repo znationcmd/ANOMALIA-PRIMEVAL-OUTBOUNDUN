@@ -1,0 +1,503 @@
+{
+  "state": "PARTIAL_NAMED_SIGNS_SAVED_NOT_PLAYTESTED",
+  "sourceCommit": "f512684ccd69c8d684062a56526c8bb68023bc02",
+  "placements": [
+    {
+      "id": "settlement_0_2",
+      "name": "Montbrume",
+      "kind": "village",
+      "signId": "settlement_0_2-south",
+      "east": -3288.0,
+      "north": -18310.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_0_3",
+      "name": "Rocheval",
+      "kind": "village",
+      "signId": "settlement_0_3-north",
+      "east": 6812.0,
+      "north": -19590.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_0",
+      "name": "Brumeterre",
+      "kind": "city",
+      "signId": "settlement_1_0-north",
+      "east": -18588.0,
+      "north": -12290.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_0",
+      "name": "Brumeterre",
+      "kind": "city",
+      "signId": "settlement_1_0-south",
+      "east": -18588.0,
+      "north": -13110.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_1",
+      "name": "Orsalia",
+      "kind": "city",
+      "signId": "settlement_1_1-north",
+      "east": -13388.0,
+      "north": -8790.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_1",
+      "name": "Orsalia",
+      "kind": "city",
+      "signId": "settlement_1_1-south",
+      "east": -13388.0,
+      "north": -9610.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_2",
+      "name": "Valcendre",
+      "kind": "city",
+      "signId": "settlement_1_2-north",
+      "east": -1188.0,
+      "north": -9490.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_2",
+      "name": "Valcendre",
+      "kind": "city",
+      "signId": "settlement_1_2-south",
+      "east": -1188.0,
+      "north": -10310.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_3",
+      "name": "Claireroche",
+      "kind": "city",
+      "signId": "settlement_1_3-north",
+      "east": 6812.0,
+      "north": -8790.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_3",
+      "name": "Claireroche",
+      "kind": "city",
+      "signId": "settlement_1_3-south",
+      "east": 6812.0,
+      "north": -9610.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_4",
+      "name": "Vespera",
+      "kind": "city",
+      "signId": "settlement_1_4-north",
+      "east": 11312.0,
+      "north": -8790.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_4",
+      "name": "Vespera",
+      "kind": "city",
+      "signId": "settlement_1_4-south",
+      "east": 11312.0,
+      "north": -9610.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_5",
+      "name": "Bellorage",
+      "kind": "city",
+      "signId": "settlement_1_5-north",
+      "east": 17212.0,
+      "north": -8790.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_1_5",
+      "name": "Bellorage",
+      "kind": "city",
+      "signId": "settlement_1_5-south",
+      "east": 17212.0,
+      "north": -9610.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_1",
+      "name": "Cendreval",
+      "kind": "city",
+      "signId": "settlement_2_1-north",
+      "east": -10588.0,
+      "north": -5690.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_1",
+      "name": "Cendreval",
+      "kind": "city",
+      "signId": "settlement_2_1-south",
+      "east": -10588.0,
+      "north": -6510.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_2",
+      "name": "Lacombre",
+      "kind": "city",
+      "signId": "settlement_2_2-north",
+      "east": -1188.0,
+      "north": -3590.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_2",
+      "name": "Lacombre",
+      "kind": "city",
+      "signId": "settlement_2_2-south",
+      "east": -1188.0,
+      "north": -4410.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_3",
+      "name": "Sylverive",
+      "kind": "city",
+      "signId": "settlement_2_3-north",
+      "east": 3312.0,
+      "north": -2190.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_3",
+      "name": "Sylverive",
+      "kind": "city",
+      "signId": "settlement_2_3-south",
+      "east": 3312.0,
+      "north": -3010.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_4",
+      "name": "Auralis",
+      "kind": "city",
+      "signId": "settlement_2_4-north",
+      "east": 12012.0,
+      "north": -1490.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_4",
+      "name": "Auralis",
+      "kind": "city",
+      "signId": "settlement_2_4-south",
+      "east": 12012.0,
+      "north": -2310.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_2_5",
+      "name": "Rocheselve",
+      "kind": "city",
+      "signId": "settlement_2_5-south",
+      "east": 17912.0,
+      "north": -6510.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_0",
+      "name": "Valmeris",
+      "kind": "village",
+      "signId": "settlement_3_0-south",
+      "east": -17888.0,
+      "north": 6390.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_1",
+      "name": "Montserein",
+      "kind": "city",
+      "signId": "settlement_3_1-north",
+      "east": -14088.0,
+      "north": 7210.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_1",
+      "name": "Montserein",
+      "kind": "city",
+      "signId": "settlement_3_1-south",
+      "east": -14088.0,
+      "north": 6390.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_3",
+      "name": "Lornac",
+      "kind": "city",
+      "signId": "settlement_3_3-north",
+      "east": 6812.0,
+      "north": 2310.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_3",
+      "name": "Lornac",
+      "kind": "city",
+      "signId": "settlement_3_3-south",
+      "east": 6812.0,
+      "north": 1490.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_4",
+      "name": "Vallombre",
+      "kind": "city",
+      "signId": "settlement_3_4-north",
+      "east": 14812.0,
+      "north": 2310.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_3_4",
+      "name": "Vallombre",
+      "kind": "city",
+      "signId": "settlement_3_4-south",
+      "east": 14812.0,
+      "north": 1490.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_0",
+      "name": "Terrebrune",
+      "kind": "village",
+      "signId": "settlement_4_0-north",
+      "east": -18588.0,
+      "north": 15210.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_1",
+      "name": "Castelbrume",
+      "kind": "city",
+      "signId": "settlement_4_1-north",
+      "east": -12688.0,
+      "north": 10310.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_1",
+      "name": "Castelbrume",
+      "kind": "city",
+      "signId": "settlement_4_1-south",
+      "east": -12688.0,
+      "north": 9490.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_2",
+      "name": "Lysandre",
+      "kind": "city",
+      "signId": "settlement_4_2-north",
+      "east": -6088.0,
+      "north": 13810.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_3",
+      "name": "Brisemer",
+      "kind": "city",
+      "signId": "settlement_4_3-north",
+      "east": 6112.0,
+      "north": 9610.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_3",
+      "name": "Brisemer",
+      "kind": "city",
+      "signId": "settlement_4_3-south",
+      "east": 6112.0,
+      "north": 8790.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_4",
+      "name": "Noirval",
+      "kind": "city",
+      "signId": "settlement_4_4-north",
+      "east": 14812.0,
+      "north": 14510.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_4",
+      "name": "Noirval",
+      "kind": "city",
+      "signId": "settlement_4_4-south",
+      "east": 14812.0,
+      "north": 13690.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_5",
+      "name": "Ventoria",
+      "kind": "city",
+      "signId": "settlement_4_5-north",
+      "east": 17212.0,
+      "north": 13810.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_4_5",
+      "name": "Ventoria",
+      "kind": "city",
+      "signId": "settlement_4_5-south",
+      "east": 17212.0,
+      "north": 12990.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_0",
+      "name": "Sablegris",
+      "kind": "village",
+      "signId": "settlement_5_0-north",
+      "east": -19288.0,
+      "north": 18310.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_0",
+      "name": "Sablegris",
+      "kind": "village",
+      "signId": "settlement_5_0-south",
+      "east": -19288.0,
+      "north": 17490.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_1",
+      "name": "Portelune",
+      "kind": "city",
+      "signId": "settlement_5_1-north",
+      "east": -14088.0,
+      "north": 17610.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_1",
+      "name": "Portelune",
+      "kind": "city",
+      "signId": "settlement_5_1-south",
+      "east": -14088.0,
+      "north": 16790.0,
+      "yaw": -90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_3",
+      "name": "Calderive",
+      "kind": "city",
+      "signId": "settlement_5_3-north",
+      "east": 6812.0,
+      "north": 18310.0,
+      "yaw": 90,
+      "existing": false
+    },
+    {
+      "id": "settlement_5_3",
+      "name": "Calderive",
+      "kind": "city",
+      "signId": "settlement_5_3-south",
+      "east": 6812.0,
+      "north": 17490.0,
+      "yaw": -90,
+      "existing": false
+    }
+  ],
+  "rejected": [
+    {
+      "id": "settlement_0_2-north",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_0_3-south",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_0_4-north",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_0_4-south",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_2_5-north",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_3_0-north",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_4_0-south",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    },
+    {
+      "id": "settlement_4_2-south",
+      "reason": "NO_MATCHING_LOADED_DRY_GROUND"
+    }
+  ],
+  "playtested": false,
+  "mapPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+  "loadedTerrainDescriptors": 145
+}

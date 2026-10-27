@@ -1,14 +1,18 @@
-name: UE5 validated progress automatic PC update
+name: UE5 native demo validation — no installation
 on:
   workflow_dispatch:
   push:
-    branches: ['ue5/driveable-roster-city-20261023']
+    branches: ['ue5/driveable-roster-city-20261023', 'ue5/reactive-world-expeditions-20261025']
     paths:
       - 'unreal/Source/**'
       - 'unreal/Config/**'
       - 'unreal/Build/Windows/Application.ico'
       - 'unreal/Content/Splash/**'
       - 'unreal/SourceAssets/Branding/**'
+      - 'unreal/Scripts/**'
+      - 'public/config/**'
+      - 'scripts/vehicle-assets/**'
+      - 'scripts/world-features/**'
       - 'unreal/Scripts/import_game_branding.py'
       - 'unreal/Scripts/import_workshop_branding.py'
       - 'scripts/ue5/prepare-game-branding.ps1'
@@ -24,8 +28,13 @@ on:
       - 'scripts/ue5/world_snapshot.py'
       - 'scripts/ue5/package-playable-windows.py'
       - 'scripts/ue5/run-playable-interactions.py'
+      - 'scripts/ue5/run-chaos-road-review.py'
+      - 'scripts/ue5/prepare-native-demo-sedan.py'
+      - 'scripts/ue5/import-native-demo-sedan.py'
+      - 'docs/art/native-demo-sedan-source.json'
       - 'scripts/ue5/install-playable-windows.ps1'
       - 'scripts/world-features/apply-playable-progress-art.py'
+      - 'scripts/vehicle-assets/*playable*'
       - 'docs/art/realism-validation-sources.json'
       - 'docs/art/residential-photogrammetry-sources.json'
       - '.github/workflows/ue5-pc-progress-update.yml'
@@ -33,7 +42,7 @@ jobs:
   update-owned-installed-game:
     # Explicit Editor-map recovery is handled by ue5-map-progress.yml. Avoid
     # replacing its pending run in the shared native-host concurrency group.
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && !startsWith(github.event.head_commit.message, '[map-recovery]')
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && !startsWith(github.event.head_commit.message, '[map-recovery]') && !startsWith(github.event.head_commit.message, '[ci-config]') && !startsWith(github.event.head_commit.message, '[native-only]')
     # Acquire the host only for an enabled job. A skipped workflow must not
     # replace the Editor validation waiting in GitHub's single pending slot.
     concurrency:
@@ -44,6 +53,32 @@ jobs:
     permissions:
       contents: read
     steps:
+      - name: Preserve local tracked edits before changing the validation checkout
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if (Test-Path -LiteralPath (Join-Path $env:GITHUB_WORKSPACE '.git')) {
+            $anomaliaChanges=@(& git -c core.quotepath=false -C "$env:GITHUB_WORKSPACE" diff --name-only HEAD -- .)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect existing validation edits' }
+            if ($anomaliaChanges.Count -gt 0) {
+              $anomaliaBackup=Join-Path (Split-Path -Parent $env:GITHUB_WORKSPACE) "ANOMALIA-validation-backups/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              if (Test-Path -LiteralPath $anomaliaBackup) { throw 'Existing backup preserved; refusing replacement' }
+              New-Item -ItemType Directory -Path $anomaliaBackup | Out-Null
+              foreach ($anomaliaRelative in $anomaliaChanges) {
+                $anomaliaSource=Join-Path $env:GITHUB_WORKSPACE $anomaliaRelative
+                if (Test-Path -LiteralPath $anomaliaSource -PathType Leaf) {
+                  $anomaliaCopy=Join-Path (Join-Path $anomaliaBackup 'files') $anomaliaRelative
+                  New-Item -ItemType Directory -Force -Path (Split-Path -Parent $anomaliaCopy) | Out-Null
+                  Copy-Item -LiteralPath $anomaliaSource -Destination $anomaliaCopy
+                  if ((Get-FileHash -LiteralPath $anomaliaSource).Hash -ne (Get-FileHash -LiteralPath $anomaliaCopy).Hash) { throw 'Local edit backup verification failed' }
+                }
+              }
+              $anomaliaPatch=(& git -C "$env:GITHUB_WORKSPACE" diff --binary HEAD -- .) -join "`n"
+              if ($LASTEXITCODE -ne 0) { throw 'Cannot preserve tracked deletion/index state' }
+              [System.IO.File]::WriteAllText((Join-Path $anomaliaBackup 'tracked-edits.patch'),$anomaliaPatch+"`n",(New-Object System.Text.UTF8Encoding($false)))
+              Write-Host "Preserved local tracked edits outside checkout: $anomaliaBackup"
+            }
+          }
       - uses: actions/checkout@v4
         with:
           clean: false
@@ -55,6 +90,7 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: ./scripts/ue5/prepare-game-branding.ps1
       - name: Compile Editor and Game and pass the native gameplay tests
+        id: native_build
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -68,7 +104,102 @@ jobs:
           path: |
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
             unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+      - name: Prepare installed licensed vehicle rig for the physical driving test
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/chaos"
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - name: Require real Chaos wheel contact acceleration steering braking and reverse
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/chaos"
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-demo-physics-evidence
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/chaos/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/chaos/frames/*.png
+          if-no-files-found: warn
+      - name: Import the original account-free CC0 sedan parts after physics acceptance
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-native-demo-sedan.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-native-demo-sedan.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test scripts/vehicle-assets/panel-geometry.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-native-demo-panels.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/NativeDemoSedan_v3
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan"
+          & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-sedan-import-evidence
+          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan/*.*
+          if-no-files-found: warn
+      - name: Import licensed account-free BMW E39 candidate without replacing the accepted sedan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          & $python scripts/ue5/prepare-bmw-e39.py
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-bmw-e39.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node --test scripts/vehicle-assets/mesh-islands.test.mjs scripts/vehicle-assets/panel-shell.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-bmw-e39-panels.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-bmw-e39-all-panels.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/validate.mjs unreal/SourceAssets/BMWE39Review_v7
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/e39"
+          & $python scripts/ue5/import-native-demo-sedan.py --engine-root "$env:UE_ROOT" --output "$evidence" --e39
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --e39
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-e39-candidate-evidence
+          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/e39/*.*
+          if-no-files-found: warn
+      - name: Require the same physical driving checks with the original sedan art
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/PCProgress/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT/sedan-drive"
+          & $python scripts/ue5/prepare-chaos-template-review.py --engine-root "$env:UE_ROOT" --output "$evidence"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & $python scripts/ue5/run-chaos-road-review.py --engine-root "$env:UE_ROOT" --output "$evidence" --sedan
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-sedan-drive-evidence
+          path: unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/sedan-drive/*.*
+          if-no-files-found: warn
       - name: Verify playable-map interaction geometry before preparing or cooking assets
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -77,6 +208,8 @@ jobs:
           & $python scripts/ue5/run-playable-interactions.py --engine-root "$env:UE_ROOT" --output "$evidence/interactions"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify pinned art and retain the imported realistic buildings
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
+        id: art_import
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -88,6 +221,8 @@ jobs:
           npm ci --prefix scripts/vehicle-assets --no-audit --no-fund
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-realism.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node scripts/vehicle-assets/prepare-playable-landscape.mjs
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node scripts/vehicle-assets/prepare-world-features.mjs --residential
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -101,6 +236,7 @@ jobs:
           & $editor $project "-ExecutePythonScript=$wrapper" -NullRHI -unattended -nopause -nosound "-abslog=$evidence/residential-import.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Import actual ANOMALIA Workshop emblem before cooking the native game
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -112,6 +248,8 @@ jobs:
           & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound
           if ($LASTEXITCODE -ne 0) {exit $LASTEXITCODE}
       - name: Cook the actual game with the new houses trees and detailed vehicles and run GPU gameplay tests
+        if: ${{ !startsWith(github.event.head_commit.message, '[physics-review]') }}
+        id: packaged_game
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -120,6 +258,7 @@ jobs:
           & $python scripts/ue5/package-playable-windows.py --engine-root "$env:UE_ROOT" --output "$evidence/package" --progress-art
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Update the existing owned PC installation only after the new executable passes
+        if: false # User priority: validate the new UE5 demo without replacing installed game.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -128,7 +267,19 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $report=Get-Content "$evidence/package/installed-package-report.json" -Raw | ConvertFrom-Json
           if ($report.state -ne 'PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED' -or -not $report.activeVersionAndShortcutVerified -or $report.commit -ne $env:GITHUB_SHA) { throw 'PC update activation is not confirmed.' }
+      - name: Retain packaged-game installation evidence before the large Editor validation
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: packaged-game-and-install-evidence
+          retention-days: 7
+          path: |
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*.*
+            unreal/Saved/PCProgress/run-${{ github.run_id }}-${{ github.run_attempt }}/package/*-visual/*.*
+          if-no-files-found: warn
       - name: Back up and replace owned repeated houses with verified scanned exteriors
+        id: residential_update
+        if: false # Preserve installed/editor content while the new demo is under validation.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -137,6 +288,8 @@ jobs:
           & $python scripts/ue5/run-residential-upgrade.py --engine-root "$env:UE_ROOT" --output "$evidence/editor/residential-upgrade"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Back up and verify the populated world with the actual GPU
+        id: editor_visual
+        if: false # No installed-world authoring in the demo validation channel.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -145,6 +298,7 @@ jobs:
           & $python scripts/ue5/run-visual-capture.py --engine-root "$env:UE_ROOT" --output "$evidence/editor" --inhabited
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Synchronize the complete native project and open the installed populated map
+        if: false # No installed Editor project replacement before demo approval.
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'

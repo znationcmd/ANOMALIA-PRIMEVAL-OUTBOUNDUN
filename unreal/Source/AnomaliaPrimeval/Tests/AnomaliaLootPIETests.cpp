@@ -162,7 +162,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Probe->Value=Economy ? Economy->GetDenomination(Probe->NoteId) : 0;
             if (!TestTrue(TEXT("Actual world RP note is a fixed denomination"),Probe->Value>0)) return true;
             Survivor->SetActorLocation(FVector(350,0,100),false,nullptr,ETeleportType::TeleportPhysics);
-            Input(EKeys::Gamepad_Special_Right,IE_Pressed); Probe->Phase=5; return false;
+            Input(EKeys::Gamepad_Special_Left,IE_Pressed); Probe->Phase=5; return false;
         }
         auto FindButton=[Survivor](const FString& Prefix)->UButton*
         {
@@ -174,7 +174,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         };
         if (Probe->Phase == 5)
         {
-            Input(EKeys::Gamepad_Special_Right,IE_Released);
+            Input(EKeys::Gamepad_Special_Left,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
             UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;

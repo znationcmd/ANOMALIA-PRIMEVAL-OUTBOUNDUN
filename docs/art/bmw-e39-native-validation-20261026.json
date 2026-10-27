@@ -1,0 +1,202 @@
+{
+  "schemaVersion": 1,
+  "codeCommit": "4a89150609985ae3b03702d834724346f71f2051",
+  "workflowRun": 40394672391,
+  "workflowURL": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40394672391",
+  "engineVersion": {
+    "MajorVersion": 5,
+    "MinorVersion": 8,
+    "PatchVersion": 3,
+    "Changelist": 58210709,
+    "CompatibleChangelist": 55116800,
+    "IsLicenseeVersion": 0,
+    "IsPromotedBuild": 1,
+    "BranchName": "++UE5+Release-5.8"
+  },
+  "compilation": "passed",
+  "compiledTargets": [
+    {
+      "target": "AnomaliaPrimevalEditor",
+      "exitCode": 0
+    },
+    {
+      "target": "AnomaliaPrimeval",
+      "exitCode": 0
+    }
+  ],
+  "nativeTests": {
+    "passed": 19,
+    "passedWithWarnings": 5,
+    "failed": 0
+  },
+  "e39ImportState": "E39_STATIC_PARTS_IMPORTED_NOT_DRIVEN",
+  "e39Parts": [
+    {
+      "id": "body",
+      "path": "/Game/Anomalia/BMWE39Review_v1/body/SM_body.SM_body",
+      "triangles": 75564,
+      "dimensionsCm": [
+        477.0169982910156,
+        199.876220703125,
+        129.86282348632812
+      ],
+      "originCm": [
+        -1.3137664794921875,
+        -0.278472900390625,
+        78.17745971679688
+      ],
+      "materials": 46,
+      "sha256": "c84fb90ba58503986336784991c183031fd2e45a85b8636310c06ebf293b88a9"
+    },
+    {
+      "id": "wheel_fl",
+      "path": "/Game/Anomalia/BMWE39Review_v1/wheel_fl/SM_wheel_fl.SM_wheel_fl",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.6219711303711,
+        28.166061401367188,
+        66.63824462890625
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        -0.3453850746154785,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "e1a77eab77fd73af59886f76a8fb00050a2e00a97f5edafd2dc1a22eb693f6ee"
+    },
+    {
+      "id": "wheel_fr",
+      "path": "/Game/Anomalia/BMWE39Review_v1/wheel_fr/SM_wheel_fr.SM_wheel_fr",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.6219711303711,
+        28.16605567932129,
+        66.63824462890625
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        0.3453807830810547,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "0e2564fdcc234ff6e07164126c3217d6a35636d5e3d6c550a055951c0f85ad5b"
+    },
+    {
+      "id": "wheel_rl",
+      "path": "/Game/Anomalia/BMWE39Review_v1/wheel_rl/SM_wheel_rl.SM_wheel_rl",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.62196350097656,
+        28.166061401367188,
+        66.63824462890625
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        -0.3453850746154785,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "37b2a48d35a0afb04fd4ec2be68c1100b0153cef65497db2d763bf5de2bc8e7d"
+    },
+    {
+      "id": "wheel_rr",
+      "path": "/Game/Anomalia/BMWE39Review_v1/wheel_rr/SM_wheel_rr.SM_wheel_rr",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.62197875976562,
+        28.16605567932129,
+        66.63824462890625
+      ],
+      "originCm": [
+        0.0,
+        0.3453807830810547,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "413b7047de34179dcf74fd0ac21221d354da3a1e9d390b20e7aa5058db3c25cd"
+    }
+  ],
+  "e39DriveState": "CHAOS_ROAD_PHYSICS_DRIVE_PASSED",
+  "e39DrivingChecks": [
+    "real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement",
+    "existing_character_and_inventory_preserved_on_entry",
+    "driver_activates_real_headlight_components",
+    "settled_spring_forces_balance_actual_chassis_weight",
+    "engine_off_blocks_full_accelerator_without_fuel_consumption",
+    "current_driver_can_start_engine_on_server",
+    "physical_acceleration_translation_and_rotating_contact_wheels",
+    "manual_first_gear_drives_physical_vehicle",
+    "rear_wheel_drive_observed_in_actual_wheel_torques",
+    "physical_steering_changes_vehicle_heading",
+    "manual_upshift_changes_actual_Chaos_gear",
+    "hazard_light_components_flash_on_and_off",
+    "service_brake_stops_the_physical_chassis",
+    "reverse_gear_drives_chassis_backwards",
+    "rear_wheel_handbrake_stops_physical_vehicle",
+    "server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle",
+    "empty_tank_cannot_accelerate_under_full_driver_input",
+    "server_refuel_rejects_invalid_amounts_and_restores_fuel",
+    "refuel_requires_explicit_driver_restart_after_stall",
+    "refuel_restores_physical_acceleration_and_fuel_consumption",
+    "current_driver_can_switch_engine_off",
+    "safe_exit_restores_same_survivor",
+    "measured_dry_braking_from_50_kmh",
+    "measured_dry_braking_from_80_kmh",
+    "lower_grip_increases_actual_80_kmh_stopping_distance",
+    "high_speed_exit_restores_original_survivor_with_vehicle_momentum"
+  ],
+  "physicsSampleCount": 305,
+  "brakingMeasurements": [
+    {
+      "initialKmh": 50.143376953125,
+      "distanceMetres": 12.140555420606102,
+      "seconds": 1.7323771975934505,
+      "meanDecelerationG": 0.8147660579170541,
+      "accelerationSecondsToTarget": 3.2373429015278816,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.26736132812499,
+      "distanceMetres": 29.466163403498005,
+      "seconds": 2.6686250008642673,
+      "meanDecelerationG": 0.8601985520304567,
+      "accelerationSecondsToTarget": 6.6295633018016815,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.24642578125,
+      "distanceMetres": 56.09612508728436,
+      "seconds": 5.1047502011060715,
+      "meanDecelerationG": 0.45160928253535526,
+      "accelerationSecondsToTarget": 10.087905298918486,
+      "surfaceFriction": 0.45
+    }
+  ],
+  "geometryPreservation": {
+    "sourceTriangles": 109044,
+    "preparedTriangles": 109044,
+    "sourceAreaMetres2": 85.89665072709649,
+    "preparedAreaMetres2": 85.89665073373118
+  },
+  "artifacts": {
+    "nativeBuildAndTests": 12687460164,
+    "e39Candidate": 12687825064,
+    "originalSedanDrive": 12685299624,
+    "referenceDrive": 12686418594
+  },
+  "actualScreenshot": "chaos-actual-driving.png",
+  "screenshotInspected": true,
+  "screenshotLibraryId": "libfile_0c7c58dfefa0819182d8dad538dbafa7",
+  "openingDoorsTested": false,
+  "entryAnimationTested": false,
+  "multiplayerTested": false,
+  "packagedGameTested": false,
+  "installed": false,
+  "productionMapModified": false,
+  "photorealismAccepted": false,
+  "rejectedAttempt": {
+    "run": 40392007599,
+    "result": "Import succeeded; game timed out because the new review map was absent from the native probe allowlist. Not accepted as driving evidence."
+  }
+}

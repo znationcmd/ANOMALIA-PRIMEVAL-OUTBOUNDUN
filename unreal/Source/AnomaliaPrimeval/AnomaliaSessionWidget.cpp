@@ -421,6 +421,11 @@ void UAnomaliaSessionWidget::BuildLayout()
             MenuArtwork->SetBrushFromTexture(Texture,true);MenuArtwork->SetRenderTransformPivot(FVector2D(.5f,.5f));Fit->SetContent(MenuArtwork);
         }
     }
+    auto* BuildLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("SessionBuildIdentity"));
+    BuildLabel->SetText(FText::FromString(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)+TEXT(" · Terrain et forêt v3 · Développement")));
+    auto BuildFont=BuildLabel->GetFont();BuildFont.Size=12;BuildLabel->SetFont(BuildFont);
+    BuildLabel->SetAutoWrapText(true);BuildLabel->SetColorAndOpacity(FSlateColor(FLinearColor(.9f,.87f,.76f,1)));
+    auto* BuildSlot=Canvas->AddChildToCanvas(BuildLabel);BuildSlot->SetAnchors(FAnchors(.035f,.95f,.96f,.99f));BuildSlot->SetOffsets(FMargin(0));
     // A narrow navigation rail keeps the actual 3D scene visible at the right.
     auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionNavigation"));NavigationFrame=Frame; Frame->SetBrushColor(FLinearColor(.012f,.016f,.014f,.82f)); Frame->SetPadding(FMargin(20));
     auto* FrameSlot=Canvas->AddChildToCanvas(Frame); FrameSlot->SetAnchors(FAnchors(.035f,.12f,.31f,.77f)); FrameSlot->SetOffsets(FMargin(0));

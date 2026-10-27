@@ -1,6 +1,10 @@
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaSurvivor.h"
+#include "Vehicles/AnomaliaChaosRoadVehicle.h"
+#include "Vehicles/AnomaliaVehicleSurvival.h"
+#include "EngineUtils.h"
+#include "Components/StaticMeshComponent.h"
 #include "Components/SafeZone.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Border.h"
@@ -48,6 +52,11 @@ void UAnomaliaInventoryWidget::NativeConstruct()
 void UAnomaliaInventoryWidget::NativeDestruct()
 {
     if (Inventory) Inventory->OnInventoryUpdated.RemoveDynamic(this, &UAnomaliaInventoryWidget::RefreshInventory);
+    if(NearbyVehicle)
+    {
+        NearbyVehicle->CargoInventory->OnInventoryUpdated.RemoveDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);
+        NearbyVehicle->SurvivalSystems->OnServicesUpdated.RemoveDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);
+    }
     Super::NativeDestruct();
 }
 
@@ -119,7 +128,12 @@ void UAnomaliaInventoryWidget::BuildLayout()
     Pages->AddChildToHorizontalBox(NextPageButton)->SetPadding(FMargin(5.f));
 
     UScrollBox* Scroll = WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(), TEXT("InventoryScroll"));
-    Content->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* Columns=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(),TEXT("InventoryColumns"));
+    Content->AddChildToVerticalBox(Columns)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* NearbyScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ProximityScroll"));
+    Columns->AddChildToHorizontalBox(NearbyScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    ProximityList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("VehicleProximity"));NearbyScroll->AddChild(ProximityList);
+    Columns->AddChildToHorizontalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(), TEXT("InventoryItems"));
     Scroll->AddChild(ItemList);
 }
@@ -127,6 +141,9 @@ void UAnomaliaInventoryWidget::BuildLayout()
 void UAnomaliaInventoryWidget::RefreshInventory()
 {
     if (!ItemList || !WidgetTree) return;
+    const auto* Previous=FocusedAction();const bool HadFocus=Previous!=nullptr;
+    const auto PreviousAction=Previous?Previous->Action:EAnomaliaInventoryAction::Stow;
+    const int32 PreviousStack=Previous?Previous->StackId:0,PreviousOther=Previous?Previous->OtherStackId:0;
     ActionRelays.Reset();
     ItemList->ClearChildren();
     if (!Inventory)
@@ -158,6 +175,10 @@ void UAnomaliaInventoryWidget::RefreshInventory()
             BindAction(Button, EAnomaliaInventoryAction::WithdrawNote, 0, Euros);
         }
     }
+    RefreshVehicleProximity();
+    auto* PersonalTarget=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+    auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("INVENTAIRE PERSONNEL — déposer ici")));PersonalTarget->SetContent(PersonalLabel);ItemList->AddChildToVerticalBox(PersonalTarget);
+    BindAction(PersonalTarget,EAnomaliaInventoryAction::Stow,0);
     const float Weight = Inventory->GetCurrentWeightKg();
     int32 StoredStacks=0;
     for(const auto& Stack:Inventory->Stacks)if(Stack.ContainerId!=TEXT("hands"))++StoredStacks;
@@ -194,6 +215,17 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     ItemList->AddChildToVerticalBox(HandsTitle)->SetPadding(FMargin(14.f, 14.f, 8.f, 5.f));
     for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)
         if (Stack.ContainerId == TEXT("hands")) AddStackRow(Stack);
+    if(HadFocus && GetOwningPlayer())
+    {
+        UButton* Fallback=nullptr;
+        for(const auto& Relay:ActionRelays)
+        {
+            if(Relay->Action==EAnomaliaInventoryAction::Stow&&Relay->StackId==0)Fallback=Relay->Button;
+            if(Relay->Action==PreviousAction&&Relay->StackId==PreviousStack&&Relay->OtherStackId==PreviousOther)
+            {Relay->Button->SetUserFocus(GetOwningPlayer());return;}
+        }
+        if(Fallback)Fallback->SetUserFocus(GetOwningPlayer());
+    }
 }
 
 void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
@@ -229,6 +261,12 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     }
     UButton* HandsButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     UTextBlock* HandsLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    if(NearbyVehicle && NearbyVehicle->SurvivalSystems->HasOpenPanel(TEXT("trunk")) && !NearbyVehicle->SurvivalSystems->State.bLocked)
+    {
+        auto* Deposit=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(TEXT("Déposer au coffre")));Deposit->SetContent(Text);Row->AddChildToHorizontalBox(Deposit);
+        BindAction(Deposit,EAnomaliaInventoryAction::VehicleService,Stack.StackId,Stack.Count,static_cast<int32>(EAnomaliaVehicleServiceAction::Deposit));
+    }
     const bool bHeld = Stack.ContainerId == TEXT("hands");
     HandsLabel->SetText(FText::FromString(bHeld ? TEXT("Ranger") : TEXT("Mains")));
     HandsButton->SetContent(HandsLabel);
@@ -276,6 +314,7 @@ void UAnomaliaInventoryWidget::BindAction(UButton* Button, EAnomaliaInventoryAct
     if (!Button) return;
     UAnomaliaInventoryActionRelay* Relay = NewObject<UAnomaliaInventoryActionRelay>(this);
     Relay->TargetWidget = this;
+    Relay->Button=Button;
     Relay->Action = Action;
     Relay->StackId = StackId;
     Relay->Count = Count;
@@ -289,6 +328,15 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
     if (!Inventory) return;
     switch (Action)
     {
+        case EAnomaliaInventoryAction::VehicleService:
+            if(OtherStackId==int32(EAnomaliaVehicleServiceAction::Deposit) && StackId==0)
+            {
+                const auto* Held=Inventory->Stacks.FindByPredicate([](const auto& Stack){return Stack.ContainerId==TEXT("hands");});
+                if(!Held)break;StackId=Held->StackId;Count=Held->Count;
+            }
+            if(auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn()))
+                User->RequestVehicleService(NearbyVehicle,static_cast<EAnomaliaVehicleServiceAction>(OtherStackId),StackId,Count);
+            break;
         case EAnomaliaInventoryAction::MoveToHands:
             Inventory->RequestMoveStack(StackId, TEXT("hands"), 0, 0, false);
             FocusFirstAction();
@@ -375,10 +423,116 @@ FReply UAnomaliaInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, cons
     { PreviousPage();return FReply::Handled(); }
     if(Event.GetKey()==EKeys::PageDown || Event.GetKey()==EKeys::Gamepad_RightShoulder)
     { NextPage();return FReply::Handled(); }
-    if (Event.GetKey() == EKeys::Gamepad_FaceButton_Right || Event.GetKey() == EKeys::Escape)
+    if (Event.GetKey() == EKeys::Gamepad_FaceButton_Right || Event.GetKey() == EKeys::Gamepad_Special_Left || Event.GetKey() == EKeys::Escape)
     {
         CloseInventory();
         return FReply::Handled();
     }
     return Super::NativeOnKeyDown(Geometry, Event);
+}
+
+void UAnomaliaInventoryWidget::AddVehicleButton(const FString& Label,int32 ServiceAction,int32 StackId,int32 Count)
+{
+ auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+ auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Label));Text->SetAutoWrapText(true);Button->SetContent(Text);
+ ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8.f,4.f));
+ BindAction(Button,EAnomaliaInventoryAction::VehicleService,StackId,Count,ServiceAction);
+}
+void UAnomaliaInventoryWidget::RefreshVehicleProximity()
+{
+ if(!ProximityList||!GetWorld())return;ProximityList->ClearChildren();
+ auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn());AAnomaliaChaosRoadVehicle* Nearest=nullptr;double Distance=FMath::Square(200.f);
+ if(User)for(TActorIterator<AAnomaliaChaosRoadVehicle> It(GetWorld());It;++It)
+ {
+  auto* Vehicle=*It;if(!Vehicle->SurvivalSystems->bEnabled)continue;
+  const double Candidate=Vehicle->Body->Bounds.GetBox().ComputeSquaredDistanceToPoint(User->GetActorLocation());
+  if(Candidate<Distance){Distance=Candidate;Nearest=Vehicle;}
+ }
+ if(NearbyVehicle!=Nearest)
+ {
+  if(NearbyVehicle){NearbyVehicle->CargoInventory->OnInventoryUpdated.RemoveDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);NearbyVehicle->SurvivalSystems->OnServicesUpdated.RemoveDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);}
+  NearbyVehicle=Nearest;
+  if(NearbyVehicle){NearbyVehicle->CargoInventory->OnInventoryUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);NearbyVehicle->SurvivalSystems->OnServicesUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);}
+ }
+ auto Label=[&](const FString& Value){auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Value));Text->SetAutoWrapText(true);ProximityList->AddChildToVerticalBox(Text)->SetPadding(FMargin(10.f,6.f));};
+ Label(TEXT("PROXIMITÉ / VÉHICULE"));
+ if(!NearbyVehicle){Label(TEXT("Approchez du véhicule puis ouvrez son coffre ou son capot."));return;}
+ const auto* Systems=NearbyVehicle->SurvivalSystems.Get();const auto& State=Systems->State;
+ Label(State.bLocked?TEXT("Véhicule verrouillé — clé correspondante requise."):TEXT("Véhicule déverrouillé"));
+ if(!Systems->bReady){Label(TEXT("Chargement de la sauvegarde du véhicule…"));return;}
+ using Action=EAnomaliaVehicleServiceAction;
+ if(!State.bKeyIssued)AddVehicleButton(TEXT("Récupérer la clé d’origine"),int32(Action::TakeInitialKey));
+ AddVehicleButton(State.bLocked?TEXT("Déverrouiller avec ma clé"):TEXT("Verrouiller avec ma clé"),int32(Action::ToggleLock));
+ if(State.bLocked)return;
+ auto Piece=[&](const TCHAR* Name,bool Present,Action Install,Action Remove){AddVehicleButton(FString(Name)+(Present?TEXT(" · retirer"):TEXT(" · emplacement vide : installer")),int32(Present?Remove:Install));};
+ if(Systems->HasOpenPanel(TEXT("hood")))
+ {
+  Label(TEXT("CAPOT — PIÈCES FONCTIONNELLES"));Piece(TEXT("Radiateur"),State.bRadiator,Action::InstallRadiator,Action::RemoveRadiator);
+  Piece(TEXT("Bougie d’allumage"),State.bSparkPlug,Action::InstallSparkPlug,Action::RemoveSparkPlug);
+  AddVehicleButton(FString::Printf(TEXT("Liquide de refroidissement : %.0f %% · remplir avec de l’eau"),State.Coolant*100),int32(Action::FillCoolant));
+ }
+ else Label(TEXT("Ouvrez le capot pour accéder au radiateur et à l’allumage."));
+ if(Systems->HasOpenPanel(Systems->BatteryAccessPanel))Piece(TEXT("Batterie"),State.bBattery,Action::InstallBattery,Action::RemoveBattery);
+ if(!Systems->HasOpenPanel(TEXT("trunk"))){Label(TEXT("Ouvrez la malle pour accéder à la cargaison."));return;}
+ const auto* Cargo=NearbyVehicle->CargoInventory.Get();int32 Cells=0;for(const auto& Box:Cargo->Compartments)Cells+=Box.Width*Box.Height;
+ Label(FString::Printf(TEXT("COFFRE · %d cases · %.1f / %.1f kg"),Cells,Cargo->GetCurrentWeightKg(),Cargo->WeightCapacityKg));
+ AddVehicleButton(TEXT("Cargaison — déposer ici (maintenir Croix) / objet en mains (Carré)"),int32(Action::Deposit));
+ for(const auto& Stack:Cargo->Stacks)
+  AddVehicleButton(FString::Printf(TEXT("%s ×%d · prendre (Croix), mains (Carré)"),*Cargo->GetItemDisplayName(Stack.ItemId),Stack.Count),int32(Action::Withdraw),Stack.StackId,Stack.Count);
+}
+UAnomaliaInventoryActionRelay* UAnomaliaInventoryWidget::FocusedAction() const
+{for(const auto& Relay:ActionRelays)if(Relay&&Relay->Button&&Relay->Button->HasUserFocus(GetOwningPlayer()))return Relay.Get();return nullptr;}
+FReply UAnomaliaInventoryWidget::NativeOnPreviewKeyDown(const FGeometry& Geometry,const FKeyEvent& Event)
+{
+ auto* Focus=FocusedAction();const auto Key=Event.GetKey();
+ if(Key==EKeys::Gamepad_FaceButton_Left&&Focus)
+ {
+  if(Focus->Action==EAnomaliaInventoryAction::VehicleService)
+  {
+   auto Action=static_cast<EAnomaliaVehicleServiceAction>(Focus->OtherStackId);
+   if(Action==EAnomaliaVehicleServiceAction::Withdraw)Action=EAnomaliaVehicleServiceAction::WithdrawToHands;
+   if(Action==EAnomaliaVehicleServiceAction::WithdrawToHands||Action==EAnomaliaVehicleServiceAction::Deposit)
+   {PerformAction(EAnomaliaInventoryAction::VehicleService,Focus->StackId,Focus->Count,int32(Action));return FReply::Handled();}
+  }
+  if(Focus->Action==EAnomaliaInventoryAction::MoveToHands||Focus->Action==EAnomaliaInventoryAction::Stow)
+  {
+   const auto* Stack=Inventory?Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==Focus->StackId;}):nullptr;
+   if(Stack)PerformAction(Stack->ContainerId==TEXT("hands")?EAnomaliaInventoryAction::VehicleService:EAnomaliaInventoryAction::MoveToHands,Stack->StackId,Stack->Count,int32(EAnomaliaVehicleServiceAction::Deposit));
+   return FReply::Handled();
+  }
+ }
+ if(Key==EKeys::Gamepad_FaceButton_Bottom)
+ {
+  if(DraggedStackId)return FReply::Handled();
+  if(Focus&&Focus->StackId>0)
+  {
+   bDraggingFromVehicle=Focus->Action==EAnomaliaInventoryAction::VehicleService&&Focus->OtherStackId==int32(EAnomaliaVehicleServiceAction::Withdraw);
+   if(bDraggingFromVehicle){DraggedStackId=Focus->StackId;DraggedCount=Focus->Count;return FReply::Handled();}
+   if(Focus->Action==EAnomaliaInventoryAction::MoveToHands||Focus->Action==EAnomaliaInventoryAction::Stow)
+   {
+    const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==Focus->StackId;});
+    if(Stack){DraggedStackId=Stack->StackId;DraggedCount=Stack->Count;return FReply::Handled();}
+   }
+  }
+ }
+ return Super::NativeOnPreviewKeyDown(Geometry,Event);
+}
+FReply UAnomaliaInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry,const FKeyEvent& Event)
+{
+ if(Event.GetKey()!=EKeys::Gamepad_FaceButton_Bottom||!DraggedStackId)return Super::NativeOnKeyUp(Geometry,Event);
+ const int32 Stack=DraggedStackId,Count=DraggedCount;DraggedStackId=DraggedCount=0;
+ const auto* Focus=FocusedAction();if(!Focus)return FReply::Handled();
+ if(bDraggingFromVehicle)
+ {
+  if(Focus->Action!=EAnomaliaInventoryAction::VehicleService)
+   PerformAction(EAnomaliaInventoryAction::VehicleService,Stack,Count,int32(Focus->Action==EAnomaliaInventoryAction::MoveToHands?EAnomaliaVehicleServiceAction::WithdrawToHands:EAnomaliaVehicleServiceAction::Withdraw));
+ }
+ else if(Focus->Action==EAnomaliaInventoryAction::VehicleService)
+ {
+  const auto Action=static_cast<EAnomaliaVehicleServiceAction>(Focus->OtherStackId);
+  if(Action==EAnomaliaVehicleServiceAction::Deposit||Action==EAnomaliaVehicleServiceAction::Withdraw||Action==EAnomaliaVehicleServiceAction::InstallBattery||Action==EAnomaliaVehicleServiceAction::InstallRadiator||Action==EAnomaliaVehicleServiceAction::InstallSparkPlug)
+   PerformAction(EAnomaliaInventoryAction::VehicleService,Stack,Count,int32(Action==EAnomaliaVehicleServiceAction::Withdraw?EAnomaliaVehicleServiceAction::Deposit:Action));
+ }
+ else if(Focus->Action==EAnomaliaInventoryAction::MoveToHands)PerformAction(EAnomaliaInventoryAction::MoveToHands,Stack,Count,0);
+ return FReply::Handled();
 }

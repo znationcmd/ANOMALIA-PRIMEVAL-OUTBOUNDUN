@@ -1,3 +1,11 @@
+# Ajout utilisateur du 26 octobre 2026
+
+**229 demandes regroupées conservées**, dont 19 nouvelles précisions/modèles dans
+`requested-models-2026-10-26.json`. Les désignations ambiguës restent à vérifier ;
+aucun de ces ajouts n'est annoncé importé ou pilotable. Terminer la même E39 avant
+leur intégration. Le bilan de recherche ci-dessous reste celui des 210 demandes
+connues le 23 octobre ; ses preuves et annotations sont conservées.
+
 # Suivi des recherches — mise à jour du 23 octobre 2026
 
 Ce fichier et `full-vehicle-worklist.json` sont le point de départ avant toute nouvelle recherche. Les anciens lots restent des preuves de recherche; ne plus les traiter comme des listes séparées à recommencer.
@@ -395,3 +403,24 @@ Le suivi ne se limite pas aux véhicules. Voir [la liste des bâtiments, arbres,
 ## Registre commun des dernières sources et des objets
 
 Voir [le registre commun](../art/ASSET_SOURCING_STATUS.md) : sources individuelles, 314 identifiants d'objets, correspondances partielles et refus conservés. Les fiches indexées dont l'ouverture est refusée ne sont pas des fichiers validés.
+
+## Requests restored
+
+- Mercedes 416 CDI jumelé
+- Mercedes-Benz Zetros 3042 2019
+- Mercedes-Benz Actros
+- Mercedes-Benz Classe G 2025
+- Fleurette Elister 73 LMF — 4 couchages, Mercedes Sprinter
+- BMW S1000RR
+- Suzuki GSX-R 1100 (demande « 1100 gsxr Suzuki »)
+- BMW GS 1250
+- KTM 250 motocross
+- Yamaha 250 YZ
+- Quad 750 Raptor (désignation demandée)
+- Quad 300 Bancher (désignation demandée)
+- Buggy Polaris RZR
+- Yamaha FX Nytro X-TX 2010
+- Jet-ski Yamaha GP1800R
+- Bateau de course Outerlimits SV43
+- Superyacht Benetti B.NOW 72M
+- Karting type Rotax Max

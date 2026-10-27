@@ -41,6 +41,17 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
         report["error"] = f"Runtime data staging failed: {error}"
         save()
         return 2
+    # UBT tracks this file as an external Build.cs dependency. A new source SHA
+    # invalidates cached rules and produces a fresh executable identity.
+    import re
+    commit = os.environ.get("GITHUB_SHA", "local")
+    if not re.fullmatch(r"[0-9a-f]{40}", commit):
+        commit = "local"
+    stamp = ROOT / "unreal/Build/AnomaliaSourceCommit.generated.txt"
+    stamp.parent.mkdir(parents=True, exist_ok=True)
+    if not stamp.is_file() or stamp.read_text(encoding="utf-8") != commit:
+        stamp.write_text(commit, encoding="utf-8")
+    report["buildCommit"] = commit
     project = ROOT / "unreal/AnomaliaPrimeval.uproject"
     report["compilation"] = "running"
     save()
@@ -84,9 +95,9 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
             data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
             rows = data.get("tests", [])
             expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics"}
-            expected.update({"Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry"})
+            expected.update({"Anomalia.Native.POIResourceExclusivity", "Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry", "Anomalia.Native.ChaosRoadConfiguration"})
             if require_loot_tests:
-                expected.update({"Anomalia.Native.LootCatalog", "Anomalia.Native.LootTransactions", "Anomalia.Native.LootJournalRecovery", "Anomalia.Native.RPBankTransactions", "Anomalia.Native.ItemConsumption", "Anomalia.Native.ItemEffects", "Anomalia.Native.StorageGrids", "Anomalia.Native.InventoryLayoutMigration"})
+                expected.update({"Anomalia.Native.LootCatalog", "Anomalia.Native.LootTransactions", "Anomalia.Native.LootJournalRecovery", "Anomalia.Native.RPBankTransactions", "Anomalia.Native.ItemConsumption", "Anomalia.Native.ItemEffects", "Anomalia.Native.StorageGrids", "Anomalia.Native.InventoryLayoutMigration", "Anomalia.Native.VehicleKeyPartsCargoAndRecovery"})
             passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}
             if result.returncode != 0 or not expected.issubset(passed) or any(row.get("state") != "Success" for row in rows):
                 raise ValueError("Missing, incomplete or failed native tests")
@@ -110,4 +121,3 @@ if __name__ == "__main__":
     args = parser.parse_args()
     # Use an explicit missing path to record the failed preflight rather than accidentally using cwd.
     raise SystemExit(validate(args.engine_root or Path("/__UNREAL_ENGINE_NOT_CONFIGURED__"), args.output, args.run_tests, args.require_loot_tests))
-

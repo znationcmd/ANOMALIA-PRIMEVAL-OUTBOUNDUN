@@ -1,0 +1,322 @@
+{
+  "schemaVersion": 1,
+  "sameE39SourcePreserved": true,
+  "source": {
+    "license": "CC-BY-4.0",
+    "sha256": "984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d",
+    "author": "Black Snow",
+    "source": "https://sketchfab.com/3d-models/none-531a5a93da5d493d9918eb36f011c20d",
+    "download": "https://raw.githubusercontent.com/pedrosoandre/carros/0a56de377f02f2574d781f6920fed08d6423ec2f/assets/bmw-e39.glb"
+  },
+  "parentBodySha256": "c84fb90ba58503986336784991c183031fd2e45a85b8636310c06ebf293b88a9",
+  "codeCommit": "87f6a0d24372ff013f642f7d480cddf7eea43a05",
+  "workflowRun": 40399566771,
+  "workflowURL": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40399566771",
+  "workflowConclusion": "success",
+  "engineVersion": {
+    "MajorVersion": 5,
+    "MinorVersion": 8,
+    "PatchVersion": 3,
+    "Changelist": 58210709,
+    "CompatibleChangelist": 55116800,
+    "IsLicenseeVersion": 0,
+    "IsPromotedBuild": 1,
+    "BranchName": "++UE5+Release-5.8"
+  },
+  "compilation": "passed",
+  "targets": [
+    {
+      "target": "AnomaliaPrimevalEditor",
+      "exitCode": 0
+    },
+    {
+      "target": "AnomaliaPrimeval",
+      "exitCode": 0
+    }
+  ],
+  "nativeTests": {
+    "passed": 19,
+    "passedWithWarnings": 5,
+    "failed": 0
+  },
+  "localTests": {
+    "python": 126,
+    "geometry": 7,
+    "gltfErrors": 0,
+    "gltfWarnings": 0,
+    "gltfPartCount": 6
+  },
+  "importState": "E39_STATIC_PARTS_IMPORTED_NOT_DRIVEN",
+  "parts": [
+    {
+      "id": "body",
+      "path": "/Game/Anomalia/BMWE39Review_v2/body/SM_body.SM_body",
+      "triangles": 72041,
+      "dimensionsCm": [
+        477.0169982910156,
+        189.99906158447266,
+        129.8628168106079
+      ],
+      "originCm": [
+        -1.3137664794921875,
+        4.660106658935547,
+        78.17746305465698
+      ],
+      "materials": 45,
+      "sha256": "fb48aba3fbbea460296f5fe90d3394eb97aa594551886a6cbd4ccbd73bc567e7"
+    },
+    {
+      "id": "door_driver",
+      "path": "/Game/Anomalia/BMWE39Review_v2/door_driver/SM_door_driver.SM_door_driver",
+      "triangles": 4545,
+      "dimensionsCm": [
+        120.93225608021021,
+        45.21657752990723,
+        87.1004753112793
+      ],
+      "originCm": [
+        -60.4338734857738,
+        2.391709327697754,
+        5.449758529663086
+      ],
+      "materials": 13,
+      "sha256": "9d9f17ece424f0c400d0891e488672dd203b17539d924e670b2fb3e6c00b19e9"
+    },
+    {
+      "id": "wheel_fl",
+      "path": "/Game/Anomalia/BMWE39Review_v2/wheel_fl/SM_wheel_fl.SM_wheel_fl",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.6219711303711,
+        28.166062355041504,
+        66.63824081420898
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        -0.3453850746154785,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "e1a77eab77fd73af59886f76a8fb00050a2e00a97f5edafd2dc1a22eb693f6ee"
+    },
+    {
+      "id": "wheel_fr",
+      "path": "/Game/Anomalia/BMWE39Review_v2/wheel_fr/SM_wheel_fr.SM_wheel_fr",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.6219711303711,
+        28.16605567932129,
+        66.63824081420898
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        0.3453807830810547,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "0e2564fdcc234ff6e07164126c3217d6a35636d5e3d6c550a055951c0f85ad5b"
+    },
+    {
+      "id": "wheel_rl",
+      "path": "/Game/Anomalia/BMWE39Review_v2/wheel_rl/SM_wheel_rl.SM_wheel_rl",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.62196350097656,
+        28.166062355041504,
+        66.63824081420898
+      ],
+      "originCm": [
+        3.814697265625e-06,
+        -0.3453850746154785,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "37b2a48d35a0afb04fd4ec2be68c1100b0153cef65497db2d763bf5de2bc8e7d"
+    },
+    {
+      "id": "wheel_rr",
+      "path": "/Game/Anomalia/BMWE39Review_v2/wheel_rr/SM_wheel_rr.SM_wheel_rr",
+      "triangles": 8370,
+      "dimensionsCm": [
+        66.62197875976562,
+        28.16605567932129,
+        66.63824081420898
+      ],
+      "originCm": [
+        0.0,
+        0.3453807830810547,
+        -1.9073486328125e-06
+      ],
+      "materials": 4,
+      "sha256": "413b7047de34179dcf74fd0ac21221d354da3a1e9d390b20e7aa5058db3c25cd"
+    }
+  ],
+  "surfacePartition": {
+    "originalSurfaceArea": 79.64918272024508,
+    "doorSurfaceArea": 1.9118176779978118,
+    "remainingSurfaceArea": 77.7373650422477,
+    "doorTriangles": 4545,
+    "remainingTriangles": 72041,
+    "wholeIslands": 63,
+    "clippedIslands": 42,
+    "materialContributions": {
+      "bump_leather.003": 154,
+      "bump_leather2": 0,
+      "bump_leather.001": 30,
+      "bump_plastic2": 0,
+      "digital_gauge": 0,
+      "gauge_emissive": 0,
+      "metal": 30,
+      "mirrorRight": 53,
+      "mirrorMiddle": 0,
+      "mottled": 359,
+      "black_glass": 0,
+      "body": 2508,
+      "bumper_frame": 0,
+      "black_chrome": 0,
+      "bump_leather": 206,
+      "chrome": 75,
+      "chrome_2": 0,
+      "detail_glass_clear": 0,
+      "detail_glass_red": 0,
+      "frame": 0,
+      ".005": 91,
+      "glass": 0,
+      "lights_glass": 0,
+      "matte_colors": 0,
+      "misc": 0,
+      "plastic": 805,
+      "plastic2": 180,
+      "reflector": 0,
+      "reverse_light_lod0": 0,
+      "window": 28,
+      "tail_light_lod0": 0,
+      "weatherstrip": 0,
+      "texture_2_suports": 0,
+      ".002": 0,
+      ".004": 0,
+      ".001": 0,
+      ".003": 0,
+      "chrome.001": 0,
+      "matte_colors.001": 0,
+      "emblem": 0,
+      "emblem.001": 0,
+      "bump_leather.002": 0,
+      "reflector.001": 0,
+      "reflector.002": 0,
+      "gauge_needle": 0,
+      ".006": 26
+    }
+  },
+  "panels": [
+    {
+      "id": "door_driver",
+      "pivotCm": [
+        92.4,
+        -80,
+        90
+      ],
+      "openAngleDegrees": 70,
+      "side": "negative_Y_same_E39_driver",
+      "apertureCm": [
+        20,
+        -80,
+        110
+      ],
+      "fixtureStandCm": [
+        210,
+        -230,
+        100
+      ]
+    }
+  ],
+  "unchangedWheelIds": [
+    "wheel_fl",
+    "wheel_fr",
+    "wheel_rl",
+    "wheel_rr"
+  ],
+  "driveState": "CHAOS_ROAD_PHYSICS_DRIVE_PASSED",
+  "validatedPanelIds": [
+    "door_driver"
+  ],
+  "driverDoorReviewed": true,
+  "checks": [
+    "separate_licensed_driver_door_mesh_installed",
+    "closed_driver_door_recomposes_original_body_bounds",
+    "closed_driver_door_has_actual_collision",
+    "locked_driver_door_rejects_server_interaction",
+    "driver_door_rotates_at_hinge_and_collision_leaves_aperture",
+    "driver_door_closes_and_restores_actual_collision",
+    "real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement",
+    "existing_character_and_inventory_preserved_on_entry",
+    "driver_activates_real_headlight_components",
+    "current_driver_opens_and_closes_real_door_from_seat",
+    "settled_spring_forces_balance_actual_chassis_weight",
+    "engine_off_blocks_full_accelerator_without_fuel_consumption",
+    "current_driver_can_start_engine_on_server",
+    "physical_acceleration_translation_and_rotating_contact_wheels",
+    "manual_first_gear_drives_physical_vehicle",
+    "rear_wheel_drive_observed_in_actual_wheel_torques",
+    "physical_steering_changes_vehicle_heading",
+    "manual_upshift_changes_actual_Chaos_gear",
+    "hazard_light_components_flash_on_and_off",
+    "service_brake_stops_the_physical_chassis",
+    "reverse_gear_drives_chassis_backwards",
+    "rear_wheel_handbrake_stops_physical_vehicle",
+    "server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle",
+    "empty_tank_cannot_accelerate_under_full_driver_input",
+    "server_refuel_rejects_invalid_amounts_and_restores_fuel",
+    "refuel_requires_explicit_driver_restart_after_stall",
+    "refuel_restores_physical_acceleration_and_fuel_consumption",
+    "current_driver_can_switch_engine_off",
+    "safe_exit_restores_same_survivor",
+    "measured_dry_braking_from_50_kmh",
+    "measured_dry_braking_from_80_kmh",
+    "lower_grip_increases_actual_80_kmh_stopping_distance",
+    "high_speed_exit_restores_original_survivor_with_vehicle_momentum"
+  ],
+  "physicsSampleCount": 318,
+  "brakingMeasurements": [
+    {
+      "initialKmh": 50.298732421874995,
+      "distanceMetres": 12.166733086408254,
+      "seconds": 1.700874499976635,
+      "meanDecelerationG": 0.8180586246506879,
+      "accelerationSecondsToTarget": 3.2254263013601303,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.06501953124999,
+      "distanceMetres": 29.53059566987666,
+      "seconds": 2.6378262005746365,
+      "meanDecelerationG": 0.8539997582544431,
+      "accelerationSecondsToTarget": 6.547313399612904,
+      "surfaceFriction": 0.9
+    },
+    {
+      "initialKmh": 80.154474609375,
+      "distanceMetres": 55.69149071623928,
+      "seconds": 5.025124799460173,
+      "meanDecelerationG": 0.45384862894986533,
+      "accelerationSecondsToTarget": 10.049370899796486,
+      "surfaceFriction": 0.45
+    }
+  ],
+  "artifacts": {
+    "nativeBuildAndTests": 12687538643,
+    "e39DoorAndDrive": 12688821799,
+    "existingSedanDoorAndDrive": 12689331626,
+    "referenceDrive": 12688512004
+  },
+  "actualScreenshot": "actual-driver-door-open.png",
+  "screenshotInspected": true,
+  "screenshotLibraryId": "libfile_8a0a66a0b4e48191a125a997b311247e",
+  "completeVehicleAccepted": false,
+  "entryAnimationTested": false,
+  "multiplayerTested": false,
+  "packagedGameTested": false,
+  "installed": false,
+  "productionMapModified": false,
+  "photorealismAccepted": false
+}

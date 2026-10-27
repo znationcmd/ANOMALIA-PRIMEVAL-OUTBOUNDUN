@@ -11,6 +11,7 @@ class UButton;
 class UTextBlock;
 class UEditableTextBox;
 class UAnomaliaInventoryWidget;
+class AAnomaliaChaosRoadVehicle;
 struct FAnomaliaInventoryStack;
 
 UENUM()
@@ -23,7 +24,8 @@ enum class EAnomaliaInventoryAction : uint8
     DepositNote,
     WithdrawNote,
     Stow,
-    Rotate
+    Rotate,
+    VehicleService
 };
 
 UCLASS()
@@ -39,6 +41,7 @@ public:
     int32 StackId = 0;
     int32 Count = 0;
     int32 OtherStackId = 0;
+    UPROPERTY() TObjectPtr<UButton> Button;
 
     UFUNCTION()
     void Execute();
@@ -99,4 +102,13 @@ private:
     UFUNCTION() void PreviousPage();
     UFUNCTION() void NextPage();
     void BuildLayout();
+    UPROPERTY() TObjectPtr<UVerticalBox> ProximityList;
+    UPROPERTY() TObjectPtr<AAnomaliaChaosRoadVehicle> NearbyVehicle;
+    void RefreshVehicleProximity();
+    void AddVehicleButton(const FString& Label,int32 ServiceAction,int32 StackId=0,int32 Count=0);
+    UAnomaliaInventoryActionRelay* FocusedAction() const;
+    virtual FReply NativeOnPreviewKeyDown(const FGeometry& Geometry,const FKeyEvent& Event) override;
+    virtual FReply NativeOnKeyUp(const FGeometry& Geometry,const FKeyEvent& Event) override;
+    int32 DraggedStackId=0,DraggedCount=0;
+    bool bDraggingFromVehicle=false;
 };

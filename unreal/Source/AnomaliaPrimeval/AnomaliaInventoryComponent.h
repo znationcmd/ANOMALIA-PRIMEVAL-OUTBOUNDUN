@@ -100,6 +100,8 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryRemoveItem(FName ItemId, int32 Count);
+    /** Trusted server transfer: selected stack identity and all instance data survive the move. */
+    bool TryTransferStackTo(int32 StackId,int32 ExpectedCount,UAnomaliaInventoryComponent* Destination,bool bToHands=false);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
@@ -198,8 +200,10 @@ protected:
     void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
 
 private:
+    friend class UAnomaliaWorldStateSubsystem;
     friend class UAnomaliaLootSubsystem;
     friend class UAnomaliaEconomySubsystem;
+    friend class UAnomaliaVehicleServiceSubsystem;
     friend class UAnomaliaSharedStorageSubsystem;
     bool bPersistenceLocked = false;
     bool bProfileRecoveryPending = false;

@@ -1,4 +1,5 @@
 #include "AnomaliaVehiclePawn.h"
+#include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaSessionWidget.h"
 #include "GameFramework/PlayerController.h"
@@ -94,8 +95,8 @@ void AAnomaliaVehiclePawn::ApplyDefinition()
     Movement->Deceleration = Movement->Acceleration * 1.4f;
     TransportMovement->Configure(Definition, SpeedMultiplier);
     // Only one movement system may move the collision root. Clients receive authoritative actor movement.
-    Movement->SetComponentTickEnabled(HasAuthority() && !TransportMovement->IsTransport());
-    RefreshVehicleVisual();
+    Movement->SetComponentTickEnabled(HasAuthority() && !TransportMovement->IsTransport() && !UsesPhysicsRoadSimulation());
+    if(!UsesPhysicsRoadSimulation()) RefreshVehicleVisual();
     OnVehicleConfigured(Definition);
 }
 
@@ -127,7 +128,8 @@ void AAnomaliaVehiclePawn::RefreshVehicleVisual()
     }
     if(!Mesh) return;
     Body->SetStaticMesh(Mesh);
-    const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
+    const float ArtYaw=FMath::IsFinite(PresentationYawDegrees)?PresentationYawDegrees:0.f;
+    const FRotator Orientation(0,(VehicleId==FName(TEXT("airliner"))?180.f:0.f)+ArtYaw,0);
     const FBoxSphereBounds Bounds=Mesh->GetBounds();
     const FVector BottomCenter(Bounds.Origin.X,Bounds.Origin.Y,Bounds.Origin.Z-Bounds.BoxExtent.Z);
     Body->SetRelativeRotation(Orientation);
@@ -231,7 +233,7 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     if (!bDriver || bStale) ClearControls();
     const FAnomaliaVehicleDefinition Definition=GetVehicleDefinition();
     if (Definition.Id.IsNone()) return;
-    const bool bPowered=bDriver && !bStale && FuelPercent > KINDA_SMALL_NUMBER;
+    const bool bPowered=bDriver && !bStale && FuelPercent > KINDA_SMALL_NUMBER && IsEngineProvidingPower();
     if (TransportMovement->IsTransport())
     {
         AnomaliaTransport::Controls Controls;
@@ -242,10 +244,7 @@ void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
     }
     else
     {
-        if(BrakeAxis>0.f) Movement->Velocity=FMath::VInterpConstantTo(Movement->Velocity,FVector::ZeroVector,DeltaSeconds,Movement->Deceleration*4.f);
-        else if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
-        if(bPowered && FMath::Abs(SteeringAxis)>KINDA_SMALL_NUMBER)
-            AddActorWorldRotation(FRotator(0,SteeringAxis*65.f*DeltaSeconds,0));
+        SimulateRoadDrive(DeltaSeconds,ForwardAxis,SteeringAxis,BrakeAxis,bPowered,!bDriver||bStale);
     }
     UpdateMetroCoaches();
     // Aircraft consume fuel while maintaining powered lift, even at neutral forward input.
@@ -267,7 +266,7 @@ bool AAnomaliaVehiclePawn::HasDriver() const
 
 bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomaliaSurvivor* Survivor)
 {
-    if (!HasAuthority() || !IsValid(DriverController) || !IsValid(Survivor) || HasDriver()) return false;
+    if (!HasAuthority() || !IsValid(DriverController) || !IsValid(Survivor) || HasDriver() || !IsDriveReady()) return false;
     if (Survivor->GetController() != DriverController || Survivor->Health <= 0.f) return false;
     if (!CanEnterFrom(Survivor)) return false;
     ClearControls();
@@ -284,6 +283,8 @@ bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomalia
 
 bool AAnomaliaVehiclePawn::CanEnterFrom(const AAnomaliaSurvivor* Survivor) const
 {
+    const auto* Services=FindComponentByClass<UAnomaliaVehicleSurvivalComponent>();
+    if(Services && Services->bEnabled && Services->State.bLocked)return false;
     if(!IsValid(Survivor) || Survivor->GetWorld()!=GetWorld() || !GetWorld())return false;
     const FVector Entry=bUseAuthoredDriverPoints?DriverEntryPoint->GetComponentLocation():GetActorLocation();
     const float Range=bUseAuthoredDriverPoints?250.f:450.f;
@@ -319,7 +320,7 @@ bool AAnomaliaVehiclePawn::FindSafeDriverExit(const AAnomaliaSurvivor* Survivor,
              Candidate-FVector(0,0,600.f),ECC_Pawn,Query)){Reject(TEXT("NO_FLOOR"));continue;}
         const FString FloorInfo=FString::Printf(TEXT("floor=%s z=%.2f nz=%.3f"),*GetNameSafe(Floor.GetActor()),Floor.ImpactPoint.Z,Floor.ImpactNormal.Z);
         if(Floor.ImpactNormal.Z<Survivor->GetCharacterMovement()->GetWalkableFloorZ()){Reject(TEXT("SLOPE ")+FloorInfo);continue;}
-        const float ExpectedFloor=bUseAuthoredDriverPoints?Candidate.Z:GetActorLocation().Z-Collision->GetScaledSphereRadius();
+        const float ExpectedFloor=bUseAuthoredDriverPoints?Candidate.Z:GetExpectedSupportFloorZ();
         if(Floor.ImpactPoint.Z>ExpectedFloor+Survivor->GetCharacterMovement()->MaxStepHeight ||
            Floor.ImpactPoint.Z<ExpectedFloor-200.f){Reject(TEXT("HEIGHT ")+FloorInfo+FString::Printf(TEXT(" expected=%.2f"),ExpectedFloor));continue;}
         const FVector Centre(Floor.ImpactPoint.X,Floor.ImpactPoint.Y,Floor.ImpactPoint.Z+HalfHeight+2.f);
@@ -332,7 +333,7 @@ bool AAnomaliaVehiclePawn::FindSafeDriverExit(const AAnomaliaSurvivor* Survivor,
         // Start above the vehicle's support plane, which can be a pavement
         // higher than the destination road. A diagonal sweep starting at the
         // destination height would falsely begin inside that pavement.
-        const float ClearanceZ=FMath::Max(Centre.Z,GetActorLocation().Z-Collision->GetScaledSphereRadius()+HalfHeight+2.f);
+        const float ClearanceZ=FMath::Max(Centre.Z,GetExpectedSupportFloorZ()+HalfHeight+2.f);
         const FVector Start(GetActorLocation().X,GetActorLocation().Y,ClearanceZ);
         const FVector HighEnd(Centre.X,Centre.Y,ClearanceZ);
         if(GetWorld()->SweepSingleByChannel(PathHit,Start,HighEnd,FQuat::Identity,ECC_Pawn,
@@ -347,7 +348,7 @@ bool AAnomaliaVehiclePawn::FindSafeDriverExit(const AAnomaliaSurvivor* Survivor,
 
 void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
 {
-    if (!HasAuthority() || !IsPlayerControlled() || !ParkedSurvivor.IsValid()) return;
+    if (!HasAuthority() || !IsPlayerControlled() || !ParkedSurvivor.IsValid() || !CanDriverExitNow()) return;
     AController* DriverController = GetController();
     AAnomaliaSurvivor* Survivor = ParkedSurvivor.Get();
     if (!IsValid(DriverController) || !IsValid(Survivor)) return;
@@ -355,12 +356,15 @@ void AAnomaliaVehiclePawn::ServerExitVehicle_Implementation()
     FVector ExitLocation;
     FString ExitDiagnostic;
     if(!FindSafeDriverExit(Survivor,ExitLocation,&ExitDiagnostic)){UE_LOG(LogTemp,Warning,TEXT("ANOMALIA vehicle exit refused: %s"),*ExitDiagnostic);return;}
+    const FVector ExitVelocity=GetDriverExitVelocity();
     if(!TransportMovement->IsTransport())Movement->StopMovementImmediately();
     Survivor->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
     Survivor->SetActorLocation(ExitLocation, false, nullptr, ETeleportType::TeleportPhysics);
     Survivor->SetActorEnableCollision(true);
     Survivor->SetActorHiddenInGame(false);
     DriverController->Possess(Survivor);
+    if(DriverController->GetPawn()==Survivor && !ExitVelocity.IsNearlyZero())
+        Survivor->LaunchCharacter(ExitVelocity,true,true);
     if (GetController() == nullptr) { ParkedSurvivor.Reset(); ForwardAxis = 0.f; SteeringAxis = 0.f; }
 }
 
@@ -408,6 +412,7 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
     DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationMeshOverride);
+    DOREPLIFETIME(AAnomaliaVehiclePawn, PresentationYawDegrees);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
 }
@@ -460,3 +465,33 @@ void AAnomaliaVehiclePawn::UpdateMetroCoaches()
 AAnomaliaSurvivor* AAnomaliaVehiclePawn::GetStoredDriverSurvivor() const { return ParkedSurvivor.Get(); }
 void AAnomaliaVehiclePawn::InputPause() { UAnomaliaSessionWidget::Open(Cast<APlayerController>(Controller)); }
 
+
+
+void AAnomaliaVehiclePawn::SimulateRoadDrive(float DeltaSeconds,float Throttle,float Steering,float Brake,
+    bool bPowered,bool bDriverMissing)
+{
+    if(Brake>0.f) Movement->Velocity=FMath::VInterpConstantTo(Movement->Velocity,FVector::ZeroVector,DeltaSeconds,Movement->Deceleration*4.f);
+    else if(bPowered) AddMovementInput(GetActorForwardVector(),Throttle);
+    if(bPowered && FMath::Abs(Steering)>KINDA_SMALL_NUMBER)
+        AddActorWorldRotation(FRotator(0,Steering*65.f*DeltaSeconds,0));
+}
+
+bool AAnomaliaVehiclePawn::SetDriverControlsOnServer(AController* Driver,float Throttle,float Steering,float Brake)
+{
+    if(!HasAuthority() || !IsValid(Driver) || Driver!=GetController() || Driver->GetPawn()!=this ||
+       !Driver->IsPlayerController() || !FMath::IsFinite(Throttle) || !FMath::IsFinite(Steering) || !FMath::IsFinite(Brake)) return false;
+    ServerSetTransportControls_Implementation(Throttle,Steering,0,0,0,Brake);
+    return true;
+}
+
+bool AAnomaliaVehiclePawn::ExitDriverOnServer(AController* Driver)
+{
+    if(!HasAuthority() || !IsValid(Driver) || Driver!=GetController() || Driver->GetPawn()!=this) return false;
+    ServerExitVehicle_Implementation();
+    return Driver->GetPawn()!=this;
+}
+
+float AAnomaliaVehiclePawn::GetExpectedSupportFloorZ() const
+{
+    return GetActorLocation().Z-Collision->GetScaledSphereRadius();
+}

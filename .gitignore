@@ -24,3 +24,28 @@ Thumbs.db
 
 # Generated, hash-owned copies of public/config runtime defaults.
 unreal/Content/Anomalia/Data/
+
+# Local Python verification caches
+__pycache__/
+*.pyc
+
+# Native executable identity is generated from the validated CI source commit.
+unreal/Build/AnomaliaSourceCommit.generated.txt
+
+# Reproducible, source-hash-verified CC0 sedan derivatives; import remains separate.
+unreal/SourceAssets/NativeDemoSedan_v1/
+unreal/SourceAssets/NativeDemoSedan_v2/
+unreal/SourceAssets/NativeDemoSedan_v3/
+
+# Reproducible licensed E39 derivatives; retain original source separately.
+/unreal/SourceAssets/BMWE39Review_v1/
+
+/unreal/SourceAssets/BMWE39Review_v2/
+
+/unreal/SourceAssets/BMWE39Review_v3/
+
+unreal/SourceAssets/BMWE39Review_v4/
+unreal/SourceAssets/BMWE39Review_v5/
+
+unreal/SourceAssets/BMWE39Review_v6/
+unreal/SourceAssets/BMWE39Review_v7/

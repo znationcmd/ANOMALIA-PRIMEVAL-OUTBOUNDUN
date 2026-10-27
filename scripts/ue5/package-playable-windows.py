@@ -31,16 +31,6 @@ try:
          '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/import_game_branding.py'),
          '-abslog='+str(out/'branding-import.log')],'branding-import',300)
     progress_flags=['-AnomaliaProgressArt'] if a.progress_art else []
-    if a.progress_art:
-        os.environ['ANOMALIA_PROGRESS_ART_REPORT']=str(out/'progress-art.json')
-        os.environ['ANOMALIA_EDITOR_TASK']=str(ROOT/'scripts/world-features/apply-playable-progress-art.py')
-        run([editor,project,'-unattended','-nopause','-nosound','-NullRHI',
-             '-ExecutePythonScript='+str(ROOT/'scripts/world-features/run-editor-task.py'),
-             '-abslog='+str(out/'progress-art.log')],'progress-art',900)
-        progress=json.loads((out/'progress-art.json').read_text())
-        if progress.get('state')!='PROGRESS_ART_SAVED_REQUIRES_PACKAGED_GAME_TEST' or progress.get('trees')!=20 or len(progress.get('houses',[]))!=2:
-            raise RuntimeError('Fresh complete playable art report required')
-        report['progressArt']=progress
     visual_receipt=out/('realism-scene-'+uuid.uuid4().hex+'.json')
     os.environ['ANOMALIA_REALISM_SCENE_REPORT']=str(visual_receipt)
     run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
@@ -51,6 +41,16 @@ try:
         raise RuntimeError('Fresh imported-art scene receipt missing or invalid')
     report['visualScene']=visual_scene
     visual_map='/Game/Maps/ANOMALIA_VisualValidation_v1'
+    if a.progress_art:
+        os.environ['ANOMALIA_PROGRESS_ART_REPORT']=str(out/'progress-art.json')
+        os.environ['ANOMALIA_EDITOR_TASK']=str(ROOT/'scripts/world-features/apply-playable-progress-art.py')
+        run([editor,project,'-unattended','-nopause','-nosound','-NullRHI',
+             '-ExecutePythonScript='+str(ROOT/'scripts/world-features/run-editor-task.py'),
+             '-abslog='+str(out/'progress-art.log')],'progress-art',900)
+        progress=json.loads((out/'progress-art.json').read_text())
+        if progress.get('state')!='PROGRESS_ART_SAVED_REQUIRES_PACKAGED_GAME_TEST' or progress.get('trees')!=20 or len(progress.get('houses',[]))!=2 or progress.get('rocks')!=24 or progress.get('groundFoliage')!=24 or progress.get('hiddenBackgroundPrototypes')!=12 or not progress.get('terrain') or not progress.get('road') or progress.get('forestTrees')!=32 or progress.get('forestGrass')!=96:
+            raise RuntimeError('Fresh complete playable art report required')
+        report['progressArt']=progress
     # Exercise the actual playable map before cooking. This catches interaction
     # failures in its real collision layout without waiting for a packaged build.
     interaction_probe=out/'editor-playable-smoke.json'
@@ -79,10 +79,10 @@ try:
     run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log'),*progress_flags],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
     required={'native_inventory_tobacco_use_has_risk_and_returns_waste','native_inventory_food_use_consumes_one_and_restores_hunger','native_playable_look_v2_cooked_materials_and_lights','main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
-    if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])):
+    if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])) or native.get('buildCommit')!=os.environ.get('GITHUB_SHA') or 'visible_executable_build_identity' not in native.get('checks',[]):
         raise RuntimeError('Actual packaged gameplay smoke failed: '+native.get('error','missing checks'))
     if 'user_branding_intro_animates_and_reveals_main_menu' not in native.get('checks',[]):raise RuntimeError('Cooked user branding and startup animation did not pass')
-    if a.progress_art and 'validated_progress_houses_and_twenty_real_trees' not in native.get('checks',[]):
+    if a.progress_art and not {'validated_progress_houses_and_twenty_real_trees','validated_progress_real_rocks_and_ground_foliage','validated_playable_pbr_landscape_and_forest'}.issubset(native.get('checks',[])):
         raise RuntimeError('Cooked progress art was not verified by the executable')
     image=probe.with_suffix('.png')
     if not image.is_file() or image.stat().st_size<10000:raise RuntimeError('Fresh packaged GPU screenshot missing')
@@ -102,7 +102,7 @@ try:
     report['visualReview']=visual
     if a.progress_art:
         notices=archive/'Windows/ThirdPartyNotices';notices.mkdir(parents=True,exist_ok=True)
-        for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1'):
+        for group in ('RealismValidation_v2','ResidentialPhotogrammetryPrepared_v1','PlayableLandscape_v2'):
             source=ROOT/'unreal/SourceAssets'/group/'CREDITS.md'
             destination=notices/(group+'-CREDITS.md')
             # Extended-length paths are needed on Windows even if UE accepts its own paths.

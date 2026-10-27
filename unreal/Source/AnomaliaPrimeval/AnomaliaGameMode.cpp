@@ -1,4 +1,5 @@
 #include "AnomaliaGameMode.h"
+#include "ReactiveWorld/AnomaliaWorldStateSubsystem.h"
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaPlayableProbe.h"
@@ -6,6 +7,7 @@
 #include "AnomaliaSessionWidget.h"
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaEconomySubsystem.h"
+#include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
@@ -65,6 +67,13 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         if (Valid) ServerId = AutomationScope;
     }
 #endif
+    FString VehicleError;
+    if(auto* Services=GetWorld()->GetSubsystem<UAnomaliaVehicleServiceSubsystem>())
+        if(!Services->Configure(ServerId,VehicleError))UE_LOG(LogTemp,Error,TEXT("ANOMALIA vehicle services initialization stopped: %s"),*VehicleError);
+    FString ReactiveError;
+    if (auto* Reactive = GetWorld()->GetSubsystem<UAnomaliaWorldStateSubsystem>())
+        if (!Reactive->Configure(ServerId, MapName, ReactiveError))
+            UE_LOG(LogTemp, Error, TEXT("ANOMALIA reactive world initialization stopped: %s"), *ReactiveError);
     FString EconomyError;
     if (auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>())
         if (!Economy->Configure(ServerId, MapName, EconomyError))
@@ -110,9 +119,11 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
     if (!HasAuthority() || !PlayerController) return;
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(PlayerController->GetPawn());
     const FString PlayerId = GetPersistentPlayerId(PlayerController);
+    const auto* Reactive = GetWorld()->GetSubsystem<UAnomaliaWorldStateSubsystem>();
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
     const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
-    if ((Loot && Loot->HasPendingPlayer(PlayerId)) || (Economy && Economy->HasPendingPlayer(PlayerId)))
+    const auto* Vehicles = GetWorld()->GetSubsystem<UAnomaliaVehicleServiceSubsystem>();
+    if ((Reactive && Reactive->HasPendingPlayer(PlayerId)) || (Loot && Loot->HasPendingPlayer(PlayerId)) || (Economy && Economy->HasPendingPlayer(PlayerId)) || (Vehicles && Vehicles->HasPendingPlayer(PlayerId)))
     {
         PendingProfileLoads.Add(PlayerId);
         if (Survivor && Survivor->InventoryComponent) Survivor->InventoryComponent->SetProfileRecoveryPending(true);
@@ -230,10 +241,12 @@ bool AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(Controller->GetPawn());
     if(!Survivor) if(auto* Vehicle=Cast<AAnomaliaVehiclePawn>(Controller->GetPawn())) Survivor=Vehicle->GetStoredDriverSurvivor();
     const FString PlayerId = GetPersistentPlayerId(Controller);
+    const auto* Reactive = GetWorld()->GetSubsystem<UAnomaliaWorldStateSubsystem>();
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
     const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
-    if (PendingProfileLoads.Contains(PlayerId) || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
-        (Economy && Economy->HasPendingPlayer(PlayerId))) return false;
+    const auto* Vehicles = GetWorld()->GetSubsystem<UAnomaliaVehicleServiceSubsystem>();
+    if (PendingProfileLoads.Contains(PlayerId) || (Reactive && Reactive->HasPendingPlayer(PlayerId)) || (Loot && Loot->HasPendingPlayer(PlayerId)) ||
+        (Economy && Economy->HasPendingPlayer(PlayerId)) || (Vehicles && Vehicles->HasPendingPlayer(PlayerId))) return false;
     if (!Survivor || PlayerId.IsEmpty()) return false;
 
     FString Error;
@@ -578,14 +591,16 @@ void AAnomaliaGameMode::SpawnConfiguredHomestead()
 void AAnomaliaGameMode::RetryPendingProfileLoads()
 {
     if (!HasAuthority() || !GetWorld() || PendingProfileLoads.IsEmpty()) return;
+    const auto* Reactive = GetWorld()->GetSubsystem<UAnomaliaWorldStateSubsystem>();
     const auto* Loot = GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>();
     const auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
+    const auto* Vehicles = GetWorld()->GetSubsystem<UAnomaliaVehicleServiceSubsystem>();
     for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
     {
         APlayerController* Controller = It->Get();
         const FString PlayerId = GetPersistentPlayerId(Controller);
-        if (PendingProfileLoads.Contains(PlayerId) && (!Loot || !Loot->HasPendingPlayer(PlayerId)) &&
-            (!Economy || !Economy->HasPendingPlayer(PlayerId)))
+        if (PendingProfileLoads.Contains(PlayerId) && (!Reactive || !Reactive->HasPendingPlayer(PlayerId)) && (!Loot || !Loot->HasPendingPlayer(PlayerId)) &&
+            (!Economy || !Economy->HasPendingPlayer(PlayerId)) && (!Vehicles || !Vehicles->HasPendingPlayer(PlayerId)))
             LoadPersistentPlayer(Controller);
     }
 }

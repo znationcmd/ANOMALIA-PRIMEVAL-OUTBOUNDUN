@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "AnomaliaSurvivor.generated.h"
 
 class USpringArmComponent;
@@ -12,6 +13,7 @@ class UAnomaliaStatusWidget;
 class UAnomaliaVitalsComponent;
 class UAnomaliaItemEffectsComponent;
 class AAnomaliaHomesteadStation;
+class AAnomaliaChaosRoadVehicle;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -20,6 +22,8 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
 public:
     AAnomaliaSurvivor();
     void CloseInventory();
+    bool RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId=0,int32 ExpectedCount=0);
+    UFUNCTION(Server,Reliable) void ServerVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;

@@ -23,6 +23,8 @@ struct FAnomaliaLootItem
     FName Id;
     FString DisplayName, Category;
     TSet<FString> Categories;
+    TSet<FString> AllowedPOIs;
+    bool IsAllowedAtPOI(const FString& POI) const { return AllowedPOIs.IsEmpty() || AllowedPOIs.Contains(POI); }
     bool MatchesAnyCategory(const TSet<FString>& Allowed) const
     { for (const auto& Name : Categories) if (Allowed.Contains(Name)) return true; return false; }
     int32 MinTier = 1, MaxTier = 5, Quantity = 1, Nominal = 1, Minimum = 0;
@@ -39,6 +41,7 @@ struct FAnomaliaLootSpawn
 {
     FString Id;
     FString BuildingType;
+    FString POIId;
     FVector Location = FVector::ZeroVector;
     TSet<FString> Categories;
     int32 Tier = 1;
@@ -66,6 +69,7 @@ public:
     void RefreshLoot();
     FString GetStateId() const { return StateId; }
 private:
+    friend class FAnomaliaPOIResourceTest;
     TMap<FName, FAnomaliaLootItem> Items;
     TArray<FAnomaliaLootSpawn> Spawns;
     TMap<FString, int32> BuildingTiers;

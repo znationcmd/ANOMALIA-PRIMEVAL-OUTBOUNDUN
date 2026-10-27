@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "graphite_sedan",
+  "source": "https://www.innerscene.com/tools/library/3d-parts/graphite-four-door-sedan-eed96d12",
+  "download": "https://www.innerscene.com/api/library/graphite-four-door-sedan-eed96d12/download",
+  "author": "Innerscene — original unbranded model",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "bytes": 5060296,
+  "sha256": "feb0be31d153ddb42dc15ae52a651e214e85ab67e31bec4282b00f9d47c9b597",
+  "sourceInspection": {
+    "meshNodes": 304,
+    "materials": 10,
+    "skins": 0,
+    "animations": 0,
+    "interiorPartsPresent": ["Contoured seat back", "Contoured seat cushion", "Instrument panel", "Steering rim"],
+    "doorSeamsAreNotOpeningPanels": true,
+    "finalPlayableVehicle": false
+  }
+}

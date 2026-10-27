@@ -4,6 +4,12 @@ Does not claim finished towns, routes, interiors, or a playable world.
 """
 import math
 from functools import lru_cache
+import importlib.util
+from pathlib import Path
+_identity_spec=importlib.util.spec_from_file_location('anomalia_place_identity',Path(__file__).with_name('place_identity.py'))
+_identity_module=importlib.util.module_from_spec(_identity_spec)
+_identity_spec.loader.exec_module(_identity_module)
+place_identity=_identity_module.place_identity
 
 HALF=24000.0
 STEP=48000.0/3024
@@ -73,7 +79,7 @@ def build_plan(native_height,house_dimensions,max_relief=.12,sites=None):
                     if hi-lo>max_relief:rejected['slope']+=1;continue
                     # A 10cm ground overlap keeps the lowest slab from hovering.
                     buildings.append(dict(id=f'{ident}_house_{ix+7}_{iy+7}',model='detached_house',east=e,north=n,z=hi-.1,yaw=yaw,width=width,depth=depth,groundMin=lo,groundMax=hi))
-            settlements.append(dict(id=ident,east=e0,north=n0,buildingCount=len(buildings)-start))
+            settlements.append(dict(**place_identity(ident, 'city' if len(buildings)-start>=140 else 'village'),east=e0,north=n0,buildingCount=len(buildings)-start))
     # Sparse world-wide vegetation base. Fine biome dressing is a separate stage.
     foliage=[]
     for iy,n in enumerate(range(-23900,24000,140)):
