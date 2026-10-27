@@ -62,7 +62,7 @@ try:
             elif i!=0:tex.set_editor_property("compression_settings",unreal.TextureCompressionSettings.TC_MASKS)
             node=unreal.MaterialEditingLibrary.create_material_expression(mat,unreal.MaterialExpressionTextureSample,-500,i*220)
             node.set_editor_property("texture",tex)
-            node.set_editor_property("sampler_type",unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if i==3 else unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if i==0 else unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+            node.set_editor_property("sampler_type",unreal.MaterialSamplerType.SAMPLERTYPE_NORMAL if i==3 else unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if i==0 else unreal.MaterialSamplerType.SAMPLERTYPE_MASKS)
             if not unreal.MaterialEditingLibrary.connect_material_property(node,"RGB" if i in (0,3) else "R",props[i]):raise RuntimeError("Texture graph connection failed")
             if not unreal.EditorAssetLibrary.save_loaded_asset(tex,only_if_is_dirty=False):raise RuntimeError("Texture save failed")
             row["textures"].append({"source":p.name,"asset":tex.get_path_name(),"normalGreenFlipped":i==3 and "OpenGL" in p.name})
