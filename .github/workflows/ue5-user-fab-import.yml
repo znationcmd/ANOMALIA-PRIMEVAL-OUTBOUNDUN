@@ -32,8 +32,11 @@ jobs:
           for(const s of sources){const full=s.id.length===36?s.id:sources.find(t=>t.id.startsWith(s.id))?.id||s.id;
           const existing=chosen.find(x=>x.id===full);if(existing){if(s.dir.startsWith(persistent))existing.dir=s.dir;}else chosen.push({id:full,dir:s.dir});}
           function files(dir,arr=[]){for(const e of fs.readdirSync(dir,{withFileTypes:true})){const p=path.join(dir,e.name);if(e.isSymbolicLink())throw Error('Symlink not copied: '+p);if(e.isDirectory())files(p,arr);else arr.push(p);}return arr;}
+          const priority=['587e3f02','b5b0c0ba','53bedd4b','07cdcbaa','021789a1','2601b38d','3c61e7dc','488b4223','5ba11f83','85d28dd1','8c23e20f','a7e70f32','ad1be7d2','e413b9d9','ec024000','88074ea4','c4e57c54','4aad439e'];
+          const blocked=chosen.filter(s=>!priority.some(id=>s.id.startsWith(id))).map(s=>({id:s.id,reason:'Deferred large pack: low disk space; source left in cache'}));
+          const selected=chosen.filter(s=>priority.some(id=>s.id.startsWith(id))).sort((a,b)=>priority.findIndex(id=>a.id.startsWith(id))-priority.findIndex(id=>b.id.startsWith(id)));
           let bytes=0;
-          for(const s of chosen){s.files=files(s.dir);for(const p of s.files)bytes+=fs.statSync(p).size;}
+          for(const s of selected){s.files=files(s.dir);for(const p of s.files)bytes+=fs.statSync(p).size;}
           const stat=fs.statfsSync(path.parse(root).root);const free=stat.bavail*stat.bsize;
           if(bytes>20*1024**3||free<bytes+10*1024**3)throw Error('Insufficient staging budget: '+bytes+' bytes; free '+free);
           const report={time:new Date().toISOString(),sourceBytes:bytes,deferredSources:blocked,sourcePacks:[],imports:[],originalSourcesModified:false,publicAssetUpload:false};
