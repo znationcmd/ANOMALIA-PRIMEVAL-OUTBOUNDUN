@@ -34,7 +34,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-    GetCharacterMovement()->CrouchedHalfHeight = 60.f;
+    GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
