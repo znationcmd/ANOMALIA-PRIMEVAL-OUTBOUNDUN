@@ -99,7 +99,8 @@
     "settleSecondsBeforeEveryPanelOpening": 4,
     "sameChassisStabilityLimitsBeforeOpening": true,
     "unprovenProductionPoseChangeRemoved": true,
-    "vehicleTransformsAndVelocitiesNeverReset": true
+    "vehicleTransformsAndVelocitiesNeverReset": true,
+    "compileFix": "Explicit UPrimitiveComponent* null base for UE 5.8 overload resolution"
   },
   "panelChannelAttempt": {
     "codeCommit": "7a8602c474f05383d83777101a738fdf98f9f1a8",
@@ -189,5 +190,15 @@
     "rawPanelBodyWelded": false,
     "rawPanelBodyOwner": "RoadPanel1",
     "effectivePanelBodyOwner": "RoadPanel1"
+  },
+  "fixtureCompileAttempt": {
+    "codeCommit": "f5ff521494793ac31bd3e24cf12eab231bcfe694",
+    "workflowRun": 40492726919,
+    "artifact": 12729545899,
+    "compilation": "failed",
+    "target": "AnomaliaPrimevalEditor",
+    "exitCode": 6,
+    "error": "C2668: ACharacter::SetBase(nullptr) ambiguous between UPrimitiveComponent* and FMovementBaseInterfaceData* overloads",
+    "gameplayExecuted": false
   }
 }

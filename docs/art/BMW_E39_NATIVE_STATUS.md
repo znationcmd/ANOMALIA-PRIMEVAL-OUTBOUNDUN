@@ -172,6 +172,15 @@ measured interaction. Production character movement is unchanged. The unproven
 production panel-pose change is removed. This remains a hypothesis under test;
 no complete E39 or six-panel acceptance is claimed.
 
+## Fixture candidate compilation — 27 October 2026
+
+Revision `f5ff521494793ac31bd3e24cf12eab231bcfe694`, run `40492726919`,
+failed Editor compilation with C2668 at `SetBase(nullptr)`. UE 5.8 provides
+both `UPrimitiveComponent*` and `FMovementBaseInterfaceData*` overloads.
+The call now uses an explicit `UPrimitiveComponent*` null pointer. Artifact
+`12729545899` retains the actual compiler error. No native gameplay test ran
+for that failed revision; the relocation hypothesis is still unverified.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.

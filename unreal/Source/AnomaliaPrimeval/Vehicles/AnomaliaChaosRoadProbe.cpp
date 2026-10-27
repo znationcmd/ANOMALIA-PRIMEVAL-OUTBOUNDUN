@@ -51,7 +51,7 @@ bool PlaceReviewSurvivor(AAnomaliaSurvivor* Survivor,const FVector& Destination)
     // the car between successive sides. The vehicle is never moved or reset.
     Survivor->SetActorEnableCollision(false);
     Survivor->GetCharacterMovement()->StopMovementImmediately();
-    Survivor->SetBase(nullptr);
+    Survivor->SetBase(static_cast<UPrimitiveComponent*>(nullptr));
     const bool Placed=Survivor->SetActorLocationAndRotation(Destination,FRotator::ZeroRotator,
         false,nullptr,ETeleportType::TeleportPhysics);
     Survivor->SetActorEnableCollision(true);
