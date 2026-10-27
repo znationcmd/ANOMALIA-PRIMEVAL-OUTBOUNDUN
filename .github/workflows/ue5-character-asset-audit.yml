@@ -1,0 +1,43 @@
+name: ANOMALIA character asset audit in UE (read only)
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-character-asset-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Load character assets in commandlet without saving assets
+        shell: node {0}
+        run: |
+          const fs=require('fs'), path=require('path'), cp=require('child_process');
+          const root='C:\\ANOMALIA\\unreal', engine=process.env.UE_ROOT || 'C:\\Program Files\\Epic Games\\UE_5.8';
+          const dir=path.join(process.env.RUNNER_TEMP,'anomalia-assets-'+process.env.GITHUB_RUN_ID);
+          fs.mkdirSync(dir);
+          const report=path.join(dir,'assets.json'), script=path.join(dir,'audit.py'), log=path.join(dir,'editor.log');
+          const sourcePaths=['Source/AnomaliaPrimeval/AnomaliaSurvivor.h','Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp','Source/AnomaliaPrimeval/AnomaliaVitalsComponent.cpp','Content/Python/setup_anomalia_character.py','Config/DefaultEngine.ini'];
+          for(const p of sourcePaths){const f=path.join(root,p);console.log('LOCAL_SOURCE '+p+'\n'+(fs.existsSync(f)?fs.readFileSync(f,'utf8'):'MISSING'));}
+          fs.writeFileSync(script, "import unreal, json, os, traceback\nreport = {\"engine\": unreal.SystemLibrary.get_engine_version(), \"errors\": [], \"assets\": [], \"blueprints\": []}\nregistry = unreal.AssetRegistryHelpers.get_asset_registry()\nregistry.search_all_assets(True)\nroots = [\"/Game/ControlRig/Characters/Mannequins\", \"/Game/QuantumCharacter\", \"/Game/Survival_Character\"]\nfor root in roots:\n    for data in registry.get_assets_by_path(root, recursive=True):\n        cls = str(data.asset_class_path.asset_name)\n        if cls not in (\"SkeletalMesh\", \"Skeleton\", \"AnimBlueprint\", \"AnimSequence\", \"Blueprint\", \"StaticMesh\"):\n            continue\n        row = {\"path\": str(data.package_name), \"class\": cls}\n        try:\n            asset = data.get_asset()\n            if not asset:\n                raise RuntimeError(\"Asset failed to load\")\n            if cls in (\"SkeletalMesh\", \"AnimSequence\"):\n                sk = asset.get_editor_property(\"skeleton\")\n                row[\"skeleton\"] = sk.get_path_name() if sk else None\n            if cls == \"SkeletalMesh\":\n                row[\"materials\"] = [str(m.material_interface.get_path_name()) if m.material_interface else None for m in asset.get_editor_property(\"materials\")]\n            if cls == \"AnimBlueprint\":\n                sk = asset.get_editor_property(\"target_skeleton\")\n                row[\"skeleton\"] = sk.get_path_name() if sk else None\n            if cls == \"Blueprint\":\n                row[\"parent\"] = str(unreal.BlueprintEditorLibrary.get_blueprint_parent_class(asset))\n            row[\"loaded\"] = True\n        except Exception as exc:\n            row[\"error\"] = str(exc)\n            report[\"errors\"].append(row)\n        report[\"assets\"].append(row)\nfor p in [\"/Game/BP_AnomaliaSurvivor\", \"/Game/QuantumCharacter/Demo/CBP_QuantumCharacter\", \"/Game/Survival_Character/Demo/ThirdPerson/Blueprints/BP_ThirdPersonCharacter\"]:\n    try:\n        bp = unreal.load_asset(p)\n        cls = unreal.EditorAssetLibrary.load_blueprint_class(p)\n        cdo = unreal.get_default_object(cls)\n        parts = []\n        for comp in cdo.get_components_by_class(unreal.SkeletalMeshComponent):\n            mesh = comp.get_editor_property(\"skeletal_mesh_asset\")\n            anim = comp.get_editor_property(\"anim_class\")\n            parts.append({\"component\":comp.get_name(),\"mesh\":mesh.get_path_name() if mesh else None,\"anim\":anim.get_path_name() if anim else None})\n        report[\"blueprints\"].append({\"path\":p,\"parent\":str(unreal.BlueprintEditorLibrary.get_blueprint_parent_class(bp)),\"parts\":parts})\n    except Exception as exc:\n        report[\"blueprints\"].append({\"path\":p,\"error\":str(exc)})\nreport[\"survivor_class\"] = str(unreal.load_class(None,\"/Script/AnomaliaPrimeval.AnomaliaSurvivor\"))\nreport[\"subobject_api\"] = {name: str(getattr(getattr(unreal,\"SubobjectDataBlueprintFunctionLibrary\",None),name,None).__doc__) for name in [\"get_data\",\"get_object_for_blueprint\"]}\nwith open(os.environ[\"ANOMALIA_ASSET_REPORT\"], \"x\", encoding=\"utf-8\") as output:\n    json.dump(report,output,indent=2)\nunreal.log(\"ANOMALIA_READONLY_ASSET_AUDIT_COMPLETED\")\n", {flag:'wx'});
+          const exe=path.join(engine,'Engine','Binaries','Win64','UnrealEditor-Cmd.exe');
+          const result=cp.spawnSync(exe,[path.join(root,'AnomaliaPrimeval.uproject'),'-run=pythonscript','-script='+script,'-unattended','-nop4','-nosplash','-NullRHI','-stdout','-FullStdOutLogOutput','-abslog='+log],{encoding:'utf8',timeout:420000,maxBuffer:16*1024*1024,env:{...process.env,ANOMALIA_ASSET_REPORT:report}});
+          console.log('EDITOR_EXIT '+result.status+' '+String(result.error||''));
+          if(fs.existsSync(report)) console.log('ASSET_REPORT_BEGIN\n'+fs.readFileSync(report,'utf8')+'\nASSET_REPORT_END');
+          const lines=(fs.existsSync(log)?fs.readFileSync(log,'utf8'):String(result.stdout||'')+String(result.stderr||'')).split(/\r?\n/);
+          console.log('EDITOR_LOG_ERRORS\n'+lines.filter(l=>/error|warning|failed|Traceback|ANOMALIA_/i.test(l)).slice(-100).join('\n'));
+          fs.appendFileSync(process.env.GITHUB_ENV,'ANOMALIA_ASSET_DIR='+dir+'\n');
+          if(result.status!==0 || !fs.existsSync(report)) process.exitCode=1;
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: character-asset-audit
+          path: ${{ env.ANOMALIA_ASSET_DIR }}
+          if-no-files-found: warn
