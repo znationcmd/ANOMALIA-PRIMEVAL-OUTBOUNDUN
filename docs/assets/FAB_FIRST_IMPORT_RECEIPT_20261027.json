@@ -1,0 +1,332 @@
+{
+  "state": "IMPORT_FINISHED",
+  "namespace": "/Game/Anomalia/ImportedFab/Batch_40561644379",
+  "sources": [
+    {
+      "id": "587e3f02-f8a1-4a3d-8b35-3394e793cfc5",
+      "source": "fbx\\akriflefbx_extracted\\AKRifle.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 8
+    },
+    {
+      "id": "b5b0c0ba-5b45-4573-84d9-3d44e19d81ff",
+      "source": "m4noskel.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 25
+    },
+    {
+      "id": "53bedd4b-95d2-433f-9f30-987c45513763",
+      "source": "mp5_game_ready.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 9
+    },
+    {
+      "id": "07cdcbaa-b6d7-4140-b4d5-62440c296952",
+      "source": "mauser98k.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "021789a1-67f7-4ac5-8c4c-dcddb9b9c35b",
+      "source": "revolver.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 6
+    },
+    {
+      "id": "2601b38d-a3d8-4e5c-905d-4e5848daa8b8",
+      "source": "ammo_set_gltf_extracted\\ammo_set_(GLTF)\\ammo_set_(GLTF).gltf",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 6
+    },
+    {
+      "id": "3c61e7dc-3aa1-43f3-bd6c-429db849cdb3",
+      "source": "doublebarreled_extracted\\SM_DoubleBarreled.FBX",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "488b4223-0481-4e0c-8ead-445f63bd96bd",
+      "source": "1911_extracted\\SM_1911_02.FBX",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "5ba11f83-fbcc-498e-9036-5b9c08533dc6",
+      "source": "shotgun02_modern_long_extracted\\SM_Shotgun_02_ModernLong_02.FBX",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "85d28dd1-a22b-4897-b102-12eb9b1c8119",
+      "source": "shotgun_02_short_extracted\\SM_Shotgun_02_Short.FBX",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "8c23e20f-af8e-47a9-b12f-378f3b632675",
+      "source": "m14_high_poly_pbr_fbx_extracted\\source\\SM_M14.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "a7e70f32-2091-416c-8da9-1546b4dff1bb",
+      "source": "fps_guns_4k_rifle_1_extracted\\FPS Guns 4K - Rifle 1\\Models\\Rifle 1.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 117
+    },
+    {
+      "id": "ad1be7d2-4100-42ae-9e9c-2473db382a02",
+      "source": "sawedoff_extracted\\SM_SawedOff.FBX",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "e413b9d9-bff4-46dc-8cb0-545541aa7b96",
+      "source": "dp28_light_machine_gun_low_poly_pbr.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 6
+    },
+    {
+      "id": "ec024000-1573-4775-8581-3c7de8dc9c49",
+      "source": "police_pistol.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 12
+    },
+    {
+      "id": "88074ea4-91ed-4d77-8d94-6bba4042c377",
+      "source": "worn_jerrycan_gltf_extracted\\worn_jerrycan_(GLTF)\\worn_jerrycan_(GLTF).gltf",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "c4e57c54-453b-480d-b279-62f160657282",
+      "source": "post_apocalyptic_laptop.glb",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 5
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_aidbox_001.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_airdrop_001.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Airfield_Crate_1.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Airfield_Crate_2.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ammobox_001.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ammobox_002.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ammo_can_small.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ammo_crate.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Ammo_Crate_1.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ArtyShell.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ArtyShellCrate.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ArtyShellCrateFull.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ArtyShellCrateStack.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_ArtyShellTube.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_CompB.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_crate_bomb_rack.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 2
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_FootLocker.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_grenades.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Health_Generic.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_highcaliber.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Medical_Cart.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Medical_Crate.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Medical_Crate_Open.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_MilitaryCrate.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_petrolcanister_a.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_rockets.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_SilverBullets.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_smg.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_SupplyCrate_2.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_WeaponBox1.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_WeaponBox1B.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_WeaponBox2.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_WeaponBox3.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_weapon_case_a_3.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    },
+    {
+      "id": "4aad439e-7f5d-463f-9881-3b8460cbbe55",
+      "source": "fbx\\supply_crates_vicevoxel__extracted\\supply crates-Vicevoxel-FBX\\VV_Weapon_Supply_Crate.fbx",
+      "status": "IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED",
+      "meshes": 1
+    }
+  ],
+  "errors": [],
+  "workflowRun": 40561644379,
+  "artifact": 12761282157,
+  "sourcePacks": 18,
+  "sourceModelFiles": 52,
+  "assetClasses": {
+    "StaticMesh": 238,
+    "Material": 85,
+    "Texture2D": 195,
+    "MaterialInstanceConstant": 18
+  },
+  "materialValidation": "Zero empty material slots; visual inspection pending; smoothing/tangent warnings remain",
+  "installedProject": "not_copied_yet",
+  "gameplay": "not_implemented_or_tested"
+}
