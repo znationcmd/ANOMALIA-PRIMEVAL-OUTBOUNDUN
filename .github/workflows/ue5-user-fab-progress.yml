@@ -1,0 +1,36 @@
+name: ANOMALIA Fab import read only progress
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-user-fab-progress.yml']
+permissions:
+  contents: read
+jobs:
+  progress:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read only current import receipt and free disk space
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path');
+          const id='40561644379',stage='C:\\ANOMALIA\\FabImports\\UserSelection_'+id;
+          const temp=path.join(process.env.RUNNER_TEMP,'anomalia-fab-import-'+id),receipt=path.join(temp,'import-report.json'),log=path.join(temp,'unreal-import.log');
+          const stat=fs.statfsSync('C:\\');
+          const r={time:new Date().toISOString(),driveFreeBytes:stat.bavail*stat.bsize,sourceStageExists:fs.existsSync(stage),stage:null,import:null};
+          const manifest=path.join(stage,'stage-manifest.json');
+          if(fs.existsSync(manifest)){const s=JSON.parse(fs.readFileSync(manifest,'utf8'));r.stage={bytes:s.sourceBytes,packs:s.sourcePacks.length,models:s.imports.length,deferred:s.deferredSources};}
+          if(fs.existsSync(receipt)){const j=JSON.parse(fs.readFileSync(receipt,'utf8'));r.import={state:j.state,namespace:j.namespace,processed:j.sources.length,successful:j.sources.filter(x=>x.status==='IMPORTED_SAVED_LOADED_NOT_GAMEPLAY_ACCEPTED').length,errors:j.errors,last:j.sources.slice(-3).map(x=>({id:x.id,source:x.source,status:x.status,error:x.error}))};}
+          if(fs.existsSync(log)){const lines=fs.readFileSync(log,'utf8').split(/\r?\n/);r.logLast=lines.slice(-15);r.errors=lines.filter(l=>/Error:|Traceback/.test(l)).slice(-12);}
+          const cache='C:\\ProgramData\\Epic\\EpicGamesLauncher\\VaultCache';
+          if(fs.existsSync(cache))r.cacheDirectories=fs.readdirSync(cache,{withFileTypes:true}).filter(e=>e.isDirectory()).map(e=>e.name);
+          console.log(JSON.stringify(r,null,2));
+          const out=path.join(process.env.RUNNER_TEMP,'fab-monitor-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out);fs.writeFileSync(path.join(out,'progress.json'),JSON.stringify(r,null,2));fs.appendFileSync(process.env.GITHUB_ENV,'FAB_PROGRESS='+out+'\n');
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fab-import-progress
+          path: ${{ env.FAB_PROGRESS }}
+          if-no-files-found: error
