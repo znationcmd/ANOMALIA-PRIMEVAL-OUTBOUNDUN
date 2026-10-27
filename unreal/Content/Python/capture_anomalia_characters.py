@@ -74,6 +74,17 @@ def tick(delta):
             entry = report["characters"][name]
             entry["maxObservedEditorBoneDisplacementCm"] = max(entry.get("maxObservedEditorBoneDisplacementCm", 0), displacement)
             entry["editorPoseChanged"] = entry["maxObservedEditorBoneDisplacementCm"] > .01
+            instance = mesh.get_anim_instance()
+            entry["animationInstanceClass"] = instance.get_class().get_name() if instance else None
+        for part, leader, bone, row in state.get("parts", []):
+            if part.get_bone_index(unreal.Name(bone)) < 0:
+                row["poseComparison"] = "bone_not_in_garment_mesh"
+                continue
+            a = part.get_bone_transform(unreal.Name(bone), unreal.RelativeTransformSpace.RTS_WORLD).translation
+            b = leader.get_bone_transform(unreal.Name(bone), unreal.RelativeTransformSpace.RTS_WORLD).translation
+            error = math.dist([a.x, a.y, a.z], [b.x, b.y, b.z])
+            row["maxObservedWorldBoneErrorCm"] = max(row.get("maxObservedWorldBoneErrorCm", 0), error)
+            row["poseComparison"] = "within_1cm" if row["maxObservedWorldBoneErrorCm"] < 1 else "mismatch"
         name, eye, target = views[state["index"]]
         if state["task"] is None:
             state["busy"] = True
@@ -108,6 +119,7 @@ try:
     world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     state["meshes"] = {}
+    state["parts"] = []
     for actor in actors.get_all_level_actors():
         label = actor.get_actor_label()
         if not label.startswith("ANOMALIA_TEST_"):
@@ -133,6 +145,10 @@ try:
                 except Exception as exc:
                     row["leaderReadError"] = str(exc)
                 entry["garments"].append(row)
+                bone = {"jacket_mesh": "spine_03", "pants_mesh": "pelvis", "boots_mesh": "foot_l",
+                        "gloves_mesh": "hand_l", "backpack_mesh": "spine_03"}[prop]
+                row["comparedBone"] = bone
+                state["parts"].append((part, mesh, bone, row))
         report["characters"][name] = entry
     if set(state["meshes"]) != {"Manny", "Quinn", "Survival"}:
         raise RuntimeError("Expected exactly three saved test characters")
