@@ -1,0 +1,50 @@
+name: ANOMALIA acquire original CC0 pill and cannabis model sources
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-medical-plant-sources.yml']
+permissions:
+  contents: read
+jobs:
+  download:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Acquire and safely inspect original CC0 models without changing project assets
+        shell: node {0}
+        run: |
+          (async()=>{
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto');
+          const root='C:\\ANOMALIA\\FabImports\\OpenMedicalPlantSources_20261027';fs.mkdirSync(root,{recursive:true});
+          const out=path.join(process.env.RUNNER_TEMP,'medical-plant-sources-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out);fs.appendFileSync(process.env.GITHUB_ENV,'MEDICAL_PLANT_OUTPUT='+out+'\n');
+          const sources=[
+          {id:'pills_mxc2',source:'https://opengameart.org/content/pills-3d-models',author:'mxc2',url:'https://opengameart.org/sites/default/files/pills-2022-marcus-indrek-simmer_4.zip',filename:'pills.zip'},
+          {id:'cannabis_yughues',source:'https://opengameart.org/content/cannabis-plants',author:'Yughues',url:'https://opengameart.org/sites/default/files/Cannabis.7z',filename:'Cannabis.7z'}];
+          const report={time:new Date().toISOString(),license:'CC0-1.0',sources:[],errors:[],unrealImported:false,quality:'NOT_VISUALLY_ACCEPTED'};
+          for(const s of sources){
+           const row={id:s.id,author:s.author,source:s.source,license:'CC0-1.0',unrealImported:false};report.sources.push(row);
+           try{
+            const dir=path.join(root,s.id);fs.mkdirSync(dir,{recursive:true});const archive=path.join(dir,s.filename);let b;
+            if(fs.existsSync(archive))b=fs.readFileSync(archive);
+            else{const r=await fetch(s.url,{headers:{'User-Agent':'ANOMALIA-Asset-Intake/1.0'},signal:AbortSignal.timeout(90000)});if(!r.ok)throw Error('HTTP '+r.status);b=Buffer.from(await r.arrayBuffer());if(b.length>16*1024**2)throw Error('Unexpected large archive');fs.writeFileSync(archive,b,{flag:'wx'});}
+            row.bytes=b.length;row.sha256=crypto.createHash('sha256').update(b).digest('hex');row.archive=archive;row.state='SOURCE_DOWNLOADED';
+            const dest=path.join(dir,'Extracted');
+            if(fs.existsSync(dest)){row.extraction='EXISTING_DIRECTORY_NOT_OVERWRITTEN';continue;}
+            const list=cp.execFileSync('tar.exe',['-tf',archive],{encoding:'utf8',timeout:20000}).split(/\r?\n/).filter(Boolean);
+            const verbose=cp.execFileSync('tar.exe',['-tvf',archive],{encoding:'utf8',timeout:20000}).split(/\r?\n/).filter(Boolean);
+            if(list.length>2000||list.some(n=>/^[\\/]|^[a-z]:|(^|[\\/])\.\.([\\/]|$)/i.test(n))||verbose.some(l=>!/^[-d]/.test(l)))throw Error('Unsafe or unsupported archive entries');
+            fs.mkdirSync(dest);cp.execFileSync('tar.exe',['-xf',archive,'-C',dest],{timeout:60000});
+            row.extraction='EXTRACTED_TO_NEW_DIRECTORY';row.files=list;row.models=list.filter(n=>/\.(fbx|obj|blend|gltf|glb)$/i.test(n));row.state='SOURCE_EXTRACTED_NEEDS_QUALITY_AND_UNREAL_VALIDATION';
+           }catch(e){row.error=String(e.message);report.errors.push({id:s.id,error:row.error});}
+          }
+          fs.writeFileSync(path.join(root,'source-receipt.json'),JSON.stringify(report,null,2));fs.writeFileSync(path.join(out,'source-receipt.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(report.errors.length)process.exit(1);
+          })().catch(e=>{console.error(e);process.exit(1);});
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: original-pill-and-plant-source-receipts
+          path: ${{ env.MEDICAL_PLANT_OUTPUT }}
+          if-no-files-found: warn
