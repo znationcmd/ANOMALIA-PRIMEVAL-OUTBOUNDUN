@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "codeCommit": "32575224b4ba545d1466f5fc25b403625ae7a308",
+  "workflowRun": 40412772847,
+  "workflowURL": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40412772847",
+  "attempt1": {
+    "conclusion": "failure",
+    "lastStep": "Import the original account-free CC0 sedan parts after physics acceptance",
+    "stepStillReportedInProgress": true,
+    "completedUtc": "2026-10-26T22:46:08Z",
+    "completionLogAvailable": false,
+    "exactInterruptionCause": "NOT_DETERMINED"
+  },
+  "attempt2": {
+    "requestedDate": "2026-10-27",
+    "jobId": 122061181473,
+    "state": "queued",
+    "runnerAssigned": false
+  },
+  "engineVersion": {
+    "MajorVersion": 5,
+    "MinorVersion": 8,
+    "PatchVersion": 3,
+    "Changelist": 58210709,
+    "CompatibleChangelist": 55116800,
+    "IsLicenseeVersion": 0,
+    "IsPromotedBuild": 1,
+    "BranchName": "++UE5+Release-5.8"
+  },
+  "compilation": "passed",
+  "targets": [
+    {
+      "target": "AnomaliaPrimevalEditor",
+      "exitCode": 0
+    },
+    {
+      "target": "AnomaliaPrimeval",
+      "exitCode": 0
+    }
+  ],
+  "nativeTests": {
+    "passed": 19,
+    "passedWithWarnings": 5,
+    "failed": 0
+  },
+  "referenceVehicle": {
+    "state": "CHAOS_ROAD_PHYSICS_DRIVE_PASSED",
+    "checks": 27,
+    "physicsSamples": 322,
+    "stationaryReviewed": true,
+    "stationarySamples": 89,
+    "maxStationarySpeedCmPerSecond": 0.024416649969035274,
+    "maxStationaryDriftCm": 0.29642425186193927,
+    "asyncPhysics": true,
+    "asyncFixedTimeStepSize": 0.00833333283662796
+  },
+  "latestE39": {
+    "state": "NOT_RUN_INTERRUPTED_BEFORE_E39_STAGE",
+    "allSixPanelsAccepted": false,
+    "completeVehicleAccepted": false
+  },
+  "artifacts": {
+    "nativeBuild": 12693973692,
+    "referenceDrive": 12693398860
+  },
+  "historicalAcceptedE39DriverDoor": {
+    "codeCommit": "87f6a0d24372ff013f642f7d480cddf7eea43a05",
+    "workflowRun": 40399566771,
+    "checks": 33
+  },
+  "sameE39Preserved": true,
+  "installed": false,
+  "packagedGameTested": false,
+  "multiplayerTested": false,
+  "entryAnimationTested": false,
+  "photorealZoneAccepted": false,
+  "newVehicleRequests": {
+    "addedGroupedRequests": 19,
+    "totalGroupedRequests": 229,
+    "implementedNewModels": 0
+  },
+  "prison": {
+    "requirementsRegistered": true,
+    "implemented": false,
+    "gameTested": false
+  }
+}

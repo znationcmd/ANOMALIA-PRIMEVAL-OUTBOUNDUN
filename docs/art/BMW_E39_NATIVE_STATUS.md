@@ -51,8 +51,24 @@ of rendering/readback stalls, and adds a twenty-second unoccupied stationary
 observation before any panel interaction on every review vehicle. It records
 idle samples and the actual loaded physics settings; all previous contact,
 driving, opening, capsule-collision and stability gates remain required.
-This latest physics configuration and extended idle gate are not yet compiled
-or accepted; do not report the E39 as completed. The verified v2 results below do not validate these changes
+Revision `32575224b4ba545d1466f5fc25b403625ae7a308`,
+[workflow 40412772847](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40412772847),
+compiled Editor/Game in UE 5.8.3 and passed 24 native tests (19 clean, five with
+warnings). The reference vehicle passed 27 checks, including twenty seconds
+stationary: 89 samples, maximum speed 0.02442 cm/s and drift 0.29643 cm,
+followed by 322 physical driving samples. The loaded async step is 0.008333333 s.
+
+The run ended with failure at 22:46:08 UTC on 26 October, while GitHub still
+reported the preceding original-sedan preparation/import step as in progress.
+No E39 stage, cleanup steps or final job log are available. The exact cause of
+the interruption is undetermined; do not report a confirmed import-code error,
+runner failure or power loss. Attempt 2 was requested on 27 October; job
+`122061181473` is queued with no runner assigned at the status check.
+
+This latest E39 configuration has therefore not passed six-panel acceptance.
+The interrupted run is not still executing. Receipt:
+`docs/art/bmw-e39-all-panels-validation-20261027.json`. Do not install or report
+the E39 as completed. The verified v2 results below do not validate these changes
 or the five new panels.
 
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
