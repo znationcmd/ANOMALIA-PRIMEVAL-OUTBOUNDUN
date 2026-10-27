@@ -39,3 +39,15 @@ La carte de test séparée et ses vérifications de rechargement sont en cours d
 La BMW E39 et ses assets sont conservés. La compilation a également révélé un blocage réel dans son composant de survie ; la correction de compilation n’équivaut pas à un test natif complet des clés, pièces ou échanges de cargaison.
 
 Les modèles Fab ne sont pas publiés dans GitHub. Les PR #44 et #45 restent en brouillon, sans fusion.
+
+## Résultats ultérieurs effectivement vérifiés
+
+- Reprise native 40546939481 : Editor et Game compilés, code de sortie 0 ; **26 tests natifs réussis**, dont TacticalMovement.SpeedLoadFatigueAndCrouch et VehicleKeyPartsCargoAndRecovery. Le job a ensuite échoué dans une première version du script de scène Python ; cela n’annule pas les compilations et tests précédents.
+- Scène installée 40547916155 : trois personnages créés dans une carte séparée, caméra/inventaire/vitals/capsule trouvés ; sauvegarde puis rechargement de la carte réussis. L’ancienne classe native installée ne dispose pas de l’API des vêtements.
+- Scène modulaire isolée 40549277135 : veste, pantalon, chaussures, gants et sac à dos Survival appliqués, retirés et réappliqués via l’API ; vêtement Quantum au squelette différent rejeté ; carte sauvegardée et rechargée.
+- Correction de référence de rig 40550113760 : redirection de package exacte, configuration sauvegardée avant modification, validation avant installation. Aucun asset Fab réécrit.
+- Captures GPU réelles 40550553551 : trois personnages visibles ; instances ABP actives ; variations des positions d’os observées dans l’éditeur pour Manny, Quinn et Survival. Les cinq vêtements ont le corps comme Leader Pose et zéro écart observé sur les cinq os comparés. Preuves : artefact 12755186683. Les captures ont été inspectées ; elles montrent le corps habillé, les mannequins et le sac. L’éclairage de la scène de test est encore sommaire.
+
+Ces observations d’éditeur **ne sont pas un test PIE**, ne prouvent pas les commandes du joueur, toutes les transitions d’animation ou l’absence de traversées dans chaque posture. La sauvegarde de carte n’est pas une sauvegarde de profil joueur.
+
+Restent : équipement depuis l’inventaire, validation serveur et réplication, apparence persistante après reconnexion, tous les emplacements, masquage du corps, Quantum animé, position allongée/inclinaison/franchissement, catalogue ANOMALIA Editor et essai deux joueurs. La classe native compilée reste dans la copie isolée.
