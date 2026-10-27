@@ -241,6 +241,11 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         PanelSample->SetNumberField(TEXT("seconds"),Now-PhaseStarted);
         PanelSample->SetNumberField(TEXT("frameDeltaSeconds"),DeltaSeconds);
         PanelSample->SetNumberField(TEXT("angleDegrees"),Panel->AngleDegrees);
+        const FBodyInstance* RawPanelBody=Panel->GetBodyInstance(NAME_None,false);
+        const FBodyInstance* EffectivePanelBody=Panel->GetBodyInstance();
+        PanelSample->SetBoolField(TEXT("nativePanelBodyWelded"),RawPanelBody && RawPanelBody->WeldParent!=nullptr);
+        PanelSample->SetStringField(TEXT("nativePanelBodyOwner"),RawPanelBody?GetNameSafe(RawPanelBody->OwnerComponent.Get()):TEXT("None"));
+        PanelSample->SetStringField(TEXT("effectivePanelBodyOwner"),EffectivePanelBody?GetNameSafe(EffectivePanelBody->OwnerComponent.Get()):TEXT("None"));
         PanelSample->SetStringField(TEXT("location"),V->GetActorLocation().ToString());
         PanelSample->SetStringField(TEXT("velocity"),V->Chassis->GetPhysicsLinearVelocity().ToString());
         PanelSample->SetNumberField(TEXT("driftCm"),FVector::Dist(V->GetActorLocation(),PanelReviewStart));
@@ -374,7 +379,7 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                 for(auto* Leaf:Leaves)if(Leaf)
                 {
                     Leaf->bOpen=false;Leaf->bLocked=false;Leaf->bObstructed=false;
-                    Leaf->AngleDegrees=0.f;Leaf->SetRelativeRotation(FQuat::Identity);
+                    Leaf->AngleDegrees=0.f;Leaf->SetRelativeRotation(FQuat::Identity,false,nullptr,ETeleportType::TeleportPhysics);
                 }
                 IdleStarted=Now;IdleStartLocation=V->GetActorLocation();
             }

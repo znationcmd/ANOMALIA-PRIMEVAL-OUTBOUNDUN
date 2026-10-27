@@ -59,9 +59,18 @@
   },
   "latestE39": {
     "state": "FAILED",
-    "error": "Closed real driver door does not block the aperture trace",
-    "driverDoorReviewed": false,
-    "validatedAdditionalPanelIds": [],
+    "error": "Panel review destabilized chassis: trunk drift=766.95 cm speed=22532.03 cm/s vehicle=X=-779.102 Y=-11.660 Z=35.759 survivor=X=-393.435 Y=-4.701 Z=97.377",
+    "driverDoorReviewed": true,
+    "validatedAdditionalPanelIds": [
+      "door_front_right",
+      "door_rear_left",
+      "door_rear_right",
+      "hood"
+    ],
+    "panelMaxChassisDriftCm": 766.9539184570312,
+    "panelMaxChassisSpeedCmPerSecond": 22532.025390625,
+    "reviewFixtureInitializedClosed": true,
+    "reviewKeyboardInputIsolated": true,
     "allSixPanelsAccepted": false,
     "completeVehicleAccepted": false
   },
@@ -92,10 +101,10 @@
   },
   "nextCorrection": {
     "state": "PREPARED_NOT_NATIVE_VERIFIED",
-    "scope": "isolated standalone proving-ground probe only",
-    "initializeFixtureLeavesClosedBeforeIdle": true,
-    "disableLivePawnInputDuringAutomatedReview": true,
-    "retainActualFinalLeafStates": true,
+    "panelPosePhysicsMode": "TeleportPhysics",
+    "obstructionSamplingRetained": true,
+    "rawAndEffectiveNativePanelBodyTelemetry": true,
+    "globalCharacterPushExperimentRemoved": true,
     "stabilityLimitsUnchanged": true
   },
   "panelChannelAttempt": {
@@ -140,5 +149,31 @@
     },
     "stationaryReviewed": true,
     "captureObservation": "Driver leaf appears open before the first commanded opening; initial state and live input are not yet isolated"
+  },
+  "isolatedInputAttempt": {
+    "codeCommit": "098dca60faf8a6fff340ac77bb000fd4d06e6a19",
+    "workflowRun": 40475542625,
+    "jobId": 122092753481,
+    "artifact": 12721900245,
+    "compilation": "passed",
+    "nativeTests": "passed",
+    "referenceVehicle": "passed",
+    "e39": {
+      "state": "FAILED",
+      "error": "Panel review destabilized chassis: trunk drift=766.95 cm speed=22532.03 cm/s vehicle=X=-779.102 Y=-11.660 Z=35.759 survivor=X=-393.435 Y=-4.701 Z=97.377",
+      "driverDoorReviewed": true,
+      "validatedAdditionalPanelIds": [
+        "door_front_right",
+        "door_rear_left",
+        "door_rear_right",
+        "hood"
+      ],
+      "panelMaxChassisDriftCm": 766.9539184570312,
+      "panelMaxChassisSpeedCmPerSecond": 22532.025390625,
+      "reviewFixtureInitializedClosed": true,
+      "reviewKeyboardInputIsolated": true
+    },
+    "characterAutoPhysicsPushEnabled": false,
+    "survivorHorizontalVelocityBeforeFailure": 0
   }
 }

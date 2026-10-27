@@ -128,6 +128,28 @@ open/angle/obstruction states in every report. Measured opening/closing still
 uses the same targeted server commands; normal production input is unchanged.
 No stability/collision threshold is relaxed. Native verification is pending.
 
+## Isolated-input native attempt — 27 October 2026
+
+Revision `098dca60faf8a6fff340ac77bb000fd4d06e6a19`, run `40475542625`,
+compiled Editor/Game, passed native tests and reference driving, and imported
+all eleven E39 parts. The report confirms closed fixture initialization and
+isolated keyboard input. All four doors and the bonnet completed their cycles.
+The boot again launched the chassis near six degrees: 766.95 cm drift and
+22532.03 cm/s speed. Artifact `12721900245` retains the real report/captures.
+The survivor had zero horizontal velocity and no movement base at the boot,
+with automatic character physics interaction disabled. That experiment did not
+resolve the failure; the unrelated global character setting is now removed.
+
+The next candidate changes only animated leaf pose updates to
+`ETeleportType::TeleportPhysics`, retaining the existing angular obstruction
+samples, query-only collision and all acceptance limits. This mode updates
+collision geometry without deriving physics velocity from pose changes:
+https://dev.epicgames.com/documentation/unreal-engine/API/Runtime/Engine/Components/USceneComponent/MoveComponent/1
+The raw and effective panel body owners and actual WeldParent state are now
+recorded on every panel sample to detect hidden native coupling. No chassis
+velocity/transform is assigned or clamped. This is an unverified hypothesis;
+complete six-panel, walking-contact and driving acceptance is still required.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.
