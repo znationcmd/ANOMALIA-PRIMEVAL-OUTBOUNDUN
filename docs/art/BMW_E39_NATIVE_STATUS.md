@@ -1,6 +1,41 @@
-# BMW E39 — same model, native driving and driver door
+# BMW E39 — same model, six opening leaves and native driving
 
-Current work: the remaining three doors, bonnet and boot lid are prepared in
+## Current accepted native scope — 27 October 2026
+
+Code `e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea`,
+[Windows run 40493715250](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40493715250).
+Editor and Game compile under UE 5.8.3. All 24 native tests pass (19 clean,
+five with warnings). The reference vehicle passes; the original-sedan regression also passes
+35 checks, including its driver leaf. The entire Windows workflow succeeds.
+
+The same E39 passes **61 real gameplay checks** and 313 driving samples.
+All four doors, bonnet and boot open/close on their authored axes, retain
+server lock/aim checks and restore character collision. A real survivor walks
+against the closed boot and stops without launching the chassis. The owning
+driver operates the driver leaf from the seat; the complete calibrated Chaos
+acceleration, steering, gears, braking, lights, fuel and exit sequence passes.
+Across 355 panel samples, maximum chassis drift is 0.41774 cm and speed
+0.08431 cm/s. This is isolated mechanical acceptance, not a completed vehicle,
+photoreal scene, multiplayer, packaged-game or production-installation acceptance.
+
+The successful candidate removes the unproven production pose-mode and
+character-force experiments. Only the test character's fixture placement is
+isolated, with collision restored and a four-second settling interval before
+unchanged physical gates and targeted opening commands. This result supports
+the relocation/settling change; it does not uniquely identify an engine-level
+root cause. No chassis transform/velocity is reset or clamped.
+
+The boot-open viewport was inspected: the same red E39 remains on the proving
+ground, with the actual lid raised. Engine-bay and boot finishes are visibly
+incomplete. All six leaves are closed, unobstructed and at zero degrees at the
+end of the run. Native artifacts: build `12730321731`, reference `12730577186`,
+E39 `12729594152`. Authoritative current receipt:
+`docs/art/bmw-e39-six-panels-native-validation-20261027.json`.
+
+## Earlier attempts (not accepted at the time)
+
+
+Historical preparation: the remaining three doors, bonnet and boot lid were prepared in
 `BMWE39Review_v5`, with eleven parts total. The previous driver leaf and all
 four wheels are byte-identical. Horizontal/vertical axes and five stable extra
 panel components are wired into the native actor.
@@ -190,7 +225,7 @@ Each later model needs a detailed licensed source, native import, appropriate
 physics for its category, interior/crew/interactions and actual game acceptance.
 Reuse compatible components; catalogue names alone do not count as delivery.
 
-## Latest real UE 5.8.3 acceptance — 2026-10-26
+## Historical driver-leaf-only acceptance — 2026-10-26
 
 Code: `87f6a0d24372ff013f642f7d480cddf7eea43a05`.
 [Windows workflow 40399566771](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40399566771)
@@ -269,10 +304,11 @@ non-shipping, explicit owned-map and temporary server-scope guards.
 
 ## Still unfinished
 
-The E39 is not yet a completed playable catalogue vehicle. Three other doors,
-hood and trunk, exact seat positioning, entry/exit animations and a visible
-animated human driver remain unfinished. Entry currently uses the existing
-crew possession path; the complete animation/access sequence is not accepted.
+The E39 is not yet a completed playable catalogue vehicle. Its four doors,
+bonnet and boot now pass isolated native interaction/collision acceptance.
+Engine-bay/boot finishing, exact seat positioning, entry/exit animations and a
+visible animated human driver remain unfinished. Entry currently uses the
+existing crew possession path; the complete animation/access sequence is not accepted.
 
 Source paint is very glossy, glass is dark and texture detail is limited.
 Frame/seam finishing, interior presentation, realistic sounds and final PBR

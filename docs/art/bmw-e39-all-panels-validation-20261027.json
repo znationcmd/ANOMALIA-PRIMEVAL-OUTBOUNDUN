@@ -58,13 +58,158 @@
     "asyncFixedTimeStepSize": 0.00833333283662796
   },
   "latestE39": {
-    "state": "FAILED",
-    "error": "Panel review destabilized chassis: door_front_right drift=24.43 cm speed=626.67 cm/s vehicle=X=-21.071 Y=15.002 Z=2.157 survivor=X=207.801 Y=230.170 Z=98.558",
+    "state": "CHAOS_ROAD_PHYSICS_DRIVE_PASSED",
+    "checks": 61,
+    "checkNames": [
+      "unoccupied_chassis_stable_for_20_seconds_with_fixed_async_physics",
+      "separate_licensed_driver_door_mesh_installed",
+      "closed_driver_door_recomposes_original_body_bounds",
+      "driver_fixture_settled_with_character_collision_before_opening",
+      "closed_driver_door_has_actual_collision",
+      "locked_driver_door_rejects_server_interaction",
+      "driver_door_rotates_at_hinge_and_collision_leaves_aperture",
+      "driver_door_closes_and_restores_actual_collision",
+      "panel_door_front_right_fixture_settled_with_character_collision_before_opening",
+      "panel_door_front_right_installed_with_authored_hinge_axis",
+      "panel_door_front_right_closed_collision_and_server_lock_verified",
+      "panel_door_front_right_rotates_on_authored_axis_and_clears_access",
+      "panel_door_front_right_closes_and_restores_real_collision",
+      "panel_door_rear_left_fixture_settled_with_character_collision_before_opening",
+      "panel_door_rear_left_installed_with_authored_hinge_axis",
+      "panel_door_rear_left_closed_collision_and_server_lock_verified",
+      "panel_door_rear_left_rotates_on_authored_axis_and_clears_access",
+      "panel_door_rear_left_closes_and_restores_real_collision",
+      "panel_door_rear_right_fixture_settled_with_character_collision_before_opening",
+      "panel_door_rear_right_installed_with_authored_hinge_axis",
+      "panel_door_rear_right_closed_collision_and_server_lock_verified",
+      "panel_door_rear_right_rotates_on_authored_axis_and_clears_access",
+      "panel_door_rear_right_closes_and_restores_real_collision",
+      "panel_hood_fixture_settled_with_character_collision_before_opening",
+      "panel_hood_installed_with_authored_hinge_axis",
+      "panel_hood_closed_collision_and_server_lock_verified",
+      "panel_hood_rotates_on_authored_axis_and_clears_access",
+      "panel_hood_closes_and_restores_real_collision",
+      "panel_trunk_fixture_settled_with_character_collision_before_opening",
+      "panel_trunk_installed_with_authored_hinge_axis",
+      "panel_trunk_closed_collision_and_server_lock_verified",
+      "panel_trunk_rotates_on_authored_axis_and_clears_access",
+      "panel_trunk_closes_and_restores_real_collision",
+      "survivor_walks_into_closed_trunk_without_launching_chassis",
+      "real_skeletal_rig_and_four_Chaos_wheels_no_floating_movement",
+      "existing_character_and_inventory_preserved_on_entry",
+      "driver_activates_real_headlight_components",
+      "current_driver_opens_and_closes_real_door_from_seat",
+      "settled_spring_forces_balance_actual_chassis_weight",
+      "engine_off_blocks_full_accelerator_without_fuel_consumption",
+      "current_driver_can_start_engine_on_server",
+      "physical_acceleration_translation_and_rotating_contact_wheels",
+      "manual_first_gear_drives_physical_vehicle",
+      "rear_wheel_drive_observed_in_actual_wheel_torques",
+      "physical_steering_changes_vehicle_heading",
+      "manual_upshift_changes_actual_Chaos_gear",
+      "hazard_light_components_flash_on_and_off",
+      "service_brake_stops_the_physical_chassis",
+      "reverse_gear_drives_chassis_backwards",
+      "rear_wheel_handbrake_stops_physical_vehicle",
+      "server_fuel_consumption_reaches_zero_and_cuts_Chaos_throttle",
+      "empty_tank_cannot_accelerate_under_full_driver_input",
+      "server_refuel_rejects_invalid_amounts_and_restores_fuel",
+      "refuel_requires_explicit_driver_restart_after_stall",
+      "refuel_restores_physical_acceleration_and_fuel_consumption",
+      "current_driver_can_switch_engine_off",
+      "safe_exit_restores_same_survivor",
+      "measured_dry_braking_from_50_kmh",
+      "measured_dry_braking_from_80_kmh",
+      "lower_grip_increases_actual_80_kmh_stopping_distance",
+      "high_speed_exit_restores_original_survivor_with_vehicle_momentum"
+    ],
+    "physicsSamples": 313,
+    "panelSamples": 355,
     "driverDoorReviewed": true,
-    "validatedAdditionalPanelIds": [],
-    "panelMaxChassisDriftCm": 24.42592430114746,
-    "panelMaxChassisSpeedCmPerSecond": 626.6660766601562,
-    "allSixPanelsAccepted": false,
+    "validatedAdditionalPanelIds": [
+      "door_front_right",
+      "door_rear_left",
+      "door_rear_right",
+      "hood",
+      "trunk"
+    ],
+    "allSixPanelsAccepted": true,
+    "closedTrunkWalkingAccepted": true,
+    "panelMaxChassisDriftCm": 0.41773906350135803,
+    "panelMaxChassisSpeedCmPerSecond": 0.0843043178319931,
+    "stationaryReviewed": true,
+    "reviewFixtureInitializedClosed": true,
+    "reviewKeyboardInputIsolated": true,
+    "brakingMeasurements": [
+      {
+        "initialKmh": 50.670654785156245,
+        "distanceMetres": 13.29978064753088,
+        "seconds": 1.8047414012253284,
+        "meanDecelerationG": 0.7594739495577112,
+        "accelerationSecondsToTarget": 3.300568901002407,
+        "surfaceFriction": 0.9
+      },
+      {
+        "initialKmh": 80.19152929687499,
+        "distanceMetres": 30.60080074304562,
+        "seconds": 2.6775498017668724,
+        "meanDecelerationG": 0.8267391953380244,
+        "accelerationSecondsToTarget": 6.628200497478247,
+        "surfaceFriction": 0.9
+      },
+      {
+        "initialKmh": 80.2677744140625,
+        "distanceMetres": 56.918496963342434,
+        "seconds": 5.110100798308849,
+        "meanDecelerationG": 0.4453211756162011,
+        "accelerationSecondsToTarget": 10.127264000475407,
+        "surfaceFriction": 0.45
+      }
+    ],
+    "finalPanelStates": [
+      {
+        "id": "driver_door",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+      },
+      {
+        "id": "door_front_right",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+      },
+      {
+        "id": "door_rear_left",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+      },
+      {
+        "id": "door_rear_right",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+      },
+      {
+        "id": "hood",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=-0.000000 Y=0.000000 R=-0.000000"
+      },
+      {
+        "id": "trunk",
+        "open": false,
+        "obstructed": false,
+        "angleDegrees": 0,
+        "relativeRotation": "P=0.000000 Y=0.000000 R=-0.000000"
+      }
+    ],
     "completeVehicleAccepted": false
   },
   "artifacts": {
@@ -93,14 +238,9 @@
     "gameTested": false
   },
   "nextCorrection": {
-    "state": "PREPARED_NOT_NATIVE_VERIFIED",
-    "fixtureOnlyCharacterRelocation": "temporarily disable character collision only during placement, reset character movement/base, recreate at destination",
-    "characterCollisionRestoredBeforeMeasurement": true,
-    "settleSecondsBeforeEveryPanelOpening": 4,
-    "sameChassisStabilityLimitsBeforeOpening": true,
-    "unprovenProductionPoseChangeRemoved": true,
-    "vehicleTransformsAndVelocitiesNeverReset": true,
-    "compileFix": "Explicit UPrimitiveComponent* null base for UE 5.8 overload resolution"
+    "state": "NATIVE_SIX_PANEL_AND_PHYSICAL_DRIVE_ACCEPTED",
+    "receipt": "docs/art/bmw-e39-six-panels-native-validation-20261027.json",
+    "remaining": "interior/compartment finish, human driver/entry-exit animation, multiplayer/persistence/package/production integration"
   },
   "panelChannelAttempt": {
     "codeCommit": "7a8602c474f05383d83777101a738fdf98f9f1a8",
@@ -200,5 +340,7 @@
     "exitCode": 6,
     "error": "C2668: ACharacter::SetBase(nullptr) ambiguous between UPrimitiveComponent* and FMovementBaseInterfaceData* overloads",
     "gameplayExecuted": false
-  }
+  },
+  "currentCodeCommit": "e5bcfa65355f4b3aa92fb99aaa2c0f8f9ce845ea",
+  "currentAcceptedReceipt": "docs/art/bmw-e39-six-panels-native-validation-20261027.json"
 }
