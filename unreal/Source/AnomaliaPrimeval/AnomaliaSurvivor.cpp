@@ -21,6 +21,8 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
@@ -36,6 +38,20 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
+    // Keep the original character mesh as the animation leader; clothes are optional.
+    JacketMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("JacketMesh"));
+    PantsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PantsMesh"));
+    BootsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BootsMesh"));
+    GlovesMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("GlovesMesh"));
+    HeadgearMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("HeadgearMesh"));
+    BackpackMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("BackpackMesh"));
+    VestMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("VestMesh"));
+    for (USkeletalMeshComponent* Part : {JacketMesh.Get(), PantsMesh.Get(), BootsMesh.Get(), GlovesMesh.Get(), HeadgearMesh.Get(), BackpackMesh.Get(), VestMesh.Get()})
+    {
+        Part->SetupAttachment(GetMesh());
+        Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+        Part->SetLeaderPoseComponent(GetMesh());
+    }
     CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
     CameraBoom->SetupAttachment(GetRootComponent());
     CameraBoom->TargetArmLength = 350.f;
@@ -45,6 +61,24 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     FollowCamera->bUsePawnControlRotation = false;
     bUseControllerRotationYaw = false;
     GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+bool AAnomaliaSurvivor::SetClothingMesh(FName Slot, USkeletalMesh* MeshAsset)
+{
+    USkeletalMeshComponent* Target = nullptr;
+    if (Slot == TEXT("Jacket")) Target = JacketMesh;
+    else if (Slot == TEXT("Pants")) Target = PantsMesh;
+    else if (Slot == TEXT("Boots")) Target = BootsMesh;
+    else if (Slot == TEXT("Gloves")) Target = GlovesMesh;
+    else if (Slot == TEXT("Headgear")) Target = HeadgearMesh;
+    else if (Slot == TEXT("Backpack")) Target = BackpackMesh;
+    else if (Slot == TEXT("Vest")) Target = VestMesh;
+    if (!Target) return false;
+    // Never silently apply a mesh with a different bone hierarchy.
+    if (MeshAsset && (!GetMesh() || !GetMesh()->GetSkeletalMeshAsset() ||
+        MeshAsset->GetSkeleton() != GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())) return false;
+    Target->SetSkeletalMeshAsset(MeshAsset);
+    return true;
 }
 
 float AAnomaliaSurvivor::TakeDamage(float Amount,const FDamageEvent& Event,AController* InstigatorController,AActor* Causer)

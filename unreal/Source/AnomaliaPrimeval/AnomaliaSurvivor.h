@@ -6,6 +6,8 @@
 #include "AnomaliaSurvivor.generated.h"
 
 class USpringArmComponent;
+class USkeletalMeshComponent;
+class USkeletalMesh;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
@@ -24,6 +26,26 @@ public:
     void CloseInventory();
     bool RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId=0,int32 ExpectedCount=0);
     UFUNCTION(Server,Reliable) void ServerVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount);
+
+    /** Cosmetic modular clothing follows the main body skeleton. No third-party meshes are bundled. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> JacketMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> PantsMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> BootsMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> GlovesMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> HeadgearMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> BackpackMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Appearance")
+    TObjectPtr<USkeletalMeshComponent> VestMesh;
+
+    /** Apply an approved, skeleton-compatible cosmetic mesh; game equipment rules remain server-owned. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Appearance")
+    bool SetClothingMesh(FName Slot, USkeletalMesh* MeshAsset);
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Camera")
     TObjectPtr<USpringArmComponent> CameraBoom;
