@@ -57,7 +57,7 @@ def main():
             require(actor.get_editor_property("inventory_component") is not None, "Missing actual inventory: " + name)
             require(actor.get_editor_property("vitals_component") is not None, "Missing actual vitals: " + name)
             require(actor.get_editor_property("follow_camera") is not None, "Missing actual camera: " + name)
-            require(actor.get_capsule_component().get_scaled_capsule_half_height() > 0, "Missing capsule: " + name)
+            require(actor.get_editor_property("capsule_component").get_scaled_capsule_half_height() > 0, "Missing capsule: " + name)
             report["actors"].append({"name": name, "mesh": body.get_path_name(), "animation": anim.get_path_name(),
                                       "inventory_component": True, "vitals_component": True, "camera": True, "capsule": True})
             actors[name] = actor
@@ -85,7 +85,7 @@ def main():
         require(unreal.BlueprintEditorLibrary.compile_blueprint(gm) is True, "Test GameMode compilation failed")
         require(unreal.get_default_object(unreal.BlueprintEditorLibrary.generated_class(gm)).get_editor_property("default_pawn_class") == classes["Manny"], "Test pawn class did not persist")
         require(unreal.EditorAssetLibrary.save_loaded_asset(gm, only_if_is_dirty=False), "Test GameMode save failed")
-        world.get_world_settings().set_editor_property("default_game_mode", unreal.BlueprintEditorLibrary.generated_class(gm))
+        unreal.GameplayStatics.get_world_settings(world).set_editor_property("default_game_mode", unreal.BlueprintEditorLibrary.generated_class(gm))
         require(unreal.EditorLoadingAndSavingUtils.save_map(world, MAP), "New map save failed")
         report["map_saved"] = MAP
         loaded = unreal.EditorLoadingAndSavingUtils.load_map(MAP)
