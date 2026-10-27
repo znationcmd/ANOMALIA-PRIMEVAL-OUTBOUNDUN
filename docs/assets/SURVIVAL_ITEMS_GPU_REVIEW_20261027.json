@@ -1,0 +1,179 @@
+{
+  "state": "GPU_GALLERY_CAPTURED_NOT_GAMEPLAY_ACCEPTED",
+  "batch": "/Game/Anomalia/ImportedFab/Batch_40571935754",
+  "sourceCount": 10,
+  "groups": [
+    {
+      "source": "food_apple_01/food_apple_01_4k.gltf",
+      "id": "ph_food_apple_01",
+      "meshCount": 1,
+      "previewOriginCm": [
+        0,
+        0,
+        80
+      ],
+      "previewOnlyScale": 14.349970200481309,
+      "originalMaxDimensionCm": 9.756117820739746,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "food_pears_asian_01/food_pears_asian_01_4k.gltf",
+      "id": "ph_food_pears_asian_01",
+      "meshCount": 5,
+      "previewOriginCm": [
+        280,
+        0,
+        80
+      ],
+      "previewOnlyScale": 8.385970492480537,
+      "originalMaxDimensionCm": 16.694549560546875,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "long_life_food/long_life_food_4k.gltf",
+      "id": "ph_long_life_food",
+      "meshCount": 4,
+      "previewOriginCm": [
+        560,
+        0,
+        80
+      ],
+      "previewOnlyScale": 2.6729624976984945,
+      "originalMaxDimensionCm": 52.3763427734375,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "wine_bottles_01/wine_bottles_01_4k.gltf",
+      "id": "ph_wine_bottles_01",
+      "meshCount": 4,
+      "previewOriginCm": [
+        840,
+        0,
+        80
+      ],
+      "previewOnlyScale": 2.0700116922718803,
+      "originalMaxDimensionCm": 67.63246822357178,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "medical_box/medical_box_4k.gltf",
+      "id": "ph_medical_box",
+      "meshCount": 5,
+      "previewOriginCm": [
+        0,
+        280,
+        80
+      ],
+      "previewOnlyScale": 2.664223431982491,
+      "originalMaxDimensionCm": 52.54814529418945,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "medical_tape/medical_tape_4k.gltf",
+      "id": "ph_medical_tape",
+      "meshCount": 1,
+      "previewOriginCm": [
+        280,
+        280,
+        80
+      ],
+      "previewOnlyScale": 30.90536048298468,
+      "originalMaxDimensionCm": 4.529958486557007,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "complexPill/complexPill.fbx",
+      "id": "pills_mxc2",
+      "meshCount": 1,
+      "previewOriginCm": [
+        560,
+        280,
+        80
+      ],
+      "previewOnlyScale": 4.795419414438723,
+      "originalMaxDimensionCm": 29.19452667236328,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "simplePill/simplePill.fbx",
+      "id": "pills_mxc2",
+      "meshCount": 1,
+      "previewOriginCm": [
+        840,
+        280,
+        80
+      ],
+      "previewOnlyScale": 8.029602191831174,
+      "originalMaxDimensionCm": 17.435483932495117,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "Cannabis.FBX",
+      "id": "cannabis_yughues",
+      "meshCount": 1,
+      "previewOriginCm": [
+        0,
+        560,
+        80
+      ],
+      "previewOnlyScale": 1.092613051018436,
+      "originalMaxDimensionCm": 128.13319396972656,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    },
+    {
+      "source": "Cannabis_flowering.FBX",
+      "id": "cannabis_yughues",
+      "meshCount": 1,
+      "previewOriginCm": [
+        280,
+        560,
+        80
+      ],
+      "previewOnlyScale": 1.092613051018436,
+      "originalMaxDimensionCm": 128.13319396972656,
+      "assembly": "authored_geometry_overlay_not_attachment_configuration"
+    }
+  ],
+  "screenshots": [
+    {
+      "file": "overview.png",
+      "sha256": "459f79122cf8b16771542f264d261efeabe8d7347a8f845fcde4bb47c91d72f0",
+      "bytes": 501660
+    },
+    {
+      "file": "source-ph_long_life_food-2.png",
+      "sha256": "5e876edf540a12739f65d0fba0e2a700e4b3ab5c2aada09b35846572d7c7055b",
+      "bytes": 1337426
+    },
+    {
+      "file": "source-ph_wine_bottles_01-3.png",
+      "sha256": "0740d098a741c723ff864c9a1b4de1ccdb8e88ee71069f869b44d9d8a867a684",
+      "bytes": 1327835
+    },
+    {
+      "file": "source-ph_medical_box-4.png",
+      "sha256": "53461b140d8bb81d3e96553f7a301c418554f2b1b78a7b555a8a7bf88462023e",
+      "bytes": 1268781
+    },
+    {
+      "file": "source-pills_mxc2-6.png",
+      "sha256": "659a124247c8d6d2cda2418b5597402719797b7a0198965de2e044bfbefd7a02",
+      "bytes": 1280702
+    },
+    {
+      "file": "source-cannabis_yughues-9.png",
+      "sha256": "ab27866a82bf6ec2cae751d5701dbe44d3286373b401b8cb763715f16ca89d9e",
+      "bytes": 1279850
+    }
+  ],
+  "gameplay": "not_run",
+  "errors": [],
+  "map": "/Game/Anomalia/ImportedFab/Batch_40571935754/QA/L_Survival_Items_Review",
+  "run_id": 40573339647,
+  "human_review": {
+    "food_wine_medical_pills": "Visible in captured editor GPU views; not gameplay accepted",
+    "plants": "Rejected visually: checkerboard/default material and opaque leaf cards; repair texture and alpha bindings",
+    "deployment": "Validation project only; no installed Content promotion",
+    "gameplay": "Not run: inventory, consuming, save/reload, multiplayer"
+  }
+}
