@@ -51,3 +51,13 @@ Les modèles Fab ne sont pas publiés dans GitHub. Les PR #44 et #45 restent en 
 Ces observations d’éditeur **ne sont pas un test PIE**, ne prouvent pas les commandes du joueur, toutes les transitions d’animation ou l’absence de traversées dans chaque posture. La sauvegarde de carte n’est pas une sauvegarde de profil joueur.
 
 Restent : équipement depuis l’inventaire, validation serveur et réplication, apparence persistante après reconnexion, tous les emplacements, masquage du corps, Quantum animé, position allongée/inclinaison/franchissement, catalogue ANOMALIA Editor et essai deux joueurs. La classe native compilée reste dans la copie isolée.
+
+## Reprise du 27 octobre — sessions PIE effectivement exécutées
+
+Les workflows 40586546392 et 40586806231 ont démarré un vrai monde PIE. Deux erreurs du nouveau script de test ont été corrigées : chargement des classes avant PIE/identification des acteurs placés et vérification de possession via le contrôleur du Pawn. Ces exécutions échouées ne sont pas des tests réussis du personnage.
+
+Le run 40587016325 a effectivement possédé Manny, trouvé sa caméra active et son ABP_Manny, et observé 11,44 cm de variation de l’os mesuré. La marche automatisée n’a pas passé le contrôle (distance et vitesse observées nulles). Cela reste à diagnostiquer ; aucune acceptation de déplacement, sprint, saut, inventaire ou tenue en session n’en découle.
+
+La reprise 40587325434 mesure les phases en temps de simulation et ajoute des diagnostics. Elle a planté avec sortie 3 avant résultat final : GenericPlatformMemory.cpp indique un manque de mémoire et un fichier de pagination insuffisant. Le journal rapporte environ 0,38 Gio de RAM et 0,02 Gio de mémoire virtuelle disponibles, ainsi que ZenLocal HTTP 507 Insufficient Storage. L’audit disque indépendant 40586922691 mesurait 6 491 983 872 octets libres sur C:. Ne pas conclure à un problème de licence ou à la disparition du projet à partir de ce crash.
+
+Journaux conservés dans les artefacts des quatre runs et sous C:\ANOMALIA-Validation\Reports\character-pie-<run>. Le code de test est versionné dans unreal/Content/Python/verify_anomalia_character_pie.py. Aucun changement natif C++ supplémentaire ni remplacement du projet installé dans cette reprise. Les tests clavier/manette, multijoueur et sauvegarde/reconnexion restent non validés.
