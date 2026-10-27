@@ -189,6 +189,25 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         Checks.Add(TEXT("high_speed_exit_restores_original_survivor_with_vehicle_momentum"));
         Finish();return;
     }
+    if(Phase==42)
+    {
+        auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());
+        if(!V || !S){Finish(TEXT("Closed-trunk walking review lost its actors"));return;}
+        const float Drift=FVector::Dist(V->GetActorLocation(),PanelReviewStart);
+        if(Drift>50.f || V->Chassis->GetPhysicsLinearVelocity().Size()>100.f)
+        {Finish(TEXT("Walking into the closed trunk destabilized the chassis"));return;}
+        if(Now-PhaseStarted<1.5)
+        {S->AddMovementInput(-PanelTraceOutward.GetSafeNormal());return;}
+        const float Walked=FVector::Dist2D(S->GetActorLocation(),PanelAimInMeshCm);
+        const FVector Local=V->Chassis->GetComponentTransform().InverseTransformPosition(S->GetActorLocation());
+        if(Walked<25.f || Walked>180.f || Local.X>PanelApertureLocalCm.X-5.f ||
+            S->GetCharacterMovement()->Velocity.Size2D()>10.f)
+        {Finish(FString::Printf(TEXT("Character did not actually walk and stop at the closed trunk: moved=%.2f local=%s velocity=%s"),
+            Walked,*Local.ToString(),*S->GetCharacterMovement()->Velocity.ToString()));return;}
+        S->GetCharacterMovement()->StopMovementImmediately();
+        Checks.Add(TEXT("survivor_walks_into_closed_trunk_without_launching_chassis"));
+        bAdditionalPanelsReviewed=true;Phase=0;PhaseStarted=Now-4;
+    }
     if(Phase==40 || Phase==41)
     {
         auto* V=Car.Get();auto* S=Cast<AAnomaliaSurvivor>(PC->GetPawn());auto* Panel=PanelUnderReview.Get();
@@ -206,6 +225,10 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
         PanelSample->SetStringField(TEXT("location"),V->GetActorLocation().ToString());
         PanelSample->SetStringField(TEXT("velocity"),V->Chassis->GetPhysicsLinearVelocity().ToString());
         PanelSample->SetNumberField(TEXT("driftCm"),FVector::Dist(V->GetActorLocation(),PanelReviewStart));
+        PanelSample->SetStringField(TEXT("survivorLocation"),S->GetActorLocation().ToString());
+        PanelSample->SetStringField(TEXT("survivorVelocity"),S->GetCharacterMovement()->Velocity.ToString());
+        PanelSample->SetStringField(TEXT("survivorMovementBase"),GetNameSafe(S->GetMovementBase()));
+        PanelSample->SetBoolField(TEXT("characterAutoPhysicsPushEnabled"),S->GetCharacterMovement()->bEnablePhysicsInteraction);
         TArray<TSharedPtr<FJsonValue>> WheelSamples;
         for(int32 Index=0;Index<V->ChaosMovement->Wheels.Num();++Index)
         {
@@ -254,7 +277,14 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
            !Panel->GetRelativeTransform().GetRotation().Equals(FQuat::Identity,.01f) || !bHit || Hit.GetComponent()!=Panel || !bPawnHit || PawnHit.GetComponent()!=Panel)
         {Finish(TEXT("Additional panel failed closed collision restoration: ")+Id);return;}
         Checks.Add(TEXT("panel_")+Id+TEXT("_closes_and_restores_real_collision"));
-        ValidatedAdditionalPanelIds.Add(Id);++AdditionalPanelIndex;Phase=0;PhaseStarted=Now-4;
+        ValidatedAdditionalPanelIds.Add(Id);++AdditionalPanelIndex;
+        if(AdditionalPanelIndex==5)
+        {
+            // Actual normal walking input, not a trace-only collision claim.
+            PanelReviewStart=V->GetActorLocation();PanelAimInMeshCm=S->GetActorLocation();
+            Phase=42;PhaseStarted=Now;return;
+        }
+        Phase=0;PhaseStarted=Now-4;
     }
     if(Phase==32 || Phase==33)
     {

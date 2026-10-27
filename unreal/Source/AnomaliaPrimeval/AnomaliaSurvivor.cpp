@@ -30,6 +30,10 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     bReplicates = true;
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
+    // Walking uses blocking capsule sweeps. Do not apply CharacterMovement's
+    // automatic push/repulsion forces to vehicles or other simulated bodies.
+    // Deliberate interactions supply their own validated gameplay actions.
+    GetCharacterMovement()->bEnablePhysicsInteraction = false;
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));

@@ -83,6 +83,32 @@ Do not install or report the E39 as completed.
 The verified v2 results below do not validate these changes
 or the five new panels.
 
+## Panel-channel native attempt — 27 October 2026
+
+Revision `7a8602c474f05383d83777101a738fdf98f9f1a8`,
+[run 40469835323](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40469835323),
+compiled Editor/Game and passed 24 native tests (19 clean, five with warnings),
+source checks and reference driving. All eleven parts imported. The driver
+leaf, three additional doors and bonnet completed opening/closing checks.
+This does not prove the filter alone solved the earlier nondeterministic issue.
+
+The boot lid failed at 6.09 degrees: in one sampled frame the chassis moved
+725.77 cm and reached 28508.43 cm/s. Previous bonnet closure samples had balanced
+spring forces and zero/near-zero chassis speed. Evidence artifact `12718547212`
+retains 292 panel samples, four accepted additional panel IDs and real captures.
+No complete E39 or six-panel acceptance is claimed.
+
+The next hypothesis is CharacterMovement's automatic push/repulsion coupling.
+The survivor now uses blocking capsule movement with automatic physics pushing
+disabled. This applies to walking against simulated bodies generally; explicit
+gameplay interactions are retained. The chassis is not frozen, velocity-clamped
+or repositioned by the acceptance gate. Every existing stability limit remains.
+An additional acceptance sequence uses actual walking input against the closed
+boot lid: the survivor must move at least 25 cm, stop before the trunk aperture,
+and leave chassis drift/speed under the existing limits. Panel telemetry also
+records survivor velocity, location and movement base. This correction still
+requires native compilation and gameplay acceptance.
+
 **Keep this E39.** The same Black Snow source, body, interior and four wheels
 are retained. v2 derives a driver leaf from that model; it does not substitute
 a different car. v1 and its successful driving evidence remain preserved.

@@ -59,12 +59,16 @@
   },
   "latestE39": {
     "state": "FAILED",
-    "error": "Panel review destabilized chassis: door_front_right drift=6.17 cm speed=126.18 cm/s vehicle=X=-6.716 Y=3.777 Z=1.871 survivor=X=207.757 Y=230.172 Z=99.167",
-    "stationaryReviewed": true,
+    "error": "Panel review destabilized chassis: trunk drift=725.77 cm speed=28508.43 cm/s vehicle=X=-729.891 Y=-26.692 Z=28.593 survivor=X=-385.206 Y=-17.503 Z=97.808",
     "driverDoorReviewed": true,
-    "validatedAdditionalPanelIds": [],
-    "panelMaxChassisDriftCm": 6.167149543762207,
-    "panelMaxChassisSpeedCmPerSecond": 126.18402862548828,
+    "validatedAdditionalPanelIds": [
+      "door_front_right",
+      "door_rear_left",
+      "door_rear_right",
+      "hood"
+    ],
+    "panelMaxChassisDriftCm": 725.7744750976562,
+    "panelMaxChassisSpeedCmPerSecond": 28508.43359375,
     "allSixPanelsAccepted": false,
     "completeVehicleAccepted": false
   },
@@ -95,9 +99,36 @@
   },
   "nextCorrection": {
     "state": "PREPARED_NOT_NATIVE_VERIFIED",
-    "dedicatedPanelObjectChannel": "VehiclePanel",
-    "suspensionIgnoresPanelChannel": true,
-    "perFramePanelWheelForceEvidence": true,
+    "disableAutomaticCharacterPhysicsPush": true,
+    "characterBlockingRetained": true,
+    "realClosedTrunkWalkingRequired": true,
+    "survivorVelocityAndBaseTelemetry": true,
     "stabilityLimitsUnchanged": true
+  },
+  "panelChannelAttempt": {
+    "codeCommit": "7a8602c474f05383d83777101a738fdf98f9f1a8",
+    "workflowRun": 40469835323,
+    "jobId": 122074007224,
+    "artifact": 12718547212,
+    "compilation": "passed",
+    "nativeTests": {
+      "passed": 19,
+      "passedWithWarnings": 5,
+      "failed": 0
+    },
+    "referenceVehicle": "passed",
+    "e39": {
+      "state": "FAILED",
+      "error": "Panel review destabilized chassis: trunk drift=725.77 cm speed=28508.43 cm/s vehicle=X=-729.891 Y=-26.692 Z=28.593 survivor=X=-385.206 Y=-17.503 Z=97.808",
+      "driverDoorReviewed": true,
+      "validatedAdditionalPanelIds": [
+        "door_front_right",
+        "door_rear_left",
+        "door_rear_right",
+        "hood"
+      ],
+      "panelMaxChassisDriftCm": 725.7744750976562,
+      "panelMaxChassisSpeedCmPerSecond": 28508.43359375
+    }
   }
 }

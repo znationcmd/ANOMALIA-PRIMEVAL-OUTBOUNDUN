@@ -75,6 +75,8 @@ def main():
         if not drive.get('driverDoorReviewed') or not panels.issubset(drive.get('checks',[])):
             raise RuntimeError('Selected sedan requires a real animated driver door and moving collision')
     if args.e39:
+        if 'survivor_walks_into_closed_trunk_without_launching_chassis' not in drive.get('checks',[]):
+            raise RuntimeError('Real character walking must remain blocked without launching the chassis')
         expected={'door_front_right','door_rear_left','door_rear_right','hood','trunk'}
         if set(drive.get('validatedAdditionalPanelIds',[]))!=expected:
             raise RuntimeError('All five additional E39 panels must pass real moving-collision checks')
