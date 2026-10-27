@@ -1,59 +1,54 @@
-# Sélection Fab de l’utilisateur — prise en charge réelle du 27 octobre 2026
+# Ressources 3D ANOMALIA — état réel au 27 octobre 2026
 
-La sélection photographiée est enregistrée dans USER_FAB_SELECTION_20261027.json : 83 entrées lisibles, certaines avec titres incomplets. Ces titres incomplets ne servent pas à choisir automatiquement un asset.
+La sélection photographiée est enregistrée dans USER_FAB_SELECTION_20261027.json : 83 entrées lisibles, avec titres incomplets signalés. Les nouvelles priorités de transport, secours et loot sont consignées séparément dans PRIORITY_TRANSPORT_EMERGENCY_SURVIVAL_20261027.json.
 
-## Inventaire effectivement exécuté
+## Imports et téléchargements effectivement exécutés
 
-Exécution Windows : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40560637249
+| Exécution | Résultat confirmé |
+| --- | --- |
+| 40560637249 | Inventaire Windows du projet et des caches Fab ; fichiers locaux retrouvés. |
+| 40561644379 | 18 packs, 52 fichiers source importés/sauvegardés/rechargés : 238 StaticMesh, 85 Material, 18 MaterialInstanceConstant et 195 Texture2D. |
+| 40568581362 | 14 fichiers de modèles réussis sur 15 ; 220 StaticMesh, 88 SkeletalMesh, 10 Skeleton, 88 PhysicsAsset, 124 AnimSequence, 23 Material, 109 MaterialInstanceConstant et 129 Texture2D consignés. Un personnage marin échoue. |
+| 40569633783 | Textures PBR exactes reliées sur sept packs d’armes FBX ; nouveaux matériaux/textures et sauvegarde des meshes importés avant modification. Sources Fab d’origine préservées. |
+| 40571617245 | Six sources Poly Haven effectivement téléchargées sur le PC : pommes, poires, conserves, vin, boîte médicale et ruban médical ; SHA-256 et dépendances glTF vérifiés. |
+| 40571935754 | Six sources Poly Haven importées/sauvegardées/rechargées, 20 meshes ; zéro erreur dans le rapport d’import. |
+| 40572389726 | Archives originales CC0 de comprimés mxc2 et de plantes Yughues téléchargées, hashées et extraites dans de nouveaux dossiers. |
+| 40573064314 | Import des quatre modèles de comprimés/plantes lancé ; consulter le résultat avant d’en annoncer le succès. |
 
-- Projet installé présent : C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject.
-- Téléchargements retrouvés dans le FabLibrary temporaire et dans le FabLibrary du VaultCache Epic.
-- Exemples de fichiers réels : m4noskel.fbx, mp5_game_ready.glb, mauser98k.glb, revolver.glb, les FBX des fusils à pompe/1911/M14, le jeu de munitions, le jerrican et les FBX Military Supplies.
-- Autres modèles locaux : sous-marin, tramway, bus, yacht, hélicoptère, porte-avions, voiture, opérateur FSB, marin, singe et vache. Leur présence ne valide ni conduite, ni animation, ni vêtements séparables.
-- AR70, CommercialPlane, les mannequins, Quantum et Survival ont déjà des dossiers dans le Content installé. Ils ne sont pas remplacés par l’import.
-- Le scan global a atteint sa limite de 22 000 modèles pendant l’exploration supplémentaire des ressources du moteur ; ne pas présenter ce scan comme un inventaire exhaustif de tous les disques.
+Les imports sont dans la copie native de validation : C:\ANOMALIA-Validation\c40543166274\unreal. Ils ne sont pas encore copiés dans le Content du projet installé. Les sources sont conservées dans C:\ANOMALIA\FabImports.
 
-## Espace disque et limitation constatée
+Les slots de matériaux non vides ne suffisent pas à valider les textures : le contrôle GPU a révélé plusieurs armes blanches. La réparation a traité sept jeux de textures précisément identifiés ; Police Pistol et le mapping des quatre matériaux du FPS Rifle 1 restent à résoudre.
 
-Le premier contrôle a mesuré 12 282 372 096 octets disponibles sur C: et 3 042 441 395 octets de sources locales à préserver. L’import complet a été arrêté avant copie pour conserver la réserve de travail.
+## Contrôles visuels réels
 
-Le lot a été réduit aux identifiants explicites des armes et petits objets. Les archives originales restent en cache ; seuls les fichiers extraits et leurs dépendances sont copiés et vérifiés par SHA-256. Aucun fichier utilisateur n’est supprimé pour gagner de la place.
+- 40568460995 : cinq captures et une galerie séparée sauvegardée. Jerrican, caisses, Mauser et plusieurs GLB texturés ; défauts des FBX constatés.
+- 40571772475 : sept nouvelles captures après réparation, avec le tramway, le métro et le bus. Captures inspectées : armes corrigées texturées ; bus visible ; tramway avec éléments séparés à assembler ; métro toujours sans textures.
+- L’éclairage de ces galeries est sommaire. Les échelles normalisées sont uniquement celles des aperçus ; les meshes sources ne sont pas redimensionnés.
+- Les variantes d’accessoires de la M4 sont des pièces séparées et ne constituent pas encore une arme configurée et fonctionnelle.
+- Le journal du premier contrôle GPU contient 20 messages LogAutomationTest « Condition failed » dont l’origine reste à isoler. Les captures ont été produites ; cela ne constitue pas une recette globale sans erreurs.
 
-L’espace de travail conseillé (estimation, pas mesure de l’import complet) est au moins 50 Go libres, idéalement 100 Go pour traiter les gros environnements et caches Unreal. Le total réel de toute la sélection ne peut pas être déduit des captures seules.
+## Transports demandés
 
-## Premier import effectivement terminé
+- Gold Coast G:Link Light Rail Tram : fichiers Unreal réellement importés, matériaux/textures et une séquence présents ; assemblage, pivots, portes et circulation/passagers non validés.
+- Subway Car TTC : cinq meshes et neuf matériaux importés ; textures non retrouvées par l’import FBX. Rendu et fonctionnement non acceptés.
+- Marcopolo Ideale 770 : 35 meshes, 32 instances de matériaux et 35 textures importés ; modèle visible en GPU, conduite et intérieur/passagers non testés.
+- Train complet et téléphérique : candidats documentés, fichiers non acquis. La cabine de téléphérique seule ne fournit pas câbles, pylônes, stations ni simulation.
+- Pompiers, police, ambulance et militaires : fiches individuelles documentées avec états d’acquisition séparés. Aucun achat effectué. Les modèles extraits de GTA et les candidats non commerciaux identifiés ne sont pas utilisés.
 
-Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40561644379
+## Erreur constatée
 
-Le run 40561644379 a réussi : 18 packs, 52 fichiers de modèles, 238 StaticMesh, 85 Material, 18 MaterialInstanceConstant et 195 Texture2D. Les objets ont été sauvegardés et rechargés par le script. Les reçus font autorité. Il ne s’agit pas encore d’un import dans le projet installé.
+Le FBX navy_better_fbx.fbx possède plusieurs racines dans la hiérarchie des os ; Unreal rejette l’import skeletal. Le fichier original est conservé. Aucun aplatissement du modèle ni suppression de racines n’est présenté comme une intégration fonctionnelle.
 
-- Sources copiées uniquement vers un nouveau répertoire C:\ANOMALIA\FabImports\UserSelection_<run>.
-- Cible d’import : copie native de validation C:\ANOMALIA-Validation\c40543166274\unreal.
-- Namespace neuf /Game/Anomalia/ImportedFab/Batch_<run>.
-- Remplacement d’assets désactivé ; refus d’un namespace préexistant ; contrôle du chargement des objets, des matériaux vides, des squelettes et de la sauvegarde.
-- Aucun asset binaire Fab n’est publié dans ce dépôt public.
-- La carte principale, les véhicules existants et la BMW E39 ne sont pas modifiés.
-- Un import de mesh ne constitue pas une arme fonctionnelle ni un objet d’inventaire connecté. Prise en main, sockets, rechargement, tir, effets, dégâts, inventaire et réseau restent à intégrer et tester.
+Le métro a également émis des erreurs de nom de package terminant par une barre oblique pendant l’import ; les objets ensuite consignés ont été sauvegardés/rechargés, mais le lot global n’est pas une recette sans erreurs.
 
-## Packs non retrouvés et formats particuliers
+## Espace et préservation
 
-Tactical Soldier Outfit for MetaHuman : fiche identifiée https://www.fab.com/listings/8547291f-699f-45b3-87ca-3fdf2db85bb7 ; le créateur fournit un vêtement MetaHuman et décrit un fichier .mhpkg, avec FBX/Blender. Aucune compatibilité directe avec nos squelettes Survival/Quantum n’est déduite de cette fiche.
+Le contrôle initial a mesuré environ 12 Go libres et a arrêté le lot complet avant copie. L’utilisateur a ensuite libéré de la place ; le contrôle suivant a mesuré 22 427 312 128 octets libres. Les scripts conservent une réserve et ne suppriment aucun fichier pour gagner de la place.
 
-FPS Weapon Bundle : fiche identifiée https://www.fab.com/listings/8aeb9c48-b404-4dcd-9e56-1d0ecedba7f5 ; le créateur annonce 7 armes et 4 accessoires avec rigs. Les fichiers de ce pack n’ont pas été retrouvés dans le Content installé lors du scan.
+Le scan global initial a atteint son plafond de 22 000 modèles durant l’exploration supplémentaire du moteur. Il ne représente pas un inventaire exhaustif de tous les disques.
 
-Les acquisitions ou téléchargements Fab manquants ne sont pas annoncés comme effectués. Les licences/versions exactes et les accès aux fichiers doivent être confirmés pack par pack avant leur utilisation finale.
+La BMW E39, les véhicules existants, les cartes/World Partition, les sauvegardes, les configurations et les personnages par défaut sont préservés. Aucune fusion. Aucun binaire Fab publié dans ce dépôt public.
 
-## Reprise après nettoyage et contrôle visuel réel
+## Acceptation gameplay restante
 
-- L’utilisateur a signalé avoir récupéré 20 Go. Le contrôle suivant sur C: a effectivement mesuré 22 427 312 128 octets libres à 19:22 UTC.
-- Le run 40568460995 a produit cinq captures GPU et une galerie séparée sauvegardée sous /Game/Anomalia/ImportedFab/Batch_40561644379/QA/L_Fab_Imported_Review. Les captures ont été inspectées.
-- Le jerrican et les caisses ont des textures visibles ; le Mauser, le MP5, le revolver et d’autres imports GLB affichent leurs matériaux.
-- Plusieurs FBX apparaissent blancs malgré des slots de matériaux non vides : les textures séparées n’ont pas été automatiquement reliées. Le seul contrôle « aucun slot vide » était donc insuffisant pour valider l’apparence.
-- La M4 est un kit de pièces séparées : la galerie montre sa géométrie d’origine, pas une configuration d’arme assemblée et fonctionnelle.
-- Les échelles et positions de pièces de certains modèles restent à vérifier avant utilisation en jeu. La normalisation des aperçus n’a pas changé les meshes sources.
-- Le journal GPU contient aussi 20 messages LogAutomationTest « Condition failed » ; les captures sont produites, mais ce journal ne doit pas être présenté comme entièrement sans erreurs. Leur origine reste à isoler.
-- Une réparation des jeux de textures précisément identifiés est préparée pour sept packs, avec sauvegarde des meshes importés et création de nouveaux matériaux dans leur namespace. Police Pistol et le mapping des matériaux du FPS Rifle 1 restent à résoudre.
-- Reprise des packs locaux différés : run 40568581362. Son résultat ne doit pas être supposé avant la fin.
-- Aucun de ces contrôles n’établit encore une arme jouable, une conduite de véhicule, une apparence persistante ou le multijoueur.
-
-Les modèles restent dans la copie de validation jusqu’au contrôle des problèmes constatés. Aucune fusion dans la branche principale.
+Un import ou une capture d’éditeur ne prouve pas la conduite, les passagers, la prise en main d’une arme, le tir/rechargement, les effets des consommables, l’inventaire connecté, la sauvegarde/reconnexion ou le réseau. Ces fonctionnalités restent à implémenter/intégrer et à tester. Les validations des personnages et de la BMW sont documentées séparément.
