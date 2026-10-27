@@ -1,0 +1,69 @@
+name: UE5 Tactical Character native verification — no installation
+on:
+  push:
+    branches: ['ue5/tactical-survivor-p0-20261027']
+    paths:
+      - 'unreal/Source/**'
+      - 'unreal/Config/**'
+      - 'tests/test_ue5_vitals_source.py'
+      - 'scripts/ue5/**'
+      - '.github/workflows/ue5-tactical-character-native.yml'
+jobs:
+  native-tactical-character:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    permissions:
+      contents: read
+    steps:
+      - name: Preserve all tracked host edits before touching checkout
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          if (Test-Path (Join-Path $env:GITHUB_WORKSPACE '.git')) {
+            $changes=@(& git -C "$env:GITHUB_WORKSPACE" status --porcelain=v1)
+            if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect host checkout' }
+            if ($changes.Count -gt 0) {
+              $backup=Join-Path (Split-Path -Parent $env:GITHUB_WORKSPACE) "ANOMALIA-validation-backups/tactical-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+              if (Test-Path $backup) { throw 'Existing host backup; refusing overwrite' }
+              New-Item -ItemType Directory -Force -Path $backup | Out-Null
+              $patch=(& git -C "$env:GITHUB_WORKSPACE" diff --binary HEAD -- .) -join "`n"
+              if ($LASTEXITCODE -ne 0) { throw 'Cannot preserve tracked changes' }
+              [System.IO.File]::WriteAllText((Join-Path $backup 'tracked.patch'),$patch+"`n")
+              $staged=(& git -C "$env:GITHUB_WORKSPACE" diff --binary --cached HEAD -- .) -join "`n"
+              if ($LASTEXITCODE -ne 0) { throw 'Cannot preserve index' }
+              [System.IO.File]::WriteAllText((Join-Path $backup 'index.patch'),$staged+"`n")
+              & git -C "$env:GITHUB_WORKSPACE" ls-files --others --exclude-standard | ForEach-Object {
+                $destination=Join-Path (Join-Path $backup 'untracked') $_
+                New-Item -ItemType Directory -Force -Path (Split-Path -Parent $destination) | Out-Null
+                Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE $_) -Destination $destination -ErrorAction Stop
+              }
+              Write-Host "Preserved host checkout changes: $backup"
+            }
+          }
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile UE5 Editor and Game and run actual native automation tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $evidence="unreal/Saved/TacticalNative/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          & $python scripts/ue5/validate-build.py --engine-root "$env:UE_ROOT" --output "$evidence/native" --run-tests --require-loot-tests
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: tactical-survivor-native-proof
+          path: |
+            unreal/Saved/TacticalNative/run-${{ github.run_id }}-${{ github.run_attempt }}/native/*.*
+            unreal/Saved/TacticalNative/run-${{ github.run_id }}-${{ github.run_attempt }}/native/automation-*/index.json
+          if-no-files-found: warn

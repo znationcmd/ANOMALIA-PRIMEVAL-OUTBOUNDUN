@@ -69,12 +69,30 @@ class UE5VitalsSourceTests(unittest.TestCase):
 
     def test_damage_and_movement_only_on_server(self):
         code = cpp("AnomaliaVitalsComponent.cpp")
-        self.assertIn("if (!Survivor || !Survivor->HasAuthority() || DeltaTime <= 0.f) return;", code)
+        self.assertIn("if (!Survivor->HasAuthority()) { ApplyMovementSpeed(); return; }", code)
+        self.assertLess(code.index("if (!Survivor->HasAuthority()) { ApplyMovementSpeed(); return; }"),
+                        code.index("const float Step = FMath::Min(DeltaTime, 0.25f)"))
         self.assertIn("Survivor->Health = FMath::Max(0.f", code)
-        self.assertIn("bIsSprinting ? SprintWalkSpeed : 450.f", code)
+        self.assertIn("Move->MaxWalkSpeed = bIsSprinting ? SprintWalkSpeed * Scale : TacticalSpeed;", code)
+        self.assertIn("CalculateTacticalSpeed(4, LoadKg, Survivor->Fatigue, InjuryScale)", code)
         self.assertIn("BodyTemperatureC < 35.f", code)
         self.assertIn("BodyTemperatureC > 40.f", code)
         self.assertIn("FMath::Clamp(SavedTemperatureC, 25.f, 45.f)", code)
+
+    def test_tactical_pace_is_real_character_gameplay(self):
+        code = cpp("AnomaliaVitalsComponent.cpp")
+        survivor = cpp("AnomaliaSurvivor.cpp")
+        settings = (ROOT / "unreal/Config/DefaultInput.ini").read_text(encoding="utf-8")
+        self.assertIn("InventoryComponent->GetCurrentWeightKg()", code)
+        self.assertIn("GetMovementScale()", code)
+        self.assertIn("Survivor->Fatigue", code)
+        self.assertIn("ServerRequestPaceStep_Implementation", code)
+        self.assertIn("DOREPLIFETIME(UAnomaliaVitalsComponent, PaceStep)", code)
+        self.assertIn("DOREPLIFETIME(UAnomaliaVitalsComponent, bExhausted)", code)
+        self.assertIn("GetCharacterMovement()->NavAgentProps.bCanCrouch = true", survivor)
+        self.assertIn("if (bIsCrouched) UnCrouch(); else Crouch();", survivor)
+        self.assertIn('ActionName="PaceMode",Key=LeftAlt', settings)
+        self.assertIn('ActionName="TacticalCrouch",Key=C', settings)
 
 
 if __name__ == "__main__":
