@@ -27,6 +27,10 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_Sprinting, BlueprintReadOnly, Category="ANOMALIA|Survival")
     bool bIsSprinting = false;
 
+    /** 0-6 tactical pace. Sprint is still controlled by the existing stamina system. */
+    UPROPERTY(ReplicatedUsing=OnRep_PaceStep, BlueprintReadOnly, Category="ANOMALIA|Movement")
+    uint8 PaceStep = 4;
+
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Survival", meta=(ClampMin="0.0", ClampMax="40.0"))
     float SprintDrainPerSecond = 12.f;
 
@@ -43,6 +47,15 @@ public:
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Survival")
     void RequestSprint(bool bWanted);
 
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Movement")
+    void RequestPaceStep(uint8 RequestedStep);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Movement")
+    float GetPlannedWalkSpeed() const;
+
+    /** Pure deterministic function shared by gameplay and native automation tests. */
+    static float CalculateTacticalSpeed(uint8 Step, float LoadKg, float FatiguePercent, float InjuryScale);
+
     /** Only trusted server-side lifecycle restoration is allowed. */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Survival")
     void RestoreVitals(float SavedStamina, float SavedTemperatureC);
@@ -57,6 +70,12 @@ protected:
 
     UFUNCTION()
     void OnRep_Sprinting();
+
+    UFUNCTION()
+    void OnRep_PaceStep();
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestPaceStep(uint8 RequestedStep);
 
     UFUNCTION(Server, Reliable)
     void ServerRequestSprint(bool bWanted);

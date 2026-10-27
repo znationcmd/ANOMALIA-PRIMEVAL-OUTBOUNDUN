@@ -31,6 +31,8 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     bReplicates = true;
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
+    GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
+    GetCharacterMovement()->CrouchedHalfHeight = 60.f;
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
@@ -171,6 +173,30 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
     Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
     Input->BindAction(TEXT("Rest"), IE_Pressed, this, &AAnomaliaSurvivor::InputRest);
+    Input->BindAction(TEXT("TacticalCrouch"), IE_Pressed, this, &AAnomaliaSurvivor::ToggleTacticalCrouch);
+    Input->BindAction(TEXT("PaceMode"), IE_Pressed, this, &AAnomaliaSurvivor::BeginPaceAdjustment);
+    Input->BindAction(TEXT("PaceMode"), IE_Released, this, &AAnomaliaSurvivor::EndPaceAdjustment);
+    Input->BindAction(TEXT("PaceUp"), IE_Pressed, this, &AAnomaliaSurvivor::IncreasePace);
+    Input->BindAction(TEXT("PaceDown"), IE_Pressed, this, &AAnomaliaSurvivor::DecreasePace);
+}
+
+void AAnomaliaSurvivor::BeginPaceAdjustment() { bAdjustPaceWithWheel = IsLocallyControlled(); }
+void AAnomaliaSurvivor::EndPaceAdjustment() { bAdjustPaceWithWheel = false; }
+void AAnomaliaSurvivor::IncreasePace()
+{
+    if (IsLocallyControlled() && bAdjustPaceWithWheel && VitalsComponent)
+        VitalsComponent->RequestPaceStep(FMath::Min<uint8>(6, VitalsComponent->PaceStep + 1));
+}
+void AAnomaliaSurvivor::DecreasePace()
+{
+    if (IsLocallyControlled() && bAdjustPaceWithWheel && VitalsComponent)
+        VitalsComponent->RequestPaceStep(VitalsComponent->PaceStep > 0 ? VitalsComponent->PaceStep - 1 : 0);
+}
+void AAnomaliaSurvivor::ToggleTacticalCrouch()
+{
+    if (!IsLocallyControlled() || Health <= 0.f || bSleeping) return;
+    // Native ACharacter crouch predicts and replicates capsule height via CharacterMovement.
+    if (bIsCrouched) UnCrouch(); else Crouch();
 }
 
 void AAnomaliaSurvivor::StartSprint()

@@ -100,11 +100,18 @@ private:
     void InputInteract();
     void InputInventory();
     void StartSprint();
+    void BeginPaceAdjustment();
+    void EndPaceAdjustment();
+    void IncreasePace();
+    void DecreasePace();
+    void ToggleTacticalCrouch();
     void StopSprint();
     void InputRest();
     void InputPause();
     void InputCamera();
 
+    /** Only the owning local player uses this to prevent wheel/weapon conflicts. */
+    bool bAdjustPaceWithWheel = false;
     TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
 
     UFUNCTION(Server, Reliable)
