@@ -136,9 +136,16 @@ foreach($def in $productDefs){
             $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-unsafe-reparse-point'}
             continue
         }
-        $userdata=@($tree|Where-Object{$_.PSIsContainer -and ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
-        $engineSaved=@($userdata|Where-Object{$_.FullName -match '\\Engine\\Saved
-        foreach($file in @($tree|Where-Object{-not $_.PSIsContainer})){ $bytes+=[int64]$file.Length }
+        $ordinaryData=@($tree|Where-Object{$_.PSIsContainer -and ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
+        $engineSaved=@($ordinaryData|Where-Object{$_.FullName -match '\\Engine\\Saved$'})
+        $unarchivedUserData=@($ordinaryData|Where-Object{$_.FullName -notmatch '\\Engine\\Saved$'})
+        if($unarchivedUserData.Count -gt 0){
+            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains ordinary user-data folders outside Engine\Saved; preserved';userDataPaths=@($unarchivedUserData|ForEach-Object{$_.FullName})}
+            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-user-data'}
+            continue
+        }
+        $bytes=0L
+        foreach($file in @($tree|Where-Object{-not $_.PSIsContainer})){ $bytes += [int64]$file.Length }
         $entry=@{product=$def.name;folder=$candidate.Name;path=$path;logicalBytes=$bytes;safeLinks=$safeLinks;engineSavedPaths=@($engineSaved|ForEach-Object{$_.FullName})}
         $allRemovals+=,$entry
         $productReport.candidates+=,@{folder=$candidate.Name;status='eligible';logicalBytes=$bytes}
