@@ -31,7 +31,18 @@ bool AAnomaliaDogCompanion::LoadBreed()
     Run=LoadObject<UAnimSequence>(nullptr,TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Run_Loop_v01.A_type1_Run_Loop_v01"));
     if(!Body||!Idle||!Walk||!Run||Idle->GetSkeleton()!=Body->GetSkeleton()||Walk->GetSkeleton()!=Body->GetSkeleton()||Run->GetSkeleton()!=Body->GetSkeleton())
     {Status=TEXT("Modèle ou animations du chien indisponibles");return false;}
-    GetMesh()->SetSkeletalMesh(Body);RefreshAnimation();return true;
+    GetMesh()->SetSkeletalMesh(Body);
+    // Normalize the imported dog mesh to a believable adult shepherd silhouette.
+    // The collision capsule stays in centimetres; this only corrects the visual mesh scale.
+    const FBoxSphereBounds BodyBounds=Body->GetBounds();
+    const float ImportedHeight=BodyBounds.BoxExtent.Z*2.f;
+    const float TargetHeightCm=90.f;
+    const float VisualScale=ImportedHeight>1.f?FMath::Clamp(TargetHeightCm/ImportedHeight,.8f,2.5f):1.f;
+    GetMesh()->SetRelativeScale3D(FVector(VisualScale));
+    const float CapsuleHalfHeight=GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
+    const float MeshBottom=BodyBounds.Origin.Z-BodyBounds.BoxExtent.Z;
+    GetMesh()->SetRelativeLocation(FVector(0,0,-CapsuleHalfHeight-MeshBottom*VisualScale));
+    RefreshAnimation();return true;
 }
 void AAnomaliaDogCompanion::BeginPlay(){Super::BeginPlay();LoadBreed();}
 bool AAnomaliaDogCompanion::AssignSurvivor(AAnomaliaSurvivor* Survivor)
