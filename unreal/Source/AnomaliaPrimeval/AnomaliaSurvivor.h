@@ -24,6 +24,9 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
 public:
     AAnomaliaSurvivor();
     void CloseInventory();
+    void AssignQuickbarStack(int32 SlotIndex,int32 StackId);
+    int32 GetQuickbarStackId(int32 SlotIndex) const;
+    void ActivateQuickbarSlot(int32 SlotIndex);
     bool RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId=0,int32 ExpectedCount=0);
     UFUNCTION(Server,Reliable) void ServerVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount);
 
@@ -133,10 +136,6 @@ private:
     void InputCamera();
     void InputQuickbar1(); void InputQuickbar2(); void InputQuickbar3(); void InputQuickbar4(); void InputQuickbar5();
     void InputQuickbar6(); void InputQuickbar7(); void InputQuickbar8(); void InputQuickbar9(); void InputQuickbar0();
-    void ActivateQuickbarSlot(int32 SlotIndex);
-    void AssignQuickbarStack(int32 SlotIndex,int32 StackId);
-    int32 GetQuickbarStackId(int32 SlotIndex) const;
-
     /** Only the owning local player uses this to prevent wheel/weapon conflicts. */
     bool bAdjustPaceWithWheel = false;
     UPROPERTY(Transient) TArray<int32> QuickbarStackIds;

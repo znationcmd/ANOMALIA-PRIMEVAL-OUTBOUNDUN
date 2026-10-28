@@ -333,7 +333,7 @@ void AAnomaliaSurvivor::AssignQuickbarStack(int32 SlotIndex,int32 StackId)
     if(!IsLocallyControlled()||!InventoryComponent||SlotIndex<0||SlotIndex>=10)return;
     if(QuickbarStackIds.Num()!=10)QuickbarStackIds.SetNumZeroed(10);
     const auto* Stack=InventoryComponent->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
-    if(!Stack||Stack->ContainerId==TEXT("hands")||InventoryComponent->IsRecoveryContainer(Stack->ContainerId))return;
+    if(!Stack||InventoryComponent->IsRecoveryContainer(Stack->ContainerId))return;
     QuickbarStackIds[SlotIndex]=StackId;
 }
 void AAnomaliaSurvivor::ActivateQuickbarSlot(int32 SlotIndex)
