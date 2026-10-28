@@ -7,8 +7,13 @@ export function itemSize(id,rotated=false){
 }
 export function maxStack(id){return ['clothing','weapon','tool','saddle'].includes(ITEM_DEFS[id]?.kind)?1:['ammo','material'].includes(ITEM_DEFS[id]?.kind)?50:20}
 export function compartments(s){
- const out=[{id:'pockets',label:'Poches',width:6,height:4}];
- for(const [slot,id] of Object.entries(s.equipment||{}))if((ITEM_DEFS[id]?.capacity||0)>1)out.push({id:slot,label:ITEM_DEFS[id].label,width:6,height:Math.max(slot==='back'?6:2,Math.ceil(ITEM_DEFS[id].capacity*2/6))});
+ const out=[];
+ const order=['vest','torso','legs','back','feet','head'];
+ for(const slot of order){
+  const id=s.equipment?.[slot],capacity=ITEM_DEFS[id]?.capacity||0;
+  if(id&&capacity>0)out.push({id:slot,label:ITEM_DEFS[id].label,width:6,height:Math.max(slot==='back'?6:2,Math.ceil(capacity*2/6))});
+ }
+ out.push({id:'pockets',label:'Poches',width:6,height:4});
  return out;
 }
 export function fits(s,stack,container,x,y,ignore=null){
