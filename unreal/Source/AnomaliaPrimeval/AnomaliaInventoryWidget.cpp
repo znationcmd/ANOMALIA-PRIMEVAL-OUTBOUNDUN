@@ -194,6 +194,11 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto* CraftScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());CraftPanel->AddChildToVerticalBox(CraftScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     CraftList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("CraftRecipes"));CraftScroll->AddChild(CraftList);
 
+    auto* QuickbarFrame=Panel(TEXT("QuickbarFrame"),FAnchors(.24f,.92f,.76f,.99f));
+    QuickbarFrame->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.02f,.025f,.03f,.86f),0.f,FLinearColor(.35f,.32f,.28f,.82f),1.f,FVector2D(10,10)));
+    QuickbarPanel=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(),TEXT("QuickbarSlots"));
+    QuickbarFrame->SetContent(QuickbarPanel);
+
     auto* Center=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     auto* CenterSlot=RootCanvas->AddChildToCanvas(Center);CenterSlot->SetAnchors(FAnchors(.35f,.008f,.65f,.08f));CenterSlot->SetOffsets(FMargin(0));
     MoneyStatus=Text(TEXT("ESPÈCES —"),23);MoneyStatus->SetJustification(ETextJustify::Center);MoneyStatus->SetColorAndOpacity(FSlateColor(FLinearColor(.95f,.90f,.70f)));MoneyStatus->SetShadowOffset(FVector2D(1,2));MoneyStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(MoneyStatus);
@@ -286,13 +291,15 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     const auto PreviousAction=Previous?Previous->Action:EAnomaliaInventoryAction::Stow;
     const int32 PreviousStack=Previous?Previous->StackId:0,PreviousOther=Previous?Previous->OtherStackId:0;
     ActionRelays.Reset();
-    GridContainerByPanel.Reset();GridCellSizeByPanel.Reset();AttachmentContainerByButton.Reset();
+    GridContainerByPanel.Reset();GridCellSizeByPanel.Reset();AttachmentContainerByButton.Reset();QuickbarDropTargets.Reset();
     ItemList->ClearChildren();
+    if(QuickbarPanel)QuickbarPanel->ClearChildren();
     if(DetailsList)DetailsList->ClearChildren();
     if(HandsList)HandsList->ClearChildren();
     if(BankWithdrawals)BankWithdrawals->ClearChildren();
     RefreshEquipment();
     RefreshCrafting();
+    RefreshQuickbar();
     if (!Inventory)
     {
         UTextBlock* Missing = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -525,6 +532,40 @@ void UAnomaliaInventoryWidget::BindAction(UButton* Button, EAnomaliaInventoryAct
     }
 }
 
+void UAnomaliaInventoryWidget::RefreshQuickbar()
+{
+    if(!QuickbarPanel||!WidgetTree)return;
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn());
+    for(int32 SlotIndex=0;SlotIndex<10;++SlotIndex)
+    {
+        const int32 StackId=User?User->GetQuickbarStackId(SlotIndex):0;
+        const auto* Stack=Inventory?Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;}):nullptr;
+        auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("Quickbar_%d"),SlotIndex))));
+        StyleButton(Button,Stack!=nullptr);
+        auto* Overlay=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());Button->SetContent(Overlay);
+        if(Stack)
+        {
+            if(auto* Icon=ItemIcon(Stack->ItemId))
+                Overlay->AddChildToOverlay(Thumbnail(Icon,44))->SetHorizontalAlignment(HAlign_Center);
+            else
+            {
+                auto* ItemName=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+                ItemName->SetText(FText::FromString(Inventory->GetItemDisplayName(Stack->ItemId)));
+                auto NameFont=ItemName->GetFont();NameFont.Size=9;ItemName->SetFont(NameFont);ItemName->SetAutoWrapText(true);
+                Overlay->AddChildToOverlay(ItemName)->SetVerticalAlignment(VAlign_Center);
+            }
+        }
+        auto* Number=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Number->SetText(FText::FromString(SlotIndex==9?TEXT("0"):FString::FromInt(SlotIndex+1)));
+        auto NumberFont=Number->GetFont();NumberFont.Size=11;NumberFont.TypefaceFontName=TEXT("Bold");Number->SetFont(NumberFont);
+        auto* NumberSlot=Overlay->AddChildToOverlay(Number);NumberSlot->SetHorizontalAlignment(HAlign_Left);NumberSlot->SetVerticalAlignment(VAlign_Top);NumberSlot->SetPadding(FMargin(3));
+        Button->SetToolTipText(FText::FromString(Stack?Inventory->GetItemDisplayName(Stack->ItemId):TEXT("Glisser un objet ici")));
+        QuickbarPanel->AddChildToHorizontalBox(Button)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+        QuickbarDropTargets.Add(Button,SlotIndex);
+        BindAction(Button,EAnomaliaInventoryAction::QuickbarActivate,0,SlotIndex);
+    }
+}
+
 void UAnomaliaInventoryWidget::BeginPointerDrag(int32 StackId)
 {
     PointerDraggedStackId=0;PointerGrabOffset=FIntPoint::ZeroValue;
@@ -555,6 +596,15 @@ void UAnomaliaInventoryWidget::DropPointerDraggedStack()
     float MouseX=0,MouseY=0;
     if(!GetOwningPlayer()->GetMousePosition(MouseX,MouseY))return;
     const FVector2D Mouse(MouseX,MouseY);
+    for(const auto& Pair:QuickbarDropTargets)
+    {
+        if(Pair.Key&&Pair.Key->GetCachedGeometry().IsUnderLocation(Mouse))
+        {
+            if(auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn()))User->AssignQuickbarStack(Pair.Value,StackId);
+            RefreshInventory();
+            return;
+        }
+    }
     for(const auto& Pair:AttachmentContainerByButton)
     {
         if(Pair.Key&&Pair.Key->GetCachedGeometry().IsUnderLocation(Mouse))
@@ -590,6 +640,9 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
         case EAnomaliaInventoryAction::DogCommand:
             if(auto* Dog=NearbyDog.Get();Dog&&Dog->SurvivorOwner==GetOwningPlayerPawn()&&Count>=0&&Count<=1)
                 Dog->RequestCommand(static_cast<EAnomaliaDogCommand>(Count));
+            RefreshInventory();break;
+        case EAnomaliaInventoryAction::QuickbarActivate:
+            if(auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn()))User->ActivateQuickbarSlot(Count);
             RefreshInventory();break;
         case EAnomaliaInventoryAction::CollectNearby:
         {

@@ -16,6 +16,7 @@ class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
 class AAnomaliaLootPickup;
 class AAnomaliaDogCompanion;
+class AAnomaliaSurvivor;
 class ASceneCapture2D;
 class UTextureRenderTarget2D;
 class UPrimitiveComponent;
@@ -42,7 +43,8 @@ enum class EAnomaliaInventoryAction : uint8
     ToggleContainer,
     StowInContainer,
     CollectNearby,
-    DogCommand
+    DogCommand,
+    QuickbarActivate
 };
 
 UCLASS()
@@ -125,9 +127,12 @@ private:
     void AddAttachmentSlots(FName ParentId);
     void BeginPointerDrag(int32 StackId);
     void DropPointerDraggedStack();
+    void RefreshQuickbar();
     UPROPERTY() TMap<TObjectPtr<UCanvasPanel>,FName> GridContainerByPanel;
     UPROPERTY() TMap<TObjectPtr<UCanvasPanel>,float> GridCellSizeByPanel;
     UPROPERTY() TMap<TObjectPtr<UButton>,FName> AttachmentContainerByButton;
+    UPROPERTY() TObjectPtr<UHorizontalBox> QuickbarPanel;
+    UPROPERTY() TMap<TObjectPtr<UButton>,int32> QuickbarDropTargets;
     int32 PointerDraggedStackId=0;
     FIntPoint PointerGrabOffset=FIntPoint::ZeroValue;
     int32 SelectedStackId=0;

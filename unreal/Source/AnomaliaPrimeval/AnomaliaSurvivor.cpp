@@ -38,6 +38,7 @@ AAnomaliaSurvivor::AAnomaliaSurvivor()
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
+    QuickbarStackIds.SetNumZeroed(10);
     // Keep the original character mesh as the animation leader; clothes are optional.
     JacketMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("JacketMesh"));
     PantsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PantsMesh"));
@@ -216,6 +217,16 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Pause"), IE_Pressed, this, &AAnomaliaSurvivor::InputPause);
     Input->BindAction(TEXT("VehicleCamera"), IE_Pressed, this, &AAnomaliaSurvivor::InputCamera);
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
+    Input->BindAction(TEXT("Quickbar1"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar1);
+    Input->BindAction(TEXT("Quickbar2"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar2);
+    Input->BindAction(TEXT("Quickbar3"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar3);
+    Input->BindAction(TEXT("Quickbar4"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar4);
+    Input->BindAction(TEXT("Quickbar5"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar5);
+    Input->BindAction(TEXT("Quickbar6"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar6);
+    Input->BindAction(TEXT("Quickbar7"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar7);
+    Input->BindAction(TEXT("Quickbar8"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar8);
+    Input->BindAction(TEXT("Quickbar9"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar9);
+    Input->BindAction(TEXT("Quickbar0"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar0);
     Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
     Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
     Input->BindAction(TEXT("Rest"), IE_Pressed, this, &AAnomaliaSurvivor::InputRest);
@@ -301,6 +312,38 @@ void AAnomaliaSurvivor::ServerRequestRest_Implementation()
 void AAnomaliaSurvivor::CloseInventory()
 {
     if (InventoryWidget && InventoryWidget->IsInViewport()) InputInventory();
+}
+
+void AAnomaliaSurvivor::InputQuickbar1(){ActivateQuickbarSlot(0);}
+void AAnomaliaSurvivor::InputQuickbar2(){ActivateQuickbarSlot(1);}
+void AAnomaliaSurvivor::InputQuickbar3(){ActivateQuickbarSlot(2);}
+void AAnomaliaSurvivor::InputQuickbar4(){ActivateQuickbarSlot(3);}
+void AAnomaliaSurvivor::InputQuickbar5(){ActivateQuickbarSlot(4);}
+void AAnomaliaSurvivor::InputQuickbar6(){ActivateQuickbarSlot(5);}
+void AAnomaliaSurvivor::InputQuickbar7(){ActivateQuickbarSlot(6);}
+void AAnomaliaSurvivor::InputQuickbar8(){ActivateQuickbarSlot(7);}
+void AAnomaliaSurvivor::InputQuickbar9(){ActivateQuickbarSlot(8);}
+void AAnomaliaSurvivor::InputQuickbar0(){ActivateQuickbarSlot(9);}
+int32 AAnomaliaSurvivor::GetQuickbarStackId(int32 SlotIndex) const
+{
+    return QuickbarStackIds.IsValidIndex(SlotIndex)?QuickbarStackIds[SlotIndex]:0;
+}
+void AAnomaliaSurvivor::AssignQuickbarStack(int32 SlotIndex,int32 StackId)
+{
+    if(!IsLocallyControlled()||!InventoryComponent||SlotIndex<0||SlotIndex>=10)return;
+    if(QuickbarStackIds.Num()!=10)QuickbarStackIds.SetNumZeroed(10);
+    const auto* Stack=InventoryComponent->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack||Stack->ContainerId==TEXT("hands")||InventoryComponent->IsRecoveryContainer(Stack->ContainerId))return;
+    QuickbarStackIds[SlotIndex]=StackId;
+}
+void AAnomaliaSurvivor::ActivateQuickbarSlot(int32 SlotIndex)
+{
+    if(!IsLocallyControlled()||!InventoryComponent||!QuickbarStackIds.IsValidIndex(SlotIndex))return;
+    const int32 StackId=QuickbarStackIds[SlotIndex];
+    const auto* Stack=InventoryComponent->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack){QuickbarStackIds[SlotIndex]=0;return;}
+    if(Stack->ContainerId==TEXT("hands"))InventoryComponent->RequestStowStack(StackId);
+    else InventoryComponent->RequestMoveStack(StackId,TEXT("hands"),0,0,false);
 }
 
 void AAnomaliaSurvivor::InputInventory()
