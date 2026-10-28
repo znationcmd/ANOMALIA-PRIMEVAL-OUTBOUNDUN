@@ -119,7 +119,7 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto Tab=[&](FName Name,const FString& Label){auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),Name);B->SetContent(Text(Label));StyleButton(B);Top->AddChildToHorizontalBox(B)->SetPadding(FMargin(4,0));return B;};
     InventoryTab=Tab(TEXT("InventoryTab"),TEXT("INVENTAIRE"));InventoryTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowInventoryTab);
     BankTab=Tab(TEXT("BankTab"),TEXT("BANQUE"));BankTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowBankTab);
-    CloseButton=Tab(TEXT("InventoryClose"),TEXT("FERMER  [ÉCHAP]"));CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
+    CloseButton=Tab(TEXT("InventoryClose"),TEXT("FERMER  [TAB / ÉCHAP]"));CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
 
     auto* NearbyScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ProximityScroll"));
     Panel(TEXT("NearbyFrame"),FAnchors(.025f,.15f,.285f,.81f))->SetContent(NearbyScroll);
@@ -598,7 +598,14 @@ UAnomaliaInventoryActionRelay* UAnomaliaInventoryWidget::FocusedAction() const
 {for(const auto& Relay:ActionRelays)if(Relay&&Relay->Button&&Relay->Button->HasUserFocus(GetOwningPlayer()))return Relay.Get();return nullptr;}
 FReply UAnomaliaInventoryWidget::NativeOnPreviewKeyDown(const FGeometry& Geometry,const FKeyEvent& Event)
 {
- auto* Focus=FocusedAction();const auto Key=Event.GetKey();
+ const auto Key=Event.GetKey();
+ // Consume plain Tab before Slate moves focus; Shift+Tab still navigates controls.
+ if(Key==EKeys::Tab&&!Event.IsShiftDown()&&!Event.IsControlDown()&&!Event.IsAltDown()&&!Event.IsCommandDown())
+ {
+  if(!Event.IsRepeat())CloseInventory();
+  return FReply::Handled();
+ }
+ auto* Focus=FocusedAction();
  if(Key==EKeys::Gamepad_FaceButton_Left&&Focus)
  {
   if(Focus->Action==EAnomaliaInventoryAction::VehicleService)
