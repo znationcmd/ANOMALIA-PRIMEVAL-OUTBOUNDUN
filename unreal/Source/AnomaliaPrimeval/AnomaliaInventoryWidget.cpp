@@ -365,7 +365,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         HasHeld=true;auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());StyleButton(Button,Stack.StackId==SelectedStackId);
         auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Button->SetContent(Content);
         auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));auto Font=Text->GetFont();Font.Size=13;Text->SetFont(Font);Text->SetJustification(ETextJustify::Center);Content->AddChildToVerticalBox(Text);
-        if(auto* Icon=ItemIcon(Stack.ItemId))Content->AddChildToVerticalBox(Thumbnail(Icon,150))->SetHorizontalAlignment(HAlign_Center);
+        if(auto* Icon=ItemIcon(Stack.ItemId))Content->AddChildToVerticalBox(Thumbnail(Icon,Stack.ItemId==TEXT("rifle")?500.f:150.f))->SetHorizontalAlignment(HAlign_Center);
         HandsList->AddChildToVerticalBox(Button);BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
     }
     if(auto* Frame=HandsList->GetParent())if(auto* Layout=Cast<UCanvasPanelSlot>(Frame->Slot))Layout->SetAnchors(HasHeld?FAnchors(.35f,.51f,.65f,.85f):FAnchors(.35f,.51f,.65f,.56f));
@@ -852,7 +852,7 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::QueueIcon(FName Key,UPrimitive
  // Bounded, client-only snapshots; no continual render or asset writes.
  if(IconTextures.Num()>=32)return nullptr;
  auto* Target=NewObject<UTextureRenderTarget2D>(this,NAME_None,RF_Transient);
- Target->ClearColor=FLinearColor(0,0,0,1);Target->InitCustomFormat(256,256,PF_B8G8R8A8,true);
+ Target->ClearColor=FLinearColor(0,0,0,1);Target->InitCustomFormat(Key==TEXT("item_rifle")?512:256,256,PF_B8G8R8A8,true);
  Target->UpdateResourceImmediate(true);IconTextures.Add(Key,Target);IconComponents.Add(Key,Source);
  IconSignatures.Add(Key,Signature);PendingIcons.AddUnique(Key);return Target;
 }
@@ -871,7 +871,8 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::ItemIcon(FName Id)
  // Exact installed, audited geometry. Never substitute another item or pack.
  static const TMap<FName,FString> Sources={
   {TEXT("apple"),TEXT("/Game/Anomalia/ImportedFab/Batch_40571935754/ph_food_apple_01/Source_0/food_apple_01_4k/StaticMeshes/food_apple_01_4k")},
-  {TEXT("canned_beans"),TEXT("/Game/Anomalia/ImportedFab/Batch_40571935754/ph_long_life_food/Source_2/long_life_food_4k/StaticMeshes/long_life_food_beans")}
+  {TEXT("canned_beans"),TEXT("/Game/Anomalia/ImportedFab/Batch_40571935754/ph_long_life_food/Source_2/long_life_food_4k/StaticMeshes/long_life_food_beans")},
+  {TEXT("rifle"),TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive")}
  };
  const auto* Source=Sources.Find(Id);
  if(!Source||!FPackageName::DoesPackageExist(*Source)){MissingIconItems.Add(Id);return nullptr;}
@@ -890,7 +891,7 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::ItemIcon(FName Id)
 }
 UWidget* UAnomaliaInventoryWidget::Thumbnail(UTextureRenderTarget2D* Texture,float Size)
 {
- auto* Box=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Box->SetWidthOverride(Size);Box->SetHeightOverride(Size);
+ auto* Box=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Box->SetWidthOverride(Size);Box->SetHeightOverride(Texture?Size*Texture->SizeY/FMath::Max(1,Texture->SizeX):Size);
  auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
  const TCHAR* Path=TEXT("/Game/Anomalia/UI/Inventory/RealIcons_20261028/M_InventoryThumbnail");
  if(!IconBaseMaterial&&FPackageName::DoesPackageExist(Path))IconBaseMaterial=LoadObject<UMaterialInterface>(nullptr,Path);
@@ -901,7 +902,7 @@ UWidget* UAnomaliaInventoryWidget::Thumbnail(UTextureRenderTarget2D* Texture,flo
   if(!Material){Material=UMaterialInstanceDynamic::Create(IconBaseMaterial,this);Material->SetTextureParameterValue(TEXT("IconTexture"),Texture);IconMaterials.Add(Texture->GetFName(),Material);}
   Resource=Material;
  }
- FSlateBrush Brush;Brush.SetResourceObject(Resource);Brush.ImageSize=FVector2D(256,256);Image->SetBrush(Brush);Box->SetContent(Image);return Box;
+ FSlateBrush Brush;Brush.SetResourceObject(Resource);Brush.ImageSize=Texture?FVector2D(Texture->SizeX,Texture->SizeY):FVector2D(256,256);Image->SetBrush(Brush);Box->SetContent(Image);return Box;
 }
 void UAnomaliaInventoryWidget::CaptureNextIcon()
 {
@@ -927,8 +928,11 @@ void UAnomaliaInventoryWidget::CaptureNextIcon()
  FVector Direction=GetOwningPlayerPawn()?GetOwningPlayerPawn()->GetActorForwardVector():FVector::ForwardVector;
  if(Key==TEXT("worn_back"))Direction=-Direction;
  if(Key.ToString().StartsWith(TEXT("item_")))Direction=FVector(1,1,.35f).GetSafeNormal();
+ const bool Rifle=Key==TEXT("item_rifle");bool VerticalRifle=false;
+ if(Rifle){VerticalRifle=Bounds.BoxExtent.Z>FMath::Max(Bounds.BoxExtent.X,Bounds.BoxExtent.Y);Direction=Bounds.BoxExtent.X>=Bounds.BoxExtent.Y?FVector(0,-1,0):FVector(1,0,0);}
  const FVector Location=Bounds.Origin+Direction*FMath::Max(100.f,Extent*4.f);
- Capture->SetWorldLocationAndRotation(Location,(Bounds.Origin-Location).Rotation());Capture->OrthoWidth=FMath::Max(2.f,Extent*2.5f);
+ auto Rotation=(Bounds.Origin-Location).Rotation();if(VerticalRifle)Rotation.Roll=90;
+ Capture->SetWorldLocationAndRotation(Location,Rotation);Capture->OrthoWidth=FMath::Max(2.f,Extent*(Rifle?2.2f:2.5f));
  Capture->TextureTarget=Target;Capture->ClearShowOnlyComponents();Capture->ShowOnlyComponent(Part);
  Capture->CaptureScene();++IconCaptureCount;
 }
