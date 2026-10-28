@@ -139,11 +139,11 @@ void UAnomaliaInventoryWidget::BuildLayout()
     CloseButton=Tab(TEXT("InventoryClose"),TEXT("FERMER  [TAB / ÉCHAP]"));CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
 
     auto* NearbyScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ProximityScroll"));
-    Panel(TEXT("NearbyFrame"),FAnchors(.025f,.15f,.285f,.87f))->SetContent(NearbyScroll);
+    Panel(TEXT("NearbyFrame"),FAnchors(.025f,.15f,.285f,.84f))->SetContent(NearbyScroll);
     ProximityList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("VehicleProximity"));NearbyScroll->AddChild(ProximityList);
 
     auto* Right=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
-    Panel(TEXT("StorageFrame"),FAnchors(.715f,.15f,.975f,.87f))->SetContent(Right);
+    Panel(TEXT("StorageFrame"),FAnchors(.715f,.15f,.975f,.84f))->SetContent(Right);
     auto Full=[&](UWidget* W){auto* S=Right->AddChildToCanvas(W);S->SetAnchors(FAnchors(0,0,1,1));S->SetOffsets(FMargin(0));};
     StoragePanel=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("StoragePanel"));Full(StoragePanel);
     StoragePanel->AddChildToVerticalBox(Text(TEXT("ÉQUIPEMENT PORTÉ"),12));
@@ -180,9 +180,9 @@ void UAnomaliaInventoryWidget::BuildLayout()
     MoneyStatus=Text(TEXT("ESPÈCES —"),30);MoneyStatus->SetJustification(ETextJustify::Center);MoneyStatus->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.76f,.28f)));MoneyStatus->SetShadowOffset(FVector2D(1,2));MoneyStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(MoneyStatus);
     BankBalanceStatus=Text(TEXT("Compte en cours de chargement"),14);BankBalanceStatus->SetJustification(ETextJustify::Center);BankBalanceStatus->SetShadowOffset(FVector2D(1,1));BankBalanceStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(BankBalanceStatus);
     HandsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("HandsItems"));
-    Panel(TEXT("HandsFrame"),FAnchors(.32f,.79f,.68f,.87f))->SetContent(HandsList);
+    Panel(TEXT("HandsFrame"),FAnchors(.32f,.79f,.68f,.84f))->SetContent(HandsList);
     DetailsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SelectedItemActions"));
-    Panel(TEXT("SelectionFrame"),FAnchors(.025f,.89f,.975f,.985f))->SetContent(DetailsList);
+    Panel(TEXT("SelectionFrame"),FAnchors(.025f,.855f,.975f,.985f))->SetContent(DetailsList);
     UseStatus=Text(TEXT(""),12);auto* StatusSlot=RootCanvas->AddChildToCanvas(UseStatus);StatusSlot->SetAnchors(FAnchors(.32f,.74f,.68f,.78f));StatusSlot->SetOffsets(FMargin(0));
     ShowInventoryTab();
 }
