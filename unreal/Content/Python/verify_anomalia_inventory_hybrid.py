@@ -30,7 +30,7 @@ def finish(error=None):
     else: report['state']='HYBRID_INVENTORY_RENDER_AND_BOUND_ACTIONS_PASSED_NOT_MANUAL_NETWORK_ACCEPTANCE'
     try:
         if s.get('widget'):
-            s['widget'].remove_from_parent()
+            s['widget'].call_method('CloseInventory')
             if s.get('previous_camera'): require(s['pc'].get_view_target()==s['previous_camera'],'Original gameplay camera was not restored')
             report['cameraRestoredOnClose']=True
             require(not dict(s['widget'].get_editor_property('IconTextures')),'Thumbnail textures not released on close')
@@ -42,10 +42,12 @@ def finish(error=None):
     save()
     if s.get('handle'): unreal.unregister_slate_post_tick_callback(s.pop('handle'))
     editor.editor_request_end_play()
-    s['close_at']=time.monotonic()+3
+    s['close_at']=time.monotonic()+8
     def close(delta):
         if not editor.is_in_play_in_editor() and time.monotonic()>s['close_at']:
             unreal.unregister_slate_post_tick_callback(s.pop('close_handle'))
+            s.pop('widget',None)
+            unreal.SystemLibrary.collect_garbage()
             unreal.SystemLibrary.quit_editor()
     s['close_handle']=unreal.register_slate_post_tick_callback(close)
 
@@ -217,7 +219,47 @@ def tick(delta):
             require(total==s['pickup_before']+s['pickup_count'],'Vicinity callback failed authoritative pickup transfer')
             report['checks'].append('registered nearby loot listed and collected through real bound vicinity button')
             report['collectedLoot']={'item':s['pickup_item'],'count':s['pickup_count']}
-            finish();return
+            phase('wear');return
+        if s['phase']=='wear' and now-s['at']>1:
+            inv=s['inv'];rifle=stack('rifle');original=rifle.condition
+            require(inv.apply_item_wear(rifle.stack_id,12.5),'Trusted weapon wear hook failed')
+            require(abs(stack('rifle').condition-(original-12.5))<.01,'Weapon wear amount incorrect')
+            require(not inv.apply_item_wear(stack('apple').stack_id,5),'Food accepted weapon wear')
+            require(not inv.apply_item_wear(rifle.stack_id,-5),'Negative wear accepted')
+            require(not inv.apply_item_wear(rifle.stack_id,float('nan')),'Nonfinite wear accepted')
+            top=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition
+            require(inv.apply_worn_wear(5),'Worn clothing wear failed')
+            require(abs(next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition-(top-5))<.01,'Clothing wear amount incorrect')
+            inv.save_inventory_to_player_profile(SCOPE,'local-owner');inv.load_inventory_from_player_profile(SCOPE,'local-owner')
+            require(abs(stack('rifle').condition-(original-12.5))<.01,'Weapon condition lost on reload')
+            require(abs(next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition-(top-5))<.01,'Clothing condition lost on reload')
+            require(inv.request_move_stack(stack('rifle').stack_id,'hands',0,0,False),'Damaged weapon move to hands failed')
+            require(abs(stack('rifle').condition-(original-12.5))<.01,'Moving weapon repaired its wear')
+            unreal.GameplayStatics.apply_damage(s['actor'],20,None,None,unreal.DamageType)
+            require(abs(stack('rifle').condition-(original-13.5))<.01,'Server damage did not wear held weapon')
+            require(abs(next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition-(top-7))<.01,'Server damage did not wear clothing')
+            s['walk_origin']=s['actor'].get_actor_location();s['walk_condition']=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition
+            report['checks']+=['server weapon wear changes persistent condition','food negative and nonfinite wear rejected','worn clothing wear persisted','moving weapon preserves condition','actual survivor damage wears clothing and held weapon']
+            phase('wear_walk');return
+        if s['phase']=='wear_walk':
+            s['actor'].add_movement_input(unreal.Vector(0,1,0),1,True)
+            if now-s['at']<2.5:return
+            inv=s['inv'];current=s['actor'].get_actor_location();origin=s['walk_origin']
+            distance=((current.x-origin.x)**2+(current.y-origin.y)**2)**.5
+            require(distance>100,'Real movement wear fixture did not move')
+            condition=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition
+            require(condition<s['walk_condition'],'Walking did not wear clothing')
+            report['walkWear']={'distanceCm':distance,'before':s['walk_condition'],'after':condition}
+            s['actor'].get_character_movement().stop_movement_immediately();s['actor'].set_actor_location(origin,False,True)
+            report['checks'].append('actual CharacterMovement distance applies clothing wear')
+            cargo=[(x.stack_id,str(x.item_id),x.count,str(x.container_id)) for x in inv.get_editor_property('stacks')]
+            require(inv.apply_worn_wear(100),'Zero-condition clothing fixture failed')
+            require(cargo==[(x.stack_id,str(x.item_id),x.count,str(x.container_id)) for x in inv.get_editor_property('stacks')],'Ruined clothing destroyed cargo')
+            inv.save_inventory_to_player_profile(SCOPE,'local-owner');inv.load_inventory_from_player_profile(SCOPE,'local-owner')
+            require(next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition==0,'Ruined clothing condition not persisted')
+            report['checks'].append('zero-condition clothing preserves every cargo stack')
+            report['conditionAfterTest']={'rifle':stack('rifle').condition,'jacket':next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition}
+            s['shots']=[('Inventory_condition','inventory')];s['shot_index']=0;s['finish_after_captures']=True;phase('capture_prepare');return
         if s['phase']=='capture_prepare':
             if not report.get('thumbnailReadback'):
                 textures=dict(s['widget'].get_editor_property('IconTextures'))
@@ -259,6 +301,7 @@ def tick(delta):
             s['shot_index']+=1
             if s['shot_index']<len(s['shots']): phase('capture_prepare')
             else:
+                if s.get('finish_after_captures'): finish();return
                 s['widget'].show_inventory_tab();s['inv'].request_stow_stack(stack('rifle').stack_id);report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
     except Exception as error: finish(error)
 
