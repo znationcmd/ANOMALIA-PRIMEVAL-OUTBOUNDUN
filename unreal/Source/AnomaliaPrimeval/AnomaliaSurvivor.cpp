@@ -306,18 +306,7 @@ void AAnomaliaSurvivor::InputInventory()
         PC->SetIgnoreLookInput(false);
         return;
     }
-    InventoryWidget = CreateWidget<UAnomaliaInventoryWidget>(PC, UAnomaliaInventoryWidget::StaticClass());
-    if (!InventoryWidget) return;
-    InventoryWidget->InitializeForInventory(InventoryComponent);
-    InventoryWidget->AddToViewport(80);
-    FInputModeGameAndUI InputMode;
-    InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
-    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-    PC->SetInputMode(InputMode);
-    InventoryWidget->FocusFirstAction();
-    PC->bShowMouseCursor = true;
-    PC->SetIgnoreMoveInput(true);
-    PC->SetIgnoreLookInput(true);
+    UAnomaliaInventoryWidget::CreateForPlayerInventory(PC);
 }
 
 void AAnomaliaSurvivor::MoveForward(float Value)
