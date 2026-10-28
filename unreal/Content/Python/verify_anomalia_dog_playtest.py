@@ -151,14 +151,15 @@ try:
     default=unreal.get_default_object(dog_class);default.set_editor_property('auto_assign_nearest_survivor',True)
     default.get_editor_property('mesh').set_editor_property('skeletal_mesh_asset',assets.load_asset('/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01'))
     require(assets.save_loaded_asset(bp,False),'Dog BP not saved')
-    require(assets.duplicate_asset(SOURCE,MAP) is not None,'Source test map could not be copied')
-    world=unreal.EditorLoadingAndSavingUtils.load_map(MAP)
+    require(editor.new_level_from_template(MAP,SOURCE),'Source test map could not be copied through LevelEditorSubsystem')
+    world=worlds.get_editor_world()
     starts=unreal.GameplayStatics.get_all_actors_of_class(world,unreal.PlayerStart);require(starts,'No player start')
     location=starts[0].get_actor_location()+unreal.Vector(0,200,30)
     dog=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).spawn_actor_from_class(dog_class,location)
     require(dog is not None,'Dog actor placement failed');dog.set_editor_property('auto_assign_nearest_survivor',True)
-    require(unreal.EditorLoadingAndSavingUtils.save_map(world,MAP),'Dog test map save failed')
+    require(editor.save_current_level(),'Dog test map save failed')
     r['savedBlueprint']=FOLDER+'/BP_Anomalia_GermanShepherd';r['savedMap']=MAP
+    del world,starts,dog
     blank=unreal.EditorLoadingAndSavingUtils.new_blank_map(False);blank.get_world_settings().set_editor_property('default_game_mode',unreal.GameModeBase)
     for c in ('DisableAllScreenMessages','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','sg.TextureQuality 1','t.MaxFPS 30','t.IdleWhenNotForeground 0'):
         unreal.SystemLibrary.execute_console_command(blank,c)
