@@ -44,7 +44,12 @@ jobs:
             $installDir=Split-Path $lnk.TargetPath -Parent
             $updateConfig=Join-Path $installDir 'resources/app-update.yml'
             $start=Get-Date
-            $started=Start-Process -FilePath $lnk.TargetPath -ArgumentList $lnk.Arguments -WorkingDirectory $lnk.WorkingDirectory -PassThru
+            $arguments=[string]$lnk.Arguments
+            if([string]::IsNullOrWhiteSpace($arguments)){
+              $started=Start-Process -FilePath $lnk.TargetPath -WorkingDirectory $lnk.WorkingDirectory -PassThru
+            }else{
+              $started=Start-Process -FilePath $lnk.TargetPath -ArgumentList $arguments -WorkingDirectory $lnk.WorkingDirectory -PassThru
+            }
             $visible=$false;$proc=$null
             $deadline=(Get-Date).AddSeconds([int]$t.timeout)
             while((Get-Date) -lt $deadline){
