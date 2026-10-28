@@ -213,9 +213,12 @@ void UAnomaliaInventoryWidget::BeginCharacterView()
     PreviewCamera->GetCameraComponent()->SetFieldOfView(45.f);PreviewCamera->GetCameraComponent()->bConstrainAspectRatio=false;
     auto* Fill=NewObject<UPointLightComponent>(PreviewCamera);Fill->SetupAttachment(PreviewCamera->GetRootComponent());Fill->SetIntensity(1800.f);Fill->SetAttenuationRadius(650.f);Fill->SetCastShadows(false);Fill->RegisterComponent();Fill->SetWorldLocation(Target+Pawn->GetActorForwardVector()*160.f+FVector(0,0,100));
     PC->SetViewTarget(PreviewCamera);
+    HidePreviewPickupPrompts();
 }
 void UAnomaliaInventoryWidget::EndCharacterView()
 {
+    if(auto* PC=GetOwningPlayer())for(const auto& Hidden:PreviewHiddenPickups)if(auto* Actor=Hidden.Get())PC->HiddenActors.Remove(Actor);
+    PreviewHiddenPickups.Reset();
     if(PreviewCamera)
     {
         if(auto* PC=GetOwningPlayer();PC&&PC->GetViewTarget()==PreviewCamera)PC->SetViewTarget(IsValid(PreviousViewTarget)?PreviousViewTarget.Get():GetOwningPlayerPawn());
@@ -229,7 +232,7 @@ void UAnomaliaInventoryWidget::RefreshEquipment()
     auto* User=Cast<AAnomaliaSurvivor>(GetOwningPlayerPawn());if(!User)return;
     auto* Strip=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());EquipmentList->AddChildToVerticalBox(Strip);
     for(const FName Id:{FName(TEXT("worn_head")),FName(TEXT("worn_top")),FName(TEXT("worn_vest")),FName(TEXT("worn_gloves")),FName(TEXT("worn_legs")),FName(TEXT("worn_feet")),FName(TEXT("worn_back"))})
-      if(auto* Icon=GarmentIcon(Id)){auto* Image=Thumbnail(Icon,38);Image->SetToolTipText(FText::FromString(ContainerLabel(Id)));Strip->AddChildToWrapBox(Image)->SetPadding(FMargin(2));}
+      if(auto* Icon=GarmentIcon(Id)){auto* Image=Thumbnail(Icon,60);Image->SetToolTipText(FText::FromString(ContainerLabel(Id)));Strip->AddChildToWrapBox(Image)->SetPadding(FMargin(2));}
 }
 
 void UAnomaliaInventoryWidget::AddGridStack(const FAnomaliaInventoryStack& Stack)
@@ -324,7 +327,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         Title->SetText(FText::FromString(FString::Printf(TEXT("%s   %s   %d / %d cases%s"),Expanded?TEXT("−"):TEXT("+"),*ContainerLabel(Box.Id),Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height,Box.bRecoveryOnly?TEXT(" · retrait seul"):TEXT(""))));
         auto HeaderFont=Title->GetFont();HeaderFont.Size=14;HeaderFont.TypefaceFontName=TEXT("Bold");Title->SetFont(HeaderFont);Title->SetAutoWrapText(true);
         auto* HeaderRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Header->SetContent(HeaderRow);
-        if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,38))->SetPadding(FMargin(0,0,8,0));
+        if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,54))->SetPadding(FMargin(0,0,8,0));
         auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Title);TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));TitleSlot->SetVerticalAlignment(VAlign_Center);
         ItemList->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,10,0,6));BindAction(Header,EAnomaliaInventoryAction::ToggleContainer,0,0,ContainerIndex);
         if(!Expanded){for(const auto& S:Inventory->Stacks)if(S.ContainerId==Box.Id)++StoredIndex;continue;}
@@ -637,7 +640,7 @@ TArray<AAnomaliaLootPickup*> UAnomaliaInventoryWidget::FindNearbyPickups() const
 void UAnomaliaInventoryWidget::NativeTick(const FGeometry& Geometry,float DeltaTime)
 {
  Super::NativeTick(Geometry,DeltaTime);IconDelay+=DeltaTime;if(IconDelay>.15f){CaptureNextIcon();IconDelay=0;}
- ProximityElapsed+=DeltaTime;if(ProximityElapsed<.5f)return;ProximityElapsed=0;
+ ProximityElapsed+=DeltaTime;if(ProximityElapsed<.5f)return;ProximityElapsed=0;HidePreviewPickupPrompts();
  FString Signature;for(const auto* P:FindNearbyPickups())Signature+=FString::Printf(TEXT("%u:%s:%d;"),P->GetUniqueID(),*P->ItemId.ToString(),P->Count);
  if(Signature!=ProximitySignature){ProximitySignature=MoveTemp(Signature);RefreshInventory();}
 }
@@ -820,6 +823,13 @@ USkeletalMeshComponent* UAnomaliaInventoryWidget::WornMesh(FName Id) const
  if(Id==TEXT("worn_head"))return User->HeadgearMesh;
  if(Id==TEXT("worn_vest"))return User->VestMesh;
  return nullptr;
+}
+void UAnomaliaInventoryWidget::HidePreviewPickupPrompts()
+{
+ auto* PC=GetOwningPlayer();if(!PC||!PreviewCamera||!GetWorld())return;
+ // Camera-local only: no actor/component visibility or server state is modified.
+ for(TActorIterator<AAnomaliaLootPickup> It(GetWorld());It;++It)
+  if(IsValid(*It)&&!PC->HiddenActors.Contains(*It)){PC->HiddenActors.Add(*It);PreviewHiddenPickups.Add(*It);}
 }
 UTextureRenderTarget2D* UAnomaliaInventoryWidget::QueueIcon(FName Key,UPrimitiveComponent* Source,const FString& Signature)
 {
