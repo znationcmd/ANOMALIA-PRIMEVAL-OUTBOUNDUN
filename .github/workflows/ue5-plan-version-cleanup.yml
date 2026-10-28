@@ -1,0 +1,33 @@
+name: ANOMALIA plan obsolete version cleanup
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-plan-version-cleanup.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify guards and make a read-only deletion plan
+        shell: node {0}
+        run: |
+          const cp=require('child_process'),path=require('path');
+          const script=path.join(process.env.GITHUB_WORKSPACE,'scripts','ue5','cleanup-obsolete-version-snapshots.ps1');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','version-cleanup-'+process.env.GITHUB_RUN_ID);
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script],{encoding:'utf8',timeout:1500000,maxBuffer:8*1024*1024});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Version cleanup preflight failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-version-cleanup-plan
+          path: C:\\ANOMALIA-Validation\\Reports\\version-cleanup-*
+          if-no-files-found: warn
