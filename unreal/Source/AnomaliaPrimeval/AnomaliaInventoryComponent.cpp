@@ -12,6 +12,7 @@
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/CharacterMovementComponent.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
 #include "Serialization/JsonWriter.h"
@@ -273,7 +274,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     int32 CandidateNextId = NextStackId;
     for (FAnomaliaInventoryStack& Stack : Candidate)
     {
-        if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
+        if (Stack.ItemId != ItemId || Stack.Condition!=100.f || Stack.ContainerId == TEXT("hands") || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
         Stack.Count += Added; Remaining -= Added;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
@@ -386,7 +387,7 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
-    if (!Target || !Source || Target->ItemId != Source->ItemId || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
+    if (!Target || !Source || Target->ItemId != Source->ItemId || Target->Condition!=Source->Condition || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
     if(IsRecoveryContainer(Target->ContainerId) && !IsRecoveryContainer(Source->ContainerId)) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
@@ -419,6 +420,7 @@ TSharedPtr<FJsonObject> UAnomaliaInventoryComponent::ExportInventoryObject() con
         Row->SetNumberField(TEXT("width"), Box.Width);
         Row->SetNumberField(TEXT("height"), Box.Height);
         Row->SetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly);
+        Row->SetNumberField(TEXT("condition"),Box.Condition);
         CompartmentRows.Add(MakeShared<FJsonValueObject>(Row));
     }
     Inventory->SetArrayField(TEXT("compartments"), CompartmentRows);
@@ -433,6 +435,7 @@ TSharedPtr<FJsonObject> UAnomaliaInventoryComponent::ExportInventoryObject() con
         Row->SetNumberField(TEXT("x"), Stack.X);
         Row->SetNumberField(TEXT("y"), Stack.Y);
         Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
+        Row->SetNumberField(TEXT("condition"),Stack.Condition);
         StackRows.Add(MakeShared<FJsonValueObject>(Row));
     }
     Inventory->SetArrayField(TEXT("stacks"), StackRows);
@@ -553,6 +556,10 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
             Box.Id==TEXT("worn_vest")||Box.Id==TEXT("worn_head")||Box.Id==TEXT("worn_gloves")||Box.Id==TEXT("worn_feet");
         if((Migration&&!Box.bRecoveryOnly)||(!Migration&&!Worn&&Box.bRecoveryOnly))
         { OutError=TEXT("Invalid reserved migration compartment");return false; }
+        double Condition=100;
+        if(Row->HasField(TEXT("condition"))&&(!Row->TryGetNumberField(TEXT("condition"),Condition)||!FMath::IsFinite(Condition)||Condition<0||Condition>100||(!Worn&&Condition!=100)))
+        {OutError=TEXT("Invalid compartment condition");return false;}
+        Box.Condition=static_cast<float>(Condition);
         LoadedCompartments.Add(Box);
     }
 
@@ -581,6 +588,10 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
         FAnomaliaInventoryStack Stack;
         Stack.StackId = FMath::RoundToInt(StackId); Stack.Count = FMath::RoundToInt(Count); Stack.X = FMath::RoundToInt(X); Stack.Y = FMath::RoundToInt(Y);
         Stack.ItemId = FName(*ItemText); Stack.ContainerId = FName(*ContainerText); Stack.bRotated = bRotated;
+        double Condition=100;
+        if(Row->HasField(TEXT("condition"))&&(!Row->TryGetNumberField(TEXT("condition"),Condition)||!FMath::IsFinite(Condition)||Condition<0||Condition>100||(!SupportsItemWear(Stack.ItemId)&&Condition!=100)))
+        {OutError=TEXT("Invalid item condition");return false;}
+        Stack.Condition=static_cast<float>(Condition);
         float ItemWeight = 0.f; int32 MaxStack = 0; FIntPoint Size;
         if (SeenStackIds.Contains(Stack.StackId) || !GetItemRules(Stack.ItemId, ItemWeight, MaxStack, Size) || Stack.Count > MaxStack)
         { OutError = TEXT("Duplicate stack or unsupported item in inventory profile"); return false; }
@@ -894,6 +905,12 @@ void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick Tick
     const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
     auto* Economy = GetWorld()->GetSubsystem<UAnomaliaEconomySubsystem>();
     SynchronizeWornStorage();
+    if(Survivor)
+    {
+        const FVector Location=Survivor->GetActorLocation();
+        if(bHasWearLocation){const float Distance=FVector::Dist2D(Location,LastWearLocation);if(Distance>1.f&&Distance<2500.f&&Survivor->GetCharacterMovement()->IsMovingOnGround()&&Survivor->Health>0&&!Survivor->bSleeping)ApplyWornWear(Distance*.00002f);}
+        LastWearLocation=Location;bHasWearLocation=true;
+    }
     if (Survivor && Mode && Economy && Survivor->GetController())
     {
         Economy->RefreshAccount(this, Mode->GetPersistentPlayerId(Survivor->GetController()));
@@ -971,7 +988,7 @@ void UAnomaliaInventoryComponent::SynchronizeWornStorage()
         }
         else if(Box)
         {
-            if(Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Id;}))
+            if(Box->Condition<100.f||Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Id;}))
             {if(!Box->bRecoveryOnly){Box->bRecoveryOnly=true;Changed=true;}}
             else{Compartments.RemoveAll([&](const auto& B){return B.Id==Id;});Changed=true;}
         }
@@ -1083,3 +1100,40 @@ bool UAnomaliaInventoryComponent::RequestCraftRecipe(FName RecipeId)
 void UAnomaliaInventoryComponent::ServerRequestCraftRecipe_Implementation(FName RecipeId)
 {CraftFromOwningPlayer(RecipeId);}
 
+
+
+bool UAnomaliaInventoryComponent::SupportsItemWear(FName Id) const
+{
+    static const TSet<FName> Legacy={TEXT("rifle"),TEXT("pistol"),TEXT("shotgun"),TEXT("knife"),TEXT("hunting_knife"),TEXT("combat_knife"),TEXT("machete"),TEXT("hatchet"),TEXT("jacket"),TEXT("coat"),TEXT("shirt"),TEXT("pants"),TEXT("jeans"),TEXT("boots"),TEXT("gloves"),TEXT("helmet"),TEXT("vest"),TEXT("backpack"),TEXT("bag")};
+    if(Legacy.Contains(Id))return true;
+    const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    const auto* Item=Loot?Loot->FindItem(Id):nullptr;if(!Item)return false;
+    for(const TCHAR* Category:{TEXT("assault_weapons"),TEXT("hunting_precision_weapons"),TEXT("handguns_smg_shotguns"),TEXT("tops"),TEXT("pants"),TEXT("shoes_gloves"),TEXT("headwear"),TEXT("backpacks"),TEXT("vests")})
+        if(Item->Categories.Contains(FString(Category)))return true;
+    return false;
+}
+bool UAnomaliaInventoryComponent::ApplyItemWear(int32 StackId,float Wear)
+{
+    if(!GetOwner()||!GetOwner()->HasAuthority()||IsPersistenceLocked()||bSuppressNotifications||!FMath::IsFinite(Wear)||Wear<=0||Wear>100)return false;
+    const auto* Existing=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Existing||Existing->Count!=1||!SupportsItemWear(Existing->ItemId))return false;
+    auto Candidate=Stacks;auto* Item=Candidate.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    Item->Condition=FMath::Max(0.f,Item->Condition-Wear);Commit(MoveTemp(Candidate));return true;
+}
+bool UAnomaliaInventoryComponent::ApplyWornWear(float Wear)
+{
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    if(!User||!User->HasAuthority()||IsPersistenceLocked()||bSuppressNotifications||!FMath::IsFinite(Wear)||Wear<=0||Wear>100)return false;
+    struct FPart{FName Slot;USkeletalMeshComponent* Mesh;};
+    const FPart Parts[]={{TEXT("Jacket"),User->JacketMesh},{TEXT("Pants"),User->PantsMesh},{TEXT("Backpack"),User->BackpackMesh},{TEXT("Vest"),User->VestMesh},{TEXT("Headgear"),User->HeadgearMesh},{TEXT("Gloves"),User->GlovesMesh},{TEXT("Boots"),User->BootsMesh}};
+    bool Changed=false;
+    for(const auto& Part:Parts)
+    {
+        if(!Part.Mesh||!Part.Mesh->GetSkeletalMeshAsset())continue;
+        const FName Id=WornContainerId(Part.Slot);auto* Box=Compartments.FindByPredicate([&](const auto& B){return B.Id==Id;});
+        if(!Box||Box->bRecoveryOnly||Box->Condition<=0)continue;
+        Box->Condition=FMath::Max(0.f,Box->Condition-Wear);Changed=true;
+    }
+    if(Changed){OnInventoryChanged();OnInventoryUpdated.Broadcast();User->ForceNetUpdate();}
+    return Changed;
+}
