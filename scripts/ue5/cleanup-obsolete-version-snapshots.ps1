@@ -1,3 +1,5 @@
+[CmdletBinding()]
+param([switch]$Apply)
 Set-StrictMode -Version 2.0
 $ErrorActionPreference='Stop'
 
@@ -53,6 +55,7 @@ $report=[ordered]@{
     dFreeBytesBefore=[int64](Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
     products=@()
     removed=@()
+    planned=@()
     preserved=@()
     skipped=@()
 }
@@ -111,7 +114,7 @@ foreach($def in $productDefs){
     $productReport.versionFoldersAfterPlanned=$dirs.Count-@($productReport.candidates|Where-Object{$_.status -eq 'eligible'}).Count
     $report.products+=,$productReport
 }
-if($allRemovals.Count -eq 0){$report.state='NO_SAFE_OLD_VERSIONS_TO_REMOVE'}else{
+if($allRemovals.Count -eq 0){$report.state='NO_SAFE_OLD_VERSIONS_TO_REMOVE'}elseif(-not $Apply){$report.state='CLEANUP_PLAN_ONLY';$report.planned=$allRemovals}else{
     foreach($entry in $allRemovals){
         $p=[IO.Path]::GetFullPath($entry.path).TrimEnd([char]92)
         $root=[IO.Path]::GetFullPath((Join-Path (Join-Path $local $entry.product) 'versions')).TrimEnd([char]92)
