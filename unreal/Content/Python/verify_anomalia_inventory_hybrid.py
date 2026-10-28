@@ -50,6 +50,8 @@ def click_text(text):
         child=button.get_child_at(0)
         if isinstance(child,unreal.TextBlock) and str(child.get_text())==text:
             require(button.get_is_enabled(),'Disabled action '+text);relay.execute();return
+    report['availableActionTexts']=[str(r.get_editor_property('Button').get_child_at(0).get_text()) for r in relays() if isinstance(r.get_editor_property('Button').get_child_at(0),unreal.TextBlock)]
+    report['inventoryAtFailure']=[{'id':x.stack_id,'item':str(x.item_id),'count':x.count,'container':str(x.container_id)} for x in s['inv'].get_editor_property('stacks')]
     raise RuntimeError('No bound action '+text)
 
 def select(stack_id):
@@ -90,7 +92,7 @@ def tick(delta):
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
             require(actor.get_editor_property('jacket_mesh').get_editor_property('skeletal_mesh_asset') is not None,'Real equipped jacket missing')
             report['checks']+=['isolated native profile','real equipped pawn in live camera','actual storage grid widget created']
-            phase('actions');return
+            s['shots']=[('Inventory_hybrid','inventory'),('Inventory_bank','bank')];s['shot_index']=0;phase('capture_prepare');return
         if s['phase']=='actions' and now-s['at']>2:
             apples=stack('apple');select(apples.stack_id)
             click_text('½ pile')
@@ -111,7 +113,7 @@ def tick(delta):
             report['checks']+=['tile selection','split preserves total count','merge preserves total count','move to hands','stow into storage','rotate 1x2 item','consume selected apple with native survival effect']
             report['appleCountAfterUse']=stack('apple').count
             report['inventoryWeightKg']=s['inv'].get_current_weight_kg()
-            s['shots']=[('Inventory_hybrid','inventory'),('Inventory_bank','bank')];s['shot_index']=0;phase('capture_prepare');return
+            finish();return
         if s['phase']=='capture_prepare':
             name,tab=s['shots'][s['shot_index']]
             if tab=='bank': s['widget'].show_bank_tab()
@@ -134,7 +136,7 @@ def tick(delta):
             s['shot_index']+=1
             if s['shot_index']<len(s['shots']): phase('capture_prepare')
             else:
-                s['widget'].show_inventory_tab();report['checks'].append('bank and inventory tabs switch without replacing data');finish()
+                s['widget'].show_inventory_tab();report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
     except Exception as error: finish(error)
 
 try:
