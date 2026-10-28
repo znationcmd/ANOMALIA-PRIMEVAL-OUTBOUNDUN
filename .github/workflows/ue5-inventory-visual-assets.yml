@@ -29,3 +29,8 @@ jobs:
             const file=path.join(engine,p);if(!fs.existsSync(file))continue;
             console.log('API '+p);console.log(fs.readFileSync(file,'utf8').split(/\r?\n/).filter(l=>/VisibleInSceneCapture|CaptureSource|OrthoWidth|ProjectionType|ShowOnlyComponent|InitAutoFormat|InitCustomFormat|ClearColor|RenderTargetFormat/.test(l)).join('\n'));
           }
+
+          console.log('ADDITIONAL_ITEM_ASSET_CANDIDATES');
+          let found=0;
+          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj)$/i.test(e.name)&&/knife|water.?bottle|banknote|bandage|rifle|pistol|ak.?47|gun|soda|food|whisky|vodka/i.test(e.name)&&!/^T_|^M_|^MI_|^PHYS|^ABP|^AN_/i.test(e.name)){console.log(f);found++;}}}
+          candidates(content);candidates('C:\\ANOMALIA\\FabImports');
