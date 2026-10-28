@@ -177,8 +177,8 @@ void UAnomaliaInventoryWidget::ShowBankTab()
 void UAnomaliaInventoryWidget::BeginCharacterView()
 {
     auto* PC=GetOwningPlayer();auto* Pawn=GetOwningPlayerPawn();if(!PC||!Pawn||PreviewCamera||!GetWorld())return;
-    PreviousViewTarget=PC->GetViewTarget();const FVector Target=Pawn->GetActorLocation()+FVector(0,0,18);
-    FVector Position=Target+Pawn->GetActorForwardVector()*320.f+FVector(0,0,15);
+    PreviousViewTarget=PC->GetViewTarget();const FVector Target=Pawn->GetActorLocation();
+    FVector Position=Target+Pawn->GetActorForwardVector()*580.f+FVector(0,0,15);
     FHitResult Hit;FCollisionQueryParams Params(SCENE_QUERY_STAT(InventoryCamera),false,Pawn);
     if(GetWorld()->LineTraceSingleByChannel(Hit,Target,Position,ECC_Camera,Params))Position=Hit.Location+Hit.Normal*12.f;
     FActorSpawnParameters Spawn;Spawn.ObjectFlags|=RF_Transient;
@@ -211,10 +211,12 @@ void UAnomaliaInventoryWidget::AddGridStack(const FAnomaliaInventoryStack& Stack
 {
     if(!ActiveGrid||!Inventory)return;const FIntPoint Size=Inventory->GetItemSize(Stack.ItemId,Stack.bRotated);
     auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("InventoryTile_%d"),Stack.StackId))));StyleButton(Button,SelectedStackId==Stack.StackId);
-    auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(FString::Printf(TEXT("%s\n×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));auto Font=Label->GetFont();Font.Size=10;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetClipping(EWidgetClipping::ClipToBounds);Button->SetContent(Label);
+    const FString Caption=Inventory->GetItemDisplayName(Stack.ItemId).Left(FMath::Max(3,FMath::FloorToInt(Size.X*GridCellSize/6.f)-1));
+    auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(FString::Printf(TEXT("%s\n×%d"),*Caption,Stack.Count)));auto Font=Label->GetFont();Font.Size=9;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetClipping(EWidgetClipping::ClipToBounds);Button->SetContent(Label);
     Button->SetToolTipText(FText::FromString(FString::Printf(TEXT("%s ×%d · %d×%d cases"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count,Size.X,Size.Y)));
     auto* LayoutSlot=ActiveGrid->AddChildToCanvas(Button);LayoutSlot->SetPosition(FVector2D(Stack.X*GridCellSize+1,Stack.Y*GridCellSize+1));LayoutSlot->SetSize(FVector2D(Size.X*GridCellSize-2,Size.Y*GridCellSize-2));LayoutSlot->SetZOrder(1);
     BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
+    auto TileStyle=Button->GetStyle();TileStyle.NormalPadding=FMargin(1.f);TileStyle.PressedPadding=FMargin(1.f);Button->SetStyle(TileStyle);
 }
 
 
