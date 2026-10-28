@@ -1,4 +1,4 @@
-name: ANOMALIA attachment and dog disk audit
+name: ANOMALIA current companion files and host audit
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -11,35 +11,41 @@ concurrency:
 jobs:
   audit:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 3
+    timeout-minutes: 5
     steps:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Read installed inventory visual sources
+      - name: Locate newly imported companion assets without opening or modifying Unreal
         shell: node {0}
         run: |
-          const fs=require('fs'),path=require('path');
-          const content='C:\\ANOMALIA-Validation\\c40543166274\\unreal\\Content';
-          const roots=['Anomalia/ImportedFab/Batch_40571935754','Survival_Character/Meshes/Modular_Parts'];
-          function scan(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())scan(f);else if(e.name.endsWith('.uasset')&&!/Textures|Materials/i.test(f))console.log(path.relative(content,f));}}
-          roots.forEach(r=>scan(path.join(content,r)));
-          const engine='C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Engine\\Classes';
-          for(const p of ['Components/SceneCaptureComponent2D.h','Components/SceneCaptureComponent.h','Components/PrimitiveComponent.h','Engine/TextureRenderTarget2D.h']){
-            const file=path.join(engine,p);if(!fs.existsSync(file))continue;
-            console.log('API '+p);console.log(fs.readFileSync(file,'utf8').split(/\r?\n/).filter(l=>/VisibleInSceneCapture|CaptureSource|OrthoWidth|ProjectionType|ShowOnlyComponent|InitAutoFormat|InitCustomFormat|ClearColor|RenderTargetFormat/.test(l)).join('\n'));
+          const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),crypto=require('crypto');
+          const validation='C:\\ANOMALIA-Validation\\c40543166274\\unreal',original='C:\\ANOMALIA\\unreal';
+          const roots=[path.join(original,'Content'),path.join(validation,'Content'),'C:\\ANOMALIA\\FabImports','C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects'];
+          const rows=[],errors=[];let scanned=0;
+          function walk(p){
+            if(!fs.existsSync(p))return;
+            let entries;try{entries=fs.readdirSync(p,{withFileTypes:true});}catch(e){errors.push({path:p,code:e.code});return;}
+            for(const e of entries){
+              if(e.isSymbolicLink())continue;const f=path.join(p,e.name);
+              if(e.isDirectory()){if(!/^(Saved|Intermediate|node_modules|__ExternalActors__|Binaries|DerivedDataCache|\.git)$/i.test(e.name))walk(f);continue;}
+              scanned++;if(!/\.(uasset|fbx|glb|gltf|obj|blend|zip|rar|7z)$/i.test(e.name))continue;
+              if(!/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|malinois|doberman|alsatian|beagle|bulldog|pitbull|monkey|singe/i.test(f))continue;
+              if(rows.length>=1500)continue;
+              const s=fs.statSync(f);rows.push({path:f,bytes:s.size,modified:s.mtime.toISOString()});
+            }
           }
-
-          console.log('ADDITIONAL_ITEM_ASSET_CANDIDATES');
-          let found=0;
-          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|5ffcabde|monkey|medical|medic|pouch|holster|cuff|belt|sleep|magazine|canteen|bottle/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
-          candidates(content);candidates('C:\\ANOMALIA\\FabImports');candidates('C:\\ANOMALIA\\unreal\\Content');
-
-          for(const root of ['C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects','C:\\Program Files\\Epic Games\\Launcher\\VaultCache'])candidates(root);
-
-          const os=require('os'),cp=require('child_process');console.log('HOST_FREE_PHYSICAL_BYTES '+os.freemem());
-          const query=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 12 ProcessName,Id,WorkingSet64 | ConvertTo-Json -Compress'],{encoding:'utf8',timeout:20000});console.log('HOST_PROCESS_MEMORY '+query.stdout);
-
-          console.log('EXACT_MONKEY_B3_FILENAME_SEARCH');let monkeyCount=0;
-          function monkeyScan(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isSymbolicLink())continue;if(e.isDirectory()){if(!/^(Saved|Intermediate|node_modules|Textures|Materials|__ExternalActors__)$/i.test(e.name))monkeyScan(f);}else if(/monkey|singe|(?:^|[_ .-])b3(?:[_ .-]|$)/i.test(e.name)&&/\.(uasset|fbx|glb|gltf|obj|blend|zip|rar|7z)$/i.test(e.name)){console.log('MONKEY_B3 '+f);monkeyCount++;}}}
-          for(const p of [content,'C:\\ANOMALIA\\unreal\\Content','C:\\ANOMALIA\\FabImports','C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects'])monkeyScan(p);console.log('MONKEY_B3_MATCHES '+monkeyCount);
+          roots.forEach(walk);
+          const q=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"Get-CimInstance Win32_Process -Filter \"Name='UnrealEditor.exe'\" | Select-Object ProcessId,CreationDate,CommandLine | ConvertTo-Json -Compress"],{encoding:'utf8',timeout:20000});
+          let active=[];try{const p=q.stdout.trim()?JSON.parse(q.stdout):[];active=(Array.isArray(p)?p:[p]).map(x=>({pid:x.ProcessId,created:x.CreationDate,project:(x.CommandLine||'').match(/[A-Z]:\\[^"]*?\.uproject/i)?.[0]||'unidentified editor'}));}catch(e){errors.push({processQuery:e.message});}
+          const stat=fs.statfsSync('C:\\');
+          const source=path.join(validation,'Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp');
+          const b=fs.readFileSync(source,'utf8').replace(/\r\n/g,'\n');
+          const report={time:new Date().toISOString(),state:'READ_ONLY_FILE_AND_RESOURCE_AUDIT',freePhysicalBytes:os.freemem(),freeDiskBytes:stat.bavail*stat.bsize,activeEditors:active,processQuerySucceeded:q.status===0,scannedFiles:scanned,matchedFiles:rows.length,files:rows,errors,validationInventoryBlob:crypto.createHash('sha1').update(Buffer.from('blob '+Buffer.byteLength(b)+'\0')).update(b).digest('hex'),editorLoadedAssets:false};
+          const out=path.join(process.env.RUNNER_TEMP,'companion-audit-'+process.env.GITHUB_RUN_ID+'.json');fs.writeFileSync(out,JSON.stringify(report,null,2),{flag:'wx'});fs.appendFileSync(process.env.GITHUB_ENV,'COMPANION_AUDIT_REPORT='+out+'\n');
+          console.log(JSON.stringify(report,null,2));
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-companion-audit
+          path: ${{ env.COMPANION_AUDIT_REPORT }}
+          if-no-files-found: error
