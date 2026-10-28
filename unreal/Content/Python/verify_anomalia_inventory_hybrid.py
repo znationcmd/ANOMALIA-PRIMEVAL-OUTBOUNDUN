@@ -92,7 +92,8 @@ def prepare_thumbnail_material():
     texture.set_editor_property('texture',white)
     texture.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if white.get_editor_property('srgb') else unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
     inverse=edit.create_material_expression(material,unreal.MaterialExpressionOneMinus,-160,160)
-    require(edit.connect_material_expressions(texture,'A',inverse,'Input'),'Inverse opacity connection failed')
+    report['thumbnailMaterialPins']={'outputs':list(edit.get_material_expression_output_names(texture)),'inputs':list(edit.get_material_expression_input_names(inverse))}
+    require(edit.connect_material_expressions(texture,'A',inverse,''),'Inverse opacity connection failed')
     require(edit.connect_material_property(texture,'RGB',unreal.MaterialProperty.MP_EMISSIVE_COLOR),'UI colour connection failed')
     require(edit.connect_material_property(inverse,'',unreal.MaterialProperty.MP_OPACITY),'UI opacity connection failed')
     unreal.EditorAssetLibrary.set_metadata_tag(material,'AnomaliaIconSchema','inverse-opacity-v1')
