@@ -85,9 +85,8 @@ def tick(delta):
             actor.restore_survival(60,60,100)
             pc=unreal.GameplayStatics.get_player_controller(world,0)
             s.update(world=world,actor=actor,inv=inv,pc=pc,previous_camera=pc.get_view_target())
-            widget=unreal.WidgetBlueprintLibrary.create(world,unreal.AnomaliaInventoryWidget,pc)
+            widget=unreal.AnomaliaInventoryWidget.create_for_player_inventory(pc)
             require(widget is not None,'Native widget creation failed');s['widget']=widget
-            widget.initialize_for_inventory(inv);widget.add_to_viewport(80)
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
             require(actor.get_editor_property('jacket_mesh').get_editor_property('skeletal_mesh_asset') is not None,'Real equipped jacket missing')
             report['checks']+=['isolated native profile','real equipped pawn in live camera','actual storage grid widget created']
