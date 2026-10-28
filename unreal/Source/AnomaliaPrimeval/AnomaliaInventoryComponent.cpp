@@ -1202,6 +1202,7 @@ const TArray<FAnomaliaAttachmentRule>& UAnomaliaInventoryComponent::GetAttachmen
         {TEXT("mount_back_medical"),TEXT("worn_back"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
         {TEXT("mount_back_radio"),TEXT("worn_back"),TEXT("Radio"),{TEXT("handheld_radio")}},
         {TEXT("mount_back_light"),TEXT("worn_back"),TEXT("Bâton lumineux"),{TEXT("chemlight")}},
+        {TEXT("mount_boot_knife"),TEXT("worn_feet"),TEXT("Couteau latéral"),{TEXT("hunting_knife"),TEXT("kitchen_knife"),TEXT("bone_knife")}},
         {TEXT("mount_vest_medical"),TEXT("worn_vest"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
         {TEXT("mount_vest_mag_left"),TEXT("worn_vest"),TEXT("Chargeur gauche"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
         {TEXT("mount_vest_mag_right"),TEXT("worn_vest"),TEXT("Chargeur droit"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
@@ -1221,6 +1222,7 @@ bool UAnomaliaInventoryComponent::AttachmentAvailable(const TArray<FAnomaliaInve
     if(Rule->Parent.IsNone())return true;
     if(Rule->Parent==TEXT("worn_back"))return User->BackpackMesh&&User->BackpackMesh->GetSkeletalMeshAsset();
     if(Rule->Parent==TEXT("worn_vest"))return User->VestMesh&&User->VestMesh->GetSkeletalMeshAsset();
+    if(Rule->Parent==TEXT("worn_feet"))return User->BootsMesh&&User->BootsMesh->GetSkeletalMeshAsset();
     const auto* Parent=FindAttachmentRule(Rule->Parent);
     return Parent&&AttachmentAvailable(Candidate,Parent->Id)&&Candidate.ContainsByPredicate([&](const auto& S){return S.ContainerId==Parent->Id&&S.Count==1&&Parent->Items.Contains(S.ItemId);});
 }
