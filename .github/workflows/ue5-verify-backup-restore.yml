@@ -36,11 +36,11 @@ jobs:
             $vcount=0;$dcount=0
             foreach($f in $it.files){
               $rel=[string]$f.path
-              $rel=$rel.Replace('\\','/').TrimStart('/')
+              $rel=$rel.Replace([char]92,[char]47).TrimStart([char]47)
               $versionPrefix=([string]$it.name)+'/active-version/'
               $dataPrefix=([string]$it.name)+'/userdata-Saved/'
               if($rel.StartsWith($versionPrefix,[StringComparison]::OrdinalIgnoreCase)){
-                $sub=$rel.Substring($versionPrefix.Length).Replace('/','\\')
+                $sub=$rel.Substring($versionPrefix.Length).Replace([char]47,[char]92)
                 $src=Join-Path ([string]$it.source) $sub
                 $bak=Join-Path $backup ([string]$f.path)
                 $rest=Join-Path $restoreBase $sub
@@ -48,7 +48,7 @@ jobs:
                 foreach($filePath in @($src,$bak,$rest)){if((Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash -ne [string]$f.sha256){throw "Version SHA mismatch $filePath"}}
                 $vcount++
               }elseif($rel.StartsWith($dataPrefix,[StringComparison]::OrdinalIgnoreCase)){
-                $sub=$rel.Substring($dataPrefix.Length).Replace('/','\\')
+                $sub=$rel.Substring($dataPrefix.Length).Replace([char]47,[char]92)
                 $src=Join-Path ([string]$it.userdata) $sub
                 $bak=Join-Path $backup ([string]$f.path)
                 $rest=Join-Path $dataRestore $sub
