@@ -154,7 +154,7 @@ try:
     require(bp is not None,'Native companion BP creation failed')
     unreal.BlueprintEditorLibrary.compile_blueprint(bp)
     dog_class=unreal.EditorAssetLibrary.load_blueprint_class(FOLDER+'/BP_Anomalia_GermanShepherd')
-    default=unreal.get_default_object(dog_class);default.set_editor_property('auto_assign_nearest_survivor',True)
+    default=unreal.get_default_object(dog_class)
     default.get_editor_property('mesh').set_editor_property('skeletal_mesh_asset',assets.load_asset('/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01'))
     require(assets.save_loaded_asset(bp,False),'Dog BP not saved')
     require(editor.new_level_from_template(MAP,SOURCE),'Source test map could not be copied through LevelEditorSubsystem')
@@ -162,7 +162,9 @@ try:
     starts=unreal.GameplayStatics.get_all_actors_of_class(world,unreal.PlayerStart);require(starts,'No player start')
     location=starts[0].get_actor_location()+unreal.Vector(0,200,30)
     dog=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).spawn_actor_from_class(dog_class,location)
-    require(dog is not None,'Dog actor placement failed');dog.set_editor_property('auto_assign_nearest_survivor',True)
+    require(dog is not None,'Dog actor placement failed');dog.modify();dog.set_editor_property('auto_assign_nearest_survivor',True)
+    r['savedOwnershipConfiguration']={'classDefault':default.get_editor_property('auto_assign_nearest_survivor'),'placedInstance':dog.get_editor_property('auto_assign_nearest_survivor')}
+    require(not r['savedOwnershipConfiguration']['classDefault'] and r['savedOwnershipConfiguration']['placedInstance'],'Test ownership must serialize as an instance override')
     require(editor.save_current_level(),'Dog test map save failed')
     r['savedBlueprint']=FOLDER+'/BP_Anomalia_GermanShepherd';r['savedMap']=MAP
     del world,starts,dog
