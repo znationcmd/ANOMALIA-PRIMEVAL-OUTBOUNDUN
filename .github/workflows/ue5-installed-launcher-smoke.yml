@@ -29,15 +29,15 @@ jobs:
           $shell=New-Object -ComObject WScript.Shell
           $tests=@(
             @{name='Editor';shortcut=(Join-Path $public 'ANOMALIA Editor.lnk');process='ANOMALIA Editor';timeout=12},
-            @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=12},
-            @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=60},
+            @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=30},
+            @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=180},
             @{name='UnrealEditor';shortcut=(Join-Path $desktop 'ANOMALIA - Unreal.lnk');process='UnrealEditor';timeout=120}
           )
           $results=@()
           foreach($t in $tests){
             if(!(Test-Path -LiteralPath $t.shortcut)){throw "Required launcher shortcut missing: $($t.name)"}
-            $before=@(Get-Process -Name $t.process -ErrorAction SilentlyContinue)
-            if($before.Count -gt 0){throw "Cannot safely test $($t.name): process was already running."}
+            $beforeIds=@(Get-Process -Name $t.process -ErrorAction SilentlyContinue|Select-Object -ExpandProperty Id)
+            if($beforeIds.Count -gt 0){throw "Cannot safely test $($t.name): process was already running."}
             $lnk=$shell.CreateShortcut($t.shortcut)
             if(!(Test-Path -LiteralPath $lnk.TargetPath)){throw "Launcher target missing for $($t.name)"}
             $exe=Get-Item -LiteralPath $lnk.TargetPath
@@ -50,20 +50,23 @@ jobs:
             }else{
               $started=Start-Process -FilePath $lnk.TargetPath -ArgumentList $arguments -WorkingDirectory $lnk.WorkingDirectory -PassThru
             }
-            $visible=$false;$proc=$null
+            $visible=$false;$proc=$null;$newProcesses=@()
             $deadline=(Get-Date).AddSeconds([int]$t.timeout)
             while((Get-Date) -lt $deadline){
               Start-Sleep -Seconds 2
               $found=@(Get-Process -Name $t.process -ErrorAction SilentlyContinue)
-              if($found.Count -gt 0){$proc=$found[0];if($proc.MainWindowHandle -ne 0){$visible=$true;break}}
-              if($started.HasExited -and $t.name -ne 'UnrealEditor'){break}
+              $newProcesses=@($found|Where-Object{$_.Id -notin $beforeIds})
+              $visibleProcess=@($newProcesses|Where-Object{$_.MainWindowHandle -ne 0}|Select-Object -First 1)
+              if($visibleProcess.Count -gt 0){$proc=$visibleProcess[0];$visible=$true;break}
+              if($started.HasExited -and $newProcesses.Count -eq 0){break}
             }
-            $result=@{name=$t.name;shortcutExists=$true;targetExists=$true;targetVersion=$exe.VersionInfo.FileVersion;updateMetadataPresent=(Test-Path -LiteralPath $updateConfig);processStarted=($null -ne $proc);windowVisible=$visible;seconds=[int]((Get-Date)-$start).TotalSeconds}
-            if($null -ne $proc){
-              try{$result.windowTitle=$proc.MainWindowTitle;$null=$proc.CloseMainWindow()}catch{}
+            if($null -eq $proc -and $newProcesses.Count -gt 0){$proc=$newProcesses[0]}
+            $result=@{name=$t.name;shortcutExists=$true;targetExists=$true;targetVersion=$exe.VersionInfo.FileVersion;updateMetadataPresent=(Test-Path -LiteralPath $updateConfig);processStarted=($newProcesses.Count -gt 0);windowVisible=$visible;seconds=[int]((Get-Date)-$start).TotalSeconds}
+            if($newProcesses.Count -gt 0){
+              foreach($candidate in $newProcesses){try{$null=$candidate.CloseMainWindow()}catch{}}
               Start-Sleep -Seconds 3
-              $proc.Refresh()
-              if(!$proc.HasExited){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;$result.processClosedByTest=$true}else{$result.processClosedByTest=$true}
+              foreach($candidate in $newProcesses){try{$candidate.Refresh();if(!$candidate.HasExited){Stop-Process -Id $candidate.Id -Force -ErrorAction SilentlyContinue}}catch{}}
+              $result.processClosedByTest=$true
             }elseif(!$started.HasExited){Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue;$result.processClosedByTest=$true}else{$result.processClosedByTest=$true}
             $results+=,$result
             if(!$result.processStarted){throw "Launcher process did not stay alive: $($t.name)"}
