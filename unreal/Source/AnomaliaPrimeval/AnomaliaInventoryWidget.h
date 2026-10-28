@@ -136,6 +136,8 @@ private:
     UPROPERTY() TMap<FName,TObjectPtr<UPrimitiveComponent>> IconComponents;
     UPROPERTY() TObjectPtr<ASceneCapture2D> IconCapture;
     UPROPERTY() TObjectPtr<AActor> IconPreviewActor;
+    TArray<TWeakObjectPtr<AActor>> PreviewHiddenPickups;
+    void HidePreviewPickupPrompts();
     TMap<FName,FString> IconSignatures;
     TSet<FName> MissingIconItems;
     TArray<FName> PendingIcons;
