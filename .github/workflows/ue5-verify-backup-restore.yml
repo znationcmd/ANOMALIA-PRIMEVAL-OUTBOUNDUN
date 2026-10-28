@@ -1,0 +1,28 @@
+name: ANOMALIA verify active backups and user-data restore on D
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-verify-backup-restore.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare source, D backup and restored version and user data by SHA256
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');const out=path.join('C:\\ANOMALIA-Validation\\Reports','restore-verification-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});const p=path.join(out,'verify.ps1');fs.writeFileSync(p,"$ErrorActionPreference='Stop'\n$backup='D:\\ANOMALIA-Backups\\pre-differential-40767016246'\n$manifestPath=Join-Path $backup 'backup-manifest.json'\nif(!(Test-Path $manifestPath)){throw 'Backup manifest missing on D:'}\n$m=Get-Content $manifestPath -Raw|ConvertFrom-Json\n$r=[ordered]@{state='FAILED';backup=$backup;backupRun=$m.run;items=@();cDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\").FreeSpace;dDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='D:'\").FreeSpace}\nforeach($it in $m.items){\n $versPrefix=$it.name+'/active-version/';$dataPrefix=$it.name+'/userdata-Saved/';$restoreBase=Join-Path (Join-Path $backup 'restore-test') $it.name\n $versionRestore=Join-Path $restoreBase 'active-version';if(!(Test-Path $versionRestore)){throw \"Version restore test missing $versionRestore\"}\n $dataRestore=Join-Path $restoreBase 'userdata-Saved';New-Item -ItemType Directory -Path $dataRestore -Force|Out-Null\n if(Test-Path $it.userdata){& robocopy.exe $it.userdata $dataRestore /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NFL /NDL /NJH /NJS|Out-Null;if($LASTEXITCODE -gt 7){throw 'User-data restore copy failed'}}\n $vcount=0;$dcount=0\n foreach($f in $it.files){\n   if($f.path.StartsWith($versPrefix,[StringComparison]::OrdinalIgnoreCase)){ $rel=$f.path.Substring($versPrefix.Length);$src=Join-Path $it.source $rel;$bak=Join-Path $backup $f.path;$rest=Join-Path $versionRestore $rel;if(!(Test-Path $src) -or !(Test-Path $bak) -or !(Test-Path $rest)){throw \"Version source/backup/restore missing $($f.path)\"};foreach($p in @($src,$bak,$rest)){if((Get-FileHash $p -Algorithm SHA256).Hash -ne $f.sha256){throw \"Version SHA mismatch $p\"}};$vcount++ }\n   elseif($f.path.StartsWith($dataPrefix,[StringComparison]::OrdinalIgnoreCase)){ $rel=$f.path.Substring($dataPrefix.Length);$src=Join-Path $it.userdata $rel;$bak=Join-Path $backup $f.path;$rest=Join-Path $dataRestore $rel;if(!(Test-Path $src) -or !(Test-Path $bak) -or !(Test-Path $rest)){throw \"User-data source/backup/restore missing $($f.path)\"};foreach($p in @($src,$bak,$rest)){if((Get-FileHash $p -Algorithm SHA256).Hash -ne $f.sha256){throw \"User-data SHA mismatch $p\"}};$dcount++ }\n }\n $r.items+=@{name=$it.name;activeVersionFiles=$vcount;userDataFiles=$dcount;sourceMatchesBackupAndRestore=$true}\n}\n$r.state='ACTIVE_VERSIONS_AND_USERDATA_SHA256_RESTORE_VERIFIED'\n$out=Join-Path 'C:\\ANOMALIA-Validation\\Reports' ('restore-verification-'+$env:GITHUB_RUN_ID);New-Item -ItemType Directory -Path $out -Force|Out-Null\n$r|ConvertTo-Json -Depth 10|Set-Content (Join-Path $out 'restore-report.json') -Encoding UTF8\n$r|ConvertTo-Json -Depth 10|Write-Output",{flag:'wx'});const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:7200000,maxBuffer:8*1024*1024});console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('D restore verification failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-backup-restoration-verification
+          path: C:\\ANOMALIA-Validation\\Reports\\restore-verification-*
+          if-no-files-found: warn
