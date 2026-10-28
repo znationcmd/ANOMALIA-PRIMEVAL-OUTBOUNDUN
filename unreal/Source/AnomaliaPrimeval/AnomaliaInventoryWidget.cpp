@@ -15,6 +15,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/SafeZone.h"
 #include "Blueprint/WidgetTree.h"
+#include "Blueprint/WidgetLayoutLibrary.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanel.h"
@@ -211,8 +212,9 @@ void UAnomaliaInventoryWidget::AddGridStack(const FAnomaliaInventoryStack& Stack
 {
     if(!ActiveGrid||!Inventory)return;const FIntPoint Size=Inventory->GetItemSize(Stack.ItemId,Stack.bRotated);
     auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("InventoryTile_%d"),Stack.StackId))));StyleButton(Button,SelectedStackId==Stack.StackId);
-    const FString Caption=Inventory->GetItemDisplayName(Stack.ItemId).Left(FMath::Max(3,FMath::FloorToInt(Size.X*GridCellSize/6.f)-1));
-    auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(FString::Printf(TEXT("%s\n×%d"),*Caption,Stack.Count)));auto Font=Label->GetFont();Font.Size=9;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetClipping(EWidgetClipping::ClipToBounds);Button->SetContent(Label);
+    const int32 TileFontSize=FMath::Clamp(FMath::FloorToInt(GridCellSize*.2f),12,22);
+    const FString Caption=Inventory->GetItemDisplayName(Stack.ItemId).Left(FMath::Max(3,FMath::FloorToInt(Size.X*GridCellSize/(TileFontSize*.75f))-1));
+    auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(FString::Printf(TEXT("%s\n×%d"),*Caption,Stack.Count)));auto Font=Label->GetFont();Font.Size=TileFontSize;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetClipping(EWidgetClipping::ClipToBounds);Button->SetContent(Label);
     Button->SetToolTipText(FText::FromString(FString::Printf(TEXT("%s ×%d · %d×%d cases"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count,Size.X,Size.Y)));
     auto* LayoutSlot=ActiveGrid->AddChildToCanvas(Button);LayoutSlot->SetPosition(FVector2D(Stack.X*GridCellSize+1,Stack.Y*GridCellSize+1));LayoutSlot->SetSize(FVector2D(Size.X*GridCellSize-2,Size.Y*GridCellSize-2));LayoutSlot->SetZOrder(1);
     BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
@@ -287,7 +289,9 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         if(Box.bRecoveryOnly) BoxTitle->SetText(FText::FromString(TEXT("RÉCUPÉRATION — retrait uniquement · objets conservés après migration")));
         ItemList->AddChildToVerticalBox(BoxTitle)->SetPadding(FMargin(14.f, 14.f, 8.f, 5.f));
         auto* GridSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-        GridCellSize=FMath::Min(36.f,252.f/FMath::Max(1,Box.Width));
+        const float ViewportScale=FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this));
+        const float VirtualWidth=UWidgetLayoutLibrary::GetViewportSize(this).X/ViewportScale;
+        GridCellSize=FMath::Clamp((VirtualWidth*.26f-40.f)/FMath::Max(1,Box.Width),18.f,96.f);
         GridSize->SetWidthOverride(Box.Width*GridCellSize);GridSize->SetHeightOverride(Box.Height*GridCellSize);
         ActiveGrid=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());GridSize->SetContent(ActiveGrid);
         ItemList->AddChildToVerticalBox(GridSize)->SetHorizontalAlignment(HAlign_Center);
