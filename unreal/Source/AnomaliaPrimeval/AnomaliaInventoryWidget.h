@@ -11,6 +11,7 @@ class UButton;
 class UTextBlock;
 class UEditableTextBox;
 class ACameraActor;
+class APlayerController;
 class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
 struct FAnomaliaInventoryStack;
@@ -45,7 +46,7 @@ public:
     int32 OtherStackId = 0;
     UPROPERTY() TObjectPtr<UButton> Button;
 
-    UFUNCTION()
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void Execute();
 };
 
@@ -56,6 +57,10 @@ class ANOMALIAPRIMEVAL_API UAnomaliaInventoryWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    static UAnomaliaInventoryWidget* CreateForPlayerInventory(APlayerController* Player);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory") void ShowInventoryTab();
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory") void ShowBankTab();
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
@@ -99,8 +104,6 @@ private:
     void RefreshEquipment();
     void AddGridStack(const FAnomaliaInventoryStack& Stack);
     void StyleButton(UButton* Button,bool bSelected=false);
-    UFUNCTION() void ShowInventoryTab();
-    UFUNCTION() void ShowBankTab();
 
     UPROPERTY()
     TArray<TObjectPtr<UAnomaliaInventoryActionRelay>> ActionRelays;
