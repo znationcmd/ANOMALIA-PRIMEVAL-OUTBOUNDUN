@@ -218,6 +218,7 @@ void UAnomaliaInventoryWidget::BeginCharacterView()
 void UAnomaliaInventoryWidget::EndCharacterView()
 {
     if(auto* PC=GetOwningPlayer())for(const auto& Hidden:PreviewHiddenPickups)if(auto* Actor=Hidden.Get())PC->HiddenActors.Remove(Actor);
+    if(auto* PC=GetOwningPlayer())PC->HiddenActors.RemoveAll([](const auto& Actor){return !IsValid(Actor.Get());});
     PreviewHiddenPickups.Reset();
     if(PreviewCamera)
     {
