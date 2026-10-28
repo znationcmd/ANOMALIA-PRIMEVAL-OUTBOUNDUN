@@ -1,4 +1,5 @@
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaLootPickup.h"
 #include "AnomaliaStorageCatalog.h"
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaConfigLibrary.h"
@@ -547,7 +548,10 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
         Box.Id = Id; Box.Width = FMath::RoundToInt(Width); Box.Height = FMath::RoundToInt(Height);
         if(Row->HasField(TEXT("recoveryOnly")) && !Row->TryGetBoolField(TEXT("recoveryOnly"),Box.bRecoveryOnly))
         { OutError=TEXT("Invalid migration compartment flag");return false; }
-        if(Box.bRecoveryOnly!=IdText.StartsWith(TEXT("migration_recovery_")))
+        const bool Migration=IdText.StartsWith(TEXT("migration_recovery_"));
+        const bool Worn=Box.Id==TEXT("worn_top")||Box.Id==TEXT("worn_legs")||Box.Id==TEXT("worn_back")||
+            Box.Id==TEXT("worn_vest")||Box.Id==TEXT("worn_head")||Box.Id==TEXT("worn_gloves")||Box.Id==TEXT("worn_feet");
+        if((Migration&&!Box.bRecoveryOnly)||(!Migration&&!Worn&&Box.bRecoveryOnly))
         { OutError=TEXT("Invalid reserved migration compartment");return false; }
         LoadedCompartments.Add(Box);
     }
@@ -1000,6 +1004,26 @@ bool UAnomaliaInventoryComponent::RequestStowStackIn(int32 StackId,FName Contain
 void UAnomaliaInventoryComponent::ServerRequestStowStackIn_Implementation(int32 StackId,FName ContainerId)
 {StowStackInOnServer(StackId,ContainerId);}
 
+bool UAnomaliaInventoryComponent::RequestCollectNearby(AAnomaliaLootPickup* Pickup)
+{
+    if(!GetOwner())return false;
+    if(GetOwner()->HasAuthority())return CollectNearbyOnServer(Pickup);
+    ServerRequestCollectNearby(Pickup);return true;
+}
+void UAnomaliaInventoryComponent::ServerRequestCollectNearby_Implementation(AAnomaliaLootPickup* Pickup)
+{CollectNearbyOnServer(Pickup);}
+bool UAnomaliaInventoryComponent::CollectNearbyOnServer(AAnomaliaLootPickup* Pickup)
+{
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    auto* World=GetWorld();auto* Mode=World?World->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    auto* Loot=World?World->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
+    if(!User||!User->HasAuthority()||!Mode||!Loot||!User->GetController()||User->GetController()->GetPawn()!=User)return false;
+    const double Now=World->GetRealTimeSeconds();if(Now<NextCollectRequestTime)return false;NextCollectRequestTime=Now+.2;
+    FString Error;const bool Accepted=Loot->TryCollect(Pickup,User,Mode->GetPersistentPlayerId(User->GetController()),Error);
+    UseMessage=Accepted?TEXT("Objet ramassé."):(Error.IsEmpty()?TEXT("Objet indisponible ou hors de portée."):Error);
+    OnInventoryUpdated.Broadcast();User->ForceNetUpdate();return Accepted;
+}
+
 const TArray<FAnomaliaHandcraftRecipe>& UAnomaliaInventoryComponent::GetHandcraftRecipes()
 {
     static const TArray<FAnomaliaHandcraftRecipe> Recipes={
@@ -1058,3 +1082,4 @@ bool UAnomaliaInventoryComponent::RequestCraftRecipe(FName RecipeId)
 }
 void UAnomaliaInventoryComponent::ServerRequestCraftRecipe_Implementation(FName RecipeId)
 {CraftFromOwningPlayer(RecipeId);}
+
