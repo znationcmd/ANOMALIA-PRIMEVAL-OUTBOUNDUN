@@ -28,15 +28,18 @@ def finish(error=None):
     s['finished']=True
     if error: report['errors'].append(str(error));report['traceback']=traceback.format_exc()
     else: report['state']='HYBRID_INVENTORY_RENDER_AND_BOUND_ACTIONS_PASSED_NOT_MANUAL_NETWORK_ACCEPTANCE'
-    if s.get('widget'):
-        s['widget'].remove_from_parent()
-        if s.get('previous_camera'): require(s['pc'].get_view_target()==s['previous_camera'],'Original gameplay camera was not restored')
-        report['cameraRestoredOnClose']=True
-        hidden=list(s['pc'].get_editor_property('hidden_actors'))
-        require(hidden==s['previous_hidden'],'Inventory changed another system camera-hidden actors')
-        require(not dict(s['widget'].get_editor_property('IconTextures')),'Thumbnail textures not released on close')
-        require(s['widget'].get_editor_property('IconCapture') is None and s['widget'].get_editor_property('IconPreviewActor') is None,'Transient preview actors not released')
-        report['checks'].append('camera-local hidden actors restored and transient thumbnail resources released')
+    try:
+        if s.get('widget'):
+            s['widget'].remove_from_parent()
+            if s.get('previous_camera'): require(s['pc'].get_view_target()==s['previous_camera'],'Original gameplay camera was not restored')
+            report['cameraRestoredOnClose']=True
+            hidden=list(s['pc'].get_editor_property('hidden_actors'))
+            require(hidden==s['previous_hidden'],'Inventory changed another system camera-hidden actors')
+            require(not dict(s['widget'].get_editor_property('IconTextures')),'Thumbnail textures not released on close')
+            require(s['widget'].get_editor_property('IconCapture') is None and s['widget'].get_editor_property('IconPreviewActor') is None,'Transient preview actors not released')
+            report['checks'].append('camera-local hidden actors restored and transient thumbnail resources released')
+    except Exception as cleanup_error:
+        report['state']='FAILED';report['errors'].append(str(cleanup_error));report['cleanupTraceback']=traceback.format_exc()
     save()
     if s.get('handle'): unreal.unregister_slate_post_tick_callback(s.pop('handle'))
     editor.editor_request_end_play()
