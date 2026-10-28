@@ -42,11 +42,11 @@ def finish(error=None):
             unreal.SystemLibrary.quit_editor()
     s['close_handle']=unreal.register_slate_post_tick_callback(close)
 
-def relays(): return list(s['widget'].get_editor_property('action_relays'))
+def relays(): return list(s['widget'].get_editor_property('ActionRelays'))
 
 def click_text(text):
     for relay in relays():
-        button=relay.get_editor_property('button')
+        button=relay.get_editor_property('Button')
         child=button.get_child_at(0)
         if isinstance(child,unreal.TextBlock) and str(child.get_text())==text:
             require(button.get_is_enabled(),'Disabled action '+text);relay.execute();return
