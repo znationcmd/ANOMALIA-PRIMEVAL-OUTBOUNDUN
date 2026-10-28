@@ -18,6 +18,8 @@ class AAnomaliaLootPickup;
 class ASceneCapture2D;
 class UTextureRenderTarget2D;
 class UPrimitiveComponent;
+class UMaterialInterface;
+class UMaterialInstanceDynamic;
 class USkeletalMeshComponent;
 class UWidget;
 struct FAnomaliaInventoryStack;
@@ -133,6 +135,9 @@ private:
     void ReleaseIcons();
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
     TMap<FName,TObjectPtr<UTextureRenderTarget2D>> IconTextures;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
+    TMap<FName,TObjectPtr<UMaterialInstanceDynamic>> IconMaterials;
+    UPROPERTY() TObjectPtr<UMaterialInterface> IconBaseMaterial;
     UPROPERTY() TMap<FName,TObjectPtr<UPrimitiveComponent>> IconComponents;
     UPROPERTY() TObjectPtr<ASceneCapture2D> IconCapture;
     UPROPERTY() TObjectPtr<AActor> IconPreviewActor;
@@ -185,6 +190,7 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
 
 
 
