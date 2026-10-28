@@ -15,6 +15,7 @@
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaDogCompanion.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "EngineUtils.h"
@@ -506,6 +507,10 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
     if (!Inventory) return;
     switch (Action)
     {
+        case EAnomaliaInventoryAction::DogCommand:
+            if(auto* Dog=NearbyDog.Get();Dog&&Dog->SurvivorOwner==GetOwningPlayerPawn()&&Count>=0&&Count<=1)
+                Dog->RequestCommand(static_cast<EAnomaliaDogCommand>(Count));
+            RefreshInventory();break;
         case EAnomaliaInventoryAction::CollectNearby:
         {
             if(NearbyPickups.IsValidIndex(OtherStackId))
@@ -664,6 +669,9 @@ void UAnomaliaInventoryWidget::NativeTick(const FGeometry& Geometry,float DeltaT
  Super::NativeTick(Geometry,DeltaTime);IconDelay+=DeltaTime;if(IconDelay>.15f){CaptureNextIcon();IconDelay=0;}
  ProximityElapsed+=DeltaTime;if(ProximityElapsed<.5f)return;ProximityElapsed=0;HidePreviewPickupPrompts();
  FString Signature;for(const auto* P:FindNearbyPickups())Signature+=FString::Printf(TEXT("%u:%s:%d;"),P->GetUniqueID(),*P->ItemId.ToString(),P->Count);
+ if(GetWorld())for(TActorIterator<AAnomaliaDogCompanion> It(GetWorld());It;++It)
+  if(It->SurvivorOwner==GetOwningPlayerPawn()&&It->GetDistanceTo(GetOwningPlayerPawn())<1500.f)
+   Signature+=FString::Printf(TEXT("dog:%u:%d:%.0f;"),It->GetUniqueID(),int32(It->Command),It->Health);
  if(Signature!=ProximitySignature){ProximitySignature=MoveTemp(Signature);RefreshInventory();}
 }
 void UAnomaliaInventoryWidget::RefreshVehicleProximity()
@@ -700,6 +708,23 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
   BindAction(Button,EAnomaliaInventoryAction::CollectNearby,0,0,Index);
  }
  if(NearbyPickups.IsEmpty())Label(TEXT("Vide"));
+ NearbyDog.Reset();float DogDistance=1500.f;
+ if(User)for(TActorIterator<AAnomaliaDogCompanion> It(GetWorld());It;++It)
+  if(It->SurvivorOwner==User&&It->GetDistanceTo(User)<DogDistance){NearbyDog=*It;DogDistance=It->GetDistanceTo(User);}
+ if(auto* Dog=NearbyDog.Get())
+ {
+  Label(FString::Printf(TEXT("BERGER ALLEMAND · %.0f %%"),Dog->Health));
+  if(auto* Icon=QueueIcon(TEXT("companion_dog"),Dog->GetMesh(),Dog->GetPathName()))
+   ProximityList->AddChildToVerticalBox(Thumbnail(Icon,90))->SetHorizontalAlignment(HAlign_Center);
+  auto* Commands=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());ProximityList->AddChildToVerticalBox(Commands);
+  for(const auto Value:{EAnomaliaDogCommand::Follow,EAnomaliaDogCommand::Stay})
+  {
+   auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+   auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Value==EAnomaliaDogCommand::Follow?TEXT("Suivre"):TEXT("Pas bouger")));
+   auto Font=Text->GetFont();Font.Size=12;Text->SetFont(Font);Button->SetContent(Text);StyleButton(Button,Dog->Command==Value);
+   Commands->AddChildToHorizontalBox(Button)->SetPadding(FMargin(2));BindAction(Button,EAnomaliaInventoryAction::DogCommand,0,int32(Value));
+  }
+ }
  if(!NearbyVehicle)return;
  Label(TEXT("VÉHICULE / COFFRE"));
  const auto* Systems=NearbyVehicle->SurvivalSystems.Get();const auto& State=Systems->State;

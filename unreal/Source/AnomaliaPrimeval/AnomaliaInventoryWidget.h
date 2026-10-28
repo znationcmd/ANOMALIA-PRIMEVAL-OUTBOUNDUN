@@ -15,6 +15,7 @@ class APlayerController;
 class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
 class AAnomaliaLootPickup;
+class AAnomaliaDogCompanion;
 class ASceneCapture2D;
 class UTextureRenderTarget2D;
 class UPrimitiveComponent;
@@ -40,7 +41,8 @@ enum class EAnomaliaInventoryAction : uint8
     CraftRecipe,
     ToggleContainer,
     StowInContainer,
-    CollectNearby
+    CollectNearby,
+    DogCommand
 };
 
 UCLASS()
@@ -180,6 +182,7 @@ private:
     UPROPERTY() TObjectPtr<UVerticalBox> ProximityList;
     UPROPERTY() TObjectPtr<AAnomaliaChaosRoadVehicle> NearbyVehicle;
     UPROPERTY() TArray<TObjectPtr<AAnomaliaLootPickup>> NearbyPickups;
+    TWeakObjectPtr<AAnomaliaDogCompanion> NearbyDog;
     float ProximityElapsed=0;
     FString ProximitySignature;
     TArray<AAnomaliaLootPickup*> FindNearbyPickups() const;
