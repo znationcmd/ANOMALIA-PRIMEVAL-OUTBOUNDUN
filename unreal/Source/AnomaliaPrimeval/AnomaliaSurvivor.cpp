@@ -77,7 +77,13 @@ bool AAnomaliaSurvivor::SetClothingMesh(FName Slot, USkeletalMesh* MeshAsset)
     // Never silently apply a mesh with a different bone hierarchy.
     if (MeshAsset && (!GetMesh() || !GetMesh()->GetSkeletalMeshAsset() ||
         MeshAsset->GetSkeleton() != GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())) return false;
+    if(!MeshAsset&&HasAuthority()&&GetWorld()&&GetWorld()->IsGameWorld()&&InventoryComponent&&!InventoryComponent->CanRemoveWornStorage(Slot))
+    {
+        InventoryComponent->UseMessage=TEXT("Videz le rangement du vêtement avant de le retirer.");
+        InventoryComponent->OnInventoryUpdated.Broadcast();return false;
+    }
     Target->SetSkeletalMeshAsset(MeshAsset);
+    if(HasAuthority()&&InventoryComponent)InventoryComponent->SynchronizeWornStorage();
     return true;
 }
 
@@ -434,3 +440,4 @@ void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVe
     InventoryComponent->UseMessage=Accepted?TEXT("Échange véhicule enregistré."):Error.IsEmpty()?TEXT("Action véhicule indisponible."):Error;
     InventoryComponent->OnInventoryUpdated.Broadcast();ForceNetUpdate();
 }
+
