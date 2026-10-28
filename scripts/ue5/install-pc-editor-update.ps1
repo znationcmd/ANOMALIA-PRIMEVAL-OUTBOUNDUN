@@ -40,13 +40,22 @@ try {
     }
     $versions = Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
     $target = Join-Path $versions $Commit
+    $baseVersion=$null
+    $installedActivePath=Join-Path $base 'active.json'
+    if(Test-Path -LiteralPath $installedActivePath){
+        $installedActive=Get-Content -LiteralPath $installedActivePath -Raw|ConvertFrom-Json
+        if($installedActive.project){
+            $candidateBase=[IO.Path]::GetFullPath((Split-Path ([string]$installedActive.project) -Parent))
+            $versionsFull=[IO.Path]::GetFullPath($versions)
+            if($candidateBase.StartsWith($versionsFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $candidateBase -PathType Container)){$baseVersion=$candidateBase}
+        }
+    }
     $critical = @('AnomaliaPrimeval.uproject','Binaries/Win64/UnrealEditor-AnomaliaPrimeval.dll',('Content/'+$MapPackage.Substring(6)+'.umap'),'Config/DefaultEngine.ini')
     if (-not (Test-Path -LiteralPath $target)) {
         $stage = Join-Path $versions ('.staging-' + [Guid]::NewGuid().ToString('N'))
-        New-Item -ItemType Directory -Path $stage | Out-Null
-        & robocopy.exe $source $stage /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /XD Saved Intermediate DerivedDataCache .vs /NFL /NDL /NJH /NJS | Out-Null
-        $copyExit = $LASTEXITCODE
-        if ($copyExit -gt 7) { throw "Project copy failed: robocopy $copyExit" }
+        . (Join-Path $SourceRoot 'scripts/ue5/differential-version-store.ps1')
+        $diff=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $source -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Intermediate','DerivedDataCache','.vs')
+        $report.differentialInstall=$diff
         foreach ($relative in $critical) {
             $from=Join-Path $source $relative;$to=Join-Path $stage $relative
             if (-not (Test-Path -LiteralPath $from) -or -not (Test-Path -LiteralPath $to)) { throw "Missing required project file: $relative" }
