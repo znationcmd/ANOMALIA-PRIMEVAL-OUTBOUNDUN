@@ -146,7 +146,7 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto Tab=[&](FName Name,const FString& Label){auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),Name);B->SetContent(Text(Label,15));StyleButton(B);auto* Slot=Top->AddChildToHorizontalBox(B);Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));return B;};
     InventoryTab=Tab(TEXT("InventoryTab"),TEXT("ÉQUIPEMENT"));InventoryTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowInventoryTab);
     CraftTab=Tab(TEXT("CraftTab"),TEXT("CRAFT"));CraftTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowCraftTab);
-    BankTab=Tab(TEXT("BankTab"),TEXT("€"));BankTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowBankTab);
+    BankTab=Tab(TEXT("BankTab"),TEXT("COMPTE"));BankTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowBankTab);
     CloseButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("InventoryClose"));CloseButton->SetContent(Text(TEXT("×"),22));StyleButton(CloseButton);CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
     auto* CloseSlot=RootCanvas->AddChildToCanvas(CloseButton);CloseSlot->SetAnchors(FAnchors(.965f,.025f,.99f,.07f));CloseSlot->SetOffsets(FMargin(0));
 
@@ -173,8 +173,16 @@ void UAnomaliaInventoryWidget::BuildLayout()
     NextPageButton->SetContent(Text(TEXT("›")));StyleButton(NextPageButton);NextPageButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::NextPage);Pages->AddChildToHorizontalBox(NextPageButton);
 
     BankPanel=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("BankPanel"));Full(BankPanel);
-    BankPanel->AddChildToVerticalBox(Text(TEXT("COMPTE & TRANSFERTS"),17))->SetPadding(FMargin(0,0,0,10));
-    BankStatus=Text(TEXT(""));BankPanel->AddChildToVerticalBox(BankStatus)->SetPadding(FMargin(0,0,0,16));
+    auto* AccountTitle=Text(TEXT("COMPTE DE SURVIVANT"),19);
+    auto AccountTitleFont=AccountTitle->GetFont();AccountTitleFont.TypefaceFontName=TEXT("Bold");AccountTitle->SetFont(AccountTitleFont);
+    BankPanel->AddChildToVerticalBox(AccountTitle)->SetPadding(FMargin(0,0,0,8));
+    auto* AccountCard=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("BankAccountCard"));
+    AccountCard->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.08f,.09f,.10f,.92f),0.f,FLinearColor(.42f,.31f,.18f,.78f),1.f,FVector2D(14,14)));
+    AccountCard->SetPadding(FMargin(16));
+    BankStatus=Text(TEXT(""));BankStatus->SetJustification(ETextJustify::Center);
+    auto AccountBalanceFont=BankStatus->GetFont();AccountBalanceFont.Size=17;AccountBalanceFont.TypefaceFontName=TEXT("Bold");BankStatus->SetFont(AccountBalanceFont);
+    AccountCard->SetContent(BankStatus);BankPanel->AddChildToVerticalBox(AccountCard)->SetPadding(FMargin(0,0,0,16));
+    BankPanel->AddChildToVerticalBox(Text(TEXT("TRANSFERT ENTRE SURVIVANTS"),14))->SetPadding(FMargin(0,0,0,5));
     BankRecipient=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("BankRecipient"));BankRecipient->SetHintText(FText::FromString(TEXT("Compte destinataire")));BankPanel->AddChildToVerticalBox(BankRecipient)->SetPadding(FMargin(0,5));
     BankAmount=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("BankAmount"));BankAmount->SetHintText(FText::FromString(TEXT("Montant EUR : 10,50")));BankPanel->AddChildToVerticalBox(BankAmount)->SetPadding(FMargin(0,5));
     TransferButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("BankTransfer"));TransferButton->SetContent(Text(TEXT("TRANSFÉRER")));StyleButton(TransferButton);TransferButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::TransferMoney);BankPanel->AddChildToVerticalBox(TransferButton)->SetPadding(FMargin(0,5));
@@ -922,14 +930,29 @@ void UAnomaliaInventoryWidget::RefreshCrafting()
         Card->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.055f,.055f,.055f,.6f),0.f,FLinearColor(.3f,.3f,.3f,.3f),0.f,FVector2D(16,16)));Card->SetPadding(FMargin(12));
         CraftList->AddChildToVerticalBox(Card)->SetPadding(FMargin(0,0,0,12));
         auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Card->SetContent(Content);
-        auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Title->SetText(FText::FromString(Recipe.Label));auto Font=Title->GetFont();Font.Size=18;Font.TypefaceFontName=TEXT("Bold");Title->SetFont(Font);Content->AddChildToVerticalBox(Title)->SetPadding(FMargin(0,0,0,8));
-        FString Cost;TArray<FName> Keys;Recipe.Materials.GetKeys(Keys);Keys.Sort(FNameLexicalLess());
+        auto* TitleRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+        if(auto* OutputIcon=ItemIcon(Recipe.Output))
+            TitleRow->AddChildToHorizontalBox(Thumbnail(OutputIcon,64))->SetPadding(FMargin(0,0,10,0));
+        auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Title->SetText(FText::FromString(Recipe.Label));auto Font=Title->GetFont();Font.Size=18;Font.TypefaceFontName=TEXT("Bold");Title->SetFont(Font);TitleRow->AddChildToHorizontalBox(Title)->SetVerticalAlignment(VAlign_Center);
+        Content->AddChildToVerticalBox(TitleRow)->SetPadding(FMargin(0,0,0,8));
+        TArray<FName> Keys;Recipe.Materials.GetKeys(Keys);Keys.Sort(FNameLexicalLess());
+        auto* Materials=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());Materials->SetExplicitWrapSize(true);
+        Materials->SetWrapSize(UWidgetLayoutLibrary::GetViewportSize(this).X/FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this))*.24f);
         for(const auto Key:Keys)
         {
             int32 Have=0;for(const auto& S:Inventory->Stacks)if(S.ItemId==Key&&!Inventory->IsRecoveryContainer(S.ContainerId))Have+=S.Count;
-            if(!Cost.IsEmpty())Cost+=TEXT("\n");Cost+=FString::Printf(TEXT("%s  %d / %d"),*Inventory->GetItemDisplayName(Key),Have,Recipe.Materials[Key]);
+            auto* MaterialCard=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+            MaterialCard->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.11f,.12f,.13f,.82f),0.f,FLinearColor(.26f,.28f,.30f,.8f),1.f,FVector2D(8,8)));
+            MaterialCard->SetPadding(FMargin(7));
+            auto* MaterialRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+            if(auto* MaterialIcon=ItemIcon(Key))MaterialRow->AddChildToHorizontalBox(Thumbnail(MaterialIcon,42))->SetPadding(FMargin(0,0,5,0));
+            auto* MaterialLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            MaterialLabel->SetText(FText::FromString(FString::Printf(TEXT("%s  %d/%d"),*Inventory->GetItemDisplayName(Key),Have,Recipe.Materials[Key])));
+            auto Small=MaterialLabel->GetFont();Small.Size=12;MaterialLabel->SetFont(Small);MaterialLabel->SetAutoWrapText(true);
+            MaterialRow->AddChildToHorizontalBox(MaterialLabel)->SetVerticalAlignment(VAlign_Center);MaterialCard->SetContent(MaterialRow);
+            Materials->AddChildToWrapBox(MaterialCard)->SetPadding(FMargin(0,0,6,6));
         }
-        auto* Ingredients=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Ingredients->SetText(FText::FromString(Cost));auto Small=Ingredients->GetFont();Small.Size=13;Ingredients->SetFont(Small);Content->AddChildToVerticalBox(Ingredients)->SetPadding(FMargin(0,0,0,10));
+        Content->AddChildToVerticalBox(Materials)->SetPadding(FMargin(0,0,0,10));
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("CraftRecipe_")+Recipe.Id.ToString()+TEXT("_action")))));
         auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(TEXT("FABRIQUER")));Label->SetFont(Small);Button->SetContent(Label);
         Button->SetToolTipText(FText::FromString(TEXT("Fabriquer : ")+Recipe.Label));Button->SetIsEnabled(Inventory->HasCraftMaterials(Recipe.Id));Content->AddChildToVerticalBox(Button);
