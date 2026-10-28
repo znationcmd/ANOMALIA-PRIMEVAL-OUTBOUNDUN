@@ -61,7 +61,8 @@ jobs:
               if($started.HasExited -and $newProcesses.Count -eq 0){break}
             }
             if($null -eq $proc -and $newProcesses.Count -gt 0){$proc=$newProcesses[0]}
-            $result=@{name=$t.name;shortcutExists=$true;targetExists=$true;targetVersion=$exe.VersionInfo.FileVersion;updateMetadataPresent=(Test-Path -LiteralPath $updateConfig);processStarted=($newProcesses.Count -gt 0);windowVisible=$visible;seconds=[int]((Get-Date)-$start).TotalSeconds}
+            $windowTitle='';if($null -ne $proc){$windowTitle=[string]$proc.MainWindowTitle}
+            $result=@{name=$t.name;shortcutExists=$true;targetExists=$true;targetVersion=$exe.VersionInfo.FileVersion;updateMetadataPresent=(Test-Path -LiteralPath $updateConfig);processStarted=($newProcesses.Count -gt 0);windowVisible=$visible;windowTitle=$windowTitle;processCount=$newProcesses.Count;seconds=[int]((Get-Date)-$start).TotalSeconds}
             if($newProcesses.Count -gt 0){
               foreach($candidate in $newProcesses){try{$null=$candidate.CloseMainWindow()}catch{}}
               Start-Sleep -Seconds 3
