@@ -31,6 +31,19 @@ try {
     if([AnomaliaDifferential.Native]::GetHardLinkCount((Join-Path $stage 'keep.txt')) -lt 2){throw 'Unchanged file is not shared as a hard link.'}
     $activeAfter=Get-Content $pointer -Raw|ConvertFrom-Json
     if($activeAfter.version -ne 'base' -or $activeAfter.path -ne $base){throw 'Stage creation changed the active pointer.'}
+    $next=Join-Path $root 'active-next.json'
+    @{version='candidate';path=$stage}|ConvertTo-Json|Set-Content -LiteralPath $next -Encoding UTF8
+    [IO.File]::Replace($next,$pointer,(Join-Path $root 'active-base.json'))
+    $activeCandidate=Get-Content $pointer -Raw|ConvertFrom-Json
+    if($activeCandidate.version -ne 'candidate' -or $activeCandidate.path -ne $stage){throw 'Atomic candidate activation failed.'}
+    if((Get-Content (Join-Path $base 'change.txt') -Raw) -ne 'old bytes' -or !(Test-Path (Join-Path $base 'obsolete.txt'))){throw 'Candidate activation mutated the rollback snapshot.'}
+    $rollback=Join-Path $root 'active-rollback.json'
+    @{version='base';path=$base}|ConvertTo-Json|Set-Content -LiteralPath $rollback -Encoding UTF8
+    [IO.File]::Replace($rollback,$pointer,(Join-Path $root 'active-candidate.json'))
+    $activeRollback=Get-Content $pointer -Raw|ConvertFrom-Json
+    if($activeRollback.version -ne 'base' -or $activeRollback.path -ne $base){throw 'Atomic rollback pointer restoration failed.'}
+    if((Get-Content (Join-Path $stage 'change.txt') -Raw) -ne 'new bytes'){throw 'Rollback damaged the staged candidate.'}
+    $result|Add-Member -NotePropertyName 'atomicActivationAndRollback' -NotePropertyValue 'passed'
     Write-Output ($result|ConvertTo-Json -Compress)
     Write-Output 'DIFFERENTIAL INSTALLER TESTS PASSED'
 } finally {
