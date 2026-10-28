@@ -1,0 +1,45 @@
+name: ANOMALIA expose verified Survival test launcher
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-survival-playtest-launcher.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  launcher:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify successful saved test then create one new desktop launcher
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const dir='C:\\ANOMALIA-Validation\\Reports\\survival-playtest-40658680443';
+          const r=JSON.parse(fs.readFileSync(path.join(dir,'result/report.json'),'utf8'));
+          if(r.state!=='SURVIVAL_PLAYTEST_PROFILE_RELOAD_AND_PIE_PASSED_NOT_UI_NETWORK_ACCEPTANCE'||!r.nativeGameModeLoadedSeededInventory||r.nativeProfileReloadAppleCount!==1)throw Error('Accepted original runtime proof missing');
+          const project='C:\\ANOMALIA-Validation\\c40543166274\\unreal\\AnomaliaPrimeval.uproject',editor='C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe';
+          for(const p of [project,editor])if(!fs.existsSync(p))throw Error('Missing '+p);
+          const root=path.dirname(project);
+          for(const [asset,ext]of [[r.playtestMap,'.umap'],[r.playtestPawn,'.uasset'],[r.playtestGameMode,'.uasset']]){if(!/^\/Game\/Anomalia\/CharacterTests\/SurvivalPlayable_40658680443\/[A-Za-z_]+$/.test(asset))throw Error('Unexpected asset');const file=path.join(root,'Content',asset.slice(6)+ext);if(!fs.existsSync(file))throw Error('Missing saved asset '+file);}
+          if(r.serverScope!=='survival-playtest-40658680443')throw Error('Unexpected profile');
+          const desktop=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"[Environment]::GetFolderPath('Desktop')"],{encoding:'utf8',timeout:15000}).stdout.trim();
+          if(!desktop||!fs.statSync(desktop).isDirectory())throw Error('Desktop unavailable');
+          const launcher=path.join(desktop,'ANOMALIA_Test_Survival_20261028_'+process.env.GITHUB_RUN_ID+'.cmd');
+          const text='@echo off\r\nstart "" "'+editor+'" "'+project+'" "'+r.playtestMap+'?AnomaliaServerId='+r.serverScope+'" -game -d3d11 -sm5 -windowed -ResX=1280 -ResY=720\r\n';
+          fs.writeFileSync(launcher,text,{flag:'wx'});
+          if(fs.readFileSync(launcher,'utf8')!==text)throw Error('Launcher readback mismatch');
+          const output=path.join('C:\\ANOMALIA-Validation\\Reports','survival-launcher-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(output,{recursive:false});fs.appendFileSync(process.env.GITHUB_ENV,'SURVIVAL_LAUNCHER_OUTPUT='+output+'\n');
+          const receipt={state:'NEW_PLAYTEST_LAUNCHER_CREATED_AND_READ_BACK_NOT_INTERACTIVELY_LAUNCHED',launcher,project,map:r.playtestMap,serverScope:r.serverScope,verifiedRuntimeRun:40658680443,existingShortcutsReplaced:false,installedProjectModified:false};
+          fs.writeFileSync(path.join(output,'launcher-receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: survival-playtest-launcher-receipt
+          path: ${{ env.SURVIVAL_LAUNCHER_OUTPUT }}
+          if-no-files-found: warn
