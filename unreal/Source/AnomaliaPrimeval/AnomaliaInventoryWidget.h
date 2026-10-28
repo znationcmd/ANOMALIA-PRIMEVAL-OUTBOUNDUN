@@ -10,6 +10,7 @@ class UVerticalBox;
 class UButton;
 class UTextBlock;
 class UEditableTextBox;
+class ACameraActor;
 class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
 struct FAnomaliaInventoryStack;
@@ -25,7 +26,8 @@ enum class EAnomaliaInventoryAction : uint8
     WithdrawNote,
     Stow,
     Rotate,
-    VehicleService
+    VehicleService,
+    SelectStack
 };
 
 UCLASS()
@@ -47,7 +49,7 @@ public:
     void Execute();
 };
 
-/** Native UMG inventory panel. It is a functional first interface pass, not a 3D character paper-doll. */
+/** Native inventory: proximity, live equipped survivor and spatial storage grids. */
 UCLASS()
 class ANOMALIAPRIMEVAL_API UAnomaliaInventoryWidget : public UUserWidget
 {
@@ -75,6 +77,29 @@ private:
 
     UPROPERTY()
     TObjectPtr<UVerticalBox> ItemList;
+
+    UPROPERTY() TObjectPtr<UVerticalBox> DetailsList;
+    UPROPERTY() TObjectPtr<UVerticalBox> HandsList;
+    UPROPERTY() TObjectPtr<UVerticalBox> EquipmentList;
+    UPROPERTY() TObjectPtr<UVerticalBox> BankPanel;
+    UPROPERTY() TObjectPtr<UVerticalBox> BankWithdrawals;
+    UPROPERTY() TObjectPtr<UVerticalBox> StoragePanel;
+    UPROPERTY() TObjectPtr<UCanvasPanel> ActiveGrid;
+    UPROPERTY() TObjectPtr<ACameraActor> PreviewCamera;
+    UPROPERTY() TObjectPtr<AActor> PreviousViewTarget;
+    UPROPERTY() TObjectPtr<UTextBlock> WeightStatus;
+    UPROPERTY() TObjectPtr<UButton> InventoryTab;
+    UPROPERTY() TObjectPtr<UButton> BankTab;
+    int32 SelectedStackId=0;
+    float GridCellSize=36.f;
+    bool bBankTab=false;
+    void BeginCharacterView();
+    void EndCharacterView();
+    void RefreshEquipment();
+    void AddGridStack(const FAnomaliaInventoryStack& Stack);
+    void StyleButton(UButton* Button,bool bSelected=false);
+    UFUNCTION() void ShowInventoryTab();
+    UFUNCTION() void ShowBankTab();
 
     UPROPERTY()
     TArray<TObjectPtr<UAnomaliaInventoryActionRelay>> ActionRelays;
@@ -112,3 +137,4 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
