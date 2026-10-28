@@ -71,3 +71,26 @@ Sa syntaxe Python a été vérifiée. Son exécution Unreal n'a PAS eu lieu : le
 Le contrôle léger précédent 40652279470 avait mesuré davantage de marge, mais la vérification juste avant lancement fait autorité. Le garde-fou a évité de reproduire le crash mémoire/pagination. Les essais de marche, course, saut, accroupissement, inventaire et équipement en PIE restent à passer.
 
 Une correction candidate de masse du coffre E39 est également versionnée dans cette branche native commune (commit e36f83420a8c6bd3a4147169e5ec7253755c8048), avec reçu de préparation et workflow de compilation/test dédiés. Le run 40652769294 a été bloqué avant compilation par la réserve disque. Les 26 succès natifs historiques portent sur le code précédemment compilé et ne valident PAS ce nouveau correctif.
+
+
+## Validation réelle du 28 octobre 2026 — résultats désormais compilés
+
+Les blocages et échecs précédents ci-dessus restent historiques. Après récupération de mémoire, compilation incrémentale réelle **Editor et Game réussie** avec Unreal 5.8.3 : [run 40654988106](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40654988106), artefact 12801262040. Le correctif natif testé est e36f83420a8c6bd3a4147169e5ec7253755c8048 ; les trois fichiers sont contrôlés par empreinte avant le test. Le stamp de build conservé pour le cache est 3d044d6de6108eb99dc15a597920828e6dab79f5 : il ne représente pas à lui seul les sources du correctif ; consulter source-patch-receipt.json et build-provenance.json.
+
+[Run physique 40655809703](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40655809703) : **26 tests natifs réussis, 64 contrôles physiques réussis, 313 échantillons physiques**, état CHAOS_ROAD_PHYSICS_DRIVE_PASSED. Le dépôt/retrait de cargaison modifie et restaure la masse réelle ; une notification répétée n'accumule pas la masse. Les six ouvrants, collisions/verrouillage, batterie dans le coffre, radiateur/bougie sous le capot, clé physique, inventaire conservé entrée/sortie, roues/suspension Chaos, transmission manuelle, éclairage, carburant et freinage ont été exercés. Distances de freinage mesurées : 13,35 m à 50,61 km/h, 30,87 m à 80,32 km/h sur adhérence 0,9 ; 56,87 m à 80,04 km/h sur adhérence 0,45. Ce sont des mesures de la scène de test, pas une certification automobile.
+
+Artefact 12802022147 : accepted-run.json, drive-report.json, journaux natifs/physiques, provenance et captures réelles. La capture coffre ouvert a été inspectée : coffre levé visible, intérieur très sombre. La finition visuelle du coffre/cockpit reste à examiner ; aucun remodelage de la géométrie v7 dans cette correction.
+
+**Portée : copie de validation C:\ANOMALIA-Validation\c40543166274\unreal**, carte /Game/Anomalia/CharacterTests/E39Resume_40587487588/ANOMALIA_E39DriveReview_v1. Aucun nouveau DLL déployé dans C:\ANOMALIA\unreal. Pas de jeu packagé, multijoueur ni animation d'entrée validés. Deux avertissements d'API SetBase/GetMovementBase restent à traiter ; les journaux comportent aussi des erreurs génériques d'automatisation au démarrage GPU non résolues, malgré les rapports structurés réussis. Aucun merge.
+
+## Survival : première session PIE réussie
+
+[Run 40656105121](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40656105121), artefact 12800919597, état SINGLE_PLAYER_PIE_API_CHECKS_PASSED_NOT_FULL_GAMEPLAY_ACCEPTANCE. Monde PIE transitoire réel, Survival possédé, caméra active et instance ABP_Quinn du pack.
+
+- Marche observée 449,98 cm/s ; course 679,95 cm/s ; endurance 100 → 80,485.
+- Capsule accroupie 88 → 60 cm puis retour debout ; saut 89,92 cm et atterrissage.
+- Mouvement réel d'os : déplacement maximal main 67,68 cm.
+- Ajout/retrait d'une pomme dans l'inventaire natif ; poids 0 → 0,15 kg.
+- Retrait puis remise de veste par API natif réussis ; cinq vêtements présents dans la scène de test.
+
+Entrées automatisées par API du pawn/composants : clavier physique et UI d'inventaire non testés. Cet essai ne teste ni sauvegarde/reconnexion ni multijoueur. Le script create_anomalia_survival_playtest.py et son workflow préparent une carte persistante avec nouveau pawn, GameMode natif et profil séparé ; son résultat doit être consigné séparément après exécution. La persistance des choix de vêtements par joueur, leur équipement depuis l'inventaire/UI et leur réplication restent à développer/valider. Manny et Quinn restent disponibles ; Quantum n'a pas d'AnimBP compatible validé et n'est pas annoncé jouable.
