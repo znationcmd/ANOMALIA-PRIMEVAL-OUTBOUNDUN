@@ -666,7 +666,10 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
   auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
   auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
   Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Pickup->ItemId),Pickup->Count)));
-  Text->SetAutoWrapText(true);Button->SetContent(Text);
+  Text->SetAutoWrapText(true);
+  auto* Row=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Button->SetContent(Row);
+  if(auto* Icon=ItemIcon(Pickup->ItemId))Row->AddChildToHorizontalBox(Thumbnail(Icon,54))->SetPadding(FMargin(0,0,10,0));
+  auto* Caption=Row->AddChildToHorizontalBox(Text);Caption->SetSize(FSlateChildSize(ESlateSizeRule::Fill));Caption->SetVerticalAlignment(VAlign_Center);
   Button->SetToolTipText(FText::FromString(TEXT("Prendre")));
   ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8,4));
   BindAction(Button,EAnomaliaInventoryAction::CollectNearby,0,0,Index);
