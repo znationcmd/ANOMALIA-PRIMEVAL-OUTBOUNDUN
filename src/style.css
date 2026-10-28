@@ -14,3 +14,75 @@
 
 /* ANOMALIA original CMD emblem: startup and Windows branding */
 .anomalia-brand-emblem{width:112px;height:112px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 0 28px #ab45ff80,0 0 7px #61a9ff;}
+
+/* Inventory pass: DayZ-inspired screen geometry, direct storage reads from the existing state. */
+#panel.inventory-mode{left:1.5vw;right:1.5vw;top:2vh;bottom:2vh;width:auto;max-width:none;max-height:none;padding:48px 1vw 8px;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
+.inventory-mode .panel-head{position:absolute;right:1.1vw;top:5px;z-index:30;border:0;padding:0}
+.inventory-mode .panel-head h2{display:none}
+.inventory-mode .panel-head button{width:38px;height:34px;padding:0!important;background:#27394bdd!important;border:1px solid #a7b6bf55!important;color:#f4f7fa;font-size:18px!important}
+.inventory-mode #panelBody{display:flex;flex-direction:column;gap:6px;overflow:hidden;padding:0;min-height:0}
+.inventory-tabs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));width:min(40%,560px);margin:0 0 0 auto;gap:2px;flex:none;background:#24365ac9;border-bottom:3px solid #203a78;padding:3px}
+.inventory-tabs button{border:0!important;border-radius:0!important;background:#31487ecc!important;color:#e4e8ee;font-size:13px!important;text-transform:uppercase;letter-spacing:.03em;padding:10px 8px!important}
+.inventory-tabs button.active{background:#657db6!important;color:#fff;box-shadow:inset 0 -2px #d8e2ff!important}
+.inventory-tabs .carry{display:none}
+.survival-inventory{grid-template-columns:minmax(190px,.78fr) minmax(250px,1.2fr) minmax(360px,1.35fr);gap:8px;overflow:hidden;flex:1;min-height:0}
+.survival-inventory>section{background:linear-gradient(180deg,#263553a8,#151d32b8);border:1px solid #9caec044;scrollbar-color:#9aa8c1 #283147;scrollbar-width:thin}
+.inventory-mode h3{background:linear-gradient(90deg,#657ba5ce,#3c4c70bd);color:#f0f2f7;letter-spacing:.035em;font-size:12px}
+.vicinity>h3,.equipment-column>h3,.survivor-column>h3{position:sticky;top:0;z-index:4}
+.vicinity-tools{position:sticky;top:32px;z-index:3;display:flex;gap:3px;padding:5px;background:#1d2b47ed;border-bottom:1px solid #b9c5d52b}
+.vicinity-tools input,.vicinity-tools select{min-width:0;width:0;flex:1;height:28px;background:#17223a;color:#ecf0f8;border:1px solid #7888a333;padding:4px 6px;font:11px system-ui}
+.vicinity-tools button{min-width:28px;padding:2px 5px!important;font-size:14px!important;background:#465777!important}
+.ground-grid{grid-template-columns:repeat(3,minmax(54px,1fr));gap:3px;padding:5px}
+.ground-item{min-height:68px;background:#50638477!important;border:1px solid #b0bfd433!important}
+.cargo-item{background:#586b8d73!important;border-color:#c1cbe02d!important;border-radius:0!important}
+.cargo-item.selected{background:#a1b4d14d!important;border-color:#ecf0ff!important;box-shadow:inset 0 0 0 1px #eef3ff44!important}
+.item-icon{color:#d0d5df;fill:#8493ab;stroke:#e3e8f1;filter:drop-shadow(1px 2px 2px #101827)}
+.cargo-name{font-size:9px;color:#f0f2f6}
+.cargo-item b{color:#fff}
+.survivor-column{position:relative;display:flex;flex-direction:column;align-items:stretch;overflow:hidden!important;background:linear-gradient(180deg,#26355275,#111a2b78)!important}
+.cash-display{align-self:center;z-index:2;display:flex;flex-direction:column;align-items:center;margin:6px 0 0;padding:4px 15px;background:#283957bb;border:1px solid #c9d4e033;color:#f3f5fa;text-shadow:0 2px 5px #000;font:700 13px system-ui;letter-spacing:.06em}
+.cash-display small{font-size:9px;font-weight:600;color:#e0e5ef}
+.cash-display b{font-size:17px}
+#survivorPreview{min-height:110px;flex:1;background:radial-gradient(ellipse at 50% 75%,#d4deec25,transparent 68%);cursor:ew-resize}
+.preview-hint,.inventory-tip{display:none!important}
+.hands-panel{margin:5px 7px 0;background:#2b3b5b88}
+.hands-panel h3{position:static!important;text-align:center;background:#a0abc0c9;color:#101b2e;font-size:11px}
+.hands-drop{height:74px;background:#171e30aa;border:1px solid #c6ccda44;color:#adb8cb}
+.hands-item{background:#222d47!important}
+.survivor-stats{margin:0 9px;padding-top:5px}
+.survivor-stats>div{color:#e1e5ed;grid-template-columns:65px 1fr 23px}
+.survivor-stats meter{accent-color:#9aa9d0}
+.inventory-subtabs{display:flex;gap:4px;padding:5px 8px}
+.inventory-subtabs button{flex:1;background:#344568!important}
+.equipment-column{display:flex;flex-direction:column;overflow:auto!important;padding-bottom:4px}
+.equipment-slots{position:sticky;top:31px;z-index:3;grid-template-columns:repeat(6,minmax(0,1fr));gap:2px;padding:5px;background:#263653f0;border-bottom:2px solid #8fa3c333}
+.equipment-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;min-width:0;min-height:64px;padding:3px;background:#4c5e7b66;border:1px solid #c6cedb2a}
+.equipment-card>span{order:2;display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:center;text-transform:uppercase;color:#d6dce7;font-size:8px;line-height:1.2}
+.equipment-card>b{order:1;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:8px;color:#f2f4f8}
+.equipment-card .item-icon{order:0;width:26px;height:28px}
+.equipment-card>button{position:absolute;right:1px;top:1px;z-index:2;grid-column:auto;width:15px;height:15px;padding:0!important;border:0!important;background:#15213a!important;font-size:10px!important;line-height:1}
+.cargo-container{margin:6px 5px}
+.cargo-container h3{padding:7px 8px;text-transform:uppercase;background:#65779dbb}
+.cargo-container h3 small{font-size:10px;color:#f1f2f6}
+.cargo-grid{grid-template-rows:repeat(var(--rows),36px);gap:1px;background:#1b2741d9;border:1px solid #afb9d32c;padding:2px}
+.cargo-cell{background:#53648440;border-color:#dae0ed24}
+.item-details{width:39%;margin:5px 0 0 28%;background:#273653c9;border:1px solid #aebbd144;min-height:44px}
+.inventory-quickbar{width:39%;margin-left:28%;padding-top:3px}
+.inventory-quickbar>button{height:47px;background:#263753bb!important}
+.inventory-quickbar .item-icon{width:22px;height:23px}
+.vicinity .nearby-site{margin:6px;background:#26365399;border-color:#a9b9d633}
+.vicinity .nearby-site p{display:none}
+.vicinity .nearby-site button{width:100%;background:#536a97!important}
+.currency-grid,.survival-detail,.creature-grid,.crafting-grid{width:min(40%,560px);margin:0 0 0 auto;overflow:auto;background:linear-gradient(180deg,#263553e8,#151d32ed);border:1px solid #afbdd244;padding:10px;color:#eff2f7}
+.currency-grid header{display:flex;flex-direction:column;align-items:center;padding:24px 8px;background:#344a72}
+.currency-grid header small{font-size:12px;letter-spacing:.12em}
+.currency-grid header b{font-size:30px}
+.currency-grid>div,.currency-grid li{display:flex;justify-content:space-between;padding:9px 4px;border-bottom:1px solid #dce2ef22}
+.currency-grid h3{margin-top:14px}
+.currency-grid ul{list-style:none;margin:0;padding:0}
+.currency-grid p{color:#cbd3e2;font-size:12px}
+.inventory-mode:has(.currency-grid) .item-details,.inventory-mode:has(.currency-grid) .inventory-quickbar,.inventory-mode:has(.crafting-grid) .item-details,.inventory-mode:has(.crafting-grid) .inventory-quickbar,.inventory-mode:has(.survival-detail) .item-details,.inventory-mode:has(.survival-detail) .inventory-quickbar,.inventory-mode:has(.creature-grid) .item-details,.inventory-mode:has(.creature-grid) .inventory-quickbar{display:none}
+.inventory-mode .crafting-grid{display:grid;grid-template-columns:1fr;align-content:start;gap:5px}
+@media(max-width:1000px){.survival-inventory{grid-template-columns:minmax(145px,.7fr) minmax(190px,1fr) minmax(280px,1.25fr);gap:5px}.equipment-slots{grid-template-columns:repeat(3,minmax(0,1fr))}.equipment-card{min-height:58px}}
+@media(max-width:700px){#panel.inventory-mode{left:1vw;right:1vw;top:1vh;bottom:1vh;padding:42px 1vw 5px}.inventory-tabs{width:100%;margin:0}.survival-inventory{grid-template-columns:.7fr 1fr 1fr}.inventory-mode .survival-inventory>section{padding:0}.inventory-mode .cargo-grid{grid-template-columns:repeat(var(--cols),minmax(17px,1fr))}.equipment-slots{grid-template-columns:repeat(2,minmax(0,1fr))}.equipment-card{min-height:51px}.item-details,.inventory-quickbar{width:100%;margin-left:0}.cash-display{margin-top:3px;padding:2px 8px}.cash-display b{font-size:13px}.inventory-mode .item-details{gap:2px;padding:4px;font-size:9px}.inventory-mode .item-details button{padding:4px!important;font-size:9px!important}}
+@media(max-width:520px){.survival-inventory{grid-template-columns:minmax(110px,.8fr) minmax(120px,.9fr) minmax(165px,1.2fr)}.survivor-stats>div{grid-template-columns:43px 1fr 20px;font-size:8px}.ground-grid{grid-template-columns:repeat(2,minmax(45px,1fr))}.vicinity-tools select{display:none}}
