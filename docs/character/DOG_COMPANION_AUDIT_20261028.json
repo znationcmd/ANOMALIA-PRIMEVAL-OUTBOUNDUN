@@ -1,0 +1,53 @@
+{
+  "date": "2026-10-28",
+  "state": "BLOCKED_NO_LOCAL_DOG_MODEL_CONFIRMED",
+  "requested": {
+    "orders": [
+      "sit",
+      "stay",
+      "lie_down",
+      "attack",
+      "follow"
+    ],
+    "mortality": "never dies; injuries only",
+    "breeds": "selection from verified compatible installed models",
+    "equipment": "real visible compatible gear"
+  },
+  "implemented": false,
+  "localAudits": [
+    40709829529,
+    40710478697,
+    40714643788
+  ],
+  "checkedRoots": [
+    "C:\\ANOMALIA-Validation\\c40543166274\\unreal\\Content",
+    "C:\\ANOMALIA\\unreal\\Content",
+    "C:\\ANOMALIA\\FabImports",
+    "C:\\Users\\utilisateur\\Downloads",
+    "C:\\Users\\utilisateur\\Documents\\Unreal Projects",
+    "C:\\Program Files\\Epic Games\\Launcher\\VaultCache"
+  ],
+  "falsePositive": "RSG Shepherd Pack Cow is a cow and was not selected as a dog",
+  "source": {
+    "title": "German Shepherd 3D Dog Model",
+    "publisher": "RetroStyle Games",
+    "fab": "https://www.fab.com/listings/5ffcabde-3356-4d75-b98e-580825f15e47",
+    "creator": "https://retrostylegames.itch.io/german-shepherd-3d-dog-model-free",
+    "archive": "RSG_DogsPack_GermanShepherd_UE5_1.zip",
+    "claimedAnimations": "Creator lists locomotion/idle clips; sit, lie and bite not verified"
+  },
+  "acquisition": {
+    "run": 40713471008,
+    "state": "FAILED_PUBLIC_CREATOR_PAGE_UNAVAILABLE",
+    "credentialsUsed": false,
+    "payment": false,
+    "downloaded": false
+  },
+  "remaining": [
+    "Supply or locate authorised original archive and dependencies",
+    "Verify exact skeleton and clips, acquire or author missing poses",
+    "Implement native companion authority, navigation, orders and nonfatal injury",
+    "Integrate breed catalogue, visible gear, persistence and network tests"
+  ],
+  "preservation": "No dog Blueprint placeholder, actor, fabricated breed, asset replacement or deletion created"
+}
