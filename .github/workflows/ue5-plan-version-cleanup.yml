@@ -1,33 +1,67 @@
-name: ANOMALIA plan obsolete version cleanup
+name: ANOMALIA verify then clean obsolete versions
 on:
   push:
     branches: ['ue5/character-audit-20261027']
-    paths: ['.github/workflows/ue5-plan-version-cleanup.yml', 'scripts/ue5/cleanup-obsolete-version-snapshots.ps1']
+    paths:
+      - '.github/workflows/ue5-plan-version-cleanup.yml'
+      - 'scripts/ue5/cleanup-obsolete-version-snapshots.ps1'
+      - 'scripts/ue5/smoke-installed-launchers.ps1'
 permissions:
   contents: read
 concurrency:
   group: anomalia-ue5-native-host
   cancel-in-progress: false
 jobs:
-  plan:
+  cleanup:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 30
+    timeout-minutes: 35
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Verify guards and make a read-only deletion plan
+      - name: Make read-only plan
         shell: node {0}
         run: |
           const cp=require('child_process'),path=require('path');
           const script=path.join(process.env.GITHUB_WORKSPACE,'scripts','ue5','cleanup-obsolete-version-snapshots.ps1');
           const out=path.join('C:\\ANOMALIA-Validation\\Reports','version-cleanup-'+process.env.GITHUB_RUN_ID);
           const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script],{encoding:'utf8',timeout:1500000,maxBuffer:8*1024*1024});
-          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Version cleanup preflight failed '+String(r.error||r.status));
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Read-only cleanup plan failed '+String(r.error||r.status));
+      - name: Validate plan then archive and remove confirmed inactive snapshots
+        shell: node {0}
+        run: |
+          const cp=require('child_process'),fs=require('fs'),path=require('path');
+          const script=path.join(process.env.GITHUB_WORKSPACE,'scripts','ue5','cleanup-obsolete-version-snapshots.ps1');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','version-cleanup-'+process.env.GITHUB_RUN_ID);
+          const reportPath=path.join(out,'cleanup-report.json');
+          const plan=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(/^\\uFEFF/,''));
+          if(plan.state!=='CLEANUP_PLAN_ONLY'||!Array.isArray(plan.planned)||plan.planned.length<2||!Array.isArray(plan.products)||plan.products.length!==2||!Array.isArray(plan.skipped)||plan.skipped.length!==0)throw Error('Safety gate rejected cleanup plan');
+          for(const product of plan.products){
+            if(!product.activeFolder||!product.rollbackPreserved||product.versionFoldersAfterPlanned<2)throw Error('Safety gate rejected active/rollback retention for '+product.product);
+            if(product.candidates.some(x=>!['eligible','preserved-rollback'].includes(x.status)))throw Error('Safety gate found unreviewed candidate status for '+product.product);
+            if(product.candidates.filter(x=>x.status==='eligible').length<1)throw Error('Safety gate found no eligible old snapshots for '+product.product);
+          }
+          if(plan.planned.length!==plan.products.reduce((n,p)=>n+p.candidates.filter(x=>x.status==='eligible').length,0))throw Error('Candidate count mismatch');
+          console.log('Safety gate passed; executing verified archive and cleanup.');
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script,'-Apply'],{encoding:'utf8',timeout:1500000,maxBuffer:8*1024*1024});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Cleanup apply failed '+String(r.error||r.status));
+          const applied=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(/^\\uFEFF/,''));
+          if(applied.state!=='INACTIVE_VERSIONS_CLEANED'||applied.removed.length!==plan.planned.length)throw Error('Cleanup report did not confirm all planned removals');
+          if(!Array.isArray(applied.engineSavedArchives)||applied.engineSavedArchives.some(x=>!x.archive||!fs.existsSync(x.archive)))throw Error('Saved archive verification is incomplete');
+      - name: Re-test installed launchers after cleanup
+        shell: node {0}
+        run: |
+          const cp=require('child_process'),path=require('path');
+          const script=path.join(process.env.GITHUB_WORKSPACE,'scripts','ue5','smoke-installed-launchers.ps1');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','post-cleanup-launcher-smoke-'+process.env.GITHUB_RUN_ID);
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script,'-OutputDirectory',out],{encoding:'utf8',timeout:1200000,maxBuffer:8*1024*1024});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Post-cleanup launcher smoke failed '+String(r.error||r.status));
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: anomaly-version-cleanup-plan
-          path: C:\\ANOMALIA-Validation\\Reports\\version-cleanup-*
+          name: anomaly-version-cleanup-and-smoke
+          path: |
+            C:\\ANOMALIA-Validation\\Reports\\version-cleanup-*
+            C:\\ANOMALIA-Validation\\Reports\\post-cleanup-launcher-smoke-*
           if-no-files-found: warn
