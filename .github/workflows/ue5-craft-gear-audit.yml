@@ -1,0 +1,40 @@
+name: ANOMALIA craft and gear asset inventory
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-craft-gear-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locate existing craft and attachment assets without changing projects
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path');
+          const output=path.join('C:/ANOMALIA-Validation/Reports','craft-gear-'+process.env.GITHUB_RUN_ID);
+          fs.mkdirSync(output,{recursive:true});
+          fs.appendFileSync(process.env.GITHUB_ENV,'GEAR_AUDIT_OUTPUT='+output+'\n');
+          const roots=['C:/ANOMALIA-Validation/c40543166274/unreal/Content','C:/ANOMALIA/unreal/Content'];
+          const pattern=/knife|dagger|bayonet|bandage|gauze|medical.tape|rope|splint|saddle|cloth|rags|fiber|pouch|holster|vest|boot|assault|punch|melee|combat|rifle.*(idle|aim|hold)/i;
+          const report={commit:process.env.GITHUB_SHA,roots:[],matches:[],errors:[],scope:'Read-only filenames; not proof of asset compatibility or visual acceptance'};
+          function walk(dir){let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
+            for(const e of entries){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if(/\.uasset$/i.test(e.name)&&pattern.test(e.name))report.matches.push({path:p,bytes:fs.statSync(p).size});}}
+          for(const root of roots){const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root);}
+          fs.writeFileSync(path.join(output,'craft-gear-assets.json'),JSON.stringify(report,null,2));
+          console.log(JSON.stringify(report,null,2));
+          if(!report.roots.some(r=>r.exists))throw Error('No expected UE Content directory found');
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: craft-gear-asset-inventory
+          path: ${{ env.GEAR_AUDIT_OUTPUT }}
+          if-no-files-found: warn
