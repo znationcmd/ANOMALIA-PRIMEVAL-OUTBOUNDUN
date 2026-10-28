@@ -56,6 +56,7 @@ def tick(delta):
             if not world or not editor.is_in_play_in_editor() or now-s['at']<2:return
             unreal.GameplayStatics.open_level(world,MAP,True,'AnomaliaServerId='+SCOPE);phase('travel');return
         if s['phase']=='travel':
+            require(now-s['at']<25,'Travel or ownership did not settle: '+str(r.get('travelObserved')))
             world=worlds.get_game_world()
             if not world:return
             gm=unreal.GameplayStatics.get_game_mode(world)
@@ -66,7 +67,12 @@ def tick(delta):
             dogs=list(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.AnomaliaDogCompanion))
             require(len(dogs)==1,'Expected exactly one real companion')
             dog=dogs[0]
-            if dog.get_editor_property('survivor_owner')!=actor:return
+            r['travelObserved']={'gameMode':gm.get_class().get_name(),'player':actor.get_path_name(),'playerLocation':str(actor.get_actor_location()),
+                'dogLocation':str(dog.get_actor_location()),'autoAssignEnabled':dog.get_editor_property('auto_assign_nearest_survivor'),
+                'tickEnabled':dog.is_actor_tick_enabled(),'owner':str(dog.get_editor_property('survivor_owner')),'simulationSeconds':unreal.GameplayStatics.get_time_seconds(world)}
+            if dog.get_editor_property('survivor_owner')!=actor:
+                require(now-s['at']<20,'Dog automatic ownership failed: '+str(r['travelObserved']))
+                return
             mesh=dog.get_component_by_class(unreal.SkeletalMeshComponent)
             check(mesh.get_editor_property('skeletal_mesh_asset') is not None,'native dog loads actual German Shepherd mesh')
             check(mesh.has_valid_animation_instance(),'dog has a real animation instance')
