@@ -103,6 +103,7 @@ def tick(delta):
             select(rows[0].stack_id);click_text('Mains')
             require(str(stack('apple').container_id)=='hands','Move-to-hands callback failed')
             click_text('Ranger');require(str(stack('apple').container_id)!='hands','Stow callback failed')
+            require(s['inv'].request_move_stack(stack('canned_beans').stack_id,'pockets',2,2,False),'Rotation fixture placement failed')
             select(stack('canned_beans').stack_id);click_text('Tourner 90°')
             require(stack('canned_beans').rotated,'Rotate callback failed')
             select(stack('apple').stack_id);click_text('Manger')
