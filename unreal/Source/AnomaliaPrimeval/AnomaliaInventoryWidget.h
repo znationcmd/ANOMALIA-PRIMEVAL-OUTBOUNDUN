@@ -62,6 +62,8 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void Execute();
+    UFUNCTION() void BeginPointerDrag();
+    UFUNCTION() void EndPointerDrag();
 };
 
 /** Native inventory: proximity, live equipped survivor and spatial storage grids. */
@@ -121,6 +123,13 @@ private:
     void RefreshCrafting();
     FString ContainerLabel(FName Id) const;
     void AddAttachmentSlots(FName ParentId);
+    void BeginPointerDrag(int32 StackId);
+    void DropPointerDraggedStack();
+    UPROPERTY() TMap<TObjectPtr<UCanvasPanel>,FName> GridContainerByPanel;
+    UPROPERTY() TMap<TObjectPtr<UCanvasPanel>,float> GridCellSizeByPanel;
+    UPROPERTY() TMap<TObjectPtr<UButton>,FName> AttachmentContainerByButton;
+    int32 PointerDraggedStackId=0;
+    FIntPoint PointerGrabOffset=FIntPoint::ZeroValue;
     int32 SelectedStackId=0;
     float GridCellSize=36.f;
     bool bBankTab=false;

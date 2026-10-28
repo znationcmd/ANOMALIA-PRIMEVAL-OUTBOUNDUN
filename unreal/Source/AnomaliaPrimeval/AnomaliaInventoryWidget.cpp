@@ -51,6 +51,14 @@ void UAnomaliaInventoryActionRelay::Execute()
 {
     if (TargetWidget) TargetWidget->PerformAction(Action, StackId, Count, OtherStackId);
 }
+void UAnomaliaInventoryActionRelay::BeginPointerDrag()
+{
+    if(TargetWidget&&Action==EAnomaliaInventoryAction::SelectStack)TargetWidget->BeginPointerDrag(StackId);
+}
+void UAnomaliaInventoryActionRelay::EndPointerDrag()
+{
+    if(TargetWidget&&Action==EAnomaliaInventoryAction::SelectStack)TargetWidget->DropPointerDraggedStack();
+}
 
 UAnomaliaInventoryWidget* UAnomaliaInventoryWidget::CreateForPlayerInventory(APlayerController* Player)
 {
@@ -270,6 +278,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     const auto PreviousAction=Previous?Previous->Action:EAnomaliaInventoryAction::Stow;
     const int32 PreviousStack=Previous?Previous->StackId:0,PreviousOther=Previous?Previous->OtherStackId:0;
     ActionRelays.Reset();
+    GridContainerByPanel.Reset();GridCellSizeByPanel.Reset();AttachmentContainerByButton.Reset();
     ItemList->ClearChildren();
     if(DetailsList)DetailsList->ClearChildren();
     if(HandsList)HandsList->ClearChildren();
@@ -350,6 +359,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         VisibleRows=FMath::Min(Box.Height,VisibleRows);
         GridSize->SetWidthOverride(Box.Width*GridCellSize);GridSize->SetHeightOverride(VisibleRows*GridCellSize);
         ActiveGrid=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());GridSize->SetContent(ActiveGrid);
+        GridContainerByPanel.Add(ActiveGrid,Box.Id);GridCellSizeByPanel.Add(ActiveGrid,GridCellSize);
         ItemList->AddChildToVerticalBox(GridSize)->SetHorizontalAlignment(HAlign_Center);
         for(int32 Y=0;Y<VisibleRows;++Y)for(int32 X=0;X<Box.Width;++X)
         {
@@ -500,6 +510,68 @@ void UAnomaliaInventoryWidget::BindAction(UButton* Button, EAnomaliaInventoryAct
     Relay->OtherStackId = OtherStackId;
     ActionRelays.Add(Relay);
     Button->OnClicked.AddDynamic(Relay, &UAnomaliaInventoryActionRelay::Execute);
+    if(Action==EAnomaliaInventoryAction::SelectStack)
+    {
+        Button->OnPressed.AddDynamic(Relay,&UAnomaliaInventoryActionRelay::BeginPointerDrag);
+        Button->OnReleased.AddDynamic(Relay,&UAnomaliaInventoryActionRelay::EndPointerDrag);
+    }
+}
+
+void UAnomaliaInventoryWidget::BeginPointerDrag(int32 StackId)
+{
+    PointerDraggedStackId=0;PointerGrabOffset=FIntPoint::ZeroValue;
+    if(!Inventory||!GetOwningPlayer())return;
+    const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack)return;
+    PointerDraggedStackId=StackId;
+    float MouseX=0,MouseY=0;
+    if(!GetOwningPlayer()->GetMousePosition(MouseX,MouseY))return;
+    const FVector2D Mouse(MouseX,MouseY);
+    for(const auto& Pair:GridContainerByPanel)
+    {
+        if(Pair.Value!=Stack->ContainerId)continue;
+        const float CellSize=GridCellSizeByPanel.FindRef(Pair.Key);
+        if(CellSize<=0)break;
+        const FVector2D Local=Pair.Key->GetCachedGeometry().AbsoluteToLocal(Mouse);
+        const FIntPoint ItemSize=Inventory->GetItemSize(Stack->ItemId,Stack->bRotated);
+        PointerGrabOffset.X=FMath::Clamp(FMath::FloorToInt(Local.X/CellSize)-Stack->X,0,FMath::Max(0,ItemSize.X-1));
+        PointerGrabOffset.Y=FMath::Clamp(FMath::FloorToInt(Local.Y/CellSize)-Stack->Y,0,FMath::Max(0,ItemSize.Y-1));
+        break;
+    }
+}
+void UAnomaliaInventoryWidget::DropPointerDraggedStack()
+{
+    const int32 StackId=PointerDraggedStackId;
+    PointerDraggedStackId=0;
+    if(!StackId||!Inventory||!GetOwningPlayer())return;
+    float MouseX=0,MouseY=0;
+    if(!GetOwningPlayer()->GetMousePosition(MouseX,MouseY))return;
+    const FVector2D Mouse(MouseX,MouseY);
+    for(const auto& Pair:AttachmentContainerByButton)
+    {
+        if(Pair.Key&&Pair.Key->GetCachedGeometry().IsUnderLocation(Mouse))
+        {
+            Inventory->RequestMoveStack(StackId,Pair.Value,0,0,false);
+            return;
+        }
+    }
+    if(HandsList&&HandsList->GetCachedGeometry().IsUnderLocation(Mouse))
+    {
+        Inventory->RequestMoveStack(StackId,TEXT("hands"),0,0,false);
+        return;
+    }
+    for(const auto& Pair:GridContainerByPanel)
+    {
+        UCanvasPanel* Grid=Pair.Key.Get();
+        const float CellSize=GridCellSizeByPanel.FindRef(Pair.Key);
+        if(!Grid||CellSize<=0||!Grid->GetCachedGeometry().IsUnderLocation(Mouse))continue;
+        const FVector2D Local=Grid->GetCachedGeometry().AbsoluteToLocal(Mouse);
+        const int32 X=FMath::Max(0,FMath::FloorToInt(Local.X/CellSize)-PointerGrabOffset.X);
+        const int32 Y=FMath::Max(0,FMath::FloorToInt(Local.Y/CellSize)-PointerGrabOffset.Y);
+        const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+        Inventory->RequestMoveStack(StackId,Pair.Value,X,Y,Stack?Stack->bRotated:false);
+        return;
+    }
 }
 
 void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, int32 StackId, int32 Count, int32 OtherStackId)
@@ -1007,6 +1079,7 @@ void UAnomaliaInventoryWidget::AddAttachmentSlots(FName ParentId)
         const int32 Index=Inventory->Compartments.IndexOfByPredicate([&](const auto& B){return B.Id==Rule.Id;});
         if(Index==INDEX_NONE)continue;
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        AttachmentContainerByButton.Add(Button,Rule.Id);
         auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Size->SetWidthOverride(76);Size->SetMinDesiredHeight(70);
         auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Size->SetContent(Content);Button->SetContent(Size);
         StyleButton(Button,Stack&&Stack->StackId==SelectedStackId);
