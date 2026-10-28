@@ -107,3 +107,10 @@ Le GameMode natif a réellement chargé deux pommes, les tests de mouvement/anim
 **Lanceur réellement créé et relu** : [40659474346](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40659474346). Bureau Windows : ANOMALIA_Test_Survival_20261028_40659474346.cmd. Il pointe vers la carte du run 40658680443 terminé avec succès, dans la copie de validation, avec URL de profil isolé. Les trois fichiers assets sauvegardés et les exécutables ont été vérifiés avant création. Aucun raccourci remplacé, aucun lancement interactif ni contrôle clavier/UI annoncé. Double-cliquer ce lanceur permet d'ouvrir le test -game sans dépendre de l'association .uproject.
 
 Le GameMode principal, C:\ANOMALIA\unreal et les profils existants sont préservés. Les recettes JSON runtime_validation_20261028.json et survival_saved_playtest_20261028.json distinguent les succès de jeu du défaut de fermeture. Vêtements depuis inventaire/UI, validation serveur de l'apparence, réplication, masquage du corps et reconnexion restent non acceptés.
+
+
+## Inventaire hybride et touche Tab — 28 octobre
+
+La première interface proximité/personnage/grille est compilée et disponible dans le test. Run 40669554052 réussi (exit 0) : 11 contrôles de callbacks UMG et caméra restaurée, deux captures UI, séparation/fusion/mains/rangement/rotation/consommation natifs exercés. Clavier/souris physiques et réseau non testés. Voir INVENTORY_HYBRID_20261028.md pour les reçus et limites.
+
+Les miniatures 3D et rangements vestimentaires ne sont pas annoncés terminés. Le réglage DPI et Tab ouvrir/fermer sont préparés mais non appliqués au binaire : lien DPI bloqué par DLL ouverte (40677534343), reprise Tab bloquée avant écriture par RAM disponible de 2,22 Go (40678240912). I reste disponible dans la version testée. Fermer les sessions ANOMALIA avant reprise, sans arrêter de force les processus utilisateur. Aucun changement du projet installé ni fusion.
