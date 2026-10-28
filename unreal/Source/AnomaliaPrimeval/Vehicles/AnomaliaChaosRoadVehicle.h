@@ -116,6 +116,9 @@ public:
     bool HasValidRoadRig() const;
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos")
     bool IsChaosDriveReady() const;
+    /** Authored dry chassis mass, independent of the current cargo load. */
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle|Cargo")
+    float GetUnladenMassKg() const;
 protected:
     virtual void BeginPlay() override;
     virtual bool UsesPhysicsRoadSimulation() const override { return true; }
@@ -146,4 +149,5 @@ private:
     void ApplyRoadRig();
     UFUNCTION() void UpdateCargoPhysicalMass();
     float LastCargoMassKg=-1.f;
+    float UnladenMassKg=-1.f;
 };
