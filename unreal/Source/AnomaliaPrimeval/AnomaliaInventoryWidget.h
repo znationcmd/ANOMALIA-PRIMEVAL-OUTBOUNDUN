@@ -135,6 +135,7 @@ private:
     UPROPERTY() TMap<TObjectPtr<UButton>,int32> QuickbarDropTargets;
     int32 PointerDraggedStackId=0;
     FIntPoint PointerGrabOffset=FIntPoint::ZeroValue;
+    bool PointerDraggedRotated=false;
     int32 SelectedStackId=0;
     float GridCellSize=36.f;
     bool bBankTab=false;
