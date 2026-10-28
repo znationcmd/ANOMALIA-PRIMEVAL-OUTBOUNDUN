@@ -118,13 +118,13 @@ def tick(delta):
             if not actor or unreal.GameplayStatics.get_time_seconds(world)<3: return
             inv=actor.get_editor_property('inventory_component')
             require(not inv.get_editor_property('stacks'),'Fresh isolated profile is not empty')
-            for item,count in [('apple',4),('water_bottle',1),('canned_beans',1),('hunting_knife',1),('eur_note_50',1)]:
+            for item,count in [('apple',4),('water_bottle',1),('canned_beans',1),('hunting_knife',1),('eur_note_50',1),('rifle',1)]:
                 require(inv.try_add_item(item,count),'Catalog item rejected '+item)
             actor.restore_survival(60,60,100)
             pc=unreal.GameplayStatics.get_player_controller(world,0)
             s.update(world=world,actor=actor,inv=inv,pc=pc,previous_camera=pc.get_view_target(),prior_captures={a.get_path_name() for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.SceneCapture2D)})
             require(inv.request_stow_stack_in(stack('apple').stack_id,'worn_top'),'Reference capture garment fixture failed')
-            require(inv.request_move_stack(stack('canned_beans').stack_id,'hands',0,0,False),'Reference capture hands fixture failed')
+            require(inv.request_move_stack(stack('rifle').stack_id,'hands',0,0,False),'Reference capture hands fixture failed')
             widget=unreal.AnomaliaInventoryWidget.create_for_player_inventory(pc)
             require(widget is not None,'Native widget creation failed');s['widget']=widget
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
@@ -220,7 +220,7 @@ def tick(delta):
         if s['phase']=='capture_prepare':
             if not report.get('thumbnailReadback'):
                 textures=dict(s['widget'].get_editor_property('IconTextures'))
-                required=['worn_top','worn_legs','worn_back','worn_gloves','worn_feet','item_apple','item_canned_beans']
+                required=['worn_top','worn_legs','worn_back','worn_gloves','worn_feet','item_apple','item_canned_beans','item_rifle']
                 available={str(k):v for k,v in textures.items()}
                 require(all(k in available for k in required),'Real mesh thumbnails missing: '+str(list(available)))
                 if s['widget'].get_editor_property('IconCaptureCount')<len(required): return
@@ -229,13 +229,13 @@ def tick(delta):
                     target=available[key]
                     pixels=unreal.RenderingLibrary.read_render_target(s['world'],target,True)
                     colors={(c.r,c.g,c.b) for c in pixels}
-                    require(len(pixels)==256*256 and len(colors)>16,'Empty/flat real-model thumbnail '+key)
+                    require(len(pixels)==(512*256 if key=='item_rifle' else 256*256) and len(colors)>16,'Empty/flat real-model thumbnail '+key)
                     alpha=[c.a for c in pixels]
                     require(min(alpha)<32 and max(alpha)>230,'Thumbnail alpha mask missing '+key)
                     unreal.RenderingLibrary.export_render_target(s['world'],target,str(OUT),'raw_inverse_alpha_'+key+'.png')
                     report['thumbnailReadback'].append({'id':key,'pixels':len(pixels),'distinctRGB':len(colors),'minInverseAlpha':min(alpha),'maxInverseAlpha':max(alpha)})
-                require(len(dict(s['widget'].get_editor_property('IconMaterials')))>=7,'Real thumbnail UI materials missing')
-                report['checks'].append('seven actual mesh thumbnails rendered and GPU readback nonempty')
+                require(len(dict(s['widget'].get_editor_property('IconMaterials')))>=8,'Real thumbnail UI materials missing')
+                report['checks'].append('eight actual mesh thumbnails rendered and GPU readback nonempty')
             name,tab=s['shots'][s['shot_index']]
             if tab=='bank': s['widget'].show_bank_tab()
             elif tab=='craft': s['widget'].show_craft_tab()
@@ -258,7 +258,7 @@ def tick(delta):
             s['shot_index']+=1
             if s['shot_index']<len(s['shots']): phase('capture_prepare')
             else:
-                s['widget'].show_inventory_tab();s['inv'].request_stow_stack(stack('canned_beans').stack_id);report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
+                s['widget'].show_inventory_tab();s['inv'].request_stow_stack(stack('rifle').stack_id);report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
     except Exception as error: finish(error)
 
 try:
