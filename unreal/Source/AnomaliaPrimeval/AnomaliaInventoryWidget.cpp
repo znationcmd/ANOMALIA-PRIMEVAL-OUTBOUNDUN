@@ -195,7 +195,8 @@ void UAnomaliaInventoryWidget::BuildLayout()
     CraftList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("CraftRecipes"));CraftScroll->AddChild(CraftList);
 
     auto* QuickbarFrame=Panel(TEXT("QuickbarFrame"),FAnchors(.24f,.92f,.76f,.99f));
-    QuickbarFrame->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.02f,.025f,.03f,.86f),0.f,FLinearColor(.35f,.32f,.28f,.82f),1.f,FVector2D(10,10)));
+    if(auto* QuickbarSlot=Cast<UCanvasPanelSlot>(QuickbarFrame->Slot))QuickbarSlot->SetZOrder(10);
+    QuickbarFrame->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.02f,.025f,.03f,.92f),0.f,FLinearColor(.55f,.39f,.20f,.92f),1.f,FVector2D(10,10)));
     QuickbarPanel=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass(),TEXT("QuickbarSlots"));
     QuickbarFrame->SetContent(QuickbarPanel);
 
