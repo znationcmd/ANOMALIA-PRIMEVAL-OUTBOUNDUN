@@ -84,7 +84,7 @@ def tick(delta):
             if not actor or unreal.GameplayStatics.get_time_seconds(world)<3: return
             inv=actor.get_editor_property('inventory_component')
             require(not inv.get_editor_property('stacks'),'Fresh isolated profile is not empty')
-            for item,count in [('apple',4),('water_bottle',1),('canned_beans',1),('hunting_knife',1)]:
+            for item,count in [('apple',4),('water_bottle',1),('canned_beans',1),('hunting_knife',1),('eur_note_50',1)]:
                 require(inv.try_add_item(item,count),'Catalog item rejected '+item)
             actor.restore_survival(60,60,100)
             pc=unreal.GameplayStatics.get_player_controller(world,0)
@@ -94,7 +94,7 @@ def tick(delta):
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
             require(actor.get_editor_property('jacket_mesh').get_editor_property('skeletal_mesh_asset') is not None,'Real equipped jacket missing')
             report['checks']+=['isolated native profile','real equipped pawn in live camera','actual storage grid widget created']
-            s['shots']=[('Inventory_hybrid','inventory'),('Inventory_bank','bank')];s['shot_index']=0;phase('capture_prepare');return
+            s['shots']=[('Inventory_hybrid','inventory'),('Inventory_bank','bank'),('Inventory_crafting','craft')];s['shot_index']=0;phase('capture_prepare');return
         if s['phase']=='actions' and now-s['at']>2:
             apples=stack('apple');select(apples.stack_id)
             click_text('½ pile')
@@ -115,10 +115,62 @@ def tick(delta):
             report['checks']+=['tile selection','split preserves total count','merge preserves total count','move to hands','stow into storage','rotate 1x2 item','consume selected apple with native survival effect']
             report['appleCountAfterUse']=stack('apple').count
             report['inventoryWeightKg']=s['inv'].get_current_weight_kg()
+            require(s['inv'].get_editor_property('cash_balance_cents')==5000,'Cash does not reflect physical banknote')
+            boxes={str(b.id):b for b in s['inv'].get_editor_property('compartments')}
+            for name,capacity in [('worn_top',200),('worn_legs',200),('worn_back',350),('worn_gloves',2),('worn_feet',4)]:
+                require(name in boxes and boxes[name].width*boxes[name].height==capacity,'Missing real garment storage '+name)
+            select(stack('apple').stack_id);click_text('Ranger : Veste')
+            require(str(stack('apple').container_id)=='worn_top','Jacket destination callback failed')
+            require(not s['actor'].set_clothing_mesh('Jacket',None),'Occupied garment removed')
+            click_text('Ranger : Sac à dos')
+            require(str(stack('apple').container_id)=='worn_back','Backpack destination callback failed')
+            s['jacket']=s['actor'].get_editor_property('jacket_mesh').get_editor_property('skeletal_mesh_asset')
+            require(s['actor'].set_clothing_mesh('Jacket',None),'Empty jacket cannot be removed')
+            require(s['actor'].set_clothing_mesh('Jacket',s['jacket']),'Compatible jacket cannot be restored')
+            s['bag']=s['actor'].get_editor_property('backpack_mesh').get_editor_property('skeletal_mesh_asset')
+            s['actor'].get_editor_property('backpack_mesh').set_editor_property('skeletal_mesh_asset',None)
+            phase('recovery');return
+        if s['phase']=='recovery' and now-s['at']>2:
+            inv=s['inv'];box=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_back')
+            require(box.recovery_only,'Missing garment storage must allow withdrawal only')
+            require(not inv.request_stow_stack_in(stack('canned_beans').stack_id,'worn_back'),'Deposit into missing garment accepted')
+            require(stack('apple').count==3,'Missing mesh lost cargo')
+            report['recoverySaveResult']=str(inv.save_inventory_to_player_profile(SCOPE,'local-owner'))
+            report['recoveryLoadResult']=str(inv.load_inventory_from_player_profile(SCOPE,'local-owner'))
+            box=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_back')
+            require(box.recovery_only and stack('apple').count==3,'Recovery-only clothing cargo did not reload')
+            s['actor'].get_editor_property('backpack_mesh').set_editor_property('skeletal_mesh_asset',s['bag'])
+            report['checks']+=['five real worn storage compartments','jacket and backpack bound destination callbacks','occupied garment removal rejected','empty garment removal and compatible replacement','missing garment recovery-only deposit rejected','recovery-only cargo saved and reloaded without loss','cash derived from physical 50 EUR note']
+            s['recipes']=[('cloth_bandage',[('cloth',2)],'bandage','Pansement en tissu'),('rag_rope',[('rags',6)],'rope','Corde en chiffons'),('field_splint',[('wood',2),('rags',4)],'splint','Attelle de fortune'),('saddle',[('fiber',6),('cloth',4)],'saddle','Selle')]
+            s['recipe_index']=0;phase('craft');return
+        if s['phase']=='craft' and now-s['at']>1:
+            recipe,materials,output,label=s['recipes'][s['recipe_index']]
+            for item,count in materials: require(s['inv'].try_add_item(item,count),'Craft fixture rejected '+item)
+            s['widget'].show_craft_tab()
+            before={item:sum(x.count for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==item) for item,_ in materials}
+            selected=next((r for r in relays() if str(r.get_editor_property('Button').get_editor_property('tool_tip_text'))=='Fabriquer : '+label),None)
+            require(selected is not None,'Missing real crafting callback '+recipe)
+            require(selected.get_editor_property('Button').get_is_enabled(),'Craft button incorrectly disabled '+recipe);selected.execute()
+            require(stack(output).count>=1,'Craft output missing '+recipe)
+            for item,count in materials:
+                total=sum(x.count for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==item)
+                require(total==before[item]-count,'Craft material mismatch '+recipe)
+            report['checks'].append('bound craft transaction '+recipe)
+            s['recipe_index']+=1
+            if s['recipe_index']<len(s['recipes']): phase('craft')
+            else: phase('reject_craft')
+            return
+        if s['phase']=='reject_craft' and now-s['at']>1:
+            require(not s['inv'].request_craft_recipe('unknown_recipe'),'Unapproved recipe accepted')
+            report['checks'].append('unknown crafting recipe rejected')
+            require(not s['inv'].request_collect_nearby(None),'Null nearby pickup accepted')
+            report['checks'].append('invalid vicinity pickup rejected')
+            report['proximityLimit']='No registered loot spawn in this saved map; successful pickup not exercised'
             finish();return
         if s['phase']=='capture_prepare':
             name,tab=s['shots'][s['shot_index']]
             if tab=='bank': s['widget'].show_bank_tab()
+            elif tab=='craft': s['widget'].show_craft_tab()
             else: s['widget'].show_inventory_tab()
             s['shot_file']=OUT/(name+'.png');s['stat']=None;phase('capture_wait');return
         if s['phase']=='capture_wait' and now-s['at']>3:
@@ -150,3 +202,4 @@ try:
         unreal.SystemLibrary.execute_console_command(w,command)
     editor.editor_request_begin_play();s['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error: finish(error)
+
