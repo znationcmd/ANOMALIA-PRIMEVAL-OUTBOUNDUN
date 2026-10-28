@@ -75,7 +75,10 @@ class UE5InventorySourceTests(unittest.TestCase):
         self.assertIn("UAnomaliaInventoryWidget : public UUserWidget", WIDGET_HEADER)
         self.assertIn('Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory)', SURVIVOR_SOURCE)
         self.assertIn('ActionName="Inventory",Key=I', INPUT_INI)
-        self.assertIn("CreateWidget<UAnomaliaInventoryWidget>", SURVIVOR_SOURCE)
+        self.assertIn("UAnomaliaInventoryWidget::CreateForPlayerInventory(PC)", SURVIVOR_SOURCE)
+        self.assertIn("CreateWidget<UAnomaliaInventoryWidget>", WIDGET_SOURCE)
+        self.assertIn("Survivor->InventoryWidget=Screen", WIDGET_SOURCE)
+        self.assertIn("!Survivor->IsLocallyControlled()", WIDGET_SOURCE)
         for action in ("MoveToHands", "SplitHalf", "Merge"):
             with self.subTest(action=action):
                 self.assertIn(f"EAnomaliaInventoryAction::{action}", WIDGET_SOURCE)
