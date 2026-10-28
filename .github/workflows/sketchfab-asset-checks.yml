@@ -1,0 +1,30 @@
+name: ANOMALIA Sketchfab asset import source checks
+
+on:
+  pull_request:
+    paths:
+      - 'unreal/Config/Anomalia/sketchfab-vehicles.json'
+      - 'scripts/ue5/sketchfab_*.py'
+      - 'scripts/ue5/Importer_Sketchfab_ANOMALIA.bat'
+      - 'tests/test_sketchfab_pipeline.py'
+      - 'IMPORT_SKETCHFAB_ANOMALIA.md'
+      - '.github/workflows/sketchfab-asset-checks.yml'
+  push:
+    paths:
+      - 'unreal/Config/Anomalia/sketchfab-vehicles.json'
+      - 'scripts/ue5/sketchfab_*.py'
+      - 'scripts/ue5/Importer_Sketchfab_ANOMALIA.bat'
+      - 'tests/test_sketchfab_pipeline.py'
+      - 'IMPORT_SKETCHFAB_ANOMALIA.md'
+      - '.github/workflows/sketchfab-asset-checks.yml'
+
+jobs:
+  validate-catalog-and-importer:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate syntax, inventory and safe extraction (no authenticated downloads)
+        run: |
+          python -m py_compile scripts/ue5/sketchfab_acquire.py scripts/ue5/sketchfab_import_unreal.py
+          python -m unittest discover -s tests -p test_sketchfab_pipeline.py -v
+          python scripts/ue5/sketchfab_acquire.py
