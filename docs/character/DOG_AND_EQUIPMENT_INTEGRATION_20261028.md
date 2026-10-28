@@ -15,7 +15,7 @@ Un premier berger allemand natif est réellement présent, animé et contrôlabl
 ## Terminé et testé
 
 ### Compagnon
-- Association serveur au joueur possédé ; l'association automatique est une option explicite réservée à cette carte d'essai.
+- Association serveur au joueur possédé ; l'association automatique est une option explicitement activée sur l'acteur de cette carte d'essai.
 - Marche/course et animation d'attente depuis les véritables clips du pack.
 - Suivi de la trace du joueur avec CharacterMovement, collisions de capsule et sans téléportation de suivi.
 - Commandes « Suivre » et « Pas bouger » réellement reliées aux boutons du menu À proximité.
@@ -34,7 +34,7 @@ Mesures du dernier PIE : joueur 1276.70 cm ; chien 1202.42 cm ; distance finale 
 - Défaut visuel détecté dans la première capture (fusil horizontal à travers le torse), corrigé après inspection. Position contrôlée : centre environ 27,85 cm derrière le personnage et 29,13 cm sur le côté ; demi-hauteur 55,20 cm.
 - Vrais aperçus des chargeurs M4 et AK rendus depuis les modèles locaux. Deux textures 256 × 256 non vides vérifiées par lecture GPU (1353 et 1626 couleurs distinctes).
 - Les sacs médicaux, ceinture, menottes, couchage et gourde n'ont pas tous leur modèle 3D associé. Leur présence dans les emplacements n'est pas annoncée comme un rendu 3D complet.
-- Le gilet Survival compatible n'est pas porté par ce personnage d'essai. Les règles du gilet sont couvertes par le code et les tests d'attaches, sans essai visuel d'un gilet porté.
+- Le gilet Survival compatible n'est pas porté par ce personnage d'essai. Les règles du gilet sont implémentées, mais l'équipement et le rendu d'un gilet porté n'ont pas été spécifiquement exercés.
 - Les capacités provisoires des anciens vêtements n'ont pas été rééquilibrées ; le profil d'essai utilise une limite de poids de 100 kg pour les fixtures, pas un nouveau réglage du jeu principal.
 
 ## Preuves
