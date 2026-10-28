@@ -61,3 +61,13 @@ Le run 40587016325 a effectivement possédé Manny, trouvé sa caméra active et
 La reprise 40587325434 mesure les phases en temps de simulation et ajoute des diagnostics. Elle a planté avec sortie 3 avant résultat final : GenericPlatformMemory.cpp indique un manque de mémoire et un fichier de pagination insuffisant. Le journal rapporte environ 0,38 Gio de RAM et 0,02 Gio de mémoire virtuelle disponibles, ainsi que ZenLocal HTTP 507 Insufficient Storage. L’audit disque indépendant 40586922691 mesurait 6 491 983 872 octets libres sur C:. Ne pas conclure à un problème de licence ou à la disparition du projet à partir de ce crash.
 
 Journaux conservés dans les artefacts des quatre runs et sous C:\ANOMALIA-Validation\Reports\character-pie-<run>. Le code de test est versionné dans unreal/Content/Python/verify_anomalia_character_pie.py. Aucun changement natif C++ supplémentaire ni remplacement du projet installé dans cette reprise. Les tests clavier/manette, multijoueur et sauvegarde/reconnexion restent non validés.
+
+## Reprise du 28 octobre : essai Survival isolé et garde mémoire virtuelle
+
+Nouveau script verify_anomalia_survival_pie.py préparé : monde transitoire séparé, Survival seul avec ses cinq vêtements, GameModeBase de test, sol à collision explicite et diagnostics de mouvement sauvegardés pendant les phases. Aucun fichier de carte existant, Blueprint de personnage ou réglage de GameMode principal n'est sauvegardé par cet essai. La qualité des textures est réduite pour ce processus de test seulement.
+
+Sa syntaxe Python a été vérifiée. Son exécution Unreal n'a PAS eu lieu : le run 40653389189 a arrêté le lancement au contrôle de ressources. Mesures du 28 octobre à 07:57 UTC : disque libre 10 028 253 184 octets, RAM disponible 3 057 963 008 octets, mémoire virtuelle disponible 7 625 148 Kio. Le workflow exige, comme marges opérationnelles pour cet essai, 10 Gio de disque, 4 Gio de RAM et 8 Gio de mémoire virtuelle ; ces seuils ne sont pas présentés comme les minima officiels d'Unreal.
+
+Le contrôle léger précédent 40652279470 avait mesuré davantage de marge, mais la vérification juste avant lancement fait autorité. Le garde-fou a évité de reproduire le crash mémoire/pagination. Les essais de marche, course, saut, accroupissement, inventaire et équipement en PIE restent à passer.
+
+Une correction candidate de masse du coffre E39 est également versionnée dans cette branche native commune (commit e36f83420a8c6bd3a4147169e5ec7253755c8048), avec reçu de préparation et workflow de compilation/test dédiés. Le run 40652769294 a été bloqué avant compilation par la réserve disque. Les 26 succès natifs historiques portent sur le code précédemment compilé et ne valident PAS ce nouveau correctif.
