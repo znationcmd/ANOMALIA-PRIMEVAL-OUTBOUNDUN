@@ -14,6 +14,7 @@ class ACameraActor;
 class APlayerController;
 class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
+class AAnomaliaLootPickup;
 struct FAnomaliaInventoryStack;
 
 UENUM()
@@ -31,7 +32,8 @@ enum class EAnomaliaInventoryAction : uint8
     SelectStack,
     CraftRecipe,
     ToggleContainer,
-    StowInContainer
+    StowInContainer,
+    CollectNearby
 };
 
 UCLASS()
@@ -68,6 +70,7 @@ public:
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& Geometry,float DeltaTime) override;
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeDestruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event) override;
@@ -145,6 +148,10 @@ private:
     void BuildLayout();
     UPROPERTY() TObjectPtr<UVerticalBox> ProximityList;
     UPROPERTY() TObjectPtr<AAnomaliaChaosRoadVehicle> NearbyVehicle;
+    UPROPERTY() TArray<TObjectPtr<AAnomaliaLootPickup>> NearbyPickups;
+    float ProximityElapsed=0;
+    FString ProximitySignature;
+    TArray<AAnomaliaLootPickup*> FindNearbyPickups() const;
     void RefreshVehicleProximity();
     void AddVehicleButton(const FString& Label,int32 ServiceAction,int32 StackId=0,int32 Count=0);
     UAnomaliaInventoryActionRelay* FocusedAction() const;
@@ -153,5 +160,6 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
 
 
