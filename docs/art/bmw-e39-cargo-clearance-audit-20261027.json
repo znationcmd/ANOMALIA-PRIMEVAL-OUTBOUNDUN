@@ -1,0 +1,243 @@
+{
+  "state": "CPU_MESH_SIGHTLINES_PASSED_NOT_UNREAL_OR_VISUAL_ACCEPTANCE",
+  "rows": [
+    {
+      "angleDegrees": 0,
+      "lateralMetres": -0.25,
+      "first": {
+        "fraction": 0.8453535752534941,
+        "part": "trunk",
+        "material": "body",
+        "pointMetresYUp": [
+          -2.3121777075538503,
+          0.7453676392617156,
+          -0.25
+        ],
+        "normalYUp": [
+          -0.004900332200802104,
+          0.00003903934678461951,
+          -0.00043862770576197363
+        ]
+      }
+    },
+    {
+      "angleDegrees": 0,
+      "lateralMetres": 0,
+      "first": {
+        "fraction": 0.8601911683122262,
+        "part": "trunk",
+        "material": "body",
+        "pointMetresYUp": [
+          -2.286063543770482,
+          0.7314203017865074,
+          0
+        ],
+        "normalYUp": [
+          -0.0036062546078512447,
+          0.001129136038569456,
+          -0.00005176811069418363
+        ]
+      }
+    },
+    {
+      "angleDegrees": 0,
+      "lateralMetres": 0.25,
+      "first": {
+        "fraction": 0.8453561655779886,
+        "part": "trunk",
+        "material": "body",
+        "pointMetresYUp": [
+          -2.31217314858274,
+          0.7453652043566906,
+          0.25
+        ],
+        "normalYUp": [
+          -0.00973440124628322,
+          0.00007733765426465311,
+          0.0008725080321596579
+        ]
+      }
+    },
+    {
+      "angleDegrees": 65,
+      "lateralMetres": -0.25,
+      "first": {
+        "fraction": 0.9457424167593906,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.1354933465034724,
+          0.6510021282461728,
+          -0.25
+        ],
+        "normalYUp": [
+          0.011132289337645318,
+          0.20795500890491425,
+          0.0014873346820820643
+        ]
+      }
+    },
+    {
+      "angleDegrees": 65,
+      "lateralMetres": 0,
+      "first": {
+        "fraction": 0.9478793404328971,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.131732360838101,
+          0.6489934199930767,
+          0
+        ],
+        "normalYUp": [
+          0.009321791995553497,
+          0.17438443662003777,
+          0
+        ]
+      }
+    },
+    {
+      "angleDegrees": 65,
+      "lateralMetres": 0.25,
+      "first": {
+        "fraction": 0.9457424167593904,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.135493346503473,
+          0.651002128246173,
+          0.25
+        ],
+        "normalYUp": [
+          0.011132289337645318,
+          0.20795500890491425,
+          -0.0014873346820820643
+        ]
+      }
+    }
+  ],
+  "clearanceRows": [
+    {
+      "forwardMetres": -2.2,
+      "lateralMetres": -0.25,
+      "clearHeightMetres": 0.26588174085511607,
+      "first": {
+        "fraction": 0.5113110401059925,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.2,
+          0.654118259144884,
+          -0.25
+        ],
+        "normalYUp": [
+          0.003848646996402749,
+          0.08260687393571331,
+          0.0012133738072606093
+        ]
+      }
+    },
+    {
+      "forwardMetres": -2.2,
+      "lateralMetres": 0,
+      "clearHeightMetres": 0.26735730519416423,
+      "first": {
+        "fraction": 0.5141486638349312,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.2,
+          0.6526426948058358,
+          0
+        ],
+        "normalYUp": [
+          0.009321791995553497,
+          0.17438443662003777,
+          0
+        ]
+      }
+    },
+    {
+      "forwardMetres": -2.2,
+      "lateralMetres": 0.25,
+      "clearHeightMetres": 0.26588174085511607,
+      "first": {
+        "fraction": 0.5113110401059925,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.2,
+          0.654118259144884,
+          0.25
+        ],
+        "normalYUp": [
+          0.003848646996402749,
+          0.08260687393571331,
+          -0.0012133738072606093
+        ]
+      }
+    },
+    {
+      "forwardMetres": -2.05,
+      "lateralMetres": -0.25,
+      "clearHeightMetres": 0.2735745187638322,
+      "first": {
+        "fraction": 0.5261048437766003,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.05,
+          0.6464254812361678,
+          -0.25
+        ],
+        "normalYUp": [
+          0.011132289337645318,
+          0.20795500890491425,
+          0.0014873346820820643
+        ]
+      }
+    },
+    {
+      "forwardMetres": -2.05,
+      "lateralMetres": 0,
+      "clearHeightMetres": 0.275375617071271,
+      "first": {
+        "fraction": 0.5295684943678288,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.05,
+          0.644624382928729,
+          0
+        ],
+        "normalYUp": [
+          0.009321791995553497,
+          0.17438443662003777,
+          0
+        ]
+      }
+    },
+    {
+      "forwardMetres": -2.05,
+      "lateralMetres": 0.25,
+      "clearHeightMetres": 0.2735745187638322,
+      "first": {
+        "fraction": 0.5261048437766003,
+        "part": "body",
+        "material": "frame",
+        "pointMetresYUp": [
+          -2.05,
+          0.6464254812361678,
+          0.25
+        ],
+        "normalYUp": [
+          0.011132289337645318,
+          0.20795500890491425,
+          -0.0014873346820820643
+        ]
+      }
+    }
+  ],
+  "visualAcceptance": false,
+  "minimumClearHeightMetres": 0.26588174085511607
+}

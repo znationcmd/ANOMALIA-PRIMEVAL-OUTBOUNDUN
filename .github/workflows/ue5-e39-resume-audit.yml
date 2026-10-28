@@ -1,0 +1,41 @@
+name: ANOMALIA E39 read-only resume audit
+on:
+  push:
+    branches: ['ue5/e39-cargo-visibility-audit-20261027']
+    paths: ['.github/workflows/ue5-e39-resume-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Identify current E39 fixture and compiled probe without replacing files
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),crypto=require('crypto');
+          const dir=path.join('C:\\ANOMALIA-Validation\\Reports','e39-resume-audit-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:true});
+          fs.appendFileSync(process.env.GITHUB_ENV,'E39_RESUME_OUTPUT='+dir+'\n');
+          const projects=[path.join(process.env.GITHUB_WORKSPACE,'unreal'),'C:\\ANOMALIA-Validation\\c40543166274\\unreal','C:\\ANOMALIA\\unreal'];
+          const report={state:'READ_ONLY_E39_RESUME_AUDIT',projects:[],freeBytes:fs.statfsSync('C:\\').bavail*fs.statfsSync('C:\\').bsize};
+          function gitsha(b){return crypto.createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');}
+          for(const root of projects){
+          const row={root,projectExists:fs.existsSync(path.join(root,'AnomaliaPrimeval.uproject')),files:[],sources:[]};report.projects.push(row);
+          for(const rel of ['SourceAssets/BMWE39Review_v7/manifest.json','Content/Maps/ANOMALIA_E39DriveReview_v1.umap','Source/AnomaliaPrimeval/Vehicles/AnomaliaChaosRoadProbe.cpp','Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp','Saved/NativeValidation/build-summary.json']){
+          const p=path.join(root,rel);if(fs.existsSync(p)){const b=fs.readFileSync(p);const f={path:rel,bytes:b.length,gitSha:gitsha(b)};if(rel.endsWith('manifest.json'))f.manifest=JSON.parse(b);row.files.push(f);}}
+          const saved=path.join(root,'Saved','ChaosRoadReview');
+          if(fs.existsSync(saved))for(const name of fs.readdirSync(saved)){const d=path.join(saved,name);if(fs.statSync(d).isDirectory()&&fs.existsSync(path.join(d,'template-source.json'))){row.sources.push({path:path.join(d,'template-source.json'),source:JSON.parse(fs.readFileSync(path.join(d,'template-source.json'),'utf8'))});}}
+          }
+          fs.writeFileSync(path.join(dir,'audit.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));
+          
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e39-resume-file-audit
+          path: ${{ env.E39_RESUME_OUTPUT }}

@@ -1,0 +1,51 @@
+name: ANOMALIA actual E39 key maintenance and cargo drive continuation
+on:
+  push:
+    branches: ['ue5/e39-cargo-visibility-audit-20261027']
+    paths: ['.github/workflows/ue5-e39-service-resume.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  service:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 23
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Preserve E39 and exercise compiled current key parts and cargo services
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto');
+          const src=path.join(process.env.GITHUB_WORKSPACE,'unreal'),dst='C:\\ANOMALIA-Validation\\c40543166274\\unreal';
+          const dir=path.join('C:\\ANOMALIA-Validation\\Reports','e39-services-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:true});fs.appendFileSync(process.env.GITHUB_ENV,'E39_SERVICE_OUTPUT='+dir+'\n');
+          const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const gitsha=b=>crypto.createHash('sha1').update(Buffer.from('blob '+b.length+'\0')).update(b).digest('hex');
+          const probe=fs.readFileSync(path.join(dst,'Source/AnomaliaPrimeval/Vehicles/AnomaliaChaosRoadProbe.cpp'),'utf8').replace(/\r\n/g,'\n');
+          if(gitsha(Buffer.from(probe))!=='351076bd7a30894f1308d5c9a1cd547ceee69757')throw Error('Compiled validation source probe differs; compilation required before claiming test');
+          const files=[];
+          function visit(rel){const source=path.join(src,rel);if(!fs.existsSync(source))return;const stat=fs.lstatSync(source);if(stat.isSymbolicLink())throw Error('Link rejected');if(stat.isDirectory()){for(const n of fs.readdirSync(source))visit(path.join(rel,n));}else if(/\.(uasset|umap|uexp|ubulk|json)$/.test(rel)){const target=path.join(dst,rel),b=fs.readFileSync(source);if(fs.existsSync(target)&&hash(fs.readFileSync(target))!==hash(b))throw Error('Existing validation asset differs and is preserved: '+rel);files.push({relative:rel,bytes:b.length,sha256:hash(b),reused:fs.existsSync(target)});}}
+          for(const rel of ['Content/Anomalia/BMWE39Review_v7','Content/Vehicles/OffroadCar','Content/Vehicles/SportsCar','Content/Vehicles/PhysicsMaterials','Content/Maps/ANOMALIA_E39DriveReview_v1.umap','SourceAssets/BMWE39Review_v7/manifest.json'])visit(rel);
+          if(!files.some(f=>f.relative.replace(/\\/g,'/').endsWith('ANOMALIA_E39DriveReview_v1.umap')))throw Error('Actual E39 map missing');
+          const needed=files.filter(f=>!f.reused).reduce((s,f)=>s+f.bytes,0);const st=fs.statfsSync('C:\\');if(st.bavail*st.bsize<needed+5*1024**3)throw Error('Disk reserve prevents E39 fixture staging: '+needed);
+          for(const f of files){const target=path.join(dst,f.relative);if(!f.reused){fs.mkdirSync(path.dirname(target),{recursive:true});fs.copyFileSync(path.join(src,f.relative),target,fs.constants.COPYFILE_EXCL);}if(hash(fs.readFileSync(target))!==f.sha256)throw Error('Copied asset mismatch');}
+          fs.writeFileSync(path.join(dir,'local-stage-receipt.json'),JSON.stringify({source:src,destination:dst,files,bytesAdded:needed,probeGitSha:'351076bd7a30894f1308d5c9a1cd547ceee69757',installedProjectModified:false},null,2));
+          const engine=process.env.UE_ROOT||'C:\\Program Files\\Epic Games\\UE_5.8',exe=path.join(engine,'Engine/Binaries/Win64/UnrealEditor.exe'),project=path.join(dst,'AnomaliaPrimeval.uproject');
+          const script=path.join(dir,'prepare.py');fs.writeFileSync(script,"import json,os,traceback\nfrom pathlib import Path\nimport unreal\nout=Path(os.environ[\"E39_RESUME_DIR\"])\nreport={\"state\":\"FAILED\",\"originalMapModified\":False,\"installedProjectModified\":False}\ntry:\n    editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)\n    if not editor.load_level(\"/Game/Maps/ANOMALIA_E39DriveReview_v1\"):\n        raise RuntimeError(\"Existing v7 proving map could not load\")\n    cars=unreal.GameplayStatics.get_all_actors_of_class(unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world(),unreal.AnomaliaChaosRoadVehicle)\n    if len(cars)!=1:raise RuntimeError(\"Expected unique actual E39\")\n    car=cars[0]\n    if not car.has_valid_road_rig():raise RuntimeError(\"Actual E39 rig rejected\")\n    car.get_editor_property(\"survival_systems\").set_editor_property(\"enabled\",True)\n    car.get_editor_property(\"survival_systems\").set_editor_property(\"battery_access_panel\",unreal.Name(\"trunk\"))\n    manifest=json.loads((Path(unreal.Paths.project_dir())/\"SourceAssets/BMWE39Review_v7/manifest.json\").read_text(encoding=\"utf-8-sig\"))\n    for m in manifest[\"models\"]:\n        mesh=unreal.load_asset(m[\"objectPath\"])\n        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,\"AnomaliaNativeSedanSha256\")!=m[\"sha256\"]:\n            raise RuntimeError(\"v7 mesh metadata identity rejected \"+m[\"id\"])\n    package=\"/Game/Anomalia/CharacterTests/E39Resume_\"+os.environ[\"GITHUB_RUN_ID\"]+\"/ANOMALIA_E39DriveReview_v1\"\n    if unreal.EditorAssetLibrary.does_asset_exist(package):raise RuntimeError(\"Existing test map preserved\")\n    world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()\n    if not unreal.EditorLoadingAndSavingUtils.save_map(world,package):raise RuntimeError(\"New E39 isolated test map save failed\")\n    report.update(state=\"UNCHANGED_E39_NEW_SERVICE_TEST_MAP_SAVED\",map=package,source=manifest[\"source\"],modelCount=len(manifest[\"models\"]))\nexcept Exception as exc:\n    report[\"error\"]=str(exc);report[\"traceback\"]=traceback.format_exc()\nfinally:\n    (out/\"prepare-report.json\").write_text(json.dumps(report,indent=2)+\"\\n\")\n",{flag:'wx'});
+          const prepared=cp.spawnSync(exe,[project,'-ExecutePythonScript='+script,'-NullRHI','-unattended','-nosplash','-nosound','-abslog='+path.join(dir,'prepare.log')],{encoding:'utf8',timeout:360000,maxBuffer:8*1024**2,env:{...process.env,E39_RESUME_DIR:dir}});
+          console.log('PREPARE_EXIT '+prepared.status);const prepPath=path.join(dir,'prepare-report.json');if(!fs.existsSync(prepPath))throw Error('Missing preparation report');const p=JSON.parse(fs.readFileSync(prepPath,'utf8'));console.log(JSON.stringify(p));if(prepared.status!==0||p.state!=='UNCHANGED_E39_NEW_SERVICE_TEST_MAP_SAVED')throw Error(p.error||'Preparation rejected');
+          const drive=path.join(dir,'drive-report.json'),scope='chaos-smoke-e39-resume-'+process.env.GITHUB_RUN_ID;
+          const run=cp.spawnSync(exe,[project,p.map+'?AnomaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720','-unattended','-nosound','-nosplash','-AnomaliaChaosProbe='+drive,'-ini:Engine:[ConsoleVariables]:p.Vehicle.DisableConstraintSuspension=1','-ini:Engine:[/Script/Engine.PhysicsSettings]:bTickPhysicsAsync=True','-ini:Engine:[/Script/Engine.PhysicsSettings]:AsyncFixedTimeStepSize=0.008333333333333333','-abslog='+path.join(dir,'drive.log')],{encoding:'utf8',timeout:780000,maxBuffer:8*1024**2});
+          console.log('E39_SERVICE_DRIVE_EXIT '+run.status+' '+String(run.error||''));if(!fs.existsSync(drive))throw Error('Missing actual Chaos report');const d=JSON.parse(fs.readFileSync(drive,'utf8').replace(/^\uFEFF/,''));console.log(JSON.stringify({state:d.state,error:d.error,checks:d.checks,buildCommit:d.buildCommit,samples:d.physicsSamples?.length},null,2));
+          const required=['hood_open_inventory_radiator_and_spark_plug_removal_blocks_real_ignition','trunk_open_inventory_battery_and_journaled_cargo_exchange_verified','matching_physical_key_locks_actual_panels_and_closed_boot_blocks_cargo','survivor_walks_into_closed_trunk_without_launching_chassis'];
+          if(run.status!==0||d.state!=='CHAOS_ROAD_PHYSICS_DRIVE_PASSED'||!required.every(x=>d.checks.includes(x)))throw Error(d.error||'Required real E39 service gates failed');
+          
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e39-actual-maintenance-and-driving-evidence
+          path: ${{ env.E39_SERVICE_OUTPUT }}
+          if-no-files-found: warn
