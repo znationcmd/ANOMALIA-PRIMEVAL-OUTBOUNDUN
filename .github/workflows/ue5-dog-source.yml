@@ -23,7 +23,7 @@ jobs:
           const fs=require('fs'),path=require('path'),crypto=require('crypto');
           const dir=path.join('C:\\ANOMALIA\\FabImports','OfficialDog_'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:false});fs.appendFileSync(process.env.GITHUB_ENV,'DOG_SOURCE_OUTPUT='+dir+'\n');
           const root='https://retrostylegames.itch.io/german-shepherd-3d-dog-model-free';
-          const response=await fetch(root,{signal:AbortSignal.timeout(30000)});if(!response.ok)throw Error('Public creator page unavailable');
+          const response=await fetch(root,{signal:AbortSignal.timeout(30000)});if(!response.ok){const receipt={state:'BLOCKED_PUBLIC_CREATOR_HTTP',status:response.status,source:root,downloaded:false,imported:false};fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));throw Error('Public creator page unavailable: HTTP '+response.status);}
           const html=await response.text();fs.writeFileSync(path.join(dir,'creator-public-page.html'),html);
           const ids=[...html.matchAll(/data-upload_id=["'](\d+)["']/g)].map(m=>({id:m[1],around:html.slice(m.index,m.index+1600).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ')}));
           const candidates=ids.map(x=>({id:x.id,filename:x.around.match(/RSG_DogsPack_GermanShepherd[^<>"\s]*\.zip/)?.[0]}));
