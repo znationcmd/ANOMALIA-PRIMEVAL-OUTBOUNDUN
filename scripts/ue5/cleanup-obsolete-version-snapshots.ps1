@@ -137,7 +137,8 @@ foreach($def in $productDefs){
             continue
         }
         $userdata=@($tree|Where-Object{$_.PSIsContainer -and ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
-        $engineSaved=@($userdata|Where-Object{$_.FullName -match '\\Engine\\Saved        $bytes=0L
+        $engineSaved=@($userdata|Where-Object{$_.FullName -match '\\Engine\\Saved$'})
+        $bytes=0L
         foreach($file in @($tree|Where-Object{-not $_.PSIsContainer})){ $bytes+=[int64]$file.Length }
         $entry=@{product=$def.name;folder=$candidate.Name;path=$path;logicalBytes=$bytes;safeLinks=$safeLinks;engineSavedPaths=@($engineSaved|ForEach-Object{$_.FullName})}
         $allRemovals+=,$entry
