@@ -265,7 +265,11 @@ bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryS
                         bool Free=true;
                         for(int32 DY=0;DY<Size.Y && Free;++DY)
                             for(int32 DX=0;DX<Size.X;++DX) if(Occupied[(Y+DY)*Box.Width+X+DX]) { Free=false;break; }
-                        if(Free && CanPlace(Candidate,Stack,Box.Id,X,Y,Rotation==1))
+                        auto PlacementStack=Stack;
+                        // Migration may place preserved items into withdrawal-only recovery;
+                        // ordinary pickup and equipment requests never get this privilege.
+                        if(bIncludeRecovery&&Box.bRecoveryOnly)PlacementStack.ContainerId=Box.Id;
+                        if(Free && CanPlace(Candidate,PlacementStack,Box.Id,X,Y,Rotation==1))
                         {
                             Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
                             return true;
