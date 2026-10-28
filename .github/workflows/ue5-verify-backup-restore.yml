@@ -23,6 +23,8 @@ jobs:
           const out=path.join('C:\\ANOMALIA-Validation\\Reports','restore-verification-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});
           const p=path.join(out,'verify.ps1');
           fs.writeFileSync(p,String.raw`$ErrorActionPreference='Stop'
+          $out=$env:ANOMALIA_VERIFY_OUT
+          if([string]::IsNullOrWhiteSpace($out)){throw 'Verification output directory is missing.'}
           $backup='D:\\ANOMALIA-Backups\\pre-differential-40767016246'
           $manifestPath=Join-Path $backup 'backup-manifest.json'
           if(!(Test-Path -LiteralPath $manifestPath)){throw 'Backup manifest missing on D:'}
@@ -65,7 +67,7 @@ jobs:
           $r.state='ACTIVE_VERSIONS_AND_USERDATA_SHA256_RESTORE_VERIFIED'
           $r|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $out 'restore-report.json') -Encoding UTF8
           $r|ConvertTo-Json -Depth 10|Write-Output`,{flag:'wx'});
-          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:7200000,maxBuffer:8*1024*1024});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:7200000,maxBuffer:8*1024*1024,env:{...process.env,ANOMALIA_VERIFY_OUT:out}});
           console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('D restore verification failed '+String(r.error||r.status));
       - uses: actions/upload-artifact@v4
         if: always()
