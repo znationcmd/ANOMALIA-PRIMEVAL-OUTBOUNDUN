@@ -56,3 +56,15 @@ Ces captures réutilisent les onze meshes v7 et vérifient leurs métadonnées S
 Le run natif 40546939481 de la PR #44 a également réussi le test VehicleKeyPartsCargoAndRecovery, parmi 26 tests natifs. Cette preuve porte sur les sources corrigées et le monde de test isolé ; elle ne remplace pas un essai GPU des nouveaux services sur le code e6b7967 ou une vérification dans le jeu installé.
 
 Restent : finition des matériaux, compartiment moteur/habitacle, animations du conducteur, multijoueur, persistance en session et paquet installé. Aucun remplacement de la BMW existante n’est effectué.
+
+## Reprise du 28 octobre : défaut réel de masse du coffre
+
+Le probe du run 40587487588 a réellement exécuté la scène de service E39 isolée avec les onze meshes v7 d'origine vérifiés. La préparation a sauvegardé une nouvelle carte séparée. Le jeu a produit un rapport FAILED : « Stored cargo did not increase actual chassis mass ». Les étapes d'ouvrants, de serrure et de retrait/réinstallation du radiateur et de la bougie avaient été franchies. Le parcours s'arrête au dépôt dans le coffre, avant les mesures de conduite ; ce run ne valide donc pas toute l'extension. Le statut GitHub global est cancelled après demande d'arrêt liée au crash mémoire du personnage, mais le probe a fini et son rapport d'échec est conservé (artefact 12773480070).
+
+Cause constatée dans le code moteur 5.8.3 installé : SetupVehicleMass attache UpdateMassProperties à la notification de recalcul de masse du corps. Modifier seulement l'override du châssis est annulé par la propriété Mass du mouvement Chaos.
+
+Une correction candidate est versionnée dans la PR44, commit e36f83420a8c6bd3a4147169e5ec7253755c8048 : masse à vide mémorisée séparément, masse Chaos synchronisée avec le chargement, override du corps racine et invalidation du cache lors d'une recréation physique. Le probe compare masse réelle et masse attendue, vérifie une notification répétée sans accumulation puis le retrait de la cargaison.
+
+La compilation du correctif a été tentée par 40652769294 mais bloquée AVANT copie des sources/compilation par la réserve d'espace : 10 012 516 352 octets libres au moment du contrôle, moins que les 10 Gio réservés. Le correctif n'est donc ni compilé ni validé physiquement. Aucun remplacement des meshes, paramètres de conduite ou fichiers du projet installé. Les contrôles source GitHub ne remplacent pas la compilation Unreal.
+
+Les workflows de reprise et rapports sont préparés ; la reprise effective exige de rétablir la marge disque/RAM. Conserver cette PR de géométrie indépendante et en brouillon. Aucune fusion.
