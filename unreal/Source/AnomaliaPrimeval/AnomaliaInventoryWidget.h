@@ -118,6 +118,7 @@ private:
     TMap<FName,bool> ExpandedContainers;
     void RefreshCrafting();
     FString ContainerLabel(FName Id) const;
+    void AddAttachmentSlots(FName ParentId);
     int32 SelectedStackId=0;
     float GridCellSize=36.f;
     bool bBankTab=false;

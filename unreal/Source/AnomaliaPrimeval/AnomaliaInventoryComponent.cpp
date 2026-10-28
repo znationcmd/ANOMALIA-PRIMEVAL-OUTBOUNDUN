@@ -6,6 +6,8 @@
 #include "AnomaliaLootSubsystem.h"
 #include "AnomaliaSurvivor.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Components/StaticMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "AnomaliaVitalsComponent.h"
 #include "AnomaliaGameMode.h"
 #include "Engine/World.h"
@@ -38,6 +40,9 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
     { OutWeightKg=.03f;OutMaxStack=1;OutSize=FIntPoint(1,1);return true; }
     static const TMap<FName, float> Weights = {
         // Storage parity with the additive JS resource catalogue; crafting is separate.
+        {TEXT("tactical_belt"), .3f}, {TEXT("medical_pouch"), .25f},
+        {TEXT("handheld_radio"), .3f}, {TEXT("frag_grenade"), .4f}, {TEXT("smoke_grenade"), .45f},
+        {TEXT("handcuffs"), .35f}, {TEXT("pistol_holster"), .2f}, {TEXT("knife_sheath"), .1f},
         {TEXT("thatch"), 0.12f},
         {TEXT("fungal_wood"), 0.6f},
         {TEXT("flint"), 0.4f},
@@ -115,6 +120,7 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
         ItemId == TEXT("jacket") || ItemId == TEXT("coat") || ItemId == TEXT("shirt") || ItemId == TEXT("pants") ||
         ItemId == TEXT("jeans") || ItemId == TEXT("boots") || ItemId == TEXT("helmet") ||
         ItemId == TEXT("backpack") || ItemId == TEXT("bag") || ItemId == TEXT("vest")) OutMaxStack = 1;
+    if(ItemId==TEXT("handheld_radio")||ItemId==TEXT("frag_grenade")||ItemId==TEXT("smoke_grenade")||ItemId==TEXT("tactical_belt")||ItemId==TEXT("medical_pouch")||ItemId==TEXT("handcuffs")||ItemId==TEXT("pistol_holster")||ItemId==TEXT("knife_sheath")) {OutMaxStack=1;OutSize={2,2};}
     if (ItemId == TEXT("wood")) OutSize = FIntPoint(1, 3);
     else if (ItemId == TEXT("rifle") || ItemId == TEXT("fishing_rod")) OutSize = FIntPoint(2, 5);
     else if (ItemId == TEXT("saddle")) OutSize = FIntPoint(3, 3);
@@ -153,7 +159,7 @@ float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
 bool UAnomaliaInventoryComponent::ConfigureCompartment(FName Id, int32 Width, int32 Height)
 {
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || Id.IsNone() || Id == TEXT("hands") ||
-        Id.ToString().StartsWith(TEXT("migration_recovery_")) || !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
+        (Id.ToString().StartsWith(TEXT("migration_recovery_")) || Id.ToString().StartsWith(TEXT("mount_"))) || !UAnomaliaStorageCatalog::IsValidGrid(Width,Height)) return false;
     FAnomaliaInventoryCompartment* Existing = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == Id; });
     if (Existing && (Width < Existing->Width || Height < Existing->Height)) return false;
     if (!Existing) Existing = &Compartments.AddDefaulted_GetRef();
@@ -193,6 +199,14 @@ bool UAnomaliaInventoryComponent::IsRecoveryContainer(FName ContainerId) const
 bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate,
     const FAnomaliaInventoryStack& Stack, FName ContainerId, int32 X, int32 Y, bool bRotate) const
 {
+    if(const auto* Rule=FindAttachmentRule(ContainerId))
+    {
+        const auto* Box=Compartments.FindByPredicate([&](const auto& B){return B.Id==ContainerId;});
+        const bool Existing=Stack.ContainerId==ContainerId;
+        return Box && X==0 && Y==0 && !bRotate && Stack.Count==1 && Rule->Items.Contains(Stack.ItemId) &&
+            ((Existing&&Box->bRecoveryOnly)||AttachmentAvailable(Candidate,ContainerId)) &&
+            !Candidate.ContainsByPredicate([&](const auto& Other){return Other.StackId!=Stack.StackId&&Other.ContainerId==ContainerId;});
+    }
     if (ContainerId == TEXT("hands"))
         return !Candidate.ContainsByPredicate([&](const FAnomaliaInventoryStack& Other) { return Other.StackId != Stack.StackId && Other.ContainerId == TEXT("hands"); });
     const FAnomaliaInventoryCompartment* Box = Compartments.FindByPredicate([&](const FAnomaliaInventoryCompartment& C) { return C.Id == ContainerId; });
@@ -200,6 +214,13 @@ bool UAnomaliaInventoryComponent::CanPlace(const TArray<FAnomaliaInventoryStack>
     int32 MaxStack = 0;
     FIntPoint Size;
     if (!Box || (Box->bRecoveryOnly && Stack.ContainerId!=ContainerId) || !GetItemRules(Stack.ItemId, Weight, MaxStack, Size)) return false;
+    const FString BoxName=ContainerId.ToString();
+    if(BoxName.StartsWith(TEXT("mount_"))&&BoxName.EndsWith(TEXT("_cargo")))
+    {
+        const FName Parent(*BoxName.LeftChop(6));
+        const bool Equipped=AttachmentAvailable(Candidate,Parent)&&Candidate.ContainsByPredicate([&](const auto& S){return S.ContainerId==Parent&&S.ItemId==TEXT("medical_pouch")&&S.Count==1;});
+        if(!Equipped&&!(Box->bRecoveryOnly&&Stack.ContainerId==ContainerId))return false;
+    }
     if (bRotate) Swap(Size.X, Size.Y);
     if (X < 0 || Y < 0 || X + Size.X > Box->Width || Y + Size.Y > Box->Height) return false;
     for (const FAnomaliaInventoryStack& Other : Candidate)
@@ -219,6 +240,7 @@ bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryS
 {
     for (const FAnomaliaInventoryCompartment& Box : Compartments)
     {
+        if(FindAttachmentRule(Box.Id))continue; // Automatic pickup never equips an attachment.
         if(Box.bRecoveryOnly && !bIncludeRecovery) continue;
         if(!UAnomaliaStorageCatalog::IsValidGrid(Box.Width,Box.Height)) return false;
         // One compact occupancy map per compartment. Large grids do not scan every
@@ -243,7 +265,7 @@ bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryS
                         bool Free=true;
                         for(int32 DY=0;DY<Size.Y && Free;++DY)
                             for(int32 DX=0;DX<Size.X;++DX) if(Occupied[(Y+DY)*Box.Width+X+DX]) { Free=false;break; }
-                        if(Free)
+                        if(Free && CanPlace(Candidate,Stack,Box.Id,X,Y,Rotation==1))
                         {
                             Stack.ContainerId = Box.Id; Stack.X = X; Stack.Y = Y; Stack.bRotated = Rotation == 1;
                             return true;
@@ -256,6 +278,7 @@ bool UAnomaliaInventoryComponent::FindPlacement(const TArray<FAnomaliaInventoryS
 void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candidate)
 {
     Stacks = MoveTemp(Candidate);
+    if (!bSuppressNotifications) {SynchronizeAttachmentStorage();RefreshAttachmentVisuals();}
     if (bSuppressNotifications) return;
     if (GetOwner()) GetOwner()->ForceNetUpdate();
     OnInventoryChanged();
@@ -274,7 +297,7 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     int32 CandidateNextId = NextStackId;
     for (FAnomaliaInventoryStack& Stack : Candidate)
     {
-        if (Stack.ItemId != ItemId || Stack.Condition!=100.f || Stack.ContainerId == TEXT("hands") || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
+        if (Stack.ItemId != ItemId || Stack.Condition!=100.f || Stack.ContainerId == TEXT("hands") || FindAttachmentRule(Stack.ContainerId) || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
         Stack.Count += Added; Remaining -= Added;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
@@ -302,14 +325,14 @@ bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked() || ItemId.IsNone() || Count < 1) return false;
     int32 Available = 0;
     for (const FAnomaliaInventoryStack& Stack : Stacks)
-        if (Stack.ItemId == ItemId && Stack.Count > 0) Available += Stack.Count;
+        if (Stack.ItemId == ItemId && Stack.Count > 0 && !HasAttachmentDependents(Stack.StackId)) Available += Stack.Count;
     if (Available < Count) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     int32 Remaining = Count;
     for (int32 Index = Candidate.Num() - 1; Index >= 0 && Remaining > 0; --Index)
     {
         FAnomaliaInventoryStack& Stack = Candidate[Index];
-        if (Stack.ItemId != ItemId) continue;
+        if (Stack.ItemId != ItemId || HasAttachmentDependents(Stack.StackId)) continue;
         const int32 Removed = FMath::Min(Remaining, Stack.Count);
         Stack.Count -= Removed;
         Remaining -= Removed;
@@ -325,7 +348,7 @@ bool UAnomaliaInventoryComponent::TryTransferStackTo(int32 StackId,int32 Expecte
        !Destination->GetOwner() || !Destination->GetOwner()->HasAuthority() || Destination->IsPersistenceLocked() ||
        Destination->Stacks.Num()>=MaxStacks || Destination->NextStackId>=MAX_int32)return false;
     const auto* Existing=Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==StackId;});
-    if(!Existing || ExpectedCount<1 || Existing->Count!=ExpectedCount)return false;
+    if(!Existing || ExpectedCount<1 || Existing->Count!=ExpectedCount || HasAttachmentDependents(StackId))return false;
     float Weight=0;int32 Limit=0;FIntPoint Size;
     if(!GetItemRules(Existing->ItemId,Weight,Limit,Size) ||
        Destination->GetCurrentWeightKg()+Weight*Existing->Count>Destination->WeightCapacityKg+KINDA_SMALL_NUMBER)return false;
@@ -346,7 +369,7 @@ bool UAnomaliaInventoryComponent::TryMoveStack(int32 StackId, FName ContainerId,
     if (!GetOwner() || !GetOwner()->HasAuthority() || IsPersistenceLocked()) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Stack = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == StackId; });
-    if (!Stack || !CanPlace(Candidate, *Stack, ContainerId, X, Y, bRotate)) return false;
+    if (!Stack || (Stack->ContainerId!=ContainerId && HasAttachmentDependents(StackId)) || !CanPlace(Candidate, *Stack, ContainerId, X, Y, bRotate)) return false;
     Stack->ContainerId = ContainerId; Stack->X = X; Stack->Y = Y; Stack->bRotated = bRotate;
     Commit(MoveTemp(Candidate));
     return true;
@@ -387,7 +410,7 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     FAnomaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
-    if (!Target || !Source || Target->ItemId != Source->ItemId || Target->Condition!=Source->Condition || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
+    if (!Target || !Source || FindAttachmentRule(Target->ContainerId) || FindAttachmentRule(Source->ContainerId) || Target->ItemId != Source->ItemId || Target->Condition!=Source->Condition || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
     if(IsRecoveryContainer(Target->ContainerId) && !IsRecoveryContainer(Source->ContainerId)) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
@@ -554,12 +577,20 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
         const bool Migration=IdText.StartsWith(TEXT("migration_recovery_"));
         const bool Worn=Box.Id==TEXT("worn_top")||Box.Id==TEXT("worn_legs")||Box.Id==TEXT("worn_back")||
             Box.Id==TEXT("worn_vest")||Box.Id==TEXT("worn_head")||Box.Id==TEXT("worn_gloves")||Box.Id==TEXT("worn_feet");
-        if((Migration&&!Box.bRecoveryOnly)||(!Migration&&!Worn&&Box.bRecoveryOnly))
+        if((Migration&&!Box.bRecoveryOnly)||(!Migration&&!Worn&&!IdText.StartsWith(TEXT("mount_"))&&Box.bRecoveryOnly))
         { OutError=TEXT("Invalid reserved migration compartment");return false; }
         double Condition=100;
         if(Row->HasField(TEXT("condition"))&&(!Row->TryGetNumberField(TEXT("condition"),Condition)||!FMath::IsFinite(Condition)||Condition<0||Condition>100||(!Worn&&Condition!=100)))
         {OutError=TEXT("Invalid compartment condition");return false;}
         Box.Condition=static_cast<float>(Condition);
+        if(IdText.StartsWith(TEXT("mount_")))
+        {
+            const auto* Rule=FindAttachmentRule(Id);
+            const bool Medical=IdText.EndsWith(TEXT("_cargo")) && FindAttachmentRule(FName(*IdText.LeftChop(6))) &&
+                FindAttachmentRule(FName(*IdText.LeftChop(6)))->Items.Contains(TEXT("medical_pouch"));
+            if((Rule&&(Box.Width!=16||Box.Height!=16))||(!Rule&&(!Medical||Box.Width!=4||Box.Height!=3)))
+            {OutError=TEXT("Invalid reserved attachment storage");return false;}
+        }
         LoadedCompartments.Add(Box);
     }
 
@@ -604,6 +635,7 @@ bool UAnomaliaInventoryComponent::LoadInventoryObject(const TSharedPtr<FJsonObje
 
     const TArray<FAnomaliaInventoryCompartment> PreviousCompartments = Compartments;
     Compartments = LoadedCompartments;
+    for(auto& Box:Compartments)if(FindAttachmentRule(Box.Id)&&!AttachmentAvailable(LoadedStacks,Box.Id))Box.bRecoveryOnly=true;
     bool ValidLayout=true;
     for (const FAnomaliaInventoryStack& Stack : LoadedStacks)
     {
@@ -752,7 +784,7 @@ FString UAnomaliaInventoryComponent::GetItemDisplayName(FName ItemId) const
     const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
     const auto* Item=Loot?Loot->FindItem(ItemId):nullptr;
     if(Item)return Item->DisplayName;
-    static const TMap<FName,FString> Labels={{TEXT("cloth"),TEXT("Tissu")},{TEXT("fiber"),TEXT("Fibres")},{TEXT("wood"),TEXT("Bois")},{TEXT("stone"),TEXT("Pierre")},{TEXT("bandage"),TEXT("Pansement")},{TEXT("saddle"),TEXT("Selle")}};
+    static const TMap<FName,FString> Labels={{TEXT("tactical_belt"),TEXT("Ceinture tactique")},{TEXT("medical_pouch"),TEXT("Sacoche médicale")},{TEXT("handcuffs"),TEXT("Menottes")},{TEXT("pistol_holster"),TEXT("Holster")},{TEXT("knife_sheath"),TEXT("Fourreau")},{TEXT("handheld_radio"),TEXT("Radio")},{TEXT("frag_grenade"),TEXT("Grenade")},{TEXT("smoke_grenade"),TEXT("Fumigène")},{TEXT("cloth"),TEXT("Tissu")},{TEXT("fiber"),TEXT("Fibres")},{TEXT("wood"),TEXT("Bois")},{TEXT("stone"),TEXT("Pierre")},{TEXT("bandage"),TEXT("Pansement")},{TEXT("saddle"),TEXT("Selle")}};
     const auto* Label=Labels.Find(ItemId);return Label?*Label:ItemId.ToString();
 }
 
@@ -875,8 +907,8 @@ void UAnomaliaInventoryComponent::ServerRequestUseStack_Implementation(int32 Sta
     UseFromOwningPlayer(StackId,ExpectedCount);
 }
 
-void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
-void UAnomaliaInventoryComponent::OnRep_Compartments() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
+void UAnomaliaInventoryComponent::OnRep_Stacks() { RefreshAttachmentVisuals();OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
+void UAnomaliaInventoryComponent::OnRep_Compartments() { RefreshAttachmentVisuals();OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }
 
 void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
@@ -900,6 +932,7 @@ void UAnomaliaInventoryComponent::SetProfileRecoveryPending(bool Pending)
 void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* TickFunction)
 {
     Super::TickComponent(DeltaTime, TickType, TickFunction);
+    RefreshAttachmentVisuals();
     if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld()) return;
     const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
     const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
@@ -956,7 +989,12 @@ FName UAnomaliaInventoryComponent::WornContainerId(FName MeshSlot)
 bool UAnomaliaInventoryComponent::CanRemoveWornStorage(FName MeshSlot) const
 {
     const FName Id=WornContainerId(MeshSlot);
-    return !IsPersistenceLocked()&&!Id.IsNone()&&!Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Id;});
+    return !IsPersistenceLocked()&&!Id.IsNone()&&!Stacks.ContainsByPredicate([&](const auto& S){
+        const auto* Rule=FindAttachmentRule(S.ContainerId);
+        if(S.ContainerId==Id || (Rule&&Rule->Parent==Id))return true;
+        if(Rule){const auto* Parent=FindAttachmentRule(Rule->Parent);return Parent&&Parent->Parent==Id;}
+        return false;
+    });
 }
 
 void UAnomaliaInventoryComponent::SynchronizeWornStorage()
@@ -993,6 +1031,7 @@ void UAnomaliaInventoryComponent::SynchronizeWornStorage()
             else{Compartments.RemoveAll([&](const auto& B){return B.Id==Id;});Changed=true;}
         }
     }
+    SynchronizeAttachmentStorage();
     if(Changed){GetOwner()->ForceNetUpdate();OnInventoryChanged();OnInventoryUpdated.Broadcast();}
 }
 
@@ -1001,7 +1040,8 @@ bool UAnomaliaInventoryComponent::StowStackInOnServer(int32 StackId,FName Contai
     if(!GetOwner()||!GetOwner()->HasAuthority()||IsPersistenceLocked()||ContainerId==TEXT("hands")||IsRecoveryContainer(ContainerId))return false;
     const auto* Box=Compartments.FindByPredicate([&](const auto& B){return B.Id==ContainerId;});
     const auto* Selected=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
-    if(!Box||!Selected)return false;
+    if(!Box||!Selected||HasAttachmentDependents(StackId))return false;
+    if(FindAttachmentRule(ContainerId))return TryMoveStack(StackId,ContainerId,0,0,false);
     auto Candidate=Stacks;auto* Moving=Candidate.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
     for(bool Rotated:{Moving->bRotated,!Moving->bRotated})
     {
@@ -1104,7 +1144,7 @@ void UAnomaliaInventoryComponent::ServerRequestCraftRecipe_Implementation(FName 
 
 bool UAnomaliaInventoryComponent::SupportsItemWear(FName Id) const
 {
-    static const TSet<FName> Legacy={TEXT("rifle"),TEXT("pistol"),TEXT("shotgun"),TEXT("knife"),TEXT("hunting_knife"),TEXT("combat_knife"),TEXT("machete"),TEXT("hatchet"),TEXT("jacket"),TEXT("coat"),TEXT("shirt"),TEXT("pants"),TEXT("jeans"),TEXT("boots"),TEXT("gloves"),TEXT("helmet"),TEXT("vest"),TEXT("backpack"),TEXT("bag")};
+    static const TSet<FName> Legacy={TEXT("tactical_belt"),TEXT("medical_pouch"),TEXT("handcuffs"),TEXT("pistol_holster"),TEXT("knife_sheath"),TEXT("rifle"),TEXT("pistol"),TEXT("shotgun"),TEXT("knife"),TEXT("hunting_knife"),TEXT("combat_knife"),TEXT("machete"),TEXT("hatchet"),TEXT("jacket"),TEXT("coat"),TEXT("shirt"),TEXT("pants"),TEXT("jeans"),TEXT("boots"),TEXT("gloves"),TEXT("helmet"),TEXT("vest"),TEXT("backpack"),TEXT("bag")};
     if(Legacy.Contains(Id))return true;
     const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
     const auto* Item=Loot?Loot->FindItem(Id):nullptr;if(!Item)return false;
@@ -1136,4 +1176,112 @@ bool UAnomaliaInventoryComponent::ApplyWornWear(float Wear)
     }
     if(Changed){OnInventoryChanged();OnInventoryUpdated.Broadcast();User->ForceNetUpdate();}
     return Changed;
+}
+
+
+const TArray<FAnomaliaAttachmentRule>& UAnomaliaInventoryComponent::GetAttachmentRules()
+{
+    static const TArray<FAnomaliaAttachmentRule> Rules={
+        {TEXT("mount_belt"),NAME_None,TEXT("Ceinture"),{TEXT("tactical_belt")}},
+        {TEXT("mount_belt_holster"),TEXT("mount_belt"),TEXT("Holster"),{TEXT("pistol_holster")}},
+        {TEXT("mount_belt_pistol"),TEXT("mount_belt_holster"),TEXT("Pistolet"),{TEXT("pistol"),TEXT("mlock91"),TEXT("kolt1911"),TEXT("fx45"),TEXT("ij70"),TEXT("cr75"),TEXT("deagle"),TEXT("p1"),TEXT("derringer"),TEXT("amphibias")}},
+        {TEXT("mount_belt_sheath"),TEXT("mount_belt"),TEXT("Fourreau"),{TEXT("knife_sheath")}},
+        {TEXT("mount_belt_knife"),TEXT("mount_belt_sheath"),TEXT("Couteau"),{TEXT("hunting_knife"),TEXT("kitchen_knife"),TEXT("bone_knife")}},
+        {TEXT("mount_belt_water"),TEXT("mount_belt"),TEXT("Gourde"),{TEXT("military_canteen"),TEXT("empty_military_canteen"),TEXT("filter_canteen"),TEXT("empty_filter_canteen")}},
+        {TEXT("mount_belt_medical"),TEXT("mount_belt"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
+        {TEXT("mount_belt_mag1"),TEXT("mount_belt"),TEXT("Chargeur 1"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
+        {TEXT("mount_belt_mag2"),TEXT("mount_belt"),TEXT("Chargeur 2"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
+        {TEXT("mount_belt_cuffs"),TEXT("mount_belt"),TEXT("Menottes"),{TEXT("handcuffs")}},
+        {TEXT("mount_back_weapon"),TEXT("worn_back"),TEXT("Arme latérale"),{TEXT("rifle"),TEXT("akm"),TEXT("m4a1"),TEXT("mosin_9130"),TEXT("bk133"),TEXT("ak74"),TEXT("aks74u"),TEXT("fal_lar"),TEXT("ka101"),TEXT("m16a2"),TEXT("aug_a1"),TEXT("aug_ax"),TEXT("famas")}},
+        {TEXT("mount_back_sleep"),TEXT("worn_back"),TEXT("Sac de couchage"),{TEXT("sleeping_bag")}},
+        {TEXT("mount_back_water"),TEXT("worn_back"),TEXT("Bouteille / gourde"),{TEXT("water_bottle"),TEXT("empty_water_bottle"),TEXT("dirty_water_bottle"),TEXT("military_canteen"),TEXT("empty_military_canteen"),TEXT("filter_canteen"),TEXT("empty_filter_canteen")}},
+        {TEXT("mount_back_medical"),TEXT("worn_back"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
+        {TEXT("mount_back_radio"),TEXT("worn_back"),TEXT("Radio"),{TEXT("handheld_radio")}},
+        {TEXT("mount_back_light"),TEXT("worn_back"),TEXT("Bâton lumineux"),{TEXT("chemlight")}},
+        {TEXT("mount_vest_medical"),TEXT("worn_vest"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
+        {TEXT("mount_vest_mag_left"),TEXT("worn_vest"),TEXT("Chargeur gauche"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
+        {TEXT("mount_vest_mag_right"),TEXT("worn_vest"),TEXT("Chargeur droit"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
+        {TEXT("mount_vest_grenade1"),TEXT("worn_vest"),TEXT("Grenade 1"),{TEXT("frag_grenade"),TEXT("smoke_grenade")}},
+        {TEXT("mount_vest_grenade2"),TEXT("worn_vest"),TEXT("Grenade 2"),{TEXT("frag_grenade"),TEXT("smoke_grenade")}},
+        {TEXT("mount_vest_holster"),TEXT("worn_vest"),TEXT("Holster"),{TEXT("pistol_holster")}},
+        {TEXT("mount_vest_pistol"),TEXT("mount_vest_holster"),TEXT("Pistolet"),{TEXT("pistol"),TEXT("mlock91"),TEXT("kolt1911"),TEXT("fx45"),TEXT("ij70"),TEXT("cr75"),TEXT("deagle"),TEXT("p1"),TEXT("derringer"),TEXT("amphibias")}}
+    };
+    return Rules;
+}
+const FAnomaliaAttachmentRule* UAnomaliaInventoryComponent::FindAttachmentRule(FName Id)
+{return GetAttachmentRules().FindByPredicate([&](const auto& Rule){return Rule.Id==Id;});}
+bool UAnomaliaInventoryComponent::AttachmentAvailable(const TArray<FAnomaliaInventoryStack>& Candidate,FName Id) const
+{
+    const auto* Rule=FindAttachmentRule(Id);if(!Rule)return false;
+    const auto* User=Cast<AAnomaliaSurvivor>(GetOwner());if(!User)return false;
+    if(Rule->Parent.IsNone())return true;
+    if(Rule->Parent==TEXT("worn_back"))return User->BackpackMesh&&User->BackpackMesh->GetSkeletalMeshAsset();
+    if(Rule->Parent==TEXT("worn_vest"))return User->VestMesh&&User->VestMesh->GetSkeletalMeshAsset();
+    const auto* Parent=FindAttachmentRule(Rule->Parent);
+    return Parent&&AttachmentAvailable(Candidate,Parent->Id)&&Candidate.ContainsByPredicate([&](const auto& S){return S.ContainerId==Parent->Id&&S.Count==1&&Parent->Items.Contains(S.ItemId);});
+}
+bool UAnomaliaInventoryComponent::IsAttachmentAvailable(FName Id) const
+{return AttachmentAvailable(Stacks,Id);}
+bool UAnomaliaInventoryComponent::CanAttachStack(int32 StackId,FName SlotId) const
+{
+    const auto* Stack=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    return FindAttachmentRule(SlotId)&&Stack&&!HasAttachmentDependents(StackId)&&CanPlace(Stacks,*Stack,SlotId,0,0,false);
+}
+bool UAnomaliaInventoryComponent::HasAttachmentDependents(int32 StackId) const
+{
+    const auto* Stack=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack||!FindAttachmentRule(Stack->ContainerId))return false;
+    const FName Cargo(*(Stack->ContainerId.ToString()+TEXT("_cargo")));
+    return Stacks.ContainsByPredicate([&](const auto& Other){
+        const auto* Rule=FindAttachmentRule(Other.ContainerId);
+        return Other.ContainerId==Cargo||(Rule&&Rule->Parent==Stack->ContainerId);
+    });
+}
+void UAnomaliaInventoryComponent::SynchronizeAttachmentStorage()
+{
+    if(!GetOwner()||!GetOwner()->HasAuthority()||!Cast<AAnomaliaSurvivor>(GetOwner())||IsPersistenceLocked()||bSuppressNotifications)return;
+    bool Changed=false;
+    auto Sync=[&](FName Id,int32 W,int32 H,bool Available){
+        auto* Box=Compartments.FindByPredicate([&](const auto& B){return B.Id==Id;});
+        const bool Occupied=Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Id;});
+        if(!Available&&!Occupied){if(Box){Compartments.RemoveAll([&](const auto& B){return B.Id==Id;});Changed=true;}return;}
+        if(!Box){if(Compartments.Num()>=128)return;Box=&Compartments.AddDefaulted_GetRef();Box->Id=Id;Box->Width=W;Box->Height=H;Changed=true;}
+        if(Box->bRecoveryOnly==Available){Box->bRecoveryOnly=!Available;Changed=true;}
+    };
+    for(const auto& Rule:GetAttachmentRules())
+    {
+        Sync(Rule.Id,16,16,AttachmentAvailable(Stacks,Rule.Id));
+        if(Rule.Items.Contains(TEXT("medical_pouch")))
+        {
+            const bool Equipped=AttachmentAvailable(Stacks,Rule.Id)&&Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Rule.Id&&S.ItemId==TEXT("medical_pouch")&&S.Count==1;});
+            Sync(FName(*(Rule.Id.ToString()+TEXT("_cargo"))),4,3,Equipped);
+        }
+    }
+    if(Changed)GetOwner()->ForceNetUpdate();
+}
+
+void UAnomaliaInventoryComponent::RefreshAttachmentVisuals()
+{
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    if(!User||!GetWorld()||!GetWorld()->IsGameWorld()||GetWorld()->GetNetMode()==NM_DedicatedServer)return;
+    TSet<int32> Wanted;
+    for(const auto& Stack:Stacks)
+    {
+        // Only this exact local mesh has been validated. Other items never borrow an unrelated model.
+        if(Stack.ContainerId!=TEXT("mount_back_weapon")||Stack.ItemId!=TEXT("rifle")||!IsAttachmentAvailable(Stack.ContainerId))continue;
+        auto* Parent=User->BackpackMesh.Get();if(!Parent)continue;
+        FName Bone=NAME_None;for(const FName Candidate:{FName(TEXT("spine_03")),FName(TEXT("spine_02")),FName(TEXT("spine"))})
+            if(Parent->DoesSocketExist(Candidate)){Bone=Candidate;break;}
+        if(Bone.IsNone())continue;
+        Wanted.Add(Stack.StackId);
+        if(AttachmentVisuals.Contains(Stack.StackId))continue;
+        auto* Mesh=LoadObject<UStaticMesh>(nullptr,TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));if(!Mesh)continue;
+        auto* Part=NewObject<UStaticMeshComponent>(User);User->AddInstanceComponent(Part);
+        Part->SetStaticMesh(Mesh);Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);Part->SetGenerateOverlapEvents(false);
+        Part->SetCanEverAffectNavigation(false);Part->RegisterComponent();Part->AttachToComponent(Parent,FAttachmentTransformRules::SnapToTargetNotIncludingScale,Bone);
+        Part->SetRelativeLocation(FVector(-12,25,0));Part->SetRelativeRotation(FRotator(0,0,90));
+        AttachmentVisuals.Add(Stack.StackId,Part);
+    }
+    TArray<int32> Remove;for(const auto& Pair:AttachmentVisuals)if(!Wanted.Contains(Pair.Key))Remove.Add(Pair.Key);
+    for(const int32 Id:Remove){if(auto* Part=AttachmentVisuals.FindRef(Id).Get())Part->DestroyComponent();AttachmentVisuals.Remove(Id);}
 }

@@ -321,6 +321,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     auto* PersonalTarget=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("Ranger")));auto SmallFont=PersonalLabel->GetFont();SmallFont.Size=12;PersonalLabel->SetFont(SmallFont);PersonalTarget->SetContent(PersonalLabel);StyleButton(PersonalTarget);PersonalTarget->SetVisibility(Inventory->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");})?ESlateVisibility::Visible:ESlateVisibility::Collapsed);ItemList->AddChildToVerticalBox(PersonalTarget)->SetPadding(FMargin(0,0,0,8));
     BindAction(PersonalTarget,EAnomaliaInventoryAction::Stow,0);
+    AddAttachmentSlots(NAME_None);
     int32 StoredIndex=0;TArray<int32> DisplayOrder;
     for(int32 I=0;I<Inventory->Compartments.Num();++I)DisplayOrder.Add(I);
     auto Rank=[](FName Id){if(Id==TEXT("worn_vest"))return 0;if(Id==TEXT("worn_top"))return 1;if(Id==TEXT("worn_legs"))return 2;if(Id==TEXT("worn_back"))return 3;if(Id==TEXT("worn_gloves"))return 4;if(Id==TEXT("worn_feet"))return 5;if(Id==TEXT("worn_head"))return 6;return 10;};
@@ -328,6 +329,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     for (const int32 ContainerIndex : DisplayOrder)
     {
         const auto& Box=Inventory->Compartments[ContainerIndex];
+        if(UAnomaliaInventoryComponent::FindAttachmentRule(Box.Id))continue;
         const bool Expanded=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id!=TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);
         auto* Header=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("Container_")+Box.Id.ToString()+TEXT("_action")))));
         auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -337,6 +339,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,24))->SetPadding(FMargin(0,0,5,0));
         auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Title);TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));TitleSlot->SetVerticalAlignment(VAlign_Center);
         ItemList->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,7,0,1));BindAction(Header,EAnomaliaInventoryAction::ToggleContainer,0,0,ContainerIndex);auto HS=Header->GetStyle();HS.Normal=FSlateColorBrush(FLinearColor(.13f,.13f,.13f,.70f));Header->SetStyle(HS);
+        AddAttachmentSlots(Box.Id);
         if(!Expanded){for(const auto& S:Inventory->Stacks)if(S.ContainerId==Box.Id)++StoredIndex;continue;}
         auto* GridSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
         const float ViewportScale=FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this));
@@ -477,7 +480,7 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     auto* Destinations=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());Destinations->SetExplicitWrapSize(true);Destinations->SetWrapSize(UWidgetLayoutLibrary::GetViewportSize(this).X/FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this))*.88f);DetailsList->AddChildToVerticalBox(Destinations)->SetPadding(FMargin(8,6));
     for(int32 I=0;I<Inventory->Compartments.Num();++I)
     {
-        const auto& Box=Inventory->Compartments[I];if(Box.bRecoveryOnly||Box.Id==Stack.ContainerId)continue;
+        const auto& Box=Inventory->Compartments[I];if(Box.bRecoveryOnly||Box.Id==Stack.ContainerId||(UAnomaliaInventoryComponent::FindAttachmentRule(Box.Id)&&!Inventory->CanAttachStack(Stack.StackId,Box.Id)))continue;
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(ContainerLabel(Box.Id)));auto Small=Text->GetFont();Small.Size=12;Text->SetFont(Small);Button->SetContent(Text);Destinations->AddChildToWrapBox(Button)->SetPadding(FMargin(3));BindAction(Button,EAnomaliaInventoryAction::StowInContainer,Stack.StackId,0,I);
     }
 
@@ -791,6 +794,14 @@ FReply UAnomaliaInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry,const F
 
 FString UAnomaliaInventoryWidget::ContainerLabel(FName Id) const
 {
+    if(const auto* Rule=UAnomaliaInventoryComponent::FindAttachmentRule(Id))return Rule->Label;
+    const FString Name=Id.ToString();
+    if(Name.StartsWith(TEXT("mount_"))&&Name.EndsWith(TEXT("_cargo")))
+    {
+        const auto* Rule=UAnomaliaInventoryComponent::FindAttachmentRule(FName(*Name.LeftChop(6)));
+        const FString Parent=Rule&&Rule->Parent==TEXT("mount_belt")?TEXT("Ceinture"):Rule&&Rule->Parent==TEXT("worn_back")?TEXT("Sac à dos"):TEXT("Gilet");
+        return Parent+TEXT(" · Sacoche médicale");
+    }
     static const TMap<FName,FString> Labels={
         {TEXT("pockets"),TEXT("Poches")},{TEXT("worn_top"),TEXT("Veste")},
         {TEXT("worn_legs"),TEXT("Pantalon")},{TEXT("worn_back"),TEXT("Sac à dos")},
@@ -952,3 +963,37 @@ void UAnomaliaInventoryWidget::ReleaseIcons()
  PendingIcons.Reset();IconComponents.Reset();IconMaterials.Reset();IconBaseMaterial=nullptr;IconTextures.Reset();IconSignatures.Reset();MissingIconItems.Reset();
 }
 
+
+
+void UAnomaliaInventoryWidget::AddAttachmentSlots(FName ParentId)
+{
+    auto* Row=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());
+    Row->SetExplicitWrapSize(true);
+    Row->SetWrapSize(UWidgetLayoutLibrary::GetViewportSize(this).X/FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this))*.27f);
+    ItemList->AddChildToVerticalBox(Row)->SetPadding(FMargin(0,2));
+    TArray<FName> Children;
+    for(const auto& Rule:UAnomaliaInventoryComponent::GetAttachmentRules())
+    {
+        if(Rule.Parent!=ParentId)continue;
+        const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.ContainerId==Rule.Id;});
+        if(!Inventory->IsAttachmentAvailable(Rule.Id)&&!Stack)continue;
+        const int32 Index=Inventory->Compartments.IndexOfByPredicate([&](const auto& B){return B.Id==Rule.Id;});
+        if(Index==INDEX_NONE)continue;
+        auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Size->SetWidthOverride(76);Size->SetMinDesiredHeight(70);
+        auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Size->SetContent(Content);Button->SetContent(Size);
+        StyleButton(Button,Stack&&Stack->StackId==SelectedStackId);
+        if(Stack){if(auto* Icon=ItemIcon(Stack->ItemId))Content->AddChildToVerticalBox(Thumbnail(Icon,54))->SetHorizontalAlignment(HAlign_Center);}
+        auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Label->SetText(FText::FromString(Stack?Inventory->GetItemDisplayName(Stack->ItemId):Rule.Label));
+        auto Font=Label->GetFont();Font.Size=10;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetJustification(ETextJustify::Center);
+        Label->SetColorAndOpacity(Stack?FSlateColor(FLinearColor::White):FSlateColor(FLinearColor(.55f,.55f,.55f,1)));
+        Content->AddChildToVerticalBox(Label);Button->SetToolTipText(FText::FromString(Rule.Label));
+        Row->AddChildToWrapBox(Button)->SetPadding(FMargin(1));
+        if(Stack)BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack->StackId);
+        else{Button->SetIsEnabled(Inventory->CanAttachStack(SelectedStackId,Rule.Id));BindAction(Button,EAnomaliaInventoryAction::StowInContainer,SelectedStackId,0,Index);}
+        Children.Add(Rule.Id);
+    }
+    if(Children.IsEmpty())Row->SetVisibility(ESlateVisibility::Collapsed);
+    for(const FName Child:Children)AddAttachmentSlots(Child);
+}

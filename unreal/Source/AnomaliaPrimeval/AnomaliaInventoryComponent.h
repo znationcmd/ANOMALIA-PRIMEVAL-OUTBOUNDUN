@@ -10,6 +10,16 @@ struct FAnomaliaItemUseRule;
 class FJsonObject;
 class UAnomaliaSharedStorageSubsystem;
 class AAnomaliaLootPickup;
+class UStaticMeshComponent;
+
+/** Server-owned compatibility table. Attachments are single physical stacks, never extra cargo cells. */
+struct FAnomaliaAttachmentRule
+{
+    FName Id;
+    FName Parent;
+    FString Label;
+    TArray<FName> Items;
+};
 
 /** Fixed native recipes: clients request only Id, never ingredients or output. */
 struct FAnomaliaHandcraftRecipe
@@ -107,6 +117,12 @@ public:
 
     /** Actual server-worn meshes grant storage; missing garments preserve occupied cargo as recovery-only. */
     void SynchronizeWornStorage();
+    static const TArray<FAnomaliaAttachmentRule>& GetAttachmentRules();
+    static const FAnomaliaAttachmentRule* FindAttachmentRule(FName Id);
+    bool IsAttachmentAvailable(FName Id) const;
+    bool CanAttachStack(int32 StackId,FName SlotId) const;
+    void SynchronizeAttachmentStorage();
+    bool HasAttachmentDependents(int32 StackId) const;
     bool CanRemoveWornStorage(FName MeshSlot) const;
     static FName WornContainerId(FName MeshSlot);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
@@ -276,6 +292,9 @@ private:
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
+    bool AttachmentAvailable(const TArray<FAnomaliaInventoryStack>& Candidate,FName Id) const;
+    void RefreshAttachmentVisuals();
+    UPROPERTY(Transient) TMap<int32,TObjectPtr<UStaticMeshComponent>> AttachmentVisuals;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };
 
