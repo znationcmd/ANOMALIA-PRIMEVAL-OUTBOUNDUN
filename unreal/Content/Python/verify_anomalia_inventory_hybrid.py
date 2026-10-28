@@ -182,6 +182,21 @@ def tick(delta):
             report['collectedLoot']={'item':s['pickup_item'],'count':s['pickup_count']}
             finish();return
         if s['phase']=='capture_prepare':
+            if not report.get('thumbnailReadback'):
+                textures=dict(s['widget'].get_editor_property('IconTextures'))
+                required=['worn_top','worn_legs','worn_back','worn_gloves','worn_feet','item_apple','item_canned_beans']
+                available={str(k):v for k,v in textures.items()}
+                require(all(k in available for k in required),'Real mesh thumbnails missing: '+str(list(available)))
+                if s['widget'].get_editor_property('IconCaptureCount')<len(required): return
+                report['thumbnailReadback']=[]
+                for key in required:
+                    target=available[key]
+                    pixels=unreal.RenderingLibrary.read_render_target(s['world'],target,True)
+                    colors={(c.r,c.g,c.b) for c in pixels}
+                    require(len(pixels)==256*256 and len(colors)>16,'Empty/flat real-model thumbnail '+key)
+                    unreal.RenderingLibrary.export_render_target(s['world'],target,str(OUT),key+'.png')
+                    report['thumbnailReadback'].append({'id':key,'pixels':len(pixels),'distinctRGB':len(colors)})
+                report['checks'].append('seven actual mesh thumbnails rendered and GPU readback nonempty')
             name,tab=s['shots'][s['shot_index']]
             if tab=='bank': s['widget'].show_bank_tab()
             elif tab=='craft': s['widget'].show_craft_tab()
@@ -217,12 +232,17 @@ try:
     tier=next(t for t in tiers['tiers'] if t['tier']==1 and 'food' in t['categories'])
     tier['rarityMultiplier']=1
     (fixture/'loot_tiers.json').write_text(json.dumps(tiers),encoding='utf8')
+    catalog=json.loads((Path(unreal.Paths.project_content_dir())/'Anomalia/Data/loot_items_catalog.json').read_text(encoding='utf-8-sig'))
+    for item in catalog['items']:
+        if item['category']=='fresh_food' and item['id']!='apple': item['enabled']=False
+    (fixture/'loot_items_catalog.json').write_text(json.dumps(catalog),encoding='utf8')
     spawn={'schemaVersion':1,'spawns':[{'id':'inventory_vicinity_proof','map':'L_Survival_Playtest','buildingType':tier['buildings'][0],'categories':['fresh_food'],'anchor':'player_start','x':100,'y':0,'z':50}]}
     (fixture/'loot_spawns.json').write_text(json.dumps(spawn),encoding='utf8')
     w=unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
     w.get_world_settings().set_editor_property('default_game_mode',unreal.GameModeBase.static_class())
-    for command in ('r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','sg.TextureQuality 1','t.MaxFPS 30','t.IdleWhenNotForeground 0'):
+    for command in ('DisableAllScreenMessages','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','sg.TextureQuality 1','t.MaxFPS 30','t.IdleWhenNotForeground 0'):
         unreal.SystemLibrary.execute_console_command(w,command)
     editor.editor_request_begin_play();s['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error: finish(error)
+
 
