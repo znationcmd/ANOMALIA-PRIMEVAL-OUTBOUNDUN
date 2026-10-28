@@ -1,6 +1,6 @@
 {
   "date": "2026-10-28",
-  "state": "BLOCKED_NO_LOCAL_DOG_MODEL_CONFIRMED",
+  "state": "NATIVE_SINGLE_PLAYER_CORE_TESTED",
   "requested": {
     "orders": [
       "sit",
@@ -13,7 +13,7 @@
     "breeds": "selection from verified compatible installed models",
     "equipment": "real visible compatible gear"
   },
-  "implemented": false,
+  "implemented": true,
   "localAudits": [
     40709829529,
     40710478697,
@@ -44,10 +44,64 @@
     "downloaded": false
   },
   "remaining": [
-    "Supply or locate authorised original archive and dependencies",
-    "Verify exact skeleton and clips, acquire or author missing poses",
-    "Implement native companion authority, navigation, orders and nonfatal injury",
-    "Integrate breed catalogue, visible gear, persistence and network tests"
+    "sit/lie/attack clips and behavior",
+    "other breeds and selection UI",
+    "dog equipment and cargo",
+    "dog state persistence after reconnect",
+    "two-player validation",
+    "obstacle/navigation and packaged build testing"
   ],
-  "preservation": "No dog Blueprint placeholder, actor, fabricated breed, asset replacement or deletion created"
+  "preservation": "No dog Blueprint placeholder, actor, fabricated breed, asset replacement or deletion created",
+  "historicalAudit": {
+    "state": "BLOCKED_NO_LOCAL_DOG_MODEL_CONFIRMED",
+    "localAudits": [
+      40709829529,
+      40710478697,
+      40714643788
+    ],
+    "acquisition": {
+      "run": 40713471008,
+      "state": "FAILED_PUBLIC_CREATOR_PAGE_UNAVAILABLE",
+      "credentialsUsed": false,
+      "payment": false,
+      "downloaded": false
+    },
+    "remaining": [
+      "Supply or locate authorised original archive and dependencies",
+      "Verify exact skeleton and clips, acquire or author missing poses",
+      "Implement native companion authority, navigation, orders and nonfatal injury",
+      "Integrate breed catalogue, visible gear, persistence and network tests"
+    ]
+  },
+  "localPackConfirmed": {
+    "root": "C:\\ANOMALIA\\unreal\\Content\\German_Shepherd_3D_Model",
+    "fileAuditRun": 40722708373,
+    "fileCount": 26,
+    "bytes": 20203380,
+    "unrealAssetLoadRun": 40723219349,
+    "compatibleAnimationClips": 7,
+    "unresolvedPackReferences": [
+      "/Game/German_Shepherd_3D_Model/Blueprints/Animation_Previews/BP_GermanShepherd1",
+      "/Game/RSG_DogsPack/Models/SK_GoldenRetriever_Macey_01"
+    ]
+  },
+  "nativeValidation": {
+    "compileRun": 40757419153,
+    "dogCompileRun": 40753209118,
+    "nativeTestsPassed": 28,
+    "PIERun": 40757731172,
+    "PIEChecksPassed": 16,
+    "exitCode": 0,
+    "artifactId": 12847610637,
+    "launcher": "C:\\Users\\utilisateur\\Desktop\\ANOMALIA_Test_Dog_40757731172.cmd"
+  },
+  "implementedFeatures": [
+    "actual animated German Shepherd native character",
+    "authoritative owner assignment",
+    "Follow and Stay bound proximity commands",
+    "non-lethal damage and injury",
+    "server-only treatment hook",
+    "non-lethal KillZ recovery code (not exercised)"
+  ],
+  "report": "docs/character/DOG_AND_EQUIPMENT_INTEGRATION_20261028.md"
 }

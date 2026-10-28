@@ -1,6 +1,6 @@
 # Équipements modulaires — 28 octobre 2026
 
-État : implémentation native enregistrée, validation finale BLOQUÉE. Pas de fusion ni installation dans C:\ANOMALIA\unreal.
+État actualisé : correctif compilé et régressions réussies ; premier périmètre validé en PIE. Les limitations de modèles et de réseau restent ouvertes. Pas de fusion ni installation dans C:\ANOMALIA\unreal.
 
 ## Emplacements implémentés
 
@@ -25,7 +25,7 @@ Menottes, radio et grenades sont des objets d'inventaire ; arrestation, communic
 - Les piles conservent identifiant, quantité et condition. Toutes comptent une seule fois dans le poids. Les données empruntent la sauvegarde et la réplication existantes ; pas de registre secondaire.
 - Si un support disparaît, les objets restent accessibles en récupération. Les RPC d'inventaire existants exécutent les contrôles côté serveur.
 - Le panneau utilise les modèles exacts lorsqu'ils sont disponibles et garde un nom explicite autrement. Les silhouettes graphiques de tous les emplacements manquants restent à réaliser.
-- Le fusil Quantum peut créer un composant 3D fixé à un os de colonne vérifié du sac. Ce placement n'a pas encore été vérifié en PIE : orientation, traversées et animation restent à contrôler.
+- Le fusil Quantum peut créer un composant 3D fixé à un os de colonne vérifié du sac. Le premier placement horizontal traversait le torse ; correction compilée et revalidée : fusil vertical sur le côté du sac.
 - Aucune compatibilité automatique des vêtements Quantum avec Survival/Manny/Quinn.
 - Pas de nouvel équipement 3D fictif : modèle confirmé de ceinture, sacoche textile, couchage, gourde et menottes encore nécessaire pour achever tous les visuels.
 - Gilet Survival compatible non présent sur le personnage d'essai actuel. Les emplacements ne sont accordés que lorsqu'un mesh de gilet est réellement porté.
@@ -43,7 +43,7 @@ Menottes, radio et grenades sont des objets d'inventaire ; arrestation, communic
 8. Le contrôle CI des sources a initialement échoué parce que huit objets natifs supplémentaires n'étaient pas dans la liste d'exceptions. Liste native explicite ajoutée, anciens IDs et masses toujours vérifiés. Runs 40720606336 et 40720832811 réussis.
 
 Aucune nouvelle session PIE, capture, manipulation physique clavier/souris, cible Game ou session à deux joueurs validée pour ces attaches.
-La copie de validation contient encore le premier binaire tant que le correctif n'a pas pu être recompilé. Le projet installé et les sauvegardes utilisateur n'ont pas été modifiés.
+Le correctif a ensuite été recompilé avec succès : run 40720599355, tentative 2. Le binaire actuel inclut également le compagnon et le correctif visuel du run 40757419153. Le projet installé et les sauvegardes utilisateur n'ont pas été modifiés.
 
 ## Chien
 
@@ -64,3 +64,8 @@ Dernière mesure mémoire de ce run : 3 211 370 496 octets libres ; UnrealEditor
 
 AnomaliaInventoryComponent.h/.cpp ; AnomaliaInventoryWidget.h/.cpp ; Tests/AnomaliaEquipmentAttachmentTests.cpp ; tests/test_ue5_inventory_source.py ; workflows de compilation, recherche d'assets et acquisition du chien.
 BMW E39, véhicules, cartes, pawn principal et données Fab originaux préservés. PR44 reste en brouillon.
+
+
+## Résultat final de cette session
+
+28 tests natifs et 16 contrôles PIE réussis, sortie 0, trois captures inspectées : run 40757731172. Suivi/arrêt du chien, blessures non mortelles, sauvegarde des attaches, fusil vertical visible et vrais aperçus M4/AK. Raccourci Bureau : ANOMALIA_Test_Dog_40757731172.cmd. Le pack du berger allemand est maintenant réellement importé ; les blocages antérieurs ci-dessus sont historiques. Le rapport courant détaillé est DOG_AND_EQUIPMENT_INTEGRATION_20261028.md. Modèles d'autres accessoires, équipements du chien, autres races, assis/couché/attaque et multijoueur restent à terminer.
