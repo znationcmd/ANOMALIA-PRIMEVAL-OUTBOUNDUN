@@ -53,7 +53,9 @@ jobs:
               foreach($d in Get-ChildItem -LiteralPath $versionRoot -Directory -Force){
                 $files=@(Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue)
                 $bytes=0L;foreach($f in $files){$bytes+=[int64]$f.Length}
-                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd([char]92) -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd([char]92));lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
+                $folderPath=[IO.Path]::GetFullPath($d.FullName).TrimEnd([char]92)
+                $isActive=$false;if($activeLocation){$isActive=$folderPath -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd([char]92)}
+                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=$isActive;lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
               }
             }
             $products+=@{product=$name;hasOwner=(Test-Path (Join-Path $root 'owner.json'));activeManifest=$activeSafe;activeManifestPath=([string]$activePath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');versions=$versions}
