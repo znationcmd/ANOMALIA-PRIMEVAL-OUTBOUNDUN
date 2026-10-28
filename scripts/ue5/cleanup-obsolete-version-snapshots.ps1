@@ -23,6 +23,18 @@ foreach($name in $requiredLaunchers){
 if($backup.items.Count -lt 2){throw 'Expected active game/editor backups missing; refusing cleanup.'}
 if(!(Test-Path -LiteralPath 'D:\')){throw 'D: is unavailable; refusing cleanup.'}
 
+
+$probe=Join-Path $env:TEMP ('anomalia-junction-delete-'+[Guid]::NewGuid().ToString('N'))
+$probeTarget=Join-Path $probe 'target';$probeLink=Join-Path $probe 'link'
+New-Item -ItemType Directory -Path $probeTarget -Force|Out-Null
+Set-Content -LiteralPath (Join-Path $probeTarget 'proof.txt') -Value 'keep' -Encoding ASCII
+New-Item -ItemType Directory -Path $probe -Force|Out-Null
+$null=cmd.exe /d /c ('mklink /J "'+$probeLink+'" "'+$probeTarget+'"')
+if(!(Test-Path -LiteralPath $probeLink)){Remove-Item -LiteralPath $probe -Recurse -Force -ErrorAction SilentlyContinue;throw 'Could not create junction safety probe.'}
+[IO.Directory]::Delete($probeLink,$false)
+if((Test-Path -LiteralPath $probeLink) -or !(Test-Path -LiteralPath (Join-Path $probeTarget 'proof.txt'))){Remove-Item -LiteralPath $probe -Recurse -Force -ErrorAction SilentlyContinue;throw 'Directory.Delete junction behavior failed safety probe.'}
+Remove-Item -LiteralPath $probe -Recurse -Force
+
 $profile=$env:USERPROFILE
 $local=Join-Path $env:LOCALAPPDATA 'CMD'
 $productDefs=@(
@@ -94,14 +106,82 @@ foreach($def in $productDefs){
         }
         $tree=@(Get-ChildItem -LiteralPath $path -Recurse -Force -ErrorAction Stop)
         $reparse=@($tree|Where-Object{($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0})
-        if(($candidate.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or $reparse.Count -gt 0){
-            $reparseInfo=@()
-            foreach($rp in $reparse){
-                $detail=(& "$env:windir\System32\fsutil.exe" reparsepoint query $rp.FullName 2>&1|Out-String).Trim()
-                $reparseInfo+=@{path=$rp.FullName;attributes=[string]$rp.Attributes;details=$detail}
+        if(($candidate.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='version folder itself is a reparse point'}
+            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-root-reparse-point'}
+            continue
+        }
+        $safeLinks=@();$unsafeLink=$false
+        foreach($rp in $reparse){
+            $detail=(& "$env:windir\System32\fsutil.exe" reparsepoint query $rp.FullName 2>&1|Out-String).Trim()
+            $targetLine=@($detail -split "`r?`n"|Where-Object{$_ -match 'Nom substitut:|Substitute Name:'}|Select-Object -First 1)
+            $target=$null
+            if($rp.Name -notin @('Saved','Saved-validation') -or $detail -notmatch 'Point de montage|Mount Point' -or $targetLine.Count -ne 1 -or $targetLine[0] -notmatch ':`s*(.+)
+        $userdata=@($tree|Where-Object{$_.PSIsContainer -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
+        if($userdata.Count -gt 0){
+            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains user/save data';paths=@($userdata|ForEach-Object{$_.FullName})}
+            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-user-data';preservedPaths=@($userdata|ForEach-Object{$_.FullName})}
+            continue
+        }
+        $bytes=0L
+        foreach($file in @($tree|Where-Object{-not $_.PSIsContainer})){ $bytes+=[int64]$file.Length }
+        $entry=@{product=$def.name;folder=$candidate.Name;path=$path;logicalBytes=$bytes;safeLinks=$safeLinks}
+        $allRemovals+=,$entry
+        $productReport.candidates+=,@{folder=$candidate.Name;status='eligible';logicalBytes=$bytes}
+    }
+    $productReport.versionFoldersAfterPlanned=$dirs.Count-@($productReport.candidates|Where-Object{$_.status -eq 'eligible'}).Count
+    $report.products+=,$productReport
+}
+if($allRemovals.Count -eq 0){$report.state='NO_SAFE_OLD_VERSIONS_TO_REMOVE'}elseif(-not $Apply){$report.state='CLEANUP_PLAN_ONLY';$report.planned=$allRemovals}else{
+    foreach($entry in $allRemovals){
+        $p=[IO.Path]::GetFullPath($entry.path).TrimEnd([char]92)
+        $root=[IO.Path]::GetFullPath((Join-Path (Join-Path $local $entry.product) 'versions')).TrimEnd([char]92)
+        if(!$p.StartsWith($root+'\',[StringComparison]::OrdinalIgnoreCase)){throw "Deletion target outside managed versions root: $p"}
+        if(!(Test-Path -LiteralPath $p -PathType Container)){throw "Deletion target disappeared: $p"}
+        foreach($link in @($entry.safeLinks)){
+            if(!(Test-Path -LiteralPath $link.path)){throw "Expected Saved junction disappeared: $($link.path)"}
+            $linkItem=Get-Item -LiteralPath $link.path -Force
+            if(($linkItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0){throw "Saved link changed type: $($link.path)"}
+            if(!(Test-Path -LiteralPath $link.target -PathType Container)){throw "Saved target is missing: $($link.target)"}
+            [IO.Directory]::Delete($link.path,$false)
+            if(Test-Path -LiteralPath $link.path){throw "Could not unlink junction safely: $($link.path)"}
+            if(!(Test-Path -LiteralPath $link.target -PathType Container)){throw "Saved target changed during unlink: $($link.target)"}
+        }
+        Remove-Item -LiteralPath $p -Recurse -Force
+        if(Test-Path -LiteralPath $p){throw "Deletion did not complete: $p"}
+        foreach($link in @($entry.safeLinks)){if(!(Test-Path -LiteralPath $link.target -PathType Container)){throw "Saved target missing after version removal: $($link.target)"}}
+        $report.removed+=@{product=$entry.product;folder=$entry.folder;logicalBytes=$entry.logicalBytes;preservedTargets=@($entry.safeLinks|ForEach-Object{$_.target})}
+    }
+    foreach($manifest in $manifestHashes.Keys){
+        if((Get-FileHash -LiteralPath $manifest -Algorithm SHA256).Hash -ne $manifestHashes[$manifest]){throw "Active pointer changed during cleanup: $manifest"}
+    }
+    $report.state='INACTIVE_VERSIONS_CLEANED'
+}
+$report.cFreeBytesAfter=[int64](Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace
+$report.dFreeBytesAfter=[int64](Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
+$report.cDriveRecoveredBytes=[int64]($report.cFreeBytesAfter-$report.cFreeBytesBefore)
+$report.cDriveRecoveredGiB=[math]::Round($report.cDriveRecoveredBytes/1GB,3)
+$output='C:\ANOMALIA-Validation\Reports\version-cleanup-'+$env:GITHUB_RUN_ID
+New-Item -ItemType Directory -Path $output -Force|Out-Null
+$report|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $output 'cleanup-report.json') -Encoding UTF8
+$report|ConvertTo-Json -Depth 12|Write-Output
+){
+                $unsafeLink=$true
+            }else{
+                $targetRaw=$Matches[1].Trim() -replace '^\\\?\?\\',''
+                try{$target=[IO.Path]::GetFullPath($targetRaw).TrimEnd([char]92)}catch{$unsafeLink=$true}
             }
-            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains a reparse point';reparsePoints=$reparseInfo}
-            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-reparse-point';reparsePoints=$reparseInfo}
+            if($target){
+                $userSaved=[IO.Path]::GetFullPath((Join-Path $base 'userdata\Saved')).TrimEnd([char]92)
+                $validationRoot=[IO.Path]::GetFullPath((Join-Path $base 'validation')).TrimEnd([char]92)
+                $allowed=($target -ieq $userSaved) -or ($target.StartsWith($validationRoot+'\',[StringComparison]::OrdinalIgnoreCase) -and (Split-Path $target -Leaf) -ieq 'Saved')
+                if(!$allowed -or $target.StartsWith($path+'\',[StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $target -PathType Container)){$unsafeLink=$true}
+                $safeLinks+=@{path=$rp.FullName;target=$target;details=$detail}
+            }
+        }
+        if($unsafeLink){
+            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='reparse point target is not an approved external Saved folder';reparsePoints=$safeLinks}
+            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-unsafe-reparse-point'}
             continue
         }
         $userdata=@($tree|Where-Object{$_.PSIsContainer -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
