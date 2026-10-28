@@ -34,8 +34,9 @@ def finish(error=None):
             if s.get('previous_camera'): require(s['pc'].get_view_target()==s['previous_camera'],'Original gameplay camera was not restored')
             report['cameraRestoredOnClose']=True
             require(not dict(s['widget'].get_editor_property('IconTextures')),'Thumbnail textures not released on close')
-            require(s['widget'].get_editor_property('IconCapture') is None and s['widget'].get_editor_property('IconPreviewActor') is None,'Transient preview actors not released')
-            report['checks'].append('transient thumbnail textures and preview actors released on close')
+            captures={a.get_path_name() for a in unreal.GameplayStatics.get_all_actors_of_class(s['world'],unreal.SceneCapture2D)}
+            require(captures==s['prior_captures'],'Transient capture actor not released')
+            report['checks'].append('thumbnail textures and scene capture actor released on close')
     except Exception as cleanup_error:
         report['state']='FAILED';report['errors'].append(str(cleanup_error));report['cleanupTraceback']=traceback.format_exc()
     save()
@@ -94,7 +95,7 @@ def tick(delta):
                 require(inv.try_add_item(item,count),'Catalog item rejected '+item)
             actor.restore_survival(60,60,100)
             pc=unreal.GameplayStatics.get_player_controller(world,0)
-            s.update(world=world,actor=actor,inv=inv,pc=pc,previous_camera=pc.get_view_target())
+            s.update(world=world,actor=actor,inv=inv,pc=pc,previous_camera=pc.get_view_target(),prior_captures={a.get_path_name() for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.SceneCapture2D)})
             widget=unreal.AnomaliaInventoryWidget.create_for_player_inventory(pc)
             require(widget is not None,'Native widget creation failed');s['widget']=widget
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
