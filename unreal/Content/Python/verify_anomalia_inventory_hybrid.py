@@ -250,7 +250,7 @@ def tick(delta):
             condition=next(b for b in inv.get_editor_property('compartments') if str(b.id)=='worn_top').condition
             require(condition<s['walk_condition'],'Walking did not wear clothing')
             report['walkWear']={'distanceCm':distance,'before':s['walk_condition'],'after':condition}
-            s['actor'].get_character_movement().stop_movement_immediately();s['actor'].set_actor_location(origin,False,True)
+            s['actor'].get_component_by_class(unreal.CharacterMovementComponent).stop_movement_immediately();s['actor'].set_actor_location(origin,False,True)
             report['checks'].append('actual CharacterMovement distance applies clothing wear')
             cargo=[(x.stack_id,str(x.item_id),x.count,str(x.container_id)) for x in inv.get_editor_property('stacks')]
             require(inv.apply_worn_wear(100),'Zero-condition clothing fixture failed')
