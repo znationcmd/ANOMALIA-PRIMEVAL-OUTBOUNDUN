@@ -94,6 +94,7 @@ def tick(delta):
             second=next(x.stack_id for x in rows() if str(x.item_id)=='stanag_magazine' and x.stack_id!=first)
             require(inv.request_move_stack(first,'mount_belt_mag1',0,0,False),'First magazine failed')
             require(inv.request_move_stack(second,'mount_belt_mag2',0,0,False),'Second magazine failed')
+            require(inv.try_add_item('ak_magazine',1),'AK magazine acquisition failed')
             require(inv.try_add_item('bandage',1),'Bandage acquisition failed')
             require(inv.request_move_stack(stack('bandage').stack_id,'mount_belt_medical_cargo',0,0,False),'Medical cargo failed')
             check(not inv.request_move_stack(stack('medical_pouch').stack_id,'hands',0,0,False),'full medical pouch cannot be removed')
@@ -136,6 +137,20 @@ def tick(delta):
             visuals={v.get_path_name():v for v in s['actor'].get_components_by_class(unreal.StaticMeshComponent) if v.get_editor_property('static_mesh') and v.get_editor_property('static_mesh').get_path_name()=='/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive' and v.get_attach_parent()==s['actor'].get_editor_property('backpack_mesh')}
             check(len(visuals)==1,'actual Quantum rifle component attached to backpack')
             r['mountedWeapon']=[{'mesh':v.get_editor_property('static_mesh').get_path_name(),'socket':str(v.get_attach_socket_name())} for v in visuals.values()]
+            part=next(iter(visuals.values()));origin,extent,radius=unreal.SystemLibrary.get_component_bounds(part)
+            offset=origin-s['actor'].get_actor_location();forward=s['actor'].get_actor_forward_vector();right=s['actor'].get_actor_right_vector()
+            back=offset.x*forward.x+offset.y*forward.y+offset.z*forward.z
+            side=offset.x*right.x+offset.y*right.y+offset.z*right.z
+            r['riflePlacement']={'worldExtentCm':[extent.x,extent.y,extent.z],'forwardOffsetCm':back,'rightOffsetCm':side}
+            check(extent.z>2*max(extent.x,extent.y) and back < -15 and side>20,'rifle is upright behind torso beside backpack')
+            textures={str(k):v for k,v in s['widget'].get_editor_property('IconTextures').items()}
+            r['magazineThumbnails']=[]
+            for name in ('stanag_magazine','ak_magazine'):
+                require('item_'+name in textures,'Actual magazine thumbnail missing: '+name)
+                pixels=unreal.RenderingLibrary.read_render_target(s['world'],textures['item_'+name],True)
+                colors={(c.r,c.g,c.b) for c in pixels};require(len(colors)>16,'Magazine thumbnail empty or flat: '+name)
+                r['magazineThumbnails'].append({'item':name,'pixels':len(pixels),'distinctRGB':len(colors)})
+            r['checks'].append('actual M4 and AK magazine models rendered into inventory thumbnails')
             r['dogBones']=[str(s['mesh'].get_bone_name(i)) for i in range(s['mesh'].get_num_bones())]
             unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI nosuffix filename="'+str(s['shot_file']).replace('\\','/')+'"');phase('capture_file');return
         if s['phase']=='capture_file':
@@ -152,8 +167,13 @@ def tick(delta):
                 camera=s['pc'].get_view_target()
                 camera.set_actor_location_and_rotation(location,unreal.MathLibrary.find_look_at_rotation(location,target),False,True)
                 phase('dog_capture');return
+            if not s.get('back_view'):
+                s['back_view']=True;s['shot_file']=OUT/'Equipment_back.png'
+                target=s['actor'].get_actor_location();location=target-s['actor'].get_actor_forward_vector()*500+unreal.Vector(0,0,15)
+                s['pc'].get_view_target().set_actor_location_and_rotation(location,unreal.MathLibrary.find_look_at_rotation(location,target),False,True)
+                phase('dog_capture');return
             finish()
-        if s['phase']=='dog_capture' and now-s['at']>3:
+        if s['phase']=='dog_capture'  and now-s['at']>3:
             unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI nosuffix filename="'+str(s['shot_file']).replace('\\','/')+'"')
             phase('capture_file');return
     except Exception as e:finish(e)
