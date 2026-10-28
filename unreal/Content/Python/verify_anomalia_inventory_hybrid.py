@@ -73,6 +73,33 @@ def select(stack_id):
 
 def stack(item): return next(x for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==item)
 
+def prepare_thumbnail_material():
+    path='/Game/Anomalia/UI/Inventory/RealIcons_20261028/M_InventoryThumbnail'
+    assets=unreal.get_editor_subsystem(unreal.EditorAssetSubsystem)
+    if assets.does_asset_exist(path):
+        material=assets.load_asset(path)
+        require(isinstance(material,unreal.Material) and str(unreal.EditorAssetLibrary.get_metadata_tag(material,'AnomaliaIconSchema'))=='inverse-opacity-v1','Existing thumbnail material preserved: unknown schema')
+        report['thumbnailMaterial']={'asset':path,'created':False};return
+    material=unreal.AssetToolsHelpers.get_asset_tools().create_asset('M_InventoryThumbnail',path.rsplit('/',1)[0],unreal.Material,unreal.MaterialFactoryNew())
+    require(material is not None,'New UI thumbnail material creation failed')
+    material.set_editor_property('material_domain',unreal.MaterialDomain.MD_UI)
+    material.set_editor_property('blend_mode',unreal.BlendMode.BLEND_TRANSLUCENT)
+    edit=unreal.MaterialEditingLibrary
+    texture=edit.create_material_expression(material,unreal.MaterialExpressionTextureSampleParameter2D,-400,0)
+    texture.set_editor_property('parameter_name','IconTexture')
+    white=assets.load_asset('/Engine/EngineResources/WhiteSquareTexture')
+    require(isinstance(white,unreal.Texture2D),'Engine sample texture unavailable')
+    texture.set_editor_property('texture',white)
+    texture.set_editor_property('sampler_type',unreal.MaterialSamplerType.SAMPLERTYPE_COLOR if white.get_editor_property('srgb') else unreal.MaterialSamplerType.SAMPLERTYPE_LINEAR_COLOR)
+    inverse=edit.create_material_expression(material,unreal.MaterialExpressionOneMinus,-160,160)
+    require(edit.connect_material_expressions(texture,'A',inverse,'Input'),'Inverse opacity connection failed')
+    require(edit.connect_material_property(texture,'RGB',unreal.MaterialProperty.MP_EMISSIVE_COLOR),'UI colour connection failed')
+    require(edit.connect_material_property(inverse,'',unreal.MaterialProperty.MP_OPACITY),'UI opacity connection failed')
+    unreal.EditorAssetLibrary.set_metadata_tag(material,'AnomaliaIconSchema','inverse-opacity-v1')
+    edit.recompile_material(material)
+    require(assets.save_loaded_asset(material,False),'New thumbnail material save failed')
+    report['thumbnailMaterial']={'asset':path,'created':True,'otherAssetsModified':False}
+
 def tick(delta):
     if s['finished']: return
     try:
@@ -96,6 +123,8 @@ def tick(delta):
             actor.restore_survival(60,60,100)
             pc=unreal.GameplayStatics.get_player_controller(world,0)
             s.update(world=world,actor=actor,inv=inv,pc=pc,previous_camera=pc.get_view_target(),prior_captures={a.get_path_name() for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.SceneCapture2D)})
+            require(inv.request_stow_stack_in(stack('apple').stack_id,'worn_top'),'Reference capture garment fixture failed')
+            require(inv.request_move_stack(stack('canned_beans').stack_id,'hands',0,0,False),'Reference capture hands fixture failed')
             widget=unreal.AnomaliaInventoryWidget.create_for_player_inventory(pc)
             require(widget is not None,'Native widget creation failed');s['widget']=widget
             require(pc.get_view_target().get_class()==unreal.CameraActor.static_class(),'Live character camera not selected')
@@ -126,10 +155,10 @@ def tick(delta):
             boxes={str(b.id):b for b in s['inv'].get_editor_property('compartments')}
             for name,capacity in [('worn_top',200),('worn_legs',200),('worn_back',350),('worn_gloves',2),('worn_feet',4)]:
                 require(name in boxes and boxes[name].width*boxes[name].height==capacity,'Missing real garment storage '+name)
-            select(stack('apple').stack_id);click_text('Ranger : Veste')
+            select(stack('apple').stack_id);click_text('Veste')
             require(str(stack('apple').container_id)=='worn_top','Jacket destination callback failed')
             require(not s['actor'].set_clothing_mesh('Jacket',None),'Occupied garment removed')
-            click_text('Ranger : Sac à dos')
+            click_text('Sac à dos')
             require(str(stack('apple').container_id)=='worn_back','Backpack destination callback failed')
             s['jacket']=s['actor'].get_editor_property('jacket_mesh').get_editor_property('skeletal_mesh_asset')
             require(s['actor'].set_clothing_mesh('Jacket',None),'Empty jacket cannot be removed')
@@ -201,8 +230,11 @@ def tick(delta):
                     pixels=unreal.RenderingLibrary.read_render_target(s['world'],target,True)
                     colors={(c.r,c.g,c.b) for c in pixels}
                     require(len(pixels)==256*256 and len(colors)>16,'Empty/flat real-model thumbnail '+key)
-                    unreal.RenderingLibrary.export_render_target(s['world'],target,str(OUT),key+'.png')
-                    report['thumbnailReadback'].append({'id':key,'pixels':len(pixels),'distinctRGB':len(colors)})
+                    alpha=[c.a for c in pixels]
+                    require(min(alpha)<32 and max(alpha)>230,'Thumbnail alpha mask missing '+key)
+                    unreal.RenderingLibrary.export_render_target(s['world'],target,str(OUT),'raw_inverse_alpha_'+key+'.png')
+                    report['thumbnailReadback'].append({'id':key,'pixels':len(pixels),'distinctRGB':len(colors),'minInverseAlpha':min(alpha),'maxInverseAlpha':max(alpha)})
+                require(len(dict(s['widget'].get_editor_property('IconMaterials')))>=7,'Real thumbnail UI materials missing')
                 report['checks'].append('seven actual mesh thumbnails rendered and GPU readback nonempty')
             name,tab=s['shots'][s['shot_index']]
             if tab=='bank': s['widget'].show_bank_tab()
@@ -226,11 +258,12 @@ def tick(delta):
             s['shot_index']+=1
             if s['shot_index']<len(s['shots']): phase('capture_prepare')
             else:
-                s['widget'].show_inventory_tab();report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
+                s['widget'].show_inventory_tab();s['inv'].request_stow_stack(stack('canned_beans').stack_id);report['checks'].append('bank and inventory tabs switch without replacing data');phase('actions')
     except Exception as error: finish(error)
 
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
+    prepare_thumbnail_material()
     require(not (Path(unreal.Paths.project_saved_dir())/'Servers'/SCOPE).exists(),'Existing profile preserved')
     # Private new server scope only: shipped catalogue, one real registered fresh-food spawn.
     fixture=Path(unreal.Paths.project_saved_dir())/'Servers'/SCOPE;fixture.mkdir(parents=True,exist_ok=False)
@@ -251,5 +284,6 @@ try:
         unreal.SystemLibrary.execute_console_command(w,command)
     editor.editor_request_begin_play();s['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error: finish(error)
+
 
 
