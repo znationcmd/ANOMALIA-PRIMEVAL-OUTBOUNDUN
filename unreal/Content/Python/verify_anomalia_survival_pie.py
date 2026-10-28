@@ -144,7 +144,7 @@ def tick(delta):
             row["standingCapsuleHalfHeightCm"]=s["capsule_standing"]
             row["crouchedCapsuleHalfHeightCm"]=h
             require(h<s["capsule_standing"]-5,"Crouch capsule did not shrink "+row["name"])
-            actor.uncrouch();phase("stand")
+            actor.un_crouch();phase("stand")
         elif s["phase"]=="stand" and elapsed>0.8:
             require(abs(actor.get_editor_property("capsule_component").get_scaled_capsule_half_height()-s["capsule_standing"])<1,"Uncrouch failed")
             s["jump_start"]=pos(actor)[2]
