@@ -1,0 +1,31 @@
+name: ANOMALIA active install backup and restore rehearsal
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-backup-restore.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  backup:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Back up active editor and game plus user data, then hash-check restore copies
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const dir=path.join('C:\\ANOMALIA-Validation\\Reports','backup-restore-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:true});
+          const script=path.join(dir,'backup.ps1');fs.writeFileSync(script,"$ErrorActionPreference='Stop'\n$base=Join-Path $env:LOCALAPPDATA 'CMD'\n$backup=Join-Path 'D:\\ANOMALIA-Backups' ('pre-differential-'+$env:GITHUB_RUN_ID)\nif(Test-Path -LiteralPath $backup){throw 'Backup destination exists; preserving it.'}\n$targets=@(\n  @{name='EditorActive';root=(Join-Path $base 'ANOMALIA-UE5');active='active.json';executable='AnomaliaPrimeval.uproject'},\n  @{name='GameActive';root=(Join-Path $base 'ANOMALIA-Windows');active='active.json';executable='AnomaliaPrimeval.exe'}\n)\n$manifest=[ordered]@{state='BACKUP_AND_RESTORE_TEST';machine=$env:COMPUTERNAME;run=$env:GITHUB_RUN_ID;items=@();drives=@()}\nforeach($t in $targets){\n  $activePath=Join-Path $t.root $t.active;if(!(Test-Path $activePath)){throw \"Missing active manifest $activePath\"}\n  $active=Get-Content $activePath -Raw|ConvertFrom-Json\n  $exe=if($t.executable.EndsWith('.uproject')){[string]$active.project}else{[string]$active.executable}\n  $source=if($t.executable.EndsWith('.uproject')){Split-Path $exe -Parent}else{Split-Path $exe -Parent}\n  if(!(Test-Path -LiteralPath $exe)){throw \"Active executable/project missing: $exe\"}\n  $dest=Join-Path (Join-Path $backup $t.name) 'active-version'\n  New-Item -ItemType Directory -Path $dest -Force|Out-Null\n  & robocopy.exe $source $dest /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /XD Intermediate DerivedDataCache .vs /NFL /NDL /NJH /NJS|Out-Null\n  if($LASTEXITCODE -gt 7){throw \"Active version copy failed $LASTEXITCODE\"}\n  $dataSource=if($t.name -eq 'EditorActive'){Join-Path $t.root 'userdata/Saved'}else{Join-Path $t.root 'userdata/Saved'}\n  $dataDest=Join-Path (Join-Path $backup $t.name) 'userdata-Saved'\n  if(Test-Path -LiteralPath $dataSource){New-Item -ItemType Directory -Path $dataDest -Force|Out-Null;& robocopy.exe $dataSource $dataDest /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NFL /NDL /NJH /NJS|Out-Null;if($LASTEXITCODE -gt 7){throw 'User data backup failed'}}\n  $files=@();foreach($p in @($dest,$dataDest)){if(Test-Path $p){Get-ChildItem $p -File -Recurse -Force|ForEach-Object{$relative=$_.FullName.Substring($backup.Length).TrimStart('\\');$files+=@{path=$relative;bytes=$_.Length;sha256=(Get-FileHash $_.FullName -Algorithm SHA256).Hash}}}}\n  $manifest.items+=@{name=$t.name;activeManifest=$active;source=$source;backup=$dest;userdata=$dataSource;files=$files}\n}\n$d=Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='D:'\";$manifest.drives+=@{id=$d.DeviceID;freeBefore=[int64]$d.FreeSpace}\n$manifestPath=Join-Path $backup 'backup-manifest.json';$manifest|ConvertTo-Json -Depth 15|Set-Content $manifestPath -Encoding UTF8\n# Restore rehearsal: copy each active snapshot into a separate directory and compare SHA-256.\nforeach($item in $manifest.items){$restore=Join-Path (Join-Path $backup 'restore-test') $item.name;New-Item -ItemType Directory -Path $restore -Force|Out-Null;& robocopy.exe $item.backup $restore /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NFL /NDL /NJH /NJS|Out-Null;if($LASTEXITCODE -gt 7){throw 'Restore rehearsal copy failed'};$expected=@($item.files|Where-Object{$_.path.StartsWith(($item.name+'/active-version'))});foreach($e in $expected){$p=Join-Path $restore ($e.path.Substring(($item.name+'/active-version/').Length));if(!(Test-Path $p) -or (Get-FileHash $p -Algorithm SHA256).Hash -ne $e.sha256){throw \"Restore hash mismatch $($e.path)\"}}}\n$manifest.state='RESTORE_COPY_HASH_VERIFIED';$manifest|ConvertTo-Json -Depth 15|Set-Content $manifestPath -Encoding UTF8\nWrite-Output (Get-Content $manifestPath -Raw)",{flag:'wx'});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script],{encoding:'utf8',timeout:5400000,maxBuffer:16*1024*1024});console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Backup/restore rehearsal failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-active-backup-restore-report
+          path: C:\\ANOMALIA-Validation\\Reports\\backup-restore-*
+          if-no-files-found: warn
