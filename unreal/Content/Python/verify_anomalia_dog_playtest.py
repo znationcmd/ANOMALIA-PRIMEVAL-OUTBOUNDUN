@@ -22,6 +22,9 @@ def check(ok,message):
 def phase(p):s.update(phase=p,at=time.monotonic())
 def rows():return list(s['inv'].get_editor_property('stacks'))
 def stack(item):return next(x for x in rows() if str(x.item_id)==item)
+def belt_visuals():
+    return [v for v in s['actor'].get_components_by_class(unreal.StaticMeshComponent)
+            if any(str(tag) in ('mount_belt_mag1','mount_belt_mag2') for tag in v.get_editor_property('component_tags'))]
 def click(text):
     for relay in s['widget'].get_editor_property('ActionRelays'):
         button=relay.get_editor_property('Button');child=button.get_child_at(0)
@@ -94,7 +97,19 @@ def tick(delta):
             second=next(x.stack_id for x in rows() if str(x.item_id)=='stanag_magazine' and x.stack_id!=first)
             require(inv.request_move_stack(first,'mount_belt_mag1',0,0,False),'First magazine failed')
             require(inv.request_move_stack(second,'mount_belt_mag2',0,0,False),'Second magazine failed')
+            check(len(belt_visuals())==2,'both actual belt magazine components created')
+            require(inv.request_move_stack(first,'hands',0,0,False),'Magazine removal failed')
+            check(len(belt_visuals())==1,'removing a magazine removes its visible component')
+            require(inv.request_stow_stack_in(second,'worn_back'),'Clearing second mount failed')
+            require(inv.request_move_stack(first,'mount_belt_mag2',0,0,False),'Same-stack alternate mount rejected')
+            moved=belt_visuals()
+            check(len(moved)==1 and 'mount_belt_mag2' in [str(t) for t in moved[0].get_editor_property('component_tags')],
+                  'same stack moving between belt mounts rebuilds its visible attachment')
+            require(inv.request_move_stack(first,'mount_belt_mag1',0,0,False),'First magazine return failed')
             require(inv.try_add_item('ak_magazine',1),'AK magazine acquisition failed')
+            require(inv.request_move_stack(stack('ak_magazine').stack_id,'mount_belt_mag2',0,0,False),'AK magazine equip failed')
+            check(len(belt_visuals())==2,'M4 and AK models replace belt magazines without duplicates')
+            s['belt_relative']={str(v.get_editor_property('static_mesh').get_path_name()):str(v.get_editor_property('relative_location')) for v in belt_visuals()}
             require(inv.try_add_item('bandage',1),'Bandage acquisition failed')
             require(inv.request_move_stack(stack('bandage').stack_id,'mount_belt_medical_cargo',0,0,False),'Medical cargo failed')
             check(not inv.request_move_stack(stack('medical_pouch').stack_id,'hands',0,0,False),'full medical pouch cannot be removed')
@@ -143,6 +158,19 @@ def tick(delta):
             side=offset.x*right.x+offset.y*right.y+offset.z*right.z
             r['riflePlacement']={'worldExtentCm':[extent.x,extent.y,extent.z],'forwardOffsetCm':back,'rightOffsetCm':side}
             check(extent.z>2*max(extent.x,extent.y) and back < -15 and side>20,'rifle is upright behind torso beside backpack')
+            magazines=belt_visuals();check(len(magazines)==2,'both real magazine models survive inventory save reload and player movement')
+            r['beltMagazines']=[]
+            for v in magazines:
+                require(v.get_attach_parent()==s['actor'].get_editor_property('pants_mesh') and str(v.get_attach_socket_name())=='pelvis','Magazine not attached to animated pants pelvis')
+                origin,extent,radius=unreal.SystemLibrary.get_component_bounds(v)
+                offset=origin-v.get_attach_parent().get_socket_location('pelvis')
+                side=offset.x*right.x+offset.y*right.y+offset.z*right.z
+                tags=[str(t) for t in v.get_editor_property('component_tags')]
+                require((side < -10 if 'mount_belt_mag1' in tags else side>10),'Magazine wrong side of pelvis')
+                require(8<extent.z<15,'Magazine height outside 16-30 cm')
+                require(s['belt_relative'][v.get_editor_property('static_mesh').get_path_name()]==str(v.get_editor_property('relative_location')),'Magazine slid on its animated pelvis attachment')
+                r['beltMagazines'].append({'model':v.get_editor_property('static_mesh').get_path_name(),'mount':tags,'socket':str(v.get_attach_socket_name()),'extentCm':[extent.x,extent.y,extent.z],'rightOffsetCm':side})
+            r['checks'].append('real belt magazines stay attached to animated pelvis at left and right without sliding')
             textures={str(k):v for k,v in s['widget'].get_editor_property('IconTextures').items()}
             r['magazineThumbnails']=[]
             for name in ('stanag_magazine','ak_magazine'):
@@ -170,6 +198,12 @@ def tick(delta):
             if not s.get('back_view'):
                 s['back_view']=True;s['shot_file']=OUT/'Equipment_back.png'
                 target=s['actor'].get_actor_location();location=target-s['actor'].get_actor_forward_vector()*500+unreal.Vector(0,0,15)
+                s['pc'].get_view_target().set_actor_location_and_rotation(location,unreal.MathLibrary.find_look_at_rotation(location,target),False,True)
+                phase('dog_capture');return
+            if not s.get('belt_view'):
+                s['belt_view']=True;s['shot_file']=OUT/'Equipment_belt.png'
+                parent=s['actor'].get_editor_property('pants_mesh');target=parent.get_socket_location('pelvis')+unreal.Vector(0,0,-4)
+                location=target+s['actor'].get_actor_forward_vector()*230+s['actor'].get_actor_right_vector()*80+unreal.Vector(0,0,15)
                 s['pc'].get_view_target().set_actor_location_and_rotation(location,unreal.MathLibrary.find_look_at_rotation(location,target),False,True)
                 phase('dog_capture');return
             finish()
