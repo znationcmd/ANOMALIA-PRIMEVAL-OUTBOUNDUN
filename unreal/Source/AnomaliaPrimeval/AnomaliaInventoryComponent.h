@@ -46,6 +46,9 @@ struct FAnomaliaInventoryStack
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     bool bRotated = false;
+    /** Per physical stack; wear changes require a single item to avoid mixed-condition piles. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Condition")
+    float Condition = 100.f;
 };
 
 USTRUCT(BlueprintType)
@@ -65,6 +68,9 @@ struct FAnomaliaInventoryCompartment
     /** Migration overflow: existing items may be removed, never added through normal placement. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     bool bRecoveryOnly = false;
+    /** Current modular slot condition; cargo remains accessible even at zero. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Condition")
+    float Condition = 100.f;
 };
 
 /** Server-authoritative inventory data model. A UMG screen and item-world actors remain separate tasks. */
@@ -108,6 +114,12 @@ public:
     /** Server resolves the registered pickup and checks range, visibility and durable transfer. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestCollectNearby(AAnomaliaLootPickup* Pickup);
+    bool SupportsItemWear(FName ItemId) const;
+    /** Trusted gameplay hooks only; clients cannot request arbitrary wear or repair. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Condition")
+    bool ApplyItemWear(int32 StackId,float Wear);
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Condition")
+    bool ApplyWornWear(float Wear);
 
     static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
     bool HasCraftMaterials(FName RecipeId) const;
@@ -252,6 +264,8 @@ private:
     double NextCollectRequestTime=0;
     bool CollectNearbyOnServer(AAnomaliaLootPickup* Pickup);
     float WornStorageElapsed=0.f;
+    FVector LastWearLocation=FVector::ZeroVector;
+    bool bHasWearLocation=false;
     bool CraftFromOwningPlayer(FName RecipeId);
     bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
@@ -264,5 +278,6 @@ private:
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };
+
 
 
