@@ -95,8 +95,13 @@ foreach($def in $productDefs){
         $tree=@(Get-ChildItem -LiteralPath $path -Recurse -Force -ErrorAction Stop)
         $reparse=@($tree|Where-Object{($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0})
         if(($candidate.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0 -or $reparse.Count -gt 0){
-            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains a reparse point'}
-            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-reparse-point'}
+            $reparseInfo=@()
+            foreach($rp in $reparse){
+                $detail=(& "$env:windir\System32\fsutil.exe" reparsepoint query $rp.FullName 2>&1|Out-String).Trim()
+                $reparseInfo+=@{path=$rp.FullName;attributes=[string]$rp.Attributes;details=$detail}
+            }
+            $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains a reparse point';reparsePoints=$reparseInfo}
+            $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-reparse-point';reparsePoints=$reparseInfo}
             continue
         }
         $userdata=@($tree|Where-Object{$_.PSIsContainer -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
