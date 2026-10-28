@@ -18,7 +18,11 @@ foreach($test in $tests){
     $link=$shell.CreateShortcut($test.shortcut)
     if(!(Test-Path -LiteralPath $link.TargetPath)){throw "Launcher target missing: $($test.name)"}
     $target=Get-Item -LiteralPath $link.TargetPath
-    $started=Start-Process -FilePath $link.TargetPath -ArgumentList ([string]$link.Arguments) -WorkingDirectory $link.WorkingDirectory -PassThru
+    if([string]::IsNullOrWhiteSpace([string]$link.Arguments)){
+        $started=Start-Process -FilePath $link.TargetPath -WorkingDirectory $link.WorkingDirectory -PassThru
+    }else{
+        $started=Start-Process -FilePath $link.TargetPath -ArgumentList ([string]$link.Arguments) -WorkingDirectory $link.WorkingDirectory -PassThru
+    }
     $deadline=(Get-Date).AddSeconds([int]$test.timeout);$new=@();$visible=$null
     while((Get-Date) -lt $deadline){
         Start-Sleep -Seconds 2
