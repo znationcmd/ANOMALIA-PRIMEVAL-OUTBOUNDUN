@@ -12,6 +12,7 @@
 #include "Components/ScaleBox.h"
 #include "Misc/PackageName.h"
 #include "Materials/MaterialInterface.h"
+#include "Materials/MaterialInstanceDynamic.h"
 #include "AnomaliaSurvivor.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "Vehicles/AnomaliaVehicleSurvival.h"
@@ -851,7 +852,7 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::QueueIcon(FName Key,UPrimitive
  // Bounded, client-only snapshots; no continual render or asset writes.
  if(IconTextures.Num()>=32)return nullptr;
  auto* Target=NewObject<UTextureRenderTarget2D>(this,NAME_None,RF_Transient);
- Target->ClearColor=FLinearColor(0,0,0,1);Target->InitCustomFormat(256,256,PF_B8G8R8A8,false);
+ Target->ClearColor=FLinearColor(0,0,0,1);Target->InitCustomFormat(256,256,PF_B8G8R8A8,true);
  Target->UpdateResourceImmediate(true);IconTextures.Add(Key,Target);IconComponents.Add(Key,Source);
  IconSignatures.Add(Key,Signature);PendingIcons.AddUnique(Key);return Target;
 }
@@ -891,7 +892,16 @@ UWidget* UAnomaliaInventoryWidget::Thumbnail(UTextureRenderTarget2D* Texture,flo
 {
  auto* Box=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Box->SetWidthOverride(Size);Box->SetHeightOverride(Size);
  auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
- FSlateBrush Brush;Brush.SetResourceObject(Texture);Brush.ImageSize=FVector2D(256,256);Image->SetBrush(Brush);Box->SetContent(Image);return Box;
+ const TCHAR* Path=TEXT("/Game/Anomalia/UI/Inventory/RealIcons_20261028/M_InventoryThumbnail");
+ if(!IconBaseMaterial&&FPackageName::DoesPackageExist(Path))IconBaseMaterial=LoadObject<UMaterialInterface>(nullptr,Path);
+ UObject* Resource=Texture;
+ if(Texture&&IconBaseMaterial)
+ {
+  auto* Material=IconMaterials.FindRef(Texture->GetFName()).Get();
+  if(!Material){Material=UMaterialInstanceDynamic::Create(IconBaseMaterial,this);Material->SetTextureParameterValue(TEXT("IconTexture"),Texture);IconMaterials.Add(Texture->GetFName(),Material);}
+  Resource=Material;
+ }
+ FSlateBrush Brush;Brush.SetResourceObject(Resource);Brush.ImageSize=FVector2D(256,256);Image->SetBrush(Brush);Box->SetContent(Image);return Box;
 }
 void UAnomaliaInventoryWidget::CaptureNextIcon()
 {
@@ -903,7 +913,7 @@ void UAnomaliaInventoryWidget::CaptureNextIcon()
   if(!IconCapture)return;
   auto* Capture=IconCapture->GetCaptureComponent2D();Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;
   Capture->PrimitiveRenderMode=ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
-  Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->CaptureSource=ESceneCaptureSource::SCS_FinalColorLDR;
+  Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->CaptureSource=ESceneCaptureSource::SCS_SceneColorHDR;
   Capture->ShowFlags.SetLighting(false);Capture->ShowFlags.SetAtmosphere(false);Capture->ShowFlags.SetFog(false);
   Capture->ShowFlags.SetBloom(false);Capture->ShowFlags.SetMotionBlur(false);
  }
@@ -926,5 +936,6 @@ void UAnomaliaInventoryWidget::ReleaseIcons()
 {
  if(IconCapture){IconCapture->Destroy();IconCapture=nullptr;}
  if(IconPreviewActor){IconPreviewActor->Destroy();IconPreviewActor=nullptr;}
- PendingIcons.Reset();IconComponents.Reset();IconTextures.Reset();IconSignatures.Reset();MissingIconItems.Reset();
+ PendingIcons.Reset();IconComponents.Reset();IconMaterials.Reset();IconBaseMaterial=nullptr;IconTextures.Reset();IconSignatures.Reset();MissingIconItems.Reset();
 }
+
