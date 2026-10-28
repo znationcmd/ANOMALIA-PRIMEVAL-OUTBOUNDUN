@@ -95,6 +95,16 @@ def tick(delta):
             if not pc or now<s["until"]:
                 return
             s.update(world=w,pc=pc)
+            seeds=unreal.GameplayStatics.get_all_actors_of_class(w,s["classes"]["Survival"])
+            require(len(seeds)==1,"Transient seed pawn missing")
+            inv=seeds[0].get_editor_property("inventory_component")
+            require(inv.try_add_item("apple",2),"Runtime seed inventory rejected apple")
+            result=inv.save_inventory_to_player_profile(s["scope"],"local-owner")
+            report["profileSeedReturn"]=str(result)
+            if isinstance(result,tuple):
+                require(result[0],"Isolated native profile save rejected: "+str(result))
+            else:
+                require(result is not None and result is not False,"Isolated native profile save rejected")
             unreal.GameplayStatics.open_level(w,s["map"],True,"AnomaliaServerId="+s["scope"])
             s["phase"]="travel_to_playtest";s["phase_at_wall"]=now
             return
@@ -318,12 +328,6 @@ try:
     actors.spawn_actor_from_class(unreal.DirectionalLight,unreal.Vector(0,0,600),unreal.Rotator(pitch=-45,yaw=-30))
     actors.spawn_actor_from_class(unreal.SkyLight,unreal.Vector(0,0,500))
     actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
-    seed=actors.spawn_actor_from_class(pawn_class,unreal.Vector(500,0,100))
-    inv=seed.get_editor_property("inventory_component")
-    require(inv.try_add_item("apple",2) and inv.try_add_item("water",2),"Initial test inventory could not be seeded")
-    saved,error=inv.save_inventory_to_player_profile(SCOPE,"local-owner")
-    require(saved,"Isolated profile seed failed: "+str(error))
-    require(actors.destroy_actor(seed),"Transient seed actor removal failed")
     require(unreal.EditorLoadingAndSavingUtils.save_map(w,MAP),"New playtest map save failed")
     report["newAssetsSaved"].append(MAP)
     require(editor.load_level(MAP),"Saved playtest map reload failed")
@@ -341,6 +345,8 @@ try:
                     "r.Shadow.Virtual.Enable 0","r.Nanite 0","sg.TextureQuality 1",
                     "r.Streaming.MipBias 1","t.MaxFPS 30","t.IdleWhenNotForeground 0"):
         unreal.SystemLibrary.execute_console_command(w,command)
+    seed=actors.spawn_actor_from_class(pawn_class,unreal.Vector(500,0,100))
+    require(seed is not None,"Transient seed actor spawn failed")
     editor.editor_request_begin_play()
     s["handle"]=unreal.register_slate_post_tick_callback(tick)
 except Exception as exc:
