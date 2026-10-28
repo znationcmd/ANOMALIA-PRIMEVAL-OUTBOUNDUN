@@ -94,6 +94,12 @@ float AAnomaliaSurvivor::TakeDamage(float Amount,const FDamageEvent& Event,ACont
     Super::TakeDamage(Applied,Event,InstigatorController,Causer);
     Health=FMath::Max(0.f,Health-Applied);
     if(ItemEffectsComponent) ItemEffectsComponent->AddInjury(Applied);
+    if(InventoryComponent)
+    {
+        InventoryComponent->ApplyWornWear(Applied*.1f);
+        const auto Items=InventoryComponent->Stacks;
+        for(const auto& Item:Items)if(Item.ContainerId==TEXT("hands")&&InventoryComponent->SupportsItemWear(Item.ItemId))InventoryComponent->ApplyItemWear(Item.StackId,Applied*.05f);
+    }
     OnSurvivalChanged();return Applied;
 }
 
@@ -440,4 +446,5 @@ void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVe
     InventoryComponent->UseMessage=Accepted?TEXT("Échange véhicule enregistré."):Error.IsEmpty()?TEXT("Action véhicule indisponible."):Error;
     InventoryComponent->OnInventoryUpdated.Broadcast();ForceNetUpdate();
 }
+
 
