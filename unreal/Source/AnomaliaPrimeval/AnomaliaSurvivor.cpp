@@ -24,6 +24,8 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "CollisionShape.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -217,6 +219,7 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Pause"), IE_Pressed, this, &AAnomaliaSurvivor::InputPause);
     Input->BindAction(TEXT("VehicleCamera"), IE_Pressed, this, &AAnomaliaSurvivor::InputCamera);
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
+    Input->BindAction(TEXT("MeleeAttack"),IE_Pressed,this,&AAnomaliaSurvivor::InputMeleeAttack);
     Input->BindAction(TEXT("Quickbar1"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar1);
     Input->BindAction(TEXT("Quickbar2"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar2);
     Input->BindAction(TEXT("Quickbar3"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar3);
@@ -346,6 +349,27 @@ void AAnomaliaSurvivor::ActivateQuickbarSlot(int32 SlotIndex)
     else InventoryComponent->RequestMoveStack(StackId,TEXT("hands"),0,0,false);
 }
 
+void AAnomaliaSurvivor::InputMeleeAttack()
+{
+    if(!IsLocallyControlled()||!GetController()||Health<=0.f||bSleeping)return;
+    ServerMeleeAttack();
+}
+void AAnomaliaSurvivor::ServerMeleeAttack_Implementation()
+{
+    if(!HasAuthority()||!GetWorld()||!GetController()||GetController()->GetPawn()!=this||Health<=0.f||bSleeping)return;
+    const double Now=GetWorld()->GetRealTimeSeconds();
+    if(Now<NextMeleeAttackTime)return;
+    NextMeleeAttackTime=Now+.65;
+    if(InventoryComponent&&InventoryComponent->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");}))return;
+    const FVector Forward=GetActorForwardVector();
+    const FVector Start=GetActorLocation()+FVector(0,0,55)+Forward*18.f;
+    const FVector End=Start+Forward*125.f;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(AnomaliaUnarmedMelee),false,this);
+    FHitResult Hit;
+    if(GetWorld()->SweepSingleByChannel(Hit,Start,End,FQuat::Identity,ECC_Pawn,FCollisionShape::MakeSphere(20.f),Params))
+        if(AActor* Target=Hit.GetActor();IsValid(Target)&&Target!=this&&Target->CanBeDamaged())
+            UGameplayStatics::ApplyPointDamage(Target,12.f,Forward,Hit,GetController(),this,UDamageType::StaticClass());
+}
 void AAnomaliaSurvivor::InputInventory()
 {
     if (!IsLocallyControlled() || !InventoryComponent) return;

@@ -124,6 +124,8 @@ private:
     void LookUpRate(float Value);
     void InputInteract();
     void InputInventory();
+    void InputMeleeAttack();
+    UFUNCTION(Server,Reliable) void ServerMeleeAttack();
     void StartSprint();
     void BeginPaceAdjustment();
     void EndPaceAdjustment();
@@ -139,6 +141,7 @@ private:
     /** Only the owning local player uses this to prevent wheel/weapon conflicts. */
     bool bAdjustPaceWithWheel = false;
     UPROPERTY(Transient) TArray<int32> QuickbarStackIds;
+    double NextMeleeAttackTime=0.0;
     TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
 
     UFUNCTION(Server, Reliable)
