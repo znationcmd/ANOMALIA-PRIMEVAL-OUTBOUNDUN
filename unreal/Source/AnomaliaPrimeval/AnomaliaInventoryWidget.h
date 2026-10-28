@@ -44,7 +44,7 @@ public:
     int32 StackId = 0;
     int32 Count = 0;
     int32 OtherStackId = 0;
-    UPROPERTY() TObjectPtr<UButton> Button;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory") TObjectPtr<UButton> Button;
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void Execute();
@@ -105,7 +105,7 @@ private:
     void AddGridStack(const FAnomaliaInventoryStack& Stack);
     void StyleButton(UButton* Button,bool bSelected=false);
 
-    UPROPERTY()
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
     TArray<TObjectPtr<UAnomaliaInventoryActionRelay>> ActionRelays;
 
     UFUNCTION()
