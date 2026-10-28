@@ -43,16 +43,18 @@ jobs:
             $activeLocation=$null
             if($active.project){$activeLocation=Split-Path ([string]$active.project) -Parent}
             elseif($active.executable){$activeLocation=Split-Path ([string]$active.executable) -Parent}
+            $activeSafe=$null
+            if($active){$activeJson=ConvertTo-Json -InputObject $active -Depth 8 -Compress;$activeJson=$activeJson.Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');$activeSafe=ConvertFrom-Json $activeJson}
             $versions=@()
             $versionRoot=Join-Path $root 'versions'
             if(Test-Path $versionRoot){
               foreach($d in Get-ChildItem -LiteralPath $versionRoot -Directory -Force){
                 $files=@(Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue)
                 $bytes=0L;foreach($f in $files){$bytes+=[int64]$f.Length}
-                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd('\\') -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd('\\');lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
+                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd('\\') -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd('\\'));lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
               }
             }
-            $products+=@{product=$name;hasOwner=(Test-Path (Join-Path $root 'owner.json'));activeManifest=$active;activeManifestPath=([string]$activePath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');versions=$versions}
+            $products+=@{product=$name;hasOwner=(Test-Path (Join-Path $root 'owner.json'));activeManifest=$activeSafe;activeManifestPath=([string]$activePath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');versions=$versions}
           }
           $c=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'";$d=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'"
           $processes=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -match 'Anomalia|UnrealEditor'}|ForEach-Object{@{name=$_.ProcessName;pid=$_.Id}})
