@@ -23,6 +23,8 @@ jobs:
           const out=path.join('C:\\ANOMALIA-Validation\\Reports','installed-launcher-audit-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});
           const p=path.join(out,'inspect.ps1');
           fs.writeFileSync(p,String.raw`$ErrorActionPreference='Stop'
+          $out=$env:ANOMALIA_AUDIT_OUT
+          if([string]::IsNullOrWhiteSpace($out)){throw 'Audit output directory is missing.'}
           $local=Join-Path $env:LOCALAPPDATA 'CMD'
           $profile=$env:USERPROFILE
           $desktop=[Environment]::GetFolderPath('Desktop')
@@ -51,7 +53,7 @@ jobs:
               foreach($d in Get-ChildItem -LiteralPath $versionRoot -Directory -Force){
                 $files=@(Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue)
                 $bytes=0L;foreach($f in $files){$bytes+=[int64]$f.Length}
-                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd('\\') -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd('\\'));lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
+                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd([char]92) -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd([char]92));lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
               }
             }
             $products+=@{product=$name;hasOwner=(Test-Path (Join-Path $root 'owner.json'));activeManifest=$activeSafe;activeManifestPath=([string]$activePath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');versions=$versions}
@@ -61,7 +63,7 @@ jobs:
           $r=@{state='INSTALLED_LAUNCHER_REFERENCE_AUDIT';machine=$env:COMPUTERNAME;shortcuts=$shortcuts;products=$products;processes=$processes;cDriveFreeBytes=[int64]$c.FreeSpace;dDriveFreeBytes=[int64]$d.FreeSpace}
           $r|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $out 'launcher-audit.json') -Encoding UTF8
           $r|ConvertTo-Json -Depth 12|Write-Output`,{flag:'wx'});
-          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:2400000,maxBuffer:16*1024*1024});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:2400000,maxBuffer:16*1024*1024,env:{...process.env,ANOMALIA_AUDIT_OUT:out}});
           console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Installed launcher audit failed '+String(r.error||r.status));
       - uses: actions/upload-artifact@v4
         if: always()
