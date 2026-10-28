@@ -42,7 +42,10 @@ def finish(error=None):
     editor.editor_request_end_play();s['close_at']=time.monotonic()+8
     def close(delta):
         if not editor.is_in_play_in_editor() and time.monotonic()>s['close_at']:
-            unreal.unregister_slate_post_tick_callback(s.pop('close_handle'));unreal.SystemLibrary.collect_garbage();unreal.SystemLibrary.quit_editor()
+            unreal.unregister_slate_post_tick_callback(s.pop('close_handle'))
+            for key in ('actor','dog','mesh','inv','pc','world','pose'):s.pop(key,None)
+            import gc
+            gc.collect();unreal.SystemLibrary.collect_garbage();unreal.SystemLibrary.quit_editor()
     s['close_handle']=unreal.register_slate_post_tick_callback(close)
 def poses(mesh):
     names=[mesh.get_bone_name(i) for i in range(1,min(mesh.get_num_bones(),24))]
@@ -96,8 +99,8 @@ def tick(delta):
             check(not inv.request_move_stack(stack('medical_pouch').stack_id,'hands',0,0,False),'full medical pouch cannot be removed')
             check(not actor.set_clothing_mesh('Backpack',None),'backpack with mounted weapon cannot be removed')
             before=[(x.stack_id,str(x.item_id),x.count,str(x.container_id)) for x in rows()]
-            saved=inv.save_inventory_to_player_profile(SCOPE,'local-owner');require(bool(saved[0] if isinstance(saved,tuple) else saved),'Profile save failed')
-            loaded=inv.load_inventory_from_player_profile(SCOPE,'local-owner');require(bool(loaded[0] if isinstance(loaded,tuple) else loaded),'Profile load failed')
+            saved=inv.save_inventory_to_player_profile(SCOPE,'local-owner');r['profileSaveReturn']=str(saved);require((saved=='' if isinstance(saved,str) else bool(saved[0] if isinstance(saved,tuple) else saved)),'Profile save failed: '+str(saved))
+            loaded=inv.load_inventory_from_player_profile(SCOPE,'local-owner');r['profileLoadReturn']=str(loaded);require((loaded=='' if isinstance(loaded,str) else bool(loaded[0] if isinstance(loaded,tuple) else loaded)),'Profile load failed: '+str(loaded))
             check(before==[(x.stack_id,str(x.item_id),x.count,str(x.container_id)) for x in rows()],'equipped belt accessories and medical contents survive disk save and reload')
             s['widget']=unreal.AnomaliaInventoryWidget.create_for_player_inventory(pc);require(s['widget'],'Native inventory widget missing')
             s['dog_origin']=dog.get_actor_location();phase('idle');return
