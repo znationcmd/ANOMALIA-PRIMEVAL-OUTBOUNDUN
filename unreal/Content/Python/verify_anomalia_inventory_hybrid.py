@@ -55,12 +55,14 @@ def click_text(text):
     raise RuntimeError('No bound action '+text)
 
 def select(stack_id):
-    prefix='InventoryTile_'+str(stack_id)
+    row=next(x for x in s['inv'].get_editor_property('stacks') if x.stack_id==stack_id)
+    full_name={'apple':'Pomme','canned_beans':'Haricots en conserve'}[str(row.item_id)]
+    expected=full_name+' ×'+str(row.count)+' ·'
     for relay in relays():
-        button=relay.get_editor_property('button')
-        if button.get_name()==prefix or button.get_name().startswith(prefix+'_'):
+        button=relay.get_editor_property('Button')
+        if str(button.get_editor_property('tool_tip_text')).startswith(expected):
             relay.execute();return
-    raise RuntimeError('No item tile '+str(stack_id))
+    raise RuntimeError('No matching live item tile '+expected)
 
 def stack(item): return next(x for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==item)
 
