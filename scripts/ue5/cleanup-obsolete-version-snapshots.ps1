@@ -114,10 +114,24 @@ foreach($def in $productDefs){
         $safeLinks=@();$unsafeLink=$false
         foreach($rp in $reparse){
             $detail=(& "$env:windir\System32\fsutil.exe" reparsepoint query $rp.FullName 2>&1|Out-String).Trim()
-            $targetLine=@($detail -split "`r?`n"|Where-Object{$_ -match 'Nom substitut:|Substitute Name:'}|Select-Object -First 1)
+            $targetMatches=[regex]::Matches($detail,'(?m)^\s*(?:Nom substitut|Substitute Name)\s*:\s*(.+)$')
             $target=$null
-            if($rp.Name -notin @('Saved','Saved-validation') -or $detail -notmatch 'Point de montage|Mount Point' -or $targetLine.Count -ne 1 -or $targetLine[0] -notmatch ':`s*(.+)
-        $userdata=@($tree|Where-Object{$_.PSIsContainer -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
+            if($rp.Name -notin @('Saved','Saved-validation') -or $detail -notmatch 'Point de montage|Mount Point' -or $targetMatches.Count -ne 1){
+                $unsafeLink=$true
+            }else{
+                $targetRaw=$targetMatches[0].Groups[1].Value.Trim()
+                if($targetRaw.StartsWith('\??\')){$targetRaw=$targetRaw.Substring(4)}
+                try{$target=[IO.Path]::GetFullPath($targetRaw).TrimEnd([char]92)}catch{$unsafeLink=$true}
+            }
+            if($target){
+                $userSaved=[IO.Path]::GetFullPath((Join-Path $base 'userdata\Saved')).TrimEnd([char]92)
+                $validationRoot=[IO.Path]::GetFullPath((Join-Path $base 'validation')).TrimEnd([char]92)
+                $allowed=($target -ieq $userSaved) -or ($target.StartsWith($validationRoot+'\',[StringComparison]::OrdinalIgnoreCase) -and (Split-Path $target -Leaf) -ieq 'Saved')
+                if(!$allowed -or $target.StartsWith($path+'\',[StringComparison]::OrdinalIgnoreCase) -or !(Test-Path -LiteralPath $target -PathType Container)){$unsafeLink=$true}
+                $safeLinks+=@{path=$rp.FullName;target=$target;details=$detail}
+            }
+        }
+        $userdata=@($tree|Where-Object{$_.PSIsContainer -and ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0 -and $_.Name -in @('Saved','SaveGames','Saves','UserData','Profiles','PlayerData')})
         if($userdata.Count -gt 0){
             $report.skipped+=@{product=$def.name;folder=$candidate.Name;reason='contains user/save data';paths=@($userdata|ForEach-Object{$_.FullName})}
             $productReport.candidates+=,@{folder=$candidate.Name;status='skipped-user-data';preservedPaths=@($userdata|ForEach-Object{$_.FullName})}
