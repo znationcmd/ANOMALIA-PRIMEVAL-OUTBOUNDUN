@@ -56,6 +56,7 @@ class ANOMALIAPRIMEVAL_API UAnomaliaInventoryWidget : public UUserWidget
     GENERATED_BODY()
 
 public:
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
     virtual TSharedRef<SWidget> RebuildWidget() override;
