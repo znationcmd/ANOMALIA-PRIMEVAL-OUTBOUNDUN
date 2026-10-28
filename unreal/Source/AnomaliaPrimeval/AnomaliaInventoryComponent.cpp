@@ -1271,28 +1271,48 @@ void UAnomaliaInventoryComponent::RefreshAttachmentVisuals()
     TSet<int32> Wanted;
     for(const auto& Stack:Stacks)
     {
-        // Only this exact local mesh has been validated. Other items never borrow an unrelated model.
-        if(Stack.ContainerId!=TEXT("mount_back_weapon")||Stack.ItemId!=TEXT("rifle")||!IsAttachmentAvailable(Stack.ContainerId))continue;
-        auto* Parent=User->BackpackMesh.Get();if(!Parent)continue;
-        FName Bone=NAME_None;for(const FName Candidate:{FName(TEXT("spine_03")),FName(TEXT("spine_02")),FName(TEXT("spine"))})
+        // Exact audited local assets only; inventory-only accessories remain inventory-only.
+        const bool Rifle=Stack.ContainerId==TEXT("mount_back_weapon")&&Stack.ItemId==TEXT("rifle");
+        const bool BeltMagazine=(Stack.ContainerId==TEXT("mount_belt_mag1")||Stack.ContainerId==TEXT("mount_belt_mag2"))&&
+            (Stack.ItemId==TEXT("stanag_magazine")||Stack.ItemId==TEXT("ak_magazine"));
+        if((!Rifle&&!BeltMagazine)||Stack.Count!=1||!IsAttachmentAvailable(Stack.ContainerId))continue;
+        auto* Parent=Rifle?User->BackpackMesh.Get():(User->PantsMesh&&User->PantsMesh->GetSkeletalMeshAsset()?User->PantsMesh.Get():User->GetMesh());
+        if(!Parent)continue;
+        FName Bone=NAME_None;
+        if(BeltMagazine){if(Parent->DoesSocketExist(TEXT("pelvis")))Bone=TEXT("pelvis");}
+        else for(const FName Candidate:{FName(TEXT("spine_03")),FName(TEXT("spine_02")),FName(TEXT("spine"))})
             if(Parent->DoesSocketExist(Candidate)){Bone=Candidate;break;}
         if(Bone.IsNone())continue;
         Wanted.Add(Stack.StackId);
-        if(AttachmentVisuals.Contains(Stack.StackId))continue;
-        auto* Mesh=LoadObject<UStaticMesh>(nullptr,TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"));if(!Mesh)continue;
+        const TCHAR* Asset=Rifle?TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive"):
+            Stack.ItemId==TEXT("stanag_magazine")?
+                TEXT("/Game/Anomalia/ImportedFab/Batch_40561644379/b5b0c0ba_5b45_4573_84d9_3d44e19d81ff/Source_1/m4noskel_Magazine_Default_Unreal.m4noskel_Magazine_Default_Unreal"):
+                TEXT("/Game/Anomalia/ImportedFab/Batch_40561644379/587e3f02_f8a1_4a3d_8b35_3394e793cfc5/Source_0/AKRifle_magazine.AKRifle_magazine");
+        auto* Mesh=LoadObject<UStaticMesh>(nullptr,Asset);if(!Mesh)continue;
+        if(auto* Existing=AttachmentVisuals.FindRef(Stack.StackId).Get())
+        {
+            // A stack may move between mounts without changing identity. Rebuild its
+            // attachment when the mount, clothing component or model changes.
+            if(Existing->ComponentHasTag(Stack.ContainerId)&&Existing->GetStaticMesh()==Mesh&&
+                Existing->GetAttachParent()==Parent&&Existing->GetAttachSocketName()==Bone)continue;
+            Existing->DestroyComponent();AttachmentVisuals.Remove(Stack.StackId);
+        }
         auto* Part=NewObject<UStaticMeshComponent>(User);User->AddInstanceComponent(Part);
+        Part->ComponentTags.Add(Stack.ContainerId);
         Part->SetStaticMesh(Mesh);Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);Part->SetGenerateOverlapEvents(false);
         Part->SetCanEverAffectNavigation(false);Part->RegisterComponent();Part->AttachToComponent(Parent,FAttachmentTransformRules::SnapToTargetNotIncludingScale,Bone);
         const auto Bounds=Mesh->GetBounds();const FVector Extent=Bounds.BoxExtent;
         const FVector LongAxis=Extent.X>=Extent.Y&&Extent.X>=Extent.Z?FVector::ForwardVector:Extent.Y>=Extent.Z?FVector::RightVector:FVector::UpVector;
         const FVector ThinAxis=Extent.X<=Extent.Y&&Extent.X<=Extent.Z?FVector::ForwardVector:Extent.Y<=Extent.Z?FVector::RightVector:FVector::UpVector;
         const float LongSize=FMath::Max3(Extent.X,Extent.Y,Extent.Z)*2.f;
-        const float Scale=LongSize>1.f?110.f/LongSize:1.f;
+        const float Scale=LongSize>1.f?(Rifle?110.f:22.f)/LongSize:1.f;
         const FQuat Upright=FQuat::FindBetweenNormals(LongAxis,FVector::UpVector);
         const FVector Normal=Upright.RotateVector(ThinAxis),Forward=User->GetActorForwardVector();
         const float Twist=FMath::Atan2(Forward.Y,Forward.X)-FMath::Atan2(Normal.Y,Normal.X);
         const FQuat Rotation=FQuat(FVector::UpVector,Twist)*Upright;
-        const FVector Center=User->GetActorLocation()-Forward*28.f+User->GetActorRightVector()*29.f+FVector(0,0,15);
+        const FVector Center=Rifle?
+            User->GetActorLocation()-Forward*28.f+User->GetActorRightVector()*29.f+FVector(0,0,15):
+            Parent->GetSocketLocation(Bone)+Forward*16.f+User->GetActorRightVector()*(Stack.ContainerId==TEXT("mount_belt_mag1")?-23.f:23.f)+FVector(0,0,-4);
         // Set the actual mesh centre in world space, then retain that transform relative
         // to the animated spine socket. Imported pivots and bone axes may differ.
         Part->SetWorldScale3D(FVector(Scale));Part->SetWorldRotation(Rotation);
