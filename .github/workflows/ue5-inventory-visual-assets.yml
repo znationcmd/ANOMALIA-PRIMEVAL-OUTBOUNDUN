@@ -32,10 +32,14 @@ jobs:
 
           console.log('ADDITIONAL_ITEM_ASSET_CANDIDATES');
           let found=0;
-          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|5ffcabde|monkey|b3|medical|medic|pouch|holster|cuff|belt|sleep|magazine|canteen|bottle/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
+          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|5ffcabde|monkey|medical|medic|pouch|holster|cuff|belt|sleep|magazine|canteen|bottle/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
           candidates(content);candidates('C:\\ANOMALIA\\FabImports');candidates('C:\\ANOMALIA\\unreal\\Content');
 
           for(const root of ['C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects','C:\\Program Files\\Epic Games\\Launcher\\VaultCache'])candidates(root);
 
           const os=require('os'),cp=require('child_process');console.log('HOST_FREE_PHYSICAL_BYTES '+os.freemem());
           const query=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 12 ProcessName,Id,WorkingSet64 | ConvertTo-Json -Compress'],{encoding:'utf8',timeout:20000});console.log('HOST_PROCESS_MEMORY '+query.stdout);
+
+          console.log('EXACT_MONKEY_B3_FILENAME_SEARCH');let monkeyCount=0;
+          function monkeyScan(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isSymbolicLink())continue;if(e.isDirectory()){if(!/^(Saved|Intermediate|node_modules|Textures|Materials|__ExternalActors__)$/i.test(e.name))monkeyScan(f);}else if(/monkey|singe|(?:^|[_ .-])b3(?:[_ .-]|$)/i.test(e.name)&&/\.(uasset|fbx|glb|gltf|obj|blend|zip|rar|7z)$/i.test(e.name)){console.log('MONKEY_B3 '+f);monkeyCount++;}}}
+          for(const p of [content,'C:\\ANOMALIA\\unreal\\Content','C:\\ANOMALIA\\FabImports','C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects'])monkeyScan(p);console.log('MONKEY_B3_MATCHES '+monkeyCount);
