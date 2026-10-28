@@ -32,5 +32,5 @@ jobs:
 
           console.log('ADDITIONAL_ITEM_ASSET_CANDIDATES');
           let found=0;
-          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf/i.test(e.name)&&!/^T_|^M_|^MI_|^PHYS|^ABP|^AN_/i.test(e.name)){console.log(f);found++;}}}
-          candidates(content);candidates('C:\\ANOMALIA\\FabImports');
+          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
+          candidates(content);candidates('C:\\ANOMALIA\\FabImports');candidates('C:\\ANOMALIA\\unreal\\Content');
