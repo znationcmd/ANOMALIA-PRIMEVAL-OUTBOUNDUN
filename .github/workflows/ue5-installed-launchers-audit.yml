@@ -1,0 +1,69 @@
+name: ANOMALIA inspect installed launchers and version references
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-installed-launchers-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read launchers, active manifests and retained-version references
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','installed-launcher-audit-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});
+          const p=path.join(out,'inspect.ps1');
+          fs.writeFileSync(p,String.raw`$ErrorActionPreference='Stop'
+          $local=Join-Path $env:LOCALAPPDATA 'CMD'
+          $profile=$env:USERPROFILE
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          $publicDesktop=[Environment]::GetFolderPath('CommonDesktopDirectory')
+          $startMenu=[Environment]::GetFolderPath('StartMenu')
+          $publicStart=Join-Path $env:ProgramData 'Microsoft/Windows/Start Menu/Programs'
+          $shortcutFiles=@()
+          foreach($root in @($desktop,$publicDesktop,$startMenu,$publicStart)){if(Test-Path $root){$shortcutFiles+=@(Get-ChildItem -LiteralPath $root -Filter '*.lnk' -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$_.Name -match 'ANOMALIA'})}}
+          $shell=New-Object -ComObject WScript.Shell
+          $shortcuts=@()
+          foreach($f in $shortcutFiles){$s=$shell.CreateShortcut($f.FullName);$shortcuts+=@{name=$f.Name;target=([string]$s.TargetPath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');arguments=$s.Arguments;workingDirectory=([string]$s.WorkingDirectory).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');targetExists=(Test-Path -LiteralPath $s.TargetPath);shortcutPath=([string]$f.FullName).Replace($profile,'%USERPROFILE%')}}
+          $products=@()
+          foreach($name in @('ANOMALIA-UE5','ANOMALIA-Windows','ANOMALIA-Tools')){
+            $root=Join-Path $local $name
+            if(!(Test-Path $root)){continue}
+            $activePath=Join-Path $root 'active.json';$active=$null
+            if(Test-Path $activePath){$active=Get-Content $activePath -Raw|ConvertFrom-Json}
+            $activeLocation=$null
+            if($active.project){$activeLocation=Split-Path ([string]$active.project) -Parent}
+            elseif($active.executable){$activeLocation=Split-Path ([string]$active.executable) -Parent}
+            $versions=@()
+            $versionRoot=Join-Path $root 'versions'
+            if(Test-Path $versionRoot){
+              foreach($d in Get-ChildItem -LiteralPath $versionRoot -Directory -Force){
+                $files=@(Get-ChildItem -LiteralPath $d.FullName -File -Recurse -Force -ErrorAction SilentlyContinue)
+                $bytes=0L;foreach($f in $files){$bytes+=[int64]$f.Length}
+                $versions+=@{folder=$d.Name;bytes=$bytes;fileCount=$files.Count;active=([IO.Path]::GetFullPath($d.FullName).TrimEnd('\\') -ieq [IO.Path]::GetFullPath([string]$activeLocation).TrimEnd('\\');lastWriteUtc=$d.LastWriteTimeUtc.ToString('o')}
+              }
+            }
+            $products+=@{product=$name;hasOwner=(Test-Path (Join-Path $root 'owner.json'));activeManifest=$active;activeManifestPath=([string]$activePath).Replace($profile,'%USERPROFILE%').Replace($env:LOCALAPPDATA,'%LOCALAPPDATA%');versions=$versions}
+          }
+          $c=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'";$d=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'"
+          $processes=@(Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -match 'Anomalia|UnrealEditor'}|ForEach-Object{@{name=$_.ProcessName;pid=$_.Id}})
+          $r=@{state='INSTALLED_LAUNCHER_REFERENCE_AUDIT';machine=$env:COMPUTERNAME;shortcuts=$shortcuts;products=$products;processes=$processes;cDriveFreeBytes=[int64]$c.FreeSpace;dDriveFreeBytes=[int64]$d.FreeSpace}
+          $r|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $out 'launcher-audit.json') -Encoding UTF8
+          $r|ConvertTo-Json -Depth 12|Write-Output`,{flag:'wx'});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:2400000,maxBuffer:16*1024*1024});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Installed launcher audit failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-installed-launcher-audit
+          path: C:\\ANOMALIA-Validation\\Reports\\installed-launcher-audit-*
+          if-no-files-found: warn
