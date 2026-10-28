@@ -9,6 +9,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
 struct FAnomaliaItemUseRule;
 class FJsonObject;
 class UAnomaliaSharedStorageSubsystem;
+class AAnomaliaLootPickup;
 
 /** Fixed native recipes: clients request only Id, never ingredients or output. */
 struct FAnomaliaHandcraftRecipe
@@ -104,6 +105,9 @@ public:
     static FName WornContainerId(FName MeshSlot);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestStowStackIn(int32 StackId,FName ContainerId);
+    /** Server resolves the registered pickup and checks range, visibility and durable transfer. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestCollectNearby(AAnomaliaLootPickup* Pickup);
 
     static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
     bool HasCraftMaterials(FName RecipeId) const;
@@ -231,6 +235,8 @@ protected:
     void ServerRequestCraftRecipe(FName RecipeId);
     UFUNCTION(Server,Reliable)
     void ServerRequestStowStackIn(int32 StackId,FName ContainerId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCollectNearby(AAnomaliaLootPickup* Pickup);
 
 private:
     friend class UAnomaliaWorldStateSubsystem;
@@ -243,6 +249,8 @@ private:
     double NextBankRequestTime = 0;
     double NextUseRequestTime = 0;
     double NextCraftRequestTime=0;
+    double NextCollectRequestTime=0;
+    bool CollectNearbyOnServer(AAnomaliaLootPickup* Pickup);
     float WornStorageElapsed=0.f;
     bool CraftFromOwningPlayer(FName RecipeId);
     bool StowStackInOnServer(int32 StackId,FName ContainerId);
@@ -256,4 +264,5 @@ private:
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };
+
 
