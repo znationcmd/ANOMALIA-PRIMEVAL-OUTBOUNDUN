@@ -56,7 +56,9 @@ Recherche de fichiers joints : aucun résultat pour les noms Monkey, RSG_DogsPac
 ## Monkey B3
 
 Ajout signalé par l'utilisateur après l'audit initial. Recherche de nom de fichier dédiée préparée et lancée dans Content original/validation, FabImports, Téléchargements et projets Unreal.
-Identification non confirmée au moment de cette rédaction ; ne pas supposer qu'il s'agit d'un chien ou d'un véhicule. Reçu final à compléter à la fin du run 40721361727.
+Run 40721361727 réussi : Monkey_B3.uasset, Monkey_B3_Skeleton.uasset, Monkey_B3_PhysicsAsset.uasset et fichiers de matériaux/textures confirmés dans la copie de validation, sous le pack 04dd168f-405d-428d-b2ee-3678fcf34358. Sources FBX avec 19 noms d'animations distincts (notamment Atk, Run, Jump, Sit et ClimbIdle). Les animations n'ont pas été chargées ni leur import vérifié ; aucun compagnon singe jouable annoncé. Présence dans le projet installé non confirmée. Voir MONKEY_B3_AUDIT_20261028.json.
+
+Dernière mesure mémoire de ce run : 3 211 370 496 octets libres ; UnrealEditor PID 6068 occupe 6 125 629 440 octets. La session utilisateur est préservée, recompilation et PIE restent bloqués.
 
 ## Fichiers
 
