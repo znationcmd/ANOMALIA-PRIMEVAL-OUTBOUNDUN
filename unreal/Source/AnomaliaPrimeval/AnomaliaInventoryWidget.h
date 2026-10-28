@@ -15,6 +15,11 @@ class APlayerController;
 class UAnomaliaInventoryWidget;
 class AAnomaliaChaosRoadVehicle;
 class AAnomaliaLootPickup;
+class ASceneCapture2D;
+class UTextureRenderTarget2D;
+class UPrimitiveComponent;
+class USkeletalMeshComponent;
+class UWidget;
 struct FAnomaliaInventoryStack;
 
 UENUM()
@@ -119,6 +124,24 @@ private:
     void RefreshEquipment();
     void AddGridStack(const FAnomaliaInventoryStack& Stack);
     void StyleButton(UButton* Button,bool bSelected=false);
+    USkeletalMeshComponent* WornMesh(FName ContainerId) const;
+    UTextureRenderTarget2D* GarmentIcon(FName ContainerId);
+    UTextureRenderTarget2D* ItemIcon(FName ItemId);
+    UTextureRenderTarget2D* QueueIcon(FName Key,UPrimitiveComponent* Source,const FString& Signature);
+    UWidget* Thumbnail(UTextureRenderTarget2D* Texture,float Size);
+    void CaptureNextIcon();
+    void ReleaseIcons();
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
+    TMap<FName,TObjectPtr<UTextureRenderTarget2D>> IconTextures;
+    UPROPERTY() TMap<FName,TObjectPtr<UPrimitiveComponent>> IconComponents;
+    UPROPERTY() TObjectPtr<ASceneCapture2D> IconCapture;
+    UPROPERTY() TObjectPtr<AActor> IconPreviewActor;
+    TMap<FName,FString> IconSignatures;
+    TSet<FName> MissingIconItems;
+    TArray<FName> PendingIcons;
+    float IconDelay=0;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
+    int32 IconCaptureCount=0;
 
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Inventory", meta=(AllowPrivateAccess="true"))
     TArray<TObjectPtr<UAnomaliaInventoryActionRelay>> ActionRelays;
@@ -160,6 +183,7 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
 
 
 
