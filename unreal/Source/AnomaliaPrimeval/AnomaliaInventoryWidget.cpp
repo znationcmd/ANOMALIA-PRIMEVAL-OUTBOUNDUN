@@ -126,7 +126,7 @@ void UAnomaliaInventoryWidget::BuildLayout()
     };
     auto Panel=[&](FName Name,const FAnchors& Anchors){
         auto* B=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),Name);
-        B->SetBrush(FSlateColorBrush(FLinearColor(.025f,.025f,.025f,.32f)));
+        B->SetBrush(FSlateColorBrush(FLinearColor(.008f,.008f,.008f,.68f)));
         B->SetPadding(FMargin(2.f));auto* LayoutSlot=RootCanvas->AddChildToCanvas(B);
         LayoutSlot->SetAnchors(Anchors);LayoutSlot->SetOffsets(FMargin(0));LayoutSlot->SetZOrder(1);return B;
     };
@@ -320,10 +320,13 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     auto* PersonalTarget=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("Ranger")));auto SmallFont=PersonalLabel->GetFont();SmallFont.Size=12;PersonalLabel->SetFont(SmallFont);PersonalTarget->SetContent(PersonalLabel);StyleButton(PersonalTarget);PersonalTarget->SetVisibility(Inventory->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");})?ESlateVisibility::Visible:ESlateVisibility::Collapsed);ItemList->AddChildToVerticalBox(PersonalTarget)->SetPadding(FMargin(0,0,0,8));
     BindAction(PersonalTarget,EAnomaliaInventoryAction::Stow,0);
-    int32 StoredIndex=0,BoxIndex=0;
-    for (const FAnomaliaInventoryCompartment& Box : Inventory->Compartments)
+    int32 StoredIndex=0;TArray<int32> DisplayOrder;
+    for(int32 I=0;I<Inventory->Compartments.Num();++I)DisplayOrder.Add(I);
+    auto Rank=[](FName Id){if(Id==TEXT("worn_vest"))return 0;if(Id==TEXT("worn_top"))return 1;if(Id==TEXT("worn_legs"))return 2;if(Id==TEXT("worn_back"))return 3;if(Id==TEXT("worn_gloves"))return 4;if(Id==TEXT("worn_feet"))return 5;if(Id==TEXT("worn_head"))return 6;return 10;};
+    DisplayOrder.StableSort([&](int32 A,int32 B){return Rank(Inventory->Compartments[A].Id)<Rank(Inventory->Compartments[B].Id);});
+    for (const int32 ContainerIndex : DisplayOrder)
     {
-        const int32 ContainerIndex=BoxIndex++;
+        const auto& Box=Inventory->Compartments[ContainerIndex];
         const bool Expanded=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id!=TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);
         auto* Header=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("Container_")+Box.Id.ToString()+TEXT("_action")))));
         auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -915,7 +918,7 @@ void UAnomaliaInventoryWidget::CaptureNextIcon()
   auto* Capture=IconCapture->GetCaptureComponent2D();Capture->bCaptureEveryFrame=false;Capture->bCaptureOnMovement=false;
   Capture->PrimitiveRenderMode=ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
   Capture->ProjectionType=ECameraProjectionMode::Orthographic;Capture->CaptureSource=ESceneCaptureSource::SCS_SceneColorHDR;
-  Capture->ShowFlags.SetLighting(false);Capture->ShowFlags.SetAtmosphere(false);Capture->ShowFlags.SetFog(false);
+  Capture->ShowFlags.SetLighting(true);Capture->ShowFlags.SetAtmosphere(false);Capture->ShowFlags.SetFog(false);
   Capture->ShowFlags.SetBloom(false);Capture->ShowFlags.SetMotionBlur(false);
  }
  const FName Key=PendingIcons[0];PendingIcons.RemoveAt(0);
