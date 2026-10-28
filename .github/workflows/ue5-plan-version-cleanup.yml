@@ -35,7 +35,7 @@ jobs:
           const script=path.join(process.env.GITHUB_WORKSPACE,'scripts','ue5','cleanup-obsolete-version-snapshots.ps1');
           const out=path.join('C:\\ANOMALIA-Validation\\Reports','version-cleanup-'+process.env.GITHUB_RUN_ID);
           const reportPath=path.join(out,'cleanup-report.json');
-          const plan=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(/^\\uFEFF/,''));
+          const plan=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(String.fromCharCode(0xFEFF),''));
           if(plan.state!=='CLEANUP_PLAN_ONLY'||!Array.isArray(plan.planned)||plan.planned.length<2||!Array.isArray(plan.products)||plan.products.length!==2||!Array.isArray(plan.skipped)||plan.skipped.length!==0)throw Error('Safety gate rejected cleanup plan');
           for(const product of plan.products){
             if(!product.activeFolder||!product.rollbackPreserved||product.versionFoldersAfterPlanned<2)throw Error('Safety gate rejected active/rollback retention for '+product.product);
@@ -46,7 +46,7 @@ jobs:
           console.log('Safety gate passed; executing verified archive and cleanup.');
           const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script,'-Apply'],{encoding:'utf8',timeout:1500000,maxBuffer:8*1024*1024});
           console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Cleanup apply failed '+String(r.error||r.status));
-          const applied=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(/^\\uFEFF/,''));
+          const applied=JSON.parse(fs.readFileSync(reportPath,'utf8').replace(String.fromCharCode(0xFEFF),''));
           if(applied.state!=='INACTIVE_VERSIONS_CLEANED'||applied.removed.length!==plan.planned.length)throw Error('Cleanup report did not confirm all planned removals');
           if(!Array.isArray(applied.engineSavedArchives)||applied.engineSavedArchives.some(x=>!x.archive||!fs.existsSync(x.archive)))throw Error('Saved archive verification is incomplete');
       - name: Re-test installed launchers after cleanup
