@@ -118,11 +118,14 @@ def tick(delta):
             else: s['widget'].show_inventory_tab()
             s['shot_file']=OUT/(name+'.png');s['stat']=None;phase('capture_wait');return
         if s['phase']=='capture_wait' and now-s['at']>3:
-            unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI filename="'+str(s['shot_file']).replace('\\','/')+'"')
+            unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI nosuffix filename="'+str(s['shot_file']).replace('\\','/')+'"')
             phase('capture_file');return
         if s['phase']=='capture_file':
             require(now-s['at']<30,'UI screenshot did not save')
             p=s['shot_file']
+            if not p.exists():
+                matches=list(OUT.glob(p.stem+'*.png'))
+                if len(matches)==1: p=matches[0]
             if not p.exists() or p.stat().st_size<4096: return
             stat=(p.stat().st_size,p.stat().st_mtime_ns)
             if stat!=s['stat']: s.update(stat=stat,stable_at=now+3);return
