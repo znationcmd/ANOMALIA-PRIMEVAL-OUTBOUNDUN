@@ -104,11 +104,11 @@ void UAnomaliaInventoryWidget::NativeDestruct()
 void UAnomaliaInventoryWidget::StyleButton(UButton* Button,bool bSelected)
 {
     FButtonStyle Style=Button->GetStyle();
-    Style.Normal=FSlateRoundedBoxBrush(bSelected?FLinearColor(.025f,.18f,.23f,.98f):FLinearColor(.012f,.027f,.04f,.98f),4.f,bSelected?FLinearColor(.15f,.83f,.95f):FLinearColor(.05f,.16f,.20f),bSelected?2.f:1.f,FVector2D(16,16));
-    Style.Hovered=FSlateRoundedBoxBrush(FLinearColor(.025f,.18f,.23f),4.f,FLinearColor(.15f,.83f,.95f),2.f,FVector2D(16,16));
-    Style.Pressed=FSlateColorBrush(FLinearColor(.02f,.4f,.48f));
-    Style.Disabled=FSlateColorBrush(FLinearColor(.035f,.045f,.055f,.7f));
-    Style.NormalPadding=FMargin(8.f,6.f);Style.PressedPadding=Style.NormalPadding;
+    Style.Normal=FSlateColorBrush(bSelected?FLinearColor(.38f,.38f,.38f,.55f):FLinearColor(.045f,.045f,.045f,.28f));
+    Style.Hovered=FSlateColorBrush(FLinearColor(.55f,.55f,.55f,.32f));
+    Style.Pressed=FSlateColorBrush(FLinearColor(.7f,.7f,.7f,.5f));
+    Style.Disabled=FSlateColorBrush(FLinearColor(.09f,.09f,.09f,.25f));
+    Style.NormalPadding=FMargin(4.f,2.f);Style.PressedPadding=Style.NormalPadding;
     Button->SetStyle(Style);
 }
 
@@ -120,35 +120,35 @@ void UAnomaliaInventoryWidget::BuildLayout()
     Safe->SetContent(RootCanvas);WidgetTree->RootWidget=Safe;
     auto Text=[&](const FString& Value,int32 Size=14){
         auto* T=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        T->SetText(FText::FromString(Value));T->SetColorAndOpacity(FSlateColor(FLinearColor(.8f,.91f,.93f)));
+        T->SetText(FText::FromString(Value));T->SetColorAndOpacity(FSlateColor(FLinearColor(.92f,.92f,.92f)));
         auto Font=T->GetFont();Font.Size=Size;if(Size>=18)Font.TypefaceFontName=TEXT("Bold");T->SetFont(Font);T->SetAutoWrapText(true);return T;
     };
     auto Panel=[&](FName Name,const FAnchors& Anchors){
         auto* B=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),Name);
-        B->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.006f,.014f,.022f,.96f),8.f,FLinearColor(.05f,.20f,.25f,.8f),1.f,FVector2D(16,16)));
-        B->SetPadding(FMargin(10.f));auto* LayoutSlot=RootCanvas->AddChildToCanvas(B);
+        B->SetBrush(FSlateColorBrush(FLinearColor(.025f,.025f,.025f,.32f)));
+        B->SetPadding(FMargin(2.f));auto* LayoutSlot=RootCanvas->AddChildToCanvas(B);
         LayoutSlot->SetAnchors(Anchors);LayoutSlot->SetOffsets(FMargin(0));LayoutSlot->SetZOrder(1);return B;
     };
     auto* Top=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
-    Panel(TEXT("InventoryHeader"),FAnchors(.025f,.035f,.975f,.12f))->SetContent(Top);
-    Top->AddChildToHorizontalBox(Text(TEXT("ANOMALIA  /  ÉQUIPEMENT"),20))->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    auto Tab=[&](FName Name,const FString& Label){auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),Name);B->SetContent(Text(Label));StyleButton(B);Top->AddChildToHorizontalBox(B)->SetPadding(FMargin(4,0));return B;};
-    InventoryTab=Tab(TEXT("InventoryTab"),TEXT("INVENTAIRE"));InventoryTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowInventoryTab);
-    CraftTab=Tab(TEXT("CraftTab"),TEXT("FABRICATION"));CraftTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowCraftTab);
-    BankTab=Tab(TEXT("BankTab"),TEXT("TRANSFERTS"));BankTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowBankTab);
-    CloseButton=Tab(TEXT("InventoryClose"),TEXT("FERMER  [TAB / ÉCHAP]"));CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
+    auto* Header=Panel(TEXT("EquipmentHeader"),FAnchors(.68f,.08f,.96f,.125f));
+    Header->SetBrush(FSlateColorBrush(FLinearColor(.45f,.45f,.45f,.72f)));Header->SetContent(Top);
+    auto Tab=[&](FName Name,const FString& Label){auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),Name);B->SetContent(Text(Label,15));StyleButton(B);auto* Slot=Top->AddChildToHorizontalBox(B);Slot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));return B;};
+    InventoryTab=Tab(TEXT("InventoryTab"),TEXT("ÉQUIPEMENT"));InventoryTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowInventoryTab);
+    CraftTab=Tab(TEXT("CraftTab"),TEXT("CRAFT"));CraftTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowCraftTab);
+    BankTab=Tab(TEXT("BankTab"),TEXT("€"));BankTab->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::ShowBankTab);
+    CloseButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("InventoryClose"));CloseButton->SetContent(Text(TEXT("×"),22));StyleButton(CloseButton);CloseButton->OnClicked.AddDynamic(this,&UAnomaliaInventoryWidget::CloseInventory);
+    auto* CloseSlot=RootCanvas->AddChildToCanvas(CloseButton);CloseSlot->SetAnchors(FAnchors(.965f,.025f,.99f,.07f));CloseSlot->SetOffsets(FMargin(0));
 
     auto* NearbyScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("ProximityScroll"));
-    Panel(TEXT("NearbyFrame"),FAnchors(.025f,.15f,.285f,.84f))->SetContent(NearbyScroll);
+    Panel(TEXT("NearbyFrame"),FAnchors(.055f,.08f,.335f,.90f))->SetContent(NearbyScroll);
     ProximityList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("VehicleProximity"));NearbyScroll->AddChild(ProximityList);
 
     auto* Right=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
-    Panel(TEXT("StorageFrame"),FAnchors(.715f,.15f,.975f,.84f))->SetContent(Right);
+    Panel(TEXT("StorageFrame"),FAnchors(.68f,.13f,.96f,.92f))->SetContent(Right);
     auto Full=[&](UWidget* W){auto* S=Right->AddChildToCanvas(W);S->SetAnchors(FAnchors(0,0,1,1));S->SetOffsets(FMargin(0));};
     StoragePanel=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("StoragePanel"));Full(StoragePanel);
-    StoragePanel->AddChildToVerticalBox(Text(TEXT("ÉQUIPEMENT PORTÉ"),12));
     EquipmentList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("EquippedMeshes"));
-    StoragePanel->AddChildToVerticalBox(EquipmentList)->SetPadding(FMargin(0,5,0,10));
+    StoragePanel->AddChildToVerticalBox(EquipmentList)->SetPadding(FMargin(0,0,0,6));
     auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("InventoryScroll"));
     StoragePanel->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("InventoryItems"));Scroll->AddChild(ItemList);
@@ -176,14 +176,14 @@ void UAnomaliaInventoryWidget::BuildLayout()
     CraftList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("CraftRecipes"));CraftScroll->AddChild(CraftList);
 
     auto* Center=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
-    auto* CenterSlot=RootCanvas->AddChildToCanvas(Center);CenterSlot->SetAnchors(FAnchors(.32f,.13f,.68f,.24f));CenterSlot->SetOffsets(FMargin(0));
-    MoneyStatus=Text(TEXT("ESPÈCES —"),30);MoneyStatus->SetJustification(ETextJustify::Center);MoneyStatus->SetColorAndOpacity(FSlateColor(FLinearColor(1.f,.76f,.28f)));MoneyStatus->SetShadowOffset(FVector2D(1,2));MoneyStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(MoneyStatus);
-    BankBalanceStatus=Text(TEXT("Compte en cours de chargement"),14);BankBalanceStatus->SetJustification(ETextJustify::Center);BankBalanceStatus->SetShadowOffset(FVector2D(1,1));BankBalanceStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(BankBalanceStatus);
+    auto* CenterSlot=RootCanvas->AddChildToCanvas(Center);CenterSlot->SetAnchors(FAnchors(.35f,.008f,.65f,.08f));CenterSlot->SetOffsets(FMargin(0));
+    MoneyStatus=Text(TEXT("ESPÈCES —"),23);MoneyStatus->SetJustification(ETextJustify::Center);MoneyStatus->SetColorAndOpacity(FSlateColor(FLinearColor(.95f,.90f,.70f)));MoneyStatus->SetShadowOffset(FVector2D(1,2));MoneyStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(MoneyStatus);
+    BankBalanceStatus=Text(TEXT("Compte en cours de chargement"),12);BankBalanceStatus->SetJustification(ETextJustify::Center);BankBalanceStatus->SetShadowOffset(FVector2D(1,1));BankBalanceStatus->SetShadowColorAndOpacity(FLinearColor(0,0,0,.9f));Center->AddChildToVerticalBox(BankBalanceStatus);
     HandsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("HandsItems"));
-    Panel(TEXT("HandsFrame"),FAnchors(.32f,.79f,.68f,.84f))->SetContent(HandsList);
+    Panel(TEXT("HandsFrame"),FAnchors(.35f,.51f,.65f,.83f))->SetContent(HandsList);
     DetailsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SelectedItemActions"));
-    Panel(TEXT("SelectionFrame"),FAnchors(.025f,.855f,.975f,.985f))->SetContent(DetailsList);
-    UseStatus=Text(TEXT(""),12);auto* StatusSlot=RootCanvas->AddChildToCanvas(UseStatus);StatusSlot->SetAnchors(FAnchors(.32f,.74f,.68f,.78f));StatusSlot->SetOffsets(FMargin(0));
+    Panel(TEXT("SelectionFrame"),FAnchors(.35f,.66f,.65f,.965f))->SetContent(DetailsList);
+    UseStatus=Text(TEXT(""),12);auto* StatusSlot=RootCanvas->AddChildToCanvas(UseStatus);StatusSlot->SetAnchors(FAnchors(.35f,.96f,.65f,.995f));StatusSlot->SetOffsets(FMargin(0));
     ShowInventoryTab();
 }
 
@@ -204,7 +204,7 @@ void UAnomaliaInventoryWidget::BeginCharacterView()
 {
     auto* PC=GetOwningPlayer();auto* Pawn=GetOwningPlayerPawn();if(!PC||!Pawn||PreviewCamera||!GetWorld())return;
     PreviousViewTarget=PC->GetViewTarget();const FVector Target=Pawn->GetActorLocation();
-    FVector Position=Target+Pawn->GetActorForwardVector()*760.f+FVector(0,0,15);
+    FVector Position=Target+Pawn->GetActorForwardVector()*500.f+FVector(0,0,15);
     FHitResult Hit;FCollisionQueryParams Params(SCENE_QUERY_STAT(InventoryCamera),false,Pawn);
     if(GetWorld()->LineTraceSingleByChannel(Hit,Target,Position,ECC_Camera,Params))Position=Hit.Location+Hit.Normal*12.f;
     FActorSpawnParameters Spawn;Spawn.ObjectFlags|=RF_Transient;
@@ -312,9 +312,10 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     if(PageStatus)PageStatus->SetText(FText::FromString(FString::Printf(TEXT("Page %d / %d · %d piles"),CurrentPage+1,PageCount,StoredStacks)));
     if(PreviousPageButton)PreviousPageButton->SetIsEnabled(CurrentPage>0);
     if(NextPageButton)NextPageButton->SetIsEnabled(CurrentPage+1<PageCount);
+    for(UWidget* W:{static_cast<UWidget*>(PreviousPageButton),static_cast<UWidget*>(NextPageButton),static_cast<UWidget*>(PageStatus)})if(W)W->SetVisibility(PageCount>1?ESlateVisibility::Visible:ESlateVisibility::Collapsed);
     if(WeightStatus)WeightStatus->SetText(FText::FromString(FString::Printf(TEXT("CHARGE  %.1f / %.1f KG"),Weight,Inventory->WeightCapacityKg)));
     if(!Inventory->Stacks.ContainsByPredicate([&](const auto& Stack){return Stack.StackId==SelectedStackId;}))
-        SelectedStackId=Inventory->Stacks.IsEmpty()?0:Inventory->Stacks[0].StackId;
+        SelectedStackId=0;
     auto* PersonalTarget=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("Ranger")));auto SmallFont=PersonalLabel->GetFont();SmallFont.Size=12;PersonalLabel->SetFont(SmallFont);PersonalTarget->SetContent(PersonalLabel);StyleButton(PersonalTarget);PersonalTarget->SetVisibility(Inventory->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");})?ESlateVisibility::Visible:ESlateVisibility::Collapsed);ItemList->AddChildToVerticalBox(PersonalTarget)->SetPadding(FMargin(0,0,0,8));
     BindAction(PersonalTarget,EAnomaliaInventoryAction::Stow,0);
@@ -322,26 +323,28 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     for (const FAnomaliaInventoryCompartment& Box : Inventory->Compartments)
     {
         const int32 ContainerIndex=BoxIndex++;
-        const bool Expanded=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id==TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);
+        const bool Expanded=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id!=TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);
         auto* Header=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("Container_")+Box.Id.ToString()+TEXT("_action")))));
         auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        Title->SetText(FText::FromString(FString::Printf(TEXT("%s   %s   %d / %d cases%s"),Expanded?TEXT("−"):TEXT("+"),*ContainerLabel(Box.Id),Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height,Box.bRecoveryOnly?TEXT(" · retrait seul"):TEXT(""))));
-        auto HeaderFont=Title->GetFont();HeaderFont.Size=14;HeaderFont.TypefaceFontName=TEXT("Bold");Title->SetFont(HeaderFont);Title->SetAutoWrapText(true);
+        Title->SetText(FText::FromString(FString::Printf(TEXT("%s (%d/%d)  %s"),*ContainerLabel(Box.Id).ToUpper(),Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height,Expanded?TEXT("−"):TEXT("+"))));
+        auto HeaderFont=Title->GetFont();HeaderFont.Size=13;HeaderFont.TypefaceFontName=TEXT("Bold");Title->SetFont(HeaderFont);Title->SetAutoWrapText(true);
         auto* HeaderRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Header->SetContent(HeaderRow);
-        if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,54))->SetPadding(FMargin(0,0,8,0));
+        if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,24))->SetPadding(FMargin(0,0,5,0));
         auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Title);TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));TitleSlot->SetVerticalAlignment(VAlign_Center);
-        ItemList->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,10,0,6));BindAction(Header,EAnomaliaInventoryAction::ToggleContainer,0,0,ContainerIndex);
+        ItemList->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,7,0,1));BindAction(Header,EAnomaliaInventoryAction::ToggleContainer,0,0,ContainerIndex);auto HS=Header->GetStyle();HS.Normal=FSlateColorBrush(FLinearColor(.13f,.13f,.13f,.70f));Header->SetStyle(HS);
         if(!Expanded){for(const auto& S:Inventory->Stacks)if(S.ContainerId==Box.Id)++StoredIndex;continue;}
         auto* GridSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
         const float ViewportScale=FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this));
         const float VirtualWidth=UWidgetLayoutLibrary::GetViewportSize(this).X/ViewportScale;
-        GridCellSize=FMath::Clamp((VirtualWidth*.26f-40.f)/FMath::Max(1,Box.Width),18.f,96.f);
-        GridSize->SetWidthOverride(Box.Width*GridCellSize);GridSize->SetHeightOverride(Box.Height*GridCellSize);
+        GridCellSize=FMath::Clamp((VirtualWidth*.28f-12.f)/FMath::Max(1,Box.Width),18.f,96.f);
+        int32 VisibleRows=2;for(const auto& S:Inventory->Stacks)if(S.ContainerId==Box.Id)VisibleRows=FMath::Max(VisibleRows,S.Y+Inventory->GetItemSize(S.ItemId,S.bRotated).Y+1);
+        VisibleRows=FMath::Min(Box.Height,VisibleRows);
+        GridSize->SetWidthOverride(Box.Width*GridCellSize);GridSize->SetHeightOverride(VisibleRows*GridCellSize);
         ActiveGrid=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());GridSize->SetContent(ActiveGrid);
         ItemList->AddChildToVerticalBox(GridSize)->SetHorizontalAlignment(HAlign_Center);
-        for(int32 Y=0;Y<Box.Height;++Y)for(int32 X=0;X<Box.Width;++X)
+        for(int32 Y=0;Y<VisibleRows;++Y)for(int32 X=0;X<Box.Width;++X)
         {
-            auto* Cell=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Cell->SetBrush(FSlateColorBrush(FLinearColor(.06f,.13f,.16f,.6f)));Cell->SetVisibility(ESlateVisibility::HitTestInvisible);
+            auto* Cell=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Cell->SetBrush(FSlateColorBrush(FLinearColor(.16f,.16f,.16f,.30f)));Cell->SetVisibility(ESlateVisibility::HitTestInvisible);
             auto* LayoutSlot=ActiveGrid->AddChildToCanvas(Cell);LayoutSlot->SetPosition(FVector2D(X*GridCellSize+1,Y*GridCellSize+1));LayoutSlot->SetSize(FVector2D(GridCellSize-2,GridCellSize-2));
         }
         for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)
@@ -353,15 +356,20 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         }
     }
     ActiveGrid=nullptr;
-    auto* HandsTitle=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());HandsTitle->SetText(FText::FromString(TEXT("EN MAINS")));auto HandsFont=HandsTitle->GetFont();HandsFont.Size=12;HandsTitle->SetFont(HandsFont);HandsList->AddChildToVerticalBox(HandsTitle);
+    auto* HandsTitle=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());HandsTitle->SetText(FText::FromString(TEXT("MAINS")));auto HandsFont=HandsTitle->GetFont();HandsFont.Size=14;HandsTitle->SetFont(HandsFont);HandsTitle->SetJustification(ETextJustify::Center);
+    auto* HandsBand=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());HandsBand->SetBrush(FSlateColorBrush(FLinearColor(.45f,.45f,.45f,.75f)));HandsBand->SetContent(HandsTitle);HandsList->AddChildToVerticalBox(HandsBand);
     bool HasHeld=false;
     for(const auto& Stack:Inventory->Stacks)if(Stack.ContainerId==TEXT("hands"))
     {
         HasHeld=true;auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());StyleButton(Button,Stack.StackId==SelectedStackId);
-        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));Button->SetContent(Text);HandsList->AddChildToVerticalBox(Button);BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
+        auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Button->SetContent(Content);
+        auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));auto Font=Text->GetFont();Font.Size=13;Text->SetFont(Font);Text->SetJustification(ETextJustify::Center);Content->AddChildToVerticalBox(Text);
+        if(auto* Icon=ItemIcon(Stack.ItemId))Content->AddChildToVerticalBox(Thumbnail(Icon,150))->SetHorizontalAlignment(HAlign_Center);
+        HandsList->AddChildToVerticalBox(Button);BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
     }
-    if(!HasHeld){auto* Empty=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Empty->SetText(FText::FromString(TEXT("Mains libres")));HandsList->AddChildToVerticalBox(Empty);}
+    if(auto* Frame=HandsList->GetParent())if(auto* Layout=Cast<UCanvasPanelSlot>(Frame->Slot))Layout->SetAnchors(HasHeld?FAnchors(.35f,.51f,.65f,.85f):FAnchors(.35f,.51f,.65f,.56f));
     const auto* Selected=Inventory->Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==SelectedStackId;});
+    if(DetailsList&&DetailsList->GetParent())DetailsList->GetParent()->SetVisibility(Selected?ESlateVisibility::Visible:ESlateVisibility::Collapsed);
     if(Selected)AddStackRow(*Selected);
     if(HadFocus && GetOwningPlayer())
     {
@@ -383,7 +391,7 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     DetailsList->AddChildToVerticalBox(Row)->SetPadding(FMargin(12.f, 3.f));
     UTextBlock* Label = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
     const FIntPoint Size=Inventory->GetItemSize(Stack.ItemId,Stack.bRotated);
-    Label->SetText(FText::FromString(FString::Printf(TEXT("%s  ×%d · %d×%d cases · %s"), *Inventory->GetItemDisplayName(Stack.ItemId), Stack.Count,Size.X,Size.Y, *ContainerLabel(Stack.ContainerId))));
+    Label->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"), *Inventory->GetItemDisplayName(Stack.ItemId), Stack.Count)));
     Label->SetColorAndOpacity(FSlateColor(FLinearColor(.91f, .95f, .96f)));
     auto Font=Label->GetFont();Font.Size=13;Label->SetFont(Font);Label->SetAutoWrapText(true);
     Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
@@ -460,7 +468,7 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     for(int32 I=0;I<Inventory->Compartments.Num();++I)
     {
         const auto& Box=Inventory->Compartments[I];if(Box.bRecoveryOnly||Box.Id==Stack.ContainerId)continue;
-        auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(TEXT("Ranger : ")+ContainerLabel(Box.Id)));auto Small=Text->GetFont();Small.Size=12;Text->SetFont(Small);Button->SetContent(Text);Destinations->AddChildToWrapBox(Button)->SetPadding(FMargin(3));BindAction(Button,EAnomaliaInventoryAction::StowInContainer,Stack.StackId,0,I);
+        auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(ContainerLabel(Box.Id)));auto Small=Text->GetFont();Small.Size=12;Text->SetFont(Small);Button->SetContent(Text);Destinations->AddChildToWrapBox(Button)->SetPadding(FMargin(3));BindAction(Button,EAnomaliaInventoryAction::StowInContainer,Stack.StackId,0,I);
     }
 
 }
@@ -502,7 +510,7 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
         }
         case EAnomaliaInventoryAction::ToggleContainer:
             if(Inventory->Compartments.IsValidIndex(OtherStackId))
-            {const auto& Box=Inventory->Compartments[OtherStackId];const bool Was=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id==TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);ExpandedContainers.Add(Box.Id,!Was);RefreshInventory();}break;
+            {const auto& Box=Inventory->Compartments[OtherStackId];const bool Was=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id!=TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);ExpandedContainers.Add(Box.Id,!Was);RefreshInventory();}break;
         case EAnomaliaInventoryAction::StowInContainer:
             if(Inventory->Compartments.IsValidIndex(OtherStackId))
             {const FName Id=Inventory->Compartments[OtherStackId].Id;ExpandedContainers.Add(Id,true);Inventory->RequestStowStackIn(StackId,Id);}break;
@@ -661,21 +669,21 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
   NearbyVehicle=Nearest;
   if(NearbyVehicle){NearbyVehicle->CargoInventory->OnInventoryUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);NearbyVehicle->SurvivalSystems->OnServicesUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);}
  }
- auto Label=[&](const FString& Value){auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Value));auto Font=Text->GetFont();Font.Size=13;Text->SetFont(Font);Text->SetAutoWrapText(true);ProximityList->AddChildToVerticalBox(Text)->SetPadding(FMargin(10.f,6.f));};
+ auto Label=[&](const FString& Value){auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Value));auto Font=Text->GetFont();Font.Size=14;Text->SetFont(Font);Text->SetAutoWrapText(true);auto* Band=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Band->SetBrush(FSlateColorBrush(FLinearColor(.45f,.45f,.45f,.7f)));Band->SetPadding(FMargin(5,3));Text->SetJustification(ETextJustify::Center);Band->SetContent(Text);ProximityList->AddChildToVerticalBox(Band)->SetPadding(FMargin(0,0,0,2));};
  Label(TEXT("À PROXIMITÉ"));
  NearbyPickups.Reset();
+ auto* NearbyIcons=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());ProximityList->AddChildToVerticalBox(NearbyIcons);
  for(auto* Pickup:FindNearbyPickups())
  {
   const int32 Index=NearbyPickups.Add(Pickup);
   auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
-  auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-  Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Pickup->ItemId),Pickup->Count)));
-  Text->SetAutoWrapText(true);
-  auto* Row=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Button->SetContent(Row);
-  if(auto* Icon=ItemIcon(Pickup->ItemId))Row->AddChildToHorizontalBox(Thumbnail(Icon,54))->SetPadding(FMargin(0,0,10,0));
-  auto* Caption=Row->AddChildToHorizontalBox(Text);Caption->SetSize(FSlateChildSize(ESlateSizeRule::Fill));Caption->SetVerticalAlignment(VAlign_Center);
+  auto* Tile=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());
+  auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Size->SetWidthOverride(70);Size->SetHeightOverride(70);Size->SetContent(Tile);Button->SetContent(Size);
+  if(auto* Icon=ItemIcon(Pickup->ItemId))Tile->AddChildToOverlay(Thumbnail(Icon,66));
+  else{auto* Name=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Name->SetText(FText::FromString(Inventory->GetItemDisplayName(Pickup->ItemId)));auto Font=Name->GetFont();Font.Size=11;Name->SetFont(Font);Name->SetAutoWrapText(true);Tile->AddChildToOverlay(Name)->SetVerticalAlignment(VAlign_Center);}
+  auto* Count=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Count->SetText(FText::FromString(FString::Printf(TEXT("%d"),Pickup->Count)));auto Font=Count->GetFont();Font.Size=11;Count->SetFont(Font);auto* CountSlot=Tile->AddChildToOverlay(Count);CountSlot->SetHorizontalAlignment(HAlign_Right);CountSlot->SetVerticalAlignment(VAlign_Bottom);
   Button->SetToolTipText(FText::FromString(TEXT("Prendre")));
-  ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8,4));
+  NearbyIcons->AddChildToWrapBox(Button)->SetPadding(FMargin(1));
   BindAction(Button,EAnomaliaInventoryAction::CollectNearby,0,0,Index);
  }
  if(NearbyPickups.IsEmpty())Label(TEXT("Vide"));
@@ -793,7 +801,7 @@ void UAnomaliaInventoryWidget::RefreshCrafting()
     for(const auto& Recipe:UAnomaliaInventoryComponent::GetHandcraftRecipes())
     {
         auto* Card=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-        Card->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.014f,.032f,.044f,.98f),6.f,FLinearColor(.06f,.25f,.3f),1.f,FVector2D(16,16)));Card->SetPadding(FMargin(12));
+        Card->SetBrush(FSlateRoundedBoxBrush(FLinearColor(.055f,.055f,.055f,.6f),0.f,FLinearColor(.3f,.3f,.3f,.3f),0.f,FVector2D(16,16)));Card->SetPadding(FMargin(12));
         CraftList->AddChildToVerticalBox(Card)->SetPadding(FMargin(0,0,0,12));
         auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Card->SetContent(Content);
         auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Title->SetText(FText::FromString(Recipe.Label));auto Font=Title->GetFont();Font.Size=18;Font.TypefaceFontName=TEXT("Bold");Title->SetFont(Font);Content->AddChildToVerticalBox(Title)->SetPadding(FMargin(0,0,0,8));
@@ -843,7 +851,7 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::QueueIcon(FName Key,UPrimitive
  // Bounded, client-only snapshots; no continual render or asset writes.
  if(IconTextures.Num()>=32)return nullptr;
  auto* Target=NewObject<UTextureRenderTarget2D>(this,NAME_None,RF_Transient);
- Target->ClearColor=FLinearColor(.012f,.022f,.03f,1);Target->InitCustomFormat(256,256,PF_B8G8R8A8,false);
+ Target->ClearColor=FLinearColor(0,0,0,1);Target->InitCustomFormat(256,256,PF_B8G8R8A8,false);
  Target->UpdateResourceImmediate(true);IconTextures.Add(Key,Target);IconComponents.Add(Key,Source);
  IconSignatures.Add(Key,Signature);PendingIcons.AddUnique(Key);return Target;
 }
