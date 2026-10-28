@@ -574,6 +574,7 @@ void UAnomaliaInventoryWidget::BeginPointerDrag(int32 StackId)
     const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
     if(!Stack)return;
     PointerDraggedStackId=StackId;
+    PointerDraggedRotated=Stack->bRotated;
     float MouseX=0,MouseY=0;
     if(!GetOwningPlayer()->GetMousePosition(MouseX,MouseY))return;
     const FVector2D Mouse(MouseX,MouseY);
@@ -592,7 +593,9 @@ void UAnomaliaInventoryWidget::BeginPointerDrag(int32 StackId)
 void UAnomaliaInventoryWidget::DropPointerDraggedStack()
 {
     const int32 StackId=PointerDraggedStackId;
+    const bool bDropRotated=PointerDraggedRotated;
     PointerDraggedStackId=0;
+    PointerDraggedRotated=false;
     if(!StackId||!Inventory||!GetOwningPlayer())return;
     float MouseX=0,MouseY=0;
     if(!GetOwningPlayer()->GetMousePosition(MouseX,MouseY))return;
@@ -628,7 +631,7 @@ void UAnomaliaInventoryWidget::DropPointerDraggedStack()
         const int32 X=FMath::Max(0,FMath::FloorToInt(Local.X/CellSize)-PointerGrabOffset.X);
         const int32 Y=FMath::Max(0,FMath::FloorToInt(Local.Y/CellSize)-PointerGrabOffset.Y);
         const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
-        Inventory->RequestMoveStack(StackId,Pair.Value,X,Y,Stack?Stack->bRotated:false);
+        Inventory->RequestMoveStack(StackId,Pair.Value,X,Y,bDropRotated);
         return;
     }
 }
@@ -764,6 +767,20 @@ void UAnomaliaInventoryWidget::CloseInventory()
 
 FReply UAnomaliaInventoryWidget::NativeOnKeyDown(const FGeometry& Geometry, const FKeyEvent& Event)
 {
+    if(Event.GetKey()==EKeys::R&&PointerDraggedStackId&&Inventory)
+    {
+        const auto* Stack=Inventory->Stacks.FindByPredicate([&](const auto& S){return S.StackId==PointerDraggedStackId;});
+        if(Stack)
+        {
+            const FIntPoint Unrotated=Inventory->GetItemSize(Stack->ItemId,false);
+            const FIntPoint OldOffset=PointerGrabOffset;
+            PointerGrabOffset=PointerDraggedRotated
+                ?FIntPoint(FMath::Max(0,Unrotated.X-1-OldOffset.Y),OldOffset.X)
+                :FIntPoint(OldOffset.Y,FMath::Max(0,Unrotated.X-1-OldOffset.X));
+            PointerDraggedRotated=!PointerDraggedRotated;
+        }
+        return FReply::Handled();
+    }
     if(Event.GetKey()==EKeys::PageUp || Event.GetKey()==EKeys::Gamepad_LeftShoulder)
     { PreviousPage();return FReply::Handled(); }
     if(Event.GetKey()==EKeys::PageDown || Event.GetKey()==EKeys::Gamepad_RightShoulder)
