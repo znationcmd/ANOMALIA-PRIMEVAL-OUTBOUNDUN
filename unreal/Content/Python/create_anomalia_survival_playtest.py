@@ -1,4 +1,4 @@
-"""Measure Survival alone in a transient PIE scene; no UI/network/persistence acceptance."""
+"""Create an isolated saved Survival playtest and exercise native inventory/profile APIs."""
 import hashlib
 import json
 import os
@@ -103,6 +103,8 @@ def tick(delta):
             report["profileSeedReturn"]=str(result)
             if isinstance(result,tuple):
                 require(result[0],"Isolated native profile save rejected: "+str(result))
+            elif isinstance(result,str):
+                require(result=="","Isolated profile save error: "+result)
             else:
                 require(result is not None and result is not False,"Isolated native profile save rejected")
             unreal.GameplayStatics.open_level(w,s["map"],True,"AnomaliaServerId="+s["scope"])
@@ -156,13 +158,21 @@ def tick(delta):
             if not s["shot_task"].is_task_done():
                 return
             p=OUT/(name+".png")
-            require(p.is_file() and p.stat().st_size>4096,"PIE screenshot missing")
+            if not p.is_file() or p.stat().st_size<=4096:
+                return
+            current=(p.stat().st_size,p.stat().st_mtime_ns)
+            if s.get("shot_stat")!=current:
+                s["shot_stat"]=current
+                s["shot_stable_until"]=now+3
+                return
+            if now<s["shot_stable_until"]:
+                return
             report["screenshots"].append({"file":p.name,"sha256":hashlib.sha256(p.read_bytes()).hexdigest(),"bytes":p.stat().st_size,"jacketEquipped":equipped,"cameraControlYaw":yaw})
             s["shot_index"]+=1
             if s["shot_index"]==len(s["shot_views"]):
                 finish()
             else:
-                s.update(shot_task=None,shot_ready=0)
+                s.update(shot_task=None,shot_ready=0,shot_stat=None)
             return
         actor=s["actor"];row=s["row"];elapsed=unreal.GameplayStatics.get_time_seconds(s["world"])-s["phase_at"]
         row["runtimeMovementMode"]=str(s["movement"].get_editor_property("movement_mode"))
