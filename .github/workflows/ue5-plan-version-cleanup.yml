@@ -2,7 +2,7 @@ name: ANOMALIA plan obsolete version cleanup
 on:
   push:
     branches: ['ue5/character-audit-20261027']
-    paths: ['.github/workflows/ue5-plan-version-cleanup.yml']
+    paths: ['.github/workflows/ue5-plan-version-cleanup.yml', 'scripts/ue5/cleanup-obsolete-version-snapshots.ps1']
 permissions:
   contents: read
 concurrency:
