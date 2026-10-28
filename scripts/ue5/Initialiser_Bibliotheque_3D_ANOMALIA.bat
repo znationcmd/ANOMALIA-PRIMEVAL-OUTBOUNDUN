@@ -44,7 +44,7 @@ if errorlevel 1 (
  pause
  exit /b 5
 )
-> "%LOCALAPPDATA%\ANOMALIA\bibliotheque-3d-chemin.txt" echo %ROOT%
+powershell.exe -NoProfile -Command "[System.IO.File]::WriteAllText((Join-Path $env:LOCALAPPDATA 'ANOMALIA\bibliotheque-3d-chemin.txt'), $env:ROOT, [System.Text.Encoding]::UTF8)"
 echo.
 echo Bibliotheque creee : "%ROOT%"
 echo Ce script ne copie pas de fichiers et n'importe pas de modeles dans Unreal.
