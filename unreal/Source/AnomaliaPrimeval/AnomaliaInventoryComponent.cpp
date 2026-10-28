@@ -1283,7 +1283,20 @@ void UAnomaliaInventoryComponent::RefreshAttachmentVisuals()
         auto* Part=NewObject<UStaticMeshComponent>(User);User->AddInstanceComponent(Part);
         Part->SetStaticMesh(Mesh);Part->SetCollisionEnabled(ECollisionEnabled::NoCollision);Part->SetGenerateOverlapEvents(false);
         Part->SetCanEverAffectNavigation(false);Part->RegisterComponent();Part->AttachToComponent(Parent,FAttachmentTransformRules::SnapToTargetNotIncludingScale,Bone);
-        Part->SetRelativeLocation(FVector(-12,25,0));Part->SetRelativeRotation(FRotator(0,0,90));
+        const auto Bounds=Mesh->GetBounds();const FVector Extent=Bounds.BoxExtent;
+        const FVector LongAxis=Extent.X>=Extent.Y&&Extent.X>=Extent.Z?FVector::ForwardVector:Extent.Y>=Extent.Z?FVector::RightVector:FVector::UpVector;
+        const FVector ThinAxis=Extent.X<=Extent.Y&&Extent.X<=Extent.Z?FVector::ForwardVector:Extent.Y<=Extent.Z?FVector::RightVector:FVector::UpVector;
+        const float LongSize=FMath::Max3(Extent.X,Extent.Y,Extent.Z)*2.f;
+        const float Scale=LongSize>1.f?110.f/LongSize:1.f;
+        const FQuat Upright=FQuat::FindBetweenNormals(LongAxis,FVector::UpVector);
+        const FVector Normal=Upright.RotateVector(ThinAxis),Forward=User->GetActorForwardVector();
+        const float Twist=FMath::Atan2(Forward.Y,Forward.X)-FMath::Atan2(Normal.Y,Normal.X);
+        const FQuat Rotation=FQuat(FVector::UpVector,Twist)*Upright;
+        const FVector Center=User->GetActorLocation()-Forward*28.f+User->GetActorRightVector()*29.f+FVector(0,0,15);
+        // Set the actual mesh centre in world space, then retain that transform relative
+        // to the animated spine socket. Imported pivots and bone axes may differ.
+        Part->SetWorldScale3D(FVector(Scale));Part->SetWorldRotation(Rotation);
+        Part->SetWorldLocation(Center-Rotation.RotateVector(Bounds.Origin*Scale));
         AttachmentVisuals.Add(Stack.StackId,Part);
     }
     TArray<int32> Remove;for(const auto& Pair:AttachmentVisuals)if(!Wanted.Contains(Pair.Key))Remove.Add(Pair.Key);

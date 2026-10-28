@@ -917,7 +917,9 @@ UTextureRenderTarget2D* UAnomaliaInventoryWidget::ItemIcon(FName Id)
  static const TMap<FName,FString> Sources={
   {TEXT("apple"),TEXT("/Game/Anomalia/ImportedFab/Batch_40571935754/ph_food_apple_01/Source_0/food_apple_01_4k/StaticMeshes/food_apple_01_4k")},
   {TEXT("canned_beans"),TEXT("/Game/Anomalia/ImportedFab/Batch_40571935754/ph_long_life_food/Source_2/long_life_food_4k/StaticMeshes/long_life_food_beans")},
-  {TEXT("rifle"),TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive")}
+  {TEXT("rifle"),TEXT("/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive")},
+  {TEXT("stanag_magazine"),TEXT("/Game/Anomalia/ImportedFab/Batch_40561644379/b5b0c0ba_5b45_4573_84d9_3d44e19d81ff/Source_1/m4noskel_Magazine_Default_Unreal")},
+  {TEXT("ak_magazine"),TEXT("/Game/Anomalia/ImportedFab/Batch_40561644379/587e3f02_f8a1_4a3d_8b35_3394e793cfc5/Source_0/AKRifle_magazine")}
  };
  const auto* Source=Sources.Find(Id);
  if(!Source||!FPackageName::DoesPackageExist(*Source)){MissingIconItems.Add(Id);return nullptr;}
