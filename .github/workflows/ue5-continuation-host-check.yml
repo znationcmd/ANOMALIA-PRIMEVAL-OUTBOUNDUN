@@ -1,0 +1,36 @@
+name: ANOMALIA lightweight host check before character and E39 continuation
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-continuation-host-check.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read available RAM disk and relevant installed mass API without launching Unreal
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),os=require('os');
+          const dir=path.join('C:\\ANOMALIA-Validation\\Reports','host-check-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:true});fs.appendFileSync(process.env.GITHUB_ENV,'HOST_CHECK_OUTPUT='+dir+'\n');
+          const s=fs.statfsSync('C:\\'),out={time:new Date().toISOString(),freeDiskBytes:s.bavail*s.bsize,freePhysicalBytes:os.freemem(),totalPhysicalBytes:os.totalmem(),unrealProcesses:cp.spawnSync('tasklist.exe',['/FI','IMAGENAME eq UnrealEditor.exe','/FO','CSV','/NH'],{encoding:'utf8'}).stdout};
+          const engine=process.env.UE_ROOT||'C:\\Program Files\\Epic Games\\UE_5.8';
+          out.engineMassApi=[];
+          for(const rel of ['Engine/Source/Runtime/Engine/Private/Components/SkeletalMeshComponentPhysics.cpp','Engine/Source/Runtime/Engine/Private/PrimitiveComponentPhysics.cpp','Engine/Plugins/Experimental/ChaosVehiclesPlugin/Source/ChaosVehicles/Private/ChaosVehicleMovementComponent.cpp']){
+          const p=path.join(engine,rel);if(!fs.existsSync(p))continue;const lines=fs.readFileSync(p,'utf8').split(/\r?\n/);
+          for(let i=0;i<lines.length;i++)if(/SetMassOverrideInKg|SetupVehicleMass|void UPrimitiveComponent::SetMassOverride|FBodyInstance\* USkeletalMeshComponent::GetBodyInstance/.test(lines[i]))out.engineMassApi.push({file:rel,line:i+1,excerpt:lines.slice(Math.max(0,i-1),i+14).join('\n')});}
+          fs.writeFileSync(path.join(dir,'host-check.json'),JSON.stringify(out,null,2));console.log(JSON.stringify(out,null,2));
+          
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: continuation-host-check
+          path: ${{ env.HOST_CHECK_OUTPUT }}
