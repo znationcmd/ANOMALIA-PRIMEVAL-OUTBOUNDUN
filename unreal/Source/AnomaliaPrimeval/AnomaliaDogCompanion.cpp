@@ -5,6 +5,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "Engine/World.h"
+#include "EngineUtils.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/Controller.h"
 #include "Net/UnrealNetwork.h"
@@ -67,6 +68,15 @@ void AAnomaliaDogCompanion::RefreshAnimation()
 void AAnomaliaDogCompanion::Tick(float Delta)
 {
     Super::Tick(Delta);RefreshAnimation();if(!HasAuthority())return;
+    if(GetCharacterMovement()->IsMovingOnGround()){LastSafeLocation=GetActorLocation();bHasSafeLocation=true;}
+    if(!SurvivorOwner&&bAutoAssignNearestSurvivor&&GetWorld())
+    {
+        AAnomaliaSurvivor* Nearest=nullptr;float Distance=2000;
+        for(TActorIterator<AAnomaliaSurvivor> It(GetWorld());It;++It)
+            if(It->GetController()&&It->GetController()->IsPlayerController()&&It->Health>0&&GetDistanceTo(*It)<Distance)
+            {Nearest=*It;Distance=GetDistanceTo(*It);}
+        if(Nearest)AssignSurvivor(Nearest);
+    }
     if(Command!=EAnomaliaDogCommand::Follow||!IsValid(SurvivorOwner)||SurvivorOwner->Health<=0)
     {GetCharacterMovement()->StopMovementImmediately();return;}
     const FVector OwnerLocation=SurvivorOwner->GetActorLocation();
@@ -83,7 +93,7 @@ void AAnomaliaDogCompanion::Tick(float Delta)
     GetCharacterMovement()->MaxWalkSpeed=bInjured?180.f:Distance>500.f?800.f:400.f;
     AddMovementInput(Direction.GetSafeNormal(),1.f,true);
 }
-float AAnomaliaDogCompanion::TakeDamage(float Damage,const FDamageEvent& Event,AController* Instigator,AActor* Causer)
+float AAnomaliaDogCompanion::TakeDamage(float Damage,const FDamageEvent& Event,AController* EventInstigator,AActor* Causer)
 {
     if(!HasAuthority()||!FMath::IsFinite(Damage)||Damage<=0)return 0;
     const float Applied=FMath::Min(Damage,Health-1.f);Health=FMath::Clamp(Health-Damage,1.f,100.f);
@@ -94,8 +104,20 @@ bool AAnomaliaDogCompanion::TreatInjury(float Amount)
     if(!HasAuthority()||!FMath::IsFinite(Amount)||Amount<=0||Amount>100)return false;
     Health=FMath::Clamp(Health+Amount,1.f,100.f);bInjured=Health<=25.f;ForceNetUpdate();return true;
 }
-void AAnomaliaDogCompanion::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Props) const
+void AAnomaliaDogCompanion::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
 {
-    Super::GetLifetimeReplicatedProps(Props);DOREPLIFETIME(AAnomaliaDogCompanion,SurvivorOwner);
+    Super::GetLifetimeReplicatedProps(OutLifetimeProps);DOREPLIFETIME(AAnomaliaDogCompanion,SurvivorOwner);
     DOREPLIFETIME(AAnomaliaDogCompanion,Command);DOREPLIFETIME(AAnomaliaDogCompanion,Health);DOREPLIFETIME(AAnomaliaDogCompanion,bInjured);
+}
+
+
+void AAnomaliaDogCompanion::FellOutOfWorld(const UDamageType& DamageType)
+{
+    // Falling injures the companion instead of using the engine's default actor destruction.
+    if(!HasAuthority())return;
+    Health=1.f;bInjured=true;Command=EAnomaliaDogCommand::Stay;OwnerTrail.Reset();
+    GetCharacterMovement()->StopMovementImmediately();
+    if(bHasSafeLocation)TeleportTo(LastSafeLocation,GetActorRotation(),false,false);
+    else if(IsValid(SurvivorOwner))TeleportTo(SurvivorOwner->GetActorLocation()+FVector(120,120,80),GetActorRotation(),false,false);
+    ForceNetUpdate();
 }

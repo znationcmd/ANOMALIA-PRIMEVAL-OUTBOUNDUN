@@ -17,9 +17,12 @@ public:
     AAnomaliaDogCompanion();
     virtual void Tick(float DeltaSeconds) override;
     virtual void BeginPlay() override;
-    virtual float TakeDamage(float Damage,const FDamageEvent& Event,AController* Instigator,AActor* Causer) override;
-    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Props) const override;
+    virtual void FellOutOfWorld(const UDamageType& DamageType) override;
+    virtual float TakeDamage(float Damage,const FDamageEvent& Event,AController* EventInstigator,AActor* Causer) override;
+    virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 
+    /** Opt-in for isolated test scenes only; normal ownership is explicitly assigned by the server. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Dog") bool bAutoAssignNearestSurvivor=false;
     UPROPERTY(Replicated,BlueprintReadOnly,Category="ANOMALIA|Dog") TObjectPtr<AAnomaliaSurvivor> SurvivorOwner;
     UPROPERTY(Replicated,BlueprintReadOnly,Category="ANOMALIA|Dog") EAnomaliaDogCommand Command=EAnomaliaDogCommand::Stay;
     UPROPERTY(Replicated,BlueprintReadOnly,Category="ANOMALIA|Dog") float Health=100.f;
@@ -44,4 +47,6 @@ private:
     FVector LastOwnerSample=FVector::ZeroVector;
     bool bHasOwnerSample=false;
     double NextCommandTime=0;
+    FVector LastSafeLocation=FVector::ZeroVector;
+    bool bHasSafeLocation=false;
 };
