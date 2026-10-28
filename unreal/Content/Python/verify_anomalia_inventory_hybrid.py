@@ -105,7 +105,7 @@ def tick(delta):
             require(len(rows)==1 and rows[0].count==4,'Merge callback failed')
             select(rows[0].stack_id);click_text('Mains')
             require(str(stack('apple').container_id)=='hands','Move-to-hands callback failed')
-            click_text('RANGER L’OBJET EN MAINS');require(str(stack('apple').container_id)!='hands','Personal storage target failed')
+            click_text('Ranger');require(str(stack('apple').container_id)!='hands','Personal storage target failed')
             click_text('Mains');click_text('Ranger');require(str(stack('apple').container_id)!='hands','Selected stow callback failed')
             require(s['inv'].request_move_stack(stack('canned_beans').stack_id,'pockets',2,2,False),'Rotation fixture placement failed')
             select(stack('canned_beans').stack_id);click_text('Tourner 90°')
@@ -165,7 +165,21 @@ def tick(delta):
             report['checks'].append('unknown crafting recipe rejected')
             require(not s['inv'].request_collect_nearby(None),'Null nearby pickup accepted')
             report['checks'].append('invalid vicinity pickup rejected')
-            report['proximityLimit']='No registered loot spawn in this saved map; successful pickup not exercised'
+            pickups=list(unreal.GameplayStatics.get_all_actors_of_class(s['world'],unreal.AnomaliaLootPickup))
+            require(pickups,'Isolated registered loot fixture did not spawn')
+            pickup=pickups[0];s['pickup']=pickup
+            s['pickup_item']=str(pickup.get_editor_property('item_id'));s['pickup_count']=pickup.get_editor_property('count')
+            s['pickup_before']=sum(x.count for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==s['pickup_item'])
+            pickup.set_actor_location(s['actor'].get_actor_location()+unreal.Vector(100,0,30),False,True)
+            s['widget'].show_inventory_tab();phase('vicinity');return
+        if s['phase']=='vicinity' and now-s['at']>1:
+            targets=[r for r in relays() if str(r.get_editor_property('Button').get_editor_property('tool_tip_text'))=='Prendre']
+            require(targets,'Nearby registered pickup absent from real vicinity column')
+            targets[0].execute()
+            total=sum(x.count for x in s['inv'].get_editor_property('stacks') if str(x.item_id)==s['pickup_item'])
+            require(total==s['pickup_before']+s['pickup_count'],'Vicinity callback failed authoritative pickup transfer')
+            report['checks'].append('registered nearby loot listed and collected through real bound vicinity button')
+            report['collectedLoot']={'item':s['pickup_item'],'count':s['pickup_count']}
             finish();return
         if s['phase']=='capture_prepare':
             name,tab=s['shots'][s['shot_index']]
@@ -196,6 +210,15 @@ def tick(delta):
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
     require(not (Path(unreal.Paths.project_saved_dir())/'Servers'/SCOPE).exists(),'Existing profile preserved')
+    # Private new server scope only: shipped catalogue, one real registered fresh-food spawn.
+    fixture=Path(unreal.Paths.project_saved_dir())/'Servers'/SCOPE;fixture.mkdir(parents=True,exist_ok=False)
+    tiers=json.loads((Path(unreal.Paths.project_content_dir())/'Anomalia/Data/loot_tiers.json').read_text(encoding='utf-8-sig'))
+    tiers['enabled']=True
+    tier=next(t for t in tiers['tiers'] if t['tier']==1 and 'food' in t['categories'])
+    tier['rarityMultiplier']=1
+    (fixture/'loot_tiers.json').write_text(json.dumps(tiers),encoding='utf8')
+    spawn={'schemaVersion':1,'spawns':[{'id':'inventory_vicinity_proof','map':'L_Survival_Playtest','buildingType':tier['buildings'][0],'categories':['fresh_food'],'anchor':'player_start','x':100,'y':0,'z':50}]}
+    (fixture/'loot_spawns.json').write_text(json.dumps(spawn),encoding='utf8')
     w=unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
     w.get_world_settings().set_editor_property('default_game_mode',unreal.GameModeBase.static_class())
     for command in ('r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','sg.TextureQuality 1','t.MaxFPS 30','t.IdleWhenNotForeground 0'):
