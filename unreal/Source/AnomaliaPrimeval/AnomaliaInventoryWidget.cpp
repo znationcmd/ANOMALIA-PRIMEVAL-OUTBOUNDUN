@@ -263,7 +263,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         BankStatus->SetText(FText::FromString(FString::Printf(TEXT("BANQUE RP · Compte %s · %lld,%02lld EUR\n%s %s"),
             *Inventory->BankAccountId, static_cast<long long>(Inventory->BankBalanceCents/100),
             static_cast<long long>(Inventory->BankBalanceCents%100),
-            Inventory->bBankingAvailable ? TEXT("Terminal à portée.") : TEXT("Approchez-vous d’un terminal bancaire."), *Inventory->BankMessage)));
+            Inventory->bBankingAvailable ? TEXT("Terminal connecté") : TEXT("Terminal hors de portée"), *Inventory->BankMessage)));
     if (TransferButton) TransferButton->SetIsEnabled(Inventory->bBankingAvailable);
     if (Inventory->bBankingAvailable)
     {
@@ -284,14 +284,14 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     for(const auto& Stack:Inventory->Stacks)if(Stack.ContainerId!=TEXT("hands"))++StoredStacks;
     PageCount=FMath::Max(1,FMath::DivideAndRoundUp(StoredStacks,ItemsPerPage));
     CurrentPage=FMath::Clamp(CurrentPage,0,PageCount-1);
-    if(PageStatus)PageStatus->SetText(FText::FromString(FString::Printf(TEXT("Page %d / %d · %d piles · LB/RB"),CurrentPage+1,PageCount,StoredStacks)));
+    if(PageStatus)PageStatus->SetText(FText::FromString(FString::Printf(TEXT("Page %d / %d · %d piles"),CurrentPage+1,PageCount,StoredStacks)));
     if(PreviousPageButton)PreviousPageButton->SetIsEnabled(CurrentPage>0);
     if(NextPageButton)NextPageButton->SetIsEnabled(CurrentPage+1<PageCount);
     if(WeightStatus)WeightStatus->SetText(FText::FromString(FString::Printf(TEXT("CHARGE  %.1f / %.1f KG"),Weight,Inventory->WeightCapacityKg)));
     if(!Inventory->Stacks.ContainsByPredicate([&](const auto& Stack){return Stack.StackId==SelectedStackId;}))
         SelectedStackId=Inventory->Stacks.IsEmpty()?0:Inventory->Stacks[0].StackId;
     auto* PersonalTarget=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
-    auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("RANGER L’OBJET EN MAINS")));auto SmallFont=PersonalLabel->GetFont();SmallFont.Size=12;PersonalLabel->SetFont(SmallFont);PersonalTarget->SetContent(PersonalLabel);StyleButton(PersonalTarget);ItemList->AddChildToVerticalBox(PersonalTarget)->SetPadding(FMargin(0,0,0,8));
+    auto* PersonalLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());PersonalLabel->SetText(FText::FromString(TEXT("Ranger")));auto SmallFont=PersonalLabel->GetFont();SmallFont.Size=12;PersonalLabel->SetFont(SmallFont);PersonalTarget->SetContent(PersonalLabel);StyleButton(PersonalTarget);PersonalTarget->SetVisibility(Inventory->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");})?ESlateVisibility::Visible:ESlateVisibility::Collapsed);ItemList->AddChildToVerticalBox(PersonalTarget)->SetPadding(FMargin(0,0,0,8));
     BindAction(PersonalTarget,EAnomaliaInventoryAction::Stow,0);
     int32 StoredIndex=0,BoxIndex=0;
     for (const FAnomaliaInventoryCompartment& Box : Inventory->Compartments)
@@ -335,7 +335,6 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     if(!HasHeld){auto* Empty=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Empty->SetText(FText::FromString(TEXT("Mains libres")));HandsList->AddChildToVerticalBox(Empty);}
     const auto* Selected=Inventory->Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==SelectedStackId;});
     if(Selected)AddStackRow(*Selected);
-    else{auto* Empty=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Empty->SetText(FText::FromString(TEXT("Sélectionnez un objet pour afficher ses actions.")));DetailsList->AddChildToVerticalBox(Empty);}
     if(HadFocus && GetOwningPlayer())
     {
         UButton* Fallback=nullptr;
@@ -641,14 +640,14 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
   const int32 Index=NearbyPickups.Add(Pickup);
   auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
   auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-  Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d · Ramasser"),*Inventory->GetItemDisplayName(Pickup->ItemId),Pickup->Count)));
+  Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Pickup->ItemId),Pickup->Count)));
   Text->SetAutoWrapText(true);Button->SetContent(Text);
-  Button->SetToolTipText(FText::FromString(TEXT("Ramasser l’objet proche. Distance et visibilité vérifiées par le serveur.")));
+  Button->SetToolTipText(FText::FromString(TEXT("Prendre")));
   ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8,4));
   BindAction(Button,EAnomaliaInventoryAction::CollectNearby,0,0,Index);
  }
- if(NearbyPickups.IsEmpty())Label(TEXT("Aucun objet accessible à moins de 2,5 m."));
- if(!NearbyVehicle){Label(TEXT("Véhicule : approchez puis ouvrez le coffre ou le capot."));return;}
+ if(NearbyPickups.IsEmpty())Label(TEXT("Vide"));
+ if(!NearbyVehicle)return;
  Label(TEXT("VÉHICULE / COFFRE"));
  const auto* Systems=NearbyVehicle->SurvivalSystems.Get();const auto& State=Systems->State;
  Label(State.bLocked?TEXT("Véhicule verrouillé — clé correspondante requise."):TEXT("Véhicule déverrouillé"));
@@ -669,9 +668,9 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
  if(!Systems->HasOpenPanel(TEXT("trunk"))){Label(TEXT("Ouvrez la malle pour accéder à la cargaison."));return;}
  const auto* Cargo=NearbyVehicle->CargoInventory.Get();int32 Cells=0;for(const auto& Box:Cargo->Compartments)Cells+=Box.Width*Box.Height;
  Label(FString::Printf(TEXT("COFFRE · %d cases · %.1f / %.1f kg"),Cells,Cargo->GetCurrentWeightKg(),Cargo->WeightCapacityKg));
- AddVehicleButton(TEXT("Cargaison — déposer ici (maintenir Croix) / objet en mains (Carré)"),int32(Action::Deposit));
+ AddVehicleButton(TEXT("Déposer"),int32(Action::Deposit));
  for(const auto& Stack:Cargo->Stacks)
-  AddVehicleButton(FString::Printf(TEXT("%s ×%d · prendre (Croix), mains (Carré)"),*Cargo->GetItemDisplayName(Stack.ItemId),Stack.Count),int32(Action::Withdraw),Stack.StackId,Stack.Count);
+  AddVehicleButton(FString::Printf(TEXT("%s ×%d"),*Cargo->GetItemDisplayName(Stack.ItemId),Stack.Count),int32(Action::Withdraw),Stack.StackId,Stack.Count);
 }
 UAnomaliaInventoryActionRelay* UAnomaliaInventoryWidget::FocusedAction() const
 {for(const auto& Relay:ActionRelays)if(Relay&&Relay->Button&&Relay->Button->HasUserFocus(GetOwningPlayer()))return Relay.Get();return nullptr;}
