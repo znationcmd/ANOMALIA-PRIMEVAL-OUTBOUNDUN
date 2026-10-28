@@ -1,4 +1,4 @@
-name: ANOMALIA inventory visual source audit
+name: ANOMALIA attachment and dog disk audit
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -32,7 +32,7 @@ jobs:
 
           console.log('ADDITIONAL_ITEM_ASSET_CANDIDATES');
           let found=0;
-          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|5ffcabde/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
+          function candidates(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory()){if(!/^(Textures|Materials|Shaders|Saved|Intermediate|__ExternalActors__|Backups)$/i.test(e.name))candidates(f);}else if(found<200&&/\.(uasset|fbx|gltf|glb|obj|zip|rar|7z)$/i.test(e.name)&&/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|5ffcabde|medical|medic|pouch|holster|cuff|belt|sleep|magazine|canteen|bottle/i.test(f)&&!/^T_|^M_|^MI_/i.test(e.name)){console.log(f);found++;}}}
           candidates(content);candidates('C:\\ANOMALIA\\FabImports');candidates('C:\\ANOMALIA\\unreal\\Content');
 
           for(const root of ['C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects','C:\\Program Files\\Epic Games\\Launcher\\VaultCache'])candidates(root);
