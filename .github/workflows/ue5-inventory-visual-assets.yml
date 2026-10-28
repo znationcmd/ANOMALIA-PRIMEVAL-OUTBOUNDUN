@@ -1,0 +1,31 @@
+name: ANOMALIA inventory visual source audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-inventory-visual-assets.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 3
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read installed inventory visual sources
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path');
+          const content='C:\\ANOMALIA-Validation\\c40543166274\\unreal\\Content';
+          const roots=['Anomalia/ImportedFab/Batch_40571935754','Survival_Character/Meshes/Modular_Parts'];
+          function scan(p){if(!fs.existsSync(p))return;for(const e of fs.readdirSync(p,{withFileTypes:true})){const f=path.join(p,e.name);if(e.isDirectory())scan(f);else if(e.name.endsWith('.uasset')&&!/Textures|Materials/i.test(f))console.log(path.relative(content,f));}}
+          roots.forEach(r=>scan(path.join(content,r)));
+          const engine='C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Source\\Runtime\\Engine\\Classes';
+          for(const p of ['Components/SceneCaptureComponent2D.h','Components/SceneCaptureComponent.h','Components/PrimitiveComponent.h','Engine/TextureRenderTarget2D.h']){
+            const file=path.join(engine,p);if(!fs.existsSync(file))continue;
+            console.log('API '+p);console.log(fs.readFileSync(file,'utf8').split(/\r?\n/).filter(l=>/VisibleInSceneCapture|CaptureSource|OrthoWidth|ProjectionType|ShowOnlyComponent|InitAutoFormat|InitCustomFormat|ClearColor|RenderTargetFormat/.test(l)).join('\n'));
+          }
