@@ -1,0 +1,68 @@
+name: ANOMALIA current native suite and unchanged E39 physical cargo regression
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-e39-cargo-physics-only.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 34
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify compiled source identity then run native suite and physical E39 service gates
+        shell: node {0}
+        run: |
+          (async()=>{
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto'),os=require('os');
+          const stage='C:\\ANOMALIA-Validation\\c40543166274',project=path.join(stage,'unreal/AnomaliaPrimeval.uproject'),engine=process.env.UE_ROOT||'C:\\Program Files\\Epic Games\\UE_5.8';
+          const compiled=path.join(stage,'unreal/Saved/CharacterValidation/cargo-compile-40654988106-1');
+          const build=JSON.parse(fs.readFileSync(path.join(compiled,'report.json'),'utf8'));
+          const patch=JSON.parse(fs.readFileSync(path.join(compiled,'source-patch-receipt.json'),'utf8'));
+          if(build.compilation!=='passed'||build.targets.length!==2||build.targets.some(t=>t.exitCode!==0)||patch.patchCommit!=='e36f83420a8c6bd3a4147169e5ec7253755c8048')throw Error('Required current cargo build proof missing');
+          const blob=s=>crypto.createHash('sha1').update(Buffer.from('blob '+Buffer.byteLength(s)+'\0')).update(s).digest('hex');
+          for(const f of patch.files)if(blob(fs.readFileSync(path.join(stage,f.path),'utf8').replace(/\r\n/g,'\n'))!==f.after)throw Error('Compiled source drift: '+f.path);
+          const dir=path.join('C:\\ANOMALIA-Validation\\Reports','cargo-physics-'+process.env.GITHUB_RUN_ID+'-'+process.env.GITHUB_RUN_ATTEMPT);fs.mkdirSync(dir,{recursive:true});fs.appendFileSync(process.env.GITHUB_ENV,'CARGO_PHYSICS_OUTPUT='+dir+'\n');
+          fs.writeFileSync(path.join(dir,'build-provenance.json'),JSON.stringify({compiled,build,patch,installedProjectModified:false,sourceArtModified:false},null,2));
+          function guard(){
+          const stat=fs.statfsSync('C:\\'),r=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','Get-CimInstance Win32_OperatingSystem | Select-Object FreeVirtualMemory | ConvertTo-Json -Compress'],{encoding:'utf8',timeout:20000});
+          let v=null;try{v=JSON.parse(r.stdout);}catch{}
+          const host={freeDiskBytes:stat.bavail*stat.bsize,freePhysicalBytes:os.freemem(),virtualMemory:v,retainedReserveBytes:6*1024**3,temporaryRuntimeBudgetBytes:2*1024**3};
+          fs.writeFileSync(path.join(dir,'resource-preflight.json'),JSON.stringify(host,null,2));
+          if(host.freeDiskBytes<8*1024**3||host.freePhysicalBytes<4*1024**3||!v||v.FreeVirtualMemory*1024<8*1024**3)throw Error('Runtime resources insufficient: '+JSON.stringify(host));
+          }
+          async function runOwned(name,exe,args,timeout){
+          guard();const child=cp.spawn(exe,args,{cwd:stage,stdio:['ignore','pipe','pipe']});
+          const stream=fs.createWriteStream(path.join(dir,name+'-process.log'));child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});
+          let stopped=null,done=false;
+          function abort(reason){if(done||stopped)return;stopped=reason;fs.writeFileSync(path.join(dir,name+'-runtime-stop.json'),JSON.stringify({reason,pid:child.pid},null,2));child.kill();}
+          const timer=setTimeout(()=>abort('Process timeout'),timeout),monitor=setInterval(()=>{const s=fs.statfsSync('C:\\');if(s.bavail*s.bsize<6*1024**3)abort('Disk reserve reached');else if(os.freemem()<1024**3)abort('Low physical memory');},2000);
+          const result=await new Promise(resolve=>{child.once('error',e=>resolve({status:null,error:String(e)}));child.once('close',(status,signal)=>resolve({status,error:stopped||signal||null}));});
+          done=true;clearTimeout(timer);clearInterval(monitor);stream.end();console.log(name+' '+JSON.stringify(result));if(result.status!==0||result.error)throw Error(name+' process failed');return result;
+          }
+          const automation=path.join(dir,'automation');fs.mkdirSync(automation);
+          await runOwned('native-tests',path.join(engine,'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),[project,'-unattended','-nopause','-nosound','-NullRHI','-ExecCmds=Automation RunTests Anomalia.Native.; Quit','-ReportExportPath='+automation,'-abslog='+path.join(dir,'native-tests.log')],900000);
+          const index=JSON.parse(fs.readFileSync(path.join(automation,'index.json'),'utf8').replace(/^\uFEFF/,'')),rows=index.tests||[];
+          const names=new Set(rows.filter(t=>t.state==='Success').map(t=>t.fullTestPath));
+          if(rows.length<26||rows.some(t=>t.state!=='Success')||!names.has('Anomalia.Native.VehicleKeyPartsCargoAndRecovery')||!names.has('Anomalia.Native.TacticalMovement.SpeedLoadFatigueAndCrouch'))throw Error('Current native regression suite incomplete or failed');
+          console.log('NATIVE_TESTS_PASSED '+rows.length);
+          const reportFile=path.join(dir,'drive-report.json'),map='/Game/Anomalia/CharacterTests/E39Resume_40587487588/ANOMALIA_E39DriveReview_v1';
+          await runOwned('physical-drive',path.join(engine,'Engine/Binaries/Win64/UnrealEditor.exe'),[project,map+'?AnomaliaServerId=chaos-smoke-cargofix-'+process.env.GITHUB_RUN_ID,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720','-unattended','-nosound','-nosplash','-AnomaliaChaosProbe='+reportFile,'-ini:Engine:[ConsoleVariables]:p.Vehicle.DisableConstraintSuspension=1','-ini:Engine:[/Script/Engine.PhysicsSettings]:bTickPhysicsAsync=True','-ini:Engine:[/Script/Engine.PhysicsSettings]:AsyncFixedTimeStepSize=0.008333333333333333','-abslog='+path.join(dir,'drive.log')],900000);
+          const d=JSON.parse(fs.readFileSync(reportFile,'utf8').replace(/^\uFEFF/,''));
+          console.log(JSON.stringify({state:d.state,error:d.error,checks:d.checks,samples:d.physicsSamples?.length},null,2));
+          const required=['hood_open_inventory_radiator_and_spark_plug_removal_blocks_real_ignition','trunk_open_inventory_battery_and_journaled_cargo_exchange_verified','matching_physical_key_locks_actual_panels_and_closed_boot_blocks_cargo','survivor_walks_into_closed_trunk_without_launching_chassis'];
+          if(d.state!=='CHAOS_ROAD_PHYSICS_DRIVE_PASSED'||!required.every(c=>d.checks.includes(c))||d.physicsSamples.length<30)throw Error(d.error||'Actual E39 physical regression failed');
+          fs.writeFileSync(path.join(dir,'accepted-run.json'),JSON.stringify({state:'COMPILED_CARGO_FIX_NATIVE_AND_PHYSICAL_REGRESSION_PASSED',nativeTests:rows.length,physicalChecks:d.checks.length,buildRun:40654988106,patchCommit:patch.patchCommit,multiplayerTested:false,installed:false},null,2));
+          })().catch(e=>{console.error(e.message);process.exit(1);});
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e39-cargo-current-native-physical-proof
+          path: ${{ env.CARGO_PHYSICS_OUTPUT }}
+          if-no-files-found: warn
