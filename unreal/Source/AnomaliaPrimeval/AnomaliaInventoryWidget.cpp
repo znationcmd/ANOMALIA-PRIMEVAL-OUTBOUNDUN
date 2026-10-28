@@ -10,6 +10,7 @@
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/ScaleBox.h"
+#include "Components/ProgressBar.h"
 #include "Misc/PackageName.h"
 #include "Materials/MaterialInterface.h"
 #include "Materials/MaterialInstanceDynamic.h"
@@ -330,7 +331,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         const bool Expanded=ExpandedContainers.Contains(Box.Id)?ExpandedContainers[Box.Id]:(Box.Id!=TEXT("pockets")||Inventory->GetUsedCells(Box.Id)>0);
         auto* Header=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("Container_")+Box.Id.ToString()+TEXT("_action")))));
         auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        Title->SetText(FText::FromString(FString::Printf(TEXT("%s (%d/%d)  %s"),*ContainerLabel(Box.Id).ToUpper(),Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height,Expanded?TEXT("−"):TEXT("+"))));
+        Title->SetText(FText::FromString(FString::Printf(TEXT("%s (%d/%d)  %.0f%%  %s"),*ContainerLabel(Box.Id).ToUpper(),Inventory->GetUsedCells(Box.Id),Box.Width*Box.Height,Box.Condition,Expanded?TEXT("−"):TEXT("+"))));
         auto HeaderFont=Title->GetFont();HeaderFont.Size=13;HeaderFont.TypefaceFontName=TEXT("Bold");Title->SetFont(HeaderFont);Title->SetAutoWrapText(true);
         auto* HeaderRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());Header->SetContent(HeaderRow);
         if(auto* Icon=GarmentIcon(Box.Id))HeaderRow->AddChildToHorizontalBox(Thumbnail(Icon,24))->SetPadding(FMargin(0,0,5,0));
@@ -369,6 +370,11 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         auto* Content=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Button->SetContent(Content);
         auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));auto Font=Text->GetFont();Font.Size=13;Text->SetFont(Font);Text->SetJustification(ETextJustify::Center);Content->AddChildToVerticalBox(Text);
         if(auto* Icon=ItemIcon(Stack.ItemId))Content->AddChildToVerticalBox(Thumbnail(Icon,Stack.ItemId==TEXT("rifle")?500.f:150.f))->SetHorizontalAlignment(HAlign_Center);
+        if(Inventory->SupportsItemWear(Stack.ItemId))
+        {
+            auto* Bar=WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass());Bar->SetPercent(Stack.Condition/100.f);Bar->SetFillColorAndOpacity(Stack.Condition>50?FLinearColor(.65f,.72f,.50f):Stack.Condition>20?FLinearColor(.8f,.65f,.25f):FLinearColor(.75f,.2f,.15f));
+            auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());Size->SetHeightOverride(4);Size->SetContent(Bar);Content->AddChildToVerticalBox(Size);
+        }
         HandsList->AddChildToVerticalBox(Button);BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
     }
     if(auto* Frame=HandsList->GetParent())if(auto* Layout=Cast<UCanvasPanelSlot>(Frame->Slot))Layout->SetAnchors(HasHeld?FAnchors(.35f,.51f,.65f,.85f):FAnchors(.35f,.51f,.65f,.56f));
