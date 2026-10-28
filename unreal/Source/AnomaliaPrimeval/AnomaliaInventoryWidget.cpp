@@ -160,6 +160,9 @@ void UAnomaliaInventoryWidget::BuildLayout()
     StoragePanel=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("StoragePanel"));Full(StoragePanel);
     EquipmentList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("EquippedMeshes"));
     StoragePanel->AddChildToVerticalBox(EquipmentList)->SetPadding(FMargin(0,0,0,6));
+    auto* DragHint=Text(TEXT("Glisser-déposer  •  R : tourner l’objet"),10);
+    DragHint->SetColorAndOpacity(FSlateColor(FLinearColor(.72f,.76f,.8f)));
+    StoragePanel->AddChildToVerticalBox(DragHint)->SetPadding(FMargin(4,0,4,5));
     auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("InventoryScroll"));
     StoragePanel->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("InventoryItems"));Scroll->AddChild(ItemList);
