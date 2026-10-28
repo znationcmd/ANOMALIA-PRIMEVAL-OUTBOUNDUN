@@ -127,7 +127,9 @@ function Invoke-AnomaliaDifferentialVersionStage {
                 throw "Differential staged hash mismatch: $relative"
             }
             if(Test-Path -LiteralPath $destination -PathType Leaf) {
-                [IO.File]::Replace($temporary,$destination,$null,$true)
+                $replacementBackup=$destination+'.anomalia-old-'+[Guid]::NewGuid().ToString('N')+'.tmp'
+                [IO.File]::Replace($temporary,$destination,$replacementBackup,$true)
+                if(Test-Path -LiteralPath $replacementBackup){Remove-Item -LiteralPath $replacementBackup -Force}
                 $report.replaced++
             } else {
                 [IO.File]::Move($temporary,$destination)
