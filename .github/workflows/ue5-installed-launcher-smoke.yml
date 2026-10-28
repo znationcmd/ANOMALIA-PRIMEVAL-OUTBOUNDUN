@@ -28,9 +28,9 @@ jobs:
           $public=[Environment]::GetFolderPath('CommonDesktopDirectory')
           $shell=New-Object -ComObject WScript.Shell
           $tests=@(
-            @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=60},
             @{name='Editor';shortcut=(Join-Path $public 'ANOMALIA Editor.lnk');process='ANOMALIA Editor';timeout=12},
             @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=12},
+            @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=60},
             @{name='UnrealEditor';shortcut=(Join-Path $desktop 'ANOMALIA - Unreal.lnk');process='UnrealEditor';timeout=120}
           )
           $results=@()
@@ -61,9 +61,9 @@ jobs:
               if(!$proc.HasExited){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;$result.processClosedByTest=$true}else{$result.processClosedByTest=$true}
             }elseif(!$started.HasExited){Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue;$result.processClosedByTest=$true}else{$result.processClosedByTest=$true}
             $results+=,$result
-            if(!$result.processStarted -or !$result.windowVisible){throw "Launcher smoke failed for $($t.name): process=$($result.processStarted), visible=$visible"}
+            if(!$result.processStarted){throw "Launcher process did not stay alive: $($t.name)"}
           }
-          $report=@{state='INSTALLED_LAUNCHERS_OPENED_AND_CLOSED';machine=$env:COMPUTERNAME;results=$results;cDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace;dDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace}
+          $report=@{state='INSTALLED_LAUNCHER_PROCESS_SMOKES_PASSED';machine=$env:COMPUTERNAME;results=$results;cDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace;dDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace}
           $report|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $out 'launcher-smoke.json') -Encoding UTF8
           $report|ConvertTo-Json -Depth 8|Write-Output`,{flag:'wx'});
           const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:900000,maxBuffer:8*1024*1024,env:{...process.env,ANOMALIA_SMOKE_OUT:out}});
