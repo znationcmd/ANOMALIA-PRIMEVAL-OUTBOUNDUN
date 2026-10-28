@@ -1,0 +1,103 @@
+{
+  "state": "SURVIVAL_PLAYTEST_PROFILE_RELOAD_AND_PIE_PASSED_NOT_UI_NETWORK_ACCEPTANCE",
+  "newAssetsSaved": [
+    "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/BP_Survival_Playtest",
+    "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/GM_Survival_Playtest",
+    "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/L_Survival_Playtest"
+  ],
+  "screenshots": [
+    {
+      "file": "Survival_equipped_front.png",
+      "sha256": "e6c159bdb6099c1553cb98a5e27f302a84b1117dae1e0789220a20709931ae08",
+      "bytes": 1213021,
+      "jacketEquipped": true,
+      "cameraControlYaw": 180
+    },
+    {
+      "file": "Survival_jacket_removed_front.png",
+      "sha256": "3fddf64865d207b5525891523398421b31c3cd7bfad3eef9e690da7eda6cc8e5",
+      "bytes": 1220614,
+      "jacketEquipped": false,
+      "cameraControlYaw": 180
+    },
+    {
+      "file": "Survival_equipped_back.png",
+      "sha256": "cb2f51bbc022025dd898cc6315278ebe41bbb3f90c3c328c4eb4ef638aff38c7",
+      "bytes": 1250437,
+      "jacketEquipped": true,
+      "cameraControlYaw": 0
+    }
+  ],
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "characters": [
+    {
+      "name": "Survival",
+      "pawn": "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/UEDPIE_0_L_Survival_Playtest.L_Survival_Playtest:PersistentLevel.BP_Survival_Playtest_C_0",
+      "possessed": true,
+      "animationInstance": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/ABP_Quinn.ABP_Quinn_C",
+      "cameraActive": true,
+      "startCm": [
+        -1500.0,
+        0.0,
+        110.0
+      ],
+      "maxWalkSpeedObserved": 449.96240234375,
+      "maxSprintSpeedObserved": 679.924560546875,
+      "jumpRiseCm": 89.49795990017151,
+      "maxBoneDisplacementCm": 67.77870958935098,
+      "runtimeMovementMode": "<MovementMode.MOVE_WALKING: 1>",
+      "runtimeMaxWalkSpeedCmS": 449.90789794921875,
+      "inputIgnored": false,
+      "lastPositionCm": [
+        249.24827373795168,
+        0.0,
+        90.14999914887993
+      ],
+      "phase": "jump",
+      "phaseSimulationSeconds": 2.043679215013981,
+      "walkDistanceCm": 670.7745171987272,
+      "staminaBefore": 100.0,
+      "staminaAfter": 80.57421875,
+      "standingCapsuleHalfHeightCm": 88.0,
+      "crouchedCapsuleHalfHeightCm": 60.0,
+      "inventoryWeightBeforeKg": 0.30000001192092896,
+      "inventoryWeightWithAppleKg": 0.45000001788139343,
+      "inventoryAddRemoveApple": true,
+      "endCm": [
+        249.24827373795168,
+        0.0,
+        90.14999914887993
+      ],
+      "runtimeJacketRemoveReequip": true
+    }
+  ],
+  "errors": [],
+  "mode": "single_player_PIE",
+  "input": "automated native pawn/component API calls; physical keyboard not tested",
+  "inventoryUI": "not_tested",
+  "save_reconnect": "map travel in same editor process only; network reconnection not tested",
+  "multiplayer": "not_tested",
+  "originalAssetsSaved": false,
+  "playtestMap": "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/L_Survival_Playtest",
+  "playtestPawn": "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/BP_Survival_Playtest",
+  "playtestGameMode": "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/GM_Survival_Playtest",
+  "serverScope": "survival-playtest-40659026008",
+  "fixture": "new saved test assets only; native GameMode and isolated test profile",
+  "clothingPersistence": "CDO outfit defaults; per-player clothing choice persistence not implemented",
+  "profileSeedReturn": "",
+  "nativeGameModeLoadedSeededInventory": true,
+  "world": "/Game/Anomalia/CharacterTests/SurvivalPlayable_40659026008/UEDPIE_0_L_Survival_Playtest.L_Survival_Playtest",
+  "nativeAppleConsumption": {
+    "remaining": 1,
+    "hungerAfter": 94.0
+  },
+  "nativeProfileReloadAppleCount": 1,
+  "nativeProfileReloadNewPawn": true,
+  "workflowRun": 40659026008,
+  "artifact": 12802568246,
+  "processExitCode": 3221225477,
+  "overallProcessResult": "FAILED_AT_SHUTDOWN_AFTER_GAMEPLAY_AND_SCREENSHOT_CHECKS",
+  "logObservation": "QUIT_EDITOR then full editor shutdown/log closure before process access violation exit",
+  "physicalKeyboardAndUI": false,
+  "screenshotBytesAndHashesVerifiedAfterDownload": true
+}
