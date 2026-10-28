@@ -1,35 +1,25 @@
-# Inventaire ANOMALIA — 28 octobre 2026
+# Inventaire ANOMALIA — contrôles réels
 
-## Présentation native
-Trois zones : **À proximité** à gauche, **personnage réel vêtu** au centre, **rangements des vêtements** à droite ; mains sous le personnage. Fonds sombres, contours cyan, cases adaptées au DPI. Les phrases d'aide et rappels de manette ont été retirés. Les boutons de proximité affichent seulement nom et quantité ; leur action prend l'objet.
+## Version du 28 octobre : disposition de référence et usure
 
-Les espèces physiques et le solde bancaire apparaissent au-dessus du personnage. L'onglet FABRICATION comporte quatre recettes natives ; TRANSFERTS conserve les opérations bancaires existantes.
+L'interface native suit maintenant la disposition demandée : panneaux gris/noirs translucides à gauche et à droite, personnage agrandi au centre, bandeaux fins de rangements et panneau Mains avec vraie vignette d'arme. Le grand en-tête bleu et la barre d'actions générale ont été retirés. Les actions sont contextuelles à la pile choisie ; espèces et solde bancaire restent au-dessus du personnage.
 
-## Compilation réellement exécutée
-- Tab + DPI : [40678901767](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40678901767), réussite.
-- Rangements, argent et craft : 40681165103, réussite.
-- Proximité et reprise des rangements : [40691913211](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40691913211), Editor 5.8.3, code 0, artefact 12818155396.
-- Présentation épurée : [40692598129](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40692598129), réussite.
+Huit vignettes sont réellement rendues à partir des modèles présents : cinq pièces Survival portées, pomme, haricots en conserve et fusil Quantum SM_Rifle_Olive. Capture orthographique, matériau UI avec inversion de l'opacité, fond transparent ; pas d'image de DayZ copiée et pas de correspondance approchée entre objets. Les autres objets conservent leur nom tant qu'un modèle exact n'a pas été validé. Le rendu n'est pas une reproduction à l'identique des assets, du personnage policier ou de la pose armée de DayZ.
 
-Ces compilations mettent à jour la cible Editor dans **C:\\ANOMALIA-Validation\\c40543166274\\unreal**, utilisée par le lanceur Survival du bureau. La cible Game n'a pas été reconstruite pour cette refonte. Le projet installé C:\\ANOMALIA\\unreal n'est pas modifié. I et Tab sont configurés ; clavier physique non testé.
+Compilation Editor 5.8.3 réussie : [40712350609](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40712350609). Cible Game de cette refonte non reconstruite.
 
-## Fonctionnement des rangements
-Les meshes effectivement portés accordent leur rangement : veste 200 cases, pantalon 200, petit sac 350, gants 2, chaussures 4 ; gilet 300 si présent, coiffure 2 si présente. Poches existantes conservées. Les petites capacités des gants/coiffure/chaussures sont provisoires. Les 14 kg de capacité de masse restent distincts du nombre de cases.
+Essai PIE [40714225658](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40714225658), artefact 12827867107 : **34 contrôles passés, code de sortie 0, erreurs du rapport vides**. Quatre captures réelles : inventaire, banque, craft, état d'usure. La capture d'inventaire de 600400 octets a l'empreinte SHA-256 6f0ef4fc2eb5b2ebf0dfc92f787dc910418b7e021586af91cbfa47aad44fbad5.
 
-Les destinations de rangement sont des actions serveur. Une pièce contenant des objets ne peut pas être retirée par SetClothingMesh. Si un mesh disparaît autrement, son rangement occupé reste accessible en retrait seul ; les objets ne sont pas supprimés. La relecture accepte cet état uniquement pour les sept identifiants réservés de vêtements, sans relâcher les règles des autres compartiments.
+Les tests ont exercé les actions UMG liées, les huit rendus GPU et leur masque alpha, le ramassage d'un objet enregistré, les quatre recettes, les rangements, la consommation, la reprise du cargo d'un vêtement manquant et la restauration de caméra. Les entrées physiques souris/clavier et le multijoueur ne sont pas testés.
 
-## Proximité
-La liste affiche jusqu'à 64 ramassables accessibles à moins de 250 cm, actualisée toutes les 0,5 seconde lorsque son contenu change. Le serveur vérifie le joueur propriétaire, l'identité enregistrée du ramassable, sa génération, sa portée, la visibilité, la capacité et le transfert durable par le système de loot existant. Le client ne fournit ni quantité ni identité d'objet arbitraire. Les coffres et fonctions de service du véhicule restent disponibles.
+L'usure des piles d'objets est calculée côté serveur, enregistrée et conservée lors du rangement. Les piles de conditions différentes ne fusionnent pas ; les nouvelles acquisitions ne réparent pas les objets déjà abîmés. Une modification d'usure exige un objet unique, une catégorie compatible et une valeur positive finie. Aucun RPC ne permet au client d'imposer une usure ou une réparation.
 
-## Craft et argent
-Recettes : tissu ×2 → pansement ; chiffons ×6 → corde ; bois ×2 + chiffons ×4 → attelle ; fibres ×6 + tissu ×4 → selle, coût du prototype existant. Serveur : recette fermée, ressources vérifiées, poids/espace vérifiés, sauvegarde atomique avant publication, matériaux conservés en cas d'échec. Aucun comportement de montage d'une selle annoncé.
+Les emplacements de vêtements réellement portés s'usent avec la distance au sol et les dégâts reçus ; l'objet compatible tenu en mains est aussi endommagé lors d'un impact. Les valeurs d'équilibrage sont provisoires : 0,2 % par 100 m et 10 % des dégâts reçus pour les emplacements portés, 5 % des dégâts reçus pour l'objet tenu. La marche mesurée sur 982,77 cm a fait passer la veste de 93 à 92,98617 %. Un fusil a conservé 86,5 % après usure/dégâts ; la veste à 0 % a gardé tout son cargo et son état a été rechargé. Aucun fichier d'objet n'est détruit.
 
-Les espèces sont calculées depuis les piles de billets physiques existantes ; aucun second registre d'argent créé. Le solde bancaire provient du compte existant.
+L'état des vêtements est actuellement attaché à l'emplacement modulaire, pas à une instance de vêtement équipée depuis une pile d'inventaire. L'usure par tir/rechargement, les réparations et les variantes visuelles déchirées restent à intégrer. Un état à zéro ne supprime pas un rangement ni son contenu.
 
-## Validation et limites
-Le premier essai 40669554052 avait passé 11 contrôles de callbacks UMG et restauration de caméra (code 0), avant les nouvelles fonctions.
-Essai réel [40692693342](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40692693342), artefact 12817243545 : **25 contrôles réussis, processus code 0, erreurs du rapport vides, caméra restaurée**. Trois captures UI inspectables : inventaire, transferts et fabrication. Actions UMG liées réellement exécutées : rangement veste/sac, retrait d'une veste vide et refus si occupée, sauvegarde/relecture du cargo de sac manquant en retrait seul, espèces 50 EUR issues d'un billet physique, quatre recettes avec consommation des matériaux, refus de recette inconnue et de ramassable nul. Une volaille crue enregistrée dans un nouveau scope privé a été listée et ramassée par le bouton de proximité, avec augmentation exacte du stock. Les configurations de loot de ce test n'affectent que inventory-hybrid-40692693342. Aucun clavier physique, réseau ou transfert bancaire effectué. Inspection de la capture : vêtements Survival visibles sur le corps, argent au-dessus, proximité gauche ; libellés de petites cases encore tronqués et avertissement moteur de lumière superposé. La finition visuelle complète n'est pas acceptée.
+Régression native [40714519929](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40714519929) : **26 tests réussis, code 0**, dont migration d'inventaire, stockage, loot/persistance et pièces/clés/coffre E39.
 
-Le personnage central porte réellement les meshes Survival (veste, pantalon, chaussures, gants, sac). **Les cases d'objets et en-têtes de vêtements ne disposent pas encore de miniatures rendues des modèles 3D.** L'équipement vestimentaire depuis une pile d'inventaire, la persistance/réplication des choix d'apparence, le masquage du corps, le glisser-déposer souris et le multijoueur ne sont pas acceptés. Les captures UI incluent l'éditeur et l'avertissement de lumière non reconstruite de la carte de test.
+Les itérations échouées restent conservées : connexion d'entrée de matériau corrigée (40708906419), fixture de rotation chevauchant le fusil (40709250764), plantage de fermeture 0xC0000005 après contrôles réussis (40710599089), appel Python non exposé du composant de déplacement (40713100275). La fermeture utilise maintenant le chemin natif de l'inventaire ; le dernier essai est sorti avec code 0, sans prétendre avoir identifié toutes les causes historiques de plantage.
 
-Les erreurs génériques LogAutomationTest au démarrage GPU et avertissements d'API déjà relevés restent ouverts. Aucun asset Fab Standard publié, aucun profil utilisateur réinitialisé, aucun changement de pawn principal, aucune fusion GitHub.
+Portée : C:\\ANOMALIA-Validation\\c40543166274\\unreal et profils de test distincts. Le lanceur Survival du bureau utilise cette copie. Aucun déploiement de DLL dans C:\\ANOMALIA\\unreal, aucun personnage principal remplacé, aucun asset Fab publié, aucune fusion. Les erreurs génériques d'automatisation au démarrage GPU et avertissements déjà signalés restent ouverts.
