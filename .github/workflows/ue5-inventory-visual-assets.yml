@@ -36,3 +36,6 @@ jobs:
           candidates(content);candidates('C:\\ANOMALIA\\FabImports');candidates('C:\\ANOMALIA\\unreal\\Content');
 
           for(const root of ['C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects','C:\\Program Files\\Epic Games\\Launcher\\VaultCache'])candidates(root);
+
+          const os=require('os'),cp=require('child_process');console.log('HOST_FREE_PHYSICAL_BYTES '+os.freemem());
+          const query=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command','Get-Process | Sort-Object WorkingSet64 -Descending | Select-Object -First 12 ProcessName,Id,WorkingSet64 | ConvertTo-Json -Compress'],{encoding:'utf8',timeout:20000});console.log('HOST_PROCESS_MEMORY '+query.stdout);
