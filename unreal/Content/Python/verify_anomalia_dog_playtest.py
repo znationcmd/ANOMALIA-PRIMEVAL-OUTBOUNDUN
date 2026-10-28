@@ -133,19 +133,29 @@ def tick(delta):
             require(s['dog'].treat_injury(100),'Trusted recovery hook failed')
             s['widget'].show_inventory_tab();s['shot_file']=OUT/'Dog_inventory.png';phase('capture');return
         if s['phase']=='capture' and now-s['at']>3:
-            visuals=dict(s['inv'].get_editor_property('AttachmentVisuals'))
+            visuals={v.get_path_name():v for v in s['actor'].get_components_by_class(unreal.StaticMeshComponent) if v.get_editor_property('static_mesh') and v.get_editor_property('static_mesh').get_path_name()=='/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive' and v.get_attach_parent()==s['actor'].get_editor_property('backpack_mesh')}
             check(len(visuals)==1,'actual Quantum rifle component attached to backpack')
             r['mountedWeapon']=[{'mesh':v.get_editor_property('static_mesh').get_path_name(),'socket':str(v.get_attach_socket_name())} for v in visuals.values()]
             r['dogBones']=[str(s['mesh'].get_bone_name(i)) for i in range(s['mesh'].get_num_bones())]
             unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI nosuffix filename="'+str(s['shot_file']).replace('\\','/')+'"');phase('capture_file');return
         if s['phase']=='capture_file':
-            candidates=list(OUT.glob('Dog_inventory*.png'))
+            candidates=list(OUT.glob(s['shot_file'].stem+'*.png'))
             if not candidates:return
             p=candidates[0]
             if p.stat().st_size<4096 or now-s['at']<4:return
             r['screenshots'].append({'file':p.name,'bytes':p.stat().st_size,'sha256':hashlib.sha256(p.read_bytes()).hexdigest()})
             r['dogStateAtEnd']={'health':s['dog'].get_editor_property('health'),'position':str(s['dog'].get_actor_location())}
+            if not s.get('dog_close_view'):
+                s['dog_close_view']=True;s['shot_file']=OUT/'Dog_companion.png'
+                target=s['dog'].get_actor_location()+unreal.Vector(0,0,10)
+                location=target+unreal.Vector(220,280,130)
+                camera=s['pc'].get_view_target()
+                camera.set_actor_location_and_rotation(location,unreal.MathLibrary.find_look_at_rotation(location,target),False,True)
+                phase('dog_capture');return
             finish()
+        if s['phase']=='dog_capture' and now-s['at']>3:
+            unreal.SystemLibrary.execute_console_command(s['world'],'Shot ShowUI nosuffix filename="'+str(s['shot_file']).replace('\\','/')+'"')
+            phase('capture_file');return
     except Exception as e:finish(e)
 try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
