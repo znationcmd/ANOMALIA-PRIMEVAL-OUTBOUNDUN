@@ -1,43 +1,35 @@
-# Inventaire ANOMALIA — fusion des références, 28 octobre 2026
+# Inventaire ANOMALIA — 28 octobre 2026
 
-## Version disponible dans le test
-Le test Survival utilise une première interface native à trois zones : proximité/véhicule à gauche, personnage réellement équipé au centre, stockage à droite, mains en bas et actions sur la pile sélectionnée. Fond sombre, sélection turquoise, coordonnées et dimensions réelles des piles. Banque dans son propre onglet. Aucun visuel propriétaire des jeux de référence copié.
+## Présentation native
+Trois zones : **À proximité** à gauche, **personnage réel vêtu** au centre, **rangements des vêtements** à droite ; mains sous le personnage. Fonds sombres, contours cyan, cases adaptées au DPI. Les phrases d'aide et rappels de manette ont été retirés. Les boutons de proximité affichent seulement nom et quantité ; leur action prend l'objet.
 
-Le lanceur existant ANOMALIA_Test_Survival_20261028_40659474346.cmd ouvre la copie C:\ANOMALIA-Validation\c40543166274\unreal. I ouvre l'inventaire de la version compilée. Aucun déploiement du nouveau DLL dans C:\ANOMALIA\unreal ; aucun changement de personnage principal.
+Les espèces physiques et le solde bancaire apparaissent au-dessus du personnage. L'onglet FABRICATION comporte quatre recettes natives ; TRANSFERTS conserve les opérations bancaires existantes.
 
-## Compilé et testé
-Compilation Editor réellement réussie : [40668678314](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40668678314), après compilation réussie de la fabrique partagée et du recadrage 40667659731. Cible Game de cette refonte différée.
+## Compilation réellement exécutée
+- Tab + DPI : [40678901767](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40678901767), réussite.
+- Rangements, argent et craft : 40681165103, réussite.
+- Proximité et reprise des rangements : [40691913211](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40691913211), Editor 5.8.3, code 0, artefact 12818155396.
+- Présentation épurée : [40692598129](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40692598129), réussite.
 
-Essai PIE [40669554052](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40669554052), artefact 12808190603 : processus terminé avec code 0, état HYBRID_INVENTORY_RENDER_AND_BOUND_ACTIONS_PASSED_NOT_MANUAL_NETWORK_ACCEPTANCE, erreurs du rapport vides. **11 contrôles réussis**, plus restauration de la caméra à la fermeture :
-- Profil natif isolé, pawn équipé réel, grille UMG réelle.
-- Onglets inventaire/banque sans remplacement des données.
-- Sélection, séparation/fusion sans perte de quantité, passage en mains, rangement via cible personnelle et action de pile, rotation d'un objet 1×2.
-- Consommation native : quatre pommes deviennent trois, avec effet de survie ; poids final 2,9000001 kg.
+Ces compilations mettent à jour la cible Editor dans **C:\\ANOMALIA-Validation\\c40543166274\\unreal**, utilisée par le lanceur Survival du bureau. La cible Game n'a pas été reconstruite pour cette refonte. Le projet installé C:\\ANOMALIA\\unreal n'est pas modifié. I et Tab sont configurés ; clavier physique non testé.
 
-Deux captures UI réelles conservées : Inventory_hybrid00000.png et Inventory_bank00000.png. L'inspection d'une reprise identique a montré la disposition, le personnage entier et la banque séparée. La grille était trop petite dans le viewport éditeur : adaptation DPI préparée ci-dessous. Les captures incluent l'éditeur et le message de lumière non reconstruite de la carte de test.
+## Fonctionnement des rangements
+Les meshes effectivement portés accordent leur rangement : veste 200 cases, pantalon 200, petit sac 350, gants 2, chaussures 4 ; gilet 300 si présent, coiffure 2 si présente. Poches existantes conservées. Les petites capacités des gants/coiffure/chaussures sont provisoires. Les 14 kg de capacité de masse restent distincts du nombre de cases.
 
-Entrées de contrôle par callbacks UMG effectivement liés, sans souris/clavier physiques. Pas de recette réseau, jeu packagé ou transfert bancaire réalisé. Les erreurs génériques LogAutomationTest au démarrage GPU et avertissements d'API déjà constatés restent ouverts ; rapport de fonctions réussi ne signifie pas journal global sans erreurs.
+Les destinations de rangement sont des actions serveur. Une pièce contenant des objets ne peut pas être retirée par SetClothingMesh. Si un mesh disparaît autrement, son rangement occupé reste accessible en retrait seul ; les objets ne sont pas supprimés. La relecture accepte cet état uniquement pour les sept identifiants réservés de vêtements, sans relâcher les règles des autres compartiments.
 
-Les premières itérations de contrôle ont échoué sur une API Python indisponible, la lecture de propriétés protégées puis des noms UObject instables. Les scripts et reçus d'échec restent conservés. La sélection du test se fait finalement par l'infobulle de la pile, sans supposer que le suffixe UObject est son identifiant.
+## Proximité
+La liste affiche jusqu'à 64 ramassables accessibles à moins de 250 cm, actualisée toutes les 0,5 seconde lorsque son contenu change. Le serveur vérifie le joueur propriétaire, l'identité enregistrée du ramassable, sa génération, sa portée, la visibilité, la capacité et le transfert durable par le système de loot existant. Le client ne fournit ni quantité ni identité d'objet arbitraire. Les coffres et fonctions de service du véhicule restent disponibles.
 
-## Préparé, pas encore actif : grandes cases et Tab
-- Cases et libellés adaptés à la taille et au DPI du viewport.
-- Ajout de +ActionMappings=(ActionName="Inventory",Key=Tab), en conservant I et la manette.
-- Tab simple ferme l'écran avant la navigation Slate ; Shift+Tab garde la navigation inverse. Indication TAB / ÉCHAP dans le bouton de fermeture.
+## Craft et argent
+Recettes : tissu ×2 → pansement ; chiffons ×6 → corde ; bois ×2 + chiffons ×4 → attelle ; fibres ×6 + tissu ×4 → selle, coût du prototype existant. Serveur : recette fermée, ressources vérifiées, poids/espace vérifiés, sauvegarde atomique avant publication, matériaux conservés en cas d'échec. Aucun comportement de montage d'une selle annoncé.
 
-Ces changements sont versionnés, mais **pas encore installés dans le binaire du test**. [40677534343](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40677534343) a compilé l'unité DPI puis échoué au lien : DLL tenue ouverte par deux processus UnrealEditor.exe, erreur LNK1104. Artefact 12811217796.
+Les espèces sont calculées depuis les piles de billets physiques existantes ; aucun second registre d'argent créé. Le solde bancaire provient du compte existant.
 
-La reprise Tab [40678240912](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40678240912) est bloquée AVANT écriture des sources/INI : seulement 2 220 519 424 octets de RAM disponibles pour un seuil opérationnel de 4 Gio. Artefact 12810809677. Disque libre mesuré 9 847 853 056 octets ; aucune suppression effectuée. Fermer le test et l'éditeur ANOMALIA permet de libérer DLL et mémoire avant la reprise. Le workflow contrôle aussi les sessions Unreal actives et les laisse ouvertes.
+## Validation et limites
+Le premier essai 40669554052 avait passé 11 contrôles de callbacks UMG et restauration de caméra (code 0), avant les nouvelles fonctions.
+Essai réel [40692693342](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40692693342), artefact 12817243545 : **25 contrôles réussis, processus code 0, erreurs du rapport vides, caméra restaurée**. Trois captures UI inspectables : inventaire, transferts et fabrication. Actions UMG liées réellement exécutées : rangement veste/sac, retrait d'une veste vide et refus si occupée, sauvegarde/relecture du cargo de sac manquant en retrait seul, espèces 50 EUR issues d'un billet physique, quatre recettes avec consommation des matériaux, refus de recette inconnue et de ramassable nul. Une volaille crue enregistrée dans un nouveau scope privé a été listée et ramassée par le bouton de proximité, avec augmentation exacte du stock. Les configurations de loot de ce test n'affectent que inventory-hybrid-40692693342. Aucun clavier physique, réseau ou transfert bancaire effectué. Inspection de la capture : vêtements Survival visibles sur le corps, argent au-dessus, proximité gauche ; libellés de petites cases encore tronqués et avertissement moteur de lumière superposé. La finition visuelle complète n'est pas acceptée.
 
-Les sauvegardes avant modification et les empreintes sont exigées dans la copie de validation. Les sources natives et la configuration de cette copie peuvent être en avance sur le binaire tant que la reprise n'est pas passée. Le stamp de cache 3d044d6de6108eb99dc15a597920828e6dab79f5 ne remplace pas les reçus de patch.
+Le personnage central porte réellement les meshes Survival (veste, pantalon, chaussures, gants, sac). **Les cases d'objets et en-têtes de vêtements ne disposent pas encore de miniatures rendues des modèles 3D.** L'équipement vestimentaire depuis une pile d'inventaire, la persistance/réplication des choix d'apparence, le masquage du corps, le glisser-déposer souris et le multijoueur ne sont pas acceptés. Les captures UI incluent l'éditeur et l'avertissement de lumière non reconstruite de la carte de test.
 
-## Limites fonctionnelles
-Les cases portent encore nom/quantité et infobulle, **pas de miniatures rendues des objets 3D**. La tenue est lue depuis les meshes réellement portés ; les emplacements vestimentaires ne sont pas des boutons d'équipement fonctionnels. Restent les miniatures, rangements propres aux vêtements, équipement depuis l'inventaire, persistance/réplication d'apparence, glisser-déposer souris vers une case arbitraire et recette manuelle/manette/deux joueurs. Aucune fusion GitHub.
-
-## Fichiers
-- unreal/Source/AnomaliaPrimeval/AnomaliaInventoryWidget.h/.cpp
-- unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp : ouverture partagée sans changer les données de survie.
-- unreal/Config/DefaultInput.ini : ajout Tab, autres raccourcis conservés.
-- unreal/Content/Python/verify_anomalia_inventory_hybrid.py
-- .github/workflows/ue5-inventory-hybrid-compile.yml et ue5-inventory-hybrid-runtime.yml
-- tests/test_ue5_inventory_source.py : suivi du raccourci I vers la fabrique partagée et sa restriction au joueur local.
+Les erreurs génériques LogAutomationTest au démarrage GPU et avertissements d'API déjà relevés restent ouverts. Aucun asset Fab Standard publié, aucun profil utilisateur réinitialisé, aucun changement de pawn principal, aucune fusion GitHub.
