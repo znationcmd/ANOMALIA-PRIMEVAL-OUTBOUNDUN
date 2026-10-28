@@ -1,5 +1,6 @@
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaLootPickup.h"
 #include "AnomaliaSurvivor.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "Vehicles/AnomaliaVehicleSurvival.h"
@@ -457,6 +458,16 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
     if (!Inventory) return;
     switch (Action)
     {
+        case EAnomaliaInventoryAction::CollectNearby:
+        {
+            if(NearbyPickups.IsValidIndex(OtherStackId))
+            {
+                auto* Pickup=NearbyPickups[OtherStackId].Get();
+                Inventory->RequestCollectNearby(Pickup);
+                RefreshInventory();
+            }
+            break;
+        }
         case EAnomaliaInventoryAction::CraftRecipe:
         {
             const auto& Recipes=UAnomaliaInventoryComponent::GetHandcraftRecipes();
@@ -585,6 +596,27 @@ void UAnomaliaInventoryWidget::AddVehicleButton(const FString& Label,int32 Servi
  ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8.f,4.f));
  BindAction(Button,EAnomaliaInventoryAction::VehicleService,StackId,Count,ServiceAction);
 }
+TArray<AAnomaliaLootPickup*> UAnomaliaInventoryWidget::FindNearbyPickups() const
+{
+ TArray<AAnomaliaLootPickup*> Found;
+ const auto* User=GetOwningPlayerPawn();auto* World=GetWorld();if(!User||!World)return Found;
+ for(TActorIterator<AAnomaliaLootPickup> It(World);It;++It)
+ {
+  auto* Pickup=*It;if(!IsValid(Pickup)||Pickup->Count<=0||Pickup->ItemId.IsNone()||
+   FVector::DistSquared(User->GetActorLocation(),Pickup->GetActorLocation())>FMath::Square(250.f))continue;
+  FHitResult Hit;FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaInventoryProximity),false,User);Query.AddIgnoredActor(Pickup);
+  if(!World->LineTraceSingleByChannel(Hit,User->GetActorLocation()+FVector(0,0,50),Pickup->GetActorLocation(),ECC_Visibility,Query))Found.Add(Pickup);
+ }
+ Found.Sort([&](const AAnomaliaLootPickup& A,const AAnomaliaLootPickup& B)
+ {const double DA=FVector::DistSquared(User->GetActorLocation(),A.GetActorLocation()),DB=FVector::DistSquared(User->GetActorLocation(),B.GetActorLocation());return DA==DB?A.GetUniqueID()<B.GetUniqueID():DA<DB;});
+ if(Found.Num()>64)Found.SetNum(64);return Found;
+}
+void UAnomaliaInventoryWidget::NativeTick(const FGeometry& Geometry,float DeltaTime)
+{
+ Super::NativeTick(Geometry,DeltaTime);ProximityElapsed+=DeltaTime;if(ProximityElapsed<.5f)return;ProximityElapsed=0;
+ FString Signature;for(const auto* P:FindNearbyPickups())Signature+=FString::Printf(TEXT("%u:%s:%d;"),P->GetUniqueID(),*P->ItemId.ToString(),P->Count);
+ if(Signature!=ProximitySignature){ProximitySignature=MoveTemp(Signature);RefreshInventory();}
+}
 void UAnomaliaInventoryWidget::RefreshVehicleProximity()
 {
  if(!ProximityList||!GetWorld())return;ProximityList->ClearChildren();
@@ -602,8 +634,22 @@ void UAnomaliaInventoryWidget::RefreshVehicleProximity()
   if(NearbyVehicle){NearbyVehicle->CargoInventory->OnInventoryUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);NearbyVehicle->SurvivalSystems->OnServicesUpdated.AddDynamic(this,&UAnomaliaInventoryWidget::RefreshInventory);}
  }
  auto Label=[&](const FString& Value){auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Text->SetText(FText::FromString(Value));auto Font=Text->GetFont();Font.Size=13;Text->SetFont(Font);Text->SetAutoWrapText(true);ProximityList->AddChildToVerticalBox(Text)->SetPadding(FMargin(10.f,6.f));};
- Label(TEXT("PROXIMITÉ / VÉHICULE"));
- if(!NearbyVehicle){Label(TEXT("Approchez du véhicule puis ouvrez son coffre ou son capot."));return;}
+ Label(TEXT("À PROXIMITÉ"));
+ NearbyPickups.Reset();
+ for(auto* Pickup:FindNearbyPickups())
+ {
+  const int32 Index=NearbyPickups.Add(Pickup);
+  auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+  auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+  Text->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d · Ramasser"),*Inventory->GetItemDisplayName(Pickup->ItemId),Pickup->Count)));
+  Text->SetAutoWrapText(true);Button->SetContent(Text);
+  Button->SetToolTipText(FText::FromString(TEXT("Ramasser l’objet proche. Distance et visibilité vérifiées par le serveur.")));
+  ProximityList->AddChildToVerticalBox(Button)->SetPadding(FMargin(8,4));
+  BindAction(Button,EAnomaliaInventoryAction::CollectNearby,0,0,Index);
+ }
+ if(NearbyPickups.IsEmpty())Label(TEXT("Aucun objet accessible à moins de 2,5 m."));
+ if(!NearbyVehicle){Label(TEXT("Véhicule : approchez puis ouvrez le coffre ou le capot."));return;}
+ Label(TEXT("VÉHICULE / COFFRE"));
  const auto* Systems=NearbyVehicle->SurvivalSystems.Get();const auto& State=Systems->State;
  Label(State.bLocked?TEXT("Véhicule verrouillé — clé correspondante requise."):TEXT("Véhicule déverrouillé"));
  if(!Systems->bReady){Label(TEXT("Chargement de la sauvegarde du véhicule…"));return;}
@@ -733,3 +779,4 @@ void UAnomaliaInventoryWidget::RefreshCrafting()
         BindAction(Button,EAnomaliaInventoryAction::CraftRecipe,0,0,RecipeIndex++);
     }
 }
+
