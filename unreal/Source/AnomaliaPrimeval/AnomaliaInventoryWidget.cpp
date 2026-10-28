@@ -95,8 +95,8 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto Panel=[&](FName Name,const FAnchors& Anchors){
         auto* B=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),Name);
         B->SetBrush(FSlateColorBrush(FLinearColor(.008f,.025f,.035f,.91f)));
-        B->SetPadding(FMargin(10.f));auto* Slot=RootCanvas->AddChildToCanvas(B);
-        Slot->SetAnchors(Anchors);Slot->SetOffsets(FMargin(0));Slot->SetZOrder(1);return B;
+        B->SetPadding(FMargin(10.f));auto* LayoutSlot=RootCanvas->AddChildToCanvas(B);
+        LayoutSlot->SetAnchors(Anchors);LayoutSlot->SetOffsets(FMargin(0));LayoutSlot->SetZOrder(1);return B;
     };
     auto* Top=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
     Panel(TEXT("InventoryHeader"),FAnchors(.025f,.035f,.975f,.12f))->SetContent(Top);
@@ -198,7 +198,7 @@ void UAnomaliaInventoryWidget::AddGridStack(const FAnomaliaInventoryStack& Stack
     auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("InventoryTile_%d"),Stack.StackId))));StyleButton(Button,SelectedStackId==Stack.StackId);
     auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(FString::Printf(TEXT("%s\n×%d"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count)));auto Font=Label->GetFont();Font.Size=10;Label->SetFont(Font);Label->SetAutoWrapText(true);Label->SetClipping(EWidgetClipping::ClipToBounds);Button->SetContent(Label);
     Button->SetToolTipText(FText::FromString(FString::Printf(TEXT("%s ×%d · %d×%d cases"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count,Size.X,Size.Y)));
-    auto* Slot=ActiveGrid->AddChildToCanvas(Button);Slot->SetPosition(FVector2D(Stack.X*GridCellSize+1,Stack.Y*GridCellSize+1));Slot->SetSize(FVector2D(Size.X*GridCellSize-2,Size.Y*GridCellSize-2));Slot->SetZOrder(1);
+    auto* LayoutSlot=ActiveGrid->AddChildToCanvas(Button);LayoutSlot->SetPosition(FVector2D(Stack.X*GridCellSize+1,Stack.Y*GridCellSize+1));LayoutSlot->SetSize(FVector2D(Size.X*GridCellSize-2,Size.Y*GridCellSize-2));LayoutSlot->SetZOrder(1);
     BindAction(Button,EAnomaliaInventoryAction::SelectStack,Stack.StackId);
 }
 
@@ -277,7 +277,7 @@ void UAnomaliaInventoryWidget::RefreshInventory()
         for(int32 Y=0;Y<Box.Height;++Y)for(int32 X=0;X<Box.Width;++X)
         {
             auto* Cell=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Cell->SetBrush(FSlateColorBrush(FLinearColor(.06f,.13f,.16f,.6f)));Cell->SetVisibility(ESlateVisibility::HitTestInvisible);
-            auto* Slot=ActiveGrid->AddChildToCanvas(Cell);Slot->SetPosition(FVector2D(X*GridCellSize+1,Y*GridCellSize+1));Slot->SetSize(FVector2D(GridCellSize-2,GridCellSize-2));
+            auto* LayoutSlot=ActiveGrid->AddChildToCanvas(Cell);LayoutSlot->SetPosition(FVector2D(X*GridCellSize+1,Y*GridCellSize+1));LayoutSlot->SetSize(FVector2D(GridCellSize-2,GridCellSize-2));
         }
         for (const FAnomaliaInventoryStack& Stack : Inventory->Stacks)
         {
