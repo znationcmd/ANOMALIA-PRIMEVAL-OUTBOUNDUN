@@ -28,7 +28,10 @@ enum class EAnomaliaInventoryAction : uint8
     Stow,
     Rotate,
     VehicleService,
-    SelectStack
+    SelectStack,
+    CraftRecipe,
+    ToggleContainer,
+    StowInContainer
 };
 
 UCLASS()
@@ -61,6 +64,7 @@ public:
     static UAnomaliaInventoryWidget* CreateForPlayerInventory(APlayerController* Player);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory") void ShowInventoryTab();
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory") void ShowBankTab();
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory") void ShowCraftTab();
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     void InitializeForInventory(UAnomaliaInventoryComponent* InInventory);
     virtual void NativeConstruct() override;
@@ -96,6 +100,14 @@ private:
     UPROPERTY() TObjectPtr<UTextBlock> WeightStatus;
     UPROPERTY() TObjectPtr<UButton> InventoryTab;
     UPROPERTY() TObjectPtr<UButton> BankTab;
+    UPROPERTY() TObjectPtr<UButton> CraftTab;
+    UPROPERTY() TObjectPtr<UVerticalBox> CraftPanel;
+    UPROPERTY() TObjectPtr<UVerticalBox> CraftList;
+    UPROPERTY() TObjectPtr<UTextBlock> MoneyStatus;
+    UPROPERTY() TObjectPtr<UTextBlock> BankBalanceStatus;
+    TMap<FName,bool> ExpandedContainers;
+    void RefreshCrafting();
+    FString ContainerLabel(FName Id) const;
     int32 SelectedStackId=0;
     float GridCellSize=36.f;
     bool bBankTab=false;
@@ -141,4 +153,5 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
 
