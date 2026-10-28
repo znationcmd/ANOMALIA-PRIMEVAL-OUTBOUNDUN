@@ -1,0 +1,39 @@
+name: ANOMALIA Windows versions read-only audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-version-readonly-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Audit installed versions and D backup without changes
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path 'C:\ANOMALIA-Validation\Reports' ('version-audit-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $report=[ordered]@{state='READ_ONLY_AUDIT';run=$env:GITHUB_RUN_ID;drives=@();installs=@();launchers=@();processes=@();backups=@()}
+          foreach($letter in @('C','D')){$q="DeviceID='$letter`:'";$d=Get-CimInstance Win32_LogicalDisk -Filter $q -ErrorAction SilentlyContinue;if($d){$report.drives+=@{id=$d.DeviceID;size=[int64]$d.Size;free=[int64]$d.FreeSpace;volume=$d.VolumeName}}}
+          $root=Join-Path $env:LOCALAPPDATA 'CMD'
+          foreach($n in @('ANOMALIA-UE5','ANOMALIA-Windows')){$b=Join-Path $root $n;if(!(Test-Path $b)){continue};$x=[ordered]@{name=$n;path=$b;metadata=@{};versions=@();totalBytes=[int64]0;userdata=@();backupDirs=@()};foreach($f in @('active.json','owner.json','manifest.json','install.json')){$p=Join-Path $b $f;if(Test-Path $p -PathType Leaf){try{$x.metadata[$f]=Get-Content $p -Raw|ConvertFrom-Json}catch{$x.metadata[$f]=Get-Content $p -Raw}}};$v=Join-Path $b 'versions';if(Test-Path $v){foreach($z in Get-ChildItem $v -Directory -Force){$s=0L;$c=0;Get-ChildItem $z.FullName -File -Recurse -Force -ErrorAction SilentlyContinue|%{$s+=$_.Length;$c++};$x.versions+=@{name=$z.Name;path=$z.FullName;bytes=$s;files=$c;lastWrite=$z.LastWriteTimeUtc};$x.totalBytes+=$s}};foreach($g in @('userdata','Saved')){$p=Join-Path $b $g;if(Test-Path $p){$x.userdata+=,$p}};foreach($g in @('backup','backups','owner-history','bootstrap-history')){$p=Join-Path $b $g;if(Test-Path $p){$x.backupDirs+=,$p}};$report.installs+=,$x}
+          foreach($d in @((Join-Path $env:USERPROFILE 'Desktop'),(Join-Path $env:PUBLIC 'Desktop'))){if(Test-Path $d){foreach($f in Get-ChildItem $d -File -Force|?{$_.Name -match 'ANOMALIA|CMD'}){$report.launchers+=@{path=$f.FullName;bytes=$f.Length;sha256=(Get-FileHash $f.FullName -Algorithm SHA256).Hash}}}}
+          $report.processes=@(Get-CimInstance Win32_Process|?{$_.Name -in @('UnrealEditor.exe','AnomaliaPrimeval.exe')}|%{@{name=$_.Name;pid=$_.ProcessId;path=$_.ExecutablePath;command=$_.CommandLine}})
+          if(Test-Path 'D:\'){$report.backups=@(Get-ChildItem 'D:\' -Directory -Force|?{$_.Name -match 'ANOMALIA|backup|sauvegarde'}|%{$s=0L;Get-ChildItem $_.FullName -File -Recurse -Force -ErrorAction SilentlyContinue|%{$s+=$_.Length};@{path=$_.FullName;bytes=$s}})}
+          $report|ConvertTo-Json -Depth 10|Set-Content (Join-Path $out 'audit.json') -Encoding UTF8
+          Get-Content (Join-Path $out 'audit.json') -Raw
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-versions-read-only-audit
+          path: C:\ANOMALIA-Validation\Reports\version-audit-*
+          if-no-files-found: warn
