@@ -10,6 +10,16 @@ struct FAnomaliaItemUseRule;
 class FJsonObject;
 class UAnomaliaSharedStorageSubsystem;
 
+/** Fixed native recipes: clients request only Id, never ingredients or output. */
+struct FAnomaliaHandcraftRecipe
+{
+    FName Id;
+    FString Label;
+    FName Output;
+    int32 OutputCount=1;
+    TMap<FName,int32> Materials;
+};
+
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
 {
@@ -87,6 +97,24 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool ConfigureCompartmentFromPreset(FName Id, FName PresetId);
+
+    /** Actual server-worn meshes grant storage; missing garments preserve occupied cargo as recovery-only. */
+    void SynchronizeWornStorage();
+    bool CanRemoveWornStorage(FName MeshSlot) const;
+    static FName WornContainerId(FName MeshSlot);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestStowStackIn(int32 StackId,FName ContainerId);
+
+    static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
+    bool HasCraftMaterials(FName RecipeId) const;
+    /** Trusted server transaction; rollback on missing materials, space or failed profile write. */
+    bool TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Crafting")
+    bool RequestCraftRecipe(FName RecipeId);
+
+    /** Derived from physical banknote stacks on the server, not a second cash ledger. */
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 CashBalanceCents=0;
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
     int32 GetUsedCells(FName ContainerId) const;
@@ -199,6 +227,11 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
 
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCraftRecipe(FName RecipeId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestStowStackIn(int32 StackId,FName ContainerId);
+
 private:
     friend class UAnomaliaWorldStateSubsystem;
     friend class UAnomaliaLootSubsystem;
@@ -209,6 +242,10 @@ private:
     bool bProfileRecoveryPending = false;
     double NextBankRequestTime = 0;
     double NextUseRequestTime = 0;
+    double NextCraftRequestTime=0;
+    float WornStorageElapsed=0.f;
+    bool CraftFromOwningPlayer(FName RecipeId);
+    bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
     bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
     bool bSuppressNotifications = false;
@@ -219,3 +256,4 @@ private:
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };
+
