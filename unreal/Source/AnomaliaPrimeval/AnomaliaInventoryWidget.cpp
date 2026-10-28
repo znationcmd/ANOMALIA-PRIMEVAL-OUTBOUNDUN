@@ -33,6 +33,20 @@ void UAnomaliaInventoryActionRelay::Execute()
     if (TargetWidget) TargetWidget->PerformAction(Action, StackId, Count, OtherStackId);
 }
 
+UAnomaliaInventoryWidget* UAnomaliaInventoryWidget::CreateForPlayerInventory(APlayerController* Player)
+{
+    auto* Survivor=Player?Cast<AAnomaliaSurvivor>(Player->GetPawn()):nullptr;
+    if(!Survivor||!Survivor->IsLocallyControlled()||!Survivor->InventoryComponent)return nullptr;
+    if(Survivor->InventoryWidget&&Survivor->InventoryWidget->IsInViewport())return Survivor->InventoryWidget;
+    auto* Screen=CreateWidget<UAnomaliaInventoryWidget>(Player,UAnomaliaInventoryWidget::StaticClass());
+    if(!Screen)return nullptr;
+    Survivor->InventoryWidget=Screen;
+    Screen->InitializeForInventory(Survivor->InventoryComponent);Screen->AddToViewport(80);
+    FInputModeGameAndUI Mode;Mode.SetWidgetToFocus(Screen->TakeWidget());Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    Player->SetInputMode(Mode);Screen->FocusFirstAction();Player->bShowMouseCursor=true;Player->SetIgnoreMoveInput(true);Player->SetIgnoreLookInput(true);
+    return Screen;
+}
+
 void UAnomaliaInventoryWidget::InitializeForInventory(UAnomaliaInventoryComponent* InInventory)
 {
     if (Inventory) Inventory->OnInventoryUpdated.RemoveDynamic(this, &UAnomaliaInventoryWidget::RefreshInventory);
@@ -114,11 +128,13 @@ void UAnomaliaInventoryWidget::BuildLayout()
     Panel(TEXT("StorageFrame"),FAnchors(.715f,.15f,.975f,.81f))->SetContent(Right);
     auto Full=[&](UWidget* W){auto* S=Right->AddChildToCanvas(W);S->SetAnchors(FAnchors(0,0,1,1));S->SetOffsets(FMargin(0));};
     StoragePanel=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("StoragePanel"));Full(StoragePanel);
+    StoragePanel->AddChildToVerticalBox(Text(TEXT("ÉQUIPEMENT PORTÉ"),12));
+    EquipmentList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("EquippedMeshes"));
+    StoragePanel->AddChildToVerticalBox(EquipmentList)->SetPadding(FMargin(0,5,0,10));
     auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("InventoryScroll"));
     StoragePanel->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     ItemList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("InventoryItems"));Scroll->AddChild(ItemList);
     // These are actual equipped meshes, not empty clickable slots.
-    EquipmentList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("EquippedMeshes"));
     WeightStatus=Text(TEXT(""));StoragePanel->AddChildToVerticalBox(WeightStatus)->SetPadding(FMargin(0,5));
     auto* Pages=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());StoragePanel->AddChildToVerticalBox(Pages);
     PreviousPageButton=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("InventoryPreviousPage"));
@@ -139,7 +155,6 @@ void UAnomaliaInventoryWidget::BuildLayout()
     auto* Center=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     auto* CenterSlot=RootCanvas->AddChildToCanvas(Center);CenterSlot->SetAnchors(FAnchors(.32f,.15f,.68f,.32f));CenterSlot->SetOffsets(FMargin(0));
     auto* CharacterTitle=Text(TEXT("SURVIVANT  /  TENUE PORTÉE"),14);CharacterTitle->SetJustification(ETextJustify::Center);Center->AddChildToVerticalBox(CharacterTitle);
-    Center->AddChildToVerticalBox(EquipmentList);
     HandsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("HandsItems"));
     Panel(TEXT("HandsFrame"),FAnchors(.32f,.70f,.68f,.81f))->SetContent(HandsList);
     DetailsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SelectedItemActions"));
@@ -430,6 +445,11 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
             FocusFirstAction();
             break;
         case EAnomaliaInventoryAction::Stow:
+            if(StackId==0)
+            {
+                const auto* Held=Inventory->Stacks.FindByPredicate([](const auto& Stack){return Stack.ContainerId==TEXT("hands");});
+                if(!Held)break;StackId=Held->StackId;
+            }
             Inventory->RequestStowStack(StackId);
             FocusFirstAction();
             break;
