@@ -1,0 +1,19 @@
+name: ANOMALIA saved map recovery check
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-saved-map-check.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read saved maps and exact sector bounds
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Content 'D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.json' -Raw
+          Get-ChildItem 'D:/ANOMALIA/unreal/Content/Maps','D:/ANOMALIA/unreal/Content/Anomalia' -Recurse -Filter '*.umap' | ForEach-Object {Write-Output ("SAVED_MAP "+$_.FullName+" "+$_.Length)}
+          Select-String 'D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.log' -Pattern 'ANOMALIA_INSTALLED_MAPS|ANOMALIA_SECTOR_RESULT' | ForEach-Object {Write-Output $_.Line}
