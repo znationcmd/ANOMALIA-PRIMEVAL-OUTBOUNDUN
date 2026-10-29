@@ -16,38 +16,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
-      - name: Locate existing craft and attachment assets without changing projects
+      - name: Read newly downloaded and added assets
         shell: node {0}
         run: |
           const fs=require('fs'),path=require('path');
-          const output=path.join('C:/ANOMALIA-Validation/Reports','craft-gear-'+process.env.GITHUB_RUN_ID);
-          fs.mkdirSync(output,{recursive:true});
-          fs.appendFileSync(process.env.GITHUB_ENV,'GEAR_AUDIT_OUTPUT='+output+'\n');
-          const roots=['D:/ANOMALIA/FabImports/DerelictCorridorMegascans'];
-          const report={scope:'Read-only building source inventory, not gameplay verification',roots:[],projects:[],candidates:[],counts:{},errors:[]};
-          function walk(dir,depth=0,locate=false){
-            if(depth>16)return;
+          const cutoff=Date.parse('2026-10-29T06:00:00Z');
+          const report={scope:'Read-only asset files; not gameplay verification',roots:[],groups:{},recent:[],errors:[]};
+          function walk(dir,root,depth=0){
+            if(depth>22)return;
             let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
-            for(const e of entries){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);
+            for(const e of entries){
+              if(e.isSymbolicLink())continue;
+              const p=path.join(dir,e.name);
               if(e.isDirectory()){
                 if(/^(Intermediate|DerivedDataCache|Binaries|Saved|node_modules|\.git)$/i.test(e.name))continue;
-                if(locate&&/city.?sample/i.test(e.name)&&!roots.includes(p))roots.push(p);
-                if(!locate||depth<4)walk(p,depth+1,locate);
-              }else if(/\.uproject$/i.test(e.name))report.projects.push(p);
-              else if(!locate&&/\.(uasset|umap)$/i.test(e.name)){
-                const ext=path.extname(e.name);report.counts[ext]=(report.counts[ext]||0)+1;
-                if(/door|interior|window|stair|floor|room|corridor/i.test(e.name))report.candidates.push({path:p,bytes:fs.statSync(p).size});
+                walk(p,root,depth+1);
+              }else if(/\.(uasset|umap|fbx|glb|gltf|blend|zip|obj)$/i.test(e.name)){
+                const s=fs.statSync(p),rel=path.relative(root,p),group=rel.split(path.sep)[0];
+                const key=root+' / '+group;report.groups[key]=(report.groups[key]||0)+1;
+                if(s.mtimeMs>=cutoff||s.birthtimeMs>=cutoff)report.recent.push({path:p,bytes:s.size,modified:s.mtime.toISOString(),created:s.birthtime.toISOString()});
               }
             }
           }
-          for(const base of ['D:/ANOMALIA','D:/Unreal Projects','D:/Epic Games'])if(fs.existsSync(base))walk(base,0,true);
-          for(const root of [...new Set(roots)]){const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root);}
-          fs.writeFileSync(path.join(output,'building-doors-inventory.json'),JSON.stringify(report,null,2));
-          console.log(JSON.stringify({...report,candidates:report.candidates.slice(0,100),candidateCount:report.candidates.length},null,2));
-          if(!report.roots.some(r=>r.exists))throw Error('Expected source folders missing');
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: craft-gear-asset-inventory
-          path: ${{ env.GEAR_AUDIT_OUTPUT }}
-          if-no-files-found: warn
+          for(const root of ['D:/ANOMALIA/unreal/Content','D:/ANOMALIA/FabImports']){
+            const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root,root);
+          }
+          report.recent.sort((a,b)=>b.created.localeCompare(a.created));
+          console.log(JSON.stringify({roots:report.roots,groups:report.groups,recentCount:report.recent.length,errors:report.errors}));
+          console.log('RECENT_FILES '+JSON.stringify(report.recent.slice(0,100)));
+          console.log('ANIMATION_FILES '+JSON.stringify(report.recent.filter(x=>/anim|mixamo|moto|drink|eat|drive|prone|crouch|punch|interaction/i.test(x.path)).slice(0,160)));
