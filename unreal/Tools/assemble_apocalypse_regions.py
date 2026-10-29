@@ -39,7 +39,7 @@ try:
     if not library:raise RuntimeError("Compiled world library missing")
     desc=json.loads(library.get_archipelago_actor_descriptors())
     if desc.get("state")!="COPIED_DESCRIPTOR_VALUES":raise RuntimeError("World descriptor verification failed")
-    blockers=[d for d in desc["actors"] if d.get("boundsValid") and
+    blockers=[d for d in desc["actors"] if d.get("boundsValid") and d.get("nativeClass")=="/Script/Engine.StaticMeshActor" and
         (str(d.get("label","")).startswith("ANOMALIA_Inhabited1_") or
          str(d.get("label","")).startswith("ANOMALIA_Features_")) and
         "SceneryCluster" not in d.get("nativeClass","")]
