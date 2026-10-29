@@ -106,13 +106,13 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Toggle->OnClicked.Broadcast();
             if(auto* Play=Cast<UButton>(PolicyMenu->WidgetTree->FindWidget(TEXT("SessionPlay")))) Play->OnClicked.Broadcast();
             Survivor->SetActorLocation(FVector(70, 0, 100), false, nullptr, ETeleportType::TeleportPhysics);
-            Input(EKeys::E, IE_Pressed);
+            Input(EKeys::F, IE_Pressed);
             Probe->Phase = 1;
             return false;
         }
         if (Probe->Phase == 1)
         {
-            Input(EKeys::E, IE_Released);
+            Input(EKeys::F, IE_Released);
             if (Units == 0) return false;
             TestEqual(TEXT("Actual Interact key adds exactly one world item"), Units, 1);
             FString Error;
@@ -154,7 +154,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         }
         if (Probe->Phase == 4)
         {
-            Input(EKeys::E,IE_Released);
+            Input(EKeys::F,IE_Released);
             if (Units < 2) return false;
             for (const auto& Stack : Survivor->InventoryComponent->Stacks)
                 if (Stack.ItemId.ToString().StartsWith(TEXT("eur_note_"))) Probe->NoteId=Stack.ItemId;
