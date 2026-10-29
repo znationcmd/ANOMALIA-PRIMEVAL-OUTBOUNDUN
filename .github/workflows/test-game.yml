@@ -1,7 +1,7 @@
-name: ANOMALIA PRIMEVAL OUTBOUNDUN — tests et compilation
+name: ANOMALIA’Z PRIGIMALIA — tests et compilation
 on:
   push:
-    branches: [main]
+    branches: [main, rebrand/anomaliaz-prigimalia-20261029]
     paths: ["src/**", "server/**", "public/**", "desktop/**", "tests/**", "index.html", "package.json", "scripts/**", "vite.config.js", ".github/workflows/test-game.yml"]
   workflow_dispatch:
 permissions:
@@ -29,7 +29,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ANOMALIA-Gameplay-Screenshots
+          name: ANOMALIAZ-PRIGIMALIA-Gameplay-Screenshots
           path: test-results/
           if-no-files-found: ignore
       - name: Verify entrypoint and 3D chunks
@@ -41,14 +41,14 @@ jobs:
       - name: Create self-contained playable HTML for Windows Mac and Linux
         run: |
           npm run package:offline
-          test -s release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
-          grep -q 'ANOMALIA' release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
+          test -s release/ANOMALIAZ_PRIGIMALIA.html
+          grep -q 'ANOMALIA' release/ANOMALIAZ_PRIGIMALIA.html
           test -s release/LIRE_AVANT_DE_JOUER.txt
       - name: Download playable pre-alpha ZIP from GitHub Actions
         uses: actions/upload-artifact@v4
         with:
-          name: ANOMALIA-PRIMEVAL-OUTBOUNDUN-Jouer-PC
+          name: ANOMALIAZ-PRIGIMALIA-Jouer-PC
           path: |
-            release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html
+            release/ANOMALIAZ_PRIGIMALIA.html
             release/LIRE_AVANT_DE_JOUER.txt
           retention-days: 90
