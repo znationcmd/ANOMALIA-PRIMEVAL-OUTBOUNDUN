@@ -1,5 +1,5 @@
 /**
- * Package ANOMALIA PRIMEVAL OUTBOUNDUN as one playable offline browser file.
+ * Package ANOMALIA’Z PRIGIMALIA as one playable offline browser file.
  * The compiled JS and CSS are embedded, so users can double-click the file.
  * No internet service, developer tooling or external assets are required at runtime.
  */
@@ -18,14 +18,14 @@ html=html.replace(jsTag[0],()=>'<script type="module">'+js.replace(/<\/script/gi
 html=html.replace(cssTag[0],()=>'<style>'+css.replace(/<\/style/gi,'<\\/style')+'</style>');
 html=html.replace(/<link\b[^>]*rel="modulepreload"[^>]*>/gi,"");
 if(/<script\b[^>]*src=|<link\b[^>]*rel="stylesheet"/i.test(html))throw new Error("Package still includes external JS or stylesheet references");
-const output=join(root,"release","ANOMALIA_PRIMEVAL_OUTBOUNDUN.html");
+const output=join(root,"release","ANOMALIAZ_PRIGIMALIA.html");
 await mkdir(dirname(output),{recursive:true});
 await writeFile(output,html);
-const instructions=`ANOMALIA PRIMEVAL OUTBOUNDUN - VERSION PRE-ALPHA WINDOWS / MAC / LINUX
+const instructions=`ANOMALIA’Z PRIGIMALIA - VERSION PRE-ALPHA WINDOWS / MAC / LINUX
 
 POUR JOUER :
 1. Décompresse le fichier ZIP.
-2. Double-clique sur ANOMALIA_PRIMEVAL_OUTBOUNDUN.html.
+2. Double-clique sur ANOMALIAZ_PRIGIMALIA.html.
 3. Ouvre avec Chrome, Edge ou Firefox récent compatible WebGL2.
 4. Choisis Jouer en solo, ou Multijoueur pour rejoindre un serveur.
 5. ZQSD/WASD : déplacements; souris : regarder; clic gauche : tirer; I : inventaire; M : carte.
@@ -44,4 +44,4 @@ Menu traduit en huit langues, interfaces historiques en français.
 Les animations, les physiques et les performances varient selon le navigateur et l'appareil.
 `;
 await writeFile(join(root,"release","LIRE_AVANT_DE_JOUER.txt"),instructions);
-console.log(JSON.stringify({standalone:"release/ANOMALIA_PRIMEVAL_OUTBOUNDUN.html",bytes:Buffer.byteLength(html),embeddedJS:Buffer.byteLength(js),embeddedCSS:Buffer.byteLength(css)}));
+console.log(JSON.stringify({standalone:"release/ANOMALIAZ_PRIGIMALIA.html",bytes:Buffer.byteLength(html),embeddedJS:Buffer.byteLength(js),embeddedCSS:Buffer.byteLength(css)}));
