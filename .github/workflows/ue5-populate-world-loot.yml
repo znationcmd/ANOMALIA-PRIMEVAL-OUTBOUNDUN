@@ -1,4 +1,4 @@
-name: ANOMALIA populate recovered world loot and verify pickup
+name: ANOMALIA world loot after corrected native build
 on:
   push:
     branches: ['ue5/character-audit-20261027']
