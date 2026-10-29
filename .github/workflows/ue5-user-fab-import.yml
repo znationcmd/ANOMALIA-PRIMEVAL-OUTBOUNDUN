@@ -1,4 +1,4 @@
-name: ANOMALIA import user selected local Fab models in validation copy
+name: ANOMALIA’Z PRIGIMALIA — import user selected local Fab models in validation copy
 on:
   push:
     branches: ['ue5/character-audit-20261027']

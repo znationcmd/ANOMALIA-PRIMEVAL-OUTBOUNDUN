@@ -1,4 +1,4 @@
-name: ANOMALIA expose verified Survival test launcher
+name: ANOMALIA’Z PRIGIMALIA — expose verified Survival test launcher
 on:
   push:
     branches: ['ue5/character-audit-20261027']
