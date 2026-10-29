@@ -50,6 +50,26 @@ jobs:
           $test=@($result.tests | Where-Object {$_.fullTestPath -eq 'Anomalia.Loot.PIE' -and $_.state -eq 'Success'})
           if($test.Count -ne 1){throw 'Isolated actual pickup and inventory playtest did not pass'}
           Write-Output 'NATIVE_LOOT_PICKUP_INVENTORY_PIE_PASSED'
+      - name: Provide an unambiguous shortcut to the recovered development world
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $shell=New-Object -ComObject WScript.Shell
+          $path=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Carte D.lnk'
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(Test-Path $path){
+            $old=$shell.CreateShortcut($path)
+            if($old.TargetPath -ne $editor -or !$old.Arguments.Contains($project)){throw 'Unrelated shortcut preserved'}
+          }
+          $shortcut=$shell.CreateShortcut($path)
+          $shortcut.TargetPath=$editor
+          $shortcut.Arguments=('"'+$project+'" /Game/Maps/ANOMALIA_Inhabited_v2 -d3d11 -sm5')
+          $shortcut.WorkingDirectory='D:\ANOMALIA\unreal'
+          $shortcut.Description='ANOMALIA — carte de développement réunie avec les assets Fab sur D:'
+          $shortcut.IconLocation=$editor+',0'
+          $shortcut.Save()
+          Write-Output ("MAP_SHORTCUT_CREATED="+$path)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
