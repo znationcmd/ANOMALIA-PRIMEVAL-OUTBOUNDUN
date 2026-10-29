@@ -21,6 +21,16 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
+          # User confirmed closing Unreal; remove only the observed windowless leftover.
+          $leftover=Get-CimInstance Win32_Process -Filter "ProcessId=21676"
+          if($leftover -and $leftover.Name -eq 'UnrealEditor.exe' -and $leftover.CommandLine -like '*D:\\ANOMALIA\\unreal\\AnomaliaPrimeval.uproject*'){
+            $p=Get-Process -Id 21676 -ErrorAction SilentlyContinue
+            if($p -and [string]::IsNullOrWhiteSpace($p.MainWindowTitle) -and $p.StartTime -lt (Get-Date).AddMinutes(-5)){
+              Stop-Process -Id 21676 -ErrorAction Stop
+              Wait-Process -Id 21676 -Timeout 20 -ErrorAction SilentlyContinue
+              Write-Host 'Closed identified windowless Unreal leftover after user confirmed shutdown.'
+            }
+          }
           # Close only this project's game windows gracefully; preserve any editor session.
           $games=Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIA*' -and $_.CommandLine -match '(?i)(^|\\s)-game(\\s|$)'}
           foreach($game in $games){
