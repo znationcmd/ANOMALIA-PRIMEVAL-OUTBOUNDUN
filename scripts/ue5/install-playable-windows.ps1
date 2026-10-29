@@ -88,27 +88,27 @@ try {
         [IO.File]::Replace($temp,$active,(Join-Path $history ([Guid]::NewGuid().ToString('N')+'.json')))
     } else { Move-Item -LiteralPath $temp -Destination $active }
     $shell=New-Object -ComObject WScript.Shell
-    $link=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Jouer.lnk'
+    $link=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA’Z PRIGIMALIA - Jouer.lnk'
     if (Test-Path -LiteralPath $link) {
         $old=$shell.CreateShortcut($link)
         if (-not $old.TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated desktop shortcut preserved.' }
     }
     $icon=Join-Path $target 'Anomalia.ico'
     if (-not (Test-Path -LiteralPath $icon)) { throw 'Installed ANOMALIA logo missing.' }
-    $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.IconLocation=$icon+',0';$shortcut.Description='ANOMALIA — version de test Windows autonome';$shortcut.Save()
+    $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.IconLocation=$icon+',0';$shortcut.Description='ANOMALIA’Z PRIGIMALIA — version de test Windows autonome';$shortcut.Save()
     $readback=Get-Content -LiteralPath $active -Raw | ConvertFrom-Json
     $desktop=$shell.CreateShortcut($link)
     if ($readback.commit -ne $Commit -or $readback.executable -ne $exe -or $desktop.TargetPath -ne $exe -or $desktop.WorkingDirectory -ne $target -or $desktop.Arguments -ne '-d3d11 -sm5') { throw 'Active version or desktop shortcut readback failed.' }
     $report.activeVersionAndShortcutVerified=$true
     if ($shell.CreateShortcut($link).IconLocation -ne ($icon+',0')) { throw 'Windows logo shortcut readback failed.' }
     $report.userIconVerified=$true
-    $visualLink=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Validation visuelle.lnk'
+    $visualLink=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA’Z PRIGIMALIA - Validation visuelle.lnk'
     if (Test-Path -LiteralPath $visualLink) {
         if (-not $shell.CreateShortcut($visualLink).TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated visual shortcut preserved.' }
     }
     $visualShortcut=$shell.CreateShortcut($visualLink);$visualShortcut.TargetPath=$exe
     $visualShortcut.Arguments='/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=visual-review-local -d3d11 -sm5'
-    $visualShortcut.WorkingDirectory=$target;$visualShortcut.Description='ANOMALIA — zone de validation des nouvelles ressources 3D';$visualShortcut.Save()
+    $visualShortcut.WorkingDirectory=$target;$visualShortcut.Description='ANOMALIA’Z PRIGIMALIA — zone de validation des nouvelles ressources 3D';$visualShortcut.Save()
     if ($shell.CreateShortcut($visualLink).TargetPath -ne $exe) { throw 'Visual shortcut readback failed.' }
     $report.visualShortcut=$visualLink
     $report.trigger=$env:GITHUB_EVENT_NAME

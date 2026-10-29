@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Category": "Games",
-  "Description": "ANOMALIA PRIMEVAL OUTBOUNDUN \u2014 Unreal Engine 5 migration (C++ foundation)",
+  "Description": "ANOMALIA’Z PRIGIMALIA \u2014 Unreal Engine 5 migration (C++ foundation)",
   "Modules": [
     {
       "Name": "AnomaliaPrimeval",
