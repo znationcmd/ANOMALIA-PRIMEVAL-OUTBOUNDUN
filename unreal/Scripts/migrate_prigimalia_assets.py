@@ -112,8 +112,13 @@ def migrate():
             if not api.does_asset_exist(new):
                 raise RuntimeError("Renamed map could not be resolved: " + new)
             report["mapsRenamed"].append({"old": old, "new": new})
+        # Unreal may intentionally leave redirector assets under the old path.
+        # They preserve legacy Blueprint references and are NOT lost source assets.
+        # Verify every new target instead of incorrectly rejecting redirectors.
+        expected_new = [name.replace(OLD_DIR + "/", NEW_DIR + "/", 1) for name in previous]
+        report["remainingLegacyPathsIncludingRedirectors"] = len(old_asset_inventory())
         report["verified"] = (
-            not old_asset_inventory()
+            all(api.does_asset_exist(name) for name in expected_new)
             and all(api.does_asset_exist(m["new"]) for m in report["mapsRenamed"])
         )
         if not report["verified"]:
