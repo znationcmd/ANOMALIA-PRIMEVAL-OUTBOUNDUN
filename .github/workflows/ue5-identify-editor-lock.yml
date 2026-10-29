@@ -1,0 +1,22 @@
+name: ANOMALIA identify remaining editor lock
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-identify-editor-lock.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Identify remaining Unreal processes without terminating them
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | ForEach-Object {
+            $p=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
+            [PSCustomObject]@{PID=$_.ProcessId;Parent=$_.ParentProcessId;Created=$_.CreationDate;Window=$p.MainWindowTitle;Responsive=$p.Responding;CommandLine=$_.CommandLine} | Format-List
+          }
