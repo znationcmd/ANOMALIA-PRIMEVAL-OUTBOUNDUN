@@ -4,8 +4,8 @@ from pathlib import Path
 import unreal
 
 root = Path(unreal.Paths.project_dir()).resolve()
-source = root / "SourceAssets/Branding/workshop-logo.jpg"
-destination = "/Game/Anomalia/Branding/T_WorkshopLogo"
+source = root / "SourceAssets/Branding/prigimalia-workshop-logo.jpg"
+destination = "/Game/AnomaliaZPrigimalia/Branding/T_WorkshopLogo"
 if not source.is_file():
     raise RuntimeError("Workshop logo is missing: " + str(source))
 source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
@@ -15,7 +15,7 @@ if texture and unreal.EditorAssetLibrary.get_metadata_tag(texture, "AnomaliaZPri
 if not texture:
     task = unreal.AssetImportTask()
     task.filename = str(source)
-    task.destination_path = "/Game/Anomalia/Branding"
+    task.destination_path = "/Game/AnomaliaZPrigimalia/Branding"
     task.destination_name = "T_WorkshopLogo"
     task.automated = True
     task.save = True
