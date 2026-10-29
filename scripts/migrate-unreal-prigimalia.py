@@ -39,6 +39,9 @@ def changes_in_source(src: str) -> str:
     return src
 
 def change_general(src: str, path: Path) -> str:
+    # DefaultEngine.ini has legacy redirect keys: they must NEVER be rewritten as normal text.
+    if path.resolve() == (ROOT / "unreal/Config/DefaultEngine.ini").resolve():
+        return src
     src = src.replace(OLD_MODULE, NEW_MODULE)
     src = src.replace("ANOMALIA PRIMEVAL OUTBOUNDUN", NEW_TITLE)
     src = src.replace("ANOMALIA_PRIMEVAL_OUTBOUNDUN", "ANOMALIAZ_PRIGIMALIA")
@@ -72,10 +75,7 @@ def collect_reflected_types(root: Path) -> dict[str,list[str]]:
     return {kind:sorted(values) for kind,values in types.items()}
 
 def redirects(types: dict[str,list[str]]) -> str:
-    records = [
-        f'+ActiveGameNameRedirects=(OldGameName="/Script/{OLD_MODULE}",NewGameName="/Script/{NEW_MODULE}")',
-        f'+ActiveGameNameRedirects=(OldGameName="/Script/ANOMALIA",NewGameName="/Script/{NEW_MODULE}")',
-    ]
+    records = []
     mapping={"Class":"ClassRedirects","Struct":"StructRedirects","Enum":"EnumRedirects"}
     for kind,names in types.items():
         for name in names:
@@ -138,13 +138,31 @@ def main():
         legacy=redirects(types)
         if section not in content:
             content+="\n"+section+"\n"
-        # Add class redirects once, never remove existing third-party redirects.
+        # Repair redirects wrongly rewritten by an older migration iteration.
+        # OldName always identifies an actual OLD module/class, never the new one.
+        updated=[]
+        for line in content.splitlines():
+            if line.startswith('+ActiveGameNameRedirects=') and 'OldGameName="/Script/'+NEW_MODULE+'"' in line:
+                continue
+            for kind in ('Class','Struct','Enum'):
+                prefix=f'+{kind}Redirects=(OldName="/Script/{NEW_MODULE}.{NEW_MODULE}'
+                if line.startswith(prefix):
+                    line=(f'+{kind}Redirects=(OldName="/Script/{OLD_MODULE}.Anomalia'
+                          +line[len(prefix):])
+            updated.append(line)
+        content="\n".join(updated).rstrip()+"\n"
+        # Active game-name redirects belong to [/Script/Engine.Engine].
+        redirect=f'+ActiveGameNameRedirects=(OldGameName="/Script/{OLD_MODULE}",NewGameName="/Script/{NEW_MODULE}")'
+        engine_header='[/Script/Engine.Engine]\n'
+        if redirect not in content:
+            if engine_header not in content:
+                raise RuntimeError("Missing Engine.Engine section")
+            content=content.replace(engine_header,engine_header+redirect+"\n",1)
+        # Append only missing class/struct/enum redirects to CoreRedirects.
         records=legacy.splitlines()
         for record in records:
             if record not in content:
                 content+="\n"+record
-        content=content.replace('NewGameName="/Script/'+OLD_MODULE+'"',
-                                'NewGameName="/Script/'+NEW_MODULE+'"')
         content=content.replace('GlobalDefaultGameMode=/Script/'+NEW_MODULE+'.AnomaliaGameMode',
                                 'GlobalDefaultGameMode=/Script/'+NEW_MODULE+'.'+NEW_MODULE+'GameMode')
         if args.apply:
