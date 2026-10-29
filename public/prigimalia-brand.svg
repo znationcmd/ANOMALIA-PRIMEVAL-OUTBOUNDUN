@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 700" role="img" aria-labelledby="title desc">
+<title id="title">ANOMALIA’Z PRIGIMALIA</title>
+<desc id="desc">Emblème sombre A’Z et titre PRIGIMALIA</desc>
+<defs><radialGradient id="bg"><stop stop-color="#29383c"/><stop offset="1" stop-color="#0b1014"/></radialGradient>
+<linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#f3e2b7"/><stop offset=".5" stop-color="#bca178"/><stop offset="1" stop-color="#756955"/></linearGradient></defs>
+<rect width="700" height="700" fill="url(#bg)" rx="100"/>
+<path d="M350 60 594 195 594 478 350 624 106 478 106 195Z" fill="none" stroke="#87999d" stroke-width="8"/>
+<path d="M350 91 564 210 564 463 350 591 136 463 136 210Z" fill="none" stroke="#435d5f" stroke-width="3"/>
+<text x="350" y="376" text-anchor="middle" fill="url(#metal)" font-size="197" font-weight="900" font-family="Arial,DejaVu Sans,sans-serif">A’Z</text>
+<line x1="208" y1="431" x2="492" y2="431" stroke="#bd9b68" stroke-width="5"/>
+<text x="350" y="490" text-anchor="middle" fill="#e8dfcf" font-size="49" font-weight="700" letter-spacing="4" font-family="Arial,DejaVu Sans,sans-serif">PRIGIMALIA</text>
+</svg>
