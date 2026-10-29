@@ -137,7 +137,7 @@ class UnrealPortTests(unittest.TestCase):
         presets = configparser.ConfigParser(strict=False)
         presets.read(root / "DefaultGame.ini", encoding="utf-8")
         for name in ("PC_High", "PS5_Target", "XboxSeriesX_Target", "XboxSeriesS_Target", "Android_Mobile_Target", "IOS_Mobile_Target", "Performance_Fallback"):
-            section = "Anomalia." + name
+            section = "AnomaliaZPrigimalia." + name
             self.assertIn(section, presets)
             minimum = presets.getint(section, "RenderScaleMin")
             maximum = presets.getint(section, "RenderScaleMax")
@@ -160,7 +160,7 @@ class UnrealPortTests(unittest.TestCase):
         presets = configparser.ConfigParser(strict=False)
         presets.read(root / "DefaultGame.ini")
         for name in ("Android_Mobile_Target", "IOS_Mobile_Target"):
-            self.assertEqual(presets.getint("Anomalia." + name, "FrameRateLimit"), 30)
+            self.assertEqual(presets.getint("AnomaliaZPrigimalia." + name, "FrameRateLimit"), 30)
 
     def test_migration_script_is_non_destructive(self):
         source = (ROOT / "scripts" / "migrate-to-ue5.py").read_text(encoding="utf-8")
