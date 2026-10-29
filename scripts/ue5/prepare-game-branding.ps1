@@ -1,6 +1,6 @@
 $ErrorActionPreference='Stop'
 $project=Join-Path $env:GITHUB_WORKSPACE 'unreal'
-$source=Join-Path $project 'SourceAssets/Branding/menu-backdrop.jpg'
+$source=Join-Path $project 'SourceAssets/Branding/prigimalia-menu-backdrop.jpg'
 $folder=Join-Path $project 'Content/Splash'
 New-Item -ItemType Directory -Path $folder -Force | Out-Null
 Add-Type -AssemblyName System.Drawing
