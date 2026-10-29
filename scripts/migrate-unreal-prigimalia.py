@@ -141,7 +141,13 @@ def main():
         # Repair redirects wrongly rewritten by an older migration iteration.
         # OldName always identifies an actual OLD module/class, never the new one.
         updated=[]
+        in_core_redirects=False
         for line in content.splitlines():
+            if line.startswith('[') and line.endswith(']'):
+                in_core_redirects=line.strip()=='[CoreRedirects]'
+            # GameNameRedirects belong under Engine.Engine, not CoreRedirects.
+            if in_core_redirects and line.startswith('+ActiveGameNameRedirects='):
+                continue
             if line.startswith('+ActiveGameNameRedirects=') and 'OldGameName="/Script/'+NEW_MODULE+'"' in line:
                 continue
             for kind in ('Class','Struct','Enum'):
@@ -150,7 +156,15 @@ def main():
                     line=(f'+{kind}Redirects=(OldName="/Script/{OLD_MODULE}.Anomalia'
                           +line[len(prefix):])
             updated.append(line)
-        content="\n".join(updated).rstrip()+"\n"
+        deduped=[]
+        seen_redirects=set()
+        for line in updated:
+            if line.startswith(('+ClassRedirects=','+StructRedirects=','+EnumRedirects=','+ActiveGameNameRedirects=')):
+                if line in seen_redirects:
+                    continue
+                seen_redirects.add(line)
+            deduped.append(line)
+        content="\n".join(deduped).rstrip()+"\n"
         # Active game-name redirects belong to [/Script/Engine.Engine].
         redirect=f'+ActiveGameNameRedirects=(OldGameName="/Script/{OLD_MODULE}",NewGameName="/Script/{NEW_MODULE}")'
         engine_header='[/Script/Engine.Engine]\n'
