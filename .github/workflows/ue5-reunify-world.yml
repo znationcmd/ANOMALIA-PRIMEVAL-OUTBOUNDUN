@@ -1,4 +1,4 @@
-name: ANOMALIA recover world, compile fixes and assemble regions
+name: ANOMALIA assemble regions with building-only clearance
 on:
   push:
     branches: ['ue5/character-audit-20261027']
