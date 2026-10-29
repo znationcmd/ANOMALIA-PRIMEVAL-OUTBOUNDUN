@@ -94,7 +94,7 @@ try {
         if (-not $old.TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated desktop shortcut preserved.' }
     }
     $icon=Join-Path $target 'Anomalia.ico'
-    if (-not (Test-Path -LiteralPath $icon)) { throw 'Installed ANOMALIA logo missing.' }
+    if (-not (Test-Path -LiteralPath $icon)) { throw 'Installed ANOMALIA’Z PRIGIMALIA logo missing.' }
     $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$exe;$shortcut.Arguments='-d3d11 -sm5';$shortcut.WorkingDirectory=$target;$shortcut.IconLocation=$icon+',0';$shortcut.Description='ANOMALIA’Z PRIGIMALIA — version de test Windows autonome';$shortcut.Save()
     $readback=Get-Content -LiteralPath $active -Raw | ConvertFrom-Json
     $desktop=$shell.CreateShortcut($link)

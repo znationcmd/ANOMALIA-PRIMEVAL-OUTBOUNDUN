@@ -1,10 +1,10 @@
-"""Create Windows executable and installer icon from CMD's uploaded ANOMALIA emblem."""
+"""Create Windows executable and installer icon from CMD's legacy source emblem for ANOMALIA’Z PRIGIMALIA."""
 from pathlib import Path
 from PIL import Image, ImageOps
 source=Path("build/anomalia-logo-small.jpg")
 target=Path("build/icon.ico")
 if not source.is_file():
-    raise SystemExit("ANOMALIA logo missing: "+str(source))
+    raise SystemExit("ANOMALIA’Z PRIGIMALIA logo source missing: "+str(source))
 with Image.open(source) as original:
     image=ImageOps.fit(original.convert("RGBA"),(256,256),method=Image.Resampling.LANCZOS)
     target.parent.mkdir(parents=True,exist_ok=True)
