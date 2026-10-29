@@ -46,18 +46,21 @@ jobs:
                   with zipfile.ZipFile(p) as z:
                       infos=z.infolist();size=sum(i.file_size for i in infos)
                       if shutil.disk_usage(out).free-size<20*1024**3:raise RuntimeError('D reserve below 20 GiB; archive preserved: '+p.name)
-                      seen=set()
+                      seen={}; unique=[]
                       for i in infos:
                           name=i.filename.replace('\\','/')
                           rel=pathlib.PurePosixPath(name)
                           if rel.is_absolute() or '..' in rel.parts or ':' in name or (i.external_attr>>16)&0o170000==0o120000:raise RuntimeError('Unsafe archive entry: '+p.name)
                           key=name.casefold().rstrip('/')
-                          if key in seen:raise RuntimeError('Duplicate archive path: '+p.name)
-                          seen.add(key)
+                          if key in seen:
+                              old=seen[key]
+                              if old.is_dir()!=i.is_dir() or old.CRC!=i.CRC or old.file_size!=i.file_size:raise RuntimeError('Conflicting archive path preserved: '+p.name)
+                              continue
+                          seen[key]=i;unique.append(i)
                       stage=out/(target.name+'.partial-'+os.environ['GITHUB_RUN_ID'])
                       if stage.exists():raise RuntimeError('Partial extraction retained: '+str(stage))
                       stage.mkdir()
-                      for i in infos:
+                      for i in unique:
                           dest=stage.joinpath(*pathlib.PurePosixPath(i.filename.replace('\\','/')).parts)
                           if i.is_dir():dest.mkdir(parents=True,exist_ok=True);continue
                           dest.parent.mkdir(parents=True,exist_ok=True)
