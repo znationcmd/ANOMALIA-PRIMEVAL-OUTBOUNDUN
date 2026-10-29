@@ -1,0 +1,91 @@
+name: ANOMALIA repair missing runtime player start
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-repair-map-start.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Back up saved map and make existing spawn always loaded
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/spawn-fix-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          @'
+          import pathlib,shutil,os
+          root=pathlib.Path('D:/ANOMALIA/unreal/Content')
+          out=pathlib.Path('D:/ANOMALIA/StorageRecovery/spawn-fix-'+os.environ['GITHUB_RUN_ID'])
+          for rel in ('Maps/ANOMALIA_Inhabited_v2.umap','__ExternalActors__/Maps/ANOMALIA_Inhabited_v2'):
+              src=root/rel;dst=out/'backup'/rel
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              if src.is_dir():shutil.copytree(src,dst)
+              else:shutil.copy2(src,dst)
+          '@ | Set-Content "$out/backup.py" -Encoding UTF8
+          & $python "$out/backup.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          @'
+          import unreal,json,pathlib
+          level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          lib=unreal.AnomaliaWorldImportLibrary
+          if not level.load_level('/Game/Maps/ANOMALIA_Inhabited_v2'):raise RuntimeError('Map missing')
+          desc=json.loads(lib.get_archipelago_actor_descriptors())
+          starts=[d for d in desc['actors'] if d.get('nativeClass')=='/Script/Engine.PlayerStart']
+          if not starts:raise RuntimeError('No saved PlayerStart descriptor; original map retained')
+          if not lib.set_archipelago_actors_loaded([d['guid'] for d in starts],True):raise RuntimeError('Cannot load saved starts')
+          fixed=[]
+          for a in actors.get_all_level_actors():
+              if isinstance(a,unreal.PlayerStart):
+                  a.modify()
+                  a.set_editor_property('is_spatially_loaded',False)
+                  p=a.get_actor_location()
+                  fixed.append({'label':a.get_actor_label(),'position':[p.x,p.y,p.z],'spatial':a.get_editor_property('is_spatially_loaded')})
+          if not fixed or any(x['spatial'] for x in fixed):raise RuntimeError('PlayerStart update failed')
+          if not level.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('Save failed')
+          unreal.log('REPAIRED_PLAYER_STARTS '+json.dumps(fixed))
+          '@ | Set-Content "$out/repair.py" -Encoding UTF8
+          $exe=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI -run=pythonscript "-script=$out/repair.py" "-abslog=$out/repair.log"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $env:ANOMALIA_EDITOR_EXE=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor.exe'
+          @'
+          import subprocess,pathlib,time,os
+          out=pathlib.Path('D:/ANOMALIA/StorageRecovery/spawn-fix-'+os.environ['GITHUB_RUN_ID'])
+          log=out/'game.log'
+          p=subprocess.Popen([os.environ['ANOMALIA_EDITOR_EXE'],'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject','/Game/Maps/ANOMALIA_Inhabited_v2?AnomaliaServerId=spawn-check-'+os.environ['GITHUB_RUN_ID'],'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720','-unattended','-nosound','-abslog='+str(log)])
+          try:
+              deadline=time.monotonic()+180;started=None
+              while time.monotonic()<deadline:
+                  t=log.read_text(errors='replace') if log.exists() else ''
+                  if 'NO PLAYERSTART' in t or 'Fatal error:' in t:raise RuntimeError('Runtime spawn or renderer still fails')
+                  if 'Bringing World' in t and 'up for play' in t:
+                      if started is None:started=time.monotonic()
+                      if time.monotonic()-started>30:break
+                  if p.poll() is not None:raise RuntimeError('Game exited')
+                  time.sleep(2)
+              else:raise RuntimeError('Startup timeout')
+              print('GAME_STARTED_WITHOUT_MISSING_PLAYERSTART; visual confirmation still required')
+          finally:
+              if p.poll() is None:
+                  p.terminate()
+                  try:p.wait(timeout=20)
+                  except subprocess.TimeoutExpired:p.kill();p.wait()
+          '@ | Set-Content "$out/check.py" -Encoding UTF8
+          & $python "$out/check.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: spawn-repair-evidence
+          path: |
+            D:/ANOMALIA/StorageRecovery/spawn-fix-${{ github.run_id }}/*.log
+          if-no-files-found: warn
