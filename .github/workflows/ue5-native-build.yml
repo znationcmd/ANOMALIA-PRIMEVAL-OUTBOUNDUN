@@ -47,7 +47,7 @@ jobs:
           New-Item -ItemType Directory -Path $evidence -Force | Out-Null
           $env:ANOMALIA_VEHICLE_IMPORT_REPORT = Join-Path $evidence 'vehicle-import.json'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/import_vehicle_models.py'
           $logPath = Join-Path $evidence 'vehicle-import.log'
           & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
@@ -69,7 +69,7 @@ jobs:
             $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
             $env:ANOMALIA_WORLD_REPORT = Join-Path $evidence 'archipelago-world.json'
             $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-            $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+            $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
             $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_archipelago_world.py'
             $logPath = Join-Path $evidence 'archipelago-world.log'
             & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
@@ -85,7 +85,7 @@ jobs:
           $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $env:ANOMALIA_BRIDGE_REPORT = Join-Path $evidence 'detroit-bridge.json'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_detroit_bridge.py'
           $logPath = Join-Path $evidence 'detroit-bridge.log'
           & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
@@ -99,7 +99,7 @@ jobs:
           $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $env:ANOMALIA_ROADS_REPORT = Join-Path $evidence 'detroit-roads.json'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/integrate_bridge_roads.py'
           $logPath = Join-Path $evidence 'detroit-roads.log'
           & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
@@ -208,7 +208,7 @@ jobs:
           $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $env:ANOMALIA_METRO_RAIL_REPORT = Join-Path $evidence 'metro-rail-review.json'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_metro_rail_review.py'
           & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$evidence/metro-rail-review.log"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
@@ -230,7 +230,7 @@ jobs:
           $evidence = Join-Path $env:GITHUB_WORKSPACE "unreal/Saved/BuildValidation/run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
           $env:ANOMALIA_SETTLEMENT_REPORT = Join-Path $evidence 'urban-review.json'
           $editor = Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaPrimeval.uproject'
+          $project = Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
           $scriptPath = Join-Path $env:GITHUB_WORKSPACE 'unreal/Scripts/create_settlement_review.py'
           $logPath = Join-Path $evidence 'urban-review.log'
           & $editor $project "-ExecutePythonScript=$scriptPath" -unattended -nopause -nosound -NullRHI "-abslog=$logPath"
