@@ -36,7 +36,7 @@ try:
   loaded[item['id']]=mesh
   report['models'].append(dict(id=item['id'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(mats),triangleCollisionConfigured=True,nativePresentationBound=False,state='IMPORTED_NOT_PLAYTESTED'))
  actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
- vehicle=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+ vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
  for item in report['models']:
   if item['id'] not in ['quad','snowmobile','jetski','zodiac']:continue
   probe=actors.spawn_actor_from_class(vehicle,unreal.Vector(0,0,500),transient=True)

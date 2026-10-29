@@ -47,11 +47,11 @@ else:
     light=spawn(unreal.DirectionalLight,'PlayableSun',(0,0,3000));light.set_actor_rotation(unreal.Rotator(pitch=-40,yaw=-35),False)
     spawn(unreal.SkyAtmosphere,'PlayableAtmosphere',(0,0,0))
     sky=spawn(unreal.SkyLight,'PlayableSky',(0,0,500));sky.light_component.set_editor_property('intensity',1.2)
-    cls=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
     for i,name in enumerate(('car','suv','transport_truck')):
         a=spawn(cls,'PlayableVehicle_'+name,(1800+i*1500,-1500,160))
         if not a.configure_vehicle(unreal.Name(name)): raise RuntimeError('Cannot configure '+name)
-    bed=spawn(unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaHomesteadStation'),'PlayableBed',(250,1000,50))
+    bed=spawn(unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaHomesteadStation'),'PlayableBed',(250,1000,50))
     bed.display_mesh.set_static_mesh(cube);bed.display_mesh.set_relative_scale3d(unreal.Vector(1,2,.4))
     if not level.save_current_level(): raise RuntimeError('Cannot save playable map')
 # Upgrade only our isolated map. Never recreate it: keep gameplay actors, IDs and saves.

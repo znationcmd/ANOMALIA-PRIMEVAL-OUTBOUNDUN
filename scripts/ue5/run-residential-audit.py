@@ -9,7 +9,7 @@ def main():
     try:
         if evidence.exists():raise RuntimeError('Fresh evidence directory required')
         env=dict(os.environ,ANOMALIA_RESIDENTIAL_AUDIT_REPORT=str(evidence))
-        command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+str(root/'unreal/Scripts/audit_residential_native.py'),'-abslog='+str(out/'residential-audit.engine.log')]
+        command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaZPrigimalia.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+str(root/'unreal/Scripts/audit_residential_native.py'),'-abslog='+str(out/'residential-audit.engine.log')]
         with (out/'process.log').open('w',encoding='utf-8') as stream:
             run=subprocess.run(command,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=1800,check=False)
         native=json.loads(evidence.read_text()) if evidence.is_file() else {}

@@ -29,7 +29,7 @@ try:
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     package='/Game/Maps/ANOMALIA_UrbanReview_v1'
     def deploy_services():
-        vehicle_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
         if not vehicle_class:raise RuntimeError('Native possessable vehicle class unavailable')
         existing={a.get_actor_label():a for a in actors.get_all_level_actors()}
         placed=[]

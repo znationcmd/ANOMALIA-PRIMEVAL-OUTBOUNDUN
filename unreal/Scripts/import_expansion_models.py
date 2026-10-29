@@ -57,7 +57,7 @@ try:
         loaded[item['id']]=mesh
         report['models'].append(dict(id=item['id'],kind=item['kind'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(materials),nativePresentationBound=False,importSourceAdaptation=import_proof))
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    vehicle=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+    vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
     for item in report['models']:
         if item['kind']!='vehicle':continue
         probe=actors.spawn_actor_from_class(vehicle,unreal.Vector(0,0,500),transient=True)

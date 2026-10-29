@@ -38,10 +38,10 @@ try {
         . (Join-Path $PSScriptRoot 'differential-version-store.ps1')
         $diff=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $proof.archive -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Saved-validation','Intermediate','DerivedDataCache')
         $report.differentialInstall=$diff
-        New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaPrimeval/Saved') -Target $testSaved | Out-Null
+        New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaZPrigimalia/Saved') -Target $testSaved | Out-Null
         Move-Item -LiteralPath $stage -Destination $target
     }
-    $exe=Join-Path $target 'AnomaliaPrimeval.exe'
+    $exe=Join-Path $target 'AnomaliaZPrigimalia.exe'
     if (-not (Test-Path -LiteralPath $exe)) { throw 'Installed packaged executable missing.' }
     if ((Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $proof.executable -Algorithm SHA256).Hash) { throw 'Installed executable hash mismatch.' }
     $probe=Join-Path $ValidationDir ('installed-smoke-'+[Guid]::NewGuid().ToString('N')+'.json')
@@ -67,11 +67,11 @@ try {
     foreach($image in $visualNative.screenshots) { if (-not (Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 10000) { throw 'Installed imported-art screenshot missing.' } }
     $report.installedVisualReview=$visualNative
     $observed=([IO.Path]::GetFullPath($native.savedDir)).TrimEnd('\','/')
-    $expected=([IO.Path]::GetFullPath((Join-Path $target 'AnomaliaPrimeval/Saved'))).TrimEnd('\','/')
+    $expected=([IO.Path]::GetFullPath((Join-Path $target 'AnomaliaZPrigimalia/Saved'))).TrimEnd('\','/')
     if ($observed -ne $expected -and $observed -ne ([IO.Path]::GetFullPath($saved)).TrimEnd('\','/')) { throw "Unexpected packaged save location: $observed" }
     foreach($f in $hashes.Keys) { if (-not (Test-Path -LiteralPath $f) -or (Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash -ne $hashes[$f]) { throw ('Existing user data changed during installation: '+$f) } }
     # Keep smoke-test output separate from all real saves and settings. Preserve the test link too.
-    $savedLink=Join-Path $target 'AnomaliaPrimeval/Saved'
+    $savedLink=Join-Path $target 'AnomaliaZPrigimalia/Saved'
     $testLink=Get-Item -LiteralPath $savedLink
     if ($testLink.LinkType -ne 'Junction' -or @($testLink.Target)[0] -ne $testSaved) { throw 'Unexpected validation save junction preserved.' }
     Rename-Item -LiteralPath $savedLink -NewName 'Saved-validation'

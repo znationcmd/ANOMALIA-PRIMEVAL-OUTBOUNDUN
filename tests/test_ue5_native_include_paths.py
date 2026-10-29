@@ -7,7 +7,7 @@ from pathlib import Path
 import re
 import unittest
 
-ROOT = Path(__file__).resolve().parents[1] / "unreal" / "Source" / "AnomaliaPrimeval"
+ROOT = Path(__file__).resolve().parents[1] / "unreal" / "Source" / "AnomaliaZPrigimalia"
 NESTED = ROOT / "Tests" / "AnomaliaPersistenceTests.cpp"
 
 class TestNativeIncludePaths(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestCoreOnlineLinkDependency(unittest.TestCase):
     def test_persistent_player_identity_links_coreonline(self):
         # Unreal documentation locates FUniqueNetIdWrapper::ToString in CoreOnline.
         # Source-level guard only; Windows UE5.8 linker build must be verified separately.
-        build = (ROOT / "AnomaliaPrimeval.Build.cs").read_text(encoding="utf-8")
+        build = (ROOT / "AnomaliaZPrigimalia.Build.cs").read_text(encoding="utf-8")
         gamemode = (ROOT / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
         self.assertIn('PrivateDependencyModuleNames.Add("CoreOnline");', build)
         self.assertIn("AAnomaliaGameMode::GetPersistentPlayerId", gamemode)

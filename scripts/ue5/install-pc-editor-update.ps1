@@ -50,7 +50,7 @@ try {
             if($candidateBase.StartsWith($versionsFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $candidateBase -PathType Container)){$baseVersion=$candidateBase}
         }
     }
-    $critical = @('AnomaliaPrimeval.uproject','Binaries/Win64/UnrealEditor-AnomaliaPrimeval.dll',('Content/'+$MapPackage.Substring(6)+'.umap'),'Config/DefaultEngine.ini')
+    $critical = @('AnomaliaZPrigimalia.uproject','Binaries/Win64/UnrealEditor-AnomaliaZPrigimalia.dll',('Content/'+$MapPackage.Substring(6)+'.umap'),'Config/DefaultEngine.ini')
     if (-not (Test-Path -LiteralPath $target)) {
         $stage = Join-Path $versions ('.staging-' + [Guid]::NewGuid().ToString('N'))
         . (Join-Path $SourceRoot 'scripts/ue5/differential-version-store.ps1')
@@ -111,7 +111,7 @@ try {
     $env:ANOMALIA_EXPECTED_SAVED=Join-Path $base 'userdata/Saved'
     $env:ANOMALIA_PC_UPDATE_REPORT=Join-Path $ValidationDir 'pc-editor-open-probe.json'
     $enginePython=Join-Path $EngineRoot 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
-    $copiedProject=Join-Path $target 'AnomaliaPrimeval.uproject'
+    $copiedProject=Join-Path $target 'AnomaliaZPrigimalia.uproject'
     & $enginePython (Join-Path $SourceRoot 'scripts/ue5/verify-installed-project.py') --engine-root $EngineRoot --project $copiedProject --saved $env:ANOMALIA_EXPECTED_SAVED --output $ValidationDir --map $MapPackage
     if ($LASTEXITCODE -ne 0) { throw 'Copied project native process verification failed; inspect pc-editor-open-process.json.' }
     $opened=Get-Content -LiteralPath $env:ANOMALIA_PC_UPDATE_REPORT -Raw | ConvertFrom-Json
@@ -119,7 +119,7 @@ try {
     $report.installedProjectHeadlessOpenTested=$true
     $report.editorLaunchTested=$true
     $report.installedProjectDX11SM5Tested=$true
-    $active=@{state='VALIDATED_EDITOR_PROJECT_INSTALLED';commit=$Commit;project=(Join-Path $target 'AnomaliaPrimeval.uproject');engineRoot=$EngineRoot;mapPackage=$MapPackage;userData=(Join-Path $base 'userdata');validation=$proofFile}
+    $active=@{state='VALIDATED_EDITOR_PROJECT_INSTALLED';commit=$Commit;project=(Join-Path $target 'AnomaliaZPrigimalia.uproject');engineRoot=$EngineRoot;mapPackage=$MapPackage;userData=(Join-Path $base 'userdata');validation=$proofFile}
     $temp=Join-Path $base ('active-'+[Guid]::NewGuid().ToString('N')+'.json')
     $active | ConvertTo-Json | Set-Content -LiteralPath $temp -Encoding UTF8
     $current=Join-Path $base 'active.json'

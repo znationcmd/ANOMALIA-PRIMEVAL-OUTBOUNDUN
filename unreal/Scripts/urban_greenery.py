@@ -18,7 +18,7 @@ def boxes_from_descriptors(descriptors):
         # Existing broad foliage cluster bounds and world lighting/water aren't
         # structures. Unknown user actors with valid bounds are reserved.
         if cls in {'/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy',
-                   '/Script/AnomaliaPrimeval.AnomaliaSceneryCluster','/Script/AnomaliaPrimeval.AnomaliaNavigableWater',
+                   '/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster','/Script/AnomaliaZPrigimalia.AnomaliaNavigableWater',
                    '/Script/Engine.DirectionalLight','/Script/Engine.SkyLight','/Script/Engine.SkyAtmosphere',
                    '/Script/Engine.WorldSettings','/Script/Engine.LevelBounds','/Script/Engine.PlayerStart'}:continue
         if not d.get('boundsValid'):

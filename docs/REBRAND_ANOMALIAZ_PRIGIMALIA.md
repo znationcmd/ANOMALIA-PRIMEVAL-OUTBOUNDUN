@@ -13,7 +13,7 @@ outils associés. Les anciens identifiants d'exécution et chemins Unreal doiven
 
 ## Conserver les données existantes
 
-- `/Script/AnomaliaPrimeval` et les noms des classes C++ sont utilisés par des
+- `/Script/AnomaliaZPrigimalia` et les noms des classes C++ sont utilisés par des
   Blueprints et assets ; les modifier nécessite des Core Redirects vérifiés
   sous Unreal Editor 5.8 et une recompilation C++.
 - `/Game/Anomalia/*`, les cartes `ANOMALIA_*.umap`, les textures et fichiers

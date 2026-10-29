@@ -17,7 +17,7 @@ def main():
         scope = 'visual-smoke-residential-' + os.environ.get('GITHUB_RUN_ID', 'manual')
         review = output / 'review.json'
         command = [str(args.engine_root / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),
-                   str(ROOT / 'unreal/AnomaliaPrimeval.uproject'),
+                   str(ROOT / 'unreal/AnomaliaZPrigimalia.uproject'),
                    '/Game/Maps/ANOMALIA_ResidentialPhotogrammetryReview_v1?AnomaliaServerId=' + scope,
                    '-game', '-windowed', '-ResX=1280', '-ResY=720', '-d3d11', '-sm5',
                    '-unattended', '-nosound', '-AnomaliaResidentialReview',

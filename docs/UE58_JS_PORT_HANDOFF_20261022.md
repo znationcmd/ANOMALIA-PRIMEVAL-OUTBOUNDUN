@@ -24,6 +24,6 @@ Branche : `feature/loot-tiers-radiation-config-20261021`. Tous les prototypes Ja
 ## Tests et portée
 
 - `tests/test_ue5_npc_recruitment_source.py` : tests statiques de couverture du code ; ils **ne compilent pas** UE5.
-- `unreal/Source/AnomaliaPrimeval/Tests/AnomaliaModResolverTests.cpp` : scénarios Unreal d'ordre des dépendances, de cycles, de consentement et de chemins ; ils doivent être **compilés et exécutés dans l'Editor**.
+- `unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaModResolverTests.cpp` : scénarios Unreal d'ordre des dépendances, de cycles, de consentement et de chemins ; ils doivent être **compilés et exécutés dans l'Editor**.
 - Aucun résultat de compilation, de test PIE, de paquet Windows ni de déploiement Xbox/PlayStation/mobile n'est revendiqué pour ces ports nouveaux.
 - Ne pas remplacer le C++ déjà existant pour inventaire, économie, blessures, véhicules et autres systèmes sans comparaison fonctionnelle préalable.

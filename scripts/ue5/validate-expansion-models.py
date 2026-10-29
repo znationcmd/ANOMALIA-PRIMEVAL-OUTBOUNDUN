@@ -19,7 +19,7 @@ def main():
         manifest=module.generate(root/'unreal/SourceAssets'/group) if group in ['Expansion1','Metro1'] else json.loads((root/'unreal/SourceAssets'/group/'manifest.json').read_text())
         import_report=out/(prefix+'-import.json');visual=out/(prefix+'-views')
         if import_report.exists() or visual.exists():raise RuntimeError('Existing evidence preserved; use a fresh run directory')
-        editor=args.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe';project=root/'unreal/AnomaliaPrimeval.uproject'
+        editor=args.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe';project=root/'unreal/AnomaliaZPrigimalia.uproject'
         for phase,script,flags in [('import','import_expansion_models.py',['-NullRHI']),('gpu','capture_expansion_models.py',['-d3d11','-sm5','-RenderOffscreen','-ResX=1280','-ResY=720'])]:
             env=dict(os.environ,ANOMALIA_ASSET_GROUP=group,ANOMALIA_EXPANSION_REPORT=str(import_report),ANOMALIA_EXPANSION_VISUAL=str(visual))
             command=[str(editor),str(project),'-unattended','-nopause','-nosound',*flags,f'-ExecutePythonScript={root/"unreal/Scripts"/script}',f'-abslog={out/(prefix+"-"+phase+".engine.log")}']

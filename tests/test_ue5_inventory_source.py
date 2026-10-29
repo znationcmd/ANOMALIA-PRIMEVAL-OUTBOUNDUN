@@ -4,12 +4,12 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.h").read_text(encoding="utf-8")
-SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp").read_text(encoding="utf-8")
-SURVIVOR_HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.h").read_text(encoding="utf-8")
-SURVIVOR_SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
-WIDGET_HEADER = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryWidget.h").read_text(encoding="utf-8")
-WIDGET_SOURCE = (ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaInventoryWidget.cpp").read_text(encoding="utf-8")
+HEADER = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaInventoryComponent.h").read_text(encoding="utf-8")
+SOURCE = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaInventoryComponent.cpp").read_text(encoding="utf-8")
+SURVIVOR_HEADER = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSurvivor.h").read_text(encoding="utf-8")
+SURVIVOR_SOURCE = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
+WIDGET_HEADER = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaInventoryWidget.h").read_text(encoding="utf-8")
+WIDGET_SOURCE = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaInventoryWidget.cpp").read_text(encoding="utf-8")
 INPUT_INI = (ROOT / "unreal/Config/DefaultInput.ini").read_text(encoding="utf-8")
 
 

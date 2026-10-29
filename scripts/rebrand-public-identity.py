@@ -19,9 +19,9 @@ EXTENSIONS = {".md",".txt",".js",".mjs",".cjs",".json",".ini",".yml",".yaml",".x
 REPLACEMENTS = (
     ("ANOMALIA <strong>PRIMEVAL</strong> OUTBOUNDUN", "ANOMALIA’Z <strong>PRIGIMALIA</strong>"),
     ("ANOMALIA <b>PRIMEVAL</b> OUTBOUNDUN", "ANOMALIA’Z <b>PRIGIMALIA</b>"),
-    ("ANOMALIA PRIMEVAL OUTBOUNDUN", "ANOMALIA’Z PRIGIMALIA"),
+    ("ANOMALIA’Z PRIGIMALIA", "ANOMALIA’Z PRIGIMALIA"),
     ("Anomalia Primeval Outboundun", "ANOMALIA’Z PRIGIMALIA"),
-    ("ANOMALIA_PRIMEVAL_OUTBOUNDUN", "ANOMALIAZ_PRIGIMALIA"),
+    ("ANOMALIAZ_PRIGIMALIA", "ANOMALIAZ_PRIGIMALIA"),
 )
 IGNORED = {".git","node_modules","dist","release","Saved","Intermediate","Binaries",
            ".venv","venv","DerivedDataCache","__pycache__"}

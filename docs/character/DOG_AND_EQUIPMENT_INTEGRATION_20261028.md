@@ -5,7 +5,7 @@
 Un premier berger allemand natif est réellement présent, animé et contrôlable par les commandes du menu de proximité dans une carte Survival isolée. La ceinture et les accessoires utilisent l'inventaire natif ; le fusil est visible verticalement à côté du sac. Aucune fusion ni modification des DLL du projet installé.
 
 - Moteur : UE 5.8.3, changelist 58210709.
-- Copie validée : C:\\ANOMALIA-Validation\\c40543166274\\unreal\\AnomaliaPrimeval.uproject.
+- Copie validée : C:\\ANOMALIA-Validation\\c40543166274\\unreal\\AnomaliaZPrigimalia.uproject.
 - Raccourci Bureau créé et relu : ANOMALIA_Test_Dog_40757731172.cmd.
 - Carte sauvegardée : /Game/Anomalia/CompanionTests/GermanShepherd_40757731172/L_Dog_Playtest.
 - Blueprint sauvegardé : /Game/Anomalia/CompanionTests/GermanShepherd_40757731172/BP_Anomalia_GermanShepherd, enfant de AAnomaliaDogCompanion ; comportement C++ réel.

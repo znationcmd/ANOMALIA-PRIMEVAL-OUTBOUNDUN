@@ -11,7 +11,7 @@ SOURCE = Path(__file__).resolve().parents[1] / "unreal" / "Source"
 
 class InstalledEngineTargets(unittest.TestCase):
     def test_editor_and_game_use_compatible_ue58_build_settings(self):
-        for name in ("AnomaliaPrimevalEditor.Target.cs", "AnomaliaPrimeval.Target.cs"):
+        for name in ("AnomaliaZPrigimaliaEditor.Target.cs", "AnomaliaZPrigimalia.Target.cs"):
             with self.subTest(target=name):
                 code = (SOURCE / name).read_text(encoding="utf-8")
                 self.assertIn("DefaultBuildSettings = BuildSettingsVersion.V7;", code)
@@ -19,7 +19,7 @@ class InstalledEngineTargets(unittest.TestCase):
                 self.assertNotIn("DefaultBuildSettings = BuildSettingsVersion.V6;", code)
                 self.assertNotIn("BuildEnvironment = TargetBuildEnvironment.Unique", code)
                 self.assertNotIn("bOverrideBuildEnvironment = true", code)
-                self.assertIn('ExtraModuleNames.Add("AnomaliaPrimeval");', code)
+                self.assertIn('ExtraModuleNames.Add("AnomaliaZPrigimalia");', code)
 
 if __name__ == "__main__":
     unittest.main()

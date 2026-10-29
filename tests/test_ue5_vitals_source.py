@@ -7,7 +7,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "unreal/Source/AnomaliaPrimeval"
+SOURCE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 
 
 def cpp(name):
@@ -49,9 +49,9 @@ class UE5VitalsSourceTests(unittest.TestCase):
         self.assertIn("OutSettings.AmbientTemperatureC", source)
         self.assertIn("Settings.AmbientTemperatureC < -50.f", source)
         self.assertIn("Settings.AmbientTemperatureC > 60.f", source)
-        settings = json.loads((ROOT / "unreal/Config/Anomalia/config.json").read_text())
+        settings = json.loads((ROOT / "unreal/Config/AnomaliaZPrigimalia/config.json").read_text())
         self.assertEqual(settings["survival"]["ambientTemperatureC"], 20)
-        catalog = json.loads((ROOT / "unreal/Config/Anomalia/settings-catalog.json").read_text())
+        catalog = json.loads((ROOT / "unreal/Config/AnomaliaZPrigimalia/settings-catalog.json").read_text())
         match = [x for x in catalog["entries"] if x["id"] == "survival.ambientTemperatureC"]
         self.assertEqual(len(match), 1)
         self.assertEqual(match[0]["status"], "partial")

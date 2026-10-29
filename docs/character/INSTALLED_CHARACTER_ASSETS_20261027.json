@@ -6,7 +6,7 @@
   "disk_evidence_run": 40541978287,
   "installed_gameplay_blueprint": {
     "path": "/Game/BP_AnomaliaSurvivor",
-    "parent": "<Object '/Script/AnomaliaPrimeval.AnomaliaSurvivor' (0x00000206A6C82D00) Class 'Class'>",
+    "parent": "<Object '/Script/AnomaliaZPrigimalia.AnomaliaSurvivor' (0x00000206A6C82D00) Class 'Class'>",
     "parts": [
       {
         "component": "CharacterMesh0",

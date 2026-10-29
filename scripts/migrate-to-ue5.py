@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Non-destructive ANOMALIA config migration from Three.js to Unreal Engine 5.
 
-Copies original config files into Unreal/Config/Anomalia/Legacy.
+Copies original config files into Unreal/Config/AnomaliaZPrigimalia/Legacy.
 Never removes or overwrites files; conflicts are reported for manual merge.
 This migrates configuration DATA, not playable levels or game logic.
 """
@@ -23,7 +23,7 @@ def main() -> None:
         raise SystemExit(f"Source configuration not found: {SOURCE}")
     TARGET.mkdir(parents=True, exist_ok=True)
     result = {"copied": [], "unchanged": [], "conflicts": [], "source": "public/config",
-              "destination": "unreal/Config/Anomalia/Legacy"}
+              "destination": "unreal/Config/AnomaliaZPrigimalia/Legacy"}
     for source in sorted(SOURCE.iterdir()):
         if not source.is_file() or source.name.startswith("."):
             continue

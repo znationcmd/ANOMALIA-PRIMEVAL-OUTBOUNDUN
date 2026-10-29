@@ -5,10 +5,10 @@ Les modules JS `src/world-settings-ui.js` et `src/config-fusion.js` restent inch
 
 ## Nouveaux fichiers Unreal
 
-- `unreal/Source/AnomaliaPrimeval/AnomaliaWorldSettingsLibrary.h/.cpp`
-- `unreal/Source/AnomaliaPrimeval/AnomaliaConfigFusionLibrary.h/.cpp`
-- `unreal/Source/AnomaliaPrimeval/Tests/AnomaliaWorldSettingsTests.cpp`
-- `unreal/Source/AnomaliaPrimeval/Tests/AnomaliaConfigFusionTests.cpp`
+- `unreal/Source/AnomaliaZPrigimalia/AnomaliaWorldSettingsLibrary.h/.cpp`
+- `unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigFusionLibrary.h/.cpp`
+- `unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaWorldSettingsTests.cpp`
+- `unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaConfigFusionTests.cpp`
 
 ### World settings
 

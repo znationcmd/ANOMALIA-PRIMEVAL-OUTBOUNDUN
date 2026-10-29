@@ -7,7 +7,7 @@ import json
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CODE = ROOT / "unreal/Source/AnomaliaPrimeval"
+CODE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 SCRIPTS = ROOT / "scripts/ue5"
 
 
@@ -38,7 +38,7 @@ class WorldHomesteadIntegrationTests(unittest.TestCase):
             self.assertIn(f'AxisName="MoveForward",Scale=1.000000,Key={key}', keys)
         for key in ("A", "Q"):
             self.assertIn(f'AxisName="MoveRight",Scale=-1.000000,Key={key}', keys)
-        project = json.loads((ROOT / "unreal/AnomaliaPrimeval.uproject").read_text(encoding="utf-8"))
+        project = json.loads((ROOT / "unreal/AnomaliaZPrigimalia.uproject").read_text(encoding="utf-8"))
         self.assertTrue(any(p.get("Name") == "PythonScriptPlugin" and p.get("Enabled")
                             for p in project.get("Plugins", [])))
 

@@ -14,7 +14,7 @@ def main():
   out=base/phase;out.mkdir(exist_ok=False)
   env=dict(os.environ,ANOMALIA_VISUAL_OUTPUT=str(out),ANOMALIA_RENDER_PHASE=phase,ANOMALIA_CAPTURE_MAP=package)
   if backup:env['ANOMALIA_RENDER_BACKUP']=backup['archive']
-  command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-d3d11','-sm5','-RenderOffscreen','-unattended','-nopause','-nosound','-ResX=1280','-ResY=720',f'-ExecutePythonScript={root/"unreal/Scripts/capture_real_world.py"}',f'-abslog={out/"editor-render.log"}']
+  command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaZPrigimalia.uproject'),'-d3d11','-sm5','-RenderOffscreen','-unattended','-nopause','-nosound','-ResX=1280','-ResY=720',f'-ExecutePythonScript={root/"unreal/Scripts/capture_real_world.py"}',f'-abslog={out/"editor-render.log"}']
   status=dict(phase=phase,command=command);result['phases'].append(status)
   with (out/'process.log').open('w',encoding='utf-8') as log:
    run=subprocess.run(command,env=env,stdout=log,stderr=subprocess.STDOUT,timeout=900,check=False)

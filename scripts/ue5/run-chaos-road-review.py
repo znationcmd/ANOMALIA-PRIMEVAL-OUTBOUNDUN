@@ -16,7 +16,7 @@ def main():
     env=os.environ.copy();env['ANOMALIA_CHAOS_OUTPUT']=str(out)
     env['ANOMALIA_CHAOS_USE_SEDAN']='1' if args.sedan else '0'
     env['ANOMALIA_CHAOS_USE_E39']='1' if args.e39 else '0'
-    project=ROOT/'unreal/AnomaliaPrimeval.uproject'
+    project=ROOT/'unreal/AnomaliaZPrigimalia.uproject'
     exe=args.engine_root/'Engine/Binaries/Win64/UnrealEditor.exe'
     def run(name,arguments,timeout):
         with (out/(name+'-process.log')).open('w',encoding='utf-8') as log:

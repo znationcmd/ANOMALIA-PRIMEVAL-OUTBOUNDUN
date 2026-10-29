@@ -48,7 +48,7 @@ class ReplacementTests(unittest.TestCase):
   root=PATH.parents[2]
   pop_spec=importlib.util.spec_from_file_location('population',root/'unreal/Scripts/archipelago_population.py')
   pop=importlib.util.module_from_spec(pop_spec);pop_spec.loader.exec_module(pop)
-  include=root/'unreal/Source/AnomaliaPrimeval/World'
+  include=root/'unreal/Source/AnomaliaZPrigimalia/World'
   sites=[tuple(map(float,row)) for row in re.findall(r'\{\s*(-?\d+),\s*(-?\d+)\s*\}',(include/'AnomaliaInhabitedHeight.h').read_text())]
   with tempfile.TemporaryDirectory() as d:
    cpp=Path(d)/'height.cpp';library=Path(d)/'height.so'

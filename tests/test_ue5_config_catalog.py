@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-CATALOG_PATH = ROOT / "unreal/Config/Anomalia/settings-catalog.json"
+CATALOG_PATH = ROOT / "unreal/Config/AnomaliaZPrigimalia/settings-catalog.json"
 
 
 class UE5ConfigCatalogTests(unittest.TestCase):
@@ -13,7 +13,7 @@ class UE5ConfigCatalogTests(unittest.TestCase):
         cls.catalog = json.loads(CATALOG_PATH.read_text(encoding="utf-8"))
         cls.entries = cls.catalog["entries"]
         cls.by_id = {entry["id"]: entry for entry in cls.entries}
-        cls.config = json.loads((ROOT / "unreal/Config/Anomalia/config.json").read_text(encoding="utf-8"))
+        cls.config = json.loads((ROOT / "unreal/Config/AnomaliaZPrigimalia/config.json").read_text(encoding="utf-8"))
 
     def test_schema_and_ids_are_valid_and_unique(self):
         self.assertEqual(self.catalog["schemaVersion"], 1)

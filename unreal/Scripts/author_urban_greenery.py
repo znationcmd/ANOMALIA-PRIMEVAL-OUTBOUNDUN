@@ -83,7 +83,7 @@ def main():
             if plan['counts'].get('island_tree_02',0)<600:raise RuntimeError('Insufficient clear safe planting; no actors authored: '+json.dumps(plan['counts']))
             raw=json.dumps(plan,sort_keys=True,separators=(',',':')).encode();plan_sha=hashlib.sha256(raw).hexdigest()
             out.with_name('proposed-plan.json').write_bytes(raw)
-            cluster_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaSceneryCluster')
+            cluster_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster')
             if not cluster_class:raise RuntimeError('Native HISM scenery class missing')
             loaded={};packages={}
             for group in plan['clusters']:

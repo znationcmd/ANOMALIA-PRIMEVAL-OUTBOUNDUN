@@ -1,0 +1,355 @@
+#include "AnomaliaZPrigimaliaWorldImportLibrary.h"
+#include "AnomaliaZPrigimaliaArchipelagoHeight.h"
+#include "AnomaliaZPrigimaliaInhabitedHeight.h"
+#if WITH_EDITOR
+#include "Editor.h"
+#include "Landscape.h"
+#include "LandscapeInfo.h"
+#include "LandscapeComponent.h"
+#include "LandscapeSubsystem.h"
+#include "Engine/Texture2D.h"
+#include "Materials/MaterialInterface.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+#include "Engine/World.h"
+#include "EngineUtils.h"
+#include "UObject/Package.h"
+#include "WorldPartition/WorldPartitionBlueprintLibrary.h"
+#include "UObject/StructOnScope.h"
+#include "UObject/UnrealType.h"
+#include "UObject/MetaData.h"
+#include "Engine/StaticMeshActor.h"
+#include "Engine/StaticMesh.h"
+#include "Components/StaticMeshComponent.h"
+#endif
+
+#if WITH_EDITOR
+namespace
+{
+ // These Blueprint functions belong to a MinimalAPI engine class and are not
+ // exported by installed UE builds. Invoke the reflected functions with native
+ // owned parameter storage rather than retaining their structs in Python.
+ bool CopyPartitionDescriptors(TArray<FActorDesc>& Output)
+ {
+  UClass* Library=UWorldPartitionBlueprintLibrary::StaticClass();
+  UFunction* Function=Library->FindFunctionByName(TEXT("GetActorDescs"));
+  if(!Function)return false;
+  FArrayProperty* Array=FindFProperty<FArrayProperty>(Function,TEXT("OutActorDescs"));
+  FBoolProperty* Returned=FindFProperty<FBoolProperty>(Function,TEXT("ReturnValue"));
+  if(!Array || !Returned || Array->Inner->GetCPPType()!=TEXT("FActorDesc"))return false;
+  FStructOnScope Parameters(Function);
+  Library->GetDefaultObject()->ProcessEvent(Function,Parameters.GetStructMemory());
+  if(!Returned->GetPropertyValue_InContainer(Parameters.GetStructMemory()))return false;
+  Output=*Array->ContainerPtrToValuePtr<TArray<FActorDesc>>(Parameters.GetStructMemory());
+  return true;
+ }
+ bool StreamPartitionActors(const TArray<FGuid>& Guids,bool bLoaded)
+ {
+  UClass* Library=UWorldPartitionBlueprintLibrary::StaticClass();
+  UFunction* Function=Library->FindFunctionByName(bLoaded ? TEXT("LoadActors") : TEXT("UnloadActors"));
+  if(!Function)return false;
+  FArrayProperty* Array=FindFProperty<FArrayProperty>(Function,bLoaded ? TEXT("InActorsToLoad") : TEXT("InActorsToUnload"));
+  if(!Array || Array->Inner->GetCPPType()!=TEXT("FGuid"))return false;
+  FStructOnScope Parameters(Function);
+  *Array->ContainerPtrToValuePtr<TArray<FGuid>>(Parameters.GetStructMemory())=Guids;
+  Library->GetDefaultObject()->ProcessEvent(Function,Parameters.GetStructMemory());
+  return true;
+ }
+ bool IsOwnedPartitionWorld()
+ {
+  const UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+  if(!World)return false;
+  const FString Name=World->GetPackage()->GetName();
+  return Name==TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") || Name==TEXT("/Game/Maps/ANOMALIA_Inhabited_v2");
+ }
+ bool IsOwnedDescriptor(const FActorDesc& Desc)
+ {
+  const FString NativeClass=Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString();
+  return Desc.Label.ToString().StartsWith(TEXT("ANOMALIA_")) ||
+   NativeClass==TEXT("/Script/Landscape.Landscape") || NativeClass==TEXT("/Script/Landscape.LandscapeStreamingProxy");
+ }
+}
+#endif
+
+FString UAnomaliaZPrigimaliaWorldImportLibrary::GetArchipelagoActorDescriptors()
+{
+#if WITH_EDITOR
+ if(!IsOwnedPartitionWorld())return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ TArray<FActorDesc> Descriptors;
+ if(!CopyPartitionDescriptors(Descriptors))return TEXT("{\"state\":\"DESCRIPTORS_UNAVAILABLE\"}");
+ TArray<TSharedPtr<FJsonValue>> Entries;
+ for(const FActorDesc& Desc:Descriptors){
+  TSharedRef<FJsonObject> Entry=MakeShared<FJsonObject>();
+  Entry->SetStringField(TEXT("label"),Desc.Label.ToString());
+  Entry->SetStringField(TEXT("guid"),Desc.Guid.ToString(EGuidFormats::DigitsWithHyphens));
+  Entry->SetStringField(TEXT("nativeClass"),Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString());
+  Entry->SetBoolField(TEXT("owned"),IsOwnedDescriptor(Desc));
+  // Plain saved bounds support placement clearance without loading borrowed
+  // descriptor structs or every actor in the 48 km world into Python.
+  Entry->SetBoolField(TEXT("boundsValid"),Desc.Bounds.IsValid!=0);
+  if(Desc.Bounds.IsValid){
+   TArray<TSharedPtr<FJsonValue>> Min,Max;
+   for(int32 Axis=0;Axis<3;++Axis){Min.Add(MakeShared<FJsonValueNumber>(Desc.Bounds.Min[Axis]));Max.Add(MakeShared<FJsonValueNumber>(Desc.Bounds.Max[Axis]));}
+   Entry->SetArrayField(TEXT("boundsMinCm"),Min);Entry->SetArrayField(TEXT("boundsMaxCm"),Max);
+  }
+  Entries.Add(MakeShared<FJsonValueObject>(Entry));
+ }
+ TSharedRef<FJsonObject> Result=MakeShared<FJsonObject>();
+ Result->SetStringField(TEXT("state"),TEXT("COPIED_DESCRIPTOR_VALUES"));
+ Result->SetArrayField(TEXT("actors"),Entries);
+ FString Output;
+ const TSharedRef<TJsonWriter<>> Writer=TJsonWriterFactory<>::Create(&Output);
+ FJsonSerializer::Serialize(Result,Writer);
+ return Output;
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
+#endif
+}
+
+bool UAnomaliaZPrigimaliaWorldImportLibrary::SetArchipelagoActorsLoaded(const TArray<FString>& ActorGuids,bool bLoaded)
+{
+#if WITH_EDITOR
+ if(!IsOwnedPartitionWorld() || ActorGuids.Num()>65536)return false;
+ TArray<FActorDesc> Descriptors;
+ if(!CopyPartitionDescriptors(Descriptors))return false;
+ TSet<FGuid> Allowed;
+ for(const FActorDesc& Desc:Descriptors)if(IsOwnedDescriptor(Desc))Allowed.Add(Desc.Guid);
+ TArray<FGuid> Requested;
+ TSet<FGuid> Seen;
+ for(const FString& Text:ActorGuids){
+  FGuid Guid;
+  if(!FGuid::ParseExact(Text,EGuidFormats::DigitsWithHyphens,Guid) || !Allowed.Contains(Guid) || Seen.Contains(Guid))return false;
+  Requested.Add(Guid);Seen.Add(Guid);
+ }
+ // Complete preflight above: never partially change streaming for a bad batch.
+ if(!Requested.IsEmpty()){
+  return StreamPartitionActors(Requested,bLoaded);
+ }
+ return true;
+#else
+ return false;
+#endif
+}
+
+FString UAnomaliaZPrigimaliaWorldImportLibrary::AuditInhabitedResidential(const TArray<FString>& MeshPaths,const TArray<FString>& HouseLabels)
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2"))
+  return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ if(MeshPaths.Num()!=3)return TEXT("{\"state\":\"REFUSED_MESH_COUNT\"}");
+ TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
+ Report->SetStringField(TEXT("state"),TEXT("FAILED"));
+ auto VectorValues=[](const FVector& V){
+  TArray<TSharedPtr<FJsonValue>> Values;
+  Values.Add(MakeShared<FJsonValueNumber>(V.X));Values.Add(MakeShared<FJsonValueNumber>(V.Y));Values.Add(MakeShared<FJsonValueNumber>(V.Z));
+  return Values;
+ };
+ auto Finish=[&Report](){FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);FJsonSerializer::Serialize(Report,Writer);return Json;};
+ TArray<TSharedPtr<FJsonValue>> Meshes;
+ TSet<FString> UniqueMeshes;
+ // Validate all paths before loading any assets. No arbitrary external content.
+ for(const FString& Path:MeshPaths){
+  if(!Path.StartsWith(TEXT("/Game/")) || UniqueMeshes.Contains(Path))return Finish();
+  UniqueMeshes.Add(Path);
+ }
+ for(const FString& Path:MeshPaths){
+  UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*Path);
+  if(!Mesh)return Finish();
+  TSharedRef<FJsonObject> Row=MakeShared<FJsonObject>();
+  Row->SetStringField(TEXT("path"),Mesh->GetPathName());
+  Row->SetStringField(TEXT("sourceSha"),Mesh->GetOutermost()->GetMetaData().GetValue(Mesh,TEXT("AnomaliaZPrigimaliaWorldFeatureSha256")));
+  Row->SetStringField(TEXT("originalSha"),Mesh->GetOutermost()->GetMetaData().GetValue(Mesh,TEXT("AnomaliaZPrigimaliaRealismSha256")));
+  const FBoxSphereBounds Bounds=Mesh->GetBounds();
+  Row->SetArrayField(TEXT("origin"),VectorValues(Bounds.Origin));Row->SetArrayField(TEXT("extent"),VectorValues(Bounds.BoxExtent));
+  bool bMaterialsReady=!Mesh->GetStaticMaterials().IsEmpty();
+  for(const FStaticMaterial& Slot:Mesh->GetStaticMaterials())if(!Slot.MaterialInterface)bMaterialsReady=false;
+  Row->SetBoolField(TEXT("materialsReady"),bMaterialsReady);
+  Meshes.Add(MakeShared<FJsonValueObject>(Row));
+ }
+ Report->SetArrayField(TEXT("meshes"),Meshes);
+ TArray<FActorDesc> Descriptors;
+ if(!CopyPartitionDescriptors(Descriptors))return Finish();
+ TSet<FString> Expected;
+ if(HouseLabels.Num()!=4760)return Finish();
+ for(const FString& Label:HouseLabels){
+  if(!Label.StartsWith(TEXT("ANOMALIA_Inhabited1_")) || Expected.Contains(Label))return Finish();
+  Expected.Add(Label);
+ }
+ TArray<FActorDesc> Houses;TSet<FString> Labels;
+ for(const FActorDesc& Desc:Descriptors)if(Expected.Contains(Desc.Label.ToString())){
+  if(Labels.Contains(Desc.Label.ToString()))return Finish();
+  Labels.Add(Desc.Label.ToString());Houses.Add(Desc);
+ }
+ // The Python verifier checks exact plan identities. Do not stream a partial population.
+ if(Houses.Num()!=4760)return Finish();
+ TSet<FGuid> InitiallyLoaded;
+ for(TActorIterator<AActor> It(World);It;++It)InitiallyLoaded.Add(It->GetActorGuid());
+ TArray<TSharedPtr<FJsonValue>> Actors;
+ for(int32 Start=0;Start<Houses.Num();Start+=64){
+  TArray<FGuid> Load,Unload;TSet<FGuid> Requested;
+  for(int32 I=Start;I<FMath::Min(Start+64,Houses.Num());++I){
+   const FGuid Guid=Houses[I].Guid;Load.Add(Guid);Requested.Add(Guid);
+   if(!InitiallyLoaded.Contains(Guid))Unload.Add(Guid);
+  }
+  if(!StreamPartitionActors(Load,true)){StreamPartitionActors(Unload,false);return Finish();}
+  int32 Found=0;
+  // Only owned, short-lived native actor pointers exist inside this loop.
+  for(TActorIterator<AActor> It(World);It;++It)if(Requested.Contains(It->GetActorGuid())){
+   ++Found;AActor* Actor=*It;TSharedRef<FJsonObject> Row=MakeShared<FJsonObject>();
+   Row->SetStringField(TEXT("label"),Actor->GetActorLabel());
+   Row->SetArrayField(TEXT("location"),VectorValues(Actor->GetActorLocation()));
+   Row->SetArrayField(TEXT("scale"),VectorValues(Actor->GetActorScale3D()));
+   Row->SetNumberField(TEXT("yaw"),Actor->GetActorRotation().Yaw);
+   TArray<TSharedPtr<FJsonValue>> Tags;
+   for(const FName Tag:Actor->Tags)Tags.Add(MakeShared<FJsonValueString>(Tag.ToString()));
+   Row->SetArrayField(TEXT("tags"),Tags);
+   const AStaticMeshActor* House=Cast<AStaticMeshActor>(Actor);
+   const UStaticMeshComponent* Component=House ? House->GetStaticMeshComponent() : nullptr;
+   Row->SetStringField(TEXT("mesh"),Component && Component->GetStaticMesh() ? Component->GetStaticMesh()->GetPathName() : FString());
+   bool bOverrides=false;
+   if(Component)for(const auto& Material:Component->OverrideMaterials)if(Material)bOverrides=true;
+   Row->SetBoolField(TEXT("materialOverrides"),bOverrides);
+   Actors.Add(MakeShared<FJsonValueObject>(Row));
+  }
+  // Restore this batch even on a missing actor; no actor is saved or deleted.
+  const bool bRestored=StreamPartitionActors(Unload,false);
+  if(!bRestored || Found!=Load.Num())return Finish();
+ }
+ Report->SetArrayField(TEXT("actors"),Actors);
+ Report->SetNumberField(TEXT("houseCount"),Actors.Num());
+ Report->SetBoolField(TEXT("packagesSaved"),false);
+ Report->SetBoolField(TEXT("terrainModified"),false);
+ Report->SetStringField(TEXT("state"),TEXT("NATIVE_RESIDENTIAL_VALUES_COPIED"));
+ return Finish();
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
+#endif
+}
+
+double UAnomaliaZPrigimaliaWorldImportLibrary::ArchipelagoHeight(double EastMeters,double NorthMeters)
+{
+ if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return 0;
+ return AnomaliaZPrigimaliaArchipelago::Height(EastMeters,NorthMeters);
+}
+static AActor* CreateLandscape(bool bInhabited)
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World)return nullptr;
+ const FString Map=World->GetPackage()->GetName();
+ if(bInhabited ? (Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v1")&&Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")) : Map!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))return nullptr;
+ for(TActorIterator<ALandscape> It(World);It;++It)return nullptr; // Never overlay/replace existing terrain.
+ constexpr int32 Size=3025;
+ TArray<uint16> Samples; Samples.SetNumUninitialized(Size*Size);
+ for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X){
+  const double East=-24000.+48000.*X/(Size-1);
+  const double North=24000.-48000.*Y/(Size-1);
+  Samples[Y*Size+X]=AnomaliaZPrigimaliaArchipelago::Encode(bInhabited?AnomaliaZPrigimaliaInhabited::Height(East,North):AnomaliaZPrigimaliaArchipelago::Height(East,North));
+ }
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(bInhabited?TEXT("ANOMALIA_InhabitedArchipelago_48km"):TEXT("ANOMALIA_OriginalArchipelago_48km"));
+ Land->SetActorLocation(FVector(-2400000,-2400000,0));
+ Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800));
+ TMap<FGuid,TArray<uint16>> Heights; Heights.Add(FGuid(),MoveTemp(Samples));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers; Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=576){UE_LOG(LogTemp,Error,TEXT("ANOMALIA unexpected terrain component count"));return nullptr;}
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
+TArray<FVector2D> UAnomaliaZPrigimaliaWorldImportLibrary::InhabitedSettlementSites()
+{
+ TArray<FVector2D> Result;
+ for(const auto& Site:AnomaliaZPrigimaliaInhabited::Sites)Result.Add(FVector2D(Site[0],Site[1]));
+ return Result;
+}
+double UAnomaliaZPrigimaliaWorldImportLibrary::InhabitedArchipelagoHeight(double EastMeters,double NorthMeters)
+{
+ if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return 0;
+ return AnomaliaZPrigimaliaInhabited::Height(EastMeters,NorthMeters);
+}
+
+FString UAnomaliaZPrigimaliaWorldImportLibrary::RefreshArchipelagoRenderResources(bool bRefresh)
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || (World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") &&
+               World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")))
+  return TEXT("{\"state\":\"REFUSED_WRONG_WORLD\"}");
+ TArray<ULandscapeComponent*> Components;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+  for(ULandscapeComponent* Component:It->LandscapeComponents)
+   if(Component)Components.Add(Component);
+ // Refuse incomplete worlds before any refresh, preserving their streaming state.
+ if(Components.Num()!=576)return TEXT("{\"state\":\"REFUSED_INCOMPLETE_LANDSCAPE\"}");
+ // Edit-layer merging needs a real rendering device. The source map was imported
+ // under NullRHI; its saved collision has relief but all visual bounds are -2048m.
+ // Re-evaluate existing layers only in memory, never recreate or save the map.
+ int32 MergedLandscapes=0;
+ if(bRefresh)for(TActorIterator<ALandscape> It(World);It;++It){
+  if(ULandscapeInfo* Info=It->GetLandscapeInfo()){
+   Info->ForceLayersFullUpdate();
+   It->ForceUpdateLayersContent();
+   ++MergedLandscapes;
+  }
+ }
+ TArray<TSharedPtr<FJsonValue>> Entries;
+ TSet<UTexture2D*> Refreshed;
+ int32 MissingHeightmaps=0;
+ for(ULandscapeComponent* Component:Components){
+  TSharedRef<FJsonObject> Entry=MakeShared<FJsonObject>();
+  Entry->SetStringField(TEXT("component"),Component->GetPathName());
+  Entry->SetBoolField(TEXT("registered"),Component->IsRegistered());
+  Entry->SetBoolField(TEXT("visible"),Component->IsVisible());
+  Entry->SetNumberField(TEXT("boundsCenterZCm"),Component->Bounds.Origin.Z);
+  Entry->SetNumberField(TEXT("boundsMinZCm"),Component->Bounds.Origin.Z-Component->Bounds.BoxExtent.Z);
+  Entry->SetNumberField(TEXT("boundsMaxZCm"),Component->Bounds.Origin.Z+Component->Bounds.BoxExtent.Z);
+  Entry->SetStringField(TEXT("bounds"),Component->Bounds.Origin.ToString()+TEXT(" extent=")+Component->Bounds.BoxExtent.ToString());
+  UTexture2D* Heightmap=Component->GetHeightmap(false);
+  if(Heightmap){
+   Entry->SetStringField(TEXT("heightmap"),Heightmap->GetPathName());
+   Entry->SetNumberField(TEXT("textureWidth"),Heightmap->GetSizeX());
+   Entry->SetNumberField(TEXT("textureHeight"),Heightmap->GetSizeY());
+   Entry->SetNumberField(TEXT("sourceWidth"),Heightmap->Source.GetSizeX());
+   Entry->SetNumberField(TEXT("sourceHeight"),Heightmap->Source.GetSizeY());
+   Entry->SetBoolField(TEXT("resourceBefore"),Heightmap->GetResource()!=nullptr);
+   if(!Refreshed.Contains(Heightmap)){if(bRefresh)Heightmap->UpdateResource();Refreshed.Add(Heightmap);}
+  }else{++MissingHeightmaps;}
+  UMaterialInterface* Material=Component->GetMaterial(0);
+  Entry->SetStringField(TEXT("materialBefore"),Material?Material->GetPathName():TEXT("NONE"));
+  // Rebuild transient scene/material resources after a NullRHI-created import.
+  // No height data, transform, collision or package is replaced or saved here.
+  if(bRefresh){
+  Component->UpdateMaterialInstances();
+  Component->SetVisibility(true);
+  Component->SetRenderInMainPass(true);
+  Component->UpdateBounds();
+  Component->MarkRenderStateDirty();
+  }
+  Entries.Add(MakeShared<FJsonValueObject>(Entry));
+ }
+ TSharedRef<FJsonObject> Report=MakeShared<FJsonObject>();
+ Report->SetStringField(TEXT("state"),bRefresh?TEXT("REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED"):TEXT("INSPECTED_WITHOUT_FORCED_REBUILD"));
+ Report->SetNumberField(TEXT("componentCount"),Components.Num());
+ Report->SetNumberField(TEXT("landscapesLayerMergeRequested"),MergedLandscapes);
+ Report->SetNumberField(TEXT("uniqueHeightmaps"),Refreshed.Num());
+ Report->SetNumberField(TEXT("missingHeightmaps"),MissingHeightmaps);
+ Report->SetArrayField(TEXT("components"),Entries);
+ FString Json;auto Writer=TJsonWriterFactory<>::Create(&Json);
+ FJsonSerializer::Serialize(Report,Writer);return Json;
+#else
+ return TEXT("{\"state\":\"EDITOR_ONLY\"}");
+#endif
+}

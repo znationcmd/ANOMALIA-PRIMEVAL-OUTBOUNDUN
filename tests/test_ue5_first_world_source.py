@@ -9,7 +9,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "scripts/ue5/create-first-world.py"
 RUNNER = ROOT / "scripts/ue5/create-first-world.ps1"
-PROJECT = ROOT / "unreal/AnomaliaPrimeval.uproject"
+PROJECT = ROOT / "unreal/AnomaliaZPrigimalia.uproject"
 
 
 class FirstWorldSourceTests(unittest.TestCase):

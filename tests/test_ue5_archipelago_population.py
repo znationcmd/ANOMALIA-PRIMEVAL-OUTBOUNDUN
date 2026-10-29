@@ -22,7 +22,7 @@ extern "C" double original(double e,double n){return AnomaliaArchipelago::Height
 extern "C" int site_count(){return sizeof(AnomaliaInhabited::Sites)/sizeof(AnomaliaInhabited::Sites[0]);}
 extern "C" double site(int i,int axis){return AnomaliaInhabited::Sites[i][axis];}
 ''')
-        subprocess.run(['g++','-std=c++17','-O2','-Wall','-Wextra','-Werror','-fPIC','-shared','-I',str(ROOT/'unreal/Source/AnomaliaPrimeval'),str(source),'-o',str(library)],check=True,capture_output=True)
+        subprocess.run(['g++','-std=c++17','-O2','-Wall','-Wextra','-Werror','-fPIC','-shared','-I',str(ROOT/'unreal/Source/AnomaliaZPrigimalia'),str(source),'-o',str(library)],check=True,capture_output=True)
         cls.dll=ctypes.CDLL(str(library))
         for name in ('height','original'):
             fn=getattr(cls.dll,name);fn.argtypes=[ctypes.c_double,ctypes.c_double];fn.restype=ctypes.c_double

@@ -8,7 +8,7 @@ Exécution : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/
 Le 22 octobre 2026, vers 18 h 10 (Paris), la copie autonome Windows a été construite, lancée, testée et installée automatiquement. Le raccourci Bureau **ANOMALIA - Jouer** a été relu et pointe vers la version active :
 
 ```text
-C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\e5e5a33195f2ed0f9685a98d907d5adf57826c21-259eaa9e\AnomaliaPrimeval.exe
+C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\e5e5a33195f2ed0f9685a98d907d5adf57826c21-259eaa9e\AnomaliaZPrigimalia.exe
 ```
 
 Le rapport indique `PACKAGED_WINDOWS_INSTALLED_AND_SMOKE_TESTED`, `trigger: push`, `updatedExistingInstallation: true`, `activeVersionAndShortcutVerified: true`, `validationSaveIsolationVerified: true` et 11 fichiers utilisateur existants conservés sans modification. La version précédente était `54828093b2e03618121a18703ec572b3d23412e9`.

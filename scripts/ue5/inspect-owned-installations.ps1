@@ -34,7 +34,7 @@ foreach($folder in @([Environment]::GetFolderPath('Desktop'),[Environment]::GetF
         $report.shortcuts+=@{name=$file.Name;path=$file.FullName;target=$link.TargetPath;arguments=$link.Arguments;workingDirectory=$link.WorkingDirectory}
     }
 }
-foreach($name in @('AnomaliaPrimeval','AnomaliaPrimeval-Win64-Shipping','AnomaliaPrimeval-Win64-Development','UnrealEditor')) {
+foreach($name in @('AnomaliaZPrigimalia','AnomaliaZPrigimalia-Win64-Shipping','AnomaliaZPrigimalia-Win64-Development','UnrealEditor')) {
     foreach($process in Get-Process -Name $name -ErrorAction SilentlyContinue) {
         try {$report.running+=@{name=$process.ProcessName;id=$process.Id;executable=$process.Path;windowTitle=$process.MainWindowTitle}} catch {}
     }

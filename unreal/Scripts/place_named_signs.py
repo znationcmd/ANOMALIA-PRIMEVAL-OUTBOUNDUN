@@ -30,7 +30,7 @@ try:
     proposals=identity.settlement_signs(plan)
     source=ROOT/'SourceAssets/OriginalSigns_v1/sign.glb'
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
-    native=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaPlaceSign')
+    native=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaPlaceSign')
     if not native: raise RuntimeError('Compile native sign actor before placement')
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not level.load_level(package): raise RuntimeError('Cannot open validated population map')

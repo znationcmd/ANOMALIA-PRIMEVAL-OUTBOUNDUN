@@ -34,8 +34,8 @@ try:
         if not mesh.get_editor_property('static_materials') or any(not slot.material_interface for slot in mesh.get_editor_property('static_materials')):
             raise RuntimeError('Missing real-art material: '+ident)
         meshes[ident]=mesh
-    cluster_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaSceneryCluster')
-    water_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaNavigableWater')
+    cluster_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster')
+    water_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaNavigableWater')
     if not cluster_class or not water_class:raise RuntimeError('Compile native world components first')
     sites=[(p.x,p.y) for p in unreal.AnomaliaWorldImportLibrary.inhabited_settlement_sites()]
     bounds=meshes['detached_house'].get_bounds()

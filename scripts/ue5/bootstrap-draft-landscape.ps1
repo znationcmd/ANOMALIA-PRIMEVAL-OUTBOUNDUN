@@ -3,7 +3,7 @@
 param([string]$EngineRoot = "C:\Program Files\Epic Games\UE_5.8")
 $ErrorActionPreference = "Stop"
 $Repository = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
-$Game = Join-Path $Repository "unreal\AnomaliaPrimeval.uproject"
+$Game = Join-Path $Repository "unreal\AnomaliaZPrigimalia.uproject"
 $Generator = Join-Path $PSScriptRoot "generate-playtest-terrain.py"
 $Script = Join-Path $PSScriptRoot "create-terrain-draft-level.py"
 $Editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"

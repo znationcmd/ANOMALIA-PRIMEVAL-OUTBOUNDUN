@@ -13,7 +13,7 @@ Raccourci Bureau : **ANOMALIA - Jouer**.
 Exécutable réellement installé et lancé pendant le test :
 
 ```text
-C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\bba112c3657d29a3152383dbcf248072579d0b7c-1a8d7627\AnomaliaPrimeval.exe
+C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\bba112c3657d29a3152383dbcf248072579d0b7c-1a8d7627\AnomaliaZPrigimalia.exe
 ```
 
 Données persistantes : `%LOCALAPPDATA%\CMD\ANOMALIA-Windows\userdata\Saved`.

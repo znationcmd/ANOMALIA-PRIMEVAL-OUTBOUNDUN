@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "unreal/Source/AnomaliaPrimeval"
+BASE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 HEADER = (BASE / "AnomaliaNpcRecruitmentSubsystem.h").read_text(encoding="utf-8")
 SOURCE = (BASE / "AnomaliaNpcRecruitmentSubsystem.cpp").read_text(encoding="utf-8")
 LEGACY = (ROOT / "src/npc-recruitment.js").read_text(encoding="utf-8")

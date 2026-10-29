@@ -48,7 +48,7 @@ try:
             raise RuntimeError('Airliner scale invalid (centimetres): '+str(dimensions))
         if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,only_if_is_dirty=False): raise RuntimeError('Could not save vehicle asset')
         actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-        vehicle_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn')
+        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
         if not vehicle_class: raise RuntimeError('Native vehicle class not loaded')
         probe=actors.spawn_actor_from_class(vehicle_class,unreal.Vector(0,0,500),transient=True)
         if not probe: raise RuntimeError('Could not spawn a transient presentation probe')

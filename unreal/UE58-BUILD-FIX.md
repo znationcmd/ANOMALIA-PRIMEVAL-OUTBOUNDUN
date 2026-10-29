@@ -4,7 +4,7 @@ Le journal UnrealBuildTool fourni par l'utilisateur confirme **MSVC 14.50.35717*
 et **Windows SDK 10.0.26100.0** trouvés. Le problème restant est :
 
 ```text
-AnomaliaPrimevalEditor modifies the values of properties:
+AnomaliaZPrigimaliaEditor modifies the values of properties:
 UndefinedIdentifierWarningLevel: Off != Error
 UnreachableCodeWarningLevel: Off != Error
 ReturnTypeWarningLevel: Off != Error
@@ -26,11 +26,11 @@ la vérification des binaires partagés de l'éditeur installé. Le mode
 
 1. Fermer le message d'erreur Unreal (et l'éditeur s'il fonctionne).
 2. Depuis le dossier du projet extrait `.../unreal/Source/`, ouvrir
-   `AnomaliaPrimevalEditor.Target.cs` dans le Bloc-notes.
+   `AnomaliaZPrigimaliaEditor.Target.cs` dans le Bloc-notes.
 3. Remplacer **uniquement** `BuildSettingsVersion.V5` par
    `BuildSettingsVersion.V7` et enregistrer.
-4. Faire la même modification dans `AnomaliaPrimeval.Target.cs`.
-5. Double-cliquer `AnomaliaPrimeval.uproject`, accepter `Yes` pour
+4. Faire la même modification dans `AnomaliaZPrigimalia.Target.cs`.
+5. Double-cliquer `AnomaliaZPrigimalia.uproject`, accepter `Yes` pour
    reconstruire les modules. Si besoin, clic droit sur le fichier
    `.uproject` → Generate Visual Studio project files, puis réessayer.
 6. Si la compilation échoue encore, transmettre le **nouveau**

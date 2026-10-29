@@ -10,7 +10,7 @@ p.add_argument('--output',type=Path,required=True)
 p.add_argument('--progress-art',action='store_true')
 a=p.parse_args();out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),packagedGame=True,consoleMobileTested=False)
-project=ROOT/'unreal/AnomaliaPrimeval.uproject'
+project=ROOT/'unreal/AnomaliaZPrigimalia.uproject'
 def run(command,name,timeout):
     with (out/(name+'.log')).open('w',encoding='utf-8') as log:
         r=subprocess.run([str(x) for x in command],stdout=log,stderr=subprocess.STDOUT,timeout=timeout,check=False)
@@ -71,7 +71,7 @@ try:
     archive=Path(tempfile.mkdtemp(prefix='anomalia-win-',dir=os.environ.get('RUNNER_TEMP'))).resolve()
     uat=a.engine_root/'Engine/Build/BatchFiles/RunUAT.bat'
     run([os.environ.get('COMSPEC','cmd.exe'),'/d','/c',uat,'BuildCookRun','-project='+str(project),'-noP4','-unattended','-utf8output','-platform=Win64','-clientconfig=Development','-build','-cook','-stage','-pak','-archive','-archivedirectory='+str(archive),'-map='+MAP+'+'+visual_map,'-prereqs'],'package',5400)
-    executables=list(archive.glob('Windows/AnomaliaPrimeval.exe'))
+    executables=list(archive.glob('Windows/AnomaliaZPrigimalia.exe'))
     if len(executables)!=1:raise RuntimeError('Unique actual packaged executable not found')
     exe=executables[0];probe=out/'packaged-smoke.json'
     shutil.copyfile(ROOT/'unreal/Build/Windows/Application.ico',archive/'Windows/Anomalia.ico')

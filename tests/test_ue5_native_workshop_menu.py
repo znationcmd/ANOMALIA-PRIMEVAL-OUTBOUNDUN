@@ -3,9 +3,9 @@ import pathlib
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SESSION = ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSessionWidget.cpp"
-HEADER = ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaSessionWidget.h"
-PROBE = ROOT / "unreal/Source/AnomaliaPrimeval/AnomaliaPlayableProbe.cpp"
+SESSION = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSessionWidget.cpp"
+HEADER = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSessionWidget.h"
+PROBE = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaPlayableProbe.cpp"
 
 
 class NativeWorkshopMenuTests(unittest.TestCase):

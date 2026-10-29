@@ -6,11 +6,11 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SOURCE = ROOT / "unreal" / "Source" / "AnomaliaPrimeval"
+SOURCE = ROOT / "unreal" / "Source" / "AnomaliaZPrigimalia"
 
 class UnrealPortTests(unittest.TestCase):
     def test_project_and_cpp_module_present(self):
-        self.assertTrue((ROOT / "unreal" / "AnomaliaPrimeval.uproject").is_file())
+        self.assertTrue((ROOT / "unreal" / "AnomaliaZPrigimalia.uproject").is_file())
         for name in ["AnomaliaGameMode", "AnomaliaSurvivor",
                      "AnomaliaConfigLibrary", "AnomaliaVehicleCatalog", "AnomaliaVehiclePawn"]:
             self.assertTrue((SOURCE / (name + ".h")).is_file(), name)

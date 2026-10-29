@@ -197,7 +197,7 @@ try:
         item=next(m for m in real['models'] if m['id']==source_id)
         mesh=unreal.load_asset(item['objectPath']+'_r2')
         if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=item['sha256']:raise RuntimeError('Verified vehicle art required')
-        candidates=[a for a in present.values() if OWNER in a.tags and a.get_class().get_path_name()=='/Script/AnomaliaPrimeval.AnomaliaVehiclePawn' and str(a.get_editor_property('vehicle_id'))==vehicle_id]
+        candidates=[a for a in present.values() if OWNER in a.tags and a.get_class().get_path_name()=='/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn' and str(a.get_editor_property('vehicle_id'))==vehicle_id]
         if len(candidates)!=1:raise RuntimeError('Unique existing playable vehicle required')
         vehicle=candidates[0];vehicle.set_editor_property('presentation_mesh_override',mesh)
         vehicle.set_editor_property('presentation_yaw_degrees',90.)

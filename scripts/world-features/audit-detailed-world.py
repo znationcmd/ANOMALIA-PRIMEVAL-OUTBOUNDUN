@@ -30,7 +30,7 @@ try:
         for item in manifest['models']:
             path = item['objectPath'] + suffix
             known[path.rsplit('/', 1)[0] + '/' + path.rsplit('/', 1)[1] + '.' + path.rsplit('/', 1)[1]] = (tag, item['sha256'])
-    expected_classes = {'/Script/Engine.StaticMeshActor', '/Script/AnomaliaPrimeval.AnomaliaSceneryCluster'}
+    expected_classes = {'/Script/Engine.StaticMeshActor', '/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster'}
     targets = []
     for desc in descriptors:
         native = desc.get_editor_property('native_class')

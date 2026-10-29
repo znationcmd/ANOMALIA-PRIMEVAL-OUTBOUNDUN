@@ -1,7 +1,7 @@
 # Audit réel des personnages ANOMALIA — 27 octobre 2026
 
 ## Périmètre vérifié
-Poste Windows ANOMALIA-PC, projet `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject`.
+Poste Windows ANOMALIA-PC, projet `C:\ANOMALIA\unreal\AnomaliaZPrigimalia.uproject`.
 Unreal chargé : `5.8.3-58210709+++UE5+Release-5.8`.
 
 Preuves :

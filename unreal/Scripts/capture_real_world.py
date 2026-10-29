@@ -100,7 +100,7 @@ def set_view():
         for entry in streamable_desc:
             label=entry['label']
             if prefix and label.startswith(prefix):selected.append(entry['guid']);continue
-            if entry['nativeClass']=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster':
+            if entry['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster':
                 cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
                 if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry['guid'])
         if selected and not wp.set_archipelago_actors_loaded(selected,True):raise RuntimeError('Nearby view load refused')
@@ -144,7 +144,7 @@ try:
     descriptor_snapshot=json.loads(wp.get_archipelago_actor_descriptors())
     if descriptor_snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
     desc=descriptor_snapshot['actors']
-    streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
+    streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
     dynamic_labels={d['label'] for d in streamable_desc}
     if streamable_desc and not wp.set_archipelago_actors_loaded([d['guid'] for d in streamable_desc],False):raise RuntimeError('Initial local-view unload refused')
     wanted=[d['guid'] for d in desc if d['owned'] and d['label'] not in dynamic_labels]

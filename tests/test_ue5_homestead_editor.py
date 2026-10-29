@@ -13,7 +13,7 @@ SCRIPT = ROOT / "scripts/ue5/anomalia-editor-tools.py"
 spec = importlib.util.spec_from_file_location("anomalia_editor_tools", SCRIPT)
 tools = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tools)
-SOURCE = ROOT / "unreal/Source/AnomaliaPrimeval"
+SOURCE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 
 
 def cpp(name: str) -> str:

@@ -33,11 +33,11 @@
   "compilation": "passed",
   "targets": [
     {
-      "target": "AnomaliaPrimevalEditor",
+      "target": "AnomaliaZPrigimaliaEditor",
       "exitCode": 0
     },
     {
-      "target": "AnomaliaPrimeval",
+      "target": "AnomaliaZPrigimalia",
       "exitCode": 0
     }
   ],
@@ -336,7 +336,7 @@
     "workflowRun": 40492726919,
     "artifact": 12729545899,
     "compilation": "failed",
-    "target": "AnomaliaPrimevalEditor",
+    "target": "AnomaliaZPrigimaliaEditor",
     "exitCode": 6,
     "error": "C2668: ACharacter::SetBase(nullptr) ambiguous between UPrimitiveComponent* and FMovementBaseInterfaceData* overloads",
     "gameplayExecuted": false

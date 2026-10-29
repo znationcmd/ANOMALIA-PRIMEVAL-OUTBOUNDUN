@@ -24,7 +24,7 @@ The packaged game, explicit profile save, second-process restoration and automat
 Installed executable:
 
 ```text
-C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\76a9c62dad5cc7eb4fa07f6d5323b5e7c3edfc38-5ab5be32\AnomaliaPrimeval.exe
+C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-Windows\versions\76a9c62dad5cc7eb4fa07f6d5323b5e7c3edfc38-5ab5be32\AnomaliaZPrigimalia.exe
 ```
 
 Desktop launcher: **ANOMALIA - Jouer**. This push updated the existing `e5e5a331` installation automatically. Evidence: [workflow run 39821306529](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39821306529), artifact `packaged-playable-install-diagnostics` (`12445231682`). That artifact contains the package, restart and installed-copy reports; `ANOMALIA-Windows-Test` (`12445710889`) contains the test build. Native tests verify every configured consumable and every catalogue item's inventory round trip; the packaged UI probe verifies an actual collected food's use, rather than claiming every item's UI or specialized behavior was tested.

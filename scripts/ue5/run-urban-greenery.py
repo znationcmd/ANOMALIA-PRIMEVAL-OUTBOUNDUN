@@ -15,7 +15,7 @@ def main():
             native=out/(phase+'.json')
             if native.exists():raise RuntimeError('Fresh output directory required')
             env=dict(os.environ,ANOMALIA_URBAN_REPORT=str(native),ANOMALIA_URBAN_MODE=phase,ANOMALIA_URBAN_HOUSE_AUDIT=str(a.house_audit.resolve()),ANOMALIA_URBAN_BACKUP_REPORT=str(out/'backup-report.json'))
-            command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+str(root/'unreal/Scripts/author_urban_greenery.py'),'-abslog='+str(out/(phase+'.engine.log'))]
+            command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaZPrigimalia.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+str(root/'unreal/Scripts/author_urban_greenery.py'),'-abslog='+str(out/(phase+'.engine.log'))]
             with (out/(phase+'.process.log')).open('w',encoding='utf-8') as stream:
                 run=subprocess.run(command,env=env,stdout=stream,stderr=subprocess.STDOUT,timeout=1200,check=False)
             proof=json.loads(native.read_text()) if native.exists() else {}

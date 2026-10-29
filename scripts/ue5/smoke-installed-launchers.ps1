@@ -7,7 +7,7 @@ $public=[Environment]::GetFolderPath('CommonDesktopDirectory')
 $tests=@(
     @{name='Editor';shortcut=(Join-Path $public 'ANOMALIA Editor.lnk');process='ANOMALIA Editor';timeout=20},
     @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=45},
-    @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=180},
+    @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaZPrigimalia';timeout=180},
     @{name='UnrealEditor';shortcut=(Join-Path $desktop 'ANOMALIA - Unreal.lnk');process='UnrealEditor';timeout=120}
 )
 $results=@()

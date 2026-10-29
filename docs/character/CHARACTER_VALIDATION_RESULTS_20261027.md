@@ -2,7 +2,7 @@
 
 ## Actions réellement exécutées sur le poste Windows
 
-- Audit disque et version : `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject` présent, Unreal 5.8.3 confirmé.
+- Audit disque et version : `C:\ANOMALIA\unreal\AnomaliaZPrigimalia.uproject` présent, Unreal 5.8.3 confirmé.
 - Commandlet Unreal de chargement des packs : succès, zéro erreur de chargement des objets inventoriés. Une référence de Control Rig de pied vers Survival_01 manque.
 - Création réelle de `BP_Anomalia_Manny`, `BP_Anomalia_Quinn`, `BP_Anomalia_Survival` sous `/Game/Anomalia/Characters` : compilation Blueprint, vérification du corps/de la classe d’animation sur le CDO puis sauvegarde réussies.
 - Preuve : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40543337391 ; artefact 12752758014.
