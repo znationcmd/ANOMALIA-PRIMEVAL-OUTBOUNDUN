@@ -1,0 +1,21 @@
+{
+  "schema": 1,
+  "title": "Free Animations Pack",
+  "publisher": "SoerGame",
+  "source": "https://www.fab.com/listings/9e93d929-36e8-45f9-b925-325db1b9385d",
+  "selectedByUser": true,
+  "status": "SELECTED_DOWNLOAD_AND_IMPORT_NOT_CONFIRMED",
+  "purpose": "Inspect included In Car animation samples for ANOMALIA survivor vehicle poses",
+  "requiredChecks": [
+    "Locate downloaded source on D drive",
+    "Record acquisition license",
+    "Enumerate actual animation clips and source skeleton",
+    "Retarget to survivor skeleton",
+    "Calibrate seat, hands on wheel and feet",
+    "Verify entry, exit and driving coverage; do not assume full paid pack included",
+    "Validate in Unreal before gameplay acceptance"
+  ],
+  "downloaded": false,
+  "imported": false,
+  "gameplayValidated": false
+}
