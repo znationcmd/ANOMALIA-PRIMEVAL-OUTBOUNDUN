@@ -55,6 +55,16 @@ KeepFolder=D:\\\\ANOMALIA
         self.assertIn("LegacyModule=/Script/AnomaliaPrimeval.AnomaliaGameMode",updated)
         self.assertNotIn("ANOMALIA_Playable_v1.ANOMALIA_Playable_v1",updated)
 
+    def test_exact_native_short_names_change_but_save_keys_do_not(self):
+        source=self.root/"unreal/Source/Game.cpp"
+        source.parent.mkdir(parents=True)
+        source.write_text('Map.EndsWith(TEXT("ANOMALIA_Playable_v1")); Save="ANOMALIA_SAVE_V1"; Other="ANOMALIA_OtherWorld";',encoding="utf-8")
+        module.migrate(self.root,True)
+        updated=source.read_text(encoding="utf-8")
+        self.assertIn('TEXT("PRIGIMALIA_Playable_v1")',updated)
+        self.assertIn('"ANOMALIA_SAVE_V1"',updated)
+        self.assertIn('"ANOMALIA_OtherWorld"',updated)
+
     def test_refuse_when_unreal_asset_report_not_verified(self):
         f=self.root/"unreal"/"Saved"/"BrandMigration"/"asset-rename-report.json"
         f.write_text(json.dumps({"verified":False,"errors":["Editor failure"]}),encoding="utf-8")
