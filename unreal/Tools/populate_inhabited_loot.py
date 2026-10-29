@@ -11,6 +11,8 @@ report=dict(state="STARTED",map=MAP,points=[],rejected=[],playtested=False)
 level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
 actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
 lib=unreal.AnomaliaWorldImportLibrary
+def guidkey(actor):
+    return "".join("%08x"%(v & 0xffffffff) for v in actor.get_actor_guid().to_tuple())
 def trace(world,x,y,z,actor):
     hit=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+140),unreal.Vector(x,y,z-30),
         unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
@@ -39,7 +41,7 @@ try:
         nearby.sort(key=lambda d:hashlib.sha256(d["guid"].encode()).hexdigest())
         selected.extend(nearby[:8])
     selected=list({d["guid"]:d for d in selected}.values())
-    initial={str(a.get_actor_guid()) for a in actors.get_all_level_actors()}
+    initial={guidkey(a) for a in actors.get_all_level_actors()}
     groups=[["canned_food"],["drinks"],["medical_supplies"],["tops","pants"],
             ["backpacks"],["tools"],["camping_storage"],["shoes_gloves"]]
     for begin in range(0,len(selected),24):
@@ -47,9 +49,9 @@ try:
         guids=[d["guid"] for d in batch]
         if not lib.set_archipelago_actors_loaded(guids,True):raise RuntimeError("House streaming failed")
         try:
-            loaded={str(a.get_actor_guid()):a for a in actors.get_all_level_actors()}
+            loaded={guidkey(a):a for a in actors.get_all_level_actors()}
             for d in batch:
-                a=loaded.get(d["guid"])
+                a=loaded.get(d["guid"].replace("-","").lower())
                 if a is None:
                     report["rejected"].append(dict(id=d["label"],reason="ACTOR_NOT_LOADED"));continue
                 base=a.get_actor_location();yaw=math.radians(a.get_actor_rotation().yaw)
@@ -65,7 +67,7 @@ try:
                 report["points"].append(dict(id=ident,map="ANOMALIA_Inhabited_v2",buildingType="house",
                     x=pos[0],y=pos[1],z=pos[2],categories=groups[len(report["points"])%len(groups)]))
         finally:
-            unload=[g for g in guids if g not in initial]
+            unload=[g for g in guids if g.replace("-","").lower() not in initial]
             if not lib.set_archipelago_actors_loaded(unload,False):raise RuntimeError("Could not restore house streaming")
     if not report["points"]:raise RuntimeError("No floor-tested loot points; original layout preserved")
     path=ROOT/"Content/Anomalia/Data/loot_spawns.json"
