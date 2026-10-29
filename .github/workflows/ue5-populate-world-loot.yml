@@ -1,4 +1,4 @@
-name: ANOMALIA checked ground loot across recovered settlements
+name: ANOMALIA world loot and current controller bindings
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -36,6 +36,20 @@ jobs:
           if($code -ne 0){throw 'World loot authoring failed'}
           $report=Get-Content 'D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json' -Raw | ConvertFrom-Json
           if($report.state -ne 'FLOOR_TESTED_LOOT_LAYOUT_SAVED_NOT_PLAYTESTED'){throw 'No verified loot layout saved'}
+      - name: Merge missing current input bindings without removing user controls
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal/Config/DefaultInput.ini'
+          $target='D:/ANOMALIA/unreal/Config/DefaultInput.ini'
+          $current=Get-Content -LiteralPath $target -Raw
+          $missing=@(Get-Content -LiteralPath $source | Where-Object {($_.StartsWith('+ActionMappings=') -or $_.StartsWith('+AxisMappings=')) -and !$current.Contains($_)})
+          Write-Output ("MISSING_INPUT_BINDINGS="+$missing.Count)
+          if($missing.Count){
+            Copy-Item -LiteralPath $target -Destination ($target+".before-map-controls-$env:GITHUB_RUN_ID.bak")
+            Add-Content -LiteralPath $target -Value (([Environment]::NewLine)+"[/Script/Engine.InputSettings]"+([Environment]::NewLine)+($missing -join ([Environment]::NewLine))) -Encoding UTF8
+          }
+          Write-Output ("HAS_GAMEPAD_INVENTORY="+(Get-Content $target -Raw).Contains('ActionName="Inventory",Key=Gamepad_Special_Left'))
       - name: Verify real loot pickup and inventory in isolated Play In Editor
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
