@@ -21,7 +21,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Inspect availability without changing original project
-        shell: pwsh
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
           $gamePath = 'D:\\ANOMALIA'
@@ -44,7 +44,7 @@ jobs:
           clean: false
           persist-credentials: false
       - name: Validate isolated rebrand checkout source
-        shell: pwsh
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
           $proj = Join-Path $env:GITHUB_WORKSPACE 'unreal\\AnomaliaZPrigimalia.uproject'
