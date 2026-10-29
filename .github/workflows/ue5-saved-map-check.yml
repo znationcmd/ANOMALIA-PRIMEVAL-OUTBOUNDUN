@@ -14,6 +14,13 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $folder='D:/ANOMALIA/StorageRecovery/loot-pie-40888969944'
-          if(Test-Path "$folder/index.json"){Get-Content "$folder/index.json" -Raw}
-          Select-String "$folder/editor.log" -Pattern 'Error:|Fatal|Test Completed|Test Started|PIE timeout|Automation Test|Failed to load|failed|Assertion' -Context 1,2 | Select-Object -Last 60 | ForEach-Object {Write-Output $_}
+          $folder=Get-ChildItem 'D:/ANOMALIA/StorageRecovery' -Directory -Filter 'loot-pie-*' | Sort-Object CreationTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+          Write-Output ("LATEST_PIE_FOLDER="+$folder)
+          if(Test-Path "$folder/index.json"){
+            $data=Get-Content "$folder/index.json" -Raw | ConvertFrom-Json
+            foreach($test in $data.tests){
+              Write-Output ("TEST_STATE="+$test.state)
+              foreach($entry in $test.entries){if($entry.event.type -eq 'Error'){Write-Output ("TEST_ERROR="+$entry.event.message)}}
+            }
+          }
+          Select-String "$folder/editor.log" -Pattern 'timeout phase|Test Completed|Test Started|Fatal error|Assertion failed' | ForEach-Object {Write-Output $_.Line}
