@@ -32,8 +32,9 @@ LEGACY_SAVE_NAMES = ("anomalia-primeval-outboundun-save-v1",
 def changes_in_source(src: str) -> str:
     src = src.replace("ANOMALIAPRIMEVAL_API", "ANOMALIAZPRIGIMALIA_API")
     src = src.replace("ANOMALIAPRIMEVAL", "ANOMALIAZPRIGIMALIA")
-    src = src.replace(OLD_MODULE, NEW_MODULE)
+    src = src.replace(OLD_MODULE, "__MIGRATED_MODULE__")
     src = src.replace("Anomalia", NEW_MODULE)
+    src = src.replace("__MIGRATED_MODULE__", NEW_MODULE)
     # UE macro name is based on the module, not a class.
     return src
 
@@ -109,7 +110,7 @@ def main():
         changed=changes_in_source(original) if source else change_general(original,p)
         new_rel=rel
         if source:
-            new_rel=Path(str(rel).replace(OLD_MODULE,NEW_MODULE).replace("Anomalia",NEW_MODULE))
+            new_rel=Path(str(rel).replace(OLD_MODULE,"__MIGRATED_MODULE__").replace("Anomalia",NEW_MODULE).replace("__MIGRATED_MODULE__",NEW_MODULE))
         elif rel==Path("unreal")/(OLD_MODULE+".uproject"):
             new_rel=Path("unreal")/(NEW_MODULE+".uproject")
         elif rel.parts[:3]==("unreal","Config","Anomalia"):
