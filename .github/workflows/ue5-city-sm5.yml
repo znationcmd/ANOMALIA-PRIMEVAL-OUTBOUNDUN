@@ -1,0 +1,27 @@
+name: ANOMALIA City Sample SM5 extraction profile
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-city-sm5.yml']
+permissions:
+  contents: read
+jobs:
+  configure:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 3
+    steps:
+      - name: Back up and configure source City Sample for SM5 extraction
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'Editor already open; no change'}
+          $ini='D:\ANOMALIA\FabImports\CitySample\Config\DefaultEngine.ini'
+          if(!(Test-Path $ini)){throw 'City Sample config missing'}
+          $backup=$ini+'.before-sm5-'+$env:GITHUB_RUN_ID+'.bak'
+          Copy-Item -LiteralPath $ini -Destination $backup
+          $text=[IO.File]::ReadAllText($ini)
+          $text=$text.Replace('+D3D12TargetedShaderFormats=PCD3D_SM6','-D3D12TargetedShaderFormats=PCD3D_SM6')
+          $text=$text.Replace('-D3D12TargetedShaderFormats=PCD3D_SM5','+D3D12TargetedShaderFormats=PCD3D_SM5')
+          $text += [Environment]::NewLine + (@('[/Script/Engine.RendererSettings]','r.RayTracing=False','r.Lumen.HardwareRayTracing=False','r.DynamicGlobalIlluminationMethod=0','r.ReflectionMethod=0','r.Shadow.Virtual.Enable=0','r.Nanite.ProjectEnabled=False') -join [Environment]::NewLine) + [Environment]::NewLine
+          [IO.File]::WriteAllText($ini,$text,(New-Object Text.UTF8Encoding($false)))
+          Write-Output "SOURCE_EXTRACTION_PROFILE_WRITTEN; startup and fallback meshes not yet tested. Backup: $backup"
