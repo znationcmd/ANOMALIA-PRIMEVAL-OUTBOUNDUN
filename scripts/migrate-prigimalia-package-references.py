@@ -17,8 +17,6 @@ REPLACEMENTS=(
     ("/Game/Anomalia/","/Game/AnomaliaZPrigimalia/"),
     ("unreal/Content/Anomalia/","unreal/Content/AnomaliaZPrigimalia/"),
     ("Content/Anomalia/","Content/AnomaliaZPrigimalia/"),
-    ("ANOMALIA_","PRIGIMALIA_"),
-    ("AnomaliaWorld","PrigimaliaWorld"),
 )
 # This path-mapping step deliberately never renames the old backup root
 # D:\\ANOMALIA, historic IPC keys, or old game class redirect source entries.
@@ -34,6 +32,18 @@ def migrate(root:Path,apply:bool):
     proof=json.loads(assetreport.read_text(encoding="utf-8-sig"))
     if proof.get("verified") is not True or proof.get("errors"):
         raise RuntimeError("Assets were not successfully migrated in Unreal Editor")
+    # Use only the exact map package renames confirmed by Unreal. Never replace
+    # all ANOMALIA_ strings: they include API macros, build IDs and save keys.
+    actual_maps = proof.get("mapsRenamed") or []
+    map_replacements = []
+    for item in actual_maps:
+        old, new = item.get("old", ""), item.get("new", "")
+        if not old.startswith("/Game/") or not new.startswith("/Game/"):
+            raise RuntimeError("Invalid confirmed Unreal map rename in report")
+        map_replacements.append((old, new))
+        # Also support exact quoted standalone map names in launch scripts.
+        # Do not rewrite names embedded in C++ symbol/API identifiers.
+    replacements = REPLACEMENTS + tuple(map_replacements)
     updates=[]
     for folder in DIRECTORIES:
         base=root/folder
@@ -54,7 +64,7 @@ def migrate(root:Path,apply:bool):
             except (OSError,UnicodeError):
                 continue
             changed=original
-            for old,new in REPLACEMENTS:
+            for old,new in replacements:
                 changed=changed.replace(old,new)
             if changed!=original:
                 updates.append(relative)
