@@ -1,4 +1,4 @@
-name: ANOMALIA world loot and current controller bindings
+name: ANOMALIA loot and spatial inventory gameplay verification
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -17,6 +17,20 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Compile the updated real spatial inventory interaction test
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $relative='unreal/Source/AnomaliaPrimeval/Tests/AnomaliaLootPIETests.cpp'
+          $target='D:/ANOMALIA/unreal/Source/AnomaliaPrimeval/Tests/AnomaliaLootPIETests.cpp'
+          $source=Join-Path $env:GITHUB_WORKSPACE $relative
+          if((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash){
+            Copy-Item $target ($target+".before-grid-test-$env:GITHUB_RUN_ID.bak")
+            Copy-Item $source $target -Force
+          }
+          $build='C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat'
+          & $build AnomaliaPrimevalEditor Win64 Development '-Project=D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw 'Spatial interaction test did not compile'}
       - name: Place loot on verified real floors in distributed settlements
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
