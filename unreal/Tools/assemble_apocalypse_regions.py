@@ -33,8 +33,9 @@ try:
     for a in sector_actors:
         if isinstance(a,global_types): actors.destroy_actor(a)
     if not level.save_current_level():raise RuntimeError("Cleaned sector could not save")
-    sector_asset=unreal.load_asset(SECTOR)
     if not level.load_level(MAP):raise RuntimeError("Original world failed to reopen")
+    sector_asset=unreal.load_asset(SECTOR)
+    if not sector_asset:raise RuntimeError("Sector world asset did not reload after changing maps")
     library=getattr(unreal,"AnomaliaWorldImportLibrary",None)
     if not library:raise RuntimeError("Compiled world library missing")
     desc=json.loads(library.get_archipelago_actor_descriptors())
