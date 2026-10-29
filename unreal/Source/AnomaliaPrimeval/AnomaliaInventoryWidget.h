@@ -10,6 +10,7 @@ class UVerticalBox;
 class UHorizontalBox;
 class UButton;
 class UTextBlock;
+class UProgressBar;
 class UEditableTextBox;
 class ACameraActor;
 class APlayerController;
@@ -68,6 +69,8 @@ public:
     void Execute();
     UFUNCTION() void BeginPointerDrag();
     UFUNCTION() void EndPointerDrag();
+    UFUNCTION() void BeginCombineHold();
+    UFUNCTION() void EndCombineHold();
 };
 
 /** Native inventory: proximity, live equipped survivor and spatial storage grids. */
@@ -182,6 +185,14 @@ private:
 
     UPROPERTY() TObjectPtr<UTextBlock> BankStatus;
     UPROPERTY() TObjectPtr<UTextBlock> UseStatus;
+    UPROPERTY() TObjectPtr<UProgressBar> CombineProgressBar;
+    bool bCombineInputHeld=false;
+    bool bDeferredCombineRefresh=false;
+    bool bSawServerCombine=false;
+    float CombineInputElapsed=0;
+    FKey CombineActivationKey;
+    void BeginCombineHold(int32 HeldStackId,int32 OtherStackId,int32 RecipeIndex);
+    void EndCombineHold();
     UPROPERTY() TObjectPtr<UEditableTextBox> BankRecipient;
     UPROPERTY() TObjectPtr<UEditableTextBox> BankAmount;
     UPROPERTY() TObjectPtr<UButton> TransferButton;
