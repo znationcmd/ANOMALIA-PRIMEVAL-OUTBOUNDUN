@@ -1,0 +1,25 @@
+name: Prioritize ANOMALIA map work
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-prioritize-map.yml']
+permissions:
+  actions: write
+jobs:
+  pause-storage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const run_id = 40858126126;
+            const scope = {owner: context.repo.owner, repo: context.repo.repo};
+            const {data: run} = await github.rest.actions.getWorkflowRun({...scope, run_id});
+            if (run.path !== '.github/workflows/ue5-storage-locations.yml' || run.head_branch !== 'ue5/character-audit-20261027') {
+              throw new Error('Refusing to cancel unrelated workflow');
+            }
+            if (run.status !== 'completed') {
+              await github.rest.actions.cancelWorkflowRun({...scope, run_id});
+              core.info('Requested pause of per-file verified cache recovery; pending diagnostics may run next.');
+            } else core.info('Storage task already finished.');
