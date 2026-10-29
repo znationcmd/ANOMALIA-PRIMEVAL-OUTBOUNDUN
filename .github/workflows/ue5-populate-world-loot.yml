@@ -1,4 +1,4 @@
-name: ANOMALIA loot and spatial inventory gameplay verification
+name: ANOMALIA loot and account interaction verification
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -21,12 +21,13 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $relative='unreal/Source/AnomaliaPrimeval/Tests/AnomaliaLootPIETests.cpp'
-          $target='D:/ANOMALIA/unreal/Source/AnomaliaPrimeval/Tests/AnomaliaLootPIETests.cpp'
-          $source=Join-Path $env:GITHUB_WORKSPACE $relative
-          if((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash){
-            Copy-Item $target ($target+".before-grid-test-$env:GITHUB_RUN_ID.bak")
-            Copy-Item $source $target -Force
+          foreach($relative in @('AnomaliaInventoryWidget.cpp','Tests/AnomaliaLootPIETests.cpp')){
+            $source=Join-Path $env:GITHUB_WORKSPACE ("unreal/Source/AnomaliaPrimeval/"+$relative)
+            $target=Join-Path 'D:/ANOMALIA/unreal/Source/AnomaliaPrimeval' $relative
+            if((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash){
+              Copy-Item $target ($target+".before-account-fix-$env:GITHUB_RUN_ID.bak")
+              Copy-Item $source $target -Force
+            }
           }
           $build='C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat'
           & $build AnomaliaPrimevalEditor Win64 Development '-Project=D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
