@@ -1,4 +1,4 @@
-name: UE5 populated map validation and owned Editor update
+name: ANOMALIA’Z PRIGIMALIA — UE5 populated map validation and owned Editor update
 on:
   workflow_dispatch:
   push:

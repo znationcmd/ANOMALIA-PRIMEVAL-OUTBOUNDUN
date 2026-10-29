@@ -9,7 +9,7 @@ import {WebSocketServer,WebSocket} from 'ws';
 import {randomUUID,randomBytes,timingSafeEqual} from 'node:crypto';
 import {pathToFileURL} from 'node:url';
 const equal=(a,b)=>{const x=Buffer.from(String(a??'')),y=Buffer.from(String(b??''));return x.length===y.length&&timingSafeEqual(x,y)};
-export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverName='ANOMALIA PRIMEVAL OUTBOUNDUN',thirdPersonAllowed=true,timeMultiplier=1,serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
+export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',maxPlayers=16,mode,serverName='ANOMALIA’Z PRIGIMALIA',thirdPersonAllowed=true,timeMultiplier=1,serverId='main',dataRoot='server-data',adminKey=randomBytes(32).toString('hex')}={}){
  serverId=normalizeServerId(serverId);
  const log=(event,details={},file='Server.log')=>{try{appendServerLog({dataRoot,serverId,file,event,details})}catch(error){console.warn('Log write failed:',error.message)}};
  log('server-start',{port,maxPlayers,mode:mode||'pve'});
@@ -18,7 +18,7 @@ export function createMultiplayerServer({port=2303,host='0.0.0.0',password='',ma
  try{objects=validatePlacements({schemaVersion:1,objects:saved.objects});revision=Math.max(0,Number(saved.revision)||0)}catch{}
  const persist=()=>writeServerDocument(dataRoot,serverId,'world.json',{schemaVersion:1,objects,mode:activeMode,revision});
  const players=new Map();
- const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({game:'ANOMALIA PRIMEVAL OUTBOUNDUN',name:serverName,protocol:2,serverId,mode:activeMode,players:players.size,maxPlayers,thirdPersonAllowed,timeMultiplier,revision}));});
+ const server=http.createServer((req,res)=>{res.writeHead(200,{'Content-Type':'application/json','Cache-Control':'no-store'});res.end(JSON.stringify({game:'ANOMALIA’Z PRIGIMALIA',name:serverName,protocol:2,serverId,mode:activeMode,players:players.size,maxPlayers,thirdPersonAllowed,timeMultiplier,revision}));});
  const wss=new WebSocketServer({server,maxPayload:256*1024,perMessageDeflate:false});
  const send=(ws,value)=>{if(ws.readyState===WebSocket.OPEN&&ws.bufferedAmount<512*1024)ws.send(JSON.stringify(value))};
  const broadcast=value=>{for(const ws of players.keys())send(ws,value)};
@@ -89,5 +89,5 @@ if(process.argv[1]&&import.meta.url===pathToFileURL(process.argv[1]).href){
  const settings=loadServerSettings({dataRoot,serverId});
  const instance=createMultiplayerServer({port:settings.port,password:settings.password,maxPlayers:settings.maxPlayers,serverName:settings.name,thirdPersonAllowed:settings.thirdPerson,timeMultiplier:settings.timeMultiplier,serverId,dataRoot,mode:settings.mode,adminKey:process.env.SERVER_ADMIN_KEY||randomBytes(32).toString('hex')});
  const port=settings.port;
- console.log('ANOMALIA server :'+port+' · ID '+instance.serverId+' · '+instance.mode+' · data isolated');
+ console.log('ANOMALIA’Z PRIGIMALIA server :'+port+' · ID '+instance.serverId+' · '+instance.mode+' · data isolated');
 }

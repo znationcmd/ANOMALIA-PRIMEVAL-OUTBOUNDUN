@@ -4,11 +4,18 @@ New-Item -ItemType Directory -Path $OutputDirectory -Force|Out-Null
 $shell=New-Object -ComObject WScript.Shell
 $desktop=[Environment]::GetFolderPath('Desktop')
 $public=[Environment]::GetFolderPath('CommonDesktopDirectory')
+function Resolve-BrandShortcut([string]$folder,[string[]]$names) {
+    foreach ($name in $names) {
+        $candidate=Join-Path $folder $name
+        if (Test-Path -LiteralPath $candidate) { return $candidate }
+    }
+    return Join-Path $folder $names[0]
+}
 $tests=@(
-    @{name='Editor';shortcut=(Join-Path $public 'ANOMALIA Editor.lnk');process='ANOMALIA Editor';timeout=20},
-    @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=45},
-    @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=180},
-    @{name='UnrealEditor';shortcut=(Join-Path $desktop 'ANOMALIA - Unreal.lnk');process='UnrealEditor';timeout=120}
+    @{name='Editor';shortcut=(Resolve-BrandShortcut $public @('ANOMALIA’Z PRIGIMALIA Editor.lnk','ANOMALIA Editor.lnk'));process='ANOMALIA Editor';timeout=20},
+    @{name='Tools';shortcut=(Resolve-BrandShortcut $public @('ANOMALIA’Z PRIGIMALIA Tools.lnk','ANOMALIA Tools.lnk'));process='ANOMALIA Tools';timeout=45},
+    @{name='Jouer';shortcut=(Resolve-BrandShortcut $desktop @('ANOMALIA’Z PRIGIMALIA - Jouer.lnk','ANOMALIA - Jouer.lnk'));process='AnomaliaPrimeval';timeout=180},
+    @{name='UnrealEditor';shortcut=(Resolve-BrandShortcut $desktop @('ANOMALIA’Z PRIGIMALIA - Unreal.lnk','ANOMALIA - Unreal.lnk'));process='UnrealEditor';timeout=120}
 )
 $results=@()
 foreach($test in $tests){

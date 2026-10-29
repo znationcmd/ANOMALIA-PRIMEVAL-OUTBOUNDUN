@@ -17,7 +17,7 @@
         "minLength": 1,
         "maxLength": 96
       },
-      "default": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+      "default": "ANOMALIA’Z PRIGIMALIA",
       "scope": "server",
       "status": "functional",
       "mechanism": "Chargé et sauvegardé par UAnomaliaConfigLibrary dans le dossier du serveur.",

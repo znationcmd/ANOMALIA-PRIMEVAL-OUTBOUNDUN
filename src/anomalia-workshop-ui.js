@@ -42,7 +42,7 @@ export function createWorkshopPanels({modsPanel,toolsPanel}){
   const status=toolsPanel.querySelector('[data-mod-status]');
   try{
    const file=toolsPanel.querySelector('[data-mod-source]').files?.[0];
-   if(!file||file.size>500000)throw Error('Choisis un export JSON ANOMALIA Editor (max 500 Ko)');
+   if(!file||file.size>500000)throw Error('Choisis un export JSON ANOMALIA’Z PRIGIMALIA Editor (max 500 Ko)');
    const source=JSON.parse(await file.text());const objects=validatePlacements(source);
    const id=toolsPanel.querySelector('[data-mod-id]').value.trim().toLowerCase();
    const name=toolsPanel.querySelector('[data-mod-name]').value.trim();

@@ -129,14 +129,14 @@ try {
     } else { Move-Item -LiteralPath $temp -Destination $current }
     $shell = New-Object -ComObject WScript.Shell
     $desktop = [Environment]::GetFolderPath('Desktop')
-    $link=Join-Path $desktop 'ANOMALIA - Unreal.lnk'
+    $link=Join-Path $desktop 'ANOMALIA’Z PRIGIMALIA - Unreal.lnk'
     $wscript=Join-Path $env:WINDIR 'System32/wscript.exe'
     $launcher=Join-Path $bootstrap 'Launch-AnomaliaUE5.vbs'
     if (Test-Path -LiteralPath $link) {
         $existing=$shell.CreateShortcut($link)
         if ($existing.Arguments -ne ('"'+$launcher+'"')) { throw 'Existing unrelated desktop shortcut preserved.' }
     } else {
-        $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$wscript;$shortcut.Arguments='"'+$launcher+'"';$shortcut.WorkingDirectory=$base;$shortcut.Description='ANOMALIA — projet Unreal mis à jour après validation';$shortcut.IconLocation=$editor+',0';$shortcut.Save()
+        $shortcut=$shell.CreateShortcut($link);$shortcut.TargetPath=$wscript;$shortcut.Arguments='"'+$launcher+'"';$shortcut.WorkingDirectory=$base;$shortcut.Description='ANOMALIA’Z PRIGIMALIA — projet Unreal mis à jour après validation';$shortcut.IconLocation=$editor+',0';$shortcut.Save()
     }
     # Restart the existing trusted repository runner at Windows sign-in; stop none.
     $runnerRoot=([IO.Path]::GetFullPath((Join-Path $env:RUNNER_WORKSPACE '../..'))).TrimEnd([IO.Path]::DirectorySeparatorChar)

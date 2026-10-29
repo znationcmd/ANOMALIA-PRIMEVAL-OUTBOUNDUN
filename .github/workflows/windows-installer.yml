@@ -1,4 +1,4 @@
-name: ANOMALIA PRIMEVAL OUTBOUNDUN — Installateur Windows EXE
+name: ANOMALIA’Z PRIGIMALIA — Installateur Windows EXE
 on:
   workflow_dispatch:
   push:
@@ -47,7 +47,7 @@ jobs:
       - name: Verifier que le setup Windows est genere
         shell: pwsh
         run: |
-          $installers = @(Get-ChildItem -Path "release/windows" -Filter "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-*-x64.exe" -File -ErrorAction Stop)
+          $installers = @(Get-ChildItem -Path "release/windows" -Filter "ANOMALIAZ-PRIGIMALIA-Setup-*-x64.exe" -File -ErrorAction Stop)
           if ($installers.Count -eq 0) { throw "Installateur Windows absent" }
           foreach ($installer in $installers) {
             if ($installer.Length -lt 10000000) { throw "Installateur suspect: fichier trop petit" }
@@ -57,8 +57,8 @@ jobs:
       - name: Publier le telechargement de l'installateur
         uses: actions/upload-artifact@v4
         with:
-          name: ANOMALIA-PRIMEVAL-OUTBOUNDUN-Installateur-Windows
-          path: release/windows/ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-*-x64.exe
+          name: ANOMALIAZ-PRIGIMALIA-Installateur-Windows
+          path: release/windows/ANOMALIAZ-PRIGIMALIA-Setup-*-x64.exe
           if-no-files-found: error
           retention-days: 90
           compression-level: 0

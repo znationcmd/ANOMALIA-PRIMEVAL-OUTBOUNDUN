@@ -1,5 +1,5 @@
 
-/** ANOMALIA PRIMEVAL OUTBOUNDUN
+/** ANOMALIA’Z PRIGIMALIA
  * Deterministic 96 x 96 km open-world terrain and hand-authored landmarks.
  * Distances and positions are metres. No copyrighted game assets.
  */

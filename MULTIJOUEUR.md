@@ -18,7 +18,7 @@ L'installateur Windows porte l'emblème ANOMALIA. Une fois installée, l'applica
 
 ## Historique — première connexion multijoueur (0.5)
 
-Le menu affiche ANOMALIA PRIMEVAL OUTBOUNDUN et propose Solo, Multijoueur et Paramètres. Le menu de démarrage est traduit en français (par défaut), allemand, russe, italien, anglais, japonais, chinois simplifié et espagnol. La langue et la qualité graphique sont conservées. Les interfaces historiques de survie et d’administration restent en français : la traduction intégrale du jeu est encore à réaliser.
+Le menu affiche ANOMALIA’Z PRIGIMALIA et propose Solo, Multijoueur et Paramètres. Le menu de démarrage est traduit en français (par défaut), allemand, russe, italien, anglais, japonais, chinois simplifié et espagnol. La langue et la qualité graphique sont conservées. Les interfaces historiques de survie et d’administration restent en français : la traduction intégrale du jeu est encore à réaliser.
 
 ## Lancer un serveur sur Windows ou Linux
 

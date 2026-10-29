@@ -1,4 +1,4 @@
-name: ANOMALIA exact Survival rig reference repair
+name: ANOMALIA’Z PRIGIMALIA — exact Survival rig reference repair
 on:
   push:
     branches: ['ue5/character-audit-20261027']

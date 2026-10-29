@@ -1,4 +1,4 @@
-name: ANOMALIA character disk audit (read only)
+name: ANOMALIA’Z PRIGIMALIA — character disk audit (read only)
 on:
   push:
     branches: ['ue5/character-audit-20261027']

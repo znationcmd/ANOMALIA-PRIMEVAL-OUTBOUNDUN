@@ -1,5 +1,5 @@
 /**
- * ANOMALIA PRIMEVAL OUTBOUNDUN — Windows installed game runtime.
+ * ANOMALIA’Z PRIGIMALIA — Windows installed game runtime.
  * Bundled 3D assets use a secure, standard local application origin, allowing
  * offline ES modules and persistent saves without file:// CORS failures.
  */
@@ -10,7 +10,7 @@ const {pathToFileURL}=require("node:url");
 const {createHash}=require("node:crypto");
 const {autoUpdater}=require("electron-updater");
 
-const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
+const GAME_TITLE="ANOMALIA’Z PRIGIMALIA";
 const SCHEME="anomalia";
 protocol.registerSchemesAsPrivileged([
  {scheme:SCHEME,privileges:{standard:true,secure:true,supportFetchAPI:true,stream:true}}
@@ -56,7 +56,7 @@ app.whenReady().then(()=>{
  ipcMain.on('anomalia:send',(event,token,data)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token&&active.socket.readyState===1&&typeof data==='string'&&Buffer.byteLength(data)<=256*1024)active.socket.send(data);});
  ipcMain.on('anomalia:disconnect',(event,token)=>{validSender(event);const active=clientSockets.get(event.sender.id);if(active?.token===token)active.socket.close();});
  ipcMain.handle('anomalia:host',async(event,options={})=>{
-  validSender(event);const port=Number(options.port||2303),password=String(options.password||''),maxPlayers=Number(options.maxPlayers||16),serverName=String(options.name||'ANOMALIA PRIMEVAL OUTBOUNDUN').trim();if(!Number.isInteger(port)||port<1024||port>65535||password.length>128||!Number.isInteger(maxPlayers)||maxPlayers<1||maxPlayers>64||!serverName||serverName.length>96)throw Error('Invalid server options');
+  validSender(event);const port=Number(options.port||2303),password=String(options.password||''),maxPlayers=Number(options.maxPlayers||16),serverName=String(options.name||'ANOMALIA’Z PRIGIMALIA').trim();if(!Number.isInteger(port)||port<1024||port>65535||password.length>128||!Number.isInteger(maxPlayers)||maxPlayers<1||maxPlayers>64||!serverName||serverName.length>96)throw Error('Invalid server options');
   const gameMode=String(options.mode||'pve');if(!['rp','pvp','pve','mixed'].includes(gameMode))throw Error('Invalid game mode');
   if(multiplayerServer){await multiplayerServer.close();multiplayerServer=null;}
   const {createMultiplayerServer}=await import('../server/server.mjs');const legacyWorld=path.join(app.getPath('userData'),'world-server.json');

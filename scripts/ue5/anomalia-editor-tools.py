@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""ANOMALIA Editor/Tools data-only CLI for offline server layout and mod scaffolds.
+"""ANOMALIA’Z PRIGIMALIA Editor/Tools data-only CLI for offline server layout and mod scaffolds.
 
 This is not a live multiplayer editor or a cross-platform mod publisher.
 It writes ONLY Saved/Servers/<server-id>/Editor/world.json and refuses invalid scopes.

@@ -1,4 +1,4 @@
-name: UE5 Tactical Character native verification — no installation
+name: ANOMALIA’Z PRIGIMALIA — UE5 Tactical Character native verification — no installation
 on:
   push:
     branches: ['ue5/tactical-survivor-p0-20261027']

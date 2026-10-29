@@ -12,7 +12,7 @@
 .editor-panel{position:fixed;right:12px;top:15px;bottom:15px;overflow:auto;width:300px;max-width:85vw;padding:18px;background:#101b20ef;border:1px solid #78917f;box-shadow:0 10px 50px #0009;z-index:100;color:#e0e8dc}.editor-panel h2{font-size:18px}.editor-panel p,.editor-panel small{font-size:11px;line-height:1.5;color:#b0c0b4}.editor-panel label{display:grid;gap:5px;margin:9px 0;font-size:12px}.editor-panel input,.editor-panel select{padding:9px;width:100%;box-sizing:border-box;background:#1e2b2b;border:1px solid #52665a;color:white}.editor-panel button{width:100%;padding:9px;margin:3px 0;font-size:12px}.editor-row{display:flex;gap:5px}.editing-map #reticle,.editing-map #quest{display:none}
 .build-menu{max-width:760px;margin:auto;line-height:1.6}.build-menu label{display:grid;gap:6px;margin:12px 0}.build-menu select{background:#17242a;color:#e1e9df;border:1px solid #668275;padding:12px}.build-menu p{font-size:13px;color:#c1d0c7}.build-menu button{margin:5px}#nearBuild>div{border-bottom:1px solid #56695c;padding:6px;font-size:12px}
 
-/* ANOMALIA original CMD emblem: startup and Windows branding */
+/* CMD game brand emblem: startup and Windows branding */
 .anomalia-brand-emblem{width:112px;height:112px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 0 28px #ab45ff80,0 0 7px #61a9ff;}
 
 /* Inventory pass: DayZ-inspired screen geometry, direct storage reads from the existing state. */

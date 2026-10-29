@@ -1,4 +1,4 @@
-name: ANOMALIA lightweight host check before character and E39 continuation
+name: ANOMALIA’Z PRIGIMALIA — lightweight host check before character and E39 continuation
 on:
   push:
     branches: ['ue5/character-audit-20261027']

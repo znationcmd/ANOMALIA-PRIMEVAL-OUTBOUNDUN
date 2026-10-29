@@ -11,7 +11,7 @@ struct FAnomaliaServerSettings
     GENERATED_BODY()
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Server")
-    FString Name = TEXT("ANOMALIA PRIMEVAL OUTBOUNDUN");
+    FString Name = TEXT("ANOMALIA’Z PRIGIMALIA");
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Server")
     int32 Port = 2303;
