@@ -1,0 +1,54 @@
+name: ANOMALIA’Z PRIGIMALIA - Windows native readiness (read only)
+on:
+  push:
+    branches:
+      - rebrand/full-anomaliaz-prigimalia-20261029
+    paths:
+      - '.github/workflows/prigimalia-native-readiness.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  inspect-native-host:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect availability without changing original project
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $gamePath = 'D:\\ANOMALIA'
+          $hasUE = -not [string]::IsNullOrWhiteSpace($env:UE_ROOT) -and (Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe'))
+          $hasProject = Test-Path -LiteralPath $gamePath -PathType Container
+          $hasGit = Get-Command git -ErrorAction SilentlyContinue
+          Write-Host "HOST WINDOWS READY: $([System.Environment]::OSVersion.Platform -eq 'Win32NT')"
+          Write-Host "UNREAL ENGINE CONFIGURED: $hasUE"
+          Write-Host "ORIGINAL GAME DIRECTORY DETECTED: $hasProject"
+          Write-Host "GIT AVAILABLE: $([bool]$hasGit)"
+          if ($hasProject) {
+            $old = Test-Path -LiteralPath (Join-Path $gamePath 'unreal\\AnomaliaPrimeval.uproject')
+            $new = Test-Path -LiteralPath (Join-Path $gamePath 'unreal\\AnomaliaZPrigimalia.uproject')
+            Write-Host "ORIGINAL UE PROJECT EXISTS: $old"
+            Write-Host "NEW UE PROJECT ALREADY EXISTS: $new"
+          }
+          if (-not $hasUE) { throw 'Unreal Engine executable not found on the connected native host.' }
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate isolated rebrand checkout source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $proj = Join-Path $env:GITHUB_WORKSPACE 'unreal\\AnomaliaZPrigimalia.uproject'
+          $module = Join-Path $env:GITHUB_WORKSPACE 'unreal\\Source\\AnomaliaZPrigimalia\\AnomaliaZPrigimalia.Build.cs'
+          if (-not (Test-Path -LiteralPath $proj)) { throw 'Renamed project file missing from isolated checkout.' }
+          if (-not (Test-Path -LiteralPath $module)) { throw 'Renamed C++ module missing from isolated checkout.' }
+          Write-Host 'RENAMED GAME SOURCE VERIFIED: true'
