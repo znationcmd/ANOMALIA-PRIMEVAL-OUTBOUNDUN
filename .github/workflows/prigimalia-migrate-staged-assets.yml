@@ -65,7 +65,7 @@ jobs:
           $ErrorActionPreference='Stop'
           $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
-          & $bat 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE'
+          & $bat 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
           if($LASTEXITCODE -ne 0){throw "Compilation failed ($LASTEXITCODE); assets left untouched in stage"}
           Write-Host 'STAGED_PRIGIMALIA_EDITOR_CPP_BUILD_SUCCESS=true'
       - name: Inspect actual assets through native Unreal Editor without modification
@@ -112,3 +112,23 @@ jobs:
           & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts/migrate-prigimalia-package-references.py') '--root' 'D:\ANOMALIAZ-PRIGIMALIA' '--apply'
           if($LASTEXITCODE -ne 0){throw 'Updating staged map references failed'}
           Write-Host 'STAGED_GAME_MAP_REFERENCES_UPDATED=true'
+      - name: Rebuild native Editor and Game after verified package reference changes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $bat $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw "Post-migration build failed: $target"}
+          }
+          Write-Host 'POST_MIGRATION_EDITOR_AND_GAME_BUILD_SUCCESS=true'
+      - name: Preserve native migration reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prigimalia-native-migration-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.log
