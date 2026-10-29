@@ -1,0 +1,108 @@
+name: ANOMALIA’Z PRIGIMALIA - Install approved logo on Windows PC
+on:
+  push:
+    branches:
+      - rebrand/full-anomaliaz-prigimalia-20261029
+    paths:
+      - .github/workflows/prigimalia-install-approved-logo-windows.yml
+      - build/icon.ico
+      - unreal/Build/Windows/Application.ico
+      - unreal/SourceAssets/Branding/prigimalia-installed-logo.jpg
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  install-logo:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Install approved logo ONLY in independent PRIGIMALIA copy
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $original='D:\ANOMALIA'
+          $marker=Join-Path $stage 'unreal/Saved/BrandMigration/verified-source-backup.marker'
+          $project=Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject'
+          if(-not (Test-Path -LiteralPath $marker)){throw 'Staged project clone has not been verified; refusing installation.'}
+          if(-not (Test-Path -LiteralPath $project)){throw 'Renamed Unreal project missing; refusing installation.'}
+          if(-not (Test-Path -LiteralPath (Join-Path $original 'unreal/AnomaliaPrimeval.uproject'))){throw 'Original project is missing; refusing installation.'}
+          $srcRoot=[IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\')
+          $destRoot=[IO.Path]::GetFullPath($stage).TrimEnd('\')
+          if($srcRoot -ieq $destRoot -or $srcRoot -ieq [IO.Path]::GetFullPath($original).TrimEnd('\')){throw 'Unsafe checkout source'}
+          $files=@(
+            'build/icon.ico',
+            'build/prigimalia-logo-small.jpg',
+            'public/prigimalia-logo.jpg',
+            'unreal/Build/Windows/Application.ico',
+            'unreal/SourceAssets/Branding/prigimalia-installed-logo.jpg'
+          )
+          foreach($rel in $files){
+            $source=Join-Path $srcRoot $rel
+            $dest=Join-Path $stage $rel
+            if(-not (Test-Path -LiteralPath $source)){throw "Approved icon file missing in GitHub checkout: $rel"}
+            if((Get-Item -LiteralPath $source).Length -lt 1000){throw "Icon file is suspiciously small: $rel"}
+            New-Item -ItemType Directory -Path (Split-Path -Parent $dest) -Force | Out-Null
+            if(Test-Path -LiteralPath $dest){
+              $backup=$dest+'.before-approved-prigimalia-logo.bak'
+              if(-not (Test-Path -LiteralPath $backup)){Copy-Item -LiteralPath $dest -Destination $backup -ErrorAction Stop}
+            }
+            Copy-Item -LiteralPath $source -Destination $dest -Force -ErrorAction Stop
+            $srcHash=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
+            $dstHash=(Get-FileHash -LiteralPath $dest -Algorithm SHA256).Hash
+            if($srcHash -ne $dstHash){throw "Logo hash mismatch on installed staged project: $rel"}
+            Write-Host "BRANDED_FILE_VERIFIED=$rel"
+          }
+          $icon=Join-Path $stage 'build/icon.ico'
+          $shortcutCount=0
+          $shell=New-Object -ComObject WScript.Shell
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          $programs=[Environment]::GetFolderPath('Programs')
+          foreach($dir in @($desktop,$programs)){
+            if(-not (Test-Path -LiteralPath $dir)){continue}
+            foreach($link in @(Get-ChildItem -LiteralPath $dir -Filter '*.lnk' -File -Recurse -ErrorAction SilentlyContinue)){
+              try{
+                $sc=$shell.CreateShortcut($link.FullName)
+                $target=[string]$sc.TargetPath
+                if($target.StartsWith($stage+'\',[StringComparison]::OrdinalIgnoreCase) -or $target -ieq $project){
+                  $sc.IconLocation=$icon+',0'
+                  $sc.Save()
+                  $shortcutCount++
+                  Write-Host "APPROVED_LOGO_SHORTCUT_UPDATED=$($link.FullName)"
+                }
+              }catch{ Write-Host "Skipped inaccessible shortcut: $($link.FullName)" }
+            }
+          }
+          $proof=Join-Path $stage 'unreal/Saved/BrandMigration/approved-logo-installation.json'
+          $receipt=[ordered]@{
+            title='ANOMALIA’Z PRIGIMALIA'
+            stage=$stage
+            verifiedFiles=$files
+            shortcutUpdates=$shortcutCount
+            iconSha256=(Get-FileHash -LiteralPath $icon -Algorithm SHA256).Hash
+            originalProjectUntouched=$true
+            executableResourceRebuildRequired=$true
+            installerResourceRebuildRequired=$true
+          }
+          $receipt|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $proof -Encoding UTF8
+          Write-Host 'APPROVED_PRIGIMALIA_ICON_INSTALLED_ON_PC=true'
+          Write-Host 'ORIGINAL_ANOMALIA_UNCHANGED=true'
+      - name: Upload installation receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-Approved-Logo-Windows-Installation-Receipt
+          path: D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/approved-logo-installation.json
+          if-no-files-found: warn
