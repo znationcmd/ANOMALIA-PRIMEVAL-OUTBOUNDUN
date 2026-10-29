@@ -27,6 +27,13 @@ jobs:
           $desktop=[Environment]::GetFolderPath('Desktop')
           $public=[Environment]::GetFolderPath('CommonDesktopDirectory')
           $shell=New-Object -ComObject WScript.Shell
+          function Resolve-BrandShortcut([string]$folder,[string[]]$names) {
+            foreach ($name in $names) {
+              $candidate=Join-Path $folder $name
+              if (Test-Path -LiteralPath $candidate) { return $candidate }
+            }
+            return Join-Path $folder $names[0]
+          }
           $tests=@(
             @{name='Editor';shortcut=(Resolve-BrandShortcut $public @('ANOMALIA’Z PRIGIMALIA Editor.lnk','ANOMALIA Editor.lnk'));process='ANOMALIA Editor';timeout=12},
             @{name='Tools';shortcut=(Resolve-BrandShortcut $public @('ANOMALIA’Z PRIGIMALIA Tools.lnk','ANOMALIA Tools.lnk'));process='ANOMALIA Tools';timeout=30},
