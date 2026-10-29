@@ -32,7 +32,7 @@ jobs:
           foreach($file in Get-ChildItem $source -Recurse -File){
             $relative=$file.FullName.Substring($source.Length).TrimStart('/','\')
             $target=Join-Path $destination $relative
-            if(!(Test-Path -LiteralPath $target)){$missing+=@{source=$file.FullName;target=$target;bytes=$file.Length}}
+            if(!(Test-Path -LiteralPath $target)){$missing+=[pscustomobject]@{source=$file.FullName;target=$target;bytes=$file.Length}}
           }
           $required=($missing | Measure-Object -Property bytes -Sum).Sum
           $free=(Get-PSDrive D).Free
