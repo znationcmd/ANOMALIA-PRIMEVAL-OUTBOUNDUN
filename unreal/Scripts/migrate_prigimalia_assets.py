@@ -1,65 +1,128 @@
-"""Rename native Unreal assets inside the Editor, never by moving .uasset files.
+"""Safe asset + map rename for ANOMALIA’Z PRIGIMALIA, exclusively inside Unreal Editor 5.8.
 
-Run through Unreal Editor Python Scripting. Default is audit only.
-For an actual migration, on a BACKUP COPY, set environment variable
-PRIGIMALIA_APPLY_RENAME=YES and run this script in Unreal Editor (not PIE).
-Do not run while anybody edits the map. Full World Partition levels must
-be separately reviewed in the editor.
+Dry-run by default. APPLY is deliberately impossible on the original D:\\ANOMALIA
+project: use an independent, fully backed up project copy. The script never
+moves or edits a .uasset or .umap file using ordinary filesystem operations.
+Run UnrealEditor-Cmd.exe -ExecutePythonScript=... on the staged copy.
 """
-import os
 import json
+import os
 from pathlib import Path
 import unreal
 
-OLD="/Game/Anomalia"
-NEW="/Game/AnomaliaZPrigimalia"
-MODE=os.environ.get("PRIGIMALIA_APPLY_RENAME","NO")
-ROOT=Path(unreal.Paths.project_dir()).resolve()
-OUTPUT=ROOT/"Saved"/"BrandMigration"/"asset-rename-report.json"
-OUTPUT.parent.mkdir(parents=True,exist_ok=True)
-api=unreal.EditorAssetLibrary
+OLD_DIR = "/Game/Anomalia"
+NEW_DIR = "/Game/AnomaliaZPrigimalia"
+APPLY = os.environ.get("PRIGIMALIA_APPLY_RENAME") == "YES"
+STAGED = os.environ.get("PRIGIMALIA_STAGED_COPY") == "YES"
+project_root = Path(unreal.Paths.project_dir()).resolve()
+project_file = Path(unreal.Paths.get_project_file_path()).resolve()
+content_dir = project_root / "Content"
+report_file = project_root / "Saved" / "BrandMigration" / "asset-rename-report.json"
+report_file.parent.mkdir(parents=True, exist_ok=True)
+api = unreal.EditorAssetLibrary
 
-def audit():
-    if not api.does_directory_exist(OLD):
+# Source and target paths are object/package paths, not filenames. AssetTools
+# handles loaded references, redirectors and serialized package identifiers.
+def old_asset_inventory():
+    if not api.does_directory_exist(OLD_DIR):
         return []
-    return sorted(set(api.list_assets(OLD,recursive=True,include_folder=False)))
+    return sorted(set(api.list_assets(OLD_DIR, recursive=True, include_folder=False)))
 
-def execute():
-    names=audit()
-    report={"newTitle":"ANOMALIA’Z PRIGIMALIA","source":OLD,"destination":NEW,
-        "applyRequested":MODE=="YES","found":len(names),
-        "renamed":False,"verified":False,"errors":[],"before":names}
-    try:
-        if MODE!="YES":
-            unreal.log_warning("DRY RUN: pass PRIGIMALIA_APPLY_RENAME=YES only on a backup copy.")
-        elif api.does_directory_exist(NEW) and api.does_directory_have_assets(NEW,recursive=True):
-            raise RuntimeError("Destination already contains assets; refuse to overwrite.")
-        elif not names:
-            unreal.log("No legacy assets: migration may have already completed.")
+def eligible_maps():
+    """Discover actual .umap packages, including maps outside /Game/Maps."""
+    if not content_dir.is_dir():
+        return []
+    items = []
+    for filepath in content_dir.rglob("*.umap"):
+        rel = filepath.relative_to(content_dir).with_suffix("")
+        path = "/Game/" + rel.as_posix()
+        name = rel.name
+        if path.startswith(OLD_DIR + "/"):
+            continue  # renamed with the directory and its external packages
+        if name.startswith("ANOMALIA_"):
+            target_name = "PRIGIMALIA_" + name[len("ANOMALIA_"):]
+        elif name == "AnomaliaWorld":
+            target_name = "PrigimaliaWorld"
         else:
-            # Asset Tools updates UE object references and creates redirectors.
-            # Direct OS moves / git mv of binary packages are deliberately forbidden.
-            if not api.rename_directory(OLD, NEW):
-                raise RuntimeError("Unreal Editor rejected directory rename")
-            report["renamed"]=True
-            report["verified"]=api.does_directory_exist(NEW) and all(
-                api.does_asset_exist(name.replace(OLD+"/",NEW+"/",1))
-                for name in names
-            )
-            if not report["verified"]:
-                raise RuntimeError("Post-rename reference verification incomplete")
-            if not api.save_directory(NEW,only_if_is_dirty=False,recursive=True):
-                raise RuntimeError("One or more migrated assets could not be saved")
-            unreal.log("Assets moved; review redirectors & World Partition levels in Content Browser.")
-    except Exception as exc:
-        report["errors"].append(str(exc))
-        unreal.log_error("ANOMALIA’Z PRIGIMALIA asset rename: "+str(exc))
-    finally:
-        report["remainingOld"]=audit()
-        OUTPUT.write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding="utf-8")
-        unreal.log("Brand migration report: "+str(OUTPUT))
-    if report["errors"]:
-        raise RuntimeError("Asset rename failed; original backup must be retained.")
+            continue
+        target = path.rsplit("/", 1)[0] + "/" + target_name
+        items.append((path, target))
+    return sorted(items)
+
+def report_on_disk(report):
+    report_file.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+    unreal.log("PRIGIMALIA_MIGRATION_REPORT=" + str(report_file))
     return report
 
-execute()
+def migrate():
+    previous = old_asset_inventory()
+    maps = eligible_maps()
+    report = {
+        "title": "ANOMALIA’Z PRIGIMALIA",
+        "project": project_file.name,
+        "applyRequested": APPLY,
+        "stagedCopyConfirmed": STAGED,
+        "legacyFolder": OLD_DIR,
+        "newFolder": NEW_DIR,
+        "legacyAssetsFound": len(previous),
+        "legacyMapsFound": len(maps),
+        "mapRenamePlan": [{"old": a, "new": b} for a, b in maps],
+        "directoryRenamed": False,
+        "mapsRenamed": [],
+        "verified": False,
+        "errors": [],
+        "originalProjectPreserved": True,
+    }
+    if not APPLY:
+        unreal.log_warning("DRY RUN ONLY: no assets or map packages will be modified.")
+        return report_on_disk(report)
+
+    # There is no safe way to resolve binary reference dependencies via git mv.
+    # The original local project remains intact. Only a staged project copy
+    # with a renamed .uproject may be modified by this migration.
+    if not STAGED or project_file.stem != "AnomaliaZPrigimalia":
+        raise RuntimeError("Refusing apply: must be an independently staged renamed project")
+    if str(project_root).lower().startswith("d:\\anomalia\\"):
+        raise RuntimeError("Refusing apply inside original D:\\ANOMALIA project")
+    if not (project_root / "Saved" / "BrandMigration" / "verified-source-backup.marker").is_file():
+        raise RuntimeError("Refusing apply without verified backup marker on staged project")
+    if previous and api.does_directory_exist(NEW_DIR):
+        existing = api.list_assets(NEW_DIR, recursive=True, include_folder=False)
+        if existing:
+            raise RuntimeError("Destination contains assets; refusing overwrite")
+    for old, new in maps:
+        if api.does_asset_exist(new):
+            raise RuntimeError("Map destination collision: " + new)
+
+    try:
+        if previous:
+            if not api.rename_directory(OLD_DIR, NEW_DIR):
+                raise RuntimeError("Unreal could not rename the legacy asset directory")
+            report["directoryRenamed"] = True
+            updated = [name.replace(OLD_DIR + "/", NEW_DIR + "/", 1) for name in previous]
+            if not all(api.does_asset_exist(name) for name in updated):
+                raise RuntimeError("Missing target assets after folder rename")
+            if not api.save_directory(NEW_DIR, only_if_is_dirty=False, recursive=True):
+                raise RuntimeError("Failed to save one or more migrated assets")
+        # A World Partition map rename can be rejected by Unreal while the
+        # world is loaded. This is a hard failure, never a filesystem fallback.
+        for old, new in maps:
+            if not api.rename_asset(old, new):
+                raise RuntimeError("Unreal refused map rename: " + old)
+            if not api.does_asset_exist(new):
+                raise RuntimeError("Renamed map could not be resolved: " + new)
+            report["mapsRenamed"].append({"old": old, "new": new})
+        report["verified"] = (
+            not old_asset_inventory()
+            and all(api.does_asset_exist(m["new"]) for m in report["mapsRenamed"])
+        )
+        if not report["verified"]:
+            raise RuntimeError("Final asset and map validation failed")
+        unreal.log("PRIGIMALIA_MIGRATION_STAGED_ASSETS_VERIFIED=true")
+    except Exception as exc:
+        report["errors"].append(str(exc))
+        report_on_disk(report)
+        raise
+    return report_on_disk(report)
+
+migrate()
