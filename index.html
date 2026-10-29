@@ -2,9 +2,14 @@
 <html lang="fr"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><meta name="theme-color" content="#111824">
 <title>ANOMALIA’Z PRIGIMALIA — Survie en monde ouvert</title>
 <meta name="description" content="Monde ouvert 3D original : villes, montagnes, îles, bunkers à clés, métro, catacombes, bateaux et survie.">
+<link rel="preload" as="image" href="/prigimalia-startup-poster.jpg">
 <link rel="stylesheet" href="/src/style.css"></head>
 <body>
 <div id="app">
+  <!-- Temporary startup splash only: removed before the main menu becomes interactive. -->
+  <div id="launchSplash" class="prigimalia-launch-splash" role="status" aria-label="Démarrage ANOMALIA’Z PRIGIMALIA">
+    <img src="/prigimalia-startup-poster.jpg" alt="ANOMALIA’Z PRIGIMALIA — affiche de lancement" fetchpriority="high">
+  </div>
   <div id="startScreen" class="overlay start">
     <div class="start-card">
       <p class="eyebrow">UN MONDE EN RUINE · UNE HISTOIRE À ÉCRIRE</p>
@@ -42,5 +47,6 @@
   <div id="deathScreen" class="overlay hidden"><div class="start-card"><h2>VOUS ÊTES TOMBÉ</h2><p>La région vous attend encore. Votre progression reste sauvegardée.</p><button id="respawnBtn" class="action">RÉAPPARAÎTRE</button></div></div>
   <div id="crosshairHint" class="hidden"></div>
 </div>
+<script src="/src/startup-splash.js"></script>
 <script type="module" src="/src/main.js"></script>
 </body></html>
