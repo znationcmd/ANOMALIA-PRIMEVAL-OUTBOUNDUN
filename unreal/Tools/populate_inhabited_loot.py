@@ -13,7 +13,7 @@ def main():
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     lib=unreal.AnomaliaWorldImportLibrary
     def guidkey(actor):
-        return "".join("%08x"%(v & 0xffffffff) for v in actor.get_editor_property("actor_guid").to_tuple())
+        return actor.get_editor_property("actor_guid").to_string().replace("-","").replace("{","").replace("}","").lower()
     def trace(world,x,y,z,actor):
         hit=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+140),unreal.Vector(x,y,z-30),
             unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
