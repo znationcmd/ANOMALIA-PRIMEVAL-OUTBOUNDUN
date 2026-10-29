@@ -1,0 +1,100 @@
+name: ANOMALIA extract new Sketchfab sources and inspect playable update
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-sketchfab-update.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  extract:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Extract archives on D without replacing originals
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          @'
+          import pathlib,zipfile,hashlib,json,shutil,os
+          root=pathlib.Path('D:/ANOMALIA/sketchfab')
+          out=pathlib.Path('D:/ANOMALIA/SketchfabExtracted')
+          out.mkdir(exist_ok=True)
+          report={'archives':[],'unsupported':[],'modelFiles':[]}
+          def digest(p):
+              h=hashlib.sha256()
+              with p.open('rb') as f:
+                  for b in iter(lambda:f.read(1024*1024),b''):h.update(b)
+              return h.hexdigest()
+          sources=sorted(p for p in root.rglob('*') if p.is_file())
+          try:
+              for p in sources:
+                  if not zipfile.is_zipfile(p):
+                      report['unsupported'].append(str(p));continue
+                  sha=digest(p); target=out/(p.stem[:80]+'-'+sha[:12])
+                  receipt=target/'.extraction.json'
+                  if receipt.exists() and json.loads(receipt.read_text()).get('sha256')==sha:
+                      report['archives'].append({'source':str(p),'state':'already_extracted','target':str(target)});continue
+                  if target.exists():raise RuntimeError('Existing unowned target preserved: '+str(target))
+                  with zipfile.ZipFile(p) as z:
+                      infos=z.infolist();size=sum(i.file_size for i in infos)
+                      if shutil.disk_usage(out).free-size<20*1024**3:raise RuntimeError('D reserve below 20 GiB; archive preserved: '+p.name)
+                      seen=set()
+                      for i in infos:
+                          name=i.filename.replace('\\','/')
+                          rel=pathlib.PurePosixPath(name)
+                          if rel.is_absolute() or '..' in rel.parts or ':' in name or (i.external_attr>>16)&0o170000==0o120000:raise RuntimeError('Unsafe archive entry: '+p.name)
+                          key=name.casefold().rstrip('/')
+                          if key in seen:raise RuntimeError('Duplicate archive path: '+p.name)
+                          seen.add(key)
+                      stage=out/(target.name+'.partial-'+os.environ['GITHUB_RUN_ID'])
+                      if stage.exists():raise RuntimeError('Partial extraction retained: '+str(stage))
+                      stage.mkdir()
+                      for i in infos:
+                          dest=stage.joinpath(*pathlib.PurePosixPath(i.filename.replace('\\','/')).parts)
+                          if i.is_dir():dest.mkdir(parents=True,exist_ok=True);continue
+                          dest.parent.mkdir(parents=True,exist_ok=True)
+                          with z.open(i) as src,dest.open('xb') as dst:shutil.copyfileobj(src,dst,1024*1024)
+                      (stage/'.extraction.json').write_text(json.dumps({'sha256':sha,'source':str(p),'files':len(infos),'bytes':size}))
+                      stage.rename(target)
+                      report['archives'].append({'source':str(p),'state':'extracted','target':str(target),'bytes':size})
+                  print('EXTRACTED '+p.name,flush=True)
+              for p in out.rglob('*'):
+                  if p.suffix.lower() in ('.fbx','.obj','.gltf','.glb','.blend','.uasset','.umap'):
+                      report['modelFiles'].append(str(p))
+              report['state']='EXTRACTION_COMPLETE'
+          except Exception as e:
+              report['state']='INCOMPLETE';report['error']=str(e)
+          finally:
+              (out/'extraction-report.json').write_text(json.dumps(report,indent=2))
+              print(json.dumps({k:v for k,v in report.items() if k not in ('archives','modelFiles','unsupported')}))
+              print('ARCHIVES',len(report['archives']),'MODELS',len(report['modelFiles']))
+          raise SystemExit(0 if report['state']=='EXTRACTION_COMPLETE' else 1)
+          '@ | Set-Content -LiteralPath "$env:RUNNER_TEMP/extract-sketchfab.py" -Encoding UTF8
+          & $python "$env:RUNNER_TEMP/extract-sketchfab.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+      - name: Read installed game and latest native validation
+        if: always()
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $base=Join-Path $env:LOCALAPPDATA 'CMD/ANOMALIA-Windows'
+          if(Test-Path "$base/active.json"){Get-Content "$base/active.json"}
+          Get-PSDrive C,D | Select-Object Name,Free,Used | Format-Table
+          $folder=Get-ChildItem 'D:/ANOMALIA/StorageRecovery' -Directory -Filter 'loot-pie-*' | Sort-Object CreationTime -Descending | Select-Object -First 1
+          if($folder -and (Test-Path "$($folder.FullName)/index.json")){
+            $r=Get-Content "$($folder.FullName)/index.json" -Raw | ConvertFrom-Json
+            foreach($t in $r.tests){Write-Host "TEST $($t.testDisplayName) $($t.state)";foreach($e in $t.entries){if($e.event.type -eq 'Error'){Write-Host $e.event.message}}}
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: sketchfab-extraction-report
+          path: D:/ANOMALIA/SketchfabExtracted/extraction-report.json
+          if-no-files-found: warn
