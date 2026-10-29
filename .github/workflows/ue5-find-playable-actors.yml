@@ -28,7 +28,7 @@ jobs:
           for a in registry.get_all_assets():
               path=str(a.package_name)
               cls=str(a.asset_class_path.asset_name)
-              if cls in ('Blueprint','AnimBlueprint','SkeletalMesh','BlendSpace','BlendSpace1D') and any(k in path.lower() for k in ('e39','quinn','manny','shepherd','survivor','survivalcharacter','thirdperson')):
+              if cls in ('Blueprint','AnimBlueprint','SkeletalMesh','BlendSpace','BlendSpace1D') and any(k in path.lower() for k in ('e39','bmw','chaos','/anomalia/vehicles/','quinn','manny','shepherd','survivor','survivalcharacter','thirdperson')):
                   rows.append({'path':path,'class':cls})
           print('PLAYABLE_ASSET_PATHS '+json.dumps(rows))
           '@ | Set-Content "$out/find.py" -Encoding UTF8
