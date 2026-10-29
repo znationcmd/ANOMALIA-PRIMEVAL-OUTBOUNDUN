@@ -23,15 +23,28 @@ jobs:
           const output=path.join('C:/ANOMALIA-Validation/Reports','craft-gear-'+process.env.GITHUB_RUN_ID);
           fs.mkdirSync(output,{recursive:true});
           fs.appendFileSync(process.env.GITHUB_ENV,'GEAR_AUDIT_OUTPUT='+output+'\n');
-          const roots=['C:/ANOMALIA-Validation/c40543166274/unreal/Content','C:/ANOMALIA/unreal/Content','D:/ANOMALIA/FabImports','D:/MixamoAnimations','D:/Animations','D:/ANOMALIA/unreal/Content'];
-          const pattern=/prone|crouch|crawl|lying|lie.down|stand.to|punch|boxing|shepherd|dog|survival.character|citysample|city.sample|derelict|sleep|insurgent|knife|dagger|bayonet|bandage|gauze|medical.tape|rope|splint|saddle|cloth|rags|fiber|pouch|holster|vest|boot|assault|punch|melee|combat|rifle.*(idle|aim|hold)/i;
-          const report={commit:process.env.GITHUB_SHA,roots:[],matches:[],errors:[],scope:'Read-only filenames; not proof of asset compatibility or visual acceptance'};
-          function walk(dir){let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
-            for(const e of entries){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if((/\.(fbx|bvh)$/i.test(e.name))||(/\.(uasset|glb|gltf|blend|zip)$/i.test(e.name)&&pattern.test(p))||/\.uproject$/i.test(e.name))report.matches.push({path:p,bytes:fs.statSync(p).size});}}
-          for(const root of roots){if(fs.existsSync(root))console.log('ROOT_ENTRIES '+root+' '+JSON.stringify(fs.readdirSync(root)));const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root);}
-          fs.writeFileSync(path.join(output,'craft-gear-assets.json'),JSON.stringify(report,null,2));
-          console.log(JSON.stringify(report,null,2));
-          if(!report.roots.some(r=>r.exists))throw Error('No expected UE Content directory found');
+          const roots=['D:/ANOMALIA/FabImports/DerelictCorridorMegascans'];
+          const report={scope:'Read-only building source inventory, not gameplay verification',roots:[],projects:[],candidates:[],counts:{},errors:[]};
+          function walk(dir,depth=0,locate=false){
+            if(depth>16)return;
+            let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
+            for(const e of entries){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);
+              if(e.isDirectory()){
+                if(/^(Intermediate|DerivedDataCache|Binaries|Saved|node_modules|\.git)$/i.test(e.name))continue;
+                if(locate&&/city.?sample/i.test(e.name)&&!roots.includes(p))roots.push(p);
+                if(!locate||depth<4)walk(p,depth+1,locate);
+              }else if(/\.uproject$/i.test(e.name))report.projects.push(p);
+              else if(!locate&&/\.(uasset|umap)$/i.test(e.name)){
+                const ext=path.extname(e.name);report.counts[ext]=(report.counts[ext]||0)+1;
+                if(/door|interior|window|stair|floor|room|corridor/i.test(e.name))report.candidates.push({path:p,bytes:fs.statSync(p).size});
+              }
+            }
+          }
+          for(const base of ['D:/ANOMALIA','D:/Unreal Projects','D:/Epic Games'])if(fs.existsSync(base))walk(base,0,true);
+          for(const root of [...new Set(roots)]){const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root);}
+          fs.writeFileSync(path.join(output,'building-doors-inventory.json'),JSON.stringify(report,null,2));
+          console.log(JSON.stringify({...report,candidates:report.candidates.slice(0,100),candidateCount:report.candidates.length},null,2));
+          if(!report.roots.some(r=>r.exists))throw Error('Expected source folders missing');
       - uses: actions/upload-artifact@v4
         if: always()
         with:
