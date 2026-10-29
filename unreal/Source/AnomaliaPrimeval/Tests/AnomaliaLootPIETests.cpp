@@ -176,6 +176,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         {
             Input(EKeys::Gamepad_Special_Left,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
+            if (auto* Account=FindButton(TEXT("BankTab"))) Account->OnClicked.Broadcast();
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
             UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;
             if (!Deposit && Stack)
