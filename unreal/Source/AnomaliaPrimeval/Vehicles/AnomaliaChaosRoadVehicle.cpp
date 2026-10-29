@@ -515,8 +515,14 @@ void AAnomaliaChaosRoadVehicle::UpdateRoadLights()
     const auto* State=GetWorld()?GetWorld()->GetGameState():nullptr;
     const double Time=State?State->GetServerWorldTimeSeconds():(GetWorld()?GetWorld()->GetTimeSeconds():0);
     const bool bFlash=FMath::Fmod(Time,.8)<.4;
+    const bool bAuthoredPositions=IndicatorPositionsCm.Num()==IndicatorLights.Num() &&
+        !IndicatorPositionsCm.ContainsByPredicate([](const FVector& P){return P.ContainsNaN() || P.GetAbsMax()>1000.f;});
     for(int32 Index=0;Index<IndicatorLights.Num();++Index)
-        if(IndicatorLights[Index])IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
+    {
+        if(!IndicatorLights[Index])continue;
+        if(bAuthoredPositions)IndicatorLights[Index]->SetRelativeLocation(IndicatorPositionsCm[Index]);
+        IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
+    }
 }
 
 float AAnomaliaChaosRoadVehicle::GetUnladenMassKg() const
