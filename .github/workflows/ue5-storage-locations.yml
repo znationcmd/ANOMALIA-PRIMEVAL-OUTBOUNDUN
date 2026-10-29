@@ -14,16 +14,8 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $active=@(Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor -ErrorAction SilentlyContinue)
-          if($active.Count){throw 'Epic or Unreal is still running'}
-          $root='C:\ProgramData\Epic\EpicGamesLauncher\VaultCache'
-          foreach($d in Get-ChildItem -LiteralPath $root -Directory){
-            Write-Output "CACHE $($d.FullName)"
-            Get-ChildItem -LiteralPath $d.FullName -Force | Select-Object -First 8 Name,Attributes,Length | ConvertTo-Json -Compress | Write-Output
-            & robocopy $d.FullName 'D:\ANOMALIA\StorageAuditDryRunOnly' /L /E /XJ /BYTES /NFL /NDL /NJH /R:0 /W:0
+          foreach($p in @('C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data','C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\Derelict31b645c4b988V1\data')){
+            Write-Output "DATA_ROOT $p"
+            Get-ChildItem -LiteralPath $p -Force | Select-Object -First 20 Name,Attributes,Length | ConvertTo-Json -Compress | Write-Output
           }
-          foreach($p in @('D:\ANOMALIA\FabImports\CitySample','D:\ANOMALIA\FabImports\DerelictCorridorMegascans')){
-            Write-Output "DEST $p"
-            Get-ChildItem -LiteralPath $p -Force | Select-Object -First 15 Name,Attributes,Length | ConvertTo-Json -Compress | Write-Output
-          }
-          exit 0
+          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID,FreeSpace,Size | ConvertTo-Json -Compress | Write-Output
