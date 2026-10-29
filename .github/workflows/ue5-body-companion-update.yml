@@ -23,7 +23,7 @@ jobs:
           $ErrorActionPreference='Stop'
           # User confirmed closing Unreal; remove only the observed windowless leftover.
           $leftover=Get-CimInstance Win32_Process -Filter "ProcessId=21676"
-          if($leftover -and $leftover.Name -eq 'UnrealEditor.exe' -and $leftover.CommandLine -like '*D:\\ANOMALIA\\unreal\\AnomaliaPrimeval.uproject*'){
+          if($leftover -and $leftover.Name -eq 'UnrealEditor.exe' -and $leftover.CommandLine -like '*AnomaliaPrimeval.uproject*'){
             $p=Get-Process -Id 21676 -ErrorAction SilentlyContinue
             if($p -and [string]::IsNullOrWhiteSpace($p.MainWindowTitle) -and $p.StartTime -lt (Get-Date).AddMinutes(-5)){
               Stop-Process -Id 21676 -ErrorAction Stop
