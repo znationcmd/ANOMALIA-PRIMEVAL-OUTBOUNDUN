@@ -46,6 +46,10 @@ def migrate(root:Path,apply:bool):
         new_asset=new.rsplit("/",1)[-1]
         map_replacements.append((old+"."+old_asset,new+"."+new_asset))
         map_replacements.append((old, new))
+        # Exact quoted short names are used by native map-specific logic.
+        # Keep save keys, API macros and unconfirmed map names unchanged.
+        for quote in ('"', "'"):
+            map_replacements.append((quote+old_asset+quote, quote+new_asset+quote))
     replacements = REPLACEMENTS + tuple(map_replacements)
     updates=[]
     for folder in DIRECTORIES:
