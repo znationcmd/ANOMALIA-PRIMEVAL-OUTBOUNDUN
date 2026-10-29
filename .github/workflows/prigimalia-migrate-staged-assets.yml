@@ -19,6 +19,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
           clean: false
           persist-credentials: false
       - name: Assert full independent Windows project clone is verified
