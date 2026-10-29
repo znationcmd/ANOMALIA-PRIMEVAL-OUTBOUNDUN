@@ -169,5 +169,29 @@ class UnrealPortTests(unittest.TestCase):
         self.assertNotIn("rmtree(", source)
         self.assertNotIn("unlink(", source)
 
+
+    def test_rebrand_preserves_unreal_core_redirects(self):
+        """The renamed module must still resolve classes stored by legacy Blueprints."""
+        ini = (ROOT / "unreal" / "Config" / "DefaultEngine.ini").read_text(encoding="utf-8")
+        redirects = [
+            line.strip() for line in ini.splitlines()
+            if line.strip().startswith(("+ClassRedirects=", "+StructRedirects=", "+EnumRedirects="))
+        ]
+        self.assertGreaterEqual(len(redirects), 90)
+        self.assertEqual(len(redirects), len(set(redirects)), "CoreRedirects must not contain duplicates")
+        for line in redirects:
+            self.assertIn('OldName="/Script/AnomaliaPrimeval.', line)
+            self.assertIn('NewName="/Script/AnomaliaZPrigimalia.', line)
+            self.assertNotIn('OldName="/Script/AnomaliaZPrigimalia.', line)
+        self.assertIn(
+            'OldGameName="/Script/AnomaliaPrimeval",NewGameName="/Script/AnomaliaZPrigimalia"',
+            ini,
+        )
+        self.assertIn(
+            'GlobalDefaultGameMode=/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaGameMode',
+            ini,
+        )
+        self.assertTrue((ROOT / "unreal" / "AnomaliaZPrigimalia.uproject").is_file())
+
 if __name__ == "__main__":
     unittest.main()
