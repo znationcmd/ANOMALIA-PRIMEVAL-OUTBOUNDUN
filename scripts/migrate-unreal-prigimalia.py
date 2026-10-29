@@ -42,6 +42,8 @@ def change_general(src: str, path: Path) -> str:
     src = src.replace(OLD_MODULE, NEW_MODULE)
     src = src.replace("ANOMALIA PRIMEVAL OUTBOUNDUN", NEW_TITLE)
     src = src.replace("ANOMALIA_PRIMEVAL_OUTBOUNDUN", "ANOMALIAZ_PRIGIMALIA")
+    src = src.replace("Config/Anomalia/", "Config/AnomaliaZPrigimalia/")
+    src = src.replace("AnomaliaSourceCommit", "AnomaliaZPrigimaliaSourceCommit")
     # Correct all file references to C++ module and headers in scripts/tests/docs.
     if path.suffix in {".py",".ps1",".vbs",".cmd",".mjs",".js",".cjs",".md",".txt",".ini",".json",".yml",".yaml",".xml",".cfg",".html",".cs"}:
         src = re.sub(r"(?<=/)(Anomalia)(?=[A-Z][A-Za-z0-9]*\\.(?:h|cpp|generated\\.h))",
@@ -114,8 +116,7 @@ def main():
         elif rel==Path("unreal")/(OLD_MODULE+".uproject"):
             new_rel=Path("unreal")/(NEW_MODULE+".uproject")
         elif rel.parts[:3]==("unreal","Config","Anomalia"):
-            # Existing cooked paths are handled by a backward-compatible copy in the editor.
-            new_rel=rel
+            new_rel=Path(str(rel).replace("unreal/Config/Anomalia/","unreal/Config/AnomaliaZPrigimalia/"))
         if changed!=original or new_rel!=rel:
             file_changes.append((str(rel),str(new_rel)))
             if args.apply:
@@ -141,7 +142,7 @@ def main():
                 content+="\n"+record
         content=content.replace('NewGameName="/Script/'+OLD_MODULE+'"',
                                 'NewGameName="/Script/'+NEW_MODULE+'"')
-        content=content.replace('GlobalDefaultGameMode=/Script/'+OLD_MODULE+'.AnomaliaGameMode',
+        content=content.replace('GlobalDefaultGameMode=/Script/'+NEW_MODULE+'.AnomaliaGameMode',
                                 'GlobalDefaultGameMode=/Script/'+NEW_MODULE+'.'+NEW_MODULE+'GameMode')
         if args.apply:
             config.write_text(content,encoding="utf-8")
