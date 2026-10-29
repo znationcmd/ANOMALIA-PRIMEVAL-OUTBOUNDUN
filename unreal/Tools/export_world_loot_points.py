@@ -48,7 +48,7 @@ def export(map_name, layout_file, tiers_file, catalog_files):
         if any(not math.isfinite(v) or abs(v) > 2400000 for v in xyz):
             raise ValueError("Marker outside supported world bounds")
         # Actor GUID remains stable when a marker is renamed or the editor restarts.
-        guid = str(actor.get_actor_guid())
+        guid = str(actor.get_editor_property("actor_guid"))
         ident = "world-" + hashlib.sha256((map_name + ":" + guid).encode()).hexdigest()[:32]
         row = dict(id=ident, map=map_name, buildingType=kinds[0], x=xyz[0], y=xyz[1], z=xyz[2])
         if cats: row["categories"] = sorted(set(cats))
