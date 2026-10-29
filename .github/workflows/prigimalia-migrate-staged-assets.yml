@@ -48,6 +48,16 @@ jobs:
           }
           Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject') -Destination (Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject') -Force
           Write-Host 'LATEST_REBRANDED_UE_SOURCE_APPLIED_TO_STAGE=true'
+      - name: Merge original local-only C++ files into renamed stage without overwrites
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          if(-not (Test-Path -LiteralPath $py)){throw 'Unreal bundled Python unavailable'}
+          $helper=Join-Path $env:GITHUB_WORKSPACE 'scripts/merge-local-prigimalia-cpp.py'
+          & $py $helper '--original' 'D:\ANOMALIA' '--staged' 'D:\ANOMALIAZ-PRIGIMALIA' '--apply'
+          if($LASTEXITCODE -ne 0){throw 'Local-only native files were not safely merged'}
+          Write-Host 'LOCAL_NATIVE_CPP_ADDITIONS_PRESERVED=true'
       - name: Build AnomaliaZPrigimaliaEditor using SHORT D path
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
