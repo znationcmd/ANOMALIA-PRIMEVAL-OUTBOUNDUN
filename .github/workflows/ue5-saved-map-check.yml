@@ -14,23 +14,6 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          foreach($root in @('C:/ANOMALIA/unreal','D:/ANOMALIA/unreal','D:/ANOMALIA/unreal 5.8','C:/ANOMALIA-Validation')){
-            if(!(Test-Path -LiteralPath $root)){continue}
-            Write-Output ("PROJECT_ROOT "+$root)
-            Get-ChildItem (Join-Path $root 'Content/Maps') -Recurse -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("BASE_MAP "+$_.FullName+" "+$_.Length)}
-            Get-ChildItem (Join-Path $root 'Content') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("ROOT_MAP "+$_.FullName+" "+$_.Length)}
-            Get-ChildItem (Join-Path $root 'Binaries/Win64') -Filter '*Anomalia*.dll' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("NATIVE_MODULE "+$_.FullName+" "+$_.LastWriteTime)}
-          }
-          $activePath=Join-Path $env:LOCALAPPDATA 'CMD/ANOMALIA-UE5/active.json'
-          if(Test-Path $activePath){
-            $active=Get-Content $activePath -Raw | ConvertFrom-Json
-            Write-Output ("ACTIVE_PROJECT "+$active.project)
-            Write-Output ("ACTIVE_MAP "+$active.mapPackage)
-            $base=Split-Path $active.project -Parent
-            Get-ChildItem (Join-Path $base 'Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("INSTALLED_MAP "+$_.FullName+" "+$_.Length)}
-          }
-          Write-Output ("WORKSPACE "+$env:GITHUB_WORKSPACE)
-          Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("WORKSPACE_MAP "+$_.FullName+" "+$_.Length)}
-          Get-ChildItem 'C:/ANOMALIA-Validation' -Directory -ErrorAction SilentlyContinue | ForEach-Object {
-            Get-ChildItem (Join-Path $_.FullName 'unreal/Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("VALIDATION_MAP "+$_.FullName+" "+$_.Length)}
-          }
+          $folder='D:/ANOMALIA/StorageRecovery/loot-pie-40886290256'
+          if(Test-Path "$folder/index.json"){Get-Content "$folder/index.json" -Raw}
+          Select-String "$folder/editor.log" -Pattern 'Error:|Fatal|Test Completed|Test Started|PIE timeout|Automation Test|Failed to load|failed|Assertion' -Context 1,2 | Select-Object -Last 60 | ForEach-Object {Write-Output $_}
