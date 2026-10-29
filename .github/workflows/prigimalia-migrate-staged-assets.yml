@@ -49,6 +49,8 @@ jobs:
           }
           Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject') -Destination (Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject') -Force
           Write-Host 'LATEST_REBRANDED_UE_SOURCE_APPLIED_TO_STAGE=true'
+          # Robocopy codes 0..7 are successful; do not leak them to Actions.
+          exit 0
       - name: Merge original local-only C++ files into renamed stage without overwrites
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
