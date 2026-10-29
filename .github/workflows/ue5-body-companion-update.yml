@@ -21,9 +21,15 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
+          # Close only this project's game windows gracefully; preserve any editor session.
+          $games=Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIA*' -and $_.CommandLine -match '(?i)(^|\\s)-game(\\s|$)'}
+          foreach($game in $games){
+            $process=Get-Process -Id $game.ProcessId -ErrorAction SilentlyContinue
+            if($process){$null=$process.CloseMainWindow();$null=$process.WaitForExit(10000)}
+          }
           $running=Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIA*'}
           if($running){throw 'ANOMALIA game/editor remains open. Close it before replacing the native DLL; no process was terminated.'}
-          foreach($name in @('AnomaliaSurvivor.cpp','AnomaliaGameMode.cpp','AnomaliaInventoryComponent.h','AnomaliaInventoryComponent.cpp','AnomaliaInventoryWidget.h','AnomaliaInventoryWidget.cpp','Vehicles/AnomaliaChaosRoadVehicle.h','Vehicles/AnomaliaChaosRoadVehicle.cpp','Tests/AnomaliaLootPIETests.cpp')){
+          foreach($name in @('AnomaliaSurvivor.cpp','AnomaliaGameMode.cpp','AnomaliaInventoryComponent.h','AnomaliaInventoryComponent.cpp','AnomaliaInventoryWidget.h','AnomaliaInventoryWidget.cpp','Vehicles/AnomaliaChaosRoadVehicle.h','Vehicles/AnomaliaChaosRoadVehicle.cpp','Tests/AnomaliaLootPIETests.cpp','Vehicles/AnomaliaChaosRoadProbe.cpp')){
             $dest=Join-Path 'D:/ANOMALIA/unreal/Source/AnomaliaPrimeval' $name
             Copy-Item -LiteralPath $dest -Destination "$dest.before-body-$env:GITHUB_RUN_ID.bak"
             Copy-Item -LiteralPath (Join-Path "$env:GITHUB_WORKSPACE/unreal/Source/AnomaliaPrimeval" $name) -Destination $dest
