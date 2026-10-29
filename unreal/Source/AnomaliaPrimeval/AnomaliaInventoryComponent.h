@@ -139,6 +139,11 @@ public:
 
     static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
     bool HasCraftMaterials(FName RecipeId) const;
+    bool CanCombineForRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId) const;
+    UFUNCTION(BlueprintCallable,Category="ANOMALIA|Crafting")
+    bool RequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
     /** Trusted server transaction; rollback on missing materials, space or failed profile write. */
     bool TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Crafting")
