@@ -14,6 +14,7 @@
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/Controller.h"
+#include "GameFramework/GameStateBase.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -918,6 +919,8 @@ void UAnomaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<FLifetimePro
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UAnomaliaInventoryComponent, Stacks);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent,bCombining,COND_OwnerOnly);
+    DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent,CombineStartedAt,COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UAnomaliaInventoryComponent, CashBalanceCents, COND_OwnerOnly);
     DOREPLIFETIME(UAnomaliaInventoryComponent, Compartments);
     DOREPLIFETIME(UAnomaliaInventoryComponent, WeightCapacityKg);
@@ -937,6 +940,7 @@ void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick Tick
 {
     Super::TickComponent(DeltaTime, TickType, TickFunction);
     RefreshAttachmentVisuals();
+    if(bCombining && GetOwner() && GetOwner()->HasAuthority())TickPendingCombine();
     if (!GetOwner() || !GetOwner()->HasAuthority() || !GetWorld()) return;
     const auto* Survivor = Cast<AAnomaliaSurvivor>(GetOwner());
     const auto* Mode = GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
@@ -1104,7 +1108,7 @@ bool UAnomaliaInventoryComponent::HasCraftMaterials(FName RecipeId) const
     {int32 Count=0;for(const auto& S:Stacks)if(S.ItemId==M.Key&&!IsRecoveryContainer(S.ContainerId))Count+=S.Count;if(Count<M.Value)return false;}
     return true;
 }
-bool UAnomaliaInventoryComponent::TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError)
+bool UAnomaliaInventoryComponent::TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError,int32 HeldStackId,int32 OtherStackId)
 {
     OutError.Empty();auto* Survivor=Cast<AAnomaliaSurvivor>(GetOwner());
     const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaLootSubsystem>():nullptr;
@@ -1115,8 +1119,25 @@ bool UAnomaliaInventoryComponent::TryCraftRecipe(FName RecipeId,const FString& S
     const auto* Recipe=GetHandcraftRecipes().FindByPredicate([&](const auto& R){return R.Id==RecipeId;});
     if(!Recipe||!HasCraftMaterials(RecipeId)){OutError=TEXT("Plan inconnu ou matériaux insuffisants.");return false;}
     const auto Before=Stacks;const int32 BeforeId=NextStackId;auto Candidate=Stacks;
+    const bool bSelectedPair=HeldStackId!=0 || OtherStackId!=0;
+    if(bSelectedPair && !CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))
+    {OutError=TEXT("Les objets sélectionnés ne permettent plus cette combinaison.");return false;}
     for(const auto& M:Recipe->Materials)
-    {int32 Remaining=M.Value;for(int32 I=Candidate.Num()-1;I>=0&&Remaining>0;--I){auto& S=Candidate[I];if(S.ItemId!=M.Key||IsRecoveryContainer(S.ContainerId))continue;const int32 Taken=FMath::Min(Remaining,S.Count);S.Count-=Taken;Remaining-=Taken;}}
+    {
+        int32 Remaining=M.Value;
+        if(bSelectedPair)
+        {
+            // Spend the exact selected physical stacks, held ingredient first.
+            // Equivalent items elsewhere in the inventory must never disappear.
+            for(const int32 Id : {HeldStackId,OtherStackId})
+                if(auto* S=Candidate.FindByPredicate([&](const auto& Row){return Row.StackId==Id;});
+                   S && S->ItemId==M.Key && Remaining>0)
+                {const int32 Taken=FMath::Min(Remaining,S->Count);S->Count-=Taken;Remaining-=Taken;}
+        }
+        else for(int32 I=Candidate.Num()-1;I>=0&&Remaining>0;--I)
+        {auto& S=Candidate[I];if(S.ItemId!=M.Key||IsRecoveryContainer(S.ContainerId))continue;const int32 Taken=FMath::Min(Remaining,S.Count);S.Count-=Taken;Remaining-=Taken;}
+        if(Remaining>0){OutError=TEXT("Matériaux sélectionnés insuffisants.");return false;}
+    }
     Candidate.RemoveAll([](const auto& S){return S.Count<=0;});
     Stacks=MoveTemp(Candidate);bSuppressNotifications=true;
     auto Rollback=[&](){Stacks=Before;NextStackId=BeforeId;bSuppressNotifications=false;};
@@ -1332,7 +1353,7 @@ bool UAnomaliaInventoryComponent::CanCombineForRecipe(int32 HeldStackId,int32 Ot
     const auto* Other=Stacks.FindByPredicate([&](const auto& S){return S.StackId==OtherStackId;});
     const auto* Recipe=GetHandcraftRecipes().FindByPredicate([&](const auto& R){return R.Id==RecipeId;});
     if(!Held||!Other||!Recipe||Held->ContainerId!=TEXT("hands")||IsRecoveryContainer(Other->ContainerId)||
-       Held->Condition<=0||Other->Condition<=0||Held->Count<=0||Other->Count<=0||
+       !FMath::IsFinite(Held->Condition)||!FMath::IsFinite(Other->Condition)||Held->Condition<=0||Other->Condition<=0||Held->Count<=0||Other->Count<=0||
        !Recipe->Materials.Contains(Held->ItemId)||!Recipe->Materials.Contains(Other->ItemId))return false;
     for(const auto& Material:Recipe->Materials)
     {
@@ -1344,10 +1365,83 @@ bool UAnomaliaInventoryComponent::CanCombineForRecipe(int32 HeldStackId,int32 Ot
 bool UAnomaliaInventoryComponent::RequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId)
 {
     if(!GetOwner()||!CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))return false;
-    if(GetOwner()->HasAuthority())return CraftFromOwningPlayer(RecipeId);
+    if(GetOwner()->HasAuthority())return BeginCombineOnServer(HeldStackId,OtherStackId,RecipeId);
     ServerRequestCombineRecipe(HeldStackId,OtherStackId,RecipeId);return true;
 }
 void UAnomaliaInventoryComponent::ServerRequestCombineRecipe_Implementation(int32 HeldStackId,int32 OtherStackId,FName RecipeId)
+{BeginCombineOnServer(HeldStackId,OtherStackId,RecipeId);}
+
+bool UAnomaliaInventoryComponent::BeginCombineOnServer(int32 HeldStackId,int32 OtherStackId,FName RecipeId)
 {
-    if(CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))CraftFromOwningPlayer(RecipeId);
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaGameMode>():nullptr;
+    if(!User||!User->HasAuthority()||!Mode||!User->GetController()||User->GetController()->GetPawn()!=User||
+       User->Health<=0||User->bSleeping||bCombining||!CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))return false;
+    const double Now=GetWorld()->GetTimeSeconds();
+    if(Now<NextCombineRequestTime)return false;
+    NextCombineRequestTime=Now+.2;
+    CombineHeldSnapshot=*Stacks.FindByPredicate([&](const auto& S){return S.StackId==HeldStackId;});
+    CombineOtherSnapshot=*Stacks.FindByPredicate([&](const auto& S){return S.StackId==OtherStackId;});
+    CombineRecipeId=RecipeId;CombineStartLocation=User->GetActorLocation();
+    CombineStartedAt=Now;bCombining=true;
+    SetComponentTickInterval(.05f);
+    UseMessage=TEXT("Combinaison en cours : maintenir la commande.");
+    User->ForceNetUpdate();OnInventoryUpdated.Broadcast();return true;
+}
+
+bool UAnomaliaInventoryComponent::IsPendingCombineValid() const
+{
+    const auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    if(!bCombining||!User||!User->HasAuthority()||!User->GetController()||
+       User->GetController()->GetPawn()!=User||User->Health<=0||User->bSleeping||
+       FVector::DistSquared(User->GetActorLocation(),CombineStartLocation)>FMath::Square(25.f)||
+       !CanCombineForRecipe(CombineHeldSnapshot.StackId,CombineOtherSnapshot.StackId,CombineRecipeId))return false;
+    const auto Matches=[this](const FAnomaliaInventoryStack& Expected)
+    {
+        const auto* Current=Stacks.FindByPredicate([&](const auto& S){return S.StackId==Expected.StackId;});
+        return Current && Current->ItemId==Expected.ItemId && Current->Count==Expected.Count &&
+            Current->Condition==Expected.Condition && Current->ContainerId==Expected.ContainerId &&
+            Current->X==Expected.X && Current->Y==Expected.Y && Current->bRotated==Expected.bRotated;
+    };
+    return Matches(CombineHeldSnapshot)&&Matches(CombineOtherSnapshot);
+}
+
+float UAnomaliaInventoryComponent::GetCombineProgress() const
+{
+    if(!bCombining||!GetWorld())return 0.f;
+    const auto* State=GetWorld()->GetGameState();
+    const double Now=State?State->GetServerWorldTimeSeconds():GetWorld()->GetTimeSeconds();
+    return FMath::Clamp(float((Now-CombineStartedAt)/CombineDurationSeconds),0.f,1.f);
+}
+
+void UAnomaliaInventoryComponent::CancelCombineOnServer(const FString& Message)
+{
+    if(!GetOwner()||!GetOwner()->HasAuthority()||!bCombining)return;
+    bCombining=false;CombineStartedAt=0;CombineRecipeId=NAME_None;
+    SetComponentTickInterval(1.f);UseMessage=Message;
+    GetOwner()->ForceNetUpdate();OnInventoryUpdated.Broadcast();
+}
+void UAnomaliaInventoryComponent::RequestCancelCombine()
+{
+    if(!GetOwner())return;
+    if(GetOwner()->HasAuthority())CancelCombineOnServer(TEXT("Combinaison annulée ; matériaux conservés."));
+    else ServerCancelCombine();
+}
+void UAnomaliaInventoryComponent::ServerCancelCombine_Implementation()
+{CancelCombineOnServer(TEXT("Combinaison annulée ; matériaux conservés."));}
+
+void UAnomaliaInventoryComponent::TickPendingCombine()
+{
+    if(!IsPendingCombineValid()){CancelCombineOnServer(TEXT("Combinaison interrompue ; matériaux conservés."));return;}
+    if(GetCombineProgress()<1.f)return;
+    auto* User=Cast<AAnomaliaSurvivor>(GetOwner());
+    const auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaGameMode>();
+    if(!Mode){CancelCombineOnServer(TEXT("Serveur indisponible ; matériaux conservés."));return;}
+    const FName Recipe=CombineRecipeId;
+    const int32 Held=CombineHeldSnapshot.StackId,Other=CombineOtherSnapshot.StackId;
+    // Clear only after validation and immediately before the atomic persisted transaction.
+    bCombining=false;CombineStartedAt=0;CombineRecipeId=NAME_None;SetComponentTickInterval(1.f);
+    FString Error;
+    if(!TryCraftRecipe(Recipe,Mode->ServerId,Mode->GetPersistentPlayerId(User->GetController()),Error,Held,Other))
+    {UseMessage=Error;User->ForceNetUpdate();OnInventoryUpdated.Broadcast();}
 }
