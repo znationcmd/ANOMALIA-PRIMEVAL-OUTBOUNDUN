@@ -1028,7 +1028,7 @@ void UAnomaliaInventoryWidget::RefreshCrafting()
         }
         Content->AddChildToVerticalBox(Materials)->SetPadding(FMargin(0,0,0,10));
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*(TEXT("CraftRecipe_")+Recipe.Id.ToString()+TEXT("_action")))));
-        auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(TEXT("FABRIQUER")));Label->SetFont(Small);Button->SetContent(Label);
+        auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());Label->SetText(FText::FromString(TEXT("FABRIQUER")));auto ActionFont=Label->GetFont();ActionFont.Size=12;Label->SetFont(ActionFont);Button->SetContent(Label);
         Button->SetToolTipText(FText::FromString(TEXT("Fabriquer : ")+Recipe.Label));Button->SetIsEnabled(Inventory->HasCraftMaterials(Recipe.Id));Content->AddChildToVerticalBox(Button);
         BindAction(Button,EAnomaliaInventoryAction::CraftRecipe,0,0,RecipeIndex++);
     }
