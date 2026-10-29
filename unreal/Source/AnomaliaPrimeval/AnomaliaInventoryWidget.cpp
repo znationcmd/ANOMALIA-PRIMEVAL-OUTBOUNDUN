@@ -451,6 +451,21 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
     auto Font=Label->GetFont();Font.Size=13;Label->SetFont(Font);Label->SetAutoWrapText(true);
     Row->AddChildToHorizontalBox(Label)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
 
+    const auto* Held=Inventory->Stacks.FindByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");});
+    if(Held && Held->StackId!=Stack.StackId)
+    {
+        const auto& Recipes=UAnomaliaInventoryComponent::GetHandcraftRecipes();
+        for(int32 Index=0;Index<Recipes.Num();++Index)
+        {
+            if(!Inventory->CanCombineForRecipe(Held->StackId,Stack.StackId,Recipes[Index].Id))continue;
+            auto* Combine=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
+                MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("Combine_%d_%d"),Stack.StackId,Index))));
+            auto* Caption=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Caption->SetText(FText::FromString(TEXT("Combiner : ")+Recipes[Index].Label));
+            Combine->SetContent(Caption);Row->AddChildToHorizontalBox(Combine)->SetPadding(FMargin(5));
+            BindAction(Combine,EAnomaliaInventoryAction::CombineCraft,Held->StackId,Stack.StackId,Index);
+        }
+    }
     const FString UseLabel=Inventory->GetUseActionLabel(Stack.ItemId);
     if(!UseLabel.IsEmpty())
     {
@@ -671,6 +686,12 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
                 Inventory->RequestCollectNearby(Pickup);
                 RefreshInventory();
             }
+            break;
+        }
+        case EAnomaliaInventoryAction::CombineCraft:
+        {
+            const auto& Recipes=UAnomaliaInventoryComponent::GetHandcraftRecipes();
+            if(Recipes.IsValidIndex(OtherStackId))Inventory->RequestCombineRecipe(StackId,Count,Recipes[OtherStackId].Id);
             break;
         }
         case EAnomaliaInventoryAction::CraftRecipe:
