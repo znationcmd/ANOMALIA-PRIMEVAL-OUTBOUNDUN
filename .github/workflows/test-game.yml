@@ -1,7 +1,7 @@
 name: ANOMALIA’Z PRIGIMALIA — tests et compilation
 on:
   push:
-    branches: [main, rebrand/anomaliaz-prigimalia-20261029]
+    branches: [main, rebrand/anomaliaz-prigimalia-20261029, rebrand/full-anomaliaz-prigimalia-20261029]
     paths: ["src/**", "server/**", "public/**", "desktop/**", "tests/**", "index.html", "package.json", "scripts/**", "vite.config.js", ".github/workflows/test-game.yml"]
   workflow_dispatch:
 permissions:
