@@ -86,3 +86,21 @@
 @media(max-width:1000px){.survival-inventory{grid-template-columns:minmax(145px,.7fr) minmax(190px,1fr) minmax(280px,1.25fr);gap:5px}.equipment-slots{grid-template-columns:repeat(3,minmax(0,1fr))}.equipment-card{min-height:58px}}
 @media(max-width:700px){#panel.inventory-mode{left:1vw;right:1vw;top:1vh;bottom:1vh;padding:42px 1vw 5px}.inventory-tabs{width:100%;margin:0}.survival-inventory{grid-template-columns:.7fr 1fr 1fr}.inventory-mode .survival-inventory>section{padding:0}.inventory-mode .cargo-grid{grid-template-columns:repeat(var(--cols),minmax(17px,1fr))}.equipment-slots{grid-template-columns:repeat(2,minmax(0,1fr))}.equipment-card{min-height:51px}.item-details,.inventory-quickbar{width:100%;margin-left:0}.cash-display{margin-top:3px;padding:2px 8px}.cash-display b{font-size:13px}.inventory-mode .item-details{gap:2px;padding:4px;font-size:9px}.inventory-mode .item-details button{padding:4px!important;font-size:9px!important}}
 @media(max-width:520px){.survival-inventory{grid-template-columns:minmax(110px,.8fr) minmax(120px,.9fr) minmax(165px,1.2fr)}.survivor-stats>div{grid-template-columns:43px 1fr 20px;font-size:8px}.ground-grid{grid-template-columns:repeat(2,minmax(45px,1fr))}.vicinity-tools select{display:none}}
+
+/* Only the launch/boot splash. The interactive main menu and in-game
+   3D canvas retain their existing backgrounds. */
+.prigimalia-launch-splash{
+  position:fixed;inset:0;z-index:99999;display:flex;align-items:center;
+  justify-content:center;background:#050509;overflow:hidden;pointer-events:none;
+  opacity:1;visibility:visible;transition:opacity .45s ease,visibility .45s ease;
+}
+.prigimalia-launch-splash img{
+  display:block;width:100%;height:100%;object-fit:contain;object-position:center;
+  background:#050509;user-select:none;-webkit-user-drag:none;
+}
+.prigimalia-launch-splash.prigimalia-splash-done{
+  opacity:0;visibility:hidden;
+}
+@media(prefers-reduced-motion:reduce){
+ .prigimalia-launch-splash{transition:none}
+}
