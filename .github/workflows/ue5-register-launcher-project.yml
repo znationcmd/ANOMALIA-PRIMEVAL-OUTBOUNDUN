@@ -1,0 +1,56 @@
+name: Register ANOMALIA in Epic project list
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-register-launcher-project.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  register:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Register existing project after Epic closes, preserving settings
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw "Project not found: $project"}
+          $descriptor=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          Write-Output "PROJECT_CONFIRMED $project EngineAssociation=$($descriptor.EngineAssociation)"
+          $deadline=(Get-Date).AddMinutes(8)
+          while(Get-Process EpicGamesLauncher -ErrorAction SilentlyContinue){
+            if((Get-Date)-gt $deadline){throw 'Epic still running. Settings preserved; close Epic completely and rerun.'}
+            Write-Output 'WAITING_FOR_USER_TO_EXIT_EPIC: no download stopped and no process killed'
+            Start-Sleep -Seconds 10
+          }
+          $configs=@(
+            (Join-Path $env:LOCALAPPDATA 'EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini'),
+            (Join-Path $env:LOCALAPPDATA 'EpicGamesLauncher\Saved\Config\WindowsEditor\GameUserSettings.ini')
+          )
+          $found=0
+          foreach($config in $configs){
+            if(!(Test-Path -LiteralPath $config)){continue}
+            $found++
+            $before=[IO.File]::ReadAllBytes($config)
+            $text=[IO.File]::ReadAllText($config)
+            $line='CreatedProjectPaths=D:/ANOMALIA'
+            if($text -match '(?im)^CreatedProjectPaths=D:[/\\]ANOMALIA[/\\]?\s*$'){
+              Write-Output "ALREADY_REGISTERED $config";continue
+            }
+            $backup=$config+'.anomalia-'+$env:GITHUB_RUN_ID+'.bak'
+            if(Test-Path -LiteralPath $backup){throw 'Backup already exists'}
+            [IO.File]::WriteAllBytes($backup,$before)
+            if(Get-Process EpicGamesLauncher -ErrorAction SilentlyContinue){throw 'Epic reopened; no settings changed'}
+            if($text -match '(?im)^\[Launcher\]\s*$'){
+              $text=[regex]::Replace($text,'(?im)^\[Launcher\][ \t]*\r?$',("[Launcher]"+[Environment]::NewLine+$line))
+            }else{$text+=[Environment]::NewLine+'[Launcher]'+[Environment]::NewLine+$line+[Environment]::NewLine}
+            [IO.File]::WriteAllText($config,$text,(New-Object Text.UTF8Encoding($false)))
+            if(!([IO.File]::ReadAllText($config).Contains($line))){throw 'Registration readback failed'}
+            Write-Output "REGISTERED $config BACKUP $backup"
+          }
+          if($found-eq 0){throw 'Launcher settings file not found; no file created'}
+          Write-Output 'DONE: reopen Epic to refresh project list. Project and assets unchanged.'
