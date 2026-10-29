@@ -1,5 +1,5 @@
-"""Generate loot defaults from collision-tested floors of actual saved houses.
-Only explicit points accepted on a house mesh are written. No theoretical sites.
+"""Generate loot at real saved houses, accepting clear collision-tested surfaces.
+Scanned exterior houses can receive ground loot outside their actual mesh bounds.
 """
 import hashlib,json,math,os,traceback
 from pathlib import Path
@@ -22,7 +22,7 @@ def main():
         if hit is None:
             count("NO_HIT");return None
         values=hit.to_tuple()
-        if not values[0] or values[1] or values[7].z<.9 or values[9]!=actor:
+        if not values[0] or values[1] or values[7].z<.9 or (values[9]!=actor if actor is not None else not isinstance(values[9],unreal.LandscapeProxy)):
             count("REJECTED_HIT");
             if len(report["samples"])<5:report["samples"].append(dict(blocking=bool(values[0]),initial=bool(values[1]),normalZ=values[7].z,hitActor=str(values[9]),expectedActor=str(actor)))
             return None
@@ -42,7 +42,8 @@ def main():
             d.get("nativeClass")=="/Script/Engine.StaticMeshActor" and
             d.get("label","").startswith("ANOMALIA_Inhabited1_")]
         if len(houses)<100:raise RuntimeError("Actual saved house population missing")
-        selected=[]
+        terrain=[d for d in desc["actors"] if d.get("boundsValid") and d.get("nativeClass") in ("/Script/Landscape.Landscape","/Script/Landscape.LandscapeStreamingProxy")]
+    selected=[]
         for site in lib.inhabited_settlement_sites():
             nearby=[d for d in houses if abs((d["boundsMinCm"][0]+d["boundsMaxCm"][0])/200-site.x)<420 and
                     abs(-(d["boundsMinCm"][1]+d["boundsMaxCm"][1])/200-site.y)<420]
@@ -67,19 +68,27 @@ def main():
                         origin,extent=a.get_actor_bounds(False)
                         report["samples"].append(dict(actor=a.get_actor_label(),position=[base.x,base.y,base.z],boundsOrigin=[origin.x,origin.y,origin.z],boundsExtent=[extent.x,extent.y,extent.z]))
                     yaw=math.radians(a.get_actor_rotation().yaw)
-                    pos=None
+                    pos=None;surface="interior_floor"
                     for dx,dy in ((150,150),(-150,150),(150,-150),(-150,-150),(250,250),(-250,-250)):
                         x=base.x+dx*math.cos(yaw)-dy*math.sin(yaw)
                         y=base.y+dx*math.sin(yaw)+dy*math.cos(yaw)
                         pos=trace(world,x,y,base.z,a)
                         if pos:break
                     if not pos:
+                        origin,extent=a.get_actor_bounds(False)
+                        for x,y in ((origin.x-extent.x-180,origin.y),(origin.x+extent.x+180,origin.y),
+                                    (origin.x,origin.y-extent.y-180),(origin.x,origin.y+extent.y+180)):
+                            z=lib.inhabited_archipelago_height(x/100,-y/100)*100
+                            pos=trace(world,x,y,z,None)
+                            if pos:
+                                surface="outdoor_ground";break
+                    if not pos:
                         report["rejected"].append(dict(id=d["label"],reason="NO_CLEAR_COLLIDING_FLOOR"));continue
                     ident="inhabited-"+hashlib.sha256(d["guid"].encode()).hexdigest()[:24]
                     report["points"].append(dict(id=ident,map="ANOMALIA_Inhabited_v2",buildingType="house",
-                        x=pos[0],y=pos[1],z=pos[2],categories=groups[len(report["points"])%len(groups)]))
+                        x=pos[0],y=pos[1],z=pos[2],categories=groups[len(report["points"])%len(groups)],placementSurface=surface))
             finally:
-                unload=[g for g in guids if g.replace("-","").lower() not in initial]
+                unload=[g for g in stream_guids if g.replace("-","").lower() not in initial]
                 if not lib.set_archipelago_actors_loaded(unload,False):raise RuntimeError("Could not restore house streaming")
         if not report["points"]:raise RuntimeError("No floor-tested loot points; original layout preserved")
         path=ROOT/"Content/Anomalia/Data/loot_spawns.json"
@@ -94,7 +103,7 @@ def main():
         if not backup.exists():backup.write_bytes(original)
         tmp=path.with_suffix(".tmp");tmp.write_bytes(encoded);os.replace(tmp,path)
         report.update(state="FLOOR_TESTED_LOOT_LAYOUT_SAVED_NOT_PLAYTESTED",housesInSavedWorld=len(houses),
-                      housesSampled=len(selected),totalPoints=len(layout["spawns"]),layout=str(path),
+                      housesSampled=len(selected),outdoorPoints=sum(p["placementSurface"]=="outdoor_ground" for p in report["points"]),interiorPoints=sum(p["placementSurface"]=="interior_floor" for p in report["points"]),totalPoints=len(layout["spawns"]),layout=str(path),
                       layoutSha256=hashlib.sha256(encoded).hexdigest())
     except Exception as error:
         report.update(state="FAILED",error=str(error),traceback=traceback.format_exc())
