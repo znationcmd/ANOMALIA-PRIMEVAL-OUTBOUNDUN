@@ -113,7 +113,10 @@ try:
     # Spawn in the reserved 50m lot corridor, on the real native terrain at that point.
     e,n=first['east']+22,first['north']
     surface=population.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
-    z,error=surface(e,n);place(unreal.PlayerStart,'PlayerStart',e,n,z+error+1.2)
+    z,error=surface(e,n)
+    start=place(unreal.PlayerStart,'PlayerStart',e,n,z+error+1.2)
+    # GameMode must find this actor before a player exists to drive spatial streaming.
+    start.set_editor_property('is_spatially_loaded',False)
     if not level.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('Population or external actor save failed')
     OUT.parent.mkdir(parents=True,exist_ok=True);(OUT.parent/'population-plan.json').write_text(json.dumps(plan,indent=2)+'\n')
     report.update(state='POPULATED_WORLD_CREATED_NOT_PLAYTESTED',houses=len(plan['buildings']),foliageInstances=len(plan['foliage']),foliageClusters=len(clusters),terrainComponents=576,rejected=plan['rejected'],oceanRenderingImplemented=False)
