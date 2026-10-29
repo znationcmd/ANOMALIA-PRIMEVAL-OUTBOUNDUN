@@ -3,7 +3,8 @@ Source material is generated here, without modifying third-party asset packs.
 """
 from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
-import math
+from io import BytesIO
+import base64, hashlib, math
 
 ROOT=Path(__file__).resolve().parents[1]
 GOLD=(210,180,130)
@@ -64,8 +65,23 @@ def save(image,relative,quality=92):
     image.save(out,quality=quality,optimize=True)
     print(relative,out.stat().st_size)
     
+def approved_installed_logo():
+    # Rasterized from the user-approved molten stone / red orb game logo.
+    # Encoded source is a compact icon-scale copy, not the older A’Z monogram.
+    source=ROOT/"assets/branding/approved-prigimalia-installed-icon-96.jpg.base64"
+    if not source.exists():
+        raise RuntimeError("Approved PRIGIMALIA image missing: "+str(source))
+    data=base64.b64decode(source.read_text(encoding="ascii").strip(),validate=True)
+    expected="737d45cc1a8f63ffb93643903f9105523ea7009bf3ac4aceb4dcf6609604f163"
+    if hashlib.sha256(data).hexdigest()!=expected:
+        raise RuntimeError("Approved PRIGIMALIA logo has unexpected checksum")
+    img=Image.open(BytesIO(data)).convert("RGB")
+    if img.size!=(96,96):
+        raise RuntimeError("Unexpected source icon dimensions")
+    return img.resize((700,700),Image.Resampling.LANCZOS)
+
 def main():
-    icon=symbol(700)
+    icon=approved_installed_logo()
     save(icon,"build/prigimalia-logo-small.jpg")
     save(icon,"public/prigimalia-logo.jpg")
     save(icon,"unreal/SourceAssets/Branding/prigimalia-installed-logo.jpg")
