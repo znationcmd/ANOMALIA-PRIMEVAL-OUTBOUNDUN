@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "project": "ANOMALIA PRIMEVAL OUTBOUNDUN",
+  "status": "PREPARATION_NOT_PLAYABLE_OR_BENCHMARKED",
+  "source_project": "D:/ANOMALIA/FabImports/CitySample/CitySample.uproject",
+  "preserve_original": true,
+  "target_hardware": {
+    "gpu": "Intel Iris Xe",
+    "ram_gb": 16
+  },
+  "first_stage": {
+    "scope": "one streamed district from existing city layout",
+    "look": "abandoned post-apocalyptic city",
+    "features": [
+      "stationary abandoned vehicles",
+      "road barricades using verified available assets",
+      "localized debris",
+      "sparse vegetation reclaiming sidewalks",
+      "muted weathered lighting"
+    ],
+    "disable": [
+      "ambient civilian crowd",
+      "ambient moving vehicle traffic"
+    ],
+    "retain": [
+      "original street layout",
+      "building geometry where feasible"
+    ]
+  },
+  "rendering": {
+    "resolution_test": [
+      1280,
+      720
+    ],
+    "texture_max_resolution_test": 1024,
+    "hardware_ray_tracing": false,
+    "lumen": false,
+    "virtual_shadow_maps": false,
+    "nanite": "requires fallback mesh inspection before disabling",
+    "rhi": "choose after DirectX startup diagnosis",
+    "fps_acceptance": "measure frame times on host before expanding"
+  },
+  "acceptance": [
+    "load one district without DirectX startup error",
+    "verify buildings remain visible with fallback rendering",
+    "check collisions and walkable streets",
+    "benchmark memory and frame time",
+    "expand only after successful district test"
+  ],
+  "limitations": [
+    "no blanket promise of enterable buildings or interactive doors",
+    "full city compatibility unverified",
+    "no City Sample proprietary binaries committed to repository"
+  ]
+}

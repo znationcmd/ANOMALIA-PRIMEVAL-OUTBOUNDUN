@@ -1,0 +1,110 @@
+name: ANOMALIA actual PC import input and E39 audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-complete-pc-audit.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Audit physical catalogs source watches notifications and controller presence
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/full-audit-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $env:ANOMALIA_AUDIT_OUT=$out
+          $env:ANOMALIA_REPO=$env:GITHUB_WORKSPACE
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          @'
+          import pathlib,json,hashlib,os,re,collections
+          root=pathlib.Path('D:/ANOMALIA/unreal');out=pathlib.Path(os.environ['ANOMALIA_AUDIT_OUT'])
+          report={'catalogs':[],'watchSettings':[],'notifications':[],'sources':[],'runtimeJsonDataTable':[]}
+          def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+          for name,expected in [('loot_items_catalog.json',236),('rp_items_catalog.json',79)]:
+              for location,p in [('project',root/'Content/Anomalia/Data'/name),('repo',pathlib.Path(os.environ['ANOMALIA_REPO'])/'public/config'/name)]:
+                  if not p.exists():report['catalogs'].append({'location':location,'file':str(p),'missing':True});continue
+                  d=json.loads(p.read_text(encoding='utf-8-sig'));rows=d['items'];ids=collections.Counter(x['id'] for x in rows)
+                  battery=[x for x in rows if x['id']=='car_battery']
+                  report['catalogs'].append({'location':location,'file':str(p),'sha256':sha(p),'rows':len(rows),'expected':expected,'uniqueIds':len(ids),'duplicates':{k:v for k,v in ids.items() if v>1},'carBattery':battery})
+          for base in [root/'Config',root/'Saved/Config']:
+              if not base.exists():continue
+              for p in base.rglob('*.ini'):
+                  lines=p.read_text(errors='replace').splitlines()
+                  matches=[x for x in lines if re.search(r'AutoReimport|MonitorContent|DetectChangesOnStartup|AutoCreateAssets|AutoDeleteAssets',x,re.I)]
+                  if matches:report['watchSettings'].append({'file':str(p),'lines':matches})
+          for p in sorted((root/'Saved/Logs').glob('*.log'),key=lambda x:x.stat().st_mtime,reverse=True)[:8]:
+              matches=[x[:1800] for x in p.read_text(errors='replace').splitlines() if re.search(r'35 (?:source|file)|reimport|AutoReimport|loot_items_catalog|source files? (?:have|changed)|modifications',x,re.I)]
+              if matches:report['notifications'].append({'file':str(p),'lines':matches[-120:]})
+          for base in [pathlib.Path('D:/ANOMALIA/sketchfab'),pathlib.Path('D:/ANOMALIA/FabImports'),pathlib.Path('D:/ANOMALIA/SketchfabExtracted')]:
+              counts=collections.Counter();total=0
+              if base.exists():
+                  for p in base.rglob('*'):
+                      if p.is_file():
+                          counts[p.suffix.lower()]+=1;total+=p.stat().st_size
+              report['sources'].append({'root':str(base),'exists':base.exists(),'extensions':dict(counts),'bytes':total})
+          for p in (root/'Content/Anomalia/Data').glob('loot_items_catalog*'):
+              report['runtimeJsonDataTable'].append({'path':str(p),'bytes':p.stat().st_size,'suffix':p.suffix})
+          for p in (root/'Content/Maps').glob('*E39*.umap'):report.setdefault('e39Maps',[]).append(str(p))
+          (out/'audit.json').write_text(json.dumps(report,indent=2))
+          print(json.dumps(report,indent=2))
+          '@ | Set-Content "$out/audit.py" -Encoding UTF8
+          & $python "$out/audit.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          Get-CimInstance Win32_PnPEntity | Where-Object {$_.Name -match 'Xbox|DualSense|Wireless Controller|Game Controller'} | ForEach-Object {
+            $vid=if($_.PNPDeviceID -match 'VID_([0-9A-F]{4})'){$Matches[1]}else{''}
+            $pid=if($_.PNPDeviceID -match 'PID_([0-9A-F]{4})'){$Matches[1]}else{''}
+            [PSCustomObject]@{Name=$_.Name;Status=$_.Status;VID=$vid;PID=$pid}
+          } | ConvertTo-Json | Set-Content "$out/controllers.json" -Encoding UTF8
+          Get-Content "$out/controllers.json"
+          Get-PSDrive C,D | Select-Object Name,Free,Used | Format-Table
+      - name: Inspect actual E39 rig properties without changing the scene
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/full-audit-$env:GITHUB_RUN_ID"
+          @'
+          import unreal,json,pathlib,os
+          level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem);actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          report=[]
+          for p in pathlib.Path('D:/ANOMALIA/unreal/Content/Maps').glob('*E39*.umap'):
+              package='/Game/Maps/'+p.stem
+              if not level.load_level(package):continue
+              row={'map':package,'cars':[],'actorClasses':[]}
+              for a in actors.get_all_level_actors():
+                  row['actorClasses'].append(str(a.get_class().get_name()))
+                  if not isinstance(a,unreal.AnomaliaChaosRoadVehicle):continue
+                  c={'label':a.get_actor_label(),'rigValid':a.has_valid_road_rig(),'properties':{}}
+                  for k in ('road_mesh','road_animation','road_body_mesh','road_wheel_mesh','road_glass_mesh','wheel_bones','wheel_radius_cm'):
+                      try:c['properties'][k]=str(a.get_editor_property(k))
+                      except Exception as e:c['properties'][k]=str(e)
+                  for k in ('road_body_mesh','road_wheel_mesh'):
+                      mesh=a.get_editor_property(k)
+                      if mesh:
+                          c[k+'Materials']=[{'slot':str(m.material_slot_name),'material':str(m.material_interface)} for m in mesh.get_editor_property('static_materials')]
+                  row['cars'].append(c)
+              report.append(row)
+          out=pathlib.Path('D:/ANOMALIA/StorageRecovery/full-audit-'+os.environ['GITHUB_RUN_ID'])
+          (out/'e39-rigs.json').write_text(json.dumps(report,indent=2))
+          unreal.log('ACTUAL_E39_RIGS '+json.dumps(report))
+          '@ | Set-Content "$out/rig.py" -Encoding UTF8
+          $exe=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI -run=pythonscript "-script=$out/rig.py" "-abslog=$out/rig.log"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          Get-Content "$out/e39-rigs.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-pc-import-input-audit
+          path: D:/ANOMALIA/StorageRecovery/full-audit-${{ github.run_id }}/*
+          if-no-files-found: warn

@@ -1,0 +1,39 @@
+name: ANOMALIA face and posture capability audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-face-posture-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inspect facial bones morphs and installed posture animations
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),os=require('os');
+          const out='C:/ANOMALIA-Validation/Reports/face-posture-'+process.env.GITHUB_RUN_ID;
+          fs.mkdirSync(out,{recursive:true});fs.appendFileSync(process.env.GITHUB_ENV,'FACE_AUDIT_OUTPUT='+out+'\n');
+          if(os.freemem()<4*1024**3)throw Error('Insufficient free RAM for isolated asset inspection; user processes preserved');
+          const script=path.join(out,'inspect.py');
+          fs.writeFileSync(script,"import unreal, json, os\nfrom pathlib import Path\nreport={\"meshes\":[],\"animations\":[],\"errors\":[]}\ntry:\n registry=unreal.AssetRegistryHelpers.get_asset_registry()\n registry.search_all_assets(True)\n for root in (\"/Game/Survival_Character\",\"/Game/QuantumCharacter\",\"/Game/FreeAnimationLibrary\"):\n  for data in registry.get_assets_by_path(root,recursive=True):\n   cls=str(data.asset_class_path.asset_name)\n   package=str(data.package_name)\n   if cls==\"SkeletalMesh\" and (\"body\" in package.lower() or \"head\" in package.lower() or \"character\" in package.lower()):\n    row={\"path\":package}\n    try:\n     mesh=data.get_asset()\n     sk=mesh.get_editor_property(\"skeleton\")\n     row[\"skeleton\"]=sk.get_path_name() if sk else None\n     comp=unreal.SkeletalMeshComponent()\n     comp.set_skinned_asset_and_update(mesh)\n     row[\"facial_bones\"]=[str(comp.get_bone_name(i)) for i in range(comp.get_num_bones()) if any(k in str(comp.get_bone_name(i)).lower() for k in (\"jaw\",\"lip\",\"mouth\",\"tongue\",\"face\"))]\n     try: row[\"morph_targets\"]=[x.get_name() for x in mesh.get_editor_property(\"morph_targets\")]\n     except Exception as e: row[\"morph_query_error\"]=str(e)\n    except Exception as e: row[\"error\"]=str(e)\n    report[\"meshes\"].append(row)\n for data in registry.get_assets_by_path(\"/Game\",recursive=True):\n  cls=str(data.asset_class_path.asset_name)\n  p=str(data.package_name)\n  if cls==\"AnimSequence\" and any(k in p.lower() for k in (\"prone\",\"crouch\",\"crawl\",\"punch\",\"sleep\")):\n   obj=data.get_asset()\n   sk=obj.get_editor_property(\"skeleton\")\n   report[\"animations\"].append({\"path\":p,\"skeleton\":sk.get_path_name() if sk else None})\nexcept Exception as e: report[\"errors\"].append(str(e))\nPath(os.environ[\"FACE_AUDIT_OUTPUT\"]).joinpath(\"face-and-postures.json\").write_text(json.dumps(report,indent=2),encoding=\"utf-8\")\nunreal.log(\"ANOMALIA_FACE_AUDIT \"+json.dumps(report))\n");
+          const engine=process.env.UE_ROOT||'C:/Program Files/Epic Games/UE_5.8';
+          const exe=path.join(engine,'Engine/Binaries/Win64/UnrealEditor-Cmd.exe');
+          const project='C:/ANOMALIA-Validation/c40543166274/unreal/AnomaliaPrimeval.uproject';
+          const r=cp.spawnSync(exe,[project,'-run=pythonscript','-script='+script,'-unattended','-nopause','-nosound','-NullRHI','-abslog='+path.join(out,'editor.log')],{encoding:'utf8',timeout:600000,maxBuffer:8*1024**2,env:{...process.env,FACE_AUDIT_OUTPUT:out}});
+          const result=path.join(out,'face-and-postures.json');if(fs.existsSync(result))console.log(fs.readFileSync(result,'utf8'));
+          if(r.status!==0||!fs.existsSync(result))throw Error('Asset inspection failed '+r.status+' '+String(r.error||''));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: face-and-postures
+          path: ${{ env.FACE_AUDIT_OUTPUT }}
+          if-no-files-found: warn

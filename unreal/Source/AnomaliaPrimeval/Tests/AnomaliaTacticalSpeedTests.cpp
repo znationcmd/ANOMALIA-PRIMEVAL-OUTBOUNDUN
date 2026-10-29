@@ -31,9 +31,9 @@ bool FAnomaliaTacticalSpeedTest::RunTest(const FString&)
     AAnomaliaSurvivor* Survivor = World->SpawnActor<AAnomaliaSurvivor>();
     if (TestNotNull(TEXT("Actual game survivor"),Survivor))
     {
-        TestNotNull(TEXT("Uses existing stamina component"),Survivor->VitalsComponent);
+        TestNotNull(TEXT("Uses existing stamina component"),Survivor->VitalsComponent.Get());
         TestTrue(TEXT("Native crouch supported"),Survivor->GetCharacterMovement()->NavAgentProps.bCanCrouch);
-        TestTrue(TEXT("Crouch has physically lower capsule"),Survivor->GetCharacterMovement()->CrouchedHalfHeight<
+        TestTrue(TEXT("Crouch has physically lower capsule"),Survivor->GetCharacterMovement()->GetCrouchedHalfHeight()<
             Survivor->GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight());
         TestTrue(TEXT("Tactical speed drives actual character movement"),
             FMath::IsNearlyEqual(Survivor->VitalsComponent->GetPlannedWalkSpeed(),Normal));

@@ -1,0 +1,79 @@
+{
+  "date": "2026-10-27",
+  "state": "SOURCES_FOUND_NOT_ACQUIRED_OR_IMPORTED",
+  "candidates": [
+    {
+      "category": "vodka",
+      "title": "Absolut Vodka 1L Bottle",
+      "author": "Saandy",
+      "url": "https://sketchfab.com/3d-models/absolut-vodka-1l-bottle-e11913a2fcdb41d5badfa841d6448c90",
+      "license_page": "CC Attribution",
+      "triangles": 1700,
+      "notes": "Scale authored for Source 2 imperial. Verify Unreal centimeters using actual bounds; do not apply a meter conversion blindly. Branded label needs replacement with original ANOMALIA design.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    },
+    {
+      "category": "rhum",
+      "title": "Rum bottle",
+      "author": "hopefuldesign",
+      "url": "https://sketchfab.com/3d-models/rum-bottle-55a2c35cc2f7467ca36847945d04ce9b",
+      "license_page": "CC Attribution",
+      "triangles": 78100,
+      "notes": "Author calls it low poly but page reports 78.1k triangles; inspect/optimize. Pirate styling may require original modern label.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    },
+    {
+      "category": "whisky",
+      "title": "Whiskey and Wine Low-Poly Bottles",
+      "author": "Helyeouka",
+      "url": "https://sketchfab.com/3d-models/whiskey-and-wine-low-poly-bottles-99999f032f624e8cb05651f041dbf8eb",
+      "license_page": "CC Attribution",
+      "triangles": 1900,
+      "notes": "Page declares 1k-2k textures and solid/transparent glass alternatives. Verify actual downloaded materials and labels.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    },
+    {
+      "category": "zombie_homme",
+      "title": "Male Zombie 1 - Animated",
+      "author": "Tony Flanagan",
+      "url": "https://www.fab.com/listings/986b1ef0-f319-40cd-9020-2936fa6e3ab6",
+      "price_page": "Free",
+      "formats": [
+        "fbx",
+        "glb",
+        "gltf",
+        "usdz"
+      ],
+      "notes": "Free downloadable listing confirmed. Animation title does not establish locomotion/attack/death coverage. License, skeleton, clips and UE import must be inspected.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    },
+    {
+      "category": "zombie_homme_alternative",
+      "title": "Zombi man",
+      "url": "https://www.fab.com/listings/ae3e5d58-c5de-4f39-8ac2-6f09a4101fdb",
+      "notes": "Author declares Epic Skeleton 5 and eight in-place clips: two idle, walk, gethit, three attack, death. Price/license not established; no purchase.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    },
+    {
+      "category": "zombie_chien",
+      "title": "Dog Zombie",
+      "author": "Pxltiger",
+      "url": "https://www.fab.com/listings/da3dfd97-2466-4f9d-ba58-3d29c85df972",
+      "notes": "Author declares UE format, own non-Epic skeleton, 59 clips including bite/attack/walk/trot/run/hit; RootMotion/InPlace. 3944-triangle game mesh and 16660-triangle high-res variant, 4k PBR. Price/license not established; no purchase. AI/pathfinding/combat/network not provided by this verification.",
+      "acquisition": "NOT_DOWNLOADED",
+      "ue_verification": "NOT_RUN"
+    }
+  ],
+  "excluded": [
+    {
+      "url": "https://sketchfab.com/3d-models/vodka-bottle-0a36d75bf85f4cfbac0896034e6b95b1",
+      "reason": "CC Attribution-NonCommercial; not selected for general commercial project use"
+    }
+  ],
+  "preservation": "No payments, downloads, UE asset writes, inventory changes, or merges performed for these candidates."
+}

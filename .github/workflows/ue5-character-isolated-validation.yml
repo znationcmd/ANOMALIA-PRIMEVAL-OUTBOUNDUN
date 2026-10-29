@@ -1,0 +1,71 @@
+name: ANOMALIA isolated character build and Blueprint validation
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-character-isolated-validation.yml']
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    env:
+      ANOMALIA_STAGE: c${{ github.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+        env:
+          GIT_CONFIG_COUNT: '1'
+          GIT_CONFIG_KEY_0: core.longpaths
+          GIT_CONFIG_VALUE_0: 'true'
+        with:
+          path: c${{ github.run_id }}
+          clean: false
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compile isolated sources and validate new BPs using copies of installed packs
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const checkout=path.join(process.env.GITHUB_WORKSPACE,process.env.ANOMALIA_STAGE);
+          const stage=path.join('C:\\ANOMALIA-Validation',process.env.ANOMALIA_STAGE);
+          if(fs.existsSync(stage)) throw Error('Validation directory exists; refusing overwrite');
+          fs.mkdirSync(path.dirname(stage),{recursive:true});
+          fs.cpSync(checkout,stage,{recursive:true,errorOnExist:true,force:false,filter:p=>path.basename(p)!=='.git'});
+          const engine=process.env.UE_ROOT || 'C:\\Program Files\\Epic Games\\UE_5.8';
+          const local='C:\\ANOMALIA\\unreal';
+          const output=path.join(stage,'unreal','Saved','CharacterValidation');
+          fs.mkdirSync(output,{recursive:true});
+          for(const name of ['ControlRig','QuantumCharacter','Survival_Character']){
+            const source=path.join(local,'Content',name);
+            if(!fs.existsSync(source)) throw Error('Missing installed pack '+source);
+            const dest=path.join(stage,'unreal','Content',name);
+            if(fs.existsSync(dest)) throw Error('Pack destination already exists; refusing overwrite '+dest);
+            fs.cpSync(source,dest,{recursive:true,errorOnExist:true,force:false,dereference:false});
+          }
+          const python=path.join(engine,'Engine','Binaries','ThirdParty','Python3','Win64','python.exe');
+          const build=cp.spawnSync(python,[path.join(stage,'scripts','ue5','validate-build.py'),'--engine-root',engine,'--output',output,'--run-tests'],{cwd:stage,encoding:'utf8',timeout:1800000,maxBuffer:4*1024*1024});
+          console.log('NATIVE_BUILD_EXIT '+build.status+' '+String(build.error||'')+'\n'+String(build.stdout||'')+String(build.stderr||''));
+          for(const name of ['report.json','AnomaliaPrimevalEditor.log','AnomaliaPrimeval.log']){
+            const p=path.join(output,name);
+            if(fs.existsSync(p)) console.log(name+'\n'+fs.readFileSync(p,'utf8').split(/\r?\n/).slice(-65).join('\n'));
+          }
+          fs.appendFileSync(process.env.GITHUB_ENV,'ANOMALIA_VALIDATION_OUTPUT='+output+'\n');
+          if(build.status!==0) process.exit(1);
+          const editor=path.join(engine,'Engine','Binaries','Win64','UnrealEditor-Cmd.exe');
+          const result=cp.spawnSync(editor,[path.join(stage,'unreal','AnomaliaPrimeval.uproject'),'-run=pythonscript','-script='+path.join(stage,'unreal','Content','Python','setup_anomalia_character.py'),'-unattended','-nop4','-nosplash','-NullRHI','-stdout','-FullStdOutLogOutput','-abslog='+path.join(output,'setup.log')],{cwd:stage,encoding:'utf8',timeout:420000,maxBuffer:16*1024*1024,env:{...process.env,ANOMALIA_CHARACTER_MODE:'create',ANOMALIA_CHARACTER_PROFILES:'Manny,Quinn'}});
+          console.log('BLUEPRINT_SETUP_EXIT '+result.status+' '+String(result.error||''));
+          console.log((String(result.stdout||'')+String(result.stderr||'')).split(/\r?\n/).filter(l=>/error|warning|failed|Traceback|ANOMALIA/i.test(l)).slice(-65).join('\n'));
+          const reports=path.join(stage,'unreal','Saved','CharacterAudit');
+          if(fs.existsSync(reports)) for(const name of fs.readdirSync(reports)){fs.copyFileSync(path.join(reports,name),path.join(output,name));console.log('CHARACTER_REPORT '+fs.readFileSync(path.join(reports,name),'utf8').slice(-4000));}
+          if(result.status!==0) process.exit(1);
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: character-isolated-validation
+          path: C:/ANOMALIA-Validation/c${{ github.run_id }}/unreal/Saved/CharacterValidation
+          if-no-files-found: warn

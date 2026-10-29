@@ -1,0 +1,113 @@
+name: ANOMALIA map access and visible inventory interaction checks
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-populate-world-loot.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  populate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile the updated real spatial inventory interaction test
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($relative in @('AnomaliaInventoryWidget.cpp','Tests/AnomaliaLootPIETests.cpp')){
+            $source=Join-Path $env:GITHUB_WORKSPACE ("unreal/Source/AnomaliaPrimeval/"+$relative)
+            $target=Join-Path 'D:/ANOMALIA/unreal/Source/AnomaliaPrimeval' $relative
+            if((Get-FileHash $source -Algorithm SHA256).Hash -ne (Get-FileHash $target -Algorithm SHA256).Hash){
+              Copy-Item $target ($target+".before-account-fix-$env:GITHUB_RUN_ID.bak")
+              Copy-Item $source $target -Force
+            }
+          }
+          $build='C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat'
+          & $build AnomaliaPrimevalEditor Win64 Development '-Project=D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw 'Spatial interaction test did not compile'}
+      - name: Place loot on verified real floors in distributed settlements
+        id: place_loot
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'User editor session preserved'}
+          $recovery=Get-Content 'D:/ANOMALIA/StorageRecovery/world-recovery.json' -Raw | ConvertFrom-Json
+          $regions=Get-Content 'D:/ANOMALIA/StorageRecovery/apocalypse-regions.json' -Raw | ConvertFrom-Json
+          if($recovery.state -ne 'MISSING_CONTENT_RECOVERED' -or $regions.state -ne 'GARAGE_REGIONS_SAVED_NOT_PLAYTESTED'){throw 'World recovery and native assembly must succeed first'}
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal/Tools/populate_inhabited_loot.py'
+          $task='D:/ANOMALIA/unreal/Tools/populate_inhabited_loot.py'
+          Copy-Item -LiteralPath $source -Destination $task -Force
+          $exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $log='D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.log'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' "-ExecutePythonScript=$task" -unattended -nopause -nosound -NullRHI "-abslog=$log"
+          $code=$LASTEXITCODE
+          if(Test-Path $log){Select-String $log -Pattern 'ANOMALIA_WORLD_LOOT_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}}
+          if($code -ne 0){throw 'World loot authoring failed'}
+          $report=Get-Content 'D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json' -Raw | ConvertFrom-Json
+          if($report.state -ne 'FLOOR_TESTED_LOOT_LAYOUT_SAVED_NOT_PLAYTESTED'){throw 'No verified loot layout saved'}
+      - name: Merge missing current input bindings without removing user controls
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal/Config/DefaultInput.ini'
+          $target='D:/ANOMALIA/unreal/Config/DefaultInput.ini'
+          $current=Get-Content -LiteralPath $target -Raw
+          $missing=@(Get-Content -LiteralPath $source | Where-Object {($_.StartsWith('+ActionMappings=') -or $_.StartsWith('+AxisMappings=')) -and !$current.Contains($_)})
+          Write-Output ("MISSING_INPUT_BINDINGS="+$missing.Count)
+          if($missing.Count){
+            Copy-Item -LiteralPath $target -Destination ($target+".before-map-controls-$env:GITHUB_RUN_ID.bak")
+            Add-Content -LiteralPath $target -Value (([Environment]::NewLine)+"[/Script/Engine.InputSettings]"+([Environment]::NewLine)+($missing -join ([Environment]::NewLine))) -Encoding UTF8
+          }
+          Write-Output ("HAS_GAMEPAD_INVENTORY="+(Get-Content $target -Raw).Contains('ActionName="Inventory",Key=Gamepad_Special_Left'))
+      - name: Verify real loot pickup and inventory in isolated Play In Editor
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $folder="D:/ANOMALIA/StorageRecovery/loot-pie-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force -Path $folder | Out-Null
+          $exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $scope="loot-pie-map-$env:GITHUB_RUN_ID"
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI "-AnomaliaAutomationServerId=$scope" "-ExecCmds=Automation RunTests Anomalia.Loot.PIE; Quit" "-ReportExportPath=$folder" "-abslog=$folder/editor.log"
+          if($LASTEXITCODE -ne 0){throw 'Native loot PIE process failed'}
+          $result=Get-Content "$folder/index.json" -Raw | ConvertFrom-Json
+          $test=@($result.tests | Where-Object {$_.fullTestPath -eq 'Anomalia.Loot.PIE' -and $_.state -eq 'Success'})
+          if($test.Count -ne 1){throw 'Isolated actual pickup and inventory playtest did not pass'}
+          Write-Output 'NATIVE_LOOT_PICKUP_INVENTORY_PIE_PASSED'
+      - name: Provide an unambiguous shortcut to the recovered development world
+        if: ${{ !cancelled() && steps.place_loot.outcome == 'success' }}
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $shell=New-Object -ComObject WScript.Shell
+          $path=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Carte D.lnk'
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(Test-Path $path){
+            $old=$shell.CreateShortcut($path)
+            if($old.TargetPath -ne $editor -or !$old.Arguments.Contains($project)){throw 'Unrelated shortcut preserved'}
+          }
+          $shortcut=$shell.CreateShortcut($path)
+          $shortcut.TargetPath=$editor
+          $shortcut.Arguments=('"'+$project+'" /Game/Maps/ANOMALIA_Inhabited_v2 -d3d11 -sm5')
+          $shortcut.WorkingDirectory='D:\ANOMALIA\unreal'
+          $shortcut.Description='ANOMALIA — carte de développement réunie avec les assets Fab sur D:'
+          $shortcut.IconLocation=$editor+',0'
+          $shortcut.Save()
+          Write-Output ("MAP_SHORTCUT_CREATED="+$path)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-world-loot-${{ github.run_id }}
+          path: |
+            D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json
+            D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.log
+            D:/ANOMALIA/StorageRecovery/loot-pie-${{ github.run_id }}/index.json
+            D:/ANOMALIA/StorageRecovery/loot-pie-${{ github.run_id }}/editor.log
+          if-no-files-found: warn

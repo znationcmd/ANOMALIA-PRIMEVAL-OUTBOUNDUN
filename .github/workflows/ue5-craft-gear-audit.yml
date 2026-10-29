@@ -1,0 +1,47 @@
+name: ANOMALIA craft and gear asset inventory
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-craft-gear-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read newly downloaded and added assets
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path');
+          const cutoff=Date.parse('2026-10-29T06:00:00Z');
+          const report={scope:'Read-only asset files; not gameplay verification',roots:[],groups:{},recent:[],errors:[]};
+          function walk(dir,root,depth=0){
+            if(depth>22)return;
+            let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
+            for(const e of entries){
+              if(e.isSymbolicLink())continue;
+              const p=path.join(dir,e.name);
+              if(e.isDirectory()){
+                if(/^(Intermediate|DerivedDataCache|Binaries|Saved|node_modules|\.git)$/i.test(e.name))continue;
+                walk(p,root,depth+1);
+              }else if(/\.(uasset|umap|fbx|glb|gltf|blend|zip|obj)$/i.test(e.name)){
+                const s=fs.statSync(p),rel=path.relative(root,p),group=rel.split(path.sep)[0];
+                const key=root+' / '+group;report.groups[key]=(report.groups[key]||0)+1;
+                if(s.mtimeMs>=cutoff||s.birthtimeMs>=cutoff)report.recent.push({path:p,bytes:s.size,modified:s.mtime.toISOString(),created:s.birthtime.toISOString()});
+              }
+            }
+          }
+          for(const root of ['D:/ANOMALIA/unreal/Content','D:/ANOMALIA/FabImports']){
+            const exists=fs.existsSync(root);report.roots.push({path:root,exists});if(exists)walk(root,root);
+          }
+          report.recent.sort((a,b)=>b.created.localeCompare(a.created));
+          console.log(JSON.stringify({roots:report.roots,groups:report.groups,recentCount:report.recent.length,errors:report.errors}));
+          console.log('RECENT_FILES '+JSON.stringify(report.recent.slice(0,100)));
+          console.log('ANIMATION_FILES '+JSON.stringify(report.recent.filter(x=>/anim|mixamo|moto|drink|eat|drive|prone|crouch|punch|interaction/i.test(x.path)).slice(0,160)));

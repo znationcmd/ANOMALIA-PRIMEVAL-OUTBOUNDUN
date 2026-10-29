@@ -50,9 +50,11 @@ class UE5InventorySourceTests(unittest.TestCase):
         legacy_ids = set(re.findall(r"^\s*([a-zA-Z_][a-zA-Z_0-9]*):\{label:", definitions, re.M))
         weight_table = SOURCE.split("static const TMap<FName, float> Weights = {", 1)[1].split("\n    };", 1)[0]
         ue_ids = set(re.findall(r'TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\)', weight_table))
-        # Native farm milk is a new UE5-only item until Work merges the JS homestead branch.
-        self.assertEqual(ue_ids - {"milk"}, legacy_ids)
-        self.assertIn("milk", ue_ids)
+        # Explicit native-only inventory items; preserve exact legacy IDs and weights below.
+        native_only = {"milk", "tactical_belt", "medical_pouch", "handcuffs", "pistol_holster",
+                       "knife_sheath", "handheld_radio", "frag_grenade", "smoke_grenade"}
+        self.assertEqual(ue_ids - native_only, legacy_ids)
+        self.assertTrue(native_only.issubset(ue_ids))
         legacy_weights = dict(re.findall(r'^\s*([a-zA-Z_][a-zA-Z_0-9]*):\{label:[^\n]+?weight:([.0-9]+)', definitions, re.M))
         native_weights = dict(re.findall(r'\{TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\),\s*([.0-9]+)f\}', weight_table))
         for item_id, weight in legacy_weights.items():
@@ -75,7 +77,10 @@ class UE5InventorySourceTests(unittest.TestCase):
         self.assertIn("UAnomaliaInventoryWidget : public UUserWidget", WIDGET_HEADER)
         self.assertIn('Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory)', SURVIVOR_SOURCE)
         self.assertIn('ActionName="Inventory",Key=I', INPUT_INI)
-        self.assertIn("CreateWidget<UAnomaliaInventoryWidget>", SURVIVOR_SOURCE)
+        self.assertIn("UAnomaliaInventoryWidget::CreateForPlayerInventory(PC)", SURVIVOR_SOURCE)
+        self.assertIn("CreateWidget<UAnomaliaInventoryWidget>", WIDGET_SOURCE)
+        self.assertIn("Survivor->InventoryWidget=Screen", WIDGET_SOURCE)
+        self.assertIn("!Survivor->IsLocallyControlled()", WIDGET_SOURCE)
         for action in ("MoveToHands", "SplitHalf", "Merge"):
             with self.subTest(action=action):
                 self.assertIn(f"EAnomaliaInventoryAction::{action}", WIDGET_SOURCE)

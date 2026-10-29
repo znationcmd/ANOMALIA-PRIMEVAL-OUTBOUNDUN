@@ -1,0 +1,49 @@
+name: ANOMALIA installed character animation audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-installed-animation-audit.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Read installed animation registry
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIA\StorageRecovery'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $script=Join-Path $out 'inspect-installed-animations.py'
+          @'
+          import json, re
+          from pathlib import Path
+          import unreal
+          root=Path("D:/ANOMALIA/unreal/Content")
+          report={"scope":"Asset registry metadata, animations not retargeted or wired", "folders":sorted(p.name for p in root.iterdir() if p.is_dir()),"animations":[]}
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.search_all_assets(True)
+          for kind in ("AnimSequence","AnimMontage","BlendSpace","AnimBlueprint"):
+              for data in registry.get_assets_by_class(unreal.TopLevelAssetPath("/Script/Engine",kind),True):
+                  path=str(data.package_name)
+                  if not path.startswith("/Game/"): continue
+                  try: skeleton=str(data.get_tag_value("Skeleton"))
+                  except Exception as error: skeleton="unavailable: "+str(error)
+                  report["animations"].append({"path":path,"class":kind,"skeleton":skeleton})
+          report["animations"].sort(key=lambda a:a["path"])
+          Path("D:/ANOMALIA/StorageRecovery/installed-character-animations.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          selected=[a for a in report["animations"] if re.search(r"prone|crouch|crawl|punch|eat|drink|drive|driv|moto|sleep|door|search|interaction",a["path"],re.I)]
+          unreal.log("ANOMALIA_ANIMATION_FOLDERS="+json.dumps(report["folders"]))
+          unreal.log("ANOMALIA_ANIMATION_TOTAL="+str(len(report["animations"])))
+          unreal.log("ANOMALIA_SELECTED_ANIMATIONS="+json.dumps(selected[:140]))
+          '@ | Set-Content -LiteralPath $script -Encoding UTF8
+          $exe='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $log=Join-Path $out 'installed-animation-audit.log'
+          $args=@('"'+$project+'"','-run=pythonscript','-script="'+$script+'"','-unattended','-nopause','-nosound','-NullRHI','-abslog="'+$log+'"')
+          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+          if(!$proc.WaitForExit(540000)){Stop-Process -Id $proc.Id -ErrorAction SilentlyContinue;throw 'Animation registry scan timed out'}
+          Select-String -LiteralPath $log -Pattern 'ANOMALIA_ANIMATION|ANOMALIA_SELECTED|Error:|Traceback' | Select-Object -Last 30 | ForEach-Object {Write-Output $_.Line}
+          if($proc.ExitCode -ne 0 -or !(Test-Path "$out\installed-character-animations.json")){throw 'Animation audit did not complete'}

@@ -9,6 +9,7 @@ class USpringArmComponent;
 class USkeletalMeshComponent;
 class USkeletalMesh;
 class UCameraComponent;
+class UAnomaliaInputProfileComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
 class UAnomaliaStatusWidget;
@@ -23,7 +24,12 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
     GENERATED_BODY()
 public:
     AAnomaliaSurvivor();
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Controls") TObjectPtr<UAnomaliaInputProfileComponent> ControlsProfile;
+    virtual void UnPossessed() override;
     void CloseInventory();
+    void AssignQuickbarStack(int32 SlotIndex,int32 StackId);
+    int32 GetQuickbarStackId(int32 SlotIndex) const;
+    void ActivateQuickbarSlot(int32 SlotIndex);
     bool RequestVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId=0,int32 ExpectedCount=0);
     UFUNCTION(Server,Reliable) void ServerVehicleService(AAnomaliaChaosRoadVehicle* Vehicle,EAnomaliaVehicleServiceAction Action,int32 StackId,int32 ExpectedCount);
 
@@ -113,6 +119,7 @@ protected:
     void OnRep_Rest();
 
 private:
+    UFUNCTION() void HandleEnhancedControl(FName Name,float Value,bool bPressed);
     void MoveForward(float Value);
     void MoveRight(float Value);
     void Turn(float Value);
@@ -121,6 +128,8 @@ private:
     void LookUpRate(float Value);
     void InputInteract();
     void InputInventory();
+    void InputMeleeAttack();
+    UFUNCTION(Server,Reliable) void ServerMeleeAttack();
     void StartSprint();
     void BeginPaceAdjustment();
     void EndPaceAdjustment();
@@ -131,9 +140,12 @@ private:
     void InputRest();
     void InputPause();
     void InputCamera();
-
+    void InputQuickbar1(); void InputQuickbar2(); void InputQuickbar3(); void InputQuickbar4(); void InputQuickbar5();
+    void InputQuickbar6(); void InputQuickbar7(); void InputQuickbar8(); void InputQuickbar9(); void InputQuickbar0();
     /** Only the owning local player uses this to prevent wheel/weapon conflicts. */
     bool bAdjustPaceWithWheel = false;
+    UPROPERTY(Transient) TArray<int32> QuickbarStackIds;
+    double NextMeleeAttackTime=0.0;
     TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
 
     UFUNCTION(Server, Reliable)

@@ -1,0 +1,67 @@
+{
+  "time": "2026-10-27T19:50:31.214Z",
+  "license": "CC0-1.0",
+  "sources": [
+    {
+      "id": "pills_mxc2",
+      "author": "mxc2",
+      "source": "https://opengameart.org/content/pills-3d-models",
+      "license": "CC0-1.0",
+      "unrealImported": false,
+      "bytes": 146883,
+      "sha256": "554b5d8a3ffab9fa177a3d3532f31292376df80a05b3e04eb9155a7b5fafc516",
+      "archive": "C:\\ANOMALIA\\FabImports\\OpenMedicalPlantSources_20261027\\pills_mxc2\\pills.zip",
+      "state": "SOURCE_EXTRACTED_NEEDS_QUALITY_AND_UNREAL_VALIDATION",
+      "extraction": "EXTRACTED_TO_NEW_DIRECTORY",
+      "files": [
+        "complexPill/complexPill.fbx",
+        "complexPill/complexPill.mtl",
+        "complexPill/complexPill.obj",
+        "Credit.txt",
+        "simplePill/simplePill.fbx",
+        "simplePill/simplePill.mtl",
+        "simplePill/simplePill.obj"
+      ],
+      "models": [
+        "complexPill/complexPill.fbx",
+        "complexPill/complexPill.obj",
+        "simplePill/simplePill.fbx",
+        "simplePill/simplePill.obj"
+      ]
+    },
+    {
+      "id": "cannabis_yughues",
+      "author": "Yughues",
+      "source": "https://opengameart.org/content/cannabis-plants",
+      "license": "CC0-1.0",
+      "unrealImported": false,
+      "bytes": 3275277,
+      "sha256": "da4a5ae4c3a93a041bde4342e94fa8b78ac6da7ae11152a7beaee1116f95b109",
+      "archive": "C:\\ANOMALIA\\FabImports\\OpenMedicalPlantSources_20261027\\cannabis_yughues\\Cannabis.7z",
+      "state": "SOURCE_EXTRACTED_NEEDS_QUALITY_AND_UNREAL_VALIDATION",
+      "extraction": "EXTRACTED_TO_NEW_DIRECTORY",
+      "files": [
+        "preview.jpg",
+        "readme.txt",
+        "Cannabis.obj",
+        "Cannabis_flowering.obj",
+        "Cannabis.FBX",
+        "Cannabis_flowering.FBX",
+        "diffuse.tga",
+        "normal.tga",
+        "specular.tga"
+      ],
+      "models": [
+        "Cannabis.obj",
+        "Cannabis_flowering.obj",
+        "Cannabis.FBX",
+        "Cannabis_flowering.FBX"
+      ]
+    }
+  ],
+  "errors": [],
+  "unrealImported": false,
+  "quality": "NOT_VISUALLY_ACCEPTED",
+  "workflowRun": 40572389726,
+  "artifact": 12764959969
+}

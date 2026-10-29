@@ -1,0 +1,61 @@
+name: ANOMALIA character disk audit (read only)
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-character-disk-audit.yml']
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Read installed project and pack filenames without checkout or editor
+        shell: node {0}
+        run: |
+          const fs = require('fs'), path = require('path'), cp = require('child_process');
+          const root = 'C:\\ANOMALIA\\unreal';
+          const exists = p => fs.existsSync(p);
+          const walk = dir => {
+            if (!exists(dir)) return [];
+            return fs.readdirSync(dir, {withFileTypes:true}).flatMap(e => {
+              const p=path.join(dir,e.name);
+              if (e.isSymbolicLink()) return [];
+              return e.isDirectory() ? walk(p) : [p];
+            });
+          };
+          const git = args => {
+            try { return cp.execFileSync('git', ['-C',path.dirname(root),...args], {encoding:'utf8',timeout:30000,env:{...process.env,GIT_OPTIONAL_LOCKS:'0'}}).trim(); }
+            catch(e) { return {error:String(e.message).slice(0,500)}; }
+          };
+          const files = walk(path.join(root,'Content'));
+          const packs = files.filter(p=>/manny|quinn|quantum|survival|arberry|mannequin/i.test(p));
+          const engineCandidates = [process.env.UE_ROOT,'C:\\Program Files\\Epic Games\\UE_5.8','C:\\Program Files\\Epic Games\\UE_5.8.3'].filter(Boolean);
+          const report = {
+            time: new Date().toISOString(), project: root,
+            uprojectExists: exists(path.join(root,'AnomaliaPrimeval.uproject')),
+            uproject: exists(path.join(root,'AnomaliaPrimeval.uproject')) ? JSON.parse(fs.readFileSync(path.join(root,'AnomaliaPrimeval.uproject'),'utf8').replace(/^\uFEFF/,'')) : null,
+            folders: Object.fromEntries(['Content','Source','Config','Plugins'].map(n=>[n,exists(path.join(root,n))])),
+            gitHead:git(['rev-parse','HEAD']), gitBranch:git(['branch','--show-current']),gitStatus:git(['status','--porcelain=v1','--untracked-files=no']),
+            engines:engineCandidates.map(p=>({root:p,editor:exists(path.join(p,'Engine','Binaries','Win64','UnrealEditor.exe')),version:exists(path.join(p,'Engine','Build','Build.version')) ? JSON.parse(fs.readFileSync(path.join(p,'Engine','Build','Build.version'),'utf8').replace(/^\uFEFF/,'')) : null})),
+            contentFileCount:files.length, packFiles:packs.map(p=>({path:p.slice(root.length+1),bytes:fs.statSync(p).size})),
+            modules:packs.filter(p=>/quantum/i.test(p)&&/[/\\]Modules[/\\]/i.test(p)&&/\.uasset$/i.test(p)).map(p=>p.slice(root.length+1)),
+            characterBlueprintCandidates:files.filter(p=>/\.uasset$/i.test(p)&&/(^|[/\\])(BP_|ABP_)/i.test(p)&&/character|surviv|manny|quinn|quantum|mannequin/i.test(p)).map(p=>p.slice(root.length+1)),
+            plugins:walk(path.join(root,'Plugins')).filter(p=>p.endsWith('.uplugin')).map(p=>p.slice(root.length+1)),
+            testStatus:'Filesystem audit only. No assets loaded, no build, no PIE, no compatibility validation.'
+          };
+          const out=path.join(process.env.RUNNER_TEMP,'anomalia-character-audit-'+process.env.GITHUB_RUN_ID+'.json');
+          fs.writeFileSync(out,JSON.stringify(report,null,2),{flag:'wx'});
+          fs.appendFileSync(process.env.GITHUB_ENV,'ANOMALIA_AUDIT_REPORT='+out+'\n');
+          console.log('ANOMALIA_AUDIT_BEGIN\n'+JSON.stringify(report,null,2)+'\nANOMALIA_AUDIT_END');
+      - uses: actions/upload-artifact@v4
+        with:
+          name: character-disk-audit
+          path: ${{ env.ANOMALIA_AUDIT_REPORT }}
+          if-no-files-found: error

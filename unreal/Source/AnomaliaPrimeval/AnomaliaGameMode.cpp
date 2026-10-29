@@ -2,6 +2,9 @@
 #include "ReactiveWorld/AnomaliaWorldStateSubsystem.h"
 #include "AnomaliaItemEffectsComponent.h"
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaDogCompanion.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "CollisionShape.h"
 #include "AnomaliaPlayableProbe.h"
 #include "AnomaliaVisualReviewProbe.h"
 #include "AnomaliaSessionWidget.h"
@@ -67,6 +70,19 @@ void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options,
         if (Valid) ServerId = AutomationScope;
     }
 #endif
+    // The native fallback has no body asset. Use the installed ANOMALIA character
+    // only on the inhabited solo map; retain other maps' pawn choices.
+    if (GetNetMode()==NM_Standalone && MapName.EndsWith(TEXT("ANOMALIA_Inhabited_v2")))
+    {
+        UClass* BodyClass=LoadClass<AAnomaliaSurvivor>(nullptr,TEXT("/Game/Anomalia/Characters/BP_Anomalia_Quinn.BP_Anomalia_Quinn_C"));
+        const auto* Body=BodyClass?Cast<AAnomaliaSurvivor>(BodyClass->GetDefaultObject()):nullptr;
+        if(Body && Body->GetMesh()->GetSkeletalMeshAsset())
+        {
+            DefaultPawnClass=BodyClass;
+            UE_LOG(LogTemp,Log,TEXT("ANOMALIA inhabited character body configured: %s"),*BodyClass->GetPathName());
+        }
+        else UE_LOG(LogTemp,Error,TEXT("ANOMALIA inhabited character Blueprint has no compatible body"));
+    }
     FString VehicleError;
     if(auto* Services=GetWorld()->GetSubsystem<UAnomaliaVehicleServiceSubsystem>())
         if(!Services->Configure(ServerId,VehicleError))UE_LOG(LogTemp,Error,TEXT("ANOMALIA vehicle services initialization stopped: %s"),*VehicleError);
@@ -111,6 +127,38 @@ void AAnomaliaGameMode::HandleStartingNewPlayer_Implementation(APlayerController
     GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, NewPlayer]()
     {
         LoadPersistentPlayer(NewPlayer);
+        // Single-player companion belongs to the actual player, never an arbitrary nearby actor.
+        if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Inhabited_v2")))
+        {
+            auto* Survivor=Cast<AAnomaliaSurvivor>(NewPlayer->GetPawn());
+            bool bExisting=false;
+            for(TActorIterator<AAnomaliaDogCompanion> It(GetWorld());It;++It)
+                if(It->SurvivorOwner==Survivor) bExisting=true;
+            if(Survivor && !bExisting)
+            {
+                for(const FVector Offset : {FVector(180,180,0),FVector(-180,180,0),FVector(180,-180,0),FVector(-180,-180,0)})
+                {
+                    const FVector Candidate=Survivor->GetActorLocation()+Offset;
+                    FHitResult Floor;FCollisionQueryParams Query;Query.AddIgnoredActor(Survivor);
+                    if(!GetWorld()->LineTraceSingleByChannel(Floor,Candidate+FVector(0,0,200),Candidate-FVector(0,0,600),ECC_Visibility,Query)
+                        || Floor.ImpactNormal.Z<.8f) continue;
+                    const FVector Position=Floor.ImpactPoint+FVector(0,0,50);
+                    if(GetWorld()->OverlapBlockingTestByChannel(Position,FQuat::Identity,ECC_Pawn,FCollisionShape::MakeCapsule(25,46),Query))continue;
+                    FActorSpawnParameters Params;Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::DontSpawnIfColliding;
+                    auto* Dog=GetWorld()->SpawnActor<AAnomaliaDogCompanion>(AAnomaliaDogCompanion::StaticClass(),Position,FRotator::ZeroRotator,Params);
+                    if(Dog)
+                    {
+                        if(Dog->AssignSurvivor(Survivor))
+                        {
+                            Dog->RequestCommand(EAnomaliaDogCommand::Follow);
+                            UE_LOG(LogTemp,Log,TEXT("ANOMALIA solo shepherd spawned beside player; mesh=%s"),*GetNameSafe(Dog->GetMesh()->GetSkeletalMeshAsset()));
+                        }
+                        else Dog->Destroy();
+                        break;
+                    }
+                }
+            }
+        }
     }));
 }
 

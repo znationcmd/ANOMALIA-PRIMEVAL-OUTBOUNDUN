@@ -1,0 +1,53 @@
+name: ANOMALIA imported dog real Editor asset validation
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-dog-local-validation.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Load copied dog mesh skeleton and actual animations with NullRHI
+        shell: node {0}
+        run: |
+          (async()=>{
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),os=require('os'),crypto=require('crypto');
+          const source='C:\\ANOMALIA\\unreal\\Content\\German_Shepherd_3D_Model',stage='C:\\ANOMALIA-Validation\\c40543166274\\unreal',target=path.join(stage,'Content/German_Shepherd_3D_Model');
+          const engine='C:\\Program Files\\Epic Games\\UE_5.8';
+          const out=path.join(process.env.RUNNER_TEMP,'dog-load-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:false});fs.appendFileSync(process.env.GITHUB_ENV,'DOG_LOAD_OUTPUT='+out+'\n');
+          const rows=[];function walk(p){for(const e of fs.readdirSync(p,{withFileTypes:true})){if(e.isSymbolicLink())throw Error('Dog source symlink preserved');const f=path.join(p,e.name);if(e.isDirectory())walk(f);else rows.push({source:f,rel:path.relative(source,f),size:fs.statSync(f).size});}}walk(source);
+          const reserve=6*1024**3,budget=128*1024**2,bytes=rows.reduce((n,r)=>n+r.size,0),stat=fs.statfsSync('C:\\');
+          if(stat.bavail*stat.bsize<reserve+budget+bytes||os.freemem()<4*1024**3)throw Error('Read-only NullRHI dog asset load headroom unavailable');
+          const q=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"Get-CimInstance Win32_Process -Filter \"Name='UnrealEditor.exe'\" | Select-Object ProcessId | ConvertTo-Json -Compress"],{encoding:'utf8',timeout:20000});
+          if(q.status!==0||q.stdout.trim())throw Error('User Editor session preserved; dog staging deferred');
+          const hash=b=>crypto.createHash('sha256').update(b).digest('hex');
+          const planned=rows.map(r=>{const destination=path.join(target,r.rel),b=fs.readFileSync(r.source),sha=hash(b);if(fs.existsSync(destination)&&hash(fs.readFileSync(destination))!==sha)throw Error('Different staged dog asset preserved: '+r.rel);return{...r,destination,sha,alreadyPresent:fs.existsSync(destination)};});
+          for(const r of planned){if(!r.alreadyPresent){fs.mkdirSync(path.dirname(r.destination),{recursive:true});fs.copyFileSync(r.source,r.destination,fs.constants.COPYFILE_EXCL);}if(hash(fs.readFileSync(r.destination))!==r.sha)throw Error('Dog copy verification failed');}
+          fs.writeFileSync(path.join(out,'copy-receipt.json'),JSON.stringify({source,target,files:planned.map(r=>({path:r.rel,sha256:r.sha,bytes:r.size,alreadyPresent:r.alreadyPresent})),originalModified:false,artUploaded:false},null,2));
+          const script=path.join(out,'verify_dog.py');fs.writeFileSync(script,"\"\"\"Load the user's real dog pack in UE without editing the installed project.\"\"\"\nimport os,json,traceback\nfrom pathlib import Path\nimport unreal\nout=Path(os.environ['DOG_VALIDATION_REPORT'])\nout.mkdir(parents=True,exist_ok=False)\nr={'state':'FAILED','editorVersion':unreal.SystemLibrary.get_engine_version(),'assets':[],'animations':[],'missingDependencies':[],'errors':[],\n   'playtested':False,'rendered':False,'companionImplemented':False,'mainProjectModified':False}\ntry:\n    lib=unreal.EditorAssetLibrary\n    root='/Game/German_Shepherd_3D_Model'\n    registry=unreal.AssetRegistryHelpers.get_asset_registry()\n    registry.scan_paths_synchronous([root],True)\n    paths=list(lib.list_assets(root,True,False))\n    expected=root+'/Models/SK_GermanShepherd_01'\n    mesh=lib.load_asset(expected)\n    if not isinstance(mesh,unreal.SkeletalMesh): raise RuntimeError('Exact dog skeletal mesh failed to load')\n    skeleton=mesh.get_editor_property('skeleton')\n    if not skeleton: raise RuntimeError('Dog mesh has no skeleton')\n    r['mesh']=mesh.get_path_name();r['skeleton']=skeleton.get_path_name()\n    options=unreal.AssetRegistryDependencyOptions()\n    options.set_editor_property('include_hard_package_references',True)\n    options.set_editor_property('include_soft_package_references',True)\n    r['animationComponentAPIs']=[n for n in dir(unreal.SkeletalMeshComponent) if any(t in n for t in ['animation','bone','socket','tick_pose'])]\n    for path in paths:\n        asset=lib.load_asset(path)\n        if asset is None: raise RuntimeError('Asset could not load: '+str(path))\n        row={'path':asset.get_path_name(),'class':asset.get_class().get_name()}\n        r['assets'].append(row)\n        if isinstance(asset,unreal.AnimSequence):\n            compatible=asset.get_editor_property('skeleton')==skeleton\n            r['animations'].append({'path':asset.get_path_name(),'compatibleSkeleton':compatible,'seconds':asset.get_play_length()})\n            if not compatible: raise RuntimeError('Animation uses another skeleton: '+str(path))\n        pkg=str(path).split('.')[0]\n        for dep in registry.get_dependencies(unreal.Name(pkg),options):\n            name=str(dep)\n            if name.startswith('/Game/') and not lib.does_asset_exist(name):\n                if name not in r['missingDependencies']: r['missingDependencies'].append(name)\n    if len(r['animations'])<7: raise RuntimeError('Expected seven real locomotion animations')\n    if r['missingDependencies']: raise RuntimeError('Missing dog dependencies')\n    r['missingRequestedAnimationClips']=['sit','lie_down','attack']\n    r['state']='DOG_ASSETS_LOADED_AND_SKELETON_DEPENDENCIES_VERIFIED_NO_GAMEPLAY'\nexcept Exception as e:\n    r['errors'].append(str(e));r['traceback']=traceback.format_exc()\nfinally:\n    (out/'report.json').write_text(json.dumps(r,indent=2)+'\\n',encoding='utf8')\n    unreal.log('DOG_VALIDATION '+json.dumps(r))\n    unreal.SystemLibrary.quit_editor()\n",{flag:'wx'});
+          const child=cp.spawn(path.join(engine,'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),[path.join(stage,'AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecutePythonScript='+script,'-abslog='+path.join(out,'editor.log')],{env:{...process.env,DOG_VALIDATION_REPORT:path.join(out,'result')},stdio:['ignore','pipe','pipe']});
+          const stream=fs.createWriteStream(path.join(out,'process.log'));child.stdout.pipe(stream,{end:false});child.stderr.pipe(stream,{end:false});
+          let blocked=null,done=false;const abort=message=>{if(done||blocked)return;blocked=message;child.kill();};
+          const monitor=setInterval(()=>{const s=fs.statfsSync('C:\\');if(s.bavail*s.bsize<reserve)abort('Retained disk reserve reached');if(os.freemem()<1024**3)abort('Physical memory reserve reached');},2000);
+          const timeout=setTimeout(()=>abort('Dog load timed out'),180000);
+          const result=await new Promise(resolve=>{child.once('error',e=>resolve({exit:null,error:e.message}));child.once('close',(exit,signal)=>resolve({exit,error:blocked||signal}));});
+          done=true;clearTimeout(timeout);clearInterval(monitor);stream.end();
+          const report=path.join(out,'result/report.json');if(fs.existsSync(report))console.log(fs.readFileSync(report,'utf8'));
+          fs.writeFileSync(path.join(out,'process-result.json'),JSON.stringify(result,null,2));console.log(JSON.stringify(result));
+          if(result.exit!==0||!fs.existsSync(report)||JSON.parse(fs.readFileSync(report,'utf8')).state!=='DOG_ASSETS_LOADED_AND_SKELETON_DEPENDENCIES_VERIFIED_NO_GAMEPLAY')throw Error('Dog asset validation did not pass');
+          })().catch(e=>{console.error(e.message);process.exit(1);});
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dog-local-editor-validation
+          path: ${{ env.DOG_LOAD_OUTPUT }}
+          if-no-files-found: warn

@@ -1,0 +1,65 @@
+name: ANOMALIA exact Survival rig reference repair
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-character-rig-reference.yml']
+permissions:
+  contents: read
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Back up each config and verify exact rig redirect first in isolated copy then installed project
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),crypto=require('crypto');
+          const engine=process.env.UE_ROOT||'C:\\Program Files\\Epic Games\\UE_5.8';
+          const out=path.join(process.env.RUNNER_TEMP,'anomalia-rig-redirect-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out);
+          fs.appendFileSync(process.env.GITHUB_ENV,'ANOMALIA_REDIRECT_OUTPUT='+out+'\n');
+          const script=path.join(out,'validate.py');fs.writeFileSync(script,"import unreal, json, os\nold = \"/Game/Survival_01/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK\"\nnew = \"/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK\"\ntarget=unreal.load_asset(new)\nlegacy=unreal.load_asset(old)\nif not target or legacy != target:\n    raise RuntimeError(\"Exact legacy foot IK reference did not resolve to the installed rig\")\nbp=unreal.load_asset(\"/Game/Survival_Character/Demo/Characters/Mannequins/Animations/ABP_Manny\")\nif not bp or unreal.BlueprintEditorLibrary.compile_blueprint(bp) is not True:\n    raise RuntimeError(\"Survival animation Blueprint compilation failed\")\nresult={\"engine\":unreal.SystemLibrary.get_engine_version(),\"legacy\":old,\"resolved\":target.get_path_name(),\n        \"class\":target.get_class().get_name(),\"legacyMatchesTarget\":True,\"survivalAnimBlueprintCompiled\":True,\n        \"FabAssetsSaved\":False}\nwith open(os.environ[\"ANOMALIA_REDIRECT_REPORT\"],\"x\",encoding=\"utf-8\") as output:json.dump(result,output,indent=2)\nunreal.log(\"ANOMALIA_RIG_REDIRECT_VERIFIED \"+json.dumps(result))\n",{flag:'wx'});
+          const redirect="+PackageRedirects=(OldName=\"/Game/Survival_01/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK\",NewName=\"/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK\",MatchSubstring=false)";
+          const sha=b=>crypto.createHash('sha256').update(b).digest('hex');
+          for(const [label,root]of [['isolated','C:\\ANOMALIA-Validation\\c40543166274\\unreal'],['installed','C:\\ANOMALIA\\unreal']]){
+           const target=path.join(root,'Content','Survival_Character','Demo','Characters','Mannequins','Rigs','CR_Mannequin_BasicFootIK.uasset');
+           const legacy=path.join(root,'Content','Survival_01','Demo','Characters','Mannequins','Rigs','CR_Mannequin_BasicFootIK.uasset');
+           if(!fs.existsSync(target)||fs.existsSync(legacy))throw Error('Exact target missing or real legacy asset present; preserve both');
+           const config=path.join(root,'Config','DefaultEngine.ini'),original=fs.readFileSync(config),text=original.toString('utf8');
+           if(!Buffer.from(text).equals(original))throw Error('Non-UTF8 configuration preserved');
+           if(text.includes('OldName="/Game/Survival_01/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK"')&&!text.includes(redirect))throw Error('Conflicting legacy redirect preserved');
+           let next=text,backup=null;
+           if(!text.includes(redirect)){
+            const section=/^\[CoreRedirects\][ \t]*\r?$/m.exec(text);
+            if(section){const begin=section.index+section[0].length,tail=text.slice(begin),match=/\n\[/.exec(tail);const index=match?begin+match.index:text.length;next=text.slice(0,index)+'\n'+redirect+'\n'+text.slice(index);}
+            else next=text+'\n\n; ANOMALIA exact Survival demo foot IK reference repair.\n[CoreRedirects]\n'+redirect+'\n';
+            const folder=path.join(root,'Saved','CharacterAudit','Backups','rig-redirect-'+process.env.GITHUB_RUN_ID);
+            fs.mkdirSync(folder,{recursive:true});backup=path.join(folder,'DefaultEngine.ini');
+            fs.copyFileSync(config,backup,fs.constants.COPYFILE_EXCL);
+            if(!fs.readFileSync(backup).equals(original))throw Error('Configuration backup mismatch');
+            if(!fs.readFileSync(config).equals(original))throw Error('Configuration changed during backup; refusing edit');
+            fs.writeFileSync(config,next);
+           }
+           const receipt={label,beforeSha256:sha(original),afterSha256:sha(Buffer.from(next)),backup,redirect,mainMapAndGameModeUnchanged:true};
+           fs.writeFileSync(path.join(out,label+'-config-receipt.json'),JSON.stringify(receipt,null,2));
+           const report=path.join(out,label+'-report.json'),log=path.join(out,label+'.log');
+           const r=cp.spawnSync(path.join(engine,'Engine','Binaries','Win64','UnrealEditor-Cmd.exe'),[path.join(root,'AnomaliaPrimeval.uproject'),'-run=pythonscript','-script='+script,'-unattended','-nop4','-NullRHI','-stdout','-FullStdOutLogOutput','-abslog='+log],{encoding:'utf8',timeout:420000,maxBuffer:16*1024*1024,env:{...process.env,ANOMALIA_REDIRECT_REPORT:report}});
+           console.log(label+' REDIRECT_EXIT '+r.status+' '+String(r.error||''));
+           if(fs.existsSync(report))console.log(fs.readFileSync(report,'utf8'));
+           if(fs.existsSync(log))console.log(fs.readFileSync(log,'utf8').split(/\r?\n/).filter(l=>/Warning:|Error:|ANOMALIA_RIG_REDIRECT/.test(l)).slice(-25).join('\n'));
+           if(r.status!==0||!fs.existsSync(report)){
+            if(backup&&fs.readFileSync(config).equals(Buffer.from(next))){fs.writeFileSync(config,original);console.log(label+' original config restored after failed validation');}
+            throw Error('Rig redirect validation failed; no next project changed');
+           }
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: character-rig-reference-repair-evidence
+          path: ${{ env.ANOMALIA_REDIRECT_OUTPUT }}
+          if-no-files-found: warn

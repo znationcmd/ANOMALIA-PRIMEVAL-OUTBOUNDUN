@@ -1,0 +1,55 @@
+name: ANOMALIA official dog source acquisition
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-dog-source.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 4
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Resolve official public free Unreal dog download
+        shell: node {0}
+        run: |
+          (async()=>{
+          const fs=require('fs'),path=require('path'),crypto=require('crypto');
+          const dir=path.join('C:\\ANOMALIA\\FabImports','OfficialDog_'+process.env.GITHUB_RUN_ID);fs.mkdirSync(dir,{recursive:false});fs.appendFileSync(process.env.GITHUB_ENV,'DOG_SOURCE_OUTPUT='+dir+'\n');
+          const root='https://retrostylegames.itch.io/german-shepherd-3d-dog-model-free';
+          const response=await fetch(root,{signal:AbortSignal.timeout(30000)});if(!response.ok){const receipt={state:'BLOCKED_PUBLIC_CREATOR_HTTP',status:response.status,source:root,downloaded:false,imported:false};fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt));throw Error('Public creator page unavailable: HTTP '+response.status);}
+          const html=await response.text();fs.writeFileSync(path.join(dir,'creator-public-page.html'),html);
+          const ids=[...html.matchAll(/data-upload_id=["'](\d+)["']/g)].map(m=>({id:m[1],around:html.slice(m.index,m.index+1600).replace(/<[^>]+>/g,' ').replace(/\s+/g,' ')}));
+          const candidates=ids.map(x=>({id:x.id,filename:x.around.match(/RSG_DogsPack_GermanShepherd[^<>"\s]*\.zip/)?.[0]}));
+          fs.writeFileSync(path.join(dir,'public-files.json'),JSON.stringify(candidates,null,2));console.log(JSON.stringify(candidates));
+          const selected=candidates.find(x=>x.filename==='RSG_DogsPack_GermanShepherd_UE5_1.zip');
+          if(!selected)throw Error('Exact Unreal archive not identified; no download guessed');
+          const csrf=html.match(/name=["']csrf_token["'][^>]*value=["']([^"']+)["']/)?.[1]||html.match(/I\.csrf_token\s*=\s*["']([^"']+)["']/)?.[1];
+          const headers={'Content-Type':'application/x-www-form-urlencoded','Referer':root};
+          const cookies=response.headers.getSetCookie?.()||[];if(cookies.length)headers.Cookie=cookies.map(x=>x.split(';')[0]).join('; ');
+          const form=new URLSearchParams();if(csrf)form.set('csrf_token',csrf);
+          const result=await fetch(root+'/file/'+selected.id,{method:'POST',headers,body:form,signal:AbortSignal.timeout(30000)});
+          if(!result.ok)throw Error('Public anonymous download requires unavailable access: '+result.status);
+          const payload=await result.json();if(typeof payload.url!=='string')throw Error('No public download URL returned');
+          const st=fs.statfsSync('C:\\');if(st.bavail*st.bsize<6*1024**3+350*1024**2)throw Error('Dog import disk reserve unavailable');
+          const download=await fetch(payload.url,{signal:AbortSignal.timeout(60000)});if(!download.ok)throw Error('Official archive download failed');
+          const declared=Number(download.headers.get('content-length')||0);if(declared>80*1024**2)throw Error('Unexpected archive size');
+          const bytes=Buffer.from(await download.arrayBuffer());if(bytes.length>80*1024**2||bytes[0]!==80||bytes[1]!==75)throw Error('Not expected small ZIP archive');
+          const file=path.join(dir,selected.filename);fs.writeFileSync(file,bytes,{flag:'wx'});
+          const receipt={state:'OFFICIAL_SOURCE_DOWNLOADED_NOT_IMPORTED',source:root,author:'RetroStyle Games',filename:selected.filename,bytes:bytes.length,sha256:crypto.createHash('sha256').update(bytes).digest('hex'),licenseStatement:'Creator page: free for commercial and personal projects',credentialsUsed:false,paid:false};
+          fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify(receipt,null,2));console.log(JSON.stringify(receipt,null,2));
+          })().catch(e=>{console.error(e.message);process.exit(1);});
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: dog-source-receipt-only
+          path: |
+            ${{ env.DOG_SOURCE_OUTPUT }}\\receipt.json
+            ${{ env.DOG_SOURCE_OUTPUT }}\\public-files.json
+          if-no-files-found: warn

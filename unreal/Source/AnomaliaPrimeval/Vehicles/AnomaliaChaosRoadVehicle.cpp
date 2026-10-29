@@ -264,6 +264,14 @@ void AAnomaliaChaosRoadVehicle::ApplyRoadRig()
         RuntimeChassisPhysics->SkeletalBodySetups.Add(ChassisBody);
         RuntimeChassisPhysics->BoundsBodies.Add(0);
         RuntimeChassisPhysics->BodySetupIndexMap.Add(RootBone,0);
+        // Chaos re-applies its Mass property whenever body mass is recalculated.
+        // Keep that source of truth in sync, preserving the authored dry mass
+        // across physics-state recreation and repeated inventory notifications.
+        if (UnladenMassKg < 0.f) UnladenMassKg = ChaosMovement->Mass;
+        const float InitialCargo = CargoInventory->GetCurrentWeightKg();
+        ChaosMovement->Mass = UnladenMassKg +
+            (FMath::IsFinite(InitialCargo) && InitialCargo >= 0.f ? InitialCargo : 0.f);
+        LastCargoMassKg = -1.f;
         Chassis->SetPhysicsAsset(RuntimeChassisPhysics,true);
         Chassis->SetSimulatePhysics(HasAuthority());
         Chassis->SetMassOverrideInKg(RootBone,ChaosMovement->Mass,true);
@@ -507,14 +515,34 @@ void AAnomaliaChaosRoadVehicle::UpdateRoadLights()
     const auto* State=GetWorld()?GetWorld()->GetGameState():nullptr;
     const double Time=State?State->GetServerWorldTimeSeconds():(GetWorld()?GetWorld()->GetTimeSeconds():0);
     const bool bFlash=FMath::Fmod(Time,.8)<.4;
+    const bool bAuthoredPositions=IndicatorPositionsCm.Num()==IndicatorLights.Num() &&
+        !IndicatorPositionsCm.ContainsByPredicate([](const FVector& P){return P.ContainsNaN() || P.GetAbsMax()>1000.f;});
     for(int32 Index=0;Index<IndicatorLights.Num();++Index)
-        if(IndicatorLights[Index])IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
+    {
+        if(!IndicatorLights[Index])continue;
+        if(bAuthoredPositions)IndicatorLights[Index]->SetRelativeLocation(IndicatorPositionsCm[Index]);
+        IndicatorLights[Index]->SetVisibility(bFlash && (IndicatorMode==3 || IndicatorMode==(Index%2==0?1:2)));
+    }
+}
+
+float AAnomaliaChaosRoadVehicle::GetUnladenMassKg() const
+{
+    return UnladenMassKg >= 0.f ? UnladenMassKg : ChaosMovement->Mass;
 }
 
 void AAnomaliaChaosRoadVehicle::UpdateCargoPhysicalMass()
 {
     if(!HasAuthority()||!IsDriveReady())return;
     const float CargoMass=CargoInventory->GetCurrentWeightKg();
-    if(!FMath::IsFinite(CargoMass)||CargoMass<0||FMath::IsNearlyEqual(CargoMass,LastCargoMassKg,.001f))return;
-    Chassis->SetMassOverrideInKg(NAME_None,ChaosMovement->Mass+CargoMass,true);LastCargoMassKg=CargoMass;
+    if(!FMath::IsFinite(CargoMass)||CargoMass<0)return;
+    const float TotalMass=GetUnladenMassKg()+CargoMass;
+    if(FMath::IsNearlyEqual(CargoMass,LastCargoMassKg,.001f) &&
+       FMath::IsNearlyEqual(ChaosMovement->Mass,TotalMass,.001f) &&
+       FMath::IsNearlyEqual(Chassis->GetMass(),TotalMass,.01f))return;
+    // SetupVehicleMass binds UpdateMassProperties to the body's recalculation.
+    // Updating only the body override would immediately restore the dry Mass.
+    ChaosMovement->Mass=TotalMass;
+    const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
+    Chassis->SetMassOverrideInKg(RootBone,TotalMass,true);
+    LastCargoMassKg=CargoMass;
 }

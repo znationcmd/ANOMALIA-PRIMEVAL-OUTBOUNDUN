@@ -1,0 +1,80 @@
+name: ANOMALIA storage locations
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-storage-locations.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Recover duplicated City Sample cache and redirect Epic cache to D
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'Close Epic and Unreal before relocation'}
+          $report='D:\ANOMALIA\StorageRecovery'
+          New-Item -ItemType Directory -Force -Path $report | Out-Null
+          $code=@'
+          using System;
+          using System.IO;
+          using System.Security.Cryptography;
+          public static class CacheRecovery {
+            public static long Reclaimed=0, Preserved=0;
+            static string Hash(string p) { using(var h=SHA256.Create())using(var s=File.OpenRead(p)){return BitConverter.ToString(h.ComputeHash(s));} }
+            public static void Process(string dir,string root,string installed,string recovery) {
+              foreach(string sub in Directory.GetDirectories(dir)) {
+                if((File.GetAttributes(sub)&FileAttributes.ReparsePoint)!=0)throw new Exception("Unexpected link "+sub);
+                Process(sub,root,installed,recovery);
+              }
+              foreach(string source in Directory.GetFiles(dir)) {
+                string rel=source.Substring(root.Length).TrimStart('\\');
+                string candidate=Path.Combine(installed,rel);
+                long bytes=new FileInfo(source).Length;
+                bool same=File.Exists(candidate)&&new FileInfo(candidate).Length==bytes&&Hash(source)==Hash(candidate);
+                if(!same){
+                  string dest=Path.Combine(recovery,rel);
+                  if(File.Exists(dest)) { if(Hash(source)!=Hash(dest))throw new Exception("Recovery conflict "+dest); }
+                  else {
+                    if(new DriveInfo("D").AvailableFreeSpace<bytes+20L*1024*1024*1024)throw new Exception("D reserve reached");
+                    Directory.CreateDirectory(Path.GetDirectoryName(dest));
+                    File.Copy(source,dest,false);
+                    if(Hash(source)!=Hash(dest))throw new Exception("Copy verification failed "+source);
+                  }
+                  Preserved+=bytes;
+                }
+                File.SetAttributes(source,FileAttributes.Normal);
+                File.Delete(source);
+                Reclaimed+=bytes;
+              }
+              Directory.Delete(dir,false);
+            }
+          }
+          '@
+          Add-Type -TypeDefinition $code
+          $cache='C:\ProgramData\Epic\EpicGamesLauncher\VaultCache'
+          $city=Join-Path $cache 'CitySample_5.8'
+          $installed='D:\ANOMALIA\FabImports\CitySample'
+          if(!(Test-Path "$installed\CitySample.uproject") -or !(Test-Path "$installed\Content")){throw 'Installed City Sample missing'}
+          if(Test-Path "$city\data"){
+            Copy-Item -LiteralPath "$city\manifest" -Destination "$report\CitySample-cache-manifest.backup" -Force
+            "HASH_COMPARE_STARTED $(Get-Date -Format o)" | Set-Content "$report\status.txt"
+            [CacheRecovery]::Process("$city\data","$city\data",$installed,"$report\CitySampleUniqueCacheFiles")
+            "CITY_RECLAIMED_BYTES=$([CacheRecovery]::Reclaimed) UNIQUE_PRESERVED_BYTES=$([CacheRecovery]::Preserved)" | Tee-Object -FilePath "$report\status.txt"
+            Remove-Item -LiteralPath "$city\manifest" -Force
+            Remove-Item -LiteralPath $city
+          }
+          if(@(Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'Epic reopened; stop before remaining cache migration'}
+          $dest='D:\ANOMALIA\FabImports\VaultCache'
+          $recovery=Join-Path $dest ('RecoveredC-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $recovery | Out-Null
+          & robocopy $cache $recovery /E /XJ /COPY:DAT /DCOPY:T /R:1 /W:1 /NFL /NDL /NP /LOG:"$report\remaining-cache-copy.log"
+          if($LASTEXITCODE -ge 8){throw 'Remaining cache copy failed; C originals retained'}
+          # Verify every remaining byte before removing the old cache files.
+          [CacheRecovery]::Process($cache,$cache,$recovery,"$report\UnexpectedCopyDifferences")
+          New-Item -ItemType Junction -Path $cache -Target $dest | Out-Null
+          "CACHE_REDIRECT=$cache -> $dest" | Tee-Object -FilePath "$report\status.txt" -Append
+          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID,FreeSpace,Size | ConvertTo-Json -Compress | Tee-Object -FilePath "$report\status.txt" -Append
+          exit 0

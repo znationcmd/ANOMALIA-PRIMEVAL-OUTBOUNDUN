@@ -1,0 +1,43 @@
+name: ANOMALIA apocalypse city preparation
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-apocalypse-city-inventory.yml']
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Inventory infrastructure and biome source assets
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path');
+          const groups={tunnel:/tunnel|underpass/i,bridge:/bridge|overpass/i,port:/harbou?r|dock|pier|quay|port_/i,garage:/garage|carpark|parking/i,rail:/station|rail|subway|metro|train/i,wreck:/wreck|scrap|abandon|damaged.*car|car.*damaged/i,forest:/tree|forest|pine|fir_|foliage/i,snow:/snow|ice_|glacier|mountain/i,desert:/desert|sand|dune/i,storm:/storm|blizzard|dust|weather/i};
+          const result={scope:'Names only, meshes and collision still require inspection',roots:[],maps:[],groups:Object.fromEntries(Object.keys(groups).map(k=>[k,[]])),counts:{}};
+          function walk(dir,depth=0){
+            if(depth>20)return;
+            for(const e of fs.readdirSync(dir,{withFileTypes:true})){
+              if(e.isSymbolicLink())continue;
+              const p=path.join(dir,e.name);
+              if(e.isDirectory()){if(!/^(Binaries|Intermediate|DerivedDataCache|Saved|node_modules|\.git|__ExternalActors__|__ExternalObjects__)$/i.test(e.name))walk(p,depth+1);}
+              else if(/\.(uasset|umap|fbx|glb|gltf)$/i.test(e.name)){
+                if(/\.umap$/i.test(e.name))result.maps.push(p);
+                for(const [key,regex] of Object.entries(groups))if(regex.test(e.name)){
+                  result.counts[key]=(result.counts[key]||0)+1;
+                  if(result.groups[key].length<60)result.groups[key].push(p);
+                }
+              }
+            }
+          }
+          for(const base of ['D:/ANOMALIA/FabImports','D:/ANOMALIA/unreal/Content']){
+            result.roots.push({path:base,exists:fs.existsSync(base)});
+            if(fs.existsSync(base))walk(base);
+          }
+          fs.mkdirSync('D:/ANOMALIA/StorageRecovery',{recursive:true});
+          fs.writeFileSync('D:/ANOMALIA/StorageRecovery/apocalypse-infrastructure-biomes.json',JSON.stringify(result,null,2));
+          console.log(JSON.stringify(result));

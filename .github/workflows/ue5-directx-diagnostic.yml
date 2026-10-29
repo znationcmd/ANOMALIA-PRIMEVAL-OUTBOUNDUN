@@ -1,0 +1,32 @@
+name: ANOMALIA DirectX diagnostic
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-directx-diagnostic.yml']
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Inspect GPU and DirectX failure logs
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-CimInstance Win32_VideoController | Select-Object Name,DriverVersion,DriverDate,AdapterRAM,Status,PNPDeviceID | ConvertTo-Json -Compress | Write-Output
+          Get-CimInstance Win32_OperatingSystem | Select-Object Caption,Version,BuildNumber,TotalVisibleMemorySize,FreePhysicalMemory | ConvertTo-Json -Compress | Write-Output
+          foreach($p in @('D:\ANOMALIA\FabImports\CitySample\Saved\Logs','D:\ANOMALIA\unreal\Saved\Logs')){
+            if(Test-Path $p){
+              foreach($f in Get-ChildItem $p -Filter '*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 2){
+                Write-Output "LOG $($f.FullName)"
+                Select-String -LiteralPath $f.FullName -Pattern 'D3D12|Adapter|Driver|Feature Level|Shader Model|not supported|Fatal|RHI|Command Line' | Select-Object -Last 65 | ForEach-Object {Write-Output $_.Line}
+              }
+            }
+          }
+          $p='D:\ANOMALIA\FabImports\CitySample\Config\DefaultEngine.ini'
+          if(Test-Path $p){Select-String -LiteralPath $p -Pattern 'DefaultGraphicsRHI|TargetedShader|D3D|RayTracing|Adapter' | ForEach-Object {Write-Output $_.Line}}
+          $dx='D:\ANOMALIA\StorageRecovery\dxdiag.txt'
+          $proc=Start-Process "$env:WINDIR\System32\dxdiag.exe" -ArgumentList "/whql:off /t $dx" -PassThru
+          if(!$proc.WaitForExit(60000)){throw 'dxdiag timed out'}
+          if(Test-Path $dx){Select-String -LiteralPath $dx -Pattern 'Card name|Driver Version|Driver Model|Feature Levels|DirectX Version|DDI Version|Device Status|Problem Code' | ForEach-Object {Write-Output $_.Line}}

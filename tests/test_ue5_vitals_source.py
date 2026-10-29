@@ -91,7 +91,7 @@ class UE5VitalsSourceTests(unittest.TestCase):
         self.assertIn("DOREPLIFETIME(UAnomaliaVitalsComponent, bExhausted)", code)
         self.assertIn("GetCharacterMovement()->NavAgentProps.bCanCrouch = true", survivor)
         self.assertIn("if (bIsCrouched) UnCrouch(); else Crouch();", survivor)
-        self.assertIn('ActionName="PaceMode",Key=LeftAlt', settings)
+        self.assertIn('ActionName="PaceMode",Key=RightAlt', settings)
         self.assertIn('ActionName="TacticalCrouch",Key=C', settings)
 
 

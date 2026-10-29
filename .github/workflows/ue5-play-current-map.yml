@@ -1,0 +1,68 @@
+name: ANOMALIA current D map playable access
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-play-current-map.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  play:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Verify game-mode world startup before creating separate shortcut
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $env:ANOMALIA_EDITOR_EXE=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor.exe'
+          @'
+          import pathlib,subprocess,os,json,time
+          project=pathlib.Path('D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject')
+          log=pathlib.Path('D:/ANOMALIA/StorageRecovery/game-mode-'+os.environ['GITHUB_RUN_ID']+'.log')
+          report={'state':'FAILED','packagedGame':False,'map':'/Game/Maps/ANOMALIA_Inhabited_v2'}
+          proc=None
+          try:
+              if not project.exists():raise RuntimeError('D project missing')
+              proc=subprocess.Popen([os.environ['ANOMALIA_EDITOR_EXE'],str(project),report['map']+'?AnomaliaServerId=game-start-check-'+os.environ['GITHUB_RUN_ID'],'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720','-nosound','-unattended','-abslog='+str(log)])
+              deadline=time.monotonic()+180
+              while time.monotonic()<deadline:
+                  text=log.read_text(errors='replace') if log.exists() else ''
+                  if 'Fatal error:' in text or 'LowLevelFatalError' in text:raise RuntimeError('Game renderer failed; see log')
+                  if 'Bringing World' in text and 'up for play' in text:
+                      report['state']='GAME_WORLD_STARTED_NOT_FULL_PLAYTEST';break
+                  if proc.poll() is not None:raise RuntimeError('Game process exited before world startup')
+                  time.sleep(2)
+              if report['state']=='FAILED':raise RuntimeError('Game world startup timed out')
+          except Exception as e:report['error']=str(e)
+          finally:
+              if proc and proc.poll() is None:
+                  proc.terminate()
+                  try:proc.wait(timeout=20)
+                  except subprocess.TimeoutExpired:proc.kill();proc.wait()
+              log.with_suffix('.json').write_text(json.dumps(report,indent=2))
+              print(json.dumps(report))
+          raise SystemExit(0 if report['state']=='GAME_WORLD_STARTED_NOT_FULL_PLAYTEST' else 1)
+          '@ | Set-Content "$env:RUNNER_TEMP/check-d-game.py" -Encoding UTF8
+          & $python "$env:RUNNER_TEMP/check-d-game.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          $shell=New-Object -ComObject WScript.Shell
+          $link=Join-Path ([Environment]::GetFolderPath('Desktop')) 'ANOMALIA - Jouer carte D.lnk'
+          if(Test-Path $link){$old=$shell.CreateShortcut($link);if($old.TargetPath -ne $env:ANOMALIA_EDITOR_EXE){throw 'Unrelated shortcut preserved'}}
+          $s=$shell.CreateShortcut($link)
+          $s.TargetPath=$env:ANOMALIA_EDITOR_EXE
+          $s.Arguments='"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject" /Game/Maps/ANOMALIA_Inhabited_v2 -game -d3d11 -sm5 -windowed -ResX=1280 -ResY=720'
+          $s.WorkingDirectory='D:\ANOMALIA\unreal'
+          $s.Description='ANOMALIA carte en chantier — mode jeu depuis le projet D'
+          $s.Save()
+          if($shell.CreateShortcut($link).Arguments -ne $s.Arguments){throw 'Shortcut verification failed'}
+          Write-Host "GAME_MODE_SHORTCUT_VERIFIED $link"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: current-map-game-start
+          path: D:/ANOMALIA/StorageRecovery/game-mode-${{ github.run_id }}.*
+          if-no-files-found: warn

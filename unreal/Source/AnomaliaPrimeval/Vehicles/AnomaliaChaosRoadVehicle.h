@@ -109,6 +109,11 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_RoadControls, VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") uint8 IndicatorMode=0;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") TArray<TObjectPtr<USpotLightComponent>> Headlights;
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos|Lights") TArray<TObjectPtr<UPointLightComponent>> IndicatorLights;
+    /** Authored chassis-local lamp positions: front left/right, rear left/right.
+     * Empty preserves older vehicles; a partial or non-finite set is rejected. */
+    UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="ANOMALIA|Chaos|Lights")
+    TArray<FVector> IndicatorPositionsCm;
+
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Chaos|Engine")
     void OnEngineRunningChanged(bool bRunning);
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos") bool AreWheelVisualsUpright() const;
@@ -116,6 +121,9 @@ public:
     bool HasValidRoadRig() const;
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Chaos")
     bool IsChaosDriveReady() const;
+    /** Authored dry chassis mass, independent of the current cargo load. */
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Vehicle|Cargo")
+    float GetUnladenMassKg() const;
 protected:
     virtual void BeginPlay() override;
     virtual bool UsesPhysicsRoadSimulation() const override { return true; }
@@ -146,4 +154,5 @@ private:
     void ApplyRoadRig();
     UFUNCTION() void UpdateCargoPhysicalMass();
     float LastCargoMassKg=-1.f;
+    float UnladenMassKg=-1.f;
 };

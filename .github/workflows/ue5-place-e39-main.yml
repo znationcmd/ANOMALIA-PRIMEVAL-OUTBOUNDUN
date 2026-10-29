@@ -1,0 +1,80 @@
+name: ANOMALIA place authored E39 in inhabited map
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-place-e39-main.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Transfer verified E39 assembly from its review into main world
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/e39-main-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          @'
+          import unreal,json,pathlib
+          level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          source='/Game/Maps/ANOMALIA_E39DriveReview_v1'
+          if not level.load_level(source):raise RuntimeError('Original E39 authored review missing; no replacement vehicle created')
+          cars=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.AnomaliaChaosRoadVehicle)]
+          if len(cars)!=1 or not cars[0].has_valid_road_rig():raise RuntimeError('Unique valid original E39 rig required')
+          car=cars[0]
+          props={k:car.get_editor_property(k) for k in ('road_mesh','road_animation','road_body_mesh','road_wheel_mesh','road_glass_mesh','driver_door_mesh','driver_door_pivot_cm','additional_panel_definitions','road_wheel_meshes','road_wheel_hub_targets_cm','wheel_bones','wheel_radius_cm')}
+          body=props['road_body_mesh'].get_path_name()
+          if 'e39' not in body.lower():raise RuntimeError('Source art is not E39: '+body)
+          if not level.load_level('/Game/Maps/ANOMALIA_Inhabited_v2'):raise RuntimeError('Main map absent')
+          label='ANOMALIA_Main_E39_v1'
+          existing=[a for a in actors.get_all_level_actors() if a.get_actor_label()==label]
+          if existing:
+              if len(existing)!=1 or not isinstance(existing[0],unreal.AnomaliaChaosRoadVehicle):raise RuntimeError('Existing unrelated actor retained')
+              target=existing[0]
+          else:
+              starts=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.PlayerStart)]
+              if not starts:raise RuntimeError('Always-loaded start required')
+              start=starts[0].get_actor_location()
+              lib=unreal.AnomaliaWorldImportLibrary
+              desc=json.loads(lib.get_archipelago_actor_descriptors())
+              terrain=[d['guid'] for d in desc['actors'] if d.get('boundsValid') and 'Landscape' in d.get('nativeClass','') and d['boundsMinCm'][0]-2000<start.x<d['boundsMaxCm'][0]+2000 and d['boundsMinCm'][1]-2000<start.y<d['boundsMaxCm'][1]+2000]
+              if not lib.set_archipelago_actors_loaded(terrain,True):raise RuntimeError('Terrain load failed')
+              world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+              pos=None
+              for dx,dy in ((500,0),(-500,0),(0,500),(0,-500),(800,0)):
+                  hit=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(start.x+dx,start.y+dy,start.z+500),unreal.Vector(start.x+dx,start.y+dy,start.z-1000),unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
+                  if hit is None:continue
+                  v=hit.to_tuple()
+                  if not v[0] or v[1] or v[7].z<.97:continue
+                  p=v[5]
+                  block=unreal.SystemLibrary.box_trace_single(world,unreal.Vector(p.x,p.y,p.z+130),unreal.Vector(p.x,p.y,p.z+135),unreal.Vector(260,120,95),unreal.Rotator(),unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
+                  if block is not None and block.to_tuple()[0]:continue
+                  pos=unreal.Vector(p.x,p.y,p.z+100);break
+              if pos is None:raise RuntimeError('No clear flat E39 placement near player; map unchanged')
+              target=actors.spawn_actor_from_class(unreal.AnomaliaChaosRoadVehicle,pos)
+              if not target:raise RuntimeError('Vehicle spawn failed')
+              target.set_actor_label(label);target.tags=[unreal.Name(label)]
+          for k,v in props.items():target.set_editor_property(k,v)
+          target.get_editor_property('survival_systems').set_editor_property('enabled',True)
+          target.get_editor_property('survival_systems').set_editor_property('battery_access_panel',unreal.Name('trunk'))
+          target.set_editor_property('is_spatially_loaded',False)
+          if not target.has_valid_road_rig():raise RuntimeError('Transferred E39 rig failed validation')
+          if not level.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('E39 save failed')
+          unreal.log('MAIN_E39_SAVED '+body+'; driving on main map remains to validate')
+          '@ | Set-Content "$out/place.py" -Encoding UTF8
+          $exe=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI -run=pythonscript "-script=$out/place.py" "-abslog=$out/place.log"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          Select-String "$out/place.log" -Pattern 'MAIN_E39_SAVED|Error:' | ForEach-Object {$_.Line}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: e39-main-placement
+          path: D:/ANOMALIA/StorageRecovery/e39-main-${{ github.run_id }}/*.log
+          if-no-files-found: warn

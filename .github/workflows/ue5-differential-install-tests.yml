@@ -1,0 +1,31 @@
+name: ANOMALIA differential version installer tests
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths:
+      - 'scripts/ue5/differential-version-store.ps1'
+      - 'scripts/ue5/install-pc-editor-update.ps1'
+      - 'scripts/ue5/install-playable-windows.ps1'
+      - 'tests/windows-differential-install.ps1'
+      - '.github/workflows/ue5-differential-install-tests.yml'
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  differential:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exercise immutable hard-link delta staging and rollback safety
+        shell: node {0}
+        run: |
+          const cp=require('child_process'),path=require('path');
+          const script=path.join(process.env.GITHUB_WORKSPACE,'tests','windows-differential-install.ps1');
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',script],{encoding:'utf8',timeout:1200000,maxBuffer:8*1024*1024});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Differential version installer tests failed '+String(r.error||r.status));

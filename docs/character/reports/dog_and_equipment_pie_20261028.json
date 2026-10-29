@@ -1,0 +1,179 @@
+{
+  "state": "NATIVE_DOG_AND_ATTACHMENTS_PIE_PASSED_NOT_MULTIPLAYER_ACCEPTANCE",
+  "scope": "dog-playtest-40757731172",
+  "map": "/Game/Anomalia/CompanionTests/GermanShepherd_40757731172/L_Dog_Playtest",
+  "checks": [
+    "native dog loads actual German Shepherd mesh",
+    "dog has a real animation instance",
+    "full medical pouch cannot be removed",
+    "backpack with mounted weapon cannot be removed",
+    "equipped belt accessories and medical contents survive disk save and reload",
+    "real dog animation changes component-space bone positions",
+    "actual proximity Follow callback reaches native dog",
+    "missing sitting animation is rejected honestly",
+    "real CharacterMovement moves the player",
+    "dog follows actual moving player without teleporting",
+    "actual proximity Stay callback reaches native dog",
+    "dog remains stopped",
+    "lethal hit injures dog without destroying it",
+    "actual Quantum rifle component attached to backpack",
+    "rifle is upright behind torso beside backpack",
+    "actual M4 and AK magazine models rendered into inventory thumbnails"
+  ],
+  "errors": [],
+  "screenshots": [
+    {
+      "file": "Dog_inventory00000.png",
+      "bytes": 639041,
+      "sha256": "48ff06a17a692067e8919cfd2718ba1016a60dcef063c3401c880784e9e45af2"
+    },
+    {
+      "file": "Dog_companion00000.png",
+      "bytes": 990370,
+      "sha256": "57307dd9fa01e1b734be7c96bd0d265b54eba141b7eca51c9ca0f4041ce03db1"
+    },
+    {
+      "file": "Equipment_back00000.png",
+      "bytes": 700569,
+      "sha256": "ac099b4114b1c4beb97071376027c9ff7e5f8345c80f3b17c49b8847c62cb022"
+    }
+  ],
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "physicalKeyboardMouseTested": false,
+  "multiplayerTested": false,
+  "mainProjectModified": false,
+  "dogEquipmentImplemented": false,
+  "breedsAvailable": [
+    "german_shepherd"
+  ],
+  "unavailableCommands": [
+    "sit",
+    "lie_down",
+    "attack"
+  ],
+  "appearancePersistenceTested": false,
+  "savedOwnershipConfiguration": {
+    "classDefault": false,
+    "placedInstance": true
+  },
+  "savedBlueprint": "/Game/Anomalia/CompanionTests/GermanShepherd_40757731172/BP_Anomalia_GermanShepherd",
+  "savedMap": "/Game/Anomalia/CompanionTests/GermanShepherd_40757731172/L_Dog_Playtest",
+  "travelObserved": {
+    "gameMode": "GM_Survival_Playtest_C",
+    "player": "/Game/Anomalia/CompanionTests/GermanShepherd_40757731172/UEDPIE_0_L_Dog_Playtest.L_Dog_Playtest:PersistentLevel.BP_Survival_Playtest_C_0",
+    "playerLocation": "<Struct 'Vector' (0x000001ACC29B9C30) {x: 0.000000, y: 0.000000, z: 90.150000}>",
+    "dogLocation": "<Struct 'Vector' (0x000001ACC29B9C30) {x: 0.000000, y: 200.000000, z: 47.150001}>",
+    "autoAssignEnabled": true,
+    "tickEnabled": true,
+    "owner": "<Object '/Game/Anomalia/CompanionTests/GermanShepherd_40757731172/UEDPIE_0_L_Dog_Playtest.L_Dog_Playtest:PersistentLevel.BP_Survival_Playtest_C_0' (0x000001ACDB524600) Class 'BP_Survival_Playtest_C'>",
+    "simulationSeconds": 3.012310102581978
+  },
+  "profileSaveReturn": "",
+  "profileLoadReturn": "",
+  "idleBoneMotionCm": 37.304915847673065,
+  "follow": {
+    "playerMovedCm": 1276.7028567155814,
+    "dogMovedCm": 1202.4216788590475,
+    "gapCm": 100.67587280273438
+  },
+  "mountedWeapon": [
+    {
+      "mesh": "/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive.SM_Rifle_Olive",
+      "socket": "spine_03"
+    }
+  ],
+  "riflePlacement": {
+    "worldExtentCm": [
+      3.781667438713531,
+      20.304878775267927,
+      55.19908734238432
+    ],
+    "forwardOffsetCm": -27.849285412238032,
+    "rightOffsetCm": 29.12622499375709
+  },
+  "magazineThumbnails": [
+    {
+      "item": "stanag_magazine",
+      "pixels": 65536,
+      "distinctRGB": 1353
+    },
+    {
+      "item": "ak_magazine",
+      "pixels": 65536,
+      "distinctRGB": 1626
+    }
+  ],
+  "dogBones": [
+    "Group",
+    "Rig_1-type",
+    "DEF-spine_004",
+    "DEF-spine_006",
+    "DEF-spine_007",
+    "DEF-spine_008",
+    "DEF-spine_009",
+    "DEF-spine_010",
+    "DEF-spine_011",
+    "DEF-tongue",
+    "DEF-tongue_001",
+    "DEF-tongue_002",
+    "DEF-jaw",
+    "DEF-AustralianShepherd_ear01_L",
+    "DEF-AustralianShepherd_ear01_R",
+    "DEF-Border-collie_ear01_L",
+    "DEF-Border-collie_ear02_L",
+    "DEF-Border-collie_ear01_R",
+    "DEF-Border-collie_ear02_R",
+    "DEF-shoulder_L",
+    "DEF-front_thigh_L",
+    "DEF-front_shin_L",
+    "DEF-front_foot_L",
+    "DEF-front_toe_L",
+    "DEF-f_palm_01_L",
+    "DEF-f_palm_02_L",
+    "DEF-f_palm_03_L",
+    "DEF-f_palm_04_L",
+    "DEF-shoulder_R",
+    "DEF-front_thigh_R",
+    "DEF-front_shin_R",
+    "DEF-front_foot_R",
+    "DEF-front_toe_R",
+    "DEF-f_palm_01_R",
+    "DEF-f_palm_02_R",
+    "DEF-f_palm_03_R",
+    "DEF-f_palm_04_R",
+    "DEF-thigh_L",
+    "DEF-shin_L",
+    "DEF-foot_L",
+    "DEF-toe_L",
+    "DEF-r_palm_01_L",
+    "DEF-r_palm_02_L",
+    "DEF-r_palm_03_L",
+    "DEF-r_palm_04_L",
+    "DEF-thigh_R",
+    "DEF-shin_R",
+    "DEF-foot_R",
+    "DEF-toe_R",
+    "DEF-r_palm_01_R",
+    "DEF-r_palm_02_R",
+    "DEF-r_palm_03_R",
+    "DEF-r_palm_04_R",
+    "DEF-spine_003",
+    "DEF-spine_002",
+    "DEF-spine_001",
+    "DEF-spine"
+  ],
+  "dogStateAtEnd": {
+    "health": 100,
+    "position": "<Struct 'Vector' (0x000001ACB38CC330) {x: 1185.671917, y: -0.000000, z: 47.150001}>"
+  },
+  "workflowRun": 40757731172,
+  "artifactId": 12847610637,
+  "processExitCode": 0,
+  "compileRun": 40757419153,
+  "nativeTestsPassed": 28,
+  "visualInspection": {
+    "screenshotsInspected": true,
+    "rifleUprightBesideBackpack": true,
+    "magazineModelsVisible": true
+  }
+}

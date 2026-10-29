@@ -1,0 +1,77 @@
+name: ANOMALIA verify active backups and user-data restore on D
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-verify-backup-restore.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Compare all active source, D backup and restored files by SHA256
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','restore-verification-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});
+          const p=path.join(out,'verify.ps1');
+          fs.writeFileSync(p,String.raw`$ErrorActionPreference='Stop'
+          $out=$env:ANOMALIA_VERIFY_OUT
+          if([string]::IsNullOrWhiteSpace($out)){throw 'Verification output directory is missing.'}
+          $backup='D:\\ANOMALIA-Backups\\pre-differential-40767016246'
+          $manifestPath=Join-Path $backup 'backup-manifest.json'
+          if(!(Test-Path -LiteralPath $manifestPath)){throw 'Backup manifest missing on D:'}
+          $m=Get-Content -LiteralPath $manifestPath -Raw|ConvertFrom-Json
+          $r=[ordered]@{state='FAILED';backup=$backup;backupRun=$m.run;items=@();cDriveFreeBytesBefore=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace;dDriveFreeBytesBefore=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace}
+          foreach($it in $m.items){
+            $restoreBase=Join-Path (Join-Path $backup 'restore-test') $it.name
+            if(!(Test-Path -LiteralPath $restoreBase)){throw "Version restore test missing $restoreBase"}
+            $dataRestore=Join-Path $restoreBase 'userdata-Saved'
+            if(!(Test-Path -LiteralPath $dataRestore)){throw "User-data restore copy missing $dataRestore"}
+            $vcount=0;$dcount=0
+            foreach($f in $it.files){
+              $rel=[string]$f.path
+              $rel=$rel.Replace([char]92,[char]47).TrimStart([char]47)
+              $versionPrefix=([string]$it.name)+'/active-version/'
+              $dataPrefix=([string]$it.name)+'/userdata-Saved/'
+              if($rel.StartsWith($versionPrefix,[StringComparison]::OrdinalIgnoreCase)){
+                $sub=$rel.Substring($versionPrefix.Length).Replace([char]47,[char]92)
+                $src=Join-Path ([string]$it.source) $sub
+                $bak=Join-Path $backup ([string]$f.path)
+                $rest=Join-Path $restoreBase $sub
+                if(!(Test-Path -LiteralPath $src) -or !(Test-Path -LiteralPath $bak) -or !(Test-Path -LiteralPath $rest)){throw "Version source/backup/restore missing $($f.path)"}
+                foreach($filePath in @($src,$bak,$rest)){if((Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash -ne [string]$f.sha256){throw "Version SHA mismatch $filePath"}}
+                $vcount++
+              }elseif($rel.StartsWith($dataPrefix,[StringComparison]::OrdinalIgnoreCase)){
+                $sub=$rel.Substring($dataPrefix.Length).Replace([char]47,[char]92)
+                $src=Join-Path ([string]$it.userdata) $sub
+                $bak=Join-Path $backup ([string]$f.path)
+                $rest=Join-Path $dataRestore $sub
+                if(!(Test-Path -LiteralPath $src) -or !(Test-Path -LiteralPath $bak) -or !(Test-Path -LiteralPath $rest)){throw "User-data source/backup/restore missing $($f.path)"}
+                foreach($filePath in @($src,$bak,$rest)){if((Get-FileHash -LiteralPath $filePath -Algorithm SHA256).Hash -ne [string]$f.sha256){throw "User-data SHA mismatch $filePath"}}
+                $dcount++
+              }else{throw "Unexpected backup manifest path: $($f.path)"}
+            }
+            if($vcount -eq 0){throw "No active version files were compared for $($it.name)"}
+            $r.items+=@{name=$it.name;activeVersionFiles=$vcount;userDataFiles=$dcount;sourceMatchesBackupAndRestore=$true}
+          }
+          $r.cDriveFreeBytesAfter=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace
+          $r.dDriveFreeBytesAfter=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
+          $r.state='ACTIVE_VERSIONS_AND_USERDATA_SHA256_RESTORE_VERIFIED'
+          $r|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $out 'restore-report.json') -Encoding UTF8
+          $r|ConvertTo-Json -Depth 10|Write-Output`,{flag:'wx'});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:7200000,maxBuffer:8*1024*1024,env:{...process.env,ANOMALIA_VERIFY_OUT:out}});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('D restore verification failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-backup-restoration-verification
+          path: C:\\ANOMALIA-Validation\\Reports\\restore-verification-*
+          if-no-files-found: warn

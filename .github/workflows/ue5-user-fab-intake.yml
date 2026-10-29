@@ -1,0 +1,55 @@
+name: ANOMALIA user Fab selection local file intake
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-user-fab-intake.yml']
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locate user selected licensed assets without modifying their files
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),os=require('os');
+          const out=path.join(process.env.RUNNER_TEMP,'anomalia-fab-intake-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out);
+          fs.appendFileSync(process.env.GITHUB_ENV,'ANOMALIA_FAB_INTAKE='+out+'\n');
+          const home=os.homedir(),local=process.env.LOCALAPPDATA||path.join(home,'AppData','Local');
+          const roots=[
+          'C:\\ANOMALIA','C:\\ProgramData\\Epic\\EpicGamesLauncher\\VaultCache',
+          'C:\\Program Files\\Epic Games\\Launcher\\VaultCache','C:\\Program Files (x86)\\Epic Games\\Launcher\\VaultCache',
+          path.join(home,'Downloads'),path.join(home,'Documents','Unreal Projects'),
+          path.join(home,'Desktop','Unreal Projects'),path.join(local,'Temp','FabLibrary'),
+          path.join(local,'Fab'),path.join(local,'FabLibrary'),
+          'C:\\Users\\Public\\Documents\\Unreal Projects','C:\\Unreal Projects'];
+          const config=path.join(local,'EpicGamesLauncher','Saved','Config','Windows','GameUserSettings.ini');
+          if(fs.existsSync(config)){const s=fs.readFileSync(config,'utf8');for(const l of s.split(/\r?\n/)){const m=l.match(/^\s*(?:VaultCachePath|VaultCacheLocation)\s*=\s*(.+)\s*$/i);if(m)roots.push(m[1].replace(/^"|"$/g,''));}}
+          const itemDir='C:\\ProgramData\\Epic\\EpicGamesLauncher\\Data\\Manifests';
+          const installed=[];
+          if(fs.existsSync(itemDir))for(const f of fs.readdirSync(itemDir).filter(x=>x.endsWith('.item'))){try{const j=JSON.parse(fs.readFileSync(path.join(itemDir,f),'utf8'));installed.push({name:j.DisplayName,installLocation:j.InstallLocation});if(j.InstallLocation&&!/UE_5|Launcher/i.test(j.DisplayName||''))roots.push(j.InstallLocation);}catch{}}
+          const terms=/tactical|soldier|outfit|metahuman|survival|quantum|adventure|military|supplies|aks|operator|weapon|rifle|shotgun|pistol|revolver|ammo|cartridge|mauser|m4|mp5|ar70|dp28|mjolnir|jerrycan|bottle|tools|construction|citysample|city.?sample|corridor|subway|tram|submarine|yacht|marcopolo|ideale|paz.?652|zis.?42|lightning|vehicle.?variety|postwar|modern.?city|animal|monkey|shepherd|cow|bubba|zombie|rigged|fare.?gate|megaplant|cypress|maple|poplar|gas.?station|dealer|orphan|blender|snow|fab|vaultcache/i;
+          const exts=new Set(['.uasset','.umap','.uproject','.fbx','.glb','.gltf','.obj','.blend','.zip','.7z','.rar','.usd','.usdz']);
+          const report={time:new Date().toISOString(),mode:'read_only_filesystem_no_download_no_import',projectExists:fs.existsSync('C:\\ANOMALIA\\unreal\\AnomaliaPrimeval.uproject'),installed,roots:[],models:[],archives:[],projects:[],interestingDirectories:[],errors:[],truncated:false};
+          const seen=new Set(),start=Date.now();let entries=0;
+          const skip=/^(DerivedDataCache|Intermediate|Binaries|node_modules|\.git|\.vs|Saved)$/i;
+          function walk(dir,depth=0){if(depth>24||entries>350000||Date.now()-start>150000){report.truncated=true;return;}let list;try{list=fs.readdirSync(dir,{withFileTypes:true});}catch(e){if(report.errors.length<60)report.errors.push({path:dir,code:e.code});return;}
+          for(const e of list){entries++;const p=path.join(dir,e.name);if(e.isSymbolicLink())continue;if(e.isDirectory()){if(skip.test(e.name))continue;if(terms.test(e.name)&&report.interestingDirectories.length<2500)report.interestingDirectories.push(p);walk(p,depth+1);}else{const ext=path.extname(e.name).toLowerCase();if(!exts.has(ext))continue;const st=fs.statSync(p);const row={path:p,bytes:st.size};if(ext==='.uproject')report.projects.push(row);else if(['.zip','.7z','.rar'].includes(ext)){if(report.archives.length<1000)report.archives.push(row);}else if(report.models.length<22000)report.models.push(row);else report.truncated=true;}}}
+          for(const r of roots){const normalized=path.resolve(r).toLowerCase();if(seen.has(normalized))continue;seen.add(normalized);const exists=fs.existsSync(r);report.roots.push({path:r,exists});if(exists)walk(r);}
+          report.entries=entries;report.elapsedSeconds=(Date.now()-start)/1000;
+          fs.writeFileSync(path.join(out,'local-asset-inventory.json'),JSON.stringify(report,null,2),{flag:'wx'});
+          console.log(JSON.stringify({projectExists:report.projectExists,roots:report.roots,installed,projects:report.projects,models:report.models.length,archives:report.archives,interestingDirectories:report.interestingDirectories.slice(0,180),truncated:report.truncated,errors:report.errors},null,2));
+          
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: user-fab-selection-local-inventory
+          path: ${{ env.ANOMALIA_FAB_INTAKE }}
+          if-no-files-found: error

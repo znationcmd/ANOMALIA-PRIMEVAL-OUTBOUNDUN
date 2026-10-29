@@ -1,0 +1,101 @@
+name: ANOMALIA assemble regions with fresh sector world references
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-reunify-world.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  assemble:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Recover complete original world with external actors and dependencies
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'User editor session preserved; close it before authoring'}
+          $activePath=Join-Path $env:LOCALAPPDATA 'CMD/ANOMALIA-UE5/active.json'
+          $active=Get-Content $activePath -Raw | ConvertFrom-Json
+          if($active.mapPackage -ne '/Game/Maps/ANOMALIA_Inhabited_v2'){throw 'Unexpected active world; preserve it'}
+          $source=Join-Path (Split-Path $active.project -Parent) 'Content'
+          $destination='D:/ANOMALIA/unreal/Content'
+          if(!(Test-Path (Join-Path $source 'Maps/ANOMALIA_Inhabited_v2.umap'))){throw 'Active world source absent'}
+          $missing=@()
+          foreach($file in Get-ChildItem $source -Recurse -File){
+            $relative=$file.FullName.Substring($source.Length).TrimStart('/','\')
+            $target=Join-Path $destination $relative
+            if(!(Test-Path -LiteralPath $target)){$missing+=[pscustomobject]@{source=$file.FullName;target=$target;bytes=$file.Length}}
+          }
+          $required=($missing | Measure-Object -Property bytes -Sum).Sum
+          $free=(Get-PSDrive D).Free
+          if($free-$required -lt 20GB){throw 'Recovery would breach 20GiB free space reserve'}
+          Write-Output ("RECOVERY_FILES="+$missing.Count+" BYTES="+$required)
+          $copied=0
+          foreach($entry in $missing){
+            New-Item -ItemType Directory -Force -Path (Split-Path $entry.target -Parent) | Out-Null
+            Copy-Item -LiteralPath $entry.source -Destination $entry.target
+            if((Get-FileHash -LiteralPath $entry.source -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $entry.target -Algorithm SHA256).Hash){throw 'Recovered file hash mismatch'}
+            $copied++
+            if($copied%250 -eq 0){Write-Output ("RECOVERED="+$copied)}
+          }
+          $out='D:/ANOMALIA/StorageRecovery'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          @{state='MISSING_CONTENT_RECOVERED';source=$source;destination=$destination;copied=$copied;bytes=$required;existingFilesOverwritten=0;originalInstallRemoved=$false} | ConvertTo-Json | Set-Content "$out/world-recovery.json" -Encoding UTF8
+          Write-Output ("WORLD_RECOVERY_COMPLETE="+$copied)
+      - name: Back up and synchronize native source then build installed Editor incrementally
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $projectRoot='D:/ANOMALIA/unreal'
+          $backup="D:/ANOMALIA/StorageRecovery/native-before-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force -Path $backup | Out-Null
+          Copy-Item "$projectRoot/Binaries" "$backup/Binaries" -Recurse
+          foreach($folder in @('Source','Scripts','Tools')){
+            $src=Join-Path $env:GITHUB_WORKSPACE "unreal/$folder"
+            foreach($file in Get-ChildItem $src -Recurse -File){
+              $relative=$file.FullName.Substring($src.Length).TrimStart('/','\')
+              $target=Join-Path "$projectRoot/$folder" $relative
+              if(Test-Path -LiteralPath $target){
+                if((Get-FileHash $file.FullName -Algorithm SHA256).Hash -eq (Get-FileHash $target -Algorithm SHA256).Hash){continue}
+                $saved=Join-Path "$backup/$folder" $relative
+                New-Item -ItemType Directory -Force -Path (Split-Path $saved -Parent) | Out-Null
+                Copy-Item -LiteralPath $target -Destination $saved
+              }
+              New-Item -ItemType Directory -Force -Path (Split-Path $target -Parent) | Out-Null
+              Copy-Item -LiteralPath $file.FullName -Destination $target -Force
+            }
+          }
+          $build='C:/Program Files/Epic Games/UE_5.8/Engine/Build/BatchFiles/Build.bat'
+          & $build AnomaliaPrimevalEditor Win64 Development "-Project=$projectRoot/AnomaliaPrimeval.uproject" -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw 'Native build failed; backups retained; no world authoring attempted'}
+      - name: Append streamed garage regions to the real saved world
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project='D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject'
+          $task='D:/ANOMALIA/unreal/Tools/assemble_apocalypse_regions.py'
+          $log='D:/ANOMALIA/StorageRecovery/apocalypse-regions.log'
+          & $exe $project -run=pythonscript "-script=$task" -unattended -nopause -nosound -NullRHI "-abslog=$log"
+          $code=$LASTEXITCODE
+          if(Test-Path $log){Select-String $log -Pattern 'ANOMALIA_REGIONS_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}}
+          if($code -ne 0){throw 'Region authoring failed; inspect exact report'}
+          $report=Get-Content 'D:/ANOMALIA/StorageRecovery/apocalypse-regions.json' -Raw | ConvertFrom-Json
+          if($report.state -ne 'GARAGE_REGIONS_SAVED_NOT_PLAYTESTED' -or @($report.placed).Count -lt 1){throw 'No saved regions confirmed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-world-recovery-${{ github.run_id }}
+          path: |
+            D:/ANOMALIA/StorageRecovery/world-recovery.json
+            D:/ANOMALIA/StorageRecovery/apocalypse-regions.json
+            D:/ANOMALIA/StorageRecovery/apocalypse-regions.log
+          if-no-files-found: warn

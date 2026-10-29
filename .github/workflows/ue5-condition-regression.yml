@@ -1,0 +1,44 @@
+name: ANOMALIA condition inventory native regression
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-condition-regression.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  regression:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Exercise existing native inventory cargo and persistence regressions
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process'),os=require('os'),crypto=require('crypto');
+          const stage='C:\\ANOMALIA-Validation\\c40543166274',engine='C:\\Program Files\\Epic Games\\UE_5.8';
+          const output=path.join('C:\\ANOMALIA-Validation\\Reports','condition-native-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(output,{recursive:false});fs.appendFileSync(process.env.GITHUB_ENV,'CONDITION_NATIVE_OUTPUT='+output+'\n');
+          const st=fs.statfsSync('C:\\');if(st.bavail*st.bsize<6*1024**3+256*1024**2||os.freemem()<4*1024**3)throw Error('Native regression resource reserve insufficient');
+          const compileDir=path.join(stage,'unreal/Saved/CharacterValidation/inventory-ui-compile-40712350609-1'),build=JSON.parse(fs.readFileSync(path.join(compileDir,'report.json'),'utf8'));
+          if(build.compilation!=='passed')throw Error('Required Editor compile missing');
+          const patch=JSON.parse(fs.readFileSync(path.join(compileDir,'source-patch-receipt.json'),'utf8'));
+          for(const f of patch.files){const s=fs.readFileSync(path.join(stage,f.path),'utf8').replace(/\r\n/g,'\n');const hash=crypto.createHash('sha1').update(Buffer.from('blob '+Buffer.byteLength(s)+'\0')).update(s).digest('hex');if(hash!==f.after)throw Error('Compiled condition source changed '+f.path);}
+          fs.writeFileSync(path.join(output,'provenance.json'),JSON.stringify({compileRun:40712350609,patch,installedProjectModified:false},null,2));
+          const log=path.join(output,'editor.log'),reportDir=path.join(output,'automation');
+          const run=cp.spawnSync(path.join(engine,'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),[path.join(stage,'unreal/AnomaliaPrimeval.uproject'),'-NullRHI','-unattended','-nopause','-nosound','-ExecCmds=Automation RunTests Anomalia.Native.; Quit','-ReportExportPath='+reportDir,'-abslog='+log],{encoding:'utf8',timeout:600000,maxBuffer:16*1024**2});
+          fs.writeFileSync(path.join(output,'process.log'),String(run.stdout||'')+String(run.stderr||''));
+          const file=path.join(reportDir,'index.json');if(!fs.existsSync(file))throw Error('No fresh native regression report; exit '+run.status);
+          const data=JSON.parse(fs.readFileSync(file,'utf8').replace(/^\uFEFF/,'')),rows=data.tests||[];
+          const required=['Anomalia.Native.InventoryLayoutMigration','Anomalia.Native.StorageGrids','Anomalia.Native.LootTransactions','Anomalia.Native.VehicleKeyPartsCargoAndRecovery'];
+          const ok=run.status===0&&required.every(n=>rows.some(t=>t.fullTestPath===n&&t.state==='Success'))&&rows.every(t=>t.state==='Success');
+          const report={state:ok?'NATIVE_REGRESSIONS_PASSED':'FAILED',exit:run.status,tests:rows.map(t=>({name:t.fullTestPath,state:t.state})),expected:required,errors:String(run.error||'')};fs.writeFileSync(path.join(output,'report.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report,null,2));if(!ok)process.exit(1);
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: condition-native-regression
+          path: ${{ env.CONDITION_NATIVE_OUTPUT }}
+          if-no-files-found: warn

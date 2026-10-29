@@ -1,0 +1,51 @@
+name: ANOMALIA current companion files and host audit
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-inventory-visual-assets.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locate newly imported companion assets without opening or modifying Unreal
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),os=require('os'),cp=require('child_process'),crypto=require('crypto');
+          const validation='C:\\ANOMALIA-Validation\\c40543166274\\unreal',original='C:\\ANOMALIA\\unreal';
+          const roots=[path.join(original,'Content'),path.join(validation,'Content'),'C:\\ANOMALIA\\FabImports','C:\\Users\\utilisateur\\Downloads','C:\\Users\\utilisateur\\Documents\\Unreal Projects'];
+          const rows=[],errors=[];let scanned=0;
+          function walk(p){
+            if(!fs.existsSync(p))return;
+            let entries;try{entries=fs.readdirSync(p,{withFileTypes:true});}catch(e){errors.push({path:p,code:e.code});return;}
+            for(const e of entries){
+              if(e.isSymbolicLink())continue;const f=path.join(p,e.name);
+              if(e.isDirectory()){if(!/^(Saved|Intermediate|node_modules|__ExternalActors__|Binaries|DerivedDataCache|\.git)$/i.test(e.name))walk(f);continue;}
+              scanned++;if(!/\.(uasset|fbx|glb|gltf|obj|blend|zip|rar|7z)$/i.test(e.name))continue;
+              if(!/dog|canine|husky|shepherd|chien|german|rottweiler|labrador|wolf|malinois|doberman|alsatian|beagle|bulldog|pitbull|monkey|singe/i.test(f))continue;
+              if(rows.length>=1500)continue;
+              const s=fs.statSync(f);rows.push({path:f,bytes:s.size,modified:s.mtime.toISOString()});
+            }
+          }
+          roots.forEach(walk);
+          const q=cp.spawnSync('powershell.exe',['-NoProfile','-NonInteractive','-Command',"Get-CimInstance Win32_Process -Filter \"Name='UnrealEditor.exe'\" | Select-Object ProcessId,CreationDate,CommandLine | ConvertTo-Json -Compress"],{encoding:'utf8',timeout:20000});
+          let active=[];try{const p=q.stdout.trim()?JSON.parse(q.stdout):[];active=(Array.isArray(p)?p:[p]).map(x=>({pid:x.ProcessId,created:x.CreationDate,project:(x.CommandLine||'').match(/[A-Z]:\\[^"]*?\.uproject/i)?.[0]||'unidentified editor'}));}catch(e){errors.push({processQuery:e.message});}
+          const stat=fs.statfsSync('C:\\');
+          const source=path.join(validation,'Source/AnomaliaPrimeval/AnomaliaInventoryComponent.cpp');
+          const b=fs.readFileSync(source,'utf8').replace(/\r\n/g,'\n');
+          const report={time:new Date().toISOString(),state:'READ_ONLY_FILE_AND_RESOURCE_AUDIT',freePhysicalBytes:os.freemem(),freeDiskBytes:stat.bavail*stat.bsize,activeEditors:active,processQuerySucceeded:q.status===0,scannedFiles:scanned,matchedFiles:rows.length,files:rows,errors,validationInventoryBlob:crypto.createHash('sha1').update(Buffer.from('blob '+Buffer.byteLength(b)+'\0')).update(b).digest('hex'),editorLoadedAssets:false};
+          const out=path.join(process.env.RUNNER_TEMP,'companion-audit-'+process.env.GITHUB_RUN_ID+'.json');fs.writeFileSync(out,JSON.stringify(report,null,2),{flag:'wx'});fs.appendFileSync(process.env.GITHUB_ENV,'COMPANION_AUDIT_REPORT='+out+'\n');
+          console.log(JSON.stringify(report,null,2));
+      - uses: actions/upload-artifact@v4
+        with:
+          name: current-companion-audit
+          path: ${{ env.COMPANION_AUDIT_REPORT }}
+          if-no-files-found: error

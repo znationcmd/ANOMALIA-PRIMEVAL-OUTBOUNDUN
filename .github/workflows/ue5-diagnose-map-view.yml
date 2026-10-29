@@ -1,0 +1,51 @@
+name: ANOMALIA diagnose distorted game view
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-diagnose-map-view.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    steps:
+      - name: Read recent actual game logs and renderer settings
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:/ANOMALIA/StorageRecovery/view-diagnosis'
+          New-Item -ItemType Directory -Force $out | Out-Null
+          $logs=Get-ChildItem 'D:/ANOMALIA/unreal/Saved/Logs' -File -Filter '*.log' | Sort-Object LastWriteTime -Descending | Select-Object -First 3
+          foreach($log in $logs){
+            Write-Host "LOG $($log.FullName)"
+            Select-String -LiteralPath $log.FullName -Pattern 'Error:|Warning:|PlayerStart|SpawnActor|Bringing World|LoadMap:|WorldPartition|Landscape|Nanite|Shader|Camera' | Select-Object -Last 100 | ForEach-Object { $_.Line }
+            Copy-Item -LiteralPath $log.FullName -Destination $out
+          }
+          Get-Content 'D:/ANOMALIA/unreal/Config/DefaultEngine.ini' | Select-String -Pattern 'DefaultMap|GameMode|Targeted|Nanite|Lumen|Shadow|DefaultGraphicsRHI'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          @'
+          import unreal,json,pathlib
+          e=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          e.load_level('/Game/Maps/ANOMALIA_Inhabited_v2')
+          rows=[]
+          for a in unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors():
+              if isinstance(a,unreal.PlayerStart) or 'Landscape' in a.get_class().get_name() or 'Water' in a.get_name():
+                  p=a.get_actor_location();s=a.get_actor_scale3d()
+                  rows.append({'name':a.get_name(),'class':a.get_class().get_name(),'position':[p.x,p.y,p.z],'scale':[s.x,s.y,s.z]})
+          pathlib.Path('D:/ANOMALIA/StorageRecovery/view-diagnosis/map-starts.json').write_text(json.dumps(rows,indent=2))
+          unreal.log('ANOMALIA_MAP_STARTS '+json.dumps(rows))
+          '@ | Set-Content "$out/inspect.py" -Encoding UTF8
+          $exe=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI -run=pythonscript "-script=$out/inspect.py" "-abslog=$out/inspection.log"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          Get-Content "$out/map-starts.json"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: distorted-view-diagnosis
+          path: D:/ANOMALIA/StorageRecovery/view-diagnosis/*
+          if-no-files-found: warn

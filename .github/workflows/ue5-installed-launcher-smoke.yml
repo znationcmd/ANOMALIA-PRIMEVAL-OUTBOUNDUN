@@ -1,0 +1,85 @@
+name: ANOMALIA smoke-test installed launchers
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-installed-launcher-smoke.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  smoke:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Launch real installed Jouer, Editor and Tools shortcuts
+        shell: node {0}
+        run: |
+          const fs=require('fs'),path=require('path'),cp=require('child_process');
+          const out=path.join('C:\\ANOMALIA-Validation\\Reports','installed-launcher-smoke-'+process.env.GITHUB_RUN_ID);fs.mkdirSync(out,{recursive:true});
+          const p=path.join(out,'smoke.ps1');
+          fs.writeFileSync(p,String.raw`$ErrorActionPreference='Stop'
+          $out=$env:ANOMALIA_SMOKE_OUT
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          $public=[Environment]::GetFolderPath('CommonDesktopDirectory')
+          $shell=New-Object -ComObject WScript.Shell
+          $tests=@(
+            @{name='Editor';shortcut=(Join-Path $public 'ANOMALIA Editor.lnk');process='ANOMALIA Editor';timeout=12},
+            @{name='Tools';shortcut=(Join-Path $public 'ANOMALIA Tools.lnk');process='ANOMALIA Tools';timeout=30},
+            @{name='Jouer';shortcut=(Join-Path $desktop 'ANOMALIA - Jouer.lnk');process='AnomaliaPrimeval';timeout=180},
+            @{name='UnrealEditor';shortcut=(Join-Path $desktop 'ANOMALIA - Unreal.lnk');process='UnrealEditor';timeout=120}
+          )
+          $results=@()
+          foreach($t in $tests){
+            if(!(Test-Path -LiteralPath $t.shortcut)){throw "Required launcher shortcut missing: $($t.name)"}
+            $beforeIds=@(Get-Process -Name $t.process -ErrorAction SilentlyContinue|Select-Object -ExpandProperty Id)
+            if($beforeIds.Count -gt 0){throw "Cannot safely test $($t.name): process was already running."}
+            $lnk=$shell.CreateShortcut($t.shortcut)
+            if(!(Test-Path -LiteralPath $lnk.TargetPath)){throw "Launcher target missing for $($t.name)"}
+            $exe=Get-Item -LiteralPath $lnk.TargetPath
+            $installDir=Split-Path $lnk.TargetPath -Parent
+            $updateConfig=Join-Path $installDir 'resources/app-update.yml'
+            $start=Get-Date
+            $arguments=[string]$lnk.Arguments
+            if([string]::IsNullOrWhiteSpace($arguments)){
+              $started=Start-Process -FilePath $lnk.TargetPath -WorkingDirectory $lnk.WorkingDirectory -PassThru
+            }else{
+              $started=Start-Process -FilePath $lnk.TargetPath -ArgumentList $arguments -WorkingDirectory $lnk.WorkingDirectory -PassThru
+            }
+            $visible=$false;$proc=$null;$newProcesses=@()
+            $deadline=(Get-Date).AddSeconds([int]$t.timeout)
+            while((Get-Date) -lt $deadline){
+              Start-Sleep -Seconds 2
+              $found=@(Get-Process -Name $t.process -ErrorAction SilentlyContinue)
+              $newProcesses=@($found|Where-Object{$_.Id -notin $beforeIds})
+              $visibleProcess=@($newProcesses|Where-Object{$_.MainWindowHandle -ne 0}|Select-Object -First 1)
+              if($visibleProcess.Count -gt 0){$proc=$visibleProcess[0];$visible=$true;break}
+              if($started.HasExited -and $newProcesses.Count -eq 0){break}
+            }
+            if($null -eq $proc -and $newProcesses.Count -gt 0){$proc=$newProcesses[0]}
+            $windowTitle='';if($null -ne $proc){$windowTitle=[string]$proc.MainWindowTitle}
+            $result=@{name=$t.name;shortcutExists=$true;targetExists=$true;targetVersion=$exe.VersionInfo.FileVersion;updateMetadataPresent=(Test-Path -LiteralPath $updateConfig);processStarted=($newProcesses.Count -gt 0);windowVisible=$visible;windowTitle=$windowTitle;processCount=$newProcesses.Count;seconds=[int]((Get-Date)-$start).TotalSeconds}
+            if($newProcesses.Count -gt 0){
+              foreach($candidate in $newProcesses){try{$null=$candidate.CloseMainWindow()}catch{}}
+              Start-Sleep -Seconds 3
+              foreach($candidate in $newProcesses){try{$candidate.Refresh();if(!$candidate.HasExited){Stop-Process -Id $candidate.Id -Force -ErrorAction SilentlyContinue}}catch{}}
+              $result.processClosedByTest=$true
+            }elseif(!$started.HasExited){Stop-Process -Id $started.Id -Force -ErrorAction SilentlyContinue;$result.processClosedByTest=$true}else{$result.processClosedByTest=$true}
+            $results+=,$result
+            if(!$result.processStarted){throw "Launcher process did not stay alive: $($t.name)"}
+          }
+          $report=@{state='INSTALLED_LAUNCHER_PROCESS_SMOKES_PASSED';machine=$env:COMPUTERNAME;results=$results;cDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'").FreeSpace;dDriveFreeBytes=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace}
+          $report|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $out 'launcher-smoke.json') -Encoding UTF8
+          $report|ConvertTo-Json -Depth 8|Write-Output`,{flag:'wx'});
+          const r=cp.spawnSync('powershell.exe',['-NoLogo','-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',p],{encoding:'utf8',timeout:900000,maxBuffer:8*1024*1024,env:{...process.env,ANOMALIA_SMOKE_OUT:out}});
+          console.log(r.stdout);console.error(r.stderr);if(r.error||r.status!==0)throw Error('Installed launcher smoke test failed '+String(r.error||r.status));
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaly-installed-launcher-smoke
+          path: C:\\ANOMALIA-Validation\\Reports\\installed-launcher-smoke-*
+          if-no-files-found: warn

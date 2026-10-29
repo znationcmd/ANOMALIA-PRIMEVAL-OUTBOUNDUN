@@ -106,13 +106,13 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             Toggle->OnClicked.Broadcast();
             if(auto* Play=Cast<UButton>(PolicyMenu->WidgetTree->FindWidget(TEXT("SessionPlay")))) Play->OnClicked.Broadcast();
             Survivor->SetActorLocation(FVector(70, 0, 100), false, nullptr, ETeleportType::TeleportPhysics);
-            Input(EKeys::E, IE_Pressed);
+            Input(EKeys::F, IE_Pressed);
             Probe->Phase = 1;
             return false;
         }
         if (Probe->Phase == 1)
         {
-            Input(EKeys::E, IE_Released);
+            Input(EKeys::F, IE_Released);
             if (Units == 0) return false;
             TestEqual(TEXT("Actual Interact key adds exactly one world item"), Units, 1);
             FString Error;
@@ -154,7 +154,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
         }
         if (Probe->Phase == 4)
         {
-            Input(EKeys::E,IE_Released);
+            Input(EKeys::F,IE_Released);
             if (Units < 2) return false;
             for (const auto& Stack : Survivor->InventoryComponent->Stacks)
                 if (Stack.ItemId.ToString().StartsWith(TEXT("eur_note_"))) Probe->NoteId=Stack.ItemId;
@@ -169,15 +169,23 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             UButton* Found=nullptr;
             if (Survivor->InventoryWidget && Survivor->InventoryWidget->WidgetTree)
                 Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
-                { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) Found=Cast<UButton>(Widget); });
+                { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) if(auto* Button=Cast<UButton>(Widget))Found=Button; });
             return Found;
         };
         if (Probe->Phase == 5)
         {
             Input(EKeys::Gamepad_Special_Left,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
+            if (auto* Account=FindButton(TEXT("BankTab"))) Account->OnClicked.Broadcast();
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
             UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;
+            if (!Deposit && Stack)
+            {
+                // The spatial inventory reveals item actions after selecting its real tile.
+                if (auto* Tile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),Stack->StackId)))
+                    Tile->OnClicked.Broadcast();
+                return false;
+            }
             if (!Deposit) return false;
             TestNotNull(TEXT("Gamepad inventory opens a safe-zone panel"),Cast<USafeZone>(Survivor->InventoryWidget->WidgetTree->RootWidget));
             Deposit->OnClicked.Broadcast(); Probe->Phase=6; Probe->NextAction=FPlatformTime::Seconds()+.25; return false;
@@ -203,6 +211,10 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             {
                 const int32 WoodId=Paging->Stacks[0].StackId;
                 Survivor->InventoryWidget->InitializeForInventory(Paging);
+                if (auto* Tab=FindButton(TEXT("InventoryTab"))) Tab->OnClicked.Broadcast();
+                if (auto* Tile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),WoodId)))
+                    Tile->OnClicked.Broadcast();
+                else AddError(TEXT("The rectangular cargo item has no selectable inventory tile"));
                 auto* Rotate=FindButton(FString::Printf(TEXT("RotateStack_%d_action"),WoodId));
                 if(TestNotNull(TEXT("Real UMG rotation button exists"),Rotate))Rotate->OnClicked.Broadcast();
                 TestTrue(TEXT("Actual rotation button changes authoritative rectangle"),Paging->Stacks[0].bRotated);
@@ -218,7 +230,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
                 auto CountRows=[Survivor]()
                 {
                     int32 Rows=0;
-                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* W){if(W && W->GetName().StartsWith(TEXT("InventoryStack_")))++Rows;});
+                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* W){if(W && W->GetName().StartsWith(TEXT("InventoryTile_")))++Rows;});
                     return Rows;
                 };
                 TestEqual(TEXT("UMG constructs at most 32 stored rows on page one"),CountRows(),32);

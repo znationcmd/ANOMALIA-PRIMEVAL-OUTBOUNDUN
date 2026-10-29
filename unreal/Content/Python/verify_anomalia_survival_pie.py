@@ -1,0 +1,219 @@
+"""Measure Survival alone in a transient PIE scene; no UI/network/persistence acceptance."""
+import hashlib
+import json
+import os
+from pathlib import Path
+import time
+import traceback
+import unreal
+
+OUT = Path(os.environ["ANOMALIA_PIE_REPORT"])
+OUT.mkdir(parents=True, exist_ok=False)
+report = {"state": "FAILED", "engine": unreal.SystemLibrary.get_engine_version(),
+          "characters": [], "errors": [], "mode": "single_player_PIE",
+          "input": "automated native pawn/component API calls; physical keyboard not tested",
+          "inventoryUI": "not_tested", "save_reconnect": "not_tested", "multiplayer": "not_tested",
+          "originalAssetsSaved": False}
+s = {"start": time.monotonic(), "phase": "wait_world", "phase_at": time.monotonic(),
+     "index": 0, "finished": False, "until": time.monotonic()+3}
+names = ("Survival",)
+editor = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+
+def require(ok, why):
+    if not ok:
+        raise RuntimeError(why)
+
+def pos(actor):
+    v = actor.get_actor_location()
+    return [v.x, v.y, v.z]
+
+def record():
+    (OUT/"report.json").write_text(json.dumps(report, indent=2)+"\n", encoding="utf-8")
+
+def finish(error=None):
+    if s["finished"]:
+        return
+    s["finished"] = True
+    if error:
+        report["errors"].append(str(error))
+        report["traceback"] = traceback.format_exc()
+    else:
+        report["state"] = "SINGLE_PLAYER_PIE_API_CHECKS_PASSED_NOT_FULL_GAMEPLAY_ACCEPTANCE"
+    record()
+    if s.get("handle"):
+        unreal.unregister_slate_post_tick_callback(s.pop("handle"))
+    editor.editor_request_end_play()
+    def close(delta):
+        if not editor.is_in_play_in_editor():
+            unreal.unregister_slate_post_tick_callback(s.pop("close_handle"))
+            unreal.SystemLibrary.quit_editor()
+    s["close_handle"] = unreal.register_slate_post_tick_callback(close)
+
+def phase(name):
+    s["phase"] = name
+    s["phase_at"] = unreal.GameplayStatics.get_time_seconds(s["world"])
+    s["phase_at_wall"] = time.monotonic()
+
+def begin_actor():
+    name = names[s["index"]]
+    cls = s["classes"][name]
+    actors = [a for a in unreal.GameplayStatics.get_all_actors_of_class(s["world"], cls)
+              if unreal.Name("ANOMALIA_PIE_"+name) in a.tags]
+    require(len(actors) == 1, "Expected one placed test pawn for "+name)
+    actor = actors[0]
+    actor.set_actor_location(unreal.Vector(-1500, s["index"]*400, 110), False, True)
+    s["pc"].possess(actor)
+    require(actor.get_controller() == s["pc"] and actor.is_locally_controlled(), "Possession failed "+name)
+    mesh = actor.get_editor_property("mesh")
+    require(mesh.get_anim_instance() is not None, "No runtime AnimInstance "+name)
+    require(actor.get_editor_property("follow_camera").is_active(), "Inactive follow camera "+name)
+    inv = actor.get_editor_property("inventory_component")
+    require(inv is not None, "No runtime inventory "+name)
+    s.update(actor=actor, mesh=mesh, inv=inv, vitals=actor.get_editor_property("vitals_component"),
+             movement=actor.get_editor_property("character_movement"))
+    row={"name":name,"pawn":actor.get_path_name(),"possessed":True,
+         "animationInstance":mesh.get_anim_instance().get_class().get_path_name(),
+         "cameraActive":True,"startCm":pos(actor),"maxWalkSpeedObserved":0.0,
+         "maxSprintSpeedObserved":0.0,"jumpRiseCm":0.0,"maxBoneDisplacementCm":0.0}
+    report["characters"].append(row)
+    s["row"]=row
+    s["bone_start"]=mesh.get_bone_transform("hand_l",unreal.RelativeTransformSpace.RTS_COMPONENT).translation
+    s["capsule_standing"]=actor.get_editor_property("capsule_component").get_scaled_capsule_half_height()
+    phase("settle")
+
+def tick(delta):
+    if s["finished"]:
+        return
+    try:
+        now=time.monotonic()
+        require(now-s["start"]<240, "PIE check timed out at "+s["phase"])
+        if s["phase"]=="wait_world":
+            w=worlds.get_game_world()
+            if not editor.is_in_play_in_editor() or not w:
+                return
+            require("UEDPIE_" in w.get_path_name(), "Not a PIE world: "+w.get_path_name())
+            require(not unreal.GameplayStatics.is_game_paused(w),"PIE startup is paused")
+            pc=unreal.GameplayStatics.get_player_controller(w,0)
+            if not pc or now<s["until"]:
+                return
+            s.update(world=w,pc=pc)
+            report["world"]=w.get_path_name()
+            begin_actor()
+            return
+        actor=s["actor"];row=s["row"];elapsed=unreal.GameplayStatics.get_time_seconds(s["world"])-s["phase_at"]
+        row["runtimeMovementMode"]=str(s["movement"].get_editor_property("movement_mode"))
+        row["runtimeMaxWalkSpeedCmS"]=s["movement"].get_editor_property("max_walk_speed")
+        row["inputIgnored"]=actor.is_move_input_ignored()
+        row["lastPositionCm"]=pos(actor)
+        row["phase"]=s["phase"]
+        row["phaseSimulationSeconds"]=elapsed
+        require(not row["inputIgnored"],"Possessed character has movement input disabled")
+        require(now-s["phase_at_wall"]<25,"Simulation phase stalled: "+s["phase"])
+        if now-s.get("checkpoint_at",0)>1:
+            s["checkpoint_at"]=now
+            record()
+        velocity=actor.get_velocity()
+        speed=(velocity.x**2+velocity.y**2)**0.5
+        t=s["mesh"].get_bone_transform("hand_l",unreal.RelativeTransformSpace.RTS_COMPONENT).translation
+        b=s["bone_start"]
+        row["maxBoneDisplacementCm"]=max(row["maxBoneDisplacementCm"],((t.x-b.x)**2+(t.y-b.y)**2+(t.z-b.z)**2)**0.5)
+        if s["phase"]=="settle" and elapsed>1.5:
+            s["walk_start"]=pos(actor);phase("walk")
+        elif s["phase"]=="walk":
+            actor.add_movement_input(unreal.Vector(1,0,0),1,False)
+            row["maxWalkSpeedObserved"]=max(row["maxWalkSpeedObserved"],speed)
+            if elapsed>1.6:
+                row["walkDistanceCm"]=abs(pos(actor)[0]-s["walk_start"][0])
+                require(row["walkDistanceCm"]>100,"Pawn did not walk "+row["name"])
+                s["stamina_before"]=s["vitals"].get_editor_property("stamina")
+                s["vitals"].request_sprint(True);phase("sprint")
+        elif s["phase"]=="sprint":
+            actor.add_movement_input(unreal.Vector(1,0,0),1,False)
+            row["maxSprintSpeedObserved"]=max(row["maxSprintSpeedObserved"],speed)
+            if elapsed>1.6:
+                row["staminaBefore"]=s["stamina_before"]
+                row["staminaAfter"]=s["vitals"].get_editor_property("stamina")
+                s["vitals"].request_sprint(False)
+                require(row["maxSprintSpeedObserved"]>row["maxWalkSpeedObserved"]+20,"Sprint did not increase speed "+row["name"])
+                require(row["staminaAfter"]<row["staminaBefore"],"Sprint did not consume stamina "+row["name"])
+                s["movement"].stop_movement_immediately()
+                actor.crouch();phase("crouch")
+        elif s["phase"]=="crouch" and elapsed>0.8:
+            h=actor.get_editor_property("capsule_component").get_scaled_capsule_half_height()
+            row["standingCapsuleHalfHeightCm"]=s["capsule_standing"]
+            row["crouchedCapsuleHalfHeightCm"]=h
+            require(h<s["capsule_standing"]-5,"Crouch capsule did not shrink "+row["name"])
+            actor.un_crouch();phase("stand")
+        elif s["phase"]=="stand" and elapsed>0.8:
+            require(abs(actor.get_editor_property("capsule_component").get_scaled_capsule_half_height()-s["capsule_standing"])<1,"Uncrouch failed")
+            s["jump_start"]=pos(actor)[2]
+            actor.jump();phase("jump")
+        elif s["phase"]=="jump":
+            row["jumpRiseCm"]=max(row["jumpRiseCm"],pos(actor)[2]-s["jump_start"])
+            if elapsed>0.25:
+                actor.stop_jumping()
+            if elapsed>2:
+                require(row["jumpRiseCm"]>10,"No jump rise "+row["name"])
+                require(not s["movement"].is_falling(),"Did not land on test floor "+row["name"])
+                require(row["maxBoneDisplacementCm"]>0.1,"No runtime bone motion "+row["name"])
+                weight_before=s["inv"].get_current_weight_kg()
+                require(s["inv"].try_add_item("apple",1),"Runtime inventory rejected catalog apple "+row["name"])
+                row["inventoryWeightBeforeKg"]=weight_before
+                row["inventoryWeightWithAppleKg"]=s["inv"].get_current_weight_kg()
+                require(row["inventoryWeightWithAppleKg"]>weight_before,"Inventory weight did not rise")
+                require(s["inv"].try_remove_item("apple",1),"Inventory remove failed")
+                row["inventoryAddRemoveApple"]=True
+                row["endCm"]=pos(actor)
+                if row["name"]=="Survival":
+                    garment=s["jacket"]
+                    require(actor.set_clothing_mesh("Jacket",None),"Runtime jacket removal failed")
+                    require(actor.get_editor_property("jacket_mesh").get_editor_property("skeletal_mesh_asset") is None,"Jacket remains")
+                    require(actor.set_clothing_mesh("Jacket",garment),"Runtime jacket re-equip failed")
+                    row["runtimeJacketRemoveReequip"]=True
+                record()
+                s["index"]+=1
+                if s["index"]==len(names):
+                    finish()
+                else:
+                    begin_actor()
+    except Exception as exc:
+        finish(exc)
+
+try:
+    unreal.EditorPythonScripting.set_keep_python_script_alive(True)
+    # One character and one small proving scene keep the other packs unloaded.
+    w=unreal.EditorLoadingAndSavingUtils.new_blank_map(False)
+    require(w is not None,"New transient proving world failed")
+    w.get_world_settings().set_editor_property("default_game_mode",unreal.GameModeBase.static_class())
+    for command in ("r.DynamicGlobalIlluminationMethod 0","r.ReflectionMethod 0",
+                    "r.Shadow.Virtual.Enable 0","r.Nanite 0","sg.TextureQuality 1",
+                    "r.Streaming.MipBias 1","t.MaxFPS 30","t.IdleWhenNotForeground 0"):
+        unreal.SystemLibrary.execute_console_command(w,command)
+    s["classes"]={n:unreal.EditorAssetLibrary.load_blueprint_class("/Game/Anomalia/Characters/BP_Anomalia_"+n) for n in names}
+    require(all(s["classes"].values()),"Test Blueprint classes failed to load before PIE")
+    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    floor=actors.spawn_actor_from_class(unreal.StaticMeshActor,unreal.Vector(0,0,-10))
+    require(floor is not None,"Test floor failed")
+    floor.static_mesh_component.set_static_mesh(unreal.load_asset("/Engine/BasicShapes/Cube"))
+    floor.static_mesh_component.set_collision_profile_name("BlockAll")
+    floor.set_actor_scale3d(unreal.Vector(200,200,.2))
+    actors.spawn_actor_from_class(unreal.PlayerStart,unreal.Vector(0,-500,100))
+    actors.spawn_actor_from_class(unreal.DirectionalLight,unreal.Vector(0,0,600),unreal.Rotator(pitch=-45,yaw=-30))
+    actors.spawn_actor_from_class(unreal.SkyLight,unreal.Vector(0,0,500))
+    actors.spawn_actor_from_class(unreal.SkyAtmosphere,unreal.Vector())
+    pawn=actors.spawn_actor_from_class(s["classes"]["Survival"],unreal.Vector(0,0,110))
+    require(pawn is not None,"Survival fixture spawn failed")
+    pawn.tags=list(pawn.tags)+[unreal.Name("ANOMALIA_PIE_Survival")]
+    garments={"Jacket":"Jacket","Pants":"Jeans","Boots":"Shoes","Gloves":"Gloves","Backpack":"Backpack"}
+    for slot,suffix in garments.items():
+        garment=unreal.load_asset("/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_"+suffix)
+        require(garment is not None and pawn.set_clothing_mesh(slot,garment),"Initial outfit rejected "+slot)
+        if slot=="Jacket":
+            s["jacket"]=garment
+    report["fixture"]="transient_single_Survival_world; existing maps and defaults unchanged"
+    report["texturePreview"]="lower texture quality and mip bias in this process only"
+    editor.editor_request_begin_play()
+    s["handle"]=unreal.register_slate_post_tick_callback(tick)
+except Exception as exc:
+    finish(exc)

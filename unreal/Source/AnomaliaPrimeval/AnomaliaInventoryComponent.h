@@ -9,6 +9,27 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FAnomaliaInventoryUpdated);
 struct FAnomaliaItemUseRule;
 class FJsonObject;
 class UAnomaliaSharedStorageSubsystem;
+class AAnomaliaLootPickup;
+class UStaticMeshComponent;
+
+/** Server-owned compatibility table. Attachments are single physical stacks, never extra cargo cells. */
+struct FAnomaliaAttachmentRule
+{
+    FName Id;
+    FName Parent;
+    FString Label;
+    TArray<FName> Items;
+};
+
+/** Fixed native recipes: clients request only Id, never ingredients or output. */
+struct FAnomaliaHandcraftRecipe
+{
+    FName Id;
+    FString Label;
+    FName Output;
+    int32 OutputCount=1;
+    TMap<FName,int32> Materials;
+};
 
 USTRUCT(BlueprintType)
 struct FAnomaliaInventoryStack
@@ -35,6 +56,9 @@ struct FAnomaliaInventoryStack
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     bool bRotated = false;
+    /** Per physical stack; wear changes require a single item to avoid mixed-condition piles. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Condition")
+    float Condition = 100.f;
 };
 
 USTRUCT(BlueprintType)
@@ -54,6 +78,9 @@ struct FAnomaliaInventoryCompartment
     /** Migration overflow: existing items may be removed, never added through normal placement. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     bool bRecoveryOnly = false;
+    /** Current modular slot condition; cargo remains accessible even at zero. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Condition")
+    float Condition = 100.f;
 };
 
 /** Server-authoritative inventory data model. A UMG screen and item-world actors remain separate tasks. */
@@ -87,6 +114,53 @@ public:
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool ConfigureCompartmentFromPreset(FName Id, FName PresetId);
+
+    /** Actual server-worn meshes grant storage; missing garments preserve occupied cargo as recovery-only. */
+    void SynchronizeWornStorage();
+    static const TArray<FAnomaliaAttachmentRule>& GetAttachmentRules();
+    static const FAnomaliaAttachmentRule* FindAttachmentRule(FName Id);
+    bool IsAttachmentAvailable(FName Id) const;
+    bool CanAttachStack(int32 StackId,FName SlotId) const;
+    void SynchronizeAttachmentStorage();
+    bool HasAttachmentDependents(int32 StackId) const;
+    bool CanRemoveWornStorage(FName MeshSlot) const;
+    static FName WornContainerId(FName MeshSlot);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestStowStackIn(int32 StackId,FName ContainerId);
+    /** Server resolves the registered pickup and checks range, visibility and durable transfer. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
+    bool RequestCollectNearby(AAnomaliaLootPickup* Pickup);
+    bool SupportsItemWear(FName ItemId) const;
+    /** Trusted gameplay hooks only; clients cannot request arbitrary wear or repair. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Condition")
+    bool ApplyItemWear(int32 StackId,float Wear);
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Condition")
+    bool ApplyWornWear(float Wear);
+
+    static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
+    bool HasCraftMaterials(FName RecipeId) const;
+    bool CanCombineForRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId) const;
+    /** Owner-only authoritative hold state. Ingredients remain untouched until completion. */
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks,BlueprintReadOnly,Category="ANOMALIA|Crafting")
+    bool bCombining=false;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks,BlueprintReadOnly,Category="ANOMALIA|Crafting")
+    double CombineStartedAt=0;
+    static constexpr float CombineDurationSeconds=2.f;
+    UFUNCTION(BlueprintPure,Category="ANOMALIA|Crafting") float GetCombineProgress() const;
+    UFUNCTION(BlueprintCallable,Category="ANOMALIA|Crafting") void RequestCancelCombine();
+    UFUNCTION(Server,Reliable) void ServerCancelCombine();
+    UFUNCTION(BlueprintCallable,Category="ANOMALIA|Crafting")
+    bool RequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
+    /** Trusted server transaction; rollback on missing materials, space or failed profile write. */
+    bool TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError,int32 HeldStackId=0,int32 OtherStackId=0);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Crafting")
+    bool RequestCraftRecipe(FName RecipeId);
+
+    /** Derived from physical banknote stacks on the server, not a second cash ledger. */
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
+    int64 CashBalanceCents=0;
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
     int32 GetUsedCells(FName ContainerId) const;
@@ -199,6 +273,13 @@ protected:
     UFUNCTION(Server, Reliable)
     void ServerRequestUseStack(int32 StackId, int32 ExpectedCount);
 
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCraftRecipe(FName RecipeId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestStowStackIn(int32 StackId,FName ContainerId);
+    UFUNCTION(Server,Reliable)
+    void ServerRequestCollectNearby(AAnomaliaLootPickup* Pickup);
+
 private:
     friend class UAnomaliaWorldStateSubsystem;
     friend class UAnomaliaLootSubsystem;
@@ -209,6 +290,23 @@ private:
     bool bProfileRecoveryPending = false;
     double NextBankRequestTime = 0;
     double NextUseRequestTime = 0;
+    double NextCraftRequestTime=0;
+    double NextCollectRequestTime=0;
+    bool CollectNearbyOnServer(AAnomaliaLootPickup* Pickup);
+    float WornStorageElapsed=0.f;
+    FVector LastWearLocation=FVector::ZeroVector;
+    bool bHasWearLocation=false;
+    bool CraftFromOwningPlayer(FName RecipeId);
+    bool BeginCombineOnServer(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
+    bool IsPendingCombineValid() const;
+    void TickPendingCombine();
+    void CancelCombineOnServer(const FString& Message);
+    FAnomaliaInventoryStack CombineHeldSnapshot;
+    FAnomaliaInventoryStack CombineOtherSnapshot;
+    FName CombineRecipeId;
+    FVector CombineStartLocation=FVector::ZeroVector;
+    double NextCombineRequestTime=0;
+    bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
     bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
     bool bSuppressNotifications = false;
@@ -217,5 +315,11 @@ private:
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;
     bool FindPlacement(const TArray<FAnomaliaInventoryStack>& Candidate, FAnomaliaInventoryStack& Stack, bool bIncludeRecovery = false) const;
+    bool AttachmentAvailable(const TArray<FAnomaliaInventoryStack>& Candidate,FName Id) const;
+    void RefreshAttachmentVisuals();
+    UPROPERTY(Transient) TMap<int32,TObjectPtr<UStaticMeshComponent>> AttachmentVisuals;
     void Commit(TArray<FAnomaliaInventoryStack>&& Candidate);
 };
+
+
+

@@ -3,6 +3,2735 @@
   "description": "Native pickup placements. Coordinates are Unreal centimetres. Extend per map; no implicit map-wide building population is claimed.",
   "spawns": [
     {
+      "id": "beach-supplies-drink",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": 0,
+      "z": -100,
+      "categories": [
+        "drinks"
+      ]
+    },
+    {
+      "id": "beach-supplies-food",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": -110,
+      "z": -100,
+      "categories": [
+        "canned_food"
+      ]
+    },
+    {
+      "id": "beach-supplies-medical",
+      "map": "ANOMALIA_Archipelago_v2",
+      "buildingType": "village",
+      "anchor": "player_start",
+      "x": 140,
+      "y": 110,
+      "z": -100,
+      "categories": [
+        "medical_supplies"
+      ]
+    },
+    {
+      "id": "inhabited-001b29438213edb1897c3c13",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1446309.5181101956,
+      "y": -157500,
+      "z": 5729.951075761044,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-001dd29237f0287687f7037b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1185778.8263333233,
+      "y": 207500,
+      "z": 9467.47425040055,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0023f65c9ac7b73ba7f38ba7",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -633690.4818898045,
+      "y": -1312500,
+      "z": 18586.120393682766,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-002573578c49678478d82805",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1443690.4818898044,
+      "y": -1732500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-002d43b8a31905e971a8cccf",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1756309.5181101956,
+      "y": 607500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-004af2910e043db8fb4d565d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1863690.4818898044,
+      "y": 1257500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-006866a1cc6ef0518024d981",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1775778.8263333233,
+      "y": 627500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-006d3c32aa0f21ddbbf34e62",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1711309.5181101956,
+      "y": 932500,
+      "z": 8511.12993057145,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00888f904769d8ba419e9c36",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1798690.4818898044,
+      "y": -667500,
+      "z": 917.229056992446,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0091882cb72d19d02636a1a7",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 325778.82633332326,
+      "y": 267500,
+      "z": 15173.719672693982,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-009c6bbb6d93fe7924516587",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -603690.4818898045,
+      "y": -1332500,
+      "z": 18586.120393682766,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00b41e822105b4502540e205",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 651309.5181101955,
+      "y": 917500,
+      "z": 11123.663214312963,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00c5489352f5eacb7cc364cc",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1456309.5181101956,
+      "y": -162500,
+      "z": 5729.951075761044,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00cf0fe7e6d1401e897422ec",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1288690.4818898044,
+      "y": -957500,
+      "z": 21798.60656519417,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00d02a0129d43bcf3e369a8f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 671309.5181101955,
+      "y": -192500,
+      "z": 10711.165503166247,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00d9f01214c8833fa1a40a50",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 326309.5181101955,
+      "y": 247500,
+      "z": 15173.719672693982,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00de09ae2a7c791b869e0d26",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -348690.4818898045,
+      "y": 1782500,
+      "z": 686.0777637903414,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00e08a4d54a8a84d13e602c1",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1874221.1736666767,
+      "y": 1242500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-00ffa3c9bf3a7c60c902b071",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -108690.48188980446,
+      "y": 372500,
+      "z": 14798.75,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0108be83426bce2bae4030d1",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -103690.48188980446,
+      "y": 1017500,
+      "z": 13861.25,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-012a4703ea72c5688ddffc39",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 696309.5181101955,
+      "y": -1807500,
+      "z": 9817.5,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0147763315fdd7811dd8f7e3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1303690.4818898044,
+      "y": -1017500,
+      "z": 21798.503566796368,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-016c77d26e693ff27ff731c8",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1701309.5181101956,
+      "y": 947500,
+      "z": 8511.12993057145,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0184aea2676eabb444e852e6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1186309.5181101956,
+      "y": 222500,
+      "z": 9467.47425040055,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0189c0e677eefe59e08fb49b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1438690.4818898044,
+      "y": -697500,
+      "z": 16498.590638590067,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01aeafd2b5901dc7096843d6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -609221.1736666767,
+      "y": -1342500,
+      "z": 18586.120393682766,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01b6d8064007d788c324b8c6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 691309.5181101955,
+      "y": -162500,
+      "z": 10711.165503166247,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01b8ddadd219ee247e2b33b2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1898690.4818898044,
+      "y": -1762500,
+      "z": 936.109807736324,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01e0264c45d1920476afd3a0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -608690.4818898045,
+      "y": -1312500,
+      "z": 18586.120393682766,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01e6fb753f8922c71262b826",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 351309.5181101955,
+      "y": 262500,
+      "z": 15173.719672693982,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-01f59e84bdaa04c1d9dbeb27",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1838690.4818898044,
+      "y": 1257500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02019811d99b9074dde4242d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1854221.1736666767,
+      "y": 1252500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02211ea9b6d147cddcd32005",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1028690.4818898045,
+      "y": 607500,
+      "z": 16179.985408560311,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0229923c7e96327e068e91f5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 300778.82633332326,
+      "y": 272500,
+      "z": 15173.719672693982,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02369f44528dac2804dc5342",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -608690.4818898045,
+      "y": -1337500,
+      "z": 18586.120393682766,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0239fedd1e0894cd34926d77",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1221309.5181101956,
+      "y": 222500,
+      "z": 9467.388513771268,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0244d1d73e9ab7de4817a1d3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1943690.4818898044,
+      "y": -1822500,
+      "z": 927.3938458434566,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02457627d9c37264f1263a69",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1348690.4818898044,
+      "y": 942500,
+      "z": 9686.164072632944,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02862cad3134015171f8d2f8",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 321309.5181101955,
+      "y": 277500,
+      "z": 15173.719672693982,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02990a254c2dce94c116df8b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 671309.5181101955,
+      "y": -1762500,
+      "z": 9817.5,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02a20ba2fa5a9b16f3ba7866",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1774221.1736666767,
+      "y": -697500,
+      "z": 917.229056992446,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02adc69a7992366700fff6a0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 691309.5181101955,
+      "y": 1997500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02b83290f33a3860bb3245af",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1408690.4818898044,
+      "y": -1692500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-02b8734244639c43cb25adee",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1433690.4818898044,
+      "y": -687500,
+      "z": 16498.590638590067,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03020d8d59c85136738d1bef",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1701309.5181101956,
+      "y": -1312500,
+      "z": 5323.519684138247,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03346b1230b8c68ce097fdd2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -349221.17366667674,
+      "y": 1807500,
+      "z": 686.2395094224456,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0338cfeda520e3f491e247a9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1253690.4818898044,
+      "y": -957500,
+      "z": 21798.60656519417,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-034c08c531b5d7454bc9eac3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 351309.5181101955,
+      "y": 247500,
+      "z": 15173.719672693982,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-035069edf5992d2917dcc803",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -148690.48188980448,
+      "y": 972500,
+      "z": 13861.23178454261,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-035abc6eb16276ba74bcc55c",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1776309.5181101956,
+      "y": 607500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-035ae0bac7169910437d0170",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1843690.4818898044,
+      "y": 1277500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0362534905f26f67fbe08a36",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1101309.5181101956,
+      "y": 922500,
+      "z": 8548.710135805295,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-036667c2d1dd158f654180a9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 671309.5181101955,
+      "y": -1802500,
+      "z": 9817.5,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-036783c1f45543f67b008f9d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1438690.4818898044,
+      "y": -1717500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0369b2c69f354fa12bdb337a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1303690.4818898044,
+      "y": -997500,
+      "z": 21798.60656519417,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0370fd3ba6c3118f5d074f12",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1844221.1736666767,
+      "y": -1482500,
+      "z": 961.0311284046691,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03754ae30473b26899a81718",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 656309.5181101955,
+      "y": 917500,
+      "z": 11123.663214312963,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-037ea55fb0ac8f01beceb197",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1828690.4818898044,
+      "y": -1492500,
+      "z": 961.0311284046691,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-038822023891f6ef536a8b41",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -138690.48188980448,
+      "y": 997500,
+      "z": 13861.23178454261,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-038caae9152efbf8b7887db9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1730778.8263333233,
+      "y": -1352500,
+      "z": 5323.519684138247,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-039b5c5d329a47a628d63a10",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1106309.5181101956,
+      "y": 887500,
+      "z": 8548.710135805295,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03d958574c593289bc8dd4c0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1398690.4818898044,
+      "y": -1752500,
+      "z": 1486.25,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03e441464d9299b5716aae59",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -644221.1736666767,
+      "y": -1347500,
+      "z": 18586.120393682766,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03e720be98170dca2d61a904",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -144221.17366667677,
+      "y": 972500,
+      "z": 13861.23178454261,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-03ecb07927447de0a9cf54ea",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1429221.1736666767,
+      "y": -647500,
+      "z": 16498.590638590067,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04166cf8e97c86490a6478d5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 690778.8263333233,
+      "y": 907500,
+      "z": 11123.663214312963,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-041feaa7a7dc4283a8d1c967",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 906309.5181101955,
+      "y": 1912500,
+      "z": 629.7997253376042,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-042338400fadaeb97083b446",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1696309.5181101956,
+      "y": -1317500,
+      "z": 5323.519684138247,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-042f7fc6772065e9b74343b0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 711309.5181101955,
+      "y": -222500,
+      "z": 10711.25,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-042f8d8e3801ba20f831a36d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1161309.5181101956,
+      "y": 927500,
+      "z": 8548.710135805295,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-043483b8da180f97447f7d49",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1746309.5181101956,
+      "y": 902500,
+      "z": 8511.12993057145,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-043de01b5a602c14b5a63cfd",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -88690.48188980446,
+      "y": 377500,
+      "z": 14798.75,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-044e453d511dd8e573770140",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1258690.4818898044,
+      "y": -1002500,
+      "z": 21798.503566796368,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-045b95b813482bfa8a3b4715",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1058690.4818898044,
+      "y": 627500,
+      "z": 16179.985408560311,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-046566c74b3f0ee619cdb9a0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -123690.48188980446,
+      "y": 387500,
+      "z": 14798.75,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04671f41990a0ef27b094a49",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -348690.4818898045,
+      "y": 1787500,
+      "z": 686.0777637903414,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04741df2bba61eb4e21380ac",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 656309.5181101955,
+      "y": -167500,
+      "z": 10711.165503166247,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0476d7bab434b4d26f5521f2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1294221.1736666767,
+      "y": -1022500,
+      "z": 21798.503566796368,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-047da9a5dc306146f9a92446",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1506309.5181101956,
+      "y": -1382500,
+      "z": 8379.969958800639,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-048211a0bc6f6853eff7d0a7",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1466309.5181101956,
+      "y": -1377500,
+      "z": 8379.969958800639,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04826c09f02d4983a4a5ccf3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1903690.4818898044,
+      "y": -1812500,
+      "z": 936.2331197070279,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0482daac4d9f264d18f44ff4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1843690.4818898044,
+      "y": 1252500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-048701ff2dfbf20a89664977",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -98690.48188980446,
+      "y": 412500,
+      "z": 14798.656443121996,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-048b8e00699bd02b67d5dd49",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 665778.8263333233,
+      "y": -162500,
+      "z": 10711.165503166247,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-048cd7c9d2c3c658746b6ebd",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1156309.5181101956,
+      "y": 932500,
+      "z": 8548.710135805295,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-049ed192a5783ab1ed519f15",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1388690.4818898044,
+      "y": -682500,
+      "z": 16498.75,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04ad62b96732a17364149812",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1918690.4818898044,
+      "y": -1767500,
+      "z": 936.109807736324,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04b75b8154573856473b2b7f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 301309.5181101955,
+      "y": 267500,
+      "z": 15173.719672693982,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04cfc2301420e3823a4e1828",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1691309.5181101956,
+      "y": -1322500,
+      "z": 5323.519684138247,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04e4ad3443851fb6beb02d6d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1383690.4818898044,
+      "y": -692500,
+      "z": 16498.75,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-04fe7a4a339d4cb456cecb8f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1701309.5181101956,
+      "y": 897500,
+      "z": 8511.12993057145,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-050117fe53b2137b92d607bd",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 675778.8263333233,
+      "y": -1762500,
+      "z": 9817.5,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0504d3d910120201f271d13a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 690778.8263333233,
+      "y": -1822500,
+      "z": 9817.5,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0519395c24b82bdd003fe3a6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1293690.4818898044,
+      "y": -1007500,
+      "z": 21798.503566796368,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-052068bdbc60fae3940e1729",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1369221.1736666767,
+      "y": 887500,
+      "z": 9686.164072632944,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0537bd9ae2d7a3b79fe5f886",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1043690.4818898045,
+      "y": 612500,
+      "z": 16179.985408560311,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-053af5ce22a6f2ddf4b69318",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 346309.5181101955,
+      "y": 257500,
+      "z": 15173.719672693982,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05466ce4e96ed3d97572a810",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1828690.4818898044,
+      "y": -1457500,
+      "z": 961.0311284046691,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-056149e4e7311522f77f0e00",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 691309.5181101955,
+      "y": -172500,
+      "z": 10711.165503166247,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-056240ed8e4d770a9422c2eb",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1868690.4818898044,
+      "y": -1482500,
+      "z": 961.0311284046691,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-056f6c90de12a42b965557eb",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 685778.8263333233,
+      "y": -197500,
+      "z": 10711.165503166247,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-056f9d7cb85545e73f625326",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1716309.5181101956,
+      "y": -1327500,
+      "z": 5323.519684138247,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05919a46251e2e24aa3ddcb4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1048690.4818898044,
+      "y": 627500,
+      "z": 16179.985408560311,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05b75e6422d892195e3da2af",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 915778.8263333233,
+      "y": 1902500,
+      "z": 629.7997253376042,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05cd188c12b9b57d5906bb33",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1764221.1736666767,
+      "y": -677500,
+      "z": 917.229056992446,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05d896c59e74a241c5391476",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1181309.5181101956,
+      "y": 187500,
+      "z": 9467.400720988786,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05e5fa626fd5cd284904cc58",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1221309.5181101956,
+      "y": 182500,
+      "z": 9467.426565957123,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05e7be223ab5a190ec3bcdd4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -153690.48188980448,
+      "y": 1007500,
+      "z": 13861.25,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-05fc1e9343210a36888262ed",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -358690.4818898045,
+      "y": 1777500,
+      "z": 686.0777637903414,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-060ba709bdff0291380920ed",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1779221.1736666767,
+      "y": -687500,
+      "z": 917.229056992446,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0625b5e6f207cc147b05a788",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 676309.5181101955,
+      "y": 2007500,
+      "z": 1992.5,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-063cd6582cdc50aea99413b5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -98690.48188980446,
+      "y": 987500,
+      "z": 13861.23178454261,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-064f791bafed0f28f5684032",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1879221.1736666767,
+      "y": 1272500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0667d12efe185ec894e638f2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1171309.5181101956,
+      "y": 187500,
+      "z": 9467.400720988786,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-06885607b7dba3b0f973f673",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 665778.8263333233,
+      "y": -1812500,
+      "z": 9817.5,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-06c264644d1bd95a5c1a991c",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1691309.5181101956,
+      "y": -1342500,
+      "z": 5323.519684138247,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-06d38ee1e1c7ebb89acc02d7",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 661309.5181101955,
+      "y": -162500,
+      "z": 10711.165503166247,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-06dd2e3ba0cabf35a5f64ac5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1338690.4818898044,
+      "y": 927500,
+      "z": 9686.164072632944,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-06f8e6078966992eb849de3f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 706309.5181101955,
+      "y": 892500,
+      "z": 11123.663214312963,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0702f4eff1f09bb3999d3e3f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -324221.17366667674,
+      "y": 1807500,
+      "z": 686.2395094224456,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-070579954d7e9f53ea157ed5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1476309.5181101956,
+      "y": -1437500,
+      "z": 8379.935149156938,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-072218aef3dde7790995b24a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -318690.4818898045,
+      "y": 1822500,
+      "z": 686.2395094224456,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-072d7b343c85cdc3651b7731",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -583690.4818898045,
+      "y": -1337500,
+      "z": 18585.215152208744,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-073b5763e1de6a827cc12356",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 666309.5181101955,
+      "y": 887500,
+      "z": 11123.663214312963,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07455d54c60aa514bd374abf",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1868690.4818898044,
+      "y": 1267500,
+      "z": 1804.9527924010074,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-075e28605fe436e39d87be27",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1913690.4818898044,
+      "y": -1767500,
+      "z": 936.109807736324,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-076aa986f468c7a813a875ac",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -303690.4818898045,
+      "y": 1817500,
+      "z": 686.2395094224456,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07715adab03c559bfca7cbd6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 701309.5181101955,
+      "y": 947500,
+      "z": 11123.663214312963,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-077e98dfa64a36a1a8249f46",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 621309.5181101955,
+      "y": -937500,
+      "z": 8154.934863050279,
+      "categories": [
+        "canned_food"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0781ddfccea4eab93d7b78c4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1434221.1736666767,
+      "y": -1687500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07bce63ddb2cc44729da0152",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -134221.17366667677,
+      "y": 962500,
+      "z": 13861.23178454261,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07bcfb2093bfa781db1a8f62",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1495778.8263333233,
+      "y": -207500,
+      "z": 5730,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07becadebb19a56862417e6a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1126309.5181101956,
+      "y": 897500,
+      "z": 8548.710135805295,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07bee4feb9e7e010e54ba01e",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 670778.8263333233,
+      "y": -1792500,
+      "z": 9817.5,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07cf9a268d06328fb2fffa2a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1195778.8263333233,
+      "y": 222500,
+      "z": 9467.47425040055,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07eca54acd6301ce8aac90b3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -134221.17366667677,
+      "y": 402500,
+      "z": 14798.656443121996,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-07ff80f243b456f8522dc488",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1433690.4818898044,
+      "y": -1702500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0813bf1e9eedf5da8d36fb55",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1428690.4818898044,
+      "y": -667500,
+      "z": 16498.590638590067,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08344236cc44acb1353fdb52",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1779221.1736666767,
+      "y": -682500,
+      "z": 917.229056992446,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-083e94a98a8e4c129618f563",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1191309.5181101956,
+      "y": 202500,
+      "z": 9467.47425040055,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-083fb5039d4292cb05c1c55d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -629221.1736666767,
+      "y": -1317500,
+      "z": 18586.120393682766,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-085765ca8909866e9096e837",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1869221.1736666767,
+      "y": -1492500,
+      "z": 961.0311284046691,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-086e40cd8d5c2eae5ba96b58",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1806309.5181101956,
+      "y": 637500,
+      "z": 1267.1878576333245,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08a553c6aeb60efbe8f521c2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 711309.5181101955,
+      "y": -1807500,
+      "z": 9817.5,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08ae094652cd93ad58ee7ee6",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 586309.5181101955,
+      "y": -887500,
+      "z": 8154.860570687419,
+      "categories": [
+        "drinks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08c17c2200f341fa84c54818",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1496309.5181101956,
+      "y": -192500,
+      "z": 5729.951075761044,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08cc100d5d2a3e16e653454e",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1094221.1736666767,
+      "y": 632500,
+      "z": 16179.985408560311,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-08dd15373a1b8d022d485745",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1461309.5181101956,
+      "y": -172500,
+      "z": 5729.951075761044,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-090510601f3cf27b7df68867",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -104221.17366667675,
+      "y": 972500,
+      "z": 13861.23178454261,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0917064e2128d3ae19af26ed",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -88690.48188980446,
+      "y": 432500,
+      "z": 14798.656443121996,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09188ae657296b1637310cb2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1784221.1736666767,
+      "y": -647500,
+      "z": 917.229056992446,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0938400230989699680f713a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1258690.4818898044,
+      "y": -957500,
+      "z": 21798.60656519417,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-093c830708fd63fa89000a01",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1308690.4818898044,
+      "y": 887500,
+      "z": 9686.164072632944,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-097126e2f94594aafdd8a5b3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1746309.5181101956,
+      "y": -1307500,
+      "z": 5323.519684138247,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-098be40b0649ae165242ed26",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1101309.5181101956,
+      "y": 912500,
+      "z": 8548.710135805295,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09a3c920e20f4313edeb1f61",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1433690.4818898044,
+      "y": -667500,
+      "z": 16498.590638590067,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09ae7490b9736e8fdc7d55ea",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1106309.5181101956,
+      "y": 942500,
+      "z": 8548.710135805295,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09bdbf074cb1b3793e2b7b7f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -344221.17366667674,
+      "y": 1817500,
+      "z": 686.2395094224456,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09c6de9848c0d92d030fe374",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1495778.8263333233,
+      "y": -162500,
+      "z": 5729.951075761044,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-09f137598df602dcdd34d2d5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1404221.1736666767,
+      "y": -672500,
+      "z": 16498.590638590067,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a1be1a7507b23dbc9379ab8",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1731309.5181101956,
+      "y": 952500,
+      "z": 8511.12993057145,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a517eb852b45b3e696d194d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1429221.1736666767,
+      "y": -1717500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a6e4471a731039b59b51e45",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -104221.17366667675,
+      "y": 397500,
+      "z": 14798.75,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a770ac6cdf4ca6c5f80cd1f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 691309.5181101955,
+      "y": 917500,
+      "z": 11123.663214312963,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a862c73c0acf6a317bf9785",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 661309.5181101955,
+      "y": 1982500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0a9ba95dca0ef8a41384fc15",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1801309.5181101956,
+      "y": 622500,
+      "z": 1267.1878576333245,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0aa2e03596b37371405da142",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1721309.5181101956,
+      "y": -1342500,
+      "z": 5323.519684138247,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0aaf8d3a90aec73bf28cd2e9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1423690.4818898044,
+      "y": -1737500,
+      "z": 1486.1232547493705,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0ab32177a5261562f7741d0e",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1848690.4818898044,
+      "y": -1512500,
+      "z": 961.0311284046691,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0acfe09ccf0105bb5910b264",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 616309.5181101955,
+      "y": -917500,
+      "z": 8154.934863050279,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0ad869c0831cd02235b31cb9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -88690.48188980446,
+      "y": 397500,
+      "z": 14798.75,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b01d075f0079565dfd71b99",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1824221.1736666767,
+      "y": -647500,
+      "z": 916.9898718242155,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b04b7d73b830b5e200a0137",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1095778.8263333233,
+      "y": 892500,
+      "z": 8548.710135805295,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b1126267b50c579e5635f41",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1353690.4818898044,
+      "y": 952500,
+      "z": 9686.164072632944,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b3056c30f8c6480ed762c25",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1309221.1736666767,
+      "y": 902500,
+      "z": 9686.164072632944,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b3777a3c3b6ace8beb6fa21",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 711309.5181101955,
+      "y": 902500,
+      "z": 11123.663214312963,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b4cc90badd05e0571f3c93e",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1785778.8263333233,
+      "y": 632500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b4f8396de637792a6898111",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1043690.4818898045,
+      "y": 627500,
+      "z": 16179.985408560311,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b58a19bc8fe4c2fce8ad689",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 576309.5181101955,
+      "y": -947500,
+      "z": 8154.860570687419,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b62bfe421ef005f671229c5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1368690.4818898044,
+      "y": 927500,
+      "z": 9686.164072632944,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b7bc64c8e25fb1dc1d8c6b3",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1328690.4818898044,
+      "y": 892500,
+      "z": 9686.164072632944,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b82e393736e75fbc2e079d0",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1751309.5181101956,
+      "y": 907500,
+      "z": 8511.12993057145,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0b9f2bcb6f69d61df2e4c97d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1083690.4818898044,
+      "y": 622500,
+      "z": 16179.985408560311,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0bb774f8f5f892b0394fa113",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1034221.1736666767,
+      "y": 597500,
+      "z": 16179.889848935683,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0bc158d14979c19093dafc1b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1490778.8263333233,
+      "y": -197500,
+      "z": 5729.951075761044,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0bde35ed7c0e422a4fa1caf9",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1776309.5181101956,
+      "y": 622500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0be4b5f3f8d589cd5649f363",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1511309.5181101956,
+      "y": -187500,
+      "z": 5729.951075761044,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0c1ea352206f3e5866062cca",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1696309.5181101956,
+      "y": 927500,
+      "z": 8511.12993057145,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0c26da55d9363854b6464dbf",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1466309.5181101956,
+      "y": -1427500,
+      "z": 8379.935149156938,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0c35eb8e11edd685b7434ab5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1755778.8263333233,
+      "y": 637500,
+      "z": 1267.4124513618674,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0c38d4d5caa32e286440f79b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1690778.8263333233,
+      "y": 897500,
+      "z": 8511.12993057145,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0c600ffbe57abeb8d2f995fd",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1495778.8263333233,
+      "y": -1417500,
+      "z": 8379.935149156938,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0ccfa4bed6b413ead9cfef4b",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 701309.5181101955,
+      "y": 1987500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0cd7ce32d1bf00eb6d7979ce",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1506309.5181101956,
+      "y": -1412500,
+      "z": 8379.935149156938,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0d70737a72ec5004c0d2f4e7",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1456309.5181101956,
+      "y": -1412500,
+      "z": 8379.935149156938,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0d733dd32ba5a72b92742048",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 671309.5181101955,
+      "y": 1997500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0df17e8a5b9d31d12214bca4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 605778.8263333233,
+      "y": -932500,
+      "z": 8154.934863050279,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0e9177089fccbdba3d02103d",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1844221.1736666767,
+      "y": -1487500,
+      "z": 961.0311284046691,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0efe564bdfa2abca7a5c1394",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 586309.5181101955,
+      "y": -952500,
+      "z": 8154.860570687419,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0f1c936290f6df7e80c82a94",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 1465778.8263333233,
+      "y": -1402500,
+      "z": 8379.935149156938,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0f1f54f3008c73f2b9dd619f",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 666309.5181101955,
+      "y": 2007500,
+      "z": 1992.5,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0fa5b46cc99ac2be0b1cdbd8",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 640778.8263333233,
+      "y": -927500,
+      "z": 8154.934863050279,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0fe1d55748ed1da554d0fc1e",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1903690.4818898044,
+      "y": -1777500,
+      "z": 936.109807736324,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0fed879717db3f069b1c61c2",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1908690.4818898044,
+      "y": -1782500,
+      "z": 936.109807736324,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-0fee062e5ce68e3564abddfc",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 706309.5181101955,
+      "y": 1982500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-1019eecdb19155c526aa6ef4",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 616309.5181101955,
+      "y": -942500,
+      "z": 8154.934863050279,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-105956e341dc0688859b9c9a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 701309.5181101955,
+      "y": 1992500,
+      "z": 1992.4750133516436,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-106cf9f6b2a8bedd3339dcf5",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 885778.8263333233,
+      "y": 1917500,
+      "z": 629.7997253376042,
+      "categories": [
+        "medical_supplies"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-117abacfd739b68eb384d555",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1818690.4818898044,
+      "y": -657500,
+      "z": 915.6489614328217,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-1188534a4ca7c3b66e79f561",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1928690.4818898044,
+      "y": -1782500,
+      "z": 936.109807736324,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-11981b62bfb7bba39b7df169",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": -1833690.4818898044,
+      "y": -1492500,
+      "z": 961.0311284046691,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-1d6169edecb2891229ba992a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 911309.5181101955,
+      "y": 1902500,
+      "z": 629.7997253376042,
+      "categories": [
+        "tops",
+        "pants"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-1f7fbe1134ba0c837ee89960",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 891309.5181101955,
+      "y": 1952500,
+      "z": 629.7997253376042,
+      "categories": [
+        "backpacks"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-21a0ee00e65fc9aad535eacb",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 886309.5181101955,
+      "y": 1902500,
+      "z": 629.7997253376042,
+      "categories": [
+        "tools"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-24eb433b7298936374053b2a",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 895778.8263333233,
+      "y": 1912500,
+      "z": 629.7997253376042,
+      "categories": [
+        "navigation",
+        "power_lighting"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "inhabited-28cb2224495e462a23bb5b36",
+      "map": "ANOMALIA_Inhabited_v2",
+      "buildingType": "house",
+      "x": 906309.5181101955,
+      "y": 1927500,
+      "z": 629.7997253376042,
+      "categories": [
+        "shoes_gloves"
+      ],
+      "placementSurface": "outdoor_ground"
+    },
+    {
+      "id": "review-bank-cash",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "house",
+      "x": 200,
+      "y": -140,
+      "z": 30,
+      "categories": [
+        "rp_cash"
+      ]
+    },
+    {
+      "id": "review-bunker",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "bunker",
+      "x": 160,
+      "y": 560,
+      "z": 30,
+      "categories": [
+        "assault_weapons",
+        "ammunition"
+      ]
+    },
+    {
+      "id": "review-garage",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "garage",
+      "x": 160,
+      "y": 420,
+      "z": 30,
+      "categories": [
+        "vehicle_engine_parts",
+        "vehicle_body_parts"
+      ]
+    },
+    {
+      "id": "review-hospital",
+      "map": "ANOMALIA_LootReview_v1",
+      "buildingType": "hospital",
+      "x": 160,
+      "y": 280,
+      "z": 30,
+      "categories": [
+        "medical_supplies",
+        "medicine"
+      ]
+    },
+    {
       "id": "review-house-food",
       "map": "ANOMALIA_LootReview_v1",
       "buildingType": "house",
@@ -25,86 +2754,36 @@
       ]
     },
     {
-      "id": "review-hospital",
-      "map": "ANOMALIA_LootReview_v1",
-      "buildingType": "hospital",
-      "x": 160,
-      "y": 280,
-      "z": 30,
+      "id": "playable-rp-medicine",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "pharmacy",
+      "x": -2900,
+      "y": 2600,
+      "z": 35,
       "categories": [
-        "medical_supplies",
         "medicine"
       ]
     },
     {
-      "id": "review-garage",
-      "map": "ANOMALIA_LootReview_v1",
-      "buildingType": "garage",
-      "x": 160,
-      "y": 420,
-      "z": 30,
+      "id": "playable-rp-substances",
+      "map": "ANOMALIA_Playable_v1",
+      "buildingType": "hospital",
+      "x": -3200,
+      "y": 2600,
+      "z": 35,
       "categories": [
-        "vehicle_engine_parts",
-        "vehicle_body_parts"
+        "rp_substances"
       ]
     },
     {
-      "id": "review-bunker",
-      "map": "ANOMALIA_LootReview_v1",
-      "buildingType": "bunker",
-      "x": 160,
-      "y": 560,
-      "z": 30,
-      "categories": [
-        "assault_weapons",
-        "ammunition"
-      ]
-    },
-    {
-      "id": "beach-supplies-food",
-      "map": "ANOMALIA_Archipelago_v2",
-      "buildingType": "village",
-      "anchor": "player_start",
-      "x": 140,
-      "y": -110,
-      "z": -100,
-      "categories": [
-        "canned_food"
-      ]
-    },
-    {
-      "id": "beach-supplies-drink",
-      "map": "ANOMALIA_Archipelago_v2",
-      "buildingType": "village",
-      "anchor": "player_start",
-      "x": 140,
-      "y": 0,
-      "z": -100,
-      "categories": [
-        "drinks"
-      ]
-    },
-    {
-      "id": "beach-supplies-medical",
-      "map": "ANOMALIA_Archipelago_v2",
-      "buildingType": "village",
-      "anchor": "player_start",
-      "x": 140,
-      "y": 110,
-      "z": -100,
-      "categories": [
-        "medical_supplies"
-      ]
-    },
-    {
-      "id": "review-bank-cash",
-      "map": "ANOMALIA_LootReview_v1",
+      "id": "playable-rp-tobacco",
+      "map": "ANOMALIA_Playable_v1",
       "buildingType": "house",
-      "x": 200,
-      "y": -140,
-      "z": 30,
+      "x": 400,
+      "y": 900,
+      "z": 35,
       "categories": [
-        "rp_cash"
+        "rp_tobacco"
       ]
     },
     {
@@ -160,39 +2839,6 @@
       "z": 35,
       "categories": [
         "ammunition"
-      ]
-    },
-    {
-      "id": "playable-rp-tobacco",
-      "map": "ANOMALIA_Playable_v1",
-      "buildingType": "house",
-      "x": 400,
-      "y": 900,
-      "z": 35,
-      "categories": [
-        "rp_tobacco"
-      ]
-    },
-    {
-      "id": "playable-rp-substances",
-      "map": "ANOMALIA_Playable_v1",
-      "buildingType": "hospital",
-      "x": -3200,
-      "y": 2600,
-      "z": 35,
-      "categories": [
-        "rp_substances"
-      ]
-    },
-    {
-      "id": "playable-rp-medicine",
-      "map": "ANOMALIA_Playable_v1",
-      "buildingType": "pharmacy",
-      "x": -2900,
-      "y": 2600,
-      "z": 35,
-      "categories": [
-        "medicine"
       ]
     }
   ]

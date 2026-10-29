@@ -1,0 +1,992 @@
+{
+  "observed_at": "2026-10-27T16:33:13.900Z",
+  "project": "C:\\ANOMALIA\\unreal",
+  "engine": "5.8.3-58210709+++UE5+Release-5.8",
+  "evidence_run": 40542226182,
+  "disk_evidence_run": 40541978287,
+  "installed_gameplay_blueprint": {
+    "path": "/Game/BP_AnomaliaSurvivor",
+    "parent": "<Object '/Script/AnomaliaPrimeval.AnomaliaSurvivor' (0x00000206A6C82D00) Class 'Class'>",
+    "parts": [
+      {
+        "component": "CharacterMesh0",
+        "mesh": null,
+        "anim": null
+      }
+    ]
+  },
+  "quantum_modules": [
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Arms.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Bulletproof_Physics.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Drops_1_Physics.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Head_PhysicsAsset.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Holster_Hard_Bege_Physics.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Jeans.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Patch_Back_Physics.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\PA_Shirt_RolledUp.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Arms.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Bulletproof_Bege.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Drops_1_Bege.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Head.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Holster_Hard_Bege.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Jeans.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Patch_Back.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SKM_Shirt_RolledUp_Blue.uasset",
+    "Content\\QuantumCharacter\\Mesh\\Modules\\SM_Cap_Bege.uasset"
+  ],
+  "assets": [
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/ABP_Manny",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/ABP_Quinn",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Fall_Loop",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Idle",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Jump",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Land",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Manny/MM_Walk_InPlace",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Quinn/MF_Idle",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Quinn/MF_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Animations/Quinn/MF_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Meshes/SKM_Manny",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "materials": [
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_02.MI_Manny_02",
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_01.MI_Manny_01"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "materials": [
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_01.MI_Manny_01",
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_02.MI_Manny_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Meshes/SKM_Quinn",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "materials": [
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_01.MI_Quinn_01",
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_02.MI_Quinn_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "materials": [
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_01.MI_Quinn_01",
+        "/Game/ControlRig/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_02.MI_Quinn_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin",
+      "class": "Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/ABP_Manny_PostProcess",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/ABP_Quinn_PostProcess",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_calf_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_calf_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_clavicle_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_clavicle_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_foot_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_foot_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_hand_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_hand_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_lowerarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_lowerarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_thigh_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_thigh_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_upperarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Manny/Manny_upperarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_calf_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_calf_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_clavicle_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_clavicle_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_foot_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_foot_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_hand_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_hand_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_lowerarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_lowerarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_thigh_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_thigh_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_upperarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/ControlRig/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_upperarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/ControlRig/Characters/Mannequins/Meshes/SK_Mannequin.SK_Mannequin",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/CBP_QuantumCharacter",
+      "class": "Blueprint",
+      "parent": "<Object '/Script/Engine.Character' (0x00007FF3C42BB970) Class 'Class'>",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MF_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MF_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Fall_Loop",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Idle",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Jump",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Land",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_MM_Walk_InPlace",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Demo/Animations/A_Preset_Pose_0",
+      "class": "AnimSequence",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/SKM_QuantumCharacter",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Arms.M_Arms",
+        "/Game/QuantumCharacter/Materials/M_Cap_Bege.M_Cap_Bege",
+        "/Game/QuantumCharacter/Materials/M_Holster_Hard_Bege.M_Holster_Hard_Bege",
+        "/Game/QuantumCharacter/Materials/M_Eyelashesh.M_Eyelashesh",
+        "/Game/QuantumCharacter/Materials/M_Head.M_Head",
+        "/Game/QuantumCharacter/Materials/M_Shirt_RolledUp_Blue.M_Shirt_RolledUp_Blue",
+        "/Game/QuantumCharacter/Materials/M_Bulletproof_Bege.M_Bulletproof_Bege",
+        "/Game/QuantumCharacter/Materials/M_Jeasn.M_Jeasn",
+        "/Game/QuantumCharacter/Materials/M_Eyeball.M_Eyeball",
+        "/Game/QuantumCharacter/Materials/Eye/MI_EyeRefractive_Inst.MI_EyeRefractive_Inst",
+        "/Game/QuantumCharacter/Materials/M_Teeth.M_Teeth",
+        "/Game/QuantumCharacter/Materials/M_Pistol.M_Pistol",
+        "/Game/QuantumCharacter/Materials/M_Patches.M_Patches",
+        "/Game/QuantumCharacter/Materials/M_Drops_Tactical_Bege.M_Drops_Tactical_Bege"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/SKM_QuantumCharacter_NoHead",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Arms.M_Arms",
+        "/Game/QuantumCharacter/Materials/M_Cap_Bege.M_Cap_Bege",
+        "/Game/QuantumCharacter/Materials/M_Holster_Hard_Bege.M_Holster_Hard_Bege",
+        "/Game/QuantumCharacter/Materials/M_Eyelashesh.M_Eyelashesh",
+        "/Game/QuantumCharacter/Materials/M_Head.M_Head",
+        "/Game/QuantumCharacter/Materials/M_Shirt_RolledUp_Blue.M_Shirt_RolledUp_Blue",
+        "/Game/QuantumCharacter/Materials/M_Bulletproof_Bege.M_Bulletproof_Bege",
+        "/Game/QuantumCharacter/Materials/M_Jeasn.M_Jeasn",
+        "/Game/QuantumCharacter/Materials/M_Eyeball.M_Eyeball",
+        "/Game/QuantumCharacter/Materials/Eye/MI_EyeRefractive_Inst.MI_EyeRefractive_Inst",
+        "/Game/QuantumCharacter/Materials/M_Teeth.M_Teeth",
+        "/Game/QuantumCharacter/Materials/M_Pistol.M_Pistol",
+        "/Game/QuantumCharacter/Materials/M_Patches.M_Patches",
+        "/Game/QuantumCharacter/Materials/M_Drops_Tactical_Bege.M_Drops_Tactical_Bege"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton",
+      "class": "Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Arms",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Arms.M_Arms"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Bulletproof_Bege",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Bulletproof_Bege.M_Bulletproof_Bege"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Drops_1_Bege",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Drops_Tactical_Bege.M_Drops_Tactical_Bege"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Head",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Eyelashesh.M_Eyelashesh",
+        "/Game/QuantumCharacter/Materials/M_Head.M_Head",
+        "/Game/QuantumCharacter/Materials/M_Eyeball.M_Eyeball",
+        "/Game/QuantumCharacter/Materials/Eye/MI_EyeRefractive_Inst.MI_EyeRefractive_Inst",
+        "/Game/QuantumCharacter/Materials/M_Teeth.M_Teeth"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Holster_Hard_Bege",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Holster_Hard_Bege.M_Holster_Hard_Bege",
+        "/Game/QuantumCharacter/Materials/M_Pistol.M_Pistol"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Jeans",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Jeasn.M_Jeasn"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Patch_Back",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Patches.M_Patches"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SKM_Shirt_RolledUp_Blue",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/QuantumCharacter/Mesh/SK_Military_Character_Skeleton.SK_Military_Character_Skeleton",
+      "materials": [
+        "/Game/QuantumCharacter/Materials/M_Shirt_RolledUp_Blue.M_Shirt_RolledUp_Blue"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Modules/SM_Cap_Bege",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/QuantumCharacter/Mesh/Rifle/SM_Rifle_Olive",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/ABP_Manny",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/ABP_Quinn",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Fall_Loop",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Idle",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Jump",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Land",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_T_Pose",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Manny/MM_Walk_InPlace",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Quinn/MF_Idle",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Quinn/MF_Run_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Animations/Quinn/MF_Walk_Fwd",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Meshes/SKM_Manny",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_02.MI_Manny_02",
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_01.MI_Manny_01"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Meshes/SKM_Manny_Simple",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_01.MI_Manny_01",
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Manny/MI_Manny_02.MI_Manny_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Meshes/SKM_Quinn",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_01.MI_Quinn_01",
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_02.MI_Quinn_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Meshes/SKM_Quinn_Simple",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_01.MI_Quinn_01",
+        "/Game/Survival_Character/Demo/Characters/Mannequins/Materials/Instances/Quinn/MI_Quinn_02.MI_Quinn_02"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/ABP_Manny_PostProcess",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/ABP_Quinn_PostProcess",
+      "class": "AnimBlueprint",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_calf_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_calf_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_clavicle_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_clavicle_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_foot_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_foot_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_hand_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_hand_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_lowerarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_lowerarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_thigh_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_thigh_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_upperarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Manny/Manny_upperarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_calf_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_calf_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_clavicle_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_clavicle_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_foot_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_foot_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_hand_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_hand_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_lowerarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_lowerarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_thigh_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_thigh_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_upperarm_l_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Characters/Mannequins/Rigs/Poses/Quinn/Quinn_upperarm_r_anim",
+      "class": "AnimSequence",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/FBX",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/Plane",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/SM_ChamferCube",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/SM_Cube",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/SM_Cylinder",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/SM_QuarterCylinder",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/LevelPrototyping/Meshes/SM_Ramp",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/Mesh/SM_Curtain",
+      "class": "StaticMesh",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/ThirdPerson/Blueprints/BP_ThirdPersonCharacter",
+      "class": "Blueprint",
+      "parent": "<Object '/Script/Engine.Character' (0x00007FF3C42BB970) Class 'Class'>",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Demo/ThirdPerson/Blueprints/BP_ThirdPersonGameMode",
+      "class": "Blueprint",
+      "parent": "<Object '/Script/Engine.GameModeBase' (0x00007FF3C44A4CF0) Class 'Class'>",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/SKEL_Survival_Character",
+      "class": "Skeleton",
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/SK_Survival_Character",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Skin.MI_Survival_Character_Skin",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeBrow.MI_Survival_Character_EyeBrow",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeLash.MI_Survival_Character_EyeLash",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Eye.MI_Survival_Character_Eye",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Hair_Brown.MI_Survival_Character_Hair_Brown",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Haircap.MI_Survival_Character_Haircap",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Gloves.MI_Survival_Character_Gloves",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Jacket.MI_Survival_Character_Jacket",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Jeans.MI_Survival_Character_Jeans",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Shoes.MI_Survival_Character_Shoes",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Backpack.MI_Survival_Character_Backpack"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Backpack",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Backpack.MI_Survival_Character_Backpack"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Body",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Skin.MI_Survival_Character_Skin",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeBrow.MI_Survival_Character_EyeBrow",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeLash.MI_Survival_Character_EyeLash",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Eye.MI_Survival_Character_Eye",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Hair_Brown.MI_Survival_Character_Hair_Brown",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Haircap.MI_Survival_Character_Haircap"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Body_Parts",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Skin.MI_Survival_Character_Skin",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeBrow.MI_Survival_Character_EyeBrow",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_EyeLash.MI_Survival_Character_EyeLash",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Eye.MI_Survival_Character_Eye",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Hair_Brown.MI_Survival_Character_Hair_Brown",
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Haircap.MI_Survival_Character_Haircap"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Gloves",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Gloves.MI_Survival_Character_Gloves"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Jacket",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Jacket.MI_Survival_Character_Jacket"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Jeans",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Jeans.MI_Survival_Character_Jeans"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SK_Survival_Character_Shoes",
+      "class": "SkeletalMesh",
+      "skeleton": "/Game/Survival_Character/Meshes/SKEL_Survival_Character.SKEL_Survival_Character",
+      "materials": [
+        "/Game/Survival_Character/Materials/MI_Survival_Character_Shoes.MI_Survival_Character_Shoes"
+      ],
+      "loaded": true
+    },
+    {
+      "path": "/Game/Survival_Character/Meshes/Modular_Parts/SM_Survival_Character_Bat",
+      "class": "StaticMesh",
+      "loaded": true
+    }
+  ],
+  "warning": "Missing soft reference /Game/Survival_01/Demo/Characters/Mannequins/Rigs/CR_Mannequin_BasicFootIK.CR_Mannequin_BasicFootIK",
+  "validation_scope": "Assets loaded by Unreal commandlet. No PIE, screenshot, clothing exchange, persistence or multiplayer test."
+}

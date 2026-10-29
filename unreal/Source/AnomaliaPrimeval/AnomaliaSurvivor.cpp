@@ -1,4 +1,5 @@
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaInputProfileComponent.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
@@ -24,20 +25,24 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "GameFramework/CharacterMovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "CollisionShape.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Net/UnrealNetwork.h"
 
 AAnomaliaSurvivor::AAnomaliaSurvivor()
 {
     PrimaryActorTick.bCanEverTick = true;
+    ControlsProfile=CreateDefaultSubobject<UAnomaliaInputProfileComponent>(TEXT("ControlsProfile"));
     bReplicates = true;
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
-    GetCharacterMovement()->CrouchedHalfHeight = 60.f;
+    GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
     InventoryComponent = CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
+    QuickbarStackIds.SetNumZeroed(10);
     // Keep the original character mesh as the animation leader; clothes are optional.
     JacketMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("JacketMesh"));
     PantsMesh = CreateDefaultSubobject<USkeletalMeshComponent>(TEXT("PantsMesh"));
@@ -77,7 +82,13 @@ bool AAnomaliaSurvivor::SetClothingMesh(FName Slot, USkeletalMesh* MeshAsset)
     // Never silently apply a mesh with a different bone hierarchy.
     if (MeshAsset && (!GetMesh() || !GetMesh()->GetSkeletalMeshAsset() ||
         MeshAsset->GetSkeleton() != GetMesh()->GetSkeletalMeshAsset()->GetSkeleton())) return false;
+    if(!MeshAsset&&HasAuthority()&&GetWorld()&&GetWorld()->IsGameWorld()&&InventoryComponent&&!InventoryComponent->CanRemoveWornStorage(Slot))
+    {
+        InventoryComponent->UseMessage=TEXT("Videz le rangement du vêtement avant de le retirer.");
+        InventoryComponent->OnInventoryUpdated.Broadcast();return false;
+    }
     Target->SetSkeletalMeshAsset(MeshAsset);
+    if(HasAuthority()&&InventoryComponent)InventoryComponent->SynchronizeWornStorage();
     return true;
 }
 
@@ -88,6 +99,12 @@ float AAnomaliaSurvivor::TakeDamage(float Amount,const FDamageEvent& Event,ACont
     Super::TakeDamage(Applied,Event,InstigatorController,Causer);
     Health=FMath::Max(0.f,Health-Applied);
     if(ItemEffectsComponent) ItemEffectsComponent->AddInjury(Applied);
+    if(InventoryComponent)
+    {
+        InventoryComponent->ApplyWornWear(Applied*.1f);
+        const auto Items=InventoryComponent->Stacks;
+        for(const auto& Item:Items)if(Item.ContainerId==TEXT("hands")&&InventoryComponent->SupportsItemWear(Item.ItemId))InventoryComponent->ApplyItemWear(Item.StackId,Applied*.05f);
+    }
     OnSurvivalChanged();return Applied;
 }
 
@@ -192,6 +209,8 @@ void AAnomaliaSurvivor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
+    ControlsProfile->OnControl.AddUniqueDynamic(this,&AAnomaliaSurvivor::HandleEnhancedControl);
+    if(ControlsProfile->Install(Input,false))return;
     Input->BindAxis(TEXT("MoveForward"), this, &AAnomaliaSurvivor::MoveForward);
     Input->BindAxis(TEXT("MoveRight"), this, &AAnomaliaSurvivor::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &AAnomaliaSurvivor::Turn);
@@ -204,6 +223,17 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
     Input->BindAction(TEXT("Pause"), IE_Pressed, this, &AAnomaliaSurvivor::InputPause);
     Input->BindAction(TEXT("VehicleCamera"), IE_Pressed, this, &AAnomaliaSurvivor::InputCamera);
     Input->BindAction(TEXT("Inventory"), IE_Pressed, this, &AAnomaliaSurvivor::InputInventory);
+    Input->BindAction(TEXT("MeleeAttack"),IE_Pressed,this,&AAnomaliaSurvivor::InputMeleeAttack);
+    Input->BindAction(TEXT("Quickbar1"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar1);
+    Input->BindAction(TEXT("Quickbar2"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar2);
+    Input->BindAction(TEXT("Quickbar3"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar3);
+    Input->BindAction(TEXT("Quickbar4"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar4);
+    Input->BindAction(TEXT("Quickbar5"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar5);
+    Input->BindAction(TEXT("Quickbar6"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar6);
+    Input->BindAction(TEXT("Quickbar7"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar7);
+    Input->BindAction(TEXT("Quickbar8"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar8);
+    Input->BindAction(TEXT("Quickbar9"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar9);
+    Input->BindAction(TEXT("Quickbar0"),IE_Pressed,this,&AAnomaliaSurvivor::InputQuickbar0);
     Input->BindAction(TEXT("Sprint"), IE_Pressed, this, &AAnomaliaSurvivor::StartSprint);
     Input->BindAction(TEXT("Sprint"), IE_Released, this, &AAnomaliaSurvivor::StopSprint);
     Input->BindAction(TEXT("Rest"), IE_Pressed, this, &AAnomaliaSurvivor::InputRest);
@@ -291,6 +321,59 @@ void AAnomaliaSurvivor::CloseInventory()
     if (InventoryWidget && InventoryWidget->IsInViewport()) InputInventory();
 }
 
+void AAnomaliaSurvivor::InputQuickbar1(){ActivateQuickbarSlot(0);}
+void AAnomaliaSurvivor::InputQuickbar2(){ActivateQuickbarSlot(1);}
+void AAnomaliaSurvivor::InputQuickbar3(){ActivateQuickbarSlot(2);}
+void AAnomaliaSurvivor::InputQuickbar4(){ActivateQuickbarSlot(3);}
+void AAnomaliaSurvivor::InputQuickbar5(){ActivateQuickbarSlot(4);}
+void AAnomaliaSurvivor::InputQuickbar6(){ActivateQuickbarSlot(5);}
+void AAnomaliaSurvivor::InputQuickbar7(){ActivateQuickbarSlot(6);}
+void AAnomaliaSurvivor::InputQuickbar8(){ActivateQuickbarSlot(7);}
+void AAnomaliaSurvivor::InputQuickbar9(){ActivateQuickbarSlot(8);}
+void AAnomaliaSurvivor::InputQuickbar0(){ActivateQuickbarSlot(9);}
+int32 AAnomaliaSurvivor::GetQuickbarStackId(int32 SlotIndex) const
+{
+    return QuickbarStackIds.IsValidIndex(SlotIndex)?QuickbarStackIds[SlotIndex]:0;
+}
+void AAnomaliaSurvivor::AssignQuickbarStack(int32 SlotIndex,int32 StackId)
+{
+    if(!IsLocallyControlled()||!InventoryComponent||SlotIndex<0||SlotIndex>=10)return;
+    if(QuickbarStackIds.Num()!=10)QuickbarStackIds.SetNumZeroed(10);
+    const auto* Stack=InventoryComponent->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack||InventoryComponent->IsRecoveryContainer(Stack->ContainerId))return;
+    QuickbarStackIds[SlotIndex]=StackId;
+}
+void AAnomaliaSurvivor::ActivateQuickbarSlot(int32 SlotIndex)
+{
+    if(!IsLocallyControlled()||!InventoryComponent||!QuickbarStackIds.IsValidIndex(SlotIndex))return;
+    const int32 StackId=QuickbarStackIds[SlotIndex];
+    const auto* Stack=InventoryComponent->Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    if(!Stack){QuickbarStackIds[SlotIndex]=0;return;}
+    if(Stack->ContainerId==TEXT("hands"))InventoryComponent->RequestStowStack(StackId);
+    else InventoryComponent->RequestMoveStack(StackId,TEXT("hands"),0,0,false);
+}
+
+void AAnomaliaSurvivor::InputMeleeAttack()
+{
+    if(!IsLocallyControlled()||!GetController()||Health<=0.f||bSleeping)return;
+    ServerMeleeAttack();
+}
+void AAnomaliaSurvivor::ServerMeleeAttack_Implementation()
+{
+    if(!HasAuthority()||!GetWorld()||!GetController()||GetController()->GetPawn()!=this||Health<=0.f||bSleeping)return;
+    const double Now=GetWorld()->GetRealTimeSeconds();
+    if(Now<NextMeleeAttackTime)return;
+    NextMeleeAttackTime=Now+.65;
+    if(InventoryComponent&&InventoryComponent->Stacks.ContainsByPredicate([](const auto& S){return S.ContainerId==TEXT("hands");}))return;
+    const FVector Forward=GetActorForwardVector();
+    const FVector Start=GetActorLocation()+FVector(0,0,55)+Forward*18.f;
+    const FVector End=Start+Forward*125.f;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(AnomaliaUnarmedMelee),false,this);
+    FHitResult Hit;
+    if(GetWorld()->SweepSingleByChannel(Hit,Start,End,FQuat::Identity,ECC_Pawn,FCollisionShape::MakeSphere(20.f),Params))
+        if(AActor* Target=Hit.GetActor();IsValid(Target)&&Target!=this&&Target->CanBeDamaged())
+            UGameplayStatics::ApplyPointDamage(Target,12.f,Forward,Hit,GetController(),this,UDamageType::StaticClass());
+}
 void AAnomaliaSurvivor::InputInventory()
 {
     if (!IsLocallyControlled() || !InventoryComponent) return;
@@ -306,18 +389,7 @@ void AAnomaliaSurvivor::InputInventory()
         PC->SetIgnoreLookInput(false);
         return;
     }
-    InventoryWidget = CreateWidget<UAnomaliaInventoryWidget>(PC, UAnomaliaInventoryWidget::StaticClass());
-    if (!InventoryWidget) return;
-    InventoryWidget->InitializeForInventory(InventoryComponent);
-    InventoryWidget->AddToViewport(80);
-    FInputModeGameAndUI InputMode;
-    InputMode.SetWidgetToFocus(InventoryWidget->TakeWidget());
-    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
-    PC->SetInputMode(InputMode);
-    InventoryWidget->FocusFirstAction();
-    PC->bShowMouseCursor = true;
-    PC->SetIgnoreMoveInput(true);
-    PC->SetIgnoreLookInput(true);
+    UAnomaliaInventoryWidget::CreateForPlayerInventory(PC);
 }
 
 void AAnomaliaSurvivor::MoveForward(float Value)
@@ -428,6 +500,13 @@ void AAnomaliaSurvivor::InputCamera()
     const bool First=CameraBoom->TargetArmLength>1.f;
     CameraBoom->TargetArmLength=First?0.f:350.f;
     CameraBoom->SocketOffset=First?FVector(0,0,65):FVector::ZeroVector;
+    // The owning player must see their body again when returning to third person.
+    // Owner visibility keeps the character visible to other players in either view.
+    for (USkeletalMeshComponent* Part : {GetMesh(), JacketMesh.Get(), PantsMesh.Get(),
+        BootsMesh.Get(), GlovesMesh.Get(), HeadgearMesh.Get(), BackpackMesh.Get(), VestMesh.Get()})
+    {
+        if (Part) Part->SetOwnerNoSee(First);
+    }
 }
 
 
@@ -444,4 +523,40 @@ void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVe
     FString Error;const bool Accepted=IsValid(Vehicle)&&Vehicle->GetWorld()==GetWorld()&&Vehicle->SurvivalSystems->Execute(this,Action,StackId,ExpectedCount,Error);
     InventoryComponent->UseMessage=Accepted?TEXT("Échange véhicule enregistré."):Error.IsEmpty()?TEXT("Action véhicule indisponible."):Error;
     InventoryComponent->OnInventoryUpdated.Broadcast();ForceNetUpdate();
+}
+
+
+
+void AAnomaliaSurvivor::UnPossessed()
+{
+    if(ControlsProfile)ControlsProfile->Deactivate();
+    Super::UnPossessed();
+}
+void AAnomaliaSurvivor::HandleEnhancedControl(FName Name,float Value,bool bPressed)
+{
+    if(!IsLocallyControlled())return;
+    if(Name==TEXT("MoveForward")){MoveForward(Value);return;}
+    if(Name==TEXT("MoveRight")){MoveRight(Value);return;}
+    if(Name==TEXT("Turn")){Turn(Value);return;}
+    if(Name==TEXT("LookUp")){LookUp(Value);return;}
+    if(Name==TEXT("TurnRate")){TurnRate(Value);return;}
+    if(Name==TEXT("LookUpRate")){LookUpRate(Value);return;}
+    if(Name==TEXT("Jump")){if(bPressed)Jump();else StopJumping();return;}
+    if(Name==TEXT("Sprint")){if(bPressed)StartSprint();else StopSprint();return;}
+    if(Name==TEXT("PaceMode")){if(bPressed)BeginPaceAdjustment();else EndPaceAdjustment();return;}
+    if(!bPressed)return;
+    if(Name==TEXT("Interact"))InputInteract();
+    else if(Name==TEXT("Pause"))InputPause();
+    else if(Name==TEXT("VehicleCamera"))InputCamera();
+    else if(Name==TEXT("Inventory"))InputInventory();
+    else if(Name==TEXT("MeleeAttack"))InputMeleeAttack();
+    else if(Name==TEXT("Rest"))InputRest();
+    else if(Name==TEXT("TacticalCrouch"))ToggleTacticalCrouch();
+    else if(Name==TEXT("PaceUp"))IncreasePace();
+    else if(Name==TEXT("PaceDown"))DecreasePace();
+    else if(Name.ToString().StartsWith(TEXT("Quickbar")))
+    {
+        const int32 Digit=FCString::Atoi(*Name.ToString().RightChop(8));
+        if(Digit>=0&&Digit<=9)ActivateQuickbarSlot(Digit==0?9:Digit-1);
+    }
 }

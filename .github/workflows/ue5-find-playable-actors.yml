@@ -1,0 +1,44 @@
+name: ANOMALIA locate playable body dog and E39
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-find-playable-actors.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  assets:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    permissions:
+      contents: read
+    steps:
+      - name: Find real installed character and car assets
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/playable-actors-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Get-ChildItem 'D:/ANOMALIA/unreal/Content' -Recurse -File -Filter '*.uasset' | Where-Object {$_.Name -match 'E39|Quinn|Manny|GermanShepherd|Survivor|ABP.*(Human|Locomotion)|BP.*Character'} | ForEach-Object {$_.FullName}
+          @'
+          import unreal,json,pathlib
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.search_all_assets(True)
+          rows=[]
+          for a in registry.get_all_assets():
+              path=str(a.package_name)
+              cls=str(a.asset_class_path.asset_name)
+              if cls in ('Blueprint','AnimBlueprint','SkeletalMesh','BlendSpace','BlendSpace1D') and any(k in path.lower() for k in ('e39','bmw','chaos','/anomalia/vehicles/','quinn','manny','shepherd','survivor','survivalcharacter','thirdperson')):
+                  rows.append({'path':path,'class':cls})
+          print('PLAYABLE_ASSET_PATHS '+json.dumps(rows))
+          '@ | Set-Content "$out/find.py" -Encoding UTF8
+          $exe=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -unattended -nopause -nosound -NullRHI -run=pythonscript "-script=$out/find.py" "-abslog=$out/assets.log"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+          Select-String "$out/assets.log" -Pattern 'PLAYABLE_ASSET_PATHS' | ForEach-Object {$_.Line}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playable-actor-assets
+          path: D:/ANOMALIA/StorageRecovery/playable-actors-${{ github.run_id }}/*.log
+          if-no-files-found: warn

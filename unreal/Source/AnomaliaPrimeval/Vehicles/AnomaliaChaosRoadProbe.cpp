@@ -332,12 +332,19 @@ void AAnomaliaChaosRoadProbe::Tick(float DeltaSeconds)
                     const auto* Item=S->InventoryComponent->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("wood");});
                     if(!Item || !Systems->Execute(S,EAnomaliaVehicleServiceAction::Deposit,Item->StackId,Item->Count,ServiceError))
                     {Finish(TEXT("Open boot deposit failed: ")+ServiceError);return;}
-                    if(V->Chassis->GetMass()<=V->ChaosMovement->Mass)
-                    {Finish(TEXT("Stored cargo did not increase actual chassis mass"));return;}
+                    const float CargoMass=V->CargoInventory->GetCurrentWeightKg();
+                    const float ExpectedMass=V->GetUnladenMassKg()+CargoMass;
+                    if(CargoMass<=0.f || !FMath::IsNearlyEqual(V->Chassis->GetMass(),ExpectedMass,.1f) ||
+                       !FMath::IsNearlyEqual(V->ChaosMovement->Mass,ExpectedMass,.1f))
+                    {Finish(FString::Printf(TEXT("Cargo mass mismatch: physical=%.3f chaos=%.3f dry=%.3f cargo=%.3f"),
+                        V->Chassis->GetMass(),V->ChaosMovement->Mass,V->GetUnladenMassKg(),CargoMass));return;}
+                    V->CargoInventory->OnInventoryUpdated.Broadcast();
+                    if(!FMath::IsNearlyEqual(V->Chassis->GetMass(),ExpectedMass,.1f))
+                    {Finish(TEXT("Repeated cargo notification accumulated extra chassis mass"));return;}
                     const auto* Stored=V->CargoInventory->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("wood");});
                     if(!Stored || !Systems->Execute(S,EAnomaliaVehicleServiceAction::Withdraw,Stored->StackId,Stored->Count,ServiceError) || V->CargoInventory->Stacks.Num()!=0)
                     {Finish(TEXT("Open boot withdrawal failed or duplicated cargo: ")+ServiceError);return;}
-                    if(!FMath::IsNearlyEqual(V->Chassis->GetMass(),V->ChaosMovement->Mass,.1f))
+                    if(!FMath::IsNearlyEqual(V->Chassis->GetMass(),V->GetUnladenMassKg(),.1f))
                     {Finish(TEXT("Empty cargo did not restore the actual chassis mass"));return;}
                     if(!S->InventoryComponent->TryRemoveItem(TEXT("wood"),1)){Finish(TEXT("Restored cargo item missing from survivor"));return;}
                     Checks.Add(TEXT("trunk_open_inventory_battery_and_journaled_cargo_exchange_verified"));

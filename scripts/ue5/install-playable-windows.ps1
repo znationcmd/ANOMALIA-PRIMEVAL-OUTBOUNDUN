@@ -18,15 +18,26 @@ try {
     $saved=Join-Path $base 'userdata/Saved';New-Item -ItemType Directory -Path $saved -Force | Out-Null
     $hashes=@{};foreach($f in Get-ChildItem -LiteralPath $saved -Recurse -File) { $hashes[$f.FullName]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash }
     $versions=Join-Path $base 'versions';New-Item -ItemType Directory -Path $versions -Force | Out-Null
+    $baseVersion=$null
+    $installedActivePath=Join-Path $base 'active.json'
+    if(Test-Path -LiteralPath $installedActivePath){
+        $installedActive=Get-Content -LiteralPath $installedActivePath -Raw|ConvertFrom-Json
+        if($installedActive.executable){
+            $candidateBase=[IO.Path]::GetFullPath((Split-Path ([string]$installedActive.executable) -Parent))
+            $versionsFull=[IO.Path]::GetFullPath($versions)
+            if($candidateBase.StartsWith($versionsFull+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase) -and (Test-Path -LiteralPath $candidateBase -PathType Container)){$baseVersion=$candidateBase}
+        }
+    }
     # The full commit remains in active.json. A shorter unique folder leaves
     # room for native server/map/profile names and atomic-save GUID suffixes.
     $target=Join-Path $versions ($Commit.Substring(0,12)+'-'+[Guid]::NewGuid().ToString('N').Substring(0,8))
     $testSaved=Join-Path $base ('validation/'+[Guid]::NewGuid().ToString('N')+'/Saved')
     New-Item -ItemType Directory -Path $testSaved -Force | Out-Null
     if (-not (Test-Path -LiteralPath $target)) {
-        $stage=Join-Path $versions ('.stage-'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $stage | Out-Null
-        & robocopy.exe $proof.archive $stage /E /COPY:DAT /DCOPY:DAT /XJ /XD Saved /R:1 /W:1 /NFL /NDL /NJH /NJS | Out-Null
-        if ($LASTEXITCODE -gt 7) { throw 'Packaged version copy failed.' }
+        $stage=Join-Path $versions ('.stage-'+[Guid]::NewGuid().ToString('N'))
+        . (Join-Path $PSScriptRoot 'differential-version-store.ps1')
+        $diff=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $proof.archive -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Saved-validation','Intermediate','DerivedDataCache')
+        $report.differentialInstall=$diff
         New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaPrimeval/Saved') -Target $testSaved | Out-Null
         Move-Item -LiteralPath $stage -Destination $target
     }

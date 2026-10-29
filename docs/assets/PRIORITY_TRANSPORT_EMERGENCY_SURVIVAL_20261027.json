@@ -1,0 +1,277 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-27",
+  "scope": "Priorités explicites : tramway, métro, train, bus, téléphérique, secours, police, militaire et loot de survie.",
+  "preservation": "BMW E39 et systèmes existants conservés. Aucun achat ni asset propriétaire extrait d’un autre jeu.",
+  "transportLocal": [
+    {
+      "title": "Gold Coast G:Link Light Rail Tram",
+      "cacheId": "898242a2-9776-4de4-812d-75a15ddda9e0",
+      "source": "gold_coast_glink_light_rail_tram_flexity_2.glb",
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362
+    },
+    {
+      "title": "Subway Car (TTC)",
+      "cacheId": "0a3cdd5d-775d-4de5-ad37-28637527ba49",
+      "source": "sm_subwaycar.fbx",
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362,
+      "materialIssue": "FBX produced materials but no Texture2D; visual/material validation still required."
+    },
+    {
+      "title": "Marcopolo Ideale 770",
+      "cacheId": "540888de-d0cd-4b2d-99d3-ee9a9150d5a2",
+      "source": "marcopolo_ideale_770.glb",
+      "status": "IMPORTED_SAVED_IN_VALIDATION_COPY_NOT_GAMEPLAY_TESTED",
+      "workflowRun": 40568581362
+    },
+    {
+      "title": "City Subway Train Modular",
+      "status": "VISIBLE_IN_USER_LIBRARY_LOCAL_PAYLOAD_NOT_CONFIRMED"
+    }
+  ],
+  "sources": [
+    {
+      "category": "telepherique",
+      "title": "Rusty Cableway wagon",
+      "author": "Sain Zhu",
+      "url": "https://sketchfab.com/3d-models/rusty-cableway-wagon-low-poly-game-ready-ab93ce83584645ea8850269e4ce1bbc8",
+      "license": "CC-BY",
+      "triangles": 24400,
+      "note": "Cabine avec textures 4K selon l’auteur ; câbles, pylônes, stations et fonctionnement à développer.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "train",
+      "title": "Locomotive ChME3",
+      "author": "Nikcore",
+      "url": "https://sketchfab.com/3d-models/train-locomotive-low-poly-locomotive-0eea1fa85cfa40769ce8e0cbb98e1d05",
+      "license": "CC-BY",
+      "triangles": 24700,
+      "note": "Locomotive ; ne constitue pas une rame complète, des wagons ni un intérieur validé.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "pompiers",
+      "title": "Fire Truck",
+      "author": "amongus / holedonutdriveout",
+      "url": "https://sketchfab.com/3d-models/fire-truck-4a0d8c5bfca643d2aaa9b113ff752c26",
+      "license": "CC-BY",
+      "triangles": 72200,
+      "note": "Licence et téléchargement affichés ; origine détaillée, intérieur, pièces séparées et textures encore à inspecter.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "pompiers",
+      "title": "1940s American LaFrance",
+      "author": "Libau Media",
+      "url": "https://sketchfab.com/3d-models/free-1940s-us-fire-truck-american-lafrance-9548e406e29e49e18a7ea39a4de1111d",
+      "license": "CC-BY",
+      "triangles": 137300,
+      "note": "Créateur décrit son propre modèle ; véhicule historique, pas un camion moderne. FBX/Blend/textures annoncés.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "police",
+      "title": "SWAT Police Van",
+      "author": "Zack_Hawley",
+      "url": "https://sketchfab.com/3d-models/swat-police-van-5b9076973cda47e98609640d745bb8ce",
+      "license": "CC-BY",
+      "triangles": 23500,
+      "note": "Créateur indique modélisation et textures Substance Painter ; intérieur, portes et pivots non vérifiés.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "ambulance",
+      "title": "Gazel Next ambulance",
+      "author": "RES1N",
+      "url": "https://sketchfab.com/3d-models/gazel-next-ambulance-car-dc57ce22945a4a3992a9483dbd19824b",
+      "license": "CC-BY",
+      "triangles": 420000,
+      "note": "Modèle texturé annoncé ; optimisation et intérieur à vérifier.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "militaire",
+      "title": "Military Truck",
+      "author": "Raphael Escamilla",
+      "url": "https://sketchfab.com/3d-models/military-truck-d3a85af5faef4fddb217b3fce073614c",
+      "license": "CC-BY",
+      "triangles": 67200,
+      "note": "Auteur indique Blender + Substance Painter ; modèle générique, ne valide pas le Zetros exact demandé.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "militaire",
+      "title": "ZIL 157",
+      "author": "Rylo",
+      "url": "https://sketchfab.com/3d-models/zil-157-military-truck-9e047922452346f28acc8f4f6cc66d7b",
+      "license": "CC-BY",
+      "triangles": 686700,
+      "note": "Auteur décrit son modèle et son rig de suspension ; LOD/optimisation nécessaires à évaluer.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "boisson",
+      "title": "Water Bottle",
+      "author": "bluesassassins",
+      "url": "https://sketchfab.com/3d-models/water-bottle-6c99a0a4ddd040cc99e0d9d44887cef4",
+      "license": "CC-BY",
+      "triangles": 16100,
+      "note": "PBR 2K et dimensions 7×7×22 cm annoncés.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "alcool",
+      "title": "Beer Bottle",
+      "author": "CrZ",
+      "url": "https://sketchfab.com/3d-models/beer-bottle-4a7073aef68d413897c5fe04af9c705e",
+      "license": "CC-BY",
+      "triangles": 2523,
+      "note": "FBX et Blend annoncés ; contenu des textures à vérifier.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "medicament",
+      "title": "Medical Supplies Collection",
+      "author": "Miguel Adão",
+      "url": "https://sketchfab.com/3d-models/medical-supplies-collection-eae9fc470e674c458791cf00b892340f",
+      "license": "CC-BY",
+      "triangles": 87500,
+      "note": "Bandages, comprimés/blisters, seringues, poche de sang, kit de soins et autres accessoires annoncés.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    },
+    {
+      "category": "drogue_jeu",
+      "title": "FREE DRUGS",
+      "author": "22002",
+      "url": "https://sketchfab.com/3d-models/free-drugs-e3dedd7575934145892ad2c9d17173f8",
+      "license": "CC-BY",
+      "triangles": 32900,
+      "note": "Aucune description d’origine ; provenance, éléments et fichiers à inspecter avant sélection.",
+      "status": "LISTING_READ_DOWNLOAD_ADVERTISED_FILES_NOT_ACQUIRED",
+      "unrealImported": false,
+      "commercialRightsIndependentlyCertified": false
+    }
+  ],
+  "openSurvivalSources": [
+    {
+      "id": "ph_food_apple_01",
+      "source": "https://polyhaven.com/a/food_apple_01",
+      "license": "CC0-1.0",
+      "requiredFiles": 5,
+      "requiredBytes": 3642264,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    },
+    {
+      "id": "ph_food_pears_asian_01",
+      "source": "https://polyhaven.com/a/food_pears_asian_01",
+      "license": "CC0-1.0",
+      "requiredFiles": 5,
+      "requiredBytes": 16254873,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    },
+    {
+      "id": "ph_long_life_food",
+      "source": "https://polyhaven.com/a/long_life_food",
+      "license": "CC0-1.0",
+      "requiredFiles": 5,
+      "requiredBytes": 22425932,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    },
+    {
+      "id": "ph_wine_bottles_01",
+      "source": "https://polyhaven.com/a/wine_bottles_01",
+      "license": "CC0-1.0",
+      "requiredFiles": 15,
+      "requiredBytes": 44621833,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    },
+    {
+      "id": "ph_medical_box",
+      "source": "https://polyhaven.com/a/medical_box",
+      "license": "CC0-1.0",
+      "requiredFiles": 5,
+      "requiredBytes": 26365694,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    },
+    {
+      "id": "ph_medical_tape",
+      "source": "https://polyhaven.com/a/medical_tape",
+      "license": "CC0-1.0",
+      "requiredFiles": 5,
+      "requiredBytes": 23733090,
+      "status": "DOWNLOADED_ON_PC_SHA256_AND_DEPENDENCIES_VERIFIED",
+      "unrealImported": false,
+      "downloadRun": 40571617245,
+      "importRun": 40571935754,
+      "importState": "QUEUED"
+    }
+  ],
+  "rejected": [
+    {
+      "url": "https://sketchfab.com/3d-models/drug-pack-af40636101a3437786e2998f96b716f4",
+      "reason": "Description explicitly says extracted from GTA V; not used despite CC label."
+    },
+    {
+      "url": "https://sketchfab.com/3d-models/cable-car-e48fd0aae63240dcb5c96a7986876303",
+      "reason": "Description says GTA IV and license is non-commercial; not used."
+    }
+  ],
+  "gameplayAcceptance": "No new vehicle driving, transit passenger doors, consuming items, medical effects, persistence or multiplayer validated by this sourcing record.",
+  "deferredBatchResult": {
+    "modelsSucceeded": 14,
+    "modelsFailed": 1,
+    "failedSource": "navy_better_fbx.fbx",
+    "failureReason": "Multiple skeleton root bones; original file preserved."
+  },
+  "pbrRepair": {
+    "run": 40569633783,
+    "state": "EXACT_TEXTURE_SETS_CONNECTED_NEEDS_GPU_REVIEW",
+    "packs": 7,
+    "originalSourcesModified": false
+  }
+}

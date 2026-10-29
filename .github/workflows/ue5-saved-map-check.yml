@@ -1,0 +1,26 @@
+name: ANOMALIA saved map recovery check
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-saved-map-check.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read saved maps and exact sector bounds
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $folder=Get-ChildItem 'D:/ANOMALIA/StorageRecovery' -Directory -Filter 'loot-pie-*' | Sort-Object CreationTime -Descending | Select-Object -First 1 -ExpandProperty FullName
+          Write-Output ("LATEST_PIE_FOLDER="+$folder)
+          if(Test-Path "$folder/index.json"){
+            $data=Get-Content "$folder/index.json" -Raw | ConvertFrom-Json
+            foreach($test in $data.tests){
+              Write-Output ("TEST_STATE="+$test.state)
+              foreach($entry in $test.entries){if($entry.event.type -eq 'Error'){Write-Output ("TEST_ERROR="+$entry.event.message)}}
+            }
+          }
+          Select-String "$folder/editor.log" -Pattern 'timeout phase|Test Completed|Test Started|Fatal error|Assertion failed' | ForEach-Object {Write-Output $_.Line}

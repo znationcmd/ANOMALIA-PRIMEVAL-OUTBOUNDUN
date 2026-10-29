@@ -1,0 +1,87 @@
+name: ANOMALIA install body camera and companion fixes
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-body-companion-update.yml']
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  update:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Back up changed native sources and build existing D project
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          # User confirmed closing Unreal; remove only the observed windowless leftover.
+          $leftover=Get-CimInstance Win32_Process -Filter "ProcessId=21676"
+          if($leftover -and $leftover.Name -eq 'UnrealEditor.exe' -and $leftover.CommandLine -like '*AnomaliaPrimeval.uproject*'){
+            $p=Get-Process -Id 21676 -ErrorAction SilentlyContinue
+            if($p -and [string]::IsNullOrWhiteSpace($p.MainWindowTitle) -and $p.StartTime -lt (Get-Date).AddMinutes(-5)){
+              Stop-Process -Id 21676 -ErrorAction Stop
+              Wait-Process -Id 21676 -Timeout 20 -ErrorAction SilentlyContinue
+              Write-Host 'Closed identified windowless Unreal leftover after user confirmed shutdown.'
+            }
+          }
+          # Close only this project's game windows gracefully; preserve any editor session.
+          $games=Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIA*' -and $_.CommandLine -match '(?i)(^|\\s)-game(\\s|$)'}
+          foreach($game in $games){
+            $process=Get-Process -Id $game.ProcessId -ErrorAction SilentlyContinue
+            if($process){$null=$process.CloseMainWindow();$null=$process.WaitForExit(10000)}
+          }
+          $running=Get-CimInstance Win32_Process -Filter "Name='UnrealEditor.exe'" | Where-Object {$_.CommandLine -like '*ANOMALIA*'}
+          if($running){throw 'ANOMALIA game/editor remains open. Close it before replacing the native DLL; no process was terminated.'}
+          foreach($name in @('AnomaliaSurvivor.cpp','AnomaliaGameMode.cpp','AnomaliaInventoryComponent.h','AnomaliaInventoryComponent.cpp','AnomaliaInventoryWidget.h','AnomaliaInventoryWidget.cpp','Vehicles/AnomaliaChaosRoadVehicle.h','Vehicles/AnomaliaChaosRoadVehicle.cpp','Tests/AnomaliaLootPIETests.cpp','Vehicles/AnomaliaChaosRoadProbe.cpp')){
+            $dest=Join-Path 'D:/ANOMALIA/unreal/Source/AnomaliaPrimeval' $name
+            Copy-Item -LiteralPath $dest -Destination "$dest.before-body-$env:GITHUB_RUN_ID.bak"
+            Copy-Item -LiteralPath (Join-Path "$env:GITHUB_WORKSPACE/unreal/Source/AnomaliaPrimeval" $name) -Destination $dest
+          }
+          & "$env:UE_ROOT/Engine/Build/BatchFiles/Build.bat" AnomaliaPrimevalEditor Win64 Development '-Project=D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+      - name: Check actual solo character and shepherd startup and list authored vehicle maps
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out="D:/ANOMALIA/StorageRecovery/body-companion-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Force $out | Out-Null
+          Get-ChildItem 'D:/ANOMALIA/unreal/Content' -Recurse -File | Where-Object {$_.Name -match 'BMW|E39|Road.*Review|Chaos.*Review'} | ForEach-Object {$_.FullName}
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          $env:ANOMALIA_EDITOR_EXE=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor.exe'
+          @'
+          import subprocess,pathlib,time,os
+          out=pathlib.Path('D:/ANOMALIA/StorageRecovery/body-companion-'+os.environ['GITHUB_RUN_ID']);log=out/'game.log'
+          p=subprocess.Popen([os.environ['ANOMALIA_EDITOR_EXE'],'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject','/Game/Maps/ANOMALIA_Inhabited_v2?AnomaliaServerId=companion-check-'+os.environ['GITHUB_RUN_ID'],'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720','-unattended','-nosound','-abslog='+str(log)])
+          try:
+              deadline=time.monotonic()+240;ready=None
+              while time.monotonic()<deadline:
+                  t=log.read_text(errors='replace') if log.exists() else ''
+                  if 'Fatal error:' in t or 'Blueprint has no compatible body' in t:raise RuntimeError('Body or renderer startup failed')
+                  if 'ANOMALIA inhabited character body configured:' in t and 'ANOMALIA solo shepherd spawned beside player; mesh=SK_' in t:
+                      if ready is None:ready=time.monotonic()
+                      if time.monotonic()-ready>20:break
+                  if p.poll() is not None:raise RuntimeError('Game exited')
+                  time.sleep(2)
+              else:raise RuntimeError('Body and owned companion were not confirmed')
+              print('BODY_AND_SHEPHERD_RUNTIME_CREATED; input and visual review still required')
+          finally:
+              if p.poll() is None:
+                  p.terminate()
+                  try:p.wait(timeout=20)
+                  except subprocess.TimeoutExpired:p.kill();p.wait()
+          '@ | Set-Content "$out/check.py" -Encoding UTF8
+          & $python "$out/check.py"
+          if($LASTEXITCODE -ne 0){exit $LASTEXITCODE}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: body-companion-runtime
+          path: D:/ANOMALIA/StorageRecovery/body-companion-${{ github.run_id }}/*.log
+          if-no-files-found: warn
