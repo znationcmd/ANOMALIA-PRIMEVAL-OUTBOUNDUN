@@ -70,7 +70,7 @@ class UnrealPortTests(unittest.TestCase):
         game_mode = (SOURCE / "AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
         header = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.h").read_text(encoding="utf-8")
         pawn = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.cpp").read_text(encoding="utf-8")
-        template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "vehicles.example.json").read_text(encoding="utf-8"))
+        template = json.loads((ROOT / "unreal" / "Config" / "AnomaliaZPrigimalia" / "vehicles.example.json").read_text(encoding="utf-8"))
         for key in ("fuelPercent", "fuelConsumptionPerSecond", "speedMultiplier"):
             self.assertIn(key, template["vehicles"][0])
             self.assertIn('TEXT("' + key + '")', game_mode)
@@ -104,14 +104,14 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("FMath::IsFinite(X)", cpp)
         self.assertIn("FindVehicleDefinition(VehicleId, Definition)", cpp)
         self.assertNotIn("ServerSpawnVehicle", cpp)
-        template = ROOT / "unreal" / "Config" / "Anomalia" / "vehicles.example.json"
+        template = ROOT / "unreal" / "Config" / "AnomaliaZPrigimalia" / "vehicles.example.json"
         import json
         parsed = json.loads(template.read_text(encoding="utf-8"))
         self.assertTrue(parsed["vehicles"])
 
     def test_survival_rates_are_per_server_and_authoritative(self):
         import json
-        template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "config.json").read_text(encoding="utf-8"))
+        template = json.loads((ROOT / "unreal" / "Config" / "AnomaliaZPrigimalia" / "config.json").read_text(encoding="utf-8"))
         self.assertEqual(template["survival"]["hungerDrainPerSecond"], 0.015)
         self.assertEqual(template["survival"]["thirstDrainPerSecond"], 0.025)
         header = (SOURCE / "AnomaliaZPrigimaliaConfigLibrary.h").read_text(encoding="utf-8")
