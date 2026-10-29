@@ -1,4 +1,5 @@
 #include "AnomaliaSurvivor.h"
+#include "AnomaliaInputProfileComponent.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
 #include "ReactiveWorld/AnomaliaWorldMechanism.h"
 #include "AnomaliaVehiclePawn.h"
@@ -32,6 +33,7 @@
 AAnomaliaSurvivor::AAnomaliaSurvivor()
 {
     PrimaryActorTick.bCanEverTick = true;
+    ControlsProfile=CreateDefaultSubobject<UAnomaliaInputProfileComponent>(TEXT("ControlsProfile"));
     bReplicates = true;
     SetReplicateMovement(true);
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
@@ -207,6 +209,8 @@ void AAnomaliaSurvivor::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& Ou
 void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
 {
     Super::SetupPlayerInputComponent(Input);
+    ControlsProfile->OnControl.AddUniqueDynamic(this,&AAnomaliaSurvivor::HandleEnhancedControl);
+    if(ControlsProfile->Install(Input,false))return;
     Input->BindAxis(TEXT("MoveForward"), this, &AAnomaliaSurvivor::MoveForward);
     Input->BindAxis(TEXT("MoveRight"), this, &AAnomaliaSurvivor::MoveRight);
     Input->BindAxis(TEXT("Turn"), this, &AAnomaliaSurvivor::Turn);
@@ -522,3 +526,37 @@ void AAnomaliaSurvivor::ServerVehicleService_Implementation(AAnomaliaChaosRoadVe
 }
 
 
+
+void AAnomaliaSurvivor::UnPossessed()
+{
+    if(ControlsProfile)ControlsProfile->Deactivate();
+    Super::UnPossessed();
+}
+void AAnomaliaSurvivor::HandleEnhancedControl(FName Name,float Value,bool bPressed)
+{
+    if(!IsLocallyControlled())return;
+    if(Name==TEXT("MoveForward")){MoveForward(Value);return;}
+    if(Name==TEXT("MoveRight")){MoveRight(Value);return;}
+    if(Name==TEXT("Turn")){Turn(Value);return;}
+    if(Name==TEXT("LookUp")){LookUp(Value);return;}
+    if(Name==TEXT("TurnRate")){TurnRate(Value);return;}
+    if(Name==TEXT("LookUpRate")){LookUpRate(Value);return;}
+    if(Name==TEXT("Jump")){if(bPressed)Jump();else StopJumping();return;}
+    if(Name==TEXT("Sprint")){if(bPressed)StartSprint();else StopSprint();return;}
+    if(Name==TEXT("PaceMode")){if(bPressed)BeginPaceAdjustment();else EndPaceAdjustment();return;}
+    if(!bPressed)return;
+    if(Name==TEXT("Interact"))InputInteract();
+    else if(Name==TEXT("Pause"))InputPause();
+    else if(Name==TEXT("VehicleCamera"))InputCamera();
+    else if(Name==TEXT("Inventory"))InputInventory();
+    else if(Name==TEXT("MeleeAttack"))InputMeleeAttack();
+    else if(Name==TEXT("Rest"))InputRest();
+    else if(Name==TEXT("TacticalCrouch"))ToggleTacticalCrouch();
+    else if(Name==TEXT("PaceUp"))IncreasePace();
+    else if(Name==TEXT("PaceDown"))DecreasePace();
+    else if(Name.ToString().StartsWith(TEXT("Quickbar")))
+    {
+        const int32 Digit=FCString::Atoi(*Name.ToString().RightChop(8));
+        if(Digit>=0&&Digit<=9)ActivateQuickbarSlot(Digit==0?9:Digit-1);
+    }
+}
