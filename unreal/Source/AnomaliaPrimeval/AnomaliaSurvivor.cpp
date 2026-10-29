@@ -496,6 +496,13 @@ void AAnomaliaSurvivor::InputCamera()
     const bool First=CameraBoom->TargetArmLength>1.f;
     CameraBoom->TargetArmLength=First?0.f:350.f;
     CameraBoom->SocketOffset=First?FVector(0,0,65):FVector::ZeroVector;
+    // The owning player must see their body again when returning to third person.
+    // Owner visibility keeps the character visible to other players in either view.
+    for (USkeletalMeshComponent* Part : {GetMesh(), JacketMesh.Get(), PantsMesh.Get(),
+        BootsMesh.Get(), GlovesMesh.Get(), HeadgearMesh.Get(), BackpackMesh.Get(), VestMesh.Get()})
+    {
+        if (Part) Part->SetOwnerNoSee(First);
+    }
 }
 
 
