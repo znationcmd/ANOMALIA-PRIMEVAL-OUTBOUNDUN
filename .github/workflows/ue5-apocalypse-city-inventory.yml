@@ -1,0 +1,24 @@
+name: ANOMALIA apocalypse city preparation
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-apocalypse-city-inventory.yml']
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Locate existing maps and dressing assets without modifying levels
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\FabImports\CitySample\Content'
+          if(!(Test-Path $root)){throw 'City Sample Content missing'}
+          $maps=@(Get-ChildItem -LiteralPath $root -Filter '*.umap' -Recurse -File | Select-Object FullName,Length)
+          $candidates=@(Get-ChildItem -LiteralPath $root -Filter '*.uasset' -Recurse -File | Where-Object {$_.Name -match '^(SM|BP)_.*(debris|rubble|barrier|barricade|trash|wreck|ivy|grass|tree|road|vehicle)' } | Select-Object -First 120 FullName,Length)
+          $report='D:\ANOMALIA\StorageRecovery\apocalypse-city-inventory.json'
+          @{scope='Source inventory only, no generated apocalypse level';maps=$maps;candidates=$candidates} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $report -Encoding UTF8
+          $maps | ConvertTo-Json -Compress | Write-Output
+          $candidates | ConvertTo-Json -Compress | Write-Output
