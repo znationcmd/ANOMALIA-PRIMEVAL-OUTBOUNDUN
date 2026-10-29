@@ -1,4 +1,4 @@
-name: ANOMALIA loot and account interaction verification
+name: ANOMALIA map access and visible inventory interaction checks
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -33,6 +33,7 @@ jobs:
           & $build AnomaliaPrimevalEditor Win64 Development '-Project=D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
           if($LASTEXITCODE -ne 0){throw 'Spatial interaction test did not compile'}
       - name: Place loot on verified real floors in distributed settlements
+        id: place_loot
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -80,6 +81,7 @@ jobs:
           if($test.Count -ne 1){throw 'Isolated actual pickup and inventory playtest did not pass'}
           Write-Output 'NATIVE_LOOT_PICKUP_INVENTORY_PIE_PASSED'
       - name: Provide an unambiguous shortcut to the recovered development world
+        if: ${{ !cancelled() && steps.place_loot.outcome == 'success' }}
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
