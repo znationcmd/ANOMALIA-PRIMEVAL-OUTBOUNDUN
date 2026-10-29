@@ -1,4 +1,4 @@
-name: Apply public game-title rebrand on dedicated branch
+name: ANOMALIA’Z PRIGIMALIA — Apply public game-title rebrand on dedicated branch
 on:
   push:
     branches:

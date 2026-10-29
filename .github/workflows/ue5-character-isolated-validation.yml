@@ -1,4 +1,4 @@
-name: ANOMALIA isolated character build and Blueprint validation
+name: ANOMALIA’Z PRIGIMALIA — isolated character build and Blueprint validation
 on:
   push:
     branches: ['ue5/character-audit-20261027']

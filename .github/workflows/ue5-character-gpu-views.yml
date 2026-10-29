@@ -1,4 +1,4 @@
-name: ANOMALIA real character GPU views and editor pose observations
+name: ANOMALIA’Z PRIGIMALIA — real character GPU views and editor pose observations
 on:
   push:
     branches: ['ue5/character-audit-20261027']
