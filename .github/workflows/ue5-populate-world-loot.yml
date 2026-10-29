@@ -1,4 +1,4 @@
-name: ANOMALIA distribute loot after region save
+name: ANOMALIA trace world loot in initialized editor
 on:
   push:
     branches: ['ue5/character-audit-20261027']
@@ -30,7 +30,7 @@ jobs:
           Copy-Item -LiteralPath $source -Destination $task -Force
           $exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
           $log='D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.log'
-          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -run=pythonscript "-script=$task" -unattended -nopause -nosound -NullRHI "-abslog=$log"
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' "-ExecutePythonScript=$task" -unattended -nopause -nosound -NullRHI "-abslog=$log"
           $code=$LASTEXITCODE
           if(Test-Path $log){Select-String $log -Pattern 'ANOMALIA_WORLD_LOOT_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}}
           if($code -ne 0){throw 'World loot authoring failed'}
