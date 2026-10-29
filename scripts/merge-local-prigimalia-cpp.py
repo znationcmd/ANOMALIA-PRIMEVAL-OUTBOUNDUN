@@ -42,11 +42,27 @@ def main():
     differing=[]
     local_conflicts=[]
     conflict_root=root/"Saved/BrandMigration/LocalSourceConflicts"
+    # A previous filename-only substitution retained "Primeval" for module
+    # entry/rules files while their contents already defined the new module.
+    # Quarantine those exact generated duplicates outside Source, preserving bytes.
+    for suffix in (".Build.cs",".cpp"):
+        malformed=newer/(NEW+"Primeval"+suffix)
+        canonical=newer/(NEW+suffix)
+        if malformed.is_file() and canonical.is_file() and args.apply:
+            backup=conflict_root/"DuplicateModuleFiles"/malformed.name
+            backup.parent.mkdir(parents=True,exist_ok=True)
+            payload=malformed.read_bytes()
+            if backup.exists():
+                if backup.read_bytes()!=payload:
+                    raise RuntimeError("Different duplicate-module backup already exists")
+                malformed.unlink()
+            else:
+                malformed.rename(backup)
     for src in sorted(legacy.rglob("*")):
         if not src.is_file() or src.suffix.lower() not in EXTS:
             continue
         relative=src.relative_to(legacy).as_posix()
-        target_relative=re.sub(r"Anomalia(?!ZPrigimalia)",NEW,relative)
+        target_relative=transformed(relative)
         target=newer/target_relative
         original_text=src.read_text(encoding="utf-8-sig")
         migrated=transformed(original_text)
