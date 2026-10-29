@@ -1,0 +1,58 @@
+name: PRIGIMALIA - Native PIE validation after migration
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-native-pie.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-pie:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - name: Validate migration receipts and build staged native targets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Game or Editor already running'}
+          foreach($file in @('asset-rename-report.json','package-ref-update-report.json')){
+            $p=Join-Path $root ('Saved/BrandMigration/'+$file)
+            if(-not(Test-Path -LiteralPath $p)){throw "Migration receipt missing: $file"}
+            $receipt=Get-Content -LiteralPath $p -Raw | ConvertFrom-Json
+            if($file -eq 'asset-rename-report.json' -and (-not $receipt.verified -or $receipt.errors.Count)){throw 'Asset migration not verified'}
+            if($file -eq 'package-ref-update-report.json' -and -not $receipt.applied){throw 'References not migrated'}
+          }
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $bat $target Win64 Development "-Project=$project" -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+            if($LASTEXITCODE -ne 0){throw "Native build failed: $target"}
+          }
+      - name: Run real native loot PIE test with isolated saves
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $out=Join-Path $root ('Saved/BrandMigration/PIE-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          & $editor $project -NullRHI -unattended -nopause -nosound "-AnomaliaZPrigimaliaAutomationServerId=loot-pie-migration-$env:GITHUB_RUN_ID" '-ExecCmds=Automation RunTests AnomaliaZPrigimalia.Loot.PIE' '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$out" "-abslog=$out/native-pie.log"
+          if($LASTEXITCODE -ne 0){throw 'Native PIE process failed'}
+          $index=Join-Path $out 'index.json'
+          if(-not(Test-Path -LiteralPath $index)){throw 'No native automation results; test NOT validated'}
+          $result=Get-Content -LiteralPath $index -Raw | ConvertFrom-Json
+          if($result.succeeded -lt 1 -or $result.failed -gt 0 -or $result.notRun -gt 0){throw 'Native automation did not pass'}
+          Write-Host 'REAL_NATIVE_PIE_GAMEPLAY_VALIDATED=true'
+          Write-Host 'GRAPHICS_PHYSICAL_CONTROLLERS_AND_PACKAGED_GAME_NOT_VALIDATED_BY_THIS_TEST=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prigimalia-native-pie-${{ github.run_id }}
+          if-no-files-found: warn
+          path: D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/PIE-*/**
