@@ -59,6 +59,16 @@ void UAnomaliaInventoryActionRelay::EndPointerDrag()
 {
     if(TargetWidget&&Action==EAnomaliaInventoryAction::SelectStack)TargetWidget->DropPointerDraggedStack();
 }
+void UAnomaliaInventoryActionRelay::BeginCombineHold()
+{
+    if(TargetWidget&&Action==EAnomaliaInventoryAction::CombineCraft)
+        TargetWidget->BeginCombineHold(StackId,Count,OtherStackId);
+}
+void UAnomaliaInventoryActionRelay::EndCombineHold()
+{
+    if(TargetWidget&&Action==EAnomaliaInventoryAction::CombineCraft)TargetWidget->EndCombineHold();
+}
+
 
 UAnomaliaInventoryWidget* UAnomaliaInventoryWidget::CreateForPlayerInventory(APlayerController* Player)
 {
@@ -101,6 +111,7 @@ void UAnomaliaInventoryWidget::NativeConstruct()
 
 void UAnomaliaInventoryWidget::NativeDestruct()
 {
+    EndCombineHold();
     if (Inventory) Inventory->OnInventoryUpdated.RemoveDynamic(this, &UAnomaliaInventoryWidget::RefreshInventory);
     if(NearbyVehicle)
     {
@@ -211,6 +222,10 @@ void UAnomaliaInventoryWidget::BuildLayout()
     Panel(TEXT("HandsFrame"),FAnchors(.35f,.51f,.65f,.83f))->SetContent(HandsList);
     DetailsList=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SelectedItemActions"));
     Panel(TEXT("SelectionFrame"),FAnchors(.35f,.66f,.65f,.965f))->SetContent(DetailsList);
+    CombineProgressBar=WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(),TEXT("CombineHoldProgress"));
+    auto* CombineSlot=RootCanvas->AddChildToCanvas(CombineProgressBar);
+    CombineSlot->SetAnchors(FAnchors(.35f,.945f,.65f,.958f));CombineSlot->SetOffsets(FMargin(0));
+    CombineProgressBar->SetVisibility(ESlateVisibility::Collapsed);
     UseStatus=Text(TEXT(""),12);auto* StatusSlot=RootCanvas->AddChildToCanvas(UseStatus);StatusSlot->SetAnchors(FAnchors(.35f,.96f,.65f,.995f));StatusSlot->SetOffsets(FMargin(0));
     ShowInventoryTab();
 }
@@ -290,6 +305,10 @@ void UAnomaliaInventoryWidget::AddGridStack(const FAnomaliaInventoryStack& Stack
 
 void UAnomaliaInventoryWidget::RefreshInventory()
 {
+    // Keep the actual pressed widget alive until release/completion. Rebuilding
+    // its relay during a server notification would lose the cancellation event.
+    if(bCombineInputHeld){bDeferredCombineRefresh=true;return;}
+    bDeferredCombineRefresh=false;
     if (!ItemList || !WidgetTree) return;
     const auto* Previous=FocusedAction();const bool HadFocus=Previous!=nullptr;
     const auto PreviousAction=Previous?Previous->Action:EAnomaliaInventoryAction::Stow;
@@ -461,7 +480,7 @@ void UAnomaliaInventoryWidget::AddStackRow(const FAnomaliaInventoryStack& Stack)
             auto* Combine=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
                 MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("Combine_%d_%d"),Stack.StackId,Index))));
             auto* Caption=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-            Caption->SetText(FText::FromString(TEXT("Combiner : ")+Recipes[Index].Label));
+            Caption->SetText(FText::FromString(TEXT("Maintenir pour combiner : ")+Recipes[Index].Label));
             Combine->SetContent(Caption);Row->AddChildToHorizontalBox(Combine)->SetPadding(FMargin(5));
             BindAction(Combine,EAnomaliaInventoryAction::CombineCraft,Held->StackId,Stack.StackId,Index);
         }
@@ -555,6 +574,12 @@ void UAnomaliaInventoryWidget::BindAction(UButton* Button, EAnomaliaInventoryAct
     Relay->Count = Count;
     Relay->OtherStackId = OtherStackId;
     ActionRelays.Add(Relay);
+    if(Action==EAnomaliaInventoryAction::CombineCraft)
+    {
+        Button->OnPressed.AddDynamic(Relay,&UAnomaliaInventoryActionRelay::BeginCombineHold);
+        Button->OnReleased.AddDynamic(Relay,&UAnomaliaInventoryActionRelay::EndCombineHold);
+        return;
+    }
     Button->OnClicked.AddDynamic(Relay, &UAnomaliaInventoryActionRelay::Execute);
     if(Action==EAnomaliaInventoryAction::SelectStack)
     {
@@ -691,7 +716,7 @@ void UAnomaliaInventoryWidget::PerformAction(EAnomaliaInventoryAction Action, in
         case EAnomaliaInventoryAction::CombineCraft:
         {
             const auto& Recipes=UAnomaliaInventoryComponent::GetHandcraftRecipes();
-            if(Recipes.IsValidIndex(OtherStackId))Inventory->RequestCombineRecipe(StackId,Count,Recipes[OtherStackId].Id);
+            if(Recipes.IsValidIndex(OtherStackId))BeginCombineHold(StackId,Count,OtherStackId);
             break;
         }
         case EAnomaliaInventoryAction::CraftRecipe:
@@ -853,7 +878,27 @@ TArray<AAnomaliaLootPickup*> UAnomaliaInventoryWidget::FindNearbyPickups() const
 }
 void UAnomaliaInventoryWidget::NativeTick(const FGeometry& Geometry,float DeltaTime)
 {
- Super::NativeTick(Geometry,DeltaTime);IconDelay+=DeltaTime;if(IconDelay>.15f){CaptureNextIcon();IconDelay=0;}
+ Super::NativeTick(Geometry,DeltaTime);
+ if(bCombineInputHeld && Inventory)
+ {
+  CombineInputElapsed+=DeltaTime;
+  bSawServerCombine=bSawServerCombine||Inventory->bCombining;
+  if(CombineProgressBar)
+  {
+   CombineProgressBar->SetVisibility(ESlateVisibility::Visible);
+   CombineProgressBar->SetPercent(Inventory->GetCombineProgress());
+  }
+  if(UseStatus)UseStatus->SetText(FText::FromString(Inventory->bCombining
+      ?FString::Printf(TEXT("Combiner : %.0f %% — relâcher pour annuler"),Inventory->GetCombineProgress()*100.f)
+      :TEXT("Validation de la combinaison par le serveur…")));
+  if((bSawServerCombine&&!Inventory->bCombining)||(!bSawServerCombine&&CombineInputElapsed>5.f))
+  {
+   bCombineInputHeld=false;CombineActivationKey=FKey();
+   if(CombineProgressBar)CombineProgressBar->SetVisibility(ESlateVisibility::Collapsed);
+   RefreshInventory();
+  }
+ }
+ IconDelay+=DeltaTime;if(IconDelay>.15f){CaptureNextIcon();IconDelay=0;}
  ProximityElapsed+=DeltaTime;if(ProximityElapsed<.5f)return;ProximityElapsed=0;HidePreviewPickupPrompts();
  FString Signature;for(const auto* P:FindNearbyPickups())Signature+=FString::Printf(TEXT("%u:%s:%d;"),P->GetUniqueID(),*P->ItemId.ToString(),P->Count);
  if(GetWorld())for(TActorIterator<AAnomaliaDogCompanion> It(GetWorld());It;++It)
@@ -949,6 +994,12 @@ FReply UAnomaliaInventoryWidget::NativeOnPreviewKeyDown(const FGeometry& Geometr
   return FReply::Handled();
  }
  auto* Focus=FocusedAction();
+ if(Focus&&Focus->Action==EAnomaliaInventoryAction::CombineCraft &&
+    (Key==EKeys::Gamepad_FaceButton_Bottom||Key==EKeys::Gamepad_FaceButton_Right||Key==EKeys::Enter||Key==EKeys::SpaceBar))
+ {
+  if(!Event.IsRepeat()){CombineActivationKey=Key;BeginCombineHold(Focus->StackId,Focus->Count,Focus->OtherStackId);}
+  return FReply::Handled();
+ }
  if(Key==EKeys::Gamepad_FaceButton_Left&&Focus)
  {
   if(Focus->Action==EAnomaliaInventoryAction::VehicleService)
@@ -983,6 +1034,8 @@ FReply UAnomaliaInventoryWidget::NativeOnPreviewKeyDown(const FGeometry& Geometr
 }
 FReply UAnomaliaInventoryWidget::NativeOnKeyUp(const FGeometry& Geometry,const FKeyEvent& Event)
 {
+ if(bCombineInputHeld&&CombineActivationKey.IsValid()&&Event.GetKey()==CombineActivationKey)
+ {EndCombineHold();return FReply::Handled();}
  if(Event.GetKey()!=EKeys::Gamepad_FaceButton_Bottom||!DraggedStackId)return Super::NativeOnKeyUp(Geometry,Event);
  const int32 Stack=DraggedStackId,Count=DraggedCount;DraggedStackId=DraggedCount=0;
  const auto* Focus=FocusedAction();if(!Focus)return FReply::Handled();
@@ -1226,4 +1279,22 @@ void UAnomaliaInventoryWidget::AddAttachmentSlots(FName ParentId)
     }
     if(Children.IsEmpty())Row->SetVisibility(ESlateVisibility::Collapsed);
     for(const FName Child:Children)AddAttachmentSlots(Child);
+}
+
+void UAnomaliaInventoryWidget::BeginCombineHold(int32 HeldStackId,int32 OtherStackId,int32 RecipeIndex)
+{
+    if(bCombineInputHeld||!Inventory)return;
+    const auto& Recipes=UAnomaliaInventoryComponent::GetHandcraftRecipes();
+    if(!Recipes.IsValidIndex(RecipeIndex))return;
+    bCombineInputHeld=true;bSawServerCombine=false;CombineInputElapsed=0;
+    if(!Inventory->RequestCombineRecipe(HeldStackId,OtherStackId,Recipes[RecipeIndex].Id))
+    {bCombineInputHeld=false;CombineActivationKey=FKey();RefreshInventory();}
+}
+void UAnomaliaInventoryWidget::EndCombineHold()
+{
+    if(!bCombineInputHeld)return;
+    bCombineInputHeld=false;CombineActivationKey=FKey();
+    if(Inventory)Inventory->RequestCancelCombine();
+    if(CombineProgressBar)CombineProgressBar->SetVisibility(ESlateVisibility::Collapsed);
+    if(bDeferredCombineRefresh||Inventory)RefreshInventory();
 }
