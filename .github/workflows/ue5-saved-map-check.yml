@@ -21,3 +21,16 @@ jobs:
             Get-ChildItem (Join-Path $root 'Content') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("ROOT_MAP "+$_.FullName+" "+$_.Length)}
             Get-ChildItem (Join-Path $root 'Binaries/Win64') -Filter '*Anomalia*.dll' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("NATIVE_MODULE "+$_.FullName+" "+$_.LastWriteTime)}
           }
+          $activePath=Join-Path $env:LOCALAPPDATA 'CMD/ANOMALIA-UE5/active.json'
+          if(Test-Path $activePath){
+            $active=Get-Content $activePath -Raw | ConvertFrom-Json
+            Write-Output ("ACTIVE_PROJECT "+$active.project)
+            Write-Output ("ACTIVE_MAP "+$active.mapPackage)
+            $base=Split-Path $active.project -Parent
+            Get-ChildItem (Join-Path $base 'Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("INSTALLED_MAP "+$_.FullName+" "+$_.Length)}
+          }
+          Write-Output ("WORKSPACE "+$env:GITHUB_WORKSPACE)
+          Get-ChildItem (Join-Path $env:GITHUB_WORKSPACE 'unreal/Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("WORKSPACE_MAP "+$_.FullName+" "+$_.Length)}
+          Get-ChildItem 'C:/ANOMALIA-Validation' -Directory -ErrorAction SilentlyContinue | ForEach-Object {
+            Get-ChildItem (Join-Path $_.FullName 'unreal/Content/Maps') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("VALIDATION_MAP "+$_.FullName+" "+$_.Length)}
+          }
