@@ -1,4 +1,4 @@
-name: ANOMALIA resume native character validation with verified patches
+name: ANOMALIA’Z PRIGIMALIA — resume native character validation with verified patches
 on:
   push:
     branches: ['ue5/character-audit-20261027']
