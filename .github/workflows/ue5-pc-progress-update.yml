@@ -1,4 +1,4 @@
-name: UE5 native demo validation — no installation
+name: ANOMALIA’Z PRIGIMALIA — UE5 native demo validation — no installation
 on:
   workflow_dispatch:
   push:

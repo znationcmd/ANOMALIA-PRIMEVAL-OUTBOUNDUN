@@ -1,4 +1,4 @@
-name: ANOMALIA isolated Survival movement and outfit PIE with virtual-memory guard
+name: ANOMALIA’Z PRIGIMALIA — isolated Survival movement and outfit PIE with virtual-memory guard
 on:
   push:
     branches: ['ue5/character-audit-20261027']

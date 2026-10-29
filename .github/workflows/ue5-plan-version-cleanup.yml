@@ -1,4 +1,4 @@
-name: ANOMALIA verify then clean obsolete versions
+name: ANOMALIA’Z PRIGIMALIA — verify then clean obsolete versions
 on:
   push:
     branches: ['ue5/character-audit-20261027']

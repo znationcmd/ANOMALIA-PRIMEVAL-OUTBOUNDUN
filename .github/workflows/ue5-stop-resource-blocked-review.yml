@@ -1,4 +1,4 @@
-name: Stop only ANOMALIA continuation run after verified host resource exhaustion
+name: ANOMALIA’Z PRIGIMALIA — Stop only ANOMALIA continuation run after verified host resource exhaustion
 on:
   push:
     branches: ['ue5/character-audit-20261027']

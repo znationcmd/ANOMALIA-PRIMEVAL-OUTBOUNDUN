@@ -1,4 +1,4 @@
-name: UE5 reactive world native validation
+name: ANOMALIA’Z PRIGIMALIA — UE5 reactive world native validation
 on:
   push:
     branches: ['ue5/reactive-world-expeditions-20261025']
