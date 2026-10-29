@@ -1,4 +1,4 @@
-# ANOMALIA PRIMEVAL OUTBOUNDUN — fusion des sources UE5 (20/10/2026)
+# ANOMALIA’Z PRIGIMALIA — fusion des sources UE5 (20/10/2026)
 
 Cette branche intègre **sans supprimer le code existant** les deux lignes de
 travail précédemment séparées :

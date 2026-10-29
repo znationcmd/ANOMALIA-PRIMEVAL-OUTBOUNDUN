@@ -1,4 +1,4 @@
-/** ANOMALIA PRIMEVAL OUTBOUNDUN — server-owned gameplay rules. */
+/** ANOMALIA’Z PRIGIMALIA — server-owned gameplay rules. */
 export const GAME_MODES=Object.freeze({
  rp:{label:"Roleplay (RP)",playerDamage:false,construction:true,adminEditor:true,description:"Rôles et villes RP : aucun dégât entre joueurs sans événement dédié."},
  pvp:{label:"Survie PVP",playerDamage:true,construction:true,adminEditor:true,description:"Combats entre joueurs hors zones protégées désactivées."},

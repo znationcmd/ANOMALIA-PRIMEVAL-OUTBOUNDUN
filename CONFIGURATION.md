@@ -1,4 +1,4 @@
-# ANOMALIA PRIMEVAL OUTBOUNDUN — configuration 0.4
+# ANOMALIA’Z PRIGIMALIA — configuration 0.4
 
 This is a solo, offline prototype running on Three.js and Electron. It is not a DayZ or ARK server and cannot install their Workshop mods or load their proprietary assets/saves.
 

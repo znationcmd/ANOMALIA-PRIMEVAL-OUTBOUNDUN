@@ -14,7 +14,7 @@ test('offline packager embeds JavaScript replacement tokens literally and remove
   writeFileSync(join(dir,'dist','game.js'),js);
   writeFileSync(join(dir,'dist','game.css'),'body{color:red}');
   execFileSync(process.execPath,[fileURLToPath(new URL('../scripts/package-offline.mjs',import.meta.url))],{cwd:dir});
-  const html=readFileSync(join(dir,'release','ANOMALIA_PRIMEVAL_OUTBOUNDUN.html'),'utf8');
+  const html=readFileSync(join(dir,'release','ANOMALIAZ_PRIGIMALIA.html'),'utf8');
   assert.ok(html.includes(js));assert.ok(!html.includes('src="'));assert.ok(html.includes('<style>body{color:red}</style>'));
  }finally{rmSync(dir,{recursive:true,force:true})}
 });
