@@ -1,4 +1,5 @@
 #include "AnomaliaVehiclePawn.h"
+#include "AnomaliaInputProfileComponent.h"
 #include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaSessionWidget.h"
@@ -25,6 +26,7 @@
 AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
 {
     PrimaryActorTick.bCanEverTick = true;
+    ControlsProfile=CreateDefaultSubobject<UAnomaliaInputProfileComponent>(TEXT("ControlsProfile"));
     bReplicates = true;
     SetReplicateMovement(true);
     Collision = CreateDefaultSubobject<USphereComponent>(TEXT("Collision"));
@@ -191,6 +193,7 @@ void AAnomaliaVehiclePawn::ClearControls()
 
 void AAnomaliaVehiclePawn::UnPossessed()
 {
+    if(ControlsProfile)ControlsProfile->Deactivate();
     ClearControls();
     LastControlReceived=-1;
     Super::UnPossessed();
@@ -393,8 +396,10 @@ void AAnomaliaVehiclePawn::InputCamera()
 
 void AAnomaliaVehiclePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-    PlayerInputComponent->BindAction(TEXT("Pause"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputPause);
     Super::SetupPlayerInputComponent(PlayerInputComponent);
+    ControlsProfile->OnControl.AddUniqueDynamic(this,&AAnomaliaVehiclePawn::HandleEnhancedControl);
+    if(ControlsProfile->Install(PlayerInputComponent,true))return;
+    PlayerInputComponent->BindAction(TEXT("Pause"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputPause);
     PlayerInputComponent->BindAxis(TEXT("MoveForward"),this,&AAnomaliaVehiclePawn::InputForward);
     PlayerInputComponent->BindAxis(TEXT("MoveRight"),this,&AAnomaliaVehiclePawn::InputSteering);
     PlayerInputComponent->BindAxis(TEXT("VehiclePitch"),this,&AAnomaliaVehiclePawn::InputPitch);
@@ -494,4 +499,22 @@ bool AAnomaliaVehiclePawn::ExitDriverOnServer(AController* Driver)
 float AAnomaliaVehiclePawn::GetExpectedSupportFloorZ() const
 {
     return GetActorLocation().Z-Collision->GetScaledSphereRadius();
+}
+
+void AAnomaliaVehiclePawn::HandleEnhancedControl(FName Name,float Value,bool bPressed)
+{
+    if(!IsLocallyControlled())return;
+    if(Name==TEXT("MoveForward"))InputForward(Value);
+    else if(Name==TEXT("MoveRight"))InputSteering(Value);
+    else if(Name==TEXT("Turn"))InputTurn(Value);
+    else if(Name==TEXT("LookUp"))InputLookUp(Value);
+    else if(Name==TEXT("TurnRate"))InputTurn(Value*90.f*GetWorld()->GetDeltaSeconds());
+    else if(Name==TEXT("LookUpRate"))InputLookUp(Value*90.f*GetWorld()->GetDeltaSeconds());
+    else if(Name==TEXT("VehiclePitch"))InputPitch(Value);
+    else if(Name==TEXT("VehicleRoll"))InputRoll(Value);
+    else if(Name==TEXT("VehicleVertical"))InputVertical(Value);
+    else if(Name==TEXT("VehicleBrake"))InputBrake(Value);
+    else if(bPressed&&Name==TEXT("Interact"))InputExitVehicle();
+    else if(bPressed&&Name==TEXT("VehicleCamera"))InputCamera();
+    else if(bPressed&&Name==TEXT("Pause"))InputPause();
 }
