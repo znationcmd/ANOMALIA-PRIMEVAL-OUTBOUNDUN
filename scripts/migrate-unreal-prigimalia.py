@@ -44,6 +44,9 @@ def change_general(src: str, path: Path) -> str:
     src = src.replace("ANOMALIA_PRIMEVAL_OUTBOUNDUN", "ANOMALIAZ_PRIGIMALIA")
     src = src.replace("Config/Anomalia/", "Config/AnomaliaZPrigimalia/")
     src = src.replace("AnomaliaSourceCommit", "AnomaliaZPrigimaliaSourceCommit")
+    # Rename C++ symbols mentioned in validation scripts and tests, without
+    # renaming serialized /Game/Anomalia packages or legacy transport IDs.
+    src = re.sub(r"Anomalia(?!ZPrigimalia)(?=[A-Z][A-Za-z0-9_]+)",NEW_MODULE,src)
     # Correct all file references to C++ module and headers in scripts/tests/docs.
     if path.suffix in {".py",".ps1",".vbs",".cmd",".mjs",".js",".cjs",".md",".txt",".ini",".json",".yml",".yaml",".xml",".cfg",".html",".cs"}:
         src = re.sub(r"(?<=/)(Anomalia)(?=[A-Z][A-Za-z0-9]*\\.(?:h|cpp|generated\\.h))",
