@@ -9,6 +9,7 @@ class USpringArmComponent;
 class USkeletalMeshComponent;
 class USkeletalMesh;
 class UCameraComponent;
+class UAnomaliaInputProfileComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
 class UAnomaliaStatusWidget;
@@ -23,6 +24,8 @@ class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
     GENERATED_BODY()
 public:
     AAnomaliaSurvivor();
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Controls") TObjectPtr<UAnomaliaInputProfileComponent> ControlsProfile;
+    virtual void UnPossessed() override;
     void CloseInventory();
     void AssignQuickbarStack(int32 SlotIndex,int32 StackId);
     int32 GetQuickbarStackId(int32 SlotIndex) const;
@@ -116,6 +119,7 @@ protected:
     void OnRep_Rest();
 
 private:
+    UFUNCTION() void HandleEnhancedControl(FName Name,float Value,bool bPressed);
     void MoveForward(float Value);
     void MoveRight(float Value);
     void Turn(float Value);
