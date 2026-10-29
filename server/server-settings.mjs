@@ -20,7 +20,7 @@ export function loadServerSettings({dataRoot='server-data',serverId='main',env=p
  const s=document.server||{};
  const mode=['rp','pvp','pve','mixed'].includes(s.mode)?s.mode:'pve';
  return {
-  name:safeString(env.SERVER_NAME??s.name,'ANOMALIA PRIMEVAL OUTBOUNDUN',96),
+  name:safeString(env.SERVER_NAME??s.name,'ANOMALIA’Z PRIGIMALIA',96),
   port:integer(env.PORT??s.port,2303,1024,65535),
   maxPlayers:integer(env.MAX_PLAYERS??s.maxPlayers,16,1,64),
   password:safeString(env.SERVER_PASSWORD??s.password,'',128),
