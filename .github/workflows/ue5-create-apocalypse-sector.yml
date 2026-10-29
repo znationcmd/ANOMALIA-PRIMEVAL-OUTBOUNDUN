@@ -26,6 +26,10 @@ jobs:
           source="/Game/Car_Dealer/Maps/Demo"
           report={"target":target,"source":source,"state":"STARTED","playtested":False,"wholeMapAssembled":False,"lootPlaced":False,"originalMapModified":False}
           output=Path("D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.json")
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.search_all_assets(True)
+          maps=[str(a.package_name) for a in registry.get_assets_by_class(unreal.TopLevelAssetPath("/Script/Engine","World"),True) if str(a.package_name).startswith("/Game/")]
+          unreal.log("ANOMALIA_INSTALLED_MAPS="+json.dumps(maps))
           try:
               levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
               if unreal.EditorAssetLibrary.does_asset_exist(target):
@@ -59,7 +63,7 @@ jobs:
           '@ | Set-Content -LiteralPath $script -Encoding UTF8
           $exe='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $log=Join-Path $out 'first-apocalypse-sector.log'
-          $editorArguments=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','-run=pythonscript','-script="'+$script+'"','-unattended','-nopause','-nosound','-NullRHI','-abslog="'+$log+'"')
+          $editorArguments=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','-run=pythonscript',("-script="+$script),'-unattended','-nopause','-nosound','-NullRHI',("-abslog="+$log))
           $proc=Start-Process -FilePath $exe -ArgumentList $editorArguments -PassThru -WorkingDirectory 'D:\ANOMALIA\unreal' -RedirectStandardOutput (Join-Path $out 'sector-stdout.txt') -RedirectStandardError (Join-Path $out 'sector-stderr.txt')
           if(!$proc.WaitForExit(660000)){Stop-Process -Id $proc.Id -ErrorAction SilentlyContinue;throw 'Sector authoring timed out'}
           Write-Output "EDITOR_EXIT_CODE=$($proc.ExitCode)"
