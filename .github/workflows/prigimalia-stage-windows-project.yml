@@ -1,0 +1,82 @@
+name: ANOMALIA’Z PRIGIMALIA - Create independent native project clone
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-stage-windows-project.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  stage:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Create independent copy without modifying D ANOMALIA
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $source='D:\ANOMALIA'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $workspace=[IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\\')
+          if($workspace -ieq $source -or $workspace.StartsWith(($source+'\\'),[StringComparison]::OrdinalIgnoreCase)){throw 'Unsafe runner checkout; refusing source changes.'}
+          if(-not (Test-Path -LiteralPath (Join-Path $source 'unreal/AnomaliaPrimeval.uproject'))){throw 'Expected original project missing'}
+          if(Test-Path -LiteralPath $stage){throw 'Destination already exists: migration will not overwrite an earlier stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count -ne 0){
+            throw 'Editor or game is running: refuse to stage while a project may be writing assets.'
+          }
+          $contentFolder=Join-Path $source 'unreal/Content'
+          $contentBytes=[int64]0
+          Get-ChildItem -LiteralPath $contentFolder -File -Recurse -ErrorAction Stop | ForEach-Object { $contentBytes += $_.Length }
+          $free=(Get-PSDrive -Name D).Free
+          Write-Host ("CONTENT_SOURCE_GB={0:N2} FREE_GB={1:N2}" -f ($contentBytes/1GB),($free/1GB))
+          if($free -lt ($contentBytes+12GB)){throw 'Not enough D drive space to clone content with safety margin'}
+          New-Item -ItemType Directory -Path (Join-Path $stage 'unreal') -Force | Out-Null
+          New-Item -ItemType Directory -Path (Join-Path $stage 'MigrationLogs') -Force | Out-Null
+          $log1=Join-Path $stage 'MigrationLogs/clone-original-unreal.log'
+          & robocopy (Join-Path $source 'unreal') (Join-Path $stage 'unreal') /E /XJ /R:1 /W:2 /MT:8 /NP /NFL /NDL /XD Binaries Intermediate DerivedDataCache .vs /LOG:$log1
+          if($LASTEXITCODE -ge 8){throw "Failed copying original Unreal project (robocopy $LASTEXITCODE). Stage retained for inspection."}
+          $log2=Join-Path $stage 'MigrationLogs/overlay-new-rebrand-code.log'
+          & robocopy $workspace $stage /E /XJ /R:1 /W:2 /MT:8 /NP /NFL /NDL /XD .git unreal node_modules Binaries Intermediate Saved DerivedDataCache dist release .venv /LOG:$log2
+          if($LASTEXITCODE -ge 8){throw "Failed copying rebranded project files (robocopy $LASTEXITCODE)."}
+          $log3=Join-Path $stage 'MigrationLogs/overlay-new-unreal-code.log'
+          & robocopy (Join-Path $workspace 'unreal') (Join-Path $stage 'unreal') /E /XJ /R:1 /W:2 /MT:8 /NP /NFL /NDL /XD Binaries Intermediate Saved DerivedDataCache /LOG:$log3
+          if($LASTEXITCODE -ge 8){throw "Failed copying rebranded Unreal source (robocopy $LASTEXITCODE)."}
+          $legacy=Join-Path $stage 'LegacySourceBackup'
+          New-Item -ItemType Directory -Path $legacy -Force | Out-Null
+          $oldSource=Join-Path $stage 'unreal/Source/AnomaliaPrimeval'
+          if(Test-Path -LiteralPath $oldSource){Move-Item -LiteralPath $oldSource -Destination $legacy -ErrorAction Stop}
+          foreach($name in @('AnomaliaPrimeval.Target.cs','AnomaliaPrimevalEditor.Target.cs')){
+            $old=Join-Path $stage ('unreal/Source/'+$name)
+            if(Test-Path -LiteralPath $old){Move-Item -LiteralPath $old -Destination $legacy -ErrorAction Stop}
+          }
+          $oldProj=Join-Path $stage 'unreal/AnomaliaPrimeval.uproject'
+          if(Test-Path -LiteralPath $oldProj){Move-Item -LiteralPath $oldProj -Destination $legacy -ErrorAction Stop}
+          $newProj=Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject'
+          if(-not (Test-Path -LiteralPath $newProj)){throw 'New staged UE project missing'}
+          $sourceMaps=@(Get-ChildItem -LiteralPath $contentFolder -Recurse -File -Filter '*.umap')
+          $stageMaps=@(Get-ChildItem -LiteralPath (Join-Path $stage 'unreal/Content') -Recurse -File -Filter '*.umap')
+          $sourceAssets=@(Get-ChildItem -LiteralPath $contentFolder -Recurse -File -Filter '*.uasset').Count
+          $stageAssets=@(Get-ChildItem -LiteralPath (Join-Path $stage 'unreal/Content') -Recurse -File -Filter '*.uasset').Count
+          Write-Host "SOURCE_MAPS=$($sourceMaps.Count) STAGE_MAPS=$($stageMaps.Count)"
+          Write-Host "SOURCE_ASSETS=$sourceAssets STAGE_ASSETS=$stageAssets"
+          if($stageMaps.Count -lt $sourceMaps.Count -or $stageAssets -lt $sourceAssets){
+            throw 'Stage asset count is below original: no migration authorised'
+          }
+          if(-not (Test-Path -LiteralPath (Join-Path $source 'unreal/AnomaliaPrimeval.uproject'))){throw 'Original project is unexpectedly missing'}
+          $marker=Join-Path $stage 'unreal/Saved/BrandMigration/verified-source-backup.marker'
+          New-Item -ItemType Directory -Path (Split-Path $marker) -Force | Out-Null
+          Set-Content -LiteralPath $marker -Encoding UTF8 -Value "Original D:\ANOMALIA intact; independent staged copy created; original source maps and assets present."
+          Set-Content -LiteralPath (Join-Path $stage 'EXTERNAL-LIBRARIES.txt') -Encoding UTF8 -Value "FabImports and sketchfab remain under D:\ANOMALIA to avoid duplicating >140 GB of source downloads. Already-imported game assets are copied in unreal/Content."
+          Write-Host "PRIGIMALIA_STAGED_COPY_VERIFIED=true"
+          Write-Host "ORIGINAL_PROJECT_UNCHANGED=true"
