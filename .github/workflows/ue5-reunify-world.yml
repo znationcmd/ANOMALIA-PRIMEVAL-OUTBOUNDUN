@@ -1,4 +1,4 @@
-name: ANOMALIA assemble regions with building-only clearance
+name: ANOMALIA assemble regions with fresh sector world references
 on:
   push:
     branches: ['ue5/character-audit-20261027']
