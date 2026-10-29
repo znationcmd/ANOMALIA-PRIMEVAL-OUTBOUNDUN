@@ -76,4 +76,5 @@ jobs:
             throw 'Editor stopped before requested log; startup evidence printed above'
           }
           Select-String -LiteralPath $log -Pattern 'ANOMALIA_SECTOR_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}
-          if($proc.ExitCode -ne 0){throw 'Sector authoring failed; see report'}
+          $receipt=Get-Content "$out/first-apocalypse-sector.json" -Raw | ConvertFrom-Json
+          if($receipt.state -notin @('FIRST_SECTOR_MAP_CREATED_NEEDS_DRESSING_AND_PLAYTEST','EXISTING_SECTOR_PRESERVED')){throw 'Sector receipt did not confirm a saved map'}
