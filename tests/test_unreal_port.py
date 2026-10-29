@@ -43,7 +43,7 @@ class UnrealPortTests(unittest.TestCase):
         survivor = (SOURCE / "AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
         vehicle = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
         inputs = (ROOT / "unreal" / "Config" / "DefaultInput.ini").read_text(encoding="utf-8")
-        self.assertIn('ActionName="Interact",Key=E', inputs)
+        self.assertIn('ActionName="Interact",Key=F', inputs)
         self.assertIn("ServerTryEnterVehicle_Implementation", survivor)
         self.assertIn("Candidate->HasDriver()", survivor)
         self.assertIn("FVector::DistSquared", survivor)
