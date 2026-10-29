@@ -1,4 +1,4 @@
-name: UE5 loot runtime compile and native tests
+name: ANOMALIA’Z PRIGIMALIA — UE5 loot runtime compile and native tests
 on:
   push:
     branches: ['feature/loot-tiers-radiation-config-20261021']

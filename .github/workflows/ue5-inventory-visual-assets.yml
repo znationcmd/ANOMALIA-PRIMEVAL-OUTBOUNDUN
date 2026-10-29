@@ -1,4 +1,4 @@
-name: ANOMALIA current companion files and host audit
+name: ANOMALIA’Z PRIGIMALIA — current companion files and host audit
 on:
   push:
     branches: ['ue5/character-audit-20261027']

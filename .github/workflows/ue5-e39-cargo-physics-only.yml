@@ -1,4 +1,4 @@
-name: ANOMALIA current native suite and unchanged E39 physical cargo regression
+name: ANOMALIA’Z PRIGIMALIA — current native suite and unchanged E39 physical cargo regression
 on:
   push:
     branches: ['ue5/character-audit-20261027']
