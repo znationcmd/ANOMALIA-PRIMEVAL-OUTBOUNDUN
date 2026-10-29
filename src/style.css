@@ -13,7 +13,7 @@
 .build-menu{max-width:760px;margin:auto;line-height:1.6}.build-menu label{display:grid;gap:6px;margin:12px 0}.build-menu select{background:#17242a;color:#e1e9df;border:1px solid #668275;padding:12px}.build-menu p{font-size:13px;color:#c1d0c7}.build-menu button{margin:5px}#nearBuild>div{border-bottom:1px solid #56695c;padding:6px;font-size:12px}
 
 /* CMD game brand emblem: startup and Windows branding */
-.anomalia-brand-emblem{width:112px;height:112px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 0 28px #ab45ff80,0 0 7px #61a9ff;}
+.prigimalia-brand-emblem{width:112px;height:112px;object-fit:contain;border-radius:50%;display:block;margin:0 auto 12px;box-shadow:0 0 28px #ab45ff80,0 0 7px #61a9ff;}
 
 /* Inventory pass: DayZ-inspired screen geometry, direct storage reads from the existing state. */
 #panel.inventory-mode{left:1.5vw;right:1.5vw;top:2vh;bottom:2vh;width:auto;max-width:none;max-height:none;padding:48px 1vw 8px;background:transparent;border:0;box-shadow:none;backdrop-filter:none}
