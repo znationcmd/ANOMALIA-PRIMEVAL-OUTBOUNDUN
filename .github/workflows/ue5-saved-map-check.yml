@@ -14,6 +14,10 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          Get-Content 'D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.json' -Raw
-          Get-ChildItem 'D:/ANOMALIA/unreal/Content/Maps','D:/ANOMALIA/unreal/Content/Anomalia' -Recurse -Filter '*.umap' | ForEach-Object {Write-Output ("SAVED_MAP "+$_.FullName+" "+$_.Length)}
-          Select-String 'D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.log' -Pattern 'ANOMALIA_INSTALLED_MAPS|ANOMALIA_SECTOR_RESULT' | ForEach-Object {Write-Output $_.Line}
+          foreach($root in @('C:/ANOMALIA/unreal','D:/ANOMALIA/unreal','D:/ANOMALIA/unreal 5.8','C:/ANOMALIA-Validation')){
+            if(!(Test-Path -LiteralPath $root)){continue}
+            Write-Output ("PROJECT_ROOT "+$root)
+            Get-ChildItem (Join-Path $root 'Content/Maps') -Recurse -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("BASE_MAP "+$_.FullName+" "+$_.Length)}
+            Get-ChildItem (Join-Path $root 'Content') -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("ROOT_MAP "+$_.FullName+" "+$_.Length)}
+            Get-ChildItem (Join-Path $root 'Binaries/Win64') -Filter '*Anomalia*.dll' -ErrorAction SilentlyContinue | ForEach-Object {Write-Output ("NATIVE_MODULE "+$_.FullName+" "+$_.LastWriteTime)}
+          }
