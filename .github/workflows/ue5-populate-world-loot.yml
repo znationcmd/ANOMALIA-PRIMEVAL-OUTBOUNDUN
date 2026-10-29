@@ -1,0 +1,46 @@
+name: ANOMALIA populate recovered world loot
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-populate-world-loot.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  populate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Place loot on verified real floors in distributed settlements
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'User editor session preserved'}
+          $recovery=Get-Content 'D:/ANOMALIA/StorageRecovery/world-recovery.json' -Raw | ConvertFrom-Json
+          $regions=Get-Content 'D:/ANOMALIA/StorageRecovery/apocalypse-regions.json' -Raw | ConvertFrom-Json
+          if($recovery.state -ne 'MISSING_CONTENT_RECOVERED' -or $regions.state -ne 'GARAGE_REGIONS_SAVED_NOT_PLAYTESTED'){throw 'World recovery and native assembly must succeed first'}
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal/Tools/populate_inhabited_loot.py'
+          $task='D:/ANOMALIA/unreal/Tools/populate_inhabited_loot.py'
+          Copy-Item -LiteralPath $source -Destination $task -Force
+          $exe='C:/Program Files/Epic Games/UE_5.8/Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $log='D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.log'
+          & $exe 'D:/ANOMALIA/unreal/AnomaliaPrimeval.uproject' -run=pythonscript "-script=$task" -unattended -nopause -nosound -NullRHI "-abslog=$log"
+          $code=$LASTEXITCODE
+          if(Test-Path $log){Select-String $log -Pattern 'ANOMALIA_WORLD_LOOT_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}}
+          if($code -ne 0){throw 'World loot authoring failed'}
+          $report=Get-Content 'D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json' -Raw | ConvertFrom-Json
+          if($report.state -ne 'FLOOR_TESTED_LOOT_LAYOUT_SAVED_NOT_PLAYTESTED'){throw 'No verified loot layout saved'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-world-loot-${{ github.run_id }}
+          path: |
+            D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json
+            D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.log
+          if-no-files-found: warn
