@@ -324,6 +324,18 @@ void UAnomaliaInventoryWidget::RefreshInventory()
     if (Inventory->bBankingAvailable)
     {
         UVerticalBox* Withdrawals = BankWithdrawals;
+        // Account actions must be available in the account panel, including cash in hands or attachments.
+        for (const auto& Stack : Inventory->Stacks)
+        {
+            if (!Stack.ItemId.ToString().StartsWith(TEXT("eur_note_")) || Stack.Count<=0) continue;
+            auto* Deposit=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
+                MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("BankDeposit_%d_action"),Stack.StackId))));
+            auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Label->SetText(FText::FromString(TEXT("Déposer 1 × ")+Inventory->GetItemDisplayName(Stack.ItemId)));
+            Deposit->SetContent(Label);StyleButton(Deposit);
+            Withdrawals->AddChildToVerticalBox(Deposit)->SetPadding(FMargin(3.f));
+            BindAction(Deposit,EAnomaliaInventoryAction::DepositNote,Stack.StackId);
+        }
         for (int32 Euros : {5,10,20,50,100,200,500})
         {
             UButton* Button = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankWithdraw_eur_note_%d_action"), Euros))));
