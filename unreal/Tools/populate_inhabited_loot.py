@@ -43,7 +43,7 @@ def main():
             d.get("label","").startswith("ANOMALIA_Inhabited1_")]
         if len(houses)<100:raise RuntimeError("Actual saved house population missing")
         terrain=[d for d in desc["actors"] if d.get("boundsValid") and d.get("nativeClass") in ("/Script/Landscape.Landscape","/Script/Landscape.LandscapeStreamingProxy")]
-    selected=[]
+        selected=[]
         for site in lib.inhabited_settlement_sites():
             nearby=[d for d in houses if abs((d["boundsMinCm"][0]+d["boundsMaxCm"][0])/200-site.x)<420 and
                     abs(-(d["boundsMinCm"][1]+d["boundsMaxCm"][1])/200-site.y)<420]
@@ -56,7 +56,11 @@ def main():
         for begin in range(0,len(selected),24):
             batch=selected[begin:begin+24]
             guids=[d["guid"] for d in batch]
-            if not lib.set_archipelago_actors_loaded(guids,True):raise RuntimeError("House streaming failed")
+            proxy_guids=[p["guid"] for p in terrain if any(
+                p["boundsMinCm"][0]-3000<d["boundsMaxCm"][0] and p["boundsMaxCm"][0]+3000>d["boundsMinCm"][0] and
+                p["boundsMinCm"][1]-3000<d["boundsMaxCm"][1] and p["boundsMaxCm"][1]+3000>d["boundsMinCm"][1] for d in batch)]
+            stream_guids=list(dict.fromkeys(guids+proxy_guids))
+            if not lib.set_archipelago_actors_loaded(stream_guids,True):raise RuntimeError("House streaming failed")
             try:
                 loaded={guidkey(a):a for a in actors.get_all_level_actors()}
                 for d in batch:
