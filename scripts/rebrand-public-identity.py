@@ -34,7 +34,10 @@ def main():
     for path in ROOT.rglob("*"):
         if not path.is_file() or path.suffix.lower() not in EXTENSIONS:
             continue
-        if any(part in IGNORED for part in path.relative_to(ROOT).parts):
+        relative = path.relative_to(ROOT)
+        if relative.parts[0] == ".github" or path.resolve() == Path(__file__).resolve():
+            continue  # GitHub workflow writes require extra permission; never mutate this script
+        if any(part in IGNORED for part in relative.parts):
             continue
         if path.stat().st_size > 350_000:  # huge generated assets, never rewrite blindly
             continue
