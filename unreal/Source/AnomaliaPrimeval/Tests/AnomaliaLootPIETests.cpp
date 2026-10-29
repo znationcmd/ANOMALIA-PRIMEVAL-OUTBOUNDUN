@@ -169,7 +169,7 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             UButton* Found=nullptr;
             if (Survivor->InventoryWidget && Survivor->InventoryWidget->WidgetTree)
                 Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* Widget)
-                { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) Found=Cast<UButton>(Widget); });
+                { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) if(auto* Button=Cast<UButton>(Widget))Found=Button; });
             return Found;
         };
         if (Probe->Phase == 5)
@@ -211,8 +211,10 @@ bool FAnomaliaLootPIETest::RunTest(const FString& Parameters)
             {
                 const int32 WoodId=Paging->Stacks[0].StackId;
                 Survivor->InventoryWidget->InitializeForInventory(Paging);
+                if (auto* Tab=FindButton(TEXT("InventoryTab"))) Tab->OnClicked.Broadcast();
                 if (auto* Tile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),WoodId)))
                     Tile->OnClicked.Broadcast();
+                else AddError(TEXT("The rectangular cargo item has no selectable inventory tile"));
                 auto* Rotate=FindButton(FString::Printf(TEXT("RotateStack_%d_action"),WoodId));
                 if(TestNotNull(TEXT("Real UMG rotation button exists"),Rotate))Rotate->OnClicked.Broadcast();
                 TestTrue(TEXT("Actual rotation button changes authoritative rectangle"),Paging->Stacks[0].bRotated);
