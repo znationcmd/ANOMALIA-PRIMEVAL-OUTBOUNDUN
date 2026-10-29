@@ -24,7 +24,7 @@ jobs:
           fs.mkdirSync(output,{recursive:true});
           fs.appendFileSync(process.env.GITHUB_ENV,'GEAR_AUDIT_OUTPUT='+output+'\n');
           const roots=['C:/ANOMALIA-Validation/c40543166274/unreal/Content','C:/ANOMALIA/unreal/Content','D:/ANOMALIA/FabImports','D:/ANOMALIA/unreal/Content'];
-          const pattern=/citysample|city.sample|derelict|sleep|insurgent|knife|dagger|bayonet|bandage|gauze|medical.tape|rope|splint|saddle|cloth|rags|fiber|pouch|holster|vest|boot|assault|punch|melee|combat|rifle.*(idle|aim|hold)/i;
+          const pattern=/prone|crouch|crawl|lying|lie.down|stand.to|punch|boxing|shepherd|dog|survival.character|citysample|city.sample|derelict|sleep|insurgent|knife|dagger|bayonet|bandage|gauze|medical.tape|rope|splint|saddle|cloth|rags|fiber|pouch|holster|vest|boot|assault|punch|melee|combat|rifle.*(idle|aim|hold)/i;
           const report={commit:process.env.GITHUB_SHA,roots:[],matches:[],errors:[],scope:'Read-only filenames; not proof of asset compatibility or visual acceptance'};
           function walk(dir){let entries;try{entries=fs.readdirSync(dir,{withFileTypes:true});}catch(e){report.errors.push({path:dir,error:e.code});return;}
             for(const e of entries){if(e.isSymbolicLink())continue;const p=path.join(dir,e.name);if(e.isDirectory())walk(p);else if((/\.(uasset|fbx|glb|gltf|blend|zip)$/i.test(e.name)&&pattern.test(p))||/\.uproject$/i.test(e.name))report.matches.push({path:p,bytes:fs.statSync(p).size});}}
