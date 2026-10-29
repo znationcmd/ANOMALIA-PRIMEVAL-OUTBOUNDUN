@@ -45,7 +45,8 @@ enum class EAnomaliaInventoryAction : uint8
     StowInContainer,
     CollectNearby,
     DogCommand,
-    QuickbarActivate
+    QuickbarActivate,
+    CombineCraft
 };
 
 UCLASS()
