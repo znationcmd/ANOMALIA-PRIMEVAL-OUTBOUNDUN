@@ -10,6 +10,7 @@ class UStaticMeshComponent;
 class UStaticMesh;
 class USpringArmComponent;
 class UCameraComponent;
+class UAnomaliaInputProfileComponent;
 class UFloatingPawnMovement;
 class UAnomaliaTransportMovement;
 class AAnomaliaSurvivor;
@@ -26,6 +27,7 @@ class ANOMALIAPRIMEVAL_API AAnomaliaVehiclePawn : public APawn
 
 public:
     AAnomaliaVehiclePawn();
+    UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="ANOMALIA|Controls") TObjectPtr<UAnomaliaInputProfileComponent> ControlsProfile;
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Vehicle")
     TObjectPtr<USphereComponent> Collision;
@@ -176,6 +178,7 @@ protected:
     void ServerExitVehicle();
 
 private:
+    UFUNCTION() void HandleEnhancedControl(FName Name,float Value,bool bPressed);
     TWeakObjectPtr<AAnomaliaSurvivor> ParkedSurvivor;
     float ForwardAxis = 0.f;
     float SteeringAxis = 0.f;
