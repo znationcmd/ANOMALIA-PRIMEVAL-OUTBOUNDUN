@@ -5,6 +5,7 @@ on:
       - rebrand/full-anomaliaz-prigimalia-20261029
     paths:
       - scripts/generate-prigimalia-brand.py
+      - assets/branding/approved-prigimalia-installed-icon-96.jpg.base64
       - .github/workflows/prigimalia-visual-assets.yml
   workflow_dispatch:
 
@@ -19,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - name: Install image tooling
         run: python3 -m pip install --user Pillow
-      - name: Generate new assets
+      - name: Generate installed-game icons from approved logo
         run: |
           python3 scripts/generate-prigimalia-brand.py
           test -s build/prigimalia-logo-small.jpg
