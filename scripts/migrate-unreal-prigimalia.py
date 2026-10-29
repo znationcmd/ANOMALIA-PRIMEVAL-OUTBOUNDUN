@@ -33,7 +33,7 @@ def changes_in_source(src: str) -> str:
     src = src.replace("ANOMALIAPRIMEVAL_API", "ANOMALIAZPRIGIMALIA_API")
     src = src.replace("ANOMALIAPRIMEVAL", "ANOMALIAZPRIGIMALIA")
     src = src.replace(OLD_MODULE, "__MIGRATED_MODULE__")
-    src = src.replace("Anomalia", NEW_MODULE)
+    src = re.sub(r"Anomalia(?!ZPrigimalia)", NEW_MODULE, src)
     src = src.replace("__MIGRATED_MODULE__", NEW_MODULE)
     # UE macro name is based on the module, not a class.
     return src
@@ -56,16 +56,16 @@ def collect_reflected_types(root: Path) -> dict[str,list[str]]:
     # Reflected type redirects make old Blueprint and serialized C++ class names loadable.
     types: dict[str,set[str]] = {"Class":set(),"Struct":set(),"Enum":set()}
     for p in (root/"unreal"/"Source").rglob("*.h"):
-        if OLD_MODULE not in str(p):
+        if OLD_MODULE not in str(p) and NEW_MODULE not in str(p):
             continue
         text = p.read_text(encoding="utf-8",errors="replace")
         for prefix,kind in (("A","Class"),("U","Class"),("F","Struct"),("E","Enum")):
-            for match in re.findall(r"\\b"+prefix+r"Anomalia[A-Za-z0-9_]+\\b",text):
+            for match in re.findall(r"\b"+prefix+r"(?:AnomaliaZPrigimalia|Anomalia)[A-Za-z0-9_]+\b",text):
                 if prefix=="F" and "USTRUCT" not in text:
                     continue
                 if prefix=="E" and "UENUM" not in text:
                     continue
-                types[kind].add(match[1:])
+                types[kind].add(match[1:].replace(NEW_MODULE,"Anomalia",1))
     return {kind:sorted(values) for kind,values in types.items()}
 
 def redirects(types: dict[str,list[str]]) -> str:
@@ -112,7 +112,7 @@ def main():
         changed=changes_in_source(original) if source else change_general(original,p)
         new_rel=rel
         if source:
-            new_rel=Path(str(rel).replace(OLD_MODULE,"__MIGRATED_MODULE__").replace("Anomalia",NEW_MODULE).replace("__MIGRATED_MODULE__",NEW_MODULE))
+            new_rel=Path(re.sub(r"Anomalia(?!ZPrigimalia)",NEW_MODULE,str(rel).replace(OLD_MODULE,"__MIGRATED_MODULE__")).replace("__MIGRATED_MODULE__",NEW_MODULE))
         elif rel==Path("unreal")/(OLD_MODULE+".uproject"):
             new_rel=Path("unreal")/(NEW_MODULE+".uproject")
         elif rel.parts[:3]==("unreal","Config","Anomalia"):
