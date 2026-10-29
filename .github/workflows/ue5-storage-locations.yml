@@ -14,17 +14,12 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID,FreeSpace,Size | ConvertTo-Json -Compress | Write-Output
-          $paths=@('C:\ANOMALIA','D:\ANOMALIA\unreal',"$env:LOCALAPPDATA\EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini","$env:LOCALAPPDATA\EpicGamesLauncher\Saved\Config\WindowsEditor\GameUserSettings.ini",'C:\ProgramData\Epic\EpicGamesLauncher\LauncherInstalled.dat')
-          foreach($p in $paths){
+          foreach($p in @('C:\ProgramData\Epic\EpicGamesLauncher\VaultCache','C:\ANOMALIA-Validation',"$env:LOCALAPPDATA\UnrealEngine\Common\DerivedDataCache","$env:LOCALAPPDATA\UnrealEngine\Common\Zen")){
             if(Test-Path -LiteralPath $p){
-              Get-Item -LiteralPath $p | Select-Object FullName,Attributes,LinkType,Target,LastWriteTime | ConvertTo-Json -Compress | Write-Output
-              if($p -like '*.ini'){Select-String -LiteralPath $p -Pattern 'Vault|Cache|Download|CreatedProjectPaths' | ForEach-Object {Write-Output ($_.Line)}}
+              Write-Output "SIZE_LOCATION $p"
+              & robocopy $p 'D:\ANOMALIA\StorageAuditDryRunOnly' /L /E /XJ /BYTES /NFL /NDL /NJH /R:0 /W:0
             }
           }
-          foreach($p in @('C:\ProgramData\Epic\EpicGamesLauncher\VaultCache','C:\Program Files\Epic Games\Launcher\VaultCache',"$env:LOCALAPPDATA\UnrealEngine\Common","$env:LOCALAPPDATA\Fab","$env:LOCALAPPDATA\Temp\Fab",'C:\ANOMALIA-Validation','D:\ANOMALIA\FabImports\VaultCache')){
-            if(Test-Path -LiteralPath $p){
-              Write-Output "LOCATION $p"
-              Get-ChildItem -LiteralPath $p -Force | Select-Object -First 25 Name,Length,Attributes,LastWriteTime | ConvertTo-Json -Compress | Write-Output
-            }
-          }
+          Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor,zenserver -ErrorAction SilentlyContinue | Select-Object ProcessName,Id | ConvertTo-Json -Compress | Write-Output
+          Get-Item 'C:\ProgramData\Epic\EpicGamesLauncher\VaultCache' | Select-Object FullName,Attributes,LinkType,Target | ConvertTo-Json -Compress | Write-Output
+          exit 0
