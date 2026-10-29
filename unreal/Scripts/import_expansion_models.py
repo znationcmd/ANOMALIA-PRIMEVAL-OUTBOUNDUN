@@ -16,7 +16,7 @@ GROUP=os.environ.get('ANOMALIA_ASSET_GROUP','Expansion1')
 if GROUP not in ['Expansion1','Metro1','NamedVehicles1','Military1','Military2']:raise RuntimeError('Unsupported import group')
 BASE=ROOT/'SourceAssets'/GROUP
 MAPS={'Expansion1':'Expansion','Metro1':'Metro','NamedVehicles1':'NamedVehicles','Military1':'Military','Military2':'MilitaryExtra'}
-TAG='AnomaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
+TAG='AnomaliaZPrigimaliaExpansionSHA' if GROUP=='Expansion1' else 'Anomalia'+GROUP+'SHA'
 OUT=Path(os.environ['ANOMALIA_EXPANSION_REPORT'])
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),models=[],drivingTested=False,walkingTested=False,multiplayerTested=False)
 try:
@@ -57,7 +57,7 @@ try:
         loaded[item['id']]=mesh
         report['models'].append(dict(id=item['id'],kind=item['kind'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(materials),nativePresentationBound=False,importSourceAdaptation=import_proof))
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-    vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+    vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
     for item in report['models']:
         if item['kind']!='vehicle':continue
         probe=actors.spawn_actor_from_class(vehicle,unreal.Vector(0,0,500),transient=True)

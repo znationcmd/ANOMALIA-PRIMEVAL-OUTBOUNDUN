@@ -8,7 +8,7 @@ PR : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/38
 
 | Système | Réalisation | Limite de validation |
 | --- | --- | --- |
-| Monde persistant | `UAnomaliaWorldStateSubsystem`, état versionné par serveur **et carte**, identifiants stables, refus des versions futures/corrompues | Reprise du processus vérifiée par test natif ; aucune garantie matérielle de coupure disque |
+| Monde persistant | `UAnomaliaZPrigimaliaWorldStateSubsystem`, état versionné par serveur **et carte**, identifiants stables, refus des versions futures/corrompues | Reprise du processus vérifiée par test natif ; aucune garantie matérielle de coupure disque |
 | Réparation | Dépôts partiels plafonnés au coût restant ; recette par défaut **100 `metal_sheet` + 50 `plank`**, délai et étapes de mesh configurables ; Destroyed/Repairing/Repaired/Disabled | Pas encore de pont de production placé avec ses modèles endommagé/réparé et ses animations |
 | Inventaire/monde | Un journal contient le résultat du monde et le profil après consommation ; l'inventaire reste verrouillé jusqu'à publication durable du profil ; reprise idempotente au démarrage | Tests de dépôts simultanés entre clients réels encore requis |
 | Électricité | Graphe de câbles explicites, portée par défaut 3 000 cm, génération à carburant, consommation, coupure de surcharge ; lampe native et porte existante raccordables | Solaire, éolien, batteries, fusibles, disjoncteurs et appareils industriels spécialisés non réalisés |
@@ -23,8 +23,8 @@ Aucun modèle Bohemia, carte DayZ ou asset sans licence n'est copié.
 
 ## Édition Unreal
 
-Créer des `UAnomaliaWorldDefinition` dans le navigateur de contenu, puis placer des
-`AAnomaliaWorldMechanism` avec un `StableId` unique. Choisir `Kind`, coûts, meshes
+Créer des `UAnomaliaZPrigimaliaWorldDefinition` dans le navigateur de contenu, puis placer des
+`AAnomaliaZPrigimaliaWorldMechanism` avec un `StableId` unique. Choisir `Kind`, coûts, meshes
 licenciés des étapes et mesh final. Les collisions proviennent réellement des
 meshes. La navigation dynamique doit être configurée dans la carte et vérifiée
 avec une IA et un véhicule : elle n'est pas revendiquée comme validée.

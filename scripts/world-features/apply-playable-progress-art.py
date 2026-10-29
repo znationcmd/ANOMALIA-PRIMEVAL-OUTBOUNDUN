@@ -19,17 +19,17 @@ try:
     models={m['id']:m for m in manifest['models']};loaded={}
     for ident in ('country_house_scan','abandoned_brick_house_scan'):
         m=models[ident];mesh=unreal.load_asset(m['objectPath'])
-        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaWorldFeatureSha256')!=m['sha256']:
+        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaWorldFeatureSha256')!=m['sha256']:
             raise RuntimeError('Source-verified native dwelling required')
         loaded[ident]=mesh
     tree_paths=unreal.EditorAssetLibrary.list_assets('/Game/Anomalia/VerifiedProps_v1/pine_tree_01',recursive=True,include_folder=False)
     trees=[unreal.load_asset(p) for p in tree_paths]
-    trees=[m for m in trees if isinstance(m,unreal.StaticMesh) and unreal.EditorAssetLibrary.get_metadata_tag(m,'AnomaliaPropsSourceSha256')]
+    trees=[m for m in trees if isinstance(m,unreal.StaticMesh) and unreal.EditorAssetLibrary.get_metadata_tag(m,'AnomaliaZPrigimaliaPropsSourceSha256')]
     if not trees:
         real=json.loads((ROOT/'SourceAssets/RealismValidation_v2/manifest.json').read_text())
         item=next(m for m in real['models'] if m['id']=='island_tree_02')
         candidate=unreal.load_asset(item['objectPath']+'_r2')
-        if not candidate or unreal.EditorAssetLibrary.get_metadata_tag(candidate,'AnomaliaRealismSha256')!=item['sha256']:
+        if not candidate or unreal.EditorAssetLibrary.get_metadata_tag(candidate,'AnomaliaZPrigimaliaRealismSha256')!=item['sha256']:
             raise RuntimeError('A verified realistic tree is required')
         trees=[candidate]
     tree=max(trees,key=lambda m:max(m.get_num_triangles(0),m.get_num_nanite_triangles()))
@@ -53,7 +53,7 @@ try:
     destination=landscape['objectPath']
     if unreal.EditorAssetLibrary.does_asset_exist(destination):
         terrain=unreal.load_asset(destination)
-        if not isinstance(terrain,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(terrain,'AnomaliaPlayableTerrainSha256')!=landscape['sha256']:
+        if not isinstance(terrain,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(terrain,'AnomaliaZPrigimaliaPlayableTerrainSha256')!=landscape['sha256']:
             raise RuntimeError('Existing artist terrain preserved')
     else:
         task=unreal.AssetImportTask();task.filename=str(source)
@@ -65,7 +65,7 @@ try:
         if len(candidates)!=1:raise RuntimeError('One colliding playable terrain mesh required')
         terrain=unreal.EditorAssetLibrary.duplicate_asset(candidates[0].get_path_name(),destination)
         if not terrain:raise RuntimeError('Playable terrain asset creation failed')
-        unreal.EditorAssetLibrary.set_metadata_tag(terrain,'AnomaliaPlayableTerrainSha256',landscape['sha256'])
+        unreal.EditorAssetLibrary.set_metadata_tag(terrain,'AnomaliaZPrigimaliaPlayableTerrainSha256',landscape['sha256'])
     settings=editor.get_nanite_settings(terrain)
     if settings.get_editor_property('enabled'):
         settings.set_editor_property('enabled',False);editor.set_nanite_settings(terrain,settings,apply_changes=True)
@@ -76,7 +76,7 @@ try:
     real=json.loads((ROOT/'SourceAssets/RealismValidation_v2/manifest.json').read_text())
     road_item=next(m for m in real['models'] if m['id']=='asphalt_02')
     road=unreal.load_asset(road_item['objectPath']+'_r2')
-    if not road or unreal.EditorAssetLibrary.get_metadata_tag(road,'AnomaliaRealismSha256')!=road_item['sha256']:
+    if not road or unreal.EditorAssetLibrary.get_metadata_tag(road,'AnomaliaZPrigimaliaRealismSha256')!=road_item['sha256']:
         raise RuntimeError('Verified PBR asphalt road required')
     for label,mesh,position,tag in [('PlayableGround',terrain,(0,0,0),'ANOMALIA_PlayableTerrain_v1'),('PlayableRoad',road,(0,-1500,4),'ANOMALIA_PlayableRoad_v1')]:
         actor=present.get(label)
@@ -117,7 +117,7 @@ try:
     tree_height=tree.get_bounds().box_extent.z*2
     grass_item=next(m for m in real['models'] if m['id']=='grass_medium_01')
     grass=unreal.load_asset(grass_item['objectPath']+'_r2')
-    if not grass or unreal.EditorAssetLibrary.get_metadata_tag(grass,'AnomaliaRealismSha256')!=grass_item['sha256']:raise RuntimeError('Verified forest understory required')
+    if not grass or unreal.EditorAssetLibrary.get_metadata_tag(grass,'AnomaliaZPrigimaliaRealismSha256')!=grass_item['sha256']:raise RuntimeError('Verified forest understory required')
     g=grass.get_bounds().box_extent;grass_scale=240/(max(g.x,g.y,g.z)*2)
     for index,(x,y) in enumerate(forest_positions):
         forest_actor('ProgressForestTree_'+str(index),tree,x,y,(1100+(index%5)*110)/tree_height,'ANOMALIA_ForestTree_v1',index*137.5)
@@ -163,7 +163,7 @@ try:
         ('PlayableLook_v2_Shrub','grass_medium_01',200.,'ANOMALIA_ProgressGroundFoliage_v1','groundFoliage')]:
         item=next(m for m in real['models'] if m['id']==source_id)
         mesh=unreal.load_asset(item['objectPath']+'_r2')
-        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=item['sha256']:
+        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaRealismSha256')!=item['sha256']:
             raise RuntimeError('Source-verified realistic terrain prop required: '+source_id)
         settings=editor.get_nanite_settings(mesh)
         if settings.get_editor_property('enabled'):
@@ -196,8 +196,8 @@ try:
     for vehicle_id,source_id in [('car','concept_car'),('transport_truck','box_truck')]:
         item=next(m for m in real['models'] if m['id']==source_id)
         mesh=unreal.load_asset(item['objectPath']+'_r2')
-        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=item['sha256']:raise RuntimeError('Verified vehicle art required')
-        candidates=[a for a in present.values() if OWNER in a.tags and a.get_class().get_path_name()=='/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn' and str(a.get_editor_property('vehicle_id'))==vehicle_id]
+        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaRealismSha256')!=item['sha256']:raise RuntimeError('Verified vehicle art required')
+        candidates=[a for a in present.values() if OWNER in a.tags and a.get_class().get_path_name()=='/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn' and str(a.get_editor_property('vehicle_id'))==vehicle_id]
         if len(candidates)!=1:raise RuntimeError('Unique existing playable vehicle required')
         vehicle=candidates[0];vehicle.set_editor_property('presentation_mesh_override',mesh)
         vehicle.set_editor_property('presentation_yaw_degrees',90.)

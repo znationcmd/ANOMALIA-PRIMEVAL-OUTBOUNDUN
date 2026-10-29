@@ -4,9 +4,9 @@ from pathlib import Path
 import unreal
 ROOT=Path(unreal.Paths.project_dir()).resolve();sys.path.insert(0,str(ROOT/'Scripts'))
 from road_mesh import build_road
-REPORT=Path(os.environ['ANOMALIA_ROADS_REPORT']);MARKER=ROOT/'Saved/AnomaliaMigration/detroit-roads-v3.json'
-V2=ROOT/'Saved/AnomaliaMigration/detroit-roads-v2.json'
-LEGACY=ROOT/'Saved/AnomaliaMigration/detroit-roads-v1.json'
+REPORT=Path(os.environ['ANOMALIA_ROADS_REPORT']);MARKER=ROOT/'Saved/AnomaliaZPrigimaliaMigration/detroit-roads-v3.json'
+V2=ROOT/'Saved/AnomaliaZPrigimaliaMigration/detroit-roads-v2.json'
+LEGACY=ROOT/'Saved/AnomaliaZPrigimaliaMigration/detroit-roads-v1.json'
 TAG='ANOMALIA_DetroitRoads_v1';PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
 result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),walkTested=False,renderingValidated=False)
 try:
@@ -38,19 +38,19 @@ try:
             # follows the imported grid, rather than unquantized analytic hills.
             step=48000/3024;gx=(x+24000)/step;gy=(-north+24000)/step;ix=math.floor(gx);iy=math.floor(gy);fx=gx-ix;fy=gy-iy
             def vertex(a,b):
-                h=unreal.AnomaliaWorldImportLibrary.archipelago_height(-24000+a*step,24000-b*step)
+                h=unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(-24000+a*step,24000-b*step)
                 return math.floor(32768+h*16+.5)/16-2048
             return (vertex(ix,iy)*(1-fx)+vertex(ix+1,iy)*fx)*(1-fy)+(vertex(ix,iy+1)*(1-fx)+vertex(ix+1,iy+1)*fx)*fy
         placed=[]
         for name,x0,x1,end in [('West',13000.,13500.,13500.),('East',16000.,16500.,16000.)]:
-            data,origin=build_road(height,x0,x1,end,unreal.AnomaliaWorldImportLibrary.archipelago_height(end,-9000)+.25,source)
+            data,origin=build_road(height,x0,x1,end,unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(end,-9000)+.25,source)
             sha=hashlib.sha256(data).hexdigest();destination='/Game/Anomalia/Infrastructure/Roads/SM_Detroit'+name+'_'+sha[:12]
             if unreal.EditorAssetLibrary.does_asset_exist(destination):
                 known=json.loads(V2.read_text()) if V2.exists() else {}
                 if not any(r['sourceSha256']==sha and r['objectPath'].split('.')[0]==destination for r in known.get('roads',[])):raise RuntimeError('Existing road asset without ownership evidence preserved')
                 mesh=unreal.EditorAssetLibrary.load_asset(destination)
             else:
-                staging=ROOT/'Saved/AnomaliaMigration'/('road-'+uuid.uuid4().hex);staging.mkdir(parents=True)
+                staging=ROOT/'Saved/AnomaliaZPrigimaliaMigration'/('road-'+uuid.uuid4().hex);staging.mkdir(parents=True)
                 file=staging/(name+'.glb');file.write_bytes(data)
                 task=unreal.AssetImportTask();task.filename=str(file);task.destination_path='/Game/Anomalia/Infrastructure/Roads/Imports/Road_'+uuid.uuid4().hex;task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
                 unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task]);task.get_objects()

@@ -3,30 +3,30 @@ import pathlib
 import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
-SESSION = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSessionWidget.cpp"
-HEADER = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaSessionWidget.h"
-PROBE = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaPlayableProbe.cpp"
+SESSION = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp"
+HEADER = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.h"
+PROBE = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaPlayableProbe.cpp"
 
 
 class NativeWorkshopMenuTests(unittest.TestCase):
     def test_button_opens_native_fullscreen_workshop(self):
         s = SESSION.read_text(encoding="utf-8")
         self.assertIn('ModsButton=Button(TEXT("SessionMods"),TEXT("Mods"))', s)
-        self.assertIn('ModsButton->OnClicked.AddDynamic(this,&UAnomaliaSessionWidget::ShowMods)', s)
-        self.assertIn('void UAnomaliaSessionWidget::ShowMods()', s)
+        self.assertIn('ModsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowMods)', s)
+        self.assertIn('void UAnomaliaZPrigimaliaSessionWidget::ShowMods()', s)
         self.assertIn('WorkshopFrame->SetVisibility(ESlateVisibility::Visible)', s)
         self.assertIn('TEXT("WorkshopFullScreen")', s)
         self.assertIn('TEXT("W O R K F O R G E")', s)
-        self.assertIn('void UAnomaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)', s)
+        self.assertIn('void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)', s)
         self.assertIn('TEXT("WorkshopHeroBackdrop")', s)
         self.assertIn('T_WorkshopLogo.T_WorkshopLogo', s)
         self.assertIn('UUniformGridPanel::StaticClass()', s)
         for section in ('ANOMALIA WORKFORGE', 'MODS DISPONIBLES', 'MODS LES MIEUX NOTÉS', 'COMMUNAUTÉ'):
             self.assertIn(section, s)
         self.assertIn('TEXT("WorkshopReturn")', s)
-        self.assertIn("void UAnomaliaSessionWidget::CloseWorkshop()", s)
+        self.assertIn("void UAnomaliaZPrigimaliaSessionWidget::CloseWorkshop()", s)
         self.assertIn('WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed)', s)
-        self.assertNotIn('void UAnomaliaSessionWidget::ShowMods() { RefreshMods(); SelectPage(2); }', s)
+        self.assertNotIn('void UAnomaliaZPrigimaliaSessionWidget::ShowMods() { RefreshMods(); SelectPage(2); }', s)
 
     def test_native_search_categories_and_real_sources(self):
         s = SESSION.read_text(encoding="utf-8")
@@ -39,14 +39,14 @@ class NativeWorkshopMenuTests(unittest.TestCase):
         self.assertIn("UFUNCTION() void RefreshWorkshop();", h)
         self.assertIn("WorkshopCategoryChanged(FString SelectedItem, ESelectInfo::Type SelectionType)", h)
         self.assertIn("const int64 Size=IFileManager::Get().FileSize(*File)", s)
-        self.assertIn("UAnomaliaModResolver::ValidateModManifest", s)
+        self.assertIn("UAnomaliaZPrigimaliaModResolver::ValidateModManifest", s)
         self.assertIn("Aucun mod UE5 chargé", s)
         self.assertIn('WorkshopFilterVehicles', s)
         self.assertIn('WorkshopFilterCreatures', s)
         self.assertIn('Grid->SetSlotPadding(FMargin(3,4))', s)
         self.assertIn('Grid->AddChildToUniformGrid(Card,I/9,I%9)', s)
         self.assertIn('TEXT("WorkshopSort")', s)
-        self.assertIn('void UAnomaliaSessionWidget::WorkshopShowMyMods()', s)
+        self.assertIn('void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods()', s)
         self.assertIn('TEXT("WFNavForge")', s)
         self.assertIn('TEXT("WorkshopManageMods")', s)
         self.assertIn('for(int32 Index=0;Index<Visible.Num();Index+=3)', s)

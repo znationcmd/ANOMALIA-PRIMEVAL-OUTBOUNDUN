@@ -100,7 +100,7 @@ def set_view():
         for entry in streamable_desc:
             label=entry['label']
             if prefix and label.startswith(prefix):selected.append(entry['guid']);continue
-            if entry['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster':
+            if entry['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster':
                 cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
                 if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry['guid'])
         if selected and not wp.set_archipelago_actors_loaded(selected,True):raise RuntimeError('Nearby view load refused')
@@ -140,11 +140,11 @@ try:
     unreal.EditorPythonScripting.set_keep_python_script_alive(True)
     if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Real map unavailable')
     # Load known generated geometry for aerial captures without altering streaming rules on disk.
-    wp=unreal.AnomaliaWorldImportLibrary
+    wp=unreal.AnomaliaZPrigimaliaWorldImportLibrary
     descriptor_snapshot=json.loads(wp.get_archipelago_actor_descriptors())
     if descriptor_snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
     desc=descriptor_snapshot['actors']
-    streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
+    streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
     dynamic_labels={d['label'] for d in streamable_desc}
     if streamable_desc and not wp.set_archipelago_actors_loaded([d['guid'] for d in streamable_desc],False):raise RuntimeError('Initial local-view unload refused')
     wanted=[d['guid'] for d in desc if d['owned'] and d['label'] not in dynamic_labels]
@@ -163,7 +163,7 @@ try:
     world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     for command in ['ShowFlag.Landscape 1','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
         unreal.SystemLibrary.execute_console_command(world,command)
-    report['renderResourceRefresh']=json.loads(unreal.AnomaliaWorldImportLibrary.refresh_archipelago_render_resources(PHASE=='repair'))
+    report['renderResourceRefresh']=json.loads(unreal.AnomaliaZPrigimaliaWorldImportLibrary.refresh_archipelago_render_resources(PHASE=='repair'))
     expected='REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED' if PHASE=='repair' else 'INSPECTED_WITHOUT_FORCED_REBUILD'
     if report['renderResourceRefresh'].get('state')!=expected:raise RuntimeError('Landscape inspection/refresh refused')
     entries=report['renderResourceRefresh']['components']
@@ -173,15 +173,15 @@ try:
     if report['renderResourceRefresh']['missingHeightmaps']:raise RuntimeError('Landscape heightmap data is missing')
     unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
     if WORLD_NAME=='ANOMALIA_Inhabited_v2':
-        sites=unreal.AnomaliaWorldImportLibrary.inhabited_settlement_sites()
+        sites=unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_settlement_sites()
         if len(sites)!=27:raise RuntimeError('Expected all 27 inhabited settlements')
         for index,site_index in enumerate((0,13,26),start=1):
             site=sites[site_index];e,n=site.x,site.y
-            z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(e,n)*100
+            z=unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height(e,n)*100
             views[index]=(f'0{index+1}_settlement_{site_index}',(e*100-18000,-n*100-18000,z+12000),(e*100,-n*100,z+200))
         report['reviewScope']='Populated archipelago overview, three settlements and a street-height view; interiors and full-map gameplay not certified'
         e,n=sites[13].x,sites[13].y
-        views[4]=street_review_view(e,n,unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(e,n))
+        views[4]=street_review_view(e,n,unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height(e,n))
     set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
 except Exception as error:
     unreal.log_error(traceback.format_exc());finish(error)

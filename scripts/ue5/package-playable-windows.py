@@ -30,7 +30,7 @@ try:
     run([editor,project,'-NullRHI','-unattended','-nopause','-nosound',
          '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/import_game_branding.py'),
          '-abslog='+str(out/'branding-import.log')],'branding-import',300)
-    progress_flags=['-AnomaliaProgressArt'] if a.progress_art else []
+    progress_flags=['-AnomaliaZPrigimaliaProgressArt'] if a.progress_art else []
     visual_receipt=out/('realism-scene-'+uuid.uuid4().hex+'.json')
     os.environ['ANOMALIA_REALISM_SCENE_REPORT']=str(visual_receipt)
     run([editor,project,'-unattended','-nopause','-nosound','-NullRHI','-stdout','-FullStdOutLogOutput',
@@ -54,16 +54,16 @@ try:
     # Exercise the actual playable map before cooking. This catches interaction
     # failures in its real collision layout without waiting for a packaged build.
     interaction_probe=out/'editor-playable-smoke.json'
-    run([editor,project,MAP+'?AnomaliaServerId=playable-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
-         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaPlayableProbe='+str(interaction_probe),
+    run([editor,project,MAP+'?AnomaliaZPrigimaliaServerId=playable-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
+         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaZPrigimaliaPlayableProbe='+str(interaction_probe),
          '-abslog='+str(out/'editor-playable-engine.log'),*progress_flags],'editor-playable',180)
     interaction=json.loads(interaction_probe.read_text(encoding='utf-8-sig'))
     report['editorPlayable']=interaction
     if interaction.get('state')!='PACKAGED_GAME_SMOKE_PASSED':
         raise RuntimeError('Playable-map interaction preflight failed: '+interaction.get('error','missing checks'))
     editor_review=out/'editor-visual/review.json';editor_review.parent.mkdir()
-    run([editor,project,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
-         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
+    run([editor,project,visual_map+'?AnomaliaZPrigimaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-game','-windowed','-ResX=1280','-ResY=720',
+         '-d3d11','-sm5','-unattended','-nosound','-AnomaliaZPrigimaliaVisualReview='+str(editor_review),'-abslog='+str(out/'editor-visual.log')],'editor-visual',300)
     if json.loads(editor_review.read_text(encoding='utf-8-sig')).get('state')!='PACKAGED_VISUAL_REVIEW_PASSED':
         raise RuntimeError('Imported-art scene failed in actual Editor game renderer')
     # Execute outside the deeply nested repository/evidence path. UE gameplay
@@ -76,7 +76,7 @@ try:
     exe=executables[0];probe=out/'packaged-smoke.json'
     shutil.copyfile(ROOT/'unreal/Build/Windows/Application.ico',archive/'Windows/Anomalia.ico')
     scope='playable-smoke-'+uuid.uuid4().hex
-    run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log'),*progress_flags],'packaged-run',180)
+    run([exe,MAP+'?AnomaliaZPrigimaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaPlayableProbe='+str(probe),'-abslog='+str(out/'packaged-engine.log'),*progress_flags],'packaged-run',180)
     native=json.loads(probe.read_text(encoding='utf-8-sig'))
     required={'native_inventory_tobacco_use_has_risk_and_returns_waste','native_inventory_food_use_consumes_one_and_restores_hunger','native_playable_look_v2_cooked_materials_and_lights','main_menu_play_button','explicit_local_profile_save','native_world_HUD_and_three_vehicle_meshes','keyboard_character_movement','walk_through_house_doorway','world_pickup_into_native_inventory','native_inventory_open_close','three_vehicle_enter_accelerate_steer_exit'}
     if native.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not required.issubset(native.get('checks',[])) or native.get('buildCommit')!=os.environ.get('GITHUB_SHA') or 'visible_executable_build_identity' not in native.get('checks',[]):
@@ -87,14 +87,14 @@ try:
     image=probe.with_suffix('.png')
     if not image.is_file() or image.stat().st_size<10000:raise RuntimeError('Fresh packaged GPU screenshot missing')
     resume=out/'packaged-resume.json'
-    run([exe,MAP+'?AnomaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-AnomaliaPlayableProbe='+str(resume),'-AnomaliaPlayableResume'],'packaged-resume',90)
+    run([exe,MAP+'?AnomaliaZPrigimaliaServerId='+scope,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-AnomaliaZPrigimaliaPlayableProbe='+str(resume),'-AnomaliaZPrigimaliaPlayableResume'],'packaged-resume',90)
     resumed=json.loads(resume.read_text(encoding='utf-8-sig'))
     if resumed.get('state')!='PACKAGED_GAME_SMOKE_PASSED' or not {'restarted_executable_restored_inventory_and_character_position','restarted_executable_restored_item_effects'}.issubset(resumed.get('checks',[])):
         raise RuntimeError('Actual executable restart did not restore character and inventory')
     report['resume']=resumed
     visual_probe=out/'packaged-visual/review.json';visual_probe.parent.mkdir()
-    run([exe,visual_map+'?AnomaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
-         '-AnomaliaVisualReview='+str(visual_probe),'-abslog='+str(out/'packaged-visual-engine.log')],'packaged-visual',300)
+    run([exe,visual_map+'?AnomaliaZPrigimaliaServerId=visual-smoke-'+uuid.uuid4().hex,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
+         '-AnomaliaZPrigimaliaVisualReview='+str(visual_probe),'-abslog='+str(out/'packaged-visual-engine.log')],'packaged-visual',300)
     visual=json.loads(visual_probe.read_text(encoding='utf-8-sig'))
     if visual.get('state')!='PACKAGED_VISUAL_REVIEW_PASSED' or len(visual.get('screenshots',[]))!=8 or not visual.get('dayAndNightCaptured'):
         raise RuntimeError('Real Windows visual review failed: '+visual.get('error','missing screenshots'))

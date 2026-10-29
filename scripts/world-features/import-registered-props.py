@@ -35,7 +35,7 @@ try:
             if not meshes: raise RuntimeError('No native static mesh imported')
             row['meshes'] = []
             for mesh in meshes:
-                if exists and unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaPropsSourceSha256') != identity:
+                if exists and unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaPropsSourceSha256') != identity:
                     raise RuntimeError('Existing unverified artist asset preserved')
                 materials = mesh.get_editor_property('static_materials')
                 if not materials or any(not slot.material_interface or slot.material_interface.get_path_name().startswith('/Engine/EngineMaterials/DefaultMaterial') for slot in materials):
@@ -43,8 +43,8 @@ try:
                 if max(mesh.get_num_triangles(0),mesh.get_num_nanite_triangles()) <= 0:
                     raise RuntimeError('Empty native geometry')
                 if not exists:
-                    unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaPropsSourceSha256',identity)
-                    unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaAttribution',item['source']+' / CC0-1.0 / '+item['licenseUrl'])
+                    unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaPropsSourceSha256',identity)
+                    unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaAttribution',item['source']+' / CC0-1.0 / '+item['licenseUrl'])
                     if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,only_if_is_dirty=False):
                         raise RuntimeError('Native prop save failed')
                 bounds=mesh.get_bounds()

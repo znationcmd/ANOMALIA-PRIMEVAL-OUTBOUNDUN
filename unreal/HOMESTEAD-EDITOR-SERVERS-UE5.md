@@ -45,7 +45,7 @@ et la possibilité d'utiliser certains scripts ou contenus peut être limitée.
 ## Navigateur de serveurs prévu
 
 15 emplacements OFFICIELS de configuration : 5 PVE, 5 PVP, 5 RP.
-Classe C++ : UAnomaliaServerBrowserLibrary. Les filtres All/PVE/PVP/RP
+Classe C++ : UAnomaliaZPrigimaliaServerBrowserLibrary. Les filtres All/PVE/PVP/RP
 fonctionnent sur des structures de données C++.
 Ces emplacements NE SONT PAS des serveurs réellement hébergés, ouverts,
 accessibles ni connectés à CMD Hosting. L'interface UMG reste à développer.

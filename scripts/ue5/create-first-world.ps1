@@ -7,7 +7,7 @@ $Repo = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 $Project = Join-Path $Repo "unreal\AnomaliaZPrigimalia.uproject"
 $Script = Join-Path $PSScriptRoot "create-first-world.py"
 $Editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
-$Report = Join-Path $Repo "unreal\Saved\AnomaliaMigration\first-world-report.json"
+$Report = Join-Path $Repo "unreal\Saved\AnomaliaZPrigimaliaMigration\first-world-report.json"
 foreach ($file in @($Project, $Script, $Editor)) {
     if (!(Test-Path -LiteralPath $file -PathType Leaf)) {
         throw "Missing file: $file"

@@ -35,7 +35,7 @@ try:
     if hashlib.sha256(source.read_bytes()).hexdigest() != model['sha256']:
         raise RuntimeError('Bunker source identity mismatch')
     mesh = unreal.load_asset(model['objectPath'])
-    if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaWorldFeatureSha256') != model['sha256']:
+    if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaWorldFeatureSha256') != model['sha256']:
         raise RuntimeError('Verified native exterior bunker import required')
     bounds = mesh.get_bounds()
     width, depth, height = bounds.box_extent.x * .02, bounds.box_extent.y * .02, bounds.box_extent.z * .02
@@ -43,7 +43,7 @@ try:
         raise RuntimeError('Bunker dimensions outside expected full-scale exterior envelope')
     spec = importlib.util.spec_from_file_location('bunker_ground', ROOT / 'Scripts/archipelago_population.py')
     ground = importlib.util.module_from_spec(spec); spec.loader.exec_module(ground)
-    surface = ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
+    surface = ground.sampled_surface(unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height)
     proposals = []
     for site in plan['settlements']:
         e, n = site['east'] + 365., site['north'] + 365.

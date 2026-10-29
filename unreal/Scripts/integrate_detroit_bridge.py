@@ -4,7 +4,7 @@ from pathlib import Path
 import unreal
 ROOT=Path(unreal.Paths.project_dir()).resolve();BASE=ROOT/'SourceAssets/Infrastructure/Bridge'
 REPORT=Path(os.environ.get('ANOMALIA_BRIDGE_REPORT',str(ROOT/'Saved/BuildValidation'/('bridge-'+uuid.uuid4().hex+'.json'))))
-MARKER=ROOT/'Saved/AnomaliaMigration/detroit-bridge-v1.json'
+MARKER=ROOT/'Saved/AnomaliaZPrigimaliaMigration/detroit-bridge-v1.json'
 TAG='ANOMALIA_DetroitBridge_v1';PACKAGE='/Game/Maps/ANOMALIA_Archipelago_v2'
 result=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),mapPackage=PACKAGE,renderingValidated=False,walkTested=False,vehicleDriveTested=False)
 try:
@@ -18,7 +18,7 @@ try:
         destination='/Game/Anomalia/Infrastructure/Bridge/SM_Bridge50m'
         asset=unreal.EditorAssetLibrary.load_asset(destination) if unreal.EditorAssetLibrary.does_asset_exist(destination) else None
         if asset:
-            if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaBridgeSourceSHA256')!=spec['sha256']:raise RuntimeError('Unowned bridge asset preserved')
+            if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaZPrigimaliaBridgeSourceSHA256')!=spec['sha256']:raise RuntimeError('Unowned bridge asset preserved')
         else:
             tools=unreal.AssetToolsHelpers.get_asset_tools();staging='/Game/Anomalia/Infrastructure/Bridge/Imports/Span_'+uuid.uuid4().hex
             task=unreal.AssetImportTask();task.filename=str(source);task.destination_path=staging;task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
@@ -28,7 +28,7 @@ try:
             if len(meshes)!=1:raise RuntimeError('Expected one complete bridge mesh')
             asset=unreal.EditorAssetLibrary.duplicate_asset(meshes[0].get_path_name(),destination)
             if not asset:raise RuntimeError('Bridge asset duplication failed')
-            unreal.EditorAssetLibrary.set_metadata_tag(asset,'AnomaliaBridgeSourceSHA256',spec['sha256'])
+            unreal.EditorAssetLibrary.set_metadata_tag(asset,'AnomaliaZPrigimaliaBridgeSourceSHA256',spec['sha256'])
         bounds=asset.get_bounds()
         if abs(bounds.box_extent.x*2-5011)>2 or abs(bounds.box_extent.y*2-1100)>2:raise RuntimeError('Bridge scale/axis mismatch')
         body=asset.get_editor_property('body_setup')
@@ -40,8 +40,8 @@ try:
         actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
         if any(unreal.Name(TAG) in a.tags for a in actors.get_all_level_actors()):raise RuntimeError('Existing tagged bridge actors found; no duplicate placement')
         x0,x1,north=13500.,16000.,-9000.
-        h0=unreal.AnomaliaWorldImportLibrary.archipelago_height(x0,north)+.25
-        h1=unreal.AnomaliaWorldImportLibrary.archipelago_height(x1,north)+.25
+        h0=unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(x0,north)+.25
+        h1=unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(x1,north)+.25
         def height(x):return h0+(h1-h0)*(x-x0)/(x1-x0)
         pitch=math.degrees(math.atan2(h1-h0,x1-x0))
         labels=[];pier_count=0
@@ -58,7 +58,7 @@ try:
         cylinder=unreal.load_asset('/Engine/BasicShapes/Cylinder')
         concrete=next((m.material_interface for m in asset.get_editor_property('static_materials') if 'concrete' in str(m.material_slot_name).lower()),None)
         for i in range(51):
-            x=x0+i*50;bottom=unreal.AnomaliaWorldImportLibrary.archipelago_height(x,north)-3;top=height(x)-2.05;length=top-bottom
+            x=x0+i*50;bottom=unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(x,north)-3;top=height(x)-2.05;length=top-bottom
             if length<1:continue
             for side in [-1,1]:
                 a=place('ANOMALIA_DetroitBridge_Pier_%02d_%s'%(i,'L' if side<0 else 'R'),cylinder,unreal.Vector(x*100,-north*100+side*270,(top+bottom)*50),scale=unreal.Vector(3.5,3.5,length))

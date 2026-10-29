@@ -15,13 +15,13 @@ try:
     for item in manifest['models']:
         if item['id'] not in {'island_tree_02', 'grass_medium_01'}: continue
         mesh = unreal.load_asset(item['objectPath'] + '_r2')
-        if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaRealismSha256') != item['sha256']:
+        if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaRealismSha256') != item['sha256']:
             raise RuntimeError('Verified owned foliage mesh required')
         assets.append(mesh)
     for path in unreal.EditorAssetLibrary.list_assets('/Game/Anomalia/SettlementRoads_v1', recursive=True, include_folder=False):
         if not path.endswith('/SM_Streets.SM_Streets') and not path.endswith('/SM_Streets'): continue
         mesh = unreal.load_asset(path)
-        if not isinstance(mesh, unreal.StaticMesh) or not unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaStreetGeometrySha256'):
+        if not isinstance(mesh, unreal.StaticMesh) or not unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaStreetGeometrySha256'):
             raise RuntimeError('Unknown artist street asset preserved')
         assets.append(mesh)
     if len(assets) != 29: raise RuntimeError('Expected two foliage meshes and 27 owned street meshes')
@@ -29,8 +29,8 @@ try:
         settings = editor.get_nanite_settings(mesh)
         before = settings.get_editor_property('enabled')
         if before:
-            if not unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaNaniteBeforeCompatibilityFix'):
-                unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaNaniteBeforeCompatibilityFix', 'true')
+            if not unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaNaniteBeforeCompatibilityFix'):
+                unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaNaniteBeforeCompatibilityFix', 'true')
             settings.set_editor_property('enabled', False)
             editor.set_nanite_settings(mesh, settings, apply_changes=True)
             if not unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False):

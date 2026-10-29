@@ -47,11 +47,11 @@ else:
     light=spawn(unreal.DirectionalLight,'PlayableSun',(0,0,3000));light.set_actor_rotation(unreal.Rotator(pitch=-40,yaw=-35),False)
     spawn(unreal.SkyAtmosphere,'PlayableAtmosphere',(0,0,0))
     sky=spawn(unreal.SkyLight,'PlayableSky',(0,0,500));sky.light_component.set_editor_property('intensity',1.2)
-    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
     for i,name in enumerate(('car','suv','transport_truck')):
         a=spawn(cls,'PlayableVehicle_'+name,(1800+i*1500,-1500,160))
         if not a.configure_vehicle(unreal.Name(name)): raise RuntimeError('Cannot configure '+name)
-    bed=spawn(unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaHomesteadStation'),'PlayableBed',(250,1000,50))
+    bed=spawn(unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaHomesteadStation'),'PlayableBed',(250,1000,50))
     bed.display_mesh.set_static_mesh(cube);bed.display_mesh.set_relative_scale3d(unreal.Vector(1,2,.4))
     if not level.save_current_level(): raise RuntimeError('Cannot save playable map')
 # Upgrade only our isolated map. Never recreate it: keep gameplay actors, IDs and saves.
@@ -62,7 +62,7 @@ def surface(name,dark,light,roughness,grain):
     path=folder+'/'+name
     if unreal.EditorAssetLibrary.does_asset_exist(path):
         value=unreal.load_asset(path)
-        if not isinstance(value,unreal.Material) or unreal.EditorAssetLibrary.get_metadata_tag(value,'AnomaliaPlayableSurfaceState')!='SAVED_NOISE_PBR_1':
+        if not isinstance(value,unreal.Material) or unreal.EditorAssetLibrary.get_metadata_tag(value,'AnomaliaZPrigimaliaPlayableSurfaceState')!='SAVED_NOISE_PBR_1':
             raise RuntimeError('Existing unrecognized material preserved: '+path)
         return value  # Preserve any subsequent artist edits.
     value=unreal.AssetToolsHelpers.get_asset_tools().create_asset(name,folder,unreal.Material,unreal.MaterialFactoryNew())
@@ -87,7 +87,7 @@ def surface(name,dark,light,roughness,grain):
     if not lib.connect_material_property(mix,'',unreal.MaterialProperty.MP_BASE_COLOR): raise RuntimeError('Base colour connection failed')
     if not lib.connect_material_property(r,'',unreal.MaterialProperty.MP_ROUGHNESS): raise RuntimeError('Roughness connection failed')
     lib.recompile_material(value)
-    unreal.EditorAssetLibrary.set_metadata_tag(value,'AnomaliaPlayableSurfaceState','SAVED_NOISE_PBR_1')
+    unreal.EditorAssetLibrary.set_metadata_tag(value,'AnomaliaZPrigimaliaPlayableSurfaceState','SAVED_NOISE_PBR_1')
     if not unreal.EditorAssetLibrary.save_loaded_asset(value): raise RuntimeError('Cannot save original material')
     return value
 

@@ -21,7 +21,7 @@ try:
     if not level.load_level(PACKAGE):raise RuntimeError('Could not load archipelago')
     present={a.get_actor_label():a for a in actors.get_all_level_actors()}
     if 'ANOMALIA_OriginalArchipelago_48km' not in present:raise RuntimeError('Expected original landscape missing; map preserved')
-    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaNavigableWater')
+    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaNavigableWater')
     if not cls:raise RuntimeError('Native water class not loaded')
     if LABEL in present:
         sea=present[LABEL]

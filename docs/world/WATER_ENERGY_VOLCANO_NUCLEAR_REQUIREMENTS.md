@@ -17,7 +17,7 @@ Ce document ne signifie pas que les lieux ou mécanismes existent déjà en jeu.
 - Des fontaines et points d'eau potables dans les villes et villages permettent
   de boire et remplir les contenants. La qualité doit rester identifiable.
 - Réutiliser `water_purification_tablets`, `dirty_water_bottle`, `water_bottle`
-  et la transaction persistante de `UAnomaliaInventoryComponent::TryUseStack`.
+  et la transaction persistante de `UAnomaliaZPrigimaliaInventoryComponent::TryUseStack`.
   La recette actuelle traite une bouteille sale ; la contamination radioactive,
   les sources naturelles et les fontaines restent à intégrer et tester.
 

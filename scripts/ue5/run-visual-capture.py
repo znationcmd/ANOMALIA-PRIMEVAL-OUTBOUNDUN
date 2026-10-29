@@ -8,7 +8,7 @@ def main():
  p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);p.add_argument('--inhabited',action='store_true');a=p.parse_args()
  root=Path(__file__).resolve().parents[2];base=a.output.resolve()/'real-graphics';base.mkdir(parents=True,exist_ok=True)
  package='/Game/Maps/ANOMALIA_Inhabited_v2' if a.inhabited else '/Game/Maps/ANOMALIA_Archipelago_v2'
- marker=root/('unreal/Saved/AnomaliaMigration/render-repair-inhabited-v2.json' if a.inhabited else 'unreal/Saved/AnomaliaMigration/render-repair-v1.json')
+ marker=root/('unreal/Saved/AnomaliaZPrigimaliaMigration/render-repair-inhabited-v2.json' if a.inhabited else 'unreal/Saved/AnomaliaZPrigimaliaMigration/render-repair-v1.json')
  result=dict(state='FAILED',headless=False,mapPackage=package,sourceCommit=os.environ.get('GITHUB_SHA','manual'),phases=[])
  def capture(phase,backup=None):
   out=base/phase;out.mkdir(exist_ok=False)

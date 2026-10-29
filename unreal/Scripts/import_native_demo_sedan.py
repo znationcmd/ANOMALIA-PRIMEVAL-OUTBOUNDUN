@@ -12,7 +12,7 @@ NAMESPACE="BMWE39Review_v7" if E39 else "NativeDemoSedan_v3"
 BASE=ROOT/"SourceAssets"/NAMESPACE
 OUT=Path(os.environ['ANOMALIA_SEDAN_OUTPUT'])
 OUT.mkdir(parents=True,exist_ok=True)
-TAG='AnomaliaNativeSedanSha256'
+TAG='AnomaliaZPrigimaliaNativeSedanSha256'
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA'),models=[],
     mapModified=False,installed=False,rigged=False,interactiveDoors=False,gameplayTested=False)
 try:
@@ -67,8 +67,8 @@ try:
             mesh=unreal.EditorAssetLibrary.duplicate_asset(candidates[0].get_path_name(),destination)
             if not mesh:raise RuntimeError('Canonical part creation failed: '+name)
             unreal.EditorAssetLibrary.set_metadata_tag(mesh,TAG,model['sha256'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaSourceLicense',source['license'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaAttribution',source['author']+' / '+source['source']+' / '+source['license'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaSourceLicense',source['license'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaAttribution',source['author']+' / '+source['source']+' / '+source['license'])
         bounds=mesh.get_bounds()
         actual=[bounds.box_extent.x*2,bounds.box_extent.y*2,bounds.box_extent.z*2]
         # glTF uses metres/Y up; Unreal uses centimetres/Z up.

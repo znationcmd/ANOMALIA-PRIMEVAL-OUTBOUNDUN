@@ -48,7 +48,7 @@ try:
     if mapfile.exists():raise RuntimeError('Map already exists, preserved. Inspect it or choose a new version; no overwrite.')
     mat=material() # Validate and save graph BEFORE creating any level file.
     if not level.new_level(PACKAGE,is_partitioned_world=True):raise RuntimeError('World Partition map creation failed')
-    terrain=unreal.AnomaliaWorldImportLibrary.create_archipelago_landscape()
+    terrain=unreal.AnomaliaZPrigimaliaWorldImportLibrary.create_archipelago_landscape()
     if not terrain:raise RuntimeError('Native landscape import failed')
     proxies=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
     count=collision=0
@@ -78,7 +78,7 @@ try:
     spawn=None
     for east in range(-17000,13000,50):
         north=-10000
-        height=unreal.AnomaliaWorldImportLibrary.archipelago_height(east,north)
+        height=unreal.AnomaliaZPrigimaliaWorldImportLibrary.archipelago_height(east,north)
         if 3<height<12:
             spawn=unreal.Vector(east*100,-north*100,height*100+110);break
     if spawn is None:raise RuntimeError('No safe beach spawn found')

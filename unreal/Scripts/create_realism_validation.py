@@ -20,7 +20,7 @@ try:
         if not source.resolve().is_relative_to(BASE) or hashlib.sha256(source.read_bytes()).hexdigest()!=item['sha256']:raise RuntimeError('Prepared art integrity failed')
         if unreal.EditorAssetLibrary.does_asset_exist(destination):
             mesh=unreal.load_asset(destination)
-            if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=item['sha256']:raise RuntimeError('Existing artist asset preserved: '+destination)
+            if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaRealismSha256')!=item['sha256']:raise RuntimeError('Existing artist asset preserved: '+destination)
         else:
             task=unreal.AssetImportTask();task.filename=str(source);task.destination_path='/Game/Anomalia/VisualValidation_v1/Imports_r2/'+item['id']
             task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
@@ -30,8 +30,8 @@ try:
             if len(candidates)!=1:raise RuntimeError('Expected one baked mesh: '+item['id']+' '+str(len(candidates)))
             mesh=unreal.EditorAssetLibrary.duplicate_asset(candidates[0].get_path_name(),destination)
             if not mesh:raise RuntimeError('Cannot create canonical review mesh')
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaRealismSha256',item['sha256'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaAttribution',item['author']+' / '+item['license']+' / '+item['source'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaRealismSha256',item['sha256'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaAttribution',item['author']+' / '+item['license']+' / '+item['source'])
             if item['triangles']>20000 and item['id'] not in ('forest_ground_04','detached_house'):
                 options=unreal.StaticMeshReductionOptions()
                 options.auto_compute_lod_screen_size=False
@@ -80,7 +80,7 @@ try:
         x=-7000+(i%8)*1900;y=3300+(i//8)*700
         mesh('ReviewGrass_'+str(i),'grass_medium_01',(x,y,2),scale=1.1,yaw=i*37)
     for i,pos in enumerate([(-4000,3000,0),(4500,4500,0),(-5500,-4200,0)]):mesh('ReviewRock_'+str(i),'rock_moss_set_01',pos,yaw=i*73)
-    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+    cls=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
     car=spawn(cls,'ReviewDriveableCar',(1600,-1500,160));car.set_editor_property('presentation_mesh_override',meshes['concept_car']);car.set_editor_property('presentation_yaw_degrees',90.)
     if not car.configure_vehicle(unreal.Name('car')) or car.body.get_editor_property('static_mesh')!=meshes['concept_car']:raise RuntimeError('Detailed car not bound to real vehicle systems')
     truck=spawn(cls,'ReviewDriveableTruck',(-1800,-1500,160));truck.set_editor_property('presentation_mesh_override',meshes['box_truck']);truck.set_editor_property('presentation_yaw_degrees',90.)

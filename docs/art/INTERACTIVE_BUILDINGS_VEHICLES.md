@@ -18,7 +18,7 @@ assets. No DayZ model, protected implementation or game-specific config is copie
 - Large-world replacement houses are static scanned **exteriors**. Source hashes,
   material bindings and placement checks do not prove accessible interiors. No
   automatic promotion to an enterable building is allowed.
-- `AnomaliaVehiclePawn` uses a sphere root and `FloatingPawnMovement` for road
+- `AnomaliaZPrigimaliaVehiclePawn` uses a sphere root and `FloatingPawnMovement` for road
   vehicles. Visual overrides cannot supply real wheels, suspension, differentials
   or transmission. Its current behaviour remains a prototype, not Chaos validation.
 - Legacy crew interaction used the actor centre with a 450 cm radius; exit blindly
@@ -28,7 +28,7 @@ assets. No DayZ model, protected implementation or game-specific config is copie
 
 ## This implementation
 
-- `AnomaliaDoorActor`: separate mobile leaf around a hinge, configurable dimensions
+- `AnomaliaZPrigimaliaDoorActor`: separate mobile leaf around a hinge, configurable dimensions
   and signed opening angle, server distance and line-of-sight checks, replicated
   lock/angle/obstruction, collision checked along the moving leaf arc. Server-side
   survivor interaction targets the actual visible door. No arbitrary client target.

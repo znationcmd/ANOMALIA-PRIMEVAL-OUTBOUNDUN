@@ -8,7 +8,7 @@ $Generator = Join-Path $PSScriptRoot "generate-playtest-terrain.py"
 $Script = Join-Path $PSScriptRoot "create-terrain-draft-level.py"
 $Editor = Join-Path $EngineRoot "Engine\Binaries\Win64\UnrealEditor-Cmd.exe"
 $Output = Join-Path $Repository "unreal\TerrainPreview"
-$Report = Join-Path $Repository "unreal\Saved\AnomaliaMigration\draft-level-report.json"
+$Report = Join-Path $Repository "unreal\Saved\AnomaliaZPrigimaliaMigration\draft-level-report.json"
 foreach ($Required in @($Game, $Generator, $Script, $Editor)) {
   if (!(Test-Path -LiteralPath $Required -PathType Leaf)) {
     throw "File missing: $Required"

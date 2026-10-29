@@ -54,7 +54,7 @@ try {
     if (-not (Test-Path -LiteralPath $target)) {
         $stage = Join-Path $versions ('.staging-' + [Guid]::NewGuid().ToString('N'))
         . (Join-Path $SourceRoot 'scripts/ue5/differential-version-store.ps1')
-        $diff=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $source -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Intermediate','DerivedDataCache','.vs')
+        $diff=Invoke-AnomaliaZPrigimaliaDifferentialVersionStage -SourceRoot $source -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Intermediate','DerivedDataCache','.vs')
         $report.differentialInstall=$diff
         foreach ($relative in $critical) {
             $from=Join-Path $source $relative;$to=Join-Path $stage $relative
@@ -83,7 +83,7 @@ try {
     $bootstrap = Join-Path $base 'bootstrap';New-Item -ItemType Directory -Path $bootstrap -Force | Out-Null
     $ownerState=Get-Content -LiteralPath $owner -Raw | ConvertFrom-Json
     $newHashes=@{}
-    foreach ($name in @('Launch-AnomaliaUE5.ps1','Launch-AnomaliaUE5.vbs')) {
+    foreach ($name in @('Launch-AnomaliaZPrigimaliaUE5.ps1','Launch-AnomaliaZPrigimaliaUE5.vbs')) {
         $from=Join-Path $SourceRoot "distribution/windows-editor/$name";$to=Join-Path $bootstrap $name
         $newHash=(Get-FileHash -LiteralPath $from -Algorithm SHA256).Hash
         if (Test-Path -LiteralPath $to) {
@@ -91,7 +91,7 @@ try {
             $registered=$null
             if ($null -ne $ownerState.bootstrapSHA) { $registered=$ownerState.bootstrapSHA.$name }
             # Accept only registered bytes or this exact first shipped launcher.
-            $firstShipped=if ($name -eq 'Launch-AnomaliaUE5.ps1') { @('4F47639732D67BFEF9FAEADF612523F257631816E5FC6DAC63C17DF66533E7CE','479DF1FA241DED7B2AEB352736322C41DFDF26D5F20685ADEF892E611B223105') } else { @($newHash) }
+            $firstShipped=if ($name -eq 'Launch-AnomaliaZPrigimaliaUE5.ps1') { @('4F47639732D67BFEF9FAEADF612523F257631816E5FC6DAC63C17DF66533E7CE','479DF1FA241DED7B2AEB352736322C41DFDF26D5F20685ADEF892E611B223105') } else { @($newHash) }
             if ($currentHash -ne $newHash -and $currentHash -ne $registered -and $firstShipped -notcontains $currentHash) { throw 'Modified launcher preserved; inspect before updating it.' }
             if ($currentHash -ne $newHash) {
                 $historyDir=Join-Path $base ('bootstrap-history/'+[Guid]::NewGuid().ToString('N'));New-Item -ItemType Directory -Path $historyDir -Force | Out-Null
@@ -131,7 +131,7 @@ try {
     $desktop = [Environment]::GetFolderPath('Desktop')
     $link=Join-Path $desktop 'ANOMALIA - Unreal.lnk'
     $wscript=Join-Path $env:WINDIR 'System32/wscript.exe'
-    $launcher=Join-Path $bootstrap 'Launch-AnomaliaUE5.vbs'
+    $launcher=Join-Path $bootstrap 'Launch-AnomaliaZPrigimaliaUE5.vbs'
     if (Test-Path -LiteralPath $link) {
         $existing=$shell.CreateShortcut($link)
         if ($existing.Arguments -ne ('"'+$launcher+'"')) { throw 'Existing unrelated desktop shortcut preserved.' }
@@ -141,7 +141,7 @@ try {
     # Restart the existing trusted repository runner at Windows sign-in; stop none.
     $runnerRoot=([IO.Path]::GetFullPath((Join-Path $env:RUNNER_WORKSPACE '../..'))).TrimEnd([IO.Path]::DirectorySeparatorChar)
     if (-not (Test-Path -LiteralPath (Join-Path $runnerRoot 'run.cmd'))) { throw 'Existing runner root not found.' }
-    $runnerScript=Join-Path $bootstrap 'Start-AnomaliaRunner.vbs'
+    $runnerScript=Join-Path $bootstrap 'Start-AnomaliaZPrigimaliaRunner.vbs'
     $vbRoot=$runnerRoot.Replace('"','""')
     $vb=@"
 Option Explicit

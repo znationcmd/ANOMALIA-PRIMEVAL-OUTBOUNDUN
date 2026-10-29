@@ -1,6 +1,6 @@
 # P0 — Déplacement tactique d'ANOMALIA (UE5)
 
-Cette modification agit sur le **vrai** `AAnomaliaSurvivor`. Elle réutilise `UAnomaliaVitalsComponent` pour l'endurance, `UAnomaliaInventoryComponent` pour le poids, `UAnomaliaItemEffectsComponent` pour les conséquences de blessures/douleurs et `UCharacterMovementComponent` pour la capsule, sans ajouter une seconde endurance.
+Cette modification agit sur le **vrai** `AAnomaliaZPrigimaliaSurvivor`. Elle réutilise `UAnomaliaZPrigimaliaVitalsComponent` pour l'endurance, `UAnomaliaZPrigimaliaInventoryComponent` pour le poids, `UAnomaliaZPrigimaliaItemEffectsComponent` pour les conséquences de blessures/douleurs et `UCharacterMovementComponent` pour la capsule, sans ajouter une seconde endurance.
 
 ## Intégré dans le code (validation native attendue)
 

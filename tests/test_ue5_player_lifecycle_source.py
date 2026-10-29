@@ -2,8 +2,8 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-GAME_MODE_HEADER = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.h").read_text(encoding="utf-8")
-GAME_MODE_SOURCE = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp").read_text(encoding="utf-8")
+GAME_MODE_HEADER = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.h").read_text(encoding="utf-8")
+GAME_MODE_SOURCE = (ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
 
 
 class UE5PlayerLifecyclePersistenceTests(unittest.TestCase):

@@ -56,7 +56,7 @@ try:
         item=models[ident];file=(source/item['file']).resolve()
         if not file.is_relative_to(source) or digest(file)!=item['sha256']:raise RuntimeError('Prepared scan checksum mismatch: '+ident)
         mesh=unreal.load_asset(item['objectPath'])
-        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaWorldFeatureSha256')!=item['sha256']:
+        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaWorldFeatureSha256')!=item['sha256']:
             raise RuntimeError('Verified imported scanned house required: '+ident)
         materials=mesh.get_editor_property('static_materials')
         if not materials or any(not slot.material_interface for slot in materials):raise RuntimeError('Scanned house material missing')
@@ -64,10 +64,10 @@ try:
     base=json.loads((ROOT/'SourceAssets/RealismValidation_v2/manifest.json').read_text())
     original=next(m for m in base['models'] if m['id']=='detached_house')
     old_mesh=unreal.load_asset(original['objectPath']+'_r2')
-    if not old_mesh or unreal.EditorAssetLibrary.get_metadata_tag(old_mesh,'AnomaliaRealismSha256')!=original['sha256']:
+    if not old_mesh or unreal.EditorAssetLibrary.get_metadata_tag(old_mesh,'AnomaliaZPrigimaliaRealismSha256')!=original['sha256']:
         raise RuntimeError('Known original generated-house mesh required')
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);wp=unreal.AnomaliaWorldImportLibrary
+    actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);wp=unreal.AnomaliaZPrigimaliaWorldImportLibrary
     if not level.load_level(PACKAGE):raise RuntimeError('Existing populated world did not open')
     snapshot=json.loads(wp.get_archipelago_actor_descriptors())
     if snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
@@ -77,7 +77,7 @@ try:
     initially_loaded={a.get_actor_label() for a in actors.get_all_level_actors()}
     def height(east,north):
         # Do not retain UE 5.8 bound native callables in cached Python closures.
-        return unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(east,north)
+        return unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height(east,north)
     surface=ground.sampled_surface(height)
     records={};stats={'already':0,'replace':0,'artist-edit':0,'expanded-footprint-relief':0,'wet-or-high':0}
     def batch(start):

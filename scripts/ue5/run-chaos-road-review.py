@@ -32,11 +32,11 @@ def main():
     # Run the unchanged physical acceptance gates without that observer overhead.
     # Phase/final screenshots are still captured by the probe. Recording is an
     # explicit additional run, not a condition for proving actual wheel physics.
-    capture=['-AnomaliaRecordDriving'] if args.record_driving else []
+    capture=['-AnomaliaZPrigimaliaRecordDriving'] if args.record_driving else []
     suspension=(['-ini:Engine:[ConsoleVariables]:p.Vehicle.DisableConstraintSuspension=1',
-        '-AnomaliaForceSuspensionReview'] if args.force_suspension else [])
-    run('drive',[report['map']+'?AnomaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720',
-        '-AnomaliaChaosProbe='+str(out/'drive-report.json'),*capture,*suspension],900)
+        '-AnomaliaZPrigimaliaForceSuspensionReview'] if args.force_suspension else [])
+    run('drive',[report['map']+'?AnomaliaZPrigimaliaServerId='+scope,'-game','-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720',
+        '-AnomaliaZPrigimaliaChaosProbe='+str(out/'drive-report.json'),*capture,*suspension],900)
     drive=json.loads((out/'drive-report.json').read_text(encoding='utf-8-sig'))
     if drive['state']!='CHAOS_ROAD_PHYSICS_DRIVE_PASSED' or len(drive['physicsSamples'])<30:
         raise RuntimeError('Actual Chaos driving failed: '+str(drive.get('error')))

@@ -4900,7 +4900,7 @@
       "stairs",
       "ramp"
     ],
-    "homesteadSource": "unreal/Source/AnomaliaZPrigimalia/AnomaliaHomesteadStation.h",
+    "homesteadSource": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaHomesteadStation.h",
     "homesteadObjects": [
       "Bed",
       "Table",

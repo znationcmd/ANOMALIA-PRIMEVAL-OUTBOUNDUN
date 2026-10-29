@@ -21,7 +21,7 @@ try:
         destination=item['objectPath'].split('.')[0]
         existing=unreal.EditorAssetLibrary.load_asset(destination) if unreal.EditorAssetLibrary.does_asset_exist(destination) else None
         if existing:
-            if not isinstance(existing,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(existing,'AnomaliaVehicleSourceSha256')!=item['sha256']:
+            if not isinstance(existing,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(existing,'AnomaliaZPrigimaliaVehicleSourceSha256')!=item['sha256']:
                 raise RuntimeError('Refusing to overwrite an unowned or different vehicle asset: '+destination)
             mesh=existing
         else:
@@ -38,8 +38,8 @@ try:
             if len(meshes)!=1: raise RuntimeError('Expected one complete static mesh; found '+str(len(meshes)))
             mesh=unreal.EditorAssetLibrary.duplicate_asset(meshes[0].get_path_name(),destination)
             if not mesh: raise RuntimeError('Could not create canonical vehicle asset')
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaVehicleSourceSha256',item['sha256'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaAttribution',item['author']+' / '+item['license']+' / '+item['source'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaVehicleSourceSha256',item['sha256'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaAttribution',item['author']+' / '+item['license']+' / '+item['source'])
         materials=mesh.get_editor_property('static_materials')
         if not materials or any(not m.material_interface for m in materials): raise RuntimeError('Missing vehicle materials')
         bounds=mesh.get_bounds()
@@ -48,7 +48,7 @@ try:
             raise RuntimeError('Airliner scale invalid (centimetres): '+str(dimensions))
         if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,only_if_is_dirty=False): raise RuntimeError('Could not save vehicle asset')
         actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
         if not vehicle_class: raise RuntimeError('Native vehicle class not loaded')
         probe=actors.spawn_actor_from_class(vehicle_class,unreal.Vector(0,0,500),transient=True)
         if not probe: raise RuntimeError('Could not spawn a transient presentation probe')

@@ -165,7 +165,7 @@ nouveaux véhicules actifs en doublon. Les dates/noms fournis restent non vérif
 - Version JS/Electron et toutes les branches existantes.
 - `unreal/Saved` du runner : profils/configurations/sauvegardes et marqueurs de migration.
 - Marqueurs `detroit-bridge-v1.json`, `detroit-roads-v1.json`, puis `detroit-roads-v2.json`
-  sous `unreal/Saved/AnomaliaMigration`.
+  sous `unreal/Saved/AnomaliaZPrigimaliaMigration`.
 - Vrai monde généré : `.umap`, `Content/__ExternalActors__`, `__ExternalObjects__`,
   `Anomalia/World/Archipelago_v2` et `Anomalia/Infrastructure` ensemble.
 - `checkout` garde `clean: false` : ne jamais nettoyer les sauvegardes ou les cartes

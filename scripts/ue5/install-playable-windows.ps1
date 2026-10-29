@@ -36,7 +36,7 @@ try {
     if (-not (Test-Path -LiteralPath $target)) {
         $stage=Join-Path $versions ('.stage-'+[Guid]::NewGuid().ToString('N'))
         . (Join-Path $PSScriptRoot 'differential-version-store.ps1')
-        $diff=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $proof.archive -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Saved-validation','Intermediate','DerivedDataCache')
+        $diff=Invoke-AnomaliaZPrigimaliaDifferentialVersionStage -SourceRoot $proof.archive -StagePath $stage -BaseVersionRoot $baseVersion -ExcludePaths @('Saved','Saved-validation','Intermediate','DerivedDataCache')
         $report.differentialInstall=$diff
         New-Item -ItemType Junction -Path (Join-Path $stage 'AnomaliaZPrigimalia/Saved') -Target $testSaved | Out-Null
         Move-Item -LiteralPath $stage -Destination $target
@@ -48,8 +48,8 @@ try {
     $scope='playable-smoke-'+[Guid]::NewGuid().ToString('N')
     $enginePython=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
     $progressArguments=@()
-    if ($proof.progressArt) { $progressArguments=@('-AnomaliaProgressArt') }
-    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=180).returncode)' $exe "/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=$scope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaPlayableProbe=$probe" @progressArguments
+    if ($proof.progressArt) { $progressArguments=@('-AnomaliaZPrigimaliaProgressArt') }
+    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=180).returncode)' $exe "/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=$scope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaZPrigimaliaPlayableProbe=$probe" @progressArguments
     if ($LASTEXITCODE -ne 0) { throw 'Installed game process failed.' }
     $native=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
     if ($native.state -ne 'PACKAGED_GAME_SMOKE_PASSED') { throw "Installed gameplay smoke failed: $($native.error)" }
@@ -60,7 +60,7 @@ try {
     $visualDir=Join-Path $ValidationDir 'installed-visual';New-Item -ItemType Directory -Path $visualDir -Force | Out-Null
     $visualProbe=Join-Path $visualDir 'review.json'
     $visualScope='visual-smoke-'+[Guid]::NewGuid().ToString('N')
-    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=300).returncode)' $exe "/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=$visualScope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaVisualReview=$visualProbe"
+    & $enginePython -c 'import subprocess,sys; sys.exit(subprocess.run(sys.argv[1:],timeout=300).returncode)' $exe "/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaZPrigimaliaServerId=$visualScope" -windowed -ResX=1280 -ResY=720 -d3d11 -sm5 -unattended -nosound "-AnomaliaZPrigimaliaVisualReview=$visualProbe"
     if ($LASTEXITCODE -ne 0) { throw 'Installed imported-art process failed.' }
     $visualNative=Get-Content -LiteralPath $visualProbe -Raw | ConvertFrom-Json
     if ($visualNative.state -ne 'PACKAGED_VISUAL_REVIEW_PASSED' -or @($visualNative.screenshots).Count -ne 8 -or -not $visualNative.dayAndNightCaptured) { throw 'Installed imported-art validation failed.' }
@@ -107,7 +107,7 @@ try {
         if (-not $shell.CreateShortcut($visualLink).TargetPath.StartsWith($versions+'\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Unrelated visual shortcut preserved.' }
     }
     $visualShortcut=$shell.CreateShortcut($visualLink);$visualShortcut.TargetPath=$exe
-    $visualShortcut.Arguments='/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=visual-review-local -d3d11 -sm5'
+    $visualShortcut.Arguments='/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaZPrigimaliaServerId=visual-review-local -d3d11 -sm5'
     $visualShortcut.WorkingDirectory=$target;$visualShortcut.Description='ANOMALIA’Z PRIGIMALIA — zone de validation des nouvelles ressources 3D';$visualShortcut.Save()
     if ($shell.CreateShortcut($visualLink).TargetPath -ne $exe) { throw 'Visual shortcut readback failed.' }
     $report.visualShortcut=$visualLink

@@ -20,8 +20,8 @@
       "default": "ANOMALIA’Z PRIGIMALIA",
       "scope": "server",
       "status": "functional",
-      "mechanism": "Chargé et sauvegardé par UAnomaliaConfigLibrary dans le dossier du serveur.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanism": "Chargé et sauvegardé par UAnomaliaZPrigimaliaConfigLibrary dans le dossier du serveur.",
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "server.port",
@@ -37,7 +37,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Validation, chargement et sauvegarde JSON; l'écoute réseau réelle n'est pas raccordée à ce champ.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "server.maxPlayers",
@@ -53,7 +53,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Chargé et sauvegardé; aucune validation serveur dédié ni test de charge ne confirme cette capacité.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "server.password",
@@ -84,7 +84,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Valeur chargée et sauvegardée; règles distinctes RP/PVP/PVE non implémentées.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "server.thirdPerson",
@@ -100,7 +100,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Champ chargé et sauvegardé; le personnage UE actuel n'a qu'une caméra de troisième personne.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "server.timeMultiplier",
@@ -116,7 +116,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Chargé et sauvegardé; aucune horloge de jeu n'applique actuellement ce multiplicateur.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaConfigLibrary.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaConfigLibrary.cpp"
     },
     {
       "id": "survival.hungerDrainPerSecond",
@@ -132,7 +132,7 @@
       "scope": "server",
       "status": "functional",
       "mechanism": "Lu par le GameMode et appliqué au Tick serveur du personnage répliqué.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaSurvivor.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSurvivor.cpp"
     },
     {
       "id": "survival.thirstDrainPerSecond",
@@ -148,7 +148,7 @@
       "scope": "server",
       "status": "functional",
       "mechanism": "Lu par le GameMode et appliqué au Tick serveur du personnage répliqué.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaSurvivor.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSurvivor.cpp"
     },
     {
       "id": "survival.starvationDamagePerSecond",
@@ -164,7 +164,7 @@
       "scope": "server",
       "status": "functional",
       "mechanism": "Lu par le GameMode et appliqué au Tick serveur du personnage répliqué.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaSurvivor.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSurvivor.cpp"
     },
     {
       "id": "survival.ambientTemperatureC",
@@ -179,8 +179,8 @@
       "default": 20,
       "scope": "server",
       "status": "partial",
-      "mechanism": "Chargé et sauvegardé par UAnomaliaConfigLibrary puis utilisé par UAnomaliaVitalsComponent. Pas encore de vêtements, météo ou cartes climatiques.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaVitalsComponent.cpp"
+      "mechanism": "Chargé et sauvegardé par UAnomaliaZPrigimaliaConfigLibrary puis utilisé par UAnomaliaZPrigimaliaVitalsComponent. Pas encore de vêtements, météo ou cartes climatiques.",
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaVitalsComponent.cpp"
     },
     {
       "id": "vehicles.spawnList",
@@ -197,7 +197,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "GameMode charge Saved/Servers/<id>/vehicles.json; les véhicules restent des prototypes génériques.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp"
     },
     {
       "id": "vehicles.fuelPercent",
@@ -213,7 +213,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Validé et appliqué au véhicule répliqué; ravitaillement et sauvegarde d'état manquent.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp"
     },
     {
       "id": "vehicles.fuelConsumptionPerSecond",
@@ -229,7 +229,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Validé puis appliqué par le prototype de véhicule répliqué.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp"
     },
     {
       "id": "vehicles.speedMultiplier",
@@ -245,7 +245,7 @@
       "scope": "server",
       "status": "partial",
       "mechanism": "Validé et appliqué au prototype de véhicule répliqué.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp"
     },
     {
       "id": "graphics.presets",
@@ -257,8 +257,8 @@
       "default": "PC_High",
       "scope": "player",
       "status": "partial",
-      "mechanism": "UAnomaliaPerformanceLibrary lit les sections et applique qualité, résolution dynamique et limite FPS; aucune validation matérielle.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaPerformanceLibrary.cpp"
+      "mechanism": "UAnomaliaZPrigimaliaPerformanceLibrary lit les sections et applique qualité, résolution dynamique et limite FPS; aucune validation matérielle.",
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaPerformanceLibrary.cpp"
     },
     {
       "id": "graphics.performanceTargets",
@@ -346,7 +346,7 @@
       "scope": "server",
       "status": "not_implemented",
       "mechanism": "Le code utilise actuellement les journaux UE LogTemp; aucun système structuré isolé par serveur.",
-      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaGameMode.cpp"
+      "mechanismPath": "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp"
     }
   ]
 }

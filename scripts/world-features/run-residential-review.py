@@ -18,10 +18,10 @@ def main():
         review = output / 'review.json'
         command = [str(args.engine_root / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),
                    str(ROOT / 'unreal/AnomaliaZPrigimalia.uproject'),
-                   '/Game/Maps/ANOMALIA_ResidentialPhotogrammetryReview_v1?AnomaliaServerId=' + scope,
+                   '/Game/Maps/ANOMALIA_ResidentialPhotogrammetryReview_v1?AnomaliaZPrigimaliaServerId=' + scope,
                    '-game', '-windowed', '-ResX=1280', '-ResY=720', '-d3d11', '-sm5',
-                   '-unattended', '-nosound', '-AnomaliaResidentialReview',
-                   '-AnomaliaVisualReview=' + str(review), '-abslog=' + str(output / 'renderer.log')]
+                   '-unattended', '-nosound', '-AnomaliaZPrigimaliaResidentialReview',
+                   '-AnomaliaZPrigimaliaVisualReview=' + str(review), '-abslog=' + str(output / 'renderer.log')]
         with (output / 'process.log').open('wb') as log:
             result = subprocess.run(command, timeout=300, stdout=log, stderr=subprocess.STDOUT)
         native = json.loads(review.read_text(encoding='utf-8-sig'))

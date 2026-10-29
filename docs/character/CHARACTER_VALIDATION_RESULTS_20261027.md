@@ -14,8 +14,8 @@
 La tentative isolée 40543166274 a réellement compilé les sources Editor, puis échoué, code de sortie 6. Game et les tests natifs n’ont pas été exécutés dans cette tentative.
 
 Erreurs constatées :
-- C2672 dans AnomaliaTacticalSpeedTests.cpp : TestNotNull ne déduit pas un pointeur à partir d’un TObjectPtr.
-- C2065 dans Vehicles/AnomaliaVehicleSurvival.cpp : DOREPLIFETIME attend le paramètre OutLifetimeProps, nommé Out dans la définition.
+- C2672 dans AnomaliaZPrigimaliaTacticalSpeedTests.cpp : TestNotNull ne déduit pas un pointeur à partir d’un TObjectPtr.
+- C2065 dans Vehicles/AnomaliaZPrigimaliaVehicleSurvival.cpp : DOREPLIFETIME attend le paramètre OutLifetimeProps, nommé Out dans la définition.
 
 Corrections enregistrées :
 - Utilisation de VitalsComponent.Get() dans le test.

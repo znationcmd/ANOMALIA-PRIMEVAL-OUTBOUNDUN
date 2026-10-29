@@ -22,9 +22,9 @@ def main():
         editor = args.engine_root / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
         scope = 'visual-smoke-' + os.environ.get('GITHUB_RUN_ID', 'manual') + '-' + os.environ.get('GITHUB_RUN_ATTEMPT', '1')
         command = [str(editor), str(ROOT / 'unreal/AnomaliaZPrigimalia.uproject'),
-                   '/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaServerId=' + scope,
+                   '/Game/Maps/ANOMALIA_VisualValidation_v1?AnomaliaZPrigimaliaServerId=' + scope,
                    '-game', '-windowed', '-ResX=1280', '-ResY=720', '-d3d11', '-sm5',
-                   '-unattended', '-nosound', '-AnomaliaVisualReview=' + str(review),
+                   '-unattended', '-nosound', '-AnomaliaZPrigimaliaVisualReview=' + str(review),
                    '-abslog=' + str(output / 'renderer.log')]
         with (output / 'process.log').open('wb') as log:
             result = subprocess.run(command, timeout=300, stdout=log, stderr=subprocess.STDOUT)

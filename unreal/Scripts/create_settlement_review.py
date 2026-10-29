@@ -19,7 +19,7 @@ try:
     # Resolve every source before creating anything, preserving any existing scene.
     for item in plan['buildings']+module.service_fleet():
         model=catalogue[item['model']];mesh=unreal.EditorAssetLibrary.load_asset(model['objectPath'])
-        tag='AnomaliaOriginalLot1SHA' if item['model'] in ['hlm_8floors_v1','beach_villa_pool_v1'] else 'AnomaliaExpansionSHA'
+        tag='AnomaliaZPrigimaliaOriginalLot1SHA' if item['model'] in ['hlm_8floors_v1','beach_villa_pool_v1'] else 'AnomaliaZPrigimaliaExpansionSHA'
         if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,tag)!=model['sha256']:
             raise RuntimeError('Missing or unverified building: '+item['model'])
         bounds=mesh.get_bounds()
@@ -29,7 +29,7 @@ try:
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem);level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     package='/Game/Maps/ANOMALIA_UrbanReview_v1'
     def deploy_services():
-        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+        vehicle_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
         if not vehicle_class:raise RuntimeError('Native possessable vehicle class unavailable')
         existing={a.get_actor_label():a for a in actors.get_all_level_actors()}
         placed=[]

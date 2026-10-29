@@ -17,9 +17,9 @@ La version JavaScript / Three.js / Electron à la racine reste inchangée et dis
 ## État du portage C++ (19 octobre 2026)
 
 **Implémenté dans le dépôt UE5 (code source, non compilé dans Unreal Editor) :**
-- `AAnomaliaGameMode` sélectionné dans `Config/DefaultEngine.ini`.
-- `AAnomaliaSurvivor` : personnage 3D de base, caméra à la troisième personne, clavier ZQSD/WASD à configurer selon le clavier, déplacement/saut, faim/soif/santé répliqués et calculés côté serveur.
-- `UAnomaliaConfigLibrary` : API accessible aux Blueprints pour charger/sauvegarder `config.json` par serveur et les profils joueurs sous `Saved/Servers/<id>/userProfile/<id>.json`. Les identifiants sont validés, les JSON contrôlés et les écritures passent par un fichier temporaire. Les champs inconnus de `config.json` sont conservés.
+- `AAnomaliaZPrigimaliaGameMode` sélectionné dans `Config/DefaultEngine.ini`.
+- `AAnomaliaZPrigimaliaSurvivor` : personnage 3D de base, caméra à la troisième personne, clavier ZQSD/WASD à configurer selon le clavier, déplacement/saut, faim/soif/santé répliqués et calculés côté serveur.
+- `UAnomaliaZPrigimaliaConfigLibrary` : API accessible aux Blueprints pour charger/sauvegarder `config.json` par serveur et les profils joueurs sous `Saved/Servers/<id>/userProfile/<id>.json`. Les identifiants sont validés, les JSON contrôlés et les écritures passent par un fichier temporaire. Les champs inconnus de `config.json` sont conservés.
 - `Config/AnomaliaZPrigimalia/config.json` : modèle UE5 du fichier principal, avec port, nom, places, mode RP/PVP/PVE/mixte et multiplicateur de temps.
 - `scripts/migrate-to-ue5.py` : copie non destructive de **tous** les fichiers `public/config` dans `unreal/Config/AnomaliaZPrigimalia/Legacy`. Les doublons identiques sont ignorés, les conflits sont signalés sans écraser les données. Commande à la racine : `python scripts/migrate-to-ue5.py`.
 
@@ -46,9 +46,9 @@ fichiers DayZ/ARK et formats `.pbo`, `.paa`, `.edds`, `.ark`, `.c`, `.uasset` et
 exécutables par UE5. Les contrôles `tests/test_ue5_config_catalog.py` vérifient
 les valeurs de configuration contre les modèles et chemins de code présents.
 
-- `UAnomaliaVehicleCatalog` : **27 définitions uniques** accessibles dans les Blueprints, couvrant camions/remorques, quads, buggys, motoneiges, motos, karting, F1, SUV, fourgons, police/gendarmerie, pompiers, ambulance, blindés, monster trucks, jet-skis, zodiaques, porte-avions, navires de guerre, sous-marins, avions de chasse et hélicoptères. Les valeurs de vitesse, places et stockage sont des valeurs initiales **ajustables**, pas des performances simulées.
-- `AAnomaliaVehiclePawn` : prototype C++ **possédable et répliqué**, caméra troisième personne, commandes avant/arrière/direction, validation de l'identifiant de véhicule par le serveur, déplacements calculés côté serveur. Il faut créer des Blueprints enfants, attribuer les vrais modèles 3D, collisions et animations, et programmer la montée/descente.
-- `AAnomaliaGameMode::SpawnServerVehicle` : création d'un véhicule par **logique serveur de confiance** ; pas de RPC public autorisant n'importe quel joueur à créer un véhicule.
+- `UAnomaliaZPrigimaliaVehicleCatalog` : **27 définitions uniques** accessibles dans les Blueprints, couvrant camions/remorques, quads, buggys, motoneiges, motos, karting, F1, SUV, fourgons, police/gendarmerie, pompiers, ambulance, blindés, monster trucks, jet-skis, zodiaques, porte-avions, navires de guerre, sous-marins, avions de chasse et hélicoptères. Les valeurs de vitesse, places et stockage sont des valeurs initiales **ajustables**, pas des performances simulées.
+- `AAnomaliaZPrigimaliaVehiclePawn` : prototype C++ **possédable et répliqué**, caméra troisième personne, commandes avant/arrière/direction, validation de l'identifiant de véhicule par le serveur, déplacements calculés côté serveur. Il faut créer des Blueprints enfants, attribuer les vrais modèles 3D, collisions et animations, et programmer la montée/descente.
+- `AAnomaliaZPrigimaliaGameMode::SpawnServerVehicle` : création d'un véhicule par **logique serveur de confiance** ; pas de RPC public autorisant n'importe quel joueur à créer un véhicule.
 - `tests/test_unreal_port.py` et workflow `ue5-source-checks.yml` : contrôles statiques de la liste des véhicules et de l'importation non destructive. **Ce ne sont pas des tests de compilation UE5.**
 
 **Limites actuelles :** la conduite est une première base `UFloatingPawnMovement` générique. La physique des roues Chaos, les remorques articulées, la flottabilité des navires, la plongée des sous-marins, les vols, le carburant, les armes, les passagers et la persistance des véhicules **ne sont pas encore implémentés**. Les 27 définitions ne sont pas 27 véhicules finis ou photoréalistes. La compilation Unreal Engine 5 sur Windows reste indispensable.
@@ -62,9 +62,9 @@ les valeurs de configuration contre les modèles et chemins de code présents.
 
 ## Lot suivant — carburant et paramètres isolés (19 octobre 2026)
 
-- `AAnomaliaVehiclePawn` : jauge `FuelPercent` répliquée, consommation uniquement sur le serveur quand le conducteur accélère, arrêt de la propulsion et de la direction lorsque le carburant est épuisé. Le taux `FuelConsumptionPerSecond` est personnalisable dans les Blueprints enfants.
+- `AAnomaliaZPrigimaliaVehiclePawn` : jauge `FuelPercent` répliquée, consommation uniquement sur le serveur quand le conducteur accélère, arrêt de la propulsion et de la direction lorsque le carburant est épuisé. Le taux `FuelConsumptionPerSecond` est personnalisable dans les Blueprints enfants.
 - `RefuelOnServer` : API de ravitaillement réservée à une logique serveur de confiance ; aucun RPC client public permettant de s'attribuer du carburant. Il reste à développer les stations-service, réservoirs, consommation propre à chaque véhicule et sauvegarde du carburant.
-- `AAnomaliaGameMode::InitGame` : lit les paramètres propres au serveur via l'option de lancement `?AnomaliaServerId=rp-corse` et `Saved/Servers/rp-corse/config.json`. Les identifiants sont validés ; aucune modification automatique d'un fichier malformé.
+- `AAnomaliaZPrigimaliaGameMode::InitGame` : lit les paramètres propres au serveur via l'option de lancement `?AnomaliaZPrigimaliaServerId=rp-corse` et `Saved/Servers/rp-corse/config.json`. Les identifiants sont validés ; aucune modification automatique d'un fichier malformé.
 - Les tests `tests/test_unreal_port.py` contrôlent ces garanties **statiquement**. La compilation, la physique, le multijoueur et l'exécution sous UE5 restent à vérifier dans Unreal Editor sur Windows.
 
 ## Démarrage
@@ -96,7 +96,7 @@ Le GameMode UE5 lit désormais **uniquement** `Saved/Servers/<identifiant>/vehic
 
 - Le fichier `Saved/Servers/<id>/config.json` accepte maintenant une section `survival` : `hungerDrainPerSecond`, `thirstDrainPerSecond`, `starvationDamagePerSecond`.
 - Les valeurs sont bornées entre 0 et 10, avec conservation des valeurs historiques si la section est absente. Les propriétés inconnues sont conservées lors d'un enregistrement : pas de fusion destructrice.
-- `AAnomaliaSurvivor::Tick` lit les règles du `AAnomaliaGameMode` **côté serveur uniquement** et réplique la faim, la soif et la santé aux joueurs. Deux serveurs avec des identifiants différents peuvent donc appliquer des règles de survie distinctes.
+- `AAnomaliaZPrigimaliaSurvivor::Tick` lit les règles du `AAnomaliaZPrigimaliaGameMode` **côté serveur uniquement** et réplique la faim, la soif et la santé aux joueurs. Deux serveurs avec des identifiants différents peuvent donc appliquer des règles de survie distinctes.
 - Le modèle est dans `Config/AnomaliaZPrigimalia/config.json`. Ne pas modifier les fichiers d'un autre serveur ni effacer les sauvegardes existantes.
 - Les tests GitHub vérifient statiquement ce raccordement ; **aucune compilation UE5 native ni test de partie multijoueur n'a été exécuté ici**.
 
@@ -128,7 +128,7 @@ Ajouter cette section au `config.json` du serveur concerné, sans supprimer les 
 
 ### Sélection des réglages depuis l'interface du jeu
 
-Le nouveau `UAnomaliaPerformanceLibrary` expose `GetGraphicsPresets` et `ApplyGraphicsPreset` aux Blueprints. Il lit les sections `[Anomalia.*]` de `Config/DefaultGame.ini` (config standard embarquée dans les builds), puis applique localement les niveaux de qualité, l'échelle de rendu, la résolution dynamique et la limite de 60 FPS. Les préférences sont enregistrées dans `GameUserSettings.ini` **du joueur uniquement**, sans écrire dans `Saved/Servers/<id>`. La fenêtre de paramètres UMG et les contrôles manette restent à réaliser. Les profils PS5/Series X sont des points de départ, non des optimisations validées.
+Le nouveau `UAnomaliaZPrigimaliaPerformanceLibrary` expose `GetGraphicsPresets` et `ApplyGraphicsPreset` aux Blueprints. Il lit les sections `[Anomalia.*]` de `Config/DefaultGame.ini` (config standard embarquée dans les builds), puis applique localement les niveaux de qualité, l'échelle de rendu, la résolution dynamique et la limite de 60 FPS. Les préférences sont enregistrées dans `GameUserSettings.ini` **du joueur uniquement**, sans écrire dans `Saved/Servers/<id>`. La fenêtre de paramètres UMG et les contrôles manette restent à réaliser. Les profils PS5/Series X sont des points de départ, non des optimisations validées.
 
 ## Lot 1 — compilation native reproductible (19 octobre 2026)
 
@@ -204,12 +204,12 @@ Pour l’import manuel dans UE5 : générer le dossier, créer un nouveau niveau
 avec World Partition, passer en mode Landscape > Import from File et sélectionner
 `height_x0_y0.r16`. Régler l’échelle de paysage à environ X/Y `396.8254` et Z
 `200`, vérifier l’assemblage des 144 tuiles, l’orientation nord/sud et le niveau
-de la mer, puis enregistrer sous `/Game/Maps/AnomaliaWorld`. Cette opération
+de la mer, puis enregistrer sous `/Game/Maps/AnomaliaZPrigimaliaWorld`. Cette opération
 reste à effectuer dans l’éditeur ; elle n’est pas exécutée par le générateur.
 
 ## Lot suivant — modèle d’inventaire UE5
 
-`UAnomaliaInventoryComponent` est créé sur chaque survivant UE5. Il ajoute un
+`UAnomaliaZPrigimaliaInventoryComponent` est créé sur chaque survivant UE5. Il ajoute un
 modèle répliqué de piles, compartiments, poids, déplacement avec rotation,
 ajout et retrait atomiques, séparation et fusion. Les mutations refusent
 les appels sans autorité serveur ; les ajouts sont atomiques si le poids ou la

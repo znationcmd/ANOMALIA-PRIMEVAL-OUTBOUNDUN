@@ -11,13 +11,13 @@ SOURCE = ROOT / "unreal" / "Source" / "AnomaliaZPrigimalia"
 class UnrealPortTests(unittest.TestCase):
     def test_project_and_cpp_module_present(self):
         self.assertTrue((ROOT / "unreal" / "AnomaliaZPrigimalia.uproject").is_file())
-        for name in ["AnomaliaGameMode", "AnomaliaSurvivor",
-                     "AnomaliaConfigLibrary", "AnomaliaVehicleCatalog", "AnomaliaVehiclePawn"]:
+        for name in ["AnomaliaZPrigimaliaGameMode", "AnomaliaZPrigimaliaSurvivor",
+                     "AnomaliaZPrigimaliaConfigLibrary", "AnomaliaZPrigimaliaVehicleCatalog", "AnomaliaZPrigimaliaVehiclePawn"]:
             self.assertTrue((SOURCE / (name + ".h")).is_file(), name)
             self.assertTrue((SOURCE / (name + ".cpp")).is_file(), name)
 
     def test_requested_vehicle_catalog_is_unique(self):
-        cpp = (SOURCE / "AnomaliaVehicleCatalog.cpp").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaVehicleCatalog.cpp").read_text(encoding="utf-8")
         ids = re.findall(r'MakeVehicle\(TEXT\("([^"]+)"\)', cpp)
         self.assertEqual(len(ids), 45)
         self.assertEqual(len(set(ids)), len(ids))
@@ -30,18 +30,18 @@ class UnrealPortTests(unittest.TestCase):
             self.assertIn(expected, ids)
 
     def test_server_isolation_and_no_cross_server_writes(self):
-        cpp = (SOURCE / "AnomaliaConfigLibrary.cpp").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaConfigLibrary.cpp").read_text(encoding="utf-8")
         self.assertIn('TEXT("Servers")', cpp)
         self.assertIn('TEXT("userProfile")', cpp)
         self.assertIn("ValidId(ServerId)", cpp)
-        pawn = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        pawn = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.cpp").read_text(encoding="utf-8")
         self.assertIn("HasAuthority()", pawn)
         self.assertIn("DOREPLIFETIME", pawn)
         self.assertIn("ServerSetControls_Implementation", pawn)
 
     def test_vehicle_interaction_is_server_authoritative(self):
-        survivor = (SOURCE / "AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
-        vehicle = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        survivor = (SOURCE / "AnomaliaZPrigimaliaSurvivor.cpp").read_text(encoding="utf-8")
+        vehicle = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.cpp").read_text(encoding="utf-8")
         inputs = (ROOT / "unreal" / "Config" / "DefaultInput.ini").read_text(encoding="utf-8")
         self.assertIn('ActionName="Interact",Key=E', inputs)
         self.assertIn("ServerTryEnterVehicle_Implementation", survivor)
@@ -54,22 +54,22 @@ class UnrealPortTests(unittest.TestCase):
         self.assertNotIn("Survivor->Destroy()", vehicle)
 
     def test_vehicle_fuel_is_server_authoritative_and_replicated(self):
-        header = (SOURCE / "AnomaliaVehiclePawn.h").read_text(encoding="utf-8")
-        cpp = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.h").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.cpp").read_text(encoding="utf-8")
         self.assertIn("ReplicatedUsing=OnRep_Fuel", header)
         self.assertIn("BlueprintAuthorityOnly", header)
         self.assertIn("FuelConsumptionPerSecond", header)
         self.assertIn("HasAuthority() || !FMath::IsFinite(AmountPercent)", cpp)
-        self.assertIn("DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent)", cpp)
+        self.assertIn("DOREPLIFETIME(AAnomaliaZPrigimaliaVehiclePawn, FuelPercent)", cpp)
         self.assertIn("FuelPercent > KINDA_SMALL_NUMBER", cpp)
         self.assertIn("OnFuelChanged(FuelPercent)", cpp)
         self.assertNotIn("ServerRefuel", header)  # no unrestricted client refuel RPC
 
     def test_vehicle_tuning_is_scoped_validated_and_replicated(self):
         import json
-        game_mode = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
-        header = (SOURCE / "AnomaliaVehiclePawn.h").read_text(encoding="utf-8")
-        pawn = (SOURCE / "AnomaliaVehiclePawn.cpp").read_text(encoding="utf-8")
+        game_mode = (SOURCE / "AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.h").read_text(encoding="utf-8")
+        pawn = (SOURCE / "AnomaliaZPrigimaliaVehiclePawn.cpp").read_text(encoding="utf-8")
         template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "vehicles.example.json").read_text(encoding="utf-8"))
         for key in ("fuelPercent", "fuelConsumptionPerSecond", "speedMultiplier"):
             self.assertIn(key, template["vehicles"][0])
@@ -79,23 +79,23 @@ class UnrealPortTests(unittest.TestCase):
         self.assertIn("HasAuthority()", pawn)
         self.assertIn("FMath::IsFinite(InitialFuelPercent)", pawn)
         self.assertIn("SpeedMultiplier * (100000.f / 3600.f)", pawn)
-        self.assertIn("DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier)", pawn)
+        self.assertIn("DOREPLIFETIME(AAnomaliaZPrigimaliaVehiclePawn, SpeedMultiplier)", pawn)
         self.assertIn("ReplicatedUsing=OnRep_Tuning", header)
         self.assertNotIn("ServerSetFuel", header)
 
     def test_game_mode_loads_independent_server_config(self):
-        header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
-        cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
-        self.assertIn("FAnomaliaServerSettings ActiveServerSettings", header)
+        header = (SOURCE / "AnomaliaZPrigimaliaGameMode.h").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
+        self.assertIn("FAnomaliaZPrigimaliaServerSettings ActiveServerSettings", header)
         self.assertIn("virtual void InitGame(", header)
-        self.assertIn('ParseOption(Options, TEXT("AnomaliaServerId"))', cpp)
+        self.assertIn('ParseOption(Options, TEXT("AnomaliaZPrigimaliaServerId"))', cpp)
         self.assertIn("RequestedId.Len() <= 64", cpp)
         self.assertIn("LoadServerSettings(ServerId, ActiveServerSettings", cpp)
         self.assertNotIn("SaveServerSettings(ServerId", cpp)
 
     def test_vehicle_spawns_are_bounded_and_server_scoped(self):
-        cpp = (SOURCE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
-        header = (SOURCE / "AnomaliaGameMode.h").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaZPrigimaliaGameMode.h").read_text(encoding="utf-8")
         self.assertIn("SpawnConfiguredVehicles()", header)
         self.assertRegex(cpp, r"if\s*\(HasAuthority\(\)\)\s*\{\s*SpawnConfiguredHomestead\(\);\s*SpawnConfiguredVehicles\(\);")
         self.assertIn('TEXT("Servers"), ServerId, TEXT("vehicles.json")', cpp)
@@ -114,9 +114,9 @@ class UnrealPortTests(unittest.TestCase):
         template = json.loads((ROOT / "unreal" / "Config" / "Anomalia" / "config.json").read_text(encoding="utf-8"))
         self.assertEqual(template["survival"]["hungerDrainPerSecond"], 0.015)
         self.assertEqual(template["survival"]["thirstDrainPerSecond"], 0.025)
-        header = (SOURCE / "AnomaliaConfigLibrary.h").read_text(encoding="utf-8")
-        loader = (SOURCE / "AnomaliaConfigLibrary.cpp").read_text(encoding="utf-8")
-        survivor = (SOURCE / "AnomaliaSurvivor.cpp").read_text(encoding="utf-8")
+        header = (SOURCE / "AnomaliaZPrigimaliaConfigLibrary.h").read_text(encoding="utf-8")
+        loader = (SOURCE / "AnomaliaZPrigimaliaConfigLibrary.cpp").read_text(encoding="utf-8")
+        survivor = (SOURCE / "AnomaliaZPrigimaliaSurvivor.cpp").read_text(encoding="utf-8")
         for name in ("HungerDrainPerSecond", "ThirstDrainPerSecond", "StarvationDamagePerSecond"):
             self.assertIn(name, header)
             self.assertIn(name, loader)
@@ -142,7 +142,7 @@ class UnrealPortTests(unittest.TestCase):
             minimum = presets.getint(section, "RenderScaleMin")
             maximum = presets.getint(section, "RenderScaleMax")
             self.assertTrue(25 <= minimum <= maximum <= 100)
-        cpp = (SOURCE / "AnomaliaPerformanceLibrary.cpp").read_text(encoding="utf-8")
+        cpp = (SOURCE / "AnomaliaZPrigimaliaPerformanceLibrary.cpp").read_text(encoding="utf-8")
         self.assertIn("GGameIni", cpp)
         self.assertIn("SaveSettings()", cpp)
         self.assertNotIn("SaveServerSettings", cpp)

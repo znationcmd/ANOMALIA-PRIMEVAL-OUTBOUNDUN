@@ -20,10 +20,10 @@ def main():
                     templates.append(dict(path=str(file.relative_to(a.engine_root)),bytes=file.stat().st_size))
         report['installedVehicleTemplateFiles']=templates[:60]
         command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaZPrigimalia.uproject'),
-            '/Game/Maps/ANOMALIA_Playable_v1?AnomaliaServerId=playable-smoke-'+uuid.uuid4().hex,
+            '/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-'+uuid.uuid4().hex,
             '-game','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound',
-            '-AnomaliaPlayableProbe='+str(proof),'-abslog='+str(out/'engine.log')]
-        if a.progress_art: command.append('-AnomaliaProgressArt')
+            '-AnomaliaZPrigimaliaPlayableProbe='+str(proof),'-abslog='+str(out/'engine.log')]
+        if a.progress_art: command.append('-AnomaliaZPrigimaliaProgressArt')
         with (out/'process.log').open('w',encoding='utf-8') as stream:
             run=subprocess.run(command,stdout=stream,stderr=subprocess.STDOUT,timeout=180,check=False)
         report['exitCode']=run.returncode

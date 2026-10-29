@@ -37,7 +37,7 @@ try:
         if not actor or OWNER not in actor.tags:
             raise RuntimeError('Imported review actor missing')
         mesh = actor.static_mesh_component.get_editor_property('static_mesh')
-        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaWorldFeatureSha256') != item['sha256']:
+        if not mesh or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaWorldFeatureSha256') != item['sha256']:
             raise RuntimeError('Native candidate source identity mismatch')
         settings = editor.get_nanite_settings(mesh)
         settings.set_editor_property('enabled', False)

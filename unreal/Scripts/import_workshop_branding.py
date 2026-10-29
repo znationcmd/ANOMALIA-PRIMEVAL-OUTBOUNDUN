@@ -10,7 +10,7 @@ if not source.is_file():
     raise RuntimeError("Workshop logo is missing: " + str(source))
 source_sha = hashlib.sha256(source.read_bytes()).hexdigest()
 texture = unreal.load_asset(destination) if unreal.EditorAssetLibrary.does_asset_exist(destination) else None
-if texture and unreal.EditorAssetLibrary.get_metadata_tag(texture, "AnomaliaWorkshopLogoSha256") != source_sha:
+if texture and unreal.EditorAssetLibrary.get_metadata_tag(texture, "AnomaliaZPrigimaliaWorkshopLogoSha256") != source_sha:
     raise RuntimeError("Existing workshop artwork differs: preserving current file")
 if not texture:
     task = unreal.AssetImportTask()
@@ -27,7 +27,7 @@ if not isinstance(texture, unreal.Texture2D):
 texture.set_editor_property("lod_group", unreal.TextureGroup.TEXTUREGROUP_UI)
 texture.set_editor_property("never_stream", True)
 texture.set_editor_property("srgb", True)
-unreal.EditorAssetLibrary.set_metadata_tag(texture, "AnomaliaWorkshopLogoSha256", source_sha)
+unreal.EditorAssetLibrary.set_metadata_tag(texture, "AnomaliaZPrigimaliaWorkshopLogoSha256", source_sha)
 if not unreal.EditorAssetLibrary.save_loaded_asset(texture, only_if_is_dirty=False):
     raise RuntimeError("Could not save native Workshop UTexture2D")
 unreal.log("ANOMALIA Workshop logo imported: " + source_sha)

@@ -20,7 +20,7 @@ try {
     Set-Content -LiteralPath (Join-Path $source 'Saved\player.sav') -Value 'new save must not ship in this snapshot' -NoNewline
     $pointer=Join-Path $root 'active.json'
     @{version='base';path=$base}|ConvertTo-Json|Set-Content -LiteralPath $pointer
-    $result=Invoke-AnomaliaDifferentialVersionStage -SourceRoot $source -StagePath $stage -BaseVersionRoot $base -ExcludePaths @('Saved')
+    $result=Invoke-AnomaliaZPrigimaliaDifferentialVersionStage -SourceRoot $source -StagePath $stage -BaseVersionRoot $base -ExcludePaths @('Saved')
     if($result.state -ne 'DIFFERENTIAL_STAGE_VERIFIED'){throw 'Stage did not pass its final verification.'}
     if($result.hardlinksCreated -ne 3 -or $result.unchanged -ne 1 -or $result.replaced -ne 1 -or $result.added -ne 1 -or $result.removed -ne 1){throw ('Unexpected differential counters: '+($result|ConvertTo-Json -Compress))}
     if((Get-Content (Join-Path $stage 'change.txt') -Raw) -ne 'new bytes'){throw 'Changed file was not atomically replaced.'}
@@ -28,7 +28,7 @@ try {
     if(Test-Path (Join-Path $stage 'obsolete.txt')){throw 'Obsolete file remains in the candidate.'}
     if(!(Test-Path (Join-Path $base 'obsolete.txt'))){throw 'Removing a candidate file mutated the rollback version.'}
     if(Test-Path (Join-Path $stage 'Saved')){throw 'Excluded user-data directory leaked into the version.'}
-    if([AnomaliaDifferential.Native]::GetHardLinkCount((Join-Path $stage 'keep.txt')) -lt 2){throw 'Unchanged file is not shared as a hard link.'}
+    if([AnomaliaZPrigimaliaDifferential.Native]::GetHardLinkCount((Join-Path $stage 'keep.txt')) -lt 2){throw 'Unchanged file is not shared as a hard link.'}
     $activeAfter=Get-Content $pointer -Raw|ConvertFrom-Json
     if($activeAfter.version -ne 'base' -or $activeAfter.path -ne $base){throw 'Stage creation changed the active pointer.'}
     $next=Join-Path $root 'active-next.json'

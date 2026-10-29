@@ -12,7 +12,7 @@ try:
   if source.resolve().parent!=BASE or hashlib.sha256(source.read_bytes()).hexdigest()!=item['sha256']:raise RuntimeError('Source identity mismatch')
   mesh=unreal.EditorAssetLibrary.load_asset(dest) if unreal.EditorAssetLibrary.does_asset_exist(dest) else None
   if mesh:
-   if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaOriginalLot1SHA')!=item['sha256']:raise RuntimeError('Existing unrelated mesh preserved: '+dest)
+   if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaOriginalLot1SHA')!=item['sha256']:raise RuntimeError('Existing unrelated mesh preserved: '+dest)
   else:
    staging='/Game/Anomalia/OriginalImports/Lot1_'+item['id']+'_'+uuid.uuid4().hex
    task=unreal.AssetImportTask();task.filename=str(source);task.destination_path=staging;task.automated=True;task.replace_existing=False;task.save=True;task.async_=False
@@ -22,7 +22,7 @@ try:
    if len(meshes)!=1:raise RuntimeError('Expected one assembled model: '+item['id'])
    mesh=unreal.EditorAssetLibrary.duplicate_asset(meshes[0].get_path_name(),dest)
    if not mesh:raise RuntimeError('Cannot save canonical mesh')
-   unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaOriginalLot1SHA',item['sha256'])
+   unreal.EditorAssetLibrary.set_metadata_tag(mesh,'AnomaliaZPrigimaliaOriginalLot1SHA',item['sha256'])
    body=mesh.get_editor_property('body_setup')
    if not body:raise RuntimeError('Missing BodySetup')
    body.set_editor_property('collision_trace_flag',unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
@@ -36,7 +36,7 @@ try:
   loaded[item['id']]=mesh
   report['models'].append(dict(id=item['id'],objectPath=mesh.get_path_name(),dimensionsCm=dims,materials=len(mats),triangleCollisionConfigured=True,nativePresentationBound=False,state='IMPORTED_NOT_PLAYTESTED'))
  actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
- vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaVehiclePawn')
+ vehicle=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn')
  for item in report['models']:
   if item['id'] not in ['quad','snowmobile','jetski','zodiac']:continue
   probe=actors.spawn_actor_from_class(vehicle,unreal.Vector(0,0,500),transient=True)

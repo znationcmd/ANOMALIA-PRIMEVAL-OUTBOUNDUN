@@ -24,7 +24,7 @@ try:
     report['createExitCode'] = result.returncode
     if result.returncode or not (root / 'unreal/Content/Maps/ANOMALIA_LootReview_v1.umap').is_file():
         raise RuntimeError('Actual loot review map creation failed')
-    command = base + [f'-AnomaliaAutomationServerId=loot-pie-{uuid.uuid4().hex}',
+    command = base + [f'-AnomaliaZPrigimaliaAutomationServerId=loot-pie-{uuid.uuid4().hex}',
                       '-ExecCmds=Automation RunTests Anomalia.Loot.PIE; Quit',
                       f'-ReportExportPath={out}', f'-abslog={out / "pie.engine.log"}']
     with (out / 'pie.process.log').open('w', encoding='utf-8') as log:

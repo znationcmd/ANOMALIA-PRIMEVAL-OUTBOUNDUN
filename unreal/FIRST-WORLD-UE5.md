@@ -23,7 +23,7 @@ ni compilation UE5, ni exécution, ni multijoueur.
    `unreal/Content/Maps/ANOMALIA_FirstTest.umap`.
 6. Ouvrir ce niveau dans l'éditeur, puis utiliser **Play** pour vérifier manuellement
    l'apparition du personnage, la caméra, ZQSD/WASD, le saut et l'inventaire.
-   Le rapport est dans `unreal/Saved/AnomaliaMigration/first-world-report.json`.
+   Le rapport est dans `unreal/Saved/AnomaliaZPrigimaliaMigration/first-world-report.json`.
 
 Le script s'arrête si la carte existe déjà : aucune destruction, aucun écrasement.
 Il ne change pas `DefaultEngine.ini` et ne touche pas au jeu navigateur existant.

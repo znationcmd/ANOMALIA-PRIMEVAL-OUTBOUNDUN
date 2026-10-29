@@ -24,7 +24,7 @@ class ExpansionGeometryTests(unittest.TestCase):
     def tearDownClass(cls):cls.temp.cleanup()
 
     def test_original_prototype_coverage_and_explicit_unmodeled_additions(self):
-        text=(ROOT/'unreal/Source/AnomaliaZPrigimalia/AnomaliaVehicleCatalog.cpp').read_text()
+        text=(ROOT/'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaVehicleCatalog.cpp').read_text()
         ids=set(re.findall(r'MakeVehicle\(TEXT\("([a-z0-9_]+)"\)',text))
         modeled=set(MODULE.VEHICLES)|{'quad','snowmobile','jetski','zodiac','airliner','metro'}
         self.assertTrue(modeled.issubset(ids))

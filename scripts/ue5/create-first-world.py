@@ -17,7 +17,7 @@ MAP_NAME = "ANOMALIA_FirstTest"
 MAP_PACKAGE = f"/Game/Maps/{MAP_NAME}"
 PROJECT_DIR = Path(unreal.Paths.project_dir())
 OUTPUT_MAP = PROJECT_DIR / "Content" / "Maps" / f"{MAP_NAME}.umap"
-REPORT_PATH = PROJECT_DIR / "Saved" / "AnomaliaMigration" / "first-world-report.json"
+REPORT_PATH = PROJECT_DIR / "Saved" / "AnomaliaZPrigimaliaMigration" / "first-world-report.json"
 
 
 def report(status: str, **fields) -> None:
