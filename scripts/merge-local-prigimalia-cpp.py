@@ -6,6 +6,7 @@ Source additions are audited and written only beneath the new module in staging.
 """
 from __future__ import annotations
 import argparse
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -39,6 +40,8 @@ def main():
     copied=[]
     identical=[]
     differing=[]
+    local_conflicts=[]
+    conflict_root=root/"Saved/BrandMigration/LocalSourceConflicts"
     for src in sorted(legacy.rglob("*")):
         if not src.is_file() or src.suffix.lower() not in EXTS:
             continue
@@ -53,6 +56,18 @@ def main():
                 identical.append(relative)
             else:
                 differing.append(relative)
+                local_conflicts.append({
+                    "relative": relative,
+                    "local_sha256": hashlib.sha256(migrated.encode("utf-8")).hexdigest(),
+                    "git_sha256": hashlib.sha256(current.encode("utf-8")).hexdigest(),
+                    "preserved_at": "unreal/Saved/BrandMigration/LocalSourceConflicts/"+target_relative,
+                })
+                if args.apply:
+                    conflict_path=conflict_root/target_relative
+                    conflict_path.parent.mkdir(parents=True,exist_ok=True)
+                    if conflict_path.exists():
+                        raise RuntimeError("Refusing to overwrite an existing local source conflict: "+str(conflict_path))
+                    conflict_path.write_text(migrated,encoding="utf-8")
             continue
         copied.append({"source":relative,"target":target_relative})
         if args.apply:
@@ -64,6 +79,8 @@ def main():
             "addedLocalCppFiles":len(copied),"existingIdentical":len(identical),
             "existingDifferentKept":len(differing),"added":copied,
             "differentLocalFilesNotOverwritten":differing,
+            "localConflictDetails":local_conflicts,
+            "conflictingLocalVersionsSavedSeparately":args.apply,
             "originalUnmodified":True}
     output=root/"Saved/BrandMigration/local-cpp-merge-report.json"
     if args.apply:
@@ -71,6 +88,9 @@ def main():
     print(json.dumps({k:v for k,v in report.items() if k not in ("added","differentLocalFilesNotOverwritten")},ensure_ascii=False,indent=2))
     for f in copied:
         print("LOCAL_ONLY_CPP_ADDED="+f["target"])
+    if differing:
+        print("LOCAL_CODE_CONFLICTS_PRESERVED_SEPARATELY="+str(len(differing)))
+        print("REVIEW_CONFLICTS_BEFORE_FINAL_MERGE=true")
     if not args.apply:
         print("DRY_RUN=true")
 if __name__=="__main__":
