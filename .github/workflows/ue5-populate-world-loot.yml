@@ -1,4 +1,4 @@
-name: ANOMALIA world loot with UE58 actor identities
+name: ANOMALIA verified world loot placement
 on:
   push:
     branches: ['ue5/character-audit-20261027']
