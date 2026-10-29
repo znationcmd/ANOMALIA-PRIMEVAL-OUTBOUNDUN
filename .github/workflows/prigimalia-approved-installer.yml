@@ -1,0 +1,57 @@
+name: ANOMALIA’Z PRIGIMALIA - Build Windows installer with approved icon
+on:
+  push:
+    branches:
+      - rebrand/full-anomaliaz-prigimalia-20261029
+    paths:
+      - .github/workflows/prigimalia-approved-installer.yml
+      - build/icon.ico
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-windows:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: windows-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout latest isolated rebrand
+        uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Check approved icon is present
+        shell: pwsh
+        run: |
+          $ico = 'build/icon.ico'
+          if (-not (Test-Path -LiteralPath $ico)) { throw 'Approved Windows logo missing' }
+          if ((Get-Item -LiteralPath $ico).Length -lt 2000) { throw 'Windows icon invalidly small' }
+          Write-Host 'APPROVED_PRIGIMALIA_WINDOWS_ICON_PRESENT=true'
+      - name: Install exact dependencies
+        run: npm ci
+      - name: Build application
+        run: npm run build
+      - name: Package new Windows installer with approved icon
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+          ELECTRON_BUILDER_ALLOW_UNRESOLVED_DEPENDENCIES: "false"
+        run: npm run package:windows
+      - name: Verify installer exists
+        shell: pwsh
+        run: |
+          $installer = Get-ChildItem -Path 'release/windows' -Filter 'ANOMALIAZ-PRIGIMALIA-Setup-*.exe' -Recurse -File | Select-Object -First 1
+          if (-not $installer) { throw 'New Windows installer missing' }
+          Write-Host "PRIGIMALIA_BRANDED_INSTALLER_CREATED=$($installer.FullName)"
+          Write-Host "INSTALLER_BYTES=$($installer.Length)"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIAZ-PRIGIMALIA-Windows-Installer-New-Logo
+          path: release/windows/ANOMALIAZ-PRIGIMALIA-Setup-*.exe
+          if-no-files-found: error
+          retention-days: 14
