@@ -111,6 +111,8 @@ def migrate():
                 raise RuntimeError("Unreal refused map rename: " + old)
             if not api.does_asset_exist(new):
                 raise RuntimeError("Renamed map could not be resolved: " + new)
+            if not api.save_asset(new, only_if_is_dirty=False):
+                raise RuntimeError("Could not save renamed map: " + new)
             report["mapsRenamed"].append({"old": old, "new": new})
         # Unreal may intentionally leave redirector assets under the old path.
         # They preserve legacy Blueprint references and are NOT lost source assets.
