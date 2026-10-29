@@ -1,0 +1,30 @@
+name: ANOMALIA storage locations
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-storage-locations.yml']
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Inspect drive capacity and Epic cache configuration
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-CimInstance Win32_LogicalDisk -Filter "DriveType=3" | Select-Object DeviceID,FreeSpace,Size | ConvertTo-Json -Compress | Write-Output
+          $paths=@('C:\ANOMALIA','D:\ANOMALIA\unreal',"$env:LOCALAPPDATA\EpicGamesLauncher\Saved\Config\Windows\GameUserSettings.ini","$env:LOCALAPPDATA\EpicGamesLauncher\Saved\Config\WindowsEditor\GameUserSettings.ini",'C:\ProgramData\Epic\EpicGamesLauncher\LauncherInstalled.dat')
+          foreach($p in $paths){
+            if(Test-Path -LiteralPath $p){
+              Get-Item -LiteralPath $p | Select-Object FullName,Attributes,LinkType,Target,LastWriteTime | ConvertTo-Json -Compress | Write-Output
+              if($p -like '*.ini'){Select-String -LiteralPath $p -Pattern 'Vault|Cache|Download|CreatedProjectPaths' | ForEach-Object {Write-Output ($_.Line)}}
+            }
+          }
+          foreach($p in @('C:\ProgramData\Epic\EpicGamesLauncher\VaultCache','C:\Program Files\Epic Games\Launcher\VaultCache',"$env:LOCALAPPDATA\UnrealEngine\Common","$env:LOCALAPPDATA\Fab","$env:LOCALAPPDATA\Temp\Fab",'C:\ANOMALIA-Validation','D:\ANOMALIA\FabImports\VaultCache')){
+            if(Test-Path -LiteralPath $p){
+              Write-Output "LOCATION $p"
+              Get-ChildItem -LiteralPath $p -Force | Select-Object -First 25 Name,Length,Attributes,LastWriteTime | ConvertTo-Json -Compress | Write-Output
+            }
+          }
