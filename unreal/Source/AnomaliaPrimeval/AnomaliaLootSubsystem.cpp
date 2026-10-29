@@ -412,6 +412,14 @@ void UAnomaliaLootSubsystem::RefreshLoot()
     const auto Points = State->GetObjectField(TEXT("points"));
     bool Changed = false;
     const double Time = LootNow();
+    // Count persisted world stock once per refresh, including unloaded points.
+    TMap<FName, int32> WorldStock;
+    for (const auto& Saved : Points->Values)
+    {
+        const auto Row = Saved.Value->AsObject();
+        const FName Id(*Row->GetStringField(TEXT("itemId")));
+        if (!Id.IsNone()) WorldStock.FindOrAdd(Id) += static_cast<int32>(Row->GetNumberField(TEXT("count")));
+    }
     for (const auto& Spawn : Spawns)
     {
         const auto Row = Points->GetObjectField(Spawn.Id);
@@ -420,6 +428,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
         if (!Current.IsEmpty() && (Time >= Row->GetNumberField(TEXT("expiresAt")) || !CurrentItem || !CurrentItem->IsAllowedAtPOI(Spawn.POIId)))
         {
             const auto* Item = FindItem(FName(*Current));
+            WorldStock.FindOrAdd(FName(*Current)) -= static_cast<int32>(Row->GetNumberField(TEXT("count")));
             Row->SetStringField(TEXT("itemId"), TEXT("")); Row->SetNumberField(TEXT("count"), 0);
             Row->SetNumberField(TEXT("availableAt"), Time + (Item ? Item->RestockSeconds : DefaultRestock));
             Changed = true; continue;
@@ -432,10 +441,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
             if (!Item.bEnabled || !Item.IsAllowedAtPOI(Spawn.POIId) || Item.Nominal < 1 || Spawn.Tier < Item.MinTier || Spawn.Tier > Item.MaxTier ||
                 !Item.MatchesAnyCategory(TierCategories[Spawn.Tier]) ||
                 (Spawn.Categories.Num() && !Item.MatchesAnyCategory(Spawn.Categories))) continue;
-            int32 Existing = 0;
-            for (const auto& Saved : Points->Values)
-                if (Saved.Value->AsObject()->GetStringField(TEXT("itemId")) == Item.Id.ToString())
-                    Existing += static_cast<int32>(Saved.Value->AsObject()->GetNumberField(TEXT("count")));
+            const int32 Existing = WorldStock.FindRef(Item.Id);
             if (Existing + Item.Quantity <= Item.Nominal)
             {
                 Candidates.Add(&Item);
@@ -452,6 +458,7 @@ void UAnomaliaLootSubsystem::RefreshLoot()
             Row->SetStringField(TEXT("itemId"), Item->Id.ToString());
             Row->SetStringField(TEXT("generation"), FGuid::NewGuid().ToString(EGuidFormats::Digits));
             Row->SetNumberField(TEXT("count"), Item->Quantity);
+            WorldStock.FindOrAdd(Item->Id) += Item->Quantity;
             Row->SetNumberField(TEXT("expiresAt"), Time + Item->LifetimeSeconds);
         }
         Changed = true;
