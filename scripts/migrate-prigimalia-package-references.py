@@ -51,6 +51,27 @@ def migrate(root:Path,apply:bool):
         for quote in ('"', "'"):
             map_replacements.append((quote+old_asset+quote, quote+new_asset+quote))
     replacements = REPLACEMENTS + tuple(map_replacements)
+    # Runtime JSON catalogs are not Unreal packages. Keep old copies and
+    # refuse differing destinations before changing any file.
+    raw_copies=[]
+    raw_source=root/"unreal/Content/Anomalia/Data"
+    raw_target=root/"unreal/Content/AnomaliaZPrigimalia/Data"
+    if raw_source.is_dir():
+        for source in sorted(raw_source.rglob("*.json")):
+            target=raw_target/source.relative_to(raw_source)
+            payload=source.read_bytes()
+            json.loads(payload.decode("utf-8-sig"))
+            if target.exists() and target.read_bytes()!=payload:
+                raise RuntimeError("Different runtime catalog at destination: "+str(target))
+            if not target.exists():
+                raw_copies.append((source,target,payload))
+    if apply:
+        for source,target,payload in raw_copies:
+            target.parent.mkdir(parents=True,exist_ok=True)
+            with target.open("xb") as destination:
+                destination.write(payload)
+            if target.read_bytes()!=payload:
+                raise RuntimeError("Runtime catalog verification failed: "+str(target))
     updates=[]
     for folder in DIRECTORIES:
         base=root/folder
@@ -79,7 +100,9 @@ def migrate(root:Path,apply:bool):
                     path.write_text(changed,encoding="utf-8")
     report={"newTitle":"ANOMALIA’Z PRIGIMALIA","root":str(root),"changedFiles":len(updates),
             "files":updates,"applied":apply,"nativeAssetsVerified":True,
-            "historicDataPreserved":True}
+            "historicDataPreserved":True,
+            "rawCatalogsCopied":len(raw_copies),
+            "rawCatalogFiles":[target.relative_to(root).as_posix() for _,target,_ in raw_copies]}
     if apply:
         out=root/"unreal/Saved/BrandMigration/package-ref-update-report.json"
         out.parent.mkdir(parents=True,exist_ok=True)
