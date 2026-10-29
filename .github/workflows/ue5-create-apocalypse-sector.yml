@@ -59,8 +59,17 @@ jobs:
           '@ | Set-Content -LiteralPath $script -Encoding UTF8
           $exe='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $log=Join-Path $out 'first-apocalypse-sector.log'
-          $args=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','-run=pythonscript','-script="'+$script+'"','-unattended','-nopause','-nosound','-NullRHI','-abslog="'+$log+'"')
-          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+          $editorArguments=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','-run=pythonscript','-script="'+$script+'"','-unattended','-nopause','-nosound','-NullRHI','-abslog="'+$log+'"')
+          $proc=Start-Process -FilePath $exe -ArgumentList $editorArguments -PassThru -WorkingDirectory 'D:\ANOMALIA\unreal' -RedirectStandardOutput (Join-Path $out 'sector-stdout.txt') -RedirectStandardError (Join-Path $out 'sector-stderr.txt')
           if(!$proc.WaitForExit(660000)){Stop-Process -Id $proc.Id -ErrorAction SilentlyContinue;throw 'Sector authoring timed out'}
+          Write-Output "EDITOR_EXIT_CODE=$($proc.ExitCode)"
+          foreach($capture in @($log,(Join-Path $out 'sector-stdout.txt'),(Join-Path $out 'sector-stderr.txt'))){
+            if(Test-Path -LiteralPath $capture){Get-Content -LiteralPath $capture -Tail 50}
+          }
+          if(!(Test-Path -LiteralPath $log)){
+            Get-ChildItem 'D:\ANOMALIA\unreal\Saved\Logs' -Filter '*.log' -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object {Get-Content -LiteralPath $_.FullName -Tail 90}
+            Get-ChildItem 'D:\ANOMALIA\unreal\Saved\Crashes' -Filter 'CrashContext.runtime-xml' -Recurse -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1 | ForEach-Object {Get-Content -LiteralPath $_.FullName | Select-String 'ErrorMessage|CrashType|MemoryStats|CommandLine'}
+            throw 'Editor stopped before requested log; startup evidence printed above'
+          }
           Select-String -LiteralPath $log -Pattern 'ANOMALIA_SECTOR_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}
           if($proc.ExitCode -ne 0){throw 'Sector authoring failed; see report'}
