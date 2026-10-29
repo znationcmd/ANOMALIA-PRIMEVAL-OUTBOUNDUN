@@ -1,0 +1,66 @@
+name: ANOMALIA create first apocalypse sector
+on:
+  push:
+    branches: ['ue5/character-audit-20261027']
+    paths: ['.github/workflows/ue5-create-apocalypse-sector.yml']
+permissions:
+  contents: read
+jobs:
+  assemble:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Create separate first-sector map using Unreal template operation
+        shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor -ErrorAction SilentlyContinue).Count){throw 'Editor open; existing session preserved'}
+          $out='D:\ANOMALIA\StorageRecovery'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $script=Join-Path $out 'create-apocalypse-sector.py'
+          @'
+          import json, traceback
+          from pathlib import Path
+          import unreal
+          target="/Game/Anomalia/Maps/ANOMALIA_Apocalypse_Garage_v1"
+          source="/Game/Car_Dealer/Maps/Demo"
+          report={"target":target,"source":source,"state":"STARTED","playtested":False,"wholeMapAssembled":False,"lootPlaced":False,"originalMapModified":False}
+          output=Path("D:/ANOMALIA/StorageRecovery/first-apocalypse-sector.json")
+          try:
+              levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if unreal.EditorAssetLibrary.does_asset_exist(target):
+                  report["state"]="EXISTING_SECTOR_PRESERVED"
+              else:
+                  if not unreal.EditorAssetLibrary.does_asset_exist(source):
+                      raise RuntimeError("Installed garage source map missing")
+                  if not levels.new_level_from_template(target,source):
+                      raise RuntimeError("Unreal template map creation failed")
+                  world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+                  actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
+                  # The copied sector uses ANOMALIA's configured project game mode.
+                  world.get_world_settings().set_editor_property("default_game_mode",None)
+                  report["actors"]=len(actors)
+                  report["staticMeshActors"]=sum(isinstance(a,unreal.StaticMeshActor) for a in actors)
+                  report["playerStarts"]=sum(isinstance(a,unreal.PlayerStart) for a in actors)
+                  report["bounds"]=[]
+                  for a in actors:
+                      if isinstance(a,unreal.StaticMeshActor):
+                          origin,extent=a.get_actor_bounds(False)
+                          report["bounds"].append({"actor":a.get_actor_label(),"origin":[origin.x,origin.y,origin.z],"extent":[extent.x,extent.y,extent.z]})
+                  if not levels.save_current_level():
+                      raise RuntimeError("Sector map could not be saved")
+                  report["state"]="FIRST_SECTOR_MAP_CREATED_NEEDS_DRESSING_AND_PLAYTEST"
+          except Exception as error:
+              report.update(state="FAILED",error=str(error),traceback=traceback.format_exc())
+              raise
+          finally:
+              output.write_text(json.dumps(report,indent=2),encoding="utf-8")
+              unreal.log("ANOMALIA_SECTOR_RESULT="+json.dumps({k:v for k,v in report.items() if k!="bounds"}))
+          '@ | Set-Content -LiteralPath $script -Encoding UTF8
+          $exe='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $out 'first-apocalypse-sector.log'
+          $args=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','-run=pythonscript','-script="'+$script+'"','-unattended','-nopause','-nosound','-NullRHI','-abslog="'+$log+'"')
+          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+          if(!$proc.WaitForExit(660000)){Stop-Process -Id $proc.Id -ErrorAction SilentlyContinue;throw 'Sector authoring timed out'}
+          Select-String -LiteralPath $log -Pattern 'ANOMALIA_SECTOR_RESULT|Error:|Traceback' | Select-Object -Last 20 | ForEach-Object {Write-Output $_.Line}
+          if($proc.ExitCode -ne 0){throw 'Sector authoring failed; see report'}
