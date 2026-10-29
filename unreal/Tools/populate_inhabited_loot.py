@@ -8,23 +8,30 @@ ROOT=Path(unreal.Paths.project_dir()).resolve()
 OUT=Path("D:/ANOMALIA/StorageRecovery/inhabited-loot-placement.json")
 MAP="/Game/Maps/ANOMALIA_Inhabited_v2"
 def main():
-    report=dict(state="STARTED",map=MAP,points=[],rejected=[],playtested=False)
+    report=dict(state="STARTED",map=MAP,points=[],rejected=[],playtested=False,traceReasons={},samples=[])
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
     lib=unreal.AnomaliaWorldImportLibrary
     def guidkey(actor):
         return actor.get_editor_property("actor_guid").to_string().replace("-","").replace("{","").replace("}","").lower()
+    def count(reason):
+        report["traceReasons"][reason]=report["traceReasons"].get(reason,0)+1
     def trace(world,x,y,z,actor):
         hit=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+140),unreal.Vector(x,y,z-30),
             unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
-        if hit is None:return None
+        if hit is None:
+            count("NO_HIT");return None
         values=hit.to_tuple()
-        if not values[0] or values[1] or values[7].z<.9 or values[9]!=actor:return None
+        if not values[0] or values[1] or values[7].z<.9 or values[9]!=actor:
+            count("REJECTED_HIT");
+            if len(report["samples"])<5:report["samples"].append(dict(blocking=bool(values[0]),initial=bool(values[1]),normalZ=values[7].z,hitActor=str(values[9]),expectedActor=str(actor)))
+            return None
         point=values[5]
         block=unreal.SystemLibrary.box_trace_single(world,unreal.Vector(point.x,point.y,point.z+45),
             unreal.Vector(point.x,point.y,point.z+75),unreal.Vector(20,20,20),unreal.Rotator(),
             unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE)
-        if block is not None and block.to_tuple()[0]:return None
+        if block is not None and block.to_tuple()[0]:
+            count("BLOCKED_CLEARANCE");return None
         return [point.x,point.y,point.z+30]
     try:
         if not level.load_level(MAP):raise RuntimeError("Saved inhabited world absent")
@@ -44,7 +51,7 @@ def main():
         selected=list({d["guid"]:d for d in selected}.values())
         initial={guidkey(a) for a in actors.get_all_level_actors()}
         groups=[["canned_food"],["drinks"],["medical_supplies"],["tops","pants"],
-                ["backpacks"],["tools"],["camping_storage"],["shoes_gloves"]]
+                ["backpacks"],["tools"],["navigation","power_lighting"],["shoes_gloves"]]
         for begin in range(0,len(selected),24):
             batch=selected[begin:begin+24]
             guids=[d["guid"] for d in batch]
@@ -55,7 +62,11 @@ def main():
                     a=loaded.get(d["guid"].replace("-","").lower())
                     if a is None:
                         report["rejected"].append(dict(id=d["label"],reason="ACTOR_NOT_LOADED"));continue
-                    base=a.get_actor_location();yaw=math.radians(a.get_actor_rotation().yaw)
+                    base=a.get_actor_location()
+                    if len(report["samples"])<5:
+                        origin,extent=a.get_actor_bounds(False)
+                        report["samples"].append(dict(actor=a.get_actor_label(),position=[base.x,base.y,base.z],boundsOrigin=[origin.x,origin.y,origin.z],boundsExtent=[extent.x,extent.y,extent.z]))
+                    yaw=math.radians(a.get_actor_rotation().yaw)
                     pos=None
                     for dx,dy in ((150,150),(-150,150),(150,-150),(-150,-150),(250,250),(-250,-250)):
                         x=base.x+dx*math.cos(yaw)-dy*math.sin(yaw)
