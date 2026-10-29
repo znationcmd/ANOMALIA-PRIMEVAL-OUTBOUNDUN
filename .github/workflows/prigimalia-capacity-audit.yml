@@ -1,0 +1,44 @@
+name: ANOMALIA’Z PRIGIMALIA - Safe clone capacity audit
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-capacity-audit.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  audit:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect disk space and Unreal project footprint without writes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA'
+          foreach($letter in @('C','D')){
+            $drive=Get-PSDrive -Name $letter -ErrorAction SilentlyContinue
+            if($drive){ Write-Host ("FREE_GB_{0}={1:N1}" -f $letter,($drive.Free/1GB)) }
+          }
+          foreach($rel in @('unreal/Content','unreal/Saved','unreal/Source','unreal/Config','sketchfab','FabImports')){
+            $p=Join-Path $root $rel
+            if(-not (Test-Path -LiteralPath $p)){continue}
+            $files=Get-ChildItem -LiteralPath $p -File -Recurse -ErrorAction SilentlyContinue
+            $count=0
+            $sum=[int64]0
+            foreach($file in $files){$count++;$sum+=$file.Length}
+            Write-Host ("DIR_SIZE {0}: {1:N2}GB; {2} files" -f $rel,($sum/1GB),$count)
+          }
+          if(Test-Path -LiteralPath (Join-Path $root '.git')){
+            $changes=@(& git -C $root status --porcelain=v1 -uno)
+            Write-Host "LOCAL_TRACKED_CHANGE_COUNT=$($changes.Count)"
+          } else {Write-Host "LOCAL_REPO_PRESENT=False"}
+          $dest='D:\ANOMALIAZ-PRIGIMALIA'
+          Write-Host "PROPOSED_DESTINATION_EXISTS=$(Test-Path -LiteralPath $dest)"
+          Write-Host 'READ_ONLY_CAPACITY_AUDIT_COMPLETE=true'
