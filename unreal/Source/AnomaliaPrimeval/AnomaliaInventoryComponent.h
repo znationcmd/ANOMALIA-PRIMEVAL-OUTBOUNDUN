@@ -140,12 +140,21 @@ public:
     static const TArray<FAnomaliaHandcraftRecipe>& GetHandcraftRecipes();
     bool HasCraftMaterials(FName RecipeId) const;
     bool CanCombineForRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId) const;
+    /** Owner-only authoritative hold state. Ingredients remain untouched until completion. */
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks,BlueprintReadOnly,Category="ANOMALIA|Crafting")
+    bool bCombining=false;
+    UPROPERTY(ReplicatedUsing=OnRep_Stacks,BlueprintReadOnly,Category="ANOMALIA|Crafting")
+    double CombineStartedAt=0;
+    static constexpr float CombineDurationSeconds=2.f;
+    UFUNCTION(BlueprintPure,Category="ANOMALIA|Crafting") float GetCombineProgress() const;
+    UFUNCTION(BlueprintCallable,Category="ANOMALIA|Crafting") void RequestCancelCombine();
+    UFUNCTION(Server,Reliable) void ServerCancelCombine();
     UFUNCTION(BlueprintCallable,Category="ANOMALIA|Crafting")
     bool RequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
     UFUNCTION(Server,Reliable)
     void ServerRequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
     /** Trusted server transaction; rollback on missing materials, space or failed profile write. */
-    bool TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError);
+    bool TryCraftRecipe(FName RecipeId,const FString& ServerId,const FString& PlayerId,FString& OutError,int32 HeldStackId=0,int32 OtherStackId=0);
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Crafting")
     bool RequestCraftRecipe(FName RecipeId);
 
@@ -288,6 +297,15 @@ private:
     FVector LastWearLocation=FVector::ZeroVector;
     bool bHasWearLocation=false;
     bool CraftFromOwningPlayer(FName RecipeId);
+    bool BeginCombineOnServer(int32 HeldStackId,int32 OtherStackId,FName RecipeId);
+    bool IsPendingCombineValid() const;
+    void TickPendingCombine();
+    void CancelCombineOnServer(const FString& Message);
+    FAnomaliaInventoryStack CombineHeldSnapshot;
+    FAnomaliaInventoryStack CombineOtherSnapshot;
+    FName CombineRecipeId;
+    FVector CombineStartLocation=FVector::ZeroVector;
+    double NextCombineRequestTime=0;
     bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaItemUseRule GetUseRule(FName ItemId) const;
     bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
