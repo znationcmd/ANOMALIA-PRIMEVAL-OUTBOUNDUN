@@ -40,9 +40,12 @@ def migrate(root:Path,apply:bool):
         old, new = item.get("old", ""), item.get("new", "")
         if not old.startswith("/Game/") or not new.startswith("/Game/"):
             raise RuntimeError("Invalid confirmed Unreal map rename in report")
+        # UE soft object paths can also contain a duplicated object name
+        # (/Game/Maps/OLD.OLD); update the full form before package prefix.
+        old_asset=old.rsplit("/",1)[-1]
+        new_asset=new.rsplit("/",1)[-1]
+        map_replacements.append((old+"."+old_asset,new+"."+new_asset))
         map_replacements.append((old, new))
-        # Also support exact quoted standalone map names in launch scripts.
-        # Do not rewrite names embedded in C++ symbol/API identifiers.
     replacements = REPLACEMENTS + tuple(map_replacements)
     updates=[]
     for folder in DIRECTORIES:
