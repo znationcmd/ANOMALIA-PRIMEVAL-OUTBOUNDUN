@@ -7,6 +7,7 @@
 class UAnomaliaInventoryComponent;
 class UCanvasPanel;
 class UVerticalBox;
+class UHorizontalBox;
 class UButton;
 class UTextBlock;
 class UEditableTextBox;
