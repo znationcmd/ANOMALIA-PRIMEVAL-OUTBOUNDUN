@@ -1324,3 +1324,30 @@ void UAnomaliaInventoryComponent::RefreshAttachmentVisuals()
     TArray<int32> Remove;for(const auto& Pair:AttachmentVisuals)if(!Wanted.Contains(Pair.Key))Remove.Add(Pair.Key);
     for(const int32 Id:Remove){if(auto* Part=AttachmentVisuals.FindRef(Id).Get())Part->DestroyComponent();AttachmentVisuals.Remove(Id);}
 }
+
+bool UAnomaliaInventoryComponent::CanCombineForRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId) const
+{
+    if(HeldStackId==OtherStackId || IsPersistenceLocked())return false;
+    const auto* Held=Stacks.FindByPredicate([&](const auto& S){return S.StackId==HeldStackId;});
+    const auto* Other=Stacks.FindByPredicate([&](const auto& S){return S.StackId==OtherStackId;});
+    const auto* Recipe=GetHandcraftRecipes().FindByPredicate([&](const auto& R){return R.Id==RecipeId;});
+    if(!Held||!Other||!Recipe||Held->ContainerId!=TEXT("hands")||IsRecoveryContainer(Other->ContainerId)||
+       Held->Condition<=0||Other->Condition<=0||Held->Count<=0||Other->Count<=0||
+       !Recipe->Materials.Contains(Held->ItemId)||!Recipe->Materials.Contains(Other->ItemId))return false;
+    for(const auto& Material:Recipe->Materials)
+    {
+        const int64 Available=(Held->ItemId==Material.Key?int64(Held->Count):0)+(Other->ItemId==Material.Key?int64(Other->Count):0);
+        if(Available<Material.Value)return false;
+    }
+    return HasCraftMaterials(RecipeId);
+}
+bool UAnomaliaInventoryComponent::RequestCombineRecipe(int32 HeldStackId,int32 OtherStackId,FName RecipeId)
+{
+    if(!GetOwner()||!CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))return false;
+    if(GetOwner()->HasAuthority())return CraftFromOwningPlayer(RecipeId);
+    ServerRequestCombineRecipe(HeldStackId,OtherStackId,RecipeId);return true;
+}
+void UAnomaliaInventoryComponent::ServerRequestCombineRecipe_Implementation(int32 HeldStackId,int32 OtherStackId,FName RecipeId)
+{
+    if(CanCombineForRecipe(HeldStackId,OtherStackId,RecipeId))CraftFromOwningPlayer(RecipeId);
+}
