@@ -14,12 +14,16 @@ jobs:
         shell: powershell -NoProfile -NonInteractive -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          foreach($p in @('C:\ProgramData\Epic\EpicGamesLauncher\VaultCache','C:\ANOMALIA-Validation',"$env:LOCALAPPDATA\UnrealEngine\Common\DerivedDataCache","$env:LOCALAPPDATA\UnrealEngine\Common\Zen")){
-            if(Test-Path -LiteralPath $p){
-              Write-Output "SIZE_LOCATION $p"
-              & robocopy $p 'D:\ANOMALIA\StorageAuditDryRunOnly' /L /E /XJ /BYTES /NFL /NDL /NJH /R:0 /W:0
-            }
+          $active=@(Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor -ErrorAction SilentlyContinue)
+          if($active.Count){throw 'Epic or Unreal is still running'}
+          $root='C:\ProgramData\Epic\EpicGamesLauncher\VaultCache'
+          foreach($d in Get-ChildItem -LiteralPath $root -Directory){
+            Write-Output "CACHE $($d.FullName)"
+            Get-ChildItem -LiteralPath $d.FullName -Force | Select-Object -First 8 Name,Attributes,Length | ConvertTo-Json -Compress | Write-Output
+            & robocopy $d.FullName 'D:\ANOMALIA\StorageAuditDryRunOnly' /L /E /XJ /BYTES /NFL /NDL /NJH /R:0 /W:0
           }
-          Get-Process EpicGamesLauncher,EpicWebHelper,UnrealEditor,zenserver -ErrorAction SilentlyContinue | Select-Object ProcessName,Id | ConvertTo-Json -Compress | Write-Output
-          Get-Item 'C:\ProgramData\Epic\EpicGamesLauncher\VaultCache' | Select-Object FullName,Attributes,LinkType,Target | ConvertTo-Json -Compress | Write-Output
+          foreach($p in @('D:\ANOMALIA\FabImports\CitySample','D:\ANOMALIA\FabImports\DerelictCorridorMegascans')){
+            Write-Output "DEST $p"
+            Get-ChildItem -LiteralPath $p -Force | Select-Object -First 15 Name,Attributes,Length | ConvertTo-Json -Compress | Write-Output
+          }
           exit 0
