@@ -66,8 +66,17 @@ def main():
                     conflict_path=conflict_root/target_relative
                     conflict_path.parent.mkdir(parents=True,exist_ok=True)
                     if conflict_path.exists():
-                        raise RuntimeError("Refusing to overwrite an existing local source conflict: "+str(conflict_path))
-                    conflict_path.write_text(migrated,encoding="utf-8")
+                        if conflict_path.read_text(encoding="utf-8")==migrated:
+                            continue
+                        digest=hashlib.sha256(migrated.encode("utf-8")).hexdigest()
+                        conflict_path=conflict_path.with_name(conflict_path.name+"."+digest)
+                        local_conflicts[-1]["preserved_at"]=conflict_path.relative_to(stage).as_posix()
+                    if conflict_path.exists():
+                        if conflict_path.read_text(encoding="utf-8")!=migrated:
+                            raise RuntimeError("Conflict backup content mismatch: "+str(conflict_path))
+                    else:
+                        with conflict_path.open("x",encoding="utf-8") as backup:
+                            backup.write(migrated)
             continue
         copied.append({"source":relative,"target":target_relative})
         if args.apply:
