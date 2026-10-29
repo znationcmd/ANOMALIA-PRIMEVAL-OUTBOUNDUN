@@ -1,7 +1,7 @@
 {
   "title": "ANOMALIA’Z PRIGIMALIA",
   "newModule": "AnomaliaZPrigimalia",
-  "editedFiles": 1,
+  "editedFiles": 0,
   "renamedFiles": 0,
   "redirectTypes": {
     "Class": 56,
@@ -18,10 +18,5 @@
     "anomalia:socket"
   ],
   "remainingNativeAssetMigration": "Run UE5.8 Editor rename + Fix Up Redirectors on Windows",
-  "fileChanges": [
-    [
-      "docs/rebrand-unreal-source-receipt.json",
-      "docs/rebrand-unreal-source-receipt.json"
-    ]
-  ]
+  "fileChanges": []
 }
