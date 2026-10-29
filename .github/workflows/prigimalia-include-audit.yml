@@ -1,0 +1,16 @@
+name: ANOMALIA’Z PRIGIMALIA - Native include order audit
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths:
+      - 'scripts/audit-prigimalia-first-includes.py'
+      - '.github/workflows/prigimalia-include-audit.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: python3 scripts/audit-prigimalia-first-includes.py
