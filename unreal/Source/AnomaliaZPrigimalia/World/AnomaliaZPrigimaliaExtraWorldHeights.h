@@ -7,14 +7,14 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Solynacalyra, Nexavarkhos, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
-        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 : 0;
+        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 : world==EWorld::Solynacalyra ? 15000 : world==EWorld::Nexavarkhos ? 10000 : 0;
 }
-inline int Resolution(EWorld world) { return SideMeters(world)==30000 ? 3025 : SideMeters(world)==20000 ? 2017 : 0; }
+inline int Resolution(EWorld world) { int side=SideMeters(world); return side==30000 ? 3025 : side==20000 ? 2017 : side==15000 ? 1513 : side==10000 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
 inline double Smooth(double v) { v=Clamp(v,0.,1.); return v*v*(3.-2.*v); }
 inline double Hash(int x,int y,int seed)
@@ -76,6 +76,28 @@ inline double Height(EWorld world,double east,double north)
   const double lakes=52.*Gaussian(east,north,3800.,-2000.,1200.,1800.)+
                      48.*Gaussian(east,north,-2800.,-4700.,1500.,1150.);
   return 33.+48.*n+ridge-marsh-lakes;
+ }
+
+ if(world==EWorld::Solynacalyra){
+  // Original fragmented tropical islands and lagoons (not another world's terrain).
+  auto isle=[east,north](double cx,double cy,double rx,double ry,double phase){
+   double dx=(east-cx)/rx,dy=(north-cy)/ry,angle=std::atan2(dy,dx);
+   return (1.+.07*std::sin(6.*angle+phase)-std::hypot(dx,dy))*std::min(rx,ry);
+  };
+  double coast=std::max({isle(-1700.,1100.,4100.,3300.,.2),
+    isle(3900.,1600.,1750.,1500.,1.4),isle(2500.,-3900.,2300.,1700.,2.1),
+    isle(-4800.,-3900.,1300.,1100.,.7)});
+  if(coast<0.)return -std::min(120.,12.+std::abs(coast)*.13);
+  double peaks=290.*Gaussian(east,north,-1100.,1350.,2300.,1800.);
+  return std::max(.4,20.+coast*.04+25.*n+peaks);
+ }
+ if(world==EWorld::Nexavarkhos){
+  // Independent devastated colony: original impact valley, ridges and ash flats.
+  double radius=std::hypot((east+650.)/1900.,(north-300.)/1800.);
+  double ring=170.*std::exp(-std::pow((radius-1.1)/.3,2.));
+  double crater=310.*Gaussian(east,north,-650.,300.,840.,790.);
+  double ridge=480.*Gaussian(east,north,2300.,2100.,1350.,1700.);
+  return 130.+75.*n+ring+ridge-crater;
  }
  // DRAKHEIM: NAMALSK + SAKHAL style frozen volcanic archipelago, basalt
  // cliffs, snowy valleys and two original calderas (not copied terrain).
