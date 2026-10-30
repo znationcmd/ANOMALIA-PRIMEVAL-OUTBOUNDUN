@@ -84,21 +84,45 @@ if "/Game/ANOMALIA_Relief_Test" in all_pairs:
             and receipt.get("new") == all_pairs["/Game/ANOMALIA_Relief_Test"]):
         fail("Relief builder result not trustworthy")
 
+# Native WorldPartitionRenameDuplicateBuilder crashed (access violation)
+# specifically on ANOMALIA_Playable_v1. Do NOT retry that destructive rename.
+# Preserve and actually load the original map package as a compatibility path,
+# without claiming its rename has completed. Never broaden this exception.
+LEGACY_WP_MAP = "/Game/Maps/ANOMALIA_Playable_v1"
+LEGACY_WP_TARGET = "/Game/Maps/PRIGIMALIA_Playable_v1"
 verified_maps = []
+preserved_maps = []
 for old, new in sorted(all_pairs.items()):
+    current = new
     if not asset_api.does_asset_exist(new):
-        fail("Missing migrated map package: " + new + " (original: " + old + ")")
-    loaded = unreal.load_asset(new)
+        if old != LEGACY_WP_MAP or new != LEGACY_WP_TARGET:
+            fail("Missing migrated map package: " + new + " (original: " + old + ")")
+        original_file = root / "Content" / "Maps" / "ANOMALIA_Playable_v1.umap"
+        target_file = root / "Content" / "Maps" / "PRIGIMALIA_Playable_v1.umap"
+        if not original_file.is_file() or target_file.exists():
+            fail("Playable-v1 original map missing or partial target collision")
+        if not asset_api.does_asset_exist(old):
+            fail("Preserved playable-v1 map is not registered as an Unreal asset")
+        current = old
+    loaded = unreal.load_asset(current)
     if loaded is None or not isinstance(loaded, unreal.World):
-        fail("Unreal cannot reload renamed map as World: " + new)
-    verified_maps.append({"old": old, "new": new})
-
-# This last check makes sure the verified renamed native maps belong to
-# the exact staged Content tree, not an unrelated project/engine asset.
-for item in verified_maps:
-    rel = item["new"].removeprefix("/Game/") + ".umap"
+        fail("Unreal cannot reload verified World: " + current)
+    rel = current.removeprefix("/Game/") + ".umap"
     if not (root / "Content" / rel).is_file():
-        fail("Reloaded map package is absent on staged disk: " + item["new"])
+        fail("Reloaded World package missing in staged Content: " + current)
+    if current == old:
+        preserved_maps.append({
+            "old": old, "plannedNew": new, "actual": old,
+            "verified": True,
+            "reason": "World Partition builder crashed; exact original map retained"
+        })
+    else:
+        verified_maps.append({"old": old, "new": new})
+
+if len(verified_maps) + len(preserved_maps) != len(all_pairs):
+    fail("The verified-map count does not match the original rename plan")
+if len(preserved_maps) > 1:
+    fail("Unexpected additional legacy map preservation")
 
 # Keep the earlier failed checkpoint byte-for-byte for audit. Never overwrite
 # that evidence if there is a different file already at the backup location.
@@ -118,6 +142,11 @@ result = dict(checkpoint)
 result.update({
     "mapRenamePlan": [{"old": old, "new": new} for old, new in sorted(all_pairs.items())],
     "mapsRenamed": verified_maps,
+    "mapsPreservedAtOriginalPath": preserved_maps,
+    "allMapRenamesComplete": len(preserved_maps) == 0,
+    "compatibilityMapVerified": bool(preserved_maps),
+    "cookMapPackages": [item["new"] for item in verified_maps]
+                       + [item["actual"] for item in preserved_maps],
     "remainingLegacyPathsIncludingRedirectors": len(asset_api.list_assets(
         old_dir, recursive=True, include_folder=False
     )) if asset_api.does_directory_exist(old_dir) else 0,
@@ -125,7 +154,7 @@ result.update({
     "errors": [],
     "nativeReloadVerified": True,
     "validationMethod": "UE5.8-Unreal-AssetRegistry-and-World-load",
-    "validatedMaps": len(verified_maps),
+    "validatedMaps": len(verified_maps) + len(preserved_maps),
     "validatedAssets": len(migrated),
     "originalProjectPreserved": original_path.is_file(),
     "validationUtc": datetime.now(timezone.utc).isoformat(),
