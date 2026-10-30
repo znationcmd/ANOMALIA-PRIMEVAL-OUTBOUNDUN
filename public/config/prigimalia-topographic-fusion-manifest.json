@@ -1,0 +1,153 @@
+{
+  "schemaVersion": 1,
+  "project": "ANOMALIA'Z PRIGIMALIA",
+  "engine": "Unreal Engine 5.8",
+  "policy": "Image references are composition inspiration only. Never reuse pixel data, copyrighted exact coastline, elevation scans, textures, road coordinates or POIs.",
+  "status": "ORIGINAL_HEIGHTFIELD_SOURCE_IMPLEMENTED_NATIVE_UNREAL_NOT_VALIDATED",
+  "worlds": [
+    {
+      "mapId": "vorgrad-v1",
+      "name": "VORGRAD",
+      "sizeKm": [
+        30,
+        30
+      ],
+      "references": [
+        1,
+        2
+      ],
+      "influence": [
+        "dry jagged mountains",
+        "mountain basin",
+        "wadi valleys",
+        "sandy east transition",
+        "settled green corridors"
+      ],
+      "terrainCode": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaExtraWorldHeights.h",
+      "nativeUmapBuilt": false
+    },
+    {
+      "mapId": "nexavarkhos-v1",
+      "name": "NEXAVARKHOS",
+      "sizeKm": [
+        10,
+        10
+      ],
+      "references": [
+        3,
+        4
+      ],
+      "influence": [
+        "temperate island coast",
+        "rugged highlands",
+        "devastated crater",
+        "rocky shore",
+        "sheltered valleys"
+      ],
+      "terrainCode": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaExtraWorldHeights.h",
+      "nativeUmapBuilt": false
+    },
+    {
+      "mapId": "solynacalyra-v1",
+      "name": "SOLYNACALYRA",
+      "sizeKm": [
+        15,
+        15
+      ],
+      "references": [
+        5,
+        6
+      ],
+      "influence": [
+        "large wooded island",
+        "fragmented islands",
+        "jungle ridges",
+        "bays and coves",
+        "tropical lagoons"
+      ],
+      "terrainCode": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaExtraWorldHeights.h",
+      "nativeUmapBuilt": false
+    },
+    {
+      "mapId": "drakheim-v1",
+      "name": "DRAKHEIM",
+      "sizeKm": [
+        20,
+        20
+      ],
+      "references": [
+        7,
+        8
+      ],
+      "influence": [
+        "ice floes and sea channels",
+        "polar volcanic archipelago",
+        "frozen coast",
+        "snowy ridges",
+        "calderas"
+      ],
+      "terrainCode": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaExtraWorldHeights.h",
+      "nativeUmapBuilt": false
+    },
+    {
+      "mapId": "chernaskaluxria-v1",
+      "name": "CHERNASKALUXRIA",
+      "sizeKm": [
+        100,
+        100
+      ],
+      "references": [
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10
+      ],
+      "influence": [
+        "arid mountain corridor",
+        "temperate island coast",
+        "densely forested archipelago",
+        "polar volcanic islands",
+        "agricultural land",
+        "river plains",
+        "metropolis",
+        "jungle",
+        "ruins"
+      ],
+      "terrainCode": "scripts/ue5/chernaskaluxria_topographic_fusion.py",
+      "nativeUmapBuilt": false,
+      "desiredGeography": {
+        "mainlandKm2": 5000,
+        "islandsKm2": 1750,
+        "seaKm2": 3250,
+        "mainIslands": 1,
+        "largeIslands": {
+          "count": 3,
+          "areaKm2": 200
+        },
+        "mediumIslands": {
+          "count": 6,
+          "areaKm2": 100
+        },
+        "smallIslands": {
+          "count": 11,
+          "areaKm2": 50
+        },
+        "areaBudgetValidatedInHeightmap": false
+      }
+    }
+  ],
+  "otherWorldsUnaffected": [
+    "SKARVIK",
+    "DRAZOVIA",
+    "KARSKOV",
+    "NEMORIS"
+  ],
+  "noMergeIntoMain": true,
+  "note": "A visual reference is NOT an exact georeferenced elevation raster. Roads, true topographic heights, bridges, tunnels, level assets and gameplay require UE5 editor authoring/testing."
+}
