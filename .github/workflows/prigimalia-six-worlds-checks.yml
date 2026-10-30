@@ -1,0 +1,25 @@
+name: PRIGIMALIA - six world independence and biome auto-building checks
+on:
+  push:
+    branches: [feature/four-world-auto-populate-20261030]
+    paths:
+      - 'unreal/Scripts/four_world_layout.py'
+      - 'unreal/Scripts/author_four_world_population.py'
+      - 'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaServerBrowserLibrary.*'
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.cpp'
+      - 'public/config/anomalia-map-catalog.json'
+      - 'tests/test_ue5_map_independence.py'
+      - '.github/workflows/prigimalia-six-worlds-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  offline-contracts-not-gameplay-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Syntax-check authored Unreal Python and deterministic layout
+        run: python -m py_compile unreal/Scripts/author_four_world_population.py unreal/Scripts/four_world_layout.py
+      - name: Test six independent world packages, native server map IDs and reproducible auto-building
+        run: python -m unittest discover -s tests -p test_ue5_map_independence.py -v
