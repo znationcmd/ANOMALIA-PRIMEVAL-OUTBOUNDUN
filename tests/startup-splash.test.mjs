@@ -24,18 +24,18 @@ test('startup art is bundled via the existing module build',()=>{
  assert.match(html,/<script type="module" src="\/src\/startup-splash\.js"><\/script>/);
 });
 
-test('native Unreal startup poster is transient and cannot replace the 3D menu',()=>{
+test('native Unreal poster displays only during boot', () => {
  const native=read('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp');
  const header=read('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.h');
  const importer=read('unreal/Scripts/import_startup_poster.py');
  const splashBuilder=read('scripts/ue5/prepare-game-branding.ps1');
- assert.match(native,/Branding\\/T_StartupPoster\\.T_StartupPoster/);
- assert.match(native,/StartupArtworkFrame->SetVisibility\\(ESlateVisibility::Collapsed\\)/);
- assert.match(native,/MenuArtwork->SetVisibility\\(ESlateVisibility::Collapsed\\)/);
- assert.match(header,/TObjectPtr<UBorder> StartupArtworkFrame/);
- assert.match(importer,/T_StartupPoster/);
- assert.match(importer,/verified-source-backup\\.marker/);
- assert.doesNotMatch(importer,/T_MenuBackdrop/);
- assert.match(splashBuilder,/prigimalia-startup-poster\\.jpg/);
- assert.doesNotMatch(splashBuilder,/prigimalia-menu-backdrop\\.jpg/);
+ assert.ok(native.includes('/Branding/T_StartupPoster.T_StartupPoster'));
+ assert.ok(native.includes('StartupArtworkFrame->SetVisibility(ESlateVisibility::Collapsed)'));
+ assert.ok(native.includes('MenuArtwork->SetVisibility(ESlateVisibility::Collapsed)'));
+ assert.ok(header.includes('TObjectPtr<UBorder> StartupArtworkFrame'));
+ assert.ok(importer.includes('verified-source-backup.marker'));
+ assert.ok(importer.includes('T_StartupPoster'));
+ assert.ok(!importer.includes('T_MenuBackdrop'));
+ assert.ok(splashBuilder.includes('prigimalia-startup-poster.jpg'));
+ assert.ok(!splashBuilder.includes('prigimalia-menu-backdrop.jpg'));
 });
