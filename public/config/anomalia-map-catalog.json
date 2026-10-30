@@ -4,7 +4,7 @@
   "maps": [
     {
       "id": "archipelago-v2",
-      "displayName": "ANOMALIA’Z — Archipelago",
+      "displayName": "ARCHIPELAMALIA",
       "originalUnrealPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
       "widthKm": 48,
       "heightKm": 48,
@@ -15,7 +15,7 @@
     },
     {
       "id": "inhabited-v2",
-      "displayName": "ANOMALIA’Z — Inhabited",
+      "displayName": "INHABIMALIA",
       "originalUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
       "widthKm": 48,
       "heightKm": 48,
