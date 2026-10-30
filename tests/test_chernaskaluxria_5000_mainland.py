@@ -28,10 +28,10 @@ class ChMainlandTargetTest(unittest.TestCase):
         self.assertFalse(d["seaNavigationPlaytested"])
         self.assertTrue(all(not i["separatedByNavigableWater"] for i in d["plannedIslands"]))
 
-    def test_nine_maps_unchanged_and_current_geometry_not_misrepresented(self):
+    def test_ten_maps_with_original_ninth_geometry_unchanged(self):
         catalog=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text())["maps"]
-        self.assertEqual(len(catalog),9)
-        self.assertEqual(sum(v["widthKm"]*v["heightKm"] for v in catalog),17533)
+        self.assertEqual(len(catalog),10)
+        self.assertEqual(sum(v["widthKm"]*v["heightKm"] for v in catalog),18235.25)
         ninth=next(m for m in catalog if m["displayName"]=="CHERNASKALUXRIA")
         self.assertFalse(ninth["serverSelectable"])
         self.assertEqual(ninth["widthKm"],100)
