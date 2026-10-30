@@ -1,0 +1,47 @@
+name: PRIGIMALIA - Repair Relief map with native World Partition builder
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-relief-map-repair.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: Rename only failing staged map using native map builder
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal or game already running'}
+          if(-not(Test-Path -LiteralPath (Join-Path $root 'Saved/BrandMigration/verified-source-backup.marker'))){throw 'Unverified staged project'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original project missing'}
+          $old=Join-Path $root 'Content/ANOMALIA_Relief_Test.umap'
+          $new=Join-Path $root 'Content/PRIGIMALIA_Relief_Test.umap'
+          if(-not(Test-Path -LiteralPath $old)){throw 'Original staged map missing; inspect before repeating'}
+          if(Test-Path -LiteralPath $new){throw 'Destination already exists; inspect before repeating'}
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $log=Join-Path $root 'Saved/BrandMigration/relief-builder.log'
+          $originalHash=(Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\Content\ANOMALIA_Relief_Test.umap' -Algorithm SHA256).Hash
+          & $editor $project '/Game/ANOMALIA_Relief_Test' '-run=WorldPartitionBuilderCommandlet' '-SCCProvider=None' '-builder=WorldPartitionRenameDuplicateBuilder' '-NewPackage=/Game/PRIGIMALIA_Relief_Test' '-Rename' '-NullRHI' '-unattended' '-nopause' '-nosound' "-abslog=$log"
+          $code=$LASTEXITCODE
+          $afterHash=(Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\Content\ANOMALIA_Relief_Test.umap' -Algorithm SHA256).Hash
+          $receipt=@{old='/Game/ANOMALIA_Relief_Test';new='/Game/PRIGIMALIA_Relief_Test';exitCode=$code;targetPresent=(Test-Path -LiteralPath $new);originalHashBefore=$originalHash;originalHashAfter=$afterHash;originalPreserved=($originalHash -eq $afterHash);nativeReloadVerified=$false}
+          $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $root 'Saved/BrandMigration/relief-builder-report.json') -Encoding UTF8
+          if($code -ne 0 -or -not $receipt.targetPresent -or -not $receipt.originalPreserved){throw 'Dedicated map builder failed; inspect saved log and report'}
+          Write-Host 'RELIEF_NATIVE_BUILDER_COMPLETED_RELOAD_VALIDATION_STILL_REQUIRED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prigimalia-relief-repair-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/relief-builder.*
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/relief-builder-report.json
