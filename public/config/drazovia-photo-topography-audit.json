@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "mapId": "inhabited-v2",
+  "displayName": "DRAZOVIA",
+  "originalWorldPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+  "candidateWorldPackage": "/Game/Maps/ANOMALIA_DrazoviaTopo_Candidate",
+  "referencePhotoSha256": "d31548b922e251ca06e06cb2d05359089685932e347a6237bb3f8e1782ca4222",
+  "sourceR16Sha256": "42a7c9a38bfc3748bc8a6f8182354831a063875a405ba5b2cba53003e5dc9120",
+  "sourceBytes": 18301250,
+  "sideKm": 48,
+  "mapAreaKm2": 2304,
+  "samplesPerSide": 3025,
+  "vertexSpacingMetres": 15.873015873015873,
+  "unrealZScaleCm": 800,
+  "landKm2": 1522.96,
+  "seaKm2": 781.04,
+  "heightRangeMetres": [
+    -187.2,
+    975.5
+  ],
+  "regions": [
+    "northern glaciated mountains",
+    "frozen northeastern valleys",
+    "central temperate towns and river plains",
+    "western island towns and sheltered bays",
+    "southcentral sandy desert and canyons",
+    "western wetlands, deltas, lakes",
+    "southern islands",
+    "southeastern volcanic island"
+  ],
+  "historicalOldMapProtected": true,
+  "skarvikProtected": true,
+  "generatedR16Artifact": "ANOMALIAZ_DRAZOVIA_HEIGHTMAP_48KM_V2.zip",
+  "generatedR16StoredInGitRepository": false,
+  "originalDrazoviaReplaced": false,
+  "unrealNativeCandidateValidated": false,
+  "newNativeMapProduced": false,
+  "heightDataIsSurveyDEM": false,
+  "roadAndHousePositionsTransferred": false,
+  "existing27SettlementsRebuilt": false,
+  "notes": "Original elevations inferred from visual geology; shoreline water/land from user-composed illustrated reference. Existing DRAZOVIA builds use older SKARVIK-like topo and must never be edited without controlled migration, new collision/playtests, terrain position conversion and new material assignments."
+}
