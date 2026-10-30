@@ -47,6 +47,8 @@ private:
     UPROPERTY() TObjectPtr<ACameraActor> MenuCamera;
     TWeakObjectPtr<AActor> PreviousViewTarget;
     UPROPERTY() TObjectPtr<UImage> MenuArtwork;
+    // Parent matte + poster disappear completely once the native menu is ready.
+    UPROPERTY() TObjectPtr<UBorder> StartupArtworkFrame;
     UPROPERTY() TObjectPtr<UBorder> NavigationFrame;
     UPROPERTY() TObjectPtr<UBorder> DetailsFrame;
     UPROPERTY() TObjectPtr<UUserWidget> HiddenStatusWidget;
