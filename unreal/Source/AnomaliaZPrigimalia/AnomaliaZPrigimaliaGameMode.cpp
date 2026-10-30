@@ -556,6 +556,17 @@ void AAnomaliaZPrigimaliaGameMode::SpawnConfiguredVehicles()
         UE_LOG(LogTemp, Warning, TEXT("ANOMALIA vehicles.json invalid for server %s"), *ServerId);
         return;
     }
+    // Do not import a large-world vehicle configuration into another map.
+    const bool bChMap=GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_CHERNASKALUXRIA"));
+    FString ScopedMapId;
+    const bool bHasMapId=Root->TryGetStringField(TEXT("mapId"),ScopedMapId);
+    if ((bChMap && (!bHasMapId || ScopedMapId!=TEXT("chernaskaluxria-v1"))) ||
+        (bHasMapId && ScopedMapId==TEXT("chernaskaluxria-v1") && !bChMap))
+    {
+        UE_LOG(LogTemp,Warning,TEXT("ANOMALIA: vehicle map ID mismatch; spawn denied"));
+        return;
+    }
+    const double XYLimitCm=bChMap ? 5000000.0 : 2400000.0;
     const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
     if (!Root->TryGetArrayField(TEXT("vehicles"), Rows) || !Rows) return;
     int32 Spawned = 0;
@@ -571,10 +582,10 @@ void AAnomaliaZPrigimaliaGameMode::SpawnConfiguredVehicles()
             !Row->TryGetNumberField(TEXT("y"), Y) ||
             !Row->TryGetNumberField(TEXT("z"), Z)) continue;
         Row->TryGetNumberField(TEXT("yaw"), Yaw);
-        // Unreal centimetres; the map is intended to be 48 km across.
+        // Unreal centimetres, map-scoped 48 km or 100 km limits.
         if (!FMath::IsFinite(X) || !FMath::IsFinite(Y) || !FMath::IsFinite(Z) ||
-            !FMath::IsFinite(Yaw) || FMath::Abs(X) > 2400000.0 ||
-            FMath::Abs(Y) > 2400000.0 || FMath::Abs(Z) > 2400000.0) continue;
+            !FMath::IsFinite(Yaw) || FMath::Abs(X) > XYLimitCm ||
+            FMath::Abs(Y) > XYLimitCm || FMath::Abs(Z) > 2400000.0) continue;
         FAnomaliaZPrigimaliaVehicleDefinition Definition;
         const FName VehicleId(*VehicleName);
         if (!UAnomaliaZPrigimaliaVehicleCatalog::FindVehicleDefinition(VehicleId, Definition)) continue;
