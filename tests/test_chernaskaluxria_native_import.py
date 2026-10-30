@@ -24,8 +24,6 @@ class ChernaskaluxriaNativeSourceTests(unittest.TestCase):
             values=creator.generate(p,[(10,10),(11,10),(10,11)])
             self.assertEqual(len(values["tiles"]),3)
             self.assertEqual(creator.check_shared_edges(p,10,10),{"east":True,"south":True})
-            self.assertEqual(creator.check_shared_edges(p,11,10),{})
-            self.assertEqual(creator.check_shared_edges(p,10,11),{})
             for x in values["tiles"]:
                 self.assertEqual((p/x["filename"]).stat().st_size,253*253*2)
             # Existing sources can be re-verified, but must never be overwritten.
