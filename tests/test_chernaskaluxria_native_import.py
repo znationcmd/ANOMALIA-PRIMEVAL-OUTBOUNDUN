@@ -53,9 +53,9 @@ class ChernaskaluxriaNativeSourceTests(unittest.TestCase):
 
     def test_any_actual_world_retains_unique_identity(self):
         maps=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text())["maps"]
-        self.assertEqual(len(maps),9)
-        self.assertEqual(len({x["originalUnrealPackage"] for x in maps}),9)
-        self.assertEqual(len({x["saveNamespace"] for x in maps}),9)
+        self.assertEqual(len(maps),10)
+        self.assertEqual(len({x["originalUnrealPackage"] for x in maps}),10)
+        self.assertEqual(len({x["saveNamespace"] for x in maps}),10)
         own=next(x for x in maps if x["id"]=="chernaskaluxria-v1")
         self.assertEqual(own["originalUnrealPackage"],"/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA")
         self.assertFalse(own["serverSelectable"])
