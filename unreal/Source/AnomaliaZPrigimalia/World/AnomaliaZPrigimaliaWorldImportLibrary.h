@@ -13,6 +13,11 @@ public:
  /** New separate world with original urban terrain pads. Never alters the v2 archipelago. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateInhabitedArchipelagoLandscape();
+ /** Strictly isolated candidate built from user-authored DRAZOVIA coastal image.
+     Requires TerrainSource/DRAZOVIA/DRAZOVIA.r16 (3025x3025 little endian).
+     Never touches /Game/Maps/ANOMALIA_Inhabited_v2 or SKARVIK. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaTopoCandidateLandscape();
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
