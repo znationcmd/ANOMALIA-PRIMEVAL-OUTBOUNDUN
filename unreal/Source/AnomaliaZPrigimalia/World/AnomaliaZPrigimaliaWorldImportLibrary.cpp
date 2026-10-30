@@ -67,7 +67,9 @@ namespace
    Name==TEXT("/Game/Maps/PRIGIMALIA_KARSKOV") ||
    Name==TEXT("/Game/Maps/PRIGIMALIA_VORGRAD") ||
    Name==TEXT("/Game/Maps/PRIGIMALIA_NEMORIS") ||
-   Name==TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM");
+   Name==TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS");
  }
  bool IsOwnedDescriptor(const FActorDesc& Desc)
  {
@@ -286,6 +288,8 @@ namespace
   if(MapIdentifier==TEXT("VORGRAD"))return EWorld::Vorgrad;
   if(MapIdentifier==TEXT("NEMORIS"))return EWorld::Nemoris;
   if(MapIdentifier==TEXT("DRAKHEIM"))return EWorld::Drakheim;
+  if(MapIdentifier==TEXT("SOLYNACALYRA"))return EWorld::Solynacalyra;
+  if(MapIdentifier==TEXT("NEXAVARKHOS"))return EWorld::Nexavarkhos;
   return EWorld::Invalid;
  }
 }
@@ -325,7 +329,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
  Land->CreateLandscapeInfo();
  Land->PostEditChange();
- const int32 Expected=(Size==3025?576:256);
+ const int32 Expected=(Size==3025 || Size==1513)?576:256;
  if(Land->LandscapeComponents.Num()!=Expected)
  {
   UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
