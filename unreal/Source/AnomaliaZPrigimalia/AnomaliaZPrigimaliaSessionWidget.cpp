@@ -1143,8 +1143,8 @@ void UAnomaliaZPrigimaliaSessionWidget::ServerSelectionChanged(FString SelectedI
         {
             SelectedServerId=Row.Id;
             if(ServerStatus) ServerStatus->SetText(FText::FromString(
-                FString::Printf(TEXT("%s\nCarte : %s\nCatégorie : %s\nJoueurs : non vérifiés\nConnexion : %s"),
-                    *Row.Name,*Row.Map,*Row.Category,*Row.Address)));
+                FString::Printf(TEXT("%s\nCarte : %s\nCatégorie : %s (%s)\nJoueurs : non vérifiés\nConnexion : %s"),
+                    *Row.Name,*Row.Map,*Row.Category,*Row.Perspective,*Row.Address)));
             break;
         }
     }
@@ -1181,6 +1181,11 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser()
                 Item->TryGetStringField(TEXT("category"),Entry.Category);
                 if(!Entry.Category.Equals(TEXT("Officiel"),ESearchCase::IgnoreCase) &&
                     !Entry.Category.Equals(TEXT("Communautaire"),ESearchCase::IgnoreCase)) continue;
+                Item->TryGetStringField(TEXT("perspective"),Entry.Perspective);
+                if(Entry.Category.Equals(TEXT("Officiel"),ESearchCase::IgnoreCase) &&
+                    Entry.Perspective!=TEXT("1PP") && Entry.Perspective!=TEXT("3PP")) continue;
+                if(Entry.Category.Equals(TEXT("Communautaire"),ESearchCase::IgnoreCase))
+                    Entry.Perspective=TEXT("Serveur indépendant");
                 Item->TryGetBoolField(TEXT("favorite"),Entry.bFavorite);
                 // Strict URL sanitation: no commands, embedded options, paths,
                 // userinfo, Unicode spoofing or extra colons. Only host:port.
@@ -1209,8 +1214,8 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser()
         const FString Option=Entry.Name+TEXT("  |  ")+Entry.Map+TEXT("  |  ")+Entry.Address;
         ServerSelect->AddOption(Option);
         auto* Row=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        Row->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %s  ·  joueurs non vérifiés"),
-            *Entry.Name,*Entry.Map)));
+        Row->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %s  ·  %s  ·  joueurs non vérifiés"),
+            *Entry.Name,*Entry.Map,*Entry.Perspective)));
         Row->SetColorAndOpacity(FSlateColor(FLinearColor(.89f,.91f,.93f,1.f)));
         Row->SetAutoWrapText(true);
         ServerResults->AddChildToVerticalBox(Row)->SetPadding(FMargin(4,8));
@@ -1243,6 +1248,18 @@ void UAnomaliaZPrigimaliaSessionWidget::JoinSelectedServer()
     {
         if(Entry.Id!=SelectedServerId)continue;
         auto* PC=GetOwningPlayer();if(!PC||!TravelLoadingFrame)return;
+        // The operator-approved central official registry exists separately.
+        // The Unreal dedicated-server bridge is not deployed yet: NEVER let
+        // an official join silently create a new isolated character and
+        // claim that carried inventory has transferred.
+        if(Entry.Category.Equals(TEXT("Officiel"),ESearchCase::IgnoreCase))
+        {
+            if(ServerStatus)ServerStatus->SetText(FText::FromString(
+                FString::Printf(TEXT("Transfert officiel %s indisponible : connexion sécurisée à la base centrale et authentification du serveur encore nécessaires.\n"
+                    "Votre personnage et votre équipement restent sauvegardés et inchangés. Aucun transfert effectué."),
+                    *Entry.Perspective)));
+            return;
+        }
         const FString Address=Entry.Address; // Already strict-validated on loading.
         if(ServerBrowserFrame) ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
         if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Collapsed);
