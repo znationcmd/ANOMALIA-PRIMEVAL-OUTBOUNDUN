@@ -472,6 +472,136 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
 }
 
+// A dedicated, usable native server browser. Unlike the visual references,
+// this never invents live public listings: rows come only from bounded local
+// configuration. A real server connection requires a validated host:port.
+void UAnomaliaZPrigimaliaSessionWidget::BuildServerBrowser(UCanvasPanel* Canvas)
+{
+    ServerBrowserFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("ServerBrowserFullScreen"));
+    ServerBrowserFrame->SetBrushColor(FLinearColor(.009f,.014f,.019f,.91f));
+    ServerBrowserFrame->SetPadding(FMargin(26.f));
+    auto* Slot=Canvas->AddChildToCanvas(ServerBrowserFrame);
+    Slot->SetAnchors(FAnchors(.035f,.065f,.965f,.925f)); Slot->SetOffsets(FMargin(0));
+    auto* Root=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    ServerBrowserFrame->SetContent(Root);
+    auto Label=[&](UVerticalBox* V,const FString& Text,int32 Size,FLinearColor Color)
+    {
+        auto* T=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        T->SetText(FText::FromString(Text)); auto Font=T->GetFont();Font.Size=Size;T->SetFont(Font);
+        T->SetColorAndOpacity(FSlateColor(Color));T->SetAutoWrapText(true);
+        V->AddChildToVerticalBox(T)->SetPadding(FMargin(0,4));return T;
+    };
+    auto Button=[&](UHorizontalBox* Row,const TCHAR* Name,const TCHAR* Title)
+    {
+        auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Name));
+        B->SetBackgroundColor(FLinearColor(.30f,.042f,.040f,.97f));
+        auto* T=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        T->SetText(FText::FromString(Title));auto Font=T->GetFont();Font.Size=15;T->SetFont(Font);
+        T->SetColorAndOpacity(FSlateColor(FLinearColor::White));B->SetContent(T);
+        Row->AddChildToHorizontalBox(B)->SetPadding(FMargin(5,3));return B;
+    };
+    Label(Root,TEXT("ANOMALIA'Z  |  NAVIGATEUR DE SERVEURS"),27,FLinearColor::White);
+    Label(Root,TEXT("Le personnage et le monde de la dernière session restent visibles à l'arrière-plan."),
+        12,FLinearColor(.79f,.86f,.89f));
+    auto* Tabs=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    Root->AddChildToVerticalBox(Tabs);
+    Button(Tabs,TEXT("ServerTabFavorite"),TEXT("FAVORIS"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::TabFavoriteServers);
+    Button(Tabs,TEXT("ServerTabOfficial"),TEXT("OFFICIEL"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::TabOfficialServers);
+    Button(Tabs,TEXT("ServerTabCommunity"),TEXT("COMMUNAUTAIRE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::TabCommunityServers);
+    Button(Tabs,TEXT("ServerBrowserRefresh"),TEXT("ACTUALISER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser);
+    Button(Tabs,TEXT("ServerBrowserBack"),TEXT("RETOUR"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CloseServerBrowser);
+    auto* Columns=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    Root->AddChildToVerticalBox(Columns)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* List=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    Columns->AddChildToHorizontalBox(List)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    Label(List,TEXT("SERVEURS  /  NOM  ·  CARTE  ·  ADRESSE"),17,FLinearColor::White);
+    ServerSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("ServerBrowserSearch"));
+    ServerSearch->SetHintText(FText::FromString(TEXT("Rechercher un serveur ou une carte...")));
+    ServerSearch->OnTextChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ServerSearchChanged);
+    List->AddChildToVerticalBox(ServerSearch)->SetPadding(FMargin(0,4,12,8));
+    ServerSelect=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("ServerBrowserSelect"));
+    ServerSelect->OnSelectionChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ServerSelectionChanged);
+    List->AddChildToVerticalBox(ServerSelect)->SetPadding(FMargin(0,4,12,8));
+    auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());
+    List->AddChildToVerticalBox(Scroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    ServerResults=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("ServerBrowserResults"));
+    Scroll->AddChild(ServerResults);
+    auto* FilterPanel=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+    FilterPanel->SetBrushColor(FLinearColor(.02f,.028f,.037f,.97f));
+    FilterPanel->SetPadding(FMargin(20));
+    Columns->AddChildToHorizontalBox(FilterPanel)->SetPadding(FMargin(12,0,0,0));
+    auto* FilterRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    FilterPanel->SetContent(FilterRows);
+    Label(FilterRows,TEXT("FILTRES / DÉTAILS"),20,FLinearColor::White);
+    Label(FilterRows,TEXT("Favoris  •  Officiel  •  Communautaire"),12,FLinearColor(.8f,.84f,.9f));
+    Label(FilterRows,TEXT("Disponibilité et ping non confirmés sans service de découverte."),12,FLinearColor(.9f,.77f,.6f));
+    ServerStatus=Label(FilterRows,TEXT("Aucun serveur vérifié pour cette catégorie."),13,FLinearColor::White);
+    auto* Commands=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+    FilterRows->AddChildToVerticalBox(Commands)->SetPadding(FMargin(0,22,0,0));
+    Button(Commands,TEXT("ServerBrowserJoin"),TEXT("REJOINDRE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::JoinSelectedServer);
+    auto* Solo=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("ServerBrowserSolo"));
+    Solo->SetBackgroundColor(FLinearColor(.70f,.06f,.045f,1.f));
+    auto* SoloText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    SoloText->SetText(FText::FromString(TEXT("CONTINUER EN SOLO")));
+    SoloText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+    Solo->SetContent(SoloText); Solo->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession);
+    FilterRows->AddChildToVerticalBox(Solo)->SetPadding(FMargin(5,14));
+    ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UAnomaliaZPrigimaliaSessionWidget::BuildOnlinePlayers(UCanvasPanel* Canvas)
+{
+    OnlinePlayersFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("PauseOnlinePlayers"));
+    OnlinePlayersFrame->SetBrushColor(FLinearColor(.014f,.020f,.027f,.94f));
+    OnlinePlayersFrame->SetPadding(FMargin(22));
+    auto* Slot=Canvas->AddChildToCanvas(OnlinePlayersFrame);
+    Slot->SetAnchors(FAnchors(.59f,.07f,.96f,.88f));Slot->SetOffsets(FMargin(0));
+    auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    OnlinePlayersFrame->SetContent(Rows);
+    auto* Header=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    Header->SetText(FText::FromString(TEXT("JOUEURS EN LIGNE")));
+    auto Font=Header->GetFont();Font.Size=24;Header->SetFont(Font);
+    Rows->AddChildToVerticalBox(Header)->SetPadding(FMargin(0,8));
+    OnlinePlayerRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("PauseOnlinePlayerRows"));
+    Rows->AddChildToVerticalBox(OnlinePlayerRows)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    auto* Refresh=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("PauseOnlineRefresh"));
+    auto* RefreshText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    RefreshText->SetText(FText::FromString(TEXT("ACTUALISER LES JOUEURS")));
+    Refresh->SetContent(RefreshText);
+    Refresh->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::RefreshOnlinePlayers);
+    Rows->AddChildToVerticalBox(Refresh);
+    auto* Return=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("PauseOnlineBack"));
+    auto* ReturnText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    ReturnText->SetText(FText::FromString(TEXT("RETOUR À LA PAUSE")));
+    Return->SetContent(ReturnText);
+    Return->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CloseOnlinePlayers);
+    Rows->AddChildToVerticalBox(Return)->SetPadding(FMargin(0,8));
+    OnlinePlayersFrame->SetVisibility(ESlateVisibility::Collapsed);
+}
+
+void UAnomaliaZPrigimaliaSessionWidget::BuildTravelLoading(UCanvasPanel* Canvas)
+{
+    TravelLoadingFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("ServerTravelLoading"));
+    TravelLoadingFrame->SetBrushColor(FLinearColor(.015f,.018f,.019f,.94f));
+    TravelLoadingFrame->SetPadding(FMargin(40));
+    auto* Slot=Canvas->AddChildToCanvas(TravelLoadingFrame);
+    Slot->SetAnchors(FAnchors(0,0,1,1));Slot->SetOffsets(FMargin(0));
+    auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+    TravelLoadingFrame->SetContent(Rows);
+    auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    Title->SetText(FText::FromString(TEXT("ANOMALIA'Z PRIGIMALIA  /  CONNEXION AU SERVEUR")));
+    auto Font=Title->GetFont();Font.Size=27;Title->SetFont(Font);Rows->AddChildToVerticalBox(Title);
+    TravelStatus=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("ServerTravelStatus"));
+    TravelStatus->SetText(FText::FromString(TEXT("Préparation de la connexion...")));
+    Rows->AddChildToVerticalBox(TravelStatus)->SetPadding(FMargin(0,24));
+    auto* Progress=WidgetTree->ConstructWidget<UProgressBar>(UProgressBar::StaticClass(),TEXT("ServerTravelActivity"));
+    Progress->SetIsMarquee(true);Rows->AddChildToVerticalBox(Progress)->SetPadding(FMargin(0,18));
+    auto* Warning=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    Warning->SetText(FText::FromString(TEXT("Connexion en cours. La progression exacte sera fournie par le moteur réseau, pas simulée.")));
+    Warning->SetAutoWrapText(true);Rows->AddChildToVerticalBox(Warning)->SetPadding(FMargin(0,10));
+    TravelLoadingFrame->SetVisibility(ESlateVisibility::Collapsed);
+}
+
 void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
 {
     if(!WidgetTree || WidgetTree->RootWidget) return;
