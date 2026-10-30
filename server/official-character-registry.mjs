@@ -95,7 +95,10 @@ export function createOfficialCharacterRegistry({
   const records=new Map();
   for(const [k,record] of Object.entries(initialRecords)){
     const [player,view,...rest]=k.split('|');
-    if(!id(player)||!['1PP','3PP'].includes(view)||rest.length||
+    const extraSlot=rest.length===0?1:(rest.length===1?Number(rest[0]):0);
+    if(!id(player)||!['1PP','3PP'].includes(view)||
+       !Number.isInteger(extraSlot)||extraSlot<1||extraSlot>8||
+       (rest.length>0 && String(extraSlot)!==rest[0])||
        !record||typeof record!=='object'||!Number.isSafeInteger(record.revision)||
        record.revision<0||!approved.has(record.lastServerId)||
        (approved.get(record.lastServerId).thirdPerson?'3PP':'1PP')!==view)
@@ -112,17 +115,26 @@ export function createOfficialCharacterRegistry({
     persist(structuredClone(next)); // Durable write MUST succeed before state becomes live.
     records.set(k,record);
   };
-  const key=(player,cam)=>player+'|'+cam;
+  // Slot 1 retains the original persistent key for backward compatibility.
+  // Newly created slots 2-8 have independent records and equipment.
+  const validateSlot=(slot)=>{
+    if(!Number.isInteger(slot)||slot<1||slot>8)deny('INVALID_SLOT','Character slot must be from 1 to 8');
+    return slot;
+  };
+  const key=(player,cam,slot=1)=>player+'|'+cam+(validateSlot(slot)===1?'':'|'+slot);
+  const anyActive=(player,cam)=>[1,2,3,4,5,6,7,8].some(slot=>records.get(key(player,cam,slot))?.active);
   const perspective=serverId=>{
     const s=approved.get(serverId);
     if(!s)deny('NOT_OFFICIAL','Official characters never migrate to community servers');
     return s.thirdPerson?'3PP':'1PP';
   };
-  function checkIn({playerId,serverId}) {
+  function checkIn({playerId,serverId,characterSlot=1}) {
     if(!id(playerId))deny('UNAUTHENTICATED','Only verified server-side player IDs are allowed');
-    const view=perspective(serverId),k=key(playerId,view),time=now();
+    const view=perspective(serverId),k=key(playerId,view,characterSlot),time=now();
     const rec=records.get(k);
-    if(rec?.active)deny('CHARACTER_ALREADY_ONLINE','Character is already active on an official server');
+    if(characterSlot!==1 && !rec)deny('PROFILE_NOT_FOUND','Create the new character slot before joining');
+    // Protect the entire player identity from concurrent logins in any slot.
+    if(anyActive(playerId,view))deny('CHARACTER_ALREADY_ONLINE','Character is already active on an official server');
     if(rec && rec.lastServerId!==serverId && time<rec.lastLogoutAt+cooldownMs)
       deny('SERVER_HOP_COOLDOWN', 'Next official transfer available after '+(rec.lastLogoutAt+cooldownMs));
     const switched=!!rec&&rec.lastServerId!==serverId;
@@ -132,27 +144,43 @@ export function createOfficialCharacterRegistry({
     const next={lastServerId:serverId,lastLogoutAt:rec?.lastLogoutAt??0,revision:rec?.revision??0,
       snapshot:rec?.snapshot??null,active:{serverId,session,startedAt:time},perspective:view};
     commit(k,next);
-    return {session,revision:next.revision,view,switched,spawn:switched?structuredClone(selected):null,
+    return {session,revision:next.revision,view,characterSlot,switched,spawn:switched?structuredClone(selected):null,
       // A newly-created official player gets a fresh identity for each view.
       snapshot:next.snapshot?structuredClone(next.snapshot):null};
   }
-  function checkOut({playerId,serverId,session,snapshot}) {
+  function checkOut({playerId,serverId,session,snapshot,characterSlot=1}) {
     if(!id(playerId)||!id(session))deny('INVALID_IDENTITY','Invalid session identity');
-    const view=perspective(serverId),k=key(playerId,view),record=records.get(k);
+    const view=perspective(serverId),k=key(playerId,view,characterSlot),record=records.get(k);
     if(!record||!record.active||record.active.serverId!==serverId||record.active.session!==session)
       deny('STALE_SESSION','Disconnected or superseded official session cannot write a character');
     const clean=sanitizePortableCharacter(snapshot);
     const updated={...record,snapshot:clean,active:null,revision:record.revision+1,lastLogoutAt:now()};
     commit(k,updated);
-    return {saved:true,revision:updated.revision,view};
+    return {saved:true,revision:updated.revision,view,characterSlot};
   }
-  function getStatus({playerId,serverId}) {
+  function createCharacter({playerId,serverId,characterSlot}) {
     if(!id(playerId))deny('UNAUTHENTICATED','Invalid player ID');
-    const view=perspective(serverId),record=records.get(key(playerId,view));
-    return {view,active:!!record?.active,hasCharacter:!!record?.snapshot,
+    const view=perspective(serverId);
+    validateSlot(characterSlot);
+    if(characterSlot===1)deny('ORIGINAL_SLOT_PROTECTED','Original character is never replaced by creation');
+    if(anyActive(playerId,view))deny('CHARACTER_ALREADY_ONLINE','Disconnect before creating another official survivor');
+    const k=key(playerId,view,characterSlot);
+    if(records.has(k))deny('CHARACTER_SLOT_EXISTS','Character slot already occupied and will not be overwritten');
+    const record={lastServerId:serverId,lastLogoutAt:0,revision:0,
+      snapshot:null,active:null,perspective:view,created:true};
+    commit(k,record);
+    return {created:true,characterSlot,view};
+  }
+  function getStatus({playerId,serverId,characterSlot=1}) {
+    if(!id(playerId))deny('UNAUTHENTICATED','Invalid player ID');
+    const view=perspective(serverId),record=records.get(key(playerId,view,characterSlot));
+    const availableSlots=[1,2,3,4,5,6,7,8].filter(slot=>
+      slot===1 || records.has(key(playerId,view,slot)));
+    return {view,characterSlot,availableSlots,active:!!record?.active,
+      hasCharacter:!!record?.snapshot,
       nextTransferAt:record?.lastLogoutAt?record.lastLogoutAt+cooldownMs:0};
   }
-  return Object.freeze({checkIn,checkOut,getStatus,
+  return Object.freeze({checkIn,checkOut,getStatus,createCharacter,
     // Do not expose records or writing to ordinary players; transport must
     // enforce mTLS / signed official service credentials and persistence.
     _testingRecordCount:()=>records.size});
