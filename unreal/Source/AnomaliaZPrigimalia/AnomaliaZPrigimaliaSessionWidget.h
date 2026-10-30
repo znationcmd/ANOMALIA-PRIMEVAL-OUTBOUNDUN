@@ -38,6 +38,9 @@ private:
     UPROPERTY() TObjectPtr<UButton> PlayButton;
     UPROPERTY() TObjectPtr<UTextBlock> QualityLabel;
     UPROPERTY() TObjectPtr<UTextBlock> Feedback;
+    UPROPERTY() TObjectPtr<UComboBoxString> CharacterSlotSelect;
+    UPROPERTY() TObjectPtr<UTextBlock> CharacterSlotStatus;
+    FVector LastMenuPreviewLocation=FVector::ZeroVector;
     UPROPERTY() TObjectPtr<UWidgetSwitcher> Pages;
     UPROPERTY() TObjectPtr<UVerticalBox> ModRows;
     UPROPERTY() TObjectPtr<UBorder> WorkshopFrame;
@@ -96,6 +99,10 @@ private:
     UFUNCTION() void CloseOnlinePlayers();
     UFUNCTION() void RefreshOnlinePlayers();
     UFUNCTION() void ShowInviteFriends();
+    UFUNCTION() void RefreshCharacterSlots();
+    UFUNCTION() void SelectCharacterSlot();
+    UFUNCTION() void CreateCharacterSlot();
+    UFUNCTION() void ExportCharacterForTransfer();
     UFUNCTION() void RefreshMods();
     UFUNCTION() void RefreshWorkshop();
     UFUNCTION() void WorkshopSearchChanged(const FText& NewText);
