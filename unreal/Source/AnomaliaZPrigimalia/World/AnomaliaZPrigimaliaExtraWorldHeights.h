@@ -7,14 +7,14 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Solynacalyra, Nexavarkhos, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
-        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 : 0;
+        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 : world==EWorld::Solynacalyra ? 15000 : world==EWorld::Nexavarkhos ? 10000 : 0;
 }
-inline int Resolution(EWorld world) { return SideMeters(world)==30000 ? 3025 : SideMeters(world)==20000 ? 2017 : 0; }
+inline int Resolution(EWorld world) { int side=SideMeters(world); return side==30000 ? 3025 : side==20000 ? 2017 : side==15000 ? 1513 : side==10000 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
 inline double Smooth(double v) { v=Clamp(v,0.,1.); return v*v*(3.-2.*v); }
 inline double Hash(int x,int y,int seed)
