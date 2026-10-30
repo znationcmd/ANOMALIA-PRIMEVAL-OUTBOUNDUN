@@ -105,13 +105,26 @@ try {
   $state.packagedGamePreserved = (Test-Path -LiteralPath $packaged -PathType Leaf)
   if (-not $state.packagedGamePreserved) { throw 'Previously verified Windows executable is unexpectedly missing; stop and investigate' }
   if ([string]::IsNullOrWhiteSpace($env:UE_ROOT)) { throw 'UE_ROOT unavailable' }
-  $genBat = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\GenerateProjectFiles.bat'
-  if (-not (Test-Path -LiteralPath $genBat -PathType Leaf)) { throw 'UE5.8 GenerateProjectFiles.bat unavailable' }
-  # IMPORTANT: the system dotnet.exe only has .NET 9, while UE5.8 UBT requires
-  # .NET 10. Use the engine's own batch launcher and its bundled runtime instead.
-  # This is the same native project-file generation invoked by the selector.
-  & $genBat "-Project=$project" '-Game' '-Progress'
-  if ($LASTEXITCODE -ne 0) { throw "UE5.8 bundled GenerateProjectFiles failed (exit $LASTEXITCODE); inspect the job log" }
+  $ubt = Join-Path $env:UE_ROOT 'Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll'
+  if (-not (Test-Path -LiteralPath $ubt -PathType Leaf)) { throw 'UE5.8 UnrealBuildTool assembly unavailable' }
+  $bundledRoot = Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\DotNet'
+  if (-not (Test-Path -LiteralPath $bundledRoot -PathType Container)) { throw 'Unreal bundled .NET directory unavailable' }
+  $bundled = $null
+  foreach ($candidate in @(Get-ChildItem -LiteralPath $bundledRoot -Recurse -File -Filter 'dotnet.exe' -ErrorAction Stop)) {
+    $runtimes = @(& $candidate.FullName '--list-runtimes')
+    if ($LASTEXITCODE -eq 0 -and (($runtimes -join ' ') -match 'Microsoft\.NETCore\.App\s+10\.')) {
+      $bundled = $candidate
+      break
+    }
+  }
+  if ($null -eq $bundled) { throw 'No bundled .NET 10 runtime found in the installed UE5.8 tree' }
+  # Installed Epic launcher builds may not ship GenerateProjectFiles.bat. Use
+  # their bundled dotnet.exe explicitly, never C:\Program Files\dotnet (v9).
+  $env:DOTNET_ROOT = $bundled.DirectoryName
+  $env:DOTNET_MULTILEVEL_LOOKUP = '0'
+  Write-Host ('PRIGIMALIA_UE58_BUNDLED_DOTNET=' + $bundled.FullName)
+  & $bundled.FullName $ubt '-ProjectFiles' "-Project=$project" '-Game' '-Progress'
+  if ($LASTEXITCODE -ne 0) { throw "UE5.8 bundled UnrealBuildTool project file generation failed (exit $LASTEXITCODE); inspect job log" }
   $state.projectFilesGenerated = $true
   $state.status = 'SUCCESS'
   Write-Host 'PRIGIMALIA_NATIVE_GENERATE_PROJECT_FILES_SUCCESS=true'
