@@ -85,10 +85,16 @@ export function createOfficialCharacterRegistry({
       throw Error('Only operator-approved official servers allowed');
     approved.set(serverId,Object.freeze({thirdPerson:entry.thirdPerson}));
   }
-  for(const p of ['1PP','3PP']) {
-    if(!Array.isArray(spawnPoints[p])||spawnPoints[p].length<2)throw Error('At least two inland official spawns required for '+p);
-    for(const s of spawnPoints[p]) if(!s||!finite(s.x,-2400000,2400000)||!finite(s.y,-2400000,2400000)||!finite(s.z,-2400000,2400000))
-      throw Error('Invalid inland official spawn');
+  // Spawn locations are validated for EACH DESTINATION MAP / SERVER; a
+  // common 1PP/3PP list could accidentally spawn a player outside the map.
+  for(const serverId of approved.keys()) {
+    const points=spawnPoints[serverId];
+    if(!Array.isArray(points)||points.length<2)
+      throw Error('At least two operator-approved inland spawn points required for '+serverId);
+    for(const point of points)
+      if(!point||!finite(point.x,-2400000,2400000)||
+         !finite(point.y,-2400000,2400000)||!finite(point.z,-2400000,2400000))
+        throw Error('Invalid destination inland spawn for '+serverId);
   }
   if(!initialRecords||typeof initialRecords!=='object'||Array.isArray(initialRecords))
     throw Error('Invalid central registry recovery state');
@@ -139,7 +145,7 @@ export function createOfficialCharacterRegistry({
       deny('SERVER_HOP_COOLDOWN', 'Next official transfer available after '+(rec.lastLogoutAt+cooldownMs));
     const switched=!!rec&&rec.lastServerId!==serverId;
     const session= randomUUID(); // fencing token: only the holder can check out.
-    const spawnList=spawnPoints[view];
+    const spawnList=spawnPoints[serverId];
     const selected=switched?spawnList[Math.min(spawnList.length-1,Math.max(0,pickIndex(spawnList.length)))]:null;
     const next={lastServerId:serverId,lastLogoutAt:rec?.lastLogoutAt??0,revision:rec?.revision??0,
       snapshot:rec?.snapshot??null,active:{serverId,session,startedAt:time},perspective:view};
