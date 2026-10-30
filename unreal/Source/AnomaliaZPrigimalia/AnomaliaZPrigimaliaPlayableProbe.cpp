@@ -248,14 +248,32 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         { Finish(TEXT("Native Mods search removed the results and empty-state actions"));return; }
         Checks.Add(TEXT("native_mods_category_search_my_mods_and_catalog_buttons_operational"));
         FString WorkshopReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),WorkshopReport);
+        // Keep the genuine Mods screen visible for a full rendered frame
+        // before testing navigation. Closing in the same tick would capture
+        // the home page instead of the newly designed native Mods page.
         FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(WorkshopReport,TEXT(""))+TEXT("-workshop.png"),true,false);
+        Next=Now+1.2; Phase=21; return;
+    }
+    if(Phase==21)
+    {
+        if(Now<Next) return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        if(!Menu || !Menu->WidgetTree){ Finish(TEXT("Mods UI destroyed before capture completed"));return; }
+        auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
+        auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        auto* WorkshopReturn=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Settings=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavSettings")));
+        auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
+        if(!Pages || !Workshop || !WorkshopReturn || !Mods || !Settings || !Home)
+        { Finish(TEXT("Mods buttons vanished before navigation test"));return; }
         WorkshopReturn->OnClicked.Broadcast();
         if(Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
         { Finish(TEXT("Native Workshop return button failed to close"));return; }
         Mods->OnClicked.Broadcast();
         if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
         { Finish(TEXT("Native Workshop did not reopen"));return; }
-        WorkshopSettings->OnClicked.Broadcast();
+        Settings->OnClicked.Broadcast();
         if(Pages->GetActiveWidgetIndex()!=1 || Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
         { Finish(TEXT("Native Mods settings button failed to open the real options screen"));return; }
         Home->OnClicked.Broadcast();
