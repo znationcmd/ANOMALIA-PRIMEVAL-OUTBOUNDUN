@@ -1362,15 +1362,15 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshCharacterSlots()
     if(!Mode || GetWorld()->GetNetMode()!=NM_Standalone)return;
     CharacterSlotSelect->ClearOptions();
     const int32 Active=Mode->GetLocalCharacterSlot();
-    for(int32 Slot=1;Slot<=8;++Slot)
+    for(int32 CharacterIndex=1;CharacterIndex<=8;++CharacterIndex)
     {
-        if(Slot==Active || Mode->HasLocalCharacterSlot(Slot))
+        if(CharacterIndex==Active || Mode->HasLocalCharacterSlot(CharacterIndex))
         {
             const FString Name=FString::Printf(TEXT("%d · %s%s"),
-                Slot,Slot==1?TEXT("Survivant original"):TEXT("Survivant indépendant"),
-                Slot==Active?TEXT(" (ACTIF)"):TEXT(""));
+                CharacterIndex,CharacterIndex==1?TEXT("Survivant original"):TEXT("Survivant indépendant"),
+                CharacterIndex==Active?TEXT(" (ACTIF)"):TEXT(""));
             CharacterSlotSelect->AddOption(Name);
-            if(Slot==Active)CharacterSlotSelect->SetSelectedOption(Name);
+            if(CharacterIndex==Active)CharacterSlotSelect->SetSelectedOption(Name);
         }
     }
     if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
@@ -1381,15 +1381,15 @@ void UAnomaliaZPrigimaliaSessionWidget::SelectCharacterSlot()
     auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
     if(!bMainMenu || !Mode || !CharacterSlotSelect)return;
     const FString Selected=CharacterSlotSelect->GetSelectedOption();
-    const int32 Slot=FCString::Atoi(*Selected.Left(1));
-    if(Slot<1 || Slot>8)return;
-    if(Slot==Mode->GetLocalCharacterSlot())
+    const int32 CharacterIndex=FCString::Atoi(*Selected.Left(1));
+    if(CharacterIndex<1 || CharacterIndex>8)return;
+    if(CharacterIndex==Mode->GetLocalCharacterSlot())
     {
         if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(TEXT("Ce personnage est déjà actif.")));
         return;
     }
     FString Error;
-    if(!Mode->SelectLocalCharacterSlot(Slot,Error))
+    if(!Mode->SelectLocalCharacterSlot(CharacterIndex,Error))
     {
         if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(Error));
         return;
@@ -1404,8 +1404,8 @@ void UAnomaliaZPrigimaliaSessionWidget::CreateCharacterSlot()
 {
     auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
     if(!bMainMenu || !Mode)return;
-    int32 Slot=0;FString Error;
-    if(!Mode->CreateLocalCharacterSlot(Slot,Error))
+    int32 CharacterIndex=0;FString Error;
+    if(!Mode->CreateLocalCharacterSlot(CharacterIndex,Error))
     {
         if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(Error));
         return;
@@ -1424,8 +1424,8 @@ void UAnomaliaZPrigimaliaSessionWidget::ExportCharacterForTransfer()
     }
     // An export is NOT automatic cross-server character import: target servers
     // must authorize inventory transfer to prevent duplication and impersonation.
-    const int32 Slot=Mode->GetLocalCharacterSlot();
-    const FString Id=AAnomaliaZPrigimaliaGameMode::LocalCharacterProfileId(Slot);
+    const int32 CharacterIndex=Mode->GetLocalCharacterSlot();
+    const FString Id=AAnomaliaZPrigimaliaGameMode::LocalCharacterProfileId(CharacterIndex);
     FString Json,Error;
     if(!UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,Id,Json,Error))
     {
@@ -1435,7 +1435,7 @@ void UAnomaliaZPrigimaliaSessionWidget::ExportCharacterForTransfer()
     const FString Folder=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("CharacterTransfers"));
     IFileManager::Get().MakeDirectory(*Folder,true);
     const FString Name=FString::Printf(TEXT("%s-slot-%d-%s.json"),
-        *Mode->ServerId,Slot,*FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S%f")));
+        *Mode->ServerId,CharacterIndex,*FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S%f")));
     const FString Target=FPaths::Combine(Folder,Name);
     if(IFileManager::Get().FileExists(*Target) || !FFileHelper::SaveStringToFile(Json,*Target))
     {
