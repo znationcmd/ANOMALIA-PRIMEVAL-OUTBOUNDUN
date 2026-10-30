@@ -19,8 +19,11 @@ class CharacterSlotsTests(unittest.TestCase):
         self.assertIn('UAnomaliaZPrigimaliaConfigLibrary::SavePlayerProfile(',GM)
         self.assertIn("if(!SaveLocalGame())",GM)
         self.assertIn("HasLocalCharacterSlot(Slot)",GM)
-        self.assertIn("const bool bHadMarker=IFileManager::Get().FileExists(*Active)",GM)
-        self.assertIn("IFileManager::Get().Move(*Active,*Staging,bHadMarker,false)",GM)
+        self.assertIn("const bool bOldMarker=IFileManager::Get().FileExists(*Active)",GM)
+        self.assertIn("IFileManager::Get().Move(*Active,*Final,bOldMarker,false)",GM)
+        self.assertIn("active-slot.pending",GM)
+        self.assertIn('TEXT("AnomaliaZPrigimaliaSwitchSlot")',GM)
+        self.assertIn("Two-phase switch",GM)
         self.assertIn("const FString ExistingFile=FPaths::Combine",GM)
         self.assertIn("IFileManager::Get().FileExists(*ExistingFile)",GM)
         self.assertIn('if(!SaveLocalGame())',GM)
@@ -33,7 +36,8 @@ class CharacterSlotsTests(unittest.TestCase):
         for control in ("SessionCharacterSlots","SessionCharacterSelect","SessionCharacterNew",
                         "SessionCharacterTransfer"):
             self.assertIn(control,UI)
-        self.assertIn("UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()))",UI)
+        self.assertIn("UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()),true,SwitchOptions)",UI)
+        self.assertIn("AnomaliaZPrigimaliaSwitchSlot=%d",UI)
         self.assertIn("SaveLocalGame()",UI)
         self.assertIn('TEXT("CharacterTransfers")',UI)
         self.assertIn("L'import vers un serveur nécessite sa validation anti-duplication",UI)
