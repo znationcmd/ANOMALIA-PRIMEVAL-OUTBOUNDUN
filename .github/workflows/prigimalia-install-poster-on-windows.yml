@@ -29,7 +29,10 @@ jobs:
           $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $project=Join-Path $stage 'unreal\AnomaliaZPrigimalia.uproject'
           $marker=Join-Path $stage 'unreal\Saved\BrandMigration\verified-source-backup.marker'
-          $zipHash='9f7e9dd3d042f12edab8fb71e6809bbedc41a08037436ca730360d44a454e69d'
+          $acceptedPackages=@{
+            'PRIGIMALIA_Demarrage_Leger.zip'='8b950d1a247b8b62d3bb0ca4cd9959e22e3e586a25eac06f68642b4ec741cbc4'
+            'ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2.zip'='9f7e9dd3d042f12edab8fb71e6809bbedc41a08037436ca730360d44a454e69d'
+          }
           $posterHash='df2af9f73703a470a0b05d7f73bd99cfc0a3f40211d3a40b82e49da197c9d316'
           $report=Join-Path $stage 'unreal\Saved\BrandMigration\startup-poster-workflow.json'
           $state=[ordered]@{approvedPackageFound=$false;posterVerified=$false;buildAttempted=$false;gamePackaged=$false;originalUnchanged=$false;status='blocked';error=''}
@@ -41,12 +44,15 @@ jobs:
             if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'An Unreal process or copy is running: refusing concurrent installation'}
             $zip=$null
             foreach($dir in @((Join-Path $env:USERPROFILE 'Downloads'),(Join-Path $env:USERPROFILE 'Desktop'))){
-              $candidate=Join-Path $dir 'ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2.zip'
-              if(Test-Path -LiteralPath $candidate){
-                if((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -eq $zipHash){$zip=$candidate;break}
+              foreach($name in @('PRIGIMALIA_Demarrage_Leger.zip','ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2.zip')){
+                $candidate=Join-Path $dir $name
+                if(Test-Path -LiteralPath $candidate){
+                  if((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -eq $acceptedPackages[$name]){$zip=$candidate;break}
+                }
               }
+              if($zip){break}
             }
-            if(-not $zip){throw 'Approved V2 ZIP not present in Windows Downloads/Desktop; transfer the exact supplied ZIP to the PC first'}
+            if(-not $zip){throw 'Approved lightweight (692 KB) or V2 ZIP not present in Windows Downloads/Desktop; open this conversation on the Windows PC and save the pack there'}
             $state.approvedPackageFound=$true
             $tempDir=Join-Path $env:RUNNER_TEMP 'prigimalia-approved-startup-v2'
             if(Test-Path -LiteralPath $tempDir){Remove-Item -LiteralPath $tempDir -Recurse -Force}
