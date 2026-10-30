@@ -1398,7 +1398,10 @@ void UAnomaliaZPrigimaliaSessionWidget::SelectCharacterSlot()
     // Reload the same map so the authoritative GameMode loads the new profile,
     // and the menu camera frames the new survivor at that profile's saved pose.
     UGameplayStatics::SetGamePaused(GetOwningPlayer(),false);
-    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()));
+    const FString SwitchOptions=FString::Printf(
+        TEXT("AnomaliaZPrigimaliaServerId=%s?AnomaliaZPrigimaliaSwitchSlot=%d"),
+        *Mode->ServerId,CharacterIndex);
+    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()),true,SwitchOptions);
 }
 void UAnomaliaZPrigimaliaSessionWidget::CreateCharacterSlot()
 {
@@ -1411,7 +1414,10 @@ void UAnomaliaZPrigimaliaSessionWidget::CreateCharacterSlot()
         return;
     }
     UGameplayStatics::SetGamePaused(GetOwningPlayer(),false);
-    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()));
+    const FString SwitchOptions=FString::Printf(
+        TEXT("AnomaliaZPrigimaliaServerId=%s?AnomaliaZPrigimaliaSwitchSlot=%d"),
+        *Mode->ServerId,CharacterIndex);
+    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()),true,SwitchOptions);
 }
 void UAnomaliaZPrigimaliaSessionWidget::ExportCharacterForTransfer()
 {
