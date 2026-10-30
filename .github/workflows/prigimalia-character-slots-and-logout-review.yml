@@ -51,7 +51,7 @@ jobs:
           $backup=Join-Path $root ('Saved\BrandMigration\CharacterSlotsReview\run-'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $backup){throw 'Already staged run; refuse overwrite'}
           New-Item -ItemType Directory -Path $backup -Force|Out-Null
-          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp','AnomaliaZPrigimaliaGameMode.cpp','AnomaliaZPrigimaliaGameMode.h')
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp','AnomaliaZPrigimaliaGameMode.cpp','AnomaliaZPrigimaliaGameMode.h','AnomaliaZPrigimalia.cpp','AnomaliaZPrigimalia.Build.cs')
           foreach($name in $names){
             $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
             $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
