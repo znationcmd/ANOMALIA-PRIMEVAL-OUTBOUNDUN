@@ -9,8 +9,10 @@ const survivor=()=>({
   survival:{health:79,hunger:42,thirst:66,fatigue:12,stamina:78,bodyTemperatureC:36.8}
 });
 const spawnPoints={
- '1PP':[{x:100,y:200,z:300},{x:500,y:700,z:800}],
- '3PP':[{x:1000,y:1200,z:1600},{x:1800,y:2000,z:2400}]
+ official1a:[{x:100,y:200,z:300},{x:500,y:700,z:800}],
+ official1b:[{x:110,y:210,z:310},{x:510,y:710,z:810}],
+ official3a:[{x:1000,y:1200,z:1600},{x:1800,y:2000,z:2400}],
+ official3b:[{x:1010,y:1210,z:1610},{x:1810,y:2010,z:2410}]
 };
 const servers={
  official1a:{category:'official',thirdPerson:false},
@@ -28,7 +30,7 @@ test('1PP official migration preserves hands, gear, appearance and vitals but fo
  clock+=90000;
  const b=r.checkIn({playerId:'identity-123',serverId:'official1b'});
  assert.equal(b.switched,true);
- assert.deepEqual(b.spawn,spawnPoints['1PP'][1]);
+ assert.deepEqual(b.spawn,spawnPoints.official1b[1]);
  assert.deepEqual(b.snapshot,survivor());
  assert.deepEqual(b.snapshot.hands,{itemId:'rifle'});
  assert.equal(b.snapshot.survival.health,79);
@@ -72,7 +74,7 @@ test('same official server restore has no forced spawn and switching again repea
  r.checkOut({playerId:'player4',serverId:'official3a',session:a.session,snapshot:survivor()});
  t+=90000;
  a=r.checkIn({playerId:'player4',serverId:'official3b'});
- assert.equal(a.switched,true);assert.deepEqual(a.spawn,spawnPoints['3PP'][1]);
+ assert.equal(a.switched,true);assert.deepEqual(a.spawn,spawnPoints.official3b[1]);
 });
 
 test('create additional official characters without overwriting the original, separated by 1PP and 3PP',()=>{
