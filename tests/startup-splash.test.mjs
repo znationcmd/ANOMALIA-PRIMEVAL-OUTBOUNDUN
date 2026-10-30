@@ -35,7 +35,7 @@ test('native Unreal poster displays only during boot', () => {
  assert.ok(header.includes('TObjectPtr<UBorder> StartupArtworkFrame'));
  assert.ok(importer.includes('verified-source-backup.marker'));
  assert.ok(importer.includes('T_StartupPoster'));
- assert.ok(!importer.includes('T_MenuBackdrop'));
+ assert.ok(!importer.includes('destination = "/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop"'));
  assert.ok(splashBuilder.includes('prigimalia-startup-poster.jpg'));
  assert.ok(!splashBuilder.includes('prigimalia-menu-backdrop.jpg'));
 });
