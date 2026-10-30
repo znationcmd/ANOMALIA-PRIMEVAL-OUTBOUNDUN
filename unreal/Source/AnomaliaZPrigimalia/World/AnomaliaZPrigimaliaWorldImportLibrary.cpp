@@ -370,6 +370,65 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
 }
 
 
+
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateFALCLandscapeTile(int32 Col,int32 Row)
+{
+#if WITH_EDITOR
+ // The four RAW tiles are 13.25km each and share identical edge samples.
+ if(Col<0 || Col>1 || Row<0 || Row>1) return nullptr;
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+  return nullptr;
+ const FString Label=FString::Printf(TEXT("FALC_x%02d_y%02d"),Col,Row);
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  if(It->GetActorLabel()==Label)
+  {
+   UE_LOG(LogTemp,Error,TEXT("FALC existing Landscape must not be overwritten: %s"),*Label);
+   return nullptr;
+  }
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("FALC"),Label+TEXT(".r16"));
+ constexpr int32 SamplesPerAxis=1009;
+ constexpr int64 RawBytes=int64(SamplesPerAxis)*SamplesPerAxis*2;
+ TArray<uint8> Bytes;
+ if(!FFileHelper::LoadFileToArray(Bytes,*Source) || Bytes.Num()!=RawBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC RAW16 missing/incorrect: %s (need %lld bytes)"),*Source,(long long)RawBytes);
+  return nullptr;
+ }
+ TArray<uint16> Elevations;
+ Elevations.SetNumUninitialized(SamplesPerAxis*SamplesPerAxis);
+ FMemory::Memcpy(Elevations.GetData(),Bytes.GetData(),Bytes.Num()); // Win64 little endian.
+ const double West=-13250.+13250.*Col;
+ const double North=13250.-13250.*Row;
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land) return nullptr;
+ Land->SetActorLabel(Label);
+ Land->SetActorLocation(FVector(West*100.,-North*100.,0.));
+ Land->SetActorScale3D(FVector(1325000./1008.,1325000./1008.,800.));
+ TMap<FGuid,TArray<uint16>> ElevationsByLayer;
+ ElevationsByLayer.Add(FGuid(),MoveTemp(Elevations));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,1008,1008,2,63,ElevationsByLayer,
+              nullptr,Layers,ELandscapeImportAlphamapType::Additive,
+              TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=64)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC incomplete terrain section %s, native import must not be accepted"),*Label);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row)
 {
 #if WITH_EDITOR
