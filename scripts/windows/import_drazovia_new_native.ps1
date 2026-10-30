@@ -47,8 +47,9 @@ $h=[IO.File]::ReadAllText($header)
 $declaration='static AActor* CreateDrazoviaIzurviveCandidateLandscape();'
 if(-not $h.Contains($declaration)){
  $old='static AActor* CreateDrazoviaTopoCandidateLandscape();'
- if(-not $h.Contains($old)){throw 'Existing staged C++ header incompatible.'}
- $new=$h.Replace($old,$old+"`r`n UFUNCTION(BlueprintCallable, Category=`"ANOMALIA|World`")`r`n "+$declaration)
+ $anchor=if($h.Contains($old)){$old}else{'static AActor* CreateArchipelagoLandscape();'}
+ if(-not $h.Contains($anchor)){throw 'Existing staged C++ header has no known safe insertion point.'}
+ $new=$h.Replace($anchor,$anchor+"`r`n UFUNCTION(BlueprintCallable, Category=`"ANOMALIA|World`")`r`n "+$declaration)
 }else{$new=$h}
 $sourceAuthorContent=[IO.File]::ReadAllText($sourceAuthor)
 if(-not $sourceAuthorContent.Contains($expectedHash)){throw 'Native editor source does not validate approved SHA.'}
