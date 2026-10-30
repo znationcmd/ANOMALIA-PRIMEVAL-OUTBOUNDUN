@@ -1,0 +1,88 @@
+name: PRIGIMALIA - native 100km world first real terrain tile
+on:
+  push:
+    branches: [feature/chernaskaluxria-100km-nine-worlds-20261030]
+    paths: ['.github/workflows/prigimalia-chernaskaluxria-native-world.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  create-native-world-pilot:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect original project and map backups; shorten Windows compile paths
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(-not $env:UE_ROOT){throw 'UE_ROOT is missing'}
+          $workspace=(Resolve-Path -LiteralPath $env:GITHUB_WORKSPACE).Path
+          if($workspace -like 'D:\ANOMALIA\*' -or $workspace -like 'D:\ANOMALIAZ-PRIGIMALIA\*'){throw 'Protected user Windows project; refusing'}
+          if(Test-Path 'X:\'){throw 'X: is already used; refusing subst override'}
+          & subst X: $workspace
+          if($LASTEXITCODE -ne 0 -or -not(Test-Path 'X:\unreal\AnomaliaZPrigimalia.uproject')){throw 'Short build path could not be established'}
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0){throw 'Other Unreal process active; refusing concurrent native world edit'}
+          if(Test-Path 'X:\unreal\Content\Maps\PRIGIMALIA_CHERNASKALUXRIA.umap'){throw 'An existing native map is protected'}
+          if(Test-Path 'X:\unreal\Content\__ExternalActors__\Maps\PRIGIMALIA_CHERNASKALUXRIA'){throw 'Existing map actors are protected'}
+          Write-Host 'CHERNASKALUXRIA_NATIVE_EDITOR_PREFLIGHT_PASSED'
+      - name: Generate deterministic 5 km sample height source and verify bytes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $source='X:\unreal\TerrainSource\CHERNASKALUXRIA'
+          $receipt="X:\unreal\Saved\CHERNASKALUXRIA\source-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+          & $python X:\scripts\ue5\generate_chernaskaluxria_tiles.py --output $source --col 10 --row 10 --count 1 --report $receipt
+          if($LASTEXITCODE -ne 0){throw 'Terrain source preparation failed'}
+          $tile=Join-Path $source 'CHERNASKALUXRIA_x10_y10.r16'
+          if((Get-Item -LiteralPath $tile).Length -ne (253*253*2)){throw 'Landscape RAW source invalid'}
+          Write-Host 'CHERNASKALUXRIA_NATIVE_TERRAIN_SOURCE_VERIFIED'
+      - name: Build the genuine installed Unreal Engine Editor using short workspace drive
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development X:\unreal\AnomaliaZPrigimalia.uproject -WaitMutex -NoHotReloadFromIDE
+          if($LASTEXITCODE -ne 0){throw 'Actual UE editor compile failed; no world creation attempted'}
+          Write-Host 'CHERNASKALUXRIA_EDITOR_NATIVE_BUILD_PASSED'
+      - name: Create a real separate World Partition umap and the first 5km Landscape tile
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:PRIGIMALIA_CH_MODE='initialize'
+          $env:PRIGIMALIA_CH_COL='10'
+          $env:PRIGIMALIA_CH_ROW='10'
+          $env:PRIGIMALIA_CH_REPORT="X:\unreal\Saved\CHERNASKALUXRIA\native-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT.json"
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor X:\unreal\AnomaliaZPrigimalia.uproject -RenderOffscreen -Unattended -NoSplash -NoSound "-ExecutePythonScript=X:\unreal\Scripts\create_chernaskaluxria_native.py"
+          if($LASTEXITCODE -ne 0){throw 'Native map/landscape creation failed'}
+          if(-not(Test-Path -LiteralPath $env:PRIGIMALIA_CH_REPORT)){throw 'Native receipt missing'}
+          $receipt=Get-Content -LiteralPath $env:PRIGIMALIA_CH_REPORT -Raw | ConvertFrom-Json
+          if($receipt.state -ne 'NATIVE_PARTIAL_WORLD_SAVED_NOT_PLAYTESTED' -or $receipt.nativeSaved -ne $true -or $receipt.completedNativeTiles -ne 1){throw 'Real native terrain save is not verified'}
+          $map=Get-Item 'X:\unreal\Content\Maps\PRIGIMALIA_CHERNASKALUXRIA.umap'
+          if($map.Length -lt 1024){throw 'No real .umap was saved'}
+          Write-Host 'CHERNASKALUXRIA_NATIVE_FIRST_TILE_SAVED_NOT_PLAYTESTED'
+      - name: Release short Windows workspace drive
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          if(Test-Path 'X:\'){ & subst X: /D }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: chernaskaluxria-first-native-tile-evidence
+          if-no-files-found: warn
+          path: |
+            unreal/Content/Maps/PRIGIMALIA_CHERNASKALUXRIA.umap
+            unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_CHERNASKALUXRIA/
+            unreal/Content/__ExternalObjects__/Maps/PRIGIMALIA_CHERNASKALUXRIA/
+            unreal/Saved/CHERNASKALUXRIA/*.json
