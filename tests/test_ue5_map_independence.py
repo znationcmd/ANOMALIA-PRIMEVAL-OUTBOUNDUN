@@ -1,4 +1,4 @@
-"""Guard the eight separate worlds and deterministic new-world population plans.
+"""Guard the nine separate worlds and deterministic new-world population plans.
 
 These tests are offline simulations; they do not certify native UE gameplay.
 """
@@ -21,8 +21,8 @@ def load_module(name,relative):
 class SixIndependentWorldsTest(unittest.TestCase):
     def test_stable_independent_packages_and_save_namespaces(self):
         rows=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text(encoding="utf-8"))["maps"]
-        self.assertEqual(len(rows),8)
-        self.assertEqual(len({r["id"] for r in rows}),8)
+        self.assertEqual(len(rows),9)
+        self.assertEqual(len({r["id"] for r in rows}),9)
         self.assertEqual(len({r["originalUnrealPackage"] for r in rows}),8)
         self.assertEqual(len({r["saveNamespace"] for r in rows}),8)
         self.assertTrue(all(r["independentWorld"] is True for r in rows))
@@ -31,7 +31,8 @@ class SixIndependentWorldsTest(unittest.TestCase):
         self.assertEqual(dimensions,{"SKARVIK":48,"DRAZOVIA":48,
                                      "KARSKOV":30,"VORGRAD":30,
                                      "NEMORIS":20,"DRAKHEIM":20,
-                                     "SOLYNACALYRA":15,"NEXAVARKHOS":10})
+                                     "SOLYNACALYRA":15,"NEXAVARKHOS":10,
+                                     "CHERNASKALUXRIA":100})
 
     def test_server_browser_catalog_has_six_discrete_packages(self):
         c=(ROOT/"unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaServerBrowserLibrary.cpp").read_text()
