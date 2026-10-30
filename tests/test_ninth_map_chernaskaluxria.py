@@ -19,10 +19,10 @@ def source():
 class NinthWorldTest(unittest.TestCase):
     def test_9_separate_worlds_and_unique_server_paths(self):
         maps=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text())["maps"]
-        assert len(maps)==9
-        assert len({v["id"] for v in maps})==9
-        assert len({v["saveNamespace"] for v in maps})==9
-        assert len({v["originalUnrealPackage"] for v in maps})==9
+        assert len(maps)==10
+        assert len({v["id"] for v in maps})==10
+        assert len({v["saveNamespace"] for v in maps})==10
+        assert len({v["originalUnrealPackage"] for v in maps})==10
         assert sum(v["widthKm"]*v["heightKm"] for v in maps)==17533
         world=next(v for v in maps if v["displayName"]=="CHERNASKALUXRIA")
         assert world["id"]=="chernaskaluxria-v1"
