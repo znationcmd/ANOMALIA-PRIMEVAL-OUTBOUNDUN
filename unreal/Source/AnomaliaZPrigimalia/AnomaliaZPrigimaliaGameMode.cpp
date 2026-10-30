@@ -68,6 +68,50 @@ void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FStrin
         if (Valid) ServerId = AutomationScope;
     }
 #endif
+    // Finalize a character switch only on a NEW standalone world and only
+    // when the target matches the previously persisted transition request.
+    // This prevents the old world's Logout from writing old gear into the
+    // freshly created profile. The original slot 1 remains byte-compatible.
+    const FString RequestedSlot=UGameplayStatics::ParseOption(Options,TEXT("AnomaliaZPrigimaliaSwitchSlot"));
+    if(GetNetMode()==NM_Standalone && RequestedSlot.Len()==1 &&
+       RequestedSlot[0]>='1' && RequestedSlot[0]<='8')
+    {
+        const int32 NextSlot=FCString::Atoi(*RequestedSlot);
+        const FString Folder=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Characters"));
+        const FString Active=FPaths::Combine(Folder,TEXT("active-slot.txt"));
+        const FString PendingPath=FPaths::Combine(Folder,TEXT("active-slot.pending"));
+        FString Pending;
+        const FString Expected=FString::Printf(TEXT("%d:%d"),GetLocalCharacterSlot(),NextSlot);
+        if(FFileHelper::LoadFileToString(Pending,*PendingPath) &&
+           Pending.TrimStartAndEnd()==Expected &&
+           HasLocalCharacterSlot(NextSlot))
+        {
+            const bool bOldMarker=IFileManager::Get().FileExists(*Active);
+            bool bBackupOK=true;
+            if(bOldMarker)
+            {
+                const FString MarkerBackup=Active+TEXT(".backup-")+
+                    FGuid::NewGuid().ToString(EGuidFormats::Digits);
+                bBackupOK=IFileManager::Get().Copy(*MarkerBackup,*Active,true,false)==COPY_OK;
+            }
+            if(bBackupOK)
+            {
+                const FString Final=FPaths::Combine(Folder,TEXT("active-slot.commit"));
+                if(!IFileManager::Get().FileExists(*Final) &&
+                   FFileHelper::SaveStringToFile(FString::FromInt(NextSlot),*Final) &&
+                   IFileManager::Get().Move(*Active,*Final,bOldMarker,false))
+                {
+                    IFileManager::Get().Delete(*PendingPath);
+                    UE_LOG(LogTemp,Display,TEXT("ANOMALIA character switch activated safely: %d"),NextSlot);
+                }
+                else
+                {
+                    UE_LOG(LogTemp,Error,TEXT("ANOMALIA: character switch commit failed; previous character kept"));
+                }
+            }
+        }
+        else UE_LOG(LogTemp,Error,TEXT("ANOMALIA: character switch request rejected; previous character kept"));
+    }
     FString VehicleError;
     if(auto* Services=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaVehicleServiceSubsystem>())
         if(!Services->Configure(ServerId,VehicleError))UE_LOG(LogTemp,Error,TEXT("ANOMALIA vehicle services initialization stopped: %s"),*VehicleError);
@@ -144,31 +188,24 @@ bool AAnomaliaZPrigimaliaGameMode::SelectLocalCharacterSlot(int32 Slot,FString& 
     { OutError=TEXT("Le personnage actuel n'a pas pu être sauvegardé. Changement annulé.");return false; }
     const FString Folder=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("Characters"));
     IFileManager::Get().MakeDirectory(*Folder,true);
-    const FString Active=FPaths::Combine(Folder,TEXT("active-slot.txt"));
     const FString Staging=FPaths::Combine(Folder,TEXT("active-slot.pending"));
+    const FString Request=FString::Printf(TEXT("%d:%d"),GetLocalCharacterSlot(),Slot);
     if(IFileManager::Get().FileExists(*Staging))
-    { OutError=TEXT("Un changement de personnage est déjà en attente.");return false; }
-    if(!FFileHelper::SaveStringToFile(FString::FromInt(Slot),*Staging))
-    { OutError=TEXT("Impossible d'enregistrer le choix du personnage.");return false; }
-    // The original survivor never had an active-slot file, so the first
-    // selection must also work without a pre-existing marker. Never alter the
-    // saved original player profile while switching identities.
-    const bool bHadMarker=IFileManager::Get().FileExists(*Active);
-    if(bHadMarker)
     {
-        const FString Backup=Active+TEXT(".backup-")+FGuid::NewGuid().ToString(EGuidFormats::Digits);
-        if(IFileManager::Get().FileExists(*Backup) ||
-           IFileManager::Get().Copy(*Backup,*Active,true,false)!=COPY_OK)
-        {
-            IFileManager::Get().Delete(*Staging);
-            OutError=TEXT("Impossible de sauvegarder le personnage actif. Changement annulé.");
-            return false;
-        }
+        FString Pending;
+        if(FFileHelper::LoadFileToString(Pending,*Staging) &&
+           Pending.TrimStartAndEnd()==Request)
+            return true; // A previous reload was interrupted: safe to retry.
+        OutError=TEXT("Un autre changement de personnage est en attente : aucune sauvegarde modifiée.");
+        return false;
     }
-    if(!IFileManager::Get().Move(*Active,*Staging,bHadMarker,false))
+    // Two-phase switch: the original pawn is STILL alive. Never activate
+    // the new identity here, because Logout during map travel would otherwise
+    // save the original inventory INTO the new slot. InitGame in the NEXT
+    // world alone commits this request, after the old world is unloaded.
+    if(!FFileHelper::SaveStringToFile(Request,*Staging))
     {
-        IFileManager::Get().Delete(*Staging);
-        OutError=TEXT("Le nouveau personnage ne peut pas être sélectionné. Sauvegardes inchangées.");
+        OutError=TEXT("Impossible de préparer le changement de personnage.");
         return false;
     }
     return true;
