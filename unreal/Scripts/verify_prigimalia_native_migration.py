@@ -104,11 +104,16 @@ for item in verified_maps:
 # that evidence if there is a different file already at the backup location.
 backup = reportdir / "asset-rename-before-native-revalidation.json"
 if backup.exists():
-    if backup.read_bytes() != checkpoint_bytes:
-        fail("A different immutable prior checkpoint backup already exists")
+    saved_checkpoint = backup.read_bytes()
+    if saved_checkpoint != checkpoint_bytes:
+        saved_hash = hashlib.sha256(saved_checkpoint).hexdigest()
+        if not (checkpoint.get("nativeReloadVerified") is True
+                and checkpoint.get("priorCheckpointSHA256") == saved_hash):
+            fail("A different immutable prior checkpoint backup already exists")
 else:
     backup.write_bytes(checkpoint_bytes)
 
+prior_hash = hashlib.sha256(backup.read_bytes()).hexdigest()
 result = dict(checkpoint)
 result.update({
     "mapRenamePlan": [{"old": old, "new": new} for old, new in sorted(all_pairs.items())],
@@ -124,7 +129,7 @@ result.update({
     "validatedAssets": len(migrated),
     "originalProjectPreserved": original_path.is_file(),
     "validationUtc": datetime.now(timezone.utc).isoformat(),
-    "priorCheckpointSHA256": hashlib.sha256(checkpoint_bytes).hexdigest(),
+    "priorCheckpointSHA256": prior_hash,
 })
 temp = reportdir / "asset-rename-report.validated.tmp"
 temp.write_text(json.dumps(result, ensure_ascii=False, indent=2), encoding="utf-8")
