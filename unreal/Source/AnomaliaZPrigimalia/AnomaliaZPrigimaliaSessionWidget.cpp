@@ -377,7 +377,11 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
         auto* LabelBox=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
         LabelBox->AddChildToVerticalBox(WidgetTree->ConstructWidget<USpacer>(USpacer::StaticClass()))->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
         auto* Txt=Label(Title,12,FLinearColor::White);Txt->SetJustification(ETextJustify::Center);
-        LabelBox->AddChildToVerticalBox(Txt)->SetPadding(FMargin(1.f,12.f,1.f,6.f));
+        LabelBox->AddChildToVerticalBox(Txt)->SetPadding(FMargin(1.f,12.f,1.f,2.f));
+        auto* CountLabel=Label(TEXT("0 mods locaux"),10,FLinearColor(.88f,.90f,.93f));
+        CountLabel->SetJustification(ETextJustify::Center);
+        LabelBox->AddChildToVerticalBox(CountLabel)->SetPadding(FMargin(1.f,0.f,1.f,5.f));
+        WorkshopCategoryCountLabels.Add(CountLabel);
         B->SetContent(LabelBox);
         auto* ButtonSlot=CategoryImage->AddChildToOverlay(B);
         ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
@@ -793,6 +797,19 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
     if(WorkshopCreatorsLabel) WorkshopCreatorsLabel->SetText(FText::AsNumber(WorkspacesCount));
     if(WorkshopInstalledLabel) WorkshopInstalledLabel->SetText(FText::FromString(
         FString::Printf(TEXT("Manifestes locaux       %d"),InstalledCount)));
+    const TCHAR* CategoryKeys[]={TEXT("Tous"),TEXT("Véhicules"),TEXT("Créatures"),
+        TEXT("Bâtiments"),TEXT("Cartes"),TEXT("Armes"),TEXT("Survie"),
+        TEXT("Gameplay"),TEXT("Outils")};
+    for(int32 Cat=0;Cat<9 && Cat<WorkshopCategoryCountLabels.Num();++Cat)
+    {
+        int32 Count=0;
+        for(const FWorkForgeCard& Entry:Entries)
+            if(Cat==0 || Entry.Category.Equals(CategoryKeys[Cat],ESearchCase::IgnoreCase))
+                ++Count;
+        if(WorkshopCategoryCountLabels[Cat])
+            WorkshopCategoryCountLabels[Cat]->SetText(FText::FromString(
+                FString::Printf(TEXT("%d mod(s) locaux"),Count)));
+    }
     TArray<FWorkForgeCard> Visible;
     for(const FWorkForgeCard& Card:Entries)if(Matches(Card))Visible.Add(Card);
     if(Sort==TEXT("Nom A-Z"))
