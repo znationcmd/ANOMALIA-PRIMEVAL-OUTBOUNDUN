@@ -2,7 +2,7 @@ name: DRAZOVIA - regenerate approved RAW16 then import new UE5.8 candidate on Wi
 on:
   push:
     branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
-    paths: [.github/workflows/drazovia-izurvive-native-import.yml]
+    paths: [.github/workflows/drazovia-izurvive-native-import.yml, scripts/windows/import_drazovia_new_native.ps1]
   workflow_dispatch:
 permissions:
   contents: read
