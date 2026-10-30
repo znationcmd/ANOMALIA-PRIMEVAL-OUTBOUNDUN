@@ -160,7 +160,17 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     const FLinearColor Soft(.87f,.89f,.91f,1.f);
     const FLinearColor Cyan(.22f,.86f,.75f,1.f);
     auto* Logo=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_WorkshopLogo.T_WorkshopLogo"),nullptr,LOAD_NoWarn);
-    auto* Backdrop=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+    auto* Backdrop=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/WorkForge/Artwork/T_WFHero.T_WFHero"),nullptr,LOAD_NoWarn);
+    if(!Backdrop) Backdrop=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+    // The nine artwork textures are ordinary UI assets. Each category remains
+    // a separate real UButton with a bound filtering callback.
+    TArray<UTexture2D*> CategoryArt;
+    for(int32 ArtIndex=0;ArtIndex<9;ArtIndex++)
+    {
+        const FString Name=FString::Printf(TEXT("T_WFCategory%d"),ArtIndex);
+        const FString Path=FString::Printf(TEXT("/Game/AnomaliaZPrigimalia/WorkForge/Artwork/%s.%s"),*Name,*Name);
+        CategoryArt.Add(LoadObject<UTexture2D>(nullptr,*Path,nullptr,LOAD_NoWarn));
+    }
 
     auto Label=[&](const FString& Value,int32 FontSize,const FLinearColor& Color)
     {
@@ -297,8 +307,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     {
         auto* Background=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("WorkshopHeroBackdrop"));
         Background->SetBrushFromTexture(Backdrop,true);
-        Background->SetDesiredSizeOverride(FVector2D(780.f,240.f));
-        Background->SetColorAndOpacity(FLinearColor(1.f,.76f,.70f,.65f));
+        Background->SetDesiredSizeOverride(FVector2D(780.f,250.f));
+        Background->SetColorAndOpacity(FLinearColor(1.f,1.f,1.f,.83f));
         HeroWrap->AddChildToOverlay(Background);
     }
     auto* HeroText=Vertical();
@@ -329,12 +339,28 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     {
         const FString& Title=Cats[I].Get<0>();
         const FString& Key=Cats[I].Get<1>();
-        auto* Card=Box(I==0?FLinearColor(.68f,.08f,.035f,.98f):FLinearColor(.055f,.074f,.095f,.98f),5);
+        auto* Card=Box(I==0?FLinearColor(.72f,.10f,.032f,.99f):FLinearColor(.055f,.074f,.095f,.99f),2);
         Grid->AddChildToUniformGrid(Card,I/9,I%9);
+        auto* CategoryImage=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());
+        Card->SetContent(CategoryImage);
+        if(CategoryArt.IsValidIndex(I) && CategoryArt[I])
+        {
+            auto* Art=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+            Art->SetBrushFromTexture(CategoryArt[I],true);
+            Art->SetDesiredSizeOverride(FVector2D(108.f,100.f));
+            Art->SetColorAndOpacity(FLinearColor(.92f,.92f,.93f,.9f));
+            CategoryImage->AddChildToOverlay(Art);
+        }
         auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(*FString::Printf(TEXT("WorkshopCategoryCard%d"),I)));
-        B->SetBackgroundColor(I==0?FLinearColor(.66f,.045f,.022f,1.f):FLinearColor(.038f,.050f,.071f,1.f));
+        B->SetBackgroundColor(I==0?FLinearColor(.63f,.035f,.012f,.82f):FLinearColor(.018f,.025f,.031f,.72f));
+        auto* LabelBox=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+        LabelBox->AddChildToVerticalBox(WidgetTree->ConstructWidget<USpacer>(USpacer::StaticClass()))->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
         auto* Txt=Label(Title,12,FLinearColor::White);Txt->SetJustification(ETextJustify::Center);
-        B->SetContent(Txt);Card->SetContent(B);
+        LabelBox->AddChildToVerticalBox(Txt)->SetPadding(FMargin(1.f,12.f,1.f,6.f));
+        B->SetContent(LabelBox);
+        auto* ButtonSlot=CategoryImage->AddChildToOverlay(B);
+        ButtonSlot->SetHorizontalAlignment(HAlign_Fill);
+        ButtonSlot->SetVerticalAlignment(VAlign_Fill);
         switch(I){
             case 0:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll);break;
             case 1:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterVehicles);break;
@@ -744,8 +770,9 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
     else if(Sort==TEXT("Version"))
         Visible.Sort([](const FWorkForgeCard& A,const FWorkForgeCard& B){return A.Version>B.Version;});
 
-    const FLinearColor Red(.58f,.11f,.075f,1.f),Gold(1.f,.79f,.60f,1.f),Soft(.82f,.74f,.70f,1.f);
-    auto* DefaultArt=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+    const FLinearColor Red(.77f,.045f,.025f,1.f),Gold(1.f,.80f,.63f,1.f),Soft(.82f,.84f,.88f,1.f);
+    auto* DefaultArt=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/WorkForge/Artwork/T_WFModCardFallback.T_WFModCardFallback"),nullptr,LOAD_NoWarn);
+    if(!DefaultArt) DefaultArt=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
     auto Text=[&](const FString& Caption,int32 Size,const FLinearColor& Color)
     {
         auto* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -755,11 +782,11 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
         return Label;
     };
     // Cards are genuine Slate/UMG widgets, not a screenshot or flattened mock-up.
-    for(int32 Index=0;Index<Visible.Num();Index+=3)
+    for(int32 Index=0;Index<Visible.Num();Index+=4)
     {
         auto* CardsRow=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
         WorkshopCards->AddChildToVerticalBox(CardsRow)->SetPadding(FMargin(4,5));
-        for(int32 Col=0;Col<3;++Col)
+        for(int32 Col=0;Col<4;++Col)
         {
             if(Index+Col>=Visible.Num())break;
             const FWorkForgeCard& Entry=Visible[Index+Col];
@@ -773,14 +800,14 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
             Card->SetContent(Content);
             auto* Art=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());
             auto* ImageHeight=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-            ImageHeight->SetHeightOverride(128.f);
+            ImageHeight->SetHeightOverride(145.f);
             Content->AddChildToVerticalBox(ImageHeight);
             ImageHeight->SetContent(Art);
             if(DefaultArt)
             {
                 auto* Image=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
                 Image->SetBrushFromTexture(DefaultArt,true);
-                Image->SetColorAndOpacity(FLinearColor(.83f,.48f,.37f,.90f));
+                Image->SetColorAndOpacity(FLinearColor(1.f,1.f,1.f,.95f));
                 Art->AddChildToOverlay(Image);
             }
             auto* Shade=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
