@@ -69,3 +69,28 @@ test('official service will not admit a community server pretending to be offici
   await service.close();rmSync(dir,{recursive:true,force:true});
  }
 });
+
+test('authenticated server can create extra character slots; same view retains separate inventories across central restart',async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'anomalia-official-extra-slot-'));
+ const path=join(dir,'official.json');
+ let svc=createOfficialCharacterService({operators,spawnPoints,storagePath:path});
+ try{
+  await new Promise(resolve=>svc.server.once('listening',resolve));
+  const c=await request(svc.server,'firstA','create-character',{playerId:'second-survivor',characterSlot:2});
+  assert.equal(c.status,200);assert.equal(c.body.characterSlot,2);
+  const repeat=await request(svc.server,'firstA','create-character',{playerId:'second-survivor',characterSlot:2});
+  assert.equal(repeat.status,409);assert.equal(repeat.body.error,'CHARACTER_SLOT_EXISTS');
+  const invalid=await request(svc.server,'firstA','create-character',{playerId:'second-survivor',characterSlot:1});
+  assert.equal(invalid.status,409);assert.equal(invalid.body.error,'ORIGINAL_SLOT_PROTECTED');
+  await svc.close();
+  svc=createOfficialCharacterService({operators,spawnPoints,storagePath:path});
+  await new Promise(resolve=>svc.server.once('listening',resolve));
+  const status=await request(svc.server,'firstA','status',{playerId:'second-survivor'});
+  assert.deepEqual(status.body.availableSlots,[1,2]);
+  const selected=await request(svc.server,'firstA','check-in',{playerId:'second-survivor',characterSlot:2});
+  assert.equal(selected.status,200);assert.equal(selected.body.characterSlot,2);
+ }finally{
+  await svc.close().catch(()=>{});
+  rmSync(dir,{recursive:true,force:true});
+ }
+});
