@@ -82,7 +82,7 @@ jobs:
           $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\dry-run-editor.log'
           & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
           if($LASTEXITCODE -ne 0){throw 'UE Editor asset audit failed'}
-          $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-report.json' -Raw | ConvertFrom-Json
+          $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-dry-run-report.json' -Raw | ConvertFrom-Json
           Write-Host "LEGACY_ASSETS_FOUND=$($report.legacyAssetsFound)"
           Write-Host "LEGACY_MAPS_FOUND=$($report.legacyMapsFound)"
           if($report.legacyAssetsFound -lt 1 -and $report.legacyMapsFound -lt 1){throw 'No actual legacy assets found in staged project'}
