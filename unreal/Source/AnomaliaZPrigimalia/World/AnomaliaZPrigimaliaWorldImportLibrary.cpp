@@ -453,7 +453,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaIzurviveCandidateV
 int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectDrazoviaIzurviveCandidateV2Components(AActor* Candidate)
 {
 #if WITH_EDITOR
- const ALandscape* Land=Cast<ALandscape>(Candidate);
+ ALandscape* Land=Cast<ALandscape>(Candidate);
  if(!Land || !Land->GetWorld() ||
     Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV2_Candidate"))
   return -1;
