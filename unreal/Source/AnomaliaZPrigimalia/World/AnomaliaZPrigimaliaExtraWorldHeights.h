@@ -80,7 +80,7 @@ inline double Height(EWorld world,double east,double north)
 
  if(world==EWorld::Solynacalyra){
   // Original fragmented tropical islands and lagoons (not another world's terrain).
-  auto isle=[](double cx,double cy,double rx,double ry,double phase){
+  auto isle=[east,north](double cx,double cy,double rx,double ry,double phase){
    double dx=(east-cx)/rx,dy=(north-cy)/ry,angle=std::atan2(dy,dx);
    return (1.+.07*std::sin(6.*angle+phase)-std::hypot(dx,dy))*std::min(rx,ry);
   };
