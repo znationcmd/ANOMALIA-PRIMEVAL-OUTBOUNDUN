@@ -7,7 +7,7 @@
  */
 import http from 'node:http';
 import {createHash, timingSafeEqual} from 'node:crypto';
-import {mkdirSync, readFileSync, existsSync, writeFileSync, renameSync} from 'node:fs';
+import {mkdirSync, readFileSync, existsSync, writeFileSync, renameSync, unlinkSync} from 'node:fs';
 import {resolve,join} from 'node:path';
 import {createOfficialCharacterRegistry, OfficialTransferError} from './official-character-registry.mjs';
 
@@ -51,25 +51,31 @@ export function createOfficialCharacterService({
       if(initial.schemaVersion!==1||!allowObject(initial.records))throw Error('Bad schema');
     }catch(error){throw Error('Refusing to start with unreadable central character data: '+error.message)}
   }
-  // The registry used by both admission and checkout is rebuilt from durable
-  // state below. It must NEVER be shared with community or client scripts.
-  const registry=createOfficialCharacterRegistry({servers,spawnPoints,cooldownMs,now,pickIndex});
-  if(Object.keys(initial.records).length!==0)
-    throw Error('Nonempty durable registry needs an operator recovery/migration adapter; refusing unsafe reset');
-  const atomicWrite=()=>{
+  // Persist every admission and checkout BEFORE it becomes visible. A crash
+  // after the disk commit but before HTTP reply is safe: retry is rejected by
+  // the active session fence, never granted twice.
+  const atomicWrite=(records)=>{
     const tmp=dataPath+'.tmp';
-    if(existsSync(tmp))throw Error('Unfinished central registry write detected; human recovery required');
-    writeFileSync(tmp,JSON.stringify(initial),{encoding:'utf8',mode:0o600,flag:'wx'});
-    renameSync(tmp,dataPath);
+    if(existsSync(tmp))throw Error('Unfinished central registry write; operator recovery required');
+    try {
+      writeFileSync(tmp,JSON.stringify({schemaVersion:1,records}),{encoding:'utf8',mode:0o600,flag:'wx'});
+      renameSync(tmp,dataPath);
+    } catch(error) {
+      try { unlinkSync(tmp); } catch{}
+      throw error;
+    }
   };
+  const registry=createOfficialCharacterRegistry({
+    servers,spawnPoints,cooldownMs,now,pickIndex,
+    initialRecords:initial.records,persist:atomicWrite
+  });
   // Refuse to begin if a second central writer is present. Service is designed
   // for a single deployed instance, never multiple replicas sharing the same dir.
   const lockPath=dataPath+'.lock';
   if(existsSync(lockPath))throw Error('Another coordinator or stale central lock exists');
   writeFileSync(lockPath,JSON.stringify({pid:process.pid,startedAt:Date.now()}),{flag:'wx',mode:0o600});
   let server;
-  const requests=new Set();
-  try{
+   try{
     server=http.createServer(async(req,res)=>{
       res.setHeader('Cache-Control','no-store');
       const reply=(code,data)=>{
@@ -104,19 +110,17 @@ export function createOfficialCharacterService({
         }else{
           result=registry.getStatus({playerId:data.playerId,serverId:claimedServer});
         }
-        // Keep API internal until durable state replay is implemented. This
-        // service explicitly refuses live login rather than risking wipe/dupe.
-        return reply(503,{error:'PERSISTENCE_ADAPTER_NOT_READY',
-          message:'Central durable restart recovery and Unreal server integration required; no character was transferred.'});
+        return reply(200,{ok:true,...result});
       }catch(error){
-        if(error instanceof OfficialTransferError)return reply(409,{error:error.code});
-        return reply(400,{error:'INVALID_REQUEST'});
+        if(error instanceof OfficialTransferError)
+          return reply(error.code==='NOT_OFFICIAL'||error.code==='UNAUTHENTICATED'?403:409,{error:error.code});
+        return reply(500,{error:'COORDINATOR_WRITE_FAILED',message:'Transfer blocked without durable confirmation'});
       }
     });
     server.listen(port,host);
   }catch(error){try{unlinkSync(lockPath)}catch{}throw error}
   return {server, async close(){
     await new Promise((done,reject)=>server.close(e=>e?reject(e):done()));
-    const {unlinkSync}=await import('node:fs');unlinkSync(lockPath);
+    unlinkSync(lockPath);
   }};
 }
