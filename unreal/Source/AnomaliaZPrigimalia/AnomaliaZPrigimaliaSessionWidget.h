@@ -13,6 +13,7 @@ class UBorder;
 class UCanvasPanel;
 class UComboBoxString;
 class UEditableTextBox;
+class UHorizontalBox;
 UCLASS()
 class ANOMALIAZPRIGIMALIA_API UAnomaliaZPrigimaliaSessionWidget : public UUserWidget
 {
@@ -28,6 +29,9 @@ public:
 private:
     void BuildLayout();
     void BuildPremiumWorkshop(UCanvasPanel* Canvas);
+    void BuildServerBrowser(UCanvasPanel* Canvas);
+    void BuildOnlinePlayers(UCanvasPanel* Canvas);
+    void BuildTravelLoading(UCanvasPanel* Canvas);
     bool bMainMenu=false;
     bool bWorkshopMyModsOnly=false;
     int32 Quality=1;
@@ -37,6 +41,19 @@ private:
     UPROPERTY() TObjectPtr<UWidgetSwitcher> Pages;
     UPROPERTY() TObjectPtr<UVerticalBox> ModRows;
     UPROPERTY() TObjectPtr<UBorder> WorkshopFrame;
+    UPROPERTY() TObjectPtr<UBorder> ServerBrowserFrame;
+    UPROPERTY() TObjectPtr<UBorder> OnlinePlayersFrame;
+    UPROPERTY() TObjectPtr<UBorder> TravelLoadingFrame;
+    UPROPERTY() TObjectPtr<UVerticalBox> ServerResults;
+    UPROPERTY() TObjectPtr<UVerticalBox> OnlinePlayerRows;
+    UPROPERTY() TObjectPtr<UEditableTextBox> ServerSearch;
+    UPROPERTY() TObjectPtr<UComboBoxString> ServerSelect;
+    UPROPERTY() TObjectPtr<UTextBlock> ServerStatus;
+    UPROPERTY() TObjectPtr<UTextBlock> TravelStatus;
+    struct FServerBrowserEntry { FString Id,Name,Map,Address,Category; int32 Players=0,Capacity=0; bool bFavorite=false; };
+    TArray<FServerBrowserEntry> ServerEntries;
+    FString ServerCategory=TEXT("Officiel");
+    FString SelectedServerId;
     UPROPERTY() TObjectPtr<UVerticalBox> WorkshopCards;
     UPROPERTY() TObjectPtr<UEditableTextBox> WorkshopSearch;
     UPROPERTY() TObjectPtr<UComboBoxString> WorkshopCategory;
@@ -65,6 +82,20 @@ private:
     UFUNCTION() void ShowHome();
     UFUNCTION() void ShowOptions();
     UFUNCTION() void ShowMods();
+    UFUNCTION() void ShowServerBrowser();
+    UFUNCTION() void CloseServerBrowser();
+    UFUNCTION() void TabOfficialServers();
+    UFUNCTION() void TabCommunityServers();
+    UFUNCTION() void TabFavoriteServers();
+    UFUNCTION() void RefreshServerBrowser();
+    UFUNCTION() void ServerSearchChanged(const FText& NewText);
+    UFUNCTION() void ServerSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
+    UFUNCTION() void JoinSelectedServer();
+    UFUNCTION() void ResumeLocalSession();
+    UFUNCTION() void ShowOnlinePlayers();
+    UFUNCTION() void CloseOnlinePlayers();
+    UFUNCTION() void RefreshOnlinePlayers();
+    UFUNCTION() void ShowInviteFriends();
     UFUNCTION() void RefreshMods();
     UFUNCTION() void RefreshWorkshop();
     UFUNCTION() void WorkshopSearchChanged(const FText& NewText);
