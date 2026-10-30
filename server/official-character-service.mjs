@@ -83,7 +83,7 @@ export function createOfficialCharacterService({
         res.writeHead(code,{'Content-Type':'application/json; charset=utf-8'});
         res.end(JSON.stringify(data));
       };
-      if(req.method!=='POST'||!['/v1/official/check-in','/v1/official/check-out','/v1/official/status'].includes(req.url))
+      if(req.method!=='POST'||!['/v1/official/check-in','/v1/official/check-out','/v1/official/status','/v1/official/create-character'].includes(req.url))
         return reply(404,{error:'NOT_FOUND'});
       const claimedServer=req.headers['x-anomalia-server-id'];
       const secret=String(req.headers.authorization||'').replace(/^Bearer /,'');
@@ -103,12 +103,17 @@ export function createOfficialCharacterService({
         // from a user-controlled payload or a 'category=official' claim.
         let result;
         if(req.url==='/v1/official/check-in'){
-          result=registry.checkIn({playerId:data.playerId,serverId:claimedServer});
+          result=registry.checkIn({playerId:data.playerId,serverId:claimedServer,
+            characterSlot:data.characterSlot??1});
         }else if(req.url==='/v1/official/check-out'){
           result=registry.checkOut({playerId:data.playerId,serverId:claimedServer,
-            session:data.session,snapshot:data.snapshot});
+            session:data.session,snapshot:data.snapshot,characterSlot:data.characterSlot??1});
+        }else if(req.url==='/v1/official/create-character'){
+          result=registry.createCharacter({playerId:data.playerId,serverId:claimedServer,
+            characterSlot:data.characterSlot});
         }else{
-          result=registry.getStatus({playerId:data.playerId,serverId:claimedServer});
+          result=registry.getStatus({playerId:data.playerId,serverId:claimedServer,
+            characterSlot:data.characterSlot??1});
         }
         return reply(200,{ok:true,...result});
       }catch(error){
