@@ -46,6 +46,8 @@ export function createOfficialCharacterRegistry({
   cooldownMs=90000,
   now=()=>Date.now(),
   pickIndex=(count)=>Math.floor(Math.random()*count),
+  initialRecords={},
+  persist=()=>{},
 }={}) {
   if(!servers||typeof servers!=='object')throw Error('Explicit trusted server catalog required');
   if(!spawnPoints||typeof spawnPoints!=='object')throw Error('Explicit protected inland spawn points required');
@@ -61,7 +63,28 @@ export function createOfficialCharacterRegistry({
     for(const s of spawnPoints[p]) if(!s||!finite(s.x,-2400000,2400000)||!finite(s.y,-2400000,2400000)||!finite(s.z,-2400000,2400000))
       throw Error('Invalid inland official spawn');
   }
+  if(!initialRecords||typeof initialRecords!=='object'||Array.isArray(initialRecords))
+    throw Error('Invalid central registry recovery state');
   const records=new Map();
+  for(const [k,record] of Object.entries(initialRecords)){
+    const [player,view,...rest]=k.split('|');
+    if(!id(player)||!['1PP','3PP'].includes(view)||rest.length||
+       !record||typeof record!=='object'||!Number.isSafeInteger(record.revision)||
+       record.revision<0||!approved.has(record.lastServerId)||
+       (approved.get(record.lastServerId).thirdPerson?'3PP':'1PP')!==view)
+      throw Error('Invalid persisted character registry state; refusing startup');
+    if(record.snapshot)sanitizePortableCharacter(record.snapshot);
+    if(record.active && (!approved.has(record.active.serverId)||
+       typeof record.active.session!=='string'||!id(record.active.session)))
+      throw Error('Unresolved official session must be recovered by operator');
+    records.set(k,structuredClone(record));
+  }
+  const commit=(k,record)=>{
+    const next=Object.fromEntries(records);
+    next[k]=record;
+    persist(structuredClone(next)); // Durable write MUST succeed before state becomes live.
+    records.set(k,record);
+  };
   const key=(player,cam)=>player+'|'+cam;
   const perspective=serverId=>{
     const s=approved.get(serverId);
@@ -81,7 +104,7 @@ export function createOfficialCharacterRegistry({
     const selected=switched?spawnList[Math.min(spawnList.length-1,Math.max(0,pickIndex(spawnList.length)))]:null;
     const next={lastServerId:serverId,lastLogoutAt:rec?.lastLogoutAt??0,revision:rec?.revision??0,
       snapshot:rec?.snapshot??null,active:{serverId,session,startedAt:time},perspective:view};
-    records.set(k,next);
+    commit(k,next);
     return {session,revision:next.revision,view,switched,spawn:switched?structuredClone(selected):null,
       // A newly-created official player gets a fresh identity for each view.
       snapshot:next.snapshot?structuredClone(next.snapshot):null};
@@ -93,7 +116,7 @@ export function createOfficialCharacterRegistry({
       deny('STALE_SESSION','Disconnected or superseded official session cannot write a character');
     const clean=sanitizePortableCharacter(snapshot);
     const updated={...record,snapshot:clean,active:null,revision:record.revision+1,lastLogoutAt:now()};
-    records.set(k,updated);
+    commit(k,updated);
     return {saved:true,revision:updated.revision,view};
   }
   function getStatus({playerId,serverId}) {
