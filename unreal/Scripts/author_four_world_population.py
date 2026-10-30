@@ -98,9 +98,13 @@ def run():
  actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
  if not level.load_level(PACKAGE):raise RuntimeError("Native map refused to reopen")
  present=actors.get_all_level_actors()
- ownership=[a for a in present if OWNER in {str(t) for t in a.tags}]
- if MODE=="create" and ownership:
-  raise RuntimeError("Partial owned population already present; do not duplicate")
+ wp=unreal.AnomaliaZPrigimaliaWorldImportLibrary
+ snapshot=json.loads(wp.get_archipelago_actor_descriptors())
+ if snapshot.get("state")!="COPIED_DESCRIPTOR_VALUES":
+  raise RuntimeError("Saved World Partition actor descriptor audit required")
+ owned=[d for d in snapshot["actors"] if d["label"].startswith(OWNER)]
+ if MODE=="create" and owned:
+  raise RuntimeError("Partial owned population already saved; do not duplicate")
  if not any(isinstance(a,unreal.LandscapeProxy) for a in present):
   raise RuntimeError("Cannot author content without the actual landscape")
  height=lambda e,n:unreal.AnomaliaZPrigimaliaWorldImportLibrary.named_world_height(NAME,e,n)
@@ -136,7 +140,12 @@ def run():
   if label in labels:raise RuntimeError("Duplicate HISM cluster identity")
   labels.add(label)
  if MODE=="verify":
-  existing={a.get_actor_label():a for a in present if OWNER in {str(t) for t in a.tags}}
+  if {d["label"] for d in owned}!=labels or len(owned)!=len(labels):
+   raise RuntimeError("Saved owned World Partition descriptors missing or duplicated")
+  if not wp.set_archipelago_actors_loaded([d["guid"] for d in owned],True):
+   raise RuntimeError("Owned actor streaming failed")
+  existing={a.get_actor_label():a for a in actors.get_all_level_actors()
+            if OWNER in {str(t) for t in a.tags}}
   if set(existing)!=labels:raise RuntimeError("Saved owned actors missing or duplicated")
   for item in plan["buildings"]:
    a=existing[OWNER+"_Building_"+item["id"]]
