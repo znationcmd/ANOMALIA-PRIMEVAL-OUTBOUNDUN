@@ -322,7 +322,7 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     // copied from the visual mockup or invented remote community ratings.
     auto* Stats=Horizontal();
     HeroText->AddChildToVerticalBox(Stats)->SetPadding(FMargin(0,10,0,4));
-    auto* StatBlock=[&](const FString& Initial,const FString& Caption,UTextBlock*& Out)
+    auto StatBlock=[&](const FString& Initial,const FString& Caption,UTextBlock*& Out)
     {
         auto* Column=Vertical();
         Stats->AddChildToHorizontalBox(Column)->SetPadding(FMargin(0,0,24,0));
