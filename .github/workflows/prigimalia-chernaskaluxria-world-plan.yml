@@ -16,6 +16,7 @@ jobs:
       - name: Check nine stable maps, 100km geometry, nine biomes and 400 seam-aligned source tiles
         run: |
           python -m unittest discover -s tests -p test_ninth_map_chernaskaluxria.py -v
+          python -m unittest discover -s tests -p test_chernaskaluxria_native_import.py -v
           python -m unittest discover -s tests -p test_ue5_map_names_and_realism.py -v
           python -m unittest discover -s tests -p test_ue5_map_independence.py -v
       - name: Prove no existing maps are auto-merged or new untested map is publicly available
