@@ -17,6 +17,8 @@
 #include "Components/VerticalBox.h"
 #include "Components/Image.h"
 #include "Components/Border.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
 #include "Engine/World.h"
 #include "CollisionQueryParams.h"
 #include "Engine/StaticMesh.h"
@@ -217,16 +219,34 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         const auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
         const auto* WorkshopCards=Cast<UVerticalBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCards")));
         auto* WorkshopReturn=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
-        auto* WorkshopCategory=Menu->WidgetTree->FindWidget(TEXT("WorkshopCategory"));
-        auto* WorkshopSearch=Menu->WidgetTree->FindWidget(TEXT("WorkshopSearch"));
+        auto* WorkshopCategory=Cast<UComboBoxString>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCategory")));
+        auto* WorkshopSearch=Cast<UEditableTextBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopSearch")));
+        auto* ModsNav=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavMods")));
+        auto* VehiclesTile=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCategoryCard1")));
+        auto* MyModsNav=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavMyMods")));
+        auto* WorkshopPlay=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopPlay")));
+        auto* WorkshopSettings=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavSettings")));
         auto* WorkshopTools=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenTools")));
         auto* WorkshopHosting=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenHosting")));
         if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused() ||
             !Workshop || Workshop->GetVisibility()!=ESlateVisibility::Visible || !WorkshopCards ||
             WorkshopCards->GetChildrenCount()==0 || !WorkshopReturn || !WorkshopSearch ||
-            !WorkshopCategory || !WorkshopTools || !WorkshopHosting)
+            !WorkshopCategory || !WorkshopTools || !WorkshopHosting ||
+            !ModsNav || !VehiclesTile || !MyModsNav || !WorkshopPlay || !WorkshopSettings)
         { Finish(TEXT("Native in-game Workshop missing or not visible when Mods is clicked"));return; }
-        Checks.Add(TEXT("real_unreal_workshop_opened_inside_game_with_search_categories_and_cards"));
+        Checks.Add(TEXT("real_unreal_mods_tab_opened_inside_game_with_search_categories_and_cards"));
+        VehiclesTile->OnClicked.Broadcast();
+        if(WorkshopCategory->GetSelectedOption()!=TEXT("Véhicules"))
+        { Finish(TEXT("Native Mods category tile failed to apply its filter"));return; }
+        MyModsNav->OnClicked.Broadcast();
+        ModsNav->OnClicked.Broadcast();
+        if(WorkshopCategory->GetSelectedOption()!=TEXT("Tous"))
+        { Finish(TEXT("Native Mods navigation failed to restore complete catalog"));return; }
+        WorkshopSearch->SetText(FText::FromString(TEXT("cherche-mod-de-test")));
+        WorkshopSearch->SetText(FText::GetEmpty());
+        if(WorkshopCards->GetChildrenCount()==0)
+        { Finish(TEXT("Native Mods search removed the results and empty-state actions"));return; }
+        Checks.Add(TEXT("native_mods_category_search_my_mods_and_catalog_buttons_operational"));
         FString WorkshopReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),WorkshopReport);
         FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(WorkshopReport,TEXT(""))+TEXT("-workshop.png"),true,false);
         WorkshopReturn->OnClicked.Broadcast();
@@ -235,8 +255,9 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         Mods->OnClicked.Broadcast();
         if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
         { Finish(TEXT("Native Workshop did not reopen"));return; }
-        Options->OnClicked.Broadcast();
-        if(Pages->GetActiveWidgetIndex()!=1) { Finish(TEXT("Options navigation failed")); return; }
+        WorkshopSettings->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=1 || Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
+        { Finish(TEXT("Native Mods settings button failed to open the real options screen"));return; }
         Home->OnClicked.Broadcast();
         if(Pages->GetActiveWidgetIndex()!=0) { Finish(TEXT("Return from mods/options failed")); return; }
         auto* Close=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionClosePage")));
