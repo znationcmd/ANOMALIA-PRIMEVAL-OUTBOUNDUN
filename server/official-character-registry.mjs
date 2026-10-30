@@ -35,8 +35,35 @@ export function sanitizePortableCharacter(snapshot) {
   for(const key of ['fatigue','stamina']) if(key in clean.survival&&!finite(clean.survival[key],0,100))deny('INVALID_SNAPSHOT','Invalid '+key);
   if('bodyTemperatureC'in clean.survival&&!finite(clean.survival.bodyTemperatureC,25,45))
     deny('INVALID_SNAPSHOT','Invalid body temperature');
-  if('inventory' in clean && (!Array.isArray(clean.inventory)&&typeof clean.inventory!=='object'))
-    deny('INVALID_SNAPSHOT','Invalid inventory');
+  if('inventory' in clean) {
+    const inventory=clean.inventory;
+    if(!inventory||typeof inventory!=='object')deny('INVALID_SNAPSHOT','Invalid inventory');
+    if(!Array.isArray(inventory)) {
+      // This mirrors Unreal InventoryComponent::ExportInventoryObject:
+      // compartments and stacks belong to the character, never the map.
+      const allowedInventory=new Set(['schemaVersion','layoutVersion','weightCapacityKg','compartments','stacks']);
+      for(const key of Object.keys(inventory))
+        if(!allowedInventory.has(key))deny('WORLD_STATE_FORBIDDEN','Nonportable inventory state');
+      if(inventory.schemaVersion!==1||inventory.layoutVersion!==2||
+         !Array.isArray(inventory.compartments)||!Array.isArray(inventory.stacks))
+        deny('INVALID_SNAPSHOT','Invalid UE5 inventory layout');
+      if(inventory.stacks.length>512||inventory.compartments.length>128)
+        deny('INVALID_SNAPSHOT','Character storage exceeds validated limits');
+    }
+    const stacks=Array.isArray(inventory)?inventory:inventory.stacks;
+    if(stacks.length>512)deny('INVALID_SNAPSHOT','Too many carried items');
+    for(const stack of stacks) {
+      if(!stack||typeof stack!=='object'||Array.isArray(stack)||
+         typeof stack.itemId!=='string'||!/^[A-Za-z0-9_.:-]{1,128}$/.test(stack.itemId)||
+         !Number.isSafeInteger(stack.count)||stack.count<1||stack.count>1000000)
+        deny('INVALID_SNAPSHOT','Malformed carried item stack');
+      const allowedStack=new Set(['stackId','itemId','count','containerId','x','y','rotated','condition','container']);
+      for(const key of Object.keys(stack))
+        if(!allowedStack.has(key))deny('WORLD_STATE_FORBIDDEN','World ownership cannot hide inside inventory');
+      if('containerId'in stack&&!/^[A-Za-z0-9_.:-]{1,128}$/.test(String(stack.containerId)))
+        deny('INVALID_SNAPSHOT','Invalid inventory container');
+    }
+  }
   // Never attach a world transform to the destination. Spawn is server-owned.
   return Object.freeze(clean);
 }
