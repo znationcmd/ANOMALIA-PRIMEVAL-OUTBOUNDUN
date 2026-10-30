@@ -23,7 +23,7 @@ test('1PP official migration preserves hands, gear, appearance and vitals but fo
  let clock=100000;const r=make({now:()=>clock});
  const a=r.checkIn({playerId:'identity-123',serverId:'official1a'});
  assert.equal(a.switched,false);assert.equal(a.snapshot,null);
- assert.deepEqual(r.checkOut({playerId:'identity-123',serverId:'official1a',session:a.session,snapshot:survivor()}),{saved:true,revision:1,view:'1PP'});
+ assert.deepEqual(r.checkOut({playerId:'identity-123',serverId:'official1a',session:a.session,snapshot:survivor()}),{saved:true,revision:1,view:'1PP',characterSlot:1});
  assert.throws(()=>r.checkIn({playerId:'identity-123',serverId:'official1b'}),{code:'SERVER_HOP_COOLDOWN'});
  clock+=90000;
  const b=r.checkIn({playerId:'identity-123',serverId:'official1b'});
@@ -73,4 +73,28 @@ test('same official server restore has no forced spawn and switching again repea
  t+=90000;
  a=r.checkIn({playerId:'player4',serverId:'official3b'});
  assert.equal(a.switched,true);assert.deepEqual(a.spawn,spawnPoints['3PP'][1]);
+});
+
+test('create additional official characters without overwriting the original, separated by 1PP and 3PP',()=>{
+ const r=make();
+ const original=r.checkIn({playerId:'one-person',serverId:'official1a'});
+ r.checkOut({playerId:'one-person',serverId:'official1a',session:original.session,snapshot:survivor()});
+ const second=r.createCharacter({playerId:'one-person',serverId:'official1a',characterSlot:2});
+ assert.deepEqual(second,{created:true,characterSlot:2,view:'1PP'});
+ assert.throws(()=>r.createCharacter({playerId:'one-person',serverId:'official1a',characterSlot:2}),{code:'CHARACTER_SLOT_EXISTS'});
+ assert.throws(()=>r.createCharacter({playerId:'one-person',serverId:'official1a',characterSlot:1}),{code:'ORIGINAL_SLOT_PROTECTED'});
+ const v=r.checkIn({playerId:'one-person',serverId:'official1a',characterSlot:2});
+ assert.equal(v.snapshot,null);
+ assert.equal(v.characterSlot,2);
+ assert.throws(()=>r.checkIn({playerId:'one-person',serverId:'official1a',characterSlot:1}),{code:'CHARACTER_ALREADY_ONLINE'});
+ r.checkOut({playerId:'one-person',serverId:'official1a',characterSlot:2,session:v.session,snapshot:{
+   schemaVersion:1,inventory:[{itemId:'apple',count:3}],survival:{health:100,hunger:60,thirst:70}
+ }});
+ const first=r.checkIn({playerId:'one-person',serverId:'official1a'});
+ assert.deepEqual(first.snapshot,survivor());
+ r.checkOut({playerId:'one-person',serverId:'official1a',session:first.session,snapshot:survivor()});
+ const otherView=r.checkIn({playerId:'one-person',serverId:'official3a',characterSlot:1});
+ assert.equal(otherView.snapshot,null);
+ assert.deepEqual(r.getStatus({playerId:'one-person',serverId:'official3a'}).availableSlots,[1]);
+ assert.deepEqual(r.getStatus({playerId:'one-person',serverId:'official1a'}).availableSlots,[1,2]);
 });
