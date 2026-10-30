@@ -33,7 +33,7 @@ class FiveTopographicFusionTests(unittest.TestCase):
             self.assertFalse(item["nativeUmapBuilt"])
         catalog=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text())["maps"]
         self.assertEqual(len(catalog),10)
-        self.assertEqual(len({r["saveNamespace"] for r in catalog}),9)
+        self.assertEqual(len({r["saveNamespace"] for r in catalog}),10)
         self.assertEqual({x["displayName"] for x in catalog if x["displayName"] in expected},set(expected))
         self.assertFalse(any(x["serverSelectable"] for x in catalog if x["displayName"]=="CHERNASKALUXRIA"))
 
