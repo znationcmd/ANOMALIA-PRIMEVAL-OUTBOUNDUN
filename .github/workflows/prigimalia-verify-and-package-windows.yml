@@ -45,6 +45,53 @@ jobs:
           $hash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
           $hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prigimalia-original-uproject.sha256')
           Write-Host 'PRIGIMALIA_ORIGINAL_SAFE_AND_BOOT_POSTER_VERIFIED=true'
+      - name: Resume remaining native map renames safely through Unreal AssetTools
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_remaining_prigimalia_maps.py'
+          $log=Join-Path $root 'Saved\BrandMigration\remaining-map-native-assettools.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Failed to migrate ordinary maps safely; inspect remaining-map-migration-status.json'}
+          $p=Join-Path $root 'Saved\BrandMigration\remaining-map-migration-status.json'
+          $r=Get-Content -LiteralPath $p -Raw|ConvertFrom-Json
+          if(@($r.errors).Count -gt 0 -or $r.planned -lt 1){throw 'Map resume evidence has errors'}
+          Write-Host ('NATIVE_MAP_RENAME_PLAN='+$r.planned)
+          Write-Host ('NATIVE_MAPS_RENAMED_WITH_ASSETTOOLS='+@($r.renamedWithAssetTools).Count)
+          Write-Host ('WORLD_PARTITION_MAPS_STILL_PENDING='+@($r.pendingWorldPartition).Count)
+      - name: Complete only required World Partition map renames with native builder
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $p=Join-Path $root 'Saved\BrandMigration\remaining-map-migration-status.json'
+          $r=Get-Content -LiteralPath $p -Raw|ConvertFrom-Json
+          if(@($r.errors).Count -gt 0){throw 'Preceding simple map migration had errors'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $originalHash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
+          $i=0
+          foreach($entry in @($r.pendingWorldPartition)){
+            $i++
+            $old=[string]$entry.old;$new=[string]$entry.new
+            if(-not $old.StartsWith('/Game/') -or -not $new.StartsWith('/Game/')){throw 'Unsafe Unreal map package name'}
+            $relOld=($old.Substring(6) -replace '/','\')+'.umap'
+            $relNew=($new.Substring(6) -replace '/','\')+'.umap'
+            $diskOld=Join-Path (Join-Path $root 'Content') $relOld
+            $diskNew=Join-Path (Join-Path $root 'Content') $relNew
+            if(Test-Path -LiteralPath $diskNew){throw ('Uncertain preexisting target for map: '+$new)}
+            if(-not(Test-Path -LiteralPath $diskOld)){throw ('Unrecoverable source map missing: '+$old)}
+            $log=Join-Path $root ('Saved\BrandMigration\world-partition-map-'+$i+'.log')
+            & $editor $project $old '-run=WorldPartitionBuilderCommandlet' '-SCCProvider=None' '-builder=WorldPartitionRenameDuplicateBuilder' "-NewPackage=$new" '-Rename' '-NullRHI' '-unattended' '-nopause' '-nosound' "-abslog=$log"
+            if($LASTEXITCODE -ne 0){throw ('World Partition rename builder failed: '+$old+'; log '+$log)}
+            if(-not(Test-Path -LiteralPath $diskNew)){throw ('World Partition builder returned success without target: '+$new)}
+            if((Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash -ne $originalHash){throw 'Original project changed unexpectedly'}
+            Write-Host ('WORLD_PARTITION_MAP_RENAMED='+$new)
+          }
       - name: Reload every renamed native World and issue independent migration receipt
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
