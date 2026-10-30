@@ -80,7 +80,7 @@ jobs:
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
           $script='D:\ANOMALIAZ-PRIGIMALIA\unreal\Scripts\migrate_prigimalia_assets.py'
           $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\dry-run-editor.log'
-          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' "-ExecutePythonScript=$script" "-abslog=$log"
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
           if($LASTEXITCODE -ne 0){throw 'UE Editor asset audit failed'}
           $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-report.json' -Raw | ConvertFrom-Json
           Write-Host "LEGACY_ASSETS_FOUND=$($report.legacyAssetsFound)"
@@ -98,7 +98,7 @@ jobs:
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
           $script='D:\ANOMALIAZ-PRIGIMALIA\unreal\Scripts\migrate_prigimalia_assets.py'
           $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-migration-editor.log'
-          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' "-ExecutePythonScript=$script" "-abslog=$log"
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
           if($LASTEXITCODE -ne 0){throw 'Native Editor migration failed; ORIGINAL project is intact'}
           $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-report.json' -Raw | ConvertFrom-Json
           if(-not $report.verified -or $report.errors.Count -ne 0){throw 'Unreal asset migration receipt not verified'}
