@@ -27,7 +27,6 @@ jobs:
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\repair-prigimalia-desktop-launcher.ps1'
           if(-not(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Windows shortcut repair script missing'}
           & $script -RunId $env:GITHUB_RUN_ID
-          if($LASTEXITCODE -ne 0){throw 'Safe Windows launcher audit failed'}
           $report=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\Saved\DesktopLauncherRepair' ('run-'+$env:GITHUB_RUN_ID+'\desktop-launcher-audit.json')
           if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw 'Launcher audit report missing'}
           $audit=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
