@@ -127,6 +127,22 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeDestruct()
 void UAnomaliaZPrigimaliaSessionWidget::NativeTick(const FGeometry& Geometry,float DeltaTime)
 {
     Super::NativeTick(Geometry,DeltaTime);
+    if(bMainMenu && MenuCamera)
+    {
+        // The save may be restored one tick after the menu opens. Track the
+        // actual saved pawn position, never the initial spawn placeholder.
+        auto* PC=GetOwningPlayer();
+        auto* Survivor=PC?Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()):nullptr;
+        if(Survivor && FVector::DistSquared(Survivor->GetActorLocation(),LastMenuPreviewLocation)>100.f)
+        {
+            LastMenuPreviewLocation=Survivor->GetActorLocation();
+            const FVector Center=LastMenuPreviewLocation+FVector(0,0,100);
+            const FVector Eye=Center+Survivor->GetActorForwardVector()*285.f+
+                Survivor->GetActorRightVector()*140.f+FVector(0,0,60);
+            MenuCamera->SetActorLocationAndRotation(Eye,(Center-Eye).Rotation());
+            if(PC && PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
+        }
+    }
     if(!bStartupIntro || !MenuArtwork) return;
     const float Elapsed=static_cast<float>(FPlatformTime::Seconds()-IntroStarted);
     const float Progress=FMath::Clamp(Elapsed/4.5f,0.f,1.f);
@@ -1321,6 +1337,106 @@ void UAnomaliaZPrigimaliaSessionWidget::ChangeQuality()
     const bool OK=UAnomaliaZPrigimaliaPerformanceLibrary::ApplyGraphicsPreset(Profiles[Quality]);
     if(QualityLabel) QualityLabel->SetText(FText::FromString(FString(TEXT("Qualité : "))+Names[Quality]+TEXT(" (changer)")));
     if(Feedback) Feedback->SetText(FText::FromString(OK?TEXT("Réglages graphiques locaux appliqués."):TEXT("Impossible d’appliquer ces réglages.")));
+}
+void UAnomaliaZPrigimaliaSessionWidget::RefreshCharacterSlots()
+{
+    if(!CharacterSlotSelect || !bMainMenu)return;
+    auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
+    if(!Mode || GetWorld()->GetNetMode()!=NM_Standalone)return;
+    CharacterSlotSelect->ClearOptions();
+    const int32 Active=Mode->GetLocalCharacterSlot();
+    for(int32 Slot=1;Slot<=8;++Slot)
+    {
+        if(Slot==Active || Mode->HasLocalCharacterSlot(Slot))
+        {
+            const FString Name=FString::Printf(TEXT("%d · %s%s"),
+                Slot,Slot==1?TEXT("Survivant original"):TEXT("Survivant indépendant"),
+                Slot==Active?TEXT(" (ACTIF)"):TEXT(""));
+            CharacterSlotSelect->AddOption(Name);
+            if(Slot==Active)CharacterSlotSelect->SetSelectedOption(Name);
+        }
+    }
+    if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
+        FString::Printf(TEXT("Personnage actif : %d / 8 emplacements. Chaque inventaire et dernier emplacement sont séparés."),Active)));
+}
+void UAnomaliaZPrigimaliaSessionWidget::SelectCharacterSlot()
+{
+    auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
+    if(!bMainMenu || !Mode || !CharacterSlotSelect)return;
+    const FString Selected=CharacterSlotSelect->GetSelectedOption();
+    const int32 Slot=FCString::Atoi(*Selected.Left(1));
+    if(Slot<1 || Slot>8)return;
+    if(Slot==Mode->GetLocalCharacterSlot())
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(TEXT("Ce personnage est déjà actif.")));
+        return;
+    }
+    FString Error;
+    if(!Mode->SelectLocalCharacterSlot(Slot,Error))
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(Error));
+        return;
+    }
+    // The old pawn/inventory were saved before switching identity.
+    // Reload the same map so the authoritative GameMode loads the new profile,
+    // and the menu camera frames the new survivor at that profile's saved pose.
+    UGameplayStatics::SetGamePaused(GetOwningPlayer(),false);
+    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()));
+}
+void UAnomaliaZPrigimaliaSessionWidget::CreateCharacterSlot()
+{
+    auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
+    if(!bMainMenu || !Mode)return;
+    int32 Slot=0;FString Error;
+    if(!Mode->CreateLocalCharacterSlot(Slot,Error))
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(Error));
+        return;
+    }
+    UGameplayStatics::SetGamePaused(GetOwningPlayer(),false);
+    UGameplayStatics::OpenLevel(this,FName(*GetWorld()->GetMapName()));
+}
+void UAnomaliaZPrigimaliaSessionWidget::ExportCharacterForTransfer()
+{
+    auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
+    if(!bMainMenu || !Mode || !Mode->SaveLocalGame())
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
+            TEXT("Export refusé : impossible de sauvegarder intégralement le personnage.")));
+        return;
+    }
+    // An export is NOT automatic cross-server character import: target servers
+    // must authorize inventory transfer to prevent duplication and impersonation.
+    const int32 Slot=Mode->GetLocalCharacterSlot();
+    const FString Id=AAnomaliaZPrigimaliaGameMode::LocalCharacterProfileId(Slot);
+    FString Json,Error;
+    if(!UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,Id,Json,Error))
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(Error));
+        return;
+    }
+    const FString Folder=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("CharacterTransfers"));
+    IFileManager::Get().MakeDirectory(*Folder,true);
+    const FString Name=FString::Printf(TEXT("%s-slot-%d-%s.json"),
+        *Mode->ServerId,Slot,*FDateTime::UtcNow().ToString(TEXT("%Y%m%dT%H%M%S%f")));
+    const FString Target=FPaths::Combine(Folder,Name);
+    if(IFileManager::Get().FileExists(*Target) || !FFileHelper::SaveStringToFile(Json,*Target))
+    {
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
+            TEXT("Export non créé : écriture impossible ou fichier déjà existant.")));
+        return;
+    }
+    FString Verify;
+    if(!FFileHelper::LoadFileToString(Verify,*Target) || Verify!=Json)
+    {
+        IFileManager::Get().Delete(*Target);
+        if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
+            TEXT("Export incomplet détecté : aucun transfert accepté.")));
+        return;
+    }
+    if(CharacterSlotStatus)CharacterSlotStatus->SetText(FText::FromString(
+        TEXT("Copie de transfert sauvegardée dans Saved/CharacterTransfers. "
+             "L'import vers un serveur nécessite sa validation anti-duplication ; l'original est préservé.")));
 }
 void UAnomaliaZPrigimaliaSessionWidget::Save()
 {
