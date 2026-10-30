@@ -50,36 +50,43 @@ inline double Height(EWorld world,double east,double north)
  const double n=Fractal(east,north,100+int(world)*97);
  const double r=Fractal(east+2311.,north-1427.,510+int(world)*71);
  if(world==EWorld::Karskov){
-  // Cold fjords, narrow bays, wooded uplands and a snowy central massif.
-  const double fjord=Gaussian(east,north,3800.,-1200.,900.,12500.)*155.;
-  const double massif=Gaussian(east,north,-2800.,3300.,6900.,6700.)*
-    (420.+510.*std::pow(1.-std::abs(ValueNoise(east,north,1500.,707)),2.));
-  const double coast=Smooth((15000.-std::max(std::abs(east),std::abs(north)))/1600.);
-  return (45.+125.*n+massif-fjord)*coast-35.*(1.-coast);
+  // LIVONIA-like original geography: continuous wooded country, rolling meadows,
+  // rural farming valleys, a meandering river, dense southern ridges (no fjords).
+  const double southernRidge=Gaussian(east,north,-3400.,-6300.,7800.,6100.)*
+    (260.+360.*std::pow(1.-std::abs(ValueNoise(east,north,1450.,707)),2.));
+  const double river=north-(1650.*std::sin(east/3200.)-1050.);
+  const double riverValley=85.*std::exp(-(river*river)/(1350.*1350.));
+  const double fields=35.*std::sin(east/3600.)*std::cos(north/4100.);
+  return 120.+70.*n+southernRidge+fields-riverValley;
  }
  if(world==EWorld::Vorgrad){
-  // Broad continental country: rolling farmland, a river corridor and eastern ridges.
-  const double hills=260.*Gaussian(east,north,10500.,5500.,5400.,11000.)*(.6+.4*std::abs(r));
-  const double river=north-(1300.*std::sin(east/3000.)+800.*std::sin(east/1200.));
-  const double cut=80.*std::exp(-(river*river)/(850.*850.));
-  return 85.+58.*n+38.*r+hills-cut;
+  // NASDARA + TAKISTANPLUS style, entirely original: arid badlands, mountain
+  // chains, desert plateaus, carved valleys and dry seasonal riverbeds.
+  const double eastMountains=610.*Gaussian(east,north,10200.,4800.,5500.,10400.)*(.55+.45*std::abs(r));
+  const double westPlateau=290.*Gaussian(east,north,-10200.,-6000.,5300.,6100.);
+  const double canyon=north-(1800.*std::sin(east/2700.)+850.*std::sin(east/760.));
+  const double wadi=135.*std::exp(-(canyon*canyon)/(1100.*1100.));
+  return 185.+112.*n+48.*r+eastMountains+westPlateau-wadi;
  }
  if(world==EWorld::Nemoris){
-  // Humid rainforest, marsh pools, dark lakes and an eroded northern escarpment.
+  // LUX-style original TROPICAL jungle: flooded creeks, rainforest hills,
+  // marsh pools, dark inland lakes and a high eroded northern escarpment.
   const double ridge=320.*Gaussian(east,north,-3600.,5500.,7300.,3800.)*(.65+.35*std::abs(r));
   const double marsh=48.*Gaussian(east,north,2000.,-3900.,5700.,4200.);
   const double lakes=52.*Gaussian(east,north,3800.,-2000.,1200.,1800.)+
                      48.*Gaussian(east,north,-2800.,-4700.,1500.,1150.);
   return 33.+48.*n+ridge-marsh-lakes;
  }
- // DRAKHEIM: ash valleys, eroded basalt ridges and two volcanic calderas.
+ // DRAKHEIM: NAMALSK + SAKHAL style frozen volcanic archipelago, basalt
+ // cliffs, snowy valleys and two original calderas (not copied terrain).
  const double a=Gaussian(east,north,-1400.,1750.,3200.,3300.);
  const double b=Gaussian(east,north,5300.,-3800.,2150.,2700.);
  const double r1=std::hypot((east+1400.)/1800.,(north-1750.)/1900.);
  const double r2=std::hypot((east-5300.)/1300.,(north+3800.)/1500.);
  const double crater=680.*std::exp(-std::pow(r1/.50,4.))+
                      350.*std::exp(-std::pow(r2/.55,4.));
- return 165.+95.*n+45.*r+1020.*a+570.*b-crater;
+ const double shore=Smooth((10000.-std::max(std::abs(east),std::abs(north)))/2100.);
+ return (165.+95.*n+45.*r+1020.*a+570.*b-crater)*shore-110.*(1.-shore);
 }
 inline std::uint16_t Encode(double height)
 {
