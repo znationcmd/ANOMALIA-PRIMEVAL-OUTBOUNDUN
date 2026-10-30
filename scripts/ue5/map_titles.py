@@ -10,9 +10,9 @@ def load_titles(path=CATALOG):
     if data.get("schemaVersion") != 1:
         raise ValueError("Unsupported map catalogue version")
     items = data.get("maps")
-    if not isinstance(items, list) or len(items) != 8:
-        raise ValueError("Expected eight independent worlds")
-    if {item["id"] for item in items} != {"archipelago-v2", "inhabited-v2", "karskov-v1", "vorgrad-v1", "nemoris-v1", "drakheim-v1", "solynacalyra-v1", "nexavarkhos-v1"}:
+    if not isinstance(items, list) or len(items) != 9:
+        raise ValueError("Expected nine independent worlds")
+    if {item["id"] for item in items} != {"archipelago-v2", "inhabited-v2", "karskov-v1", "vorgrad-v1", "nemoris-v1", "drakheim-v1", "solynacalyra-v1", "nexavarkhos-v1", "chernaskaluxria-v1"}:
         raise ValueError("Map IDs must not change with public titles")
     for item in items:
         title = item["displayName"]
@@ -21,7 +21,8 @@ def load_titles(path=CATALOG):
         expected_size = {"archipelago-v2": 48, "inhabited-v2": 48,
                          "karskov-v1": 30, "vorgrad-v1": 30,
                          "nemoris-v1": 20, "drakheim-v1": 20,
-                         "solynacalyra-v1": 15, "nexavarkhos-v1": 10}[item["id"]]
+                         "solynacalyra-v1": 15, "nexavarkhos-v1": 10,
+                         "chernaskaluxria-v1": 100}[item["id"]]
         if item["widthKm"] != expected_size or item["heightKm"] != expected_size:
             raise ValueError("Unexpected world size")
         if item["saveNamespace"] != item["id"]:

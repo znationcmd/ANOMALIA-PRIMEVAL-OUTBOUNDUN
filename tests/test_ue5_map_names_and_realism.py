@@ -18,10 +18,10 @@ def module(name, filename):
 class WorldRealismSafetyTest(unittest.TestCase):
     def test_two_stable_public_names(self):
         names = module("map_titles", ROOT / "scripts/ue5/map_titles.py").load_titles()
-        self.assertEqual(set(names), {"archipelago-v2", "inhabited-v2", "karskov-v1", "vorgrad-v1", "nemoris-v1", "drakheim-v1", "solynacalyra-v1", "nexavarkhos-v1"})
+        self.assertEqual(set(names), {"archipelago-v2", "inhabited-v2", "karskov-v1", "vorgrad-v1", "nemoris-v1", "drakheim-v1", "solynacalyra-v1", "nexavarkhos-v1", "chernaskaluxria-v1"})
         self.assertEqual(names["archipelago-v2"], "SKARVIK")
         self.assertEqual(names["inhabited-v2"], "DRAZOVIA")
-        for world in ("KARSKOV", "VORGRAD", "NEMORIS", "DRAKHEIM", "SOLYNACALYRA", "NEXAVARKHOS"):
+        for world in ("KARSKOV", "VORGRAD", "NEMORIS", "DRAKHEIM", "SOLYNACALYRA", "NEXAVARKHOS", "CHERNASKALUXRIA"):
             self.assertEqual(names[world.lower()+"-v1"], world)
 
     def test_catalog_names_cannot_change_world_identity(self):

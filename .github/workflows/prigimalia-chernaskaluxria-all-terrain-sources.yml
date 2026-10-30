@@ -1,0 +1,52 @@
+name: PRIGIMALIA - CHERNASKALUXRIA full 400 heightfield sources
+on:
+  push:
+    branches: [feature/chernaskaluxria-100km-nine-worlds-20261030]
+    paths: ['.github/workflows/prigimalia-chernaskaluxria-all-terrain-sources.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  generate-400-seam-matched-5km-source-tiles:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Generate all 400 real 16-bit RAW Landscape terrain source tiles
+        run: |
+          python scripts/ue5/generate_chernaskaluxria_tiles.py --output unreal/TerrainSource/CHERNASKALUXRIA --all --report unreal/Saved/CHERNASKALUXRIA/full-source-receipt.json
+      - name: Check every SHA256 checksum and all 760 shared tile edges
+        run: |
+          python - <<'PY'
+          import hashlib,json,sys
+          from pathlib import Path
+          sys.path.insert(0,'scripts/ue5')
+          import generate_chernaskaluxria_tiles as terrain
+          root=Path('unreal/TerrainSource/CHERNASKALUXRIA')
+          manifest=json.loads(Path('unreal/Saved/CHERNASKALUXRIA/full-source-receipt.json').read_text())
+          assert manifest['state']=='HEIGHT_SOURCE_TILES_CREATED_NOT_IMPORTED'
+          assert manifest['tileCount']==400
+          assert len({e['filename'] for e in manifest['tiles']})==400
+          for e in manifest['tiles']:
+              path=root/e['filename']
+              assert path.stat().st_size==terrain.EXPECTED_BYTES
+              assert hashlib.sha256(path.read_bytes()).hexdigest()==e['sha256']
+          count=0
+          for row in range(20):
+              for col in range(20):
+                  if col<19 or row<19:
+                      edges=terrain.check_shared_edges(root,col,row)
+                      assert all(edges.values())
+                      count+=len(edges)
+          assert count==760, count
+          print('CHERNASKALUXRIA_ALL_400_RAW_TILES_760_SHARED_SEAMS_VERIFIED')
+          print('CHERNASKALUXRIA_SOURCE_NOT_YET_IMPORTED_IN_UNREAL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: chernaskaluxria-400-heightmap-sources-not-umap
+          compression-level: 6
+          path: |
+            unreal/TerrainSource/CHERNASKALUXRIA/*.r16
+            unreal/Saved/CHERNASKALUXRIA/full-source-receipt.json
