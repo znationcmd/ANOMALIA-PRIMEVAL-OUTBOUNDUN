@@ -65,6 +65,34 @@ jobs:
           }
           (Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha')
           Write-Host 'PRIGIMALIA_REAL_MAIN_MENU_SOURCES_STAGED=true'
+      - name: Check real survivor mannequin assets and include them in the new game's cook
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $assetFolder=Join-Path $root 'Content\Characters\Mannequins\Meshes'
+          $candidates=@('SKM_Manny.uasset','SKM_Quinn.uasset')
+          $found=@($candidates|Where-Object{Test-Path -LiteralPath (Join-Path $assetFolder $_) -PathType Leaf})
+          if($found.Count -gt 0){
+            $ini=Join-Path $root 'Config\DefaultGame.ini'
+            if(-not(Test-Path -LiteralPath $ini -PathType Leaf)){throw 'Cook configuration missing'}
+            $line='+DirectoriesToAlwaysCook=(Path="/Game/Characters/Mannequins/Meshes")'
+            $current=Get-Content -LiteralPath $ini -Raw
+            if(-not $current.Contains($line)){
+              $backup=Join-Path $root ('Saved\BrandMigration\RealMainMenu\run-'+$env:GITHUB_RUN_ID+'\DefaultGame.ini.before-menu-character-cook')
+              Copy-Item -LiteralPath $ini -Destination $backup
+              if((Get-FileHash -LiteralPath $ini).Hash -ne (Get-FileHash -LiteralPath $backup).Hash){throw 'Native cook settings backup failed'}
+              $text=[Environment]::NewLine+'[/Script/UnrealEd.ProjectPackagingSettings]'+[Environment]::NewLine+$line+[Environment]::NewLine
+              [IO.File]::AppendAllText($ini,$text,[Text.UTF8Encoding]::new($false))
+            }
+            Write-Host ('PRIGIMALIA_REAL_SURVIVOR_APPROVED_MESHES_FOUND='+($found -join ','))
+            Write-Host 'PRIGIMALIA_REAL_SURVIVOR_SKELETAL_MESH_MARKED_FOR_COOK=true'
+          }else{
+            # This is a genuine blocker: do not substitute a fake T-pose sprite
+            # and do not assert success when the body is still invisible.
+            Write-Warning 'No Manny/Quinn skeletal body in project Content/Characters/Mannequins/Meshes. Runtime screenshot probe will reject an invisible survivor.'
+            Write-Host 'PRIGIMALIA_REAL_SURVIVOR_MESH_AVAILABLE=false'
+          }
       - name: Build native Unreal 5.8 Editor and Win64 game with new right-side UI
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
