@@ -24,7 +24,7 @@ CONFIG={
 }
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 NAME=os.environ.get("PRIGIMALIA_NEW_MAP","")
-OUT=Path(os.environ.get("PRIGIMALIA_NEW_MAP_REPORT",str(ROOT/"Saved/FourWorlds"/(NAME or "invalid")+".json")))
+OUT=Path(os.environ.get("PRIGIMALIA_NEW_MAP_REPORT",str(ROOT/"Saved/FourWorlds"/((NAME or "invalid")+".json"))))
 REPORT=dict(state="FAILED",name=NAME,generatedInUnreal=False,gameplayTested=False,
             photorealismValidated=False,networkTested=False,originalMapsModified=False)
 try:
