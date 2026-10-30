@@ -44,6 +44,11 @@
 #include "Camera/CameraComponent.h"
 #include "Camera/PlayerCameraManager.h"
 #include "Engine/World.h"
+#include "Engine/GameInstance.h"
+#include "GameFramework/GameStateBase.h"
+#include "GameFramework/PlayerState.h"
+#include "Components/ProgressBar.h"
+#include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
@@ -54,7 +59,7 @@
 
 UAnomaliaZPrigimaliaSessionWidget* UAnomaliaZPrigimaliaSessionWidget::Open(APlayerController* PC,bool MainMenu)
 {
-    if(!PC || !PC->IsLocalController() || PC->GetNetMode()!=NM_Standalone) return nullptr;
+    if(!PC || !PC->IsLocalController() || (MainMenu && PC->GetNetMode()!=NM_Standalone)) return nullptr;
     TArray<UUserWidget*> Existing; UWidgetBlueprintLibrary::GetAllWidgetsOfClass(PC,Existing,StaticClass(),false);
     for(auto* Widget:Existing) if(Widget && Widget->IsInViewport()) return Cast<UAnomaliaZPrigimaliaSessionWidget>(Widget);
     if(auto* S=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn())) S->CloseInventory();
@@ -91,25 +96,20 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
         if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Hidden);
     }
     auto* PC=GetOwningPlayer();
-    if(bMainMenu && !MenuArtwork && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")))
+    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
     {
-        for(TActorIterator<AActor> It(GetWorld());It;++It)
+        // Frame the ACTUAL restored survivor in the ACTUAL world, at the
+        // last saved location. Never teleport or replace player appearance.
+        auto* Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
+        const FVector Center=Survivor->GetActorLocation()+FVector(0,0,100);
+        const FVector Eye=Center+Survivor->GetActorForwardVector()*285.f+Survivor->GetActorRightVector()*140.f+FVector(0,0,60);
+        FActorSpawnParameters Params; Params.ObjectFlags|=RF_Transient;
+        MenuCamera=GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(),Eye,(Center-Eye).Rotation(),Params);
+        if(MenuCamera)
         {
-            if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1"))) continue;
-            const auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
-            if(!Mesh || !Mesh->GetStaticMesh() || !Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/country_house_scan/"))) continue;
-            FVector Center,Extent; It->GetActorBounds(false,Center,Extent);
-            const double Distance=FMath::Max(1800.,Extent.Size2D()*1.6);
-            const FVector Eye=Center+FVector(Distance,-Distance,FMath::Max(180.,Extent.Z*.4));
-            FActorSpawnParameters Params; Params.ObjectFlags|=RF_Transient;
-            MenuCamera=GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(),Eye,(Center-Eye).Rotation(),Params);
-            if(MenuCamera)
-            {
-                MenuCamera->GetCameraComponent()->SetFieldOfView(60.f);
-                PreviousViewTarget=PC->GetViewTarget(); PC->SetViewTarget(MenuCamera);
-                if(PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
-            }
-            break;
+            MenuCamera->GetCameraComponent()->SetFieldOfView(63.f);
+            PreviousViewTarget=PC->GetViewTarget(); PC->SetViewTarget(MenuCamera);
+            if(PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
         }
     }
 }
@@ -504,8 +504,9 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
     auto Label=[&](const TCHAR* Text) { auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text)); auto Font=L->GetFont(); Font.Size=16; L->SetFont(Font); L->SetAutoWrapText(true); Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,6)); return L; };
     auto* Title=Label(TEXT("ANOMALIA")); auto TitleFont=Title->GetFont(); TitleFont.Size=36; Title->SetFont(TitleFont);
     Title->SetColorAndOpacity(FSlateColor(FLinearColor(.90,.87,.76,1)));
-    Label(TEXT("PRIMEVAL OUTBOUNDUN"));
-    Label(bMainMenu?TEXT("SURVIVRE · EXPLORER · CONSTRUIRE"):TEXT("PARTIE EN PAUSE"));
+    Label(TEXT("ANOMALIA'Z PRIGIMALIA"));
+    Label(bMainMenu?TEXT("SURVIVRE  ·  EXPLORER  ·  CONSTRUIRE"):TEXT("PARTIE EN PAUSE"));
+    // Start and in-game pause are intentionally separate navigation contexts.
     auto Button=[&](const TCHAR* Name,const TCHAR* Text) {
         auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()); Size->SetMinDesiredHeight(44);
         Rows->AddChildToVerticalBox(Size)->SetPadding(FMargin(0,4));
@@ -514,14 +515,26 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
         auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text));
         auto Font=L->GetFont(); Font.Size=18; L->SetFont(Font); B->SetContent(L); return B;
     };
-    PlayButton=Button(TEXT("SessionPlay"),bMainMenu?TEXT("Jouer"):TEXT("Reprendre")); PlayButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Play);
-    HomeButton=Button(TEXT("SessionHome"),TEXT("Survivant")); HomeButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowHome);
-    OptionsButton=Button(TEXT("SessionOptions"),TEXT("Options")); OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOptions);
-    ModsButton=Button(TEXT("SessionMods"),TEXT("Mods")); ModsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowMods);
-    Button(TEXT("SessionWorldEditor"),TEXT("Éditeur de carte UE5"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor);
-    Button(TEXT("SessionSaveQuit"),TEXT("Sauvegarder et quitter"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::SaveAndQuit);
-    Button(TEXT("SessionQuit"),TEXT("Quitter sans nouvelle sauvegarde"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Quit);
-    Feedback=Label(TEXT("Sauvegarde automatique toutes les 2 minutes."));
+    PlayButton=Button(TEXT("SessionPlay"),bMainMenu?TEXT("▶  JOUER"):TEXT("CONTINUER"));
+    PlayButton->SetBackgroundColor(FLinearColor(.85f,.055f,.035f,1.f));
+    PlayButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Play);
+    HomeButton=Button(TEXT("SessionHome"),bMainMenu?TEXT("PERSONNALISER / SURVIVANT"):TEXT("SURVIVANT"));
+    HomeButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowHome);
+    OptionsButton=Button(TEXT("SessionOptions"),TEXT("OPTIONS")); OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOptions);
+    if(bMainMenu)
+    {
+        ModsButton=Button(TEXT("SessionMods"),TEXT("WORKFORGE  •  MODS"));
+        ModsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowMods);
+        Button(TEXT("SessionWorldEditor"),TEXT("ÉDITEUR DE CARTE UE5"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor);
+    }
+    else
+    {
+        Button(TEXT("SessionOnline"),TEXT("EN LIGNE  •  JOUEURS"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOnlinePlayers);
+        Button(TEXT("SessionInvite"),TEXT("INVITER DES AMIS"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowInviteFriends);
+    }
+    Button(TEXT("SessionSaveQuit"),TEXT("SAUVEGARDER ET QUITTER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::SaveAndQuit);
+    Button(TEXT("SessionQuit"),TEXT("QUITTER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Quit);
+    Feedback=Label(bMainMenu?TEXT("Dernier survivant et emplacement sauvegardés."):TEXT("Partie mise en pause. Sauvegarde automatique active."));
 
     auto* Details=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionDetailsFrame"));DetailsFrame=Details; Details->SetPadding(FMargin(24));
     Details->SetBrushColor(FLinearColor(.012,.016,.014,.80));
@@ -553,8 +566,14 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
     Button(TEXT("SessionRefreshMods"),TEXT("Actualiser la liste"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::RefreshMods);
     Button(TEXT("SessionOpenModsFolder"),TEXT("Ouvrir le dossier Mods"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenModsFolder);
     ModRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SessionModRows")); Rows->AddChildToVerticalBox(ModRows);
-    // Native Workshop rebuilt as a real premium three-column launcher.
-    BuildPremiumWorkshop(Canvas);
+    // WorkForge is NEVER constructed in gameplay pause or server browsing.
+    if(bMainMenu)
+    {
+        BuildPremiumWorkshop(Canvas);
+        BuildServerBrowser(Canvas);
+        BuildTravelLoading(Canvas);
+    }
+    else BuildOnlinePlayers(Canvas);
     SelectPage(0);
     ClosePage();
 }
@@ -563,6 +582,8 @@ void UAnomaliaZPrigimaliaSessionWidget::SelectPage(int32 Index)
     if(!Pages || Index<0 || Index>=Pages->GetChildrenCount()) return;
     Pages->SetActiveWidgetIndex(Index);
     if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(ServerBrowserFrame) ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(OnlinePlayersFrame) OnlinePlayersFrame->SetVisibility(ESlateVisibility::Collapsed);
     FinishIntro();if(DetailsFrame)DetailsFrame->SetVisibility(ESlateVisibility::Visible);
     UButton* PageButtons[]={HomeButton.Get(),OptionsButton.Get(),ModsButton.Get()};
     for(int32 I=0;I<3;++I) if(PageButtons[I]) PageButtons[I]->SetBackgroundColor(I==Index?FLinearColor(.35f,.32f,.21f,1.f):FLinearColor(.08f,.10f,.085f,1.f));
@@ -572,7 +593,8 @@ void UAnomaliaZPrigimaliaSessionWidget::ShowHome() { SelectPage(0); }
 void UAnomaliaZPrigimaliaSessionWidget::ShowOptions() { SelectPage(1); }
 void UAnomaliaZPrigimaliaSessionWidget::ShowMods()
 {
-    // MODS is the native WorkForge section; the main game menu stays separate.
+    if(!bMainMenu || !WorkshopFrame) return;
+    // MODS exists only in the start menu, never during gameplay pause.
     bWorkshopMyModsOnly=false;
     RefreshMods(); SelectPage(2);
     if(DetailsFrame) DetailsFrame->SetVisibility(ESlateVisibility::Collapsed);
@@ -935,9 +957,15 @@ void UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor()
 }
 void UAnomaliaZPrigimaliaSessionWidget::Play()
 {
+    if(bMainMenu){ ShowServerBrowser();return; }
+    ResumeLocalSession();
+}
+void UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession()
+{
     FinishIntro();
     auto* PC=GetOwningPlayer(); if(!PC) return;
-    RemoveFromParent(); UGameplayStatics::SetGamePaused(PC,false); PC->SetInputMode(FInputModeGameOnly()); PC->bShowMouseCursor=false;
+    RemoveFromParent(); UGameplayStatics::SetGamePaused(PC,false);
+    PC->SetInputMode(FInputModeGameOnly()); PC->bShowMouseCursor=false;
 }
 void UAnomaliaZPrigimaliaSessionWidget::ChangeQuality()
 {
@@ -990,7 +1018,11 @@ FReply UAnomaliaZPrigimaliaSessionWidget::NativeOnKeyDown(const FGeometry& Geome
     if(bStartupIntro) { FinishIntro();return FReply::Handled(); }
     if(Event.GetKey()==EKeys::Escape || Event.GetKey()==EKeys::Gamepad_FaceButton_Right)
     {
-        if(WorkshopFrame && WorkshopFrame->GetVisibility()==ESlateVisibility::Visible)
+        if(ServerBrowserFrame && ServerBrowserFrame->GetVisibility()==ESlateVisibility::Visible)
+        { CloseServerBrowser(); }
+        else if(OnlinePlayersFrame && OnlinePlayersFrame->GetVisibility()==ESlateVisibility::Visible)
+        { CloseOnlinePlayers(); }
+        else if(WorkshopFrame && WorkshopFrame->GetVisibility()==ESlateVisibility::Visible)
         { CloseWorkshop(); }
         else if(DetailsFrame && DetailsFrame->GetVisibility()!=ESlateVisibility::Collapsed)
         { ClosePage(); if(HomeButton) HomeButton->SetUserFocus(GetOwningPlayer()); }
