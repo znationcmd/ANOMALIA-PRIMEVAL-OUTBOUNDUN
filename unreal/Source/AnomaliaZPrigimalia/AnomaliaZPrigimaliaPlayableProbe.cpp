@@ -13,6 +13,7 @@
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
 #include "Components/CanvasPanelSlot.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/VerticalBox.h"
@@ -131,6 +132,9 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
         auto* S=Survivor.Get();
         if(!S)return;
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaMenuOnly")) &&
+           (!S->GetMesh() || !S->GetMesh()->GetSkeletalMeshAsset()))
+        {Finish(TEXT("Real survivor body is missing in cooked Windows game; install/cook Manny or an owned skeletal mesh before approving the main menu"));return;}
         // Menu-only integration is intentionally independent of loot spawns,
         // vehicle setup and world-art audits. It still runs an ACTUAL cooked
         // Win64 game, draws a screenshot and clicks live UMG buttons.
