@@ -35,6 +35,21 @@ def migrate(root:Path,apply:bool):
     # Use only the exact map package renames confirmed by Unreal. Never replace
     # all ANOMALIA_ strings: they include API macros, build IDs and save keys.
     actual_maps = proof.get("mapsRenamed") or []
+    preserved_maps = proof.get("mapsPreservedAtOriginalPath") or []
+    if preserved_maps:
+        # Exact crash workaround; preserve the real source map path until UE
+        # can safely rename this specific World Partition level later.
+        if (len(preserved_maps) != 1 or
+                preserved_maps[0].get("actual") != "/Game/Maps/ANOMALIA_Playable_v1" or
+                preserved_maps[0].get("plannedNew") != "/Game/Maps/PRIGIMALIA_Playable_v1" or
+                preserved_maps[0].get("verified") is not True or
+                proof.get("allMapRenamesComplete") is not False):
+            raise RuntimeError("Unapproved or unverified preserved map")
+        if any(m.get("old") == preserved_maps[0]["actual"] for m in actual_maps):
+            raise RuntimeError("Preserved playable map cannot also be recorded as renamed")
+        old_map_file = root / "unreal/Content/Maps/ANOMALIA_Playable_v1.umap"
+        if not old_map_file.is_file():
+            raise RuntimeError("The retained playable-v1 map file disappeared")
     map_replacements = []
     for item in actual_maps:
         old, new = item.get("old", ""), item.get("new", "")
@@ -101,6 +116,9 @@ def migrate(root:Path,apply:bool):
     report={"newTitle":"ANOMALIA’Z PRIGIMALIA","root":str(root),"changedFiles":len(updates),
             "files":updates,"applied":apply,"nativeAssetsVerified":True,
             "historicDataPreserved":True,
+            "legacyPlayableWorldRetained":bool(preserved_maps),
+            "retainedWorldPackages":[p["actual"] for p in preserved_maps],
+            "renamedWorldPackages":len(actual_maps),
             "rawCatalogsCopied":len(raw_copies),
             "rawCatalogFiles":[target.relative_to(root).as_posix() for _,target,_ in raw_copies]}
     if apply:
