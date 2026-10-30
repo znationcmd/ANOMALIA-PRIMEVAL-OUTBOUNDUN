@@ -10,8 +10,11 @@ const operators={
  thirdA:{category:'official',thirdPerson:true,secret:'server_C_secret_123456789_1234567890'},
 };
 // The coordinator validates spawn positions for the destination server map.
-const spawnPoints=Object.fromEntries(Object.keys(operators).map(id=>[id,
-  [{x:100,y:500,z:100},{x:200,y:500,z:200}]]));
+const spawnPoints={
+ firstA:[{x:100,y:500,z:100},{x:200,y:500,z:200}],
+ firstB:[{x:111,y:500,z:111},{x:211,y:500,z:211}],
+ thirdA:[{x:300,y:500,z:300},{x:400,y:500,z:400}]
+};
 const snapshot={schemaVersion:1,survival:{health:95,hunger:60,thirst:40},
  hands:{itemId:'rifle'},inventory:[{itemId:'water',count:2,container:'backpack'}]};
 const request=async(server,serverId,action,body,secret=operators[serverId]?.secret)=>{
@@ -46,7 +49,7 @@ test('official service rejects outsiders, persists snapshots, and blocks paralle
   time+=90000;
   const second=await request(service.server,'firstB','check-in',{playerId:'test-person'});
   assert.equal(second.status,200);assert.equal(second.body.switched,true);
-  assert.deepEqual(second.body.spawn,spawnPoints['official1b'][1]);
+  assert.deepEqual(second.body.spawn,spawnPoints.firstB[1]);
   assert.deepEqual(second.body.snapshot,snapshot);
   // Once admitted, a restart must not allow a second session to duplicate.
   await service.close();
