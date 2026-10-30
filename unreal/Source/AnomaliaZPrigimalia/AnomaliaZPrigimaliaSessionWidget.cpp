@@ -480,8 +480,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildServerBrowser(UCanvasPanel* Canvas)
     ServerBrowserFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("ServerBrowserFullScreen"));
     ServerBrowserFrame->SetBrushColor(FLinearColor(.009f,.014f,.019f,.91f));
     ServerBrowserFrame->SetPadding(FMargin(26.f));
-    auto* Slot=Canvas->AddChildToCanvas(ServerBrowserFrame);
-    Slot->SetAnchors(FAnchors(.035f,.065f,.965f,.925f)); Slot->SetOffsets(FMargin(0));
+    auto* BrowserSlot=Canvas->AddChildToCanvas(ServerBrowserFrame);
+    BrowserSlot->SetAnchors(FAnchors(.035f,.065f,.965f,.925f)); BrowserSlot->SetOffsets(FMargin(0));
     auto* Root=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     ServerBrowserFrame->SetContent(Root);
     auto Label=[&](UVerticalBox* V,const FString& Text,int32 Size,FLinearColor Color)
@@ -554,8 +554,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildOnlinePlayers(UCanvasPanel* Canvas)
     OnlinePlayersFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("PauseOnlinePlayers"));
     OnlinePlayersFrame->SetBrushColor(FLinearColor(.014f,.020f,.027f,.94f));
     OnlinePlayersFrame->SetPadding(FMargin(22));
-    auto* Slot=Canvas->AddChildToCanvas(OnlinePlayersFrame);
-    Slot->SetAnchors(FAnchors(.59f,.07f,.96f,.88f));Slot->SetOffsets(FMargin(0));
+    auto* PlayersSlot=Canvas->AddChildToCanvas(OnlinePlayersFrame);
+    PlayersSlot->SetAnchors(FAnchors(.59f,.07f,.96f,.88f));PlayersSlot->SetOffsets(FMargin(0));
     auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     OnlinePlayersFrame->SetContent(Rows);
     auto* Header=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -584,8 +584,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildTravelLoading(UCanvasPanel* Canvas)
     TravelLoadingFrame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("ServerTravelLoading"));
     TravelLoadingFrame->SetBrushColor(FLinearColor(.015f,.018f,.019f,.94f));
     TravelLoadingFrame->SetPadding(FMargin(40));
-    auto* Slot=Canvas->AddChildToCanvas(TravelLoadingFrame);
-    Slot->SetAnchors(FAnchors(0,0,1,1));Slot->SetOffsets(FMargin(0));
+    auto* LoadingSlot=Canvas->AddChildToCanvas(TravelLoadingFrame);
+    LoadingSlot->SetAnchors(FAnchors(0,0,1,1));LoadingSlot->SetOffsets(FMargin(0));
     auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
     TravelLoadingFrame->SetContent(Rows);
     auto* Title=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
