@@ -1,0 +1,90 @@
+name: PRIGIMALIA - Auto install approved boot poster on staged Windows PC
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-install-poster-on-windows.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+# Serial execution with C++ builds, asset migrations and staged audits.
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-approved-poster:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          persist-credentials: false
+          clean: false
+      - name: Install exact artwork, compile and package only the verified Windows clone
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $project=Join-Path $stage 'unreal\AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $stage 'unreal\Saved\BrandMigration\verified-source-backup.marker'
+          $zipHash='9f7e9dd3d042f12edab8fb71e6809bbedc41a08037436ca730360d44a454e69d'
+          $posterHash='df2af9f73703a470a0b05d7f73bd99cfc0a3f40211d3a40b82e49da197c9d316'
+          $report=Join-Path $stage 'unreal\Saved\BrandMigration\startup-poster-workflow.json'
+          $state=[ordered]@{approvedPackageFound=$false;posterVerified=$false;buildAttempted=$false;gamePackaged=$false;originalUnchanged=$false;status='blocked';error=''}
+          try {
+            if(-not(Test-Path -LiteralPath $project) -or -not(Test-Path -LiteralPath $marker)){throw 'Independent verified Windows clone unavailable'}
+            if(-not(Test-Path -LiteralPath $original)){throw 'Original Unreal project is missing; refusing'}
+            if((Get-Item -LiteralPath $stage).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Staged project is a symlink/junction; refusing'}
+            $originalHash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
+            if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'An Unreal process or copy is running: refusing concurrent installation'}
+            $zip=$null
+            foreach($dir in @((Join-Path $env:USERPROFILE 'Downloads'),(Join-Path $env:USERPROFILE 'Desktop'))){
+              $candidate=Join-Path $dir 'ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2.zip'
+              if(Test-Path -LiteralPath $candidate){
+                if((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -eq $zipHash){$zip=$candidate;break}
+              }
+            }
+            if(-not $zip){throw 'Approved V2 ZIP not present in Windows Downloads/Desktop; transfer the exact supplied ZIP to the PC first'}
+            $state.approvedPackageFound=$true
+            $tempDir=Join-Path $env:RUNNER_TEMP 'prigimalia-approved-startup-v2'
+            if(Test-Path -LiteralPath $tempDir){Remove-Item -LiteralPath $tempDir -Recurse -Force}
+            New-Item -ItemType Directory -Path $tempDir -Force|Out-Null
+            Expand-Archive -LiteralPath $zip -DestinationPath $tempDir -Force
+            $poster=Join-Path $tempDir 'prigimalia-startup-poster.jpg'
+            $install=Join-Path $tempDir 'install_startup_poster.ps1'
+            if(-not(Test-Path -LiteralPath $poster) -or -not(Test-Path -LiteralPath $install)){throw 'Missing original poster or installer in verified ZIP'}
+            if((Get-FileHash -LiteralPath $poster -Algorithm SHA256).Hash.ToLowerInvariant() -ne $posterHash){throw 'Poster SHA256 mismatch, refusing replacement'}
+            $state.posterVerified=$true
+            if([string]::IsNullOrWhiteSpace($env:UE_ROOT)){throw 'UE_ROOT unavailable, cannot compile'}
+            $state.buildAttempted=$true
+            & $install -PackageGame
+            if($LASTEXITCODE -ne 0){throw 'Native installer failed: review startup-poster-installation.json on the staged copy'}
+            $receipt=Join-Path $stage 'unreal\Saved\BrandMigration\startup-poster-installation.json'
+            if(-not(Test-Path -LiteralPath $receipt)){throw 'Installer did not write verification receipt'}
+            $result=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
+            if(-not($result.artworkCopied -and $result.textureImported -and $result.gameBuilt -and $result.packaged -and $result.originalProjectVerified)){throw 'Installer receipt missing required success proofs'}
+            $state.gamePackaged=$true
+            $state.status='success'
+            Write-Host 'PRIGIMALIA_USER_POSTER_INSTALLED_AND_GAME_PACKAGED=true'
+          }catch{
+            $state.error=$_.Exception.Message
+            Write-Host ('PRIGIMALIA_POSTER_BLOCKED='+$state.error)
+            throw
+          }finally{
+            $state.originalUnchanged=($null -ne $originalHash -and (Test-Path -LiteralPath $original) -and (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash -eq $originalHash)
+            if(Test-Path -LiteralPath $stage){
+              New-Item -ItemType Directory -Path (Split-Path -Parent $report) -Force|Out-Null
+              $state|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $report -Encoding UTF8
+            }
+          }
+      - name: Upload verified Windows installation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-Approved-Boot-Poster-Install
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/startup-poster-workflow.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/startup-poster-installation.json
+          if-no-files-found: warn
