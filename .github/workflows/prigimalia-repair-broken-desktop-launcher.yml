@@ -1,0 +1,46 @@
+name: PRIGIMALIA - Repair broken Windows desktop game shortcut
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-repair-broken-desktop-launcher.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  fix-desktop-shortcut:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Audit desktop shortcut target, packaged binaries and native game content
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\repair-prigimalia-desktop-launcher.ps1'
+          if(-not(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Windows shortcut repair script missing'}
+          & $script -RunId $env:GITHUB_RUN_ID
+          if($LASTEXITCODE -ne 0){throw 'Safe Windows launcher audit failed'}
+          $report=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\Saved\DesktopLauncherRepair' ('run-'+$env:GITHUB_RUN_ID+'\desktop-launcher-audit.json')
+          if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw 'Launcher audit report missing'}
+          $audit=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if(-not $audit.completePackage){throw 'Windows package incomplete: cannot safely fix by changing a shortcut'}
+          if(-not $audit.createdShortcut){throw ('Desktop shortcut could not be created or verified: '+$audit.result)}
+          if(-not(Test-Path -LiteralPath $audit.createdShortcut -PathType Leaf)){throw 'The new Windows shortcut disappeared'}
+          Write-Host ('PRIGIMALIA_DESKTOP_SHORTCUT_VALIDATED='+$audit.createdShortcut)
+          Write-Host ('PRIGIMALIA_GAME_LAUNCHER_TARGET='+$audit.bootstrap)
+          Write-Host 'PRIGIMALIA_USER_SAVES_AND_ORIGINAL_LINKS_PRESERVED=true'
+      - name: Upload launcher audit (including failure diagnosis)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-Windows-Desktop-Launcher-Audit
+          if-no-files-found: warn
+          path: D:/ANOMALIAZ-PRIGIMALIA/Saved/DesktopLauncherRepair/run-*/desktop-launcher-audit.json
