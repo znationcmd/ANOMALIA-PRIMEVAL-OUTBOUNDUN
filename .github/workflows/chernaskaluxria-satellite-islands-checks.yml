@@ -1,0 +1,36 @@
+name: CHERNASKALUXRIA - 200 100 50 km2 islands with bridge and tunnel proposals
+on:
+  push:
+    branches: [feature/chernaskaluxria-islands-crossings-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  island-geography-and-safe-generation-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python terrain and crossing module syntax
+        run: |
+          python -m py_compile scripts/ue5/chernaskaluxria_archipelago.py scripts/ue5/chernaskaluxria_world.py scripts/ue5/generate_chernaskaluxria_tiles.py
+      - name: Verify original multi-island geography, land-water ratio and navigation proposals
+        run: |
+          python -m unittest discover -s tests -p test_chernaskaluxria_satellite_islands.py -v
+          python -m unittest discover -s tests -p test_chernaskaluxria_gameplay_rules.py -v
+          python -m unittest discover -s tests -p test_ninth_map_chernaskaluxria.py -v
+      - name: Generate small sample of new terrain and verify seamless shared edges
+        run: |
+          mkdir -p /tmp/chernaskaluxria-islands-v2
+          python scripts/ue5/generate_chernaskaluxria_tiles.py --output /tmp/chernaskaluxria-islands-v2 --col 10 --row 10 --count 2
+          python - <<'PY'
+          from pathlib import Path
+          import sys
+          sys.path.insert(0,'scripts/ue5')
+          import generate_chernaskaluxria_tiles as terrain
+          root=Path('/tmp/chernaskaluxria-islands-v2')
+          assert len(list(root.glob('*.r16')))==2
+          assert all(p.stat().st_size==253*253*2 for p in root.glob('*.r16'))
+          assert terrain.check_shared_edges(root,10,10)['east']
+          print('NEW_ARCHIPELAGO_TILE_SEAM_AND_SOURCE_FILES_VERIFIED')
+          PY
