@@ -81,9 +81,11 @@ TSharedRef<SWidget> UAnomaliaZPrigimaliaSessionWidget::RebuildWidget()
 void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
 {
     Super::NativeConstruct(); SetIsFocusable(true);
-    bStartupIntro=bMainMenu && MenuArtwork;
+    bStartupIntro=bMainMenu && MenuArtwork && StartupArtworkFrame;
     if(bStartupIntro)
     {
+        // The poster belongs to boot only, never to the interactive menu.
+        StartupArtworkFrame->SetVisibility(ESlateVisibility::Visible);
         IntroStarted=FPlatformTime::Seconds(); MenuArtwork->SetRenderOpacity(0.f);
         if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Hidden);
     }
@@ -133,7 +135,10 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeTick(const FGeometry& Geometry,flo
 void UAnomaliaZPrigimaliaSessionWidget::FinishIntro()
 {
     bStartupIntro=false;
-    if(MenuArtwork) { MenuArtwork->SetRenderOpacity(1.f);MenuArtwork->SetRenderScale(FVector2D(1.f,1.f)); }
+    // Collapse the *entire* splash frame, including its black matte: otherwise
+    // it becomes a permanent wallpaper hiding the actual 3D menu scene.
+    if(StartupArtworkFrame) StartupArtworkFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(MenuArtwork) { MenuArtwork->SetRenderOpacity(0.f);MenuArtwork->SetVisibility(ESlateVisibility::Collapsed); }
     if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
 }
 FReply UAnomaliaZPrigimaliaSessionWidget::NativeOnMouseButtonDown(const FGeometry& Geometry,const FPointerEvent& Event)
@@ -411,10 +416,12 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
     auto* Canvas=WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass()); Safe->SetContent(Canvas);
     if(bMainMenu)
     {
-        auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
+        // Dedicated transient startup poster. T_MenuBackdrop remains available
+        // to WorkForge only and is not substituted for the game's 3D menu.
+        auto* Texture=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_StartupPoster.T_StartupPoster"),nullptr,LOAD_NoWarn);
         if(Texture)
         {
-            auto* Matte=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());Matte->SetBrushColor(FLinearColor::Black);Matte->SetPadding(FMargin(0));
+            auto* Matte=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());StartupArtworkFrame=Matte;Matte->SetBrushColor(FLinearColor::Black);Matte->SetPadding(FMargin(0));
             auto* BackdropCanvasSlot=Canvas->AddChildToCanvas(Matte);BackdropCanvasSlot->SetAnchors(FAnchors(0,0,1,1));BackdropCanvasSlot->SetOffsets(FMargin(0));
             auto* Fit=WidgetTree->ConstructWidget<UScaleBox>(UScaleBox::StaticClass());Fit->SetStretch(EStretch::ScaleToFit);Matte->SetContent(Fit);
             MenuArtwork=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("SessionMenuArtwork"));
