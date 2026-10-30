@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "description": "Public names for distinct 48 x 48 km ANOMALIA'Z worlds. These entries do not rename Unreal packages or activate untested servers.",
+  "maps": [
+    {
+      "id": "archipelago-v2",
+      "displayName": "ANOMALIA’Z — Archipelago",
+      "originalUnrealPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+      "widthKm": 48,
+      "heightKm": 48,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-PIE-limited",
+      "saveNamespace": "archipelago-v2"
+    },
+    {
+      "id": "inhabited-v2",
+      "displayName": "ANOMALIA’Z — Inhabited",
+      "originalUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "widthKm": 48,
+      "heightKm": 48,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "authored-editor-not-full-gameplay-tested",
+      "saveNamespace": "inhabited-v2"
+    }
+  ]
+}
