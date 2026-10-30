@@ -57,6 +57,14 @@ for entry in plan:
     if not api.does_asset_exist(old):
         result["errors"].append("Both map source and destination missing: " + old)
         continue
+    if (old == "/Game/Maps/ANOMALIA_Playable_v1"
+            and new == "/Game/Maps/PRIGIMALIA_Playable_v1"):
+        # Known crashing WP map: never retry AssetTools rename in this loop.
+        # The release workflow retains its original path and verifies its
+        # real World object separately before packaging.
+        result["pendingWorldPartition"].append({"old": old, "new": new})
+        unreal.log_warning("Skipping unsafe Playable_v1 rename; native reload verification required")
+        continue
     world = unreal.load_asset(old)
     if not isinstance(world, unreal.World):
         result["errors"].append("Unreal could not load source World: " + old)
