@@ -7,6 +7,7 @@ This does not claim photorealism, finished content or a playable server.
 """
 import json
 import math
+import struct
 import os
 import traceback
 from pathlib import Path
@@ -34,6 +35,24 @@ REPORT=dict(state="FAILED",name=NAME,generatedInUnreal=False,gameplayTested=Fals
 try:
  if NAME not in CONFIG:raise RuntimeError("Refusing unknown map identifier")
  spec=CONFIG[NAME]
+ bPhotoTopo=os.environ.get("PRIGIMALIA_USE_IMAGE_TOPO_R16","")=="1"
+ imageTopoData=None
+ if bPhotoTopo:
+  source=ROOT/"TerrainSource"/NAME/(NAME+".r16")
+  if not source.is_file():
+   raise RuntimeError("Requested user-photo terrain is missing: "+str(source))
+  imageTopoData=source.read_bytes()
+  if len(imageTopoData)!=spec["samples"]**2*2:
+   raise RuntimeError("Wrong photo-driven RAW16 dimensions; refusing native import")
+  def photo_height(e,n):
+   size=spec["samples"]
+   ix=min(size-1,max(0,round((e+spec["side"]/2.)*float(size-1)/spec["side"])))
+   iy=min(size-1,max(0,round((spec["side"]/2.-n)*float(size-1)/spec["side"])))
+   code=struct.unpack_from("<H",imageTopoData,2*(iy*size+ix))[0]
+   return (code-32768)/16.
+ else:
+  def photo_height(e,n):
+   return native.named_world_height(NAME,e,n)
  package="/Game/Maps/PRIGIMALIA_"+NAME
  mapfile=ROOT/"Content/Maps"/("PRIGIMALIA_"+NAME+".umap")
  materials="/Game/Anomalia/World/NewMaps_"+NAME
@@ -108,8 +127,8 @@ try:
  for radius in (0,600,1200,2100,3500,5200):
   for angle in range(0,360,30):
    e=radius*math.cos(math.radians(angle));n=radius*math.sin(math.radians(angle))
-   h=native.named_world_height(NAME,e,n)
-   corners=[native.named_world_height(NAME,e+dx,n+dy) for dx,dy in
+   h=photo_height(e,n)
+   corners=[photo_height(e+dx,n+dy) for dx,dy in
             ((-8,-8),(-8,8),(8,-8),(8,8))]
    if 8<h<400 and max(abs(v-h) for v in corners)<3.5:
     spawn=(e,n,h);break
@@ -126,7 +145,9 @@ try:
                heightSamplesPerSide=spec["samples"],landscapeComponents=components,
                collisionComponents=collision,landscapeProxies=len(proxies),
                playerStartMetres=spawn,visualMaterial="BIOME_PREVIEW_NOT_PHOTOREALISTIC",
-               worldPartitionRequested=True,worldFileBytes=mapfile.stat().st_size)
+               worldPartitionRequested=True,worldFileBytes=mapfile.stat().st_size,
+               terrainSource="USER_PHOTO_R16" if bPhotoTopo else "PROCEDURAL",
+               sourceInputValidated=bPhotoTopo)
 except Exception as exc:
  REPORT["error"]=str(exc)
  REPORT["traceback"]=traceback.format_exc()
