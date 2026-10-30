@@ -12,7 +12,7 @@ const operators={
 const spawnPoints={'1PP':[{x:100,y:500,z:100},{x:200,y:500,z:200}],
 '3PP':[{x:300,y:500,z:300},{x:400,y:500,z:400}]};
 const snapshot={schemaVersion:1,survival:{health:95,hunger:60,thirst:40},
- hands:{itemId:'rifle'},inventory:[{id:'water',count:2}]};
+ hands:{itemId:'rifle'},inventory:[{itemId:'water',count:2,container:'backpack'}]};
 const request=async(server,serverId,action,body,secret=operators[serverId]?.secret)=>{
  const base='http://127.0.0.1:'+server.address().port;
  const r=await fetch(base+'/v1/official/'+action,{method:'POST',
