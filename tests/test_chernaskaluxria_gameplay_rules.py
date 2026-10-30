@@ -98,7 +98,11 @@ class ChernaskaluxriaGameplayRulesTest(unittest.TestCase):
             out=Path(tmp)/"pcg-review"
             result=exporter.export(out)
             self.assertFalse(result["changesAppliedToServer"])
-            self.assertEqual(len(result["files"]),4)
+            self.assertEqual(len(result["files"]),5)
+            fauna_rules=json.loads((out/"fauna-encounters.review.json").read_text())
+            self.assertEqual(fauna_rules["mapId"],"chernaskaluxria-v1")
+            self.assertEqual(len(fauna_rules["smallIslandFauna"]),20)
+            self.assertFalse(fauna_rules["gameplayIntegrationEnabled"])
             hubs=json.loads((out/"starter-hubs.review.json").read_text())["hubs"]
             self.assertEqual(len(hubs),9)
             j=json.loads((out/"world-map-policy.json").read_text())
