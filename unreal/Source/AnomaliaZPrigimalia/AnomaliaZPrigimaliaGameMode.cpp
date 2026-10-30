@@ -28,6 +28,7 @@
 #include "Dom/JsonObject.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/Guid.h"
 #include "HAL/FileManager.h"
 #include "Serialization/JsonReader.h"
 #include "Serialization/JsonSerializer.h"
@@ -149,8 +150,27 @@ bool AAnomaliaZPrigimaliaGameMode::SelectLocalCharacterSlot(int32 Slot,FString& 
     { OutError=TEXT("Un changement de personnage est déjà en attente.");return false; }
     if(!FFileHelper::SaveStringToFile(FString::FromInt(Slot),*Staging))
     { OutError=TEXT("Impossible d'enregistrer le choix du personnage.");return false; }
-    if(!IFileManager::Get().Move(*Active,*Staging,true,false))
-    { IFileManager::Get().Delete(*Staging);OutError=TEXT("Impossible de valider le choix sans écraser la sauvegarde.");return false; }
+    // The original survivor never had an active-slot file, so the first
+    // selection must also work without a pre-existing marker. Never alter the
+    // saved original player profile while switching identities.
+    const bool bHadMarker=IFileManager::Get().FileExists(*Active);
+    if(bHadMarker)
+    {
+        const FString Backup=Active+TEXT(".backup-")+FGuid::NewGuid().ToString(EGuidFormats::Digits);
+        if(IFileManager::Get().FileExists(*Backup) ||
+           IFileManager::Get().Copy(*Backup,*Active,true,false)!=COPY_OK)
+        {
+            IFileManager::Get().Delete(*Staging);
+            OutError=TEXT("Impossible de sauvegarder le personnage actif. Changement annulé.");
+            return false;
+        }
+    }
+    if(!IFileManager::Get().Move(*Active,*Staging,bHadMarker,false))
+    {
+        IFileManager::Get().Delete(*Staging);
+        OutError=TEXT("Le nouveau personnage ne peut pas être sélectionné. Sauvegardes inchangées.");
+        return false;
+    }
     return true;
 }
 bool AAnomaliaZPrigimaliaGameMode::CreateLocalCharacterSlot(int32& OutSlot,FString& OutError)
