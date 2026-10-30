@@ -21,6 +21,10 @@ CONFIG={
                   low=(.055,.18,.09),high=(.21,.27,.16),snow=210.),
  "DRAKHEIM": dict(side=20000,samples=2017,components=256,biome="volcanic basalt highlands",
                   low=(.12,.11,.10),high=(.24,.16,.13),snow=660.),
+ "SOLYNACALYRA": dict(side=15000,samples=1513,components=576,biome="paradise tropical islands and lagoons",
+                  low=(.18,.38,.16),high=(.68,.78,.39),snow=500.),
+ "NEXAVARKHOS": dict(side=10000,samples=1009,components=256,biome="devastated colony original impact wasteland",
+                  low=(.13,.11,.10),high=(.39,.23,.14),snow=680.),
 }
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 NAME=os.environ.get("PRIGIMALIA_NEW_MAP","")
