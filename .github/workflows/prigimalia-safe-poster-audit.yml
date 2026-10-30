@@ -1,0 +1,80 @@
+name: PRIGIMALIA - Read-only Windows migration and poster audit
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-safe-poster-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read-only check of staged project and original poster
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $marker=Join-Path $stage 'Saved\BrandMigration\verified-source-backup.marker'
+          $receiptFile=Join-Path $stage 'Saved\BrandMigration\asset-rename-report.json'
+          $refReceipt=Join-Path $stage 'Saved\BrandMigration\package-ref-update-report.json'
+          $report=[ordered]@{
+            originalExists=(Test-Path -LiteralPath $original)
+            stagedExists=(Test-Path -LiteralPath (Join-Path $stage 'AnomaliaZPrigimalia.uproject'))
+            stagedCloneVerified=(Test-Path -LiteralPath $marker)
+            migrationReportPresent=(Test-Path -LiteralPath $receiptFile)
+            referenceReportPresent=(Test-Path -LiteralPath $refReceipt)
+            oldReliefMapPresent=(Test-Path -LiteralPath (Join-Path $stage 'Content\ANOMALIA_Relief_Test.umap'))
+            newReliefMapPresent=(Test-Path -LiteralPath (Join-Path $stage 'Content\PRIGIMALIA_Relief_Test.umap'))
+            activeProcesses=@()
+            migrationVerified=$false
+            migrationErrors=@()
+            approvedPosterPresent=$false
+            approvedPosterPath=$null
+            originalZipPresent=$false
+          }
+          $report.activeProcesses=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue | ForEach-Object {"$($_.ProcessName):$($_.Id)"})
+          if($report.migrationReportPresent){
+            try {
+              $s=Get-Content -LiteralPath $receiptFile -Raw | ConvertFrom-Json
+              $report.migrationErrors=@($s.errors)
+              $report.migrationVerified=[bool]($s.verified -and @($s.errors).Count -eq 0)
+              $report.directoryRenamed=$s.directoryRenamed
+              $report.mapsRenamed=@($s.mapsRenamed).Count
+              $report.reliefRenamePlan=@($s.mapRenamePlan | Where-Object {$_.old -match 'Relief_Test'})
+            } catch { $report.migrationErrors=@('Unreadable report: '+$_.Exception.Message) }
+          }
+          foreach($p in @(
+            (Join-Path $stage 'SourceAssets\Branding\prigimalia-startup-poster.jpg'),
+            'D:\ANOMALIAZ-PRIGIMALIA\public\prigimalia-startup-poster.jpg',
+            (Join-Path $env:USERPROFILE 'Downloads\prigimalia-startup-poster.jpg')
+          )){
+            if(Test-Path -LiteralPath $p){
+              $hash=(Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash.ToLowerInvariant()
+              if($hash -eq 'df2af9f73703a470a0b05d7f73bd99cfc0a3f40211d3a40b82e49da197c9d316'){
+                $report.approvedPosterPresent=$true; $report.approvedPosterPath=$p; break
+              }
+            }
+          }
+          foreach($name in @('ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2.zip','PRIGIMALIA_Ecran_Seulement_Au_Demarrage.zip')){
+            $zip=Join-Path $env:USERPROFILE ('Downloads\'+$name)
+            if(Test-Path -LiteralPath $zip){$report.originalZipPresent=$true;$report.originalZipPath=$zip;break}
+          }
+          $content=Join-Path $stage 'Content'
+          $report.mapCount=@(Get-ChildItem -LiteralPath $content -Filter '*.umap' -File -Recurse -ErrorAction SilentlyContinue).Count
+          $report.assetCount=@(Get-ChildItem -LiteralPath $content -Filter '*.uasset' -File -Recurse -ErrorAction SilentlyContinue).Count
+          $report|ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prigimalia-poster-readiness.json') -Encoding UTF8
+          Write-Host ($report|ConvertTo-Json -Depth 8)
+          Write-Host 'PRIGIMALIA_READ_ONLY_AUDIT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: PRIGIMALIA-poster-readiness
+          path: ${{ runner.temp }}/prigimalia-poster-readiness.json
+          if-no-files-found: warn
