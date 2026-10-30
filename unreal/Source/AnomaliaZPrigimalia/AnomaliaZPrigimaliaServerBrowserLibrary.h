@@ -10,6 +10,21 @@ enum class EAnomaliaZPrigimaliaServerFilter : uint8
     All, PVE, PVP, RP
 };
 
+/** One independent Unreal World Partition map, never a region of another map. */
+USTRUCT(BlueprintType)
+struct FAnomaliaZPrigimaliaWorldMapCard
+{
+    GENERATED_BODY()
+
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") FString MapId;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") FString DisplayName;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") FString UnrealPackage;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") int32 WidthKm = 0;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") int32 HeightKm = 0;
+    /** Not an online indicator. Only set after independent native gameplay tests. */
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") bool bPlayableValidated = false;
+};
+
 USTRUCT(BlueprintType)
 struct FAnomaliaZPrigimaliaServerCard
 {
@@ -20,6 +35,10 @@ struct FAnomaliaZPrigimaliaServerCard
 
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Servers")
     FString DisplayName;
+
+    /** Stable chosen world ID; independent from the server slot and the player's saves. */
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Servers")
+    FString MapId;
 
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Servers")
     EAnomaliaZPrigimaliaServerFilter Mode = EAnomaliaZPrigimaliaServerFilter::PVE;
@@ -55,5 +74,15 @@ public:
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Servers")
     static TArray<FAnomaliaZPrigimaliaServerCard> FilterByMode(
         const TArray<FAnomaliaZPrigimaliaServerCard>& Servers, EAnomaliaZPrigimaliaServerFilter Mode,
+        bool bOnlyOnline);
+
+    /** Six separate maps; readiness is intentionally false until verified in an actual build. */
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Maps")
+    static TArray<FAnomaliaZPrigimaliaWorldMapCard> GetIndependentWorldMaps();
+
+    /** Only returns a match for the exact canonical map ID, not a fuzzy shared terrain. */
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Servers")
+    static TArray<FAnomaliaZPrigimaliaServerCard> FilterByMap(
+        const TArray<FAnomaliaZPrigimaliaServerCard>& Servers, const FString& MapId,
         bool bOnlyOnline);
 };
