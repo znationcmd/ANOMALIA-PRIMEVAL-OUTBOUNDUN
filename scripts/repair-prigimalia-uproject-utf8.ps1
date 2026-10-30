@@ -105,12 +105,13 @@ try {
   $state.packagedGamePreserved = (Test-Path -LiteralPath $packaged -PathType Leaf)
   if (-not $state.packagedGamePreserved) { throw 'Previously verified Windows executable is unexpectedly missing; stop and investigate' }
   if ([string]::IsNullOrWhiteSpace($env:UE_ROOT)) { throw 'UE_ROOT unavailable' }
-  $ubt = Join-Path $env:UE_ROOT 'Engine\Binaries\DotNET\UnrealBuildTool\UnrealBuildTool.dll'
-  if (-not (Test-Path -LiteralPath $ubt)) { throw 'UnrealBuildTool DLL unavailable' }
-  # This is the native operation which Windows reported failing. Validate it,
-  # without compiling/cooking, deleting assets or editing the original copy.
-  & dotnet $ubt '-ProjectFiles' "-Project=$project" '-Game' '-Progress'
-  if ($LASTEXITCODE -ne 0) { throw "UE5.8 GenerateProjectFiles still failed (exit $LASTEXITCODE); inspect the job log for another malformed descriptor" }
+  $genBat = Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\GenerateProjectFiles.bat'
+  if (-not (Test-Path -LiteralPath $genBat -PathType Leaf)) { throw 'UE5.8 GenerateProjectFiles.bat unavailable' }
+  # IMPORTANT: the system dotnet.exe only has .NET 9, while UE5.8 UBT requires
+  # .NET 10. Use the engine's own batch launcher and its bundled runtime instead.
+  # This is the same native project-file generation invoked by the selector.
+  & $genBat "-Project=$project" '-Game' '-Progress'
+  if ($LASTEXITCODE -ne 0) { throw "UE5.8 bundled GenerateProjectFiles failed (exit $LASTEXITCODE); inspect the job log" }
   $state.projectFilesGenerated = $true
   $state.status = 'SUCCESS'
   Write-Host 'PRIGIMALIA_NATIVE_GENERATE_PROJECT_FILES_SUCCESS=true'
