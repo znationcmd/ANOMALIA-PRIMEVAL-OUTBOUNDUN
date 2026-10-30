@@ -171,10 +171,17 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         if(!BuildLabel || !BuildLabel->GetText().ToString().StartsWith(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)))
         {Finish(TEXT("Visible executable build identity missing"));return;}
         Checks.Add(TEXT("visible_executable_build_identity"));
+        auto* Slots=Menu && Menu->WidgetTree?Cast<UComboBoxString>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterSlots"))):nullptr;
+        auto* Create=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterNew"))):nullptr;
+        auto* Select=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterSelect"))):nullptr;
+        auto* Export=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterTransfer"))):nullptr;
+        if(!Slots || Slots->GetOptionCount()<1 || !Create || !Select || !Export || PC->GetViewTarget()==PC->GetPawn())
+        {Finish(TEXT("Main menu must show a real saved survivor and independent character slots"));return;}
+        Checks.Add(TEXT("main_menu_character_slots_and_live_3d_survivor_preview"));
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
         auto* Art=Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")));
-        if(!Art || !Art->GetBrush().GetResourceObject() || !Art->GetBrush().GetResourceObject()->GetPathName().Contains(TEXT("/Branding/T_MenuBackdrop")))
+        if(!Art || !Art->GetBrush().GetResourceObject() || !Art->GetBrush().GetResourceObject()->GetPathName().Contains(TEXT("/Branding/T_StartupPoster")))
         { Finish(TEXT("User-provided main menu artwork is missing from the cooked game")); return; }
         Next=Now+1;Phase=19;return;
     }
@@ -313,6 +320,23 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         if(Menu->IsInViewport() || GetWorld()->IsPaused() || PC->GetViewTarget()!=PC->GetPawn())
         { Finish(TEXT("Continue Solo did not resume restored gameplay and camera")); return; }
         Checks.Add(TEXT("main_menu_play_button"));
+        // Verify that WorkForge cannot be opened from the real in-game pause,
+        // while the online player list really uses the separate pause widget.
+        auto* Pause=UAnomaliaZPrigimaliaSessionWidget::Open(PC,false);
+        auto* Online=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("SessionOnline"))):nullptr;
+        auto* Players=Pause && Pause->WidgetTree?Cast<UBorder>(Pause->WidgetTree->FindWidget(TEXT("PauseOnlinePlayers"))):nullptr;
+        auto* Back=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("PauseOnlineBack"))):nullptr;
+        auto* Continue=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Online || !Players || !Back || !Continue ||
+           Pause->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")))
+        { Finish(TEXT("Native pause must have Online players and must not expose WorkForge"));return; }
+        Online->OnClicked.Broadcast();
+        if(Players->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("Pause Online players list did not open"));return;}
+        Back->OnClicked.Broadcast();
+        Continue->OnClicked.Broadcast();
+        if(GetWorld()->IsPaused()) {Finish(TEXT("Pause Continue failed"));return;}
+        Checks.Add(TEXT("pause_online_players_real_widget_without_workforge"));
         Checks.Add(TEXT("native_world_HUD_and_three_vehicle_meshes"));
         Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);
         Input(EKeys::W,IE_Pressed); Next=Now+1; Phase=1; return;
