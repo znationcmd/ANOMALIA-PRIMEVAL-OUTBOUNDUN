@@ -318,6 +318,27 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     AddLabel(HeroText,TEXT("M O D S   &   C R É A T I O N S"),12,Soft,1);
     AddLabel(HeroText,TEXT("Explorez les mods et créations pour ANOMALIA’Z PRIGIMALIA."),14,FLinearColor::White,10);
     AddLabel(HeroText,TEXT("Catalogue local réel  •  Recherche  •  Catégories  •  Collections"),12,Gold,2);
+    // This stats ribbon deliberately uses LIVE local counts, never numbers
+    // copied from the visual mockup or invented remote community ratings.
+    auto* Stats=Horizontal();
+    HeroText->AddChildToVerticalBox(Stats)->SetPadding(FMargin(0,10,0,4));
+    auto* StatBlock=[&](const FString& Initial,const FString& Caption,UTextBlock*& Out)
+    {
+        auto* Column=Vertical();
+        Stats->AddChildToHorizontalBox(Column)->SetPadding(FMargin(0,0,24,0));
+        Out=AddLabel(Column,Initial,20,FLinearColor(1.f,.53f,.34f),0);
+        AddLabel(Column,Caption,11,FLinearColor::White,0);
+    };
+    UTextBlock* ModsCount=nullptr;
+    UTextBlock* CreatorsCount=nullptr;
+    StatBlock(TEXT("0"),TEXT("Mods locaux"),ModsCount);
+    StatBlock(TEXT("0"),TEXT("Créations locales"),CreatorsCount);
+    WorkshopCountLabel=ModsCount;
+    WorkshopCreatorsLabel=CreatorsCount;
+    auto* Offline=Vertical();
+    Stats->AddChildToHorizontalBox(Offline);
+    AddLabel(Offline,TEXT("LOCAL"),20,Cyan,0);
+    AddLabel(Offline,TEXT("Catalogue hors ligne"),11,FLinearColor::White,0);
 
     auto* CategoriesTitle=Label(TEXT("EXPLORER PAR CATÉGORIE"),17,FLinearColor::White);
     Center->AddChildToVerticalBox(CategoriesTitle)->SetPadding(FMargin(14,11,8,4));
@@ -420,7 +441,7 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     AddLabel(Connected,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,4);
     AddLabel(Connected,TEXT("Workshop local       ✓ ACTIF"),11,FLinearColor(.48f,.92f,.65f),6);
     AddLabel(Connected,TEXT("Synchronisation      Locale"),11,Soft,6);
-    AddLabel(Connected,TEXT("Chargement UE5       Non relié"),11,Gold,6);
+    WorkshopInstalledLabel=AddLabel(Connected,TEXT("Manifestes locaux       vérification"),11,Gold,6);
     AddLabel(Connected,TEXT("Communauté           En préparation"),11,Soft,6);
     auto* ToolsRow=Horizontal();Connected->AddChildToVerticalBox(ToolsRow);
     Action(ToolsRow,TEXT("WorkshopOpenTools"),TEXT("ANOMALIA Tools ↗"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorkshopTools);
@@ -761,6 +782,17 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
         Entries.Add(MoveTemp(Card));
     }
     const int32 Total=Entries.Num();
+    int32 WorkspacesCount=0;
+    int32 InstalledCount=0;
+    for(const FWorkForgeCard& Card:Entries)
+    {
+        if(Card.bLocalTools) ++WorkspacesCount;
+        if(Card.bInstalledManifest) ++InstalledCount;
+    }
+    if(WorkshopCountLabel) WorkshopCountLabel->SetText(FText::AsNumber(InstalledCount));
+    if(WorkshopCreatorsLabel) WorkshopCreatorsLabel->SetText(FText::AsNumber(WorkspacesCount));
+    if(WorkshopInstalledLabel) WorkshopInstalledLabel->SetText(FText::FromString(
+        FString::Printf(TEXT("Manifestes locaux       %d"),InstalledCount)));
     TArray<FWorkForgeCard> Visible;
     for(const FWorkForgeCard& Card:Entries)if(Matches(Card))Visible.Add(Card);
     if(Sort==TEXT("Nom A-Z"))
