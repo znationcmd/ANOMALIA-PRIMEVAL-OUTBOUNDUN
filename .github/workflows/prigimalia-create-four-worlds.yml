@@ -1,0 +1,86 @@
+name: PRIGIMALIA - author four distinct native UE5 levels
+on:
+  push:
+    branches: [feature/four-independent-ue5-worlds-20261030]
+    paths: ['.github/workflows/prigimalia-create-four-worlds.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  author-in-workspace-only:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Reject concurrent editors and protected user project destinations
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(-not $env:UE_ROOT){throw 'Installed UE5.8 engine missing'}
+          $workspace=(Resolve-Path $env:GITHUB_WORKSPACE).Path
+          if($workspace -like 'D:\ANOMALIA\*' -or $workspace -like 'D:\ANOMALIAZ-PRIGIMALIA\*'){throw 'Refusing production/original game project as workspace'}
+          $project=Join-Path $workspace 'unreal\AnomaliaZPrigimalia.uproject'
+          if(-not(Test-Path -LiteralPath $project -PathType Leaf)){throw 'Expected isolated Unreal project missing'}
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0){throw 'Native Unreal build or game already active; refusing concurrent generation'}
+          foreach($id in @('KARSKOV','VORGRAD','NEMORIS','DRAKHEIM')){
+            $base='PRIGIMALIA_'+$id
+            foreach($relative in @("unreal\Content\Maps\$base.umap","unreal\Content\__ExternalActors__\Maps\$base","unreal\Content\__ExternalObjects__\Maps\$base")){
+              if(Test-Path -LiteralPath (Join-Path $workspace $relative)){throw ("Existing world must be inspected and preserved: "+$relative)}
+            }
+          }
+      - name: Compile actual Unreal Editor C++ including original heightfields
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          if(-not(Test-Path -LiteralPath $build -PathType Leaf)){throw 'Build.bat missing'}
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE
+          if($LASTEXITCODE -ne 0){throw 'Real Unreal Editor compile failed'}
+      - name: Create all four real World Partition landscapes with separate Editor processes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal\AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_four_additional_maps.py'
+          $folder=Join-Path $env:GITHUB_WORKSPACE "unreal\Saved\FourWorlds\run-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          New-Item -Path $folder -ItemType Directory -Force | Out-Null
+          $sizes=@{KARSKOV=30000;VORGRAD=30000;NEMORIS=20000;DRAKHEIM=20000}
+          $counts=@{KARSKOV=576;VORGRAD=576;NEMORIS=256;DRAKHEIM=256}
+          foreach($id in @('KARSKOV','VORGRAD','NEMORIS','DRAKHEIM')){
+            $env:PRIGIMALIA_NEW_MAP=$id
+            $env:PRIGIMALIA_NEW_MAP_REPORT=Join-Path $folder "$id.json"
+            $log=Join-Path $folder "$id.log"
+            & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound "-abslog=$log"
+            if($LASTEXITCODE -ne 0){throw ('Native authoring failed: '+$id)}
+            if(-not(Test-Path -LiteralPath $env:PRIGIMALIA_NEW_MAP_REPORT -PathType Leaf)){throw ('Missing receipt: '+$id)}
+            $proof=Get-Content -LiteralPath $env:PRIGIMALIA_NEW_MAP_REPORT -Raw | ConvertFrom-Json
+            if($proof.state -ne 'NATIVE_WORLD_SAVED_NOT_PLAYTESTED' -or
+               $proof.landscapeComponents -ne $counts[$id] -or
+               $proof.collisionComponents -ne $counts[$id] -or
+               $proof.sideMeters -ne $sizes[$id] -or
+               $proof.generatedInUnreal -ne $true){throw ('Native landscape evidence invalid: '+$id)}
+            $map=Join-Path $env:GITHUB_WORKSPACE "unreal\Content\Maps\PRIGIMALIA_$id.umap"
+            if(-not(Test-Path -LiteralPath $map -PathType Leaf)){throw ('No binary native map: '+$id)}
+            Write-Host ('UE5_NATIVE_WORLD_CREATED='+$id)
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prigimalia-four-native-worlds-and-evidence
+          if-no-files-found: warn
+          path: |
+            unreal/Content/Maps/PRIGIMALIA_*.umap
+            unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_*/
+            unreal/Content/__ExternalObjects__/Maps/PRIGIMALIA_*/
+            unreal/Content/Anomalia/World/NewMaps_*/
+            unreal/Saved/FourWorlds/run-${{ github.run_id }}-${{ github.run_attempt }}/
