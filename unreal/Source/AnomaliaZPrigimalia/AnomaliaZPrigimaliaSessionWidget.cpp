@@ -800,10 +800,17 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
             Details->AddChildToVerticalBox(Text(TEXT("Par ")+Entry.Author,11,Soft))->SetPadding(FMargin(0,2));
             Details->AddChildToVerticalBox(Text(Entry.Description.IsEmpty()?TEXT("Mod ANOMALIA"):Entry.Description,12,Gold))->SetPadding(FMargin(0,3));
             Details->AddChildToVerticalBox(Text(TEXT("Version : ")+Entry.Version,11,Soft))->SetPadding(FMargin(0,4));
-            auto* Footer=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
-            Footer->SetBrushColor(Red);Footer->SetPadding(FMargin(8,5));
+            auto* Footer=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),
+                FName(*FString::Printf(TEXT("WorkshopModAction%d"),Index+Col)));
+            Footer->SetBackgroundColor(Red);
+            Footer->SetContent(Text(Entry.bLocalTools?
+                TEXT("OUVRIR ANOMALIA TOOLS  ↗"):TEXT("OUVRIR DOSSIER MODS  ↗"),
+                12,FLinearColor::White));
+            if(Entry.bLocalTools)
+                Footer->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorkshopTools);
+            else
+                Footer->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopOpenLocalModsFolder);
             Details->AddChildToVerticalBox(Footer)->SetPadding(FMargin(0,7,0,1));
-            Footer->SetContent(Text(TEXT("Installation UE5 indisponible  •  Voir ANOMALIA Tools"),11,FLinearColor::White));
         }
     }
     WorkshopStatus->SetText(FText::FromString(FString::Printf(
@@ -815,7 +822,15 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
         Empty->SetBrushColor(FLinearColor(.17f,.065f,.060f,.90f));
         Empty->SetPadding(FMargin(16));
         WorkshopCards->AddChildToVerticalBox(Empty)->SetPadding(FMargin(5,4));
-        Empty->SetContent(Text(TEXT("WORKFORGE EST PRÊT\n\nAucun mod disponible pour cette recherche.\nCréez une fiche dans ANOMALIA Tools pour voir sa carte ici.\nAucun mod communautaire ni téléchargement n'est inventé."),15,Gold));
+        auto* EmptyContent=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+        Empty->SetContent(EmptyContent);
+        EmptyContent->AddChildToVerticalBox(Text(
+            TEXT("AUCUN MOD DISPONIBLE POUR CETTE SÉLECTION\n\nLes mods locaux vérifiés et les créations ANOMALIA Tools apparaîtront ici.\nLe catalogue communautaire n'est pas encore connecté."),15,Gold));
+        auto* OpenFolder=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("WorkshopEmptyOpenFolder"));
+        OpenFolder->SetBackgroundColor(Red);
+        OpenFolder->SetContent(Text(TEXT("OUVRIR LE DOSSIER MODS"),13,FLinearColor::White));
+        OpenFolder->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopOpenLocalModsFolder);
+        EmptyContent->AddChildToVerticalBox(OpenFolder)->SetPadding(FMargin(0,12,0,4));
     }
 }
 
