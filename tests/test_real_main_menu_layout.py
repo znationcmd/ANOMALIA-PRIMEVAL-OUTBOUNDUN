@@ -19,7 +19,7 @@ class RealMenuLayout(unittest.TestCase):
         self.assertIn("bStartupIntro=false",CPP)
         self.assertIn("StartupArtworkFrame->SetVisibility(ESlateVisibility::Collapsed)",CPP)
         self.assertIn('SessionMainBrand',CPP)
-        self.assertIn('TEXT("ANOMALIA\\\'")',CPP)
+        self.assertIn("AddBrandText(TEXT(\"ANOMALIA'\"),51",CPP)
         self.assertIn('TEXT("Z"),58',CPP)
     def test_large_right_aligned_menu_not_left_miniature(self):
         self.assertIn("FAnchors(.675f,.245f,.956f,.855f)",CPP)
