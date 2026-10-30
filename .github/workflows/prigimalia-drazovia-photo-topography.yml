@@ -1,0 +1,31 @@
+name: DRAZOVIA - user drawn topographic source and protected native candidate
+on:
+  push:
+    branches: [feature/drazovia-user-topography-isolated-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-validation-not-unreal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check candidate Unreal Python authoring script
+        run: python -m py_compile unreal/Scripts/create_drazovia_topo_candidate.py
+      - name: Prove user image source, DRAZOVIA world safety and independent map paths
+        run: |
+          python -m unittest discover -s tests -p test_drazovia_user_photo_topography.py -v
+      - name: Guard claims about the native Unreal world and existing houses
+        run: |
+          python - <<'PY'
+          import json
+          d=json.load(open('public/config/drazovia-photo-topography-audit.json'))
+          assert d['samplesPerSide']==3025
+          assert d['sourceBytes']==2*3025*3025
+          assert d['sideKm']==48
+          assert not d['unrealNativeCandidateValidated']
+          assert not d['originalDrazoviaReplaced']
+          assert not d['existing27SettlementsRebuilt']
+          print('DRAZOVIA_USER_TOPOGRAPHY_SOURCE_READY_NATIVE_IMPORT_NOT_VALIDATED')
+          PY
