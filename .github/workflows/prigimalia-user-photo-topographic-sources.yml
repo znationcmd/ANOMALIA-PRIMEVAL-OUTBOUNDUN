@@ -1,0 +1,30 @@
+name: PRIGIMALIA - uploaded photo derived topographic R16 native import source checks
+on:
+  push:
+    branches: [feature/user-photo-driven-r16-topographies-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-user-composite-heightmap-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check native Editor Python syntax
+        run: python -m py_compile unreal/Scripts/create_four_additional_maps.py
+      - name: Check exact user photograph assignment, height files sizes and no-overwrite guards
+        run: |
+          python -m unittest discover -s tests -p test_user_photo_topography_import.py -v
+          python -m unittest discover -s tests -p test_chernaskaluxria_photo_fusions.py -v
+      - name: Explicitly distinguish offline heightmaps from imported Unreal content
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path('public/config/photo-derived-topographic-source-audit.json').read_text())
+          assert a['status']=='BINARY_R16_OUTPUT_GENERATED_IN_CONVERSATION_NOT_COMMITTED_TO_GIT'
+          assert not a['productionLevelCreated'] and not a['nativeUEImportVerified']
+          assert all(x['expectedBytes']==2*x['vertices']**2 for x in a['worlds'])
+          print('USER_COMPOSITE_R16_SOURCE_PROVEN_WITHOUT_FALSE_NATIVE_MAP_CLAIMS')
+          PY
