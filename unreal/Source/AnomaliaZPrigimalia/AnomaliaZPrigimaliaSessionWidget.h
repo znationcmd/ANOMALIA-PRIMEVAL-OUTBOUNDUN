@@ -45,6 +45,7 @@ private:
     UPROPERTY() TObjectPtr<UTextBlock> WorkshopCountLabel;
     UPROPERTY() TObjectPtr<UTextBlock> WorkshopCreatorsLabel;
     UPROPERTY() TObjectPtr<UTextBlock> WorkshopInstalledLabel;
+    UPROPERTY() TArray<TObjectPtr<UTextBlock>> WorkshopCategoryCountLabels;
     UPROPERTY() TObjectPtr<UButton> HomeButton;
     UPROPERTY() TObjectPtr<UButton> OptionsButton;
     UPROPERTY() TObjectPtr<UButton> ModsButton;
