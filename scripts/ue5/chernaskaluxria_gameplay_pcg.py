@@ -51,9 +51,9 @@ STARTER_VEHICLES={
     "northern-alpine":"snowmobile",
     "polar-volcanic":"snowmobile",
     "tropical-rainforest":"quad",
-    "paradise-islands":"zodiac",
+    "paradise-islands":"quad",
     "devastated-exclusion":"buggy",
-    "coastal-ports":"zodiac",
+    "coastal-ports":"quad",
 }
 # Only real currently defined vehicle catalog IDs; flying mounts need a separate
 # proven creature/piloting system, not a fake 'pteranodon' vehicle entry.
