@@ -23,6 +23,12 @@ public:
      Strictly refuses original Inhabited_v2 and existing candidate landscapes. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateDrazoviaIzurviveCandidateLandscape();
+ // Native v2 candidate: isolated from the previous failed attempt and old world.
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateV2Landscape();
+ /** Verify the native LandscapeComponents array, not Python's generic actor component enumeration. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectDrazoviaIzurviveCandidateV2Components(AActor* Candidate);
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
