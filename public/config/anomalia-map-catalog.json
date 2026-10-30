@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Nine independent ANOMALIA'Z worlds. The ninth, CHERNASKALUXRIA (100x100 km), is a separate multi-biome world under design; no existing worlds, saves or Unreal packages are merged.",
+  "description": "Ten independent ANOMALIA'Z worlds. F.A.L.C is a distinct tenth map referenced to the user's latest supplied fused topography; photo-based native landscape not yet imported.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -130,6 +130,24 @@
         "paradise-islands",
         "coastal-ports"
       ]
+    },
+    {
+      "id": "falc-v1",
+      "displayName": "F.A.L.C",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_FALC",
+      "widthKm": 26.5,
+      "heightKm": 26.5,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "user-fused-topography-reference-received-native-map-not-authored",
+      "saveNamespace": "falc-v1",
+      "reference": "latest-user-provided-FALC-map-image",
+      "landAreaTargetKm2": 500,
+      "waterAreaTargetKm2": 202.25,
+      "actualLandAreaKm2": null,
+      "actualWaterAreaKm2": null,
+      "worldPartitionPlanned": true,
+      "topographicFidelity": "coastlines-and-region-layout-from-user-image; original terrain elevations require separately generated heights"
     }
   ]
 }
