@@ -46,6 +46,14 @@ public:
 
     FString GetPersistentPlayerId(const AController* Controller) const;
     bool SaveLocalGame();
+    // Standalone-only character slots. Slot 1 keeps the original 'local-owner'
+    // profile byte-for-byte. Slots 2..8 use distinct profile identities.
+    int32 GetLocalCharacterSlot() const;
+    bool HasLocalCharacterSlot(int32 Slot) const;
+    bool SelectLocalCharacterSlot(int32 Slot,FString& OutError);
+    bool CreateLocalCharacterSlot(int32& OutSlot,FString& OutError);
+    static FString LocalCharacterProfileId(int32 Slot);
+
 
     /** Called by trusted server logic only. Not a client spawn RPC. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Server|Vehicles")
