@@ -86,6 +86,7 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
     {
         // The poster belongs to boot only, never to the interactive menu.
         StartupArtworkFrame->SetVisibility(ESlateVisibility::Visible);
+        MenuArtwork->SetVisibility(ESlateVisibility::Visible);
         IntroStarted=FPlatformTime::Seconds(); MenuArtwork->SetRenderOpacity(0.f);
         if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Hidden);
     }
