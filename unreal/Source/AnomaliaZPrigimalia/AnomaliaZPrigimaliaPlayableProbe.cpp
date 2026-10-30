@@ -211,20 +211,27 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         Checks.Add(TEXT("main_menu_character_slots_and_live_3d_survivor_preview"));
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
-        auto* Art=Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")));
-        if(!Art || !Art->GetBrush().GetResourceObject() || !Art->GetBrush().GetResourceObject()->GetPathName().Contains(TEXT("/Branding/T_StartupPoster")))
-        { Finish(TEXT("User-provided main menu artwork is missing from the cooked game")); return; }
+        // The static splash is NOT the startup menu. The user requested
+        // a live restored survivor and world, with four artworks reserved
+        // exclusively for map/server loading screens.
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        auto* Art=Menu && Menu->WidgetTree?Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork"))):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        if(!Brand || !Rail || Rail->GetVisibility()!=ESlateVisibility::Visible ||
+           (Art && Art->GetVisibility()!=ESlateVisibility::Collapsed))
+        {Finish(TEXT("Actual live main menu/brand not visible, or old startup artwork still obscures the game"));return;}
+        Checks.Add(TEXT("live_character_main_menu_visible_without_old_static_splash"));
         Next=Now+1;Phase=19;return;
     }
     if(Phase==19)
     {
         if(Now<Next)return;
         auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
-        auto* Art=Menu && Menu->WidgetTree?Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork"))):nullptr;
-        if(!Art || Art->GetRenderOpacity()<=0.f) { Finish(TEXT("Startup artwork animation did not advance while paused"));return; }
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        if(!Brand){Finish(TEXT("ANOMALIA'Z brand disappeared from live main menu"));return;}
         FString IntroReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),IntroReport);
-        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(IntroReport,TEXT(""))+TEXT("-intro.png"),true,false);
-        Next=Now+5;Phase=20;return;
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(IntroReport,TEXT(""))+TEXT("-main-menu.png"),true,false);
+        Next=Now+1;Phase=20;return;
     }
     if(Phase==20)
     {
@@ -234,7 +241,7 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
         if(!Play || !Rail || Rail->GetVisibility()!=ESlateVisibility::Visible)
         { Finish(TEXT("Startup animation did not reveal the main menu"));return; }
-        Checks.Add(TEXT("user_branding_intro_animates_and_reveals_main_menu"));
+        Checks.Add(TEXT("user_branding_real_3d_main_menu_is_visible_and_right_aligned"));
         auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
         auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
         auto* Options=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionOptions")));
