@@ -55,7 +55,16 @@ def report_on_disk(report):
     return report
 
 def migrate():
+    checkpoint = {}
+    if report_file.exists():
+        checkpoint = json.loads(report_file.read_text(encoding="utf-8"))
     previous = old_asset_inventory()
+    resumed = bool(checkpoint.get("directoryRenamed"))
+    if resumed:
+        migrated = api.list_assets(NEW_DIR, recursive=True, include_folder=False)
+        if len(migrated) < checkpoint.get("legacyAssetsFound", 0):
+            raise RuntimeError("Previously migrated folder is incomplete; refusing resume")
+        previous = []
     maps = eligible_maps()
     report = {
         "title": "ANOMALIA’Z PRIGIMALIA",
@@ -64,18 +73,21 @@ def migrate():
         "stagedCopyConfirmed": STAGED,
         "legacyFolder": OLD_DIR,
         "newFolder": NEW_DIR,
-        "legacyAssetsFound": len(previous),
+        "legacyAssetsFound": checkpoint.get("legacyAssetsFound", 0) if resumed else len(previous),
         "legacyMapsFound": len(maps),
         "mapRenamePlan": [{"old": a, "new": b} for a, b in maps],
-        "directoryRenamed": False,
-        "mapsRenamed": [],
+        "directoryRenamed": resumed,
+        "mapsRenamed": checkpoint.get("mapsRenamed", []) if resumed else [],
         "verified": False,
         "errors": [],
         "originalProjectPreserved": True,
     }
     if not APPLY:
         unreal.log_warning("DRY RUN ONLY: no assets or map packages will be modified.")
-        return report_on_disk(report)
+        dry_report = report_file.with_name("asset-rename-dry-run-report.json")
+        dry_report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding="utf-8")
+        unreal.log("PRIGIMALIA_DRY_RUN_REPORT=" + str(dry_report))
+        return report
 
     # There is no safe way to resolve binary reference dependencies via git mv.
     # The original local project remains intact. Only a staged project copy
@@ -95,10 +107,12 @@ def migrate():
             raise RuntimeError("Map destination collision: " + new)
 
     try:
+        unreal.AssetRegistryHelpers.get_asset_registry().wait_for_completion()
         if previous:
             if not api.rename_directory(OLD_DIR, NEW_DIR):
                 raise RuntimeError("Unreal could not rename the legacy asset directory")
             report["directoryRenamed"] = True
+            report_on_disk(report)
             updated = [name.replace(OLD_DIR + "/", NEW_DIR + "/", 1) for name in previous]
             if not all(api.does_asset_exist(name) for name in updated):
                 raise RuntimeError("Missing target assets after folder rename")
@@ -107,13 +121,19 @@ def migrate():
         # A World Partition map rename can be rejected by Unreal while the
         # world is loaded. This is a hard failure, never a filesystem fallback.
         for old, new in maps:
-            if not api.rename_asset(old, new):
-                raise RuntimeError("Unreal refused map rename: " + old)
+            world = unreal.load_asset(old)
+            if not isinstance(world, unreal.World):
+                raise RuntimeError("Map could not be loaded as a World: " + old)
+            folder, name = new.rsplit("/", 1)
+            rename = unreal.AssetRenameData(asset=world, new_package_path=folder, new_name=name)
+            if not unreal.AssetToolsHelpers.get_asset_tools().rename_assets([rename]):
+                raise RuntimeError("AssetTools refused map rename; World Partition builder may be required: " + old)
             if not api.does_asset_exist(new):
                 raise RuntimeError("Renamed map could not be resolved: " + new)
-            if not api.save_asset(new, only_if_is_dirty=False):
+            if not unreal.EditorLoadingAndSavingUtils.save_map(world, new):
                 raise RuntimeError("Could not save renamed map: " + new)
             report["mapsRenamed"].append({"old": old, "new": new})
+            report_on_disk(report)
         # Unreal may intentionally leave redirector assets under the old path.
         # They preserve legacy Blueprint references and are NOT lost source assets.
         # Verify every new target instead of incorrectly rejecting redirectors.
