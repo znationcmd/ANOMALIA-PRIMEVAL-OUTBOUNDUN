@@ -1,5 +1,5 @@
 name: PRIGIMALIA - Character slots and logout real Windows review
-# Review revision: two-phase safe character selection + native JSON staging repair for packaged game tests.
+# Review revision: native JSON fix + two-phase independent survivor multi-process gameplay test + opt-in Windows launcher.
 on:
   push:
     branches: [rebrand/full-anomaliaz-prigimalia-20261029]
@@ -151,7 +151,7 @@ jobs:
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $probe=Join-Path $out 'native-gameplay.json'
           $log=Join-Path $out 'native-gameplay.log'
-          $args=@('/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-character-slots','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause',("-AnomaliaZPrigimaliaPlayableProbe=$probe"),("-abslog=$log"))
+          $args=@('/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-character-slots','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaCreateSecondCharacter',("-AnomaliaZPrigimaliaPlayableProbe=$probe"),("-abslog=$log"))
           $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru
           try{
             if(-not $proc.WaitForExit(180000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;throw 'Packaged game timed out'}
@@ -162,7 +162,39 @@ jobs:
           if(@($r.checks) -notcontains 'main_menu_server_browser_tabs_and_search'){throw 'Server tabs were not exercised in actual Windows client'}
           if(@($r.checks) -notcontains 'main_menu_character_slots_and_live_3d_survivor_preview'){throw 'Survivor menu and slots not verified in packaged game'}
           if(@($r.checks) -notcontains 'pause_online_players_real_widget_without_workforge'){throw 'Pause online players isolation not verified in packaged game'}
+          if(@($r.checks) -notcontains 'second_character_created_without_replacing_original_profile'){throw 'Real new-character creation failed or replaced original'}
           Write-Host 'PRIGIMALIA_CHARACTER_SLOTS_AND_PAUSE_PROBE_PASSED=true'
+      - name: Verify second character starts EMPTY, then restore original with ALL its gear
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt') -Raw).Trim()
+          $out=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration' ('CharacterSlotsSmoke-'+$env:GITHUB_RUN_ID)
+          function Verify-CharacterState([string]$tag,[string]$flag,[string]$map,[string]$check){
+            $report=Join-Path $out ($tag+'.json')
+            $log=Join-Path $out ($tag+'.log')
+            $args=@($map,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause',$flag,
+              ("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
+            $process=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+            try{
+              if(-not $process.WaitForExit(120000)){
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                throw ('Game timed out in phase '+$tag)
+              }
+            }finally{
+              if(-not $process.HasExited){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}
+            }
+            if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw ('Missing report '+$tag)}
+            $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+            if($result.state -ne 'PACKAGED_GAME_SMOKE_PASSED' -or @($result.checks) -notcontains $check){
+              throw ('Character test '+$tag+' failed: '+$result.error)
+            }
+          }
+          $base='/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-character-slots'
+          Verify-CharacterState 'new-character' '-AnomaliaZPrigimaliaVerifySecondCharacter' ($base+'?AnomaliaZPrigimaliaSwitchSlot=2') 'new_character_has_independent_empty_inventory_and_original_still_exists'
+          Verify-CharacterState 'prepare-return' '-AnomaliaZPrigimaliaReturnOriginalCharacter' $base 'return_original_character_staged_without_old_pawn_overwrite'
+          Verify-CharacterState 'original-restored' '-AnomaliaZPrigimaliaVerifyOriginalCharacter' ($base+'?AnomaliaZPrigimaliaSwitchSlot=1') 'original_character_recovered_with_equipment_after_second_slot'
+          Write-Host 'PRIGIMALIA_TWO_SURVIVORS_INDEPENDENT_AND_OLD_GEAR_PRESERVED=true'
       - name: Confirm original and previous Windows playable game preserved
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -171,6 +203,34 @@ jobs:
           if((Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -Algorithm SHA256).Hash -ne $hash){throw 'Original D project changed'}
           if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Previous working game missing'}
           Write-Host 'PRIGIMALIA_ORIGINAL_AND_PREVIOUS_GAME_PRESERVED=true'
+      - name: Activate opt-in Windows survivor launcher without replacing the existing game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt') -Raw).Trim()
+          if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Validated Windows executable missing'}
+          $launcherDir='D:\ANOMALIAZ-PRIGIMALIA\Launchers'
+          New-Item -ItemType Directory -Path $launcherDir -Force|Out-Null
+          $name="ANOMALIA'Z PRIGIMALIA - Multi-personnages (version test).lnk"
+          $target=Join-Path $launcherDir $name
+          if(Test-Path -LiteralPath $target){throw 'Existing launcher preserved - no replacement'}
+          $shell=New-Object -ComObject WScript.Shell
+          $link=$shell.CreateShortcut($target)
+          $link.TargetPath=$exe
+          $link.WorkingDirectory=Split-Path $exe
+          $link.IconLocation=$exe
+          $link.Description="Version Windows de test des personnages, sans remplacer le jeu original"
+          $link.Save()
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if($desktop -and (Test-Path -LiteralPath $desktop -PathType Container)){
+            $desktopLink=Join-Path $desktop $name
+            if(-not(Test-Path -LiteralPath $desktopLink)){
+              Copy-Item -LiteralPath $target -Destination $desktopLink
+              Write-Host ('PRIGIMALIA_NEW_SURVIVOR_LAUNCHER='+$desktopLink)
+            }else{Write-Warning 'Existing desktop shortcut untouched'}
+          }
+          Write-Host ('PRIGIMALIA_NEW_SURVIVOR_SAFE_LAUNCHER='+$target)
+          Write-Host 'PRIGIMALIA_EXISTING_GAME_UNCHANGED=true'
       - name: Upload actionable runtime diagnostics and source backups
         if: always()
         uses: actions/upload-artifact@v4
