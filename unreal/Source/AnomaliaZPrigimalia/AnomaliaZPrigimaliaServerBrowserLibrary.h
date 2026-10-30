@@ -21,6 +21,9 @@ struct FAnomaliaZPrigimaliaWorldMapCard
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") FString UnrealPackage;
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") int32 WidthKm = 0;
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") int32 HeightKm = 0;
+    /** Exact side lengths, including fractional-kilometre maps such as F.A.L.C. */
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") float WidthKmExact = 0.f;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") float HeightKmExact = 0.f;
     /** Not an online indicator. Only set after independent native gameplay tests. */
     UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Maps") bool bPlayableValidated = false;
 };
@@ -76,7 +79,7 @@ public:
         const TArray<FAnomaliaZPrigimaliaServerCard>& Servers, EAnomaliaZPrigimaliaServerFilter Mode,
         bool bOnlyOnline);
 
-    /** Six separate maps; readiness is intentionally false until verified in an actual build. */
+    /** Ten separate maps; readiness is intentionally false until verified in an actual build. */
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Maps")
     static TArray<FAnomaliaZPrigimaliaWorldMapCard> GetIndependentWorldMaps();
 
