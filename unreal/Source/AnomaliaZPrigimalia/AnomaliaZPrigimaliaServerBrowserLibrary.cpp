@@ -46,7 +46,7 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
 {
     // Each entry is a different .umap and has its own persistent identity.
     // This catalog is not a claim that a game server or world is already online.
-    struct FDefinition { const TCHAR* Id; const TCHAR* Name; const TCHAR* Path; int32 Side; };
+    struct FDefinition { const TCHAR* Id; const TCHAR* Name; const TCHAR* Path; float Side; };
     const FDefinition Definitions[] = {
         {TEXT("archipelago-v2"), TEXT("SKARVIK"), TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"), 48},
         {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/ANOMALIA_Inhabited_v2"), 48},
@@ -57,6 +57,7 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
         {TEXT("solynacalyra-v1"), TEXT("SOLYNACALYRA"), TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA"), 15},
         {TEXT("nexavarkhos-v1"), TEXT("NEXAVARKHOS"), TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS"), 10},
         {TEXT("chernaskaluxria-v1"), TEXT("CHERNASKALUXRIA"), TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"), 100},
+        {TEXT("falc-v1"), TEXT("F.A.L.C"), TEXT("/Game/Maps/PRIGIMALIA_FALC"), 26.5f},
     };
     TArray<FAnomaliaZPrigimaliaWorldMapCard> Maps;
     Maps.Reserve(UE_ARRAY_COUNT(Definitions));
@@ -66,8 +67,10 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
         Card.MapId = Definition.Id;
         Card.DisplayName = Definition.Name;
         Card.UnrealPackage = Definition.Path;
-        Card.WidthKm = Definition.Side;
-        Card.HeightKm = Definition.Side;
+        Card.WidthKm = FMath::RoundToInt(Definition.Side);
+        Card.HeightKm = FMath::RoundToInt(Definition.Side);
+        Card.WidthKmExact = Definition.Side;
+        Card.HeightKmExact = Definition.Side;
         Card.bPlayableValidated = false; // Never claim online/playable without native tests.
         Maps.Add(MoveTemp(Card));
     }
