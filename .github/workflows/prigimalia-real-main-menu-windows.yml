@@ -48,7 +48,7 @@ jobs:
           $backup=Join-Path $root ('Saved\BrandMigration\RealMainMenu\run-'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $backup){throw 'No rewrites of previous audit or backups'}
           New-Item -ItemType Directory -Path $backup -Force|Out-Null
-          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp')
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp','AnomaliaZPrigimaliaSurvivor.cpp')
           foreach($name in $names){
             $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
             $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
