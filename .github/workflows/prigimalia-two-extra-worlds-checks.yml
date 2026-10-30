@@ -1,0 +1,40 @@
+name: PRIGIMALIA - new paradise and devastated world source checks
+on:
+  push:
+    branches: [feature/two-more-worlds-solynacalyra-nexavarkhos-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-two-new-independent-worlds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile pure C++ terrain source and verify 15km 10km geography
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_two_world_heights.cpp -o /tmp/two-worlds
+          /tmp/two-worlds
+      - name: Check native Unreal editor Python script syntax
+        run: python -m py_compile unreal/Scripts/create_four_additional_maps.py scripts/ue5/map_titles.py
+      - name: Check all eight public map names and separation
+        run: |
+          python -m unittest discover -s tests -p test_ue5_map_names_and_realism.py -v
+          python -m unittest discover -s tests -p test_ue5_map_independence.py -v
+      - name: Guard map identities and non-playable status for new worlds
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          maps=json.loads(Path('public/config/anomalia-map-catalog.json').read_text())['maps']
+          assert len(maps)==8
+          assert len({m['id'] for m in maps})==8
+          assert len({m['originalUnrealPackage'] for m in maps})==8
+          assert len({m['saveNamespace'] for m in maps})==8
+          for title,dim in {'SOLYNACALYRA':15,'NEXAVARKHOS':10}.items():
+              row=next(m for m in maps if m['displayName']==title)
+              assert row['widthKm']==row['heightKm']==dim
+              assert row['originalUnrealPackage']==f'/Game/Maps/PRIGIMALIA_{title}'
+              assert row['serverSelectable'] is False
+          print('EIGHT_MAPS_SEPARATE_SOURCE_CHECKS_PASSED')
+          PY
