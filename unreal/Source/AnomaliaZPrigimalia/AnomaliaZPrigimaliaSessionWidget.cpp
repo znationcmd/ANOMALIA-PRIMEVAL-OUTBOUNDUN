@@ -1085,6 +1085,211 @@ void UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor()
 #endif
     if(Feedback) Feedback->SetText(FText::FromString(TEXT("Le projet Unreal synchronisé n’est pas disponible. Attendez la fin de la mise à jour de l’éditeur.")));
 }
+void UAnomaliaZPrigimaliaSessionWidget::ShowServerBrowser()
+{
+    if(!bMainMenu || !ServerBrowserFrame) return;
+    FinishIntro();ClosePage();
+    if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Collapsed);
+    ServerBrowserFrame->SetVisibility(ESlateVisibility::Visible);
+    if(ServerSearch) ServerSearch->SetText(FText::GetEmpty());
+    RefreshServerBrowser();
+    if(ServerSelect && GetOwningPlayer()) ServerSelect->SetUserFocus(GetOwningPlayer());
+}
+void UAnomaliaZPrigimaliaSessionWidget::CloseServerBrowser()
+{
+    if(ServerBrowserFrame) ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
+    if(PlayButton && GetOwningPlayer()) PlayButton->SetUserFocus(GetOwningPlayer());
+}
+void UAnomaliaZPrigimaliaSessionWidget::TabOfficialServers(){ServerCategory=TEXT("Officiel");RefreshServerBrowser();}
+void UAnomaliaZPrigimaliaSessionWidget::TabCommunityServers(){ServerCategory=TEXT("Communautaire");RefreshServerBrowser();}
+void UAnomaliaZPrigimaliaSessionWidget::TabFavoriteServers(){ServerCategory=TEXT("Favoris");RefreshServerBrowser();}
+void UAnomaliaZPrigimaliaSessionWidget::ServerSearchChanged(const FText&){RefreshServerBrowser();}
+void UAnomaliaZPrigimaliaSessionWidget::ServerSelectionChanged(FString SelectedItem,ESelectInfo::Type)
+{
+    SelectedServerId.Empty();
+    for(const FServerBrowserEntry& Row:ServerEntries)
+    {
+        const FString Option=Row.Name+TEXT("  |  ")+Row.Map+TEXT("  |  ")+Row.Address;
+        if(SelectedItem==Option)
+        {
+            SelectedServerId=Row.Id;
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(
+                FString::Printf(TEXT("%s\nCarte : %s\nCatégorie : %s\nJoueurs : non vérifiés\nConnexion : %s"),
+                    *Row.Name,*Row.Map,*Row.Category,*Row.Address)));
+            break;
+        }
+    }
+}
+void UAnomaliaZPrigimaliaSessionWidget::RefreshServerBrowser()
+{
+    if(!ServerSelect || !ServerResults || !ServerStatus) return;
+    // No invented servers, player counts or ping. A trusted local service
+    // may write this bounded config with each host:port and category.
+    ServerEntries.Reset();
+    const FString File=FPaths::Combine(FPaths::ProjectSavedDir(),TEXT("ServerBrowser"),TEXT("servers.json"));
+    FString Raw;TSharedPtr<FJsonObject> Root;
+    if(IFileManager::Get().FileExists(*File) &&
+        IFileManager::Get().FileSize(*File)>0 &&
+        IFileManager::Get().FileSize(*File)<=256*1024 &&
+        FFileHelper::LoadFileToString(Raw,*File) &&
+        FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Root) && Root.IsValid())
+    {
+        const TArray<TSharedPtr<FJsonValue>>* Items=nullptr;
+        if(Root->TryGetArrayField(TEXT("servers"),Items) && Items)
+        {
+            for(const auto& Value:*Items)
+            {
+                if(ServerEntries.Num()>=128) break;
+                const TSharedPtr<FJsonObject> Item=Value.IsValid()?Value->AsObject():nullptr;
+                if(!Item.IsValid()) continue;
+                FServerBrowserEntry Entry;
+                if(!Item->TryGetStringField(TEXT("id"),Entry.Id) || Entry.Id.Len()<1 || Entry.Id.Len()>64) continue;
+                if(!Item->TryGetStringField(TEXT("name"),Entry.Name) || Entry.Name.IsEmpty() || Entry.Name.Len()>96) continue;
+                if(!Item->TryGetStringField(TEXT("address"),Entry.Address) || Entry.Address.Len()>260) continue;
+                Item->TryGetStringField(TEXT("map"),Entry.Map);
+                if(Entry.Map.IsEmpty())Entry.Map=TEXT("Carte non renseignée");
+                Entry.Map=Entry.Map.Left(65);
+                Item->TryGetStringField(TEXT("category"),Entry.Category);
+                if(!Entry.Category.Equals(TEXT("Officiel"),ESearchCase::IgnoreCase) &&
+                    !Entry.Category.Equals(TEXT("Communautaire"),ESearchCase::IgnoreCase)) continue;
+                Item->TryGetBoolField(TEXT("favorite"),Entry.bFavorite);
+                // Strict URL sanitation: no commands, embedded options, paths,
+                // userinfo, Unicode spoofing or extra colons. Only host:port.
+                FString Host,Port;
+                if(!Entry.Address.Split(TEXT(":"),&Host,&Port,ESearchCase::CaseSensitive,ESearchDir::FromEnd) ||
+                    Host.IsEmpty() || Host.Len()>253 || !Port.IsNumeric() ||
+                    Port.Len()>5 || FCString::Atoi(*Port)<1 || FCString::Atoi(*Port)>65535) continue;
+                bool bHostValid=true;
+                for(const TCHAR Ch:Host)
+                    if(!FChar::IsAlnum(Ch) && Ch!='.' && Ch!='-') {bHostValid=false;break;}
+                if(!bHostValid || Host.Contains(TEXT(":")))continue;
+                ServerEntries.Add(Entry);
+            }
+        }
+    }
+    const FString Query=ServerSearch?ServerSearch->GetText().ToString().TrimStartAndEnd():TEXT("");
+    ServerSelect->ClearOptions();
+    ServerResults->ClearChildren();
+    int32 Matches=0;
+    for(const FServerBrowserEntry& Entry:ServerEntries)
+    {
+        if(ServerCategory==TEXT("Favoris") ? !Entry.bFavorite :
+            !Entry.Category.Equals(ServerCategory,ESearchCase::IgnoreCase)) continue;
+        if(!Query.IsEmpty() && !Entry.Name.Contains(Query,ESearchCase::IgnoreCase) &&
+            !Entry.Map.Contains(Query,ESearchCase::IgnoreCase)) continue;
+        const FString Option=Entry.Name+TEXT("  |  ")+Entry.Map+TEXT("  |  ")+Entry.Address;
+        ServerSelect->AddOption(Option);
+        auto* Row=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Row->SetText(FText::FromString(FString::Printf(TEXT("%s  ·  %s  ·  joueurs non vérifiés"),
+            *Entry.Name,*Entry.Map)));
+        Row->SetColorAndOpacity(FSlateColor(FLinearColor(.89f,.91f,.93f,1.f)));
+        Row->SetAutoWrapText(true);
+        ServerResults->AddChildToVerticalBox(Row)->SetPadding(FMargin(4,8));
+        ++Matches;
+    }
+    SelectedServerId.Empty();
+    if(Matches)
+    {
+        ServerSelect->SetSelectedIndex(0);
+        ServerSelectionChanged(ServerSelect->GetSelectedOption(),ESelectInfo::Direct);
+    }
+    else
+    {
+        auto* Empty=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        Empty->SetText(FText::FromString(TEXT(
+            "Aucun serveur enregistré dans cet onglet.\n"
+            "Source de liste : Saved/ServerBrowser/servers.json\n"
+            "Aucun serveur officiel ou communautaire fictif n'est affiché.")));
+        Empty->SetAutoWrapText(true);
+        Empty->SetColorAndOpacity(FSlateColor(FLinearColor(.88f,.86f,.84f,1.f)));
+        ServerResults->AddChildToVerticalBox(Empty);
+        ServerStatus->SetText(FText::FromString(
+            TEXT("Liste vide. Les connexions et joueurs doivent être vérifiés auprès d'un véritable serveur.")));
+    }
+}
+void UAnomaliaZPrigimaliaSessionWidget::JoinSelectedServer()
+{
+    if(!bMainMenu || SelectedServerId.IsEmpty())return;
+    for(const FServerBrowserEntry& Entry:ServerEntries)
+    {
+        if(Entry.Id!=SelectedServerId)continue;
+        auto* PC=GetOwningPlayer();if(!PC||!TravelLoadingFrame)return;
+        const FString Address=Entry.Address; // Already strict-validated on loading.
+        if(ServerBrowserFrame) ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
+        if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Collapsed);
+        TravelLoadingFrame->SetVisibility(ESlateVisibility::Visible);
+        if(TravelStatus)TravelStatus->SetText(FText::FromString(
+            FString::Printf(TEXT("Connexion à %s (%s) ..."),*Entry.Name,*Address)));
+        UGameplayStatics::SetGamePaused(PC,false);
+        TWeakObjectPtr<APlayerController> WeakPC=PC;
+        if(UWorld* World=GetWorld())
+        {
+            FTimerHandle Handle;
+            World->GetTimerManager().SetTimer(Handle,FTimerDelegate::CreateWeakLambda(this,
+                [WeakPC,Address]()
+                {
+                    if(WeakPC.IsValid())
+                    {
+                        WeakPC->SetInputMode(FInputModeGameOnly());
+                        WeakPC->bShowMouseCursor=false;
+                        WeakPC->ClientTravel(Address,TRAVEL_Absolute);
+                    }
+                }),.3f,false);
+        }
+        return;
+    }
+}
+void UAnomaliaZPrigimaliaSessionWidget::ShowOnlinePlayers()
+{
+    if(bMainMenu||!OnlinePlayersFrame)return;
+    ClosePage();
+    if(NavigationFrame)NavigationFrame->SetVisibility(ESlateVisibility::Collapsed);
+    OnlinePlayersFrame->SetVisibility(ESlateVisibility::Visible);
+    RefreshOnlinePlayers();
+}
+void UAnomaliaZPrigimaliaSessionWidget::CloseOnlinePlayers()
+{
+    if(OnlinePlayersFrame)OnlinePlayersFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(NavigationFrame)NavigationFrame->SetVisibility(ESlateVisibility::Visible);
+}
+void UAnomaliaZPrigimaliaSessionWidget::RefreshOnlinePlayers()
+{
+    if(!OnlinePlayerRows)return;
+    OnlinePlayerRows->ClearChildren();
+    int32 Count=0;
+    const AGameStateBase* GameState=GetWorld()?GetWorld()->GetGameState<AGameStateBase>():nullptr;
+    if(GameState)
+    {
+        for(APlayerState* Player:GameState->PlayerArray)
+        {
+            if(!IsValid(Player)||Count>=64)continue;
+            FString Name=Player->GetPlayerName().TrimStartAndEnd();
+            if(Name.IsEmpty())Name=TEXT("Joueur sans nom");
+            auto* Line=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Line->SetText(FText::FromString(Name.Left(70)));
+            Line->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+            OnlinePlayerRows->AddChildToVerticalBox(Line)->SetPadding(FMargin(0,8));
+            ++Count;
+        }
+    }
+    if(Count==0)
+    {
+        auto* None=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        None->SetText(FText::FromString(TEXT(
+            "Aucun joueur répliqué par la session en cours.\n"
+            "La liste est lue depuis Unreal GameState, sans pseudo fictif.")));
+        None->SetAutoWrapText(true);
+        OnlinePlayerRows->AddChildToVerticalBox(None);
+    }
+}
+void UAnomaliaZPrigimaliaSessionWidget::ShowInviteFriends()
+{
+    if(Feedback)Feedback->SetText(FText::FromString(TEXT(
+        "Invitations : aucune plateforme d'amis (Steam / Xbox / PSN) n'est encore connectée. "
+        "Le jeu ne prétend pas avoir envoyé d'invitation.")));
+}
 void UAnomaliaZPrigimaliaSessionWidget::Play()
 {
     if(bMainMenu){ ShowServerBrowser();return; }
