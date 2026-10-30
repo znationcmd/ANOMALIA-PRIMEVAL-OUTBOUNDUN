@@ -2,7 +2,7 @@
 
 ## Actions réellement exécutées sur le poste Windows
 
-- Audit disque et version : `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject` présent, Unreal 5.8.3 confirmé.
+- Audit disque et version : `C:\ANOMALIA\unreal\AnomaliaZPrigimalia.uproject` présent, Unreal 5.8.3 confirmé.
 - Commandlet Unreal de chargement des packs : succès, zéro erreur de chargement des objets inventoriés. Une référence de Control Rig de pied vers Survival_01 manque.
 - Création réelle de `BP_Anomalia_Manny`, `BP_Anomalia_Quinn`, `BP_Anomalia_Survival` sous `/Game/Anomalia/Characters` : compilation Blueprint, vérification du corps/de la classe d’animation sur le CDO puis sauvegarde réussies.
 - Preuve : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/40543337391 ; artefact 12752758014.
@@ -14,8 +14,8 @@
 La tentative isolée 40543166274 a réellement compilé les sources Editor, puis échoué, code de sortie 6. Game et les tests natifs n’ont pas été exécutés dans cette tentative.
 
 Erreurs constatées :
-- C2672 dans AnomaliaTacticalSpeedTests.cpp : TestNotNull ne déduit pas un pointeur à partir d’un TObjectPtr.
-- C2065 dans Vehicles/AnomaliaVehicleSurvival.cpp : DOREPLIFETIME attend le paramètre OutLifetimeProps, nommé Out dans la définition.
+- C2672 dans AnomaliaZPrigimaliaTacticalSpeedTests.cpp : TestNotNull ne déduit pas un pointeur à partir d’un TObjectPtr.
+- C2065 dans Vehicles/AnomaliaZPrigimaliaVehicleSurvival.cpp : DOREPLIFETIME attend le paramètre OutLifetimeProps, nommé Out dans la définition.
 
 Corrections enregistrées :
 - Utilisation de VitalsComponent.Get() dans le test.

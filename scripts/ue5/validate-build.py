@@ -47,15 +47,15 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
     commit = os.environ.get("GITHUB_SHA", "local")
     if not re.fullmatch(r"[0-9a-f]{40}", commit):
         commit = "local"
-    stamp = ROOT / "unreal/Build/AnomaliaSourceCommit.generated.txt"
+    stamp = ROOT / "unreal/Build/AnomaliaZPrigimaliaSourceCommit.generated.txt"
     stamp.parent.mkdir(parents=True, exist_ok=True)
     if not stamp.is_file() or stamp.read_text(encoding="utf-8") != commit:
         stamp.write_text(commit, encoding="utf-8")
     report["buildCommit"] = commit
-    project = ROOT / "unreal/AnomaliaPrimeval.uproject"
+    project = ROOT / "unreal/AnomaliaZPrigimalia.uproject"
     report["compilation"] = "running"
     save()
-    for target in ("AnomaliaPrimevalEditor", "AnomaliaPrimeval"):
+    for target in ("AnomaliaZPrigimaliaEditor", "AnomaliaZPrigimalia"):
         command = [str(build), target, platform, "Development", f"-Project={project}", "-WaitMutex", "-NoHotReloadFromIDE"]
         # cmd.exe is required for a Windows batch file; paths remain separate arguments.
         if platform == "Win64":

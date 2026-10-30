@@ -1,0 +1,37 @@
+name: PRIGIMALIA - Secure official transfer coordinator tests
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths:
+      - server/official-character-*.mjs
+      - tests/official-character-*.test.mjs
+      - .github/workflows/prigimalia-official-transfer-policy.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate official 1PP/3PP profile coordinator, fencing and restart recovery
+        run: node --test tests/official-character-transfer.test.mjs tests/official-character-service.test.mjs
+      - name: Require no fake UE5 official migration enabled before backend bridge
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          ui=Path('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp').read_text()
+          gm=Path('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp').read_text()
+          backend=Path('server/official-character-registry.mjs').read_text()
+          assert 'Entry.Perspective!=TEXT("1PP")' in ui
+          assert 'Entry.Perspective!=TEXT("3PP")' in ui
+          assert 'Transfert officiel %s indisponible' in ui
+          assert 'return;' in ui[ui.index('Transfert officiel %s indisponible'):ui.index('const FString Address=Entry.Address')]
+          assert 'LocalCharacterProfileId(GetLocalCharacterSlot())' in gm
+          assert "snapshot:rec?.snapshot??null" in backend
+          print('Official fleet will not misrepresent its deployment; community saves remain isolated.')
+          PY

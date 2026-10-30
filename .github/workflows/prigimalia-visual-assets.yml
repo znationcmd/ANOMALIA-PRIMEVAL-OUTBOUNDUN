@@ -1,0 +1,44 @@
+name: ANOMALIA’Z PRIGIMALIA - Regenerate visual brand assets
+on:
+  push:
+    branches:
+      - rebrand/full-anomaliaz-prigimalia-20261029
+    paths:
+      - scripts/generate-prigimalia-brand.py
+      - assets/branding/approved-prigimalia-installed-icon-96.jpg.base64
+      - .github/workflows/prigimalia-visual-assets.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  brand:
+    if: github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install image tooling
+        run: python3 -m pip install --user Pillow
+      - name: Generate installed-game icons from approved logo
+        run: |
+          python3 scripts/generate-prigimalia-brand.py
+          test -s build/prigimalia-logo-small.jpg
+          test -s build/icon.ico
+          test -s unreal/Build/Windows/Application.ico
+          test -s unreal/SourceAssets/Branding/prigimalia-menu-backdrop.jpg
+          git diff --check
+      - name: Commit new brand binary assets
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add build/prigimalia-logo-small.jpg build/icon.ico
+          git add public/prigimalia-logo.jpg
+          git add unreal/Build/Windows/Application.ico
+          git add unreal/SourceAssets/Branding/prigimalia-installed-logo.jpg
+          git add unreal/SourceAssets/Branding/prigimalia-workshop-logo.jpg
+          git add unreal/SourceAssets/Branding/prigimalia-menu-backdrop.jpg
+          if ! git diff --cached --quiet; then
+            git commit -m 'art: add rebranded logo, menu art and PC application icons'
+            git push origin HEAD:rebrand/full-anomaliaz-prigimalia-20261029
+          fi

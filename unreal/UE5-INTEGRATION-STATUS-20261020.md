@@ -1,4 +1,4 @@
-# ANOMALIA PRIMEVAL OUTBOUNDUN — fusion des sources UE5 (20/10/2026)
+# ANOMALIA’Z PRIGIMALIA — fusion des sources UE5 (20/10/2026)
 
 Cette branche intègre **sans supprimer le code existant** les deux lignes de
 travail précédemment séparées :
@@ -10,7 +10,7 @@ travail précédemment séparées :
   144 tuiles et 264 joints, scripts UE Editor pour créer des cartes .umap
   non destructivement.
 
-Le projet `AnomaliaPrimeval.uproject` active `PythonScriptPlugin` pour
+Le projet `AnomaliaZPrigimalia.uproject` active `PythonScriptPlugin` pour
 l'exécution explicite des scripts dans Unreal Editor. Les contrôles AZERTY
 (Z/Q) et QWERTY (W/A) sont définis dans DefaultInput.ini.
 
@@ -27,7 +27,7 @@ l'exécution explicite des scripts dans Unreal Editor. Les contrôles AZERTY
 
 ## Reprise sur un PC équipé d'Unreal 5.8
 
-1. Ouvrir et compiler `unreal/AnomaliaPrimeval.uproject` avec UE5 C++.
+1. Ouvrir et compiler `unreal/AnomaliaZPrigimalia.uproject` avec UE5 C++.
 2. Pour une petite carte de test, lancer `scripts/ue5/create-first-world.ps1`.
 3. Pour préparer le grand terrain, lancer
    `scripts/ue5/bootstrap-draft-landscape.ps1`, puis importer les 144 tuiles

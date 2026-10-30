@@ -1,0 +1,608 @@
+#include "AnomaliaZPrigimaliaPlayableProbe.h"
+#include "AnomaliaZPrigimaliaItemEffectsComponent.h"
+#include "AnomaliaZPrigimaliaSurvivor.h"
+#include "AnomaliaZPrigimaliaVehiclePawn.h"
+#include "AnomaliaZPrigimaliaStatusWidget.h"
+#include "AnomaliaZPrigimaliaInventoryWidget.h"
+#include "AnomaliaZPrigimaliaInventoryComponent.h"
+#include "AnomaliaZPrigimaliaLootPickup.h"
+#include "AnomaliaZPrigimaliaLootSubsystem.h"
+#include "AnomaliaZPrigimaliaGameMode.h"
+#include "AnomaliaZPrigimaliaSessionWidget.h"
+#include "AnomaliaZPrigimaliaConfigLibrary.h"
+#include "Blueprint/WidgetTree.h"
+#include "Components/Button.h"
+#include "Components/CanvasPanelSlot.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Components/TextBlock.h"
+#include "Components/WidgetSwitcher.h"
+#include "Components/VerticalBox.h"
+#include "Components/Image.h"
+#include "Components/Border.h"
+#include "Components/ComboBoxString.h"
+#include "Components/EditableTextBox.h"
+#include "Engine/World.h"
+#include "CollisionQueryParams.h"
+#include "Engine/StaticMesh.h"
+#include "EngineUtils.h"
+#include "Engine/GameViewportClient.h"
+#include "GameFramework/PlayerController.h"
+#include "GameFramework/PlayerInput.h"
+#include "Components/StaticMeshComponent.h"
+#include "Components/LightComponentBase.h"
+#include "Materials/MaterialInterface.h"
+#include "Camera/CameraComponent.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
+#include "HAL/FileManager.h"
+#include "HAL/PlatformMisc.h"
+#include "HighResScreenshot.h"
+#include "UnrealClient.h"
+#include "Dom/JsonObject.h"
+#include "Serialization/JsonSerializer.h"
+#include "Serialization/JsonWriter.h"
+
+AAnomaliaZPrigimaliaPlayableProbe::AAnomaliaZPrigimaliaPlayableProbe() { PrimaryActorTick.bCanEverTick=true; PrimaryActorTick.bTickEvenWhenPaused=true; }
+void AAnomaliaZPrigimaliaPlayableProbe::Finish(const FString& Error)
+{
+    FString File; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),File);
+    TSharedPtr<FJsonObject> Report=MakeShared<FJsonObject>(); Report->SetStringField(TEXT("state"),Error.IsEmpty()?TEXT("PACKAGED_GAME_SMOKE_PASSED"):TEXT("FAILED"));
+    Report->SetStringField(TEXT("error"),Error); Report->SetStringField(TEXT("savedDir"),FPaths::ConvertRelativePathToFull(FPaths::ProjectSavedDir()));
+    Report->SetStringField(TEXT("map"),GetWorld()->GetMapName());
+    Report->SetStringField(TEXT("buildCommit"),TEXT(ANOMALIA_BUILD_COMMIT));
+    TArray<TSharedPtr<FJsonValue>> Rows; for(const auto& Check:Checks) Rows.Add(MakeShared<FJsonValueString>(Check));
+    Report->SetArrayField(TEXT("checks"),Rows); FString Json;
+    FJsonSerializer::Serialize(Report.ToSharedRef(),TJsonWriterFactory<>::Create(&Json));
+    IFileManager::Get().MakeDirectory(*FPaths::GetPath(File),true);
+    FFileHelper::SaveStringToFile(Json,*File);
+    SetActorTickEnabled(false);
+    FGenericPlatformMisc::RequestExit(false);
+}
+void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
+{
+    Super::Tick(Dt);
+#if !UE_BUILD_SHIPPING
+    const double Now=FPlatformTime::Seconds(); if(Started==0) { Started=Now; Next=Now+3; }
+    if(Now-Started>90)
+    {
+        const auto* WaitingSurvivor=Survivor.Get(); const auto* WaitingLoot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
+        Finish(FString::Printf(TEXT("Timed out phase %d (character=%s HUD=%d lootReady=%d)"),Phase,*GetNameSafe(WaitingSurvivor),WaitingSurvivor && WaitingSurvivor->StatusWidget?1:0,WaitingLoot && WaitingLoot->IsReady()?1:0)); return;
+    }
+    auto* PC=GetWorld()->GetFirstPlayerController(); if(!PC) return;
+    auto Input=[PC](FKey Key,EInputEvent Event) { PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed?1.0:0.0,Key.IsGamepadKey(),FInputDeviceId::CreateFromInternalId(0))); };
+    if(Phase==90)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        auto* PlayButton=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        auto* Art=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")):nullptr;
+        const auto* Layout=Rail?Cast<UCanvasPanelSlot>(Rail->Slot):nullptr;
+        if(!Brand || !Rail || !PlayButton || !Layout ||
+           Layout->GetAnchors().Minimum.X<.60f ||
+           Rail->GetVisibility()!=ESlateVisibility::Visible ||
+           (Art && Art->GetVisibility()!=ESlateVisibility::Collapsed) ||
+           PC->GetViewTarget()==PC->GetPawn())
+        {Finish(TEXT("Old left-aligned/static startup menu is still shown instead of live character and right-aligned menu"));return;}
+        FString File;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),File);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(File,TEXT(""))+TEXT("-actual-main-menu.png"),true,false);
+        Checks.Add(TEXT("real_right_aligned_3d_main_menu_visible_without_old_poster"));
+        Next=Now+1.5;Phase=91;return;
+    }
+    if(Phase==91)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        if(!Menu || !Menu->WidgetTree){Finish(TEXT("Actual main menu disappeared before navigation test"));return;}
+        auto* Play=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay")));
+        auto* Browser=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserFullScreen")));
+        auto* Back=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserBack")));
+        auto* Solo=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSolo")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        auto* WorkshopBack=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        if(!Play || !Browser || !Back || !Solo || !Mods || !Workshop || !WorkshopBack)
+        {Finish(TEXT("New main menu functional controls are missing"));return;}
+        Play->OnClicked.Broadcast();
+        if(Browser->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("Play must open the real server browser"));return;}
+        Back->OnClicked.Broadcast();
+        Mods->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("WorkForge must open from the start menu"));return;}
+        WorkshopBack->OnClicked.Broadcast();
+        Play->OnClicked.Broadcast();
+        Solo->OnClicked.Broadcast();
+        if(Menu->IsInViewport() || GetWorld()->IsPaused())
+        {Finish(TEXT("Continue solo did not resume native game after server browser"));return;}
+        auto* Pause=UAnomaliaZPrigimaliaSessionWidget::Open(PC,false);
+        if(!Pause || !Pause->WidgetTree ||
+           Pause->WidgetTree->FindWidget(TEXT("SessionMods")) ||
+           !Pause->WidgetTree->FindWidget(TEXT("SessionOnline")))
+        {Finish(TEXT("In-game pause must show players and hide WorkForge"));return;}
+        Checks.Add(TEXT("working_start_server_browser_workforge_and_separate_pause"));
+        Finish();return;
+    }
+    if(Phase==0)
+    {
+        if(Now<Next) return;
+        Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
+        auto* S=Survivor.Get();
+        if(!S)return;
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaMenuOnly")) &&
+           (!S->GetMesh() || !S->GetMesh()->GetSkeletalMeshAsset()))
+        {Finish(TEXT("Real survivor body is missing in cooked Windows game; install/cook Manny or an owned skeletal mesh before approving the main menu"));return;}
+        // Menu-only integration is intentionally independent of loot spawns,
+        // vehicle setup and world-art audits. It still runs an ACTUAL cooked
+        // Win64 game, draws a screenshot and clicks live UMG buttons.
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaMenuOnly")))
+        {
+            auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+            if(!Menu){Finish(TEXT("Native menu did not open in the packaged game"));return;}
+            Next=Now+1;Phase=90;return;
+        }
+        auto* Loot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
+        if(!S->StatusWidget || !Loot || !Loot->IsReady()) return;
+        // These three processes run ONLY in the separately packaged review
+        // executable whose Saved directory is isolated from the user's game.
+        auto* CharacterMode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>();
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVerifySecondCharacter")))
+        {
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=2 ||
+               !CharacterMode->HasLocalCharacterSlot(1) || !CharacterMode->HasLocalCharacterSlot(2) ||
+               !S->InventoryComponent || !S->InventoryComponent->Stacks.IsEmpty())
+            {Finish(TEXT("Second survivor loaded the previous inventory or wrong save identity"));return;}
+            Checks.Add(TEXT("new_character_has_independent_empty_inventory_and_original_still_exists"));
+            Finish();return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaReturnOriginalCharacter")))
+        {
+            FString Error;
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=2 ||
+               !CharacterMode->SelectLocalCharacterSlot(1,Error) ||
+               CharacterMode->GetLocalCharacterSlot()!=2)
+            {Finish(TEXT("Could not safely stage return to original survivor: ")+Error);return;}
+            Checks.Add(TEXT("return_original_character_staged_without_old_pawn_overwrite"));
+            Finish();return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVerifyOriginalCharacter")))
+        {
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=1 ||
+               !CharacterMode->HasLocalCharacterSlot(2) ||
+               !S->InventoryComponent || S->InventoryComponent->Stacks.IsEmpty())
+            {Finish(TEXT("Original survivor profile or carried items were not restored"));return;}
+            Checks.Add(TEXT("original_character_recovered_with_equipment_after_second_slot"));
+            Finish();return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableResume")))
+        {
+            if(S->InventoryComponent->Stacks.IsEmpty() || FVector::Dist2D(S->GetActorLocation(),FVector(0,-400,0))<300)
+            { Finish(TEXT("Saved inventory or map-scoped character position was not restored")); return; }
+            if(!S->ItemEffectsComponent || S->ItemEffectsComponent->State.Dependence<1)
+            { Finish(TEXT("Saved item effects were not restored"));return; }
+            Checks.Add(TEXT("restarted_executable_restored_item_effects"));
+            Checks.Add(TEXT("restarted_executable_restored_inventory_and_character_position")); Finish(); return;
+        }
+        for(const FName Id:{FName(TEXT("health")),FName(TEXT("hunger")),FName(TEXT("thirst")),FName(TEXT("fatigue")),FName(TEXT("temperature")),FName(TEXT("stamina")),FName(TEXT("blood"))})
+            if(S->StatusWidget->GetVitalText(Id).IsEmpty()) { Finish(TEXT("Missing native HUD field")); return; }
+        int32 VisualActors=0,DynamicLights=0; bool Meadow=false;
+        for(TActorIterator<AActor> It(GetWorld());It;++It)
+        {
+            if(It->ActorHasTag(TEXT("PlayableLook_v2"))) ++VisualActors;
+            if(It->ActorHasTag(TEXT("PlayableGround")))
+            {
+                auto* Mesh=It->FindComponentByClass<UStaticMeshComponent>();
+                auto* Material=Mesh?Mesh->GetMaterial(0):nullptr;
+                Meadow=Material && (Material->GetPathName().Contains(TEXT("/PlayableLook_v2/M_Meadow")) ||
+                    (Mesh->GetStaticMesh() && Mesh->GetStaticMesh()->GetPathName().Contains(TEXT("/PlayableLandscape_"))));
+            }
+            if(It->ActorHasTag(TEXT("PlayableSun")) || It->ActorHasTag(TEXT("PlayableSky")))
+                if(auto* Light=It->FindComponentByClass<ULightComponentBase>())
+                    if(Light->GetMobility()==EComponentMobility::Movable) ++DynamicLights;
+        }
+        if(!Meadow || DynamicLights!=2 || VisualActors<120)
+        { Finish(FString::Printf(TEXT("Cooked visual update missing: meadow=%d dynamicLights=%d decorations=%d"),Meadow,DynamicLights,VisualActors)); return; }
+        Checks.Add(TEXT("native_playable_look_v2_cooked_materials_and_lights"));
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaProgressArt")))
+        {
+            int32 Houses=0,Trees=0,HiddenCrowns=0,Rocks=0,GroundFoliage=0,HiddenBackground=0,ForestTrees=0,ForestGrass=0,Surfaces=0;
+            for(TActorIterator<AActor> It(GetWorld());It;++It)
+            {
+                if(!It->ActorHasTag(TEXT("ANOMALIA_ProgressArt_v1")))continue;
+                auto* Component=It->FindComponentByClass<UStaticMeshComponent>();
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressHiddenCrown_v1")))
+                {
+                    if(!Component || Component->IsVisible()) { Finish(TEXT("Provisional spherical canopy is still visible")); return; }
+                    ++HiddenCrowns; continue;
+                }
+                const FString Path=Component && Component->GetStaticMesh()?Component->GetStaticMesh()->GetPathName():FString();
+                if(It->ActorHasTag(TEXT("ANOMALIA_PlayableTerrain_v1")))
+                {
+                    if(!Path.Contains(TEXT("/PlayableLandscape_v2/SM_PlayableTerrain")) || !Component->IsCollisionEnabled() || !Component->GetMaterial(0))
+                    {Finish(TEXT("Cooked colliding PBR terrain missing"));return;}
+                    FHitResult Hit;FCollisionQueryParams Query;Query.bTraceComplex=true;Query.AddIgnoredActor(S);
+                    if(!GetWorld()->LineTraceSingleByChannel(Hit,FVector(0,-400,500),FVector(0,-400,-500),ECC_Visibility,Query) || Hit.GetActor()!=*It || FMath::Abs(Hit.Location.Z)>2)
+                    {Finish(FString::Printf(TEXT("Actual playable ground collision or flat spawn parcel invalid: actor=%s z=%.2f expected=%s"),*GetNameSafe(Hit.GetActor()),Hit.Location.Z,*It->GetName()));return;}
+                    ++Surfaces;
+                }
+                if(It->ActorHasTag(TEXT("ANOMALIA_PlayableRoad_v1")))
+                {
+                    const FVector RoadExtent=Component->Bounds.BoxExtent;
+                    if(!Path.Contains(TEXT("/asphalt_02/")) || !Component->IsCollisionEnabled() || RoadExtent.X<9000 || RoadExtent.Y>500)
+                    {Finish(TEXT("Cooked PBR road missing or wrong forward axis"));return;}
+                    ++Surfaces;
+                }
+                if(It->ActorHasTag(TEXT("ANOMALIA_ForestTree_v1")))
+                {if(!Path.StartsWith(TEXT("/Game/AnomaliaZPrigimalia/VerifiedProps_v1/")) && !Path.Contains(TEXT("/island_tree_02/"))){Finish(TEXT("Real perimeter tree missing"));return;}++ForestTrees;}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ForestGrass_v1")))
+                {if(!Path.Contains(TEXT("/grass_medium_01/"))){Finish(TEXT("Real understory missing"));return;}++ForestGrass;}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressRock_v1")))
+                {if(Path.Contains(TEXT("/rock_moss_set_01/")))++Rocks;else {Finish(TEXT("Real rock geometry missing"));return;}}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressGroundFoliage_v1")))
+                {if(Path.Contains(TEXT("/grass_medium_01/")))++GroundFoliage;else {Finish(TEXT("Real ground foliage missing"));return;}}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressHiddenBackground_v1")))
+                {if(!Component || Component->IsVisible()){Finish(TEXT("Provisional spherical background still visible"));return;}++HiddenBackground;}
+                if(It->ActorHasTag(TEXT("ANOMALIA_ProgressTree_v1")))
+                {if(Path.StartsWith(TEXT("/Game/AnomaliaZPrigimalia/VerifiedProps_v1/"))||Path.Contains(TEXT("/island_tree_02/")))++Trees;}
+                else if(Path.StartsWith(TEXT("/Game/AnomaliaZPrigimalia/ResidentialPhotogrammetryReview_v1/")))++Houses;
+            }
+            if(Houses!=2||Trees!=20||HiddenCrowns!=60){Finish(TEXT("New cooked art missing or provisional crowns still present"));return;}
+            Checks.Add(TEXT("validated_progress_houses_and_twenty_real_trees"));
+            if(Rocks!=24 || GroundFoliage!=24 || HiddenBackground!=12)
+            {Finish(TEXT("Real terrain decoration upgrade missing from cooked game"));return;}
+            Checks.Add(TEXT("validated_progress_real_rocks_and_ground_foliage"));
+            if(Surfaces!=2 || ForestTrees!=32 || ForestGrass!=96)
+            {Finish(TEXT("Playable landscape revision missing from cooked game"));return;}
+            Checks.Add(TEXT("validated_playable_pbr_landscape_and_forest"));
+        }
+        for(TActorIterator<AAnomaliaZPrigimaliaVehiclePawn> It(GetWorld());It;++It)
+            if(It->ActorHasTag(TEXT("ANOMALIA_Playable_v1_Owner")))
+            { if(!It->Body->GetStaticMesh()) { Finish(TEXT("Vehicle art is missing from cooked game")); return; } Vehicles.Add(*It); }
+        if(Vehicles.Num()!=3) { Finish(TEXT("Expected three cooked vehicles")); return; }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaProgressArt")))
+            for(const auto& Vehicle:Vehicles)
+                if((Vehicle->VehicleId==TEXT("car") || Vehicle->VehicleId==TEXT("transport_truck")) &&
+                   !FMath::IsNearlyEqual(Vehicle->Body->GetRelativeRotation().Yaw,90.f,.01f))
+                {Finish(TEXT("Detailed vehicle art is not aligned with driving direction"));return;}
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* BuildLabel=Menu && Menu->WidgetTree?Cast<UTextBlock>(Menu->WidgetTree->FindWidget(TEXT("SessionBuildIdentity"))):nullptr;
+        if(!BuildLabel || !BuildLabel->GetText().ToString().StartsWith(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)))
+        {Finish(TEXT("Visible executable build identity missing"));return;}
+        Checks.Add(TEXT("visible_executable_build_identity"));
+        auto* Slots=Menu && Menu->WidgetTree?Cast<UComboBoxString>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterSlots"))):nullptr;
+        auto* Create=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterNew"))):nullptr;
+        auto* Select=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterSelect"))):nullptr;
+        auto* Export=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionCharacterTransfer"))):nullptr;
+        if(!Slots || Slots->GetOptionCount()<1 || !Create || !Select || !Export || PC->GetViewTarget()==PC->GetPawn())
+        {Finish(TEXT("Main menu must show a real saved survivor and independent character slots"));return;}
+        Checks.Add(TEXT("main_menu_character_slots_and_live_3d_survivor_preview"));
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Play || !GetWorld()->IsPaused()) { Finish(TEXT("Actual main menu did not pause the game")); return; }
+        // The static splash is NOT the startup menu. The user requested
+        // a live restored survivor and world, with four artworks reserved
+        // exclusively for map/server loading screens.
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        auto* Art=Menu && Menu->WidgetTree?Cast<UImage>(Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork"))):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        if(!Brand || !Rail || Rail->GetVisibility()!=ESlateVisibility::Visible ||
+           (Art && Art->GetVisibility()!=ESlateVisibility::Collapsed))
+        {Finish(TEXT("Actual live main menu/brand not visible, or old startup artwork still obscures the game"));return;}
+        Checks.Add(TEXT("live_character_main_menu_visible_without_old_static_splash"));
+        Next=Now+1;Phase=19;return;
+    }
+    if(Phase==19)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        if(!Brand){Finish(TEXT("ANOMALIA'Z brand disappeared from live main menu"));return;}
+        FString IntroReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),IntroReport);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(IntroReport,TEXT(""))+TEXT("-main-menu.png"),true,false);
+        Next=Now+1;Phase=20;return;
+    }
+    if(Phase==20)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        if(!Play || !Rail || Rail->GetVisibility()!=ESlateVisibility::Visible)
+        { Finish(TEXT("Startup animation did not reveal the main menu"));return; }
+        Checks.Add(TEXT("user_branding_real_3d_main_menu_is_visible_and_right_aligned"));
+        auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Options=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionOptions")));
+        auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
+        auto* Refresh=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionRefreshMods")));
+        auto* WorldEditor=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionWorldEditor")));
+        if(!Pages || !Mods || !Options || !Home || !Refresh || !WorldEditor)
+        {
+            TArray<UWidget*> Observed;Menu->WidgetTree->GetAllWidgets(Observed);FString Names;
+            for(const auto* Widget:Observed)
+                if(Widget && Widget->GetName().StartsWith(TEXT("Session"))) Names+=Widget->GetName()+TEXT(";");
+            Finish(FString::Printf(TEXT("Main menu navigation or local mods page missing (pages=%d mods=%d options=%d home=%d refresh=%d editor=%d active=%d widgets=%s)"),
+                Pages?1:0,Mods?1:0,Options?1:0,Home?1:0,Refresh?1:0,WorldEditor?1:0,Pages?Pages->GetActiveWidgetIndex():-1,*Names));return;
+        }
+        // Establish the menu's starting page through its real user control. A stale
+        // selected page must not block an otherwise valid installed-game update.
+        Home->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=0) {Finish(TEXT("Survivant navigation did not restore the home page"));return;}
+        Mods->OnClicked.Broadcast(); Refresh->OnClicked.Broadcast();
+        const auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        const auto* WorkshopCards=Cast<UVerticalBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCards")));
+        auto* WorkshopReturn=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        auto* WorkshopCategory=Cast<UComboBoxString>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCategory")));
+        auto* WorkshopSearch=Cast<UEditableTextBox>(Menu->WidgetTree->FindWidget(TEXT("WorkshopSearch")));
+        auto* ModsNav=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavMods")));
+        auto* VehiclesTile=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopCategoryCard1")));
+        auto* MyModsNav=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavMyMods")));
+        auto* WorkshopPlay=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopPlay")));
+        auto* WorkshopSettings=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavSettings")));
+        auto* WorkshopTools=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenTools")));
+        auto* WorkshopHosting=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopOpenHosting")));
+        if(Pages->GetActiveWidgetIndex()!=2 || !GetWorld()->IsPaused() ||
+            !Workshop || Workshop->GetVisibility()!=ESlateVisibility::Visible || !WorkshopCards ||
+            WorkshopCards->GetChildrenCount()==0 || !WorkshopReturn || !WorkshopSearch ||
+            !WorkshopCategory || !WorkshopTools || !WorkshopHosting ||
+            !ModsNav || !VehiclesTile || !MyModsNav || !WorkshopPlay || !WorkshopSettings)
+        { Finish(TEXT("Native in-game Workshop missing or not visible when Mods is clicked"));return; }
+        Checks.Add(TEXT("real_unreal_mods_tab_opened_inside_game_with_search_categories_and_cards"));
+        VehiclesTile->OnClicked.Broadcast();
+        if(WorkshopCategory->GetSelectedOption()!=TEXT("Véhicules"))
+        { Finish(TEXT("Native Mods category tile failed to apply its filter"));return; }
+        MyModsNav->OnClicked.Broadcast();
+        ModsNav->OnClicked.Broadcast();
+        if(WorkshopCategory->GetSelectedOption()!=TEXT("Tous"))
+        { Finish(TEXT("Native Mods navigation failed to restore complete catalog"));return; }
+        WorkshopSearch->SetText(FText::FromString(TEXT("cherche-mod-de-test")));
+        WorkshopSearch->SetText(FText::GetEmpty());
+        if(WorkshopCards->GetChildrenCount()==0)
+        { Finish(TEXT("Native Mods search removed the results and empty-state actions"));return; }
+        Checks.Add(TEXT("native_mods_category_search_my_mods_and_catalog_buttons_operational"));
+        FString WorkshopReport;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),WorkshopReport);
+        // Keep the genuine Mods screen visible for a full rendered frame
+        // before testing navigation. Closing in the same tick would capture
+        // the home page instead of the newly designed native Mods page.
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(WorkshopReport,TEXT(""))+TEXT("-workshop.png"),true,false);
+        Next=Now+1.2; Phase=21; return;
+    }
+    if(Phase==21)
+    {
+        if(Now<Next) return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        if(!Menu || !Menu->WidgetTree){ Finish(TEXT("Mods UI destroyed before capture completed"));return; }
+        auto* Pages=Cast<UWidgetSwitcher>(Menu->WidgetTree->FindWidget(TEXT("SessionPages")));
+        auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        auto* WorkshopReturn=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Settings=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WFNavSettings")));
+        auto* Home=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionHome")));
+        if(!Pages || !Workshop || !WorkshopReturn || !Mods || !Settings || !Home)
+        { Finish(TEXT("Mods buttons vanished before navigation test"));return; }
+        WorkshopReturn->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
+        { Finish(TEXT("Native Workshop return button failed to close"));return; }
+        Mods->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
+        { Finish(TEXT("Native Workshop did not reopen"));return; }
+        Settings->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=1 || Workshop->GetVisibility()!=ESlateVisibility::Collapsed)
+        { Finish(TEXT("Native Mods settings button failed to open the real options screen"));return; }
+        Home->OnClicked.Broadcast();
+        if(Pages->GetActiveWidgetIndex()!=0) { Finish(TEXT("Return from mods/options failed")); return; }
+        auto* Close=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionClosePage")));
+        if(!Close) { Finish(TEXT("Return-to-menu control missing"));return; }
+        Close->OnClicked.Broadcast();
+        Checks.Add(TEXT("main_menu_mods_refresh_options_and_return"));
+        FString MenuReport; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),MenuReport);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(MenuReport,TEXT(""))+TEXT("-menu.png"),true,false);
+        Next=Now+2; Phase=18; return;
+    }
+    auto* S=Survivor.Get(); if(!S) { Finish(TEXT("Character destroyed")); return; }
+    if(Phase==18)
+    {
+        if(Now<Next) return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Play) { Finish(TEXT("Main menu vanished before play")); return; }
+        Play->OnClicked.Broadcast();
+        auto* Browser=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserFullScreen")));
+        auto* Solo=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSolo")));
+        auto* OfficialTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabOfficial")));
+        auto* FavoritesTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabFavorite")));
+        auto* CommunityTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabCommunity")));
+        auto* ServerSearch=Cast<UEditableTextBox>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSearch")));
+        if(!Browser || Browser->GetVisibility()!=ESlateVisibility::Visible || !Solo ||
+            !OfficialTab || !FavoritesTab || !CommunityTab || !ServerSearch)
+        { Finish(TEXT("Play did not open real Official/Community/Favorites server browser"));return; }
+        FavoritesTab->OnClicked.Broadcast();
+        CommunityTab->OnClicked.Broadcast();
+        OfficialTab->OnClicked.Broadcast();
+        ServerSearch->SetText(FText::FromString(TEXT("test-server-introuvable")));
+        ServerSearch->SetText(FText::GetEmpty());
+        Checks.Add(TEXT("main_menu_server_browser_tabs_and_search"));
+        Solo->OnClicked.Broadcast();
+        if(Menu->IsInViewport() || GetWorld()->IsPaused() || PC->GetViewTarget()!=PC->GetPawn())
+        { Finish(TEXT("Continue Solo did not resume restored gameplay and camera")); return; }
+        Checks.Add(TEXT("main_menu_play_button"));
+        // Verify that WorkForge cannot be opened from the real in-game pause,
+        // while the online player list really uses the separate pause widget.
+        auto* Pause=UAnomaliaZPrigimaliaSessionWidget::Open(PC,false);
+        auto* Online=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("SessionOnline"))):nullptr;
+        auto* Players=Pause && Pause->WidgetTree?Cast<UBorder>(Pause->WidgetTree->FindWidget(TEXT("PauseOnlinePlayers"))):nullptr;
+        auto* Back=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("PauseOnlineBack"))):nullptr;
+        auto* Continue=Pause && Pause->WidgetTree?Cast<UButton>(Pause->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        if(!Online || !Players || !Back || !Continue ||
+           Pause->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")))
+        { Finish(TEXT("Native pause must have Online players and must not expose WorkForge"));return; }
+        Online->OnClicked.Broadcast();
+        if(Players->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("Pause Online players list did not open"));return;}
+        Back->OnClicked.Broadcast();
+        Continue->OnClicked.Broadcast();
+        if(GetWorld()->IsPaused()) {Finish(TEXT("Pause Continue failed"));return;}
+        Checks.Add(TEXT("pause_online_players_real_widget_without_workforge"));
+        Checks.Add(TEXT("native_world_HUD_and_three_vehicle_meshes"));
+        Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);
+        Input(EKeys::W,IE_Pressed); Next=Now+1; Phase=1; return;
+    }
+    if(Phase==1)
+    {
+        if(Now<Next) return; Input(EKeys::W,IE_Released);
+        if(FVector::Dist2D(Before,S->GetActorLocation())<100) { Finish(TEXT("Real keyboard movement failed")); return; }
+        Checks.Add(TEXT("keyboard_character_movement"));
+        AActor* Building=nullptr; for(TActorIterator<AActor> It(GetWorld());It;++It) if(It->ActorHasTag(TEXT("PlayableHouse"))) Building=*It;
+        if(!Building) { Finish(TEXT("House missing")); return; } House=Building->GetActorLocation();
+        FCollisionQueryParams Query; Query.AddIgnoredActor(S); FHitResult Hit;
+        if(GetWorld()->LineTraceSingleByChannel(Hit,House+FVector(0,650,100),House+FVector(0,0,100),ECC_Visibility,Query)) DoorSign=-1;
+        if(GetWorld()->LineTraceSingleByChannel(Hit,House+FVector(0,DoorSign*650,100),House+FVector(0,0,100),ECC_Visibility,Query))
+        { Finish(TEXT("House doorway is blocked in cooked collision")); return; }
+        S->SetActorLocation(House+FVector(0,DoorSign*650,110),false,nullptr,ETeleportType::TeleportPhysics);
+        PC->SetControlRotation(FRotator(0,-DoorSign*90,0)); Input(EKeys::W,IE_Pressed); Next=Now+1.5; Phase=2; return;
+    }
+    if(Phase==2)
+    {
+        if(Now<Next) return; Input(EKeys::W,IE_Released);
+        if(FVector::Dist2D(House,S->GetActorLocation())>360) { Finish(TEXT("Character could not enter house through doorway")); return; }
+        Checks.Add(TEXT("walk_through_house_doorway"));
+        AAnomaliaZPrigimaliaLootPickup* Item=nullptr; for(TActorIterator<AAnomaliaZPrigimaliaLootPickup> It(GetWorld());It;++It) if(It->SpawnId==TEXT("playable-supplies-0")) Item=*It;
+        if(!Item) { Finish(TEXT("Cooked catalogue pickup is missing")); return; }
+        S->SetActorLocation(Item->GetActorLocation()+FVector(0,-100,100),false,nullptr,ETeleportType::TeleportPhysics);
+        Input(EKeys::E,IE_Pressed); Next=Now+.5; Phase=3; return;
+    }
+    if(Phase==3)
+    {
+        Input(EKeys::E,IE_Released); if(Now<Next) return;
+        if(S->InventoryComponent->Stacks.IsEmpty()) { Finish(TEXT("Cooked Interact pickup failed")); return; }
+        Checks.Add(TEXT("world_pickup_into_native_inventory"));
+        AAnomaliaZPrigimaliaLootPickup* Drink=nullptr;
+        for(TActorIterator<AAnomaliaZPrigimaliaLootPickup> It(GetWorld());It;++It) if(It->SpawnId==TEXT("playable-supplies-1")) Drink=*It;
+        if(!Drink) { Finish(TEXT("Second world pickup missing"));return; }
+        S->SetActorLocation(Drink->GetActorLocation()+FVector(0,-100,100),false,nullptr,ETeleportType::TeleportPhysics);
+        Input(EKeys::E,IE_Pressed);Next=Now+.5;Phase=11;return;
+    }
+    if(Phase==11)
+    {
+        Input(EKeys::E,IE_Released);if(Now<Next)return;
+        if(S->InventoryComponent->Stacks.Num()<2) { Finish(TEXT("Second pickup did not enter inventory"));return; }
+        Input(EKeys::I,IE_Pressed);Next=Now+.5;Phase=4;return;
+    }
+    if(Phase==4)
+    {
+        Input(EKeys::I,IE_Released); if(Now<Next) return;
+        if(!S->InventoryWidget || !S->InventoryWidget->IsInViewport()) { Finish(TEXT("Cooked inventory UI failed")); return; }
+        const auto* Food=S->InventoryComponent->Stacks.FindByPredicate([&](const auto& Stack){return S->InventoryComponent->GetUseActionLabel(Stack.ItemId)==TEXT("Manger");});
+        if(!Food) { Finish(TEXT("Collected food has no native use rule"));return; }
+        UsedStackId=Food->StackId;UsedCount=Food->Count;
+        S->RestoreSurvival(20.f,20.f,70.f);
+        TArray<UWidget*> Widgets;S->InventoryWidget->WidgetTree->GetAllWidgets(Widgets);
+        UButton* Eat=nullptr;
+        const FString Prefix=FString::Printf(TEXT("UseStack_%d_action"),UsedStackId);
+        for(auto* Widget:Widgets)
+            if(auto* Button=Cast<UButton>(Widget)) if(Button->GetName().StartsWith(Prefix)) Eat=Button;
+        if(!Eat) { Finish(TEXT("Actual inventory food-use button missing"));return; }
+        Eat->OnClicked.Broadcast();Next=Now+.4;Phase=12;return;
+    }
+    if(Phase==12)
+    {
+        if(Now<Next)return;
+        const auto* Remaining=S->InventoryComponent->Stacks.FindByPredicate([&](const auto& Stack){return Stack.StackId==UsedStackId;});
+        if((Remaining?Remaining->Count:0)!=UsedCount-1 || S->Hunger<=20.1f || S->InventoryComponent->Stacks.IsEmpty())
+        { Finish(TEXT("Native inventory food use failed to consume exactly one unit and restore hunger"));return; }
+        Checks.Add(TEXT("native_inventory_food_use_consumes_one_and_restores_hunger"));
+        if(!S->InventoryComponent->TryAddItem(TEXT("cigarette"),1) || !S->InventoryComponent->TryAddItem(TEXT("lighter"),1))
+        { Finish(TEXT("Isolated tobacco test supplies unavailable"));return; }
+        const auto* Cigarette=S->InventoryComponent->Stacks.FindByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("cigarette");});
+        if(!Cigarette) { Finish(TEXT("Isolated cigarette missing"));return; }
+        UsedStackId=Cigarette->StackId;
+        TArray<UWidget*> Widgets;S->InventoryWidget->WidgetTree->GetAllWidgets(Widgets);UButton* Smoke=nullptr;
+        const FString Prefix=FString::Printf(TEXT("UseStack_%d_action"),UsedStackId);
+        for(auto* Widget:Widgets) if(auto* Button=Cast<UButton>(Widget)) if(Button->GetName().StartsWith(Prefix)) Smoke=Button;
+        if(!Smoke) { Finish(TEXT("Actual cigarette inventory button missing"));return; }
+        Smoke->OnClicked.Broadcast();Next=Now+.4;Phase=13;return;
+    }
+    if(Phase==13)
+    {
+        if(Now<Next)return;
+        const auto* Effects=S->ItemEffectsComponent.Get();
+        if(!Effects || Effects->State.Intoxication<4 || Effects->State.Dependence<7 ||
+            S->InventoryComponent->Stacks.ContainsByPredicate([&](const auto& Stack){return Stack.StackId==UsedStackId;}) ||
+            !S->InventoryComponent->Stacks.ContainsByPredicate([](const auto& Stack){return Stack.ItemId==TEXT("cigarette_butt");}))
+        { Finish(TEXT("Actual cigarette UI use did not consume source, apply risks and retain waste"));return; }
+        Checks.Add(TEXT("native_inventory_tobacco_use_has_risk_and_returns_waste"));
+        S->CloseInventory(); Checks.Add(TEXT("native_inventory_open_close"));
+        auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>(); FString Saved,Error;
+        if(!Mode || !Mode->SaveLocalGame() || !UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(Mode->ServerId,TEXT("local-owner"),Saved,Error))
+        { Finish(TEXT("Explicit local profile save failed")); return; }
+        Checks.Add(TEXT("explicit_local_profile_save")); Phase=5;
+    }
+    if(Phase==5)
+    {
+        if(VehicleIndex>=Vehicles.Num())
+        {
+            Checks.Add(TEXT("three_vehicle_enter_accelerate_steer_exit"));
+            FString File; FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),File);
+            FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(File,TEXT("png")),true,false); Next=Now+3; Phase=8; return;
+        }
+        auto* V=Vehicles[VehicleIndex].Get(); if(!V) { Finish(TEXT("Vehicle destroyed")); return; }
+        S->SetActorLocation(V->GetActorLocation()+FVector(0,300,100),false,nullptr,ETeleportType::TeleportPhysics);
+        Input(EKeys::E,IE_Pressed); Next=Now+.4; Phase=6; return;
+    }
+    if(Phase==6)
+    {
+        Input(EKeys::E,IE_Released); if(Now<Next) return;
+        auto* V=Vehicles[VehicleIndex].Get(); if(PC->GetPawn()!=V) { Finish(FString::Printf(TEXT("Vehicle possession failed: index=%d id=%s controller=%s occupied=%d distance=%.1f pawn=%s"),VehicleIndex,*V->VehicleId.ToString(),*GetNameSafe(V->GetController()),V->HasDriver(),FVector::Dist(S->GetActorLocation(),V->GetActorLocation()),*GetNameSafe(PC->GetPawn()))); return; }
+        Before=V->GetActorLocation(); Input(EKeys::W,IE_Pressed); Input(EKeys::D,IE_Pressed); Next=Now+.7; Phase=7; return;
+    }
+    if(Phase==7)
+    {
+        if(Now<Next) return; Input(EKeys::W,IE_Released); Input(EKeys::D,IE_Released);
+        auto* V=Vehicles[VehicleIndex].Get(); if(FVector::Dist2D(Before,V->GetActorLocation())<30) { Finish(TEXT("Vehicle did not drive")); return; }
+        Input(EKeys::V,IE_Pressed); Input(EKeys::V,IE_Released);
+        Next=Now+.3; Phase=9; return;
+    }
+    if(Phase==9)
+    {
+        if(Now<Next) return;
+        if(!Vehicles[VehicleIndex]->InteriorCamera->IsActive()) { Finish(TEXT("Vehicle interior camera did not activate")); return; }
+        Input(EKeys::E,IE_Pressed); Next=Now+.3; Phase=10; return;
+    }
+    if(Phase==10)
+    {
+        Input(EKeys::E,IE_Released); if(Now<Next) return;
+        if(PC->GetPawn()!=S) {
+            FVector Exit;FString Diagnostic;
+            Vehicles[VehicleIndex]->FindSafeDriverExit(S,Exit,&Diagnostic);
+            Finish(FString::Printf(TEXT("Vehicle exit failed index=%d: %s"),VehicleIndex,*Diagnostic));return;
+        }
+        ++VehicleIndex; Phase=5; return;
+    }
+    if(Phase==8 && Now>=Next)
+    {
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaCreateSecondCharacter")))
+        {
+            auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>();
+            if(!Mode || Mode->GetLocalCharacterSlot()!=1 || !Mode->HasLocalCharacterSlot(1) ||
+               Mode->HasLocalCharacterSlot(2))
+            {Finish(TEXT("Review environment is not an isolated original single-character profile"));return;}
+            int32 CreatedSlot=0;FString Error;
+            if(!Mode->CreateLocalCharacterSlot(CreatedSlot,Error) || CreatedSlot!=2 ||
+               Mode->GetLocalCharacterSlot()!=1 || !Mode->HasLocalCharacterSlot(2))
+            {Finish(TEXT("New survivor creation failed without preserving old identity: ")+Error);return;}
+            FString Original,Independent;
+            if(!UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(
+                Mode->ServerId,TEXT("local-owner"),Original,Error) ||
+               !UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(
+                Mode->ServerId,TEXT("local-owner-slot-2"),Independent,Error) ||
+               Original==Independent || !Independent.Contains(TEXT("schemaVersion")))
+            {Finish(TEXT("Second character did not receive an independent profile file"));return;}
+            Checks.Add(TEXT("second_character_created_without_replacing_original_profile"));
+        }
+        Finish();return;
+    }
+#endif
+}
+

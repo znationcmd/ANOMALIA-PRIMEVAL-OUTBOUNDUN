@@ -7,17 +7,17 @@ import json
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CODE = ROOT / "unreal/Source/AnomaliaPrimeval"
+CODE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 SCRIPTS = ROOT / "scripts/ue5"
 
 
 class WorldHomesteadIntegrationTests(unittest.TestCase):
     def test_native_survivor_inventory_farming_remains_present(self):
-        for name in ("AnomaliaSurvivor.cpp", "AnomaliaInventoryComponent.cpp",
-                     "AnomaliaHomesteadStation.cpp", "AnomaliaVitalsComponent.cpp",
-                     "AnomaliaServerBrowserLibrary.cpp"):
+        for name in ("AnomaliaZPrigimaliaSurvivor.cpp", "AnomaliaZPrigimaliaInventoryComponent.cpp",
+                     "AnomaliaZPrigimaliaHomesteadStation.cpp", "AnomaliaZPrigimaliaVitalsComponent.cpp",
+                     "AnomaliaZPrigimaliaServerBrowserLibrary.cpp"):
             self.assertTrue((CODE / name).is_file(), name)
-        gm = (CODE / "AnomaliaGameMode.cpp").read_text(encoding="utf-8")
+        gm = (CODE / "AnomaliaZPrigimaliaGameMode.cpp").read_text(encoding="utf-8")
         self.assertIn("SpawnConfiguredHomestead();", gm)
         self.assertIn("LoadPersistentPlayer(NewPlayer);", gm)
 
@@ -38,7 +38,7 @@ class WorldHomesteadIntegrationTests(unittest.TestCase):
             self.assertIn(f'AxisName="MoveForward",Scale=1.000000,Key={key}', keys)
         for key in ("A", "Q"):
             self.assertIn(f'AxisName="MoveRight",Scale=-1.000000,Key={key}', keys)
-        project = json.loads((ROOT / "unreal/AnomaliaPrimeval.uproject").read_text(encoding="utf-8"))
+        project = json.loads((ROOT / "unreal/AnomaliaZPrigimalia.uproject").read_text(encoding="utf-8"))
         self.assertTrue(any(p.get("Name") == "PythonScriptPlugin" and p.get("Enabled")
                             for p in project.get("Plugins", [])))
 

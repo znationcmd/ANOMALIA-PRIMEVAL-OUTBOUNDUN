@@ -1,4 +1,4 @@
-name: ANOMALIA native dog companion compile and tests
+name: ANOMALIA’Z PRIGIMALIA — native dog companion compile and tests
 on:
   push:
     branches: ['ue5/character-audit-20261027']

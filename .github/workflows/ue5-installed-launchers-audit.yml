@@ -1,4 +1,4 @@
-name: ANOMALIA inspect installed launchers and version references
+name: ANOMALIA’Z PRIGIMALIA — inspect installed launchers and version references
 on:
   push:
     branches: ['ue5/character-audit-20261027']

@@ -1,0 +1,44 @@
+name: ANOMALIA’Z PRIGIMALIA - Native C++ compilation (isolated checkout)
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-compile-native.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify this is not the original project working directory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $workspace=[IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\\')
+          if ($workspace -ieq 'D:\ANOMALIA') { throw 'Refusing to compile in original working directory' }
+          if ($workspace.StartsWith('D:\ANOMALIA\\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to compile inside original working directory' }
+          $project=Join-Path $workspace 'unreal/AnomaliaZPrigimalia.uproject'
+          if(-not (Test-Path -LiteralPath $project)){throw 'New .uproject missing'}
+          if(-not (Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'))){throw 'Unreal Build.bat missing'}
+          Write-Host 'ISOLATED_NATIVE_BUILD_SOURCE=true'
+      - name: Compile renamed UE5 Editor target without editing the original project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
+          & $bat 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE'
+          if ($LASTEXITCODE -ne 0) { throw "Native UE 5.8 C++ compilation failed with exit code $LASTEXITCODE" }
+          Write-Host 'ANOMALIAZ_PRIGIMALIA_NATIVE_CPP_COMPILATION=true'

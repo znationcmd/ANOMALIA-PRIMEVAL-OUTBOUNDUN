@@ -10,7 +10,7 @@ sont conservés. **Le jeu complet n'est pas terminé.**
 - Branche active : `ue5/integrate-world-homestead-20261020`.
 - PR d'intégration : https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/pull/4
 - Pas de fusion vers main autorisée avant validation. Aucun force-push.
-- Projet : `unreal/AnomaliaPrimeval.uproject`.
+- Projet : `unreal/AnomaliaZPrigimalia.uproject`.
 - Carte réelle : `/Game/Maps/ANOMALIA_Archipelago_v2`.
 - Rapport détaillé historique : `docs/world/ARCHIPELAGO_PROGRESS_2026-10-20.md`.
 - Dernier lot natif terminé : `585704dff9d74162a4a981cadcf544fcea2b89ef`.
@@ -48,7 +48,7 @@ Le workflow `.github/workflows/ue5-native-build.yml` compile Editor et Game, lan
 trois tests natifs, importe les ressources et lance une vraie session Play In Editor.
 
 Chemin du projet sur le runner :
-`C:/Users/utilisateur/actions-runner/_work/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ANOMALIA-PRIMEVAL-OUTBOUNDUN/unreal/AnomaliaPrimeval.uproject`.
+`C:/Users/utilisateur/actions-runner/_work/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ANOMALIA-PRIMEVAL-OUTBOUNDUN/unreal/AnomaliaZPrigimalia.uproject`.
 
 Le runner est sur le PC du propriétaire, pas sur une machine distante indépendante.
 Il doit rester allumé, connecté et le runner lancé. Aucun hébergement de compilation
@@ -165,7 +165,7 @@ nouveaux véhicules actifs en doublon. Les dates/noms fournis restent non vérif
 - Version JS/Electron et toutes les branches existantes.
 - `unreal/Saved` du runner : profils/configurations/sauvegardes et marqueurs de migration.
 - Marqueurs `detroit-bridge-v1.json`, `detroit-roads-v1.json`, puis `detroit-roads-v2.json`
-  sous `unreal/Saved/AnomaliaMigration`.
+  sous `unreal/Saved/AnomaliaZPrigimaliaMigration`.
 - Vrai monde généré : `.umap`, `Content/__ExternalActors__`, `__ExternalObjects__`,
   `Anomalia/World/Archipelago_v2` et `Anomalia/Infrastructure` ensemble.
 - `checkout` garde `clean: false` : ne jamais nettoyer les sauvegardes ou les cartes

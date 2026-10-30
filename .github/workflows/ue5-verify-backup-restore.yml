@@ -1,4 +1,4 @@
-name: ANOMALIA verify active backups and user-data restore on D
+name: ANOMALIA’Z PRIGIMALIA — verify active backups and user-data restore on D
 on:
   push:
     branches: ['ue5/character-audit-20261027']

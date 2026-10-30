@@ -3,7 +3,7 @@ import argparse,json,os,subprocess
 from pathlib import Path
 p=argparse.ArgumentParser();p.add_argument('--engine-root',type=Path,required=True);p.add_argument('--output',type=Path,required=True);a=p.parse_args()
 root=Path(__file__).resolve().parents[2];out=a.output.resolve();out.mkdir(parents=True,exist_ok=True)
-editor=a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe';project=root/'unreal/AnomaliaPrimeval.uproject'
+editor=a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe';project=root/'unreal/AnomaliaZPrigimalia.uproject'
 report=dict(state='FAILED',sourceCommit=os.environ.get('GITHUB_SHA','manual'),phases=[])
 try:
  for phase,script,flags in [('import','import_original_lot1.py',['-NullRHI']),('gpu','capture_original_lot1.py',['-d3d11','-sm5','-RenderOffscreen','-ResX=1280','-ResY=720'])]:

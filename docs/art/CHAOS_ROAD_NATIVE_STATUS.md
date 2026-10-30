@@ -1,6 +1,6 @@
 # Native Chaos road vehicle
 
-The new `AAnomaliaChaosRoadVehicle` uses an actual skeletal chassis, Physics Asset,
+The new `AAnomaliaZPrigimaliaChaosRoadVehicle` uses an actual skeletal chassis, Physics Asset,
 four Chaos wheels, torque curve, automatic forward/reverse transmission, service brakes
 and speed-dependent steering. It reuses ANOMALIA's existing authoritative input, fuel,
 character possession and safe exit. The legacy floating road movement is disabled only

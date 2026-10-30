@@ -9,7 +9,7 @@ ni compilation UE5, ni exécution, ni multijoueur.
 1. Cloner le dépôt complet via GitHub Desktop (branche de travail fusionnée ou sélectionnée).
 2. Installer Unreal Engine 5.8 ainsi que **Visual Studio 2022**, charge de travail
    « Développement de jeux en C++ », SDK Windows et composants C++.
-3. Ouvrir `unreal/AnomaliaPrimeval.uproject` et **compiler le projet C++**.
+3. Ouvrir `unreal/AnomaliaZPrigimalia.uproject` et **compiler le projet C++**.
    Si la compilation échoue, réparer les erreurs avant de continuer.
 4. Ouvrir PowerShell à la racine du dépôt, puis lancer :
 
@@ -23,7 +23,7 @@ ni compilation UE5, ni exécution, ni multijoueur.
    `unreal/Content/Maps/ANOMALIA_FirstTest.umap`.
 6. Ouvrir ce niveau dans l'éditeur, puis utiliser **Play** pour vérifier manuellement
    l'apparition du personnage, la caméra, ZQSD/WASD, le saut et l'inventaire.
-   Le rapport est dans `unreal/Saved/AnomaliaMigration/first-world-report.json`.
+   Le rapport est dans `unreal/Saved/AnomaliaZPrigimaliaMigration/first-world-report.json`.
 
 Le script s'arrête si la carte existe déjà : aucune destruction, aucun écrasement.
 Il ne change pas `DefaultEngine.ini` et ne touche pas au jeu navigateur existant.

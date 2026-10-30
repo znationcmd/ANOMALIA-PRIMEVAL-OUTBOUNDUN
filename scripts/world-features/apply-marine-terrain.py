@@ -72,7 +72,7 @@ try:
                 raise RuntimeError('Marine source integrity failed')
     if unreal.EditorAssetLibrary.does_asset_exist(DEST):
         mat = unreal.load_asset(DEST)
-        if not isinstance(mat, unreal.Material) or unreal.EditorAssetLibrary.get_metadata_tag(mat, 'AnomaliaMarineRegistrySha256') != identity:
+        if not isinstance(mat, unreal.Material) or unreal.EditorAssetLibrary.get_metadata_tag(mat, 'AnomaliaZPrigimaliaMarineRegistrySha256') != identity:
             raise RuntimeError('Existing material preserved; source identity differs')
     else:
         # Reconstruct the existing forest layer from its verified source textures.
@@ -97,7 +97,7 @@ try:
                 destination = ART + '/Textures/' + source.stem
                 if unreal.EditorAssetLibrary.does_asset_exist(destination):
                     texture = unreal.load_asset(destination)
-                    if not isinstance(texture, unreal.Texture2D) or unreal.EditorAssetLibrary.get_metadata_tag(texture, 'AnomaliaSourceSha256') != entry['sha256']:
+                    if not isinstance(texture, unreal.Texture2D) or unreal.EditorAssetLibrary.get_metadata_tag(texture, 'AnomaliaZPrigimaliaSourceSha256') != entry['sha256']:
                         raise RuntimeError('Existing texture preserved: ' + destination)
                 else:
                     task = unreal.AssetImportTask()
@@ -115,7 +115,7 @@ try:
                     if entry['channel'] == 'nor_gl':
                         texture.set_editor_property('compression_settings', unreal.TextureCompressionSettings.TC_NORMALMAP)
                         texture.set_editor_property('flip_green_channel', True)
-                    unreal.EditorAssetLibrary.set_metadata_tag(texture, 'AnomaliaSourceSha256', entry['sha256'])
+                    unreal.EditorAssetLibrary.set_metadata_tag(texture, 'AnomaliaZPrigimaliaSourceSha256', entry['sha256'])
                     if not unreal.EditorAssetLibrary.save_loaded_asset(texture, only_if_is_dirty=False):
                         raise RuntimeError('Texture save failed')
                 textures[(model['id'], entry['channel'])] = texture
@@ -175,8 +175,8 @@ try:
                 raise RuntimeError('Material property connection failed')
         lib.layout_material_expressions(mat)
         lib.recompile_material(mat)
-        unreal.EditorAssetLibrary.set_metadata_tag(mat, 'AnomaliaMarineRegistrySha256', identity)
-        unreal.EditorAssetLibrary.set_metadata_tag(mat, 'AnomaliaOriginalLandMaterial', ORIGINAL)
+        unreal.EditorAssetLibrary.set_metadata_tag(mat, 'AnomaliaZPrigimaliaMarineRegistrySha256', identity)
+        unreal.EditorAssetLibrary.set_metadata_tag(mat, 'AnomaliaZPrigimaliaOriginalLandMaterial', ORIGINAL)
         if not unreal.EditorAssetLibrary.save_loaded_asset(mat, only_if_is_dirty=False):
             raise RuntimeError('Marine material did not save')
     for a in landscapes:

@@ -6,9 +6,9 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-BASE = ROOT / "unreal/Source/AnomaliaPrimeval"
-HEADER = (BASE / "AnomaliaNpcRecruitmentSubsystem.h").read_text(encoding="utf-8")
-SOURCE = (BASE / "AnomaliaNpcRecruitmentSubsystem.cpp").read_text(encoding="utf-8")
+BASE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
+HEADER = (BASE / "AnomaliaZPrigimaliaNpcRecruitmentSubsystem.h").read_text(encoding="utf-8")
+SOURCE = (BASE / "AnomaliaZPrigimaliaNpcRecruitmentSubsystem.cpp").read_text(encoding="utf-8")
 LEGACY = (ROOT / "src/npc-recruitment.js").read_text(encoding="utf-8")
 
 
@@ -20,7 +20,7 @@ class UE5NpcRecruitmentSourceTests(unittest.TestCase):
                 self.assertIn(f"function {operation}", LEGACY)
 
     def test_unreal_port_exposes_equivalent_gameplay_operations(self):
-        self.assertIn("UAnomaliaNpcRecruitmentSubsystem : public UWorldSubsystem", HEADER)
+        self.assertIn("UAnomaliaZPrigimaliaNpcRecruitmentSubsystem : public UWorldSubsystem", HEADER)
         for method in (
             "RegisterWorldNpc", "ApplyNonlethalStrike", "BindNpc", "DragNpc",
             "RegisterStation", "AdmitNpc", "AdvanceTraining",
@@ -28,7 +28,7 @@ class UE5NpcRecruitmentSourceTests(unittest.TestCase):
         ):
             with self.subTest(method=method):
                 self.assertIn(method, HEADER)
-                self.assertIn(f"UAnomaliaNpcRecruitmentSubsystem::{method}", SOURCE)
+                self.assertIn(f"UAnomaliaZPrigimaliaNpcRecruitmentSubsystem::{method}", SOURCE)
 
     def test_eight_jobs_and_persistent_attributes_are_explicit(self):
         for role in ("Fighter", "Archer", "Performer", "Blacksmith",
@@ -49,9 +49,9 @@ class UE5NpcRecruitmentSourceTests(unittest.TestCase):
         self.assertIn("bServerVerifiedRope", HEADER)
         self.assertIn("bServerVerifiedPlacement", HEADER)
         self.assertIn("ConsumedSupplies", HEADER)
-        self.assertIn("Status = EAnomaliaRecruitStatus::PendingDeployment", SOURCE)
+        self.assertIn("Status = EAnomaliaZPrigimaliaRecruitStatus::PendingDeployment", SOURCE)
         self.assertIn("if (!bWorldSpawnSucceeded)", SOURCE)
-        self.assertIn("Npc->Status = EAnomaliaRecruitStatus::Ready;", SOURCE)
+        self.assertIn("Npc->Status = EAnomaliaZPrigimaliaRecruitStatus::Ready;", SOURCE)
 
     def test_original_training_and_rope_rules(self):
         self.assertIn("RopeRangeMeters = 14.f", SOURCE)

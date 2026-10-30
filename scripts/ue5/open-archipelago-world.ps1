@@ -1,7 +1,7 @@
 param([string]$EngineRoot = $env:UE_ROOT)
 $ErrorActionPreference = 'Stop'
 $repo = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
-$project = Join-Path $repo 'unreal/AnomaliaPrimeval.uproject'
+$project = Join-Path $repo 'unreal/AnomaliaZPrigimalia.uproject'
 $map = Join-Path $repo 'unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap'
 if (-not (Test-Path -LiteralPath $map)) {
     throw 'La carte native n’existe pas encore dans ce projet. Attendre la création UE5 réussie ; aucune heightmap manuelle n’est nécessaire.'

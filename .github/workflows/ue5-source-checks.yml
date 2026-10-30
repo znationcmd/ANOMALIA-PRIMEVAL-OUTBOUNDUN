@@ -1,4 +1,4 @@
-name: Unreal Engine 5 source checks
+name: ANOMALIA’Z PRIGIMALIA — Unreal Engine 5 source checks
 
 on:
   push:
@@ -164,7 +164,7 @@ jobs:
         run: python -m unittest discover -s tests -p test_ue5_vehicle_models.py -v
       - name: Measure original archipelago and validate height encoding (not Unreal)
         run: |
-          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaZPrigimalia tests/native/archipelago_height.cpp -o /tmp/archipelago-height
           /tmp/archipelago-height
       - name: Regress Windows GLB import path length and preserve source geometry and credits
         run: python -m unittest discover -s tests -p test_ue5_short_import_source.py -v
@@ -192,3 +192,6 @@ jobs:
 
       - name: Preserve incremental sourcing and original vehicle request identities
         run: python -m unittest discover -s tests -p test_ue5_vehicle_worklist.py -v
+
+      - name: Verify safe PRIGIMALIA map and package reference migration
+        run: python -m unittest discover -s tests -p test_prigimalia_package_references.py -v

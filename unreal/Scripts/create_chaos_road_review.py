@@ -19,7 +19,7 @@ try:
         sedan=json.loads((Path(unreal.Paths.project_dir()).resolve()/'SourceAssets'/('BMWE39Review_v7' if E39 else 'NativeDemoSedan_v3')/'manifest.json').read_text())
         for part in sedan['models']:
             asset=unreal.load_asset(part['objectPath'])
-            if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaNativeSedanSha256')!=part['sha256']:
+            if not isinstance(asset,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(asset,'AnomaliaZPrigimaliaNativeSedanSha256')!=part['sha256']:
                 raise RuntimeError('Source-verified native sedan part required: '+part['id'])
             sedan_parts[part['id']]=asset
         body_art=sedan_parts['body'];tire=sedan_parts['wheel_fl'];glass_art=None
@@ -39,7 +39,7 @@ try:
                 a.set_actor_rotation(unreal.Rotator(),False);return a
         a=actors.spawn_actor_from_class(cls,unreal.Vector(*location))
         a.set_actor_label(label);a.tags=[unreal.Name(OWNER)];return a
-    car=spawn(unreal.AnomaliaChaosRoadVehicle,(0,0,100))
+    car=spawn(unreal.AnomaliaZPrigimaliaChaosRoadVehicle,(0,0,100))
     car.get_editor_property('survival_systems').set_editor_property('enabled',E39)
     if E39:car.get_editor_property('survival_systems').set_editor_property('battery_access_panel',unreal.Name('trunk'))
     # This licensed template is a physics fixture, not the requested final sedan.
@@ -54,7 +54,7 @@ try:
         if E39:
             for panel in sedan['panels']:
                 if panel['id']=='door_driver':continue
-                definition=unreal.AnomaliaRoadPanelDefinition()
+                definition=unreal.AnomaliaZPrigimaliaRoadPanelDefinition()
                 definition.set_editor_property('panel_id',unreal.Name(panel['id']))
                 definition.set_editor_property('mesh',sedan_parts[panel['id']])
                 definition.set_editor_property('pivot_cm',unreal.Vector(*panel['pivotCm']))
@@ -137,7 +137,7 @@ try:
     ground.set_actor_scale3d(unreal.Vector(2000,2000,1))
     ground.static_mesh_component.set_collision_profile_name('BlockAll')
     spawn(unreal.PlayerStart,(0,-350,200))
-    spawn(unreal.AnomaliaChaosRoadProbe,(0,0,300))
+    spawn(unreal.AnomaliaZPrigimaliaChaosRoadProbe,(0,0,300))
     sun=spawn(unreal.DirectionalLight,(0,0,1000));sun.set_actor_rotation(unreal.Rotator(pitch=-40,yaw=-30),False)
     spawn(unreal.SkyLight,(0,0,1000));spawn(unreal.SkyAtmosphere,(0,0,0))
     if not unreal.EditorLoadingAndSavingUtils.save_map(unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world(),PACKAGE):raise RuntimeError('Review map save failed')

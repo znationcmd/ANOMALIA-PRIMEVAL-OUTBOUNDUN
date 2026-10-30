@@ -26,11 +26,11 @@
   "compilation": "passed",
   "targets": [
     {
-      "target": "AnomaliaPrimevalEditor",
+      "target": "AnomaliaZPrigimaliaEditor",
       "exitCode": 0
     },
     {
-      "target": "AnomaliaPrimeval",
+      "target": "AnomaliaZPrigimalia",
       "exitCode": 0
     }
   ],

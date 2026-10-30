@@ -5,11 +5,11 @@
 Un premier berger allemand natif est réellement présent, animé et contrôlable par les commandes du menu de proximité dans une carte Survival isolée. La ceinture et les accessoires utilisent l'inventaire natif ; le fusil est visible verticalement à côté du sac. Aucune fusion ni modification des DLL du projet installé.
 
 - Moteur : UE 5.8.3, changelist 58210709.
-- Copie validée : C:\\ANOMALIA-Validation\\c40543166274\\unreal\\AnomaliaPrimeval.uproject.
+- Copie validée : C:\\ANOMALIA-Validation\\c40543166274\\unreal\\AnomaliaZPrigimalia.uproject.
 - Raccourci Bureau créé et relu : ANOMALIA_Test_Dog_40757731172.cmd.
 - Carte sauvegardée : /Game/Anomalia/CompanionTests/GermanShepherd_40757731172/L_Dog_Playtest.
-- Blueprint sauvegardé : /Game/Anomalia/CompanionTests/GermanShepherd_40757731172/BP_Anomalia_GermanShepherd, enfant de AAnomaliaDogCompanion ; comportement C++ réel.
-- Profil privé : dog-playtest-40757731172. Le lanceur passe explicitement AnomaliaServerId et utilise UnrealEditor -game ; aucun raccourci existant remplacé.
+- Blueprint sauvegardé : /Game/Anomalia/CompanionTests/GermanShepherd_40757731172/BP_Anomalia_GermanShepherd, enfant de AAnomaliaZPrigimaliaDogCompanion ; comportement C++ réel.
+- Profil privé : dog-playtest-40757731172. Le lanceur passe explicitement AnomaliaZPrigimaliaServerId et utilise UnrealEditor -game ; aucun raccourci existant remplacé.
 - Le raccourci est créé, mais son lancement manuel par double-clic n'a pas été testé. La carte sauvegardée a bien été rechargée et exécutée en PIE.
 
 ## Terminé et testé
@@ -88,4 +88,4 @@ Chargeurs : m4noskel_Magazine_Default_Unreal et AKRifle_magazine du lot Imported
 Les packs sources et les fichiers sous C:\\ANOMALIA\\unreal ne sont pas remplacés. Aucun asset Fab binaire n'est publié sur GitHub ; seulement code, scripts et rapports.
 Monkey B3 reste inventorié séparément (modèle/squelette/physique et 19 noms d'animations FBX), sans comportement de compagnon ni lecture d'animations Unreal annoncée validée.
 
-Fichiers principaux : AnomaliaDogCompanion.h/.cpp, Tests/AnomaliaDogCompanionTests.cpp, AnomaliaInventoryComponent.cpp, AnomaliaInventoryWidget.h/.cpp, verify_anomalia_dog_playtest.py et workflows de compilation/validation. PR44 reste en brouillon. BMW E39, autres véhicules, cartes principales et configurations des serveurs sont préservés.
+Fichiers principaux : AnomaliaZPrigimaliaDogCompanion.h/.cpp, Tests/AnomaliaZPrigimaliaDogCompanionTests.cpp, AnomaliaZPrigimaliaInventoryComponent.cpp, AnomaliaZPrigimaliaInventoryWidget.h/.cpp, verify_anomalia_dog_playtest.py et workflows de compilation/validation. PR44 reste en brouillon. BMW E39, autres véhicules, cartes principales et configurations des serveurs sont préservés.

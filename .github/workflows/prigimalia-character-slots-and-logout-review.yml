@@ -1,0 +1,243 @@
+name: PRIGIMALIA - Character slots and logout real Windows review
+# Review revision: native JSON fix + two-phase independent survivor multi-process gameplay test + opt-in Windows launcher.
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-character-slots-and-logout-review.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-menu-flow:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Validate safe character slots, logout and native menu source contracts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(-not(Test-Path -LiteralPath $python)){throw 'UE Python missing'}
+          & $python tests/test_native_character_slots_and_logout.py
+          if($LASTEXITCODE -ne 0){throw 'Character slots/logout check failed'}
+          & $python tests/test_ue5_player_lifecycle_source.py
+          if($LASTEXITCODE -ne 0){throw 'Lifecycle regression failed'}
+          & $python tests/test_ue5_native_start_pause_server_flow.py
+          if($LASTEXITCODE -ne 0){throw 'Start/Pause flow test failed'}
+          & $python tests/test_ue5_native_workshop_menu.py
+          if($LASTEXITCODE -ne 0){throw 'Existing WorkForge regression'}
+      - name: Preserve staged source then copy only approved UE5 menu files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
+          foreach($p in @($root,'D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA')){
+            if(-not(Test-Path -LiteralPath $p -PathType Container)){throw ('Missing source root '+$p)}
+            if((Get-Item -LiteralPath $p).Attributes -band [IO.FileAttributes]::ReparsePoint){throw ('Symlink or junction root '+$p)}
+          }
+          if(-not(Test-Path -LiteralPath $project) -or -not(Test-Path -LiteralPath $original) -or -not(Test-Path -LiteralPath $marker)){throw 'Source or backup verification missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'Native editor/game/build active, refuse concurrent write'}
+          $backup=Join-Path $root ('Saved\BrandMigration\CharacterSlotsReview\run-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'Already staged run; refuse overwrite'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp','AnomaliaZPrigimaliaGameMode.cpp','AnomaliaZPrigimaliaGameMode.h','AnomaliaZPrigimalia.cpp','AnomaliaZPrigimalia.Build.cs')
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            if(-not(Test-Path -LiteralPath $src -PathType Leaf) -or -not(Test-Path -LiteralPath $dst -PathType Leaf)){throw ('Missing native UE source '+$name)}
+            if((Get-Item -LiteralPath $dst).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked UE source refused'}
+            Copy-Item -LiteralPath $dst -Destination (Join-Path $backup $name)
+            if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath (Join-Path $backup $name)).Hash){throw ('Source backup hash failure '+$name)}
+          }
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+            if((Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dst).Hash){throw ('New source checksum failed '+$name)}
+          }
+          (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash|Set-Content (Join-Path $env:RUNNER_TEMP 'menu-flow-original.sha')
+          Write-Host 'PRIGIMALIA_CHARACTERS_SOURCES_STAGED=true'
+      - name: Stage authentic item, loot and economy JSON for real Windows runtime
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $data=Join-Path $root 'Content\AnomaliaZPrigimalia\Data'
+          $report=Join-Path $root ('Saved\BrandMigration\CharacterSlotsReview\run-'+$env:GITHUB_RUN_ID)
+          $names=@('loot_items_catalog.json','rp_items_catalog.json','loot_tiers.json','loot_spawns.json','rp_economy.json')
+          New-Item -ItemType Directory -Path $data -Force|Out-Null
+          foreach($name in $names){
+            $trusted=Join-Path $env:GITHUB_WORKSPACE ('public\config\'+$name)
+            $installed=Join-Path $data $name
+            if(-not(Test-Path -LiteralPath $trusted -PathType Leaf)){throw ('Missing trusted game JSON '+$name)}
+            if(-not(Test-Path -LiteralPath $installed -PathType Leaf)){
+              Copy-Item -LiteralPath $trusted -Destination $installed
+              if((Get-FileHash -LiteralPath $trusted).Hash -ne (Get-FileHash -LiteralPath $installed).Hash){throw ('Failed data checksum '+$name)}
+            }else{
+              if((Get-Item -LiteralPath $installed).Attributes -band [IO.FileAttributes]::ReparsePoint){throw ('Linked content refused '+$name)}
+              $raw=Get-Content -LiteralPath $installed -Raw
+              try{$decoded=$raw|ConvertFrom-Json -ErrorAction Stop}catch{throw ('Invalid installed JSON '+$name)}
+              if($decoded.schemaVersion -ne 1){throw ('Unsupported installed data schema '+$name)}
+            }
+          }
+          $ini=Join-Path $root 'Config\DefaultGame.ini'
+          if(-not(Test-Path -LiteralPath $ini -PathType Leaf)){throw 'DefaultGame.ini missing'}
+          $line='+DirectoriesToAlwaysStageAsNonUFS=(Path="AnomaliaZPrigimalia/Data")'
+          $current=Get-Content -LiteralPath $ini -Raw
+          if(-not $current.Contains($line)){
+            $backup=Join-Path $report 'DefaultGame.ini.before-loot-staging'
+            Copy-Item -LiteralPath $ini -Destination $backup
+            if((Get-FileHash -LiteralPath $ini).Hash -ne (Get-FileHash -LiteralPath $backup).Hash){throw 'Config backup checksum failed'}
+            $newline=[Environment]::NewLine
+            [IO.File]::AppendAllText($ini, $newline+'[/Script/UnrealEd.ProjectPackagingSettings]'+$newline+$line+$newline,[Text.UTF8Encoding]::new($false))
+          }
+          Write-Host 'PRIGIMALIA_NATIVE_LOOT_ECONOMY_DATA_READY=true'
+      - name: Compile real Unreal Engine 5.8 Editor and Win64 game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw ('C++ compile failed for '+$target)}
+          }
+          Write-Host 'PRIGIMALIA_CHARACTERS_LOGOUT_CPLUSPLUS_BUILT=true'
+      - name: Package separate Windows menu review without touching existing builds
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $archive=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows' ('CharacterSlotsReview-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $archive){throw 'Review archive collision'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
+          if($LASTEXITCODE -ne 0){throw 'Native Windows packaging failed'}
+          $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
+          if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Menu Flow Windows EXE missing'}
+          # Non-asset game rules must be readable by FFileHelper at runtime.
+          # Some UAT configurations omit these JSON files from the archive.
+          $source='D:\ANOMALIAZ-PRIGIMALIA\unreal\Content\AnomaliaZPrigimalia\Data'
+          $data=Join-Path $archive 'Windows\AnomaliaZPrigimalia\Content\AnomaliaZPrigimalia\Data'
+          New-Item -Path $data -ItemType Directory -Force|Out-Null
+          foreach($name in @('loot_items_catalog.json','rp_items_catalog.json','loot_tiers.json','loot_spawns.json','rp_economy.json')){
+            $src=Join-Path $source $name
+            $dest=Join-Path $data $name
+            if(-not(Test-Path -LiteralPath $src -PathType Leaf)){throw ('Source loot or economy data absent '+$name)}
+            if(-not(Test-Path -LiteralPath $dest -PathType Leaf)){Copy-Item -LiteralPath $src -Destination $dest}
+            if((Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dest).Hash){throw ('Packaged runtime rules checksum mismatch '+$name)}
+          }
+          Write-Host 'PRIGIMALIA_PACKAGED_NATIVE_LOOT_AND_ECONOMY_DATA=VERIFIED'
+          $exe|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt')
+          Write-Host ('PRIGIMALIA_CHARACTERS_REVIEW_EXE='+$exe)
+      - name: Test real packaged Windows game Play-to-browser-to-Solo flow
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt') -Raw).Trim()
+          $out=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration' ('CharacterSlotsSmoke-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $probe=Join-Path $out 'native-gameplay.json'
+          $log=Join-Path $out 'native-gameplay.log'
+          $args=@('/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-character-slots','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaCreateSecondCharacter',("-AnomaliaZPrigimaliaPlayableProbe=$probe"),("-abslog=$log"))
+          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+          try{
+            if(-not $proc.WaitForExit(180000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;throw 'Packaged game timed out'}
+          }finally{if(-not $proc.HasExited){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue}}
+          if(-not(Test-Path -LiteralPath $probe -PathType Leaf)){throw 'Real game did not produce runtime report'}
+          $r=Get-Content -LiteralPath $probe -Raw | ConvertFrom-Json
+          if($r.state -ne 'PACKAGED_GAME_SMOKE_PASSED'){throw ('Gameplay smoke failed: '+$r.error)}
+          if(@($r.checks) -notcontains 'main_menu_server_browser_tabs_and_search'){throw 'Server tabs were not exercised in actual Windows client'}
+          if(@($r.checks) -notcontains 'main_menu_character_slots_and_live_3d_survivor_preview'){throw 'Survivor menu and slots not verified in packaged game'}
+          if(@($r.checks) -notcontains 'pause_online_players_real_widget_without_workforge'){throw 'Pause online players isolation not verified in packaged game'}
+          if(@($r.checks) -notcontains 'second_character_created_without_replacing_original_profile'){throw 'Real new-character creation failed or replaced original'}
+          Write-Host 'PRIGIMALIA_CHARACTER_SLOTS_AND_PAUSE_PROBE_PASSED=true'
+      - name: Verify second character starts EMPTY, then restore original with ALL its gear
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt') -Raw).Trim()
+          $out=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration' ('CharacterSlotsSmoke-'+$env:GITHUB_RUN_ID)
+          function Verify-CharacterState([string]$tag,[string]$flag,[string]$map,[string]$check){
+            $report=Join-Path $out ($tag+'.json')
+            $log=Join-Path $out ($tag+'.log')
+            $args=@($map,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause',$flag,
+              ("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
+            $process=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+            try{
+              if(-not $process.WaitForExit(120000)){
+                Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                throw ('Game timed out in phase '+$tag)
+              }
+            }finally{
+              if(-not $process.HasExited){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}
+            }
+            if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw ('Missing report '+$tag)}
+            $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+            if($result.state -ne 'PACKAGED_GAME_SMOKE_PASSED' -or @($result.checks) -notcontains $check){
+              throw ('Character test '+$tag+' failed: '+$result.error)
+            }
+          }
+          $base='/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-character-slots'
+          Verify-CharacterState 'new-character' '-AnomaliaZPrigimaliaVerifySecondCharacter' ($base+'?AnomaliaZPrigimaliaSwitchSlot=2') 'new_character_has_independent_empty_inventory_and_original_still_exists'
+          Verify-CharacterState 'prepare-return' '-AnomaliaZPrigimaliaReturnOriginalCharacter' $base 'return_original_character_staged_without_old_pawn_overwrite'
+          Verify-CharacterState 'original-restored' '-AnomaliaZPrigimaliaVerifyOriginalCharacter' ($base+'?AnomaliaZPrigimaliaSwitchSlot=1') 'original_character_recovered_with_equipment_after_second_slot'
+          Write-Host 'PRIGIMALIA_TWO_SURVIVORS_INDEPENDENT_AND_OLD_GEAR_PRESERVED=true'
+      - name: Confirm original and previous Windows playable game preserved
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $hash=(Get-Content (Join-Path $env:RUNNER_TEMP 'menu-flow-original.sha') -Raw).Trim()
+          if((Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -Algorithm SHA256).Hash -ne $hash){throw 'Original D project changed'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Previous working game missing'}
+          Write-Host 'PRIGIMALIA_ORIGINAL_AND_PREVIOUS_GAME_PRESERVED=true'
+      - name: Activate opt-in Windows survivor launcher without replacing the existing game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt') -Raw).Trim()
+          if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Validated Windows executable missing'}
+          $launcherDir='D:\ANOMALIAZ-PRIGIMALIA\Launchers'
+          New-Item -ItemType Directory -Path $launcherDir -Force|Out-Null
+          $name="ANOMALIA'Z PRIGIMALIA - Multi-personnages (version test).lnk"
+          $target=Join-Path $launcherDir $name
+          if(Test-Path -LiteralPath $target){throw 'Existing launcher preserved - no replacement'}
+          $shell=New-Object -ComObject WScript.Shell
+          $link=$shell.CreateShortcut($target)
+          $link.TargetPath=$exe
+          $link.WorkingDirectory=Split-Path $exe
+          $link.IconLocation=$exe
+          $link.Description="Version Windows de test des personnages, sans remplacer le jeu original"
+          $link.Save()
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          if($desktop -and (Test-Path -LiteralPath $desktop -PathType Container)){
+            $desktopLink=Join-Path $desktop $name
+            if(-not(Test-Path -LiteralPath $desktopLink)){
+              Copy-Item -LiteralPath $target -Destination $desktopLink
+              Write-Host ('PRIGIMALIA_NEW_SURVIVOR_LAUNCHER='+$desktopLink)
+            }else{Write-Warning 'Existing desktop shortcut untouched'}
+          }
+          Write-Host ('PRIGIMALIA_NEW_SURVIVOR_SAFE_LAUNCHER='+$target)
+          Write-Host 'PRIGIMALIA_EXISTING_GAME_UNCHANGED=true'
+      - name: Upload actionable runtime diagnostics and source backups
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-Characters-LiveMenu-Native-Probe
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/CharacterSlotsSmoke-*/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/CharacterSlotsSmoke-*/*.log
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/CharacterSlotsSmoke-*/*.png

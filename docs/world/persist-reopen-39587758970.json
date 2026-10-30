@@ -7,7 +7,7 @@
       "phase": "repair",
       "command": [
         "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
-        "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaPrimeval.uproject",
+        "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaZPrigimalia.uproject",
         "-d3d11",
         "-sm5",
         "-RenderOffscreen",
@@ -1117,7 +1117,7 @@
       "phase": "verify",
       "command": [
         "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
-        "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaPrimeval.uproject",
+        "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\AnomaliaZPrigimalia.uproject",
         "-d3d11",
         "-sm5",
         "-RenderOffscreen",

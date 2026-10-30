@@ -1,4 +1,4 @@
-name: UE5 actual Chaos road driving validation
+name: ANOMALIA’Z PRIGIMALIA — UE5 actual Chaos road driving validation
 on:
   push:
     branches: ['ue5/chaos-road-driving-20261025']

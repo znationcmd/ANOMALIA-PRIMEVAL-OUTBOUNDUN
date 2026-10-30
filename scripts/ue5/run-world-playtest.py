@@ -6,7 +6,7 @@ a=p.parse_args();root=Path(__file__).resolve().parents[2];a.output.mkdir(parents
 export=(a.output/('world-pie-'+uuid.uuid4().hex)).resolve();export.mkdir()
 report=dict(state='FAILED',mode='Play In Editor',headless=True,renderingValidated=False,multiplayerTested=False,automationReport=str(export))
 try:
- command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaPrimeval.uproject'),'-unattended','-nopause','-nosound','-NullRHI','-ExecCmds=Automation RunTests Anomalia.World.ArchipelagoPIE; Quit',f'-ReportExportPath={export}',f'-abslog={export/"editor.log"}']
+ command=[str(a.engine_root/'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'),str(root/'unreal/AnomaliaZPrigimalia.uproject'),'-unattended','-nopause','-nosound','-NullRHI','-ExecCmds=Automation RunTests Anomalia.World.ArchipelagoPIE; Quit',f'-ReportExportPath={export}',f'-abslog={export/"editor.log"}']
  with (export/'process.log').open('w',encoding='utf-8') as log:
   run=subprocess.run(command,stdout=log,stderr=subprocess.STDOUT,timeout=600,check=False)
  report['exitCode']=run.returncode

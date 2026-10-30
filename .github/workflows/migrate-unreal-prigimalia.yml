@@ -1,0 +1,43 @@
+name: ANOMALIA’Z PRIGIMALIA - Native UE source migration
+on:
+  push:
+    branches:
+      - rebrand/full-anomaliaz-prigimalia-20261029
+    paths:
+      - 'scripts/migrate-unreal-prigimalia.py'
+      - '.github/workflows/migrate-unreal-prigimalia.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  migrate-owned-sources:
+    if: github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Validate migration tool
+        run: |
+          python3 -m py_compile scripts/migrate-unreal-prigimalia.py
+          python3 scripts/migrate-unreal-prigimalia.py
+      - name: Execute source rename only (binary assets remain untouched)
+        run: |
+          python3 scripts/migrate-unreal-prigimalia.py --apply
+          python3 -m json.tool unreal/AnomaliaZPrigimalia.uproject >/dev/null
+          test -f unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimalia.Build.cs
+          test -f unreal/Source/AnomaliaZPrigimalia.Target.cs
+          test -f unreal/Source/AnomaliaZPrigimaliaEditor.Target.cs
+          grep -q 'OldGameName="/Script/AnomaliaPrimeval"' unreal/Config/DefaultEngine.ini
+          git diff --check
+      - name: Commit migrated game source and manifest
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          if ! git diff --cached --quiet; then
+            git commit -m 'refactor(ue): migrate AnomaliaPrimeval module and C++ type names with CoreRedirects'
+            git push origin HEAD:rebrand/full-anomaliaz-prigimalia-20261029
+          fi

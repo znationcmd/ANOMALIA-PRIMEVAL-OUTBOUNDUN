@@ -1,0 +1,34 @@
+name: ANOMALIA’Z PRIGIMALIA — Apply public game-title rebrand on dedicated branch
+on:
+  push:
+    branches:
+      - rebrand/anomaliaz-prigimalia-20261029
+    paths:
+      - scripts/rebrand-public-identity.py
+      - .github/workflows/rebrand-public-title.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  rebrand-text:
+    if: github.ref == 'refs/heads/rebrand/anomaliaz-prigimalia-20261029'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
+      - name: Apply public title only; preserve technical identifiers
+        run: python3 scripts/rebrand-public-identity.py --apply
+      - name: Check patch formatting
+        run: git diff --check
+      - name: Commit reviewed scope back to rebrand branch
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -u
+          if ! git diff --cached --quiet; then
+            git commit -m 'chore(rebrand): update remaining public game titles'
+            git push origin HEAD:rebrand/anomaliaz-prigimalia-20261029
+          fi

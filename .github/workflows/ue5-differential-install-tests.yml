@@ -1,4 +1,4 @@
-name: ANOMALIA differential version installer tests
+name: ANOMALIA’Z PRIGIMALIA — differential version installer tests
 on:
   push:
     branches: ['ue5/character-audit-20261027']

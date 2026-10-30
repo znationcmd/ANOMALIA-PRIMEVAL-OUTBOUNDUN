@@ -38,7 +38,7 @@ class CameraTests(unittest.TestCase):
         editor=Editor();calls=[]
         def stream(guids,loaded):calls.append((guids,loaded));return True
         unreal=SimpleNamespace(Rotator=Rotator,Vector=lambda x,y,z:SimpleNamespace(x=x,y=y,z=z),get_editor_subsystem=lambda _:editor,UnrealEditorSubsystem=None)
-        def desc(label,guid,kind='house'):return dict(label=label,guid=guid,nativeClass='/Script/AnomaliaPrimeval.AnomaliaSceneryCluster' if kind=='foliage' else '/Script/Engine.StaticMeshActor')
+        def desc(label,guid,kind='house'):return dict(label=label,guid=guid,nativeClass='/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster' if kind=='foliage' else '/Script/Engine.StaticMeshActor')
         descriptors=[desc('ANOMALIA_Inhabited1_settlement_3_3_house_001','near-house'),
                      desc('ANOMALIA_Inhabited1_settlement_4_4_house_001','far-house'),
                      desc('ANOMALIA_Forest_0_0','near-foliage','foliage'),

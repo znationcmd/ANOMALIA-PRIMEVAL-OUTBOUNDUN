@@ -50,7 +50,7 @@ class BuildDriverTests(unittest.TestCase):
                     with patch.dict(os.environ,{'GITHUB_SHA':commit}):
                         self.assertEqual(driver.validate(root/'engine',root/'evidence'),0)
                     expected=commit if len(commit)==40 else 'local'
-                    self.assertEqual((root/'unreal/Build/AnomaliaSourceCommit.generated.txt').read_text(),expected)
+                    self.assertEqual((root/'unreal/Build/AnomaliaZPrigimaliaSourceCommit.generated.txt').read_text(),expected)
                     self.assertEqual(json.loads((root/'evidence/report.json').read_text())['buildCommit'],expected)
 
     def run_native_fixture(self, native_result):

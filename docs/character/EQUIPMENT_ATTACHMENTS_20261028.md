@@ -62,7 +62,7 @@ Dernière mesure mémoire de ce run : 3 211 370 496 octets libres ; UnrealEditor
 
 ## Fichiers
 
-AnomaliaInventoryComponent.h/.cpp ; AnomaliaInventoryWidget.h/.cpp ; Tests/AnomaliaEquipmentAttachmentTests.cpp ; tests/test_ue5_inventory_source.py ; workflows de compilation, recherche d'assets et acquisition du chien.
+AnomaliaZPrigimaliaInventoryComponent.h/.cpp ; AnomaliaZPrigimaliaInventoryWidget.h/.cpp ; Tests/AnomaliaZPrigimaliaEquipmentAttachmentTests.cpp ; tests/test_ue5_inventory_source.py ; workflows de compilation, recherche d'assets et acquisition du chien.
 BMW E39, véhicules, cartes, pawn principal et données Fab originaux préservés. PR44 reste en brouillon.
 
 

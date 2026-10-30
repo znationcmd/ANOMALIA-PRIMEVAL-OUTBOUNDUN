@@ -48,11 +48,11 @@ class ReplacementTests(unittest.TestCase):
   root=PATH.parents[2]
   pop_spec=importlib.util.spec_from_file_location('population',root/'unreal/Scripts/archipelago_population.py')
   pop=importlib.util.module_from_spec(pop_spec);pop_spec.loader.exec_module(pop)
-  include=root/'unreal/Source/AnomaliaPrimeval/World'
-  sites=[tuple(map(float,row)) for row in re.findall(r'\{\s*(-?\d+),\s*(-?\d+)\s*\}',(include/'AnomaliaInhabitedHeight.h').read_text())]
+  include=root/'unreal/Source/AnomaliaZPrigimalia/World'
+  sites=[tuple(map(float,row)) for row in re.findall(r'\{\s*(-?\d+),\s*(-?\d+)\s*\}',(include/'AnomaliaZPrigimaliaInhabitedHeight.h').read_text())]
   with tempfile.TemporaryDirectory() as d:
    cpp=Path(d)/'height.cpp';library=Path(d)/'height.so'
-   cpp.write_text('#include "AnomaliaInhabitedHeight.h"\nextern "C" double height(double e,double n){return AnomaliaInhabited::Height(e,n);}\n')
+   cpp.write_text('#include "AnomaliaZPrigimaliaInhabitedHeight.h"\nextern "C" double height(double e,double n){return AnomaliaZPrigimaliaInhabited::Height(e,n);}\n')
    subprocess.run(['g++','-shared','-fPIC','-O2','-std=c++17','-I',str(include),str(cpp),'-o',str(library)],check=True,capture_output=True)
    native=ctypes.CDLL(str(library));native.height.argtypes=[ctypes.c_double,ctypes.c_double];native.height.restype=ctypes.c_double
    plan=pop.build_plan(native.height,[11.056,9.146751708984375,14.67],sites=sites)

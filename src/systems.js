@@ -1,5 +1,5 @@
 
-/** Gameplay systems for the original open world ANOMALIA PRIMEVAL OUTBOUNDUN.
+/** Gameplay systems for the original open world ANOMALIA’Z PRIGIMALIA.
  * All game state is local; no in-game payments or third party credentials.
  */
 export const ITEM_DEFS={

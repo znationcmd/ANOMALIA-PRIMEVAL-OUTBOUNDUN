@@ -1,7 +1,7 @@
 # Audit réel des personnages ANOMALIA — 27 octobre 2026
 
 ## Périmètre vérifié
-Poste Windows ANOMALIA-PC, projet `C:\ANOMALIA\unreal\AnomaliaPrimeval.uproject`.
+Poste Windows ANOMALIA-PC, projet `C:\ANOMALIA\unreal\AnomaliaZPrigimalia.uproject`.
 Unreal chargé : `5.8.3-58210709+++UE5+Release-5.8`.
 
 Preuves :
@@ -10,7 +10,7 @@ Preuves :
 - Inventaire détaillé : `INSTALLED_CHARACTER_ASSETS_20261027.json`.
 
 ## Constats
-- `/Game/BP_AnomaliaSurvivor` hérite de la vraie classe native ANOMALIA, mais son `CharacterMesh0` n’a ni mesh ni classe d’animation.
+- `/Game/BP_AnomaliaZPrigimaliaSurvivor` hérite de la vraie classe native ANOMALIA, mais son `CharacterMesh0` n’a ni mesh ni classe d’animation.
 - Les sources installées sont antérieures à la branche de la PR #43 : pas de composants de vêtements, de système d’allures tactiques ou d’ItemEffects dans le Survivor installé. Le script d’intégration n’est pas installé.
 - `C:\ANOMALIA` n’est pas un checkout Git. Aucun HEAD local ne peut être assimilé à la PR.
 - `Content`, `Source`, `Config` sont présents ; aucun dossier `Plugins` de projet. Le fichier projet installé déclare EnhancedInput, ChaosVehiclesPlugin, Water, PCG et PythonScriptPlugin, avec EngineAssociation 5.8. La version exacte a été vérifiée dans Build.version puis dans Unreal.

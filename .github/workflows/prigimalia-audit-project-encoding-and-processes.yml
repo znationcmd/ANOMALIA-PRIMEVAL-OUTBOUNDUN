@@ -1,0 +1,57 @@
+name: PRIGIMALIA - Read-only .uproject encoding and active Windows processes
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-audit-project-encoding-and-processes.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Audit project descriptor header and relevant processes - no modifications
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(-not(Test-Path -LiteralPath $stage -PathType Leaf)){throw 'Staged project absent'}
+          if(-not(Test-Path -LiteralPath $original -PathType Leaf)){throw 'Original project absent'}
+          $bytes=[IO.File]::ReadAllBytes($stage)
+          Write-Host ('STAGED_PROJECT_BYTES='+$bytes.Length)
+          Write-Host ('STAGED_PROJECT_FIRST_BYTES='+[BitConverter]::ToString($bytes,0,[Math]::Min($bytes.Length,16)))
+          Write-Host ('STAGED_PROJECT_SHA256='+(Get-FileHash -LiteralPath $stage -Algorithm SHA256).Hash)
+          Write-Host ('ORIGINAL_PROJECT_BYTES='+([IO.File]::ReadAllBytes($original)).Length)
+          $encoding='Unknown';$json=$null
+          if($bytes.Length -ge 2 -and $bytes[0] -eq 0xFF -and $bytes[1] -eq 0xFE){
+            $encoding='UTF-16 LE BOM'
+            $json=[Text.UnicodeEncoding]::new($false,$true,$true).GetString($bytes,2,$bytes.Length-2)
+          }elseif($bytes.Length -ge 2 -and $bytes[0] -eq 0xFE -and $bytes[1] -eq 0xFF){
+            $encoding='UTF-16 BE BOM'
+            $json=[Text.UnicodeEncoding]::new($true,$true,$true).GetString($bytes,2,$bytes.Length-2)
+          }else{
+            $encoding='UTF-8 or invalid'
+            $json=[Text.UTF8Encoding]::new($false,$true).GetString($bytes)
+          }
+          Write-Host ('STAGED_PROJECT_ENCODING='+$encoding)
+          try {
+            $parsed=$json|ConvertFrom-Json
+            Write-Host ('STAGED_PROJECT_JSON_VALID='+($null -ne $parsed))
+            Write-Host ('STAGED_PROJECT_EXPECTED_MODULE='+(@($parsed.Modules|Where-Object{$_.Name -eq 'AnomaliaZPrigimalia'}).Count -eq 1))
+          }catch{
+            Write-Host ('STAGED_PROJECT_JSON_ERROR='+$_.Exception.Message)
+          }
+          $names=@('UnrealEditor','UnrealEditor-Cmd','UnrealBuildTool','AnomaliaPrimeval','AnomaliaZPrigimalia','robocopy')
+          $procs=@(Get-CimInstance Win32_Process | Where-Object { $names -contains $_.Name.Replace('.exe','') })
+          Write-Host ('RELEVANT_PROCESS_COUNT='+$procs.Count)
+          foreach($p in $procs){
+            $referencesStage=([string]$p.CommandLine).IndexOf('D:\ANOMALIAZ-PRIGIMALIA',[StringComparison]::OrdinalIgnoreCase) -ge 0
+            Write-Host ('PROCESS_NAME='+$p.Name+' PID='+$p.ProcessId+' USES_STAGE='+$referencesStage)
+          }
+          Write-Host 'PRIGIMALIA_READ_ONLY_DESCRIPTOR_AUDIT_COMPLETE=true'

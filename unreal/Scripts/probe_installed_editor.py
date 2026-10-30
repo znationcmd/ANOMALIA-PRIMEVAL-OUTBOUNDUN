@@ -7,12 +7,12 @@ try:
  package=os.environ.get('ANOMALIA_CAPTURE_MAP','/Game/Maps/ANOMALIA_Archipelago_v2')
  if package not in ('/Game/Maps/ANOMALIA_Archipelago_v2','/Game/Maps/ANOMALIA_Inhabited_v2'):raise RuntimeError('Unknown installed map')
  if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(package):raise RuntimeError('Installed map cannot open')
- wp=unreal.AnomaliaWorldImportLibrary
+ wp=unreal.AnomaliaZPrigimaliaWorldImportLibrary
  snapshot=json.loads(wp.get_archipelago_actor_descriptors())
  if snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Copied actor descriptors unavailable')
  desc=snapshot['actors']
  if not wp.set_archipelago_actors_loaded([d['guid'] for d in desc if d['nativeClass'] in ('/Script/Landscape.Landscape','/Script/Landscape.LandscapeStreamingProxy')],True):raise RuntimeError('Copied Landscape streaming refused')
- native=json.loads(unreal.AnomaliaWorldImportLibrary.refresh_archipelago_render_resources(False))
+ native=json.loads(unreal.AnomaliaZPrigimaliaWorldImportLibrary.refresh_archipelago_render_resources(False))
  if native.get('componentCount')!=576 or native.get('landscapesLayerMergeRequested')!=0:raise RuntimeError('Copied Landscape incomplete')
  if max(c['boundsMaxZCm'] for c in native['components'])<100000:raise RuntimeError('Copied map lost its relief')
  actual=Path(unreal.Paths.project_saved_dir()).resolve();expected=Path(os.environ['ANOMALIA_EXPECTED_SAVED']).resolve()

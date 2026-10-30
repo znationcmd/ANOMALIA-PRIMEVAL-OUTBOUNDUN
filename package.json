@@ -1,5 +1,5 @@
 {
-  "name": "anomalia-primeval-outboundun",
+  "name": "anomaliaz-prigimalia",
   "version": "0.7.0",
   "private": true,
   "type": "module",
@@ -30,8 +30,8 @@
   "main": "desktop/main.cjs",
   "build": {
     "appId": "com.cmd.anomalia.primevaloutboundun",
-    "productName": "ANOMALIA PRIMEVAL OUTBOUNDUN",
-    "copyright": "Copyright 2026 ANOMALIA PRIMEVAL OUTBOUNDUN",
+    "productName": "ANOMALIA’Z PRIGIMALIA",
+    "copyright": "Copyright 2026 ANOMALIA’Z PRIGIMALIA",
     "asar": true,
     "directories": {
       "output": "release/windows"
@@ -59,8 +59,8 @@
       "perMachine": false,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "ANOMALIA PRIMEVAL OUTBOUNDUN",
-      "artifactName": "ANOMALIA-PRIMEVAL-OUTBOUNDUN-Setup-${version}-${arch}.${ext}",
+      "shortcutName": "ANOMALIA’Z PRIGIMALIA",
+      "artifactName": "ANOMALIAZ-PRIGIMALIA-Setup-${version}-${arch}.${ext}",
       "installerIcon": "build/icon.ico",
       "uninstallerIcon": "build/icon.ico"
     },

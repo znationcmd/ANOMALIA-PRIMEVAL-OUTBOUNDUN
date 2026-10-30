@@ -1,0 +1,37 @@
+name: PRIGIMALIA - Diagnose interrupted native audit
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-audit-diagnostics.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read staged audit evidence without starting Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue | Select-Object Id,ProcessName,CPU,StartTime | Format-Table
+          Get-PSDrive C,D | Select-Object Name,Free,Used | Format-Table
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          foreach($relative in @('Saved/BrandMigration/dry-run-editor.log','Saved/BrandMigration/asset-rename-report.json')){
+            $p=Join-Path $root $relative
+            Write-Host "EVIDENCE=$relative"
+            if(Test-Path -LiteralPath $p){Get-Content -LiteralPath $p -Tail 150}else{Write-Host 'MISSING'}
+          }
+          Get-ChildItem -LiteralPath (Join-Path $root 'Saved/Logs') -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 4 Name,Length,LastWriteTime | Format-Table
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prigimalia-interrupted-audit-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.log
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.json

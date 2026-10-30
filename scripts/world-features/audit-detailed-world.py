@@ -23,14 +23,14 @@ try:
     if descriptors is None:
         raise RuntimeError('Saved World Partition descriptors required')
     known = {}
-    for folder, tag, suffix in [('RealismValidation_v2', 'AnomaliaRealismSha256', '_r2'),
-                                 ('WorldFeaturesPrepared_v1', 'AnomaliaWorldFeatureSha256', ''),
-                                 ('ResidentialPhotogrammetryPrepared_v1', 'AnomaliaWorldFeatureSha256', '')]:
+    for folder, tag, suffix in [('RealismValidation_v2', 'AnomaliaZPrigimaliaRealismSha256', '_r2'),
+                                 ('WorldFeaturesPrepared_v1', 'AnomaliaZPrigimaliaWorldFeatureSha256', ''),
+                                 ('ResidentialPhotogrammetryPrepared_v1', 'AnomaliaZPrigimaliaWorldFeatureSha256', '')]:
         manifest = json.loads((ROOT / 'SourceAssets' / folder / 'manifest.json').read_text())
         for item in manifest['models']:
             path = item['objectPath'] + suffix
             known[path.rsplit('/', 1)[0] + '/' + path.rsplit('/', 1)[1] + '.' + path.rsplit('/', 1)[1]] = (tag, item['sha256'])
-    expected_classes = {'/Script/Engine.StaticMeshActor', '/Script/AnomaliaPrimeval.AnomaliaSceneryCluster'}
+    expected_classes = {'/Script/Engine.StaticMeshActor', '/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster'}
     targets = []
     for desc in descriptors:
         native = desc.get_editor_property('native_class')
@@ -73,7 +73,7 @@ try:
                             verified = unreal.EditorAssetLibrary.get_metadata_tag(mesh, tag) == digest
                         else:
                             verified = (path.startswith('/Game/Anomalia/SettlementRoads_v1/')
-                                        and bool(unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaStreetGeometrySha256')))
+                                        and bool(unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaStreetGeometrySha256')))
                         materials = mesh.get_editor_property('static_materials')
                         triangles = mesh.get_num_triangles(0)
                         nanite_triangles = mesh.get_num_nanite_triangles()

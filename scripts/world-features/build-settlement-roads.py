@@ -39,7 +39,7 @@ try:
     if hashlib.sha256(source.read_bytes()).hexdigest() != asphalt['sha256']:
         raise RuntimeError('Asphalt source identity mismatch')
     original = unreal.load_asset(asphalt['objectPath'] + '_r2')
-    if not isinstance(original, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(original, 'AnomaliaRealismSha256') != asphalt['sha256']:
+    if not isinstance(original, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(original, 'AnomaliaZPrigimaliaRealismSha256') != asphalt['sha256']:
         raise RuntimeError('Verified native asphalt material required')
     materials = original.get_editor_property('static_materials')
     if len(materials) != 2 or any(not slot.material_interface for slot in materials):
@@ -59,7 +59,7 @@ try:
                 position = a.get_actor_location(); bounds = feature_mesh.get_bounds()
                 obstacles.append(dict(east=position.x / 100, north=-position.y / 100,
                                       width=bounds.box_extent.x * .02, depth=bounds.box_extent.y * .02))
-    surface = ground.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
+    surface = ground.sampled_surface(unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height)
     cache = ROOT / 'SourceAssets/SettlementRoads_v1'; cache.mkdir(parents=True, exist_ok=True)
     for site in plan['settlements']:
         result = streets.build_streets(site, obstacles, surface, ground.ground_envelope)
@@ -73,7 +73,7 @@ try:
         destination = ART + '/' + site['id'] + '/SM_Streets'
         if unreal.EditorAssetLibrary.does_asset_exist(destination):
             mesh = unreal.load_asset(destination)
-            if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaStreetGeometrySha256') != digest:
+            if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaStreetGeometrySha256') != digest:
                 raise RuntimeError('Existing artist street mesh preserved')
         else:
             task = unreal.AssetImportTask(); task.filename = str(file)
@@ -91,8 +91,8 @@ try:
             body = mesh.get_editor_property('body_setup')
             if not body: raise RuntimeError('Street collision body required')
             body.set_editor_property('collision_trace_flag', unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaStreetGeometrySha256', digest)
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaAttribution', 'Original ANOMALIA geometry; asphalt texture: ' + asphalt['author'] + ' / ' + asphalt['license'] + ' / ' + asphalt['source'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaStreetGeometrySha256', digest)
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaAttribution', 'Original ANOMALIA geometry; asphalt texture: ' + asphalt['author'] + ' / ' + asphalt['license'] + ' / ' + asphalt['source'])
             if not unreal.EditorAssetLibrary.save_loaded_asset(mesh, only_if_is_dirty=False):
                 raise RuntimeError('Street mesh save failed')
         label = 'ANOMALIA_Streets_' + site['id']; actor = present.get(label)

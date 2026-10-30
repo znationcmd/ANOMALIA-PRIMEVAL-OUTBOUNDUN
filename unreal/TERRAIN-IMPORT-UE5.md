@@ -74,7 +74,7 @@ ne sont pas supprimés.
 
 Il faut réellement effectuer ces actions **dans Unreal Editor** :
 
-1. Compiler le projet Unreal C++ `AnomaliaPrimeval.uproject`.
+1. Compiler le projet Unreal C++ `AnomaliaZPrigimalia.uproject`.
 2. Dans **Fichier → Nouveau niveau**, créer un niveau **Open World**
    avec **World Partition**, puis l'enregistrer sous
    `/Game/Maps/ANOMALIA_TerrainDraft`. Ne pas écraser

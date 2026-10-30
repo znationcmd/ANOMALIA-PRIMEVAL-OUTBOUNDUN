@@ -30,7 +30,7 @@ try:
     proposals=identity.settlement_signs(plan)
     source=ROOT/'SourceAssets/OriginalSigns_v1/sign.glb'
     digest=hashlib.sha256(source.read_bytes()).hexdigest()
-    native=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaPlaceSign')
+    native=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaPlaceSign')
     if not native: raise RuntimeError('Compile native sign actor before placement')
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     if not level.load_level(package): raise RuntimeError('Cannot open validated population map')
@@ -82,7 +82,7 @@ try:
             e,n=candidate['east']*100,-candidate['north']*100
             if any((e-p.x)**2+(n-p.y)**2<500**2 for p in used): continue
             if any(abs(candidate['east']-b['east'])<b['width']/2+4 and abs(candidate['north']-b['north'])<b['depth']/2+4 for b in plan['buildings']): continue
-            expected_z=unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height(candidate['east'],candidate['north'])*100
+            expected_z=unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height(candidate['east'],candidate['north'])*100
             attempt=actors.spawn_actor_from_class(native,unreal.Vector(e,n,expected_z),unreal.Rotator(0,item['yaw'],0))
             if not attempt: raise RuntimeError('Cannot spawn original native sign')
             if attempt.snap_to_ground(expected_z):

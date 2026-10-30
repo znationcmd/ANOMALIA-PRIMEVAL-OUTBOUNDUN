@@ -1,0 +1,194 @@
+name: PRIGIMALIA - Verify native maps, repair package refs and package Windows
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-verify-and-package-windows.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  verify-package:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Validate independent staged copy and exact approved poster
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
+          if(-not(Test-Path -LiteralPath $original) -or -not(Test-Path -LiteralPath $project) -or -not(Test-Path -LiteralPath $marker)){throw 'Original/isolated Unreal project or verified backup marker missing'}
+          foreach($p in @('D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA')){
+            if((Get-Item -LiteralPath $p).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Unsafe symlinked project root'}
+          }
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0){throw 'Native Unreal editor/build/copy is already in progress'}
+          $poster=Join-Path $root 'SourceAssets\Branding\prigimalia-startup-poster.jpg'
+          $texture=Join-Path $root 'Content\AnomaliaZPrigimalia\Branding\T_StartupPoster.uasset'
+          $cpp=Join-Path $root 'Source\AnomaliaZPrigimalia\AnomaliaZPrigimaliaSessionWidget.cpp'
+          if(-not(Test-Path -LiteralPath $poster) -or -not(Test-Path -LiteralPath $texture) -or -not(Test-Path -LiteralPath $cpp)){throw 'Approved poster texture or native boot-only UI source missing'}
+          if((Get-FileHash -LiteralPath $poster -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'df2af9f73703a470a0b05d7f73bd99cfc0a3f40211d3a40b82e49da197c9d316'){throw 'Approved poster bytes are different'}
+          $code=Get-Content -LiteralPath $cpp -Raw
+          if(-not $code.Contains('T_StartupPoster.T_StartupPoster') -or -not $code.Contains('StartupArtworkFrame->SetVisibility(ESlateVisibility::Collapsed)')){throw 'Transient startup poster logic not present in staged code'}
+          $hash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
+          $hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prigimalia-original-uproject.sha256')
+          Write-Host 'PRIGIMALIA_ORIGINAL_SAFE_AND_BOOT_POSTER_VERIFIED=true'
+      - name: Resume remaining native map renames safely through Unreal AssetTools
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\migrate_remaining_prigimalia_maps.py'
+          $log=Join-Path $root 'Saved\BrandMigration\remaining-map-native-assettools.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Failed to migrate ordinary maps safely; inspect remaining-map-migration-status.json'}
+          $p=Join-Path $root 'Saved\BrandMigration\remaining-map-migration-status.json'
+          $r=Get-Content -LiteralPath $p -Raw|ConvertFrom-Json
+          if(@($r.errors).Count -gt 0 -or $r.planned -lt 1){throw 'Map resume evidence has errors'}
+          Write-Host ('NATIVE_MAP_RENAME_PLAN='+$r.planned)
+          Write-Host ('NATIVE_MAPS_RENAMED_WITH_ASSETTOOLS='+@($r.renamedWithAssetTools).Count)
+          Write-Host ('WORLD_PARTITION_MAPS_STILL_PENDING='+@($r.pendingWorldPartition).Count)
+      - name: Complete only required World Partition map renames with native builder
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $p=Join-Path $root 'Saved\BrandMigration\remaining-map-migration-status.json'
+          $r=Get-Content -LiteralPath $p -Raw|ConvertFrom-Json
+          if(@($r.errors).Count -gt 0){throw 'Preceding simple map migration had errors'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $originalHash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
+          $i=0
+          foreach($entry in @($r.pendingWorldPartition)){
+            $i++
+            $old=[string]$entry.old;$new=[string]$entry.new
+            if(-not $old.StartsWith('/Game/') -or -not $new.StartsWith('/Game/')){throw 'Unsafe Unreal map package name'}
+            $relOld=($old.Substring(6) -replace '/','\')+'.umap'
+            $relNew=($new.Substring(6) -replace '/','\')+'.umap'
+            $diskOld=Join-Path (Join-Path $root 'Content') $relOld
+            $diskNew=Join-Path (Join-Path $root 'Content') $relNew
+            if(Test-Path -LiteralPath $diskNew){throw ('Uncertain preexisting target for map: '+$new)}
+            if(-not(Test-Path -LiteralPath $diskOld)){throw ('Unrecoverable source map missing: '+$old)}
+            if($old -eq '/Game/Maps/ANOMALIA_Playable_v1' -and $new -eq '/Game/Maps/PRIGIMALIA_Playable_v1'){
+              # The UE5.8 WP builder crashed with EXCEPTION_ACCESS_VIOLATION on
+              # exactly this map. Keep its original World package intact;
+              # the next native Editor step will reload it and fail if invalid.
+              # GameDefaultMap still points to its real legacy package.
+              $legacyConfig=Get-Content -LiteralPath (Join-Path $root 'Config\DefaultEngine.ini') -Raw
+              if(-not $legacyConfig.Contains('GameDefaultMap=/Game/Maps/ANOMALIA_Playable_v1')){throw 'Legacy playable map is not configured as GameDefaultMap'}
+              $expectedSource=Join-Path 'D:\ANOMALIA\unreal\Content' 'Maps\ANOMALIA_Playable_v1.umap'
+              if(-not(Test-Path -LiteralPath $expectedSource)){throw 'Original playable World source missing'}
+              Write-Host 'PRIGIMALIA_PLAYABLE_WORLD_RETAINED_FOR_NATIVE_RELOAD=true'
+              continue
+            }
+            $log=Join-Path $root ('Saved\BrandMigration\world-partition-map-'+$i+'.log')
+            & $editor $project $old '-run=WorldPartitionBuilderCommandlet' '-SCCProvider=None' '-builder=WorldPartitionRenameDuplicateBuilder' "-NewPackage=$new" '-Rename' '-NullRHI' '-unattended' '-nopause' '-nosound' "-abslog=$log"
+            if($LASTEXITCODE -ne 0){throw ('World Partition rename builder failed: '+$old+'; log '+$log)}
+            if(-not(Test-Path -LiteralPath $diskNew)){throw ('World Partition builder returned success without target: '+$new)}
+            if((Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash -ne $originalHash){throw 'Original project changed unexpectedly'}
+            Write-Host ('WORLD_PARTITION_MAP_RENAMED='+$new)
+          }
+      - name: Reload every renamed native World and issue independent migration receipt
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_prigimalia_native_migration.py'
+          $log=Join-Path $root 'Saved\BrandMigration\native-map-reload-validation.log'
+          if(-not(Test-Path -LiteralPath $script) -or -not(Test-Path -LiteralPath $editor)){throw 'Native verifier or UE editor missing'}
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Actual Unreal map reload failed; see native-map-reload-validation.log'}
+          $receipt=Join-Path $root 'Saved\BrandMigration\asset-rename-report.json'
+          $proof=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
+          if($proof.verified -ne $true -or $proof.nativeReloadVerified -ne $true -or $proof.validationMethod -ne 'UE5.8-Unreal-AssetRegistry-and-World-load' -or @($proof.errors).Count -gt 0 -or $proof.validatedMaps -lt 25){throw 'Reload result or signed migration receipt invalid'}
+          if($proof.allMapRenamesComplete -ne $false -or @($proof.mapsPreservedAtOriginalPath).Count -ne 1 -or @($proof.mapsRenamed).Count -ne 24){throw 'Native map compatibility exception must be exactly 1 of 25 planned maps'}
+          if($proof.mapsPreservedAtOriginalPath[0].actual -ne '/Game/Maps/ANOMALIA_Playable_v1'){throw 'Unexpected legacy map package; refuse unsafe packaging'}
+          Write-Host ('PRIGIMALIA_RELOADED_NATIVE_MAPS='+$proof.validatedMaps)
+          Write-Host ('PRIGIMALIA_RELOADED_NATIVE_ASSETS='+$proof.validatedAssets)
+      - name: Back up staged textual sources and update verified package references
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $dir=Join-Path $stage 'unreal\Saved\BrandMigration'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $sourceCopy=Join-Path $dir 'pre-package-reference-update.zip'
+          if(-not(Test-Path -LiteralPath $sourceCopy)){
+            $toSave=@('Source','Config','Scripts')|ForEach-Object{Join-Path $stage ('unreal\'+$_)}
+            Compress-Archive -LiteralPath $toSave -DestinationPath $sourceCopy -CompressionLevel Optimal -ErrorAction Stop
+          }
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $helper=Join-Path $env:GITHUB_WORKSPACE 'scripts\migrate-prigimalia-package-references.py'
+          if(-not(Test-Path -LiteralPath $python) -or -not(Test-Path -LiteralPath $helper)){throw 'Native Python or repository reference migrator missing'}
+          & $python $helper '--root' $stage '--apply'
+          if($LASTEXITCODE -ne 0){throw 'Failed to migrate textual package references in isolated stage'}
+          $receipt=Join-Path $dir 'package-ref-update-report.json'
+          if(-not(Test-Path -LiteralPath $receipt)){throw 'Package reference receipt was not created'}
+          $proof=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
+          if($proof.applied -ne $true -or $proof.nativeAssetsVerified -ne $true -or $proof.historicDataPreserved -ne $true -or $proof.legacyPlayableWorldRetained -ne $true){throw 'Package reference validation failed'}
+          Write-Host ('PRIGIMALIA_NATIVE_PACKAGE_REFERENCES_VERIFIED=true')
+          Write-Host ('PRIGIMALIA_TEXT_REFERENCES_CHANGED='+$proof.changedFiles)
+      - name: Build both Unreal Editor and Windows Game with validated map references
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw ('Post-reference C++ compilation failed: '+$target)}
+          }
+          Write-Host 'PRIGIMALIA_POST_MIGRATION_NATIVE_GAME_BUILD_SUCCESS=true'
+      - name: Cook stage and archive independent Windows game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          if(-not(Test-Path -LiteralPath $uat)){throw 'Missing Unreal Automation Tool'}
+          $archive='D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated'
+          if(Test-Path -LiteralPath $archive){throw 'Previous packaged output exists; refuse overwrite until reviewed'}
+          & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
+          if($LASTEXITCODE -ne 0){throw ('Windows BuildCookRun packaging failed, exit code '+$LASTEXITCODE)}
+          $exes=@(Get-ChildItem -LiteralPath $archive -Filter 'AnomaliaZPrigimalia.exe' -File -Recurse -ErrorAction SilentlyContinue)
+          if($exes.Count -eq 0){throw 'Cook/package reported success, but final runnable EXE was not found'}
+          Write-Host ('PRIGIMALIA_PACKAGED_WINDOWS_EXE='+$exes[0].FullName)
+          Write-Host 'PRIGIMALIA_NATIVE_WINDOWS_PACKAGE_VERIFIED=true'
+      - name: Assert original project remained unchanged
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $oldHash=Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prigimalia-original-uproject.sha256') -Raw
+          $newHash=(Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash
+          if($newHash -ne $oldHash.Trim()){throw 'Original D project file changed unexpectedly'}
+          Write-Host 'PRIGIMALIA_ORIGINAL_D_PROJECT_UNCHANGED=true'
+      - name: Preserve reports, logs and blocked-stage diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-Native-Package-Verification
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/asset-rename-report.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/asset-rename-before-native-revalidation.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/package-ref-update-report.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/native-map-reload-validation.log

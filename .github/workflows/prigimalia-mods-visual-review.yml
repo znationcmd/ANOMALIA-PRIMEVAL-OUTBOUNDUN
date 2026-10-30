@@ -1,0 +1,192 @@
+name: PRIGIMALIA - Real Mods screen visual gallery and click tests
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-mods-visual-review.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  mods-visual:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Run actual native Mods functionality and imagery source tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python tests/test_ue5_native_workshop_menu.py
+          if($LASTEXITCODE -ne 0){throw 'Native Mods functional tests failed'}
+      - name: Verify isolated game and install source backups of the new UI
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
+          if(-not(Test-Path -LiteralPath $original) -or -not(Test-Path -LiteralPath $project) -or -not(Test-Path -LiteralPath $marker)){throw 'Missing isolated source safety marker'}
+          foreach($p in @('D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA',$root)){
+            if((Get-Item -LiteralPath $p).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked project root refused'}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'Native Unreal workload already running; leave files untouched'}
+          $backup=Join-Path $root ('Saved\BrandMigration\WorkForgeVisualReview\run-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'Review backup already exists - refuse overwrite'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp')
+          foreach($name in $names){
+            $source=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $target=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            if(-not(Test-Path -LiteralPath $source) -or -not(Test-Path -LiteralPath $target)){throw ('Native source missing: '+$name)}
+            if((Get-Item -LiteralPath $target).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source refused'}
+            Copy-Item -LiteralPath $target -Destination (Join-Path $backup $name)
+            if((Get-FileHash -LiteralPath $target).Hash -ne (Get-FileHash -LiteralPath (Join-Path $backup $name)).Hash){throw ('Backup hash failed: '+$name)}
+          }
+          foreach($name in $names){
+            $source=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $target=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            Copy-Item -LiteralPath $source -Destination $target -Force
+            if((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash){throw ('UI source mismatch: '+$name)}
+          }
+          (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash|Set-Content (Join-Path $env:RUNNER_TEMP 'workforge-original-uproject.sha256')
+          Write-Host 'PRIGIMALIA_WORKFORGE_NATIVE_SOURCES_STAGED=true'
+      - name: Prepare repository-owned scenery for a photo-backed gallery without fake mods
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $dest='D:\ANOMALIAZ-PRIGIMALIA\unreal\SourceAssets\WorkForge\ReferenceArtwork'
+          if(Test-Path -LiteralPath $dest){throw 'Existing reference-art destination: refuse unintended replacement'}
+          New-Item -Path $dest -ItemType Directory -Force|Out-Null
+          $world=Join-Path $env:GITHUB_WORKSPACE 'docs\world'
+          $photos=Join-Path $world 'captures\2026-10-21'
+          $brand=Join-Path $env:GITHUB_WORKSPACE 'unreal\SourceAssets\Branding'
+          $map=@{
+            'hero-archipelago.jpg'=(Join-Path $world 'ANOMALIA_Archipelago_preview.jpg')
+            'category-all.jpg'=(Join-Path $brand 'prigimalia-menu-backdrop.jpg')
+            'category-vehicles.jpg'=(Join-Path $photos '05_detroit_bridge.jpg')
+            'category-creatures.jpg'=(Join-Path $photos '01_archipelago.jpg')
+            'category-buildings.jpg'=(Join-Path $photos '05_detroit_bridge.jpg')
+            'category-maps.jpg'=(Join-Path $photos '01_archipelago.jpg')
+            'category-weapons.jpg'=(Join-Path $photos '04_desert.jpg')
+            'category-survival.jpg'=(Join-Path $photos '03_beach.jpg')
+            'category-gameplay.jpg'=(Join-Path $photos '02_snow_mountains.jpg')
+            'category-tools.jpg'=(Join-Path $photos '05_detroit_bridge.jpg')
+            'card-fallback.jpg'=(Join-Path $world 'ANOMALIA_Archipelago_preview.jpg')
+          }
+          foreach($name in $map.Keys){
+            if(-not(Test-Path -LiteralPath $map[$name] -PathType Leaf)){throw ('Art source missing '+$name)}
+            Copy-Item -LiteralPath $map[$name] -Destination (Join-Path $dest $name)
+            if((Get-FileHash -LiteralPath $map[$name]).Hash -ne (Get-FileHash -LiteralPath (Join-Path $dest $name)).Hash){throw ('Art checksum failed '+$name)}
+          }
+          Write-Host 'PRIGIMALIA_VISUAL_REFERENCE_ARTWORK_PREPARED=true'
+      - name: Actually import and save the eleven UE5 UI image textures
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\import_workforge_mods_art.py'
+          $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\workforge-mods-import.log'
+          if(-not(Test-Path -LiteralPath $editor) -or -not(Test-Path -LiteralPath $script)){throw 'Missing native Unreal importer'}
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'UE5 visual category textures failed to import'}
+          $report='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\workforge-mods-visual-art-report.json'
+          $proof=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if(@($proof.errors).Count -gt 0 -or (@($proof.created).Count+@($proof.alreadyIdentical).Count) -ne 11){throw 'Missing imported native WorkForge visual textures'}
+          Write-Host 'PRIGIMALIA_WORKFORGE_TEXTURES_IMPORTED=11'
+      - name: Compile real Editor and Game with artwork-backed UMG Mods controls
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw ('Native WorkForge compile failed '+$target)}
+          }
+          Write-Host 'PRIGIMALIA_WORKFORGE_CPLUSPLUS_BUILT=true'
+      - name: Explicitly include the artwork textures in the Unreal Windows cook
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $config=Join-Path $root 'Config\DefaultGame.ini'
+          $backup=Join-Path $root ('Saved\BrandMigration\WorkForgeVisualReview\run-'+$env:GITHUB_RUN_ID+'\DefaultGame.ini.before-workforge-cook')
+          if(-not(Test-Path -LiteralPath $config -PathType Leaf)){throw 'DefaultGame.ini not found'}
+          $current=Get-Content -LiteralPath $config -Raw
+          $line='+DirectoriesToAlwaysCook=(Path="/Game/AnomaliaZPrigimalia/WorkForge/Artwork")'
+          if(-not $current.Contains($line)){
+            Copy-Item -LiteralPath $config -Destination $backup -ErrorAction Stop
+            if((Get-FileHash -LiteralPath $config).Hash -ne (Get-FileHash -LiteralPath $backup).Hash){throw 'Config backup verification failed'}
+            $newline=[Environment]::NewLine
+            $suffix=$newline+'[/Script/UnrealEd.ProjectPackagingSettings]'+$newline+$line+$newline
+            [IO.File]::AppendAllText($config,$suffix,[Text.UTF8Encoding]::new($false))
+          }
+          if(-not((Get-Content -LiteralPath $config -Raw).Contains($line))){throw 'Art cook dependency was not preserved'}
+          Write-Host 'PRIGIMALIA_WORKFORGE_ARTWORK_MARKED_FOR_COOK=true'
+      - name: Cook and archive a separate ModsVisualReview Windows game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $archive='D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\ModsVisualReview'
+          if(Test-Path -LiteralPath $archive){throw 'Existing review game: cannot overwrite'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
+          if($LASTEXITCODE -ne 0){throw 'Cook or packaging failed'}
+          $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
+          if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Review game EXE missing'}
+          Write-Host ('PRIGIMALIA_WORKFORGE_VISUAL_REVIEW_EXE='+$exe)
+      - name: Launch native Windows game and assert Mods buttons and screenshot
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe='D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\ModsVisualReview\Windows\AnomaliaZPrigimalia.exe'
+          $map='/Game/Maps/ANOMALIA_Playable_v1'
+          $out='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\ModsVisualReview'
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $report=Join-Path $out 'native-mods-probe.json'
+          $log=Join-Path $out 'native-mods-probe.log'
+          $args=@($map,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause',("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
+          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru -WindowStyle Normal
+          try{
+            if(-not $proc.WaitForExit(180000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue;throw 'Packaged gameplay test timed out'}
+          }finally{if(-not $proc.HasExited){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue}}
+          if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw 'No actual packaged-game probe report'}
+          $proof=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($proof.state -ne 'PACKAGED_GAME_SMOKE_PASSED'){throw ('Native Mods gameplay probe failed: '+$proof.error)}
+          if(@($proof.checks) -notcontains 'native_mods_category_search_my_mods_and_catalog_buttons_operational'){throw 'Native Mods category/search/clickable interactions not confirmed'}
+          $shot=Join-Path $out 'native-mods-probe-workshop.png'
+          if(-not(Test-Path -LiteralPath $shot -PathType Leaf) -or (Get-Item -LiteralPath $shot).Length -lt 10000){throw 'No fresh in-game Mods visual screenshot'}
+          Write-Host 'PRIGIMALIA_MODS_BUTTONS_AND_RENDER_VERIFIED_IN_REAL_GAME=true'
+      - name: Confirm original and existing playable Windows build remain untouched
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $prev=(Get-Content (Join-Path $env:RUNNER_TEMP 'workforge-original-uproject.sha256') -Raw).Trim()
+          if((Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -Algorithm SHA256).Hash -ne $prev){throw 'Original project changed'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Old working game missing'}
+          Write-Host 'PRIGIMALIA_ORIGINAL_AND_OLD_GAME_PRESERVED=true'
+      - name: Upload fresh actual visual screenshot and exact failure logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-WorkForge-Real-Mods-Visual-Review
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/workforge-mods-visual-art-report.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/workforge-mods-import.log
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/ModsVisualReview/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/ModsVisualReview/*.png
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/ModsVisualReview/*.log

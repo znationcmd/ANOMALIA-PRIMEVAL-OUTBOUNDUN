@@ -1,6 +1,6 @@
 # Manny/Quinn modular appearance — preparation (not asset import)
 
-The playable AAnomaliaSurvivor now owns seven optional cosmetic skeletal components: Jacket, Pants, Boots, Gloves, Headgear, Backpack, Vest. Their animation pose follows the existing character mesh; collisions are disabled on cosmetic layers. SetClothingMesh rejects mismatched skeletons. This is a local cosmetic API, **not yet a replicated server-authoritative equipment system**.
+The playable AAnomaliaZPrigimaliaSurvivor now owns seven optional cosmetic skeletal components: Jacket, Pants, Boots, Gloves, Headgear, Backpack, Vest. Their animation pose follows the existing character mesh; collisions are disabled on cosmetic layers. SetClothingMesh rejects mismatched skeletons. This is a local cosmetic API, **not yet a replicated server-authoritative equipment system**.
 
 ## Asset acquisition (manual Epic entitlement)
 

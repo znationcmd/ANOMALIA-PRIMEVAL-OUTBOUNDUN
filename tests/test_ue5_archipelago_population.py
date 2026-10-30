@@ -16,13 +16,13 @@ class PopulationTests(unittest.TestCase):
     def setUpClass(cls):
         cls.tmp=tempfile.TemporaryDirectory()
         base=Path(cls.tmp.name);source=base/'terrain.cpp';library=base/'terrain.so'
-        source.write_text('''#include "World/AnomaliaInhabitedHeight.h"
-extern "C" double height(double e,double n){return AnomaliaInhabited::Height(e,n);}
-extern "C" double original(double e,double n){return AnomaliaArchipelago::Height(e,n);}
-extern "C" int site_count(){return sizeof(AnomaliaInhabited::Sites)/sizeof(AnomaliaInhabited::Sites[0]);}
-extern "C" double site(int i,int axis){return AnomaliaInhabited::Sites[i][axis];}
+        source.write_text('''#include "World/AnomaliaZPrigimaliaInhabitedHeight.h"
+extern "C" double height(double e,double n){return AnomaliaZPrigimaliaInhabited::Height(e,n);}
+extern "C" double original(double e,double n){return AnomaliaZPrigimaliaArchipelago::Height(e,n);}
+extern "C" int site_count(){return sizeof(AnomaliaZPrigimaliaInhabited::Sites)/sizeof(AnomaliaZPrigimaliaInhabited::Sites[0]);}
+extern "C" double site(int i,int axis){return AnomaliaZPrigimaliaInhabited::Sites[i][axis];}
 ''')
-        subprocess.run(['g++','-std=c++17','-O2','-Wall','-Wextra','-Werror','-fPIC','-shared','-I',str(ROOT/'unreal/Source/AnomaliaPrimeval'),str(source),'-o',str(library)],check=True,capture_output=True)
+        subprocess.run(['g++','-std=c++17','-O2','-Wall','-Wextra','-Werror','-fPIC','-shared','-I',str(ROOT/'unreal/Source/AnomaliaZPrigimalia'),str(source),'-o',str(library)],check=True,capture_output=True)
         cls.dll=ctypes.CDLL(str(library))
         for name in ('height','original'):
             fn=getattr(cls.dll,name);fn.argtypes=[ctypes.c_double,ctypes.c_double];fn.restype=ctypes.c_double

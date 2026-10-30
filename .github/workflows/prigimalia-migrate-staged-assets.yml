@@ -1,0 +1,136 @@
+name: ANOMALIA’Z PRIGIMALIA - Compile and migrate staged UE assets
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-migrate-staged-assets.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  staged-native:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Assert full independent Windows project clone is verified
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $source='D:\ANOMALIA'
+          $marker=Join-Path $stage 'unreal/Saved/BrandMigration/verified-source-backup.marker'
+          if(-not (Test-Path -LiteralPath $marker)){throw 'Clone not verified; no asset migration permitted'}
+          if(-not (Test-Path -LiteralPath (Join-Path $source 'unreal/AnomaliaPrimeval.uproject'))){throw 'Original project not preserved'}
+          if(-not (Test-Path -LiteralPath (Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject'))){throw 'Staged renamed UE5 project missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count -gt 0){throw 'A game or Unreal Editor is currently running'}
+          Write-Host 'INDEPENDENT_STAGED_COPY_CHECKED=true'
+      - name: Overlay latest renamed C++ and Unreal scripts into staged copy only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA'
+          foreach($folder in @('Source','Config','Scripts','SourceAssets','Build')){
+             $src=Join-Path $env:GITHUB_WORKSPACE ('unreal/'+$folder)
+             if(-not (Test-Path -LiteralPath $src)){continue}
+             $dest=Join-Path $stage ('unreal/'+$folder)
+             New-Item -ItemType Directory -Path $dest -Force | Out-Null
+             & robocopy $src $dest /E /XJ /R:1 /W:1 /MT:8 /NFL /NDL /NP
+             if($LASTEXITCODE -ge 8){throw "Failed overlay of renamed $folder files"}
+          }
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject') -Destination (Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject') -Force
+          Write-Host 'LATEST_REBRANDED_UE_SOURCE_APPLIED_TO_STAGE=true'
+          # Robocopy codes 0..7 are successful; do not leak them to Actions.
+          exit 0
+      - name: Merge original local-only C++ files into renamed stage without overwrites
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          if(-not (Test-Path -LiteralPath $py)){throw 'Unreal bundled Python unavailable'}
+          $helper=Join-Path $env:GITHUB_WORKSPACE 'scripts/merge-local-prigimalia-cpp.py'
+          & $py $helper '--original' 'D:\ANOMALIA' '--staged' 'D:\ANOMALIAZ-PRIGIMALIA' '--apply'
+          if($LASTEXITCODE -ne 0){throw 'Local-only native files were not safely merged'}
+          Write-Host 'LOCAL_NATIVE_CPP_ADDITIONS_PRESERVED=true'
+      - name: Build AnomaliaZPrigimaliaEditor using SHORT D path
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          & $bat 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+          if($LASTEXITCODE -ne 0){throw "Compilation failed ($LASTEXITCODE); assets left untouched in stage"}
+          Write-Host 'STAGED_PRIGIMALIA_EDITOR_CPP_BUILD_SUCCESS=true'
+      - name: Inspect actual assets through native Unreal Editor without modification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:PRIGIMALIA_APPLY_RENAME='NO'
+          $env:PRIGIMALIA_STAGED_COPY='YES'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $script='D:\ANOMALIAZ-PRIGIMALIA\unreal\Scripts\migrate_prigimalia_assets.py'
+          $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\dry-run-editor.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'UE Editor asset audit failed'}
+          $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-dry-run-report.json' -Raw | ConvertFrom-Json
+          Write-Host "LEGACY_ASSETS_FOUND=$($report.legacyAssetsFound)"
+          Write-Host "LEGACY_MAPS_FOUND=$($report.legacyMapsFound)"
+          if($report.legacyAssetsFound -lt 1 -and $report.legacyMapsFound -lt 1){throw 'No actual legacy assets found in staged project'}
+          if($report.applyRequested){throw 'Dry-run unexpectedly requested changes'}
+          Write-Host 'STAGED_UNREAL_ASSET_DRY_RUN_SUCCESS=true'
+      - name: Rename 3D assets and maps via Unreal Editor IN STAGED COPY
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:PRIGIMALIA_APPLY_RENAME='YES'
+          $env:PRIGIMALIA_STAGED_COPY='YES'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $script='D:\ANOMALIAZ-PRIGIMALIA\unreal\Scripts\migrate_prigimalia_assets.py'
+          $log='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-migration-editor.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Native Editor migration failed; ORIGINAL project is intact'}
+          $report=Get-Content -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\asset-rename-report.json' -Raw | ConvertFrom-Json
+          if(-not $report.verified -or $report.errors.Count -ne 0){throw 'Unreal asset migration receipt not verified'}
+          Write-Host "NATIVE_ASSETS_RENAMED=$($report.legacyAssetsFound)"
+          Write-Host "NATIVE_MAPS_RENAMED=$($report.mapsRenamed.Count)"
+          Write-Host 'STAGED_PRIGIMALIA_UNREAL_ASSETS_VERIFIED=true'
+      - name: Update package names in staged code ONLY after asset migration
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine/Binaries/ThirdParty/Python3/Win64/python.exe'
+          if(-not (Test-Path -LiteralPath $python)){throw 'Bundled Python missing'}
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts/migrate-prigimalia-package-references.py') '--root' 'D:\ANOMALIAZ-PRIGIMALIA' '--apply'
+          if($LASTEXITCODE -ne 0){throw 'Updating staged map references failed'}
+          Write-Host 'STAGED_GAME_MAP_REFERENCES_UPDATED=true'
+      - name: Rebuild native Editor and Game after verified package reference changes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $bat $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw "Post-migration build failed: $target"}
+          }
+          Write-Host 'POST_MIGRATION_EDITOR_AND_GAME_BUILD_SUCCESS=true'
+      - name: Preserve native migration reports even on failure
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: prigimalia-native-migration-${{ github.run_id }}
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/*.log

@@ -1,4 +1,4 @@
-name: ANOMALIA Fab import read only progress
+name: ANOMALIA’Z PRIGIMALIA — Fab import read only progress
 on:
   push:
     branches: ['ue5/character-audit-20261027']

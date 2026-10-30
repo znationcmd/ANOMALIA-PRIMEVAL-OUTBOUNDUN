@@ -92,7 +92,7 @@ try{
  const carAfter=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.position);
  assert.ok(Math.hypot(carAfter.x-carBefore.x,carAfter.z-carBefore.z)>.1,'vehicle responds to throttle');
  const previousVehicleView=await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView);
-  await page.locator('#viewBtn').click();await page.waitForTimeout(200);
+  await page.locator('#viewBtn').click();await page.waitForFunction(previous=>window.__ANOMALIA_DIAGNOSTICS?.world?.vehicleView!==previous,previousVehicleView,{timeout:15000});
   assert.notEqual(await page.evaluate(()=>window.__ANOMALIA_DIAGNOSTICS.world.vehicleView),previousVehicleView,'view button switches the active vehicle camera');
  await safeScreenshot(page,'test-results/07-cockpit.png');
  await page.keyboard.press('KeyE');await page.keyboard.press('F2');await page.locator('[data-admin-tab="player"]').click();await page.locator('[data-admin-action="bank"]').click();

@@ -415,7 +415,7 @@ Un candidat peut nécessiter une adaptation ou ne couvrir qu'une variante; consu
 
 ## Construction et ameublement
 Pièces de construction depuis src/construction.js : foundation, piles, floating, underwater, wall, window, doorway, door, ceiling, roof, stairs, ramp.
-Objets homestead depuis AnomaliaHomesteadStation.h : Bed, Table, Chair, Sofa, Wardrobe, Kitchen, Lamp, Cow, Chicken, Beehive, Doghouse, Barn, Fence, TractorShed.
+Objets homestead depuis AnomaliaZPrigimaliaHomesteadStation.h : Bed, Table, Chair, Sofa, Wardrobe, Kitchen, Lamp, Cow, Chicken, Beehive, Doghouse, Barn, Fence, TractorShed.
 Les sources génériques correspondantes ne remplacent pas la recherche d'un lit, d'une cuisine complète, d'une armoire, d'une niche, d'une ruche ou d'une grange adaptés. Animaux Cow/Chicken sont recensés dans le code mais ne sont pas des objets de décoration.
 
 ## Sources écartées ou suspendues

@@ -6,7 +6,7 @@
     "sha256": "d2bed0bc7b00069e434340af2b4ffe17a7a4cd7aff52a044baec30dde1d0240c"
   },
   "installation": {
-    "project": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+    "project": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaZPrigimalia.uproject",
     "installedProjectDX11SM5Tested": true,
     "commit": "585704dff9d74162a4a981cadcf544fcea2b89ef",
     "installedProjectHeadlessOpenTested": true,
@@ -27,7 +27,7 @@
     "graphicalLaunchTested": true,
     "command": [
       "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
-      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaZPrigimalia.uproject",
       "-NullRHI",
       "-unattended",
       "-nopause",
@@ -47,7 +47,7 @@
     },
     "graphicalCommand": [
       "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
-      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaZPrigimalia.uproject",
       "-d3d11",
       "-sm5",
       "-RenderOffscreen",
@@ -69,14 +69,14 @@
     "worldPlayable": "not_verified",
     "targets": [
       {
-        "target": "AnomaliaPrimevalEditor",
+        "target": "AnomaliaZPrigimaliaEditor",
         "exitCode": 0,
-        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaPrimevalEditor.log"
+        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaZPrigimaliaEditor.log"
       },
       {
-        "target": "AnomaliaPrimeval",
+        "target": "AnomaliaZPrigimalia",
         "exitCode": 0,
-        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaPrimeval.log"
+        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaZPrigimalia.log"
       }
     ],
     "engineRoot": "C:\\Program Files\\Epic Games\\UE_5.8",

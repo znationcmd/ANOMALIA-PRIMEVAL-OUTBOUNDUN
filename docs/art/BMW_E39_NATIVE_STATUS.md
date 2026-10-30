@@ -299,7 +299,7 @@ remaining body (77.737365042248 m²). Closed body + hinge-offset leaf recompose
 the original native bounds; all four wheel files remain byte-identical to v1.
 
 Hinge: chassis-local `(92.4, -80, 90)` cm, +70° opening. The existing generic
-`UAnomaliaVehiclePanelComponent` supplies server-owned angular motion, moving
+`UAnomaliaZPrigimaliaVehiclePanelComponent` supplies server-owned angular motion, moving
 convex collision, locking, obstruction checks and replicated angle/state.
 The E39 review uses the same targeted server interaction as E outside and the
 same owning-driver O command inside. No invisible-panel opening substitute.

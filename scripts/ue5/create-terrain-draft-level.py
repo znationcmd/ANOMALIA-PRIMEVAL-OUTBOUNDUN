@@ -19,7 +19,7 @@ TILES_MANIFEST = TILES / "draft-terrain-manifest.json"
 MAP_NAME = "ANOMALIA_TerrainDraft"
 PACKAGE = f"/Game/Maps/{MAP_NAME}"
 MAP = PROJECT / "Content" / "Maps" / f"{MAP_NAME}.umap"
-REPORT = PROJECT / "Saved" / "AnomaliaMigration" / "draft-level-report.json"
+REPORT = PROJECT / "Saved" / "AnomaliaZPrigimaliaMigration" / "draft-level-report.json"
 
 
 def write_report(status: str, **extra):

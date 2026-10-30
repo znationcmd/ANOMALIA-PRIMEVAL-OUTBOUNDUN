@@ -17,8 +17,8 @@
 
 ## Utiliser après compilation Unreal
 
-1. Ajouter des acteurs natifs `AnomaliaNavigableWater` à la carte. Le centre Z + `SurfaceOffset` définit la surface ; l'étendue basse du volume définit le fond minimal. Le volume doit couvrir au moins 200 cm de profondeur. Il ne dessine pas d'eau : fournir le rendu de l'océan et les collisions réels séparément.
-2. Pour le train, placer un acteur `AnomaliaRailTrack`, donner un `RouteId` unique et éditer la spline `Track`. Aucun rail 3D n'est généré. Les portions requises doivent être chargées ; le traitement de longues voies World Partition reste à développer.
+1. Ajouter des acteurs natifs `AnomaliaZPrigimaliaNavigableWater` à la carte. Le centre Z + `SurfaceOffset` définit la surface ; l'étendue basse du volume définit le fond minimal. Le volume doit couvrir au moins 200 cm de profondeur. Il ne dessine pas d'eau : fournir le rendu de l'océan et les collisions réels séparément.
+2. Pour le train, placer un acteur `AnomaliaZPrigimaliaRailTrack`, donner un `RouteId` unique et éditer la spline `Track`. Aucun rail 3D n'est généré. Les portions requises doivent être chargées ; le traitement de longues voies World Partition reste à développer.
 3. Le fichier `Saved/Servers/<serverId>/vehicles.json` continue de définir les apparitions. Pour le train, préciser `routeId` et `trackDistanceCm` ; sa position doit se trouver à moins de 500 cm de la position correspondante sur la voie. Une voie absente ou ambiguë rejette cette apparition.
 4. Paramètres facultatifs par entrée : `thrustAcceleration` 0–10000 cm/s² (0 = catégorie par défaut), `stallSpeedCm` 100–20000 cm/s, `waterlineOffsetCm` 0–1000 cm. Types invalides et nombres non finis rejetés. Les réglages précédents de carburant/vitesse restent valables. Le fichier d'exemples de ce lot n'active aucune apparition automatiquement.
 5. Les modèles doivent être intégrés et associés par Blueprint (`Body`) avant d'obtenir des véhicules visibles. Les apparitions du GameMode utilisent encore la classe de base : un registre de classes/modèles est nécessaire pour déployer ces Blueprints depuis les fichiers serveur.

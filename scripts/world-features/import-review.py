@@ -36,7 +36,7 @@ try:
         destination = item['objectPath']
         if unreal.EditorAssetLibrary.does_asset_exist(destination):
             mesh = unreal.load_asset(destination)
-            if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaWorldFeatureSha256') != item['sha256']:
+            if not isinstance(mesh, unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh, 'AnomaliaZPrigimaliaWorldFeatureSha256') != item['sha256']:
                 raise RuntimeError('Existing artist asset preserved: ' + destination)
         else:
             task = unreal.AssetImportTask()
@@ -54,9 +54,9 @@ try:
             mesh = unreal.EditorAssetLibrary.duplicate_asset(candidates[0].get_path_name(), destination)
             if not mesh:
                 raise RuntimeError('Canonical review mesh creation failed')
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaWorldFeatureSha256', item['sha256'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaAttribution', item['author'] + ' / ' + item['license'] + ' / ' + item['source'])
-            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaScaleReview', 'REQUIRED_SOURCE_UNITS_UNCALIBRATED')
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaWorldFeatureSha256', item['sha256'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaAttribution', item['author'] + ' / ' + item['license'] + ' / ' + item['source'])
+            unreal.EditorAssetLibrary.set_metadata_tag(mesh, 'AnomaliaZPrigimaliaScaleReview', 'REQUIRED_SOURCE_UNITS_UNCALIBRATED')
             options = unreal.StaticMeshReductionOptions()
             options.auto_compute_lod_screen_size = False
             options.reduction_settings = [unreal.StaticMeshReductionSettings(percent_triangles=p, screen_size=s)

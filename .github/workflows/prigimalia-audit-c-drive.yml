@@ -1,0 +1,88 @@
+name: PRIGIMALIA - Delete C ANOMALIA only after full SHA256 verification on D
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-audit-c-drive.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - name: Hash compare full C folder and preserved D original without deleting
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $c='C:\ANOMALIA';$d='D:\ANOMALIA';$stage='D:\ANOMALIAZ-PRIGIMALIA'
+          $out=Join-Path $stage 'unreal\Saved\BrandMigration\c-drive-duplicate-audit.json'
+          $res=[ordered]@{status='BLOCKED';sourceExists=$false;targetExists=$false;stagedExists=$false;sourceFiles=0;sourceBytes=0;matchedFiles=0;matchedBytes=0;missing=0;different=0;unreadable=0;links=0;problems=@();safeCandidate=$false;noFilesDeleted=$true;freedBytesEstimate=0}
+          try {
+            $res.sourceExists=Test-Path -LiteralPath $c -PathType Container
+            $res.targetExists=Test-Path -LiteralPath $d -PathType Container
+            $res.stagedExists=Test-Path -LiteralPath (Join-Path $stage 'unreal\AnomaliaZPrigimalia.uproject') -PathType Leaf
+            if(-not $res.sourceExists){$res.status='C_FOLDER_ABSENT';return}
+            if(-not $res.targetExists -or -not $res.stagedExists){throw 'Both D project copies must be present'}
+            if(-not(Test-Path -LiteralPath (Join-Path $d 'unreal\AnomaliaPrimeval.uproject'))){throw 'D original .uproject absent'}
+            if(-not(Test-Path -LiteralPath (Join-Path $stage 'unreal\Saved\BrandMigration\verified-source-backup.marker'))){throw 'Staged backup marker absent'}
+            foreach($p in @($c,$d,$stage)){if((Get-Item -LiteralPath $p -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Project root is a junction or symlink'}}
+            $files=@(Get-ChildItem -LiteralPath $c -Recurse -File -Force -ErrorAction Stop)
+            $dirs=@(Get-ChildItem -LiteralPath $c -Recurse -Directory -Force -ErrorAction Stop)
+            $res.links=@($files+$dirs|Where-Object{$_.Attributes -band [IO.FileAttributes]::ReparsePoint}).Count
+            if($res.links -gt 0){throw 'Reparse points inside C; refuse cleanup'}
+            foreach($file in $files){
+              $res.sourceFiles++;$res.sourceBytes+=$file.Length
+              $rel=$file.FullName.Substring($c.Length).TrimStart('\');$p=Join-Path $d $rel
+              if(-not(Test-Path -LiteralPath $p -PathType Leaf)){$res.missing++;if($res.problems.Count -lt 15){$res.problems+=('Missing: '+$rel)};continue}
+              $other=Get-Item -LiteralPath $p -Force
+              if($other.Length -ne $file.Length -or ($other.Attributes -band [IO.FileAttributes]::ReparsePoint)){$res.different++;if($res.problems.Count -lt 15){$res.problems+=('Different size or link: '+$rel)};continue}
+              try {
+                $hash1=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256 -ErrorAction Stop).Hash
+                $hash2=(Get-FileHash -LiteralPath $p -Algorithm SHA256 -ErrorAction Stop).Hash
+                if($hash1 -ne $hash2){$res.different++;if($res.problems.Count -lt 15){$res.problems+=('Different content: '+$rel)}}else{$res.matchedFiles++;$res.matchedBytes+=$file.Length}
+              }catch{$res.unreadable++;if($res.problems.Count -lt 15){$res.problems+=('Unreadable: '+$rel)}}
+            }
+            $res.safeCandidate=$res.sourceFiles -gt 0 -and $res.missing -eq 0 -and $res.different -eq 0 -and $res.unreadable -eq 0 -and $res.links -eq 0
+            $res.status=if($res.safeCandidate){'IDENTICAL_CANDIDATE_ONLY'}else{'PRESERVE_C_HAS_DIFFERENCES'}
+            if($res.safeCandidate){
+              # User explicitly authorized deleting only C:\ANOMALIA. Guard exact paths,
+              # process usage, and a fresh source inventory immediately before deletion.
+              if((Get-Item -LiteralPath $c).FullName.TrimEnd('\') -ine 'C:\ANOMALIA'){throw 'Unsafe cleanup path'}
+              $usingC=@(Get-CimInstance -ClassName Win32_Process -ErrorAction Stop | Where-Object {
+                $_.ExecutablePath -and $_.ExecutablePath.StartsWith('C:\ANOMALIA\',[StringComparison]::OrdinalIgnoreCase)
+              })
+              if($usingC.Count -gt 0){throw 'An active process is using C:\ANOMALIA'}
+              $fresh=@(Get-ChildItem -LiteralPath $c -File -Recurse -Force -ErrorAction Stop)
+              $freshBytes=($fresh | Measure-Object -Property Length -Sum).Sum
+              if($fresh.Count -ne $res.sourceFiles -or $freshBytes -ne $res.sourceBytes){throw 'C:\ANOMALIA changed during audit; refusing cleanup'}
+              if(-not(Test-Path -LiteralPath (Join-Path $d 'unreal\AnomaliaPrimeval.uproject')) -or -not(Test-Path -LiteralPath (Join-Path $stage 'unreal\AnomaliaZPrigimalia.uproject'))){throw 'D originals or staged clone no longer present'}
+              # All C files were individually SHA256-matched against the retained D copy.
+              # Permanently remove ONLY the audited exact C:\ANOMALIA directory, not
+              # C:\Users, Unreal Engine installations, runners, or anything under D.
+              Remove-Item -LiteralPath $c -Recurse -Force -ErrorAction Stop
+              if(Test-Path -LiteralPath $c){throw 'C cleanup was incomplete; examine residual files'}
+              $res.status='REDUNDANT_C_ANOMALIA_REMOVED'
+              $res.noFilesDeleted=$false
+              $res.freedBytesEstimate=$res.matchedBytes
+            }
+          }catch{$res.problems+=('Audit exception: '+$_.Exception.Message);$res.status='BLOCKED'}
+          finally{
+            if(Test-Path -LiteralPath $stage){
+              New-Item -ItemType Directory -Path (Split-Path -Parent $out) -Force|Out-Null
+              $res|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $out -Encoding UTF8
+            }
+            Write-Host ($res|ConvertTo-Json -Depth 5)
+            Write-Host 'NO_FILES_DELETED=true'
+          }
+      - name: Save audit receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-C-Drive-Duplicate-Audit
+          path: D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/c-drive-duplicate-audit.json
+          if-no-files-found: warn

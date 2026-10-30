@@ -18,7 +18,7 @@ def main():
     env['ANOMALIA_SEDAN_USE_E39']='1' if args.e39 else '0'
     editor=args.engine_root/'Engine/Binaries/Win64/UnrealEditor.exe'
     with (output/'import-process.log').open('w',encoding='utf-8') as log:
-        result=subprocess.run([str(editor),str(ROOT/'unreal/AnomaliaPrimeval.uproject'),
+        result=subprocess.run([str(editor),str(ROOT/'unreal/AnomaliaZPrigimalia.uproject'),
             '-ExecutePythonScript='+str(ROOT/'unreal/Scripts/import_native_demo_sedan.py'),
             '-NullRHI','-unattended','-nopause','-nosound','-nosplash',
             '-abslog='+str(output/'import.log')],env=env,stdout=log,stderr=subprocess.STDOUT,

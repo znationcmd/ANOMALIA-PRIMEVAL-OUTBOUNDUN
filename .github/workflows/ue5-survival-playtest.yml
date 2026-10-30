@@ -1,4 +1,4 @@
-name: ANOMALIA saved Survival playtest and isolated inventory reload
+name: ANOMALIA’Z PRIGIMALIA — saved Survival playtest and isolated inventory reload
 on:
   push:
     branches: ['ue5/character-audit-20261027']

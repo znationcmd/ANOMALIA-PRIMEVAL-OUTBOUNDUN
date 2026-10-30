@@ -1,0 +1,46 @@
+name: ANOMALIA’Z PRIGIMALIA - Local project migration audit
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: ['.github/workflows/prigimalia-local-audit.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  inspect:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Audit UE installation, currently open processes and resource directories
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA'
+          if (-not (Test-Path -LiteralPath $root -PathType Container)) { throw 'Original project unavailable' }
+          $p=Join-Path $root 'unreal'
+          $drv=Get-PSDrive -Name D
+          Write-Host ("D_FREE_GB={0:N1}" -f ($drv.Free/1GB))
+          $proc=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)
+          Write-Host "RELEVANT_RUNNING_PROCESSES=$($proc.Count)"
+          foreach($rel in @('unreal/AnomaliaPrimeval.uproject','unreal/Content','unreal/Source','unreal/Config','unreal/Saved','sketchfab','FabImports','unreal/SourceAssets','unreal/Content/Anomalia','unreal/Content/Maps')) {
+             $e=Test-Path -LiteralPath (Join-Path $root $rel)
+             Write-Host ("EXISTS {0}: {1}" -f $rel,$e)
+          }
+          $ct=Join-Path $p 'Content'
+          if(Test-Path -LiteralPath $ct){
+            $maps=@(Get-ChildItem -LiteralPath $ct -Filter '*.umap' -File -Recurse -ErrorAction SilentlyContinue)
+            Write-Host "NATIVE_MAP_COUNT=$($maps.Count)"
+            $assetCount=@(Get-ChildItem -LiteralPath $ct -Filter '*.uasset' -File -Recurse -ErrorAction SilentlyContinue).Count
+            Write-Host "NATIVE_ASSET_COUNT=$assetCount"
+            $oldMaps=@($maps | Where-Object { $_.Name -like 'ANOMALIA*' })
+            Write-Host "LEGACY_NAMED_MAPS=$($oldMaps.Count)"
+            foreach($m in $oldMaps | Select-Object -First 12){Write-Host ("LEGACY_MAP_NAME=" + $m.BaseName)}
+          }
+          Write-Host 'READ_ONLY_AUDIT_COMPLETE=true'

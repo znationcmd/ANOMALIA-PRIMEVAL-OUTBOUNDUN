@@ -1,0 +1,39 @@
+#pragma once
+#include "CoreMinimal.h"
+#include "Subsystems/WorldSubsystem.h"
+#include "AnomaliaZPrigimaliaTrackingSubsystem.generated.h"
+
+UENUM(BlueprintType)
+enum class EAnomaliaZPrigimaliaTrackKind : uint8 { Footprint, Blood };
+
+USTRUCT(BlueprintType)
+struct FAnomaliaZPrigimaliaTrackClue
+{
+ GENERATED_BODY()
+ UPROPERTY(BlueprintReadOnly) EAnomaliaZPrigimaliaTrackKind Kind = EAnomaliaZPrigimaliaTrackKind::Footprint;
+ UPROPERTY(BlueprintReadOnly) FString ActorId;
+ UPROPERTY(BlueprintReadOnly) FVector Location = FVector::ZeroVector;
+ UPROPERTY(BlueprintReadOnly) FRotator Direction = FRotator::ZeroRotator;
+ UPROPERTY(BlueprintReadOnly) FName Terrain = TEXT("soil");
+ UPROPERTY(BlueprintReadOnly) float Severity = 1.f;
+ UPROPERTY(BlueprintReadOnly) double SpawnTimeSeconds = 0.;
+};
+
+UCLASS()
+class ANOMALIAZPRIGIMALIA_API UAnomaliaZPrigimaliaTrackingSubsystem : public UTickableWorldSubsystem
+{
+ GENERATED_BODY()
+public:
+ UFUNCTION(BlueprintCallable, Category="AnomaliaZPrigimalia|Tracking")
+ void AddClue(EAnomaliaZPrigimaliaTrackKind Kind, const FString& ActorId, FVector Location, FRotator Direction, FName Terrain, float Severity);
+ UFUNCTION(BlueprintCallable, Category="AnomaliaZPrigimalia|Tracking")
+ TArray<FAnomaliaZPrigimaliaTrackClue> FindNearby(FVector Origin, float Radius, float RainIntensity, const FString& ActorFilter) const;
+ virtual void Tick(float DeltaTime) override;
+ virtual TStatId GetStatId() const override;
+ virtual bool DoesSupportWorldType(EWorldType::Type WorldType) const override;
+private:
+ UPROPERTY() TArray<FAnomaliaZPrigimaliaTrackClue> Clues;
+ double ClockSeconds = 0.;
+ float CleanupAccumulator = 0.f;
+ double Lifespan(const FAnomaliaZPrigimaliaTrackClue& Clue, float RainIntensity) const;
+};

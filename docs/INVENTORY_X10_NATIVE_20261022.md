@@ -1,11 +1,11 @@
 # Inventory x10 implementation checkpoint — 22 October 2026
 
-The latest user design replaces the earlier capacity table. `AnomaliaStorageCatalog`
+The latest user design replaces the earlier capacity table. `AnomaliaZPrigimaliaStorageCatalog`
 contains the exact requested totals, including the 30,000-cell carrier and the
 eleven dinosaur size/domain presets. Grid area, not both dimensions, is scaled.
 Weight limits are unchanged and configured independently.
 
-`AnomaliaVehicleCatalog` resolves explicit model capacities and scales other
+`AnomaliaZPrigimaliaVehicleCatalog` resolves explicit model capacities and scales other
 original references once. Repeated lookups do not rescale saved values. Existing
 equipment cargo suggestions now resolve the same presets. No vehicle is removed.
 Unspecified storage variants have design defaults, not user-supplied exact values.

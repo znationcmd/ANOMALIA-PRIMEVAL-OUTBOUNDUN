@@ -26,7 +26,7 @@ try:
             if rotation:a.set_actor_rotation(rotation,False)
             return a
         box('Ground',(0,0,-25),(300,300,.5))
-        track=place('Route',unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaRailTrack'),(0,0,0));spline=track.get_editor_property('track')
+        track=place('Route',unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaRailTrack'),(0,0,0));spline=track.get_editor_property('track')
         spline.clear_spline_points(False)
         for i in range(16):
             t=i*math.tau/16;spline.add_spline_point(unreal.Vector(10000*math.cos(t),10000*math.sin(t),165),unreal.SplineCoordinateSpace.WORLD,False)
@@ -38,7 +38,7 @@ try:
             for side in [-1,1]:box('Rail_'+str(i)+'_'+str(side),(point.x+right.x*side*77,point.y+right.y*side*77,3),(length/steps/100+.02,.06,.04),rotation)
             box('Sleeper_'+str(i),(point.x,point.y,.5),(.22,2,.01),rotation)
         start=12000.;point=spline.get_location_at_distance_along_spline(start,unreal.SplineCoordinateSpace.WORLD)
-        lead=place('Lead',unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaVehiclePawn'),(point.x,point.y,point.z))
+        lead=place('Lead',unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaVehiclePawn'),(point.x,point.y,point.z))
         if not lead.configure_vehicle(unreal.Name('metro')):raise RuntimeError('Native metro unavailable')
         lead.set_actor_rotation(spline.get_rotation_at_distance_along_spline(start,unreal.SplineCoordinateSpace.WORLD),False)
         lead.set_editor_property('initial_rail_track',track);lead.set_editor_property('initial_rail_distance_cm',start)

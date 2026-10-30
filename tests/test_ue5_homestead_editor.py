@@ -13,7 +13,7 @@ SCRIPT = ROOT / "scripts/ue5/anomalia-editor-tools.py"
 spec = importlib.util.spec_from_file_location("anomalia_editor_tools", SCRIPT)
 tools = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tools)
-SOURCE = ROOT / "unreal/Source/AnomaliaPrimeval"
+SOURCE = ROOT / "unreal/Source/AnomaliaZPrigimalia"
 
 
 def cpp(name: str) -> str:
@@ -78,12 +78,12 @@ class EditorScopeTests(unittest.TestCase):
 
 class HomesteadSourceTests(unittest.TestCase):
     def test_sleep_bed_and_fatigue_are_authoritative_and_persisted(self):
-        player = cpp("AnomaliaSurvivor.cpp")
-        header = cpp("AnomaliaSurvivor.h")
-        mode = cpp("AnomaliaGameMode.cpp")
+        player = cpp("AnomaliaZPrigimaliaSurvivor.cpp")
+        header = cpp("AnomaliaZPrigimaliaSurvivor.h")
+        mode = cpp("AnomaliaZPrigimaliaGameMode.cpp")
         keys = (ROOT / "unreal/Config/DefaultInput.ini").read_text(encoding="utf-8")
-        self.assertIn("DOREPLIFETIME(AAnomaliaSurvivor, Fatigue)", player)
-        self.assertIn("DOREPLIFETIME(AAnomaliaSurvivor, bSleeping)", player)
+        self.assertIn("DOREPLIFETIME(AAnomaliaZPrigimaliaSurvivor, Fatigue)", player)
+        self.assertIn("DOREPLIFETIME(AAnomaliaZPrigimaliaSurvivor, bSleeping)", player)
         self.assertIn("ServerRequestRest_Implementation", player)
         self.assertIn("bSleeping = false;", player)
         self.assertIn("IsRestPlace()", player)
@@ -94,9 +94,9 @@ class HomesteadSourceTests(unittest.TestCase):
         self.assertIn('ActionName="Rest",Key=R', keys)
 
     def test_farm_harvest_requires_server_and_inventory_success(self):
-        station = cpp("AnomaliaHomesteadStation.cpp")
-        player = cpp("AnomaliaSurvivor.cpp")
-        inventory = cpp("AnomaliaInventoryComponent.cpp")
+        station = cpp("AnomaliaZPrigimaliaHomesteadStation.cpp")
+        player = cpp("AnomaliaZPrigimaliaSurvivor.cpp")
+        inventory = cpp("AnomaliaZPrigimaliaInventoryComponent.cpp")
         self.assertIn("if (!HasAuthority()", station)
         self.assertIn("Survivor->InventoryComponent->TryAddItem(ItemId, 1)", station)
         self.assertIn("NextHarvestTime = Now + 120.f", station)
@@ -107,7 +107,7 @@ class HomesteadSourceTests(unittest.TestCase):
         self.assertIn("NearestFarm->TryHarvest(this)", player)
 
     def test_editor_spawns_only_own_server_world_after_validation(self):
-        mode = cpp("AnomaliaGameMode.cpp")
+        mode = cpp("AnomaliaZPrigimaliaGameMode.cpp")
         self.assertIn('TEXT("Servers"), ServerId,', mode)
         self.assertIn('TEXT("Editor"), TEXT("world.json")', mode)
         self.assertIn("StoredServer != ServerId", mode)
@@ -118,8 +118,8 @@ class HomesteadSourceTests(unittest.TestCase):
         self.assertNotIn("ServerSpawnFurniture_Implementation", mode)
 
     def test_official_menu_does_not_pretend_servers_online(self):
-        browser = cpp("AnomaliaServerBrowserLibrary.cpp")
-        header = cpp("AnomaliaServerBrowserLibrary.h")
+        browser = cpp("AnomaliaZPrigimaliaServerBrowserLibrary.cpp")
+        header = cpp("AnomaliaZPrigimaliaServerBrowserLibrary.h")
         self.assertIn("Result.Reserve(15)", browser)
         self.assertIn("Index <= 5", browser)
         for label in ("PVE", "PVP", "RP"):
@@ -130,7 +130,7 @@ class HomesteadSourceTests(unittest.TestCase):
         self.assertIn("Card.Mode != Mode", browser)
 
     def test_tractor_is_defined_but_not_claimed_modelled(self):
-        vehicle = cpp("AnomaliaVehicleCatalog.cpp")
+        vehicle = cpp("AnomaliaZPrigimaliaVehicleCatalog.cpp")
         self.assertIn('TEXT("farm_tractor")', vehicle)
         self.assertIn('TEXT("Tracteur agricole")', vehicle)
 

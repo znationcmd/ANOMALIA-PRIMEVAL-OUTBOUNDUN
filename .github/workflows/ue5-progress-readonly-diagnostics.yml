@@ -1,4 +1,4 @@
-name: UE5 read-only progress diagnostics
+name: ANOMALIA’Z PRIGIMALIA — UE5 read-only progress diagnostics
 on:
   workflow_dispatch:
   push:

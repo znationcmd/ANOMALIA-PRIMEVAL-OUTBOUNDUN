@@ -1,7 +1,7 @@
 Set-StrictMode -Version 2.0
 $ErrorActionPreference = 'Stop'
 
-function Test-AnomaliaExcludedPath {
+function Test-AnomaliaZPrigimaliaExcludedPath {
     param([string]$RelativePath,[string[]]$ExcludePaths)
     $relative = $RelativePath.Replace([char]47,[char]92).TrimStart([char[]]@([char]92,[char]47))
     foreach($raw in $ExcludePaths) {
@@ -15,7 +15,7 @@ function Test-AnomaliaExcludedPath {
     return $false
 }
 
-function Get-AnomaliaManagedFiles {
+function Get-AnomaliaZPrigimaliaManagedFiles {
     param([Parameter(Mandatory=$true)][string]$Root,[string[]]$ExcludePaths=@())
     $rootFull=[IO.Path]::GetFullPath($Root).TrimEnd([char[]]@([char]92,[char]47))
     if(!(Test-Path -LiteralPath $rootFull -PathType Container)){throw "Managed directory missing: $rootFull"}
@@ -27,19 +27,19 @@ function Get-AnomaliaManagedFiles {
             $item=Get-Item -LiteralPath $entry -Force
             if(($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){continue}
             $relative=$entry.Substring($rootFull.Length).TrimStart([char[]]@([char]92,[char]47))
-            if(Test-AnomaliaExcludedPath -RelativePath $relative -ExcludePaths $ExcludePaths){continue}
+            if(Test-AnomaliaZPrigimaliaExcludedPath -RelativePath $relative -ExcludePaths $ExcludePaths){continue}
             if($item.PSIsContainer){$pending.Push($entry)}else{Write-Output $item}
         }
     }
 }
 
-if(-not ('AnomaliaDifferential.Native' -as [type])) {
+if(-not ('AnomaliaZPrigimaliaDifferential.Native' -as [type])) {
     Add-Type -TypeDefinition @'
 using System;
 using System.IO;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
-namespace AnomaliaDifferential {
+namespace AnomaliaZPrigimaliaDifferential {
     public struct BY_HANDLE_FILE_INFORMATION {
         public uint FileAttributes;
         public System.Runtime.InteropServices.ComTypes.FILETIME CreationTime;
@@ -71,7 +71,7 @@ namespace AnomaliaDifferential {
 '@
 }
 
-function Invoke-AnomaliaDifferentialVersionStage {
+function Invoke-AnomaliaZPrigimaliaDifferentialVersionStage {
     [CmdletBinding()]
     param(
         [Parameter(Mandatory=$true)][string]$SourceRoot,
@@ -96,19 +96,19 @@ function Invoke-AnomaliaDifferentialVersionStage {
         New-Item -ItemType Directory -Path $stage | Out-Null
         $baseFiles=@()
         if($base) {
-            $baseFiles=@(Get-AnomaliaManagedFiles -Root $base -ExcludePaths $ExcludePaths)
+            $baseFiles=@(Get-AnomaliaZPrigimaliaManagedFiles -Root $base -ExcludePaths $ExcludePaths)
             foreach($file in $baseFiles) {
                 $relative=$file.FullName.Substring($base.Length).TrimStart([char[]]@([char]92,[char]47))
                 $destination=Join-Path $stage $relative
                 New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
-                if(-not [AnomaliaDifferential.Native]::CreateHardLink($destination,$file.FullName,[IntPtr]::Zero)) {
+                if(-not [AnomaliaZPrigimaliaDifferential.Native]::CreateHardLink($destination,$file.FullName,[IntPtr]::Zero)) {
                     $code=[Runtime.InteropServices.Marshal]::GetLastWin32Error()
                     throw "Cannot create base snapshot hard link ($code): $relative"
                 }
                 $report.hardlinksCreated++
             }
         }
-        $sourceFiles=@(Get-AnomaliaManagedFiles -Root $source -ExcludePaths $ExcludePaths)
+        $sourceFiles=@(Get-AnomaliaZPrigimaliaManagedFiles -Root $source -ExcludePaths $ExcludePaths)
         $sourceSet=@{}
         foreach($file in $sourceFiles) {
             $relative=$file.FullName.Substring($source.Length).TrimStart([char[]]@([char]92,[char]47))

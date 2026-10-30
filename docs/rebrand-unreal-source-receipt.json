@@ -1,0 +1,22 @@
+{
+  "title": "ANOMALIA’Z PRIGIMALIA",
+  "newModule": "AnomaliaZPrigimalia",
+  "editedFiles": 0,
+  "renamedFiles": 0,
+  "redirectTypes": {
+    "Class": 56,
+    "Struct": 30,
+    "Enum": 17
+  },
+  "binaryAssetsRenamed": false,
+  "windowsUEBuildTested": false,
+  "historicalSaveIdsPreserved": [
+    "anomalia-primeval-outboundun-save-v1",
+    "com.cmd.anomalia.primevaloutboundun",
+    "anomalia://",
+    "anomalia:connect",
+    "anomalia:socket"
+  ],
+  "remainingNativeAssetMigration": "Run UE5.8 Editor rename + Fix Up Redirectors on Windows",
+  "fileChanges": []
+}

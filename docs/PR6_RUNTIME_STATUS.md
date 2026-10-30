@@ -115,7 +115,7 @@ La branche reste en brouillon. Aucun jeu Windows autonome, serveur officiel dép
 ## Native loot connection — native and solo PIE tests passed
 
 The branch now connects `loot_items_catalog.json` (232 entries) and `loot_tiers.json`
-to `UAnomaliaLootSubsystem`, the existing native inventory, the existing Interact
+to `UAnomaliaZPrigimaliaLootSubsystem`, the existing native inventory, the existing Interact
 input (including its current controller binding), and the inventory UMG screen.
 The server chooses the nearest registered pickup; clients send neither an item ID,
 quantity, position nor player identity. Collection checks distance, visibility,
@@ -134,7 +134,7 @@ explicit server IDs and existing files remain untouched.
 
 The three beach supply points target the real `ANOMALIA_Archipelago_v2` map relative
 to its unique PlayerStart, projected onto actual ground collision. Maps with multiple
-starts require exactly one `AnomaliaLootAnchor` tag. Five further points target a
+starts require exactly one `AnomaliaZPrigimaliaLootAnchor` tag. Five further points target a
 separate review map created by `unreal/Scripts/create_loot_review.py`.
 Hospital, garage, bunker and other building classes resolve to configured tiers;
 placements for every building across the 48 km world still need authoring. Tier
@@ -189,7 +189,7 @@ All 259 unique IDs use the native inventory and loot loader. The unchanged origi
 those categories into one physical item; conflicting duplicates still stop loading. Tier category adapters retain
 the five original tiers and add the RP groups; a cash review spawn is authored.
 
-`UAnomaliaEconomySubsystem` keeps integer-cent balances in the server's own
+`UAnomaliaZPrigimaliaEconomySubsystem` keeps integer-cent balances in the server's own
 `Saved/Servers/<id>/World/rp-economy.json`, independently of the map. Accounts start
 at zero. Depositing consumes one actual inventory banknote; withdrawing adds one
 only if capacity and funds permit. Transfers move balances in one atomic ledger

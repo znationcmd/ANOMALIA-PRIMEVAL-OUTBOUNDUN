@@ -620,7 +620,7 @@ function updatePlayer(dt){
 }
 function start(lockPointer=true){
  started=true;paused=false;$("startScreen").classList.add("hidden");$("hud").classList.remove("hidden");
- updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA PRIMEVAL OUTBOUNDUN");
+ updateStructures();updateChunks(true);notice("Bienvenue dans ANOMALIA’Z PRIGIMALIA");
  if(lockPointer&&!matchMedia("(pointer:coarse)").matches){try{renderer.domElement.requestPointerLock?.()?.catch(()=>{});}catch{}}
 }
 const network=createMultiplayer({scene,state,heightAt:walkHeight,notice,onDisconnect:()=>menu.show(),onMapChanged:()=>{buildings?.update();for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();}});
@@ -770,7 +770,7 @@ constructionUI=createConstructionUI({state,scene,camera,heightAt,world:construct
 mapEditor=createMapEditor({state,scene,camera,renderer,buildings,save,notice,network,onChanged:()=>{for(const id of [...chunks.keys()])unloadChunk(id);updateChunks();},setPaused:value=>{paused=value;keys.clear();if(value){constructionUI?.cancel();inventoryUI?.cleanup();worldRuntime?.cleanup();$("panel").classList.add('hidden');}}});
 window.addEventListener('keydown',e=>{if(e.code==='KeyN'&&started&&!paused&&!e.repeat&&!e.target.matches?.('input,textarea,select')&&!e.target.isContentEditable){if(startSleep(state,vitalsClock))notice('Repos : réveil dans 30 secondes');}});
 window.addEventListener('keydown',e=>{if(e.code==='F4'&&started&&!e.target.matches?.('input,textarea,select')){e.preventDefault();mapEditor.open();}});
-for(const [id,label,handler]of [["editorBtn","ANOMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
+for(const [id,label,handler]of [["editorBtn","ANOMALIA’Z PRIGIMALIA EDITOR · F4",()=>mapEditor.open()],["adminBtn","ADMIN · F2",()=>worldRuntime.show('admin')],["companionBtn","GROUPE · F3",()=>worldRuntime.show('companions')],["viewBtn","VUE · F5",()=>worldRuntime.toggleView()]]){const button=document.createElement('button');button.id=id;button.textContent=label;button.onclick=handler;document.querySelector('.topbuttons').append(button)}
 let lastAtmosphereUpdate=-10000;
 function updateAtmosphere(now){
  if(now-lastAtmosphereUpdate<1000)return;
@@ -798,6 +798,6 @@ function loop(now){
  graphics.update(now/1000);
  updateAtmosphere(now);
  renderer.render(scene,camera);
- if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{get connected(){return network.connected},get players(){return network.count}},world:worldRuntime?.debug()};
 }
 requestAnimationFrame(loop);

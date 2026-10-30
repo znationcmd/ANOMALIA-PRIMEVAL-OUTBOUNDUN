@@ -86,9 +86,9 @@ SHA-256 488ed88a3fe638aa925c77789c69f68c08c5800e44141c7af459659c5f582618.
 
 Branche : ue5/integrate-world-homestead-20261020 ; PR 4, pas de fusion main.
 Projet du runner Windows :
-C:/Users/utilisateur/actions-runner/_work/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ANOMALIA-PRIMEVAL-OUTBOUNDUN/unreal/AnomaliaPrimeval.uproject
+C:/Users/utilisateur/actions-runner/_work/ANOMALIA-PRIMEVAL-OUTBOUNDUN/ANOMALIA-PRIMEVAL-OUTBOUNDUN/unreal/AnomaliaZPrigimalia.uproject
 Carte : /Game/Maps/ANOMALIA_Archipelago_v2 ; lanceur : scripts/ue5/open-archipelago-world.cmd.
-Marqueur du pont : unreal/Saved/AnomaliaMigration/detroit-bridge-v1.json.
+Marqueur du pont : unreal/Saved/AnomaliaZPrigimaliaMigration/detroit-bridge-v1.json.
 Les futures exécutions préservent la carte et le pont existants et rejouent les tests.
 Le zip du monde doit conserver ses dossiers Content/Maps, __ExternalActors__,
 __ExternalObjects__, Anomalia/World et Anomalia/Infrastructure ensemble.

@@ -29,18 +29,18 @@ try:
         if not source.is_relative_to(ROOT/'SourceAssets/RealismValidation_v2') or hashlib.sha256(source.read_bytes()).hexdigest()!=model['sha256']:
             raise RuntimeError('Prepared source integrity failed: '+ident)
         mesh=unreal.load_asset(model['objectPath']+'_r2')
-        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaRealismSha256')!=model['sha256']:
+        if not isinstance(mesh,unreal.StaticMesh) or unreal.EditorAssetLibrary.get_metadata_tag(mesh,'AnomaliaZPrigimaliaRealismSha256')!=model['sha256']:
             raise RuntimeError('Import and verify real art first: '+ident)
         if not mesh.get_editor_property('static_materials') or any(not slot.material_interface for slot in mesh.get_editor_property('static_materials')):
             raise RuntimeError('Missing real-art material: '+ident)
         meshes[ident]=mesh
-    cluster_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaSceneryCluster')
-    water_class=unreal.load_class(None,'/Script/AnomaliaPrimeval.AnomaliaNavigableWater')
+    cluster_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster')
+    water_class=unreal.load_class(None,'/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaNavigableWater')
     if not cluster_class or not water_class:raise RuntimeError('Compile native world components first')
-    sites=[(p.x,p.y) for p in unreal.AnomaliaWorldImportLibrary.inhabited_settlement_sites()]
+    sites=[(p.x,p.y) for p in unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_settlement_sites()]
     bounds=meshes['detached_house'].get_bounds()
     dims=[bounds.box_extent.x*.02,bounds.box_extent.z*.02,bounds.box_extent.y*.02]
-    plan=population.build_plan(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height,dims,sites=sites)
+    plan=population.build_plan(unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height,dims,sites=sites)
     plan['mapPackage']=PACKAGE
     if len(plan['buildings'])<100:raise RuntimeError('Population plan unexpectedly incomplete')
     report['planCounts']=dict(settlements=len(plan['settlements']),houses=len(plan['buildings']),foliage=len(plan['foliage']))
@@ -76,7 +76,7 @@ try:
     lib.recompile_material(mat)
     if not unreal.EditorAssetLibrary.save_loaded_asset(mat):raise RuntimeError('Ground material save failed')
     if not level.new_level(PACKAGE,is_partitioned_world=True):raise RuntimeError('New World Partition map creation failed')
-    terrain=unreal.AnomaliaWorldImportLibrary.create_inhabited_archipelago_landscape()
+    terrain=unreal.AnomaliaZPrigimaliaWorldImportLibrary.create_inhabited_archipelago_landscape()
     if not terrain:raise RuntimeError('Inhabited landscape creation failed')
     proxies=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
     if sum(len(a.get_components_by_class(unreal.LandscapeComponent)) for a in proxies)!=576:raise RuntimeError('Incomplete populated terrain')
@@ -112,7 +112,7 @@ try:
     first=plan['buildings'][0]
     # Spawn in the reserved 50m lot corridor, on the real native terrain at that point.
     e,n=first['east']+22,first['north']
-    surface=population.sampled_surface(unreal.AnomaliaWorldImportLibrary.inhabited_archipelago_height)
+    surface=population.sampled_surface(unreal.AnomaliaZPrigimaliaWorldImportLibrary.inhabited_archipelago_height)
     z,error=surface(e,n);place(unreal.PlayerStart,'PlayerStart',e,n,z+error+1.2)
     if not level.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError('Population or external actor save failed')
     OUT.parent.mkdir(parents=True,exist_ok=True);(OUT.parent/'population-plan.json').write_text(json.dumps(plan,indent=2)+'\n')

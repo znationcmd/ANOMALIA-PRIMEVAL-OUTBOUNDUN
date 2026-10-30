@@ -16,7 +16,7 @@ out.mkdir(parents=True)
 report = dict(state='FAILED', sourceCommit=os.environ.get('GITHUB_SHA'), mode='Play In Editor',
               renderingValidated=False, multiplayerTested=False, automationReport=str(out))
 editor = a.engine_root / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
-base = [str(editor), str(root / 'unreal/AnomaliaPrimeval.uproject'), '-unattended', '-nopause', '-nosound', '-NullRHI']
+base = [str(editor), str(root / 'unreal/AnomaliaZPrigimalia.uproject'), '-unattended', '-nopause', '-nosound', '-NullRHI']
 try:
     create = base + [f'-ExecutePythonScript={root / "unreal/Scripts/create_loot_review.py"}', f'-abslog={out / "create.engine.log"}']
     with (out / 'create.process.log').open('w', encoding='utf-8') as log:
@@ -24,7 +24,7 @@ try:
     report['createExitCode'] = result.returncode
     if result.returncode or not (root / 'unreal/Content/Maps/ANOMALIA_LootReview_v1.umap').is_file():
         raise RuntimeError('Actual loot review map creation failed')
-    command = base + [f'-AnomaliaAutomationServerId=loot-pie-{uuid.uuid4().hex}',
+    command = base + [f'-AnomaliaZPrigimaliaAutomationServerId=loot-pie-{uuid.uuid4().hex}',
                       '-ExecCmds=Automation RunTests Anomalia.Loot.PIE; Quit',
                       f'-ReportExportPath={out}', f'-abslog={out / "pie.engine.log"}']
     with (out / 'pie.process.log').open('w', encoding='utf-8') as log:
