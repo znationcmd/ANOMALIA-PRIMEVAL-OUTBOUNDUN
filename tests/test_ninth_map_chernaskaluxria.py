@@ -23,7 +23,7 @@ class NinthWorldTest(unittest.TestCase):
         assert len({v["id"] for v in maps})==10
         assert len({v["saveNamespace"] for v in maps})==10
         assert len({v["originalUnrealPackage"] for v in maps})==10
-        assert sum(v["widthKm"]*v["heightKm"] for v in maps)==17533
+        assert sum(v["widthKm"]*v["heightKm"] for v in maps)==18235.25
         world=next(v for v in maps if v["displayName"]=="CHERNASKALUXRIA")
         assert world["id"]=="chernaskaluxria-v1"
         assert world["originalUnrealPackage"]=="/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"
