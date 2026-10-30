@@ -8,7 +8,7 @@ from __future__ import annotations
 import json
 import math
 from pathlib import Path
-from chernaskaluxria_archipelago import carve_archipelago
+from chernaskaluxria_archipelago import carve_archipelago, apply_satellite_islands, satellite_island_plans, interisland_voyages, crossing_plans
 
 MAP_ID = "chernaskaluxria-v1"
 DISPLAY_NAME = "CHERNASKALUXRIA"
@@ -92,7 +92,7 @@ def terrain_height(east_m: float, north_m: float) -> float:
     if x < -45_000:
         coast = _smooth((x+50_000)/5_000)
         base = -70*(1-coast) + base*coast
-    return float(carve_archipelago(base,x,y))
+    return float(apply_satellite_islands(carve_archipelago(base,x,y),x,y))
 
 
 def world_tiles() -> list[dict]:
@@ -133,6 +133,9 @@ def world_manifest() -> dict:
         "seaLevelMeters": 0,
         "islandGeography": "continuous terrain with meandering marine straits and six planned crossings",
         "bridgesAndTunnelsBuilt": False,
+        "satelliteIslands": satellite_island_plans(),
+        "plannedMarineVoyages": interisland_voyages(),
+        "plannedCrossings": crossing_plans(terrain_height),
         "tileGrid": [TILES_PER_AXIS, TILES_PER_AXIS],
         "tileSideKm": 5,
         "tileSamplesPerAxis": SAMPLES_PER_TILE_SIDE,
