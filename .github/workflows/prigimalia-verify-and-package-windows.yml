@@ -85,6 +85,18 @@ jobs:
             $diskNew=Join-Path (Join-Path $root 'Content') $relNew
             if(Test-Path -LiteralPath $diskNew){throw ('Uncertain preexisting target for map: '+$new)}
             if(-not(Test-Path -LiteralPath $diskOld)){throw ('Unrecoverable source map missing: '+$old)}
+            if($old -eq '/Game/Maps/ANOMALIA_Playable_v1' -and $new -eq '/Game/Maps/PRIGIMALIA_Playable_v1'){
+              # The UE5.8 WP builder crashed with EXCEPTION_ACCESS_VIOLATION on
+              # exactly this map. Keep its original World package intact;
+              # the next native Editor step will reload it and fail if invalid.
+              # GameDefaultMap still points to its real legacy package.
+              $legacyConfig=Get-Content -LiteralPath (Join-Path $root 'Config\DefaultEngine.ini') -Raw
+              if(-not $legacyConfig.Contains('GameDefaultMap=/Game/Maps/ANOMALIA_Playable_v1')){throw 'Legacy playable map is not configured as GameDefaultMap'}
+              $expectedSource=Join-Path 'D:\ANOMALIA\unreal\Content' 'Maps\ANOMALIA_Playable_v1.umap'
+              if(-not(Test-Path -LiteralPath $expectedSource)){throw 'Original playable World source missing'}
+              Write-Host 'PRIGIMALIA_PLAYABLE_WORLD_RETAINED_FOR_NATIVE_RELOAD=true'
+              continue
+            }
             $log=Join-Path $root ('Saved\BrandMigration\world-partition-map-'+$i+'.log')
             & $editor $project $old '-run=WorldPartitionBuilderCommandlet' '-SCCProvider=None' '-builder=WorldPartitionRenameDuplicateBuilder' "-NewPackage=$new" '-Rename' '-NullRHI' '-unattended' '-nopause' '-nosound' "-abslog=$log"
             if($LASTEXITCODE -ne 0){throw ('World Partition rename builder failed: '+$old+'; log '+$log)}
@@ -106,7 +118,9 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Actual Unreal map reload failed; see native-map-reload-validation.log'}
           $receipt=Join-Path $root 'Saved\BrandMigration\asset-rename-report.json'
           $proof=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
-          if($proof.verified -ne $true -or $proof.nativeReloadVerified -ne $true -or $proof.validationMethod -ne 'UE5.8-Unreal-AssetRegistry-and-World-load' -or @($proof.errors).Count -gt 0 -or $proof.validatedMaps -lt 1){throw 'Reload result or signed migration receipt invalid'}
+          if($proof.verified -ne $true -or $proof.nativeReloadVerified -ne $true -or $proof.validationMethod -ne 'UE5.8-Unreal-AssetRegistry-and-World-load' -or @($proof.errors).Count -gt 0 -or $proof.validatedMaps -lt 25){throw 'Reload result or signed migration receipt invalid'}
+          if($proof.allMapRenamesComplete -ne $false -or @($proof.mapsPreservedAtOriginalPath).Count -ne 1 -or @($proof.mapsRenamed).Count -ne 24){throw 'Native map compatibility exception must be exactly 1 of 25 planned maps'}
+          if($proof.mapsPreservedAtOriginalPath[0].actual -ne '/Game/Maps/ANOMALIA_Playable_v1'){throw 'Unexpected legacy map package; refuse unsafe packaging'}
           Write-Host ('PRIGIMALIA_RELOADED_NATIVE_MAPS='+$proof.validatedMaps)
           Write-Host ('PRIGIMALIA_RELOADED_NATIVE_ASSETS='+$proof.validatedAssets)
       - name: Back up staged textual sources and update verified package references
@@ -129,7 +143,7 @@ jobs:
           $receipt=Join-Path $dir 'package-ref-update-report.json'
           if(-not(Test-Path -LiteralPath $receipt)){throw 'Package reference receipt was not created'}
           $proof=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
-          if($proof.applied -ne $true -or $proof.nativeAssetsVerified -ne $true -or $proof.historicDataPreserved -ne $true){throw 'Package reference validation failed'}
+          if($proof.applied -ne $true -or $proof.nativeAssetsVerified -ne $true -or $proof.historicDataPreserved -ne $true -or $proof.legacyPlayableWorldRetained -ne $true){throw 'Package reference validation failed'}
           Write-Host ('PRIGIMALIA_NATIVE_PACKAGE_REFERENCES_VERIFIED=true')
           Write-Host ('PRIGIMALIA_TEXT_REFERENCES_CHANGED='+$proof.changedFiles)
       - name: Build both Unreal Editor and Windows Game with validated map references
