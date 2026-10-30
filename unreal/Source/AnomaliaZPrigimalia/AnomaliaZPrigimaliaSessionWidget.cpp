@@ -521,7 +521,8 @@ void UAnomaliaZPrigimaliaSessionWidget::ShowHome() { SelectPage(0); }
 void UAnomaliaZPrigimaliaSessionWidget::ShowOptions() { SelectPage(1); }
 void UAnomaliaZPrigimaliaSessionWidget::ShowMods()
 {
-    // Preserve the original page index for gamepad/menu navigation and tests.
+    // MODS is the native WorkForge section; the main game menu stays separate.
+    bWorkshopMyModsOnly=false;
     RefreshMods(); SelectPage(2);
     if(DetailsFrame) DetailsFrame->SetVisibility(ESlateVisibility::Collapsed);
     if(WorkshopFrame) WorkshopFrame->SetVisibility(ESlateVisibility::Visible);
@@ -556,16 +557,60 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshMods()
     }
     if(Count==0) AddRow(TEXT("Aucun manifeste local. Aucun mod tiers activé."));
 }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterVehicles(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Véhicules")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterWeapons(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Armes")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterBuildings(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Bâtiments")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterCreatures(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Créatures")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterSurvival(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Survie")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterMaps(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Cartes")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterGameplay(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Gameplay")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterTools(){ if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Outils")); RefreshWorkshop(); }
-void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods(){ if(WorkshopSearch) WorkshopSearch->SetText(FText::GetEmpty()); if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterVehicles(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Véhicules")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterWeapons(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Armes")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterBuildings(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Bâtiments")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterCreatures(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Créatures")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterSurvival(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Survie")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterMaps(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Cartes")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterGameplay(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Gameplay")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterTools(){ bWorkshopMyModsOnly=false; if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Outils")); RefreshWorkshop(); }
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods()
+{
+    bWorkshopMyModsOnly=true;
+    if(WorkshopSearch) WorkshopSearch->SetText(FText::GetEmpty());
+    if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous"));
+    RefreshWorkshop();
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCatalogue()
+{
+    bWorkshopMyModsOnly=false;
+    if(WorkshopSearch) WorkshopSearch->SetText(FText::GetEmpty());
+    if(WorkshopCategory) WorkshopCategory->SetSelectedOption(TEXT("Tous"));
+    RefreshWorkshop();
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCategories()
+{
+    bWorkshopMyModsOnly=false;
+    RefreshWorkshop();
+    if(WorkshopCategory && GetOwningPlayer()) WorkshopCategory->SetUserFocus(GetOwningPlayer());
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCollections()
+{
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(
+        TEXT("Collections : aucune collection communautaire publiée par un service connecté. Les créations locales restent visibles dans Mods.")));
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCommunity()
+{
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(
+        TEXT("Communauté non connectée : discussions et avis indisponibles. Aucun nombre ni avis fictif ne sera affiché.")));
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowDownloads()
+{
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(
+        TEXT("Téléchargements : aucun gestionnaire de paquets UE5 authentifiés n'est encore connecté. Ouvrez le dossier Mods pour consulter les manifestes.")));
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopShowSettings()
+{
+    ShowOptions();
+}
+void UAnomaliaZPrigimaliaSessionWidget::WorkshopOpenLocalModsFolder()
+{
+    OpenModsFolder();
+    if(WorkshopStatus) WorkshopStatus->SetText(FText::FromString(
+        TEXT("Ouverture du dossier des manifestes locaux demandée. Les paquets non authentifiés restent inactifs.")));
+}
 
 void UAnomaliaZPrigimaliaSessionWidget::CloseWorkshop()
 {
@@ -605,6 +650,7 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
     {
         FString Id, Name, Author, Category, Version, Description, Preview;
         bool bLocalTools=false;
+        bool bInstalledManifest=false;
     };
     TArray<FWorkForgeCard> Entries;
     const FString Search=WorkshopSearch?WorkshopSearch->GetText().ToString().TrimStartAndEnd():TEXT("");
@@ -612,7 +658,8 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
     const FString Sort=WorkshopSort?WorkshopSort->GetSelectedOption():TEXT("Récents");
     const auto Matches=[&](const FWorkForgeCard& Item)
     {
-        return (Filter.IsEmpty() || Filter==TEXT("Tous") || Filter.Equals(Item.Category,ESearchCase::IgnoreCase)) &&
+        return (!bWorkshopMyModsOnly || Item.bInstalledManifest) &&
+          (Filter.IsEmpty() || Filter==TEXT("Tous") || Filter.Equals(Item.Category,ESearchCase::IgnoreCase)) &&
           (Search.IsEmpty() || Item.Name.Contains(Search,ESearchCase::IgnoreCase) ||
             Item.Category.Contains(Search,ESearchCase::IgnoreCase) ||
             Item.Description.Contains(Search,ESearchCase::IgnoreCase) ||
@@ -682,6 +729,7 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
         Card.Name=Manifest.Id.Left(90);
         Card.Version=Manifest.Version.Left(32);
         Card.Author=TEXT("Manifeste local");
+        Card.bInstalledManifest=true;
         Card.Category=TEXT("Autres");
         Card.Description=TEXT("Fichier de mod local validé. Ce mod n'est pas encore chargé dans UE5.");
         Entries.Add(MoveTemp(Card));
@@ -759,8 +807,8 @@ void UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop()
         }
     }
     WorkshopStatus->SetText(FText::FromString(FString::Printf(
-        TEXT("WORKFORGE • %d mod(s) locaux • %d affiché(s) • Catalogue communautaire non connecté • Aucun mod UE5 chargé"),
-        Total,Visible.Num())));
+        TEXT("MODS • %d manifeste(s) et création(s) locale(s) • %d affiché(s) • Communauté non connectée • Aucun paquet tiers activé%s"),
+        Total,Visible.Num(),bWorkshopMyModsOnly?TEXT(" • Vue : Mes mods"):TEXT(""))));
     if(Visible.IsEmpty())
     {
         auto* Empty=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
@@ -851,7 +899,9 @@ FReply UAnomaliaZPrigimaliaSessionWidget::NativeOnKeyDown(const FGeometry& Geome
     if(bStartupIntro) { FinishIntro();return FReply::Handled(); }
     if(Event.GetKey()==EKeys::Escape || Event.GetKey()==EKeys::Gamepad_FaceButton_Right)
     {
-        if(DetailsFrame && DetailsFrame->GetVisibility()!=ESlateVisibility::Collapsed)
+        if(WorkshopFrame && WorkshopFrame->GetVisibility()==ESlateVisibility::Visible)
+        { CloseWorkshop(); }
+        else if(DetailsFrame && DetailsFrame->GetVisibility()!=ESlateVisibility::Collapsed)
         { ClosePage(); if(HomeButton) HomeButton->SetUserFocus(GetOwningPlayer()); }
         else if(!bMainMenu) Play();
         return FReply::Handled();
