@@ -1,0 +1,99 @@
+name: PRIGIMALIA - Build native in-game Mods redesign
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-mods-native-review.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  mods-review:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          clean: false
+          persist-credentials: false
+      - name: Test real native Mods page source contracts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py tests/test_ue5_native_workshop_menu.py
+          if($LASTEXITCODE -ne 0){throw 'Native Mods checks failed'}
+      - name: Back up and update only three Unreal Mods sources on the isolated D clone
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(-not(Test-Path -LiteralPath $original) -or -not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaZPrigimalia.uproject')) -or -not(Test-Path -LiteralPath (Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'))){throw 'Original or isolated project not verified'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count){throw 'Editor/game/build active; cannot modify native sources concurrently'}
+          foreach($p in @('D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA',$root)){
+            if((Get-Item -LiteralPath $p).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked project root refused'}
+          }
+          $backup=Join-Path $root ('Saved\BrandMigration\ModsNativeReview\run-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'Source backup already exists; refusing overwrite'}
+          New-Item -ItemType Directory -Path $backup -Force | Out-Null
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp')
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            if(-not(Test-Path -LiteralPath $src) -or -not(Test-Path -LiteralPath $dst)){throw ('Missing native Mods source '+$name)}
+            if((Get-Item -LiteralPath $dst).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source file refused'}
+            Copy-Item -LiteralPath $dst -Destination (Join-Path $backup $name) -ErrorAction Stop
+            if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath (Join-Path $backup $name)).Hash){throw 'Backup verification failed'}
+          }
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+            if((Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dst).Hash){throw ('Updated source hash mismatch '+$name)}
+            Write-Host ('PRIGIMALIA_MODS_SOURCE_UPDATED='+$name)
+          }
+          (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash|Set-Content (Join-Path $env:RUNNER_TEMP 'mods-original.sha')
+      - name: Compile Editor and game with real Mods UI
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw ('Compilation failed: '+$target)}
+          }
+          Write-Host 'PRIGIMALIA_NATIVE_MODS_UI_COMPILED=true'
+      - name: Create fresh separate Windows review game without overwriting existing build
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $archive='D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\ModsNativeReview'
+          if(Test-Path -LiteralPath $archive){throw 'ModsNativeReview already exists: refuse overwrite'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
+          if($LASTEXITCODE -ne 0){throw 'Native Mods Windows cook/package failed'}
+          $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
+          if(-not(Test-Path -LiteralPath $exe)){throw 'Windows review EXE not generated'}
+          Write-Host ('PRIGIMALIA_MODS_NEW_WINDOWS_EXE='+$exe)
+      - name: Verify original D project and old packaged game still exist
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $prev=(Get-Content (Join-Path $env:RUNNER_TEMP 'mods-original.sha') -Raw).Trim()
+          if((Get-FileHash -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -Algorithm SHA256).Hash -ne $prev){throw 'Original project descriptor changed'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Existing installed game disappeared'}
+          Write-Host 'PRIGIMALIA_ORIGINAL_AND_PREVIOUS_GAME_PRESERVED=true'
+      - name: Preserve recovery copies of former Mods C++ sources
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: NativeMods-Previous-Sources
+          if-no-files-found: warn
+          path: D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/ModsNativeReview/run-*/*
