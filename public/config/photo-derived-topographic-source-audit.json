@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 1,
+  "project": "ANOMALIA'Z PRIGIMALIA",
+  "engine": "Unreal Engine 5.8",
+  "type": "User-provided-composite-topography-driven synthetic heightfield proof",
+  "status": "BINARY_R16_OUTPUT_GENERATED_IN_CONVERSATION_NOT_COMMITTED_TO_GIT",
+  "landscapeR16Encoding": "uint16_le = clamp(round(32768 + 16 * altitudeMetres)); ZScale=800",
+  "sourceMethod": "Coastlines segmented from supplied finished composite images; terrain elevation synthetically generated. No exact source DEM.",
+  "worlds": [
+    {
+      "name": "DRAKHEIM",
+      "photo": 1,
+      "sideKm": 20,
+      "vertices": 2017,
+      "expectedBytes": 8136578,
+      "imageSha256": "1f44328f4eae2919a544a6ed5861d1b6b4e41ccc4074044b7281674207dd59f4",
+      "estimatedLandKm2": 163.87,
+      "estimatedWaterKm2": 236.13
+    },
+    {
+      "name": "SOLYNACALYRA",
+      "photo": 2,
+      "sideKm": 15,
+      "vertices": 1513,
+      "expectedBytes": 4578338,
+      "imageSha256": "68900190053dab2b8acdf207999197caecbfb6c470f7c10ae0a711bc734e7fa2",
+      "estimatedLandKm2": 131.1,
+      "estimatedWaterKm2": 93.9
+    },
+    {
+      "name": "VORGRAD",
+      "photo": 3,
+      "sideKm": 30,
+      "vertices": 3025,
+      "expectedBytes": 18301250,
+      "imageSha256": "256401541f40657ff4c6c818b5500063fb3ecf8da73fdbd099533ee5c05d4d59",
+      "estimatedLandKm2": 899.92,
+      "estimatedWaterKm2": 0.08
+    },
+    {
+      "name": "NEXAVARKHOS",
+      "photo": 4,
+      "sideKm": 10,
+      "vertices": 1009,
+      "expectedBytes": 2036162,
+      "imageSha256": "b7614d128a2ec25c55862a0a50719c001549e0526159a8676dc4259b823f8a78",
+      "estimatedLandKm2": 40.98,
+      "estimatedWaterKm2": 59.02
+    },
+    {
+      "name": "CHERNASKALUXRIA",
+      "photo": [
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "sideKm": 100,
+      "vertices": 5041,
+      "expectedBytes": 50823362,
+      "realTileCount": 400,
+      "perTileVertices": 253,
+      "perTileBytes": 128018,
+      "sharedEdgesVerified": 760,
+      "imageSha256": "faad5e6a7643e9f4f02fc2788c632412636b8b47055f93667adc72aa075dd4ca",
+      "estimatedLandKm2": 4408.97,
+      "estimatedWaterKm2": 5591.03,
+      "targetLandKm2": 6750,
+      "targetSeaKm2": 3250,
+      "geographyTargetPassed": false
+    }
+  ],
+  "nativeUEImportVerified": false,
+  "productionLevelCreated": false,
+  "noOtherWorldsModified": true,
+  "artifactDistribution": "The R16 and reconstruction script are provided as downloadable conversation ZIPs; binary heightfields not currently committed in the GitHub source repository."
+}
