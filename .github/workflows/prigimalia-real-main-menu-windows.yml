@@ -36,13 +36,13 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $home='D:\ANOMALIAZ-PRIGIMALIA'
-          $root=Join-Path $home 'unreal'
+          $projectHome='D:\ANOMALIAZ-PRIGIMALIA'
+          $root=Join-Path $projectHome 'unreal'
           $old='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
           $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
           if(-not(Test-Path -LiteralPath $old -PathType Leaf) -or -not(Test-Path -LiteralPath $project -PathType Leaf) -or -not(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'Safety markers or original user project missing'}
-          foreach($d in @('D:\ANOMALIA',$home,$root)){
+          foreach($d in @('D:\ANOMALIA',$projectHome,$root)){
             if((Get-Item -LiteralPath $d).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source project root is not allowed'}
           }
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'Editor or game is open: cannot safely swap shared native sources'}
