@@ -14,7 +14,7 @@
 #include "Widgets/Layout/SBorder.h"
 #include "Widgets/SBoxPanel.h"
 #include "Widgets/Text/STextBlock.h"
-#include "Widgets/Notifications/SThrobber.h"
+#include "Widgets/Images/SThrobber.h"
 #include "Styling/SlateBrush.h"
 
 // Four user-supplied images, rotating on successive Unreal map loads.
