@@ -23,3 +23,19 @@ test('startup art is bundled via the existing module build',()=>{
  const html=read('index.html');
  assert.match(html,/<script type="module" src="\/src\/startup-splash\.js"><\/script>/);
 });
+
+test('native Unreal startup poster is transient and cannot replace the 3D menu',()=>{
+ const native=read('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp');
+ const header=read('unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.h');
+ const importer=read('unreal/Scripts/import_startup_poster.py');
+ const splashBuilder=read('scripts/ue5/prepare-game-branding.ps1');
+ assert.match(native,/Branding\\/T_StartupPoster\\.T_StartupPoster/);
+ assert.match(native,/StartupArtworkFrame->SetVisibility\\(ESlateVisibility::Collapsed\\)/);
+ assert.match(native,/MenuArtwork->SetVisibility\\(ESlateVisibility::Collapsed\\)/);
+ assert.match(header,/TObjectPtr<UBorder> StartupArtworkFrame/);
+ assert.match(importer,/T_StartupPoster/);
+ assert.match(importer,/verified-source-backup\\.marker/);
+ assert.doesNotMatch(importer,/T_MenuBackdrop/);
+ assert.match(splashBuilder,/prigimalia-startup-poster\\.jpg/);
+ assert.doesNotMatch(splashBuilder,/prigimalia-menu-backdrop\\.jpg/);
+});
