@@ -107,6 +107,7 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
         MenuCamera=GetWorld()->SpawnActor<ACameraActor>(ACameraActor::StaticClass(),Eye,(Center-Eye).Rotation(),Params);
         if(MenuCamera)
         {
+            LastMenuPreviewLocation=Survivor->GetActorLocation();
             MenuCamera->GetCameraComponent()->SetFieldOfView(63.f);
             PreviousViewTarget=PC->GetViewTarget(); PC->SetViewTarget(MenuCamera);
             if(PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
@@ -675,7 +676,17 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
     Pages=WidgetTree->ConstructWidget<UWidgetSwitcher>(UWidgetSwitcher::StaticClass(),TEXT("SessionPages")); PageScroll->AddChild(Pages);
     Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Pages->AddChild(Rows);
     Label(TEXT("VOTRE SURVIVANT"));
-    Label(TEXT("Jouer reprend votre personnage et votre inventaire dans la zone jouable.\nLes sauvegardes existantes sont conservées."));
+    Label(TEXT("Votre vrai survivant est affiché dans la zone de déconnexion sauvegardée.\nLes anciens profils ne sont jamais remplacés."));
+    if(bMainMenu)
+    {
+        CharacterSlotSelect=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("SessionCharacterSlots"));
+        Rows->AddChildToVerticalBox(CharacterSlotSelect)->SetPadding(FMargin(0,8,0,5));
+        CharacterSlotStatus=Label(TEXT("Choisissez votre survivant ou créez un emplacement indépendant."));
+        Button(TEXT("SessionCharacterSelect"),TEXT("CHARGER CE PERSONNAGE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::SelectCharacterSlot);
+        Button(TEXT("SessionCharacterNew"),TEXT("CRÉER UN NOUVEAU PERSONNAGE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CreateCharacterSlot);
+        Button(TEXT("SessionCharacterTransfer"),TEXT("EXPORTER POUR TRANSFERT (SAUVEGARDE)"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ExportCharacterForTransfer);
+        RefreshCharacterSlots();
+    }
     Label(TEXT("COMMANDES\nZ/W : avancer · Q/A/D : direction · souris : regard\nMaj : courir · E : interagir/entrer/sortir · I : inventaire\nEspace : sauter · R : dormir près du lit · V : caméra\nÉchap : pause · manette : sticks, A/Croix, X/Carré\nMenu : inventaire · View/Share : pause"));
     Label(TEXT("Version de développement · carte et contenu en construction"));
     Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Pages->AddChild(Rows);
