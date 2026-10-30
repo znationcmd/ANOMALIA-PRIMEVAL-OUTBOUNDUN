@@ -8,6 +8,7 @@ from __future__ import annotations
 import argparse
 import json
 from pathlib import Path
+from chernaskaluxria_fauna_progression import review_manifest as fauna_review_manifest
 from chernaskaluxria_gameplay_pcg import (
     BIOME_RULES, CELL_SIZE_M, WORLD_ID, WORLD_PACKAGE,
     starter_mobility_hubs, server_vehicle_template, plan_population_cell,
@@ -41,6 +42,7 @@ def export(output:Path):
         "status":"REVIEW_CANDIDATES_NOT_DEPLOYED"
       },
       "vehicles.review.json":server_vehicle_template(),
+      "fauna-encounters.review.json":fauna_review_manifest(),
       "preview-population.review.json":{
         "worldId":WORLD_ID,
         "sampleCells":[
