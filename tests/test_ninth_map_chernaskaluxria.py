@@ -3,11 +3,13 @@ import importlib.util
 import json
 import math
 import unittest
+import sys
 from pathlib import Path
 
 ROOT=Path(__file__).resolve().parents[1]
 
 def source():
+    sys.path.insert(0,str(ROOT/"scripts/ue5"))
     file=ROOT/"scripts/ue5/chernaskaluxria_world.py"
     spec=importlib.util.spec_from_file_location("chernaskaluxria_test_source",file)
     module=importlib.util.module_from_spec(spec)
