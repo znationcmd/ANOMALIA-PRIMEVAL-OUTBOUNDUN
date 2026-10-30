@@ -8,6 +8,7 @@ on:
       - 'scripts/ue5/map_titles.py'
       - 'public/config/anomalia-map-catalog.json'
       - 'tests/native/prigimalia_four_world_heights.cpp'
+      - 'tests/native/prigimalia_world_area_estimate.cpp'
       - 'tests/test_ue5_map_names_and_realism.py'
       - '.github/workflows/prigimalia-four-map-source-checks.yml'
   workflow_dispatch:
@@ -23,6 +24,10 @@ jobs:
         run: |
           g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_four_world_heights.cpp -o /tmp/four-world-heights
           /tmp/four-world-heights
+      - name: Quantify native dry land and potential gentle-slope parcels
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_world_area_estimate.cpp -o /tmp/four-world-areas
+          /tmp/four-world-areas
       - name: Check Python source syntax (not Unreal Editor execution)
         run: python -m py_compile unreal/Scripts/create_four_additional_maps.py scripts/ue5/map_titles.py
       - name: Check six stable public names and protected Unreal identities
