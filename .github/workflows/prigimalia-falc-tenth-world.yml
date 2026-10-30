@@ -1,0 +1,43 @@
+name: PRIGIMALIA - F.A.L.C tenth independent 26.5km terrain source validation
+on:
+  push:
+    branches: [feature/falc-tenth-world-265km-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-tenth-world-topography:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install offline RAW16 resampling libraries
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless
+      - name: Syntax check native world creation and RAW16 source converter
+        run: |
+          python -m py_compile scripts/ue5/falc_from_composite_r16.py unreal/Scripts/create_falc_native.py scripts/ue5/map_titles.py
+      - name: Validate standalone 26.5km FALC source and four seam-exact quadrants
+        run: python -m unittest discover -s tests -p test_falc_tenth_world.py -v
+      - name: Verify ten world IDs and existing map regressions
+        run: |
+          python -m unittest discover -s tests -p test_ue5_map_independence.py -v
+          python -m unittest discover -s tests -p test_ue5_map_names_and_realism.py -v
+          python -m unittest discover -s tests -p test_user_photo_topography_import.py -v
+          python -m unittest discover -s tests -p test_ninth_map_chernaskaluxria.py -v
+          python -m unittest discover -s tests -p test_chernaskaluxria_5000_mainland.py -v
+      - name: Verify non-playability is accurately declared
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          a=json.loads(Path("public/config/anomalia-map-catalog.json").read_text())
+          assert len(a["maps"])==10
+          by_id={x["id"]:x for x in a["maps"]}
+          f=by_id["falc-v1"]
+          assert f["displayName"]=="F.A.L.C"
+          assert f["widthKm"]==26.5 and f["heightKm"]==26.5
+          assert f["serverSelectable"] is False
+          assert f["sourceBinaryPresentInGit"] is False
+          assert by_id["inhabited-v2"]["originalUnrealPackage"]=="/Game/Maps/ANOMALIA_Inhabited_v2"
+          print("FALC_TENTH_WORLD_SOURCE_ONLY_NATIVE_UMAP_NOT_TESTED")
+          PY
