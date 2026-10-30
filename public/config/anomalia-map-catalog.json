@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Eight separate worlds. Never join their landscapes or persistence data.",
+  "description": "Nine independent ANOMALIA'Z worlds. The ninth, CHERNASKALUXRIA (100x100 km), is a separate multi-biome world under design; no existing worlds, saves or Unreal packages are merged.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -101,6 +101,35 @@
       "saveNamespace": "nexavarkhos-v1",
       "terrainBiome": "devastated-colony",
       "expectedLandscapeComponents": 256
+    },
+    {
+      "id": "chernaskaluxria-v1",
+      "displayName": "CHERNASKALUXRIA",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA",
+      "widthKm": 100,
+      "heightKm": 100,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "world-spec-prepared-native-landscape-not-authored",
+      "saveNamespace": "chernaskaluxria-v1",
+      "terrainBiome": "continental-multi-biome-desert-snow-tropical-paradise-urban-rural-mountain-devastated",
+      "plannedWorldPartition": true,
+      "plannedTileGrid": [
+        20,
+        20
+      ],
+      "plannedTileSizeKm": 5,
+      "plannedRegions": [
+        "northern-alpine",
+        "polar-volcanic",
+        "arid-highlands",
+        "central-metropolis",
+        "farming-lowlands",
+        "devastated-exclusion",
+        "tropical-rainforest",
+        "paradise-islands",
+        "coastal-ports"
+      ]
     }
   ]
 }
