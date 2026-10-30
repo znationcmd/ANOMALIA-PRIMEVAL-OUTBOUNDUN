@@ -12,6 +12,7 @@
 #include "AnomaliaZPrigimaliaConfigLibrary.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
+#include "Components/CanvasPanelSlot.h"
 #include "Components/TextBlock.h"
 #include "Components/WidgetSwitcher.h"
 #include "Components/VerticalBox.h"
@@ -70,12 +71,77 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
     }
     auto* PC=GetWorld()->GetFirstPlayerController(); if(!PC) return;
     auto Input=[PC](FKey Key,EInputEvent Event) { PC->InputKey(FInputKeyParams(Key,Event,Event==IE_Pressed?1.0:0.0,Key.IsGamepadKey(),FInputDeviceId::CreateFromInternalId(0))); };
+    if(Phase==90)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        auto* Brand=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMainBrand")):nullptr;
+        auto* Rail=Menu && Menu->WidgetTree?Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("SessionNavigation"))):nullptr;
+        auto* PlayButton=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
+        auto* Art=Menu && Menu->WidgetTree?Menu->WidgetTree->FindWidget(TEXT("SessionMenuArtwork")):nullptr;
+        const auto* Layout=Rail?Cast<UCanvasPanelSlot>(Rail->Slot):nullptr;
+        if(!Brand || !Rail || !PlayButton || !Layout ||
+           Layout->GetAnchors().Minimum.X<.60f ||
+           Rail->GetVisibility()!=ESlateVisibility::Visible ||
+           (Art && Art->GetVisibility()!=ESlateVisibility::Collapsed) ||
+           PC->GetViewTarget()==PC->GetPawn())
+        {Finish(TEXT("Old left-aligned/static startup menu is still shown instead of live character and right-aligned menu"));return;}
+        FString File;FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableProbe="),File);
+        FScreenshotRequest::RequestScreenshot(FPaths::ChangeExtension(File,TEXT(""))+TEXT("-actual-main-menu.png"),true,false);
+        Checks.Add(TEXT("real_right_aligned_3d_main_menu_visible_without_old_poster"));
+        Next=Now+1.5;Phase=91;return;
+    }
+    if(Phase==91)
+    {
+        if(Now<Next)return;
+        auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+        if(!Menu || !Menu->WidgetTree){Finish(TEXT("Actual main menu disappeared before navigation test"));return;}
+        auto* Play=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay")));
+        auto* Browser=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserFullScreen")));
+        auto* Back=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserBack")));
+        auto* Solo=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSolo")));
+        auto* Mods=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionMods")));
+        auto* Workshop=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("WorkshopFullScreen")));
+        auto* WorkshopBack=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("WorkshopReturn")));
+        if(!Play || !Browser || !Back || !Solo || !Mods || !Workshop || !WorkshopBack)
+        {Finish(TEXT("New main menu functional controls are missing"));return;}
+        Play->OnClicked.Broadcast();
+        if(Browser->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("Play must open the real server browser"));return;}
+        Back->OnClicked.Broadcast();
+        Mods->OnClicked.Broadcast();
+        if(Workshop->GetVisibility()!=ESlateVisibility::Visible)
+        {Finish(TEXT("WorkForge must open from the start menu"));return;}
+        WorkshopBack->OnClicked.Broadcast();
+        Play->OnClicked.Broadcast();
+        Solo->OnClicked.Broadcast();
+        if(Menu->IsInViewport() || GetWorld()->IsPaused())
+        {Finish(TEXT("Continue solo did not resume native game after server browser"));return;}
+        auto* Pause=UAnomaliaZPrigimaliaSessionWidget::Open(PC,false);
+        if(!Pause || !Pause->WidgetTree ||
+           Pause->WidgetTree->FindWidget(TEXT("SessionMods")) ||
+           !Pause->WidgetTree->FindWidget(TEXT("SessionOnline")))
+        {Finish(TEXT("In-game pause must show players and hide WorkForge"));return;}
+        Checks.Add(TEXT("working_start_server_browser_workforge_and_separate_pause"));
+        Finish();return;
+    }
     if(Phase==0)
     {
         if(Now<Next) return;
         Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
-        auto* S=Survivor.Get(); auto* Loot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
-        if(!S || !S->StatusWidget || !Loot || !Loot->IsReady()) return;
+        auto* S=Survivor.Get();
+        if(!S)return;
+        // Menu-only integration is intentionally independent of loot spawns,
+        // vehicle setup and world-art audits. It still runs an ACTUAL cooked
+        // Win64 game, draws a screenshot and clicks live UMG buttons.
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaMenuOnly")))
+        {
+            auto* Menu=UAnomaliaZPrigimaliaSessionWidget::Open(PC,true);
+            if(!Menu){Finish(TEXT("Native menu did not open in the packaged game"));return;}
+            Next=Now+1;Phase=90;return;
+        }
+        auto* Loot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
+        if(!S->StatusWidget || !Loot || !Loot->IsReady()) return;
         // These three processes run ONLY in the separately packaged review
         // executable whose Saved directory is isolated from the user's game.
         auto* CharacterMode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>();
