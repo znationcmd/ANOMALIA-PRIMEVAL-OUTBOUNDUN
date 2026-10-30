@@ -1,6 +1,7 @@
 #include "AnomaliaZPrigimaliaWorldImportLibrary.h"
 #include "AnomaliaZPrigimaliaArchipelagoHeight.h"
 #include "AnomaliaZPrigimaliaInhabitedHeight.h"
+#include "AnomaliaZPrigimaliaExtraWorldHeights.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Landscape.h"
@@ -269,6 +270,70 @@ static AActor* CreateLandscape(bool bInhabited)
 
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
+
+namespace
+{
+ AnomaliaZPrigimaliaExtraWorlds::EWorld ResolveAdditionalWorld(const FString& MapIdentifier)
+ {
+  using namespace AnomaliaZPrigimaliaExtraWorlds;
+  if(MapIdentifier==TEXT("KARSKOV"))return EWorld::Karskov;
+  if(MapIdentifier==TEXT("VORGRAD"))return EWorld::Vorgrad;
+  if(MapIdentifier==TEXT("NEMORIS"))return EWorld::Nemoris;
+  if(MapIdentifier==TEXT("DRAKHEIM"))return EWorld::Drakheim;
+  return EWorld::Invalid;
+ }
+}
+double UAnomaliaZPrigimaliaWorldImportLibrary::NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters)
+{
+ using namespace AnomaliaZPrigimaliaExtraWorlds;
+ if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return -400.;
+ return Height(ResolveAdditionalWorld(MapIdentifier),EastMeters,NorthMeters);
+}
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const FString& MapIdentifier)
+{
+#if WITH_EDITOR
+ using namespace AnomaliaZPrigimaliaExtraWorlds;
+ const EWorld Kind=ResolveAdditionalWorld(MapIdentifier);
+ const int32 Side=SideMeters(Kind),Size=Resolution(Kind);
+ if(Side==0 || Size==0)return nullptr;
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier)return nullptr;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr; // Never overlay existing terrain.
+ TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
+ const double Half=double(Side)/2.;
+ for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X)
+ {
+  const double East=-Half+double(Side)*X/(Size-1);
+  const double North=Half-double(Side)*Y/(Size-1);
+  Samples[Y*Size+X]=Encode(Height(Kind,East,North));
+ }
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("PRIGIMALIA_")+MapIdentifier+TEXT("_Landscape"));
+ Land->SetActorLocation(FVector(-Half*100.,-Half*100.,0.));
+ const double CmPerSample=double(Side)*100./(Size-1);
+ Land->SetActorScale3D(FVector(CmPerSample,CmPerSample,800.));
+ TMap<FGuid,TArray<uint16>> Heights;Heights.Add(FGuid(),MoveTemp(Samples));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ const int32 Expected=(Size==3025?576:256);
+ if(Land->LandscapeComponents.Num()!=Expected)
+ {
+  UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
+   *MapIdentifier,Land->LandscapeComponents.Num(),Expected);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
 TArray<FVector2D> UAnomaliaZPrigimaliaWorldImportLibrary::InhabitedSettlementSites()
 {
  TArray<FVector2D> Result;
