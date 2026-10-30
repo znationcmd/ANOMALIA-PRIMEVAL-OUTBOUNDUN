@@ -1,4 +1,5 @@
 name: PRIGIMALIA - Build REAL right-aligned 3D main menu and verify screenshot
+# Rerun after correcting the ANOMALIA' escaped brand assertion in native UI contracts.
 on:
   push:
     branches: [rebrand/full-anomaliaz-prigimalia-20261029]
