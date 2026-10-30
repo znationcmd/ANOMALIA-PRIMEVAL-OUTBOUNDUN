@@ -1,0 +1,48 @@
+name: PRIGIMALIA - four independent map source checks
+on:
+  push:
+    branches: [feature/four-independent-ue5-worlds-20261030]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaExtraWorldHeights.h'
+      - 'unreal/Scripts/create_four_additional_maps.py'
+      - 'scripts/ue5/map_titles.py'
+      - 'public/config/anomalia-map-catalog.json'
+      - 'tests/native/prigimalia_four_world_heights.cpp'
+      - 'tests/native/prigimalia_world_area_estimate.cpp'
+      - 'tests/test_ue5_map_names_and_realism.py'
+      - '.github/workflows/prigimalia-four-map-source-checks.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-four-original-worlds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and check native terrain math, dimensions, independence
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_four_world_heights.cpp -o /tmp/four-world-heights
+          /tmp/four-world-heights
+      - name: Quantify native dry land and potential gentle-slope parcels
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_world_area_estimate.cpp -o /tmp/four-world-areas
+          /tmp/four-world-areas
+      - name: Check Python source syntax (not Unreal Editor execution)
+        run: python -m py_compile unreal/Scripts/create_four_additional_maps.py scripts/ue5/map_titles.py
+      - name: Check six stable public names and protected Unreal identities
+        run: python -m unittest discover -s tests -p test_ue5_map_names_and_realism.py -v
+      - name: Assert four maps remain disabled until actual native validation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          rows={r['displayName']:r for r in json.loads(Path('public/config/anomalia-map-catalog.json').read_text())['maps']}
+          for name,size in {'KARSKOV':30,'VORGRAD':30,'NEMORIS':20,'DRAKHEIM':20}.items():
+              row=rows[name]
+              assert row['widthKm']==size==row['heightKm']
+              assert row['originalUnrealPackage']==f'/Game/Maps/PRIGIMALIA_{name}'
+              assert row['serverSelectable'] is False
+              assert row['validation']=='native-generation-script-prepared-not-authored'
+          print('FOUR_NEW_MAP_CATALOG_SAFE_TO_REVIEW')
+          PY
