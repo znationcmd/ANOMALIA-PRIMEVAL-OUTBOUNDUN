@@ -53,7 +53,7 @@ private:
     UPROPERTY() TObjectPtr<UComboBoxString> ServerSelect;
     UPROPERTY() TObjectPtr<UTextBlock> ServerStatus;
     UPROPERTY() TObjectPtr<UTextBlock> TravelStatus;
-    struct FServerBrowserEntry { FString Id,Name,Map,Address,Category; int32 Players=0,Capacity=0; bool bFavorite=false; };
+    struct FServerBrowserEntry { FString Id,Name,Map,Address,Category,Perspective; int32 Players=0,Capacity=0; bool bFavorite=false; };
     TArray<FServerBrowserEntry> ServerEntries;
     FString ServerCategory=TEXT("Officiel");
     FString SelectedServerId;
