@@ -62,12 +62,18 @@ namespace
   const UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
   if(!World)return false;
   const FString Name=World->GetPackage()->GetName();
-  return Name==TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") || Name==TEXT("/Game/Maps/ANOMALIA_Inhabited_v2");
+  return Name==TEXT("/Game/Maps/ANOMALIA_Archipelago_v2") ||
+   Name==TEXT("/Game/Maps/ANOMALIA_Inhabited_v2") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_KARSKOV") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_VORGRAD") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_NEMORIS") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM");
  }
  bool IsOwnedDescriptor(const FActorDesc& Desc)
  {
   const FString NativeClass=Desc.NativeClass ? Desc.NativeClass->GetPathName() : FString();
   return Desc.Label.ToString().StartsWith(TEXT("ANOMALIA_")) ||
+   Desc.Label.ToString().StartsWith(TEXT("PRIGIMALIA_")) ||
    NativeClass==TEXT("/Script/Landscape.Landscape") || NativeClass==TEXT("/Script/Landscape.LandscapeStreamingProxy");
  }
 }
