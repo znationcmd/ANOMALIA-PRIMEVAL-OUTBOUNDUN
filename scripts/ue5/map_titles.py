@@ -11,7 +11,7 @@ def load_titles(path=CATALOG):
         raise ValueError("Unsupported map catalogue version")
     items = data.get("maps")
     if not isinstance(items, list) or len(items) != 6:
-        raise ValueError("Expected two distinct 48 km worlds")
+        raise ValueError("Expected two 48 km and four additional worlds")
     if {item["id"] for item in items} != {"archipelago-v2", "inhabited-v2", "karskov-v1", "vorgrad-v1", "nemoris-v1", "drakheim-v1"}:
         raise ValueError("Map IDs must not change with public titles")
     for item in items:
