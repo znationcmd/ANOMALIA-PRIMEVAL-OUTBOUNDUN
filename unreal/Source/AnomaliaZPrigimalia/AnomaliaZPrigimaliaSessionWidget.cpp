@@ -150,14 +150,15 @@ FReply UAnomaliaZPrigimaliaSessionWidget::NativeOnMouseButtonDown(const FGeometr
 void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canvas)
 {
     if(!Canvas || !WidgetTree) return;
-    // Identical layout primitives to a professional game launcher, rendered by UMG in UE5.
-    const FLinearColor Black(.012f,.013f,.020f,.99f);
-    const FLinearColor Surface(.038f,.038f,.052f,.97f);
-    const FLinearColor Panel(.065f,.054f,.066f,.98f);
-    const FLinearColor Hot(.93f,.27f,.17f,1.f);
-    const FLinearColor Gold(1.f,.72f,.50f,1.f);
-    const FLinearColor Soft(.84f,.75f,.73f,1.f);
-    const FLinearColor Cyan(.17f,.88f,1.f,1.f);
+    // Dedicated native MODS screen: real widgets and actions, not an image.
+    // The WorkForge brand lives inside Mods; the external Tools app is separate.
+    const FLinearColor Black(.007f,.010f,.015f,.995f);
+    const FLinearColor Surface(.020f,.029f,.042f,.98f);
+    const FLinearColor Panel(.025f,.034f,.047f,.98f);
+    const FLinearColor Hot(1.f,.14f,.065f,1.f);
+    const FLinearColor Gold(1.f,.76f,.58f,1.f);
+    const FLinearColor Soft(.87f,.89f,.91f,1.f);
+    const FLinearColor Cyan(.22f,.86f,.75f,1.f);
     auto* Logo=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_WorkshopLogo.T_WorkshopLogo"),nullptr,LOAD_NoWarn);
     auto* Backdrop=LoadObject<UTexture2D>(nullptr,TEXT("/Game/AnomaliaZPrigimalia/Branding/T_MenuBackdrop.T_MenuBackdrop"),nullptr,LOAD_NoWarn);
 
@@ -193,8 +194,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     auto Action=[&](UHorizontalBox* Parent,const TCHAR* Id,const FString& Title)
     {
         auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
-        B->SetBackgroundColor(FLinearColor(.43f,.075f,.065f,1.f));
-        auto* Caption=Label(Title,13,Gold);
+        B->SetBackgroundColor(FLinearColor(.72f,.032f,.018f,1.f));
+        auto* Caption=Label(Title,13,FLinearColor::White);
         B->SetContent(Caption);
         auto* Slot=Parent->AddChildToHorizontalBox(B);
         Slot->SetPadding(FMargin(5,6));
@@ -227,13 +228,17 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     auto* Titles=Vertical();
     auto* TitleSlot=HeaderRow->AddChildToHorizontalBox(Titles);
     TitleSlot->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
-    AddLabel(Titles,TEXT("A N O M A L I A"),23,Gold,0);
-    AddLabel(Titles,TEXT("W O R K F O R G E   •   M O D S   &   C R É A T I O N S"),8,Soft,0);
-    const auto* HeaderNav=TEXT("ACCUEIL     WORKFORGE     MODS     CRÉATIONS     COMMUNAUTÉ");
-    auto* Nav=Label(HeaderNav,12,Soft);
-    auto* NavSlot=HeaderRow->AddChildToHorizontalBox(Nav);
-    NavSlot->SetVerticalAlignment(VAlign_Center);NavSlot->SetPadding(FMargin(8));
-    Action(HeaderRow,TEXT("WorkshopReturn"),TEXT("← Retour au jeu"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CloseWorkshop);
+    AddLabel(Titles,TEXT("A N O M A L I A"),22,FLinearColor::White,0);
+    AddLabel(Titles,TEXT("W O R K F O R G E   |   M O D S   &   C R É A T I O N S"),9,Hot,0);
+    WorkshopSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("WorkshopSearch"));
+    WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod, un créateur, une catégorie...")));
+    WorkshopSearch->SetMinDesiredWidth(285.f);
+    WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopSearchChanged);
+    auto* SearchSlot=HeaderRow->AddChildToHorizontalBox(WorkshopSearch);
+    SearchSlot->SetVerticalAlignment(VAlign_Center); SearchSlot->SetPadding(FMargin(8,0));
+    Action(HeaderRow,TEXT("WorkshopRefresh"),TEXT("Actualiser"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop);
+    Action(HeaderRow,TEXT("WorkshopPlay"),TEXT("▶  JOUER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Play);
+    Action(HeaderRow,TEXT("WorkshopReturn"),TEXT("←  Retour"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CloseWorkshop);
 
     // Main viewport with genuine 3-column layout.
     auto* Columns=Horizontal();
@@ -242,29 +247,35 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
 
     // Left rail, compact and scrollable, no fake interactive items.
     auto* LeftWidth=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
-    LeftWidth->SetWidthOverride(184.f);
+    LeftWidth->SetWidthOverride(188.f);
     Columns->AddChildToHorizontalBox(LeftWidth);
-    auto* Left=Box(FLinearColor(.030f,.027f,.037f,.98f),12);
+    auto* Left=Box(FLinearColor(.011f,.016f,.023f,.99f),10);
     LeftWidth->SetContent(Left);
     auto* LeftContent=Vertical();Left->SetContent(LeftContent);
-    AddLabel(LeftContent,TEXT("✦  ANOMALIA WORKFORGE"),14,Gold,10);
+    AddLabel(LeftContent,TEXT("ANOMALIA  •  MODS"),15,FLinearColor::White,10);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,0);
     // Native navigation controls, not decorative dead labels.
     auto NavButton=[&](const TCHAR* Id,const FString& Caption)
     {
         auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Id));
-        Button->SetBackgroundColor(Caption.Contains(TEXT("WORKFORGE"))?
-            FLinearColor(.63f,.11f,.075f,1.f):FLinearColor(.075f,.070f,.080f,.95f));
-        Button->SetContent(Label(Caption,13,Caption.Contains(TEXT("WORKFORGE"))?Gold:Soft));
+        const bool bActive=Caption.Contains(TEXT("MODS  •"));
+        Button->SetBackgroundColor(bActive?
+            FLinearColor(.77f,.055f,.027f,1.f):FLinearColor(.035f,.043f,.058f,.98f));
+        Button->SetContent(Label(Caption,13,bActive?FLinearColor::White:Soft));
         LeftContent->AddChildToVerticalBox(Button)->SetPadding(FMargin(2,5));
         return Button;
     };
     NavButton(TEXT("WFNavHome"),TEXT("⌂   Accueil"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::CloseWorkshop);
-    NavButton(TEXT("WFNavForge"),TEXT("✦   WORKFORGE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll);
-    NavButton(TEXT("WFNavMods"),TEXT("▦   Mes mods"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods);
-    NavButton(TEXT("WFNavCategories"),TEXT("▤   Catégories"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll);
-    AddLabel(LeftContent,TEXT("♧   Communauté  •  bientôt"),11,Soft,9);
-    AddLabel(LeftContent,TEXT("⚙   Paramètres  •  bientôt"),11,Soft,9);
+    NavButton(TEXT("WFNavForge"),TEXT("✦   WorkForge"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCatalogue);
+    NavButton(TEXT("WFNavMods"),TEXT("▦   MODS  •  catalogue"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCatalogue);
+    NavButton(TEXT("WFNavCreations"),TEXT("✎   Créations"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorkshopTools);
+    NavButton(TEXT("WFNavCollections"),TEXT("▧   Collections"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCollections);
+    NavButton(TEXT("WFNavCategories"),TEXT("▤   Catégories"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCategories);
+    NavButton(TEXT("WFNavServers"),TEXT("☷   Serveurs"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorkshopHosting);
+    NavButton(TEXT("WFNavMyMods"),TEXT("▣   Mes mods"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods);
+    NavButton(TEXT("WFNavDownloads"),TEXT("↓   Téléchargements"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowDownloads);
+    NavButton(TEXT("WFNavCommunity"),TEXT("☏   Communauté"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCommunity);
+    NavButton(TEXT("WFNavSettings"),TEXT("⚙   Paramètres"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowSettings);
     AddLabel(LeftContent,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,12);
     if(Logo)
     {
@@ -279,73 +290,72 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     auto* CenterScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopMainScroll"));
     Columns->AddChildToHorizontalBox(CenterScroll)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     auto* Center=Vertical();CenterScroll->AddChild(Center);
-    auto* Hero=Box(FLinearColor(.14f,.04f,.042f,.98f),6);
+    auto* Hero=Box(FLinearColor(.042f,.022f,.029f,.99f),4);
     Center->AddChildToVerticalBox(Hero)->SetPadding(FMargin(12,10,9,7));
     auto* HeroWrap=WidgetTree->ConstructWidget<UOverlay>(UOverlay::StaticClass());Hero->SetContent(HeroWrap);
     if(Backdrop)
     {
         auto* Background=WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(),TEXT("WorkshopHeroBackdrop"));
         Background->SetBrushFromTexture(Backdrop,true);
-        Background->SetDesiredSizeOverride(FVector2D(750.f,185.f));
-        Background->SetColorAndOpacity(FLinearColor(.72f,.23f,.18f,.35f));
+        Background->SetDesiredSizeOverride(FVector2D(780.f,240.f));
+        Background->SetColorAndOpacity(FLinearColor(1.f,.76f,.70f,.65f));
         HeroWrap->AddChildToOverlay(Background);
     }
     auto* HeroText=Vertical();
     HeroWrap->AddChildToOverlay(HeroText)->SetPadding(FMargin(16,12));
-    AddLabel(HeroText,TEXT("CRÉER  ·  EXPLORER  ·  PERSONNALISER"),12,Gold,2);
-    AddLabel(HeroText,TEXT("ANOMALIA"),38,FLinearColor(1.f,.95f,.84f),0);
-    AddLabel(HeroText,TEXT("W O R K F O R G E"),29,FLinearColor(1.f,.49f,.27f),0);
-    AddLabel(HeroText,TEXT("Mods, créations et contenus pour votre monde ANOMALIA."),14,Soft,4);
-    AddLabel(HeroText,TEXT("Développé pour les créateurs. Relié aux projets ANOMALIA Tools."),12,Soft,2);
+    AddLabel(HeroText,TEXT("ANOMALIA"),44,FLinearColor::White,0);
+    AddLabel(HeroText,TEXT("W O R K F O R G E"),29,FLinearColor(1.f,.28f,.15f),0);
+    AddLabel(HeroText,TEXT("M O D S   &   C R É A T I O N S"),12,Soft,1);
+    AddLabel(HeroText,TEXT("Explorez les mods et créations pour ANOMALIA’Z PRIGIMALIA."),14,FLinearColor::White,10);
+    AddLabel(HeroText,TEXT("Catalogue local réel  •  Recherche  •  Catégories  •  Collections"),12,Gold,2);
 
-    auto* CategoriesTitle=Label(TEXT("CATÉGORIES DE MODS"),18,Gold);
+    auto* CategoriesTitle=Label(TEXT("EXPLORER PAR CATÉGORIE"),17,FLinearColor::White);
     Center->AddChildToVerticalBox(CategoriesTitle)->SetPadding(FMargin(14,11,8,4));
     auto* Grid=WidgetTree->ConstructWidget<UUniformGridPanel>(UUniformGridPanel::StaticClass(),TEXT("WorkshopCategories"));
     Center->AddChildToVerticalBox(Grid)->SetPadding(FMargin(10,3,8,9));
     Grid->SetSlotPadding(FMargin(3,4));
     const TArray<TTuple<FString,FString>> Cats={
-      MakeTuple(FString(TEXT("✦  Tous")),FString(TEXT("Tous"))),
-      MakeTuple(FString(TEXT("◈  Véhicules")),FString(TEXT("Véhicules"))),
-      MakeTuple(FString(TEXT("⌁  Armes")),FString(TEXT("Armes"))),
-      MakeTuple(FString(TEXT("▣  Bâtiments")),FString(TEXT("Bâtiments"))),
+      MakeTuple(FString(TEXT("▦  Tous les mods")),FString(TEXT("Tous"))),
+      MakeTuple(FString(TEXT("▰  Véhicules")),FString(TEXT("Véhicules"))),
       MakeTuple(FString(TEXT("◆  Créatures")),FString(TEXT("Créatures"))),
-      MakeTuple(FString(TEXT("✺  Survie")),FString(TEXT("Survie"))),
+      MakeTuple(FString(TEXT("▣  Bâtiments")),FString(TEXT("Bâtiments"))),
       MakeTuple(FString(TEXT("▤  Cartes")),FString(TEXT("Cartes"))),
-      MakeTuple(FString(TEXT("✺  Gameplay")),FString(TEXT("Gameplay"))),
+      MakeTuple(FString(TEXT("⌁  Armes")),FString(TEXT("Armes"))),
+      MakeTuple(FString(TEXT("✺  Survie")),FString(TEXT("Survie"))),
+      MakeTuple(FString(TEXT("◈  Gameplay")),FString(TEXT("Gameplay"))),
       MakeTuple(FString(TEXT("⚙  Outils")),FString(TEXT("Outils")))
     };
     for(int32 I=0;I<Cats.Num();++I)
     {
         const FString& Title=Cats[I].Get<0>();
         const FString& Key=Cats[I].Get<1>();
-        auto* Card=Box(FLinearColor(.19f,.075f,.065f,.96f),7);
+        auto* Card=Box(I==0?FLinearColor(.68f,.08f,.035f,.98f):FLinearColor(.055f,.074f,.095f,.98f),5);
         Grid->AddChildToUniformGrid(Card,I/9,I%9);
         auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(*FString::Printf(TEXT("WorkshopCategoryCard%d"),I)));
-        B->SetBackgroundColor(FLinearColor(.29f,.12f,.09f,1.f));
-        auto* Txt=Label(Title,15,Gold);Txt->SetJustification(ETextJustify::Center);
+        B->SetBackgroundColor(I==0?FLinearColor(.66f,.045f,.022f,1.f):FLinearColor(.038f,.050f,.071f,1.f));
+        auto* Txt=Label(Title,12,FLinearColor::White);Txt->SetJustification(ETextJustify::Center);
         B->SetContent(Txt);Card->SetContent(B);
         switch(I){
             case 0:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterAll);break;
             case 1:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterVehicles);break;
-            case 2:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterWeapons);break;
+            case 2:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterCreatures);break;
             case 3:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterBuildings);break;
-            case 4:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterCreatures);break;
-            case 5:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterSurvival);break;
-            case 6:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterMaps);break;
+            case 4:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterMaps);break;
+            case 5:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterWeapons);break;
+            case 6:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterSurvival);break;
             case 7:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterGameplay);break;
             case 8:B->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopFilterTools);break;
         }
     }
     auto* ContentHeader=Horizontal();
     Center->AddChildToVerticalBox(ContentHeader)->SetPadding(FMargin(10,7,10,5));
-    auto* SectionTitle=Label(TEXT("MODS DISPONIBLES"),18,Gold);
+    auto* SectionTitle=Label(TEXT("MODS POPULAIRES  •  CATALOGUE LOCAL"),18,FLinearColor::White);
     ContentHeader->AddChildToHorizontalBox(SectionTitle)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
     auto* SearchPanel=Box(Panel,7);
     Center->AddChildToVerticalBox(SearchPanel)->SetPadding(FMargin(10,0,10,7));
     auto* Filters=Horizontal();SearchPanel->SetContent(Filters);
-    WorkshopSearch=WidgetTree->ConstructWidget<UEditableTextBox>(UEditableTextBox::StaticClass(),TEXT("WorkshopSearch"));
-    WorkshopSearch->SetHintText(FText::FromString(TEXT("Rechercher un mod, une catégorie...")));
-    Filters->AddChildToHorizontalBox(WorkshopSearch)->SetSize(FSlateChildSize(ESlateSizeRule::Fill));
+    // The real, live search box is in the top bar, matching the screenshot.
+    // Below it the filters and sorting remain selectable with controller/mouse.
     WorkshopCategory=WidgetTree->ConstructWidget<UComboBoxString>(UComboBoxString::StaticClass(),TEXT("WorkshopCategory"));
     for(const TCHAR* Item:{TEXT("Tous"),TEXT("Véhicules"),TEXT("Armes"),TEXT("Bâtiments"),TEXT("Créatures"),TEXT("Survie"),TEXT("Cartes"),TEXT("Gameplay"),TEXT("Vêtements"),TEXT("Outils"),TEXT("Autres")})
         WorkshopCategory->AddOption(Item);
@@ -360,7 +370,6 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     Filters->AddChildToHorizontalBox(WorkshopSort)->SetPadding(FMargin(10,0,0,0));
     WorkshopSort->OnSelectionChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopCategoryChanged);
 
-    WorkshopSearch->OnTextChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopSearchChanged);
     WorkshopCategory->OnSelectionChanged.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopCategoryChanged);
     WorkshopStatus=AddLabel(Center,TEXT("Recherche de créations locales..."),12,Cyan,3);
     auto* ContentScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass(),TEXT("WorkshopListScroll"));
@@ -369,19 +378,19 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     ContentScroll->AddChild(WorkshopCards);
     auto* Note=Box(FLinearColor(.12f,.050f,.05f,.99f),10);
     Center->AddChildToVerticalBox(Note)->SetPadding(FMargin(10,8,10,13));
-    Note->SetContent(Label(TEXT("WORKFORGE : catalogue inspiré des ateliers de mods. Installation en jeu et synchronisation des serveurs non encore disponibles."),11,Soft));
+    Note->SetContent(Label(TEXT("Catalogue : vrais manifestes locaux uniquement. Installation et téléchargement communautaires indisponibles tant que le service sécurisé n'est pas connecté."),11,Soft));
 
     // Right rail: honest connection status, community preview and top mods (no invented scores).
     auto* RightSize=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
     RightSize->SetWidthOverride(255.f);
     Columns->AddChildToHorizontalBox(RightSize);
-    auto* RightBg=Box(FLinearColor(.028f,.027f,.036f,.99f),9);RightSize->SetContent(RightBg);
+    auto* RightBg=Box(FLinearColor(.013f,.020f,.029f,.99f),9);RightSize->SetContent(RightBg);
     auto* Right=Vertical();RightBg->SetContent(Right);
     auto* Connection=Box(FLinearColor(.13f,.055f,.052f,.96f),8);
     Right->AddChildToVerticalBox(Connection)->SetPadding(FMargin(0,4,0,11));
     auto* Connected=Vertical();Connection->SetContent(Connected);
-    AddLabel(Connected,TEXT("●  ANOMALIA WORKFORGE"),15,Gold,3);
-    AddLabel(Connected,TEXT("Interface intégrée au jeu"),11,Cyan,3);
+    AddLabel(Connected,TEXT("●  ANOMALIA CONNECTÉ"),15,FLinearColor::White,3);
+    AddLabel(Connected,TEXT("WorkForge intégré au jeu"),11,Cyan,3);
     AddLabel(Connected,TEXT("━━━━━━━━━━━━━━━━━━"),11,Hot,4);
     AddLabel(Connected,TEXT("Workshop local       ✓ ACTIF"),11,FLinearColor(.48f,.92f,.65f),6);
     AddLabel(Connected,TEXT("Synchronisation      Locale"),11,Soft,6);
@@ -392,7 +401,7 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     auto* HostingRow=Horizontal();Connected->AddChildToVerticalBox(HostingRow);
     Action(HostingRow,TEXT("WorkshopOpenHosting"),TEXT("CMD Hosting ↗"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorkshopHosting);
     auto* RefreshRow=Horizontal();Connected->AddChildToVerticalBox(RefreshRow);
-    Action(RefreshRow,TEXT("WorkshopRefresh"),TEXT("↻ Actualiser"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::RefreshWorkshop);
+    Action(RefreshRow,TEXT("WorkshopOpenFolder"),TEXT("Dossier Mods ↗"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopOpenLocalModsFolder);
     auto* ManageRow=Horizontal();Connected->AddChildToVerticalBox(ManageRow);
     Action(ManageRow,TEXT("WorkshopManageMods"),TEXT("Gérer mes mods  →"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowMyMods);
 
@@ -401,12 +410,14 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildPremiumWorkshop(UCanvasPanel* Canva
     auto* C=Vertical();Community->SetContent(C);
     AddLabel(C,TEXT("COMMUNAUTÉ"),16,Gold,4);
     AddLabel(C,TEXT("Discussions   •   Guides   •   Créations"),11,Soft,5);
-    AddLabel(C,TEXT("Le fil communautaire n'est pas encore connecté."),11,Soft,8);
+    AddLabel(C,TEXT("La communauté sera visible après connexion du catalogue."),11,Soft,8);
+    auto* CommunityRow=Horizontal(); C->AddChildToVerticalBox(CommunityRow);
+    Action(CommunityRow,TEXT("WorkshopCommunity"),TEXT("État du service"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::WorkshopShowCommunity);
     auto* Popular=Box(Panel,10);
     Right->AddChildToVerticalBox(Popular)->SetPadding(FMargin(0,4));
     auto* P=Vertical();Popular->SetContent(P);
     AddLabel(P,TEXT("MODS LES MIEUX NOTÉS"),15,Gold,4);
-    AddLabel(P,TEXT("Les notes et les téléchargements apparaîtront après l'ouverture du catalogue communautaire."),11,Soft,8);
+    AddLabel(P,TEXT("Les meilleures notes seront affichées ici à partir d'avis vérifiés, lorsque le service sera relié."),11,Soft,8);
     WorkshopFrame->SetVisibility(ESlateVisibility::Collapsed);
 }
 
