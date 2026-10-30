@@ -1,5 +1,5 @@
 name: PRIGIMALIA - Character slots and logout real Windows review
-# Review revision: standalone-safe selection from legacy slot1, guarded new file creation, original-save preservation.
+# Review revision: two-phase safe character selection + native JSON staging repair for packaged game tests.
 on:
   push:
     branches: [rebrand/full-anomaliaz-prigimalia-20261029]
@@ -69,6 +69,41 @@ jobs:
           }
           (Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash|Set-Content (Join-Path $env:RUNNER_TEMP 'menu-flow-original.sha')
           Write-Host 'PRIGIMALIA_CHARACTERS_SOURCES_STAGED=true'
+      - name: Stage authentic item, loot and economy JSON for real Windows runtime
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $data=Join-Path $root 'Content\AnomaliaZPrigimalia\Data'
+          $report=Join-Path $root ('Saved\BrandMigration\CharacterSlotsReview\run-'+$env:GITHUB_RUN_ID)
+          $names=@('loot_items_catalog.json','rp_items_catalog.json','loot_tiers.json','loot_spawns.json','rp_economy.json')
+          New-Item -ItemType Directory -Path $data -Force|Out-Null
+          foreach($name in $names){
+            $trusted=Join-Path $env:GITHUB_WORKSPACE ('public\config\'+$name)
+            $installed=Join-Path $data $name
+            if(-not(Test-Path -LiteralPath $trusted -PathType Leaf)){throw ('Missing trusted game JSON '+$name)}
+            if(-not(Test-Path -LiteralPath $installed -PathType Leaf)){
+              Copy-Item -LiteralPath $trusted -Destination $installed
+              if((Get-FileHash -LiteralPath $trusted).Hash -ne (Get-FileHash -LiteralPath $installed).Hash){throw ('Failed data checksum '+$name)}
+            }else{
+              if((Get-Item -LiteralPath $installed).Attributes -band [IO.FileAttributes]::ReparsePoint){throw ('Linked content refused '+$name)}
+              $raw=Get-Content -LiteralPath $installed -Raw
+              try{$decoded=$raw|ConvertFrom-Json -ErrorAction Stop}catch{throw ('Invalid installed JSON '+$name)}
+              if($decoded.schemaVersion -ne 1){throw ('Unsupported installed data schema '+$name)}
+            }
+          }
+          $ini=Join-Path $root 'Config\DefaultGame.ini'
+          if(-not(Test-Path -LiteralPath $ini -PathType Leaf)){throw 'DefaultGame.ini missing'}
+          $line='+DirectoriesToAlwaysStageAsNonUFS=(Path="AnomaliaZPrigimalia/Data")'
+          $current=Get-Content -LiteralPath $ini -Raw
+          if(-not $current.Contains($line)){
+            $backup=Join-Path $report 'DefaultGame.ini.before-loot-staging'
+            Copy-Item -LiteralPath $ini -Destination $backup
+            if((Get-FileHash -LiteralPath $ini).Hash -ne (Get-FileHash -LiteralPath $backup).Hash){throw 'Config backup checksum failed'}
+            $newline=[Environment]::NewLine
+            [IO.File]::AppendAllText($ini, $newline+'[/Script/UnrealEd.ProjectPackagingSettings]'+$newline+$line+$newline,[Text.UTF8Encoding]::new($false))
+          }
+          Write-Host 'PRIGIMALIA_NATIVE_LOOT_ECONOMY_DATA_READY=true'
       - name: Compile real Unreal Engine 5.8 Editor and Win64 game
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -92,6 +127,19 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Native Windows packaging failed'}
           $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
           if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Menu Flow Windows EXE missing'}
+          # Non-asset game rules must be readable by FFileHelper at runtime.
+          # Some UAT configurations omit these JSON files from the archive.
+          $source='D:\ANOMALIAZ-PRIGIMALIA\unreal\Content\AnomaliaZPrigimalia\Data'
+          $data=Join-Path $archive 'Windows\AnomaliaZPrigimalia\Content\AnomaliaZPrigimalia\Data'
+          New-Item -Path $data -ItemType Directory -Force|Out-Null
+          foreach($name in @('loot_items_catalog.json','rp_items_catalog.json','loot_tiers.json','loot_spawns.json','rp_economy.json')){
+            $src=Join-Path $source $name
+            $dest=Join-Path $data $name
+            if(-not(Test-Path -LiteralPath $src -PathType Leaf)){throw ('Source loot or economy data absent '+$name)}
+            if(-not(Test-Path -LiteralPath $dest -PathType Leaf)){Copy-Item -LiteralPath $src -Destination $dest}
+            if((Get-FileHash -LiteralPath $src).Hash -ne (Get-FileHash -LiteralPath $dest).Hash){throw ('Packaged runtime rules checksum mismatch '+$name)}
+          }
+          Write-Host 'PRIGIMALIA_PACKAGED_NATIVE_LOOT_AND_ECONOMY_DATA=VERIFIED'
           $exe|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'menu-flow-exe.txt')
           Write-Host ('PRIGIMALIA_CHARACTERS_REVIEW_EXE='+$exe)
       - name: Test real packaged Windows game Play-to-browser-to-Solo flow
