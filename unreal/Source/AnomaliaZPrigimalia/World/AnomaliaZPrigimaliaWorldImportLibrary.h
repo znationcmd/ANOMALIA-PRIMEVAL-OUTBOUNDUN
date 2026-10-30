@@ -29,6 +29,11 @@ public:
  /** Verify the native LandscapeComponents array, not Python's generic actor component enumeration. */
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static int32 InspectDrazoviaIzurviveCandidateV2Components(AActor* Candidate);
+ // V3 preserves the complete 576-component Landscape before grid redistribution.
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateV3Landscape();
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectDrazoviaIzurviveCandidateV3Components(AActor* Candidate);
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
