@@ -52,12 +52,33 @@ jobs:
               }
               if($zip){break}
             }
-            if(-not $zip){throw 'Approved lightweight (692 KB) or V2 ZIP not present in Windows Downloads/Desktop; open this conversation on the Windows PC and save the pack there'}
+            # Support the user's already-extracted pack as shown in Windows Explorer.
+            # No need to ask them to download, extract, or rerun the installer.
+            $tempDir=$null
+            if(-not $zip){
+              foreach($dir in @((Join-Path $env:USERPROFILE 'Downloads'),(Join-Path $env:USERPROFILE 'Desktop'))){
+                foreach($folderName in @('PRIGIMALIA_Demarrage_Leger','ANOMALIAZ_PRIGIMALIA_Demarrage_Correction_V2')){
+                  $candidate=Join-Path $dir $folderName
+                  $candidatePoster=Join-Path $candidate 'prigimalia-startup-poster.jpg'
+                  $candidateInstaller=Join-Path $candidate 'install_startup_poster.ps1'
+                  if((Test-Path -LiteralPath $candidatePoster -PathType Leaf) -and (Test-Path -LiteralPath $candidateInstaller -PathType Leaf)){
+                    if((Get-FileHash -LiteralPath $candidatePoster -Algorithm SHA256).Hash.ToLowerInvariant() -eq $posterHash){
+                      $tempDir=$candidate
+                      break
+                    }
+                  }
+                }
+                if($tempDir){break}
+              }
+            }
+            if(-not $tempDir -and -not $zip){throw 'Approved image not found in the downloaded ZIP or extracted Windows folder; no changes applied'}
             $state.approvedPackageFound=$true
-            $tempDir=Join-Path $env:RUNNER_TEMP 'prigimalia-approved-startup-v2'
-            if(Test-Path -LiteralPath $tempDir){Remove-Item -LiteralPath $tempDir -Recurse -Force}
-            New-Item -ItemType Directory -Path $tempDir -Force|Out-Null
-            Expand-Archive -LiteralPath $zip -DestinationPath $tempDir -Force
+            if(-not $tempDir){
+              $tempDir=Join-Path $env:RUNNER_TEMP 'prigimalia-approved-startup-v2'
+              if(Test-Path -LiteralPath $tempDir){Remove-Item -LiteralPath $tempDir -Recurse -Force}
+              New-Item -ItemType Directory -Path $tempDir -Force|Out-Null
+              Expand-Archive -LiteralPath $zip -DestinationPath $tempDir -Force
+            }
             $poster=Join-Path $tempDir 'prigimalia-startup-poster.jpg'
             $install=Join-Path $tempDir 'install_startup_poster.ps1'
             if(-not(Test-Path -LiteralPath $poster) -or -not(Test-Path -LiteralPath $install)){throw 'Missing original poster or installer in verified ZIP'}
