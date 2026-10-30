@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Public names for distinct 48 x 48 km ANOMALIA'Z worlds. These entries do not rename Unreal packages or activate untested servers.",
+  "description": "Six independent ANOMALIA'Z worlds: two established 48km maps and four planned original 30km or 20km Unreal levels. Display names are editable, Unreal packages and save namespaces are stable. Unvalidated maps are not selectable.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -23,6 +23,58 @@
       "serverSelectable": false,
       "validation": "authored-editor-not-full-gameplay-tested",
       "saveNamespace": "inhabited-v2"
+    },
+    {
+      "id": "karskov-v1",
+      "displayName": "KARSKOV",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KARSKOV",
+      "widthKm": 30,
+      "heightKm": 30,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-generation-script-prepared-not-authored",
+      "saveNamespace": "karskov-v1",
+      "terrainBiome": "cold-fjords-taiga",
+      "expectedLandscapeComponents": 576
+    },
+    {
+      "id": "vorgrad-v1",
+      "displayName": "VORGRAD",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_VORGRAD",
+      "widthKm": 30,
+      "heightKm": 30,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-generation-script-prepared-not-authored",
+      "saveNamespace": "vorgrad-v1",
+      "terrainBiome": "continental-ruins-plains-rivers",
+      "expectedLandscapeComponents": 576
+    },
+    {
+      "id": "nemoris-v1",
+      "displayName": "NEMORIS",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_NEMORIS",
+      "widthKm": 20,
+      "heightKm": 20,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-generation-script-prepared-not-authored",
+      "saveNamespace": "nemoris-v1",
+      "terrainBiome": "ancient-forest-wetlands",
+      "expectedLandscapeComponents": 256
+    },
+    {
+      "id": "drakheim-v1",
+      "displayName": "DRAKHEIM",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_DRAKHEIM",
+      "widthKm": 20,
+      "heightKm": 20,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-generation-script-prepared-not-authored",
+      "saveNamespace": "drakheim-v1",
+      "terrainBiome": "volcanic-ash-highlands",
+      "expectedLandscapeComponents": 256
     }
   ]
 }
