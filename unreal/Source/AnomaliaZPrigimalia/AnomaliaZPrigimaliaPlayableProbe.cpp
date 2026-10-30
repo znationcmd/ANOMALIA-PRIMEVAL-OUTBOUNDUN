@@ -76,6 +76,37 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
         auto* S=Survivor.Get(); auto* Loot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
         if(!S || !S->StatusWidget || !Loot || !Loot->IsReady()) return;
+        // These three processes run ONLY in the separately packaged review
+        // executable whose Saved directory is isolated from the user's game.
+        auto* CharacterMode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>();
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVerifySecondCharacter")))
+        {
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=2 ||
+               !CharacterMode->HasLocalCharacterSlot(1) || !CharacterMode->HasLocalCharacterSlot(2) ||
+               !S->InventoryComponent || !S->InventoryComponent->Stacks.IsEmpty())
+            {Finish(TEXT("Second survivor loaded the previous inventory or wrong save identity"));return;}
+            Checks.Add(TEXT("new_character_has_independent_empty_inventory_and_original_still_exists"));
+            Finish();return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaReturnOriginalCharacter")))
+        {
+            FString Error;
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=2 ||
+               !CharacterMode->SelectLocalCharacterSlot(1,Error) ||
+               CharacterMode->GetLocalCharacterSlot()!=2)
+            {Finish(TEXT("Could not safely stage return to original survivor: ")+Error);return;}
+            Checks.Add(TEXT("return_original_character_staged_without_old_pawn_overwrite"));
+            Finish();return;
+        }
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVerifyOriginalCharacter")))
+        {
+            if(!CharacterMode || CharacterMode->GetLocalCharacterSlot()!=1 ||
+               !CharacterMode->HasLocalCharacterSlot(2) ||
+               !S->InventoryComponent || S->InventoryComponent->Stacks.IsEmpty())
+            {Finish(TEXT("Original survivor profile or carried items were not restored"));return;}
+            Checks.Add(TEXT("original_character_recovered_with_equipment_after_second_slot"));
+            Finish();return;
+        }
         if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaPlayableResume")))
         {
             if(S->InventoryComponent->Stacks.IsEmpty() || FVector::Dist2D(S->GetActorLocation(),FVector(0,-400,0))<300)
@@ -472,7 +503,29 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         }
         ++VehicleIndex; Phase=5; return;
     }
-    if(Phase==8 && Now>=Next) Finish();
+    if(Phase==8 && Now>=Next)
+    {
+        if(FParse::Param(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaCreateSecondCharacter")))
+        {
+            auto* Mode=GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>();
+            if(!Mode || Mode->GetLocalCharacterSlot()!=1 || !Mode->HasLocalCharacterSlot(1) ||
+               Mode->HasLocalCharacterSlot(2))
+            {Finish(TEXT("Review environment is not an isolated original single-character profile"));return;}
+            int32 CreatedSlot=0;FString Error;
+            if(!Mode->CreateLocalCharacterSlot(CreatedSlot,Error) || CreatedSlot!=2 ||
+               Mode->GetLocalCharacterSlot()!=1 || !Mode->HasLocalCharacterSlot(2))
+            {Finish(TEXT("New survivor creation failed without preserving old identity: ")+Error);return;}
+            FString Original,Independent;
+            if(!UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(
+                Mode->ServerId,TEXT("local-owner"),Original,Error) ||
+               !UAnomaliaZPrigimaliaConfigLibrary::LoadPlayerProfile(
+                Mode->ServerId,TEXT("local-owner-slot-2"),Independent,Error) ||
+               Original==Independent || !Independent.Contains(TEXT("schemaVersion")))
+            {Finish(TEXT("Second character did not receive an independent profile file"));return;}
+            Checks.Add(TEXT("second_character_created_without_replacing_original_profile"));
+        }
+        Finish();return;
+    }
 #endif
 }
 
