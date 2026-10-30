@@ -1,0 +1,37 @@
+name: CHERNASKALUXRIA - continent 5000 islands 1750 sea 3250 design checks
+on:
+  push:
+    branches: [feature/chernaskaluxria-5000-mainland-20-islands-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  exact-area-allocation-design-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check Python target geography contract syntax
+        run: |
+          python -m py_compile scripts/ue5/chernaskaluxria_geography_targets.py scripts/ue5/chernaskaluxria_world.py
+      - name: Check main continent and all 20 island area budgets without claiming native terrain
+        run: |
+          python -m unittest discover -s tests -p test_chernaskaluxria_5000_mainland.py -v
+      - name: Preview canonical geography contract
+        run: |
+          python scripts/ue5/chernaskaluxria_geography_targets.py > /tmp/chernaskaluxria-targets.json
+          python - <<'PY'
+          import json
+          m=json.load(open('/tmp/chernaskaluxria-targets.json'))
+          assert m['worldAreaKm2']==10000
+          assert m['mainlandTargetKm2']==5000
+          assert m['satelliteIslandsTargetKm2']==1750
+          assert m['seaTargetKm2']==3250
+          assert m['islandCount']==20
+          assert not m['physicalHeightmapMatchesBudget']
+          print('CANONICAL_TARGET: 5000_MAINLAND + 1750_ISLANDS + 3250_SEA')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: chernaskaluxria-5000-mainland-20-islands-DESIGN-TARGET
+          path: /tmp/chernaskaluxria-targets.json

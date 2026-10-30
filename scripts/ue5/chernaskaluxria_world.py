@@ -9,6 +9,7 @@ import json
 import math
 from pathlib import Path
 from chernaskaluxria_archipelago import carve_archipelago, apply_satellite_islands, satellite_island_plans, interisland_voyages, crossing_plans
+from chernaskaluxria_geography_targets import plan as new_geography_target_plan
 
 MAP_ID = "chernaskaluxria-v1"
 DISPLAY_NAME = "CHERNASKALUXRIA"
@@ -130,6 +131,9 @@ def world_manifest() -> dict:
         "heightKm": 100,
         "totalKm2": 10000,
         "landWaterStatus": "PROCEDURAL_ISLAND_DESIGN_NOT_NATIVE_VALIDATED",
+        "targetGeography": new_geography_target_plan(),
+        "currentTerrainUsesOnlyEightDraftSatellites": True,
+        "revisedTwentyIslandHeightfieldGenerated": False,
         "seaLevelMeters": 0,
         "islandGeography": "continuous terrain with meandering marine straits and six planned crossings",
         "bridgesAndTunnelsBuilt": False,
