@@ -294,7 +294,24 @@ void AAnomaliaZPrigimaliaPlayableProbe::Tick(float Dt)
         auto* Play=Menu && Menu->WidgetTree?Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("SessionPlay"))):nullptr;
         if(!Play) { Finish(TEXT("Main menu vanished before play")); return; }
         Play->OnClicked.Broadcast();
-        if(Menu->IsInViewport() || GetWorld()->IsPaused() || PC->GetViewTarget()!=PC->GetPawn()) { Finish(TEXT("Play button did not restore gameplay and its camera")); return; }
+        auto* Browser=Cast<UBorder>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserFullScreen")));
+        auto* Solo=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSolo")));
+        auto* OfficialTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabOfficial")));
+        auto* FavoritesTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabFavorite")));
+        auto* CommunityTab=Cast<UButton>(Menu->WidgetTree->FindWidget(TEXT("ServerTabCommunity")));
+        auto* ServerSearch=Cast<UEditableTextBox>(Menu->WidgetTree->FindWidget(TEXT("ServerBrowserSearch")));
+        if(!Browser || Browser->GetVisibility()!=ESlateVisibility::Visible || !Solo ||
+            !OfficialTab || !FavoritesTab || !CommunityTab || !ServerSearch)
+        { Finish(TEXT("Play did not open real Official/Community/Favorites server browser"));return; }
+        FavoritesTab->OnClicked.Broadcast();
+        CommunityTab->OnClicked.Broadcast();
+        OfficialTab->OnClicked.Broadcast();
+        ServerSearch->SetText(FText::FromString(TEXT("test-server-introuvable")));
+        ServerSearch->SetText(FText::GetEmpty());
+        Checks.Add(TEXT("main_menu_server_browser_tabs_and_search"));
+        Solo->OnClicked.Broadcast();
+        if(Menu->IsInViewport() || GetWorld()->IsPaused() || PC->GetViewTarget()!=PC->GetPawn())
+        { Finish(TEXT("Continue Solo did not resume restored gameplay and camera")); return; }
         Checks.Add(TEXT("main_menu_play_button"));
         Checks.Add(TEXT("native_world_HUD_and_three_vehicle_meshes"));
         Before=S->GetActorLocation(); PC->SetControlRotation(FRotator::ZeroRotator);
