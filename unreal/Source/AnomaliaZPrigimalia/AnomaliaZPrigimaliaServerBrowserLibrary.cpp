@@ -41,3 +41,51 @@ TArray<FAnomaliaZPrigimaliaServerCard> UAnomaliaZPrigimaliaServerBrowserLibrary:
     }
     return Result;
 }
+
+TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrary::GetIndependentWorldMaps()
+{
+    // Each entry is a different .umap and has its own persistent identity.
+    // This catalog is not a claim that a game server or world is already online.
+    struct FDefinition { const TCHAR* Id; const TCHAR* Name; const TCHAR* Path; int32 Side; };
+    const FDefinition Definitions[] = {
+        {TEXT("archipelago-v2"), TEXT("SKARVIK"), TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"), 48},
+        {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/ANOMALIA_Inhabited_v2"), 48},
+        {TEXT("karskov-v1"), TEXT("KARSKOV"), TEXT("/Game/Maps/PRIGIMALIA_KARSKOV"), 30},
+        {TEXT("vorgrad-v1"), TEXT("VORGRAD"), TEXT("/Game/Maps/PRIGIMALIA_VORGRAD"), 30},
+        {TEXT("nemoris-v1"), TEXT("NEMORIS"), TEXT("/Game/Maps/PRIGIMALIA_NEMORIS"), 20},
+        {TEXT("drakheim-v1"), TEXT("DRAKHEIM"), TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM"), 20},
+    };
+    TArray<FAnomaliaZPrigimaliaWorldMapCard> Maps;
+    Maps.Reserve(UE_ARRAY_COUNT(Definitions));
+    for (const FDefinition& Definition : Definitions)
+    {
+        FAnomaliaZPrigimaliaWorldMapCard Card;
+        Card.MapId = Definition.Id;
+        Card.DisplayName = Definition.Name;
+        Card.UnrealPackage = Definition.Path;
+        Card.WidthKm = Definition.Side;
+        Card.HeightKm = Definition.Side;
+        Card.bPlayableValidated = false; // Never claim online/playable without native tests.
+        Maps.Add(MoveTemp(Card));
+    }
+    return Maps;
+}
+
+TArray<FAnomaliaZPrigimaliaServerCard> UAnomaliaZPrigimaliaServerBrowserLibrary::FilterByMap(
+    const TArray<FAnomaliaZPrigimaliaServerCard>& Servers, const FString& MapId, bool bOnlyOnline)
+{
+    TArray<FAnomaliaZPrigimaliaServerCard> Result;
+    bool bValidMap = false;
+    for (const FAnomaliaZPrigimaliaWorldMapCard& World : GetIndependentWorldMaps())
+    {
+        if (World.MapId == MapId) { bValidMap = true; break; }
+    }
+    if (!bValidMap) return Result; // Unknown map must never route to a different world.
+    for (const FAnomaliaZPrigimaliaServerCard& Server : Servers)
+    {
+        if (Server.MapId != MapId) continue;
+        if (bOnlyOnline && (!Server.bOnline || !Server.bProvisioned)) continue;
+        Result.Add(Server);
+    }
+    return Result;
+}
