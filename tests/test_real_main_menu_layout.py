@@ -42,5 +42,10 @@ class RealMenuLayout(unittest.TestCase):
         self.assertIn('"-actual-main-menu.png"',PROBE)
         self.assertIn("FScreenshotRequest::RequestScreenshot",PROBE)
         self.assertIn("Layout->GetAnchors().Minimum.X<.60f",PROBE)
+        self.assertIn('Real survivor body is missing in cooked Windows game',PROBE)
+        self.assertIn('GetMesh()->GetSkeletalMeshAsset()',PROBE)
+        survivor=(BASE/"AnomaliaZPrigimaliaSurvivor.cpp").read_text(encoding="utf-8")
+        self.assertIn('ApprovedProjectMeshes',survivor)
+        self.assertIn('PRIGIMALIA_NO_SURVIVOR_MESH',survivor)
 if __name__ == "__main__":
     unittest.main()
