@@ -45,9 +45,9 @@ class UserCompositeTopoImportTests(unittest.TestCase):
 
     def test_preserve_nine_independent_worlds_and_saves(self):
         rows=json.loads((ROOT/"public/config/anomalia-map-catalog.json").read_text())["maps"]
-        assert len(rows)==9
-        assert len({i["id"] for i in rows})==9
-        assert len({i["saveNamespace"] for i in rows})==9
+        assert len(rows)==10
+        assert len({i["id"] for i in rows})==10
+        assert len({i["saveNamespace"] for i in rows})==10
         assert all(i["originalUnrealPackage"].startswith("/Game/Maps/") for i in rows)
         assert not next(i for i in rows if i["id"]=="chernaskaluxria-v1")["serverSelectable"]
 
