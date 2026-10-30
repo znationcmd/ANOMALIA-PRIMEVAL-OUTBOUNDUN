@@ -4,10 +4,12 @@ import json
 from pathlib import Path
 import tempfile
 import unittest
+import sys
 
 ROOT=Path(__file__).resolve().parents[1]
 
 def module(name,path):
+    sys.path.insert(0,str(ROOT/"scripts/ue5"))
     spec=importlib.util.spec_from_file_location(name,str(ROOT/path))
     x=importlib.util.module_from_spec(spec)
     spec.loader.exec_module(x)
