@@ -20,8 +20,8 @@
 #include "Net/UnrealNetwork.h"
 namespace
 {
- FString Json(const TSharedPtr<FJsonObject>& Object){FString Raw;FJsonSerializer::Serialize(Object.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw));return Raw;}
- bool Parse(const FString& Raw,TSharedPtr<FJsonObject>& Object){return FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Object)&&Object.IsValid();}
+ FString VehicleLedgerJson(const TSharedPtr<FJsonObject>& Object){FString Raw;FJsonSerializer::Serialize(Object.ToSharedRef(),TJsonWriterFactory<>::Create(&Raw));return Raw;}
+ bool VehicleLedgerParse(const FString& Raw,TSharedPtr<FJsonObject>& Object){return FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw),Object)&&Object.IsValid();}
  bool KeyId(FName Id){FGuid Value;return Id.ToString().StartsWith(TEXT("vehicle_key_"))&&FGuid::ParseExact(Id.ToString().Mid(12),EGuidFormats::Digits,Value)&&Value.IsValid();}
 }
 UAnomaliaZPrigimaliaVehicleSurvivalComponent::UAnomaliaZPrigimaliaVehicleSurvivalComponent(){SetIsReplicatedByDefault(true);PrimaryComponentTick.bCanEverTick=false;}
@@ -194,7 +194,7 @@ bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::Configure(const FString& Scope
  if(UAnomaliaZPrigimaliaConfigLibrary::LoadWorldState(ServerId,TEXT("vehicle-services-v1"),Raw,Error))
  {
   double Version=0;const TSharedPtr<FJsonObject>* Vehicles=nullptr;
-  if(!Parse(Raw,Ledger)||!Ledger->TryGetNumberField(TEXT("schemaVersion"),Version)||Version!=1||!Ledger->TryGetObjectField(TEXT("vehicles"),Vehicles)||!Vehicles||(*Vehicles)->Values.Num()>256)
+  if(!VehicleLedgerParse(Raw,Ledger)||!Ledger->TryGetNumberField(TEXT("schemaVersion"),Version)||Version!=1||!Ledger->TryGetObjectField(TEXT("vehicles"),Vehicles)||!Vehicles||(*Vehicles)->Values.Num()>256)
   {Error=TEXT("Invalid vehicle ledger; existing state preserved");return false;}
  }
  else if(Error==TEXT("World state not found")){Ledger=MakeShared<FJsonObject>();Ledger->SetNumberField(TEXT("schemaVersion"),1);Ledger->SetObjectField(TEXT("vehicles"),MakeShared<FJsonObject>());Error.Empty();}
@@ -202,7 +202,7 @@ bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::Configure(const FString& Scope
  bConfigured=true;if(!Recover(Error))return false;bReady=Persist(Error);return bReady;
 }
 bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::Persist(FString& Error)
-{return Ledger.IsValid()&&UAnomaliaZPrigimaliaConfigLibrary::SaveWorldState(ServerId,TEXT("vehicle-services-v1"),Json(Ledger),Error);}
+{return Ledger.IsValid()&&UAnomaliaZPrigimaliaConfigLibrary::SaveWorldState(ServerId,TEXT("vehicle-services-v1"),VehicleLedgerJson(Ledger),Error);}
 bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::HasPendingPlayer(const FString& Id) const
 {const TSharedPtr<FJsonObject>* P=nullptr;FString Player;return Ledger.IsValid()&&Ledger->TryGetObjectField(TEXT("pending"),P)&&P&&(*P)->TryGetStringField(TEXT("playerId"),Player)&&Player==Id;}
 bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::Recover(FString& Error)
@@ -237,13 +237,13 @@ bool UAnomaliaZPrigimaliaVehicleServiceSubsystem::Execute(UAnomaliaZPrigimaliaVe
  const auto* Loot=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();const auto* Economy=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaEconomySubsystem>();const auto* WorldState=GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaWorldStateSubsystem>();
  if(Player.IsEmpty()||(Loot&&Loot->HasPendingPlayer(Player))||(Economy&&Economy->HasPendingPlayer(Player))||(WorldState&&WorldState->HasPendingPlayer(Player)))return false;
  auto* Inventory=User->InventoryComponent.Get();auto* Cargo=C->GetCargo();const auto BeforeStacks=Inventory->Stacks;const int32 BeforeId=Inventory->NextStackId;const auto BeforeCargo=Cargo->Stacks;const int32 CargoId=Cargo->NextStackId;
- const auto BeforeState=C->State;const FString BeforeLedger=Json(Ledger);
+ const auto BeforeState=C->State;const FString BeforeLedger=VehicleLedgerJson(Ledger);
  auto Rollback=[&](){Inventory->Stacks=BeforeStacks;Inventory->NextStackId=BeforeId;Cargo->Stacks=BeforeCargo;Cargo->NextStackId=CargoId;C->State=BeforeState;Inventory->bSuppressNotifications=false;Cargo->bSuppressNotifications=false;};
  Inventory->bSuppressNotifications=true;Cargo->bSuppressNotifications=true;
  if(!C->Change(User,Action,StackId,ExpectedCount,Error)){Rollback();return false;}
  FString Profile;if(!Inventory->BuildInventoryProfile(ServerId,Player,Profile,Error)){Rollback();return false;}
  Ledger->GetObjectField(TEXT("vehicles"))->SetObjectField(C->PersistentId,C->Export());auto Pending=MakeShared<FJsonObject>();Pending->SetStringField(TEXT("playerId"),Player);Pending->SetStringField(TEXT("profileAfter"),Profile);Ledger->SetObjectField(TEXT("pending"),Pending);
- if(!Persist(Error)){Parse(BeforeLedger,Ledger);Rollback();return false;}
+ if(!Persist(Error)){VehicleLedgerParse(BeforeLedger,Ledger);Rollback();return false;}
  Inventory->bPersistenceLocked=true;Inventory->bSuppressNotifications=false;Cargo->bSuppressNotifications=false;PendingInventory=Inventory;bReady=false;
  C->ApplyLocks();Cargo->Commit(TArray<FAnomaliaZPrigimaliaInventoryStack>(Cargo->Stacks));
  if(!Recover(Error))UE_LOG(LogTemp,Error,TEXT("Vehicle inventory exchange journal retained for recovery: %s"),*Error);
