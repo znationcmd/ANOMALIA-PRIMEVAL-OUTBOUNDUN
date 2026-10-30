@@ -13,6 +13,11 @@ public:
  /** New separate world with original urban terrain pads. Never alters the v2 archipelago. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateInhabitedArchipelagoLandscape();
+ /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double InhabitedArchipelagoHeight(double EastMeters, double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
