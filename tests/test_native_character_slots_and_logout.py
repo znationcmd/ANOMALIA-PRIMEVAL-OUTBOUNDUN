@@ -19,6 +19,11 @@ class CharacterSlotsTests(unittest.TestCase):
         self.assertIn('UAnomaliaZPrigimaliaConfigLibrary::SavePlayerProfile(',GM)
         self.assertIn("if(!SaveLocalGame())",GM)
         self.assertIn("HasLocalCharacterSlot(Slot)",GM)
+        self.assertIn("const bool bHadMarker=IFileManager::Get().FileExists(*Active)",GM)
+        self.assertIn("IFileManager::Get().Move(*Active,*Staging,bHadMarker,false)",GM)
+        self.assertIn("const FString ExistingFile=FPaths::Combine",GM)
+        self.assertIn("IFileManager::Get().FileExists(*ExistingFile)",GM)
+        self.assertIn('if(!SaveLocalGame())',GM)
         self.assertIn('UFUNCTION(BlueprintPure',GH)
     def test_menu_allows_real_profile_creation_selection_and_protected_export(self):
         for name in ("RefreshCharacterSlots", "SelectCharacterSlot",
