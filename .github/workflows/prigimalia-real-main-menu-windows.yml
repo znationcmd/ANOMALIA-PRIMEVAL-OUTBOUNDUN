@@ -1,0 +1,164 @@
+name: PRIGIMALIA - Build REAL right-aligned 3D main menu and verify screenshot
+on:
+  push:
+    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    paths: [.github/workflows/prigimalia-real-main-menu-windows.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-menu:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          persist-credentials: false
+          clean: false
+      - name: Verify native visual layout and functional source contracts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(-not(Test-Path -LiteralPath $py -PathType Leaf)){throw 'No Unreal embedded Python'}
+          foreach($file in @('tests/test_real_main_menu_layout.py','tests/test_ue5_native_start_pause_server_flow.py','tests/test_native_character_slots_and_logout.py','tests/test_ue5_native_workshop_menu.py')){
+            & $py $file
+            if($LASTEXITCODE -ne 0){throw ('Failed static test '+$file)}
+          }
+          Write-Host 'PRIGIMALIA_SOURCE_MENU_TESTS_PASSED=true'
+      - name: Preserve original and stage only menu and gameplay-probe C++ files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $home='D:\ANOMALIAZ-PRIGIMALIA'
+          $root=Join-Path $home 'unreal'
+          $old='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
+          if(-not(Test-Path -LiteralPath $old -PathType Leaf) -or -not(Test-Path -LiteralPath $project -PathType Leaf) -or -not(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'Safety markers or original user project missing'}
+          foreach($d in @('D:\ANOMALIA',$home,$root)){
+            if((Get-Item -LiteralPath $d).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source project root is not allowed'}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'Editor or game is open: cannot safely swap shared native sources'}
+          $backup=Join-Path $root ('Saved\BrandMigration\RealMainMenu\run-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'No rewrites of previous audit or backups'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          $names=@('AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h','AnomaliaZPrigimaliaPlayableProbe.cpp')
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            if(-not(Test-Path -LiteralPath $src -PathType Leaf) -or -not(Test-Path -LiteralPath $dst -PathType Leaf)){throw ('Menu source missing '+$name)}
+            if((Get-Item -LiteralPath $dst).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked native source is not allowed'}
+            Copy-Item -LiteralPath $dst -Destination (Join-Path $backup $name) -ErrorAction Stop
+            if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath (Join-Path $backup $name)).Hash){throw ('Backup mismatch '+$name)}
+          }
+          foreach($name in $names){
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
+            $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
+            Copy-Item -LiteralPath $src -Destination $dst -Force
+            if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath $src).Hash){throw ('Menu source staging mismatch '+$name)}
+          }
+          (Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha')
+          Write-Host 'PRIGIMALIA_REAL_MAIN_MENU_SOURCES_STAGED=true'
+      - name: Build native Unreal 5.8 Editor and Win64 game with new right-side UI
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
+            & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+            if($LASTEXITCODE -ne 0){throw ('New UI C++ compilation failed '+$target)}
+          }
+          Write-Host 'PRIGIMALIA_NEW_MENU_COMPILED=true'
+      - name: Cook and archive a NEW version, preserving installed and prior builds
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $archive=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows' ('RealMainMenuReview-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $archive){throw 'Review build path already exists'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
+          if($LASTEXITCODE -ne 0){throw 'New menu packaging failed'}
+          $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
+          $binary=Join-Path $archive 'Windows\AnomaliaZPrigimalia\Binaries\Win64\AnomaliaZPrigimalia-Win64-Development.exe'
+          if(-not(Test-Path -LiteralPath $exe -PathType Leaf)){throw 'Complete bootstrap game exe missing'}
+          $binFolder=Split-Path $binary -Parent
+          if(-not(Test-Path -LiteralPath $binFolder -PathType Container)){throw 'Packaged game binary folder missing'}
+          $exe|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'new-main-menu-exe.txt')
+          Write-Host ('PRIGIMALIA_REAL_MAIN_MENU_GAME='+$exe)
+      - name: Test real Windows main menu image and all interactive navigation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'new-main-menu-exe.txt') -Raw).Trim()
+          $folder=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration' ('RealMainMenu\run-'+$env:GITHUB_RUN_ID)
+          New-Item -Path $folder -ItemType Directory -Force|Out-Null
+          $report=Join-Path $folder 'real-main-menu.json'
+          $log=Join-Path $folder 'real-main-menu.log'
+          $map='/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=menu-only-validation'
+          $args=@($map,'-windowed','-ResX=1366','-ResY=768','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaMenuOnly',("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
+          $process=Start-Process -FilePath $exe -ArgumentList $args -PassThru
+          try{
+            if(-not $process.WaitForExit(120000)){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue;throw 'Real game menu probe timed out'}
+          }finally{if(-not $process.HasExited){Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue}}
+          if(-not(Test-Path -LiteralPath $report -PathType Leaf)){throw 'No actual Unreal menu validation report'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'PACKAGED_GAME_SMOKE_PASSED'){throw ('Actual menu failed: '+$r.error)}
+          foreach($check in @('real_right_aligned_3d_main_menu_visible_without_old_poster','working_start_server_browser_workforge_and_separate_pause')){
+            if(@($r.checks) -notcontains $check){throw ('Missing gameplay menu proof '+$check)}
+          }
+          $screenshot=Join-Path $folder 'real-main-menu-actual-main-menu.png'
+          if(-not(Test-Path -LiteralPath $screenshot -PathType Leaf) -or (Get-Item -LiteralPath $screenshot).Length -lt 15000){throw 'Actual 1366x768 in-game menu screenshot is missing'}
+          Write-Host 'PRIGIMALIA_REAL_MENU_SCREENSHOT_AND_BUTTONS_VERIFIED=true'
+      - name: Create a NEW desktop shortcut to the tested executable; do not overwrite old launcher
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'new-main-menu-exe.txt') -Raw).Trim()
+          $work=Split-Path $exe -Parent
+          $desktop='C:\Users\utilisateur\Desktop'
+          if(-not(Test-Path -LiteralPath $desktop -PathType Container)){
+            $desktop=[Environment]::GetFolderPath('Desktop')
+          }
+          if(-not(Test-Path -LiteralPath $desktop -PathType Container)){throw 'User desktop unavailable; package is preserved on D'}
+          if((Get-Item -LiteralPath $desktop).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked Desktop location refused'}
+          $link=Join-Path $desktop ("ANOMALIA'Z PRIGIMALIA - NOUVEAU MENU (VERSION TEST).lnk")
+          if(Test-Path -LiteralPath $link){throw 'Do not replace existing new menu shortcut'}
+          $shell=New-Object -ComObject WScript.Shell
+          $shortcut=$shell.CreateShortcut($link)
+          $shortcut.TargetPath=$exe
+          $shortcut.WorkingDirectory=$work
+          $shortcut.IconLocation=$exe+',0'
+          $shortcut.Description="Vrai menu 3D ANOMALIA'Z - version test validée, sans remplacer le jeu original"
+          $shortcut.Save()
+          if(-not(Test-Path -LiteralPath $link -PathType Leaf)){throw 'New shortcut could not be written'}
+          $verify=$shell.CreateShortcut($link)
+          if($verify.TargetPath -ne $exe){throw 'New Windows game shortcut verification failed'}
+          Write-Host ('PRIGIMALIA_NEW_REAL_3D_MENU_DESKTOP_SHORTCUT='+$link)
+          Write-Host ('PRIGIMALIA_NEW_REAL_3D_MENU_VALIDATED_EXE='+$exe)
+      - name: Check original game and prior Windows build remain present
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $old='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $sha=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha') -Raw).Trim()
+          if((Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash -ne $sha){throw 'Original project changed'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Previous Windows build vanished'}
+          Write-Host 'PRIGIMALIA_EXISTING_GAME_AND_SAVES_PRESERVED=true'
+      - name: Upload the true in-game screenshot, runtime checks and logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: PRIGIMALIA-REAL-3D-Main-Menu-Screenshot-and-Checks
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.png
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.log
