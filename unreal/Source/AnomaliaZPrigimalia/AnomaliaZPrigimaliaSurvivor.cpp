@@ -35,6 +35,32 @@ AAnomaliaZPrigimaliaSurvivor::AAnomaliaZPrigimaliaSurvivor()
     GetCharacterMovement()->MaxWalkSpeed = 450.f;
     GetCharacterMovement()->NavAgentProps.bCanCrouch = true;
     GetCharacterMovement()->SetCrouchedHalfHeight(60.f);
+    // The original native ACharacter has NO visual body mesh assigned by
+    // default, which leaves the requested real-survivor menu camera framing
+    // an invisible player. Use an ACTUAL installed Unreal mannequin only if
+    // the user project has that skeletal asset; never manufacture a fake mesh
+    // or repackage somebody else's copyrighted character.
+    if(GetMesh() && !GetMesh()->GetSkeletalMeshAsset())
+    {
+        static const TCHAR* ApprovedProjectMeshes[]={
+            TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"),
+            TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn"),
+            TEXT("/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin")
+        };
+        for(const TCHAR* MeshPath:ApprovedProjectMeshes)
+        {
+            USkeletalMesh* Body=LoadObject<USkeletalMesh>(nullptr,MeshPath,nullptr,LOAD_NoWarn);
+            if(!Body)continue;
+            GetMesh()->SetSkeletalMeshAsset(Body);
+            GetMesh()->SetRelativeLocation(FVector(0.f,0.f,-88.f));
+            GetMesh()->SetRelativeRotation(FRotator(0.f,-90.f,0.f));
+            GetMesh()->SetVisibility(true);
+            UE_LOG(LogTemp,Display,TEXT("PRIGIMALIA_ACTUAL_SURVIVOR_MESH=%s"),MeshPath);
+            break;
+        }
+        if(!GetMesh()->GetSkeletalMeshAsset())
+            UE_LOG(LogTemp,Warning,TEXT("PRIGIMALIA_NO_SURVIVOR_MESH: install a licensed skeleton-compatible body in Content/Characters/Mannequins/Meshes; the menu must not claim the character is visible"));
+    }
     InventoryComponent = CreateDefaultSubobject<UAnomaliaZPrigimaliaInventoryComponent>(TEXT("InventoryComponent"));
     VitalsComponent = CreateDefaultSubobject<UAnomaliaZPrigimaliaVitalsComponent>(TEXT("VitalsComponent"));
     ItemEffectsComponent = CreateDefaultSubobject<UAnomaliaZPrigimaliaItemEffectsComponent>(TEXT("ItemEffectsComponent"));
