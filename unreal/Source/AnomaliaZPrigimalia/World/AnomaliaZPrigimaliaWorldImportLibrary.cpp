@@ -8,6 +8,8 @@
 #include "LandscapeInfo.h"
 #include "LandscapeComponent.h"
 #include "LandscapeSubsystem.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "Engine/Texture2D.h"
 #include "Materials/MaterialInterface.h"
 #include "Dom/JsonObject.h"
@@ -69,7 +71,8 @@ namespace
    Name==TEXT("/Game/Maps/PRIGIMALIA_NEMORIS") ||
    Name==TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM") ||
    Name==TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA") ||
-   Name==TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS");
+   Name==TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS") ||
+   Name==TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA");
  }
  bool IsOwnedDescriptor(const FActorDesc& Desc)
  {
@@ -334,6 +337,61 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
  {
   UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
    *MapIdentifier,Land->LandscapeComponents.Num(),Expected);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row)
+{
+#if WITH_EDITOR
+ if(Col<0 || Col>=20 || Row<0 || Row>=20)return nullptr;
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"))
+  return nullptr;
+ const FString Name=FString::Printf(TEXT("CHERNASKALUXRIA_x%02d_y%02d"),Col,Row);
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("CHERNASKALUXRIA"),Name+TEXT(".r16"));
+ TArray<uint8> Bytes;
+ if(!FFileHelper::LoadFileToArray(Bytes,*Source) || Bytes.Num()!=253*253*2)
+ {
+  UE_LOG(LogTemp,Error,TEXT("CHERNASKALUXRIA missing/corrupt source tile %s"),*Source);
+  return nullptr;
+ }
+ // Duplicate protection across loaded landscape actors. The native launch
+ // script additionally checks persistent tile receipts before calling.
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+  if(It->GetActorLabel()==Name)
+  {
+   UE_LOG(LogTemp,Error,TEXT("CHERNASKALUXRIA tile already exists: %s"),*Name);
+   return nullptr;
+  }
+ TArray<uint16> Samples;
+ Samples.SetNumUninitialized(253*253);
+ FMemory::Memcpy(Samples.GetData(),Bytes.GetData(),Bytes.Num()); // Generated LE u16; Win64 is little endian.
+ const double West=-50000.+5000.*Col;
+ const double North=50000.-5000.*Row;
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(Name);
+ Land->SetActorLocation(FVector(West*100.,-North*100.,0.));
+ Land->SetActorScale3D(FVector(500000./252.,500000./252.,800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(Samples));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,252,252,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=4)
+ {
+  UE_LOG(LogTemp,Error,TEXT("CHERNASKALUXRIA incomplete tile landscape: %s"),*Name);
   return nullptr;
  }
  if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
