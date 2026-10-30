@@ -2,6 +2,14 @@
 (function () {
   const splash = document.getElementById('launchSplash');
   if (!splash) return;
+  const poster = splash.querySelector('img');
+  // Fallback to the approved installed-game logo if the full poster has not
+  // yet been bundled. Never keep a broken-image placeholder on the screen.
+  poster?.addEventListener('error', () => {
+    if (poster.dataset.fallback === '1') return;
+    poster.dataset.fallback = '1';
+    poster.src = '/prigimalia-logo.jpg';
+  });
   const startTime = performance.now();
   const MIN_DISPLAY_MS = 1500;
   const MAX_DISPLAY_MS = 5500;
