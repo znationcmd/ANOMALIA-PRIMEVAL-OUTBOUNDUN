@@ -116,6 +116,25 @@ jobs:
             if($LASTEXITCODE -ne 0){throw ('Native WorkForge compile failed '+$target)}
           }
           Write-Host 'PRIGIMALIA_WORKFORGE_CPLUSPLUS_BUILT=true'
+      - name: Explicitly include the artwork textures in the Unreal Windows cook
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $config=Join-Path $root 'Config\DefaultGame.ini'
+          $backup=Join-Path $root ('Saved\BrandMigration\WorkForgeVisualReview\run-'+$env:GITHUB_RUN_ID+'\DefaultGame.ini.before-workforge-cook')
+          if(-not(Test-Path -LiteralPath $config -PathType Leaf)){throw 'DefaultGame.ini not found'}
+          $current=Get-Content -LiteralPath $config -Raw
+          $line='+DirectoriesToAlwaysCook=(Path="/Game/AnomaliaZPrigimalia/WorkForge/Artwork")'
+          if(-not $current.Contains($line)){
+            Copy-Item -LiteralPath $config -Destination $backup -ErrorAction Stop
+            if((Get-FileHash -LiteralPath $config).Hash -ne (Get-FileHash -LiteralPath $backup).Hash){throw 'Config backup verification failed'}
+            $newline=[Environment]::NewLine
+            $suffix=$newline+'[/Script/UnrealEd.ProjectPackagingSettings]'+$newline+$line+$newline
+            [IO.File]::AppendAllText($config,$suffix,[Text.UTF8Encoding]::new($false))
+          }
+          if(-not((Get-Content -LiteralPath $config -Raw).Contains($line))){throw 'Art cook dependency was not preserved'}
+          Write-Host 'PRIGIMALIA_WORKFORGE_ARTWORK_MARKED_FOR_COOK=true'
       - name: Cook and archive a separate ModsVisualReview Windows game
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
