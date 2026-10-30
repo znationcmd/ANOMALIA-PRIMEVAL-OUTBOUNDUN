@@ -86,15 +86,14 @@ TSharedRef<SWidget> UAnomaliaZPrigimaliaSessionWidget::RebuildWidget()
 void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
 {
     Super::NativeConstruct(); SetIsFocusable(true);
-    bStartupIntro=bMainMenu && MenuArtwork && StartupArtworkFrame;
-    if(bStartupIntro)
-    {
-        // The poster belongs to boot only, never to the interactive menu.
-        StartupArtworkFrame->SetVisibility(ESlateVisibility::Visible);
-        MenuArtwork->SetVisibility(ESlateVisibility::Visible);
-        IntroStarted=FPlatformTime::Seconds(); MenuArtwork->SetRenderOpacity(0.f);
-        if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Hidden);
-    }
+    // Startup/menu are distinct from map travel. The four artworks chosen by
+    // the user belong to loading transitions, not to the live main menu.
+    // Show the REAL last saved character/world immediately, without a
+    // full-screen static picture obscuring the main navigation.
+    bStartupIntro=false;
+    if(StartupArtworkFrame) StartupArtworkFrame->SetVisibility(ESlateVisibility::Collapsed);
+    if(MenuArtwork) MenuArtwork->SetVisibility(ESlateVisibility::Collapsed);
+    if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
     auto* PC=GetOwningPlayer();
     if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
     {
@@ -108,7 +107,15 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
         if(MenuCamera)
         {
             LastMenuPreviewLocation=Survivor->GetActorLocation();
-            MenuCamera->GetCameraComponent()->SetFieldOfView(63.f);
+            auto* CameraComponent=MenuCamera->GetCameraComponent();
+            CameraComponent->SetFieldOfView(63.f);
+            // The menu alone receives muted post-apocalyptic lighting. This
+            // does not modify the level, player, weather or gameplay camera.
+            CameraComponent->PostProcessBlendWeight=1.f;
+            CameraComponent->PostProcessSettings.bOverride_AutoExposureBias=true;
+            CameraComponent->PostProcessSettings.AutoExposureBias=-.8f;
+            CameraComponent->PostProcessSettings.bOverride_VignetteIntensity=true;
+            CameraComponent->PostProcessSettings.VignetteIntensity=.28f;
             PreviousViewTarget=PC->GetViewTarget(); PC->SetViewTarget(MenuCamera);
             if(PC->PlayerCameraManager) PC->PlayerCameraManager->UpdateCamera(0.f);
         }
@@ -638,54 +645,102 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
             MenuArtwork->SetBrushFromTexture(Texture,true);MenuArtwork->SetRenderTransformPivot(FVector2D(.5f,.5f));Fit->SetContent(MenuArtwork);
         }
     }
+    if(bMainMenu)
+    {
+        // DayZ-inspired hierarchy, but original ANOMALIA'Z branding and
+        // independently functional UMG navigation (not a flattened poster).
+        auto* Brand=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass(),TEXT("SessionMainBrand"));
+        auto* BrandSlot=Canvas->AddChildToCanvas(Brand);
+        BrandSlot->SetAnchors(FAnchors(.045f,.075f,.59f,.28f));
+        BrandSlot->SetOffsets(FMargin(0));
+        auto* Wordmark=WidgetTree->ConstructWidget<UHorizontalBox>(UHorizontalBox::StaticClass());
+        Brand->AddChildToVerticalBox(Wordmark);
+        auto AddBrandText=[&](const TCHAR* Value,int32 Size,const FLinearColor& Color)
+        {
+            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Text->SetText(FText::FromString(Value));
+            auto Font=Text->GetFont(); Font.Size=Size;Text->SetFont(Font);
+            Text->SetColorAndOpacity(FSlateColor(Color));
+            Wordmark->AddChildToHorizontalBox(Text);
+        };
+        AddBrandText(TEXT("ANOMALIA'"),51,FLinearColor(.95f,.95f,.93f,1.f));
+        AddBrandText(TEXT("Z"),58,FLinearColor(.89f,.065f,.047f,1.f));
+        auto* BrandSubtitle=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        BrandSubtitle->SetText(FText::FromString(TEXT("PRIGIMALIA   /   SURVIE  ·  EXPLORATION  ·  MULTIJOUEUR")));
+        auto SubtitleFont=BrandSubtitle->GetFont();SubtitleFont.Size=16;BrandSubtitle->SetFont(SubtitleFont);
+        BrandSubtitle->SetColorAndOpacity(FSlateColor(FLinearColor(.85f,.88f,.89f,1.f)));
+        Brand->AddChildToVerticalBox(BrandSubtitle);
+    }
     auto* BuildLabel=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(),TEXT("SessionBuildIdentity"));
     BuildLabel->SetText(FText::FromString(TEXT("Build ")+FString(TEXT(ANOMALIA_BUILD_COMMIT)).Left(12)+TEXT(" · Terrain et forêt v3 · Développement")));
     auto BuildFont=BuildLabel->GetFont();BuildFont.Size=12;BuildLabel->SetFont(BuildFont);
     BuildLabel->SetAutoWrapText(true);BuildLabel->SetColorAndOpacity(FSlateColor(FLinearColor(.9f,.87f,.76f,1)));
     auto* BuildSlot=Canvas->AddChildToCanvas(BuildLabel);BuildSlot->SetAnchors(FAnchors(.035f,.95f,.96f,.99f));BuildSlot->SetOffsets(FMargin(0));
-    // A narrow navigation rail keeps the actual 3D scene visible at the right.
-    auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionNavigation"));NavigationFrame=Frame; Frame->SetBrushColor(FLinearColor(.012f,.016f,.014f,.82f)); Frame->SetPadding(FMargin(20));
-    auto* FrameSlot=Canvas->AddChildToCanvas(Frame); FrameSlot->SetAnchors(FAnchors(.035f,.12f,.31f,.77f)); FrameSlot->SetOffsets(FMargin(0));
+    // The character/world occupies the left/centre; actions are in a roomy
+    // right-aligned column like the requested reference, not a tiny left rail.
+    auto* Frame=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionNavigation"));NavigationFrame=Frame;
+    Frame->SetBrushColor(FLinearColor(.014f,.018f,.023f,.87f));
+    Frame->SetPadding(FMargin(20.f,18.f));
+    auto* FrameSlot=Canvas->AddChildToCanvas(Frame);
+    FrameSlot->SetAnchors(bMainMenu?FAnchors(.675f,.245f,.956f,.855f):FAnchors(.69f,.265f,.96f,.87f));
+    FrameSlot->SetOffsets(FMargin(0));
     auto* Scroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass()); Frame->SetContent(Scroll);
     auto* Rows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass()); Scroll->AddChild(Rows);
-    auto Label=[&](const TCHAR* Text) { auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text)); auto Font=L->GetFont(); Font.Size=16; L->SetFont(Font); L->SetAutoWrapText(true); Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,6)); return L; };
-    auto* Title=Label(TEXT("ANOMALIA")); auto TitleFont=Title->GetFont(); TitleFont.Size=36; Title->SetFont(TitleFont);
-    Title->SetColorAndOpacity(FSlateColor(FLinearColor(.90,.87,.76,1)));
-    Label(TEXT("ANOMALIA'Z PRIGIMALIA"));
-    Label(bMainMenu?TEXT("SURVIVRE  ·  EXPLORER  ·  CONSTRUIRE"):TEXT("PARTIE EN PAUSE"));
+    auto Label=[&](const TCHAR* Text) {
+        auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        L->SetText(FText::FromString(Text));auto Font=L->GetFont();Font.Size=14;L->SetFont(Font);
+        L->SetColorAndOpacity(FSlateColor(FLinearColor(.90f,.91f,.91f,1.f)));
+        L->SetAutoWrapText(true);
+        Rows->AddChildToVerticalBox(L)->SetPadding(FMargin(0,5));return L;
+    };
+    auto* Title=Label(bMainMenu?TEXT("MENU PRINCIPAL"):TEXT("PAUSE"));
+    auto TitleFont=Title->GetFont();TitleFont.Size=24;Title->SetFont(TitleFont);
+    Title->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+    Label(bMainMenu?TEXT("Votre prochaine destination"):TEXT("Vous êtes en partie"));
     // Start and in-game pause are intentionally separate navigation contexts.
     auto Button=[&](const TCHAR* Name,const TCHAR* Text) {
-        auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass()); Size->SetMinDesiredHeight(44);
+        auto* Size=WidgetTree->ConstructWidget<USizeBox>(USizeBox::StaticClass());
+        Size->SetMinDesiredHeight(43.f);
         Rows->AddChildToVerticalBox(Size)->SetPadding(FMargin(0,4));
-        auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Name)); Size->SetContent(B);
-        B->SetBackgroundColor(FLinearColor(.08,.10,.085,1));
-        auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass()); L->SetText(FText::FromString(Text));
-        auto Font=L->GetFont(); Font.Size=18; L->SetFont(Font); B->SetContent(L); return B;
+        auto* B=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),FName(Name));Size->SetContent(B);
+        B->SetBackgroundColor(FLinearColor(.08f,.09f,.12f,.95f));
+        auto* L=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        L->SetText(FText::FromString(Text));auto Font=L->GetFont();Font.Size=17;L->SetFont(Font);
+        L->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+        L->SetJustification(ETextJustify::Center);
+        B->SetContent(L);return B;
     };
     PlayButton=Button(TEXT("SessionPlay"),bMainMenu?TEXT("▶  JOUER"):TEXT("CONTINUER"));
     PlayButton->SetBackgroundColor(FLinearColor(.85f,.055f,.035f,1.f));
     PlayButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Play);
-    HomeButton=Button(TEXT("SessionHome"),bMainMenu?TEXT("PERSONNALISER / SURVIVANT"):TEXT("SURVIVANT"));
-    HomeButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowHome);
-    OptionsButton=Button(TEXT("SessionOptions"),TEXT("OPTIONS")); OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOptions);
     if(bMainMenu)
     {
+        HomeButton=Button(TEXT("SessionHome"),TEXT("PERSONNAGES"));
+        HomeButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowHome);
+        OptionsButton=Button(TEXT("SessionOptions"),TEXT("OPTIONS"));
+        OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOptions);
         ModsButton=Button(TEXT("SessionMods"),TEXT("WORKFORGE  •  MODS"));
         ModsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowMods);
-        Button(TEXT("SessionWorldEditor"),TEXT("ÉDITEUR DE CARTE UE5"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor);
+        Button(TEXT("SessionQuit"),TEXT("QUITTER LE JEU"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Quit);
     }
     else
     {
         Button(TEXT("SessionOnline"),TEXT("EN LIGNE  •  JOUEURS"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOnlinePlayers);
         Button(TEXT("SessionInvite"),TEXT("INVITER DES AMIS"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowInviteFriends);
+        HomeButton=Button(TEXT("SessionHome"),TEXT("COMMANDES"));
+        HomeButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowHome);
+        OptionsButton=Button(TEXT("SessionOptions"),TEXT("OPTIONS"));
+        OptionsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowOptions);
+        Button(TEXT("SessionSaveQuit"),TEXT("SAUVEGARDER ET QUITTER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::SaveAndQuit);
+        Button(TEXT("SessionQuit"),TEXT("QUITTER SANS SAUVEGARDER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Quit);
     }
-    Button(TEXT("SessionSaveQuit"),TEXT("SAUVEGARDER ET QUITTER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::SaveAndQuit);
-    Button(TEXT("SessionQuit"),TEXT("QUITTER"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Quit);
-    Feedback=Label(bMainMenu?TEXT("Dernier survivant et emplacement sauvegardés."):TEXT("Partie mise en pause. Sauvegarde automatique active."));
+    Feedback=Label(bMainMenu?TEXT("Dernière session et équipements conservés."):TEXT("Votre session est mise en pause."));
 
     auto* Details=WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass(),TEXT("SessionDetailsFrame"));DetailsFrame=Details; Details->SetPadding(FMargin(24));
-    Details->SetBrushColor(FLinearColor(.012,.016,.014,.80));
-    auto* DetailsSlot=Canvas->AddChildToCanvas(Details); DetailsSlot->SetAnchors(FAnchors(.44,.48,.96,.94)); DetailsSlot->SetOffsets(FMargin(0));
+    Details->SetBrushColor(FLinearColor(.015f,.020f,.028f,.94f));
+    auto* DetailsSlot=Canvas->AddChildToCanvas(Details);
+    DetailsSlot->SetAnchors(FAnchors(.28f,.20f,.95f,.89f));
+    DetailsSlot->SetOffsets(FMargin(0));
     auto* DetailRows=WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());Details->SetContent(DetailRows);Rows=DetailRows;
     Button(TEXT("SessionClosePage"),TEXT("Retour au menu"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ClosePage);
     auto* PageScroll=WidgetTree->ConstructWidget<UScrollBox>(UScrollBox::StaticClass());DetailRows->AddChildToVerticalBox(PageScroll);
@@ -709,6 +764,8 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildLayout()
     Label(TEXT("OPTIONS DE LA PARTIE"));
     auto* Q=Button(TEXT("SessionQuality"),TEXT("Qualité : choisir un préréglage")); QualityLabel=Cast<UTextBlock>(Q->GetContent()); Q->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ChangeQuality);
     Button(TEXT("SessionSave"),TEXT("Sauvegarder"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::Save);
+    if(bMainMenu)
+        Button(TEXT("SessionWorldEditor"),TEXT("OUTILS AVANCÉS · ÉDITEUR DE CARTE"))->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::OpenWorldEditor);
     auto* Substances=Button(TEXT("SessionRPSubstances"),TEXT("Substances RP"));
     auto* Tobacco=Button(TEXT("SessionTobacco"),TEXT("Tabac"));
     auto* Alcohol=Button(TEXT("SessionAlcohol"),TEXT("Alcool"));
