@@ -1,0 +1,57 @@
+name: ANOMALIA - 10 reference topographic fusion source and Unreal import files
+on:
+  push:
+    branches: [feature/topographic-fusions-five-worlds-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-five-original-fusion-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check original UE C++ topographic functions
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_topographic_fusion_four_worlds.cpp -o /tmp/fused-terrain-probe
+          /tmp/fused-terrain-probe
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_four_world_heights.cpp -o /tmp/original-world-probe
+          /tmp/original-world-probe
+      - name: Validate ten-image index map and ninth-world terrain fusion
+        run: |
+          python -m py_compile scripts/ue5/chernaskaluxria_topographic_fusion.py scripts/ue5/chernaskaluxria_world.py
+          python -m unittest discover -s tests -p test_chernaskaluxria_photo_fusions.py -v
+          python -m unittest discover -s tests -p test_chernaskaluxria_5000_mainland.py -v
+          python -m unittest discover -s tests -p test_ninth_map_chernaskaluxria.py -v
+      - name: Export four original 16-bit terrain heightmaps for Unreal import
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/prigimalia_export_four_topographies.cpp -o /tmp/export-fused
+          mkdir -p /tmp/anomalia-original-topographic-fusions
+          /tmp/export-fused /tmp/anomalia-original-topographic-fusions
+      - name: Generate 5km seam-matched sample of new 100km world from combined ten references
+        run: |
+          mkdir -p /tmp/chernaskaluxria-ten-ref-fusion
+          python scripts/ue5/generate_chernaskaluxria_tiles.py --output /tmp/chernaskaluxria-ten-ref-fusion --col 10 --row 10 --count 2
+          python scripts/ue5/generate_chernaskaluxria_tiles.py --output /tmp/chernaskaluxria-ten-ref-fusion --col 10 --row 11 --count 1
+          python - <<'PY'
+          import sys
+          from pathlib import Path
+          sys.path.insert(0,'scripts/ue5')
+          import generate_chernaskaluxria_tiles as source
+          root=Path('/tmp/chernaskaluxria-ten-ref-fusion')
+          assert len(list(root.glob('*.r16')))==3
+          assert source.check_shared_edges(root,10,10)=={'east':True,'south':True}
+          print('CHERNASKALUXRIA_TEN_REFERENCE_TERRAIN_EDGES_IDENTICAL')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: 4-original-fused-terrain-r16-SOURCE-not-umap
+          path: /tmp/anomalia-original-topographic-fusions/*.r16
+          compression-level: 6
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: CHERNASKALUXRIA-ten-image-fusion-sample-5km-SOURCE
+          path: /tmp/chernaskaluxria-ten-ref-fusion/*.r16
+          compression-level: 6

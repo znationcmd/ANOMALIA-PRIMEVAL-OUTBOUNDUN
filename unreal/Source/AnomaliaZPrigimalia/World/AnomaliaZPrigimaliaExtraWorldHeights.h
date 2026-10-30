@@ -66,7 +66,15 @@ inline double Height(EWorld world,double east,double north)
   const double westPlateau=290.*Gaussian(east,north,-10200.,-6000.,5300.,6100.);
   const double canyon=north-(1800.*std::sin(east/2700.)+850.*std::sin(east/760.));
   const double wadi=135.*std::exp(-(canyon*canyon)/(1100.*1100.));
-  return 185.+112.*n+48.*r+eastMountains+westPlateau-wadi;
+  // Reference composition 1+2: original Takistan-type mountain basin plus
+  // dry fractured highland. A greener settled valley crosses the arid basin.
+  const double middleValley=135.*Gaussian(east,north,-2300.,1700.,6400.,7200.);
+  const double serrated=190.*Gaussian(east,north,9000.,-9800.,3500.,4900.)*
+    (.40+.60*std::abs(ValueNoise(east,north,870.,991)));
+  const double sandySoutheast=70.*Smooth((east-4400.)/8400.)*Smooth((-north-1200.)/6100.);
+  const double roadBasin=42.*Gaussian(east,north,-1100.,2000.,5300.,4100.);
+  return 185.+112.*n+48.*r+eastMountains+westPlateau+serrated-middleValley
+    -wadi-sandySoutheast-roadBasin;
  }
  if(world==EWorld::Nemoris){
   // LUX-style original TROPICAL jungle: flooded creeks, rainforest hills,
@@ -84,12 +92,20 @@ inline double Height(EWorld world,double east,double north)
    double dx=(east-cx)/rx,dy=(north-cy)/ry,angle=std::atan2(dy,dx);
    return (1.+.07*std::sin(6.*angle+phase)-std::hypot(dx,dy))*std::min(rx,ry);
   };
-  double coast=std::max({isle(-1700.,1100.,4100.,3300.,.2),
-    isle(3900.,1600.,1750.,1500.,1.4),isle(2500.,-3900.,2300.,1700.,2.1),
-    isle(-4800.,-3900.,1300.,1100.,.7)});
+  // References 5+6: large densely wooded central island, fragmented rocky
+  // satellite archipelagos, fjord-like coves, and turquoise tropical beaches.
+  double coast=std::max({isle(-1100.,850.,4750.,3850.,.2),
+    isle(4100.,1750.,1860.,1660.,1.4),isle(3300.,-3550.,2400.,1580.,2.1),
+    isle(-4850.,-3500.,1340.,1180.,.7),isle(-3700.,4700.,1480.,1000.,2.4),
+    isle(5200.,-800.,980.,1550.,1.9),isle(-1300.,-5400.,970.,740.,.5)});
+  const double bay=2200.*Gaussian(east,north,2300.,-1000.,1900.,3300.);
+  coast=std::min(coast,coast+1600.-bay);
   if(coast<0.)return -std::min(120.,12.+std::abs(coast)*.13);
-  double peaks=290.*Gaussian(east,north,-1100.,1350.,2300.,1800.);
-  return std::max(.4,20.+coast*.04+25.*n+peaks);
+  double peaks=290.*Gaussian(east,north,-1100.,1350.,2300.,1800.)+
+   180.*Gaussian(east,north,-2400.,400.,1000.,1900.)+
+   115.*Gaussian(east,north,3250.,-4000.,1200.,780.);
+  const double lagoon=46.*Gaussian(east,north,200.,-1700.,950.,1150.);
+  return std::max(.4,20.+coast*.04+25.*n+peaks-lagoon);
  }
  if(world==EWorld::Nexavarkhos){
   // Independent devastated colony: original impact valley, ridges and ash flats.
@@ -97,7 +113,15 @@ inline double Height(EWorld world,double east,double north)
   double ring=170.*std::exp(-std::pow((radius-1.1)/.3,2.));
   double crater=310.*Gaussian(east,north,-650.,300.,840.,790.);
   double ridge=480.*Gaussian(east,north,2300.,2100.,1350.,1700.);
-  return 130.+75.*n+ring+ridge-crater;
+  // References 3+4: original rocky island/temperate forest coastal relief
+  // mixed with an ash-covered cratered colony. Retain survivable lowlands.
+  const double offshore=Smooth((5000.-std::max(std::abs(east),std::abs(north)))/900.);
+  const double coastJitter=360.*ValueNoise(east,north,1100.,927);
+  const double inland=Smooth((4700.-std::max(std::abs(east+coastJitter),std::abs(north)))/750.);
+  const double westRidge=130.*Gaussian(east,north,-2400.,1900.,900.,1900.);
+  const double shelteredBay=155.*Gaussian(east,north,-3800.,-1050.,1050.,1600.);
+  const double devastated=130.+75.*n+ring+ridge+westRidge-crater-shelteredBay;
+  return devastated*inland-90.*(1.-inland)+14.*offshore;
  }
  // DRAKHEIM: NAMALSK + SAKHAL style frozen volcanic archipelago, basalt
  // cliffs, snowy valleys and two original calderas (not copied terrain).
@@ -107,8 +131,15 @@ inline double Height(EWorld world,double east,double north)
  const double r2=std::hypot((east-5300.)/1300.,(north+3800.)/1500.);
  const double crater=680.*std::exp(-std::pow(r1/.50,4.))+
                      350.*std::exp(-std::pow(r2/.55,4.));
- const double shore=Smooth((10000.-std::max(std::abs(east),std::abs(north)))/2100.);
- return (165.+95.*n+45.*r+1020.*a+570.*b-crater)*shore-110.*(1.-shore);
+ // References 7+8: frozen Sakhal-like main island and Namalsk-like smaller
+ // volcanic southern peninsula with cracked ice-water channels.
+ const double coastJagged=720.*ValueNoise(east,north,1320.,754);
+ const double shore=Smooth((9400.-std::max(std::abs(east+coastJagged),std::abs(north)))/1600.);
+ const double iceStrait=700.*Gaussian(east,north,-4250.,-1500.,900.,5400.);
+ const double basaltRidge=420.*Gaussian(east,north,-6000.,4400.,1600.,2350.)*
+    (.50+.50*std::abs(ValueNoise(east,north,570.,608)));
+ const double inner=(165.+95.*n+45.*r+1020.*a+570.*b+basaltRidge-crater-iceStrait);
+ return inner*shore-145.*(1.-shore);
 }
 inline std::uint16_t Encode(double height)
 {
