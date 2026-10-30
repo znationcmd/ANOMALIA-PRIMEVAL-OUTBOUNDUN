@@ -42,6 +42,9 @@ private:
     UPROPERTY() TObjectPtr<UComboBoxString> WorkshopCategory;
     UPROPERTY() TObjectPtr<UComboBoxString> WorkshopSort;
     UPROPERTY() TObjectPtr<UTextBlock> WorkshopStatus;
+    UPROPERTY() TObjectPtr<UTextBlock> WorkshopCountLabel;
+    UPROPERTY() TObjectPtr<UTextBlock> WorkshopCreatorsLabel;
+    UPROPERTY() TObjectPtr<UTextBlock> WorkshopInstalledLabel;
     UPROPERTY() TObjectPtr<UButton> HomeButton;
     UPROPERTY() TObjectPtr<UButton> OptionsButton;
     UPROPERTY() TObjectPtr<UButton> ModsButton;
