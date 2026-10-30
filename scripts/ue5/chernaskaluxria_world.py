@@ -10,6 +10,7 @@ import math
 from pathlib import Path
 from chernaskaluxria_archipelago import carve_archipelago, apply_satellite_islands, satellite_island_plans, interisland_voyages, crossing_plans
 from chernaskaluxria_geography_targets import plan as new_geography_target_plan
+from chernaskaluxria_topographic_fusion import source_height_overlay, fusion_manifest
 
 MAP_ID = "chernaskaluxria-v1"
 DISPLAY_NAME = "CHERNASKALUXRIA"
@@ -93,6 +94,7 @@ def terrain_height(east_m: float, north_m: float) -> float:
     if x < -45_000:
         coast = _smooth((x+50_000)/5_000)
         base = -70*(1-coast) + base*coast
+    base+=source_height_overlay(x,y,w)
     return float(apply_satellite_islands(carve_archipelago(base,x,y),x,y))
 
 
@@ -132,6 +134,7 @@ def world_manifest() -> dict:
         "totalKm2": 10000,
         "landWaterStatus": "PROCEDURAL_ISLAND_DESIGN_NOT_NATIVE_VALIDATED",
         "targetGeography": new_geography_target_plan(),
+        "topographicFusion": fusion_manifest(),
         "currentTerrainUsesOnlyEightDraftSatellites": True,
         "revisedTwentyIslandHeightfieldGenerated": False,
         "seaLevelMeters": 0,
