@@ -18,6 +18,11 @@ public:
      Never touches /Game/Maps/ANOMALIA_Inhabited_v2 or SKARVIK. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateDrazoviaTopoCandidateLandscape();
+ /** Create an isolated candidate from the NEW iZurvive reference (not the older FALC/Drazovia photo).
+     Source: TerrainSource/DRAZOVIA_NEW_REFERENCE/DRAZOVIA_NEW_TOPO_48KM_3025.r16.
+     Strictly refuses original Inhabited_v2 and existing candidate landscapes. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateLandscape();
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
