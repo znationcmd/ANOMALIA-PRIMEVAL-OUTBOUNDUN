@@ -20,7 +20,7 @@ jobs:
           clean: false
           persist-credentials: false
       - name: Read-only Windows UE5 source and staged-project preflight
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $root='D:\\ANOMALIA'
