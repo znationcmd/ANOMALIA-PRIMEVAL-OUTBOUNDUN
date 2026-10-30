@@ -56,6 +56,7 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
         {TEXT("drakheim-v1"), TEXT("DRAKHEIM"), TEXT("/Game/Maps/PRIGIMALIA_DRAKHEIM"), 20},
         {TEXT("solynacalyra-v1"), TEXT("SOLYNACALYRA"), TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA"), 15},
         {TEXT("nexavarkhos-v1"), TEXT("NEXAVARKHOS"), TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS"), 10},
+        {TEXT("chernaskaluxria-v1"), TEXT("CHERNASKALUXRIA"), TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"), 100},
     };
     TArray<FAnomaliaZPrigimaliaWorldMapCard> Maps;
     Maps.Reserve(UE_ARRAY_COUNT(Definitions));
