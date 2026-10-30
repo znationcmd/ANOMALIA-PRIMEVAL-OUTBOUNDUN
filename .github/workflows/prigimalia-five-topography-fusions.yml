@@ -32,14 +32,15 @@ jobs:
         run: |
           mkdir -p /tmp/chernaskaluxria-ten-ref-fusion
           python scripts/ue5/generate_chernaskaluxria_tiles.py --output /tmp/chernaskaluxria-ten-ref-fusion --col 10 --row 10 --count 2
+          python scripts/ue5/generate_chernaskaluxria_tiles.py --output /tmp/chernaskaluxria-ten-ref-fusion --col 10 --row 11 --count 1
           python - <<'PY'
           import sys
           from pathlib import Path
           sys.path.insert(0,'scripts/ue5')
           import generate_chernaskaluxria_tiles as source
           root=Path('/tmp/chernaskaluxria-ten-ref-fusion')
-          assert len(list(root.glob('*.r16')))==2
-          assert source.check_shared_edges(root,10,10)['east']
+          assert len(list(root.glob('*.r16')))==3
+          assert source.check_shared_edges(root,10,10)=={'east':True,'south':True}
           print('CHERNASKALUXRIA_TEN_REFERENCE_TERRAIN_EDGES_IDENTICAL')
           PY
       - uses: actions/upload-artifact@v4
