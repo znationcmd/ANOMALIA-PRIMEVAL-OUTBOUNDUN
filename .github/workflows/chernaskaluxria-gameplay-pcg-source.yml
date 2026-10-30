@@ -1,0 +1,25 @@
+name: CHERNASKALUXRIA - early mobility, danger zones and PCG contract
+on:
+  push:
+    branches: [feature/chernaskaluxria-travel-danger-pcg-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  deterministic-source-and-review-checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source syntax without running native Unreal
+        run: |
+          python -m py_compile scripts/ue5/chernaskaluxria_gameplay_pcg.py scripts/ue5/export_chernaskaluxria_pcg_review.py
+      - name: Test transport availability, low-cost high-risk zones and real-surface PCG masks
+        run: python -m unittest discover -s tests -p test_chernaskaluxria_gameplay_rules.py -v
+      - name: Export safe review package, never a live server config
+        run: python scripts/ue5/export_chernaskaluxria_pcg_review.py --output unreal/Saved/CHERNASKALUXRIA/pcg-source-review
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: chernaskaluxria-mobility-danger-pcg-review-NOT-DEPLOYED
+          path: unreal/Saved/CHERNASKALUXRIA/pcg-source-review/
