@@ -29,6 +29,7 @@ private:
     void BuildLayout();
     void BuildPremiumWorkshop(UCanvasPanel* Canvas);
     bool bMainMenu=false;
+    bool bWorkshopMyModsOnly=false;
     int32 Quality=1;
     UPROPERTY() TObjectPtr<UButton> PlayButton;
     UPROPERTY() TObjectPtr<UTextBlock> QualityLabel;
@@ -77,6 +78,13 @@ private:
     UFUNCTION() void WorkshopFilterGameplay();
     UFUNCTION() void WorkshopFilterTools();
     UFUNCTION() void WorkshopShowMyMods();
+    UFUNCTION() void WorkshopShowCatalogue();
+    UFUNCTION() void WorkshopShowCategories();
+    UFUNCTION() void WorkshopShowCollections();
+    UFUNCTION() void WorkshopShowCommunity();
+    UFUNCTION() void WorkshopShowDownloads();
+    UFUNCTION() void WorkshopShowSettings();
+    UFUNCTION() void WorkshopOpenLocalModsFolder();
     UFUNCTION() void OpenModsFolder();
     UFUNCTION() void OpenWorldEditor();
     void SelectPage(int32 Index);
