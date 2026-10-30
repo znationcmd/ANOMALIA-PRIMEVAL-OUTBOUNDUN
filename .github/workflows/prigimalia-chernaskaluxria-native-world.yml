@@ -2,7 +2,11 @@ name: PRIGIMALIA - native 100km world first real terrain tile
 on:
   push:
     branches: [feature/chernaskaluxria-100km-nine-worlds-20261030]
-    paths: ['.github/workflows/prigimalia-chernaskaluxria-native-world.yml']
+    paths:
+      - '.github/workflows/prigimalia-chernaskaluxria-native-world.yml'
+      - 'unreal/Source/AnomaliaZPrigimalia/Vehicles/AnomaliaZPrigimaliaVehicleSurvival.cpp'
+      - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.cpp'
+      - 'unreal/Scripts/create_chernaskaluxria_native.py'
   workflow_dispatch:
 permissions:
   contents: read
