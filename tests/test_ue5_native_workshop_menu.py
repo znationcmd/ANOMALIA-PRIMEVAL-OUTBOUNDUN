@@ -11,7 +11,9 @@ PROBE = ROOT / "unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaPlayablePro
 class NativeWorkshopMenuTests(unittest.TestCase):
     def test_button_opens_native_fullscreen_workshop(self):
         s = SESSION.read_text(encoding="utf-8")
-        self.assertIn('ModsButton=Button(TEXT("SessionMods"),TEXT("Mods"))', s)
+        self.assertIn('ModsButton=Button(TEXT("SessionMods"),TEXT("WORKFORGE  •  MODS"))', s)
+        self.assertIn('if(bMainMenu)\n    {\n        BuildPremiumWorkshop(Canvas);', s)
+        self.assertIn('if(!bMainMenu || !WorkshopFrame) return;', s)
         self.assertIn('ModsButton->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ShowMods)', s)
         self.assertIn('void UAnomaliaZPrigimaliaSessionWidget::ShowMods()', s)
         self.assertIn('WorkshopFrame->SetVisibility(ESlateVisibility::Visible)', s)
