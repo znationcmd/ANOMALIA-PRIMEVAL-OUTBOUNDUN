@@ -10,6 +10,8 @@
 #include "LandscapeSubsystem.h"
 #include "Misc/FileHelper.h"
 #include "Misc/Paths.h"
+#include "Misc/CommandLine.h"
+#include "Misc/Parse.h"
 #include "Engine/Texture2D.h"
 #include "Materials/MaterialInterface.h"
 #include "Dom/JsonObject.h"
@@ -314,11 +316,31 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
  for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr; // Never overlay existing terrain.
  TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
  const double Half=double(Side)/2.;
- for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X)
+ // The user supplied merged topo is an independently-authored synthetic R16
+ // reconstruction. Explicit opt-in prevents silently overwriting old source.
+ const bool bUsePhotoR16=FParse::Param(FCommandLine::Get(),TEXT("ANOMALIAUseUserTopoR16"));
+ if(bUsePhotoR16)
  {
-  const double East=-Half+double(Side)*X/(Size-1);
-  const double North=Half-double(Side)*Y/(Size-1);
-  Samples[Y*Size+X]=Encode(Height(Kind,East,North));
+  const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),MapIdentifier,MapIdentifier+TEXT(".r16"));
+  TArray<uint8> SourceBytes;
+  const int64 ExpectedBytes=int64(Size)*int64(Size)*int64(sizeof(uint16));
+  if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || int64(SourceBytes.Num())!=ExpectedBytes)
+  {
+   UE_LOG(LogTemp,Error,TEXT("ANOMALIA user photo-driven source missing or invalid: %s (%lld bytes required)"),*Source,(long long)ExpectedBytes);
+   return nullptr; // Do not substitute unrelated procedural terrain!
+  }
+  // Native Windows Win64 is little endian, matching the R16 export.
+  FMemory::Memcpy(Samples.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+  UE_LOG(LogTemp,Display,TEXT("ANOMALIA user-provided R16 terrain selected for %s (%d samples per axis)"),*MapIdentifier,Size);
+ }
+ else
+ {
+  for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X)
+  {
+   const double East=-Half+double(Side)*X/(Size-1);
+   const double North=Half-double(Side)*Y/(Size-1);
+   Samples[Y*Size+X]=Encode(Height(Kind,East,North));
+  }
  }
  ALandscape* Land=World->SpawnActor<ALandscape>();
  if(!Land)return nullptr;
