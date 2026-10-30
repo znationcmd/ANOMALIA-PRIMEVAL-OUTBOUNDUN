@@ -337,6 +337,63 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaTopoCandidateLands
 #endif
 }
 
+// Isolated third-party image-derived new reference; only safe on a new, empty candidate map.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaIzurviveCandidateLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=3025;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReference_Candidate"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("DRAZOVIA_NEW_REFERENCE"),TEXT("DRAZOVIA_NEW_TOPO_48KM_3025.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("DRAZOVIA_Izurvive_NewReference_48km"));
+ Land->SetActorLocation(FVector(-2400000.,-2400000.,0.));
+ Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: incomplete Landscape %d != 576"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
 
