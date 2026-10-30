@@ -20,6 +20,10 @@ public:
      253x253 R16 samples -> four landscape components. Never merges another map. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row);
+ /** F.A.L.C tenth world: import one of four real 1009x1009 Landscape quadrants.
+     Rejected outside its OWN /Game/Maps/PRIGIMALIA_FALC package. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateFALCLandscapeTile(int32 Col,int32 Row);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
