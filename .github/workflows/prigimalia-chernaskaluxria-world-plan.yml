@@ -1,0 +1,35 @@
+name: PRIGIMALIA - CHERNASKALUXRIA 100km world plan validation
+on:
+  push:
+    branches: [feature/chernaskaluxria-100km-nine-worlds-20261030]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-plan-only-not-unreal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate 100km world source syntax
+        run: python -m py_compile scripts/ue5/chernaskaluxria_world.py scripts/ue5/map_titles.py
+      - name: Check nine stable maps, 100km geometry, nine biomes and 400 seam-aligned source tiles
+        run: |
+          python -m unittest discover -s tests -p test_ninth_map_chernaskaluxria.py -v
+          python -m unittest discover -s tests -p test_ue5_map_names_and_realism.py -v
+          python -m unittest discover -s tests -p test_ue5_map_independence.py -v
+      - name: Prove no existing maps are auto-merged or new untested map is publicly available
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          records=json.loads(Path('public/config/anomalia-map-catalog.json').read_text())['maps']
+          assert len(records)==9
+          assert len({record['saveNamespace'] for record in records})==9
+          assert len({record['originalUnrealPackage'] for record in records})==9
+          new=records[-1]
+          assert new['displayName']=='CHERNASKALUXRIA'
+          assert new['originalUnrealPackage']=='/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA'
+          assert new['serverSelectable'] is False
+          print('NINTH_WORLD_SOURCE_ONLY_NOT_NATIVE_AUTHORED')
+          PY
