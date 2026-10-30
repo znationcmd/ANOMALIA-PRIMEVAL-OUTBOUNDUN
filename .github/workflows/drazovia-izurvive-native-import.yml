@@ -1,0 +1,67 @@
+name: DRAZOVIA - regenerate approved RAW16 then import new UE5.8 candidate on Windows
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/drazovia-izurvive-native-import.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  reconstruct-approved-source:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install temporary Python source reconstruction dependencies
+        run: python -m pip install --disable-pip-version-check numpy opencv-python-headless brotli
+      - name: Reconstitute approved coast mask and generate byte-identical 3025 RAW16
+        run: |
+          cat scripts/ue5/drazovia_mask_part_{0,1,2,3,4,5}.txt > /tmp/DRAZOVIA_APPROVED_MASK.b85
+          test "$(wc -c </tmp/DRAZOVIA_APPROVED_MASK.b85)" -eq 6730
+          mkdir -p "${RUNNER_TEMP}/DRAZOVIA_FROM_USER"
+          python scripts/ue5/drazovia_from_approved_seamask.py \
+            --mask /tmp/DRAZOVIA_APPROVED_MASK.b85 \
+            --output "${RUNNER_TEMP}/DRAZOVIA_FROM_USER/DRAZOVIA_NEW_TOPO_48KM_3025.r16"
+          echo '704222bd547c6ec4a417a20e7b580aaefec1db769d18a4b331adf2ac0d263e9c  '"${RUNNER_TEMP}/DRAZOVIA_FROM_USER/DRAZOVIA_NEW_TOPO_48KM_3025.r16" | sha256sum -c -
+      - name: Archive generated verified RAW16 only in this run
+        uses: actions/upload-artifact@v4
+        with:
+          name: drazovia-approved-native-r16
+          path: ${{ runner.temp }}/DRAZOVIA_FROM_USER/DRAZOVIA_NEW_TOPO_48KM_3025.r16
+          retention-days: 1
+          if-no-files-found: error
+  native-on-windows:
+    needs: reconstruct-approved-source
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Fetch approved checksum-verified RAW16
+        uses: actions/download-artifact@v4
+        with:
+          name: drazovia-approved-native-r16
+          path: ${{ runner.temp }}/DRAZOVIA_FROM_USER
+      - name: Import new terrain candidate and verify 576 native components
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_drazovia_new_native.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'DRAZOVIA native authoring failed'}
+      - name: Upload native Unreal logs and receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drazovia-native-test-report-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: |
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/DrazoviaIzurviveReferenceCandidate/*.json
+            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/DrazoviaIzurviveReferenceCandidate/*.log
