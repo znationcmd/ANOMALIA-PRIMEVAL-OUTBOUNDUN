@@ -1,8 +1,8 @@
-name: DRAZOVIA - regenerate approved RAW16 then import new UE5.8 candidate on Windows
+name: DRAZOVIA - V2 verified C++ landscape inspection and isolated UE5.8 candidate
 on:
   push:
     branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
-    paths: [.github/workflows/drazovia-izurvive-native-import.yml, scripts/windows/import_drazovia_new_native.ps1]
+    paths: [.github/workflows/drazovia-izurvive-native-import.yml, scripts/windows/import_drazovia_new_native_v2.ps1]
   workflow_dispatch:
 permissions:
   contents: read
@@ -53,13 +53,13 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_drazovia_new_native.ps1')
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_drazovia_new_native_v2.ps1')
           if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'DRAZOVIA native authoring failed'}
       - name: Upload native Unreal logs and receipt
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: drazovia-native-test-report-${{ github.run_id }}
+          name: drazovia-native-v2-test-report-${{ github.run_id }}
           retention-days: 7
           if-no-files-found: warn
           path: |
