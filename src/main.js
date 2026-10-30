@@ -798,6 +798,6 @@ function loop(now){
  graphics.update(now/1000);
  updateAtmosphere(now);
  renderer.render(scene,camera);
- if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{connected:network.connected,players:network.count},world:worldRuntime?.debug()};
+ if(new URLSearchParams(location.search).has("smoke"))window.__ANOMALIA_DIAGNOSTICS={calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,position:{...state.position},started,construction:{count:state.construction.length,active:constructionUI.active,oxygen:state.oxygen,diving:state.diving},network:{get connected(){return network.connected},get players(){return network.count}},world:worldRuntime?.debug()};
 }
 requestAnimationFrame(loop);
