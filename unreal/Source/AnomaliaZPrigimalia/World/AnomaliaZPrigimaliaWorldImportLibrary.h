@@ -25,6 +25,12 @@ public:
  /** New separate world with original urban terrain pads. Never alters the v2 archipelago. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateInhabitedArchipelagoLandscape();
+ /** Create a unique native World Partition landscape ONLY for one of 4 planned new worlds. Never alters the 11 original worlds. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateNewFourLandscape(const FString& MapIdentifier);
+ /** Height metres in one of the 4 new worlds. Water masks are design targets, not rendered water. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double NewFourWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
