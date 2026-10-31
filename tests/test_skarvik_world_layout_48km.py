@@ -65,6 +65,24 @@ class SkarvikWorldSourceTests(unittest.TestCase):
                 if n not in seen:
                     seen.add(n);todo.append(n)
         self.assertEqual(seen,nodes)
+    def test_125_original_localities_and_real_road_construction_not_falsely_claimed(self):
+        from collections import Counter
+        places=self.data["settlements"]
+        self.assertEqual(len(places),125)
+        self.assertEqual(Counter(p["settlementClass"] for p in places),
+                         Counter({"major-city":10,"small-town":6,"town":26,"village":83}))
+        self.assertEqual(len({p["name"].casefold() for p in places}),125)
+        self.assertEqual(self.data["settlementTargets"]["total"],125)
+        self.assertEqual(len(self.data["roads"])>=124,True)
+        self.assertTrue(all(e["status"]=="planned-not-constructed" and not e["nativeSplineBuilt"] for e in self.data["roads"]))
+        self.assertTrue(all(not p.get("nativeConstructionVerified",False) for p in places))
+        self.assertTrue(self.data["designRules"]["noGenericBoxPlaceholders"])
+        self.assertFalse(self.data["citySample"]["trafficSpawns"])
+        self.assertFalse(self.data["citySample"]["crowdSpawns"])
+        main=next(p for p in places if p["id"]=="citysample")
+        self.assertEqual(main["footprintKm"],[4,4])
+        self.assertEqual((main["eastKm"],main["northKm"]),(2,-8))
+
     def test_no_implied_complete_asset_import(self):
         self.assertIn("NOT_DONE",self.data["status"])
         self.assertEqual(self.data["citySample"]["assetStatus"] if "assetStatus" in self.data["citySample"] else "not-migrated","not-migrated")
