@@ -49,14 +49,16 @@ jobs:
           $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT -Raw|ConvertFrom-Json
           Write-Host ('SKARVIK_NATIVE_BIGCITY_REOPEN_STATE='+$r.state)
           Write-Host ('SKARVIK_NATIVE_BIGCITY_DESCRIPTOR_COUNT='+$r.nativeLevelInstanceDescriptorCount)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_CLASS='+$r.nativeClassName)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_SOURCE_FULL_STREAMING_UNVERIFIED='+$r.sourceWorldReferenceNotYetVerifiedAfterReopen)
           Write-Host ('SKARVIK_NATIVE_BIGCITY_DESCRIPTOR_CLASS='+$r.persistedCityActorDescriptorClass)
           Write-Host ('SKARVIK_NATIVE_1039_BUILDINGS_AFTER_CITY_LINK='+$r.existing3DBuildingActorDescriptors)
           Write-Host ('SKARVIK_NATIVE_1794_OLD_ROAD_ACTORS_AFTER_CITY_LINK='+($r.existingFirst3RoadActorDescriptors+$r.existingBatch20RoadActorDescriptors))
           Write-Host ('SKARVIK_NATIVE_BATCH_B2_NEW_ROADS='+$r.additionalSecondBatchRoadActorDescriptors)
-          if($code -ne 0 -or $r.state -ne 'BIG_CITY_NAMED_ACTOR_DESCRIPTOR_PERSISTS_REFERENCE_TYPE_NEEDS_MORE_INSPECTION'){
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_NATIVE_LEVELINSTANCE_CLASS_CONFIRMED_AFTER_REOPEN_SOURCE_WORLD_STREAMING_UNVERIFIED'){
             throw ('LevelInstance ref not yet persistent: '+$r.error)
           }
-          Write-Host 'SKARVIK_BIG_CITY_NAMED_ACTOR_PERSISTED_CLASS_CHECK_REPORTED=true'
+          Write-Host 'SKARVIK_BIG_CITY_NATIVE_LEVELINSTANCE_CLASS_VERIFIED_ON_REOPEN=true'
           Write-Host 'SKARVIK_FULL_BIG_CITY_NOT_LOADED_OR_SM5_PLAYTESTED=true'
       - uses: actions/upload-artifact@v4
         if: always()
