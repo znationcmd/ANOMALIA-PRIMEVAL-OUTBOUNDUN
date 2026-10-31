@@ -115,7 +115,17 @@ try:
    nodes.append(xy(node[0]));node=back[node]
   nodes.append(xy(orig));nodes=list(reversed(nodes))
   # Keep raw 20m-step centerline instead of smoothing through unsurveyed terrain.
-  nodepath=[list(map(lambda x:round(x,5),start))]+[list(map(lambda x:round(x,5),p)) for p in nodes[1:-1]]+[list(map(lambda x:round(x,5),end))]
+  nodepath=[list(map(lambda x:round(x,5),start))]+[list(map(lambda x:round(x,5),p)) for p in nodes]+[list(map(lambda x:round(x,5),end))]
+  # Validate every *actual* exported segment, including the off-grid terminals.
+  # Never report a possible switchback if its end contacts are too steep.
+  for a,b in zip(nodepath,nodepath[1:]):
+   span=math.hypot((b[0]-a[0])*1000,(b[1]-a[1])*1000)
+   if span<.01:continue
+   if abs(height(a)-height(b))/span>.145:
+    return None,"terminal-or-exported-grade-unverified",visited
+   mid=((a[0]+b[0])*.5,(a[1]+b[1])*.5)
+   if not townclear(mid) or abs(height(mid)-(height(a)+height(b))*.5)>.65:
+    return None,"terminal-or-exported-road-crossing-unverified",visited
   dist=sum(math.hypot((b[0]-a[0])*1000,(b[1]-a[1])*1000) for a,b in zip(nodepath,nodepath[1:]))
   if dist>6*math.hypot((end[0]-start[0])*1000,(end[1]-start[1])*1000):
    return None,"detour-longer-than-sixfold",visited
