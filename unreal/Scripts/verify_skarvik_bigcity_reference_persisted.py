@@ -43,9 +43,20 @@ try:
   raise RuntimeError("Lost prior World Partition building or road actors on graded map")
  # The Python ActorDesc.class_ field may return a generic UClass wrapper;
  # record its exact value rather than assuming the string contains the C++ type.
- typename=str(cityref[0].class_)
+ softpath=cityref[0].class_
+ type_values={"pythonSoftObjectPathRepresentation":str(softpath)}
+ for method in ("to_string","get_asset_path_name","get_asset_name","get_long_package_name"):
+  if hasattr(softpath,method):
+   try:type_values[method]=str(getattr(softpath,method)())
+   except Exception as exc:type_values[method+"Error"]=str(exc)
+ try:type_values["asset_path_name"]=str(softpath.get_editor_property("asset_path_name"))
+ except Exception as exc:type_values["asset_path_nameError"]=str(exc)
+ typename=" ".join(type_values.values())
+ data["cityClassSoftObjectPathMethods"]=type_values
+ data["levelInstanceClassPathConfirmed"]=bool("LevelInstance" in typename)
  data["persistedCityActorDescriptorClass"]=typename
- data["levelInstanceTypeConfirmedFromDescriptor"]=bool("LevelInstance" in typename)
+ data["nativeLevelInstanceTypeConfirmed"]=data["levelInstanceClassPathConfirmed"]
+ data["levelInstanceTypeConfirmedFromDescriptor"]=data["levelInstanceClassPathConfirmed"]
  data["sourceWorldReferenceNotYetVerifiedAfterReopen"]=not data["levelInstanceTypeConfirmedFromDescriptor"]
  unreal.log("SKARVIK_BIGCITY_PERSISTED_ACTOR_DESCRIPTOR_TYPE="+typename)
 
