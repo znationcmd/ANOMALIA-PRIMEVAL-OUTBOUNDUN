@@ -57,8 +57,20 @@ try:
  data["secondBatchRoadsById"]=dict(grouped)
  if houses!=1039 or roadA!=126 or roadB!=1668:
   raise RuntimeError("Lost prior World Partition building or road actors on graded map")
- data["cityActorPersistedDescriptorClass"]=str(cityref[0].class_)
- data["nativeLevelInstanceTypeConfirmed"]=bool("LevelInstance" in data["cityActorPersistedDescriptorClass"])
+ softpath=cityref[0].class_
+ type_values={"pythonSoftObjectPathRepresentation":str(softpath)}
+ for method in ("to_string","get_asset_path_name","get_asset_name","get_long_package_name"):
+  if hasattr(softpath,method):
+   try:type_values[method]=str(getattr(softpath,method)())
+   except Exception as exc:type_values[method+"Error"]=str(exc)
+ try:type_values["asset_path_name"]=str(softpath.get_editor_property("asset_path_name"))
+ except Exception as exc:type_values["asset_path_nameError"]=str(exc)
+ typename=" ".join(type_values.values())
+ data["cityClassSoftObjectPathMethods"]=type_values
+ data["levelInstanceClassPathConfirmed"]=bool("LevelInstance" in typename)
+ data["persistedCityActorDescriptorClass"]=typename
+ data["nativeLevelInstanceTypeConfirmed"]=data["levelInstanceClassPathConfirmed"]
+ data["levelInstanceTypeConfirmedFromDescriptor"]=data["levelInstanceClassPathConfirmed"]
  data["CitySampleFullActorsStreamed"]=False
  data["sourceWorldReferenceAfterReloadUnverified"]=not data["nativeLevelInstanceTypeConfirmed"]
  unreal.log("SKARVIK_BIGCITY_REOPEN_DESCRIPTOR_TYPE="+data["cityActorPersistedDescriptorClass"])
