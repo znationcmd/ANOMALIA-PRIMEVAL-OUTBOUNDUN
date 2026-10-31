@@ -58,7 +58,7 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
         {TEXT("nexavarkhos-v1"), TEXT("NEXAVARKHOS"), TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS"), 10},
         {TEXT("chernaskaluxria-v1"), TEXT("CHERNASKALUXRIA"), TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"), 100},
         {TEXT("falc-v1"), TEXT("F.A.L.C"), TEXT("/Game/Maps/PRIGIMALIA_FALC"), 27},
-        {TEXT("kolchiem-origins-v1"), TEXT("KOLCHIEM ORIGINS"), TEXT("/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS"), 48},
+        {TEXT("kolchiem-origins-v1"), TEXT("KOLCHIEM ORIGINS"), TEXT("/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL"), 48},
     };
     TArray<FAnomaliaZPrigimaliaWorldMapCard> Maps;
     Maps.Reserve(UE_ARRAY_COUNT(Definitions));
