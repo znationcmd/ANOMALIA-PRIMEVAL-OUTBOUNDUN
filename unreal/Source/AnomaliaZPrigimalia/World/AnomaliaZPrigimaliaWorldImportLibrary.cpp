@@ -565,6 +565,94 @@ int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectDrazoviaIzurviveCandidateV3
 }
 
 
+// Dedicated F.A.L.C reference importer; no premature Landscape partitioning.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateFalcReferenceLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=2017;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("FALC"),TEXT("FALC_26_5KM_MASTER_2017.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("FALC_Reference_26_5km"));
+ Land->SetActorLocation(FVector(-1325000.,-1325000.,0.));
+ Land->SetActorScale3D(FVector(2650000./(Size-1),2650000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=256)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: incomplete Landscape %d != 256"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ // V3: DO NOT partition the Landscape here. ChangeGridSize previously migrated the
+ // 576 components away from the root actor, causing V1/V2's post-import checks
+ // to observe zero. Save and verify the actual terrain before any later grid split.
+ UE_LOG(LogTemp,Display,TEXT("FALC REFERENCE: 256 root components verified; Landscape grid partitioning deferred"));
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectFalcReferenceComponents(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+  return -1;
+ const int32 N=Land->LandscapeComponents.Num();
+ if(N!=256 || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE native inspection: invalid component count %d or missing LandscapeInfo"),N);
+  return -1;
+ }
+ for(const ULandscapeComponent* Component : Land->LandscapeComponents)
+ {
+  if(!IsValid(Component) || Component->GetOwner()!=Land)
+  {
+   UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE native inspection: null/foreign LandscapeComponent"));
+   return -1;
+  }
+ }
+ UE_LOG(LogTemp,Display,TEXT("FALC REFERENCE native inspection: validated %d native LandscapeComponents"),N);
+ return N;
+#else
+ return -1;
+#endif
+}
+
+
+
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
 
