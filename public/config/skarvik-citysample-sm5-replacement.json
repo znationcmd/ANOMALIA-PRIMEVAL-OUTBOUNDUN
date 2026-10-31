@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "status": "PENDING_CITY_SAMPLE_LOCAL_ASSETS_AND_NATIVE_TESTS",
+  "logicalMapId": "archipelago-v2",
+  "publicMapName": "SKARVIK",
+  "requestedReplacement": "Full City Sample Big City static SM5",
+  "preservedOriginalUnrealPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+  "targetPackageCandidates": [
+    "/Game/Map/Big_City_LLV",
+    "/Game/Map/Big_City_LVL"
+  ],
+  "sourceAreaKm": [
+    4,
+    4
+  ],
+  "originalAreaKm": [
+    48,
+    48
+  ],
+  "graphics": {
+    "RHI": "D3D11",
+    "shaderModel": "SM5",
+    "nanite": false,
+    "lumen": false,
+    "virtualShadowMaps": false,
+    "requiresUsableFallbackMeshes": true
+  },
+  "simulation": {
+    "movingTraffic": false,
+    "movingCrowds": false,
+    "parkedCars": "optional_static_only"
+  },
+  "gates": {
+    "sourceCitySampleInstalled": false,
+    "WorldPartitionActorsValidated": false,
+    "dependenciesMigrated": false,
+    "SM5PIETested": false,
+    "packagedPlaytestPassed": false,
+    "activateSKARVIK": false
+  },
+  "guards": {
+    "keepOriginalSkarvikAndSaves": true,
+    "keepOtherFiveWorlds": true,
+    "neverPushEpicBinaryAssetsToPublicGithub": true
+  }
+}
