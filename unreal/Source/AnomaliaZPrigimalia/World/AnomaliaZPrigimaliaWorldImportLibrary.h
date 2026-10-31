@@ -13,6 +13,12 @@ public:
  /** Create ONLY a new 48x48km SKARVIK City world in its separate package, preserving original SKARVIK. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateSkarvikCityLandscape();
+ /** Build a NEW, non-destructive 48km SKARVIK terrain with graded plots for 124 settlements; v1 and D: untouched. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateSkarvikGradedLandscape();
+ /** Height of the graded v2 buildable terrain in metres; source height v1 is unchanged. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double SkarvikGradedHeight(double EastMeters,double NorthMeters);
  /** Original SM5-compatible geography for the prospective SKARVIK city world. */
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double SkarvikCityHeight(double EastMeters,double NorthMeters);
