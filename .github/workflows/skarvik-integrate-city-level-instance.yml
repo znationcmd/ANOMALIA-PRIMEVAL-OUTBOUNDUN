@@ -2,7 +2,7 @@ name: SKARVIK - attach Big City native level instance to 48km UE5 world
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-integrate-city-level-instance.yml']
+    paths: ['.github/workflows/skarvik-integrate-city-level-instance.yml', 'unreal/Scripts/integrate_skarvik_citysample_level_instance.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -46,6 +46,19 @@ jobs:
           $r=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
           if($exit -ne 0 -or $r.status -ne 'BIG_CITY_UWORLD_LOADABLE_LEVEL_INSTANCE_API_AVAILABLE_NOT_INTEGRATED'){throw ('City map cannot load natively: '+$r.error)}
           Write-Host 'SKARVIK_BIG_CITY_WORLDPARTITION_MAP_LOADABLE=true'
+      - name: Verify integration script compiles before touching UE5 world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\integrate_skarvik_citysample_level_instance.py'
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(-not(Test-Path -LiteralPath $py -PathType Leaf)){
+            $p=Get-Command py -ErrorAction SilentlyContinue
+            if($p){$py=$p.Source}else{throw 'Python compiler not available for syntax verification'}
+          }
+          $cmd='import ast,sys; ast.parse(open(sys.argv[1],encoding="utf-8").read()); print("SKARVIK_PYTHON_SYNTAX_OK=true")'
+          & $py -c $cmd $src
+          if($LASTEXITCODE -ne 0){throw 'Integration Python syntax invalid. Refuse Unreal launch'}
       - name: Attach native LevelInstance without overwriting original world
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -56,7 +69,13 @@ jobs:
           $env:SKARVIK_CITY_INTEGRATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-instance-result.json'
           & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
           $exit=$LASTEXITCODE
-          if(!(Test-Path -LiteralPath $env:SKARVIK_CITY_INTEGRATION_REPORT)){throw 'No City Sample UE5 integration evidence'}
+          if(!(Test-Path -LiteralPath $env:SKARVIK_CITY_INTEGRATION_REPORT)){
+            $engineLog='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Saved\Logs\AnomaliaZPrigimalia.log'
+            if(Test-Path -LiteralPath $engineLog){
+              Get-Content -LiteralPath $engineLog -Tail 180 | Select-String -Pattern 'LogPython: Error|LogEditorPythonExecuter: Error|LogLevelInstance|Fatal error|Error:' | ForEach-Object{Write-Host $_.Line}
+            }
+            throw 'UE produced no integration report: see native Python / Unreal logs above'
+          }
           $r=Get-Content -LiteralPath $env:SKARVIK_CITY_INTEGRATION_REPORT -Raw|ConvertFrom-Json
           if($exit -ne 0 -or $r.state -ne 'CITY_LEVEL_INSTANCE_LINKED_IN_48KM_SKARVIK_NOT_VISUALLY_VALIDATED' -or !$r.cityWorldInstanceSaved){throw ('Big City could not be linked safely to SKARVIK: '+$r.error)}
           Write-Host 'SKARVIK_NATIVE_BIG_CITY_LEVEL_INSTANCE_SAVED=true'
