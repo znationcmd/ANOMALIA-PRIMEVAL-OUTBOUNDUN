@@ -1,0 +1,66 @@
+name: SKARVIK - verify native Big City reference 63 road alignments and 1039 buildings survive reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-bigcity-63-roads-building-world.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  world-integrity:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify safe staged maps and C backup of pre Big City and pre road files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\BigCityNativeReferencePilot20261031\before-city-reference.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\RoadExpansionBatchB2_20261031\graded-pre-expansion.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Missing protected file $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal Editor running'}
+      - name: Reopen actual graded World Partition and verify Big City and 63 road references
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_63_roads_bigcity_persisted.py'
+          & $py -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Combined world proof Python invalid'}
+          $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-63-roads-bigcity-integrity.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT)){throw 'No native map integrity report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_COMBINED_NATIVE_WORLD_STATUS='+$r.state)
+          Write-Host ('SKARVIK_BIG_CITY_LEVEL_REFERENCE_COUNT='+$r.nativeLevelInstanceDescriptorCount)
+          Write-Host ('SKARVIK_1039_HOUSES_ACTORS='+$r.existing3DBuildingActorDescriptors)
+          Write-Host ('SKARVIK_3_PLUS_20_ROADS_ACTORS='+($r.existingFirst3RoadActorDescriptors+$r.existingBatch20RoadActorDescriptors))
+          Write-Host ('SKARVIK_40_ADDITIONAL_ROADS_ACTORS='+$r.additionalSecondBatchRoadActorDescriptors)
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_LEVEL_INSTANCE_AND_63_NATIVE_ROADS_PLUS_1039_BUILDINGS_PERSIST_NOT_PLAYTESTED'){
+            throw ('Reopened native world integrity test failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_NATIVE_CITY_REFERENCE_AND_63_ASPHALT_ROUTES_AND_1039_BUILDINGS_PERSIST=true'
+          Write-Host 'SKARVIK_BIG_CITY_FULL_VISUAL_STREAMING_AND_SM5_DRIVING_NOT_VALIDATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-63-real-road-alignments-bigcity-native-reference-proof
+          path: skarvik-63-roads-bigcity-integrity.json
+          if-no-files-found: warn
