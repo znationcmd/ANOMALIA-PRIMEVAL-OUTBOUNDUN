@@ -1,0 +1,60 @@
+name: KOLCHIEM - read-only source World Partition size and disk capacity
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/kolchiem-origins-readonly-space-source-audit.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-no-changes:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect original world copy footprint, protected files, disk space without modifications
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $source=Join-Path $root 'Content\Maps\ANOMALIA_Inhabited_v2.umap'
+          $target=Join-Path $root 'Content\Maps\PRIGIMALIA_KOLCHIEM_ORIGINS.umap'
+          $actors=Join-Path $root 'Content\__ExternalActors__\Maps\ANOMALIA_Inhabited_v2'
+          $objects=Join-Path $root 'Content\__ExternalObjects__\Maps\ANOMALIA_Inhabited_v2'
+          if(-not(Test-Path -LiteralPath $source -PathType Leaf)){throw 'Existing source map not found'}
+          $sourceBytes=(Get-Item -LiteralPath $source).Length
+          $data=@()
+          foreach($folder in @($actors,$objects)){
+            if(Test-Path -LiteralPath $folder -PathType Container){
+              $files=@(Get-ChildItem -LiteralPath $folder -File -Recurse -ErrorAction Stop)
+              $sum=($files|Measure-Object -Property Length -Sum).Sum
+              $data+=@{folder=$folder;count=$files.Count;bytes=[long]$sum}
+            }else{$data+=@{folder=$folder;count=0;bytes=0}}
+          }
+          $d=Get-PSDrive -Name D
+          $c=Get-PSDrive -Name C
+          $allBytes=[long]$sourceBytes + ($data|Measure-Object -Property bytes -Sum).Sum
+          Write-Host ('KOLCHIEM_SOURCE_UMAP_BYTES='+$sourceBytes)
+          Write-Host ('KOLCHIEM_SOURCE_EXTERNAL_BYTES='+(($data|Measure-Object -Property bytes -Sum).Sum))
+          Write-Host ('KOLCHIEM_SOURCE_TOTAL_GIB='+[math]::Round($allBytes/1GB,3))
+          Write-Host ('KOLCHIEM_D_FREE_GIB='+[math]::Round($d.Free/1GB,3))
+          Write-Host ('KOLCHIEM_C_FREE_GIB='+[math]::Round($c.Free/1GB,3))
+          Write-Host ('KOLCHIEM_TARGET_EXISTS='+(Test-Path -LiteralPath $target))
+          foreach($item in $data){Write-Host ('KOLCHIEM_EXTERNAL_FOLDER='+$item.folder+' FILES='+$item.count+' BYTES='+$item.bytes)}
+          $result=@{sourceBytes=$sourceBytes;external=$data;sourceTotalBytes=$allBytes;freeDBytes=[long]$d.Free;freeCBytes=[long]$c.Free;targetExists=(Test-Path -LiteralPath $target);mode='READ_ONLY'}
+          $folder=Join-Path $env:RUNNER_TEMP ('KOLCHIEM_SPACE_AUDIT_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $folder -Force | Out-Null
+          $result|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $folder 'source-disk-space.json') -Encoding UTF8
+          Write-Host 'KOLCHIEM_SOURCE_CAPACITY_AUDIT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kolchiem-space-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/KOLCHIEM_SPACE_AUDIT_${{ github.run_id }}/*.json
+          if-no-files-found: warn
