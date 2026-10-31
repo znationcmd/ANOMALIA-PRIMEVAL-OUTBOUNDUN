@@ -41,7 +41,10 @@
       "trueFullCityIntegrationComplete": false,
       "fullCityReferenceProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241004483",
       "sourceDiskAuditProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41238446267",
-      "sourceMapAndProductionDProtected": true
+      "sourceMapAndProductionDProtected": true,
+      "nativeActorLabelPersistedAfterReopen": true,
+      "nativeActorClassAndSourceAfterReopenStillUnverified": true,
+      "namedActorDescriptorProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241978956"
     }
   },
   "biomeZones": [
@@ -11818,12 +11821,16 @@
     "batchB2RoadMetersSaved": 96849.6,
     "batchB2Evidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241110645",
     "remainingRegionalRoutesWithoutNativeAsphalt": 319,
-    "batchB2ReopenVerified": false,
+    "batchB2ReopenVerified": true,
     "roadNetworkContinuousAndDrivableVerified": false,
     "waterCrossingsAndBridgeDesignVerified": false,
     "citySampleSourceReferenceSaved": true,
     "citySampleSourceReferenceReopenedVerified": false,
     "citySampleFullVisualStreamingVerified": false,
-    "citySampleSourceRefEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241004483"
+    "citySampleSourceRefEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241004483",
+    "batchB2AndPreviousActorsReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241978956",
+    "citySampleNamedActorDescriptorPersisted": true,
+    "citySampleTypeAndSourceLinkReopenVerified": false,
+    "bigCityVisualActorStreamingPlaytested": false
   }
 }
