@@ -3568,6 +3568,7846 @@
       "status": "planned-not-constructed",
       "geometry": "centerline-waypoints-only",
       "nativeSplineBuilt": false
+    },
+    {
+      "id": "SK-RX-001",
+      "from": "citysample",
+      "to": "orme-bas",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.716,
+          -5.965
+        ],
+        [
+          3.919,
+          -5.725
+        ],
+        [
+          4.121,
+          -5.485
+        ],
+        [
+          4.323,
+          -5.245
+        ]
+      ],
+      "estimatedAlignmentKm": 0.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-002",
+      "from": "citysample",
+      "to": "valleron",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          1.658,
+          -5.965
+        ],
+        [
+          1.512,
+          -5.098
+        ],
+        [
+          1.367,
+          -4.232
+        ],
+        [
+          1.221,
+          -3.365
+        ]
+      ],
+      "estimatedAlignmentKm": 2.64,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-003",
+      "from": "frostgard",
+      "to": "nivergard",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          15.535,
+          13.611
+        ],
+        [
+          15.73,
+          13.434
+        ],
+        [
+          15.925,
+          13.258
+        ],
+        [
+          16.12,
+          13.082
+        ]
+      ],
+      "estimatedAlignmentKm": 0.79,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-004",
+      "from": "frostgard",
+      "to": "froidepin",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          13.403,
+          16.535
+        ],
+        [
+          13.13,
+          17.235
+        ],
+        [
+          12.858,
+          17.935
+        ],
+        [
+          12.585,
+          18.635
+        ]
+      ],
+      "estimatedAlignmentKm": 2.25,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-005",
+      "from": "valdoren",
+      "to": "sablemaree",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          13.133,
+          -0.335
+        ],
+        [
+          13.211,
+          -1.108
+        ],
+        [
+          13.288,
+          -1.882
+        ],
+        [
+          13.366,
+          -2.655
+        ]
+      ],
+      "estimatedAlignmentKm": 2.33,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-006",
+      "from": "valdoren",
+      "to": "baie-argent",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          14.335,
+          -0.279
+        ],
+        [
+          14.833,
+          -0.756
+        ],
+        [
+          15.332,
+          -1.234
+        ],
+        [
+          15.83,
+          -1.711
+        ]
+      ],
+      "estimatedAlignmentKm": 2.07,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-007",
+      "from": "kaelm",
+      "to": "fonteval",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.666,
+          6.465
+        ],
+        [
+          -15.435,
+          6.095
+        ],
+        [
+          -15.204,
+          5.725
+        ],
+        [
+          -14.973,
+          5.355
+        ]
+      ],
+      "estimatedAlignmentKm": 1.31,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-008",
+      "from": "oasis",
+      "to": "almari",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.31,
+          -13.075
+        ],
+        [
+          -17.775,
+          -13.187
+        ],
+        [
+          -18.24,
+          -13.299
+        ],
+        [
+          -18.705,
+          -13.411
+        ]
+      ],
+      "estimatedAlignmentKm": 1.43,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-009",
+      "from": "redridge",
+      "to": "rosemosse",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -8.415,
+          -9.672
+        ],
+        [
+          -8.094,
+          -9.011
+        ],
+        [
+          -7.567,
+          -8.716
+        ],
+        [
+          -6.835,
+          -8.787
+        ]
+      ],
+      "estimatedAlignmentKm": 2.07,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-010",
+      "from": "firvale",
+      "to": "charmeval",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.206,
+          -3.715
+        ],
+        [
+          -5.748,
+          -2.965
+        ],
+        [
+          -6.291,
+          -2.215
+        ],
+        [
+          -6.833,
+          -1.465
+        ]
+      ],
+      "estimatedAlignmentKm": 2.78,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-011",
+      "from": "firvale",
+      "to": "hautes-rives",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.715,
+          -3.787
+        ],
+        [
+          -3.462,
+          -2.853
+        ],
+        [
+          -2.208,
+          -1.918
+        ],
+        [
+          -0.955,
+          -0.983
+        ]
+      ],
+      "estimatedAlignmentKm": 4.69,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-012",
+      "from": "icehaven",
+      "to": "osterlac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          20.008,
+          12.485
+        ],
+        [
+          20.014,
+          12.868
+        ],
+        [
+          20.02,
+          13.252
+        ],
+        [
+          20.026,
+          13.635
+        ]
+      ],
+      "estimatedAlignmentKm": 1.15,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-013",
+      "from": "icehaven",
+      "to": "blanchecrete",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.515,
+          11.91
+        ],
+        [
+          18.325,
+          11.688
+        ],
+        [
+          17.135,
+          11.467
+        ],
+        [
+          15.945,
+          11.246
+        ]
+      ],
+      "estimatedAlignmentKm": 3.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-014",
+      "from": "harbor",
+      "to": "cap-aube",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          18.084,
+          -12.415
+        ],
+        [
+          18.241,
+          -11.322
+        ],
+        [
+          18.398,
+          -10.228
+        ],
+        [
+          18.555,
+          -9.135
+        ]
+      ],
+      "estimatedAlignmentKm": 3.31,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-015",
+      "from": "ravenor",
+      "to": "kharvel",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.815,
+          -17.839
+        ],
+        [
+          -17.273,
+          -18.222
+        ],
+        [
+          -16.732,
+          -18.606
+        ],
+        [
+          -16.19,
+          -18.989
+        ]
+      ],
+      "estimatedAlignmentKm": 1.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-016",
+      "from": "oasis",
+      "to": "ravenor",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.155,
+          -13.31
+        ],
+        [
+          -17.573,
+          -14.145
+        ],
+        [
+          -17.99,
+          -14.98
+        ],
+        [
+          -18.407,
+          -15.815
+        ]
+      ],
+      "estimatedAlignmentKm": 2.8,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-017",
+      "from": "ravenor",
+      "to": "sable-froid",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.815,
+          -17.544
+        ],
+        [
+          -16.622,
+          -18.092
+        ],
+        [
+          -15.428,
+          -18.64
+        ],
+        [
+          -14.235,
+          -19.188
+        ]
+      ],
+      "estimatedAlignmentKm": 3.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-018",
+      "from": "kaelm",
+      "to": "karstheim",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.357,
+          6.465
+        ],
+        [
+          -16.641,
+          6.038
+        ],
+        [
+          -16.926,
+          5.612
+        ],
+        [
+          -17.21,
+          5.185
+        ]
+      ],
+      "estimatedAlignmentKm": 1.54,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-019",
+      "from": "karstheim",
+      "to": "valleroche",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.946,
+          2.815
+        ],
+        [
+          -17.882,
+          1.4
+        ],
+        [
+          -17.817,
+          -0.015
+        ],
+        [
+          -17.753,
+          -1.43
+        ]
+      ],
+      "estimatedAlignmentKm": 4.25,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-020",
+      "from": "karstheim",
+      "to": "brumecrete",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.948,
+          5.185
+        ],
+        [
+          -19.796,
+          6.245
+        ],
+        [
+          -20.644,
+          7.305
+        ],
+        [
+          -21.492,
+          8.365
+        ]
+      ],
+      "estimatedAlignmentKm": 4.07,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-021",
+      "from": "varengard",
+      "to": "lauzeveil",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.608,
+          18.185
+        ],
+        [
+          -18.104,
+          18.625
+        ],
+        [
+          -18.386,
+          19.175
+        ],
+        [
+          -18.454,
+          19.835
+        ]
+      ],
+      "estimatedAlignmentKm": 1.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-022",
+      "from": "varengard",
+      "to": "granitel",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.815,
+          17.794
+        ],
+        [
+          -15.172,
+          18.224
+        ],
+        [
+          -14.528,
+          18.655
+        ],
+        [
+          -13.885,
+          19.086
+        ]
+      ],
+      "estimatedAlignmentKm": 2.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-023",
+      "from": "varengard",
+      "to": "ravin-dore",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.624,
+          15.815
+        ],
+        [
+          -18.16,
+          14.798
+        ],
+        [
+          -18.695,
+          13.782
+        ],
+        [
+          -19.231,
+          12.765
+        ]
+      ],
+      "estimatedAlignmentKm": 3.45,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-024",
+      "from": "eldervik",
+      "to": "longpont",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.285,
+          6.734
+        ],
+        [
+          -4.528,
+          6.476
+        ],
+        [
+          -5.772,
+          6.218
+        ],
+        [
+          -7.015,
+          5.961
+        ]
+      ],
+      "estimatedAlignmentKm": 3.81,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-025",
+      "from": "eldervik",
+      "to": "boissauvage",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.715,
+          7.201
+        ],
+        [
+          0.693,
+          7.421
+        ],
+        [
+          2.102,
+          7.64
+        ],
+        [
+          3.51,
+          7.86
+        ]
+      ],
+      "estimatedAlignmentKm": 4.28,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-026",
+      "from": "eldervik",
+      "to": "eiskorn",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -1.558,
+          8.285
+        ],
+        [
+          -1.103,
+          9.605
+        ],
+        [
+          -0.649,
+          10.925
+        ],
+        [
+          -0.194,
+          12.245
+        ]
+      ],
+      "estimatedAlignmentKm": 4.19,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-027",
+      "from": "astermont",
+      "to": "port-azur",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.569,
+          -3.715
+        ],
+        [
+          19.794,
+          -3.207
+        ],
+        [
+          20.019,
+          -2.698
+        ],
+        [
+          20.244,
+          -2.19
+        ]
+      ],
+      "estimatedAlignmentKm": 1.67,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-028",
+      "from": "meridia",
+      "to": "bas-moulin",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.765,
+          -20.257
+        ],
+        [
+          3,
+          -19.797
+        ],
+        [
+          2.235,
+          -19.337
+        ],
+        [
+          1.47,
+          -18.877
+        ]
+      ],
+      "estimatedAlignmentKm": 2.68,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-029",
+      "from": "meridia",
+      "to": "grandpre",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.765,
+          -20.93
+        ],
+        [
+          2.505,
+          -20.858
+        ],
+        [
+          1.245,
+          -20.786
+        ],
+        [
+          -0.015,
+          -20.714
+        ]
+      ],
+      "estimatedAlignmentKm": 3.79,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-030",
+      "from": "meridia",
+      "to": "rive-basse",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.765,
+          -21.281
+        ],
+        [
+          2.252,
+          -21.625
+        ],
+        [
+          0.738,
+          -21.97
+        ],
+        [
+          -0.775,
+          -22.314
+        ]
+      ],
+      "estimatedAlignmentKm": 4.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-031",
+      "from": "tarzel",
+      "to": "rocheseche",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.635,
+          -7.895
+        ],
+        [
+          -16.678,
+          -7.724
+        ],
+        [
+          -17.722,
+          -7.552
+        ],
+        [
+          -18.765,
+          -7.38
+        ]
+      ],
+      "estimatedAlignmentKm": 3.17,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-032",
+      "from": "tarzel",
+      "to": "safran",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.365,
+          -8.007
+        ],
+        [
+          -12.928,
+          -8.024
+        ],
+        [
+          -11.492,
+          -8.041
+        ],
+        [
+          -10.055,
+          -8.057
+        ]
+      ],
+      "estimatedAlignmentKm": 4.31,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-033",
+      "from": "tarzel",
+      "to": "ergued",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.635,
+          -8.092
+        ],
+        [
+          -17.142,
+          -8.309
+        ],
+        [
+          -18.648,
+          -8.527
+        ],
+        [
+          -20.155,
+          -8.745
+        ]
+      ],
+      "estimatedAlignmentKm": 4.57,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-034",
+      "from": "tarzel",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.616,
+          -8.635
+        ],
+        [
+          -16.855,
+          -9.912
+        ],
+        [
+          -18.094,
+          -11.188
+        ],
+        [
+          -19.332,
+          -12.465
+        ]
+      ],
+      "estimatedAlignmentKm": 5.34,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-035",
+      "from": "brumecrete",
+      "to": "cimefonte",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -21.365,
+          8.937
+        ],
+        [
+          -20.163,
+          8.818
+        ],
+        [
+          -18.962,
+          8.699
+        ],
+        [
+          -17.76,
+          8.58
+        ]
+      ],
+      "estimatedAlignmentKm": 3.62,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-036",
+      "from": "montbrume",
+      "to": "valleron",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.426,
+          -0.635
+        ],
+        [
+          2.751,
+          -1.382
+        ],
+        [
+          2.076,
+          -2.128
+        ],
+        [
+          1.401,
+          -2.875
+        ]
+      ],
+      "estimatedAlignmentKm": 3.02,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-037",
+      "from": "montbrume",
+      "to": "orme-bas",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.067,
+          -0.635
+        ],
+        [
+          4.213,
+          -2.008
+        ],
+        [
+          4.358,
+          -3.382
+        ],
+        [
+          4.504,
+          -4.755
+        ]
+      ],
+      "estimatedAlignmentKm": 4.14,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-038",
+      "from": "montbrume",
+      "to": "boisdore",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.318,
+          0.635
+        ],
+        [
+          5.35,
+          1.757
+        ],
+        [
+          6.006,
+          3.067
+        ],
+        [
+          6.287,
+          4.565
+        ]
+      ],
+      "estimatedAlignmentKm": 4.51,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-039",
+      "from": "hiverdal",
+      "to": "glacelac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.071,
+          13.635
+        ],
+        [
+          8.218,
+          14.95
+        ],
+        [
+          8.366,
+          16.265
+        ],
+        [
+          8.513,
+          17.58
+        ]
+      ],
+      "estimatedAlignmentKm": 3.97,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-040",
+      "from": "snowpine",
+      "to": "hiverdal",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.048,
+          18.715
+        ],
+        [
+          7.33,
+          17.022
+        ],
+        [
+          7.612,
+          15.328
+        ],
+        [
+          7.894,
+          13.635
+        ]
+      ],
+      "estimatedAlignmentKm": 5.15,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-041",
+      "from": "frostgard",
+      "to": "hiverdal",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          12.465,
+          14.488
+        ],
+        [
+          11.188,
+          14.063
+        ],
+        [
+          9.912,
+          13.637
+        ],
+        [
+          8.635,
+          13.212
+        ]
+      ],
+      "estimatedAlignmentKm": 4.04,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-042",
+      "from": "hiverdal",
+      "to": "boissauvage",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.501,
+          12.365
+        ],
+        [
+          6.474,
+          11.06
+        ],
+        [
+          5.448,
+          9.755
+        ],
+        [
+          4.421,
+          8.45
+        ]
+      ],
+      "estimatedAlignmentKm": 4.98,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-043",
+      "from": "rosephare",
+      "to": "cap-aube",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          20.701,
+          -13.365
+        ],
+        [
+          20.036,
+          -11.955
+        ],
+        [
+          19.371,
+          -10.545
+        ],
+        [
+          18.706,
+          -9.135
+        ]
+      ],
+      "estimatedAlignmentKm": 4.68,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-044",
+      "from": "bois-sud",
+      "to": "herbehaute",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.06,
+          -19.635
+        ],
+        [
+          -2.873,
+          -20.217
+        ],
+        [
+          -2.926,
+          -20.777
+        ],
+        [
+          -3.217,
+          -21.315
+        ]
+      ],
+      "estimatedAlignmentKm": 1.79,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-045",
+      "from": "bois-sud",
+      "to": "montbrun",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.635,
+          -19.507
+        ],
+        [
+          -4.172,
+          -19.936
+        ],
+        [
+          -4.708,
+          -20.365
+        ],
+        [
+          -5.245,
+          -20.794
+        ]
+      ],
+      "estimatedAlignmentKm": 2.06,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-046",
+      "from": "bois-sud",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.734,
+          -18.365
+        ],
+        [
+          -2.414,
+          -17.598
+        ],
+        [
+          -2.093,
+          -16.832
+        ],
+        [
+          -1.772,
+          -16.065
+        ]
+      ],
+      "estimatedAlignmentKm": 2.49,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-047",
+      "from": "dunes",
+      "to": "kharvel",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -12.285,
+          -19.027
+        ],
+        [
+          -13.269,
+          -18.88
+        ],
+        [
+          -14.231,
+          -18.971
+        ],
+        [
+          -15.17,
+          -19.301
+        ]
+      ],
+      "estimatedAlignmentKm": 2.96,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-048",
+      "from": "kharvel",
+      "to": "sablecroix",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.809,
+          -18.84
+        ],
+        [
+          -16.14,
+          -17.537
+        ],
+        [
+          -16.47,
+          -16.233
+        ],
+        [
+          -16.801,
+          -14.93
+        ]
+      ],
+      "estimatedAlignmentKm": 4.03,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-049",
+      "from": "kharvel",
+      "to": "khemir",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.17,
+          -19.213
+        ],
+        [
+          -13.405,
+          -18.741
+        ],
+        [
+          -11.64,
+          -18.268
+        ],
+        [
+          -9.875,
+          -17.796
+        ]
+      ],
+      "estimatedAlignmentKm": 5.48,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-050",
+      "from": "sablecroix",
+      "to": "almari",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.44,
+          -14.18
+        ],
+        [
+          -17.862,
+          -13.982
+        ],
+        [
+          -18.283,
+          -13.784
+        ],
+        [
+          -18.705,
+          -13.585
+        ]
+      ],
+      "estimatedAlignmentKm": 1.4,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-051",
+      "from": "dunes",
+      "to": "miraze",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -12.174,
+          -18.715
+        ],
+        [
+          -12.596,
+          -18.027
+        ],
+        [
+          -13.017,
+          -17.338
+        ],
+        [
+          -13.438,
+          -16.65
+        ]
+      ],
+      "estimatedAlignmentKm": 2.42,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-052",
+      "from": "kharvel",
+      "to": "miraze",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.373,
+          -18.84
+        ],
+        [
+          -14.934,
+          -18.11
+        ],
+        [
+          -14.496,
+          -17.38
+        ],
+        [
+          -14.057,
+          -16.65
+        ]
+      ],
+      "estimatedAlignmentKm": 2.55,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-053",
+      "from": "miraze",
+      "to": "tinjar",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.24,
+          -16.053
+        ],
+        [
+          -12.148,
+          -15.866
+        ],
+        [
+          -11.057,
+          -15.679
+        ],
+        [
+          -9.965,
+          -15.492
+        ]
+      ],
+      "estimatedAlignmentKm": 3.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-054",
+      "from": "oasis",
+      "to": "miraze",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.69,
+          -13.3
+        ],
+        [
+          -15.88,
+          -14.082
+        ],
+        [
+          -15.07,
+          -14.865
+        ],
+        [
+          -14.26,
+          -15.647
+        ]
+      ],
+      "estimatedAlignmentKm": 3.38,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-055",
+      "from": "pierremont",
+      "to": "valrivage",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -8.87,
+          4.037
+        ],
+        [
+          -8.163,
+          3.589
+        ],
+        [
+          -7.457,
+          3.141
+        ],
+        [
+          -6.75,
+          2.693
+        ]
+      ],
+      "estimatedAlignmentKm": 2.51,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-056",
+      "from": "pierremont",
+      "to": "fonteval",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.89,
+          4.43
+        ],
+        [
+          -11.452,
+          4.646
+        ],
+        [
+          -13.013,
+          4.861
+        ],
+        [
+          -14.575,
+          5.076
+        ]
+      ],
+      "estimatedAlignmentKm": 4.73,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-057",
+      "from": "pierremont",
+      "to": "charmeval",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.163,
+          3.85
+        ],
+        [
+          -8.259,
+          2.335
+        ],
+        [
+          -7.576,
+          0.727
+        ],
+        [
+          -7.114,
+          -0.975
+        ]
+      ],
+      "estimatedAlignmentKm": 5.27,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-058",
+      "from": "cimefonte",
+      "to": "melezac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.057,
+          8.02
+        ],
+        [
+          -16.888,
+          7.236
+        ],
+        [
+          -16.606,
+          6.494
+        ],
+        [
+          -16.213,
+          5.795
+        ]
+      ],
+      "estimatedAlignmentKm": 2.4,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-059",
+      "from": "karstheim",
+      "to": "cimefonte",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.804,
+          5.185
+        ],
+        [
+          -17.647,
+          6.13
+        ],
+        [
+          -17.491,
+          7.075
+        ],
+        [
+          -17.334,
+          8.02
+        ]
+      ],
+      "estimatedAlignmentKm": 2.87,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-060",
+      "from": "valleroche",
+      "to": "pierrefeu",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.24,
+          -1.918
+        ],
+        [
+          -19.071,
+          -1.463
+        ],
+        [
+          -19.919,
+          -1.427
+        ],
+        [
+          -20.785,
+          -1.81
+        ]
+      ],
+      "estimatedAlignmentKm": 2.74,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-061",
+      "from": "valleroche",
+      "to": "rocheseche",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.851,
+          -2.45
+        ],
+        [
+          -18.218,
+          -3.998
+        ],
+        [
+          -18.585,
+          -5.547
+        ],
+        [
+          -18.952,
+          -7.095
+        ]
+      ],
+      "estimatedAlignmentKm": 4.77,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-062",
+      "from": "boissauvage",
+      "to": "nordlac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.628,
+          8.45
+        ],
+        [
+          3.172,
+          9.045
+        ],
+        [
+          2.715,
+          9.64
+        ],
+        [
+          2.258,
+          10.235
+        ]
+      ],
+      "estimatedAlignmentKm": 2.25,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-063",
+      "from": "boissauvage",
+      "to": "boisdore",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.409,
+          7.43
+        ],
+        [
+          5.014,
+          6.638
+        ],
+        [
+          5.618,
+          5.847
+        ],
+        [
+          6.223,
+          5.055
+        ]
+      ],
+      "estimatedAlignmentKm": 2.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-064",
+      "from": "clairvallon",
+      "to": "valleron",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          5.83,
+          -2.507
+        ],
+        [
+          4.362,
+          -2.701
+        ],
+        [
+          2.893,
+          -2.894
+        ],
+        [
+          1.425,
+          -3.088
+        ]
+      ],
+      "estimatedAlignmentKm": 4.44,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-065",
+      "from": "clairvallon",
+      "to": "ardelport",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          6.85,
+          -2.94
+        ],
+        [
+          7.785,
+          -3.857
+        ],
+        [
+          8.72,
+          -4.773
+        ],
+        [
+          9.655,
+          -5.69
+        ]
+      ],
+      "estimatedAlignmentKm": 3.93,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-066",
+      "from": "clairvallon",
+      "to": "montoree",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          6.265,
+          -1.93
+        ],
+        [
+          6.018,
+          -0.25
+        ],
+        [
+          5.772,
+          1.43
+        ],
+        [
+          5.525,
+          3.11
+        ]
+      ],
+      "estimatedAlignmentKm": 5.09,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-067",
+      "from": "montoree",
+      "to": "boisdore",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          5.861,
+          4.13
+        ],
+        [
+          5.978,
+          4.275
+        ],
+        [
+          6.095,
+          4.42
+        ],
+        [
+          6.212,
+          4.565
+        ]
+      ],
+      "estimatedAlignmentKm": 0.56,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-068",
+      "from": "valrivage",
+      "to": "charmeval",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -6.349,
+          1.86
+        ],
+        [
+          -6.552,
+          0.915
+        ],
+        [
+          -6.755,
+          -0.03
+        ],
+        [
+          -6.957,
+          -0.975
+        ]
+      ],
+      "estimatedAlignmentKm": 2.9,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-069",
+      "from": "river",
+      "to": "valrivage",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.69,
+          -0.722
+        ],
+        [
+          -8.71,
+          0.156
+        ],
+        [
+          -7.73,
+          1.035
+        ],
+        [
+          -6.75,
+          1.913
+        ]
+      ],
+      "estimatedAlignmentKm": 3.95,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-070",
+      "from": "glacelac",
+      "to": "fjordin",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.686,
+          17.58
+        ],
+        [
+          9.032,
+          16.058
+        ],
+        [
+          9.378,
+          14.537
+        ],
+        [
+          9.724,
+          13.015
+        ]
+      ],
+      "estimatedAlignmentKm": 4.68,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-071",
+      "from": "icehaven",
+      "to": "nivergard",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.515,
+          12.089
+        ],
+        [
+          18.723,
+          12.235
+        ],
+        [
+          17.932,
+          12.381
+        ],
+        [
+          17.14,
+          12.526
+        ]
+      ],
+      "estimatedAlignmentKm": 2.41,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-072",
+      "from": "nivergard",
+      "to": "neigerive",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          17.14,
+          12.575
+        ],
+        [
+          18.696,
+          12.68
+        ],
+        [
+          20.231,
+          12.545
+        ],
+        [
+          21.745,
+          12.171
+        ]
+      ],
+      "estimatedAlignmentKm": 4.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-073",
+      "from": "frostgard",
+      "to": "lysvik",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          14.531,
+          16.535
+        ],
+        [
+          14.882,
+          17.55
+        ],
+        [
+          15.233,
+          18.565
+        ],
+        [
+          15.584,
+          19.58
+        ]
+      ],
+      "estimatedAlignmentKm": 3.22,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-074",
+      "from": "baie-argent",
+      "to": "port-azur",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          16.85,
+          -2.136
+        ],
+        [
+          17.887,
+          -2.005
+        ],
+        [
+          18.923,
+          -1.875
+        ],
+        [
+          19.96,
+          -1.744
+        ]
+      ],
+      "estimatedAlignmentKm": 3.13,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-075",
+      "from": "baie-argent",
+      "to": "vauclerc",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          16.85,
+          -2.254
+        ],
+        [
+          18.282,
+          -2.404
+        ],
+        [
+          19.713,
+          -2.554
+        ],
+        [
+          21.145,
+          -2.704
+        ]
+      ],
+      "estimatedAlignmentKm": 4.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-076",
+      "from": "hauterive",
+      "to": "etang-sale",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.924,
+          -7.66
+        ],
+        [
+          10.89,
+          -8.042
+        ],
+        [
+          10.856,
+          -8.423
+        ],
+        [
+          10.822,
+          -8.805
+        ]
+      ],
+      "estimatedAlignmentKm": 1.15,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-077",
+      "from": "hauterive",
+      "to": "fontaine-verte",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.46,
+          -7.343
+        ],
+        [
+          9.648,
+          -7.651
+        ],
+        [
+          8.837,
+          -7.959
+        ],
+        [
+          8.025,
+          -8.267
+        ]
+      ],
+      "estimatedAlignmentKm": 2.6,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-078",
+      "from": "coteverte",
+      "to": "capvive",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.575,
+          -10.25
+        ],
+        [
+          11.579,
+          -9.795
+        ],
+        [
+          11.583,
+          -9.34
+        ],
+        [
+          11.588,
+          -8.885
+        ]
+      ],
+      "estimatedAlignmentKm": 1.37,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-079",
+      "from": "coteverte",
+      "to": "fontaine-verte",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.06,
+          -10.437
+        ],
+        [
+          10.048,
+          -9.796
+        ],
+        [
+          9.037,
+          -9.156
+        ],
+        [
+          8.025,
+          -8.515
+        ]
+      ],
+      "estimatedAlignmentKm": 3.59,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-080",
+      "from": "coteverte",
+      "to": "vieux-quai",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.586,
+          -10.25
+        ],
+        [
+          11.871,
+          -8.756
+        ],
+        [
+          11.917,
+          -7.254
+        ],
+        [
+          11.723,
+          -5.745
+        ]
+      ],
+      "estimatedAlignmentKm": 4.55,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-081",
+      "from": "pont-vert",
+      "to": "auberive",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.69,
+          -15.369
+        ],
+        [
+          5.092,
+          -15.746
+        ],
+        [
+          5.493,
+          -16.123
+        ],
+        [
+          5.895,
+          -16.5
+        ]
+      ],
+      "estimatedAlignmentKm": 1.65,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-082",
+      "from": "pont-vert",
+      "to": "coulevie",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.67,
+          -14.867
+        ],
+        [
+          2.502,
+          -14.815
+        ],
+        [
+          1.333,
+          -14.763
+        ],
+        [
+          0.165,
+          -14.711
+        ]
+      ],
+      "estimatedAlignmentKm": 3.51,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-083",
+      "from": "pont-vert",
+      "to": "merilac",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.67,
+          -15.056
+        ],
+        [
+          2.482,
+          -15.444
+        ],
+        [
+          1.293,
+          -15.832
+        ],
+        [
+          0.105,
+          -16.22
+        ]
+      ],
+      "estimatedAlignmentKm": 3.75,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-084",
+      "from": "pont-vert",
+      "to": "bas-moulin",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.734,
+          -15.4
+        ],
+        [
+          2.958,
+          -16.287
+        ],
+        [
+          2.182,
+          -17.173
+        ],
+        [
+          1.406,
+          -18.06
+        ]
+      ],
+      "estimatedAlignmentKm": 3.53,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-085",
+      "from": "merivals",
+      "to": "loupvallon",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.41,
+          -14.619
+        ],
+        [
+          -3.532,
+          -14.635
+        ],
+        [
+          -2.653,
+          -14.65
+        ],
+        [
+          -1.775,
+          -14.666
+        ]
+      ],
+      "estimatedAlignmentKm": 2.64,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-086",
+      "from": "bois-sud",
+      "to": "merivals",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.278,
+          -18.365
+        ],
+        [
+          -3.971,
+          -17.38
+        ],
+        [
+          -4.444,
+          -16.298
+        ],
+        [
+          -4.697,
+          -15.12
+        ]
+      ],
+      "estimatedAlignmentKm": 3.59,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-087",
+      "from": "merivals",
+      "to": "merilac",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.41,
+          -14.79
+        ],
+        [
+          -2.928,
+          -14.869
+        ],
+        [
+          -1.587,
+          -15.343
+        ],
+        [
+          -0.385,
+          -16.213
+        ]
+      ],
+      "estimatedAlignmentKm": 4.39,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-088",
+      "from": "merivals",
+      "to": "qarven",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.43,
+          -14.839
+        ],
+        [
+          -6.848,
+          -15.476
+        ],
+        [
+          -8.267,
+          -16.113
+        ],
+        [
+          -9.685,
+          -16.75
+        ]
+      ],
+      "estimatedAlignmentKm": 4.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-089",
+      "from": "cendreval",
+      "to": "loupvallon",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.97,
+          -16.3
+        ],
+        [
+          -2.562,
+          -15.838
+        ],
+        [
+          -2.154,
+          -15.377
+        ],
+        [
+          -1.746,
+          -14.915
+        ]
+      ],
+      "estimatedAlignmentKm": 1.85,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-090",
+      "from": "cendreval",
+      "to": "corne-bois",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.393,
+          -17.32
+        ],
+        [
+          -4.019,
+          -18.364
+        ],
+        [
+          -3.965,
+          -19.373
+        ],
+        [
+          -3.233,
+          -20.345
+        ]
+      ],
+      "estimatedAlignmentKm": 3.44,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-091",
+      "from": "bas-moulin",
+      "to": "merilac",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.713,
+          -18.06
+        ],
+        [
+          0.468,
+          -17.555
+        ],
+        [
+          0.223,
+          -17.05
+        ],
+        [
+          -0.021,
+          -16.545
+        ]
+      ],
+      "estimatedAlignmentKm": 1.68,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-092",
+      "from": "khemir",
+      "to": "tinjar",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.64,
+          -17.485
+        ],
+        [
+          -9.663,
+          -16.888
+        ],
+        [
+          -9.687,
+          -16.292
+        ],
+        [
+          -9.71,
+          -15.695
+        ]
+      ],
+      "estimatedAlignmentKm": 1.79,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-093",
+      "from": "ergued",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -20.348,
+          -9.025
+        ],
+        [
+          -20.106,
+          -10.172
+        ],
+        [
+          -19.864,
+          -11.318
+        ],
+        [
+          -19.622,
+          -12.465
+        ]
+      ],
+      "estimatedAlignmentKm": 3.52,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-094",
+      "from": "oasis",
+      "to": "dunevoile",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.224,
+          -13.31
+        ],
+        [
+          -17.54,
+          -13.748
+        ],
+        [
+          -17.857,
+          -14.187
+        ],
+        [
+          -18.173,
+          -14.625
+        ]
+      ],
+      "estimatedAlignmentKm": 1.62,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-095",
+      "from": "rocheseche",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.972,
+          -7.585
+        ],
+        [
+          -18.841,
+          -8.432
+        ],
+        [
+          -18.709,
+          -9.278
+        ],
+        [
+          -18.578,
+          -10.125
+        ]
+      ],
+      "estimatedAlignmentKm": 2.57,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-096",
+      "from": "dunes",
+      "to": "qarven",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -11.724,
+          -18.715
+        ],
+        [
+          -11.205,
+          -18.178
+        ],
+        [
+          -10.686,
+          -17.642
+        ],
+        [
+          -10.167,
+          -17.105
+        ]
+      ],
+      "estimatedAlignmentKm": 2.24,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-097",
+      "from": "safran",
+      "to": "vieux-chene",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.565,
+          -8.204
+        ],
+        [
+          -9.012,
+          -8.528
+        ],
+        [
+          -8.458,
+          -8.852
+        ],
+        [
+          -7.905,
+          -9.176
+        ]
+      ],
+      "estimatedAlignmentKm": 1.92,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-098",
+      "from": "redridge",
+      "to": "solaroc",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.585,
+          -9.613
+        ],
+        [
+          -10.602,
+          -8.939
+        ],
+        [
+          -11.618,
+          -8.266
+        ],
+        [
+          -12.635,
+          -7.592
+        ]
+      ],
+      "estimatedAlignmentKm": 3.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-099",
+      "from": "solaroc",
+      "to": "vieux-chene",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -12.635,
+          -7.519
+        ],
+        [
+          -11.058,
+          -8.09
+        ],
+        [
+          -9.482,
+          -8.66
+        ],
+        [
+          -7.905,
+          -9.231
+        ]
+      ],
+      "estimatedAlignmentKm": 5.03,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-100",
+      "from": "dunes",
+      "to": "tinjar",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -11.817,
+          -18.715
+        ],
+        [
+          -11.17,
+          -17.708
+        ],
+        [
+          -10.524,
+          -16.702
+        ],
+        [
+          -9.877,
+          -15.695
+        ]
+      ],
+      "estimatedAlignmentKm": 3.59,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-101",
+      "from": "oasis",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.182,
+          -12.69
+        ],
+        [
+          -17.587,
+          -11.998
+        ],
+        [
+          -17.992,
+          -11.307
+        ],
+        [
+          -18.397,
+          -10.615
+        ]
+      ],
+      "estimatedAlignmentKm": 2.4,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-102",
+      "from": "varengard",
+      "to": "brumepierre",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.837,
+          15.815
+        ],
+        [
+          -15.418,
+          15.388
+        ],
+        [
+          -14.999,
+          14.962
+        ],
+        [
+          -14.58,
+          14.535
+        ]
+      ],
+      "estimatedAlignmentKm": 1.79,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-103",
+      "from": "brumepierre",
+      "to": "ravin-dore",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.585,
+          14.204
+        ],
+        [
+          -16.095,
+          13.671
+        ],
+        [
+          -17.605,
+          13.139
+        ],
+        [
+          -19.115,
+          12.606
+        ]
+      ],
+      "estimatedAlignmentKm": 4.8,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-104",
+      "from": "cimefonte",
+      "to": "brumepierre",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.992,
+          9.04
+        ],
+        [
+          -16.149,
+          10.708
+        ],
+        [
+          -15.307,
+          12.377
+        ],
+        [
+          -14.464,
+          14.045
+        ]
+      ],
+      "estimatedAlignmentKm": 5.61,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-105",
+      "from": "rochenord",
+      "to": "lauzeveil",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -19.028,
+          18.295
+        ],
+        [
+          -18.899,
+          18.808
+        ],
+        [
+          -18.771,
+          19.322
+        ],
+        [
+          -18.642,
+          19.835
+        ]
+      ],
+      "estimatedAlignmentKm": 1.59,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-106",
+      "from": "highpass",
+      "to": "rochenord",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.285,
+          17.059
+        ],
+        [
+          -15.603,
+          18.352
+        ],
+        [
+          -17.123,
+          18.665
+        ],
+        [
+          -18.845,
+          17.999
+        ]
+      ],
+      "estimatedAlignmentKm": 5.24,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-107",
+      "from": "vieux-col",
+      "to": "cairn-bas",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.644,
+          20.805
+        ],
+        [
+          -16.995,
+          20.312
+        ],
+        [
+          -17.345,
+          19.818
+        ],
+        [
+          -17.696,
+          19.325
+        ]
+      ],
+      "estimatedAlignmentKm": 1.82,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-108",
+      "from": "varengard",
+      "to": "vieux-col",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.845,
+          18.185
+        ],
+        [
+          -16.731,
+          19.058
+        ],
+        [
+          -16.616,
+          19.932
+        ],
+        [
+          -16.502,
+          20.805
+        ]
+      ],
+      "estimatedAlignmentKm": 2.64,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-109",
+      "from": "highpass",
+      "to": "vieux-col",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.174,
+          17.285
+        ],
+        [
+          -14.889,
+          18.458
+        ],
+        [
+          -15.605,
+          19.632
+        ],
+        [
+          -16.321,
+          20.805
+        ]
+      ],
+      "estimatedAlignmentKm": 4.12,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-110",
+      "from": "aiguille-haute",
+      "to": "sombreroch",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -20.214,
+          -1.635
+        ],
+        [
+          -20.365,
+          -0.945
+        ],
+        [
+          -20.515,
+          -0.255
+        ],
+        [
+          -20.666,
+          0.435
+        ]
+      ],
+      "estimatedAlignmentKm": 2.12,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-111",
+      "from": "rocheseche",
+      "to": "aiguille-haute",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -19.062,
+          -7.095
+        ],
+        [
+          -19.411,
+          -5.438
+        ],
+        [
+          -19.759,
+          -3.782
+        ],
+        [
+          -20.108,
+          -2.125
+        ]
+      ],
+      "estimatedAlignmentKm": 5.08,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-112",
+      "from": "valleroche",
+      "to": "sombreroch",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.24,
+          -1.493
+        ],
+        [
+          -18.985,
+          -0.84
+        ],
+        [
+          -19.73,
+          -0.187
+        ],
+        [
+          -20.475,
+          0.465
+        ]
+      ],
+      "estimatedAlignmentKm": 2.97,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-113",
+      "from": "karstheim",
+      "to": "pierrefeu",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.619,
+          2.815
+        ],
+        [
+          -19.38,
+          1.358
+        ],
+        [
+          -20.141,
+          -0.098
+        ],
+        [
+          -20.902,
+          -1.555
+        ]
+      ],
+      "estimatedAlignmentKm": 4.93,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-114",
+      "from": "vieux-col",
+      "to": "granitel",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.225,
+          20.894
+        ],
+        [
+          -15.445,
+          20.398
+        ],
+        [
+          -14.665,
+          19.902
+        ],
+        [
+          -13.885,
+          19.406
+        ]
+      ],
+      "estimatedAlignmentKm": 2.77,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-115",
+      "from": "brumepierre",
+      "to": "granitel",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.305,
+          14.535
+        ],
+        [
+          -14.511,
+          16.084
+        ],
+        [
+          -14.301,
+          17.574
+        ],
+        [
+          -13.675,
+          19.005
+        ]
+      ],
+      "estimatedAlignmentKm": 4.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-116",
+      "from": "fresnelac",
+      "to": "ardelport",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.175,
+          -7.774
+        ],
+        [
+          8.002,
+          -7.215
+        ],
+        [
+          8.828,
+          -6.655
+        ],
+        [
+          9.655,
+          -6.096
+        ]
+      ],
+      "estimatedAlignmentKm": 2.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-117",
+      "from": "fresnelac",
+      "to": "etang-sale",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.175,
+          -8.01
+        ],
+        [
+          8.368,
+          -8.103
+        ],
+        [
+          9.495,
+          -8.426
+        ],
+        [
+          10.555,
+          -8.98
+        ]
+      ],
+      "estimatedAlignmentKm": 3.57,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-118",
+      "from": "safran",
+      "to": "rosemosse",
+      "class": "desert-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.565,
+          -8.105
+        ],
+        [
+          -8.655,
+          -8.272
+        ],
+        [
+          -7.745,
+          -8.438
+        ],
+        [
+          -6.835,
+          -8.605
+        ]
+      ],
+      "estimatedAlignmentKm": 2.78,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-119",
+      "from": "rosemosse",
+      "to": "millefeuille",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -6.345,
+          -8.648
+        ],
+        [
+          -4.845,
+          -8.636
+        ],
+        [
+          -3.345,
+          -8.624
+        ],
+        [
+          -1.845,
+          -8.612
+        ]
+      ],
+      "estimatedAlignmentKm": 4.5,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-120",
+      "from": "firvale",
+      "to": "millefeuille",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.79,
+          -4.285
+        ],
+        [
+          -3.787,
+          -5.645
+        ],
+        [
+          -2.784,
+          -7.005
+        ],
+        [
+          -1.781,
+          -8.365
+        ]
+      ],
+      "estimatedAlignmentKm": 5.07,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-121",
+      "from": "millefeuille",
+      "to": "valleron",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -1.476,
+          -8.365
+        ],
+        [
+          -0.632,
+          -6.698
+        ],
+        [
+          0.212,
+          -5.032
+        ],
+        [
+          1.056,
+          -3.365
+        ]
+      ],
+      "estimatedAlignmentKm": 5.6,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-122",
+      "from": "sylvane",
+      "to": "longpont",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.635,
+          4.537
+        ],
+        [
+          -6.095,
+          4.925
+        ],
+        [
+          -6.555,
+          5.314
+        ],
+        [
+          -7.015,
+          5.703
+        ]
+      ],
+      "estimatedAlignmentKm": 1.81,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-123",
+      "from": "longpont",
+      "to": "epicea",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -7.359,
+          5.665
+        ],
+        [
+          -7.773,
+          4.645
+        ],
+        [
+          -8.187,
+          3.625
+        ],
+        [
+          -8.601,
+          2.605
+        ]
+      ],
+      "estimatedAlignmentKm": 3.3,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-124",
+      "from": "montbrume",
+      "to": "hautes-rives",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.365,
+          -0.108
+        ],
+        [
+          2.088,
+          -0.325
+        ],
+        [
+          0.812,
+          -0.542
+        ],
+        [
+          -0.465,
+          -0.758
+        ]
+      ],
+      "estimatedAlignmentKm": 3.88,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-125",
+      "from": "sylvane",
+      "to": "hautes-rives",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.432,
+          3.365
+        ],
+        [
+          -3.265,
+          2.058
+        ],
+        [
+          -2.097,
+          0.752
+        ],
+        [
+          -0.929,
+          -0.555
+        ]
+      ],
+      "estimatedAlignmentKm": 5.26,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-126",
+      "from": "river",
+      "to": "epicea",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.88,
+          -0.69
+        ],
+        [
+          -9.518,
+          0.245
+        ],
+        [
+          -9.157,
+          1.18
+        ],
+        [
+          -8.795,
+          2.115
+        ]
+      ],
+      "estimatedAlignmentKm": 3.01,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-127",
+      "from": "neigerive",
+      "to": "osterlac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          21.745,
+          12.366
+        ],
+        [
+          21.255,
+          12.799
+        ],
+        [
+          20.765,
+          13.231
+        ],
+        [
+          20.275,
+          13.664
+        ]
+      ],
+      "estimatedAlignmentKm": 1.96,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-128",
+      "from": "neigerive",
+      "to": "blanchecrete",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          21.745,
+          12.113
+        ],
+        [
+          19.913,
+          11.149
+        ],
+        [
+          17.98,
+          10.857
+        ],
+        [
+          15.945,
+          11.237
+        ]
+      ],
+      "estimatedAlignmentKm": 6.1,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-129",
+      "from": "snowpine",
+      "to": "froidepin",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.285,
+          18.994
+        ],
+        [
+          8.938,
+          18.958
+        ],
+        [
+          10.592,
+          18.921
+        ],
+        [
+          12.245,
+          18.885
+        ]
+      ],
+      "estimatedAlignmentKm": 4.96,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-130",
+      "from": "nivergard",
+      "to": "osterlac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          17.14,
+          12.809
+        ],
+        [
+          17.876,
+          13.53
+        ],
+        [
+          18.757,
+          13.856
+        ],
+        [
+          19.785,
+          13.789
+        ]
+      ],
+      "estimatedAlignmentKm": 3,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-131",
+      "from": "glacier-bas",
+      "to": "niveore",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.315,
+          11.269
+        ],
+        [
+          -2.882,
+          11.146
+        ],
+        [
+          -1.448,
+          11.024
+        ],
+        [
+          -0.015,
+          10.901
+        ]
+      ],
+      "estimatedAlignmentKm": 4.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-132",
+      "from": "niveore",
+      "to": "lysglace",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.475,
+          10.886
+        ],
+        [
+          1.198,
+          10.902
+        ],
+        [
+          1.922,
+          10.918
+        ],
+        [
+          2.645,
+          10.934
+        ]
+      ],
+      "estimatedAlignmentKm": 2.17,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-133",
+      "from": "lysglace",
+      "to": "eiskorn",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          2.645,
+          11.067
+        ],
+        [
+          1.808,
+          11.499
+        ],
+        [
+          0.972,
+          11.931
+        ],
+        [
+          0.135,
+          12.363
+        ]
+      ],
+      "estimatedAlignmentKm": 2.82,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-134",
+      "from": "hiverdal",
+      "to": "lysglace",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.365,
+          12.744
+        ],
+        [
+          5.955,
+          12.176
+        ],
+        [
+          4.545,
+          11.607
+        ],
+        [
+          3.135,
+          11.039
+        ]
+      ],
+      "estimatedAlignmentKm": 4.56,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-135",
+      "from": "fjordin",
+      "to": "blanchecrete",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.025,
+          12.705
+        ],
+        [
+          11.835,
+          12.225
+        ],
+        [
+          13.645,
+          11.745
+        ],
+        [
+          15.455,
+          11.265
+        ]
+      ],
+      "estimatedAlignmentKm": 5.62,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-136",
+      "from": "neigerive",
+      "to": "frostel",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          21.745,
+          12.25
+        ],
+        [
+          20.858,
+          12.61
+        ],
+        [
+          19.972,
+          12.97
+        ],
+        [
+          19.085,
+          13.33
+        ]
+      ],
+      "estimatedAlignmentKm": 2.87,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-137",
+      "from": "eiskorn",
+      "to": "nordlac",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.135,
+          12.264
+        ],
+        [
+          0.698,
+          11.745
+        ],
+        [
+          1.262,
+          11.225
+        ],
+        [
+          1.825,
+          10.706
+        ]
+      ],
+      "estimatedAlignmentKm": 2.3,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-138",
+      "from": "malphare",
+      "to": "cote-d-orval",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          16.245,
+          6.001
+        ],
+        [
+          16.885,
+          5.637
+        ],
+        [
+          17.525,
+          5.273
+        ],
+        [
+          18.165,
+          4.909
+        ]
+      ],
+      "estimatedAlignmentKm": 2.21,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-139",
+      "from": "blanchecrete",
+      "to": "malphare",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          15.715,
+          10.955
+        ],
+        [
+          15.805,
+          9.432
+        ],
+        [
+          15.895,
+          7.908
+        ],
+        [
+          15.985,
+          6.385
+        ]
+      ],
+      "estimatedAlignmentKm": 4.58,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-140",
+      "from": "ardelport",
+      "to": "vieux-quai",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.145,
+          -5.872
+        ],
+        [
+          10.592,
+          -5.767
+        ],
+        [
+          11.038,
+          -5.663
+        ],
+        [
+          11.485,
+          -5.558
+        ]
+      ],
+      "estimatedAlignmentKm": 1.38,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-141",
+      "from": "capvive",
+      "to": "elmarin",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.835,
+          -8.774
+        ],
+        [
+          12.582,
+          -9.181
+        ],
+        [
+          13.328,
+          -9.589
+        ],
+        [
+          14.075,
+          -9.996
+        ]
+      ],
+      "estimatedAlignmentKm": 2.55,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-142",
+      "from": "baie-argent",
+      "to": "plage-cendre",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          16.739,
+          -1.69
+        ],
+        [
+          17.532,
+          -0.675
+        ],
+        [
+          18.325,
+          0.34
+        ],
+        [
+          19.119,
+          1.355
+        ]
+      ],
+      "estimatedAlignmentKm": 3.86,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-143",
+      "from": "plage-cendre",
+      "to": "vauclerc",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.428,
+          1.355
+        ],
+        [
+          20.421,
+          0.257
+        ],
+        [
+          21.036,
+          -1.023
+        ],
+        [
+          21.272,
+          -2.485
+        ]
+      ],
+      "estimatedAlignmentKm": 4.38,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-144",
+      "from": "cote-d-orval",
+      "to": "valest",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          18.165,
+          4.728
+        ],
+        [
+          17.302,
+          4.579
+        ],
+        [
+          16.438,
+          4.431
+        ],
+        [
+          15.575,
+          4.282
+        ]
+      ],
+      "estimatedAlignmentKm": 2.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-145",
+      "from": "ardelport",
+      "to": "sablemaree",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.145,
+          -5.717
+        ],
+        [
+          11.145,
+          -4.849
+        ],
+        [
+          12.145,
+          -3.981
+        ],
+        [
+          13.145,
+          -3.113
+        ]
+      ],
+      "estimatedAlignmentKm": 3.97,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-146",
+      "from": "fonte-mer",
+      "to": "valest",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          18.285,
+          6.77
+        ],
+        [
+          17.382,
+          5.997
+        ],
+        [
+          16.478,
+          5.223
+        ],
+        [
+          15.575,
+          4.45
+        ]
+      ],
+      "estimatedAlignmentKm": 3.57,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-147",
+      "from": "blanchecrete",
+      "to": "fonte-mer",
+      "class": "mountain-road",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          15.864,
+          10.955
+        ],
+        [
+          16.698,
+          9.712
+        ],
+        [
+          17.532,
+          8.468
+        ],
+        [
+          18.366,
+          7.225
+        ]
+      ],
+      "estimatedAlignmentKm": 4.49,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-148",
+      "from": "etang-sale",
+      "to": "elmarin",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.045,
+          -9.125
+        ],
+        [
+          12.055,
+          -9.435
+        ],
+        [
+          13.065,
+          -9.745
+        ],
+        [
+          14.075,
+          -10.055
+        ]
+      ],
+      "estimatedAlignmentKm": 3.17,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-149",
+      "from": "elmarin",
+      "to": "cap-aube",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          14.565,
+          -10.059
+        ],
+        [
+          15.825,
+          -9.693
+        ],
+        [
+          17.085,
+          -9.327
+        ],
+        [
+          18.345,
+          -8.961
+        ]
+      ],
+      "estimatedAlignmentKm": 3.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-150",
+      "from": "valdoren",
+      "to": "valest",
+      "class": "secondary",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          13.96,
+          2.335
+        ],
+        [
+          14.358,
+          2.888
+        ],
+        [
+          14.756,
+          3.442
+        ],
+        [
+          15.154,
+          3.995
+        ]
+      ],
+      "estimatedAlignmentKm": 2.04,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-151",
+      "from": "sauleval",
+      "to": "boissain",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.089,
+          -16.895
+        ],
+        [
+          7.563,
+          -16.285
+        ],
+        [
+          7.037,
+          -15.675
+        ],
+        [
+          6.511,
+          -15.065
+        ]
+      ],
+      "estimatedAlignmentKm": 2.42,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-152",
+      "from": "pont-vert",
+      "to": "sauleval",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.69,
+          -15.169
+        ],
+        [
+          5.812,
+          -15.781
+        ],
+        [
+          6.933,
+          -16.394
+        ],
+        [
+          8.055,
+          -17.006
+        ]
+      ],
+      "estimatedAlignmentKm": 3.83,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-153",
+      "from": "southwood",
+      "to": "sauleval",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.31,
+          -18.891
+        ],
+        [
+          4.852,
+          -18.223
+        ],
+        [
+          6.434,
+          -17.668
+        ],
+        [
+          8.055,
+          -17.226
+        ]
+      ],
+      "estimatedAlignmentKm": 5.04,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-154",
+      "from": "boissain",
+      "to": "vermont",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          6.223,
+          -15.065
+        ],
+        [
+          5.888,
+          -16.132
+        ],
+        [
+          5.552,
+          -17.198
+        ],
+        [
+          5.217,
+          -18.265
+        ]
+      ],
+      "estimatedAlignmentKm": 3.35,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-155",
+      "from": "pont-d-oree",
+      "to": "corne-bois",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.145,
+          -21.483
+        ],
+        [
+          -3.918,
+          -21.264
+        ],
+        [
+          -3.692,
+          -21.046
+        ],
+        [
+          -3.465,
+          -20.827
+        ]
+      ],
+      "estimatedAlignmentKm": 0.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-156",
+      "from": "pont-d-oree",
+      "to": "rive-basse",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.145,
+          -21.767
+        ],
+        [
+          -3.185,
+          -21.952
+        ],
+        [
+          -2.225,
+          -22.138
+        ],
+        [
+          -1.265,
+          -22.323
+        ]
+      ],
+      "estimatedAlignmentKm": 2.93,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-157",
+      "from": "grandpre",
+      "to": "corne-bois",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.505,
+          -20.691
+        ],
+        [
+          -1.328,
+          -20.66
+        ],
+        [
+          -2.152,
+          -20.63
+        ],
+        [
+          -2.975,
+          -20.599
+        ]
+      ],
+      "estimatedAlignmentKm": 2.47,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-158",
+      "from": "corne-bois",
+      "to": "montbrun",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.465,
+          -20.633
+        ],
+        [
+          -4.058,
+          -20.738
+        ],
+        [
+          -4.652,
+          -20.842
+        ],
+        [
+          -5.245,
+          -20.947
+        ]
+      ],
+      "estimatedAlignmentKm": 1.81,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-159",
+      "from": "cendreval",
+      "to": "montbrun",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.673,
+          -17.32
+        ],
+        [
+          -4.238,
+          -18.462
+        ],
+        [
+          -4.803,
+          -19.603
+        ],
+        [
+          -5.369,
+          -20.745
+        ]
+      ],
+      "estimatedAlignmentKm": 3.82,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-160",
+      "from": "coulevie",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "redundant-village-access",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.325,
+          -14.873
+        ],
+        [
+          -0.692,
+          -15.131
+        ],
+        [
+          -1.058,
+          -15.389
+        ],
+        [
+          -1.425,
+          -15.647
+        ]
+      ],
+      "estimatedAlignmentKm": 1.35,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-161",
+      "from": "merilac",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.385,
+          -16.223
+        ],
+        [
+          -0.732,
+          -16.114
+        ],
+        [
+          -1.078,
+          -16.006
+        ],
+        [
+          -1.425,
+          -15.897
+        ]
+      ],
+      "estimatedAlignmentKm": 1.09,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-162",
+      "from": "merilac",
+      "to": "loupvallon",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.349,
+          -16.055
+        ],
+        [
+          -0.673,
+          -15.675
+        ],
+        [
+          -0.997,
+          -15.295
+        ],
+        [
+          -1.321,
+          -14.915
+        ]
+      ],
+      "estimatedAlignmentKm": 1.5,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-163",
+      "from": "herbehaute",
+      "to": "montbrun",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.485,
+          -21.498
+        ],
+        [
+          -4.072,
+          -21.349
+        ],
+        [
+          -4.658,
+          -21.201
+        ],
+        [
+          -5.245,
+          -21.052
+        ]
+      ],
+      "estimatedAlignmentKm": 1.82,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-164",
+      "from": "dunevoile",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.488,
+          -14.625
+        ],
+        [
+          -19.012,
+          -14.186
+        ],
+        [
+          -19.326,
+          -13.63
+        ],
+        [
+          -19.432,
+          -12.955
+        ]
+      ],
+      "estimatedAlignmentKm": 2.01,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-165",
+      "from": "corne-bois",
+      "to": "rive-basse",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.975,
+          -20.788
+        ],
+        [
+          -2.405,
+          -21.249
+        ],
+        [
+          -1.835,
+          -21.711
+        ],
+        [
+          -1.265,
+          -22.172
+        ]
+      ],
+      "estimatedAlignmentKm": 2.2,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-166",
+      "from": "bois-sud",
+      "to": "pont-d-oree",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.325,
+          -19.635
+        ],
+        [
+          -3.638,
+          -20.248
+        ],
+        [
+          -3.951,
+          -20.862
+        ],
+        [
+          -4.265,
+          -21.475
+        ]
+      ],
+      "estimatedAlignmentKm": 2.07,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-167",
+      "from": "sablecroix",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.44,
+          -14.09
+        ],
+        [
+          -18.003,
+          -13.582
+        ],
+        [
+          -18.631,
+          -13.175
+        ],
+        [
+          -19.325,
+          -12.869
+        ]
+      ],
+      "estimatedAlignmentKm": 2.27,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-168",
+      "from": "bois-sud",
+      "to": "grandpre",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.365,
+          -19.394
+        ],
+        [
+          -1.745,
+          -19.779
+        ],
+        [
+          -1.125,
+          -20.163
+        ],
+        [
+          -0.505,
+          -20.548
+        ]
+      ],
+      "estimatedAlignmentKm": 2.19,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-169",
+      "from": "herbehaute",
+      "to": "grandpre",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.995,
+          -21.489
+        ],
+        [
+          -2.165,
+          -21.25
+        ],
+        [
+          -1.335,
+          -21.01
+        ],
+        [
+          -0.505,
+          -20.771
+        ]
+      ],
+      "estimatedAlignmentKm": 2.59,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-170",
+      "from": "almari",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.918,
+          -13.225
+        ],
+        [
+          -18.803,
+          -12.355
+        ],
+        [
+          -18.687,
+          -11.485
+        ],
+        [
+          -18.572,
+          -10.615
+        ]
+      ],
+      "estimatedAlignmentKm": 2.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-171",
+      "from": "capvive",
+      "to": "vieux-quai",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.601,
+          -8.395
+        ],
+        [
+          11.64,
+          -7.512
+        ],
+        [
+          11.68,
+          -6.628
+        ],
+        [
+          11.719,
+          -5.745
+        ]
+      ],
+      "estimatedAlignmentKm": 2.65,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-172",
+      "from": "northhamlet",
+      "to": "lysglace",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          2.083,
+          13.715
+        ],
+        [
+          2.328,
+          12.872
+        ],
+        [
+          2.573,
+          12.028
+        ],
+        [
+          2.819,
+          11.185
+        ]
+      ],
+      "estimatedAlignmentKm": 2.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-173",
+      "from": "cendreval",
+      "to": "merilac",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.91,
+          -16.731
+        ],
+        [
+          -2.068,
+          -16.6
+        ],
+        [
+          -1.227,
+          -16.469
+        ],
+        [
+          -0.385,
+          -16.338
+        ]
+      ],
+      "estimatedAlignmentKm": 2.56,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-174",
+      "from": "ardelport",
+      "to": "capvive",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.053,
+          -6.175
+        ],
+        [
+          10.158,
+          -7.137
+        ],
+        [
+          10.619,
+          -7.877
+        ],
+        [
+          11.437,
+          -8.395
+        ]
+      ],
+      "estimatedAlignmentKm": 2.81,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-175",
+      "from": "ardelport",
+      "to": "etang-sale",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          9.971,
+          -6.175
+        ],
+        [
+          10.224,
+          -7.052
+        ],
+        [
+          10.476,
+          -7.928
+        ],
+        [
+          10.729,
+          -8.805
+        ]
+      ],
+      "estimatedAlignmentKm": 2.74,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-176",
+      "from": "merivals",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.41,
+          -14.8
+        ],
+        [
+          -3.578,
+          -15.11
+        ],
+        [
+          -2.747,
+          -15.419
+        ],
+        [
+          -1.915,
+          -15.729
+        ]
+      ],
+      "estimatedAlignmentKm": 2.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-177",
+      "from": "sauleval",
+      "to": "vermont",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.055,
+          -17.246
+        ],
+        [
+          7.165,
+          -17.632
+        ],
+        [
+          6.275,
+          -18.018
+        ],
+        [
+          5.385,
+          -18.404
+        ]
+      ],
+      "estimatedAlignmentKm": 2.91,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-178",
+      "from": "sablecroix",
+      "to": "miraze",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.42,
+          -14.696
+        ],
+        [
+          -15.7,
+          -15.085
+        ],
+        [
+          -14.98,
+          -15.475
+        ],
+        [
+          -14.26,
+          -15.864
+        ]
+      ],
+      "estimatedAlignmentKm": 2.46,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-179",
+      "from": "northhamlet",
+      "to": "nordlac",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          2.006,
+          13.715
+        ],
+        [
+          2.025,
+          12.718
+        ],
+        [
+          2.045,
+          11.722
+        ],
+        [
+          2.065,
+          10.725
+        ]
+      ],
+      "estimatedAlignmentKm": 2.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-180",
+      "from": "hauterive",
+      "to": "coteverte",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.055,
+          -7.66
+        ],
+        [
+          11.198,
+          -8.523
+        ],
+        [
+          11.342,
+          -9.387
+        ],
+        [
+          11.485,
+          -10.25
+        ]
+      ],
+      "estimatedAlignmentKm": 2.63,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-181",
+      "from": "valrivage",
+      "to": "longpont",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -6.387,
+          2.88
+        ],
+        [
+          -6.654,
+          3.808
+        ],
+        [
+          -6.922,
+          4.737
+        ],
+        [
+          -7.189,
+          5.665
+        ]
+      ],
+      "estimatedAlignmentKm": 2.9,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-182",
+      "from": "northhamlet",
+      "to": "niveore",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          1.838,
+          13.715
+        ],
+        [
+          1.349,
+          12.852
+        ],
+        [
+          0.859,
+          11.988
+        ],
+        [
+          0.369,
+          11.125
+        ]
+      ],
+      "estimatedAlignmentKm": 2.98,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-183",
+      "from": "pont-vert",
+      "to": "vermont",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.315,
+          -15.4
+        ],
+        [
+          4.569,
+          -16.355
+        ],
+        [
+          4.822,
+          -17.31
+        ],
+        [
+          5.075,
+          -18.265
+        ]
+      ],
+      "estimatedAlignmentKm": 2.96,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-184",
+      "from": "boissauvage",
+      "to": "lysglace",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.828,
+          8.45
+        ],
+        [
+          3.546,
+          9.198
+        ],
+        [
+          3.264,
+          9.947
+        ],
+        [
+          2.982,
+          10.695
+        ]
+      ],
+      "estimatedAlignmentKm": 2.4,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-185",
+      "from": "etang-sale",
+      "to": "vieux-quai",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.864,
+          -8.805
+        ],
+        [
+          11.538,
+          -7.891
+        ],
+        [
+          11.805,
+          -6.871
+        ],
+        [
+          11.666,
+          -5.745
+        ]
+      ],
+      "estimatedAlignmentKm": 3.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-186",
+      "from": "bas-moulin",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.472,
+          -18.06
+        ],
+        [
+          -0.164,
+          -17.395
+        ],
+        [
+          -0.8,
+          -16.73
+        ],
+        [
+          -1.436,
+          -16.065
+        ]
+      ],
+      "estimatedAlignmentKm": 2.76,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-187",
+      "from": "southwood",
+      "to": "grandpre",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          2.69,
+          -19.162
+        ],
+        [
+          1.788,
+          -19.632
+        ],
+        [
+          0.887,
+          -20.102
+        ],
+        [
+          -0.015,
+          -20.572
+        ]
+      ],
+      "estimatedAlignmentKm": 3.05,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-188",
+      "from": "miraze",
+      "to": "qarven",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.24,
+          -16.236
+        ],
+        [
+          -12.218,
+          -16.429
+        ],
+        [
+          -11.197,
+          -16.621
+        ],
+        [
+          -10.175,
+          -16.814
+        ]
+      ],
+      "estimatedAlignmentKm": 3.12,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-189",
+      "from": "fontaine-verte",
+      "to": "ardelport",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.994,
+          -8.115
+        ],
+        [
+          8.558,
+          -7.468
+        ],
+        [
+          9.122,
+          -6.822
+        ],
+        [
+          9.686,
+          -6.175
+        ]
+      ],
+      "estimatedAlignmentKm": 2.57,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-190",
+      "from": "cendreval",
+      "to": "coulevie",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.91,
+          -16.488
+        ],
+        [
+          -2.177,
+          -15.741
+        ],
+        [
+          -1.315,
+          -15.196
+        ],
+        [
+          -0.325,
+          -14.855
+        ]
+      ],
+      "estimatedAlignmentKm": 3.11,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-191",
+      "from": "blanchecrete",
+      "to": "frostel",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          15.945,
+          11.374
+        ],
+        [
+          16.898,
+          11.903
+        ],
+        [
+          17.781,
+          12.531
+        ],
+        [
+          18.595,
+          13.256
+        ]
+      ],
+      "estimatedAlignmentKm": 3.26,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-192",
+      "from": "southwood",
+      "to": "auberive",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.31,
+          -18.776
+        ],
+        [
+          4.172,
+          -18.153
+        ],
+        [
+          5.033,
+          -17.53
+        ],
+        [
+          5.895,
+          -16.907
+        ]
+      ],
+      "estimatedAlignmentKm": 3.19,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-193",
+      "from": "bas-moulin",
+      "to": "coulevie",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.823,
+          -18.06
+        ],
+        [
+          0.544,
+          -17.022
+        ],
+        [
+          0.265,
+          -15.983
+        ],
+        [
+          -0.014,
+          -14.945
+        ]
+      ],
+      "estimatedAlignmentKm": 3.23,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-194",
+      "from": "charmeval",
+      "to": "epicea",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -7.126,
+          -0.975
+        ],
+        [
+          -7.612,
+          0.055
+        ],
+        [
+          -8.098,
+          1.085
+        ],
+        [
+          -8.584,
+          2.115
+        ]
+      ],
+      "estimatedAlignmentKm": 3.42,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-195",
+      "from": "rochenord",
+      "to": "vieux-col",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.876,
+          18.295
+        ],
+        [
+          -18.236,
+          19.211
+        ],
+        [
+          -17.505,
+          20.047
+        ],
+        [
+          -16.684,
+          20.805
+        ]
+      ],
+      "estimatedAlignmentKm": 3.35,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-196",
+      "from": "bas-moulin",
+      "to": "vermont",
+      "class": "local",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          1.47,
+          -18.563
+        ],
+        [
+          2.612,
+          -18.546
+        ],
+        [
+          3.753,
+          -18.53
+        ],
+        [
+          4.895,
+          -18.514
+        ]
+      ],
+      "estimatedAlignmentKm": 3.43,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-197",
+      "from": "cimefonte",
+      "to": "fonteval",
+      "class": "mountain-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -16.888,
+          8.02
+        ],
+        [
+          -15.441,
+          7.711
+        ],
+        [
+          -14.81,
+          6.823
+        ],
+        [
+          -14.994,
+          5.355
+        ]
+      ],
+      "estimatedAlignmentKm": 4.05,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-198",
+      "from": "tarzel",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.635,
+          -8.425
+        ],
+        [
+          -16.522,
+          -9.019
+        ],
+        [
+          -17.408,
+          -9.612
+        ],
+        [
+          -18.295,
+          -10.206
+        ]
+      ],
+      "estimatedAlignmentKm": 3.2,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-199",
+      "from": "ravenor",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -19.157,
+          -15.815
+        ],
+        [
+          -19.284,
+          -14.862
+        ],
+        [
+          -19.411,
+          -13.908
+        ],
+        [
+          -19.537,
+          -12.955
+        ]
+      ],
+      "estimatedAlignmentKm": 2.89,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-200",
+      "from": "sablecroix",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "short-local-alternative",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.133,
+          -13.91
+        ],
+        [
+          -17.569,
+          -12.812
+        ],
+        [
+          -18.006,
+          -11.713
+        ],
+        [
+          -18.443,
+          -10.615
+        ]
+      ],
+      "estimatedAlignmentKm": 3.55,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-201",
+      "from": "oasis",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -17.31,
+          -12.965
+        ],
+        [
+          -17.982,
+          -12.889
+        ],
+        [
+          -18.653,
+          -12.813
+        ],
+        [
+          -19.325,
+          -12.738
+        ]
+      ],
+      "estimatedAlignmentKm": 2.03,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-202",
+      "from": "bois-sud",
+      "to": "rive-basse",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -2.627,
+          -19.635
+        ],
+        [
+          -2.139,
+          -20.465
+        ],
+        [
+          -1.652,
+          -21.295
+        ],
+        [
+          -1.164,
+          -22.125
+        ]
+      ],
+      "estimatedAlignmentKm": 2.89,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-203",
+      "from": "sylvane",
+      "to": "epicea",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.635,
+          3.719
+        ],
+        [
+          -6.575,
+          3.302
+        ],
+        [
+          -7.515,
+          2.885
+        ],
+        [
+          -8.455,
+          2.469
+        ]
+      ],
+      "estimatedAlignmentKm": 3.08,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-204",
+      "from": "frostgard",
+      "to": "blanchecrete",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          14.687,
+          13.465
+        ],
+        [
+          14.988,
+          12.792
+        ],
+        [
+          15.289,
+          12.118
+        ],
+        [
+          15.59,
+          11.445
+        ]
+      ],
+      "estimatedAlignmentKm": 2.21,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-205",
+      "from": "southwood",
+      "to": "merilac",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          2.69,
+          -18.733
+        ],
+        [
+          1.828,
+          -17.993
+        ],
+        [
+          0.967,
+          -17.252
+        ],
+        [
+          0.105,
+          -16.511
+        ]
+      ],
+      "estimatedAlignmentKm": 3.41,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-206",
+      "from": "bas-moulin",
+      "to": "rive-basse",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          0.694,
+          -19.08
+        ],
+        [
+          0.378,
+          -20.206
+        ],
+        [
+          -0.151,
+          -21.221
+        ],
+        [
+          -0.892,
+          -22.125
+        ]
+      ],
+      "estimatedAlignmentKm": 3.48,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-207",
+      "from": "granitel",
+      "to": "cairn-bas",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.885,
+          19.24
+        ],
+        [
+          -15.132,
+          19.19
+        ],
+        [
+          -16.378,
+          19.14
+        ],
+        [
+          -17.625,
+          19.09
+        ]
+      ],
+      "estimatedAlignmentKm": 3.74,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-208",
+      "from": "pont-d-oree",
+      "to": "grandpre",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.145,
+          -21.659
+        ],
+        [
+          -3.032,
+          -20.952
+        ],
+        [
+          -1.819,
+          -20.652
+        ],
+        [
+          -0.505,
+          -20.761
+        ]
+      ],
+      "estimatedAlignmentKm": 3.89,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-209",
+      "from": "miraze",
+      "to": "khemir",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.24,
+          -16.337
+        ],
+        [
+          -12.118,
+          -16.77
+        ],
+        [
+          -10.997,
+          -17.203
+        ],
+        [
+          -9.875,
+          -17.635
+        ]
+      ],
+      "estimatedAlignmentKm": 3.61,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-210",
+      "from": "hauterive",
+      "to": "elmarin",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.48,
+          -7.604
+        ],
+        [
+          12.345,
+          -8.373
+        ],
+        [
+          13.21,
+          -9.143
+        ],
+        [
+          14.075,
+          -9.912
+        ]
+      ],
+      "estimatedAlignmentKm": 3.47,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-211",
+      "from": "highpass",
+      "to": "cairn-bas",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.285,
+          17.153
+        ],
+        [
+          -15.285,
+          17.963
+        ],
+        [
+          -16.398,
+          18.561
+        ],
+        [
+          -17.625,
+          18.948
+        ]
+      ],
+      "estimatedAlignmentKm": 3.84,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-212",
+      "from": "fontaine-verte",
+      "to": "capvive",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.025,
+          -8.378
+        ],
+        [
+          9.132,
+          -8.459
+        ],
+        [
+          10.238,
+          -8.541
+        ],
+        [
+          11.345,
+          -8.622
+        ]
+      ],
+      "estimatedAlignmentKm": 3.33,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-213",
+      "from": "merilac",
+      "to": "grandpre",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -0.147,
+          -16.545
+        ],
+        [
+          -0.182,
+          -17.848
+        ],
+        [
+          -0.218,
+          -19.152
+        ],
+        [
+          -0.253,
+          -20.455
+        ]
+      ],
+      "estimatedAlignmentKm": 3.91,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-214",
+      "from": "boissauvage",
+      "to": "montoree",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.189,
+          7.43
+        ],
+        [
+          5.198,
+          6.544
+        ],
+        [
+          5.563,
+          5.444
+        ],
+        [
+          5.281,
+          4.13
+        ]
+      ],
+      "estimatedAlignmentKm": 3.85,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-215",
+      "from": "dunevoile",
+      "to": "arbelin",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -18.36,
+          -14.625
+        ],
+        [
+          -18.417,
+          -13.288
+        ],
+        [
+          -18.473,
+          -11.952
+        ],
+        [
+          -18.53,
+          -10.615
+        ]
+      ],
+      "estimatedAlignmentKm": 4.01,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-216",
+      "from": "harbor",
+      "to": "elmarin",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          17.415,
+          -12.544
+        ],
+        [
+          16.465,
+          -11.803
+        ],
+        [
+          15.515,
+          -11.062
+        ],
+        [
+          14.565,
+          -10.321
+        ]
+      ],
+      "estimatedAlignmentKm": 3.61,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-217",
+      "from": "hauterive",
+      "to": "fresnelac",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          10.46,
+          -7.25
+        ],
+        [
+          9.365,
+          -7.464
+        ],
+        [
+          8.27,
+          -7.678
+        ],
+        [
+          7.175,
+          -7.892
+        ]
+      ],
+      "estimatedAlignmentKm": 3.35,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-218",
+      "from": "cendreval",
+      "to": "herbehaute",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.401,
+          -17.32
+        ],
+        [
+          -4.03,
+          -18.677
+        ],
+        [
+          -3.979,
+          -20.009
+        ],
+        [
+          -3.249,
+          -21.315
+        ]
+      ],
+      "estimatedAlignmentKm": 4.32,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-219",
+      "from": "khemir",
+      "to": "sable-froid",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.875,
+          -17.818
+        ],
+        [
+          -11.165,
+          -18.283
+        ],
+        [
+          -12.455,
+          -18.747
+        ],
+        [
+          -13.745,
+          -19.212
+        ]
+      ],
+      "estimatedAlignmentKm": 4.11,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-220",
+      "from": "miraze",
+      "to": "dunevoile",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -14.26,
+          -15.999
+        ],
+        [
+          -15.542,
+          -15.645
+        ],
+        [
+          -16.823,
+          -15.291
+        ],
+        [
+          -18.105,
+          -14.938
+        ]
+      ],
+      "estimatedAlignmentKm": 3.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-221",
+      "from": "orme-bas",
+      "to": "fontaine-verte",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.767,
+          -5.245
+        ],
+        [
+          5.692,
+          -6.202
+        ],
+        [
+          6.618,
+          -7.158
+        ],
+        [
+          7.543,
+          -8.115
+        ]
+      ],
+      "estimatedAlignmentKm": 3.99,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-222",
+      "from": "rive-basse",
+      "to": "montbrun",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -1.265,
+          -22.294
+        ],
+        [
+          -2.468,
+          -21.483
+        ],
+        [
+          -3.794,
+          -21.074
+        ],
+        [
+          -5.245,
+          -21.066
+        ]
+      ],
+      "estimatedAlignmentKm": 4.29,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-223",
+      "from": "merivals",
+      "to": "coulevie",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -4.41,
+          -14.619
+        ],
+        [
+          -3.041,
+          -14.225
+        ],
+        [
+          -1.679,
+          -14.25
+        ],
+        [
+          -0.325,
+          -14.695
+        ]
+      ],
+      "estimatedAlignmentKm": 4.21,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-224",
+      "from": "sable-froid",
+      "to": "qarven",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.745,
+          -19.153
+        ],
+        [
+          -12.555,
+          -18.438
+        ],
+        [
+          -11.365,
+          -17.722
+        ],
+        [
+          -10.175,
+          -17.007
+        ]
+      ],
+      "estimatedAlignmentKm": 4.17,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-225",
+      "from": "hauterive",
+      "to": "sablemaree",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.26,
+          -6.64
+        ],
+        [
+          12.132,
+          -5.594
+        ],
+        [
+          12.796,
+          -4.429
+        ],
+        [
+          13.25,
+          -3.145
+        ]
+      ],
+      "estimatedAlignmentKm": 4.06,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-226",
+      "from": "plage-cendre",
+      "to": "valest",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.065,
+          1.763
+        ],
+        [
+          17.902,
+          2.534
+        ],
+        [
+          16.738,
+          3.306
+        ],
+        [
+          15.575,
+          4.077
+        ]
+      ],
+      "estimatedAlignmentKm": 4.19,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-227",
+      "from": "citysample",
+      "to": "fresnelac",
+      "class": "secondary",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.035,
+          -7.975
+        ],
+        [
+          4.918,
+          -7.964
+        ],
+        [
+          5.802,
+          -7.954
+        ],
+        [
+          6.685,
+          -7.943
+        ]
+      ],
+      "estimatedAlignmentKm": 2.65,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-228",
+      "from": "ergued",
+      "to": "almari",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -20.324,
+          -9.025
+        ],
+        [
+          -19.891,
+          -10.425
+        ],
+        [
+          -19.459,
+          -11.825
+        ],
+        [
+          -19.026,
+          -13.225
+        ]
+      ],
+      "estimatedAlignmentKm": 4.4,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-229",
+      "from": "firvale",
+      "to": "rosemosse",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.097,
+          -4.285
+        ],
+        [
+          -5.567,
+          -5.658
+        ],
+        [
+          -6.037,
+          -7.032
+        ],
+        [
+          -6.506,
+          -8.405
+        ]
+      ],
+      "estimatedAlignmentKm": 4.35,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-230",
+      "from": "meridia",
+      "to": "sauleval",
+      "class": "secondary",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          6.056,
+          -19.765
+        ],
+        [
+          6.734,
+          -18.972
+        ],
+        [
+          7.412,
+          -18.178
+        ],
+        [
+          8.091,
+          -17.385
+        ]
+      ],
+      "estimatedAlignmentKm": 3.13,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-231",
+      "from": "birch",
+      "to": "montbrume",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          4.938,
+          4.69
+        ],
+        [
+          4.668,
+          3.338
+        ],
+        [
+          4.397,
+          1.987
+        ],
+        [
+          4.127,
+          0.635
+        ]
+      ],
+      "estimatedAlignmentKm": 4.14,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-232",
+      "from": "coteverte",
+      "to": "ardelport",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.394,
+          -10.25
+        ],
+        [
+          10.281,
+          -9.114
+        ],
+        [
+          9.812,
+          -7.756
+        ],
+        [
+          9.985,
+          -6.175
+        ]
+      ],
+      "estimatedAlignmentKm": 4.62,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-233",
+      "from": "granitel",
+      "to": "lauzeveil",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -13.885,
+          19.291
+        ],
+        [
+          -15.368,
+          19.54
+        ],
+        [
+          -16.852,
+          19.79
+        ],
+        [
+          -18.335,
+          20.039
+        ]
+      ],
+      "estimatedAlignmentKm": 4.51,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-234",
+      "from": "corne-bois",
+      "to": "bellevigne",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -3.14,
+          -20.345
+        ],
+        [
+          -1.726,
+          -19.227
+        ],
+        [
+          -1.262,
+          -17.801
+        ],
+        [
+          -1.75,
+          -16.065
+        ]
+      ],
+      "estimatedAlignmentKm": 5.11,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-235",
+      "from": "kharvel",
+      "to": "dunevoile",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -15.984,
+          -18.84
+        ],
+        [
+          -16.724,
+          -17.598
+        ],
+        [
+          -17.464,
+          -16.357
+        ],
+        [
+          -18.204,
+          -15.115
+        ]
+      ],
+      "estimatedAlignmentKm": 4.34,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-236",
+      "from": "osterlac",
+      "to": "blanchecrete",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.785,
+          13.728
+        ],
+        [
+          18.568,
+          12.834
+        ],
+        [
+          17.288,
+          12.042
+        ],
+        [
+          15.945,
+          11.352
+        ]
+      ],
+      "estimatedAlignmentKm": 4.53,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-237",
+      "from": "boissauvage",
+      "to": "niveore",
+      "class": "mountain-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          3.51,
+          8.336
+        ],
+        [
+          2.498,
+          9.12
+        ],
+        [
+          1.487,
+          9.905
+        ],
+        [
+          0.475,
+          10.69
+        ]
+      ],
+      "estimatedAlignmentKm": 3.84,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-238",
+      "from": "fresnelac",
+      "to": "capvive",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          7.175,
+          -7.977
+        ],
+        [
+          8.565,
+          -8.186
+        ],
+        [
+          9.955,
+          -8.394
+        ],
+        [
+          11.345,
+          -8.603
+        ]
+      ],
+      "estimatedAlignmentKm": 4.22,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-239",
+      "from": "vieux-quai",
+      "to": "elmarin",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          11.867,
+          -5.745
+        ],
+        [
+          12.639,
+          -7.125
+        ],
+        [
+          13.411,
+          -8.505
+        ],
+        [
+          14.183,
+          -9.885
+        ]
+      ],
+      "estimatedAlignmentKm": 4.74,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-240",
+      "from": "merivals",
+      "to": "tinjar",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -5.43,
+          -14.699
+        ],
+        [
+          -6.778,
+          -14.935
+        ],
+        [
+          -8.127,
+          -15.171
+        ],
+        [
+          -9.475,
+          -15.407
+        ]
+      ],
+      "estimatedAlignmentKm": 4.11,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-241",
+      "from": "redridge",
+      "to": "tinjar",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -9.077,
+          -10.585
+        ],
+        [
+          -9.281,
+          -12.125
+        ],
+        [
+          -9.484,
+          -13.665
+        ],
+        [
+          -9.688,
+          -15.205
+        ]
+      ],
+      "estimatedAlignmentKm": 4.66,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-242",
+      "from": "rocheseche",
+      "to": "elzar",
+      "class": "desert-road",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          -19.036,
+          -7.585
+        ],
+        [
+          -19.205,
+          -9.212
+        ],
+        [
+          -19.375,
+          -10.838
+        ],
+        [
+          -19.544,
+          -12.465
+        ]
+      ],
+      "estimatedAlignmentKm": 4.91,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-243",
+      "from": "clairvallon",
+      "to": "fresnelac",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          6.395,
+          -2.95
+        ],
+        [
+          6.564,
+          -4.532
+        ],
+        [
+          6.734,
+          -6.113
+        ],
+        [
+          6.904,
+          -7.695
+        ]
+      ],
+      "estimatedAlignmentKm": 4.77,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-244",
+      "from": "plage-cendre",
+      "to": "fonte-mer",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          19.274,
+          1.845
+        ],
+        [
+          19.038,
+          3.475
+        ],
+        [
+          18.802,
+          5.105
+        ],
+        [
+          18.566,
+          6.735
+        ]
+      ],
+      "estimatedAlignmentKm": 4.94,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
+    },
+    {
+      "id": "SK-RX-245",
+      "from": "fontaine-verte",
+      "to": "vieux-quai",
+      "class": "local",
+      "purpose": "regional-scenic-connector",
+      "geometry": "bounded-gateway-curved-centerline",
+      "waypointsKm": [
+        [
+          8.025,
+          -8.183
+        ],
+        [
+          9.178,
+          -7.348
+        ],
+        [
+          10.332,
+          -6.512
+        ],
+        [
+          11.485,
+          -5.677
+        ]
+      ],
+      "estimatedAlignmentKm": 4.27,
+      "status": "planned-not-constructed",
+      "nativeSplineBuilt": false,
+      "landscapeSlopeVerified": false,
+      "bridgesOrCulvertsVerified": false,
+      "waterCrossingsSurveyed": false
     }
   ],
   "rules": {
