@@ -2,7 +2,7 @@ name: SKARVIK - build 3 genuine 3D village nuclei in isolated 48km UE5 world
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-author-three-real-villages.yml']
+    paths: ['.github/workflows/skarvik-author-three-real-villages.yml', 'unreal/Scripts/author_skarvik_3_real_village_pilots.py']
   workflow_dispatch:
 permissions:
   contents: read
