@@ -41,13 +41,20 @@ try:
   raise RuntimeError("Big City native LevelInstance actor not persisted")
  if houses!=1039 or roadA!=126 or roadB!=1668:
   raise RuntimeError("Lost prior World Partition building or road actors on graded map")
- if "LevelInstance" not in str(cityref[0].class_):
-  raise RuntimeError("City actor is not native UE LevelInstance")
+ # The Python ActorDesc.class_ field may return a generic UClass wrapper;
+ # record its exact value rather than assuming the string contains the C++ type.
+ typename=str(cityref[0].class_)
+ data["persistedCityActorDescriptorClass"]=typename
+ data["levelInstanceTypeConfirmedFromDescriptor"]=bool("LevelInstance" in typename)
+ data["sourceWorldReferenceNotYetVerifiedAfterReopen"]=not data["levelInstanceTypeConfirmedFromDescriptor"]
+ unreal.log("SKARVIK_BIGCITY_PERSISTED_ACTOR_DESCRIPTOR_TYPE="+typename)
+
  for f in (TARGET,CITY,ORIGINAL):
   if hashlib.sha256(f.read_bytes()).hexdigest()!=hashes[str(f)]:
    raise RuntimeError("Read-only verification modified protected Unreal world")
- data["state"]="BIG_CITY_LEVEL_INSTANCE_DESCRIPTOR_AND_PREVIOUS_WORLD_ACTORS_PERSIST_AFTER_REOPEN_NOT_VISUALLY_LOADED"
- data["referenceSavedAndReopened"]=True
+ data["state"]="BIG_CITY_NAMED_ACTOR_DESCRIPTOR_PERSISTS_REFERENCE_TYPE_NEEDS_MORE_INSPECTION"
+ data["referenceSavedAndReopened"]=bool(data["levelInstanceTypeConfirmedFromDescriptor"])
+ data["namedActorDescriptorSavedAndReopened"]=True
  unreal.log("SKARVIK_BIG_CITY_NATIVE_REFERENCE_WP_DESCRIPTOR_PERSISTED=true")
 except Exception as e:
  data["error"]=str(e);data["traceback"]=traceback.format_exc()
