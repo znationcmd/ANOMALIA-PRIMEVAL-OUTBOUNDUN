@@ -11772,20 +11772,30 @@
     ],
     "roadInsertionProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236328200",
     "stillIncomplete": [
-      "full 382-route network",
-      "992 local road sections",
-      "302 walkways",
-      "bridge and water checks",
-      "CitySample actual World Partition import",
-      "varied buildings interior gameplay",
-      "NPC vehicle and AI gameplay",
-      "SM5 drivable and packaged game tests"
+      "359 of 382 regional roads without validated native asphalt",
+      "992 street-segment layouts not fully physically paved",
+      "302 hiking trails not completed",
+      "bridges culverts and water crossings",
+      "citysample World Partition Big City connection",
+      "real drive and walk tests",
+      "native NPCs and traffic",
+      "fully enterable detailed buildings",
+      "gameplay performance and multiplayer tests"
     ],
     "preserveProductionD": true,
     "projectNotMerged": true,
     "fullMapPlayable": false,
     "combinedBuildingsAndRoadsPersistedReopenVerified": true,
     "combinedWorldReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236482266",
-    "gameplaySM5PlaytestPassed": false
+    "gameplaySM5PlaytestPassed": false,
+    "realPavedRouteCountOnGradedWorld": 23,
+    "newlyAddedRouteCount": 20,
+    "originalVerifiedRouteCount": 3,
+    "roadStaticMeshActorCount": 1794,
+    "firstThreeRoadSurfaceMetres": 2445.5,
+    "additionalRoadSurfaceMetres": 31092.9,
+    "combinedRoadSurfaceMetres": 33538.4,
+    "roadExpansionProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41237712368",
+    "independent23RoadReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41237906507"
   }
 }
