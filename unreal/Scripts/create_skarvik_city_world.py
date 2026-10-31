@@ -15,12 +15,13 @@ import unreal
 
 ROOT = Path(unreal.Paths.project_dir()).resolve()
 NEW_PACKAGE = "/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1"
-OLD_MAP = ROOT / "Content/Maps/ANOMALIA_Archipelago_v2.umap"
+OLD_MAP = Path("D:/ANOMALIA/unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap")
+STAGE_MARKER = ROOT / ".skarvik-ci-stage-marker"
 NEW_MAP = ROOT / "Content/Maps/PRIGIMALIA_SKARVIK_CITY_v1.umap"
 REPORT = Path(os.environ.get(
     "PRIGIMALIA_SKARVIK_CITY_REPORT",
     str(ROOT / "Saved/SkarvikCity/preparation.json")))
-MIN_DISK_GIB = 20
+MIN_DISK_GIB = 30
 result = {
     "state": "BLOCKED",
     "package": NEW_PACKAGE,
@@ -36,12 +37,12 @@ result = {
 }
 
 try:
-    if not str(ROOT).lower().startswith(str(Path("D:/")).lower()):
-        raise RuntimeError("Only a D: drive staging checkout is supported; original unchanged")
-    # Never author into protected production project roots.
-    protected = [Path("D:/ANOMALIA/unreal"), Path("D:/ANOMALIAZ-PRIGIMALIA/unreal")]
-    if any(ROOT == p or p in ROOT.parents for p in protected):
-        raise RuntimeError("Protected original or migration project: use an isolated staging checkout")
+    # Require a run-specific CI marker; never author into any user project or an unverified checkout.
+    expected_run = os.environ.get("PRIGIMALIA_SKARVIK_CI_RUN_ID", "")
+    if not expected_run or not STAGE_MARKER.is_file() or STAGE_MARKER.read_text(encoding="utf-8").strip() != expected_run:
+        raise RuntimeError("Refusing non-isolated or unmarked Unreal project")
+    if "ANOMALIAZ_SKARVIK_STAGE" not in str(ROOT).upper() or not str(ROOT).upper().startswith("C:\\"):
+        raise RuntimeError("Stage must be a dedicated C: ANOMALIAZ_SKARVIK_STAGE folder")
     if not OLD_MAP.is_file():
         raise RuntimeError("Original SKARVIK staged reference missing")
     if NEW_MAP.exists() or (ROOT/"Content/__ExternalActors__/Maps/PRIGIMALIA_SKARVIK_CITY_v1").exists():
