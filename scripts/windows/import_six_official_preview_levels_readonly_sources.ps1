@@ -96,5 +96,5 @@ try{
  Write-Host 'SIX_OFFICIAL_PREVIEW_PROTECTED_MAP_HASHES_UNCHANGED=true'
 }
 $failed=@($results|Where-Object{$_.status -ne 'NATIVE_PROVISIONAL_LEVEL_DUPLICATED_PENDING_RELOAD'})
-if($failed.Count -gt 0){throw ('Not all six native map duplications succeeded; review results.json: '+($failed|ForEach-Object{$_.name+':'+$_.status} -join ';'))}
+if($failed.Count -gt 0){throw ('Not all six native map duplications succeeded; review results.json: '+$failed.Count+' incomplete')}
 Write-Host 'SIX_OFFICIAL_PROVISIONAL_NATIVE_LEVELS_CREATED_PENDING_RELOAD=true'
