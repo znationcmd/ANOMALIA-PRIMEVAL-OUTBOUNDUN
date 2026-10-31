@@ -11,7 +11,7 @@
     "northMax": 24
   },
   "coordinateConvention": "east and north in kilometres; origin center; Unreal XY = east*100000, -north*100000 cm",
-  "status": "SOURCE_GEOGRAPHY_DEFINED_NATIVE_IMPORT_NOT_DONE",
+  "status": "125_SETTLEMENTS_PLANNED_ON_48KM_WORLD_PENDING_REAL_UE5_CONSTRUCTION",
   "citySample": {
     "packageOnSource": "/Game/Map/Big_City_LVL",
     "fullCityKm": [
@@ -142,7 +142,10 @@
       ],
       "terrainElevationM": 100,
       "source": "City Sample full Big City",
-      "assetStatus": "not-migrated"
+      "assetStatus": "not-migrated",
+      "settlementClass": "major-city",
+      "plannedOnly": false,
+      "nativeConstructionVerified": false
     },
     {
       "id": "frostgard",
@@ -156,7 +159,10 @@
         3
       ],
       "terrainElevationM": 540,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "major-city",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "valdoren",
@@ -170,7 +176,10 @@
         2.6
       ],
       "terrainElevationM": 130,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "major-city",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "sylvane",
@@ -184,7 +193,10 @@
         1.2
       ],
       "terrainElevationM": 185,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "town",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "kaelm",
@@ -198,7 +210,10 @@
         1
       ],
       "terrainElevationM": 680,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "town",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "oasis",
@@ -212,7 +227,10 @@
         0.55
       ],
       "terrainElevationM": 250,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "dunes",
@@ -226,7 +244,10 @@
         0.5
       ],
       "terrainElevationM": 200,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "redridge",
@@ -240,7 +261,10 @@
         1.1
       ],
       "terrainElevationM": 195,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "town",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "firvale",
@@ -254,7 +278,10 @@
         0.5
       ],
       "terrainElevationM": 135,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "birch",
@@ -268,7 +295,10 @@
         0.55
       ],
       "terrainElevationM": 185,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "highpass",
@@ -282,7 +312,10 @@
         0.5
       ],
       "terrainElevationM": 1120,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "snowpine",
@@ -296,7 +329,10 @@
         0.5
       ],
       "terrainElevationM": 710,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "icehaven",
@@ -310,7 +346,10 @@
         0.9
       ],
       "terrainElevationM": 480,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "town",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "northhamlet",
@@ -324,7 +363,10 @@
         0.5
       ],
       "terrainElevationM": 750,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "harbor",
@@ -338,7 +380,10 @@
         1.1
       ],
       "terrainElevationM": 95,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "town",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "southwood",
@@ -352,7 +397,10 @@
         0.55
       ],
       "terrainElevationM": 110,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
     },
     {
       "id": "river",
@@ -366,104 +414,3160 @@
         0.55
       ],
       "terrainElevationM": 210,
-      "assetStatus": "terrain-plan"
+      "assetStatus": "terrain-plan",
+      "settlementClass": "village",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false
+    },
+    {
+      "id": "ravenor",
+      "name": "RAVENOR",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "desert",
+      "eastKm": -19,
+      "northKm": -17,
+      "footprintKm": [
+        2.3,
+        2.3
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "ville du désert et des canyons"
+    },
+    {
+      "id": "karstheim",
+      "name": "KARSTHEIM",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "western_alps",
+      "eastKm": -18,
+      "northKm": 4,
+      "footprintKm": [
+        2.3,
+        2.3
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "cité minière des montagnes"
+    },
+    {
+      "id": "varengard",
+      "name": "VARENGARD",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "western_alps",
+      "eastKm": -17,
+      "northKm": 17,
+      "footprintKm": [
+        2.3,
+        2.3
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "ville fortifiée des cols"
+    },
+    {
+      "id": "eldervik",
+      "name": "ELDERVIK",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "forest",
+      "eastKm": -2,
+      "northKm": 7,
+      "footprintKm": [
+        2.5,
+        2.5
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "métropole de vallée forestière"
+    },
+    {
+      "id": "nordfjell",
+      "name": "NORDFJELL",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "snow",
+      "eastKm": -1,
+      "northKm": 20,
+      "footprintKm": [
+        2.5,
+        2.5
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "ville d'altitude enneigée"
+    },
+    {
+      "id": "astermont",
+      "name": "ASTERMONT",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "east",
+      "eastKm": 19,
+      "northKm": -5,
+      "footprintKm": [
+        2.5,
+        2.5
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "grande ville littorale"
+    },
+    {
+      "id": "meridia",
+      "name": "MERIDIA",
+      "kind": "large-city",
+      "settlementClass": "major-city",
+      "biome": "south",
+      "eastKm": 5,
+      "northKm": -21,
+      "footprintKm": [
+        2.4,
+        2.4
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": "ville du sud et de l'agriculture"
+    },
+    {
+      "id": "tarzel",
+      "name": "TARZEL",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "desert",
+      "eastKm": -15,
+      "northKm": -8,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "brumecrete",
+      "name": "BRUMECRÊTE",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "western_alps",
+      "eastKm": -22,
+      "northKm": 9,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "montbrume",
+      "name": "MONTBRUME",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "forest",
+      "eastKm": 4,
+      "northKm": 0,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "hiverdal",
+      "name": "HIVERDAL",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "snow",
+      "eastKm": 8,
+      "northKm": 13,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "rosephare",
+      "name": "ROSEPHARE",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "east",
+      "eastKm": 21,
+      "northKm": -14,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "bois-sud",
+      "name": "BOIS-SUD",
+      "kind": "small-town",
+      "settlementClass": "small-town",
+      "biome": "south",
+      "eastKm": -3,
+      "northKm": -19,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "kharvel",
+      "name": "KHARVEL",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "desert",
+      "eastKm": -15.68,
+      "northKm": -19.35,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "sablecroix",
+      "name": "SABLECROIX",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "desert",
+      "eastKm": -16.93,
+      "northKm": -14.42,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "miraze",
+      "name": "MIRAZE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "desert",
+      "eastKm": -13.75,
+      "northKm": -16.14,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "pierremont",
+      "name": "PIERREMONT",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "western_alps",
+      "eastKm": -9.38,
+      "northKm": 4.36,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "cimefonte",
+      "name": "CIMEFONTE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "western_alps",
+      "eastKm": -17.25,
+      "northKm": 8.53,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "valleroche",
+      "name": "VALLEROCHE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "western_alps",
+      "eastKm": -17.73,
+      "northKm": -1.94,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "boissauvage",
+      "name": "BOISSAUVAGE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "forest",
+      "eastKm": 4.02,
+      "northKm": 7.94,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "clairvallon",
+      "name": "CLAIRVALLON",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "forest",
+      "eastKm": 6.34,
+      "northKm": -2.44,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "montoree",
+      "name": "MONTORÉE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "forest",
+      "eastKm": 5.45,
+      "northKm": 3.62,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "valrivage",
+      "name": "VALRIVAGE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "forest",
+      "eastKm": -6.24,
+      "northKm": 2.37,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "glacelac",
+      "name": "GLACELAC",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "snow",
+      "eastKm": 8.57,
+      "northKm": 18.09,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "nivergard",
+      "name": "NIVERGARD",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "snow",
+      "eastKm": 16.63,
+      "northKm": 12.62,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "lysvik",
+      "name": "LYSVIK",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "snow",
+      "eastKm": 15.76,
+      "northKm": 20.09,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "baie-argent",
+      "name": "BAIE-ARGENT",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "east",
+      "eastKm": 16.34,
+      "northKm": -2.2,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "hauterive",
+      "name": "HAUTERIVE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "east",
+      "eastKm": 10.97,
+      "northKm": -7.15,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "coteverte",
+      "name": "CÔTEVERTE",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "east",
+      "eastKm": 11.57,
+      "northKm": -10.76,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "port-azur",
+      "name": "PORT-AZUR",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "east",
+      "eastKm": 20.47,
+      "northKm": -1.68,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "pont-vert",
+      "name": "PONT-VERT",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "south",
+      "eastKm": 4.18,
+      "northKm": -14.89,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "merivals",
+      "name": "MÉRIVALS",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "south",
+      "eastKm": -4.92,
+      "northKm": -14.61,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "cendreval",
+      "name": "CENDREVAL",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "south",
+      "eastKm": -3.42,
+      "northKm": -16.81,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "bas-moulin",
+      "name": "BAS-MOULIN",
+      "kind": "town",
+      "settlementClass": "town",
+      "biome": "south",
+      "eastKm": 0.96,
+      "northKm": -18.57,
+      "footprintKm": [
+        0.95,
+        0.95
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "khemir",
+      "name": "KHEMIR",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -9.63,
+      "northKm": -17.73,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "sable-froid",
+      "name": "SABLE-FROID",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -13.99,
+      "northKm": -19.3,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "ergued",
+      "name": "ERGUED",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -20.4,
+      "northKm": -8.78,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "dunevoile",
+      "name": "DUNEVOILE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -18.35,
+      "northKm": -14.87,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "almari",
+      "name": "ALMARI",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -18.95,
+      "northKm": -13.47,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "rocheseche",
+      "name": "ROCHESÈCHE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -19.01,
+      "northKm": -7.34,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "elzar",
+      "name": "ELZAR",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -19.57,
+      "northKm": -12.71,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "qarven",
+      "name": "QARVEN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -9.93,
+      "northKm": -16.86,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "safran",
+      "name": "SAFRAN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -9.81,
+      "northKm": -8.06,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "solaroc",
+      "name": "SOLAROC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -12.88,
+      "northKm": -7.43,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "tinjar",
+      "name": "TINJAR",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -9.72,
+      "northKm": -15.45,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "arbelin",
+      "name": "ARBELIN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "desert",
+      "eastKm": -18.54,
+      "northKm": -10.37,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "brumepierre",
+      "name": "BRUMEPIERRE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -14.34,
+      "northKm": 14.29,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "rochenord",
+      "name": "ROCHENORD",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -19.09,
+      "northKm": 18.05,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "vieux-col",
+      "name": "VIEUX-COL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -16.47,
+      "northKm": 21.05,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "aiguille-haute",
+      "name": "AIGUILLE-HAUTE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -20.16,
+      "northKm": -1.88,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "ravin-dore",
+      "name": "RAVIN-DORÉ",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -19.36,
+      "northKm": 12.52,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "sombreroch",
+      "name": "SOMBREROCH",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -20.72,
+      "northKm": 0.68,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "melezac",
+      "name": "MÉLÈZAC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -16.12,
+      "northKm": 5.55,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "pierrefeu",
+      "name": "PIERREFEU",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -21.03,
+      "northKm": -1.8,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "granitel",
+      "name": "GRANITEL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -13.64,
+      "northKm": 19.25,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "fonteval",
+      "name": "FONTEVAL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -14.82,
+      "northKm": 5.11,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "cairn-bas",
+      "name": "CAIRN-BAS",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -17.87,
+      "northKm": 19.08,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "lauzeveil",
+      "name": "LAUZEVEIL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "western_alps",
+      "eastKm": -18.58,
+      "northKm": 20.08,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "fresnelac",
+      "name": "FRESNELAC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": 6.93,
+      "northKm": -7.94,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "orme-bas",
+      "name": "ORME-BAS",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": 4.53,
+      "northKm": -5,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "charmeval",
+      "name": "CHARMEVAL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -7.01,
+      "northKm": -1.22,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "rosemosse",
+      "name": "ROSEMOSSE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -6.59,
+      "northKm": -8.65,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "vieux-chene",
+      "name": "VIEUX-CHÊNE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -7.66,
+      "northKm": -9.32,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "millefeuille",
+      "name": "MILLEFEUILLE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -1.6,
+      "northKm": -8.61,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "boisdore",
+      "name": "BOISDORÉ",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": 6.41,
+      "northKm": 4.81,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "longpont",
+      "name": "LONGPONT",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -7.26,
+      "northKm": 5.91,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "fontaine-verte",
+      "name": "FONTAINE-VERTE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": 7.78,
+      "northKm": -8.36,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "hautes-rives",
+      "name": "HAUTES-RIVES",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -0.71,
+      "northKm": -0.8,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "epicea",
+      "name": "ÉPICÉA",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": -8.7,
+      "northKm": 2.36,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "valleron",
+      "name": "VALLERON",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "forest",
+      "eastKm": 1.18,
+      "northKm": -3.12,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "neigerive",
+      "name": "NEIGERIVE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 21.99,
+      "northKm": 12.15,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "froidepin",
+      "name": "FROIDEPIN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 12.49,
+      "northKm": 18.88,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "osterlac",
+      "name": "OSTERLAC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 20.03,
+      "northKm": 13.88,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "glacier-bas",
+      "name": "GLACIER-BAS",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": -4.56,
+      "northKm": 11.29,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "niveore",
+      "name": "NIVEORE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 0.23,
+      "northKm": 10.88,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "lysglace",
+      "name": "LYSGLACE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 2.89,
+      "northKm": 10.94,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "fjordin",
+      "name": "FJORDIN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 9.78,
+      "northKm": 12.77,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "blanchecrete",
+      "name": "BLANCHECRÊTE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 15.7,
+      "northKm": 11.2,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "eiskorn",
+      "name": "EISKORN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": -0.11,
+      "northKm": 12.49,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "frostel",
+      "name": "FROSTEL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 18.84,
+      "northKm": 13.43,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "nordlac",
+      "name": "NORDLAC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "snow",
+      "eastKm": 2.07,
+      "northKm": 10.48,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "malphare",
+      "name": "MALPHARE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 16,
+      "northKm": 6.14,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "ardelport",
+      "name": "ARDELPORT",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 9.9,
+      "northKm": -5.93,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "capvive",
+      "name": "CAPVIVE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 11.59,
+      "northKm": -8.64,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "plage-cendre",
+      "name": "PLAGE-CENDRE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 19.31,
+      "northKm": 1.6,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "cote-d-orval",
+      "name": "CÔTE-D'ORVAL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 18.41,
+      "northKm": 4.77,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "sablemaree",
+      "name": "SABLEMARÉE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 13.39,
+      "northKm": -2.9,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "vauclerc",
+      "name": "VAUCLERC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 21.39,
+      "northKm": -2.73,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "etang-sale",
+      "name": "ÉTANG-SALÉ",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 10.8,
+      "northKm": -9.05,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "vieux-quai",
+      "name": "VIEUX-QUAI",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 11.73,
+      "northKm": -5.5,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "fonte-mer",
+      "name": "FONTE-MER",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 18.53,
+      "northKm": 6.98,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "elmarin",
+      "name": "ELMARIN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 14.32,
+      "northKm": -10.13,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "cap-aube",
+      "name": "CAP-AUBE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 18.59,
+      "northKm": -8.89,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "valest",
+      "name": "VALEST",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "east",
+      "eastKm": 15.33,
+      "northKm": 4.24,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "auberive",
+      "name": "AUBERIVE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": 6.14,
+      "northKm": -16.73,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "herbehaute",
+      "name": "HERBEHAUTE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -3.24,
+      "northKm": -21.56,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "sauleval",
+      "name": "SAULEVAL",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": 8.3,
+      "northKm": -17.14,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "merilac",
+      "name": "MÉRILAC",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -0.14,
+      "northKm": -16.3,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "boissain",
+      "name": "BOISSAIN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": 6.3,
+      "northKm": -14.82,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "pont-d-oree",
+      "name": "PONT-D'ORÉE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -4.39,
+      "northKm": -21.72,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "grandpre",
+      "name": "GRANDPRÉ",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -0.26,
+      "northKm": -20.7,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "corne-bois",
+      "name": "CORNE-BOIS",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -3.22,
+      "northKm": -20.59,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "rive-basse",
+      "name": "RIVE-BASSE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -1.02,
+      "northKm": -22.37,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "montbrun",
+      "name": "MONTBRUN",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -5.49,
+      "northKm": -20.99,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "loupvallon",
+      "name": "LOUPVALLON",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -1.53,
+      "northKm": -14.67,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "vermont",
+      "name": "VERMONT",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": 5.14,
+      "northKm": -18.51,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "coulevie",
+      "name": "COULEVIE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -0.08,
+      "northKm": -14.7,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
+    },
+    {
+      "id": "bellevigne",
+      "name": "BELLEVIGNE",
+      "kind": "village",
+      "settlementClass": "village",
+      "biome": "south",
+      "eastKm": -1.67,
+      "northKm": -15.82,
+      "footprintKm": [
+        0.42,
+        0.42
+      ],
+      "terrainElevationM": null,
+      "source": "SKARVIK original settlement masterplan",
+      "assetStatus": "planned-awaiting-native-static-mesh-construction",
+      "plannedOnly": true,
+      "nativeConstructionVerified": false,
+      "description": ""
     }
   ],
   "roads": [
     {
       "from": "citysample",
       "to": "firvale",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "citysample",
       "to": "southwood",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "citysample",
       "to": "valdoren",
-      "class": "motorway"
+      "class": "motorway",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "valdoren",
       "to": "harbor",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "valdoren",
       "to": "birch",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "valdoren",
       "to": "frostgard",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "frostgard",
       "to": "icehaven",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "frostgard",
       "to": "snowpine",
-      "class": "primary"
+      "class": "primary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "snowpine",
       "to": "northhamlet",
-      "class": "secondary"
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "northhamlet",
       "to": "sylvane",
-      "class": "mountain-road"
+      "class": "mountain-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "sylvane",
       "to": "birch",
-      "class": "secondary"
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "sylvane",
       "to": "kaelm",
-      "class": "mountain-road"
+      "class": "mountain-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "kaelm",
       "to": "highpass",
-      "class": "mountain-road"
+      "class": "mountain-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "sylvane",
       "to": "river",
-      "class": "secondary"
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "river",
       "to": "redridge",
-      "class": "desert-road"
+      "class": "desert-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "redridge",
       "to": "oasis",
-      "class": "desert-road"
+      "class": "desert-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "oasis",
       "to": "dunes",
-      "class": "desert-road"
+      "class": "desert-road",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "dunes",
       "to": "southwood",
-      "class": "secondary"
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     },
     {
       "from": "firvale",
       "to": "river",
-      "class": "secondary"
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "aiguille-haute",
+      "to": "pierrefeu",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "capvive",
+      "to": "etang-sale",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "khemir",
+      "to": "qarven",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "lysglace",
+      "to": "nordlac",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "fresnelac",
+      "to": "fontaine-verte",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "herbehaute",
+      "to": "corne-bois",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "almari",
+      "to": "elzar",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "loupvallon",
+      "to": "bellevigne",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "herbehaute",
+      "to": "pont-d-oree",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "cairn-bas",
+      "to": "lauzeveil",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "rosemosse",
+      "to": "vieux-chene",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "osterlac",
+      "to": "frostel",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "pont-d-oree",
+      "to": "montbrun",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "melezac",
+      "to": "fonteval",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "port-azur",
+      "to": "vauclerc",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "oasis",
+      "to": "sablecroix",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "birch",
+      "to": "boisdore",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "qarven",
+      "to": "tinjar",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "loupvallon",
+      "to": "coulevie",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "birch",
+      "to": "montoree",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "kaelm",
+      "to": "melezac",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "sablecroix",
+      "to": "dunevoile",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "redridge",
+      "to": "vieux-chene",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "dunevoile",
+      "to": "almari",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "rochenord",
+      "to": "cairn-bas",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "merilac",
+      "to": "coulevie",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "bois-sud",
+      "to": "corne-bois",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "hauterive",
+      "to": "capvive",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "hauterive",
+      "to": "ardelport",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "niveore",
+      "to": "eiskorn",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "kharvel",
+      "to": "sable-froid",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "nivergard",
+      "to": "blanchecrete",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "hiverdal",
+      "to": "fjordin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "snowpine",
+      "to": "glacelac",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "hauterive",
+      "to": "vieux-quai",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "grandpre",
+      "to": "rive-basse",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "icehaven",
+      "to": "frostel",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "coteverte",
+      "to": "etang-sale",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "niveore",
+      "to": "nordlac",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "auberive",
+      "to": "boissain",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "kaelm",
+      "to": "cimefonte",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "icehaven",
+      "to": "neigerive",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "ergued",
+      "to": "rocheseche",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "cendreval",
+      "to": "bellevigne",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "dunes",
+      "to": "sable-froid",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "malphare",
+      "to": "valest",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "auberive",
+      "to": "vermont",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "sylvane",
+      "to": "valrivage",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "southwood",
+      "to": "bas-moulin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "redridge",
+      "to": "safran",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "pierremont",
+      "to": "epicea",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "pont-vert",
+      "to": "boissain",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "tarzel",
+      "to": "solaroc",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "southwood",
+      "to": "vermont",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "auberive",
+      "to": "sauleval",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "cote-d-orval",
+      "to": "fonte-mer",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "ravenor",
+      "to": "dunevoile",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "bois-sud",
+      "to": "cendreval",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "varengard",
+      "to": "cairn-bas",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "highpass",
+      "to": "granitel",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "vieux-col",
+      "to": "lauzeveil",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "nivergard",
+      "to": "frostel",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "herbehaute",
+      "to": "rive-basse",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "valleroche",
+      "to": "aiguille-haute",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "karstheim",
+      "to": "melezac",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "ergued",
+      "to": "arbelin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "bas-moulin",
+      "to": "grandpre",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "valrivage",
+      "to": "epicea",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "meridia",
+      "to": "vermont",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "sombreroch",
+      "to": "pierrefeu",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "elzar",
+      "to": "arbelin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "northhamlet",
+      "to": "eiskorn",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "pierremont",
+      "to": "longpont",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "merivals",
+      "to": "cendreval",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "malphare",
+      "to": "fonte-mer",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "dunes",
+      "to": "khemir",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "highpass",
+      "to": "brumepierre",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "coteverte",
+      "to": "elmarin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "hautes-rives",
+      "to": "valleron",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "river",
+      "to": "charmeval",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "highpass",
+      "to": "varengard",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "baie-argent",
+      "to": "sablemaree",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "sablemaree",
+      "to": "vieux-quai",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "fontaine-verte",
+      "to": "etang-sale",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "birch",
+      "to": "boissauvage",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "safran",
+      "to": "solaroc",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "clairvallon",
+      "to": "orme-bas",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "harbor",
+      "to": "rosephare",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "miraze",
+      "to": "sable-froid",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "plage-cendre",
+      "to": "cote-d-orval",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "astermont",
+      "to": "vauclerc",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "montbrume",
+      "to": "clairvallon",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "port-azur",
+      "to": "plage-cendre",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "lysvik",
+      "to": "froidepin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "citysample",
+      "to": "millefeuille",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "fresnelac",
+      "to": "orme-bas",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "orme-bas",
+      "to": "valleron",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "astermont",
+      "to": "baie-argent",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "montbrume",
+      "to": "montoree",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "astermont",
+      "to": "cap-aube",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "glacelac",
+      "to": "froidepin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "sylvane",
+      "to": "eldervik",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "karstheim",
+      "to": "sombreroch",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "brumecrete",
+      "to": "ravin-dore",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "cimefonte",
+      "to": "ravin-dore",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "glacier-bas",
+      "to": "eiskorn",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "frostgard",
+      "to": "fjordin",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "northhamlet",
+      "to": "nordfjell",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "ravenor",
+      "to": "sablecroix",
+      "class": "secondary",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "ravenor",
+      "to": "almari",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "karstheim",
+      "to": "fonteval",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "varengard",
+      "to": "rochenord",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "eldervik",
+      "to": "niveore",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "eldervik",
+      "to": "glacier-bas",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "nordfjell",
+      "to": "eiskorn",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "snowpine",
+      "to": "nordfjell",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "southwood",
+      "to": "meridia",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
+    },
+    {
+      "from": "meridia",
+      "to": "auberive",
+      "class": "local",
+      "status": "planned-not-constructed",
+      "geometry": "centerline-waypoints-only",
+      "nativeSplineBuilt": false
     }
   ],
   "rules": {
@@ -477,5 +3581,34 @@
     "cityPedestrians": false,
     "worldPartitionRequired": true,
     "buildingPlacementRequiresAssetLicenses": true
+  },
+  "settlementTargets": {
+    "majorCities": 10,
+    "smallTowns": 6,
+    "towns": 26,
+    "villages": 83,
+    "total": 125,
+    "citySampleBaseMajorCity": "citysample"
+  },
+  "designRules": {
+    "citySampleNoRescale": true,
+    "cityPlacementRequiresSourceGroundTransform": true,
+    "landscape48x48": true,
+    "keepOriginalSkarvik": true,
+    "maintainOtherMaps": true,
+    "noProprietaryEpicAssetsInPublicRepo": true,
+    "cityTraffic": false,
+    "cityPedestrians": false,
+    "worldPartitionRequired": true,
+    "buildingPlacementRequiresAssetLicenses": true,
+    "settlementPositionsArePlanNotConstructed": true,
+    "siteTerrainGradeAndNavmeshMustBeValidated": true,
+    "assetStatusFlagsNotProofOfBuild": true,
+    "eachSettlementRequiresRealStaticMeshBuildings": true,
+    "noGenericBoxPlaceholders": true,
+    "roadSegmentsAreNetworkPlanNotPlayableSplines": true,
+    "retainAllOriginal17Sites": true,
+    "avoidCrowdTrafficAI": true,
+    "preserveAnomaliaDrivableVehiclesAndGameplayNPCs": true
   }
 }
