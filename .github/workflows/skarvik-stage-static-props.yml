@@ -2,7 +2,7 @@ name: SKARVIK - copy static decor excluding Crowd Vehicle and Megascans
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-stage-static-props.yml']
+    paths: ['.github/workflows/skarvik-stage-static-props.yml', 'scripts/ue5/stage-skarvik-static-props.ps1']
   workflow_dispatch:
 permissions:
   contents: read
