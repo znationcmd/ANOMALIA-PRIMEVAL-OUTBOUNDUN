@@ -23,7 +23,7 @@ jobs:
           ps=Path('scripts/windows/kolchiem_full_legacy_scratch_recovery.ps1').read_text()
           py=Path('unreal/Scripts/verify_kolchiem_full_legacy_readonly.py').read_text()
           assert 'ANOMALIA_Inhabited_v2' in ps
-          assert 'D:\ANOMALIA\unreal' in ps
+          assert r'D:\ANOMALIA\unreal' in ps
           assert 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL' in ps and 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL' in py
           assert 'Start-Process -FilePath $editor' in ps and '-Wait -PassThru' in ps
           assert "Copy-Item -LiteralPath $originalMap" in ps
