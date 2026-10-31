@@ -64,6 +64,11 @@ if(-not $newCpp.Contains($include)){
  if(-not $newCpp.Contains($anchor)){throw 'C++ include insertion anchor missing'}
  $newCpp=$newCpp.Replace($anchor,$anchor+[Environment]::NewLine+$include)
 }
+foreach($additional in @('#include "Misc/CommandLine.h"','#include "Misc/Parse.h"')){
+ if(-not $newCpp.Contains($additional)){
+  $newCpp=$newCpp.Replace('#include "AnomaliaZPrigimaliaExtraWorldHeights.h"','#include "AnomaliaZPrigimaliaExtraWorldHeights.h"'+[Environment]::NewLine+$additional)
+ }
+}
 $sourceHdr=[IO.File]::ReadAllText($sourceHeader)
 $stagedHdr=[IO.File]::ReadAllText($header)
 $anchor='static AActor* CreateArchipelagoLandscape();'
