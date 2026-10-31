@@ -105,15 +105,19 @@
     {
       "id": "chernaskaluxria-v1",
       "displayName": "CHERNASKALUXRIA",
-      "originalUnrealPackage": null,
-      "widthKm": null,
-      "heightKm": null,
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA",
+      "widthKm": 100,
+      "heightKm": 100,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "staged-D-umap-observed-100km-terrain-and-WP-cells-not-yet-validated",
       "saveNamespace": "chernaskaluxria-v1",
-      "packageDiscoveryPending": true,
-      "sourceMapPreserved": true
+      "packageDiscoveryPending": false,
+      "sourceMapPreserved": true,
+      "nativePackageFileObservedAt": "D:\\ANOMALIAZ-PRIGIMALIA\\unreal\\Content\\Maps\\PRIGIMALIA_CHERNASKALUXRIA.umap",
+      "nativePackageFileObserved": true,
+      "nativeWorldOpenedAndPlaytested": false,
+      "actualTerrainTilesVerified": false
     },
     {
       "id": "falc-v1",
