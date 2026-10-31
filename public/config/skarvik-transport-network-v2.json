@@ -23340,5 +23340,19 @@
     "mainSkarvikAttachmentComplete": false,
     "realCarDriveTestVerified": false,
     "note": "The 2.4455km 3-route pilot is in a different Unreal level from the 600m C-stage v1 map pilot; do not equate either with completion of the 382-link graph."
+  },
+  "nativeRoadExpansionBatchB2": {
+    "verifiedAfterReopen": true,
+    "nativeRoadPackage": "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+    "newRoadAlignmentsWithMeshActors": 40,
+    "newRoadStaticMeshActors": 5157,
+    "additionalSurfaceMeters": 96849.6,
+    "totalProvenAlignmentsWithRoadMeshes": 63,
+    "totalNativeRoadStaticMeshActors": 6951,
+    "combinedRoadSurfaceMeters": 130388,
+    "fullRoadNetworkContinuousOrVehiclePlaytested": false,
+    "waterBridgeCulvertApproved": false,
+    "proof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241110645",
+    "reopenedWorldProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241978956"
   }
 }
