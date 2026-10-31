@@ -1,0 +1,49 @@
+name: SKARVIK - audit real house and building meshes for 125 settlements
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-audit-settlement-meshes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect real house building garage road static meshes in UE5 stage only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Unexpected stage marker'}
+          if(!(Test-Path 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original protected map project missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor process in progress'}
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_settlement_meshes.py'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $env:SKARVIK_BUILDING_CATALOG_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-building-catalog.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_BUILDING_CATALOG_REPORT)){throw "Native mesh catalogue missing, exit=$code"}
+          $data=Get-Content $env:SKARVIK_BUILDING_CATALOG_REPORT -Raw|ConvertFrom-Json
+          if($code -ne 0 -or $data.state -ne 'READ_ONLY_STATIC_MESH_CATALOG_READY'){throw ('Mesh AssetRegistry probe failed: '+$data.error)}
+          foreach($p in $data.totalStaticMeshesByFolder.PSObject.Properties){Write-Host ("SKARVIK_BUILDING_MESHES {0} COUNT={1}" -f $p.Name,$p.Value)}
+          Write-Host ("SKARVIK_BUILDING_MESH_CANDIDATES="+$data.totalBuildingCandidates)
+          Write-Host 'SKARVIK_REAL_BUILDING_MESH_AUDIT_SUCCESS=true'
+          Write-Host 'SKARVIK_125_SETTLEMENTS_NOT_YET_BUILT=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-settlement-static-mesh-catalogue
+          path: skarvik-building-catalog.json
+          if-no-files-found: warn
+          retention-days: 30
