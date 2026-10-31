@@ -39,6 +39,9 @@ jobs:
           assert "-NewPackage=$dst" in ps
           assert "'-Rename'" not in ps
           assert "PROTECTED_SOURCE_SKARVIK_DRAZOVIA_UNCHANGED" in ps
+          assert "sourceBytes" in ps and "minimumFree" in ps and "6GB" in ps
+          assert "Insufficient safe D: capacity" in ps
+          assert "if(Test-Path -LiteralPath $path)" in ps
           print('KOLCHIEM_ORIGINS_ELEVEN_MAPS_SOURCE_CHECKS_PASSED=true')
           PY
   duplicate-old-world-on-pc:
