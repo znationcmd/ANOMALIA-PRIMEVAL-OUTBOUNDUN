@@ -1,4 +1,4 @@
-"""Integrate a *native* City Sample World level instance into isolated SKARVIK 48km.
+r"""Integrate a *native* City Sample World level instance into isolated SKARVIK 48km.
 
 Run only in C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal. Requires
 successful read-only Big City UWorld load and editor LevelInstance API.
@@ -56,8 +56,9 @@ try:
     if not inst:
         raise RuntimeError("Unable to spawn LevelInstance on isolated SKARVIK")
     inst.set_actor_label(LABEL)
-    if not inst.set_world_asset(city):
-        raise RuntimeError("LevelInstance refused City Sample world reference")
+    result=inst.set_world_asset(city)
+    if result is False:
+        raise RuntimeError("LevelInstance explicitly refused City Sample world reference")
     inst.load_level_instance()
     if not inst.is_loaded():
         raise RuntimeError("City Sample LevelInstance did not load in editor; no save")
