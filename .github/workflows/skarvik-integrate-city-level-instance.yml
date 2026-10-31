@@ -56,8 +56,8 @@ jobs:
             $p=Get-Command py -ErrorAction SilentlyContinue
             if($p){$py=$p.Source}else{throw 'Python compiler not available for syntax verification'}
           }
-          $cmd='import ast,sys; ast.parse(open(sys.argv[1],encoding="utf-8").read()); print("SKARVIK_PYTHON_SYNTAX_OK=true")'
-          & $py -c $cmd $src
+          & $py -m py_compile $src
+          if($LASTEXITCODE -eq 0){Write-Host 'SKARVIK_PYTHON_SYNTAX_OK=true'}
           if($LASTEXITCODE -ne 0){throw 'Integration Python syntax invalid. Refuse Unreal launch'}
       - name: Attach native LevelInstance without overwriting original world
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
