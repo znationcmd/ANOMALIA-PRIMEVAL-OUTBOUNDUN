@@ -1,0 +1,59 @@
+name: KOLCHIEM - read-only legacy World Partition actor inheritance audit
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/kolchiem-legacy-actor-preservation-readonly.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-world-actors:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Audit source and destination actor folders and original project without any modification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $roots=@(
+            @{name='original';path='D:\ANOMALIA\unreal'},
+            @{name='stage';path='D:\ANOMALIAZ-PRIGIMALIA\unreal'}
+          )
+          $names=@('ANOMALIA_Inhabited_v2','PRIGIMALIA_Inhabited_v2','PRIGIMALIA_KOLCHIEM_ORIGINS','ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate')
+          $rows=@()
+          foreach($root in $roots){
+            foreach($name in $names){
+              $umap=Join-Path $root.path ('Content\Maps\'+$name+'.umap')
+              $actorDir=Join-Path $root.path ('Content\__ExternalActors__\Maps\'+$name)
+              $objectsDir=Join-Path $root.path ('Content\__ExternalObjects__\Maps\'+$name)
+              $actors=@()
+              $objectFiles=@()
+              if(Test-Path -LiteralPath $actorDir){$actors=@(Get-ChildItem -LiteralPath $actorDir -File -Recurse -ErrorAction Stop)}
+              if(Test-Path -LiteralPath $objectsDir){$objectFiles=@(Get-ChildItem -LiteralPath $objectsDir -File -Recurse -ErrorAction Stop)}
+              $fileBytes=[long]0
+              if(Test-Path -LiteralPath $umap -PathType Leaf){$fileBytes=(Get-Item -LiteralPath $umap).Length}
+              $bytes=[long](($actors|Measure-Object -Property Length -Sum).Sum)
+              $objBytes=[long](($objectFiles|Measure-Object -Property Length -Sum).Sum)
+              $row=@{source=$root.name;package=$name;umapBytes=$fileBytes;externalActorCount=$actors.Count;externalActorBytes=$bytes;externalObjectCount=$objectFiles.Count;externalObjectBytes=$objBytes}
+              $rows+=,$row
+              Write-Host ('KOLCHIEM_ACTOR_AUDIT '+$root.name+' '+$name+' UMAP_BYTES='+$fileBytes+' ACTORS='+$actors.Count+' ACTOR_BYTES='+$bytes+' OBJECTS='+$objectFiles.Count)
+            }
+          }
+          $folder=Join-Path $env:RUNNER_TEMP ('KOLCHIEM_ACTOR_INHERITANCE_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $folder -Force | Out-Null
+          @{mode='read-only';maps=$rows;note='A native World loading is not proof that all legacy actors were duplicated'}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $folder 'world-actor-inheritance.json') -Encoding UTF8
+          Write-Host 'KOLCHIEM_LEGACY_ACTOR_INHERITANCE_AUDIT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kolchiem-legacy-actor-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/KOLCHIEM_ACTOR_INHERITANCE_${{ github.run_id }}/*
+          retention-days: 7
+          if-no-files-found: warn
