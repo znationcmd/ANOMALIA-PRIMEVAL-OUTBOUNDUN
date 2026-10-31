@@ -6,9 +6,10 @@ $originalRoot='D:\ANOMALIA'
 $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
 $original=Join-Path $originalRoot 'unreal\AnomaliaPrimeval.uproject'
 $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
-$src='/Game/Maps/ANOMALIA_Inhabited_v2'
+$src='/Game/Maps/PRIGIMALIA_Inhabited_v2'
 $dst='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS'
-$srcMap=Join-Path $root 'Content\Maps\ANOMALIA_Inhabited_v2.umap'
+$srcMap=Join-Path $root 'Content\Maps\PRIGIMALIA_Inhabited_v2.umap'
+$legacyAliasMap=Join-Path $root 'Content\Maps\ANOMALIA_Inhabited_v2.umap'
 $dstMap=Join-Path $root 'Content\Maps\PRIGIMALIA_KOLCHIEM_ORIGINS.umap'
 $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
 $outDir=Join-Path $env:RUNNER_TEMP ('ANOMALIA_KOLCHIEM_ORIGINS_'+$env:GITHUB_RUN_ID)
@@ -18,7 +19,7 @@ $afterPath=Join-Path $outDir 'duplication.json'
 function Assert-Exists([string]$p){
  if(-not(Test-Path -LiteralPath $p -PathType Leaf)){throw ('Missing protected file '+$p)}
 }
-foreach($p in @($project,$original,$marker,$srcMap,$editor)){Assert-Exists $p}
+foreach($p in @($project,$original,$marker,$srcMap,$legacyAliasMap,$editor)){Assert-Exists $p}
 foreach($p in @($originalRoot,'D:\ANOMALIAZ-PRIGIMALIA',$root)){
  $attr=(Get-Item -LiteralPath $p).Attributes
  if($attr -band [IO.FileAttributes]::ReparsePoint){throw ('Unsafe linked project root: '+$p)}
@@ -37,14 +38,18 @@ $receipt=Join-Path $root 'Saved\KOLCHIEM_ORIGINS\duplicate-complete.json'
 if(Test-Path -LiteralPath $receipt){throw 'Existing KOLCHIEM duplication receipt; preserve native work'}
 $protected=@(
  $srcMap,
+ $legacyAliasMap,
  (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'),
  (Join-Path $root 'Content\Maps\ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate.umap'),
  $original
 )
 $before=@{}
 foreach($path in $protected){Assert-Exists $path;$before[$path]=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}
+# The ANOMALIA_Inhabited_v2 path is a legacy redirect to PRIGIMALIA_Inhabited_v2.
+# Duplicate the actual World package rather than its 1338-byte redirect stub.
+Write-Host 'KOLCHIEM_REAL_MIGRATED_SOURCE_PACKAGE=/Game/Maps/PRIGIMALIA_Inhabited_v2'
 $originalCount=0
-$sourceActors=Join-Path $root 'Content\__ExternalActors__\Maps\ANOMALIA_Inhabited_v2'
+$sourceActors=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_Inhabited_v2'
 if(Test-Path -LiteralPath $sourceActors){$originalCount=@(Get-ChildItem -LiteralPath $sourceActors -File -Recurse -ErrorAction Stop).Count}
 # The old 48km level contains 7583 lightweight external actor files (~86MB).
 # Keep at least 6GiB free at start, or 4GiB plus 3x the measured world
@@ -53,7 +58,7 @@ $actorBytes=[int64]0
 if(Test-Path -LiteralPath $sourceActors -PathType Container){
  $actorBytes=[int64](Get-ChildItem -LiteralPath $sourceActors -File -Recurse -ErrorAction Stop | Measure-Object -Property Length -Sum).Sum
 }
-$sourceObjects=Join-Path $root 'Content\__ExternalObjects__\Maps\ANOMALIA_Inhabited_v2'
+$sourceObjects=Join-Path $root 'Content\__ExternalObjects__\Maps\PRIGIMALIA_Inhabited_v2'
 $objectBytes=[int64]0
 if(Test-Path -LiteralPath $sourceObjects -PathType Container){
  $objectBytes=[int64](Get-ChildItem -LiteralPath $sourceObjects -File -Recurse -ErrorAction Stop | Measure-Object -Property Length -Sum).Sum
