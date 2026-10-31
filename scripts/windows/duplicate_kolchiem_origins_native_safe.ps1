@@ -77,8 +77,14 @@ $state='FAILED_NOT_CERTIFIED'
 $exitCode=-1
 try {
  $log=Join-Path $outDir 'world-partition-duplicate.log'
- & $editor $project $src '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=WorldPartitionBuilderCommandlet' '-SCCProvider=None' '-builder=WorldPartitionRenameDuplicateBuilder' "-NewPackage=$dst" "-abslog=$log"
- $exitCode=$LASTEXITCODE
+ # UnrealEditor.exe is a GUI-subsystem executable; PowerShell's '&' returns
+ # before completion with no LASTEXITCODE. Start-Process -Wait is required.
+ $args=@($project,$src,'-NullRHI','-unattended','-nopause','-nosound',
+         '-run=WorldPartitionBuilderCommandlet','-SCCProvider=None',
+         '-builder=WorldPartitionRenameDuplicateBuilder',"-NewPackage=$dst","-abslog=$log")
+ $process=Start-Process -FilePath $editor -ArgumentList $args -Wait -PassThru -ErrorAction Stop
+ $exitCode=[int]$process.ExitCode
+ Write-Host ('KOLCHIEM_BUILDER_PROCESS_EXIT_CODE='+$exitCode)
  if($exitCode -ne 0){throw ('World Partition duplication commandlet failed: exit '+$exitCode)}
  if(-not(Test-Path -LiteralPath $dstMap -PathType Leaf)){throw 'Builder exited 0 but destination .umap does not exist'}
  if((Get-Item -LiteralPath $dstMap).Length -lt 1024){throw 'New KOLCHIEM .umap appears truncated'}
