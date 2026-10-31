@@ -31,6 +31,11 @@ jobs:
             if(!(Test-Path -LiteralPath (Join-Path $root ('Binaries\Win64\'+$native)))){throw ('Required compiled native CitySample module absent: '+$native)}
           }
           Write-Host 'SKARVIK_CITYSAMPLE_NATIVE_LINKER_VERIFIED=true'
+          $descriptor=Get-Content -LiteralPath (Join-Path $root 'AnomaliaZPrigimalia.uproject') -Raw | ConvertFrom-Json
+          foreach($pluginName in @('Gauntlet','ElectraPlayer','Niagara')){
+            if(!@($descriptor.Plugins|Where-Object{$_.Name -eq $pluginName -and $_.Enabled}).Count){throw ('Missing native load fix plugin: '+$pluginName)}
+          }
+          Write-Host 'SKARVIK_CITYSAMPLE_PLUGIN_DLL_LOAD_FIX_PRESENT=true'
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session running'}
           $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
           Write-Host ("SKARVIK_PRE_CITY_FREE_C_GIB="+[math]::Round($free,2))
