@@ -1,0 +1,68 @@
+name: ANOMALIA - CHERNASKALUXRIA 100km native 1 of 400 provisional Landscape tiles
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-chernaskaluxria-stage-first-native-tile.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  static-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check source integrity and native import guard
+        run: |
+          python -m py_compile unreal/Scripts/create_chernaskaluxria_native_safe_v2.py scripts/ue5/generate_chernaskaluxria_tiles.py
+          python - <<'PY'
+          from pathlib import Path
+          cpp=Path('unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.cpp').read_text()
+          py=Path('unreal/Scripts/create_chernaskaluxria_native_safe_v2.py').read_text()
+          ps=Path('scripts/windows/import_chernaskaluxria_first_tile_staged_native.ps1').read_text()
+          seg=cpp.split('CreateChernaskaluxriaLandscapeTile(',1)[1].split('TArray<FVector2D> UAnomaliaZPrigimaliaWorldImportLibrary::InhabitedSettlementSites(',1)[0]
+          assert 'Subsystem->ChangeGridSize(' not in seg
+          assert 'InspectChernaskaluxriaTileComponents' in seg
+          assert 'inspect_chernaskaluxria_tile_components' in py
+          assert 'PRIGIMALIA_CHERNASKALUXRIA' in ps
+          assert 'ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate' in ps
+          assert 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL' in ps
+          assert "CHERNASKALUXRIA_WORLD_FIRST_TILE_NATIVE_IMPORT_SUCCESS_1_OF_400" in ps
+          assert 'gameplayTested' in ps and "plannedNativeTiles=400" in ps
+          print('CHERNASKALUXRIA_STAGE_NATIVE_PILOT_OFFLINE_GUARDS_PASSED=true')
+          PY
+  native-chernaskaluxria-one-tile:
+    needs: static-safety
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile and create an isolated real Unreal World Partition level with 1 of 400 provisional height tiles
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_chernaskaluxria_first_tile_staged_native.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'CH native pilot world creation failed'}
+      - name: Upload audited CH first-tile source and native import receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-chernaskaluxria-first-native-tile-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_CHERNASKALUXRIA_PILOT_${{ github.run_id }}/*.json
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Upload CH native importer diagnostics on failures
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-chernaskaluxria-first-native-log-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_CHERNASKALUXRIA_PILOT_${{ github.run_id }}/*.log
+          retention-days: 7
+          if-no-files-found: warn
