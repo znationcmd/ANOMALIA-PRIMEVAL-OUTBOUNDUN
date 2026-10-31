@@ -596,7 +596,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
  const int32 Side=SideMeters(Kind),Size=Resolution(Kind);
  if(Side==0 || Size==0)return nullptr;
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier)return nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier+TEXT("_TerrainPreview"))return nullptr;
  for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr; // Never overlay existing terrain.
  TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
  const double Half=double(Side)/2.;
@@ -645,14 +645,42 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
    *MapIdentifier,Land->LandscapeComponents.Num(),Expected);
   return nullptr;
  }
- if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
-  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ // Verified V3 fix: keep root Landscape components until map is durably saved.
+ // Terrain streaming grid/proxy migration must be tested as an independent later operation.
+ UE_LOG(LogTemp,Display,TEXT("PRIGIMALIA terrain preview: native components retained before save"));
  return Land;
 #else
  return nullptr;
 #endif
 }
 
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectNamedWorldPreviewComponents(AActor* Candidate,const FString& MapIdentifier)
+{
+#if WITH_EDITOR
+ using namespace AnomaliaZPrigimaliaExtraWorlds;
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ const EWorld Kind=ResolveAdditionalWorld(MapIdentifier);
+ const int32 Size=Resolution(Kind);
+ const int32 Expected=(Size==3025 || Size==1513)?576:256;
+ if(!Land || Size==0 || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier+TEXT("_TerrainPreview"))
+  return -1;
+ const int32 Actual=Land->LandscapeComponents.Num();
+ if(Actual!=Expected || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA preview %s component verification failed: %d expected %d"),
+   *MapIdentifier,Actual,Expected);
+  return -1;
+ }
+ for(ULandscapeComponent* Component:Land->LandscapeComponents)
+  if(!IsValid(Component) || Component->GetOwner()!=Land)return -1;
+ UE_LOG(LogTemp,Display,TEXT("PRIGIMALIA preview %s native components validated: %d"),*MapIdentifier,Actual);
+ return Actual;
+#else
+ return -1;
+#endif
+}
 
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row)
 {
