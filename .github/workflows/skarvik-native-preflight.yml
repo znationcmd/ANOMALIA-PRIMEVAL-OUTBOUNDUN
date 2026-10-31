@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - name: Inspect Windows storage and project paths without modifying files
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           Write-Host 'SKARVIK_PREFLIGHT_BEGIN=true'
