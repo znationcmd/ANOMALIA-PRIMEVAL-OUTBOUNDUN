@@ -10,7 +10,8 @@ from pathlib import Path
 from datetime import datetime,timezone
 import unreal
 
-SOURCE="/Game/Maps/ANOMALIA_Inhabited_v2"
+SOURCE="/Game/Maps/PRIGIMALIA_Inhabited_v2"
+LEGACY_ALIAS="/Game/Maps/ANOMALIA_Inhabited_v2"
 TARGET="/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS"
 ROOT=Path(unreal.Paths.project_dir()).resolve()
 OUTPUT=Path(os.environ["ANOMALIA_KOLCHIEM_RELOAD_REPORT"])
@@ -34,6 +35,10 @@ try:
         if str(obj.get_outermost().get_name())!=package:
             raise RuntimeError("World loaded with unexpected package identity: "+package)
         state[("source" if package==SOURCE else "target")+"Class"]=str(obj.get_class().get_name())
+    legacy=unreal.load_asset(LEGACY_ALIAS)
+    if not legacy or legacy.get_outermost().get_name()!=SOURCE:
+        raise RuntimeError("Legacy DRAZOVIA alias no longer resolves to protected original")
+    state["legacyAliasResolvesTo"]=legacy.get_outermost().get_name()
     state["nativeWorldReloaded"]=True
     state["separateWorldPackages"]=True
     state["status"]="BOTH_DISTINCT_WORLD_PACKAGES_NATIVE_RELOADED_NOT_PLAYTESTED"
