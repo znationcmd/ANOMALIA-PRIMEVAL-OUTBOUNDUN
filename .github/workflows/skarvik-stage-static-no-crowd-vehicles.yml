@@ -1,0 +1,52 @@
+name: SKARVIK - stage static city without crowds and vehicles
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-static-no-crowd-vehicles.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Preflight static City Sample only, do not delete original D assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts/ue5/skarvik-static-no-crowd-vehicles.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-preflight.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Static asset staging preflight blocked; no assets copied'}
+          $data=Get-Content $report -Raw|ConvertFrom-Json
+          if($data.state -ne 'SAFE_CORE_STATIC_ASSETS_READY'){throw 'Unexpected preflight result'}
+      - name: Import buildings, roads, map, actors and optional static props only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts/ue5/skarvik-static-no-crowd-vehicles.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-copy.json'
+          & $script -Apply -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Staging failed; review report, originals unchanged'}
+          $data=Get-Content $report -Raw|ConvertFrom-Json
+          if(!$data.coreCopied -or $data.crowdCopied -or $data.vehiclesCopied){throw 'Static copy proof invalid'}
+          Write-Host "SKARVIK_STATIC_IMPORT_STAGE=$($data.state)"
+          Write-Host 'SKARVIK_CITY_SAMPLE_NATIVE_INTEGRATION_STILL_PENDING=true'
+      - name: Retain only JSON evidence, never publish licensed Epic binary assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-static-no-crowd-vehicles
+          retention-days: 14
+          if-no-files-found: warn
+          path: |
+            skarvik-static-preflight.json
+            skarvik-static-copy.json
