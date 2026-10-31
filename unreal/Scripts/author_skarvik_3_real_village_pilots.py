@@ -31,7 +31,7 @@ PARCELS=(
     (-90,-90,"coastal"),(0,-90,"townhouse"),(90,-90,"wood")
 )
 state=dict(state="FAILED",map=MAP,stagedHouses=[],villages=[],actorsSaved=0,
-           125SitesComplete=False,roadsBuilt=False,citySampleLevelInstanceIntegrated=False,
+           sites125Complete=False,roadsBuilt=False,citySampleLevelInstanceIntegrated=False,
            SM5Playtested=False,gamePackaged=False,originalDModified=False)
 try:
     if "ANOMALIAZ_SKARVIK_STAGE_41188816555" not in str(ROOT).upper() or ROOT.drive.upper()!="C:":
