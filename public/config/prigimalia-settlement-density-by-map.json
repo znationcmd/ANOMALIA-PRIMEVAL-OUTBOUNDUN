@@ -133,8 +133,8 @@
       "towns": 100,
       "villages": 315,
       "environment": "vast 100x100 km survival world: 25 distinct urban centers, 35 satellite small towns, 100 boroughs and 315 dispersed villages connected across coast, forests, hills and rural areas",
-      "status": "475 LOCALITIES PLANNED; real 100km terrain tile import and topographic grading pending; do not assert in-game placement",
-      "technicalMapPath": null,
+      "status": "475 named settlement sites and 677 connected road alignments planned; real UE5 World Partition terrain and actors not yet validated",
+      "technicalMapPath": "/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA",
       "placementPolicy": {
         "areaKm2": 10000,
         "urbanClusters": 25,
@@ -142,8 +142,12 @@
         "allNamedSitesRequireNativeWorldPartitionActors": true,
         "terrainElevationAndRoadGradesNeedRealTileValidation": true,
         "avoidGenericCubes": true,
-        "citySampleCrowdAndTrafficOff": true
-      }
+        "citySampleCrowdAndTrafficOff": true,
+        "plannedRoadSegments": 677,
+        "uniqueNamedLocalities": 475,
+        "realNativeBuildingsPlaced": 0
+      },
+      "settlementLayoutPath": "public/config/chernaskaluxria-world-layout-100km.json"
     },
     {
       "mapId": "falc",
