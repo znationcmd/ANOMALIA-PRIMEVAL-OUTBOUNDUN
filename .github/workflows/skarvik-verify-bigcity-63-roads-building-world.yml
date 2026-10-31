@@ -2,7 +2,7 @@ name: SKARVIK - verify native Big City reference 63 road alignments and 1039 bui
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-verify-bigcity-63-roads-building-world.yml']
+    paths: ['.github/workflows/skarvik-verify-bigcity-63-roads-building-world.yml', 'unreal/Scripts/verify_skarvik_63_roads_bigcity_persisted.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -50,13 +50,14 @@ jobs:
           $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT -Raw|ConvertFrom-Json
           Write-Host ('SKARVIK_COMBINED_NATIVE_WORLD_STATUS='+$r.state)
           Write-Host ('SKARVIK_BIG_CITY_LEVEL_REFERENCE_COUNT='+$r.nativeLevelInstanceDescriptorCount)
+          Write-Host ('SKARVIK_BIG_CITY_REFERENCE_DESCRIPTOR_CLASS='+$r.cityActorPersistedDescriptorClass)
           Write-Host ('SKARVIK_1039_HOUSES_ACTORS='+$r.existing3DBuildingActorDescriptors)
           Write-Host ('SKARVIK_3_PLUS_20_ROADS_ACTORS='+($r.existingFirst3RoadActorDescriptors+$r.existingBatch20RoadActorDescriptors))
           Write-Host ('SKARVIK_40_ADDITIONAL_ROADS_ACTORS='+$r.additionalSecondBatchRoadActorDescriptors)
-          if($code -ne 0 -or $r.state -ne 'BIG_CITY_LEVEL_INSTANCE_AND_63_NATIVE_ROADS_PLUS_1039_BUILDINGS_PERSIST_NOT_PLAYTESTED'){
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_NAMED_ACTOR_AND_63_ROAD_ROUTES_PLUS_1039_BUILDINGS_PERSIST_TYPE_UNVERIFIED'){
             throw ('Reopened native world integrity test failed: '+$r.error)
           }
-          Write-Host 'SKARVIK_NATIVE_CITY_REFERENCE_AND_63_ASPHALT_ROUTES_AND_1039_BUILDINGS_PERSIST=true'
+          Write-Host 'SKARVIK_NATIVE_NAMED_BIG_CITY_ACTOR_AND_63_ROAD_ROUTES_AND_1039_BUILDINGS_PERSIST=true'
           Write-Host 'SKARVIK_BIG_CITY_FULL_VISUAL_STREAMING_AND_SM5_DRIVING_NOT_VALIDATED=true'
       - uses: actions/upload-artifact@v4
         if: always()
