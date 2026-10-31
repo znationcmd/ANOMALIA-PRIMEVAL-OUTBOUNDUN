@@ -30,7 +30,7 @@ try{
  if($free -lt ($needed+24GB)){throw 'Free C below requested extras plus 24 GiB of safety headroom'}
  foreach($name in $wanted){
   $from=Join-Path $src $name;$to=Join-Path $dest $name
-  if(Test-Path -LiteralPath $to -PathType Container){throw "Existing extra folder $name: refuse overwrite"}
+  if(Test-Path -LiteralPath $to -PathType Container){throw "Existing extra folder ${name}: refuse overwrite"}
   & robocopy.exe $from $to /E /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
   $code=$LASTEXITCODE
   if($code -ge 8){throw "Robocopy failed $name code=$code"}
