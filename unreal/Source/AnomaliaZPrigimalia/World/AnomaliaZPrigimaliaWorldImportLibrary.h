@@ -37,6 +37,9 @@ public:
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
+ /** Checks native Landscape components BEFORE deferred partition migration. Preview map only. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectNamedWorldPreviewComponents(AActor* Candidate, const FString& MapIdentifier);
  /** Import ONE verified 5km CHERNASKALUXRIA source tile into its owned world.
      253x253 R16 samples -> four landscape components. Never merges another map. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
