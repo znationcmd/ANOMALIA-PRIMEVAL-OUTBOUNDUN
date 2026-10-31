@@ -38,14 +38,14 @@ try:
     if not levels or not actors:
         raise RuntimeError("Level/Actor editor subsystems unavailable")
     city=unreal.load_asset(CITY)
-    if not city or not city.is_a(unreal.World):
+    if not city or city.get_class().get_name() != "World":
         raise RuntimeError("Copied City Sample world asset did not load")
     clazz=getattr(unreal,"LevelInstance",None)
     if not clazz:
         raise RuntimeError("This editor has no LevelInstance class")
     if not levels.load_level(SKARVIK):
         raise RuntimeError("Failed to open isolated 48km SKARVIK map")
-    current=unreal.EditorLevelLibrary.get_editor_world()
+    current=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
     if not current or current.get_path_name().split(".")[0]!=SKARVIK:
         raise RuntimeError("Editor world does not match SKARVIK (refuse writing another map)")
     original=[a for a in actors.get_all_level_actors() if a.get_actor_label()==LABEL]
