@@ -1,0 +1,121 @@
+name: SKARVIK - build truly leveled 48km terrain V2 for 124 new urban sites
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-build-graded-terrain-v2.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  create-native-graded-48km-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Safeguard existing 48km SKARVIK v1 and all original D projects
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $src='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $v1=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'
+          $v2=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Invalid isolated stage'}
+          if(!(Test-Path -LiteralPath $src) -or !(Test-Path -LiteralPath $v1)){throw 'Protected original map or stage v1 absent'}
+          if(Test-Path -LiteralPath $v2){throw 'Graded v2 already exists; refuse overwrite'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal Editor is active'}
+          foreach($d in @('Crowd','Vehicle')){if(Test-Path -LiteralPath (Join-Path $root ('Content\'+$d))){throw 'CitySample crowd/vehicles unexpectedly imported'}}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_GRADED_V2_FREE_C_GIB="+[math]::Round($free,2))
+          if($free -lt 19){throw 'C has less than 19GiB free; refuse Unreal terrain rebuild'}
+          $layout=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw|ConvertFrom-Json
+          if(@($layout.settlements).Count -ne 125){throw '125 localities not present'}
+          $env:SKARVIK_GRADED_PROTECTED_D_SHA=(Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash
+          $env:SKARVIK_GRADED_PROTECTED_V1_SHA=(Get-FileHash -LiteralPath $v1 -Algorithm SHA256).Hash
+          Write-Host 'SKARVIK_GRADED_V2_PROTECTED_MAPS_OK=true'
+      - name: Backup and update ONLY the isolated native C++ terrain sources on C
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $base='Source\AnomaliaZPrigimalia\World'
+          $backup=Join-Path $root 'Saved\SkarvikCity\GradedReliefV2_SourceBackup'
+          if(Test-Path -LiteralPath $backup){throw 'Source backup already exists, refuse overwriting'}
+          New-Item -Path $backup -ItemType Directory|Out-Null
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $rel=Join-Path $base $name
+            $original=Join-Path $root $rel
+            $new=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$rel)
+            if(!(Test-Path -LiteralPath $original) -or !(Test-Path -LiteralPath $new)){throw "Missing required source: $rel"}
+            Copy-Item -LiteralPath $original -Destination (Join-Path $backup $name)
+          }
+          $header=Join-Path $root ($base+'\AnomaliaZPrigimaliaSkarvikGraded.h')
+          if(Test-Path -LiteralPath $header){throw 'New graded native header unexpectedly exists'}
+          foreach($name in @('AnomaliaZPrigimaliaSkarvikGraded.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $rel=Join-Path $base $name
+            Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$rel)) -Destination (Join-Path $root $rel) -ErrorAction Stop
+          }
+          Write-Host 'SKARVIK_GRADED_NATIVE_SOURCE_UPDATED_C_STAGE_ONLY=true'
+      - name: Compile graded landscape UE5.8 native source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('SKARVIK graded UE5 C++ compile failed code='+$LASTEXITCODE)}
+          Write-Host 'SKARVIK_GRADED_NATIVE_CPP_COMPILE_SUCCESS=true'
+      - name: Create full-size 48km graded World Partition terrain under a NEW level package
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_skarvik_graded_v2_world.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native terrain Python syntax rejected'}
+          $env:SKARVIK_GRADED_LAYOUT_JSON=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GRADED_TERRAIN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-graded-v2-native-result.json'
+          & $editor $project "-ExecutePythonScript=$script" -d3d11 -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_TERRAIN_REPORT)){throw ('UE5 did not write landscape report, exit='+$exit)}
+          $r=Get-Content -LiteralPath $env:SKARVIK_GRADED_TERRAIN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ("SKARVIK_GRADED_NATIVE_RESULT="+$r.state)
+          if($exit -ne 0 -or $r.state -ne 'SKARVIK_GRADED_V2_NATIVE_LANDSCAPE_SAVED_NOT_PLAYTESTED' -or $r.landscapeComponents -ne 576 -or $r.collisionComponents -ne 576){
+            throw ('Real graded UE5 map not saved: '+$r.error)
+          }
+          if((Get-FileHash 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap' -Algorithm SHA256).Hash -ne $env:SKARVIK_GRADED_PROTECTED_D_SHA){throw 'Original D hash mismatch'}
+          if((Get-FileHash (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap') -Algorithm SHA256).Hash -ne $env:SKARVIK_GRADED_PROTECTED_V1_SHA){throw 'Stage v1 hash mismatch'}
+          Write-Host 'SKARVIK_GRADED_124_REAL_SETTLEMENT_PADS_AND_NATIVE_LANDSCAPE_SAVED=true'
+          Write-Host 'SKARVIK_125_BUILDINGS_NOT_YET_TRANSFERRED_TO_THIS_NEW_GRADED_LEVEL=true'
+      - name: Restore previous C source on failure, leaving D original protected
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root 'Saved\SkarvikCity\GradedReliefV2_SourceBackup'
+          $base=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $path=Join-Path $backup $name
+            if(Test-Path -LiteralPath $path){
+              Copy-Item -LiteralPath $path -Destination (Join-Path $base $name) -Force
+              Write-Host "SKARVIK_GRADED_SOURCE_RESTORED=$name"
+            }
+          }
+          Write-Host 'SKARVIK_GRADED_V1_AND_ORIGINAL_D_PRESERVED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-graded-v2-native-48km-report
+          path: skarvik-graded-v2-native-result.json
+          if-no-files-found: warn
+          retention-days: 30
