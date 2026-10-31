@@ -36,7 +36,7 @@ REPORT={"state":"FAILED","id":ID,"package":PACKAGE,"realPhotoSourceImported":Fal
         "originalMapModified":False}
 
 def run():
-    if str(ROOT).replace("/","\\").lower().rstrip("\\")!=r"d:\\anomaliaz-prigimalia\\unreal":
+    if str(ROOT).replace("/","\\").lower().rstrip("\\")!=r"d:\anomaliaz-prigimalia\unreal":
         raise RuntimeError("Only isolated stage permitted; never original D:\\ANOMALIA")
     if ID not in SPECS:
         raise RuntimeError("Unexpected map identifier")
@@ -123,5 +123,5 @@ finally:
     OUTPUT.parent.mkdir(parents=True,exist_ok=True)
     if OUTPUT.exists():
         raise FileExistsError("Refusing to overwrite existing preview report")
-    OUTPUT.write_text(json.dumps(REPORT,ensure_ascii=False,indent=2)+"\\n",encoding="utf-8")
+    OUTPUT.write_text(json.dumps(REPORT,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
     unreal.log("PRIGIMALIA_PREVIEW_REPORT="+str(OUTPUT))
