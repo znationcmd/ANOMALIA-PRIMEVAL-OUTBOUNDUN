@@ -11465,6 +11465,15 @@
     "originalCitySampleStreetsStayUnmodified": true,
     "gradeBridgeFloodReviewRequired": true,
     "engineRoadMeshesConstructed": false,
-    "footTrailsWalkableInGameVerified": false
+    "footTrailsWalkableInGameVerified": false,
+    "roadSurfacePilot": {
+      "status": "C_STAGE_REAL_STATIC_MESH_ASPHALT_SAVED_NOT_SM5_DRIVEN",
+      "nativeRoadMeshes": 60,
+      "verifiedRoadSurfaceMeters": 600,
+      "stageMap": "/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1",
+      "proof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234307751",
+      "noClaimOfFullNetworkConstruction": true,
+      "protectedOriginalDNotModified": true
+    }
   }
 }
