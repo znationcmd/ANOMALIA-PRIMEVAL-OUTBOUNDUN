@@ -162,7 +162,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "major-city",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "valdoren",
@@ -179,7 +181,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "major-city",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sylvane",
@@ -196,7 +200,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "town",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "kaelm",
@@ -213,7 +219,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "town",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "oasis",
@@ -230,7 +238,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "dunes",
@@ -247,7 +257,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "redridge",
@@ -264,7 +276,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "town",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "firvale",
@@ -281,7 +295,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "birch",
@@ -298,7 +314,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "highpass",
@@ -315,7 +333,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "snowpine",
@@ -332,7 +352,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "icehaven",
@@ -349,7 +371,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "town",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "northhamlet",
@@ -366,7 +390,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "harbor",
@@ -383,7 +409,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "town",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "southwood",
@@ -400,7 +428,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "river",
@@ -417,7 +447,9 @@
       "assetStatus": "terrain-plan",
       "settlementClass": "village",
       "plannedOnly": true,
-      "nativeConstructionVerified": false
+      "nativeConstructionVerified": false,
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "ravenor",
@@ -436,7 +468,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "ville du désert et des canyons"
+      "description": "ville du désert et des canyons",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "karstheim",
@@ -455,7 +489,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "cité minière des montagnes"
+      "description": "cité minière des montagnes",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "varengard",
@@ -474,7 +510,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "ville fortifiée des cols"
+      "description": "ville fortifiée des cols",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "eldervik",
@@ -493,7 +531,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "métropole de vallée forestière"
+      "description": "métropole de vallée forestière",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "nordfjell",
@@ -512,7 +552,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "ville d'altitude enneigée"
+      "description": "ville d'altitude enneigée",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "astermont",
@@ -531,7 +573,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "grande ville littorale"
+      "description": "grande ville littorale",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "meridia",
@@ -550,7 +594,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": "ville du sud et de l'agriculture"
+      "description": "ville du sud et de l'agriculture",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "tarzel",
@@ -569,7 +615,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "brumecrete",
@@ -588,7 +636,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "montbrume",
@@ -607,7 +657,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "hiverdal",
@@ -626,7 +678,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "rosephare",
@@ -645,7 +699,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "bois-sud",
@@ -664,7 +720,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "kharvel",
@@ -683,7 +741,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sablecroix",
@@ -702,7 +762,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "miraze",
@@ -721,7 +783,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "pierremont",
@@ -740,7 +804,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "cimefonte",
@@ -759,7 +825,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "valleroche",
@@ -778,7 +846,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "boissauvage",
@@ -797,7 +867,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "clairvallon",
@@ -816,7 +888,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "montoree",
@@ -835,7 +909,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "valrivage",
@@ -854,7 +930,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "glacelac",
@@ -873,7 +951,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "nivergard",
@@ -892,7 +972,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "lysvik",
@@ -911,7 +993,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "baie-argent",
@@ -930,7 +1014,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "hauterive",
@@ -949,7 +1035,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "coteverte",
@@ -968,7 +1056,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "port-azur",
@@ -987,7 +1077,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "pont-vert",
@@ -1006,7 +1098,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "merivals",
@@ -1025,7 +1119,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "cendreval",
@@ -1044,7 +1140,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "bas-moulin",
@@ -1063,7 +1161,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "khemir",
@@ -1082,7 +1182,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sable-froid",
@@ -1101,7 +1203,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "ergued",
@@ -1120,7 +1224,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "dunevoile",
@@ -1139,7 +1245,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "almari",
@@ -1158,7 +1266,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "rocheseche",
@@ -1177,7 +1287,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "elzar",
@@ -1196,7 +1308,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "qarven",
@@ -1215,7 +1329,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "safran",
@@ -1234,7 +1350,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "solaroc",
@@ -1253,7 +1371,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "tinjar",
@@ -1272,7 +1392,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "arbelin",
@@ -1291,7 +1413,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "brumepierre",
@@ -1310,7 +1434,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "rochenord",
@@ -1329,7 +1455,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "vieux-col",
@@ -1348,7 +1476,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "aiguille-haute",
@@ -1367,7 +1497,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "ravin-dore",
@@ -1386,7 +1518,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sombreroch",
@@ -1405,7 +1539,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "melezac",
@@ -1424,7 +1560,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "pierrefeu",
@@ -1443,7 +1581,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "granitel",
@@ -1462,7 +1602,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "fonteval",
@@ -1481,7 +1623,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "cairn-bas",
@@ -1500,7 +1644,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "lauzeveil",
@@ -1519,7 +1665,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "fresnelac",
@@ -1538,7 +1686,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "orme-bas",
@@ -1557,7 +1707,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "charmeval",
@@ -1576,7 +1728,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "rosemosse",
@@ -1595,7 +1749,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "vieux-chene",
@@ -1614,7 +1770,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "millefeuille",
@@ -1633,7 +1791,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "boisdore",
@@ -1652,7 +1812,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "longpont",
@@ -1671,7 +1833,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "fontaine-verte",
@@ -1690,7 +1854,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "hautes-rives",
@@ -1709,7 +1875,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "epicea",
@@ -1728,7 +1896,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "valleron",
@@ -1747,7 +1917,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "neigerive",
@@ -1766,7 +1938,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "froidepin",
@@ -1785,7 +1959,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "osterlac",
@@ -1804,7 +1980,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "glacier-bas",
@@ -1823,7 +2001,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "niveore",
@@ -1842,7 +2022,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "lysglace",
@@ -1861,7 +2043,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "fjordin",
@@ -1880,7 +2064,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "blanchecrete",
@@ -1899,7 +2085,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "eiskorn",
@@ -1918,7 +2106,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "frostel",
@@ -1937,7 +2127,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "nordlac",
@@ -1956,7 +2148,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "malphare",
@@ -1975,7 +2169,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "ardelport",
@@ -1994,7 +2190,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "capvive",
@@ -2013,7 +2211,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "plage-cendre",
@@ -2032,7 +2232,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "cote-d-orval",
@@ -2051,7 +2253,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sablemaree",
@@ -2070,7 +2274,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "vauclerc",
@@ -2089,7 +2295,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "etang-sale",
@@ -2108,7 +2316,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "vieux-quai",
@@ -2127,7 +2337,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "fonte-mer",
@@ -2146,7 +2358,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "elmarin",
@@ -2165,7 +2379,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "cap-aube",
@@ -2184,7 +2400,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "valest",
@@ -2203,7 +2421,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "auberive",
@@ -2222,7 +2442,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "herbehaute",
@@ -2241,7 +2463,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "sauleval",
@@ -2260,7 +2484,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "merilac",
@@ -2279,7 +2505,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "boissain",
@@ -2298,7 +2526,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "pont-d-oree",
@@ -2317,7 +2547,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "grandpre",
@@ -2336,7 +2568,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "corne-bois",
@@ -2355,7 +2589,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "rive-basse",
@@ -2374,7 +2610,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "montbrun",
@@ -2393,7 +2631,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "loupvallon",
@@ -2412,7 +2652,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "vermont",
@@ -2431,7 +2673,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "coulevie",
@@ -2450,7 +2694,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     },
     {
       "id": "bellevigne",
@@ -2469,7 +2715,9 @@
       "assetStatus": "planned-awaiting-native-static-mesh-construction",
       "plannedOnly": true,
       "nativeConstructionVerified": false,
-      "description": ""
+      "description": "",
+      "nativeBuildingCoreSavedOnGradedV2": true,
+      "nativeFullTownGameplayVerified": false
     }
   ],
   "roads": [
@@ -11504,5 +11752,37 @@
       "sm5VehicleDrivingNotYetValidated": true,
       "fullNetworkBuilt": false
     }
+  },
+  "nativeGradedWorldProgress": {
+    "graded48KmWorld": "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+    "terrainCreatedAndReopened": true,
+    "firstContourProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41235881623",
+    "verifiedOriginalFileHashesUnchanged": true,
+    "settlement3DSourceMeshActorsSaved": 1039,
+    "settlementCoreLocationsWithRealMeshes": 124,
+    "majorCitySKARVIKCentreStillRequiresActualBigCityImport": true,
+    "buildingAuthorEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236036882",
+    "reopenedBuildingsProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236169566",
+    "realRoadMeshActorsOnGradedMap": 126,
+    "realRoadTerrainFollowingMetres": 2445.5,
+    "realRoadProvenRouteIds": [
+      "SK-RX-001",
+      "SK-RX-067",
+      "SK-RX-155"
+    ],
+    "roadInsertionProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236328200",
+    "stillIncomplete": [
+      "full 382-route network",
+      "992 local road sections",
+      "302 walkways",
+      "bridge and water checks",
+      "CitySample actual World Partition import",
+      "varied buildings interior gameplay",
+      "NPC vehicle and AI gameplay",
+      "SM5 drivable and packaged game tests"
+    ],
+    "preserveProductionD": true,
+    "projectNotMerged": true,
+    "fullMapPlayable": false
   }
 }
