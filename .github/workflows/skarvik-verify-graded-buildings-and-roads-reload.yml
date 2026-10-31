@@ -1,0 +1,63 @@
+name: SKARVIK - verify graded 124 real town sites and 3 actual roads survive reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-graded-buildings-and-roads-reload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  proof:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Ensure 48km graded world and clean pre-road backup are protected
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong C stage'}
+          foreach($path in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\BeforeGradedRoadMeshes\graded-with-houses-no-roads.umap'))){
+            if(!(Test-Path -LiteralPath $path)){throw "Required protected file absent: $path"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other editor active'}
+      - name: Native UE5 reopen: 124 populated localities and 3 road routes in one saved World Partition
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_graded_buildings_and_roads_persisted.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'World persistence Python source syntax failed'}
+          $env:SKARVIK_GRADED_REOPEN_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-combined-world-proof.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT)){throw 'No native combined result'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_COMBINED_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_COMBINED_REOPEN_SITE_COUNT='+$r.sitesWithSavedMeshActors)
+          Write-Host ('SKARVIK_NATIVE_COMBINED_REOPEN_BUILDING_COUNT='+$r.savedMeshActors)
+          Write-Host ('SKARVIK_NATIVE_COMBINED_REOPEN_ROAD_COUNT='+$r.roadActorDescriptors)
+          if($code -ne 0 -or $r.state -ne 'GRADED_48KM_WORLD_124_SITES_AND_THREE_NATIVE_ROADS_PERSISTED_NOT_PLAYTESTED'){
+            throw ("Combined World Partition failed reopen: "+$r.error)
+          }
+          Write-Host 'SKARVIK_GRADED_48KM_NATIVE_TOWNS_AND_ROADS_REOPEN_OK=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-grade-48km-native-towns-and-roads-actors-reopened
+          path: skarvik-native-combined-world-proof.json
+          if-no-files-found: warn
