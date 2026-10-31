@@ -10,6 +10,8 @@ on:
       - 'public/config/skarvik-citysample-sm5-replacement.json'
       - 'tests/native/skarvik_city_48km_height.cpp'
       - 'tests/test_skarvik_world_layout_48km.py'
+      - 'tests/test_skarvik_explorable_buildings_plan.py'
+      - 'public/config/skarvik-explorable-buildings.json'
       - '.github/workflows/skarvik-world-source-checks.yml'
   workflow_dispatch:
 permissions:
@@ -28,6 +30,8 @@ jobs:
           /tmp/skarvik-terrain-test
       - name: Check biome locations and road graph
         run: python -m unittest discover -s tests -p 'test_skarvik_world_layout_48km.py' -v
+      - name: Verify real interiors requirements and honest implementation status
+        run: python -m unittest discover -s tests -p 'test_skarvik_explorable_buildings_plan.py' -v
       - name: Validate Unreal Editor-only Python source
         run: python -m py_compile unreal/Scripts/create_skarvik_city_world.py
       - name: Confirm native City Sample has not been falsely packaged
