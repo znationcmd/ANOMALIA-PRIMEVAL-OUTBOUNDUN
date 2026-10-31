@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Eleven planned ANOMALIA'Z worlds. New DRAZOVIA references the verified native V3 heightfield; KOLCHIEM ORIGINS duplicates the real migrated prior World /Game/Maps/PRIGIMALIA_Inhabited_v2. Its former /Game/Maps/ANOMALIA_Inhabited_v2 is a legacy package redirect. Do not infer gameplay-ready from catalog.",
+  "description": "Eleven distinct ANOMALIA'Z Worlds. Six official World Partition packages have been duplicated and reloaded from provisional procedural terrain previews, not the final user photo heightmaps. KOLCHIEM ORIGINS uses the full 7584-external-actor legacy copy; earlier one-actor trial preserved separately. CHERNASKALUXRIA and F.A.L.C have distinct source constraints. No map is claimed end-to-end gameplay verified.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -35,10 +35,15 @@
       "heightKm": 30,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-generation-script-prepared-not-authored",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "karskov-v1",
       "terrainBiome": "cold-fjords-taiga",
-      "expectedLandscapeComponents": 576
+      "expectedLandscapeComponents": 576,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_KARSKOV_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "vorgrad-v1",
@@ -48,10 +53,15 @@
       "heightKm": 30,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-generation-script-prepared-not-authored",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "vorgrad-v1",
       "terrainBiome": "continental-ruins-plains-rivers",
-      "expectedLandscapeComponents": 576
+      "expectedLandscapeComponents": 576,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_VORGRAD_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "nemoris-v1",
@@ -61,10 +71,15 @@
       "heightKm": 20,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-generation-script-prepared-not-authored",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "nemoris-v1",
       "terrainBiome": "ancient-forest-wetlands",
-      "expectedLandscapeComponents": 256
+      "expectedLandscapeComponents": 256,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_NEMORIS_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "drakheim-v1",
@@ -74,10 +89,15 @@
       "heightKm": 20,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-generation-script-prepared-not-authored",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "drakheim-v1",
       "terrainBiome": "volcanic-ash-highlands",
-      "expectedLandscapeComponents": 256
+      "expectedLandscapeComponents": 256,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_DRAKHEIM_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "solynacalyra-v1",
@@ -87,10 +107,15 @@
       "heightKm": 15,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "generation-not-tested",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "solynacalyra-v1",
       "terrainBiome": "tropical-paradise",
-      "expectedLandscapeComponents": 576
+      "expectedLandscapeComponents": 144,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_SOLYNACALYRA_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "nexavarkhos-v1",
@@ -100,10 +125,15 @@
       "heightKm": 10,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "generation-not-tested",
+      "validation": "native-UE5.8-provisional-World-Partition-duplicated-and-reloaded-not-final-photo-topography",
       "saveNamespace": "nexavarkhos-v1",
       "terrainBiome": "devastated-colony",
-      "expectedLandscapeComponents": 256
+      "expectedLandscapeComponents": 64,
+      "nativeWorldImported": true,
+      "nativeWorldLoadVerified": true,
+      "previewSourcePackage": "/Game/Maps/PRIGIMALIA_NEXAVARKHOS_TerrainPreview",
+      "terrainSource": "procedural-preview-not-final-user-topography",
+      "gameplayTested": false
     },
     {
       "id": "chernaskaluxria-v1",
@@ -155,13 +185,13 @@
     {
       "id": "kolchiem-origins-v1",
       "displayName": "KOLCHIEM ORIGINS",
-      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL",
       "sourceUnrealPackage": "/Game/Maps/PRIGIMALIA_Inhabited_v2",
       "widthKm": 48,
       "heightKm": 48,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-World-Partition-duplicate-and-UWorld-reload-success-legacy-actors-not-migrated",
+      "validation": "native-original-7584-external-actor-WorldPartition-duplicate-and-reload-success-not-visual-or-gameplay-tested",
       "saveNamespace": "kolchiem-origins-v1",
       "nativeDuplicationMethod": "WorldPartitionRenameDuplicateBuilder source PRIGIMALIA_Inhabited_v2 without -Rename",
       "preserveSourceWorldAndSaves": true,
@@ -171,9 +201,10 @@
       "sourceMigrationIdentityVerified": true,
       "nativeWorldDuplicated": true,
       "nativeWorldLoadVerified": true,
-      "legacyActorMigrationVerified": false,
+      "legacyActorMigrationVerified": true,
       "originalLegacyExternalActors": 7584,
-      "duplicatedExternalActors": 1
+      "duplicatedExternalActors": 7584,
+      "incompleteEarlierNativeWorldPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS"
     }
   ]
 }
