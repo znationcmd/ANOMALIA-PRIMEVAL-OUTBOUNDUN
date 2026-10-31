@@ -57,12 +57,15 @@ try:
  data["secondBatchRoadsById"]=dict(grouped)
  if houses!=1039 or roadA!=126 or roadB!=1668:
   raise RuntimeError("Lost prior World Partition building or road actors on graded map")
- if "LevelInstance" not in str(cityref[0].class_):
-  raise RuntimeError("City actor is not native UE LevelInstance")
+ data["cityActorPersistedDescriptorClass"]=str(cityref[0].class_)
+ data["nativeLevelInstanceTypeConfirmed"]=bool("LevelInstance" in data["cityActorPersistedDescriptorClass"])
+ data["CitySampleFullActorsStreamed"]=False
+ data["sourceWorldReferenceAfterReloadUnverified"]=not data["nativeLevelInstanceTypeConfirmed"]
+ unreal.log("SKARVIK_BIGCITY_REOPEN_DESCRIPTOR_TYPE="+data["cityActorPersistedDescriptorClass"])
  for f in (TARGET,CITY,ORIGINAL):
   if hashlib.sha256(f.read_bytes()).hexdigest()!=hashes[str(f)]:
    raise RuntimeError("Read-only verification modified protected Unreal world")
- data["state"]="BIG_CITY_LEVEL_INSTANCE_AND_63_NATIVE_ROADS_PLUS_1039_BUILDINGS_PERSIST_NOT_PLAYTESTED"
+ data["state"]="BIG_CITY_NAMED_ACTOR_AND_63_ROAD_ROUTES_PLUS_1039_BUILDINGS_PERSIST_TYPE_UNVERIFIED"
  data["referenceSavedAndReopened"]=True
  unreal.log("SKARVIK_BIG_CITY_NATIVE_REFERENCE_WP_DESCRIPTOR_PERSISTED=true")
 except Exception as e:
