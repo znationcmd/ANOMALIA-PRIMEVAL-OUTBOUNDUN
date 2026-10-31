@@ -42,6 +42,7 @@ jobs:
           assert "sourceBytes" in ps and "minimumFree" in ps and "6GB" in ps
           assert "Insufficient safe D: capacity" in ps
           assert "UnrealEditor.exe" in ps and "UnrealEditor-Cmd.exe" not in ps
+          assert "Start-Process -FilePath $editor" in ps and "-Wait -PassThru" in ps
           assert "if(Test-Path -LiteralPath $path)" in ps
           print('KOLCHIEM_ORIGINS_ELEVEN_MAPS_SOURCE_CHECKS_PASSED=true')
           PY
