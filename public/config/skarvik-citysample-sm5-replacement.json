@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "CITY_SAMPLE_FOUND_ON_WINDOWS_48KM_TERRAIN_SOURCE_AND_R16_PREPARED_NATIVE_IMPORT_BLOCKED_DISK",
+  "status": "STATIC_ASSET_STAGING_TRIGGERED_EXCLUDING_CROWD_AND_VEHICLE_NOT_YET_VERIFIED",
   "logicalMapId": "archipelago-v2",
   "publicMapName": "SKARVIK",
   "requestedReplacement": "Keep SKARVIK 48x48 km world footprint; integrate full static City Sample Big City 4x4 km within it, SM5",
@@ -43,7 +43,12 @@
     "terrainHeightGeneratorSourceCommitted": true,
     "terrainR16ExportedForUE5": true,
     "nativeSKARVIKWorldGenerated": false,
-    "nativeCitySampleMigrationCompleted": false
+    "nativeCitySampleMigrationCompleted": false,
+    "staticFilesCopied": false,
+    "crowdAssetFolderExcludedFromStage": true,
+    "vehicleAssetFolderExcludedFromStage": true,
+    "actorDependencyAuditPassed": false,
+    "CitySampleReferenceIntegrationComplete": false
   },
   "guards": {
     "keepOriginalSkarvikAndSaves": true,
@@ -75,5 +80,41 @@
     "terrainGeneration": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h",
     "nativeCreation": "unreal/Scripts/create_skarvik_city_world.py",
     "importBlockedReason": "Only 7.6 GiB free on D; no City Sample package migration nor new Unreal world has run"
+  },
+  "assetImportPolicy": {
+    "mode": "static-city-scene-only",
+    "source": "D:\\ANOMALIA\\FabImports\\CitySample",
+    "destination": "C:\\ANOMALIAZ_SKARVIK_STAGE_41188816555\\unreal",
+    "neverDeleteOriginal": true,
+    "excludedSourceFolders": [
+      "Content/Crowd",
+      "Content/Vehicle"
+    ],
+    "excludedAssetGroups": [
+      "moving pedestrians",
+      "vehicle fleets"
+    ],
+    "mandatoryStaticFolders": [
+      "Content/__ExternalActors__",
+      "Content/Building",
+      "Content/City",
+      "Content/Environment",
+      "Content/Lighting",
+      "Content/Map",
+      "Content/Material",
+      "Content/Road",
+      "Content/Textures"
+    ],
+    "optionalStaticFolders": [
+      "Content/Megascans",
+      "Content/Prop",
+      "Content/Effect",
+      "Content/WFC",
+      "Content/MSPresets",
+      "Content/Lookdev"
+    ],
+    "nativeCityAssetsMayStillReferenceExcludedClasses": true,
+    "needsNativeAssetRegistryValidation": true,
+    "needsActorRemovalFromWorldPartition": true
   }
 }
