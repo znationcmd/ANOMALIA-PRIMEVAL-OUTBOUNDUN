@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "ANOMALIA’Z PRIGIMALIA contains 11 distinct planned/established world-map entries. The initial six catalogued worlds are preserved, and five additional confirmed map names are recorded without inventing Unreal package paths or falsely claiming native imports. Do not collapse SKARVIK's six biomes into separate worlds.",
+  "description": "15 independent ANOMALIA’Z maps, 11 original identities preserved and four new independently packaged terrain plans. No world is considered native imported solely because it is listed in this JSON.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -11,7 +11,9 @@
       "independentWorld": true,
       "serverSelectable": false,
       "validation": "native-PIE-limited",
-      "saveNamespace": "archipelago-v2"
+      "saveNamespace": "archipelago-v2",
+      "targetLocalities": 125,
+      "settlementPlacementStatus": "125-location-source-plan-native-placement-incomplete"
     },
     {
       "id": "inhabited-v2",
@@ -22,7 +24,9 @@
       "independentWorld": true,
       "serverSelectable": false,
       "validation": "authored-editor-not-full-gameplay-tested",
-      "saveNamespace": "inhabited-v2"
+      "saveNamespace": "inhabited-v2",
+      "targetLocalities": 70,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "karskov-v1",
@@ -35,7 +39,9 @@
       "validation": "native-generation-script-prepared-not-authored",
       "saveNamespace": "karskov-v1",
       "terrainBiome": "cold-fjords-taiga",
-      "expectedLandscapeComponents": 576
+      "expectedLandscapeComponents": 576,
+      "targetLocalities": 45,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "vorgrad-v1",
@@ -48,7 +54,9 @@
       "validation": "native-generation-script-prepared-not-authored",
       "saveNamespace": "vorgrad-v1",
       "terrainBiome": "continental-ruins-plains-rivers",
-      "expectedLandscapeComponents": 576
+      "expectedLandscapeComponents": 576,
+      "targetLocalities": 30,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "nemoris-v1",
@@ -61,7 +69,9 @@
       "validation": "native-generation-script-prepared-not-authored",
       "saveNamespace": "nemoris-v1",
       "terrainBiome": "ancient-forest-wetlands",
-      "expectedLandscapeComponents": 256
+      "expectedLandscapeComponents": 256,
+      "targetLocalities": 15,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "drakheim-v1",
@@ -74,7 +84,9 @@
       "validation": "native-generation-script-prepared-not-authored",
       "saveNamespace": "drakheim-v1",
       "terrainBiome": "volcanic-ash-highlands",
-      "expectedLandscapeComponents": 256
+      "expectedLandscapeComponents": 256,
+      "targetLocalities": 10,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "solynacalyra-v1",
@@ -87,7 +99,9 @@
       "validation": "map-name-known-native-world-and-package-verification-pending",
       "saveNamespace": "solynacalyra-v1",
       "packageDiscoveryPending": true,
-      "sourceMapPreserved": true
+      "sourceMapPreserved": true,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "nexavarkhos-v1",
@@ -100,7 +114,9 @@
       "validation": "map-name-known-native-world-and-package-verification-pending",
       "saveNamespace": "nexavarkhos-v1",
       "packageDiscoveryPending": true,
-      "sourceMapPreserved": true
+      "sourceMapPreserved": true,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "chernaskaluxria-v1",
@@ -117,7 +133,9 @@
       "nativePackageFileObservedAt": "D:\\ANOMALIAZ-PRIGIMALIA\\unreal\\Content\\Maps\\PRIGIMALIA_CHERNASKALUXRIA.umap",
       "nativePackageFileObserved": true,
       "nativeWorldOpenedAndPlaytested": false,
-      "actualTerrainTilesVerified": false
+      "actualTerrainTilesVerified": false,
+      "targetLocalities": 190,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "falc-v1",
@@ -130,7 +148,9 @@
       "validation": "map-name-known-native-world-and-package-verification-pending",
       "saveNamespace": "falc-v1",
       "packageDiscoveryPending": true,
-      "sourceMapPreserved": true
+      "sourceMapPreserved": true,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     },
     {
       "id": "kolchiem-origins-v1",
@@ -143,15 +163,125 @@
       "validation": "map-name-known-native-world-and-package-verification-pending",
       "saveNamespace": "kolchiem-origins-v1",
       "packageDiscoveryPending": true,
-      "sourceMapPreserved": true
+      "sourceMapPreserved": true,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+    },
+    {
+      "id": "roskatvia-b1-v1",
+      "displayName": "ROSКАТVIA-B1",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_ROSKATVIA_B1",
+      "widthKm": 12.8,
+      "heightKm": 12.8,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "source-plan-only-native-world-not-yet-authored",
+      "saveNamespace": "roskatvia-b1-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "temperate-forests-plains-rivers-lakes",
+      "targetLocalities": 16,
+      "features": [
+        "continuous forest cover with varied density",
+        "rolling meadows and glades",
+        "meandering rivers",
+        "natural freshwater lakes"
+      ],
+      "landscapeIntent": {
+        "forestAndPlains": true,
+        "rivers": true,
+        "lakes": true
+      },
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+    },
+    {
+      "id": "nogokv-51-v1",
+      "displayName": "НОГОКВ-51",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_NOGOKV_51",
+      "widthKm": 15.3,
+      "heightKm": 15.3,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "source-plan-only-native-world-not-yet-authored",
+      "saveNamespace": "nogokv-51-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "polar-ocean-islands-traversable-ice",
+      "targetLocalities": 9,
+      "features": [
+        "archipelago surrounded by sea",
+        "polar coast",
+        "sea ice sectors",
+        "small fishing or research settlements"
+      ],
+      "areaTargetsKm2": {
+        "dryLand": 83,
+        "passableIce": 22,
+        "dryLandPlusIce": 105,
+        "openOcean": 129.09
+      },
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+    },
+    {
+      "id": "paradisiomania-v1",
+      "displayName": "PARADISIOMANIA",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_PARADISIOMANIA",
+      "widthKm": 10,
+      "heightKm": 10,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "source-plan-only-native-world-not-yet-authored",
+      "saveNamespace": "paradisiomania-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "tropical-mainland-ocean-islands",
+      "targetLocalities": 7,
+      "features": [
+        "central main landmass",
+        "surrounding sea",
+        "scattered islands",
+        "beaches and tropical forests"
+      ],
+      "areaTargetsKm2": {
+        "mainland": 60,
+        "sea": 30,
+        "islands": 10,
+        "landTotal": 70
+      },
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+    },
+    {
+      "id": "deadroot-v1",
+      "displayName": "DEADROOT",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_DEADROOT",
+      "widthKm": 8,
+      "heightKm": 8,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "source-plan-only-native-world-not-yet-authored",
+      "saveNamespace": "deadroot-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "deathmatch-competitive-arena",
+      "targetLocalities": 0,
+      "features": [
+        "competitive sightlines",
+        "cover",
+        "arena loops",
+        "multiple balanced spawns",
+        "no civilian traffic or ambient crowds"
+      ],
+      "gameMode": "FULL_PVP_DEATHMATCH",
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
     }
   ],
-  "mapCount": 11,
+  "mapCount": 15,
   "catalogAudit": {
-    "confirmedNamedMaps": 11,
+    "confirmedNamedMaps": 15,
     "verifiedSourcePackages": 6,
     "additionalSourcePackagesPendingVerification": 5,
     "categoryDistinction": "Six SKARVIK biome regions are NOT the 11 separate ANOMALIA’Z maps",
-    "protection": "Do not remove, rename, overwrite, or merge existing Unreal maps from D:/ANOMALIA during map catalogue repairs"
+    "protection": "Do not remove, rename, overwrite, or merge existing Unreal maps from D:/ANOMALIA during map catalogue repairs",
+    "originalWorldsPreserved": 11,
+    "additionalPlannedWorlds": 4,
+    "exactMeasurementsNeedRealEngineVerification": true,
+    "newWorldsNativePlayable": false,
+    "settlementScalingPolicy": "Size and biome determine count; 100% PVP DEADROOT has no civilian settlements. Unknown original map dimensions must be audited rather than guessed."
   }
 }
