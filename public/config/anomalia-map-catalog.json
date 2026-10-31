@@ -161,14 +161,19 @@
       "heightKm": 48,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "World-Partition-duplicate-pending-native-reload",
+      "validation": "native-World-Partition-duplicate-and-UWorld-reload-success-legacy-actors-not-migrated",
       "saveNamespace": "kolchiem-origins-v1",
       "nativeDuplicationMethod": "WorldPartitionRenameDuplicateBuilder source PRIGIMALIA_Inhabited_v2 without -Rename",
       "preserveSourceWorldAndSaves": true,
       "geographyReference": "User-provided composite image in conversation; retaining source world geometry and actors without inventing a new topography",
       "gameplayTested": false,
       "legacyUnrealAliasPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
-      "sourceMigrationIdentityVerified": true
+      "sourceMigrationIdentityVerified": true,
+      "nativeWorldDuplicated": true,
+      "nativeWorldLoadVerified": true,
+      "legacyActorMigrationVerified": false,
+      "originalLegacyExternalActors": 7584,
+      "duplicatedExternalActors": 1
     }
   ]
 }
