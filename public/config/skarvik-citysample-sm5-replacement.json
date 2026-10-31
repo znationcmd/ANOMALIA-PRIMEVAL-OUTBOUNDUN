@@ -28,7 +28,11 @@
   "simulation": {
     "movingTraffic": false,
     "movingCrowds": false,
-    "parkedCars": "optional_static_only"
+    "parkedCars": "optional_static_only",
+    "pedestrianAI": false,
+    "CitySampleMassTrafficSpawns": 0,
+    "CitySampleMassCrowdSpawns": 0,
+    "explanation": "Only City Sample ambient AI traffic and pedestrian crowds are excluded. Do not disable the game's separately authored drivable vehicles or gameplay NPCs."
   },
   "gates": {
     "sourceCitySampleInstalled": true,
@@ -48,7 +52,11 @@
     "crowdAssetFolderExcludedFromStage": true,
     "vehicleAssetFolderExcludedFromStage": true,
     "actorDependencyAuditPassed": false,
-    "CitySampleReferenceIntegrationComplete": false
+    "CitySampleReferenceIntegrationComplete": false,
+    "citySampleAmbientTrafficDisabledInActualUEWorld": false,
+    "citySampleAmbientCrowdsDisabledInActualUEWorld": false,
+    "anomaliaVehicleDrivabilityVerifiedInSkarvik": false,
+    "anomaliaNPCGameplayVerifiedInSkarvik": false
   },
   "guards": {
     "keepOriginalSkarvikAndSaves": true,
@@ -79,7 +87,10 @@
     "biomesAndSettlements": "public/config/skarvik-world-layout-48km.json",
     "terrainGeneration": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h",
     "nativeCreation": "unreal/Scripts/create_skarvik_city_world.py",
-    "importBlockedReason": "Only 7.6 GiB free on D; no City Sample package migration nor new Unreal world has run"
+    "importBlockedReason": "Only 7.6 GiB free on D; no City Sample package migration nor new Unreal world has run",
+    "lastConfirmedNativeCitySampleModuleBuild": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41216011393",
+    "lastConfirmedNativeCitySampleAssetLoad": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41216793025",
+    "cityNativeIntegrationUnderTest": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41216967126"
   },
   "assetImportPolicy": {
     "mode": "static-city-scene-only",
@@ -116,5 +127,27 @@
     "nativeCityAssetsMayStillReferenceExcludedClasses": true,
     "needsNativeAssetRegistryValidation": true,
     "needsActorRemovalFromWorldPartition": true
+  },
+  "gameplayIntegrationPolicy": {
+    "citySampleWorldPurpose": "static_environment_and_architecture_only",
+    "citySampleSpawners": {
+      "ambientVehicleTraffic": "disabled",
+      "wanderingPedestrianCrowd": "disabled",
+      "removeOrDisableWorldPartitionRuntimeSpawnersBeforePlaytest": true,
+      "preserveBuildingsRoadsDoorsAndStaticProps": true
+    },
+    "anomaliaOwnedSystems": {
+      "drivableVehicles": "allowed_and_preserved",
+      "npcGameplay": "allowed_and_preserved",
+      "roles": "quest_givers_vendors_police_medics_enemies_and_other_gameplay_npcs",
+      "doNotReuseCitySampleTrafficOrMassCrowdSpawnControllers": true,
+      "actualWorkingSpawnAndDrivingTestsRequired": true
+    },
+    "sourceSafety": {
+      "citySampleOriginalOnDReadOnly": true,
+      "originalSkarvikUnmodified": true,
+      "onlyModifyIsolatedCStageDuringIntegration": true
+    },
+    "completedGameplayVerification": false
   }
 }
