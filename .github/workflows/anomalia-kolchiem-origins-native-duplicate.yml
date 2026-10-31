@@ -31,7 +31,8 @@ jobs:
           d=next(m for m in maps if m['displayName']=='DRAZOVIA')
           k=next(m for m in maps if m['displayName']=='KOLCHIEM ORIGINS')
           assert d['originalUnrealPackage']=='/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate'
-          assert d['legacyUnrealPackage']==k['sourceUnrealPackage']=='/Game/Maps/ANOMALIA_Inhabited_v2'
+          assert d['legacyUnrealPackage']==k['legacyUnrealAliasPackage']=='/Game/Maps/ANOMALIA_Inhabited_v2'
+          assert k['sourceUnrealPackage']=='/Game/Maps/PRIGIMALIA_Inhabited_v2'
           assert k['originalUnrealPackage']=='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS'
           assert k['serverSelectable'] is False and k['gameplayTested'] is False
           ps=Path('scripts/windows/duplicate_kolchiem_origins_native_safe.ps1').read_text()
@@ -43,6 +44,8 @@ jobs:
           assert "Insufficient safe D: capacity" in ps
           assert "UnrealEditor.exe" in ps and "UnrealEditor-Cmd.exe" not in ps
           assert "Start-Process -FilePath $editor" in ps and "-Wait -PassThru" in ps
+          assert "$src='/Game/Maps/PRIGIMALIA_Inhabited_v2'" in ps
+          assert "$legacyAliasMap=" in ps and "Get-FileHash" in ps
           assert "if(Test-Path -LiteralPath $path)" in ps
           print('KOLCHIEM_ORIGINS_ELEVEN_MAPS_SOURCE_CHECKS_PASSED=true')
           PY
