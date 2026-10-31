@@ -1,8 +1,8 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "intent": "Map-specific original locality densities with native buildable terrain and preserved distinctive geography",
-  "designStatus": "PLANNING_ONLY_NOT_NATIVE_POPULATED",
-  "referenceBaseline": "SKARVIK 48x48 = 125; other maps intentionally less urbanized according to size and biomes",
+  "designStatus": "ALL_11_WORLDS_PLANNED_NATIVE_SETTLEMENT_POPULATION_INCOMPLETE",
+  "referenceBaseline": "ELEVEN original ANOMALIA'Z maps, not just the six entries in the separate engine runtime catalogue. SKARVIK 125; other maps intentionally fewer settlements according to biomes and user direction.",
   "maps": [
     {
       "mapId": "archipelago-v2",
@@ -93,6 +93,77 @@
       "villages": 6,
       "environment": "frozen volcanic wilderness, compact isolated villages",
       "status": "planning only"
+    },
+    {
+      "mapId": "solynacalyra",
+      "name": "SOLYNACALYRA",
+      "sizeKm": null,
+      "total": 20,
+      "majorCities": 1,
+      "smallTowns": 2,
+      "towns": 4,
+      "villages": 13,
+      "environment": "distinct original biome and relief to be confirmed",
+      "status": "planning only - map exists UE5; final terrain size not verified",
+      "technicalMapPath": null
+    },
+    {
+      "mapId": "nexavarkhos",
+      "name": "NEXAVARKHOS",
+      "sizeKm": null,
+      "total": 18,
+      "majorCities": 1,
+      "smallTowns": 1,
+      "towns": 4,
+      "villages": 12,
+      "environment": "distinct original biome and relief to be confirmed",
+      "status": "planning only - map exists UE5; final terrain size not verified",
+      "technicalMapPath": null
+    },
+    {
+      "mapId": "chernaskaluxria",
+      "name": "CHERNASKALUXRIA",
+      "sizeKm": [
+        100,
+        100
+      ],
+      "total": 80,
+      "majorCities": 5,
+      "smallTowns": 7,
+      "towns": 18,
+      "villages": 50,
+      "environment": "vast mixed survival wilderness; sparse settlements despite size",
+      "status": "planning only - world tile import incomplete (earlier report: 1/400)",
+      "technicalMapPath": null
+    },
+    {
+      "mapId": "falc",
+      "name": "F.A.L.C",
+      "sizeKm": [
+        26.5,
+        26.5
+      ],
+      "total": 20,
+      "majorCities": 1,
+      "smallTowns": 2,
+      "towns": 5,
+      "villages": 12,
+      "environment": "original F.A.L.C topography; balance towns against natural terrain",
+      "status": "planning only - final native import not verified",
+      "technicalMapPath": null
+    },
+    {
+      "mapId": "kolchiem-origins",
+      "name": "KOLCHIEM ORIGINS",
+      "sizeKm": null,
+      "total": 35,
+      "majorCities": 2,
+      "smallTowns": 3,
+      "towns": 8,
+      "villages": 22,
+      "environment": "retained historical old DRAZOVIA terrain, distinct from the new DRAZOVIA",
+      "status": "planning only - original world asset reported recovered, map area not verified",
+      "technicalMapPath": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL"
     }
   ],
   "constructionGuards": {
@@ -108,5 +179,15 @@
     "createUniqueVersionedMapsInCStage": true,
     "preserveAllExistingNamedWorlds": true,
     "locationNamesAndRoadGraphStillToBeDesignedForOtherMaps": true
+  },
+  "scope": {
+    "targetMapCount": 11,
+    "technicalRuntimeCatalogCurrentlyLists": 6,
+    "technicalCatalogNotExhaustive": true,
+    "remainingFiveNeedIndependentNativeAssetAudit": true,
+    "unknownSizesMustNotBeInvented": true,
+    "originalDrazoviaAndKolchiemOriginsRemainDistinct": true,
+    "citySampleTrafficAndCrowdsOff": true,
+    "originalDProtected": true
   }
 }
