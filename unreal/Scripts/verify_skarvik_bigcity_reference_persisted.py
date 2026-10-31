@@ -53,17 +53,25 @@ try:
  except Exception as exc:type_values["asset_path_nameError"]=str(exc)
  typename=" ".join(type_values.values())
  data["cityClassSoftObjectPathMethods"]=type_values
- data["levelInstanceClassPathConfirmed"]=bool("LevelInstance" in typename)
+ # ActorDesc.class_ is an opaque SoftObjectPath under UE5.8 Python; its
+ # string repr omits actual class. Native UClass is explicitly exposed by
+ # ActorDesc.native_class and is verified for the CitySample source actors.
+ native_class=cityref[0].native_class
+ data["nativeClassUObjectRepresentation"]=str(native_class)
+ data["nativeClassName"]=native_class.get_name() if native_class else None
+ data["levelInstanceClassPathConfirmed"]=bool(native_class and "LevelInstance" in data["nativeClassName"])
  data["persistedCityActorDescriptorClass"]=typename
  data["nativeLevelInstanceTypeConfirmed"]=data["levelInstanceClassPathConfirmed"]
  data["levelInstanceTypeConfirmedFromDescriptor"]=data["levelInstanceClassPathConfirmed"]
- data["sourceWorldReferenceNotYetVerifiedAfterReopen"]=not data["levelInstanceTypeConfirmedFromDescriptor"]
+ data["sourceWorldReferenceNotYetVerifiedAfterReopen"]=True
+ if not data["levelInstanceTypeConfirmedFromDescriptor"]:
+  raise RuntimeError("CitySample actor UClass not confirmed native LevelInstance: "+str(data["nativeClassUObjectRepresentation"]))
  unreal.log("SKARVIK_BIGCITY_PERSISTED_ACTOR_DESCRIPTOR_TYPE="+typename)
 
  for f in (TARGET,CITY,ORIGINAL):
   if hashlib.sha256(f.read_bytes()).hexdigest()!=hashes[str(f)]:
    raise RuntimeError("Read-only verification modified protected Unreal world")
- data["state"]="BIG_CITY_NAMED_ACTOR_DESCRIPTOR_PERSISTS_REFERENCE_TYPE_NEEDS_MORE_INSPECTION"
+ data["state"]="BIG_CITY_NATIVE_LEVELINSTANCE_CLASS_CONFIRMED_AFTER_REOPEN_SOURCE_WORLD_STREAMING_UNVERIFIED"
  data["referenceSavedAndReopened"]=bool(data["levelInstanceTypeConfirmedFromDescriptor"])
  data["namedActorDescriptorSavedAndReopened"]=True
  unreal.log("SKARVIK_BIG_CITY_NATIVE_REFERENCE_WP_DESCRIPTOR_PERSISTED=true")
