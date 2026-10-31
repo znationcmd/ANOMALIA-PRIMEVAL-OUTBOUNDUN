@@ -81,7 +81,7 @@ try:
     if abs(origin_z-100) > 0.1:
         raise RuntimeError("The 4x4 km City Sample pad was not created")
     start = actors.spawn_actor_from_class(
-        unreal.PlayerStart, unreal.Vector(200000, 800000, (origin_z+180)*100))
+        unreal.PlayerStart, unreal.Vector(200000, 800000, (origin_z+1.8)*100))
     if not start:
         raise RuntimeError("PlayerStart could not be created")
     start.set_actor_label("PRIGIMALIA_SKARVIK_CITY_TerrainOnly_PlayerStart")
