@@ -1,0 +1,91 @@
+name: ANOMALIA - FALC import approved user illustrated RAW16 26.5km into UE5.8
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-falc-approved-source-native-import.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  offline-source-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check FALC 2017x2017 native import scripts
+        run: |
+          python -m py_compile unreal/Scripts/create_falc_from_user_raw16_native.py
+          python - <<'PY'
+          from pathlib import Path
+          py=Path('unreal/Scripts/create_falc_from_user_raw16_native.py').read_text()
+          ps=Path('scripts/windows/import_falc_verified_zip_native_safe.ps1').read_text()
+          cpp=Path('unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.cpp').read_text()
+          assert '1d3ff52ed30338b59e6130a37aacc7e2a34367b7bc3b28faf4897b3bcfe6b5b7' in py
+          assert 'C389A367D26A5CDAB2D7E73B8129D45F9CF3E46BBE6E3B59A41BCA7FD9AC7DB5' in ps
+          assert 'FALC_26_5KM_MASTER_2017.r16' in cpp
+          assert 'PRIGIMALIA_FALC' in py and 'CreateFalcReferenceLandscape()' in cpp
+          assert 'FALC_PROTECTED_DRAZOVIA_SKARVIK_KOLCHIEM_UNCHANGED' in ps
+          assert 'gameplayTested' in ps and 'sourceElevationSurveyed' in py
+          print('FALC_NATIVE_IMPORT_SOURCE_GUARDS_PASS=true')
+          PY
+  windows-verified-user-source:
+    needs: offline-source-check
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check for exact user FALC ZIP in Downloads/Desktop or verified RAW16 on staging disk
+        id: source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $expectedZip='C389A367D26A5CDAB2D7E73B8129D45F9CF3E46BBE6E3B59A41BCA7FD9AC7DB5'
+          $expectedRaw='1D3FF52ED30338B59E6130A37AACC7E2A34367B7BC3B28FAF4897B3BCFE6B5B7'
+          $name='FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM.zip'
+          $loc=@((Join-Path $env:USERPROFILE 'Downloads'),(Join-Path $env:USERPROFILE 'Desktop'),'D:\ANOMALIAZ-PRIGIMALIA')
+          $found=$false
+          foreach($dir in $loc){
+            $p=Join-Path $dir $name
+            if((Test-Path -LiteralPath $p -PathType Leaf) -and (Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash -eq $expectedZip){$found=$true;Write-Host ('FALC_APPROVED_ARCHIVE_ON_PC='+$p);break}
+          }
+          $raw='D:\ANOMALIAZ-PRIGIMALIA\unreal\TerrainSource\FALC\FALC_26_5KM_MASTER_2017.r16'
+          if((Test-Path -LiteralPath $raw -PathType Leaf) -and (Get-FileHash -LiteralPath $raw -Algorithm SHA256).Hash -eq $expectedRaw){$found=$true;Write-Host 'FALC_APPROVED_MASTER_ALREADY_STAGED=true'}
+          if($found){ 'source_found=true' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8;Write-Host 'FALC_APPROVED_SOURCE_READY=true'}
+          else{'source_found=false' | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8;Write-Host 'FALC_APPROVED_SOURCE_NOT_ON_WINDOWS=true'}
+      - name: Compile guarded FALC importer and import user-authorized 2017 RAW16 into new native UE World Partition package
+        if: steps.source.outputs.source_found == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_falc_verified_zip_native_safe.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Native FALC import failed'}
+      - name: Report missing FALC user attachment transfer as not imported, without modifying any maps
+        if: steps.source.outputs.source_found != 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $folder=Join-Path $env:RUNNER_TEMP ('FALC_NATIVE_IMPORT_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $folder -Force|Out-Null
+          @{status='BLOCKED_EXACT_USER_SOURCE_ZIP_NOT_PRESENT_ON_PC';world='/Game/Maps/PRIGIMALIA_FALC';nativeImported=$false;originalMapsModified=$false}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $folder 'summary.json') -Encoding UTF8
+          Write-Host 'FALC_NATIVE_IMPORT_NOT_ATTEMPTED_SOURCE_MISSING=true'
+      - name: Upload FALC source/import receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-falc-native-status-${{ github.run_id }}
+          path: ${{ runner.temp }}/FALC_NATIVE_IMPORT_${{ github.run_id }}/*.json
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Save Unreal FALC native diagnostic logs if needed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-falc-native-errors-${{ github.run_id }}
+          path: ${{ runner.temp }}/FALC_NATIVE_IMPORT_${{ github.run_id }}/*.log
+          retention-days: 7
+          if-no-files-found: warn
