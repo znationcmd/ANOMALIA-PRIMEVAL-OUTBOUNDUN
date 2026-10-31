@@ -43,25 +43,43 @@ foreach($id in $names){
 if(Test-Path -LiteralPath $python){throw 'Preview Python script already staged; preserve existing work'}
 $sourceText=[IO.File]::ReadAllText($sourceCpp)
 $oldText=[IO.File]::ReadAllText($cpp)
-$needle='AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape('
-$after='AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile('
-$start=$sourceText.IndexOf($needle,[StringComparison]::Ordinal)
-$end=$sourceText.IndexOf($after,$start,[StringComparison]::Ordinal)
-$oldStart=$oldText.IndexOf($needle,[StringComparison]::Ordinal)
-$oldEnd=$oldText.IndexOf($after,$oldStart,[StringComparison]::Ordinal)
-if($start -lt 0 -or $end -le $start -or $oldStart -lt 0 -or $oldEnd -le $oldStart){throw 'Unexpected C++ source layout'}
-$patch=$sourceText.Substring($start,$end-$start)
-if(-not $patch.Contains('InspectNamedWorldPreviewComponents') -or $patch.Contains('Subsystem->ChangeGridSize(') -or -not $patch.Contains('_TerrainPreview')){throw 'Unsafe native importer patch'}
-$newCpp=$oldText.Substring(0,$oldStart)+$patch+$oldText.Substring($oldEnd)
+$extraSource=Join-Path $src 'AnomaliaZPrigimaliaExtraWorldHeights.h'
+$extraDest=Join-Path $native 'AnomaliaZPrigimaliaExtraWorldHeights.h'
+if(-not(Test-Path -LiteralPath $extraSource -PathType Leaf)){throw 'Missing source ExtraWorldHeights C++'}
+if(Test-Path -LiteralPath $extraDest){throw 'ExtraWorldHeights stage file already exists; preserve it'}
+$helper=' AnomaliaZPrigimaliaExtraWorlds::EWorld ResolveAdditionalWorld('
+$helperStart=$sourceText.IndexOf('namespace'+[char]10+'{'+[char]10+$helper,[StringComparison]::Ordinal)
+$methodStart=$sourceText.IndexOf('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(',[StringComparison]::Ordinal)
+$insertAt=$oldText.IndexOf('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape(',[StringComparison]::Ordinal)
+if($helperStart -lt 0 -or $methodStart -le $helperStart -or $insertAt -lt 0){throw 'Unexpected extra native world helper or stage insertion anchor'}
+$patch=$sourceText.Substring($helperStart,$methodStart-$helperStart)
+if(-not $patch.Contains('CreateNamedWorldLandscape(') -or -not $patch.Contains('NamedWorldHeight(') -or -not $patch.Contains('InspectNamedWorldPreviewComponents(') -or $patch.Contains('Subsystem->ChangeGridSize(') -or -not $patch.Contains('_TerrainPreview')){throw 'C++ map preview patch invalid'}
+foreach($needle in @('CreateNamedWorldLandscape(', 'NamedWorldHeight(', 'InspectNamedWorldPreviewComponents(', 'ResolveAdditionalWorld(')){
+ if($oldText.Contains($needle)){throw ('Extra world method already present; refuse duplicate: '+$needle)}
+}
+$newCpp=$oldText.Substring(0,$insertAt)+$patch+[Environment]::NewLine+$oldText.Substring($insertAt)
+$include='#include "AnomaliaZPrigimaliaExtraWorldHeights.h"'
+if(-not $newCpp.Contains($include)){
+ $anchor='#include "AnomaliaZPrigimaliaWorldImportLibrary.h"'
+ if(-not $newCpp.Contains($anchor)){throw 'C++ include insertion anchor missing'}
+ $newCpp=$newCpp.Replace($anchor,$anchor+[Environment]::NewLine+$include)
+}
 $sourceHdr=[IO.File]::ReadAllText($sourceHeader)
 $stagedHdr=[IO.File]::ReadAllText($header)
-$declaration='static int32 InspectNamedWorldPreviewComponents(AActor* Candidate, const FString& MapIdentifier);'
-$anchor='static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);'
-if(-not $sourceHdr.Contains($declaration) -or -not $stagedHdr.Contains($anchor)){throw 'Native headers incompatible'}
-if(-not $stagedHdr.Contains($declaration)){
- $addition=[Environment]::NewLine+' UFUNCTION(BlueprintPure, Category="ANOMALIA|World")'+[Environment]::NewLine+' '+$declaration
- $stagedHdr=$stagedHdr.Replace($anchor,$anchor+$addition)
+$anchor='static AActor* CreateArchipelagoLandscape();'
+if(-not $stagedHdr.Contains($anchor)){throw 'Staged header anchor missing'}
+foreach($decl in @(
+ 'static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);',
+ 'static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);',
+ 'static int32 InspectNamedWorldPreviewComponents(AActor* Candidate, const FString& MapIdentifier);'
+)){
+ if(-not $sourceHdr.Contains($decl)){throw ('Missing repository C++ declaration '+$decl)}
+ if($stagedHdr.Contains($decl)){throw 'Native declaration unexpectedly already staged'}
 }
+$headerAddition=[Environment]::NewLine+' UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")'+[Environment]::NewLine+' static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);'
+$headerAddition+=[Environment]::NewLine+' UFUNCTION(BlueprintPure, Category="ANOMALIA|World")'+[Environment]::NewLine+' static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);'
+$headerAddition+=[Environment]::NewLine+' UFUNCTION(BlueprintPure, Category="ANOMALIA|World")'+[Environment]::NewLine+' static int32 InspectNamedWorldPreviewComponents(AActor* Candidate, const FString& MapIdentifier);'
+$stagedHdr=$stagedHdr.Replace($anchor,$anchor+$headerAddition)
 $backup=Join-Path $stage ('Saved\NamedTerrainPreviews\source-backup-'+$env:GITHUB_RUN_ID)
 if(Test-Path -LiteralPath $backup){throw 'Source backup already exists for this run'}
 New-Item -ItemType Directory -Path $backup|Out-Null
@@ -69,6 +87,7 @@ Copy-Item -LiteralPath $cpp -Destination (Join-Path $backup 'WorldImportLibrary.
 Copy-Item -LiteralPath $header -Destination (Join-Path $backup 'WorldImportLibrary.h.bak')
 [IO.File]::WriteAllText($cpp,$newCpp,[Text.UTF8Encoding]::new($false))
 [IO.File]::WriteAllText($header,$stagedHdr,[Text.UTF8Encoding]::new($false))
+Copy-Item -LiteralPath $extraSource -Destination $extraDest
 Copy-Item -LiteralPath $pythonSource -Destination $python
 Write-Host 'SIX_PREVIEW_SAFE_STAGING_COMPLETE=true'
 $results=@()
