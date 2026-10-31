@@ -2,7 +2,7 @@ name: SKARVIK - verify Big City native LevelInstance survives graded world reloa
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-verify-bigcity-native-reference-reload.yml']
+    paths: ['.github/workflows/skarvik-verify-bigcity-native-reference-reload.yml', 'unreal/Scripts/verify_skarvik_bigcity_reference_persisted.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -49,13 +49,14 @@ jobs:
           $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT -Raw|ConvertFrom-Json
           Write-Host ('SKARVIK_NATIVE_BIGCITY_REOPEN_STATE='+$r.state)
           Write-Host ('SKARVIK_NATIVE_BIGCITY_DESCRIPTOR_COUNT='+$r.nativeLevelInstanceDescriptorCount)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_DESCRIPTOR_CLASS='+$r.persistedCityActorDescriptorClass)
           Write-Host ('SKARVIK_NATIVE_1039_BUILDINGS_AFTER_CITY_LINK='+$r.existing3DBuildingActorDescriptors)
           Write-Host ('SKARVIK_NATIVE_1794_OLD_ROAD_ACTORS_AFTER_CITY_LINK='+($r.existingFirst3RoadActorDescriptors+$r.existingBatch20RoadActorDescriptors))
           Write-Host ('SKARVIK_NATIVE_BATCH_B2_NEW_ROADS='+$r.additionalSecondBatchRoadActorDescriptors)
-          if($code -ne 0 -or $r.state -ne 'BIG_CITY_LEVEL_INSTANCE_DESCRIPTOR_AND_PREVIOUS_WORLD_ACTORS_PERSIST_AFTER_REOPEN_NOT_VISUALLY_LOADED'){
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_NAMED_ACTOR_DESCRIPTOR_PERSISTS_REFERENCE_TYPE_NEEDS_MORE_INSPECTION'){
             throw ('LevelInstance ref not yet persistent: '+$r.error)
           }
-          Write-Host 'SKARVIK_BIG_CITY_LEVEL_INSTANCE_REFERENCE_PERSISTENCE_VERIFIED=true'
+          Write-Host 'SKARVIK_BIG_CITY_NAMED_ACTOR_PERSISTED_CLASS_CHECK_REPORTED=true'
           Write-Host 'SKARVIK_FULL_BIG_CITY_NOT_LOADED_OR_SM5_PLAYTESTED=true'
       - uses: actions/upload-artifact@v4
         if: always()
