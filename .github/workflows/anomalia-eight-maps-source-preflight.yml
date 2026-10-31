@@ -36,7 +36,7 @@ jobs:
             $size=if($id -in @('KARSKOV','VORGRAD')){3025}elseif($id -in @('NEMORIS','DRAKHEIM')){2017}elseif($id -eq 'SOLYNACALYRA'){1513}else{1009}
             $raw=Join-Path $root ("TerrainSource\$id\$id.r16")
             $rawOk=(Test-Path -LiteralPath $raw -PathType Leaf) -and ((Get-Item -LiteralPath $raw).Length -eq 2*$size*$size)
-            $items+=@{id=$id;sourceRawPresent=$rawOk;sourceBytes=if(Test-Path -LiteralPath $raw){(Get-Item -LiteralPath $raw).Length}else{0};expectedBytes=2*$size*$size;mapPresent=Test-Path -LiteralPath $mapfile;partialAssets=@($parts|Where-Object{$_}).Count -gt 0}
+            $items+=@{id=$id;sourceRawPresent=$rawOk;sourceBytes=$(if(Test-Path -LiteralPath $raw){(Get-Item -LiteralPath $raw).Length}else{0});expectedBytes=2*$size*$size;mapPresent=Test-Path -LiteralPath $mapfile;partialAssets=@($parts|Where-Object{$_}).Count -gt 0}
             Write-Host ("MAP_SOURCE $id RAW=$rawOk MAP=$(Test-Path -LiteralPath $mapfile) EXTERNAL=$(@($parts|Where-Object{$_}).Count)")
           }
           $chdir=Join-Path $root 'TerrainSource\CHERNASKALUXRIA'
