@@ -1,0 +1,72 @@
+name: SKARVIK - attach Big City native level instance to 48km UE5 world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-integrate-city-level-instance.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  attach-city-instance:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify original SKARVIK and isolated C staging
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){throw 'Native City Sample city package absent'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'New 48km SKARVIK world missing'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original SKARVIK map missing'}
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_PRE_CITY_FREE_C_GIB="+[math]::Round($free,2))
+          if($free -lt 18){throw 'Less than 18GiB C reserve for native City Sample operations'}
+      - name: Test that Unreal Engine loads native Big City World before editing anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_citysample_level_instance.py'
+          $env:SKARVIK_CITY_AUDIT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-world-audit.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          $path=$env:SKARVIK_CITY_AUDIT_REPORT
+          if(!(Test-Path -LiteralPath $path)){throw 'No native city map audit result'}
+          $r=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
+          if($exit -ne 0 -or $r.status -ne 'BIG_CITY_UWORLD_LOADABLE_LEVEL_INSTANCE_API_AVAILABLE_NOT_INTEGRATED'){throw ('City map cannot load natively: '+$r.error)}
+          Write-Host 'SKARVIK_BIG_CITY_WORLDPARTITION_MAP_LOADABLE=true'
+      - name: Attach native LevelInstance without overwriting original world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\integrate_skarvik_citysample_level_instance.py'
+          $env:SKARVIK_CITY_INTEGRATION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-instance-result.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_CITY_INTEGRATION_REPORT)){throw 'No City Sample UE5 integration evidence'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_CITY_INTEGRATION_REPORT -Raw|ConvertFrom-Json
+          if($exit -ne 0 -or $r.state -ne 'CITY_LEVEL_INSTANCE_LINKED_IN_48KM_SKARVIK_NOT_VISUALLY_VALIDATED' -or !$r.cityWorldInstanceSaved){throw ('Big City could not be linked safely to SKARVIK: '+$r.error)}
+          Write-Host 'SKARVIK_NATIVE_BIG_CITY_LEVEL_INSTANCE_SAVED=true'
+          Write-Host 'SKARVIK_SM5_GAMEPLAY_AND_WORLD_PARTITION_CELL_VALIDATION_PENDING=true'
+      - name: Upload only audit reports, no City Sample licensed binaries
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-city-level-instance-integration-evidence
+          if-no-files-found: warn
+          path: |
+            skarvik-city-world-audit.json
+            skarvik-city-instance-result.json
