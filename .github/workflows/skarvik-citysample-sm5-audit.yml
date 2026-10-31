@@ -21,7 +21,7 @@ jobs:
           persist-credentials: false
           clean: false
       - name: Inspect City Sample and protected SKARVIK (read only)
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-citysample-sm5-audit.json'
