@@ -638,7 +638,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
  Land->CreateLandscapeInfo();
  Land->PostEditChange();
- const int32 Expected=(Size==3025 || Size==1513)?576:256;
+ const int32 Expected=(Size==3025)?576:(Size==2017)?256:(Size==1513)?144:(Size==1009)?64:0;
  if(Land->LandscapeComponents.Num()!=Expected)
  {
   UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
@@ -662,7 +662,7 @@ int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectNamedWorldPreviewComponents
  ALandscape* Land=Cast<ALandscape>(Candidate);
  const EWorld Kind=ResolveAdditionalWorld(MapIdentifier);
  const int32 Size=Resolution(Kind);
- const int32 Expected=(Size==3025 || Size==1513)?576:256;
+ const int32 Expected=(Size==3025)?576:(Size==2017)?256:(Size==1513)?144:(Size==1009)?64:0;
  if(!Land || Size==0 || !Land->GetWorld() ||
     Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier+TEXT("_TerrainPreview"))
   return -1;
