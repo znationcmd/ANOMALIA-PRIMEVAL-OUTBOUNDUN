@@ -1,0 +1,48 @@
+name: SKARVIK - native read-only audit of real City Sample road meshes
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-real-road-mesh-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  road-assets:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect original maps and inspect live native road mesh geometry only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker'}
+          if(!(Test-Path 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original map missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Unreal already active'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_real_road_meshes.py'
+          $env:SKARVIK_NATIVE_ROAD_MESH_AUDIT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-road-mesh-sizes.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_NATIVE_ROAD_MESH_AUDIT)){throw "No road audit report, exit=$rc"}
+          $report=Get-Content $env:SKARVIK_NATIVE_ROAD_MESH_AUDIT -Raw|ConvertFrom-Json
+          if($rc -ne 0 -or $report.state -ne 'REAL_ROAD_STATIC_MESHES_AUDITED_NO_MAP_CHANGED'){throw ("Native road asset test failed: "+$report.error)}
+          foreach($entry in $report.meshes.PSObject.Properties){
+            Write-Host ("SKARVIK_REAL_ROAD_ASSET={0} AVAILABLE={1} DIMENSIONS_METRES={2}" -f $entry.Name,$entry.Value.available,($entry.Value.dimensionsMeters -join 'x'))
+          }
+          Write-Host 'SKARVIK_NATIVE_REAL_ROAD_MESH_AUDIT_PASSED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-road-mesh-dimensions
+          path: skarvik-native-road-mesh-sizes.json
+          if-no-files-found: warn
