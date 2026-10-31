@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Ten independent ANOMALIA'Z worlds. F.A.L.C is a distinct tenth map referenced to the user's latest supplied fused topography; photo-based native landscape not yet imported.",
+  "description": "Eleven distinct planned ANOMALIA'Z worlds. DRAZOVIA uses its imported new-reference V3 terrain candidate; KOLCHIEM ORIGINS is an independent duplicate of the prior DRAZOVIA /Game/Maps/ANOMALIA_Inhabited_v2, pending native validation. Do not infer gameplay-ready from catalog.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -16,13 +16,16 @@
     {
       "id": "inhabited-v2",
       "displayName": "DRAZOVIA",
-      "originalUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "originalUnrealPackage": "/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate",
       "widthKm": 48,
       "heightKm": 48,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "authored-editor-not-full-gameplay-tested",
-      "saveNamespace": "inhabited-v2"
+      "validation": "native-V3-heightfield-imported-576-components-visual-grid-and-gameplay-not-final",
+      "saveNamespace": "inhabited-v2",
+      "legacyUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "sourceType": "user-approved-new-reference-synthetic-RAW16",
+      "notForReleaseUntilWorldPartitionValidated": true
     },
     {
       "id": "karskov-v1",
@@ -148,6 +151,22 @@
       "actualWaterAreaKm2": null,
       "worldPartitionPlanned": true,
       "topographicFidelity": "coastlines-and-region-layout-from-user-image; original terrain elevations require separately generated heights"
+    },
+    {
+      "id": "kolchiem-origins-v1",
+      "displayName": "KOLCHIEM ORIGINS",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS",
+      "sourceUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "widthKm": 48,
+      "heightKm": 48,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "World-Partition-duplicate-pending-native-save-and-reload",
+      "saveNamespace": "kolchiem-origins-v1",
+      "nativeDuplicationMethod": "WorldPartitionRenameDuplicateBuilder without -Rename",
+      "preserveSourceWorldAndSaves": true,
+      "geographyReference": "User-provided composite image in conversation; retaining source world geometry and actors without inventing a new topography",
+      "gameplayTested": false
     }
   ]
 }
