@@ -33,7 +33,14 @@ try {
  if(-not $Apply){$result.state='SAFE_CORE_STATIC_ASSETS_READY';return}
  foreach($f in $folders){
   $from=Join-Path $src $f;$to=Join-Path $dst $f
-  if(Test-Path $to){throw "Destination folder already exists: $to"}
+  if(Test-Path $to){
+   # The newly created SKARVIK terrain already owns external actor packages.
+   # Preserve them; refuse any source/destination filename collision.
+   foreach($existing in (Get-ChildItem -LiteralPath $to -Recurse -File -ErrorAction Stop)){
+    $relative=$existing.FullName.Substring($to.Length).TrimStart('\\')
+    if(Test-Path -LiteralPath (Join-Path $from $relative)){throw "Staged source filename collision in $f : $relative"}
+   }
+  }
   & robocopy.exe $from $to /E /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
   if($LASTEXITCODE -ge 8){throw "Static folder copy failed: $f"}
   Write-Host "SKARVIK_STATIC_FOLDER_STAGED=$f"
