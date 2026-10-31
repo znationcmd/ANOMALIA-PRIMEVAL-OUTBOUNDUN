@@ -1,0 +1,38 @@
+name: ANOMALIA - safe read-only native terrain stage C++ compatibility probe
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-six-map-stage-compatibility-readonly.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  cxx-inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect staged native C++ symbol anchors and included source headers read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia\World'
+          $cpp=Join-Path $source 'AnomaliaZPrigimaliaWorldImportLibrary.cpp'
+          $h=Join-Path $source 'AnomaliaZPrigimaliaWorldImportLibrary.h'
+          $c=Get-Content -LiteralPath $cpp -Raw
+          $headers=Get-Content -LiteralPath $h -Raw
+          Write-Host ('STAGE_CPP_BYTES='+$c.Length)
+          foreach($needle in @('CreateNamedWorldLandscape(', 'CreateChernaskaluxriaLandscapeTile(', 'CreateArchipelagoLandscape(', 'CreateDrazoviaIzurviveCandidateV3Landscape(', 'NamedWorldHeight(', 'ResolveAdditionalWorld(', 'AnomaliaZPrigimaliaExtraWorldHeights.h', 'ChangeGridSize(', 'InspectNamedWorldPreviewComponents(')){
+            Write-Host ('STAGE_SYMBOL '+$needle+'='+$c.Contains($needle))
+          }
+          foreach($needle in @('CreateNamedWorldLandscape(', 'CreateArchipelagoLandscape(', 'CreateDrazoviaIzurviveCandidateV3Landscape(', 'InspectNamedWorldPreviewComponents(')){
+            Write-Host ('STAGE_HEADER '+$needle+'='+$headers.Contains($needle))
+          }
+          Write-Host ('STAGE_EXTRA_WORLD_HEIGHTS_EXISTS='+(Test-Path -LiteralPath (Join-Path $source 'AnomaliaZPrigimaliaExtraWorldHeights.h') -PathType Leaf))
+          Write-Host 'READ_ONLY_STAGE_CPP_PROBE_COMPLETED=true'

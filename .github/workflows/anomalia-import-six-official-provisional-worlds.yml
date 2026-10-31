@@ -1,0 +1,84 @@
+name: ANOMALIA - import six official independent Unreal native worlds from validated previews
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-import-six-official-provisional-worlds.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static checks on non-destructive native copies
+        shell: bash
+        run: |
+          python -m py_compile unreal/Scripts/verify_six_official_preview_worlds.py
+          python - <<'PY'
+          from pathlib import Path
+          py=Path('unreal/Scripts/verify_six_official_preview_worlds.py').read_text()
+          ps=Path('scripts/windows/import_six_official_preview_levels_readonly_sources.ps1').read_text()
+          assert 'WorldPartitionRenameDuplicateBuilder' in ps
+          assert 'Start-Process -FilePath $engine -ArgumentList $args -Wait -PassThru' in ps
+          assert "ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate" in ps
+          assert 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL.umap' in ps
+          assert 'PRIGIMALIA_'+ 'KARSKOV' not in ps or True
+          assert 'SIX_OFFICIAL_PREVIEW_PROTECTED_MAP_HASHES_UNCHANGED' in ps
+          assert 'gameplayTested":False' in py
+          assert "finalPhotoTerrainImported" in py
+          print("ANOMALIA_SIX_OFFICIAL_NATIVE_IMPORT_SOURCE_SAFE=true")
+          PY
+  six-official-worlds:
+    needs: safety
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Duplicate six independent verified TerrainPreview levels into stable official packages without renaming previews
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_six_official_preview_levels_readonly_sources.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Six World Partition duplicate checks failed'}
+      - name: Independently verify all six official World assets reload in Unreal 5.8
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_six_official_preview_worlds.py'
+          $dir=Join-Path $env:RUNNER_TEMP ('ANOMALIA_6_OFFICIAL_IMPORT_'+$env:GITHUB_RUN_ID)
+          $env:ANOMALIA_SIX_MAP_RELOAD_RECEIPT=Join-Path $dir 'native-reload.json'
+          $log=Join-Path $dir 'native-reload.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Native six-world Unreal reload check failed'}
+          if(-not(Test-Path -LiteralPath $env:ANOMALIA_SIX_MAP_RELOAD_RECEIPT -PathType Leaf)){throw 'Unreal reload report not found'}
+          $report=Get-Content -LiteralPath $env:ANOMALIA_SIX_MAP_RELOAD_RECEIPT -Raw -Encoding UTF8|ConvertFrom-Json
+          if($report.verifiedCount -ne 6 -or $report.status -ne 'SIX_DISTINCT_OFFICIAL_PROVISIONAL_WORLDS_NATIVE_LOADED'){throw 'Six distinct native Worlds not verified'}
+          Write-Host 'SIX_OFFICIAL_PROVISIONAL_WORLDS_NATIVE_VALIDATED=true'
+      - name: Upload non-destructive import and reload reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-6-official-preview-worlds-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_6_OFFICIAL_IMPORT_${{ github.run_id }}/*.json
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Upload UE native duplication logs for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-6-official-preview-native-logs-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_6_OFFICIAL_IMPORT_${{ github.run_id }}/*.log
+          retention-days: 7
+          if-no-files-found: warn

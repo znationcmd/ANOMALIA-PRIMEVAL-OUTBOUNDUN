@@ -1,0 +1,83 @@
+name: KOLCHIEM - recover full historical 7584 actor World in isolated C scratch
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/kolchiem-full-legacy-recovery-scratch-native.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-safety:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Validate isolated scratch-only source and native reload scripts
+        run: |
+          python -m py_compile unreal/Scripts/verify_kolchiem_full_legacy_readonly.py
+          python - <<'PY'
+          from pathlib import Path
+          ps=Path('scripts/windows/kolchiem_full_legacy_scratch_recovery.ps1').read_text()
+          py=Path('unreal/Scripts/verify_kolchiem_full_legacy_readonly.py').read_text()
+          assert 'ANOMALIA_Inhabited_v2' in ps
+          assert r'D:\ANOMALIA\unreal' in ps
+          assert 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL' in ps and 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL' in py
+          assert 'Start-Process -FilePath $editor' in ps and '-Wait -PassThru' in ps
+          assert "Copy-Item -LiteralPath $originalMap" in ps
+          assert 'if($copied.Count -lt [Math]::Ceiling($srcFiles.Count*.99))' in ps
+          assert 'PROTECTED_EXISTING_WORLD_CHANGED' in ps
+          assert 'Copy-Item -LiteralPath $scratchDest -Destination $targetMap' in ps
+          assert "SOURCE" not in py or 'native' in py
+          print('KOLCHIEM_ORIGINAL_FULL_SCRATCH_GUARDS_VALIDATED=true')
+          PY
+  native-recovery:
+    needs: source-safety
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Build full legacy 7584-actor candidate in C scratch; promote only if source count matches
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/kolchiem_full_legacy_scratch_recovery.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Full legacy scratch recovery failed'}
+      - name: Independently reopen full recovered World in installed Unreal 5.8 and count external actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $folder=Join-Path $env:RUNNER_TEMP ('KOLCHIEM_FULL_RECOVERY_'+$env:GITHUB_RUN_ID)
+          $env:ANOMALIA_KOLCHIEM_FULL_NATIVE_REPORT=Join-Path $folder 'native-world-reload.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_kolchiem_full_legacy_readonly.py'
+          $log=Join-Path $folder 'native-world-reload.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Native full World asset reload failed'}
+          if(-not(Test-Path -LiteralPath $env:ANOMALIA_KOLCHIEM_FULL_NATIVE_REPORT -PathType Leaf)){throw 'Full native World reload receipt missing'}
+          $data=Get-Content -LiteralPath $env:ANOMALIA_KOLCHIEM_FULL_NATIVE_REPORT -Raw -Encoding UTF8 | ConvertFrom-Json
+          if($data.externalActorFiles -lt 7500 -or $data.status -ne 'FULL_LEGACY_NATIVE_WORLD_RELOADED_EXTERNAL_ACTORS_PRESENT_NOT_PLAYTESTED'){throw 'Full old-world actors not independently validated'}
+          Write-Host ('KOLCHIEM_FULL_LEGACY_UE5_NATIVE_LOADED_ACTORS='+$data.externalActorFiles)
+      - name: Preserve native scratch commandlet diagnostics and map count report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kolchiem-full-legacy-native-evidence-${{ github.run_id }}
+          retention-days: 7
+          path: ${{ runner.temp }}/KOLCHIEM_FULL_RECOVERY_${{ github.run_id }}/*.json
+          if-no-files-found: warn
+      - name: Preserve crash trace and UE commandlet warnings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kolchiem-full-legacy-native-logs-${{ github.run_id }}
+          retention-days: 7
+          path: ${{ runner.temp }}/KOLCHIEM_FULL_RECOVERY_${{ github.run_id }}/*.log
+          if-no-files-found: warn

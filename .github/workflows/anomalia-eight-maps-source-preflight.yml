@@ -1,0 +1,58 @@
+name: ANOMALIA - read only heightmap source readiness before eight native maps
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-eight-maps-source-preflight.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-terrain-readiness:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Scan protected stage for existing heightmaps and new world files (read-only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $catalog=(Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\anomalia-map-catalog.json') -Raw -Encoding UTF8|ConvertFrom-Json)
+          $items=@()
+          $names=@('KARSKOV','VORGRAD','NEMORIS','DRAKHEIM','SOLYNACALYRA','NEXAVARKHOS')
+          foreach($id in $names){
+            $mapfile=Join-Path $root ("Content\Maps\PRIGIMALIA_$id.umap")
+            $parts=@('Content\__ExternalActors__\Maps','Content\__ExternalObjects__\Maps','Content\Anomalia\World')|ForEach-Object{
+              $leaf=if($_ -like '*World'){"NewMaps_$id"}else{"PRIGIMALIA_$id"}
+              Test-Path -LiteralPath (Join-Path (Join-Path $root $_) $leaf)
+            }
+            $size=if($id -in @('KARSKOV','VORGRAD')){3025}elseif($id -in @('NEMORIS','DRAKHEIM')){2017}elseif($id -eq 'SOLYNACALYRA'){1513}else{1009}
+            $raw=Join-Path $root ("TerrainSource\$id\$id.r16")
+            $rawOk=(Test-Path -LiteralPath $raw -PathType Leaf) -and ((Get-Item -LiteralPath $raw).Length -eq 2*$size*$size)
+            $items+=@{id=$id;sourceRawPresent=$rawOk;sourceBytes=$(if(Test-Path -LiteralPath $raw){(Get-Item -LiteralPath $raw).Length}else{0});expectedBytes=2*$size*$size;mapPresent=Test-Path -LiteralPath $mapfile;partialAssets=@($parts|Where-Object{$_}).Count -gt 0}
+            Write-Host ("MAP_SOURCE $id RAW=$rawOk MAP=$(Test-Path -LiteralPath $mapfile) EXTERNAL=$(@($parts|Where-Object{$_}).Count)")
+          }
+          $chdir=Join-Path $root 'TerrainSource\CHERNASKALUXRIA'
+          $tiles=@(Get-ChildItem -LiteralPath $chdir -Filter 'CHERNASKALUXRIA_x??_y??.r16' -File -ErrorAction SilentlyContinue)
+          Write-Host ("CHERNASKALUXRIA_SOURCE_TILES="+$tiles.Count+"/400")
+          $falc=@(Get-ChildItem -LiteralPath (Join-Path $root 'TerrainSource') -File -Recurse -ErrorAction SilentlyContinue|Where-Object{$_.Name -match 'FALC|F\.A\.L\.C'})
+          Write-Host ("FALC_SOURCE_CANDIDATES="+$falc.Count)
+          $reportDir=Join-Path $env:RUNNER_TEMP ('ANOMALIA_SOURCE_PREFLIGHT_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $reportDir -Force|Out-Null
+          @{maps=$items;chernaskaluxriaTileCount=$tiles.Count;falcSourceCandidates=@($falc|Select-Object -ExpandProperty FullName);stage=$root;readOnly=$true}|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $reportDir 'source-readiness.json') -Encoding UTF8
+          Write-Host 'ANOMALIA_TERRAIN_INPUT_PREFLIGHT_COMPLETED=true'
+      - name: Upload source readiness report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-8-terrain-preflight-${{ github.run_id }}
+          retention-days: 7
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/ANOMALIA_SOURCE_PREFLIGHT_${{ github.run_id }}/*.json

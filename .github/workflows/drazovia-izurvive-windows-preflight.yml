@@ -1,0 +1,69 @@
+name: DRAZOVIA - Windows read-only native import preflight (NEW image)
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/drazovia-izurvive-windows-preflight.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  preflight:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Read-only Windows UE5 source and staged-project preflight
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\\ANOMALIA'
+          $stage='D:\\ANOMALIAZ-PRIGIMALIA'
+          $project=Join-Path $stage 'unreal/AnomaliaZPrigimalia.uproject'
+          $marker=Join-Path $stage 'unreal/Saved/BrandMigration/verified-source-backup.marker'
+          $raw=Join-Path $stage 'unreal/TerrainSource/DRAZOVIA_NEW_REFERENCE/DRAZOVIA_NEW_TOPO_48KM_3025.r16'
+          $newMap=Join-Path $stage 'unreal/Content/Maps/ANOMALIA_DrazoviaTopo_NewReference_Candidate.umap'
+          $original=Join-Path $root 'unreal/AnomaliaPrimeval.uproject'
+          $editor=if ($env:UE_ROOT) { Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe' } else { '' }
+          $runner=[IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\\')
+          $readiness=[ordered]@{
+            machine=$env:COMPUTERNAME
+            sourceOriginalPresent=(Test-Path -LiteralPath $original)
+            independentStagePresent=(Test-Path -LiteralPath $project)
+            stageCopyBackupMarkerPresent=(Test-Path -LiteralPath $marker)
+            unrealEditorCmdPresent=($editor -and (Test-Path -LiteralPath $editor))
+            projectLockedByEditor=(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count -gt 0)
+            originalProjectNotRunnerCheckout=(-not ($runner.Equals($root,[StringComparison]::OrdinalIgnoreCase) -or $runner.StartsWith(($root+'\\'),[StringComparison]::OrdinalIgnoreCase)))
+            newR16SourcePresent=(Test-Path -LiteralPath $raw)
+            sourceR16ShaMatches=$false
+            newCandidateAlreadyExists=(Test-Path -LiteralPath $newMap)
+            originalProjectModified=$false
+            action='READ_ONLY_PREFLIGHT_NO_UNREAL_IMPORT'
+          }
+          if ($readiness.newR16SourcePresent) {
+            $item=Get-Item -LiteralPath $raw
+            if ($item.Length -eq 18301250) {
+              $readiness.sourceR16ShaMatches=((Get-FileHash -LiteralPath $raw -Algorithm SHA256).Hash -ieq '704222bd547c6ec4a417a20e7b580aaefec1db769d18a4b331adf2ac0d263e9c')
+            }
+          }
+          $path=Join-Path $env:RUNNER_TEMP 'drazovia-izurvive-preflight.json'
+          $readiness | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $path -Encoding UTF8
+          Get-Content -LiteralPath $path
+          if (-not $readiness.sourceOriginalPresent -or -not $readiness.independentStagePresent -or -not $readiness.stageCopyBackupMarkerPresent -or -not $readiness.unrealEditorCmdPresent -or -not $readiness.originalProjectNotRunnerCheckout) { throw 'Stage/Windows preflight BLOCKED. No native operations performed.' }
+          if ($readiness.projectLockedByEditor) { throw 'Other Unreal process running. No operations performed.' }
+          if (-not $readiness.newR16SourcePresent -or -not $readiness.sourceR16ShaMatches) { throw 'New user-approved RAW16 not on staged Windows host. No import attempted.' }
+          if ($readiness.newCandidateAlreadyExists) { throw 'New candidate already exists. Inspect before overwriting.' }
+          Write-Host 'DRAZOVIA_IZURVIVE_NATIVE_IMPORT_PREREQUISITES_READY=true'
+      - name: Preserve Windows preflight report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: drazovia-new-reference-windows-preflight-${{ github.run_id }}
+          if-no-files-found: warn
+          path: ${{ runner.temp }}/drazovia-izurvive-preflight.json

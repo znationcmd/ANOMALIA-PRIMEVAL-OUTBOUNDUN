@@ -18,13 +18,40 @@ public:
      Never touches /Game/Maps/ANOMALIA_Inhabited_v2 or SKARVIK. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateDrazoviaTopoCandidateLandscape();
+ /** Create an isolated candidate from the NEW iZurvive reference (not the older FALC/Drazovia photo).
+     Source: TerrainSource/DRAZOVIA_NEW_REFERENCE/DRAZOVIA_NEW_TOPO_48KM_3025.r16.
+     Strictly refuses original Inhabited_v2 and existing candidate landscapes. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateLandscape();
+ // Native v2 candidate: isolated from the previous failed attempt and old world.
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateV2Landscape();
+ /** Verify the native LandscapeComponents array, not Python's generic actor component enumeration. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectDrazoviaIzurviveCandidateV2Components(AActor* Candidate);
+ // V3 preserves the complete 576-component Landscape before grid redistribution.
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateDrazoviaIzurviveCandidateV3Landscape();
+ /** Native F.A.L.C reference 26.5x26.5km RAW16 import, separate from all other maps. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateFalcReferenceLandscape();
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectFalcReferenceComponents(AActor* Candidate);
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectDrazoviaIzurviveCandidateV3Components(AActor* Candidate);
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
+ /** Checks native Landscape components BEFORE deferred partition migration. Preview map only. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectNamedWorldPreviewComponents(AActor* Candidate, const FString& MapIdentifier);
  /** Import ONE verified 5km CHERNASKALUXRIA source tile into its owned world.
      253x253 R16 samples -> four landscape components. Never merges another map. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row);
+ /** Checks native components before World Partition grid/proxy redistribution. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectChernaskaluxriaTileComponents(AActor* Candidate);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")

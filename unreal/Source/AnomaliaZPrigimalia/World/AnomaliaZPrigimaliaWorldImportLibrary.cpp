@@ -337,6 +337,322 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaTopoCandidateLands
 #endif
 }
 
+// Isolated third-party image-derived new reference; only safe on a new, empty candidate map.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaIzurviveCandidateLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=3025;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReference_Candidate"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("DRAZOVIA_NEW_REFERENCE"),TEXT("DRAZOVIA_NEW_TOPO_48KM_3025.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("DRAZOVIA_Izurvive_NewReference_48km"));
+ Land->SetActorLocation(FVector(-2400000.,-2400000.,0.));
+ Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE: incomplete Landscape %d != 576"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+
+// New candidate V2, isolated after prior native import succeeded but Python enumeration failed.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaIzurviveCandidateV2Landscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=3025;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV2_Candidate"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V2: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V2: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("DRAZOVIA_NEW_REFERENCE"),TEXT("DRAZOVIA_NEW_TOPO_48KM_3025.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V2: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("DRAZOVIA_Izurvive_NewReferenceV2_48km"));
+ Land->SetActorLocation(FVector(-2400000.,-2400000.,0.));
+ Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V2: incomplete Landscape %d != 576"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectDrazoviaIzurviveCandidateV2Components(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV2_Candidate"))
+  return -1;
+ const int32 N=Land->LandscapeComponents.Num();
+ if(N!=576 || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA V2 native inspection: invalid component count %d or missing LandscapeInfo"),N);
+  return -1;
+ }
+ for(const ULandscapeComponent* Component : Land->LandscapeComponents)
+ {
+  if(!IsValid(Component) || Component->GetOwner()!=Land)
+  {
+   UE_LOG(LogTemp,Error,TEXT("DRAZOVIA V2 native inspection: null/foreign LandscapeComponent"));
+   return -1;
+  }
+ }
+ UE_LOG(LogTemp,Display,TEXT("DRAZOVIA V2 native inspection: validated %d native LandscapeComponents"),N);
+ return N;
+#else
+ return -1;
+#endif
+}
+
+// Verified preliminary import: retain native components, defer landscape streaming split.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateDrazoviaIzurviveCandidateV3Landscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=3025;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V3: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V3: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("DRAZOVIA_NEW_REFERENCE"),TEXT("DRAZOVIA_NEW_TOPO_48KM_3025.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V3: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("DRAZOVIA_Izurvive_NewReferenceV3_48km"));
+ Land->SetActorLocation(FVector(-2400000.,-2400000.,0.));
+ Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA IZURVIVE V3: incomplete Landscape %d != 576"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ // V3: DO NOT partition the Landscape here. ChangeGridSize previously migrated the
+ // 576 components away from the root actor, causing V1/V2's post-import checks
+ // to observe zero. Save and verify the actual terrain before any later grid split.
+ UE_LOG(LogTemp,Display,TEXT("DRAZOVIA V3: 576 root components verified; Landscape grid partitioning deferred"));
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectDrazoviaIzurviveCandidateV3Components(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate"))
+  return -1;
+ const int32 N=Land->LandscapeComponents.Num();
+ if(N!=576 || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("DRAZOVIA V3 native inspection: invalid component count %d or missing LandscapeInfo"),N);
+  return -1;
+ }
+ for(const ULandscapeComponent* Component : Land->LandscapeComponents)
+ {
+  if(!IsValid(Component) || Component->GetOwner()!=Land)
+  {
+   UE_LOG(LogTemp,Error,TEXT("DRAZOVIA V3 native inspection: null/foreign LandscapeComponent"));
+   return -1;
+  }
+ }
+ UE_LOG(LogTemp,Display,TEXT("DRAZOVIA V3 native inspection: validated %d native LandscapeComponents"),N);
+ return N;
+#else
+ return -1;
+#endif
+}
+
+
+// Dedicated F.A.L.C reference importer; no premature Landscape partitioning.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateFalcReferenceLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ constexpr int32 Size=2017;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: wrong editor world; original v2 is protected"));
+  return nullptr;
+ }
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: landscape already present; refusing to overlay"));
+  return nullptr;
+ }
+ const FString Source=FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource"),TEXT("FALC"),TEXT("FALC_26_5KM_MASTER_2017.r16"));
+ TArray<uint8> SourceBytes;
+ constexpr int64 ExpectedBytes=int64(Size)*int64(Size)*2;
+ if(!FFileHelper::LoadFileToArray(SourceBytes,*Source) || SourceBytes.Num()!=ExpectedBytes)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: missing/invalid image-derived raw heightmap: %s"),*Source);
+  return nullptr;
+ }
+ TArray<uint16> HeightsU16;
+ HeightsU16.SetNumUninitialized(Size*Size);
+ // Windows x64 little-endian: matches the exported R16 stream.
+ FMemory::Memcpy(HeightsU16.GetData(),SourceBytes.GetData(),SourceBytes.Num());
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("FALC_Reference_26_5km"));
+ Land->SetActorLocation(FVector(-1325000.,-1325000.,0.));
+ Land->SetActorScale3D(FVector(2650000./(Size-1),2650000./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(HeightsU16));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=256)
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE: incomplete Landscape %d != 256"),
+         Land->LandscapeComponents.Num());
+  World->DestroyActor(Land);
+  return nullptr;
+ }
+ // V3: DO NOT partition the Landscape here. ChangeGridSize previously migrated the
+ // 576 components away from the root actor, causing V1/V2's post-import checks
+ // to observe zero. Save and verify the actual terrain before any later grid split.
+ UE_LOG(LogTemp,Display,TEXT("FALC REFERENCE: 256 root components verified; Landscape grid partitioning deferred"));
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectFalcReferenceComponents(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+  return -1;
+ const int32 N=Land->LandscapeComponents.Num();
+ if(N!=256 || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE native inspection: invalid component count %d or missing LandscapeInfo"),N);
+  return -1;
+ }
+ for(const ULandscapeComponent* Component : Land->LandscapeComponents)
+ {
+  if(!IsValid(Component) || Component->GetOwner()!=Land)
+  {
+   UE_LOG(LogTemp,Error,TEXT("FALC REFERENCE native inspection: null/foreign LandscapeComponent"));
+   return -1;
+  }
+ }
+ UE_LOG(LogTemp,Display,TEXT("FALC REFERENCE native inspection: validated %d native LandscapeComponents"),N);
+ return N;
+#else
+ return -1;
+#endif
+}
+
+
+
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
 
@@ -368,7 +684,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
  const int32 Side=SideMeters(Kind),Size=Resolution(Kind);
  if(Side==0 || Size==0)return nullptr;
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
- if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier)return nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier+TEXT("_TerrainPreview"))return nullptr;
  for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr; // Never overlay existing terrain.
  TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
  const double Half=double(Side)/2.;
@@ -410,21 +726,49 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
  Land->CreateLandscapeInfo();
  Land->PostEditChange();
- const int32 Expected=(Size==3025 || Size==1513)?576:256;
+ const int32 Expected=(Size==3025)?576:(Size==2017)?256:(Size==1513)?144:(Size==1009)?64:0;
  if(Land->LandscapeComponents.Num()!=Expected)
  {
   UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
    *MapIdentifier,Land->LandscapeComponents.Num(),Expected);
   return nullptr;
  }
- if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
-  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ // Verified V3 fix: keep root Landscape components until map is durably saved.
+ // Terrain streaming grid/proxy migration must be tested as an independent later operation.
+ UE_LOG(LogTemp,Display,TEXT("PRIGIMALIA terrain preview: native components retained before save"));
  return Land;
 #else
  return nullptr;
 #endif
 }
 
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectNamedWorldPreviewComponents(AActor* Candidate,const FString& MapIdentifier)
+{
+#if WITH_EDITOR
+ using namespace AnomaliaZPrigimaliaExtraWorlds;
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ const EWorld Kind=ResolveAdditionalWorld(MapIdentifier);
+ const int32 Size=Resolution(Kind);
+ const int32 Expected=(Size==3025)?576:(Size==2017)?256:(Size==1513)?144:(Size==1009)?64:0;
+ if(!Land || Size==0 || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+MapIdentifier+TEXT("_TerrainPreview"))
+  return -1;
+ const int32 Actual=Land->LandscapeComponents.Num();
+ if(Actual!=Expected || !Land->GetLandscapeInfo())
+ {
+  UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA preview %s component verification failed: %d expected %d"),
+   *MapIdentifier,Actual,Expected);
+  return -1;
+ }
+ for(ULandscapeComponent* Component:Land->LandscapeComponents)
+  if(!IsValid(Component) || Component->GetOwner()!=Land)return -1;
+ UE_LOG(LogTemp,Display,TEXT("PRIGIMALIA preview %s native components validated: %d"),*MapIdentifier,Actual);
+ return Actual;
+#else
+ return -1;
+#endif
+}
 
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row)
 {
@@ -472,11 +816,30 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTi
   UE_LOG(LogTemp,Error,TEXT("CHERNASKALUXRIA incomplete tile landscape: %s"),*Name);
   return nullptr;
  }
- if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
-  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ // Keep the actual four native components on this Landscape until the
+ // independent map is durably saved; grid/proxy migration is a later step.
+ UE_LOG(LogTemp,Display,TEXT("CHERNASKALUXRIA: native tile components retained for safe save"));
  return Land;
 #else
  return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectChernaskaluxriaTileComponents(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"))
+  return -1;
+ if(Land->LandscapeComponents.Num()!=4 || !Land->GetLandscapeInfo())
+  return -1;
+ for(ULandscapeComponent* Component:Land->LandscapeComponents)
+  if(!IsValid(Component) || Component->GetOwner()!=Land)return -1;
+ UE_LOG(LogTemp,Display,TEXT("CHERNASKALUXRIA native tile components verified: 4"));
+ return 4;
+#else
+ return -1;
 #endif
 }
 

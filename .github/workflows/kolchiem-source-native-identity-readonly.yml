@@ -1,0 +1,47 @@
+name: KOLCHIEM - diagnose real native UE5 source World identity (no writes)
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/kolchiem-source-native-identity-readonly.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  identity-readonly:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inspect UWorld actual asset path, outermost package and World Partition metadata
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_kolchiem_source_world_identity_readonly.py'
+          $folder=Join-Path $env:RUNNER_TEMP ('KOLCHIEM_IDENTITY_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $folder -Force | Out-Null
+          $env:ANOMALIA_KOLCHIEM_SOURCE_INSPECTION=Join-Path $folder 'world-identity.json'
+          $log=Join-Path $folder 'native-inspection.log'
+          $active=@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0){throw 'Unreal process already active; refuse competing inspection'}
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Native read-only world identity audit failed'}
+          if(-not(Test-Path -LiteralPath $env:ANOMALIA_KOLCHIEM_SOURCE_INSPECTION -PathType Leaf)){throw 'No native package identity report produced'}
+          $data=Get-Content -LiteralPath $env:ANOMALIA_KOLCHIEM_SOURCE_INSPECTION -Raw -Encoding UTF8|ConvertFrom-Json
+          foreach($world in $data.data){Write-Host ('PACKAGE_IDENTITY requested='+$world.requested+' actual='+$world.outermostPackage+' class='+$world.class+' wp='+$world.hasWorldPartitionProperty)}
+          Write-Host 'KOLCHIEM_WORLD_IDENTITY_REPORT_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: kolchiem-world-identity-${{ github.run_id }}
+          path: ${{ runner.temp }}/KOLCHIEM_IDENTITY_${{ github.run_id }}/*
+          retention-days: 7
+          if-no-files-found: warn

@@ -1,0 +1,60 @@
+name: ANOMALIA - locate FALC original illustrated 26.5km RAW16 on Windows without changes
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-falc-real-source-disk-readonly.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-falc-sources:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check only known user folders for FALC heightmap and intact ZIP
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $paths=@(
+            (Join-Path $env:USERPROFILE 'Downloads'),
+            (Join-Path $env:USERPROFILE 'Desktop'),
+            (Join-Path $env:USERPROFILE 'Documents'),
+            'D:\ANOMALIAZ-PRIGIMALIA',
+            'D:\ANOMALIAZ-PRIGIMALIA\unreal\TerrainSource\FALC'
+          )
+          $matches=@()
+          foreach($base in $paths){
+            if(-not(Test-Path -LiteralPath $base -PathType Container)){continue}
+            $files=@(Get-ChildItem -LiteralPath $base -File -ErrorAction SilentlyContinue)
+            foreach($f in $files){
+              if($f.Name -match 'FALC|F\.A\.L\.C'){
+                if($f.Extension -notin @('.zip','.r16')){continue}
+                $entry=@{path=$f.FullName;bytes=[long]$f.Length}
+                if($f.Length -lt 20MB){$entry.sha256=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash}
+                $matches+=,$entry
+                Write-Host ('FALC_FOUND_FILE='+$f.FullName+' SIZE='+$f.Length)
+              }
+            }
+          }
+          $masterHash='1D3FF52ED30338B59E6130A37AACC7E2A34367B7BC3B28FAF4897B3BCFE6B5B7'
+          $zipHash='C389A367D26A5CDAB2D7E73B8129D45F9CF3E46BBE6E3B59A41BCA7FD9AC7DB5'
+          $confirmed=@($matches|Where-Object{$_.sha256 -eq $masterHash -or $_.sha256 -eq $zipHash})
+          Write-Host ('FALC_ILLUSTRATED_SOURCE_CONFIRMED_COUNT='+$confirmed.Count)
+          $folder=Join-Path $env:RUNNER_TEMP ('FALC_SOURCE_SCAN_'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $folder -Force | Out-Null
+          @{mode='READ_ONLY';knownSourceSha256=$masterHash;knownZipSha256=$zipHash;found=$matches;verified=$confirmed}|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $folder 'falc-source-readiness.json') -Encoding UTF8
+          Write-Host 'FALC_SOURCE_DISK_READONLY_COMPLETE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-falc-raw16-source-scan-${{ github.run_id }}
+          path: ${{ runner.temp }}/FALC_SOURCE_SCAN_${{ github.run_id }}/*.json
+          retention-days: 7
+          if-no-files-found: warn

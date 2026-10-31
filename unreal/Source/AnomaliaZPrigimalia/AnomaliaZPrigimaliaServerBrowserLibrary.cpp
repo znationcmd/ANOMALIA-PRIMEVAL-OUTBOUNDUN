@@ -49,7 +49,7 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
     struct FDefinition { const TCHAR* Id; const TCHAR* Name; const TCHAR* Path; int32 Side; };
     const FDefinition Definitions[] = {
         {TEXT("archipelago-v2"), TEXT("SKARVIK"), TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"), 48},
-        {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/ANOMALIA_Inhabited_v2"), 48},
+        {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate"), 48},
         {TEXT("karskov-v1"), TEXT("KARSKOV"), TEXT("/Game/Maps/PRIGIMALIA_KARSKOV"), 30},
         {TEXT("vorgrad-v1"), TEXT("VORGRAD"), TEXT("/Game/Maps/PRIGIMALIA_VORGRAD"), 30},
         {TEXT("nemoris-v1"), TEXT("NEMORIS"), TEXT("/Game/Maps/PRIGIMALIA_NEMORIS"), 20},
@@ -57,6 +57,8 @@ TArray<FAnomaliaZPrigimaliaWorldMapCard> UAnomaliaZPrigimaliaServerBrowserLibrar
         {TEXT("solynacalyra-v1"), TEXT("SOLYNACALYRA"), TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA"), 15},
         {TEXT("nexavarkhos-v1"), TEXT("NEXAVARKHOS"), TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS"), 10},
         {TEXT("chernaskaluxria-v1"), TEXT("CHERNASKALUXRIA"), TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"), 100},
+        {TEXT("falc-v1"), TEXT("F.A.L.C"), TEXT("/Game/Maps/PRIGIMALIA_FALC"), 27},
+        {TEXT("kolchiem-origins-v1"), TEXT("KOLCHIEM ORIGINS"), TEXT("/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL"), 48},
     };
     TArray<FAnomaliaZPrigimaliaWorldMapCard> Maps;
     Maps.Reserve(UE_ARRAY_COUNT(Definitions));

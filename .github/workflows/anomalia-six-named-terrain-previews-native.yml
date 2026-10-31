@@ -1,0 +1,69 @@
+name: ANOMALIA - six protected native UE5.8 terrain previews (not photo final)
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-six-named-terrain-previews-native.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-guard:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check six native preview import safety and Python syntax
+        shell: bash
+        run: |
+          python -m py_compile unreal/Scripts/create_named_terrain_preview_safe.py
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          cpp=Path('unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.cpp').read_text()
+          h=Path('unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaWorldImportLibrary.h').read_text()
+          py=Path('unreal/Scripts/create_named_terrain_preview_safe.py').read_text()
+          ps=Path('scripts/windows/import_six_named_terrain_previews_safe.ps1').read_text()
+          a=cpp.split('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(',1)[1]
+          a=a.split('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(',1)[0]
+          assert 'Subsystem->ChangeGridSize(' not in a
+          assert '_TerrainPreview' in a
+          assert 'InspectNamedWorldPreviewComponents' in a and 'InspectNamedWorldPreviewComponents' in h
+          assert len(re.findall(r'"(?:KARSKOV|VORGRAD|NEMORIS|DRAKHEIM|SOLYNACALYRA|NEXAVARKHOS)":\(',py))==6
+          assert 'PROCEDURAL_PREVIEW_NOT_USER_PHOTO' in py
+          assert 'D:\\ANOMALIAZ-PRIGIMALIA' in ps
+          assert 'PROTECTED_ORIGINAL_DRAZOVIA_SKARVIK_HASHES_UNCHANGED=true' in ps
+          assert 'TerrainPreview' in py and 'saved' in py
+          assert '"SOLYNACALYRA":(15000,1513,144)' in py
+          assert '"NEXAVARKHOS":(10000,1009,64)' in py
+          assert '(Size==1513)?144:(Size==1009)?64:0' in a
+          assert 'ExtraWorldHeights.h' in ps and 'ResolveAdditionalWorld(' in ps
+          assert 'LastIndexOf' in ps
+          print('SIX_PREVIEW_STATIC_SAFETY_CHECKS_PASS=true')
+          PY
+  native-six-previews-on-user-pc:
+    needs: source-guard
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 230
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compile native Landscape verifier then create six isolated UE5 terrain preview levels
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_six_named_terrain_previews_safe.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Six-map authoring failed'}
+      - name: Preserve per-map receipts, Unreal editor logs and full summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-six-native-terrain-previews-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_SIX_MAP_PREVIEWS_${{ github.run_id }}/*
+          retention-days: 7
+          if-no-files-found: warn

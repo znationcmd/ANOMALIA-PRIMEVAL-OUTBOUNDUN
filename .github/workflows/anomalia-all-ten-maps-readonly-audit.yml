@@ -1,0 +1,79 @@
+name: ANOMALIA - audit read-only of all ten real UE5 map files and native World loads
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths:
+      - .github/workflows/anomalia-all-ten-maps-readonly-audit.yml
+      - scripts/windows/audit_anomalia_ten_maps_readonly.ps1
+      - unreal/Scripts/audit_worlds_native_readonly.py
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-readonly-audit:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory all .umap without opening or altering user assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\windows\audit_anomalia_ten_maps_readonly.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'Inventory failed'}
+      - name: Independently load native Unreal World assets from isolated staged copy
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $reportDir=Join-Path $env:RUNNER_TEMP ('ANOMALIA_MAP_AUDIT_'+$env:GITHUB_RUN_ID)
+          $inventory=Join-Path $reportDir 'map-file-inventory.json'
+          $native=Join-Path $reportDir 'native-world-load.json'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $backupMarker=Join-Path $stage 'Saved\BrandMigration\verified-source-backup.marker'
+          if(-not (Test-Path -LiteralPath $original -PathType Leaf) -or -not(Test-Path -LiteralPath $project -PathType Leaf) -or -not(Test-Path -LiteralPath $backupMarker -PathType Leaf)){throw 'Protected original or verified isolated Unreal copy missing'}
+          $source=Get-Content -LiteralPath $inventory -Raw -Encoding UTF8 | ConvertFrom-Json
+          $stageMaps=@($source.maps|ForEach-Object{$_.projects.stage.nativeFiles}|ForEach-Object{$_.file}|Select-Object -Unique)
+          if($stageMaps.Count -eq 0){
+            '{"state":"SKIPPED_NO_STAGED_WORLD_FILES","gameplayTested":false}'|Set-Content -LiteralPath $native -Encoding UTF8
+            Write-Host 'NATIVE_WORLD_RELOAD_SKIPPED_NO_FILES=true'
+            exit 0
+          }
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0){
+            '{"state":"SKIPPED_NATIVE_EDITOR_BUSY","gameplayTested":false}'|Set-Content -LiteralPath $native -Encoding UTF8
+            Write-Host ('NATIVE_WORLD_RELOAD_SKIPPED_EDITOR_BUSY='+$active.Count)
+            exit 0
+          }
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_worlds_native_readonly.py'
+          if(-not (Test-Path -LiteralPath $editor -PathType Leaf) -or -not(Test-Path -LiteralPath $script -PathType Leaf)){throw 'UE5.8 or read-only script missing'}
+          $hashes=@{}
+          foreach($file in $stageMaps){$hashes[$file]=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash}
+          $env:ANOMALIA_MAP_AUDIT_INVENTORY=$inventory
+          $env:ANOMALIA_MAP_AUDIT_NATIVE=$native
+          $log=Join-Path $reportDir 'native-world-load.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          $exitCode=$LASTEXITCODE
+          foreach($file in $hashes.Keys){
+            if(-not(Test-Path -LiteralPath $file -PathType Leaf) -or (Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $hashes[$file]){throw ('Native UE World file mutated unexpectedly: '+$file)}
+          }
+          if($exitCode -ne 0){throw ('Native UE5 audit process exited '+$exitCode)}
+          if(-not(Test-Path -LiteralPath $native -PathType Leaf)){throw 'Native World report missing'}
+          Write-Host 'NATIVE_WORLD_LOAD_AUDIT_COMPLETED_WITHOUT_MAP_MUTATION=true'
+      - name: Upload full map audit report and any editor diagnostic logs
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-ten-map-audit-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_MAP_AUDIT_${{ github.run_id }}/*
+          retention-days: 7
+          if-no-files-found: warn

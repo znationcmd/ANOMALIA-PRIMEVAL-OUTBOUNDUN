@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "mapId": "inhabited-v2",
+  "displayName": "DRAZOVIA",
+  "sourceImageName": "IMG_8278.jpeg",
+  "sourceImageSha256": "1712f55201a7f89b6bf3a35b3d4a0a7c00aa64adc80895882eb0405538aa5ba8",
+  "crop": [
+    0,
+    363,
+    709,
+    1091
+  ],
+  "source": "latest user iZurvive screenshot; not earlier DRAZOVIA/FALC photos",
+  "sideKm": 48,
+  "areaKm2": 2304,
+  "landApproxKm2": 1604.37,
+  "waterApproxKm2": 699.63,
+  "raw16Name": "DRAZOVIA_NEW_TOPO_48KM_3025.r16",
+  "raw16Sha256": "704222bd547c6ec4a417a20e7b580aaefec1db769d18a4b331adf2ac0d263e9c",
+  "raw16SamplesPerAxis": 3025,
+  "raw16Bytes": 18301250,
+  "unrealXYScaleCm": 1587.3015873015872,
+  "unrealZScaleCm": 800,
+  "preservedOriginalMap": "/Game/Maps/ANOMALIA_Inhabited_v2",
+  "newCandidateMap": "/Game/Maps/ANOMALIA_DrazoviaTopo_NewReference_Candidate",
+  "sourceBinaryCommitted": false,
+  "candidateNativeUmapProduced": false,
+  "unrealNativeCompileVerified": false,
+  "terrainSurveyDEM": false,
+  "roadOrBuildingTransferDone": false,
+  "gameplayTested": false,
+  "note": "RAW16 delivered as conversation ZIP. Mount 18,301,250 byte file in the staged Windows project. Source photo not redistributable without permissions."
+}
