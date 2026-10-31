@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "description": "Eleven distinct planned ANOMALIA'Z worlds. DRAZOVIA uses its imported new-reference V3 terrain candidate; KOLCHIEM ORIGINS is an independent duplicate of the prior DRAZOVIA /Game/Maps/ANOMALIA_Inhabited_v2, pending native validation. Do not infer gameplay-ready from catalog.",
+  "description": "Eleven planned ANOMALIA'Z worlds. New DRAZOVIA references the verified native V3 heightfield; KOLCHIEM ORIGINS duplicates the real migrated prior World /Game/Maps/PRIGIMALIA_Inhabited_v2. Its former /Game/Maps/ANOMALIA_Inhabited_v2 is a legacy package redirect. Do not infer gameplay-ready from catalog.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -156,17 +156,19 @@
       "id": "kolchiem-origins-v1",
       "displayName": "KOLCHIEM ORIGINS",
       "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS",
-      "sourceUnrealPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "sourceUnrealPackage": "/Game/Maps/PRIGIMALIA_Inhabited_v2",
       "widthKm": 48,
       "heightKm": 48,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "World-Partition-duplicate-pending-native-save-and-reload",
+      "validation": "World-Partition-duplicate-pending-native-reload",
       "saveNamespace": "kolchiem-origins-v1",
-      "nativeDuplicationMethod": "WorldPartitionRenameDuplicateBuilder without -Rename",
+      "nativeDuplicationMethod": "WorldPartitionRenameDuplicateBuilder source PRIGIMALIA_Inhabited_v2 without -Rename",
       "preserveSourceWorldAndSaves": true,
       "geographyReference": "User-provided composite image in conversation; retaining source world geometry and actors without inventing a new topography",
-      "gameplayTested": false
+      "gameplayTested": false,
+      "legacyUnrealAliasPackage": "/Game/Maps/ANOMALIA_Inhabited_v2",
+      "sourceMigrationIdentityVerified": true
     }
   ]
 }
