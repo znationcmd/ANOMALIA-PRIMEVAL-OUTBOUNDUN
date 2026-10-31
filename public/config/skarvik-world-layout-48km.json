@@ -11486,6 +11486,23 @@
       "fullNetworkBuilt": false,
       "productionDUnmodified": true,
       "note": "First protected v1 in-stage pilot only; do not infer all 382 routes have physical mesh actors."
+    },
+    "secondNativeRoadPilot": {
+      "verified": true,
+      "worldPackage": "/Game/Maps/SKARVIK_ROADS_PILOT_v1",
+      "type": "isolated-world-partition-overlay",
+      "realRoadMeshActorsSaved": 126,
+      "terrainFollowingLengthMeters": 2445.5,
+      "routeIds": [
+        "SK-RX-001",
+        "SK-RX-067",
+        "SK-RX-155"
+      ],
+      "proof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234328083",
+      "separateFromFirst600mPilot": true,
+      "notAttachedToProductionSkarvik": true,
+      "sm5VehicleDrivingNotYetValidated": true,
+      "fullNetworkBuilt": false
     }
   }
 }
