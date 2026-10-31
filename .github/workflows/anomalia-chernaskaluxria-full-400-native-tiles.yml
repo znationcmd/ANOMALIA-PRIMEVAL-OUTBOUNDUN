@@ -1,0 +1,91 @@
+name: ANOMALIA - CHERNASKALUXRIA full 400 native 5km Landscape tiles (100km)
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths: [.github/workflows/anomalia-chernaskaluxria-full-400-native-tiles.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  validate-importer-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Static validation, full 400-tile source, native component checks and resume safeguards
+        shell: bash
+        run: |
+          python -m py_compile unreal/Scripts/chernaskaluxria_import_all_remaining_tiles_batch.py unreal/Scripts/chernaskaluxria_verify_all_400_native_readonly.py scripts/ue5/verify_chernaskaluxria_all_tile_inputs.py scripts/ue5/generate_chernaskaluxria_tiles.py
+          python - <<'PY'
+          from pathlib import Path
+          batch=Path('unreal/Scripts/chernaskaluxria_import_all_remaining_tiles_batch.py').read_text()
+          full=Path('scripts/windows/import_chernaskaluxria_full_400_native_safe.ps1').read_text()
+          native=Path('unreal/Scripts/chernaskaluxria_verify_all_400_native_readonly.py').read_text()
+          src=Path('scripts/ue5/verify_chernaskaluxria_all_tile_inputs.py').read_text()
+          assert 'range(BATCH_START,BATCH_START+BATCH_COUNT)' in batch
+          assert 'receipt.open("x",encoding="utf-8")' in batch
+          assert 'inspect_chernaskaluxria_tile_components(landscape)!=4' in batch
+          assert "level.load_level(PACKAGE)" in batch
+          assert "for($index=0;$index -lt 400;$index+=8)" in full
+          assert "'--all'" in full
+          assert 'CHERNASKALUXRIA_ALL_400_NATIVE_LANDSCAPE_TILES_IMPORTED=true' in full
+          assert 'ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate.umap' in full
+          assert 'PRIGIMALIA_KOLCHIEM_ORIGINS_FULL.umap' in full
+          assert 'protectedMapHashChanges' in full and 'CHERNASKALUXRIA_ALL_OTHER_MAP_HASHES_UNCHANGED' in full
+          assert 'tileCount":len(paths)' in native and 'externalActorPackages' in native
+          assert 'len(found)!=400' in src and 'check_shared_edges' in src
+          print('CHERNASKALUXRIA_400_NATIVE_SOURCE_SAFE_AND_CHECKPOINT_VALIDATED=true')
+          PY
+  native-import-all-400-tiles:
+    needs: validate-importer-sources
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 360
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Import ALL 400 World Partition Landscape tiles with native UE5 and resume checkpoints
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/import_chernaskaluxria_full_400_native_safe.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'The complete 400-tile landscape import is incomplete; checkpoints preserved'}
+      - name: Independently reload the full world and verify 400 saved R16 sources and native external actor packages
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\chernaskaluxria_verify_all_400_native_readonly.py'
+          $out=Join-Path $env:RUNNER_TEMP ('CHERNASKALUXRIA_FULL_400_'+$env:GITHUB_RUN_ID)
+          $env:CH_ALL_TILES_FINAL_REPORT=Join-Path $out 'final-native-400-reload.json'
+          $log=Join-Path $out 'final-native-400-reload.log'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Full 400-tile native World did not reopen successfully'}
+          if(-not(Test-Path -LiteralPath $env:CH_ALL_TILES_FINAL_REPORT -PathType Leaf)){throw 'Missing all-400 native reload report'}
+          $proof=Get-Content -LiteralPath $env:CH_ALL_TILES_FINAL_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          if($proof.tileCount -ne 400 -or $proof.externalActorPackages -lt 400 -or $proof.status -ne '400_NATIVE_TILES_SAVED_DISTINCT_WORLD_RELOADED_NOT_GAMEPLAY_TESTED'){
+            throw 'Not all 400 native Landscape tiles and World Partition files verified'
+          }
+          Write-Host 'CHERNASKALUXRIA_ALL_400_NATIVE_TILES_WORLD_RELOAD_CONFIRMED=true'
+      - name: Upload detailed all-400 tile import receipts and native reloading report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-chernaskaluxria-all-400-native-evidence-${{ github.run_id }}
+          path: ${{ runner.temp }}/CHERNASKALUXRIA_FULL_400_${{ github.run_id }}/*.json
+          retention-days: 7
+          if-no-files-found: warn
+      - name: Upload diagnostic logs on incomplete native import
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-chernaskaluxria-full-grid-errors-${{ github.run_id }}
+          path: ${{ runner.temp }}/CHERNASKALUXRIA_FULL_400_${{ github.run_id }}/*.log
+          retention-days: 7
+          if-no-files-found: warn
