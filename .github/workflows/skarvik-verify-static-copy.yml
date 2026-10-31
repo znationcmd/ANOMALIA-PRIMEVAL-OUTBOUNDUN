@@ -1,0 +1,104 @@
+name: SKARVIK - verify copied static City Sample, no Crowd or Vehicle (read only)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-static-copy.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-static-copy:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Compare all original static files to isolated UE5 staging; no changes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\FabImports\CitySample\Content'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $destination=Join-Path $stage 'Content'
+          $folders=@('__ExternalActors__','Building','City','Environment','Lighting','Map','Material','Road','Textures')
+          $excluded=@('Crowd','Vehicle')
+          $report=[ordered]@{
+            status='FAILED'
+            nativeCityIntegrated=$false
+            SM5PlayableCityTested=$false
+            originalSkarvikPreserved=$false
+            sourceCitySamplePreserved=$false
+            missingFiles=0
+            sizeMismatches=0
+            sourceFilesChecked=0
+            totalSourceBytesChecked=[long]0
+            remainingFreeCGiB=0
+            excludedCrowdAndVehicle=$false
+            folders=@()
+          }
+          try {
+            $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+            if(!(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'Missing isolated stage marker'}
+            if((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker'}
+            $old='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+            $new=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'
+            $city=Join-Path $source 'Map\Big_City_LVL.umap'
+            if(!(Test-Path -LiteralPath $old -PathType Leaf) -or !(Test-Path -LiteralPath $new -PathType Leaf) -or !(Test-Path -LiteralPath $city -PathType Leaf)){throw 'Required old/new/native city map absent'}
+            $report.originalSkarvikPreserved=$true
+            $report.sourceCitySamplePreserved=$true
+            foreach($f in $excluded){
+              if(Test-Path -LiteralPath (Join-Path $destination $f)){throw ('Excluded folder unexpectedly imported: '+$f)}
+            }
+            $report.excludedCrowdAndVehicle=$true
+            foreach($f in $folders){
+              $srcFolder=Join-Path $source $f
+              $dstFolder=Join-Path $destination $f
+              if(!(Test-Path -LiteralPath $srcFolder -PathType Container)){throw ('Missing static source folder: '+$f)}
+              if(!(Test-Path -LiteralPath $dstFolder -PathType Container)){throw ('Missing copied static folder: '+$f)}
+              $n=0;[long]$bytes=0;$missing=0;$mismatches=0
+              foreach($file in (Get-ChildItem -LiteralPath $srcFolder -Recurse -File -Force -ErrorAction Stop)){
+                $relative=$file.FullName.Substring($srcFolder.Length).TrimStart([char]'\')
+                $target=Join-Path $dstFolder $relative
+                $n++;$bytes+=[long]$file.Length
+                if(!(Test-Path -LiteralPath $target -PathType Leaf)){$missing++;continue}
+                if((Get-Item -LiteralPath $target).Length -ne $file.Length){$mismatches++}
+              }
+              $report.sourceFilesChecked+=$n
+              $report.totalSourceBytesChecked+=$bytes
+              $report.missingFiles+=$missing
+              $report.sizeMismatches+=$mismatches
+              $report.folders+=@([ordered]@{folder=$f;sourceFiles=$n;sourceGiB=[math]::Round($bytes/1GB,3);missing=$missing;sizeMismatches=$mismatches})
+              Write-Host ("SKARVIK_VERIFIED_FOLDER={0} files={1} GiB={2:N3} missing={3} mismatched={4}" -f $f,$n,($bytes/1GB),$missing,$mismatches)
+            }
+            $report.remainingFreeCGiB=[math]::Round(([System.IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+            if($report.missingFiles -gt 0 -or $report.sizeMismatches -gt 0){throw 'Missing or mismatched staged files'}
+            # Hash Big_City_LVL itself to verify at least the real source map binary.
+            $mapSrc=Get-FileHash -LiteralPath $city -Algorithm SHA256
+            $mapDest=Get-FileHash -LiteralPath (Join-Path $destination 'Map\Big_City_LVL.umap') -Algorithm SHA256
+            if($mapSrc.Hash -ne $mapDest.Hash){throw 'Big City map file hash mismatch'}
+            $report.bigCityMapHashMatched=$true
+            $report.status='ALL_9_CORE_STATIC_FOLDERS_VERIFIED_CITY_NOT_INTEGRATED'
+            Write-Host 'SKARVIK_CORE_COPY_VERIFIED=true'
+            Write-Host 'SKARVIK_CITY_UNREAL_INTEGRATION_PENDING=true'
+          } catch {
+            $report.status='FAILED'
+            $report.error=$_.Exception.Message
+            Write-Host ('SKARVIK_CORE_VERIFICATION_ERROR='+$report.error)
+          } finally {
+            $report.remainingFreeCGiB=[math]::Round(([System.IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+            $path=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-verified.json'
+            [IO.File]::WriteAllText($path,($report|ConvertTo-Json -Depth 10),(New-Object System.Text.UTF8Encoding($false)))
+            Write-Host "SKARVIK_STAGE_REMAINING_C_GIB=$($report.remainingFreeCGiB)"
+            Write-Host "SKARVIK_STATIC_AUDIT_REPORT=$path"
+          }
+          if($report.status -eq 'FAILED'){exit 2}
+          exit 0
+      - name: Preserve verification report only, no licensed assets
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-static-copy-integrity-report
+          path: skarvik-static-verified.json
+          if-no-files-found: warn
+          retention-days: 30
