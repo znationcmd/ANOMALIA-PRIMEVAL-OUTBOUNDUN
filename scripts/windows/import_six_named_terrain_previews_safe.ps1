@@ -48,10 +48,11 @@ $extraDest=Join-Path $native 'AnomaliaZPrigimaliaExtraWorldHeights.h'
 if(-not(Test-Path -LiteralPath $extraSource -PathType Leaf)){throw 'Missing source ExtraWorldHeights C++'}
 if(Test-Path -LiteralPath $extraDest){throw 'ExtraWorldHeights stage file already exists; preserve it'}
 $helper=' AnomaliaZPrigimaliaExtraWorlds::EWorld ResolveAdditionalWorld('
-$helperStart=$sourceText.IndexOf('namespace'+[char]10+'{'+[char]10+$helper,[StringComparison]::Ordinal)
+$helperIndex=$sourceText.IndexOf('AnomaliaZPrigimaliaExtraWorlds::EWorld ResolveAdditionalWorld(',[StringComparison]::Ordinal)
+$helperStart=if($helperIndex -ge 0){$sourceText.LastIndexOf('namespace',$helperIndex)}else{-1}
 $methodStart=$sourceText.IndexOf('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTile(',[StringComparison]::Ordinal)
 $insertAt=$oldText.IndexOf('AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape(',[StringComparison]::Ordinal)
-if($helperStart -lt 0 -or $methodStart -le $helperStart -or $insertAt -lt 0){throw 'Unexpected extra native world helper or stage insertion anchor'}
+if($helperStart -lt 0 -or $methodStart -le $helperStart -or $insertAt -lt 0){throw ("Unexpected native C++ source layout: helper=$helperStart method=$methodStart insert=$insertAt")}
 $patch=$sourceText.Substring($helperStart,$methodStart-$helperStart)
 if(-not $patch.Contains('CreateNamedWorldLandscape(') -or -not $patch.Contains('NamedWorldHeight(') -or -not $patch.Contains('InspectNamedWorldPreviewComponents(') -or $patch.Contains('Subsystem->ChangeGridSize(') -or -not $patch.Contains('_TerrainPreview')){throw 'C++ map preview patch invalid'}
 foreach($needle in @('CreateNamedWorldLandscape(', 'NamedWorldHeight(', 'InspectNamedWorldPreviewComponents(', 'ResolveAdditionalWorld(')){
