@@ -1,0 +1,39 @@
+name: SKARVIK - copy static decor excluding Crowd Vehicle and Megascans
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-static-props.yml', 'scripts/ue5/stage-skarvik-static-props.ps1']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  import-props:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Import and verify static Prop Effect WFC MSPresets Lookdev without changing original
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-skarvik-static-props.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-props-result.json'
+          & $script -ReportPath $report
+          $result=Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+          if($result.state -ne 'NON_MEGASCANS_DECOR_STAGED_CITY_NOT_INTEGRATED'){throw ('Static decor copy refused: '+$result.error)}
+          if(-not $result.crowdExcluded -or -not $result.vehiclesExcluded){throw 'Forbidden Crowd/Vehicle included'}
+          Write-Host "SKARVIK_ADDITIONAL_STATIC_DECOR_VERIFIED=true"
+          Write-Host "SKARVIK_CITY_UNREAL_INTEGRATION_PENDING=true"
+      - name: Upload only proof JSON without Epic licensed asset bytes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-additional-static-decor-report
+          path: skarvik-static-props-result.json
+          if-no-files-found: warn

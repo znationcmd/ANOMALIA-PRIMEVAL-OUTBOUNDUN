@@ -10,6 +10,12 @@ public:
  /** Editor-only creation in the dedicated new ANOMALIA_Archipelago_v2 world. Never edits another world. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateArchipelagoLandscape();
+ /** Create ONLY a new 48x48km SKARVIK City world in its separate package, preserving original SKARVIK. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateSkarvikCityLandscape();
+ /** Original SM5-compatible geography for the prospective SKARVIK city world. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double SkarvikCityHeight(double EastMeters,double NorthMeters);
  /** New separate world with original urban terrain pads. Never alters the v2 archipelago. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateInhabitedArchipelagoLandscape();

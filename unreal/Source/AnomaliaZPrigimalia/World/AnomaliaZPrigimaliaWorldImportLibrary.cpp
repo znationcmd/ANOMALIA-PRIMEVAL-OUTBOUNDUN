@@ -2,6 +2,7 @@
 #include "AnomaliaZPrigimaliaArchipelagoHeight.h"
 #include "AnomaliaZPrigimaliaInhabitedHeight.h"
 #include "AnomaliaZPrigimaliaExtraWorldHeights.h"
+#include "AnomaliaZPrigimaliaSkarvikTerrain.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Landscape.h"
@@ -416,5 +417,57 @@ FString UAnomaliaZPrigimaliaWorldImportLibrary::RefreshArchipelagoRenderResource
  FJsonSerializer::Serialize(Report,Writer);return Json;
 #else
  return TEXT("{\"state\":\"EDITOR_ONLY\"}");
+#endif
+}
+
+
+double UAnomaliaZPrigimaliaWorldImportLibrary::SkarvikCityHeight(double EastMeters,double NorthMeters)
+{
+ return AnomaliaZPrigimaliaSkarvik::Height(EastMeters,NorthMeters);
+}
+
+// Creates terrain in a new dedicated package; it NEVER mutates the original SKARVIK.
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateSkarvikCityLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1"))
+  return nullptr;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr;
+ constexpr int32 Size=3025;
+ constexpr double SideMeters=48000., Half=24000.;
+ TArray<uint16> HeightsBuffer;
+ HeightsBuffer.SetNumUninitialized(Size*Size);
+ for(int32 Row=0;Row<Size;++Row)for(int32 Col=0;Col<Size;++Col)
+ {
+  const double East=-Half+SideMeters*Col/(Size-1);
+  const double North=Half-SideMeters*Row/(Size-1);
+  HeightsBuffer[Row*Size+Col]=AnomaliaZPrigimaliaSkarvik::Encode(
+    AnomaliaZPrigimaliaSkarvik::Height(East,North));
+ }
+ ALandscape* Landscape=World->SpawnActor<ALandscape>();
+ if(!Landscape)return nullptr;
+ Landscape->SetActorLabel(TEXT("PRIGIMALIA_SKARVIK_CITY_48km_NewTerrain"));
+ Landscape->SetActorLocation(FVector(-Half*100.,-Half*100.,0.));
+ Landscape->SetActorScale3D(FVector(SideMeters*100./(Size-1),SideMeters*100./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Elevations;
+ Elevations.Add(FGuid(),MoveTemp(HeightsBuffer));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Landscape->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Elevations,nullptr,Layers,
+                   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Landscape->CreateLandscapeInfo();
+ Landscape->PostEditChange();
+ if(Landscape->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("SKARVIK_CITY landscape component count mismatch: %d"),
+         Landscape->LandscapeComponents.Num());
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Landscape->GetLandscapeInfo(),2);
+ return Landscape;
+#else
+ return nullptr;
 #endif
 }

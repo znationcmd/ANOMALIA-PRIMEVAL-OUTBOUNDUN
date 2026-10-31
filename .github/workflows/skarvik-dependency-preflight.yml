@@ -1,0 +1,44 @@
+name: SKARVIK - inspect City Sample extras, dependencies and map setup
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-dependency-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Read only City Sample plugins, native world, extras, free storage
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $city='D:\ANOMALIA\FabImports\CitySample'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $source=Join-Path $city 'CitySample.uproject'
+          if(!(Test-Path -LiteralPath $source)){throw 'Missing source'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'New SKARVIK map missing'}
+          $obj=Get-Content -LiteralPath $source -Raw | ConvertFrom-Json
+          Write-Host ("SKARVIK_SOURCE_MODULES="+($obj.Modules|ForEach-Object{$_.Name}) -join ',')
+          Write-Host ("SKARVIK_SOURCE_ENABLED_PLUGINS="+(($obj.Plugins|Where-Object{$_.Enabled}|ForEach-Object{$_.Name}) -join ','))
+          foreach($drive in @('C','D')){
+            $d=[IO.DriveInfo]::new($drive)
+            Write-Host ("SKARVIK_DISK {0} FREE_GIB={1:N2}" -f $drive,($d.AvailableFreeSpace/1GB))
+          }
+          foreach($sub in @('Megascans','Prop','Effect','WFC','MSPresets','Lookdev','Crowd','Vehicle')){
+            $s=Join-Path $city ('Content\'+$sub)
+            $d=Join-Path $stage ('Content\'+$sub)
+            Write-Host ("SKARVIK_CONTENT name={0} SOURCE={1} STAGED={2}" -f $sub,(Test-Path -LiteralPath $s -PathType Container),(Test-Path -LiteralPath $d -PathType Container))
+          }
+          foreach($p in @('Content\Map\Big_City_LVL.umap','Content\Map\Big_City_LLV.umap','Content\__ExternalActors__','Content\__ExternalObjects__','Content\Map\__ExternalActors__')){
+            Write-Host ("SKARVIK_SOURCE_PATH={0} exists={1}" -f $p,(Test-Path -LiteralPath (Join-Path $city $p)))
+          }
+          if($env:UE_ROOT){Write-Host ("SKARVIK_UE_ROOT="+$env:UE_ROOT)}
+          $files=Get-ChildItem -LiteralPath (Join-Path $city 'Plugins') -Recurse -Filter '*.uplugin' -File -ErrorAction SilentlyContinue|ForEach-Object{$_.Name}
+          Write-Host ("SKARVIK_PLUGIN_FILES="+($files -join ','))
+          Write-Host 'SKARVIK_READ_ONLY_DEPENDENCIES_SUCCESS=true'
