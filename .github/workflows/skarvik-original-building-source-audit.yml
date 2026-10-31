@@ -1,0 +1,51 @@
+name: SKARVIK - locate authentic houses and gameplay building sources on Windows
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-original-building-source-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read-only catalogue of local genuine building source manifests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $orig='D:\ANOMALIA\unreal'
+          if((Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Unexpected stage marker'}
+          foreach($p in @($stage,$orig,'D:\ANOMALIA\FabImports','D:\ANOMALIA\sketchfab')){
+            Write-Host ("SKARVIK_HOUSE_SOURCE_ROOT={0} EXISTS={1}" -f $p,(Test-Path -LiteralPath $p -PathType Container))
+          }
+          foreach($p in @('SourceAssets\OriginalLot1\manifest.json','SourceAssets\Expansion1\manifest.json','Content\Anomalia','Content\Anomalia\Buildings','Content\Anomalia\World','Content\Buildings','Content\Maps')){
+            foreach($base in @($stage,$orig)){
+              $path=Join-Path $base $p
+              if(Test-Path -LiteralPath $path){
+                $item=Get-Item -LiteralPath $path
+                Write-Host ("SKARVIK_HOUSE_ASSET location={0} relative={1} isDir={2}" -f $base,$p,$item.PSIsContainer)
+                if(!$item.PSIsContainer -and $item.Name -eq 'manifest.json'){
+                  $d=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
+                  foreach($model in @($d.models)){
+                    Write-Host ("SKARVIK_HOUSE_MODEL id={0} objectPath={1} sha256Present={2}" -f $model.id,$model.objectPath,([bool]$model.sha256))
+                  }
+                }
+              }
+            }
+          }
+          foreach($folder in @('D:\ANOMALIA\unreal\Content\Anomalia','D:\ANOMALIA\unreal\Content\Buildings')){
+            if(Test-Path -LiteralPath $folder){
+              $assetFiles=@(Get-ChildItem -LiteralPath $folder -File -Recurse -Include '*.uasset' -ErrorAction Stop)
+              Write-Host ("SKARVIK_HOUSE_NATIVE_UASSETS={0} COUNT={1}" -f $folder,$assetFiles.Count)
+              foreach($f in ($assetFiles|Where-Object{$_.Name -match 'house|villa|home|cabin|farm|garage|apartment|police|hospital|shop|hangar'}|Select-Object -First 25)){
+                Write-Host ("SKARVIK_HOUSE_NATIVE_CANDIDATE="+$f.FullName)
+              }
+            }
+          }
+          Write-Host 'SKARVIK_HOUSE_SOURCE_READONLY_AUDIT_COMPLETE=true'
