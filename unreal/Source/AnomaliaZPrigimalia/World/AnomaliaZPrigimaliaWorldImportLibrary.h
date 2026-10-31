@@ -44,6 +44,9 @@ public:
      253x253 R16 samples -> four landscape components. Never merges another map. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateChernaskaluxriaLandscapeTile(int32 Col,int32 Row);
+ /** Checks native components before World Partition grid/proxy redistribution. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectChernaskaluxriaTileComponents(AActor* Candidate);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
