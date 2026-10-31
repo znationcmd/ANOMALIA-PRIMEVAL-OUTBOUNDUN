@@ -2,7 +2,7 @@ name: SKARVIK - audit real house and building meshes for 125 settlements
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-audit-settlement-meshes.yml']
+    paths: ['.github/workflows/skarvik-audit-settlement-meshes.yml', 'unreal/Scripts/audit_skarvik_settlement_meshes.py']
   workflow_dispatch:
 permissions:
   contents: read
