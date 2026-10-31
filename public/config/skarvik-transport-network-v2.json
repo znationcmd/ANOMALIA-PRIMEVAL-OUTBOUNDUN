@@ -23326,5 +23326,19 @@
     "proof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234307751",
     "noClaimOfFullNetworkConstruction": true,
     "protectedOriginalDNotModified": true
+  },
+  "separateNativeRoadRoutePilot": {
+    "state": "THREE_REAL_MESH_ROUTES_SAVED_IN_ISOLATED_WORLD_PARTITION_NOT_PLAYTESTED",
+    "provenRoadMeshActors": 126,
+    "provenRoadLengthMeters": 2445.5,
+    "routes": [
+      "SK-RX-001",
+      "SK-RX-067",
+      "SK-RX-155"
+    ],
+    "evidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234328083",
+    "mainSkarvikAttachmentComplete": false,
+    "realCarDriveTestVerified": false,
+    "note": "The 2.4455km 3-route pilot is in a different Unreal level from the 600m C-stage v1 map pilot; do not equate either with completion of the 382-link graph."
   }
 }
