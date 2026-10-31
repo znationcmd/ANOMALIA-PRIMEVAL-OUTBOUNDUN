@@ -46,8 +46,27 @@ foreach($path in $protected){Assert-Exists $path;$before[$path]=(Get-FileHash -L
 $originalCount=0
 $sourceActors=Join-Path $root 'Content\__ExternalActors__\Maps\ANOMALIA_Inhabited_v2'
 if(Test-Path -LiteralPath $sourceActors){$originalCount=@(Get-ChildItem -LiteralPath $sourceActors -File -Recurse -ErrorAction Stop).Count}
+# The old 48km level contains 7583 lightweight external actor files (~86MB).
+# Keep at least 6GiB free at start, or 4GiB plus 3x the measured world
+# footprint, whichever is higher. Do NOT delete caches, assets or backups.
+$actorBytes=[int64]0
+if(Test-Path -LiteralPath $sourceActors -PathType Container){
+ $actorBytes=[int64](Get-ChildItem -LiteralPath $sourceActors -File -Recurse -ErrorAction Stop | Measure-Object -Property Length -Sum).Sum
+}
+$sourceObjects=Join-Path $root 'Content\__ExternalObjects__\Maps\ANOMALIA_Inhabited_v2'
+$objectBytes=[int64]0
+if(Test-Path -LiteralPath $sourceObjects -PathType Container){
+ $objectBytes=[int64](Get-ChildItem -LiteralPath $sourceObjects -File -Recurse -ErrorAction Stop | Measure-Object -Property Length -Sum).Sum
+}
+$sourceBytes=[int64](Get-Item -LiteralPath $srcMap).Length+$actorBytes+$objectBytes
+$minimumFree=[long][Math]::Max(6GB,(4GB+3*$sourceBytes))
 $drive=Get-PSDrive -Name D -ErrorAction Stop
-if($drive.Free -lt 8GB){throw ('Insufficient free space on D for safe 48km World duplicate: '+[math]::Round($drive.Free/1GB,2)+' GB')}
+Write-Host ('KOLCHIEM_SOURCE_FOOTPRINT_MIB='+[math]::Round($sourceBytes/1MB,2))
+Write-Host ('KOLCHIEM_DISK_MINIMUM_GIB='+[math]::Round($minimumFree/1GB,2))
+Write-Host ('KOLCHIEM_DISK_FREE_GIB='+[math]::Round($drive.Free/1GB,2))
+if($drive.Free -lt $minimumFree){
+ throw ('Insufficient safe D: capacity for measured World duplication: free '+[math]::Round($drive.Free/1GB,2)+' GiB; required '+[math]::Round($minimumFree/1GB,2)+' GiB')
+}
 @{
  operation='DUPLICATE_NOT_RENAME';sourcePackage=$src;targetPackage=$dst;
  sourceExternalActorFiles=$originalCount;originalHashSHA256=$before[$original];
