@@ -2,7 +2,7 @@ name: SKARVIK - recover graded terrain native 576 components after false GitHub 
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-recover-existing-graded-v2.yml']
+    paths: ['.github/workflows/skarvik-recover-existing-graded-v2.yml', 'unreal/Scripts/audit_existing_skarvik_graded_v2.py']
   workflow_dispatch:
 permissions:
   contents: read
@@ -47,9 +47,9 @@ jobs:
           if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_EXISTING_AUDIT_REPORT)){throw 'Native report absent'}
           $r=Get-Content -LiteralPath $env:SKARVIK_GRADED_EXISTING_AUDIT_REPORT -Raw|ConvertFrom-Json
           Write-Host ('SKARVIK_GRADED_V2_EXISTING_STATE='+$r.state)
-          Write-Host ('SKARVIK_GRADED_V2_LANDSCAPE_COMPONENTS='+$r.landscapeComponentCount)
-          Write-Host ('SKARVIK_GRADED_V2_COLLISION_COMPONENTS='+$r.collisionCount)
-          if($code -ne 0 -or $r.state -ne 'REAL_GRADED_48KM_WORLD_REOPENED_WITH_576_NATIVE_LANDSCAPE_AND_COLLISION_COMPONENTS'){
+          Write-Host ('SKARVIK_GRADED_V2_LOADED_LANDSCAPE_COMPONENTS='+$r.loadedLandscapeComponentCount)
+          Write-Host ('SKARVIK_GRADED_V2_LOADED_COLLISION_COMPONENTS='+$r.loadedCollisionComponentCount)
+          if($code -ne 0 -or $r.state -ne 'REAL_GRADED_48KM_WORLD_REOPENED_WITH_WORLD_PARTITION_DESCRIPTORS_AND_LOADED_COLLISION'){
             throw ("Graded native audit failed: "+$r.error)
           }
           Write-Host 'SKARVIK_GRADED_V2_REOPEN_AND_ORIGINAL_HASHES_VERIFIED=true'
