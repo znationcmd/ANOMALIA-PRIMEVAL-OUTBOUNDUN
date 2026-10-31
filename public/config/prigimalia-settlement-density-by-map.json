@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "intent": "Map-specific original locality densities with native buildable terrain and preserved distinctive geography",
-  "designStatus": "ALL_11_WORLDS_PLANNED_NATIVE_SETTLEMENT_POPULATION_INCOMPLETE",
-  "referenceBaseline": "ELEVEN original ANOMALIA'Z maps, not just the six entries in the separate engine runtime catalogue. SKARVIK 125; other maps intentionally fewer settlements according to biomes and user direction.",
+  "designStatus": "SKARVIK_125_PLANNED_OTHER_10_MAPS_NOT_FULLY_SCOPED",
+  "referenceBaseline": "SKARVIK 48x48 is the ONE world with 125 named localities; game has 11 distinct maps. No speculative density numbers for additional five worlds.",
   "maps": [
     {
       "mapId": "archipelago-v2",
@@ -189,5 +189,6 @@
     "originalDrazoviaAndKolchiemOriginsRemainDistinct": true,
     "citySampleTrafficAndCrowdsOff": true,
     "originalDProtected": true
-  }
+  },
+  "mapCount": 11
 }
