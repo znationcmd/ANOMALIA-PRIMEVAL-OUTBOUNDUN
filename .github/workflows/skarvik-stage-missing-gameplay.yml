@@ -1,0 +1,55 @@
+name: SKARVIK - restore missing City Sample gameplay blueprint references safely
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-stage-missing-gameplay.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-missing-gameplay:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Copy only missing Gameplay blueprints into isolated C staging, preserving D originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\FabImports\CitySample\Content\Gameplay'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $destination=Join-Path $stage 'Content\Gameplay'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555')){throw 'Unexpected source or staging target'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Staged 48km world missing'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original SKARVIK missing'}
+          if(!(Test-Path -LiteralPath $source -PathType Container)){throw 'Original City Sample Gameplay folder missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal process active; refuse concurrent copy'}
+          foreach($name in @('Crowd','Vehicle')){
+            if(Test-Path -LiteralPath (Join-Path $stage ('Content\'+$name))){throw 'Excluded folder exists in destination; investigate'}
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_GAMEPLAY_FREE_C_GIB={0:N2}" -f $free)
+          if($free -lt 22){throw 'Insufficient C free space; preserve headroom'}
+          if(!(Test-Path -LiteralPath (Join-Path $source 'Framework\BP_nightmode.uasset'))){throw 'BP_nightmode absent from original'}
+          if(!(Test-Path -LiteralPath (Join-Path $source 'Framework\BP_CitySampleGameMode_SandboxIntro.uasset'))){throw 'SandboxIntro Blueprint absent from original'}
+          if(Test-Path -LiteralPath $destination){throw 'Target Gameplay folder already exists; refuse overwrite'}
+          & robocopy.exe $source $destination /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
+          $copyCode=$LASTEXITCODE
+          if($copyCode -ge 8){throw "GamePlay robocopy failed code=$copyCode"}
+          [long]$bytes=0;$checked=0;$errors=0
+          foreach($f in (Get-ChildItem -LiteralPath $source -File -Recurse -Force -ErrorAction Stop)){
+            $rel=$f.FullName.Substring($source.Length).TrimStart([char]'\')
+            $to=Join-Path $destination $rel
+            $checked++;$bytes+=[long]$f.Length
+            if(!(Test-Path -LiteralPath $to -PathType Leaf)){$errors++;continue}
+            if((Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $to -Algorithm SHA256).Hash){$errors++}
+          }
+          if($errors -ne 0){throw "Gameplay integrity check failed: $errors"}
+          Write-Host "SKARVIK_MISSING_GAMEPLAY_BLUEPRINTS_STAGED=true"
+          Write-Host "SKARVIK_GAMEPLAY_FILES_VERIFIED=$checked"
+          Write-Host ("SKARVIK_GAMEPLAY_SIZE_GIB={0:N4}" -f ($bytes/1GB))
+          Write-Host "SKARVIK_CITY_NATIVE_CPP_MODULES_STILL_MISSING=true"
+          Write-Host "SKARVIK_CITY_LEVEL_INSTANCE_STILL_NOT_VERIFIED=true"
