@@ -728,11 +728,30 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateChernaskaluxriaLandscapeTi
   UE_LOG(LogTemp,Error,TEXT("CHERNASKALUXRIA incomplete tile landscape: %s"),*Name);
   return nullptr;
  }
- if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
-  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ // Keep the actual four native components on this Landscape until the
+ // independent map is durably saved; grid/proxy migration is a later step.
+ UE_LOG(LogTemp,Display,TEXT("CHERNASKALUXRIA: native tile components retained for safe save"));
  return Land;
 #else
  return nullptr;
+#endif
+}
+
+int32 UAnomaliaZPrigimaliaWorldImportLibrary::InspectChernaskaluxriaTileComponents(AActor* Candidate)
+{
+#if WITH_EDITOR
+ ALandscape* Land=Cast<ALandscape>(Candidate);
+ if(!Land || !Land->GetWorld() ||
+    Land->GetWorld()->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"))
+  return -1;
+ if(Land->LandscapeComponents.Num()!=4 || !Land->GetLandscapeInfo())
+  return -1;
+ for(ULandscapeComponent* Component:Land->LandscapeComponents)
+  if(!IsValid(Component) || Component->GetOwner()!=Land)return -1;
+ UE_LOG(LogTemp,Display,TEXT("CHERNASKALUXRIA native tile components verified: 4"));
+ return 4;
+#else
+ return -1;
 #endif
 }
 
