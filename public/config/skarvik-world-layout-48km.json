@@ -11,7 +11,7 @@
     "northMax": 24
   },
   "coordinateConvention": "east and north in kilometres; origin center; Unreal XY = east*100000, -north*100000 cm",
-  "status": "125_SETTLEMENTS_PLANNED_ON_48KM_WORLD_PENDING_REAL_UE5_CONSTRUCTION",
+  "status": "125_SETTLEMENTS_COORDINATES_READY_NATIVE_CONSTRUCTION_NOT_DONE",
   "citySample": {
     "packageOnSource": "/Game/Map/Big_City_LVL",
     "fullCityKm": [
