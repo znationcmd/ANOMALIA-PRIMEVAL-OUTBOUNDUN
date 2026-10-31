@@ -30,18 +30,20 @@ jobs:
           if(-not(Test-Path -LiteralPath $source -PathType Leaf)){throw 'Existing source map not found'}
           $sourceBytes=(Get-Item -LiteralPath $source).Length
           $data=@()
+          $totalExternalBytes=[long]0
           foreach($folder in @($actors,$objects)){
             if(Test-Path -LiteralPath $folder -PathType Container){
               $files=@(Get-ChildItem -LiteralPath $folder -File -Recurse -ErrorAction Stop)
               $sum=($files|Measure-Object -Property Length -Sum).Sum
               $data+=@{folder=$folder;count=$files.Count;bytes=[long]$sum}
+              $totalExternalBytes+=[long]$sum
             }else{$data+=@{folder=$folder;count=0;bytes=0}}
           }
           $d=Get-PSDrive -Name D
           $c=Get-PSDrive -Name C
-          $allBytes=[long]$sourceBytes + ($data|Measure-Object -Property bytes -Sum).Sum
+          $allBytes=[long]$sourceBytes + $totalExternalBytes
           Write-Host ('KOLCHIEM_SOURCE_UMAP_BYTES='+$sourceBytes)
-          Write-Host ('KOLCHIEM_SOURCE_EXTERNAL_BYTES='+(($data|Measure-Object -Property bytes -Sum).Sum))
+          Write-Host ('KOLCHIEM_SOURCE_EXTERNAL_BYTES='+$totalExternalBytes)
           Write-Host ('KOLCHIEM_SOURCE_TOTAL_GIB='+[math]::Round($allBytes/1GB,3))
           Write-Host ('KOLCHIEM_D_FREE_GIB='+[math]::Round($d.Free/1GB,3))
           Write-Host ('KOLCHIEM_C_FREE_GIB='+[math]::Round($c.Free/1GB,3))
