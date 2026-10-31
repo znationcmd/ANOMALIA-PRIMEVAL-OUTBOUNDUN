@@ -11449,6 +11449,22 @@
     "roadSegmentsAreNetworkPlanNotPlayableSplines": true,
     "retainAllOriginal17Sites": true,
     "avoidCrowdTrafficAI": true,
-    "preserveAnomaliaDrivableVehiclesAndGameplayNPCs": true
+    "preserveAnomaliaDrivableVehiclesAndGameplayNPCs": true,
+    "moreRoadsWithoutTraffic": true,
+    "trailsOutsideProtectedSettlementFootprints": true,
+    "noClonedCitySampleRoadNetwork": true
+  },
+  "transportNetwork": {
+    "kind": "densified-mixed-road-network-v2",
+    "path": "public/config/skarvik-transport-network-v2.json",
+    "existingRegionalConnections": 137,
+    "newRegionalConnections": 245,
+    "totalRegionalConnections": 382,
+    "proposedLocalStreetSegments": 992,
+    "proposedHikingAndFarmPaths": 302,
+    "originalCitySampleStreetsStayUnmodified": true,
+    "gradeBridgeFloodReviewRequired": true,
+    "engineRoadMeshesConstructed": false,
+    "footTrailsWalkableInGameVerified": false
   }
 }
