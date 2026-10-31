@@ -1,0 +1,481 @@
+{
+  "schemaVersion": 1,
+  "world": "SKARVIK",
+  "worldId": "archipelago-v2",
+  "extentKm": {
+    "width": 48,
+    "height": 48,
+    "xMin": -24,
+    "xMax": 24,
+    "northMin": -24,
+    "northMax": 24
+  },
+  "coordinateConvention": "east and north in kilometres; origin center; Unreal XY = east*100000, -north*100000 cm",
+  "status": "SOURCE_GEOGRAPHY_DEFINED_NATIVE_IMPORT_NOT_DONE",
+  "citySample": {
+    "packageOnSource": "/Game/Map/Big_City_LVL",
+    "fullCityKm": [
+      4,
+      4
+    ],
+    "cityCenterKm": [
+      2,
+      -8
+    ],
+    "location": "central-south lowland",
+    "fullCityKeepAllStaticBuildings": true,
+    "trafficSpawns": 0,
+    "crowdSpawns": 0,
+    "staticProps": true,
+    "gameplayTransferred": false,
+    "sm5Optimized": false
+  },
+  "biomeZones": [
+    {
+      "id": "desert",
+      "name": "Désert et canyons",
+      "boundsKm": [
+        -24,
+        -24,
+        -7,
+        -5
+      ],
+      "features": [
+        "dunes",
+        "canyons",
+        "plateaux arides",
+        "villages désertiques"
+      ]
+    },
+    {
+      "id": "western_alps",
+      "name": "Chaîne montagneuse occidentale",
+      "boundsKm": [
+        -24,
+        -3,
+        -6,
+        24
+      ],
+      "features": [
+        "montagnes",
+        "cols",
+        "villages d'altitude",
+        "sommets enneigés"
+      ]
+    },
+    {
+      "id": "forest",
+      "name": "Forêts et vallées tempérées",
+      "boundsKm": [
+        -11,
+        -11,
+        10,
+        10
+      ],
+      "features": [
+        "forêts",
+        "rivières",
+        "lacs",
+        "villages forestiers"
+      ]
+    },
+    {
+      "id": "snow",
+      "name": "Nord enneigé",
+      "boundsKm": [
+        -7,
+        8,
+        24,
+        24
+      ],
+      "features": [
+        "villages enneigés",
+        "maisons isolées",
+        "grande ville enneigée",
+        "montagnes neigeuses"
+      ]
+    },
+    {
+      "id": "east",
+      "name": "Est, littoral et plaines",
+      "boundsKm": [
+        8,
+        -17,
+        24,
+        9
+      ],
+      "features": [
+        "villes",
+        "villages",
+        "côte",
+        "champs",
+        "forêts"
+      ]
+    },
+    {
+      "id": "south",
+      "name": "Sud boisé et collines",
+      "boundsKm": [
+        -7,
+        -24,
+        10,
+        -13
+      ],
+      "features": [
+        "villages",
+        "routes",
+        "forêts clairsemées"
+      ]
+    }
+  ],
+  "settlements": [
+    {
+      "id": "citysample",
+      "name": "SKARVIK-CENTRE",
+      "kind": "metropolis",
+      "biome": "forest",
+      "eastKm": 2,
+      "northKm": -8,
+      "footprintKm": [
+        4,
+        4
+      ],
+      "terrainElevationM": 100,
+      "source": "City Sample full Big City",
+      "assetStatus": "not-migrated"
+    },
+    {
+      "id": "frostgard",
+      "name": "FROSTGARD",
+      "kind": "large-city",
+      "biome": "snow",
+      "eastKm": 14,
+      "northKm": 15,
+      "footprintKm": [
+        3,
+        3
+      ],
+      "terrainElevationM": 540,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "valdoren",
+      "name": "VALDOREN",
+      "kind": "large-city",
+      "biome": "east",
+      "eastKm": 13,
+      "northKm": 1,
+      "footprintKm": [
+        2.6,
+        2.6
+      ],
+      "terrainElevationM": 130,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "sylvane",
+      "name": "SYLVANE",
+      "kind": "town",
+      "biome": "forest",
+      "eastKm": -5,
+      "northKm": 4,
+      "footprintKm": [
+        1.2,
+        1.2
+      ],
+      "terrainElevationM": 185,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "kaelm",
+      "name": "KAELM",
+      "kind": "town",
+      "biome": "western_alps",
+      "eastKm": -16,
+      "northKm": 7,
+      "footprintKm": [
+        1,
+        1
+      ],
+      "terrainElevationM": 680,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "oasis",
+      "name": "OASIS DE VAR",
+      "kind": "village",
+      "biome": "desert",
+      "eastKm": -17,
+      "northKm": -13,
+      "footprintKm": [
+        0.55,
+        0.55
+      ],
+      "terrainElevationM": 250,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "dunes",
+      "name": "DUNES DE RAV",
+      "kind": "village",
+      "biome": "desert",
+      "eastKm": -12,
+      "northKm": -19,
+      "footprintKm": [
+        0.5,
+        0.5
+      ],
+      "terrainElevationM": 200,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "redridge",
+      "name": "ROCHE ROUGE",
+      "kind": "town",
+      "biome": "desert",
+      "eastKm": -9,
+      "northKm": -10,
+      "footprintKm": [
+        1.1,
+        1.1
+      ],
+      "terrainElevationM": 195,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "firvale",
+      "name": "VAL DES SAPINS",
+      "kind": "village",
+      "biome": "forest",
+      "eastKm": -5,
+      "northKm": -4,
+      "footprintKm": [
+        0.5,
+        0.5
+      ],
+      "terrainElevationM": 135,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "birch",
+      "name": "BOIS-BLANC",
+      "kind": "village",
+      "biome": "forest",
+      "eastKm": 5,
+      "northKm": 5,
+      "footprintKm": [
+        0.55,
+        0.55
+      ],
+      "terrainElevationM": 185,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "highpass",
+      "name": "COL DES AIGLES",
+      "kind": "village",
+      "biome": "western_alps",
+      "eastKm": -14,
+      "northKm": 17,
+      "footprintKm": [
+        0.5,
+        0.5
+      ],
+      "terrainElevationM": 1120,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "snowpine",
+      "name": "PIN-NORD",
+      "kind": "village",
+      "biome": "snow",
+      "eastKm": 7,
+      "northKm": 19,
+      "footprintKm": [
+        0.5,
+        0.5
+      ],
+      "terrainElevationM": 710,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "icehaven",
+      "name": "HAVRE-BLANC",
+      "kind": "town",
+      "biome": "snow",
+      "eastKm": 20,
+      "northKm": 12,
+      "footprintKm": [
+        0.9,
+        0.9
+      ],
+      "terrainElevationM": 480,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "northhamlet",
+      "name": "HAMEAU DU LAC GELÉ",
+      "kind": "village",
+      "biome": "snow",
+      "eastKm": 2,
+      "northKm": 14,
+      "footprintKm": [
+        0.5,
+        0.5
+      ],
+      "terrainElevationM": 750,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "harbor",
+      "name": "PORT ELIAS",
+      "kind": "town",
+      "biome": "east",
+      "eastKm": 18,
+      "northKm": -13,
+      "footprintKm": [
+        1.1,
+        1.1
+      ],
+      "terrainElevationM": 95,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "southwood",
+      "name": "SAINTE-ORÉE",
+      "kind": "village",
+      "biome": "south",
+      "eastKm": 3,
+      "northKm": -19,
+      "footprintKm": [
+        0.55,
+        0.55
+      ],
+      "terrainElevationM": 110,
+      "assetStatus": "terrain-plan"
+    },
+    {
+      "id": "river",
+      "name": "RIVECLAIRe",
+      "kind": "village",
+      "biome": "forest",
+      "eastKm": -10,
+      "northKm": -1,
+      "footprintKm": [
+        0.55,
+        0.55
+      ],
+      "terrainElevationM": 210,
+      "assetStatus": "terrain-plan"
+    }
+  ],
+  "roads": [
+    {
+      "from": "citysample",
+      "to": "firvale",
+      "class": "primary"
+    },
+    {
+      "from": "citysample",
+      "to": "southwood",
+      "class": "primary"
+    },
+    {
+      "from": "citysample",
+      "to": "valdoren",
+      "class": "motorway"
+    },
+    {
+      "from": "valdoren",
+      "to": "harbor",
+      "class": "primary"
+    },
+    {
+      "from": "valdoren",
+      "to": "birch",
+      "class": "primary"
+    },
+    {
+      "from": "valdoren",
+      "to": "frostgard",
+      "class": "primary"
+    },
+    {
+      "from": "frostgard",
+      "to": "icehaven",
+      "class": "primary"
+    },
+    {
+      "from": "frostgard",
+      "to": "snowpine",
+      "class": "primary"
+    },
+    {
+      "from": "snowpine",
+      "to": "northhamlet",
+      "class": "secondary"
+    },
+    {
+      "from": "northhamlet",
+      "to": "sylvane",
+      "class": "mountain-road"
+    },
+    {
+      "from": "sylvane",
+      "to": "birch",
+      "class": "secondary"
+    },
+    {
+      "from": "sylvane",
+      "to": "kaelm",
+      "class": "mountain-road"
+    },
+    {
+      "from": "kaelm",
+      "to": "highpass",
+      "class": "mountain-road"
+    },
+    {
+      "from": "sylvane",
+      "to": "river",
+      "class": "secondary"
+    },
+    {
+      "from": "river",
+      "to": "redridge",
+      "class": "desert-road"
+    },
+    {
+      "from": "redridge",
+      "to": "oasis",
+      "class": "desert-road"
+    },
+    {
+      "from": "oasis",
+      "to": "dunes",
+      "class": "desert-road"
+    },
+    {
+      "from": "dunes",
+      "to": "southwood",
+      "class": "secondary"
+    },
+    {
+      "from": "firvale",
+      "to": "river",
+      "class": "secondary"
+    }
+  ],
+  "rules": {
+    "citySampleNoRescale": true,
+    "cityPlacementRequiresSourceGroundTransform": true,
+    "landscape48x48": true,
+    "keepOriginalSkarvik": true,
+    "maintainOtherMaps": true,
+    "noProprietaryEpicAssetsInPublicRepo": true,
+    "cityTraffic": false,
+    "cityPedestrians": false,
+    "worldPartitionRequired": true,
+    "buildingPlacementRequiresAssetLicenses": true
+  }
+}
