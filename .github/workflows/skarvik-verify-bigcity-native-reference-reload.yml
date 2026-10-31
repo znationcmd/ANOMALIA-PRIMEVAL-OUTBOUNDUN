@@ -1,0 +1,65 @@
+name: SKARVIK - verify Big City native LevelInstance survives graded world reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-bigcity-native-reference-reload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check source City Sample and protected D original
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage marker'}
+          foreach($path in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\BigCityNativeReferencePilot20261031\before-city-reference.umap'))){
+            if(!(Test-Path -LiteralPath $path)){throw "Missing world or backup: $path"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal process'}
+      - name: Read-only native World Partition Big City reference descriptor and previous road/building verification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_bigcity_reference_persisted.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Big City verify source syntax invalid'}
+          $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-bigcity-reopened-persistence.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT)){throw 'Missing native Big City report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_DESCRIPTOR_COUNT='+$r.nativeLevelInstanceDescriptorCount)
+          Write-Host ('SKARVIK_NATIVE_1039_BUILDINGS_AFTER_CITY_LINK='+$r.existing3DBuildingActorDescriptors)
+          Write-Host ('SKARVIK_NATIVE_1794_OLD_ROAD_ACTORS_AFTER_CITY_LINK='+($r.existingFirst3RoadActorDescriptors+$r.existingBatch20RoadActorDescriptors))
+          Write-Host ('SKARVIK_NATIVE_BATCH_B2_NEW_ROADS='+$r.additionalSecondBatchRoadActorDescriptors)
+          if($code -ne 0 -or $r.state -ne 'BIG_CITY_LEVEL_INSTANCE_DESCRIPTOR_AND_PREVIOUS_WORLD_ACTORS_PERSIST_AFTER_REOPEN_NOT_VISUALLY_LOADED'){
+            throw ('LevelInstance ref not yet persistent: '+$r.error)
+          }
+          Write-Host 'SKARVIK_BIG_CITY_LEVEL_INSTANCE_REFERENCE_PERSISTENCE_VERIFIED=true'
+          Write-Host 'SKARVIK_FULL_BIG_CITY_NOT_LOADED_OR_SM5_PLAYTESTED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-big-city-graded-wp-actor-descriptor-reopen
+          path: skarvik-bigcity-reopened-persistence.json
+          if-no-files-found: warn
