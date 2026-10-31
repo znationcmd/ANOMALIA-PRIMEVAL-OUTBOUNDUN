@@ -1,0 +1,112 @@
+{
+  "schemaVersion": 1,
+  "intent": "Map-specific original locality densities with native buildable terrain and preserved distinctive geography",
+  "designStatus": "PLANNING_ONLY_NOT_NATIVE_POPULATED",
+  "referenceBaseline": "SKARVIK 48x48 = 125; other maps intentionally less urbanized according to size and biomes",
+  "maps": [
+    {
+      "mapId": "archipelago-v2",
+      "name": "SKARVIK",
+      "sizeKm": [
+        48,
+        48
+      ],
+      "total": 125,
+      "majorCities": 10,
+      "smallTowns": 6,
+      "towns": 26,
+      "villages": 83,
+      "environment": "mixed forest snow desert coast",
+      "status": "SKARVIK MASTER PLAN 125; native grade+world playable pending"
+    },
+    {
+      "mapId": "inhabited-v2",
+      "name": "DRAZOVIA",
+      "sizeKm": [
+        48,
+        48
+      ],
+      "total": 70,
+      "majorCities": 6,
+      "smallTowns": 5,
+      "towns": 14,
+      "villages": 45,
+      "environment": "temperate forests rural valleys, developed towns",
+      "status": "planning only"
+    },
+    {
+      "mapId": "karskov-v1",
+      "name": "KARSKOV",
+      "sizeKm": [
+        30,
+        30
+      ],
+      "total": 45,
+      "majorCities": 3,
+      "smallTowns": 4,
+      "towns": 10,
+      "villages": 28,
+      "environment": "forests meadows river villages",
+      "status": "planning only"
+    },
+    {
+      "mapId": "vorgrad-v1",
+      "name": "VORGRAD",
+      "sizeKm": [
+        30,
+        30
+      ],
+      "total": 30,
+      "majorCities": 2,
+      "smallTowns": 2,
+      "towns": 8,
+      "villages": 18,
+      "environment": "arid desert, foothills, oasis settlements",
+      "status": "planning only"
+    },
+    {
+      "mapId": "nemoris-v1",
+      "name": "NEMORIS",
+      "sizeKm": [
+        20,
+        20
+      ],
+      "total": 15,
+      "majorCities": 1,
+      "smallTowns": 2,
+      "towns": 4,
+      "villages": 8,
+      "environment": "tropical jungle, creeks, sparse settlements",
+      "status": "planning only"
+    },
+    {
+      "mapId": "drakheim-v1",
+      "name": "DRAKHEIM",
+      "sizeKm": [
+        20,
+        20
+      ],
+      "total": 10,
+      "majorCities": 1,
+      "smallTowns": 1,
+      "towns": 2,
+      "villages": 6,
+      "environment": "frozen volcanic wilderness, compact isolated villages",
+      "status": "planning only"
+    }
+  ],
+  "constructionGuards": {
+    "realMeshOnly": true,
+    "noPrefabPlaceholders": true,
+    "noCopyingCitysampleCrowdOrTraffic": true,
+    "allowAnomaliaGameVehiclesAndNpc": true,
+    "gradeFoundationPadsWithSmoothBlends": true,
+    "doNotFlattenWholeMountains": true,
+    "worldPartitionRequired": true,
+    "verifyLandscapeCollisionAndSM5Play": true,
+    "doNotModifyOriginalD": true,
+    "createUniqueVersionedMapsInCStage": true,
+    "preserveAllExistingNamedWorlds": true,
+    "locationNamesAndRoadGraphStillToBeDesignedForOtherMaps": true
+  }
+}
