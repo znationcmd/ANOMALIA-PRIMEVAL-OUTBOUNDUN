@@ -66,3 +66,5 @@ try {
  if($ReportPath){[IO.File]::WriteAllText($ReportPath,$json)}
 }
 if($result.state -eq 'BLOCKED'){exit 2}
+# robocopy exit codes 1-7 are normal; do not leak their last exit code to GitHub.
+exit 0
