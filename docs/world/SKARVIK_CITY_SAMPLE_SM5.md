@@ -1,6 +1,6 @@
 # SKARVIK -> City Sample Big City, SM5, sans trafic ni PNJ mobiles
 
-**Demande :** remplacer la carte affichée comme SKARVIK par **toute la grande ville** de City Sample (~4 × 4 km), sans aucune circulation et sans foules animées. Garder les routes, bâtiments, tunnels, ponts, trottoirs et accessoires statiques.
+**Demande corrigée (31 octobre 2026) :** SKARVIK doit garder une superficie jouable de **48 × 48 km (2 304 km²)**. Le contenu **complet de la grande ville City Sample (~4 × 4 km)** doit être intégré à l'échelle 1:1 dans une zone de cette carte, sans circulation ni PNJ mobiles. Conserver routes, bâtiments, tunnels, ponts, trottoirs et accessoires statiques. Ne jamais réduire le monde SKARVIK aux seules limites urbaines, ni étirer la ville sur 48 km.
 
 **Statut : PRÉPARATION, aucune importation native effectuée.** Ne pas confondre « cible configurée » et « monde réellement installé ». Sur GitHub, les fichiers binaires Epic City Sample ne sont pas présents. L'ancien SKARVIK, `/Game/Maps/ANOMALIA_Archipelago_v2`, reste actif tant que les vérifications ci-dessous échouent. Conserver les sauvegardes et la possibilité de retour arrière. DRAZOVIA et les quatre autres mondes ne sont pas modifiés.
 
@@ -13,7 +13,8 @@
 5. Configurer sur la copie une cible **D3D11 / SM5**, désactiver Nanite, Lumen et Virtual Shadow Maps; disposer des véritables **fallback meshes**, éventuellement reconstruire les LODs, adapter les matériaux, simplifier les ombres et les textures. **City Sample s'appuie massivement sur Nanite**, il peut être trop lourd en SM5 ou afficher des meshes de secours de qualité insuffisante.
 6. Désactiver à la source le spawning **Mass Traffic** et **Mass Crowd** (acteurs de spawn, Data Layers, Blueprints et chargement de gameplay si concernés); laisser les voitures garées uniquement en décor statique si souhaité. Les curseurs de densité à zéro ne suffisent pas à prouver l'absence durable de spawn. Ne pas retirer les routes et bâtiments.
 7. Connecter le GameMode, personnage, collisions, PlayerStart, sauvegardes et déplacements ANOMALIA’Z à la ville. Faire des tests **PIE et build packagé** : présence de la ville entière, streaming World Partition, absence de véhicules mobiles et de PNJ animés, FPS et mémoire, sauvegarde/rechargement.
-8. **Seulement après réussite**, faire pointer l'entrée publique **SKARVIK / archipelago-v2** vers le nouveau niveau validé; adapter son affichage à la surface **4 × 4 km**. Conserver les fichiers originaux 48 × 48 km et l'identité des anciennes sauvegardes pour retour arrière.
+8. **Préserver les 48 × 48 km de SKARVIK** : intégrer City Sample à son échelle native d'environ 4 × 4 km, à l'intérieur d'un nouveau monde 48 × 48 km, en prévoyant des terres, forêts et zones de survie autour. Le terrain environnant et les raccords routiers doivent être réalisés et testés ; ce n'est pas une simple conversion de dimensions. Conserver le streaming World Partition sur toute la superficie, vérifier les transitions, la navigation et les volumes.
+9. **Seulement après réussite**, faire pointer l'entrée publique **SKARVIK / archipelago-v2** vers le nouveau niveau 48 × 48 km validé. **Ne modifier ni `widthKm` ni `heightKm` dans le catalogue**, ni l'identité des sauvegardes. Conserver les fichiers originaux 48 × 48 km séparément pour retour arrière.
 
 ## Limitation matérielle
 
