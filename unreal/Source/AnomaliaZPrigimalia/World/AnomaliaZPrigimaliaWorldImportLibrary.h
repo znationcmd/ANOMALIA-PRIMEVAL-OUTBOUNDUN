@@ -32,6 +32,11 @@ public:
  // V3 preserves the complete 576-component Landscape before grid redistribution.
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateDrazoviaIzurviveCandidateV3Landscape();
+ /** Native F.A.L.C reference 26.5x26.5km RAW16 import, separate from all other maps. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateFalcReferenceLandscape();
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static int32 InspectFalcReferenceComponents(AActor* Candidate);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static int32 InspectDrazoviaIzurviveCandidateV3Components(AActor* Candidate);
  /** Editor-only 30/20 km named World Partition landscape creation; no overwrites. */
