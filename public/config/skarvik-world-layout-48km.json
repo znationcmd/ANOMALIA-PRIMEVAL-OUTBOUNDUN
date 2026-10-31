@@ -11474,6 +11474,18 @@
       "proof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234307751",
       "noClaimOfFullNetworkConstruction": true,
       "protectedOriginalDNotModified": true
+    },
+    "realRoadPilot": {
+      "confirmed": true,
+      "testWorldPackage": "/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1",
+      "isolatedCStageOnly": true,
+      "realMeshActorsSaved": 60,
+      "actualMeshStripMetres": 600,
+      "nativeProofRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41234307751",
+      "drivingPlaytestPassed": false,
+      "fullNetworkBuilt": false,
+      "productionDUnmodified": true,
+      "note": "First protected v1 in-stage pilot only; do not infer all 382 routes have physical mesh actors."
     }
   }
 }
