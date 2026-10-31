@@ -73,12 +73,13 @@ try:
  data["levelInstanceTypeConfirmedFromDescriptor"]=data["levelInstanceClassPathConfirmed"]
  data["CitySampleFullActorsStreamed"]=False
  data["sourceWorldReferenceAfterReloadUnverified"]=not data["nativeLevelInstanceTypeConfirmed"]
- unreal.log("SKARVIK_BIGCITY_REOPEN_DESCRIPTOR_TYPE="+data["cityActorPersistedDescriptorClass"])
+ unreal.log("SKARVIK_BIGCITY_REOPEN_DESCRIPTOR_TYPE="+data["persistedCityActorDescriptorClass"])
  for f in (TARGET,CITY,ORIGINAL):
   if hashlib.sha256(f.read_bytes()).hexdigest()!=hashes[str(f)]:
    raise RuntimeError("Read-only verification modified protected Unreal world")
  data["state"]="BIG_CITY_NAMED_ACTOR_AND_63_ROAD_ROUTES_PLUS_1039_BUILDINGS_PERSIST_TYPE_UNVERIFIED"
- data["referenceSavedAndReopened"]=True
+ data["referenceSavedAndReopened"]=data["levelInstanceClassPathConfirmed"]
+ data["namedActorDescriptorSavedAndReopened"]=True
  unreal.log("SKARVIK_BIG_CITY_NATIVE_REFERENCE_WP_DESCRIPTOR_PERSISTED=true")
 except Exception as e:
  data["error"]=str(e);data["traceback"]=traceback.format_exc()
