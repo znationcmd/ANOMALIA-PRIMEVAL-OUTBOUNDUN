@@ -1,0 +1,84 @@
+name: ANOMALIA - KOLCHIEM ORIGINS 11th World Partition copy of old DRAZOVIA
+on:
+  push:
+    branches: [feature/drazovia-izurvive-new-photo-48km-20261030]
+    paths:
+      - .github/workflows/anomalia-kolchiem-origins-native-duplicate.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  # Wait for existing heavy UE5 operations (including the 6 preview imports).
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-validation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify 11 distinct world records and non-destructive native commandlet
+        shell: bash
+        run: |
+          python -m py_compile unreal/Scripts/verify_kolchiem_origins_duplicate.py
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          maps=json.loads(Path('public/config/anomalia-map-catalog.json').read_text(encoding='utf-8'))['maps']
+          assert len(maps)==11
+          assert len({m['id'] for m in maps})==11
+          assert len({m['originalUnrealPackage'] for m in maps})==11
+          d=next(m for m in maps if m['displayName']=='DRAZOVIA')
+          k=next(m for m in maps if m['displayName']=='KOLCHIEM ORIGINS')
+          assert d['originalUnrealPackage']=='/Game/Maps/ANOMALIA_DrazoviaTopo_NewReferenceV3_Candidate'
+          assert d['legacyUnrealPackage']==k['sourceUnrealPackage']=='/Game/Maps/ANOMALIA_Inhabited_v2'
+          assert k['originalUnrealPackage']=='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS'
+          assert k['serverSelectable'] is False and k['gameplayTested'] is False
+          ps=Path('scripts/windows/duplicate_kolchiem_origins_native_safe.ps1').read_text()
+          assert "WorldPartitionRenameDuplicateBuilder" in ps
+          assert "-NewPackage=$dst" in ps
+          assert "'-Rename'" not in ps
+          assert "PROTECTED_SOURCE_SKARVIK_DRAZOVIA_UNCHANGED" in ps
+          print('KOLCHIEM_ORIGINS_ELEVEN_MAPS_SOURCE_CHECKS_PASSED=true')
+          PY
+  duplicate-old-world-on-pc:
+    needs: source-validation
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Duplicate old DRAZOVIA native World Partition into independent KOLCHIEM ORIGINS (no -Rename)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/windows/duplicate_kolchiem_origins_native_safe.ps1')
+          if($LASTEXITCODE -and $LASTEXITCODE -ne 0){throw 'KOLCHIEM native duplication failed'}
+      - name: Native read-only reload verification for both distinct World packages
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $folder=Join-Path $env:RUNNER_TEMP ('ANOMALIA_KOLCHIEM_ORIGINS_'+$env:GITHUB_RUN_ID)
+          $env:ANOMALIA_KOLCHIEM_RELOAD_REPORT=Join-Path $folder 'native-reload.json'
+          $log=Join-Path $folder 'native-reload.log'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_kolchiem_origins_duplicate.py'
+          & $editor $project '-NullRHI' '-unattended' '-nopause' '-nosound' '-run=pythonscript' "-script=$script" "-abslog=$log"
+          if($LASTEXITCODE -ne 0){throw 'Native KOLCHIEM World reload failed'}
+          if(-not(Test-Path -LiteralPath $env:ANOMALIA_KOLCHIEM_RELOAD_REPORT -PathType Leaf)){throw 'Native reload receipt missing'}
+          $proof=Get-Content -LiteralPath $env:ANOMALIA_KOLCHIEM_RELOAD_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          if($proof.nativeWorldReloaded -ne $true -or $proof.separateWorldPackages -ne $true){throw 'Two native World packages not verified'}
+          Write-Host 'KOLCHIEM_ORIGINS_INDEPENDENT_NATIVE_WORLD_RELOADED=true'
+      - name: Preserve KOLCHIEM duplication receipts and Unreal diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: kolchiem-origins-11th-native-world-${{ github.run_id }}
+          path: ${{ runner.temp }}/ANOMALIA_KOLCHIEM_ORIGINS_${{ github.run_id }}/*
+          retention-days: 7
+          if-no-files-found: warn
