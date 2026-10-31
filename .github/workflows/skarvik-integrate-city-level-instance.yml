@@ -27,6 +27,10 @@ jobs:
           if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'New 48km SKARVIK world missing'}
           if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original SKARVIK map missing'}
           if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          foreach($native in @('UnrealEditor-CitySample.dll','UnrealEditor-CitySampleAnimGraphRuntime.dll')){
+            if(!(Test-Path -LiteralPath (Join-Path $root ('Binaries\Win64\'+$native)))){throw ('Required compiled native CitySample module absent: '+$native)}
+          }
+          Write-Host 'SKARVIK_CITYSAMPLE_NATIVE_LINKER_VERIFIED=true'
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session running'}
           $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
           Write-Host ("SKARVIK_PRE_CITY_FREE_C_GIB="+[math]::Round($free,2))
