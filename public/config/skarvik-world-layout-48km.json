@@ -28,7 +28,21 @@
     "crowdSpawns": 0,
     "staticProps": true,
     "gameplayTransferred": false,
-    "sm5Optimized": false
+    "sm5Optimized": false,
+    "nativeBigCityReference": {
+      "targetWorld": "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+      "referencedSourceWorld": "/Game/Map/Big_City_LVL",
+      "worldPartitionLevelInstanceActor": "SKARVIK_CENTRE_CITY_SAMPLE_NATIVE_LEVEL_REFERENCE_V1",
+      "sourceWorldActorPackagesPreviouslyFound": 86608,
+      "levelInstanceReferenceSaved": true,
+      "sourceActorStreamingVerified": false,
+      "cityBuildingsVisibleInSM5": false,
+      "gameplayAndVehicleTrafficTested": false,
+      "trueFullCityIntegrationComplete": false,
+      "fullCityReferenceProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241004483",
+      "sourceDiskAuditProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41238446267",
+      "sourceMapAndProductionDProtected": true
+    }
   },
   "biomeZones": [
     {
@@ -11796,6 +11810,9 @@
     "additionalRoadSurfaceMetres": 31092.9,
     "combinedRoadSurfaceMetres": 33538.4,
     "roadExpansionProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41237712368",
-    "independent23RoadReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41237906507"
+    "independent23RoadReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41237906507",
+    "bigCityReferenceSaved": true,
+    "bigCityFullyStreamed": false,
+    "bigCityNativeReferenceProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241004483"
   }
 }
