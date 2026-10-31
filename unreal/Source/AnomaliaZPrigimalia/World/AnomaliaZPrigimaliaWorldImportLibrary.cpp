@@ -2,6 +2,7 @@
 #include "AnomaliaZPrigimaliaArchipelagoHeight.h"
 #include "AnomaliaZPrigimaliaInhabitedHeight.h"
 #include "AnomaliaZPrigimaliaExtraWorldHeights.h"
+#include "AnomaliaZPrigimaliaNewFourWorldHeights.h"
 #include "AnomaliaZPrigimaliaSkarvikTerrain.h"
 #include "AnomaliaZPrigimaliaSkarvikGraded.h"
 #if WITH_EDITOR
@@ -524,3 +525,65 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateSkarvikGradedLandscape()
 #endif
 }
 
+
+
+// Four NEW World Partition packages; the eleven existing map packages are never edited.
+namespace
+{
+ AnomaliaZPrigimaliaNewFour::EWorld ResolveNewestFour(const FString& Id)
+ {
+  using namespace AnomaliaZPrigimaliaNewFour;
+  if(Id==TEXT("ROSKATVIA_B1"))return EWorld::RoskatviaB1;
+  if(Id==TEXT("NOGOKV_51"))return EWorld::Nogokv51;
+  if(Id==TEXT("PARADISIOMANIA"))return EWorld::Paradisiomania;
+  if(Id==TEXT("DEADROOT"))return EWorld::Deadroot;
+  return EWorld::Invalid;
+ }
+}
+double UAnomaliaZPrigimaliaWorldImportLibrary::NewFourWorldHeight(const FString& Id,double EastMetres,double NorthMetres)
+{
+ return AnomaliaZPrigimaliaNewFour::Height(ResolveNewestFour(Id),EastMetres,NorthMetres);
+}
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNewFourLandscape(const FString& Id)
+{
+#if WITH_EDITOR
+ using namespace AnomaliaZPrigimaliaNewFour;
+ const EWorld WorldId=ResolveNewestFour(Id);
+ const int32 Size=SamplesPerSide(WorldId);
+ const int32 Side=SideMetres(WorldId);
+ if(Side==0 || Size==0)return nullptr;
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+Id)return nullptr;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr;
+ TArray<uint16> Heights;
+ Heights.SetNumUninitialized(Size*Size);
+ const double Half=Side/2.;
+ for(int32 Row=0;Row<Size;++Row)for(int32 Col=0;Col<Size;++Col){
+  const double East=-Half+Side*double(Col)/(Size-1);
+  const double North=Half-Side*double(Row)/(Size-1);
+  Heights[Row*Size+Col]=Encode(Height(WorldId,East,North));
+ }
+ ALandscape* Land=World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("PRIGIMALIA_")+Id+TEXT("_OriginalTerrain"));
+ Land->SetActorLocation(FVector(-Half*100.,-Half*100.,0.));
+ Land->SetActorScale3D(FVector(Side*100./double(Size-1),Side*100./double(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Elevations;Elevations.Add(FGuid(),MoveTemp(Heights));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Elevations,nullptr,Layers,
+  ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();Land->PostEditChange();
+ const int32 Expected=ExpectedComponents(WorldId);
+ if(Land->LandscapeComponents.Num()!=Expected) {
+  UE_LOG(LogTemp,Error,TEXT("New world %s landscape component mismatch %d != %d"),
+   *Id,Land->LandscapeComponents.Num(),Expected);
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* S=World->GetSubsystem<ULandscapeSubsystem>())
+  S->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
