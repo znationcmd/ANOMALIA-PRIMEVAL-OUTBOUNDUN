@@ -11783,6 +11783,9 @@
     ],
     "preserveProductionD": true,
     "projectNotMerged": true,
-    "fullMapPlayable": false
+    "fullMapPlayable": false,
+    "combinedBuildingsAndRoadsPersistedReopenVerified": true,
+    "combinedWorldReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41236482266",
+    "gameplaySM5PlaytestPassed": false
   }
 }
