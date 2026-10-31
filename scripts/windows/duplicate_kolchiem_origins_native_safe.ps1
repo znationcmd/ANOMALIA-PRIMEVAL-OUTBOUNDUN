@@ -10,7 +10,7 @@ $src='/Game/Maps/ANOMALIA_Inhabited_v2'
 $dst='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS'
 $srcMap=Join-Path $root 'Content\Maps\ANOMALIA_Inhabited_v2.umap'
 $dstMap=Join-Path $root 'Content\Maps\PRIGIMALIA_KOLCHIEM_ORIGINS.umap'
-$editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+$editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
 $outDir=Join-Path $env:RUNNER_TEMP ('ANOMALIA_KOLCHIEM_ORIGINS_'+$env:GITHUB_RUN_ID)
 New-Item -ItemType Directory -Path $outDir -Force|Out-Null
 $beforePath=Join-Path $outDir 'preflight.json'
