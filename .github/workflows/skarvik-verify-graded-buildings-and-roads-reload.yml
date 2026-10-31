@@ -31,7 +31,7 @@ jobs:
             if(!(Test-Path -LiteralPath $path)){throw "Required protected file absent: $path"}
           }
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other editor active'}
-      - name: Native UE5 reopen: 124 populated localities and 3 road routes in one saved World Partition
+      - name: 'Native UE5 reopen: 124 populated localities and 3 road routes in one saved World Partition'
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
