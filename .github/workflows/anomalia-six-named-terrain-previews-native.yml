@@ -40,6 +40,7 @@ jobs:
           assert '"NEXAVARKHOS":(10000,1009,64)' in py
           assert '(Size==1513)?144:(Size==1009)?64:0' in a
           assert 'ExtraWorldHeights.h' in ps and 'ResolveAdditionalWorld(' in ps
+          assert 'LastIndexOf' in ps
           print('SIX_PREVIEW_STATIC_SAFETY_CHECKS_PASS=true')
           PY
   native-six-previews-on-user-pc:
