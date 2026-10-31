@@ -175,7 +175,7 @@
       "heightKm": 12.8,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "source-plan-only-native-world-not-yet-authored",
+      "validation": "native-ue5-world-partition-landscape-created-saved-not-playtested",
       "saveNamespace": "roskatvia-b1-v1",
       "sourceMapPreserved": true,
       "terrainBiome": "temperate-forests-plains-rivers-lakes",
@@ -191,7 +191,12 @@
         "rivers": true,
         "lakes": true
       },
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativeWorldCreated": true,
+      "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
+      "multiplayerReady": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false
     },
     {
       "id": "nogokv-51-v1",
@@ -201,7 +206,7 @@
       "heightKm": 15.3,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "source-plan-only-native-world-not-yet-authored",
+      "validation": "native-ue5-world-partition-landscape-created-saved-not-playtested",
       "saveNamespace": "nogokv-51-v1",
       "sourceMapPreserved": true,
       "terrainBiome": "polar-ocean-islands-traversable-ice",
@@ -218,7 +223,12 @@
         "dryLandPlusIce": 105,
         "openOcean": 129.09
       },
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativeWorldCreated": true,
+      "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
+      "multiplayerReady": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false
     },
     {
       "id": "paradisiomania-v1",
@@ -228,7 +238,7 @@
       "heightKm": 10,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "source-plan-only-native-world-not-yet-authored",
+      "validation": "native-ue5-world-partition-landscape-created-saved-not-playtested",
       "saveNamespace": "paradisiomania-v1",
       "sourceMapPreserved": true,
       "terrainBiome": "tropical-mainland-ocean-islands",
@@ -245,7 +255,12 @@
         "islands": 10,
         "landTotal": 70
       },
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativeWorldCreated": true,
+      "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
+      "multiplayerReady": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false
     },
     {
       "id": "deadroot-v1",
@@ -255,7 +270,7 @@
       "heightKm": 8,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "source-plan-only-native-world-not-yet-authored",
+      "validation": "native-ue5-world-partition-landscape-created-saved-not-playtested",
       "saveNamespace": "deadroot-v1",
       "sourceMapPreserved": true,
       "terrainBiome": "deathmatch-competitive-arena",
@@ -268,7 +283,12 @@
         "no civilian traffic or ambient crowds"
       ],
       "gameMode": "FULL_PVP_DEATHMATCH",
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativeWorldCreated": true,
+      "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
+      "multiplayerReady": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false
     }
   ],
   "mapCount": 15,
@@ -282,6 +302,10 @@
     "additionalPlannedWorlds": 4,
     "exactMeasurementsNeedRealEngineVerification": true,
     "newWorldsNativePlayable": false,
-    "settlementScalingPolicy": "Size and biome determine count; 100% PVP DEADROOT has no civilian settlements. Unknown original map dimensions must be audited rather than guessed."
+    "settlementScalingPolicy": "Size and biome determine count; 100% PVP DEADROOT has no civilian settlements. Unknown original map dimensions must be audited rather than guessed.",
+    "additionalNativeWorldsSaved": 4,
+    "additionalWorldsGameSelectable": 0,
+    "mapSelectionImplementationPending": true,
+    "multiplayerMapSelectionImplementationPending": true
   }
 }
