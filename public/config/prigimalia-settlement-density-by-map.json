@@ -1,8 +1,8 @@
 {
   "schemaVersion": 2,
   "intent": "Map-specific original locality densities with native buildable terrain and preserved distinctive geography",
-  "designStatus": "SKARVIK_125_PLANNED_OTHER_10_MAPS_NOT_FULLY_SCOPED",
-  "referenceBaseline": "SKARVIK 48x48 is the ONE world with 125 named localities; game has 11 distinct maps. No speculative density numbers for additional five worlds.",
+  "designStatus": "ALL_11_WORLDS_PLANNED_NATIVE_SETTLEMENT_POPULATION_INCOMPLETE",
+  "referenceBaseline": "11 ANOMALIA'Z worlds: SKARVIK 125 and CHERNASKALUXRIA 475 on its 100x100km planned terrain. Other map densities per area and biome; totals are plans, not completed native UE5 villages.",
   "maps": [
     {
       "mapId": "archipelago-v2",
@@ -127,14 +127,23 @@
         100,
         100
       ],
-      "total": 80,
-      "majorCities": 5,
-      "smallTowns": 7,
-      "towns": 18,
-      "villages": 50,
-      "environment": "vast mixed survival wilderness; sparse settlements despite size",
-      "status": "planning only - world tile import incomplete (earlier report: 1/400)",
-      "technicalMapPath": null
+      "total": 475,
+      "majorCities": 25,
+      "smallTowns": 35,
+      "towns": 100,
+      "villages": 315,
+      "environment": "vast 100x100 km survival world: 25 distinct urban centers, 35 satellite small towns, 100 boroughs and 315 dispersed villages connected across coast, forests, hills and rural areas",
+      "status": "475 LOCALITIES PLANNED; real 100km terrain tile import and topographic grading pending; do not assert in-game placement",
+      "technicalMapPath": null,
+      "placementPolicy": {
+        "areaKm2": 10000,
+        "urbanClusters": 25,
+        "noClonedCitySampleNeighborhoods": true,
+        "allNamedSitesRequireNativeWorldPartitionActors": true,
+        "terrainElevationAndRoadGradesNeedRealTileValidation": true,
+        "avoidGenericCubes": true,
+        "citySampleCrowdAndTrafficOff": true
+      }
     },
     {
       "mapId": "falc",
@@ -188,7 +197,9 @@
     "unknownSizesMustNotBeInvented": true,
     "originalDrazoviaAndKolchiemOriginsRemainDistinct": true,
     "citySampleTrafficAndCrowdsOff": true,
-    "originalDProtected": true
+    "originalDProtected": true,
+    "chernaskaluxriaRequestedLocalities": 475,
+    "chernaskaluxriaNativeConstructionVerified": false
   },
   "mapCount": 11
 }
