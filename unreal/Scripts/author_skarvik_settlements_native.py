@@ -64,7 +64,7 @@ try:
    raise RuntimeError("Real building mesh missing, no placeholder substitution: "+path)
   bounds=asset.get_bounds()
   sizes=[bounds.box_extent.x*2/100,bounds.box_extent.y*2/100,bounds.box_extent.z*2/100]
-  if not 2<min(sizes[:2]) and 2<max(sizes[:2])<70:
+  if not (2<min(sizes[:2]) and max(sizes[:2])<70):
    raise RuntimeError("Unexpected building mesh scale: "+name+" "+str(sizes))
   meshes[name]=(asset,bounds)
  levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
