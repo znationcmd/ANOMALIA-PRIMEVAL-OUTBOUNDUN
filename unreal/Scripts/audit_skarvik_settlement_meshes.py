@@ -31,7 +31,7 @@ try:
             count+=1
             name=str(asset.asset_name)
             if rx.search(name):
-                interesting.append({"name":name,"objectPath":str(asset.get_soft_object_path()),"package":str(asset.package_name)})
+                interesting.append({"name":name,"objectPath":str(asset.package_name)+"."+str(asset.asset_name),"package":str(asset.package_name)})
         state["totalStaticMeshesByFolder"][folder]=count
         interesting=sorted(interesting,key=lambda z:z["name"].lower())
         state["catalogue"].extend([dict(group=group,**e) for e in interesting[:150]])
