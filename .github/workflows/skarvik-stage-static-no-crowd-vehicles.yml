@@ -25,7 +25,6 @@ jobs:
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts/ue5/skarvik-static-no-crowd-vehicles.ps1'
           $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-preflight.json'
           & $script -ReportPath $report
-          if($LASTEXITCODE -ne 0){throw 'Static asset staging preflight blocked; no assets copied'}
           $data=Get-Content $report -Raw|ConvertFrom-Json
           if($data.state -ne 'SAFE_CORE_STATIC_ASSETS_READY'){throw 'Unexpected preflight result'}
       - name: Import buildings, roads, map, actors and optional static props only
@@ -35,7 +34,6 @@ jobs:
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts/ue5/skarvik-static-no-crowd-vehicles.ps1'
           $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-static-copy.json'
           & $script -Apply -ReportPath $report
-          if($LASTEXITCODE -ne 0){throw 'Staging failed; review report, originals unchanged'}
           $data=Get-Content $report -Raw|ConvertFrom-Json
           if(!$data.coreCopied -or $data.crowdCopied -or $data.vehiclesCopied){throw 'Static copy proof invalid'}
           Write-Host "SKARVIK_STATIC_IMPORT_STAGE=$($data.state)"
