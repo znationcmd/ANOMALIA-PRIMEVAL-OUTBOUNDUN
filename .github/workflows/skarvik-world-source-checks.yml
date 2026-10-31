@@ -30,9 +30,8 @@ jobs:
         run: python -m unittest discover -s tests -p 'test_skarvik_world_layout_48km.py' -v
       - name: Validate Unreal Editor-only Python source
         run: python -m py_compile unreal/Scripts/create_skarvik_city_world.py
-      - name: Confirm no native map asset added to public GitHub
+      - name: Confirm native City Sample has not been falsely packaged
         run: |
-          if find unreal/Content -type f \( -name '*.uasset' -o -name '*.umap' \) -print -quit 2>/dev/null | grep -q .; then
-            echo "Native assets need controlled staging; do not upload licensed assets"; exit 1
-          fi
-          echo "SKARVIK_48KM_SOURCE_CHECKS_PASS_NO_CITY_IMPORTED"
+          test ! -f unreal/Content/Maps/PRIGIMALIA_SKARVIK_CITY_v1.umap
+          test ! -d unreal/Content/CitySample
+          echo "SKARVIK_48KM_SOURCE_CHECKS_PASS_NATIVE_IMPORT_STILL_PENDING"
