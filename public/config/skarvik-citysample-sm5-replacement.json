@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "PENDING_CITY_SAMPLE_LOCAL_ASSETS_AND_NATIVE_TESTS",
+  "status": "CITY_SAMPLE_FOUND_ON_WINDOWS_48KM_TERRAIN_SOURCE_AND_R16_PREPARED_NATIVE_IMPORT_BLOCKED_DISK",
   "logicalMapId": "archipelago-v2",
   "publicMapName": "SKARVIK",
   "requestedReplacement": "Keep SKARVIK 48x48 km world footprint; integrate full static City Sample Big City 4x4 km within it, SM5",
@@ -31,14 +31,19 @@
     "parkedCars": "optional_static_only"
   },
   "gates": {
-    "sourceCitySampleInstalled": false,
+    "sourceCitySampleInstalled": true,
     "WorldPartitionActorsValidated": false,
     "dependenciesMigrated": false,
     "SM5PIETested": false,
     "packagedPlaytestPassed": false,
     "activateSKARVIK": false,
     "skarvik48KmWorldPartitionExtentValidated": false,
-    "citySampleIntegratedAtNativeScale": false
+    "citySampleIntegratedAtNativeScale": false,
+    "citySampleSourceFilesReadOnlyVerified": true,
+    "terrainHeightGeneratorSourceCommitted": true,
+    "terrainR16ExportedForUE5": true,
+    "nativeSKARVIKWorldGenerated": false,
+    "nativeCitySampleMigrationCompleted": false
   },
   "guards": {
     "keepOriginalSkarvikAndSaves": true,
@@ -56,5 +61,19 @@
     48
   ],
   "cityPlacement": "To choose in UE Editor after terrain clearance and coordinate mapping; keep native City Sample scale",
-  "surroundingTerritory": "48x48 km continuous surrounding landscape, designed and optimized separately; not generated yet"
+  "surroundingTerritory": "48x48 km continuous surrounding landscape, designed and optimized separately; not generated yet",
+  "evidence": {
+    "citySampleSourceRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41187602646",
+    "actualBigCityLevel": "D:\\ANOMALIA\\FabImports\\CitySample\\Content\\Map\\Big_City_LVL.umap",
+    "originalSkarvikMap": "D:\\ANOMALIAZ-PRIGIMALIA\\unreal\\Content\\Maps\\ANOMALIA_Archipelago_v2.umap",
+    "freeDiskDGiB": 7.6,
+    "fullWorldExtentKm": [
+      48,
+      48
+    ],
+    "biomesAndSettlements": "public/config/skarvik-world-layout-48km.json",
+    "terrainGeneration": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h",
+    "nativeCreation": "unreal/Scripts/create_skarvik_city_world.py",
+    "importBlockedReason": "Only 7.6 GiB free on D; no City Sample package migration nor new Unreal world has run"
+  }
 }
