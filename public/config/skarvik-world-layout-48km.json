@@ -11875,7 +11875,16 @@
     "fourthCitySampleDistrictNativeActors": 180,
     "fourthCitySampleDistrictRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41295580923",
     "fourthCitySampleDistrictIndependentlyReopened": false,
-    "CitySampleSM5VisualGameplayStillUnverified": true
+    "CitySampleSM5VisualGameplayStillUnverified": true,
+    "nativeVillageLocalStreetActorsSaved": 1404,
+    "nativeVillageLocalStreetSurfaceMetres": 6240,
+    "nativeVillageSitesWithLocalStreetMeshes": 39,
+    "nativeVillageLocalStreetLegsSaved": 78,
+    "nativeVillageLocalStreetsRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41295817334",
+    "totalNativeAsphaltMeshActorsIncludingVillageLocal": 16202,
+    "totalNativeAsphaltSurfaceMetresIncludingGatewaysAndLocal": 258838.02,
+    "all992LocalStreetsCompleted": false,
+    "localStreetNativeReloadIndependentlyVerified": false
   },
   "nativeRoadConnectivityAudit": {
     "source": "Five native UE5 build and repair receipts independently cross-checked on GitHub-hosted Linux",
