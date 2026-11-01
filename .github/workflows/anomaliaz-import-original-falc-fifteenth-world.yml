@@ -2,7 +2,9 @@ name: ANOMALIAZ - import user original FALC 26.5km as true 15th UE5 World Partit
 on:
   push:
     branches: [feature/skarvik-real-native-alpha-20261101]
-    paths: ['.github/workflows/anomaliaz-import-original-falc-fifteenth-world.yml']
+    paths:
+      - '.github/workflows/anomaliaz-import-original-falc-fifteenth-world.yml'
+      - 'scripts/ue5/stage-authentic-falc-source-for-unreal.ps1'
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,6 +20,15 @@ jobs:
         with:
           clean: false
           persist-credentials: false
+      - name: Parse PowerShell FALC staging script without running any source operations
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $path=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-authentic-falc-source-for-unreal.ps1'
+          $tokens=$null; $errors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile($path,[ref]$tokens,[ref]$errors)|Out-Null
+          if(@($errors).Count -gt 0){$errors|ForEach-Object{Write-Host ('FALC_POWERSHELL_SYNTAX_ERROR='+$_.Message)};throw 'FALC PowerShell parser failed: no asset modification made'}
+          Write-Host 'FALC_POWERSHELL_STAGING_SCRIPT_SYNTAX_VALID=true'
       - name: Find and SHA256-verify user's original Oct 31 ZIP and stage only authentic FALC RAW16
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
