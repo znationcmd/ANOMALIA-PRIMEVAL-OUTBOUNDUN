@@ -1,0 +1,85 @@
+name: SKARVIK - physically join 24 short regional roads to real village access lanes
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-first-24-town-road-gateways.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  first-town-road-gateways:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-24-town-gateway-native-terrain-collision-survey-candidates
+          run-id: 41277167745
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/town-gateway-batch1
+      - name: Confirm native WP terrain, immutable source and 24 approved short road entrances
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage marker'}
+          foreach($file in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Required real original native map absent: $file"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\First24RegionalTownGateways20261101\graded-before-gateway.umap')){
+            throw 'Town gateway batch has already been attempted: do not duplicate actors'
+          }
+          $candidate=Join-Path $env:GITHUB_WORKSPACE 'receipts\town-gateway-batch1\skarvik-first-24-town-access-gateways.json'
+          if(!(Test-Path -LiteralPath $candidate)){throw 'Audited 24-gateway source manifest absent'}
+          $p=Get-Content -LiteralPath $candidate -Raw|ConvertFrom-Json
+          if($p.state -ne 'TOWN_GATEWAY_SHORT_CANDIDATES_SELECTED_NOT_BUILT' -or @($p.selected).Count -ne 24){throw 'Untrusted gateway source receipt'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal process active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_NATIVE_TOWN_GATEWAY_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'C: below safe 18GiB reserve'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_native_town_gateway_batch1.py')
+          if($LASTEXITCODE -ne 0){throw 'Native town-gateway author source syntax invalid'}
+          Write-Host 'SKARVIK_24_VILLAGE_GATEWAY_NATIVE_PREFLIGHT_OK=true'
+      - name: Build only terrain-grade and actual 3D-building-bound approved asphalt-to-local-street access
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_TOWN_GATEWAY_PLAN=Join-Path $env:GITHUB_WORKSPACE 'receipts\town-gateway-batch1\skarvik-first-24-town-access-gateways.json'
+          $env:SKARVIK_TOWN_GATEWAY_TRANSPORT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-transport-network-v2.json'
+          $env:SKARVIK_TOWN_GATEWAY_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-ue5-village-gateway-actors.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_native_town_gateway_batch1.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_TOWN_GATEWAY_RESULT)){throw 'Native town-gateway result missing'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_TOWN_GATEWAY_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_TOWN_GATEWAY_RESULT='+$d.state)
+          Write-Host ('SKARVIK_TOWN_GATEWAY_REAL_ROADS_AUTHORED='+$d.nativeTownEntrancesAuthored)
+          Write-Host ('SKARVIK_TOWN_GATEWAY_NEW_ASPHALT_MESH_ACTORS='+$d.nativeCompletedTownEntranceMeshes)
+          Write-Host ('SKARVIK_TOWN_GATEWAY_NEW_ASPHALT_METRES='+$d.nativePavedMetres)
+          Write-Host ('SKARVIK_TOWN_GATEWAY_REJECTED_COUNT='+@($d.rejectedEntrances).Count)
+          if($rc -ne 0 -or $d.state -ne 'NATIVE_TOWN_GATEWAY_SHORT_ROAD_SECTIONS_SAVED_NOT_DRIVEN'){
+            throw ('Town gateway author did not complete: '+$d.error)
+          }
+          Write-Host 'SKARVIK_GRADED_TOWN_GATEWAYS_SAVED_REAL_NATIVE_ROAD_ACTORS=true'
+          Write-Host 'SKARVIK_TOWN_PERIMETER_STREETS_AND_SM5_DRIVE_STILL_NOT_VALIDATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-24-candidates-native-real-gateway-asphalt-results
+          path: skarvik-real-ue5-village-gateway-actors.json
+          if-no-files-found: warn
