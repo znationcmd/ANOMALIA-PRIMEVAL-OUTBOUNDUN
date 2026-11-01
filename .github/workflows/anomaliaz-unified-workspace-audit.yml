@@ -1,0 +1,104 @@
+name: ANOMALIAZ - unified workspace and duplicate roots audit (no deletion)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-unified-workspace-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-duplicates-and-path-dependencies:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory every named legacy ANOMALIA and native alpha root, detect duplicate C/D validation payload
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $paths=@(
+            'C:\ANOMALIA',
+            'C:\ANOMALIA-Validation',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555',
+            'C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE',
+            'D:\ANOMALIA',
+            'D:\ANOMALIA-Validation',
+            'D:\ANOMALIA-Backups',
+            'D:\ANOMALIAZ-PRIGIMALIA'
+          )
+          function Inspect([string]$path){
+            $row=[ordered]@{path=$path;present=$false;isJunction=$false;sizeGiB=0;files=0;folders=0;projectFiles=@();topFolders=@();error=$null}
+            if(!(Test-Path -LiteralPath $path -PathType Container)){return $row}
+            $row.present=$true
+            if((([IO.File]::GetAttributes($path)) -band [IO.FileAttributes]::ReparsePoint) -ne 0){$row.isJunction=$true;return $row}
+            foreach($entry in @(Get-ChildItem -LiteralPath $path -Directory -Force -ErrorAction Stop|Sort-Object Name)){
+              $row.topFolders+=([ordered]@{name=$entry.Name;isJunction=((($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0))})
+            }
+            foreach($file in @(Get-ChildItem -LiteralPath $path -Filter '*.uproject' -File -Recurse -ErrorAction Stop | Select-Object -First 20)){
+              $row.projectFiles+=($file.FullName.Substring($path.Length).TrimStart([char]'\'))
+            }
+            [long]$bytes=0; $n=0
+            foreach($f in (Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction Stop)){$bytes+=[long]$f.Length;$n++}
+            $row.sizeGiB=[math]::Round(($bytes/1GB),3);$row.files=$n
+            return $row
+          }
+          $report=[ordered]@{
+            state='ANOMALIA_ROOT_CONSOLIDATION_DIAGNOSTICS_ONLY'
+            noFilesMovedDeletedOrRenamed=$true
+            consolidateTargetProposal='D:\ANOMALIAZ'
+            originalsPreserved=$true
+            roots=@()
+            cDValidationSameNameSizeMatchesNotHashes=$false
+            cDValidationSameRelativePathAndSizeGiB=0
+            cDValidationMismatchedOrMissingCount=0
+            nativeJobsOrEditorRunning=@()
+            volumes=@()
+          }
+          foreach($p in $paths){
+            try{$report.roots+=Inspect $p}
+            catch{$report.roots+=([ordered]@{path=$p;error=$_.Exception.Message})}
+          }
+          $ca='C:\ANOMALIA-Validation';$da='D:\ANOMALIA-Validation'
+          if((Test-Path -LiteralPath $ca) -and (Test-Path -LiteralPath $da)){
+            $dIndex=@{}
+            foreach($f in (Get-ChildItem -LiteralPath $da -File -Recurse -Force -ErrorAction Stop)){
+              $relative=$f.FullName.Substring($da.Length).TrimStart([char]'\')
+              $dIndex[$relative]=[long]$f.Length
+            }
+            [long]$matching=0;$mismatches=0
+            foreach($f in (Get-ChildItem -LiteralPath $ca -File -Recurse -Force -ErrorAction Stop)){
+              $relative=$f.FullName.Substring($ca.Length).TrimStart([char]'\')
+              if($dIndex.ContainsKey($relative) -and $dIndex[$relative] -eq [long]$f.Length){$matching+=[long]$f.Length;$dIndex.Remove($relative)}
+              else{$mismatches++}
+            }
+            $report.cDValidationSameRelativePathAndSizeGiB=[math]::Round($matching/1GB,3)
+            $report.cDValidationMismatchedOrMissingCount=$mismatches+$dIndex.Count
+            $report.cDValidationSameNameSizeMatchesNotHashes=($report.cDValidationMismatchedOrMissingCount -eq 0)
+          }
+          foreach($drive in @('C','D','E','F','G')){
+            try{
+              $v=[IO.DriveInfo]::new($drive)
+              if($v.IsReady){$report.volumes+=([ordered]@{drive=$drive;filesystem=$v.DriveFormat;freeGiB=[math]::Round($v.AvailableFreeSpace/1GB,3)})}
+            }catch{}
+          }
+          $report.nativeJobsOrEditorRunning=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,MSBuild -ErrorAction SilentlyContinue|Select-Object -ExpandProperty ProcessName)
+          $out=Join-Path $env:GITHUB_WORKSPACE 'anomaliaz-root-consolidation-readonly-report.json'
+          ($report | ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host 'ANOMALIA_UNIFIED_WORKSPACE_AUDIT_SUCCESS=true'
+          foreach($v in $report.volumes){Write-Host ("ANOMALIA_DISK_FREE drive={0} GiB={1}" -f $v.drive,$v.freeGiB)}
+          foreach($row in $report.roots){Write-Host ("ANOMALIA_LEGACY_ROOT path={0} present={1} junction={2} GiB={3} files={4} topDirs={5} projects={6} error={7}" -f $row.path,$row.present,$row.isJunction,$row.sizeGiB,$row.files,(($row.topFolders|ForEach-Object{$_.name}) -join ','),(($row.projectFiles) -join ','),$row.error)}
+          Write-Host ('ANOMALIA_VALIDATION_SAME_RELATIVE_LENGTH_BYTES_GIB='+$report.cDValidationSameRelativePathAndSizeGiB)
+          Write-Host ('ANOMALIA_VALIDATION_DIFFERENT_FILE_COUNT='+$report.cDValidationMismatchedOrMissingCount)
+          Write-Host 'ANOMALIA_FILES_DELETED=false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-unified-project-roots-dedup-audit
+          path: anomaliaz-root-consolidation-readonly-report.json
+          if-no-files-found: warn
