@@ -5,7 +5,7 @@ on:
     paths:
       - "desktop/**"
       - "src/start-menu.js"
-      - "tests/skarvik-native-launcher.test.mjs"
+      - "tests/**"
       - "package.json"
       - ".github/workflows/skarvik-native-windows-bridge-test.yml"
   workflow_dispatch:
