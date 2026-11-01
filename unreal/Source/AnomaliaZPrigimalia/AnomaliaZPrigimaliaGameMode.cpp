@@ -253,6 +253,13 @@ void AAnomaliaZPrigimaliaGameMode::HandleStartingNewPlayer_Implementation(APlaye
     GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, NewPlayer]()
     {
         LoadPersistentPlayer(NewPlayer);
+        // World BeginPlay may occur before the player controller is ready.
+        // Open the real UE5 menu only on the actual local SKARVIK player.
+        if(IsValid(NewPlayer) && NewPlayer->IsLocalController() &&
+           GetNetMode()==NM_Standalone && GetWorld() &&
+           GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) &&
+           ServerId.StartsWith(TEXT("skarvik-")))
+            UAnomaliaZPrigimaliaSessionWidget::Open(NewPlayer,true);
     }));
     // Only the real native SKARVIK alpha creates a locally owned companion
     // and driveable test car. Never manufacture invisible actor placeholders.
@@ -612,7 +619,9 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
         // Dedicated servers and automated probes keep their own behavior.
         const FString NativeLevelName=GetWorld()->GetMapName();
         const bool bSkarvikAlphaMap=NativeLevelName.EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"));
-        const bool bPlayableMenuMap=NativeLevelName.EndsWith(TEXT("ANOMALIA_Playable_v1")) || bSkarvikAlphaMap;
+        // The SKARVIK menu starts only AFTER a real local PlayerController
+        // is present (HandleStartingNewPlayer), not in world BeginPlay.
+        const bool bPlayableMenuMap=NativeLevelName.EndsWith(TEXT("ANOMALIA_Playable_v1"));
         if(GetNetMode()==NM_Standalone && bPlayableMenuMap &&
            !ServerId.StartsWith(TEXT("playable-smoke-")) && !ServerId.StartsWith(TEXT("visual-smoke-")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
