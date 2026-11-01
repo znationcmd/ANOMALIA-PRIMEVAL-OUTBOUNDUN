@@ -21,6 +21,7 @@ int main() {
    if(!std::isfinite(h)){std::cerr<<"nonfinite native coastal height\n";return 3;}
    minZ=std::min(minZ,h);maxZ=std::max(maxZ,h);
   }
+  if(maxZ-minZ>.25)std::cerr<<"SKARVIK_SITE_TERRACE_GRADE_EAST_NORTH_METRES="<<p.East<<","<<p.North<<","<<(maxZ-minZ)<<",coast="<<c<<"\n";
   maxgrade=std::max(maxgrade,maxZ-minZ);
  }
  if(wet){std::cerr<<"Cannot safely site "<<wet<<" final towns in coastal sea\n";return 4;}
