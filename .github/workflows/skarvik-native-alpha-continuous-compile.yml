@@ -42,6 +42,80 @@ jobs:
           Write-Host ('ALPHA_NATIVE_ACTIVE_UNREAL_PROCESSES='+$busy.Count)
           Write-Host ('ALPHA_NATIVE_FREE_C_GIB='+$free)
           if(!$ready){Write-Host 'No changes made to the stage or game; compile will run on an eligible manual re-run or branch push.'}
+      - name: Stage real licensed mannequin, dog and BMW E39 before compiling Unreal from D source into isolated SKARVIK UE stage
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong C stage: never touch user assets'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Original 7-island map absent'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal running: refuse concurrent asset write'}
+          $sourceRoot='D:\ANOMALIA\unreal\Content'
+          $targetRoot=Join-Path $stage 'Content'
+          $groups=@(
+            'ControlRig\Characters\Mannequins',
+            'German_Shepherd_3D_Model',
+            'Anomalia\NamedVehicles1\bmw_e39'
+          )
+          $essentials=@(
+            'ControlRig\Characters\Mannequins\Meshes\SKM_Manny.uasset',
+            'German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Idle_Playing_v01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Walk_Loop_v01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Run_Loop_v01.uasset',
+            'Anomalia\NamedVehicles1\bmw_e39\SM_bmw_e39.uasset'
+          )
+          foreach($item in $essentials){if(!(Test-Path -LiteralPath (Join-Path $sourceRoot $item))){throw ('Required ORIGINAL model not present: '+$item)}}
+          $candidateFiles=New-Object System.Collections.Generic.List[object]
+          [long]$bytes=0
+          foreach($relative in $groups){
+            $src=Join-Path $sourceRoot $relative
+            if(!(Test-Path -LiteralPath $src -PathType Container)){throw ('Asset group missing: '+$relative)}
+            foreach($file in @(Get-ChildItem -LiteralPath $src -File -Recurse -ErrorAction Stop)){
+              $subpath=$file.FullName.Substring($sourceRoot.Length).TrimStart([char]'\')
+              $target=Join-Path $targetRoot $subpath
+              $bytes+=[long]$file.Length
+              $candidateFiles.Add([pscustomobject]@{source=$file.FullName;target=$target;relative=$subpath;size=$file.Length})
+            }
+          }
+          $totalGiB=[math]::Round($bytes/1GB,3)
+          $freeGiB=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,3)
+          if($totalGiB -gt 3){throw ('Real model dependency folders exceed safe budget, '+$totalGiB+' GiB')}
+          if(($freeGiB-$totalGiB) -lt 15){throw ('Not enough space to retain 15 GiB spare after staging real models: '+$freeGiB)}
+          # Preflight ALL names/hashes. Never overwrite different game assets.
+          foreach($item in $candidateFiles){
+            if(Test-Path -LiteralPath $item.target){
+              if((Get-FileHash -LiteralPath $item.target -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $item.source -Algorithm SHA256).Hash){
+                throw ('Collision with existing different staged asset: '+$item.relative)
+              }
+            }
+          }
+          $created=New-Object System.Collections.Generic.List[string]
+          try{
+            foreach($item in $candidateFiles){
+              if(Test-Path -LiteralPath $item.target){continue}
+              $folder=Split-Path -Parent $item.target
+              if(!(Test-Path -LiteralPath $folder)){New-Item -Path $folder -ItemType Directory -Force|Out-Null}
+              Copy-Item -LiteralPath $item.source -Destination $item.target -ErrorAction Stop
+              $created.Add($item.target)
+              if((Get-FileHash -LiteralPath $item.target -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $item.source -Algorithm SHA256).Hash){
+                throw ('Hash mismatch: '+$item.relative)
+              }
+            }
+          }catch{
+            foreach($made in $created){Remove-Item -LiteralPath $made -Force -ErrorAction SilentlyContinue}
+            throw
+          }
+          foreach($item in $essentials){if(!(Test-Path -LiteralPath (Join-Path $targetRoot $item))){throw ('Staged essential missing: '+$item)}}
+          Write-Host ('SKARVIK_REAL_LICENSED_NATIVE_3D_ASSETS_VERIFIED='+$candidateFiles.Count)
+          Write-Host ('SKARVIK_MODEL_ASSET_BYTES='+$bytes)
+          Write-Host 'SKARVIK_PLAYER_MANNY_MESH_ACTUAL_UASSET_STAGED=true'
+          Write-Host 'SKARVIK_GERMAN_SHEPHERD_AND_REAL_ANIMATIONS_STAGED=true'
+          Write-Host 'SKARVIK_GENUINE_BMW_E39_STATIC_MESH_STAGED=true'
+          Write-Host 'SKARVIK_UE5_IN_GAME_MODEL_RENDERING_NOT_YET_TESTED=true'
+          Write-Host 'SKARVIK_D_ORIGINAL_SOURCE_MODIFIED=false'
       - name: Build independent alpha C++ candidate against existing real SKARVIK assets
         if: steps.prerequisites.outputs.ready == 'true'
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
