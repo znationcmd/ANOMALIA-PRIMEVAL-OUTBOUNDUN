@@ -26,7 +26,7 @@
       "existingSettlementPlan": "public/config/skarvik-world-layout-48km.json",
       "originalArchipelagoTerrain": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaArchipelagoHeight.h",
       "currentActiveGradedTerrain": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikTerrain.h",
-      "status": "SOURCE_ARCHIPELAGO_HAS_ISLANDS_BUT_GRADED_NATIVE_MAP_HAS_DIFFERENT_PREDOMINANTLY_LAND_TERRAIN",
+      "status": "SEPARATE_NATIVE_7_ISLAND_WP_WORLD_AND_15_3D_LOCALITY_CORES_VERIFIED_ORIGINAL_GRADED_MAP_PRESERVED",
       "originalSourceIslandSettlementNames": [
         "FROSTGARD",
         "VARENGARD",
@@ -43,16 +43,29 @@
         "BLANCHECRÊTE",
         "CAP-AUBE"
       ],
-      "note": "These 14 names have centers on separate source CoastDistance island shapes only. They are NOT proof of detached native islands in the graded 48km World Partition. Preserve all 1039 town buildings, 720 CitySample meshes and 14,798 existing asphalt actors. A non-destructive terrain/coastal plan is needed before changing land-water topology.",
+      "note": "Seven detached islands and native 3D first cores for fifteen island localities are present in separately saved/reopened UE5.8 World Partition map, not yet merged with old graded SKARVIK's 1,039 buildings, Big City, or previous road network. Do not claim all 125 localities migrated.",
       "newSettlementActorsRequested": 0,
-      "coastlineRealignmentPending": true,
+      "coastlineRealignmentPending": false,
       "islandTravel": [
         "boat",
         "ferry",
         "marina",
         "coastal trail"
       ],
-      "doNotRegradeNativeLandWithoutBackupAndVehicleRetest": true
+      "doNotRegradeNativeLandWithoutBackupAndVehicleRetest": true,
+      "newNativeIslandWorld": "/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1",
+      "sevenIslandsNativeCreated": true,
+      "islandLocalityCoresNativeCount": 15,
+      "islandBuildingStaticMeshActorCount": 128,
+      "nativeConstructionRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299689266",
+      "nativeReopenRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299800622",
+      "nativeCoastlineRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299937468",
+      "nativeOriginalGradedMapAndPR60Preserved": true,
+      "nativeOceanRendered": false,
+      "nativeIslandVillageGameplayTested": false,
+      "nativeAll125LocalitiesMigrated": false,
+      "newProvisionalIslandVillage": "PORT DES BRUMES",
+      "mainlandReconciliationPending": true
     },
     {
       "mapId": "nogokv-51-v1",
