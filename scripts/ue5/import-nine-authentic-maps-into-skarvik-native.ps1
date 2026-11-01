@@ -153,3 +153,4 @@ try{
  if($report.error){Write-Host ('ANOMALIAZ_REAL_WORLD_IMPORT_ERROR='+$report.error)}
 }
 if($report.state -ne 'FOURTEEN_GENUINE_UMAP_PACKAGES_STAGED_IN_SINGLE_REAL_UE5_PROJECT_FALC_MISSING'){exit 2}
+exit 0
