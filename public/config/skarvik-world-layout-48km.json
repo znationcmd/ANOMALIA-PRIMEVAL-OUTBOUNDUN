@@ -11861,5 +11861,31 @@
     "regionalConnectionsWithoutNativePavedActors": 282,
     "gradeFailedRoadGroupsPending": 12,
     "bridgesOrCulvertsVerified": false
+  },
+  "nativeRoadConnectivityAudit": {
+    "source": "Five native UE5 build and repair receipts independently cross-checked on GitHub-hosted Linux",
+    "auditRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41277057421",
+    "plannedRegionalRoads": 382,
+    "corridorsWithSavedNativeAsphalt": 100,
+    "corridorsInThreeBatchesWithNoReportedMissingInternalBaseTile": 83,
+    "corridorsWithRemainingMissingInternalBaseTile": 14,
+    "skippedNativeBaseTilesStillMissing": 182,
+    "savedGradeSafeSwitchbackGroupsUnplaytested": 2,
+    "localityGatewayPavingVerified": 0,
+    "localityGatewayCandidatesNeedingRealNativeSurvey": 197,
+    "isolatedRoadNetworkGraphComponentsWhenIgnoringPhysicalGaps": 60,
+    "largestPavedPlanGraphComponentNodes": 21,
+    "completePlanGraphComponents": 1,
+    "selectedShortGatewayBatch": {
+      "proposedEntrances": 24,
+      "uniqueSettlements": 24,
+      "maxDistanceMetres": 150,
+      "planRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41277167745",
+      "nativeUnrealResultNotYetConfirmed": true,
+      "actualBuiltCount": 0,
+      "note": "Replace 0 only after successful native actor/report and independent reload verification."
+    },
+    "completeWorldSM5VehicleTestPassed": false,
+    "bigCitySourceWorldPartitionFullyStreamed": false
   }
 }
