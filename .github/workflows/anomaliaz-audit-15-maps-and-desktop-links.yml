@@ -1,0 +1,82 @@
+name: ANOMALIAZ - inspect 15 real UE5 maps and current desktop shortcut paths (read only)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-audit-15-maps-and-desktop-links.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory-real-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+      - name: Read-only enumerate actual UMAPS, World Partition external actors and desktop shortcuts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Trusted true SKARVIK stage missing'}
+          $lookupRoots=@(
+            @{id='native-stage';p=$root},
+            @{id='D-original';p='D:\ANOMALIA\unreal'},
+            @{id='D-migration';p='D:\ANOMALIAZ\02_Projet_Migration\unreal'},
+            @{id='C-native-alpha';p='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE'}
+          )
+          $catalog=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\anomalia-map-catalog.json') -Raw|ConvertFrom-Json
+          if(@($catalog.maps).Count -ne 15){throw 'Fifteen map catalog not found'}
+          $all=@()
+          foreach($spec in $lookupRoots){
+            if(!(Test-Path -LiteralPath $spec.p -PathType Container)){continue}
+            $content=Join-Path $spec.p 'Content'
+            if(!(Test-Path -LiteralPath $content)){continue}
+            $umaps=@(Get-ChildItem -LiteralPath $content -Filter '*.umap' -File -Recurse -ErrorAction SilentlyContinue)
+            foreach($file in $umaps){
+              $sub=$file.FullName.Substring($content.Length).TrimStart([char]'\')
+              if($sub -notmatch '(?i)^(Maps|Map)\\'){continue}
+              $all+=([ordered]@{origin=$spec.id;relative=$sub;bytes=$file.Length;package='/Game/'+($sub -replace '\\','/' -replace '\.umap$','');modifiedUtc=$file.LastWriteTimeUtc.ToString('o')})
+            }
+          }
+          $records=@()
+          foreach($item in $catalog.maps){
+            $name=[string]$item.displayName
+            $package=[string]$item.originalUnrealPackage
+            $candidates=@($all|Where-Object {$package -and $_.package -ieq $package})
+            if($item.id -eq 'archipelago-v2'){
+              $candidates=@($all|Where-Object {$_.origin -eq 'native-stage' -and $_.package -eq '/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'})+$candidates
+            }
+            $records+=([ordered]@{id=$item.id;name=$name;catalogPackage=$package;realWorlds=$candidates;realWorldAvailable=($candidates.Count -gt 0)})
+          }
+          $desktopPaths=@([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('CommonDesktopDirectory'))|Select-Object -Unique
+          $shell=New-Object -ComObject WScript.Shell
+          $links=@()
+          foreach($desktop in $desktopPaths){
+            if(!(Test-Path -LiteralPath $desktop)){continue}
+            foreach($file in @(Get-ChildItem -LiteralPath $desktop -Filter '*.lnk' -File -ErrorAction SilentlyContinue)){
+              $shortcut=$shell.CreateShortcut($file.FullName)
+              if(($file.Name -notmatch '(?i)anomalia|prigimalia|skarvik|unreal|map|carte|jouer') -and
+                ($shortcut.TargetPath -notmatch '(?i)anomalia|prigimalia|skarvik|unreal')){continue}
+              $links+=([ordered]@{name=$file.Name;desktopType=$(if($desktop -eq $desktopPaths[0]){'user'}else{'shared'});target=$shortcut.TargetPath;arguments=$shortcut.Arguments;targetExists=(Test-Path -LiteralPath $shortcut.TargetPath);fullPath=$file.FullName})
+            }
+          }
+          $worlds=[ordered]@{state='REAL_15_NATIVE_MAPS_DESKTOP_READONLY_AUDIT';stageProject=(Test-Path (Join-Path $root 'AnomaliaZPrigimalia.uproject'));maps=$records;allActualUmapFiles=$all;desktopShortcuts=$links;noFilesModified=$true}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'anomaliaz-15-map-real-paths-audit.json'
+          ($worlds|ConvertTo-Json -Depth 9)|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIAZ_MAP_AUDIT_ACTUAL_UMAP_FILES='+$all.Count)
+          Write-Host ('ANOMALIAZ_MAP_AUDIT_CATALOG_PRESENT='+@($records|Where-Object realWorldAvailable).Count+'/15')
+          foreach($m in $records){Write-Host ('ANOMALIAZ_MAP_AUDIT_WORLD='+$m.name+' AVAILABLE='+$m.realWorldAvailable+' PATHS='+(($m.realWorlds|ForEach-Object {$_.origin+'|'+$_.relative}) -join ';'))}
+          foreach($link in $links){Write-Host ('ANOMALIAZ_DESKTOP_LINK='+$link.name+' TARGET_EXISTS='+$link.targetExists+' TARGET='+$link.target+' ARGS='+$link.arguments)}
+          Write-Host 'ANOMALIAZ_READONLY_NOTHING_DELETED_OR_RELOCATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-15-actual-ue5-map-inventory-and-desktop-shortcuts
+          path: anomaliaz-15-map-real-paths-audit.json
+          if-no-files-found: warn
