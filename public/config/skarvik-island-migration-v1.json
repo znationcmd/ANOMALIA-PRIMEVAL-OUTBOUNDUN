@@ -5,7 +5,7 @@
   "sideKm": 48,
   "sourceCoast": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaArchipelagoHeight.h",
   "sourceIslandAudit": "public/config/skarvik-offshore-islands-source-audit.json",
-  "status": "VERSIONED_ISLAND_MIGRATION_DESIGN_AWAITING_NATIVE_WORLD_AND_ACTOR_VALIDATION",
+  "status": "NATIVE_48KM_SEVEN_DETACHED_ISLAND_WORLD_AND_15_3D_LOCALITIES_SAVED_AND_REOPEN_VERIFIED",
   "neverReplace": [
     "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
     "/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1",
@@ -36,7 +36,7 @@
         -10.1
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "harbor",
@@ -45,7 +45,8 @@
           "eastKm": 18,
           "northKm": -13,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 10
+          "targetBuildingCoreCount": 10,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "cap-aube",
@@ -54,9 +55,11 @@
           "eastKm": 18.59,
           "northKm": -8.89,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 16
     },
     {
       "id": "skarvik-offshore-02",
@@ -66,7 +69,7 @@
         14.2
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "frostgard",
@@ -75,7 +78,8 @@
           "eastKm": 14,
           "northKm": 15,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 18
+          "targetBuildingCoreCount": 18,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "nivergard",
@@ -84,7 +88,8 @@
           "eastKm": 16.63,
           "northKm": 12.62,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 10
+          "targetBuildingCoreCount": 10,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "blanchecrete",
@@ -93,9 +98,11 @@
           "eastKm": 15.7,
           "northKm": 11.2,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 34
     },
     {
       "id": "skarvik-offshore-03",
@@ -105,7 +112,7 @@
         16.8
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "highpass",
@@ -114,7 +121,8 @@
           "eastKm": -14,
           "northKm": 17,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "varengard",
@@ -123,7 +131,8 @@
           "eastKm": -17,
           "northKm": 17,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 18
+          "targetBuildingCoreCount": 18,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "rochenord",
@@ -132,7 +141,8 @@
           "eastKm": -19.09,
           "northKm": 18.05,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "cairn-bas",
@@ -141,9 +151,11 @@
           "eastKm": -17.87,
           "northKm": 19.08,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 36
     },
     {
       "id": "skarvik-offshore-04",
@@ -153,7 +165,7 @@
         -18.7
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "bois-sud",
@@ -162,9 +174,11 @@
           "eastKm": -3,
           "northKm": -19,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 12
+          "targetBuildingCoreCount": 12,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 12
     },
     {
       "id": "skarvik-offshore-05",
@@ -174,7 +188,7 @@
         17.8
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "snowpine",
@@ -183,9 +197,11 @@
           "eastKm": 7,
           "northKm": 19,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 6
     },
     {
       "id": "skarvik-offshore-06",
@@ -195,7 +211,7 @@
         -13.9
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "dunevoile",
@@ -204,7 +220,8 @@
           "eastKm": -18.35,
           "northKm": -14.87,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "almari",
@@ -213,7 +230,8 @@
           "eastKm": -18.95,
           "northKm": -13.47,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         },
         {
           "id": "elzar",
@@ -222,9 +240,11 @@
           "eastKm": -19.57,
           "northKm": -12.71,
           "source": "existing-masterplan",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 18
     },
     {
       "id": "skarvik-offshore-07",
@@ -234,7 +254,7 @@
         -19.1
       ],
       "coastlineFromSourceOnly": true,
-      "nativeIslandLandscapeStatus": "pending-native-test",
+      "nativeIslandLandscapeStatus": "saved-as-part-of-independent-seven-island-landscape",
       "settlements": [
         {
           "id": "port-des-brumes",
@@ -243,9 +263,11 @@
           "eastKm": 7.62,
           "northKm": -19.08,
           "source": "new-provisional-seventh-island-harbor",
-          "targetBuildingCoreCount": 6
+          "targetBuildingCoreCount": 6,
+          "status": "native-3d-building-core-saved-and-reopened-not-full-town"
         }
-      ]
+      ],
+      "verifiedNativeBuildingCoreCount": 6
     }
   ],
   "waterLinks": {
@@ -288,5 +310,19 @@
     "verify 15 localities and ocean mask after reopen",
     "plan mainland remapping without destroying 1039 existing graded-world actors",
     "link ports, boats, piers, trails, roads after native SM5 validation"
-  ]
+  ],
+  "nativeMapPackageCreated": "/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1",
+  "nativeLandscapeComponents": 576,
+  "nativeLandscapeCollisionComponents": 576,
+  "nativeIslandLocalityCores": 15,
+  "nativeStaticMeshBuildingActors": 128,
+  "nativeBuildEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299689266",
+  "nativeIndependentReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299800622",
+  "nativeSourceTopologyEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41299937468",
+  "nativeTerrainAndBuildingCoreSaved": true,
+  "nativeReopenVerified": true,
+  "originalGradedWorldAndDUnchanged": true,
+  "bigCityAndPreviousRoadNetworkMigratedToNewIslandWorld": false,
+  "renderedSeaAndFullSM5GameplayValidated": false,
+  "mainlandLocalitiesNeedCoastRealignment": true
 }
