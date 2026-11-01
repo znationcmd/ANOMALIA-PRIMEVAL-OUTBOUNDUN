@@ -591,9 +591,9 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildServerBrowser(UCanvasPanel* Canvas)
     auto* Solo=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("ServerBrowserSolo"));
     Solo->SetBackgroundColor(FLinearColor(.70f,.06f,.045f,1.f));
     auto* SoloText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    SoloText->SetText(FText::FromString(TEXT("CONTINUER EN SOLO")));
+    SoloText->SetText(FText::FromString(TEXT("JOUER EN SOLO : CARTE CHOISIE")));
     SoloText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-    Solo->SetContent(SoloText); Solo->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession);
+    Solo->SetContent(SoloText); Solo->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld);
     FilterRows->AddChildToVerticalBox(Solo)->SetPadding(FMargin(5,14));
     ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -1439,6 +1439,53 @@ void UAnomaliaZPrigimaliaSessionWidget::Play()
 {
     if(bMainMenu){ ShowServerBrowser();return; }
     ResumeLocalSession();
+}
+void UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld()
+{
+    // Offline SOLO travel only: never invent an official or multiplayer server.
+    // Changing a map starts a separate level; it does not teleport across worlds
+    // or claim that unbuilt terrain is playable.
+    auto* PC=GetOwningPlayer();
+    if(!PC || !GetWorld() || PC->GetNetMode()!=NM_Standalone)
+    {
+        if(ServerStatus) ServerStatus->SetText(FText::FromString(
+            TEXT("Sélection locale indisponible dans une session réseau.")));
+        return;
+    }
+    const FString Selected=MapFilterSelect?MapFilterSelect->GetSelectedOption():FString();
+    if(Selected.IsEmpty() || Selected==TEXT("Toutes les cartes"))
+    {
+        ResumeLocalSession(); return;
+    }
+    const auto Worlds=UAnomaliaZPrigimaliaServerBrowserLibrary::GetWorldChoices();
+    for(const FAnomaliaZPrigimaliaWorldChoice& Choice:Worlds)
+    {
+        if(Choice.DisplayName!=Selected) continue;
+        if(!Choice.bNativePackageFound)
+        {
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(FString::Printf(
+                TEXT("%s : cette carte n'est pas encore installée dans la version actuelle. Aucune fausse carte ne sera lancée."),
+                *Selected)));
+            return;
+        }
+        if(Choice.WorldPackage.IsEmpty() ||
+           !Choice.WorldPackage.StartsWith(TEXT("/Game/Maps/")))
+        {
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(
+                TEXT("Chemin de carte invalide : déplacement annulé.")));
+            return;
+        }
+        if(TravelStatus) TravelStatus->SetText(FText::FromString(
+            FString::Printf(TEXT("Chargement de %s (carte Unreal native)..."),*Selected)));
+        if(TravelLoadingFrame) TravelLoadingFrame->SetVisibility(ESlateVisibility::Visible);
+        UGameplayStatics::SetGamePaused(PC,false);
+        PC->SetInputMode(FInputModeGameOnly());
+        PC->bShowMouseCursor=false;
+        UGameplayStatics::OpenLevel(this,FName(*Choice.WorldPackage),true);
+        return;
+    }
+    if(ServerStatus) ServerStatus->SetText(FText::FromString(
+        TEXT("Carte inconnue : sélection invalide.")));
 }
 void UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession()
 {
