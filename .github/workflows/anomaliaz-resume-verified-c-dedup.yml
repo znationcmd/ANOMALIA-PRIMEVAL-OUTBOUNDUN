@@ -1,0 +1,41 @@
+name: ANOMALIAZ - finish interrupted verified C duplicate cleanup (Win32 long paths)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'scripts/ue5/resume-verified-anomalia-old-c-cleanup.ps1'
+      - '.github/workflows/anomaliaz-resume-verified-c-dedup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  complete-old-c-dedup:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify all unique C assets archived, every remaining file duplicate and protected D/real SKARVIK unaffected
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\resume-verified-anomalia-old-c-cleanup.ps1'
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-resume-c-dedup.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Verification or long-path cleanup stopped safely; check report'}
+          $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($result.state -ne 'VERIFIED_C_DUPLICATE_RESUME_CLEANED'){throw 'Cleanup not independently verified'}
+          Write-Host ('ANOMALIAZ_FULL_DEDUP_GAIN_THIS_RUN_GIB='+([math]::Round(($result.CFreeGiBAfter-$result.CFreeGiBBefore),3)))
+          Write-Host ('ANOMALIAZ_FULL_DEDUP_TOTAL_C_FREE_GIB='+$result.CFreeGiBAfter)
+          Write-Host 'ANOMALIAZ_OLD_PROJECT_AND_BACKUPS_RECOVERABLE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-win32-long-path-dedup-completion-and-preservation-proof
+          path: ${{ runner.temp }}/anomaliaz-resume-c-dedup.json
+          if-no-files-found: warn
