@@ -97,6 +97,7 @@ private:
     UFUNCTION() void ServerSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void JoinSelectedServer();
     UFUNCTION() void ResumeLocalSession();
+    UFUNCTION() void StartSelectedSoloWorld();
     UFUNCTION() void ShowOnlinePlayers();
     UFUNCTION() void CloseOnlinePlayers();
     UFUNCTION() void RefreshOnlinePlayers();
