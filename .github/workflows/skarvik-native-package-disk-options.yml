@@ -46,8 +46,8 @@ jobs:
             noOverwriteDAnomalia=$true
             nativeWindowsBuildPublished=$false
             volumes=$volumes
-            cDriveFreeGiB=@($volumes|Where-Object drive -eq 'C:'|Select-Object -ExpandProperty freeGiB)[0]
-            alternativeNTFSVolumes=@($volumes|Where-Object candidateExternalBuildVolume|Select-Object -ExpandProperty drive)
+            cDriveFreeGiB=@($volumes | Where-Object { $_['drive'] -eq 'C:' } | ForEach-Object { $_['freeGiB'] })[0]
+            alternativeNTFSVolumes=@($volumes | Where-Object { $_['candidateExternalBuildVolume'] } | ForEach-Object { $_['drive'] })
             packagingRequiresVerifiedCookAndRealPlaytest=$true
           }
           ($report|ConvertTo-Json -Depth 7)|Set-Content -LiteralPath $out -Encoding utf8
