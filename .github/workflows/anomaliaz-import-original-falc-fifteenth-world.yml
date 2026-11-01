@@ -21,7 +21,7 @@ jobs:
           clean: false
           persist-credentials: false
       - name: Parse PowerShell FALC staging script without running any source operations
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $path=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-authentic-falc-source-for-unreal.ps1'
