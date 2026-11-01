@@ -46,6 +46,12 @@ AAnomaliaZPrigimaliaGameMode::AAnomaliaZPrigimaliaGameMode()
 void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
     Super::InitGame(MapName, Options, ErrorMessage);
+    // In-world solo travel is different from a fresh launch. Persist this
+    // intent in this new GameMode instance before HandleStartingNewPlayer.
+    bStartStandaloneGameplayAfterTravel =
+        UGameplayStatics::ParseOption(Options,TEXT("AnomaliaZSoloStart"))==TEXT("1");
+    if(bStartStandaloneGameplayAfterTravel)
+        UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_GAMEPLAY_REQUESTED: %s"), *MapName);
     // URL option: ?AnomaliaZPrigimaliaServerId=rp-corse. Each ID gets an isolated Saved/Servers folder.
     const FString RequestedId = UGameplayStatics::ParseOption(Options, TEXT("AnomaliaZPrigimaliaServerId"));
     if (!RequestedId.IsEmpty())
@@ -261,8 +267,10 @@ void AAnomaliaZPrigimaliaGameMode::HandleStartingNewPlayer_Implementation(APlaye
         if(IsValid(NewPlayer) && NewPlayer->IsLocalController() &&
            GetNetMode()==NM_Standalone && GetWorld() &&
            GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) &&
-           ServerId.StartsWith(TEXT("skarvik-")))
+           ServerId.StartsWith(TEXT("skarvik-")) && !bStartStandaloneGameplayAfterTravel)
             UAnomaliaZPrigimaliaSessionWidget::Open(NewPlayer,true);
+        else if(IsValid(NewPlayer) && NewPlayer->IsLocalController() && bStartStandaloneGameplayAfterTravel)
+            UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_STARTUP_MENU_SKIPPED"));
     }));
     // Only the real native SKARVIK alpha creates a locally owned companion
     // and driveable test car. Never manufacture invisible actor placeholders.
@@ -658,7 +666,7 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
         // The SKARVIK menu starts only AFTER a real local PlayerController
         // is present (HandleStartingNewPlayer), not in world BeginPlay.
         const bool bPlayableMenuMap=NativeLevelName.EndsWith(TEXT("ANOMALIA_Playable_v1"));
-        if(GetNetMode()==NM_Standalone && bPlayableMenuMap &&
+        if(GetNetMode()==NM_Standalone && bPlayableMenuMap && !bStartStandaloneGameplayAfterTravel &&
            !ServerId.StartsWith(TEXT("playable-smoke-")) && !ServerId.StartsWith(TEXT("visual-smoke-")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
             {
