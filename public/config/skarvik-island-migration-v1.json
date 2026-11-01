@@ -1,0 +1,292 @@
+{
+  "schemaVersion": 1,
+  "world": "SKARVIK",
+  "newPackage": "/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1",
+  "sideKm": 48,
+  "sourceCoast": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaArchipelagoHeight.h",
+  "sourceIslandAudit": "public/config/skarvik-offshore-islands-source-audit.json",
+  "status": "VERSIONED_ISLAND_MIGRATION_DESIGN_AWAITING_NATIVE_WORLD_AND_ACTOR_VALIDATION",
+  "neverReplace": [
+    "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+    "/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1",
+    "D:/ANOMALIA/unreal/Content/Maps/ANOMALIA_Archipelago_v2.umap"
+  ],
+  "existingIslands": 7,
+  "existingNamedIslandLocalities": 14,
+  "newProvisionalHarborCount": 1,
+  "targetTotalLocalities": 15,
+  "terrainPolicy": {
+    "native3025x3025": true,
+    "originalLandWaterShape": true,
+    "dryBuildingsOnly": true,
+    "centerSearchRadiusMeters": 550,
+    "requireTerrainFootprintGradeMetresAtMost": 1.4,
+    "noCoastalOrOceanRoads": true
+  },
+  "full125SettlementMigrationCompleted": false,
+  "otherOriginalSettlementsPendingCoastReconciliation": 111,
+  "bigCityOriginalSourceImportedToNewTerrain": false,
+  "nativeGameplayValidated": false,
+  "islands": [
+    {
+      "id": "skarvik-offshore-01",
+      "areaKm2": 37.28,
+      "centerKm": [
+        17.8,
+        -10.1
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "harbor",
+          "name": "PORT ELIAS",
+          "klass": "town",
+          "eastKm": 18,
+          "northKm": -13,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 10
+        },
+        {
+          "id": "cap-aube",
+          "name": "CAP-AUBE",
+          "klass": "village",
+          "eastKm": 18.59,
+          "northKm": -8.89,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-02",
+      "areaKm2": 35.38,
+      "centerKm": [
+        15.1,
+        14.2
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "frostgard",
+          "name": "FROSTGARD",
+          "klass": "major-city",
+          "eastKm": 14,
+          "northKm": 15,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 18
+        },
+        {
+          "id": "nivergard",
+          "name": "NIVERGARD",
+          "klass": "town",
+          "eastKm": 16.63,
+          "northKm": 12.62,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 10
+        },
+        {
+          "id": "blanchecrete",
+          "name": "BLANCHECRÊTE",
+          "klass": "village",
+          "eastKm": 15.7,
+          "northKm": 11.2,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-03",
+      "areaKm2": 24.56,
+      "centerKm": [
+        -17,
+        16.8
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "highpass",
+          "name": "COL DES AIGLES",
+          "klass": "village",
+          "eastKm": -14,
+          "northKm": 17,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        },
+        {
+          "id": "varengard",
+          "name": "VARENGARD",
+          "klass": "major-city",
+          "eastKm": -17,
+          "northKm": 17,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 18
+        },
+        {
+          "id": "rochenord",
+          "name": "ROCHENORD",
+          "klass": "village",
+          "eastKm": -19.09,
+          "northKm": 18.05,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        },
+        {
+          "id": "cairn-bas",
+          "name": "CAIRN-BAS",
+          "klass": "village",
+          "eastKm": -17.87,
+          "northKm": 19.08,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-04",
+      "areaKm2": 13.38,
+      "centerKm": [
+        -4.99,
+        -18.7
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "bois-sud",
+          "name": "BOIS-SUD",
+          "klass": "small-town",
+          "eastKm": -3,
+          "northKm": -19,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 12
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-05",
+      "areaKm2": 10.83,
+      "centerKm": [
+        6.49,
+        17.8
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "snowpine",
+          "name": "PIN-NORD",
+          "klass": "village",
+          "eastKm": 7,
+          "northKm": 19,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-06",
+      "areaKm2": 10.03,
+      "centerKm": [
+        -18.8,
+        -13.9
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "dunevoile",
+          "name": "DUNEVOILE",
+          "klass": "village",
+          "eastKm": -18.35,
+          "northKm": -14.87,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        },
+        {
+          "id": "almari",
+          "name": "ALMARI",
+          "klass": "village",
+          "eastKm": -18.95,
+          "northKm": -13.47,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        },
+        {
+          "id": "elzar",
+          "name": "ELZAR",
+          "klass": "village",
+          "eastKm": -19.57,
+          "northKm": -12.71,
+          "source": "existing-masterplan",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    },
+    {
+      "id": "skarvik-offshore-07",
+      "areaKm2": 6.43,
+      "centerKm": [
+        7.61,
+        -19.1
+      ],
+      "coastlineFromSourceOnly": true,
+      "nativeIslandLandscapeStatus": "pending-native-test",
+      "settlements": [
+        {
+          "id": "port-des-brumes",
+          "name": "PORT DES BRUMES",
+          "klass": "village",
+          "eastKm": 7.62,
+          "northKm": -19.08,
+          "source": "new-provisional-seventh-island-harbor",
+          "targetBuildingCoreCount": 6
+        }
+      ]
+    }
+  ],
+  "waterLinks": {
+    "mode": "boat/ferry",
+    "nativeDockActorsImplemented": false,
+    "lines": [
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-01"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-02"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-03"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-04"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-05"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-06"
+      },
+      {
+        "from": "mainland-coast",
+        "to": "skarvik-offshore-07"
+      }
+    ]
+  },
+  "nextActions": [
+    "build new isolated native 48km archipelago terrain",
+    "place verified native 3D building cores on seven islands",
+    "verify 15 localities and ocean mask after reopen",
+    "plan mainland remapping without destroying 1039 existing graded-world actors",
+    "link ports, boats, piers, trails, roads after native SM5 validation"
+  ]
+}
