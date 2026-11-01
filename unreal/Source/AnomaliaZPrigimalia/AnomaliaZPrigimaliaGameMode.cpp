@@ -58,7 +58,9 @@ void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FStrin
         else UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: invalid server ID rejected"));
     }
     if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone)
-        ServerId = MapName.EndsWith(TEXT("ANOMALIA_Playable_v1")) ? TEXT("solo-playable-v1") : TEXT("solo-local");
+        ServerId = MapName.EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) ?
+            TEXT("skarvik-alpha-v1") :
+            MapName.EndsWith(TEXT("ANOMALIA_Playable_v1")) ? TEXT("solo-playable-v1") : TEXT("solo-local");
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
     // A process-only test scope prevents automated PIE from touching a real local profile.
     // This is not a client URL option and is restricted to this review map while automation runs.
