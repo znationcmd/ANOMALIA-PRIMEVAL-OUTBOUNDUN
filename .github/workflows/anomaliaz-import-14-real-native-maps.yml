@@ -1,3 +1,4 @@
+# Verified 2026-11-01 read-only map preflight: 14/14 real .umaps, only 0.208 GiB external actors to merge.
 name: ANOMALIAZ - import genuine 9 existing UE5 maps into original 7-island SKARVIK project
 on:
   push:
