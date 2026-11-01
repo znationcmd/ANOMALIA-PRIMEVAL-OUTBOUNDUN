@@ -1,4 +1,4 @@
-name: ANOMALIAZ - one real 14-map UE5 editor desktop shortcut, archive wrong old links
+name: ANOMALIAZ - verified single 14-map Unreal Editor desktop access, archive obsolete links
 on:
   push:
     branches: [feature/skarvik-real-native-alpha-20261101]
