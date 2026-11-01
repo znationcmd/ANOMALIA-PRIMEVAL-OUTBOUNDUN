@@ -136,9 +136,10 @@ try{
  $report.state='FAILED_MAP_IMPORT_SAFELY_REVERTING_ONLY_NEW_FILES'
  $report.error=$_.Exception.Message
  # Roll back only files created in this attempt, never touch earlier maps or originals.
- foreach($p in @($created | Select-Object -Reverse)){
-   if(Test-Path -LiteralPath $p -PathType Leaf){
-     try{Remove-Item -LiteralPath $p -Force -ErrorAction Stop}catch{}
+ for($i=$created.Count-1; $i -ge 0; $i--){
+   $newFile=$created[$i]
+   if(Test-Path -LiteralPath $newFile -PathType Leaf){
+     try{Remove-Item -LiteralPath $newFile -Force -ErrorAction Stop}catch{}
    }
  }
 }finally{
