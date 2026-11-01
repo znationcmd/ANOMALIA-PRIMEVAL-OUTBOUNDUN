@@ -274,7 +274,16 @@ jobs:
           }else{
             Write-Host 'SKARVIK_ALPHA_USER_DISK_E_PRESENT=false'
           }
-          $candidates=@($all|Where-Object {$_.DeviceID -eq 'E:' -and ([double]$_.FreeSpace/1GB) -ge 90})
+          # BLOCK: ValiDrive previously validated only ~120.36 GiB of
+          # a claimed 6.29 TiB on user's E: drive ("No Storage" for most
+          # addresses). A filesystem reporting NTFS and 5854 GiB free is NOT
+          # proof of genuine capacity. Never cook, archive, or launch from E:
+          # unless a future full-capacity destructive media test confirms it.
+          Write-Host 'SKARVIK_ALPHA_EXTERNAL_E_DISK_BANNED_VALiDRIVE_FAILED=true'
+          Write-Host 'SKARVIK_ALPHA_EXTERNAL_PACKAGING_DISABLED_PENDING_GENUINE_VERIFIED_DISK=true'
+          $status.state='BLOCKED_UNTRUSTED_EXTERNAL_DISK_E'
+          $status.notes='Previous ValiDrive test disproved usable claimed 6TB; do not stage, back up, run or archive ANOMALIAZ on E. Preserve original D maps and 3D assets.'
+          $candidates=@()
           foreach($disk in $all){
             $status.availableNTFSVolumes+=([ordered]@{drive=$disk.DeviceID;freeGiB=[math]::Round([double]$disk.FreeSpace/1GB,2)})
           }
