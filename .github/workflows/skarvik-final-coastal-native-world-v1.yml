@@ -2,7 +2,7 @@ name: SKARVIK - create one final 48km coastal landmass with seven islands and 12
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-final-coastal-native-world-v1.yml', 'tests/native/skarvik_final_coastal_125_pad_terrain.cpp']
+    paths: ['.github/workflows/skarvik-final-coastal-native-world-v1.yml', 'tests/native/skarvik_final_coastal_125_pad_terrain.cpp', 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikFinalCoast.h']
   workflow_dispatch:
 permissions:
   contents: read
