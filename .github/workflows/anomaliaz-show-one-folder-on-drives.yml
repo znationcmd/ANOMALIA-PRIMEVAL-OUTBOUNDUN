@@ -1,0 +1,43 @@
+name: ANOMALIAZ - hide verified legacy aliases (show one folder only)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'scripts/ue5/show-only-one-anomaliaz-root-in-explorer.ps1'
+      - '.github/workflows/anomaliaz-show-one-folder-on-drives.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  show-one-central-project-folder:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify all actual NTFS paths then hide duplicate-looking Explorer aliases
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\show-only-one-anomaliaz-root-in-explorer.ps1'
+          $out=Join-Path $env:RUNNER_TEMP 'anomaliaz-one-visible-root.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Missing reviewed project visibility script'}
+          & $script -ReportPath $out
+          if($LASTEXITCODE -ne 0){throw 'Old paths hidden only when independently verified; inspect report'}
+          $result=Get-Content -LiteralPath $out -Raw|ConvertFrom-Json
+          if($result.state -ne 'ONE_VISIBLE_ANOMALIAZ_ROOT_AND_ALL_OLD_PROJECT_PATHS_PRESERVED'){throw 'Project root visibility validation failed'}
+          if(@($result.legacyJunctionsHidden).Count -ne 6){throw 'Not all expected legacy junctions verified'}
+          Write-Host 'ANOMALIAZ_EXPLORER_ONLY_D_CENTRAL_PROJECT_VISIBLE=true'
+          Write-Host 'ANOMALIAZ_ALL_LEGACY_PROJECT_PATHS_STILL_WORK=true'
+          Write-Host 'ANOMALIAZ_ADDITIONAL_DISK_SPACE_FROM_HIDE_ZERO=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-explorer-one-visible-folder-and-all-legacy-aliases-safe
+          path: ${{ runner.temp }}/anomaliaz-one-visible-root.json
+          if-no-files-found: warn
