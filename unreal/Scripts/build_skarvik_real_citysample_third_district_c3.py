@@ -33,7 +33,8 @@ try:
   raise RuntimeError("Untrusted C stage marker")
  for f in (CITY,MAP,OLD,D):
   if not f.is_file():raise RuntimeError("Required native map missing "+str(f))
- if BACKUP.exists():raise RuntimeError("City slice attempted before; refuse duplicate placement")
+ if BACKUP.exists() or (BACKUP.parent/"graded-before-second-real-city-block.umap").exists():
+  raise RuntimeError("Third City Sample district already attempted with current or legacy backup; refuse duplicate placement")
  protected={str(f):hashlib.sha256(f.read_bytes()).hexdigest() for f in (CITY,OLD,D)}
  levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
  actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
