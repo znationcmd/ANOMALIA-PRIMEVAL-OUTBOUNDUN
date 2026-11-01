@@ -2,6 +2,9 @@
 #include "ReactiveWorld/AnomaliaZPrigimaliaWorldStateSubsystem.h"
 #include "AnomaliaZPrigimaliaItemEffectsComponent.h"
 #include "AnomaliaZPrigimaliaSurvivor.h"
+#include "AnomaliaZPrigimaliaDogCompanion.h"
+#include "Misc/PackageName.h"
+#include "CollisionQueryParams.h"
 #include "AnomaliaZPrigimaliaPlayableProbe.h"
 #include "AnomaliaZPrigimaliaVisualReviewProbe.h"
 #include "AnomaliaZPrigimaliaSessionWidget.h"
@@ -250,6 +253,84 @@ void AAnomaliaZPrigimaliaGameMode::HandleStartingNewPlayer_Implementation(APlaye
     {
         LoadPersistentPlayer(NewPlayer);
     }));
+    // Only the real native SKARVIK alpha creates a locally owned companion
+    // and driveable test car. Never manufacture invisible actor placeholders.
+    if(GetNetMode()==NM_Standalone && GetWorld() &&
+       GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) &&
+       ServerId.StartsWith(TEXT("skarvik-")))
+    {
+        TWeakObjectPtr<APlayerController> WeakPlayer=NewPlayer;
+        FTimerHandle CompanionDelay;
+        GetWorldTimerManager().SetTimer(CompanionDelay,
+            FTimerDelegate::CreateWeakLambda(this,[this,WeakPlayer]()
+            {
+                if(WeakPlayer.IsValid()) TrySpawnSkarvikAlphaCompanions(WeakPlayer.Get());
+            }),2.0f,false);
+    }
+}
+
+void AAnomaliaZPrigimaliaGameMode::TrySpawnSkarvikAlphaCompanions(APlayerController* PC)
+{
+    if(!HasAuthority() || !PC || !GetWorld() || GetNetMode()!=NM_Standalone ||
+       !GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) ||
+       !ServerId.StartsWith(TEXT("skarvik-")))return;
+    auto* Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
+    if(!Survivor) {UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_NO_POSSESSED_SURVIVOR"));return;}
+
+    // Terrain/road must actually collide at the player's current location.
+    // If World Partition hasn't streamed in, omit spawn rather than create
+    // a dog or vehicle that drops through the world.
+    const FVector Origin=Survivor->GetActorLocation();
+    auto GroundAt=[this](const FVector& Requested,FVector& Out)->bool
+    {
+        FHitResult Hit;
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(SkarvikAlphaGround),false);
+        if(!GetWorld()->LineTraceSingleByChannel(Hit,Requested+FVector(0,0,450),
+            Requested-FVector(0,0,1250),ECC_Visibility,Params))return false;
+        if(Hit.ImpactNormal.Z < .72f)return false;
+        Out=Hit.ImpactPoint+FVector(0,0,65);
+        return true;
+    };
+    FVector DogLocation;
+    if(FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Idle_Playing_v01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Walk_Loop_v01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Run_Loop_v01")) &&
+       GroundAt(Origin+Survivor->GetActorRightVector()*190.f,DogLocation))
+    {
+        bool bAlreadyHasDog=false;
+        for(TActorIterator<AAnomaliaZPrigimaliaDogCompanion> It(GetWorld());It;++It)
+            if(It->SurvivorOwner==Survivor){bAlreadyHasDog=true;break;}
+        if(!bAlreadyHasDog)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+            auto* Dog=GetWorld()->SpawnActor<AAnomaliaZPrigimaliaDogCompanion>(
+                AAnomaliaZPrigimaliaDogCompanion::StaticClass(),
+                DogLocation,Survivor->GetActorRotation(),Params);
+            if(Dog && Dog->GetMesh() && Dog->GetMesh()->GetSkeletalMeshAsset() &&
+               Dog->AssignSurvivor(Survivor))
+            {
+                Dog->RequestCommand(EAnomaliaZPrigimaliaDogCommand::Follow);
+                UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_REAL_GERMAN_SHEPHERD_SPAWNED"));
+            }
+            else if(Dog)Dog->Destroy();
+        }
+    }
+    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_DOG_NOT_SPAWNED_MISSING_REAL_ASSETS_OR_GROUND"));
+
+    // The catalog's 'car' has its own genuine mesh. An empty vehicle pawn
+    // should never be advertised as a visible, driveable alpha vehicle.
+    FVector CarLocation;
+    if(FPackageName::DoesPackageExist(TEXT("/Game/AnomaliaZPrigimalia/Vehicles/car/SM_car")) &&
+       GroundAt(Origin+Survivor->GetActorForwardVector()*520.f,CarLocation))
+    {
+        CarLocation.Z+=105.f;
+        auto* Vehicle=SpawnServerVehicle(FName(TEXT("car")),
+            FTransform(Survivor->GetActorRotation(),CarLocation));
+        if(Vehicle) UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_CAR_CONFIGURED_REAL_MESH_PACKAGE_PRESENT"));
+    }
+    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_CAR_NOT_SPAWNED_MISSING_REAL_MESH_OR_GROUND"));
 }
 
 void AAnomaliaZPrigimaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController)
