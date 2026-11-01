@@ -1944,22 +1944,24 @@
         19.08
       ],
       "targetKm": [
-        -17.87,
-        19.08
+        -17.85,
+        18.75
       ],
       "targetLandmass": "source-original-offshore-island",
       "hasExistingIslandNativeCore": true,
       "relocated": false,
       "relocationDistanceKm": 0,
       "sourceDryLand": true,
-      "targetCoastDistanceM": 141.7,
+      "targetCoastDistanceM": 573.1,
       "originalFootprintKm": [
         0.42,
         0.42
       ],
       "biome": "western_alps",
       "siteTerrainFlatHalfM": 90,
-      "siteTerrainBlendM": 130
+      "siteTerrainBlendM": 130,
+      "coastalInlandAdjustmentKm": 0.33,
+      "adjustmentRationale": "Source island town center only 142m inside shoreline, not 80m-grade-safe. Move core 330m inland on same island without creating new land or touching source world."
     },
     {
       "id": "lauzeveil",
@@ -3287,5 +3289,7 @@
       "siteTerrainFlatHalfM": 90,
       "siteTerrainBlendM": 130
     }
-  ]
+  ],
+  "sourceIslandDryCoastalInlandAdjustments": 1,
+  "finalReliefCorrectionStatus": "CI_SOURCE_COASTAL_TERRACE_INLAND_ADJUSTMENT_FOR_CAIRN_BAS"
 }
