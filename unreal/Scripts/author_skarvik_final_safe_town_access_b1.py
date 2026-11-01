@@ -48,6 +48,8 @@ REPORT = {
     "actorsCreated": 0,
     "pavedMetres": 0.0,
     "skippedRelocationReviewSites": 0,
+    "skippedUnflaggedMovedSites": [],
+    "unapprovedCoordinatesNotPaved": True,
     "plannedLocalStreetCount": 992,
     "all992LocalStreetsBuilt": False,
     "regionalNetworkContinuous": False,
@@ -149,7 +151,16 @@ try:
             continue
         shift = [float(site["targetKm"][i]) - float(site["sourceKm"][i]) for i in (0, 1)]
         if abs(shift[0]) > 0.0001 or abs(shift[1]) > 0.0001:
-            raise RuntimeError("Non-relocated site unexpectedly changes location")
+            # Two legacy sites have shifted in the plan but were NOT marked
+            # relocated. Treat this as an approval inconsistency, never
+            # silently road-build their new coordinates or rewrite their data.
+            REPORT["skippedUnflaggedMovedSites"].append({
+                "site": site_id,
+                "sourceKm": site["sourceKm"],
+                "targetKm": site["targetKm"],
+                "why": "unflagged-site-relocation-requires-visual-review",
+            })
+            continue
         attempted_for_site = 0
         for lane in layouts[site_id]["localSegments"]:
             if lane.get("class") != "access-lane" or len(lane.get("pointsKm", [])) != 2:
