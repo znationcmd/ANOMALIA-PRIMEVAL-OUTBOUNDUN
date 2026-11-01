@@ -52,7 +52,8 @@
       "allSourceWorldActorsLoaded": false,
       "fullBigCityVisualIntegrationComplete": false,
       "SM5RenderedProof": false,
-      "nativeFourArchitecturalSectorsSaved": true
+      "nativeFourArchitecturalSectorsSaved": true,
+      "nativeFourArchitecturalSectorsReopenVerified": true
     }
   },
   "biomeZones": [
@@ -11874,7 +11875,7 @@
     ],
     "fourthCitySampleDistrictNativeActors": 180,
     "fourthCitySampleDistrictRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41295580923",
-    "fourthCitySampleDistrictIndependentlyReopened": false,
+    "fourthCitySampleDistrictIndependentlyReopened": true,
     "CitySampleSM5VisualGameplayStillUnverified": true,
     "nativeVillageLocalStreetActorsSaved": 1404,
     "nativeVillageLocalStreetSurfaceMetres": 6240,
@@ -11884,7 +11885,10 @@
     "totalNativeAsphaltMeshActorsIncludingVillageLocal": 16202,
     "totalNativeAsphaltSurfaceMetresIncludingGatewaysAndLocal": 258838.02,
     "all992LocalStreetsCompleted": false,
-    "localStreetNativeReloadIndependentlyVerified": false
+    "localStreetNativeReloadIndependentlyVerified": true,
+    "fourthDistrictAndLocalStreetsNativeReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41295935545",
+    "bigCityFourSectorsFullyPlayable": false,
+    "villageLocalRoadsSM5DrivenVerified": false
   },
   "nativeRoadConnectivityAudit": {
     "source": "Five native UE5 build and repair receipts independently cross-checked on GitHub-hosted Linux",
