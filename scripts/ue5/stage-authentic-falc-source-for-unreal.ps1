@@ -44,11 +44,9 @@ try{
   $raw=Join-Path $root 'FALC_26_5KM_MASTER_2017.r16'
   $reference=Join-Path $root 'FALC_REFERENCE_ORIGINALE.jpeg'
   $manifest=Join-Path $root $manifestName
-  $hasOriginalOnStage = (
-    (Test-Path -LiteralPath $raw -PathType Leaf) -and
+  $hasOriginalOnStage = (Test-Path -LiteralPath $raw -PathType Leaf) -and
     (Test-Path -LiteralPath $reference -PathType Leaf) -and
     (Test-Path -LiteralPath $manifest -PathType Leaf)
-  )
   if ($hasOriginalOnStage) {
     $hasOriginalOnStage = (((Hash $raw) -eq $expected) -and ((Hash $reference) -eq $expectedReference))
   }
