@@ -3,7 +3,8 @@ param([string]$ReportPath=(Join-Path $env:RUNNER_TEMP 'anomaliaz-falc-native-ori
 $ErrorActionPreference='Stop'
 $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
 $root=Join-Path $stage 'TerrainSource\FALC'
-$zipName='FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM.zip'
+$zipName='FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM*.zip'
+$expectedZipSHA256='c389a367d26a5cdab2d7e73b8129d45f9cf3e46bbe6e3b59a41bca7fd9ac7db5'
 $expected='1d3ff52ed30338b59e6130a37aacc7e2a34367b7bcfe6b5b7'
 $expectedReference='d31548b922e251ca06e06cb2d05359089685932e347a6237bb3f8e1782ca4222'
 $manifestName='FALC_IMPORT_MANIFEST.json'
@@ -61,12 +62,13 @@ try{
       $entry=Get-Item -LiteralPath $directory -Force
       if(($entry.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){continue}
       foreach($file in @((Get-ChildItem -LiteralPath $directory -Filter $zipName -File -Recurse -ErrorAction SilentlyContinue))){
-        if($file.Length -gt 9000000 -and $file.Length -lt 17000000){$found=$file.FullName;break}
+        if($file.Length -gt 9000000 -and $file.Length -lt 17000000 -and (Hash $file.FullName) -eq $expectedZipSHA256){$found=$file.FullName;break}
       }
       if($found){break}
     }
     if(!$found){throw 'FALC_ORIGINAL_ZIP_NOT_ON_PC: download the existing FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM.zip into Windows Downloads; no substitute map will be generated.'}
     $result.sourceZip=$found
+    $result.originalZipSHA256=$expectedZipSHA256
     Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
     $zip=[System.IO.Compression.ZipFile]::OpenRead($found)
