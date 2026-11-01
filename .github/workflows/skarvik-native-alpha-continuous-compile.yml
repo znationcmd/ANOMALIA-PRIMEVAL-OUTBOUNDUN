@@ -262,18 +262,26 @@ jobs:
             publishedAlphaBuild=$false
             packagedExeExists=$false
             notes='Compilation C++ and real asset checks do not imply playable packaged alpha'
+            requestedPackageVolume='E:'
             availableNTFSVolumes=@()
           }
+          # User-confirmed external archive/staging drive E: only.
+          # Never silently fall back to Windows C: or the ANOMALIA D: project.
           $all=@(Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DriveType -in @(2,3) -and $_.FileSystem -eq 'NTFS'})
-          $candidates=@($all|Where-Object {$_.DeviceID -ne 'D:' -and ([double]$_.FreeSpace/1GB) -ge 90}|
-            Sort-Object FreeSpace -Descending)
+          $target=@(Get-CimInstance Win32_LogicalDisk | Where-Object {$_.DeviceID -eq 'E:'})
+          if($target.Count -gt 0){
+            Write-Host ('SKARVIK_ALPHA_USER_DISK_E_PRESENT=true TYPE='+$target[0].DriveType+' FILESYSTEM='+$target[0].FileSystem+' FREE_GIB='+([math]::Round([double]$target[0].FreeSpace/1GB,2)))
+          }else{
+            Write-Host 'SKARVIK_ALPHA_USER_DISK_E_PRESENT=false'
+          }
+          $candidates=@($all|Where-Object {$_.DeviceID -eq 'E:' -and ([double]$_.FreeSpace/1GB) -ge 90})
           foreach($disk in $all){
             $status.availableNTFSVolumes+=([ordered]@{drive=$disk.DeviceID;freeGiB=[math]::Round([double]$disk.FreeSpace/1GB,2)})
           }
           if($candidates.Count -gt 0){
             $disk=$candidates[0]
-            $outDir=$disk.DeviceID+ '\\ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\\run-'+$env:GITHUB_RUN_ID
-            $stageDir=$disk.DeviceID+ '\\ANOMALIAZ_NATIVE_ALPHA_WIN64_STAGING\\run-'+$env:GITHUB_RUN_ID
+            $outDir=Join-Path 'E:\' ('ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\run-'+$env:GITHUB_RUN_ID)
+            $stageDir=Join-Path 'E:\' ('ANOMALIAZ_NATIVE_ALPHA_WIN64_STAGING\run-'+$env:GITHUB_RUN_ID)
             # Cooked stage AND archive must live on the spare NTFS volume,
             # not in the 43 GiB C: system drive or almost-full D: project drive.
             if(Test-Path -LiteralPath $stageDir){throw 'Packaging staging directory already exists: refuse overwrite'}
