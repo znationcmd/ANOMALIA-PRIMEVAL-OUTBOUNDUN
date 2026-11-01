@@ -1452,11 +1452,11 @@ void UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld()
             TEXT("Sélection locale indisponible dans une session réseau.")));
         return;
     }
-    const FString Selected=MapFilterSelect?MapFilterSelect->GetSelectedOption():FString();
+    // Default to the existing native SKARVIK world instead of merely hiding
+    // the main menu and leaving the player looking at an empty startup level.
+    FString Selected=MapFilterSelect?MapFilterSelect->GetSelectedOption():FString();
     if(Selected.IsEmpty() || Selected==TEXT("Toutes les cartes"))
-    {
-        ResumeLocalSession(); return;
-    }
+        Selected=TEXT("SKARVIK");
     const auto Worlds=UAnomaliaZPrigimaliaServerBrowserLibrary::GetWorldChoices();
     for(const FAnomaliaZPrigimaliaWorldChoice& Choice:Worlds)
     {
