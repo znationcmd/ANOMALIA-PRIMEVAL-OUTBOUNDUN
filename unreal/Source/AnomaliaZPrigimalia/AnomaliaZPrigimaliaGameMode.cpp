@@ -525,7 +525,14 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVisualReview="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaZPrigimaliaVisualReviewProbe>();
 #endif
-        if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && !ServerId.StartsWith(TEXT("playable-smoke-")))
+        // The native SKARVIK alpha must open the SAME real runtime menu as the
+        // existing playable map, not a blank editor standalone viewport.
+        // Dedicated servers and automated probes keep their own behavior.
+        const FString NativeLevelName=GetWorld()->GetMapName();
+        const bool bSkarvikAlphaMap=NativeLevelName.EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"));
+        const bool bPlayableMenuMap=NativeLevelName.EndsWith(TEXT("ANOMALIA_Playable_v1")) || bSkarvikAlphaMap;
+        if(GetNetMode()==NM_Standalone && bPlayableMenuMap &&
+           !ServerId.StartsWith(TEXT("playable-smoke-")) && !ServerId.StartsWith(TEXT("visual-smoke-")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
             {
                 auto* PC=GetWorld()->GetFirstPlayerController();
