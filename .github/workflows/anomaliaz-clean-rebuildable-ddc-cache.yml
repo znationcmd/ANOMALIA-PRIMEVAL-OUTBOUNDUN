@@ -1,0 +1,83 @@
+name: ANOMALIAZ - reclaim Windows Unreal DerivedDataCache safely (no game files)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-clean-rebuildable-ddc-cache.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  clean-only-unreal-rebuildable-cache:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Clear only redundant derived data after all active UE builds stop
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $target=Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\DerivedDataCache'
+          $parent=Split-Path -Parent $target
+          $r=[ordered]@{
+            state='PREFLIGHT'
+            deletedProjectFiles=$false
+            deletedMaps=$false
+            deletedBackupFiles=$false
+            deletedUnrealCache=$false
+            cacheGiBBefore=0
+            cFreeGiBBefore=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,3)
+            cFreeGiBAfter=0
+            error=$null
+          }
+          try{
+            if(!(Test-Path -LiteralPath $target -PathType Container)){
+              $r.state='CACHE_ALREADY_ABSENT'
+            }else{
+              $root=[IO.Path]::GetFullPath($target)
+              $expected=[IO.Path]::GetFullPath((Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\DerivedDataCache'))
+              if($root -ine $expected){throw 'DerivedDataCache root does not match expected Windows cache path'}
+              if((([IO.File]::GetAttributes($root)) -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+                throw 'Unreal cache is a symlink/junction; refuse any removal'
+              }
+              $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,UnrealBuildTool,ShaderCompileWorker,MSBuild -ErrorAction SilentlyContinue)
+              if($busy.Count -gt 0){throw 'UE/editor/compiler is running; leave all caches untouched'}
+              [long]$bytes=0
+              foreach($file in (Get-ChildItem -LiteralPath $target -File -Recurse -Force -ErrorAction Stop)){$bytes+=[long]$file.Length}
+              $r.cacheGiBBefore=[math]::Round($bytes/1GB,3)
+              $oldName='DerivedDataCache.cleanup-'+$env:GITHUB_RUN_ID
+              $old=Join-Path $parent $oldName
+              if(Test-Path -LiteralPath $old){throw 'Cleanup destination exists; refuse overwrite'}
+              Rename-Item -LiteralPath $target -NewName $oldName -ErrorAction Stop
+              try{
+                Remove-Item -LiteralPath $old -Recurse -Force -ErrorAction Stop
+                $r.deletedUnrealCache=$true
+                $r.state='ONLY_REBUILDABLE_COMMON_UNREAL_DDC_DELETED'
+              }catch{
+                if(!(Test-Path -LiteralPath $target) -and (Test-Path -LiteralPath $old)){
+                  try{Rename-Item -LiteralPath $old -NewName 'DerivedDataCache' -ErrorAction Stop}catch{}
+                }
+                throw
+              }
+            }
+          }catch{
+            $r.state='SKIPPED_OR_FAILED_SAFELY'
+            $r.error=$_.Exception.Message
+          }
+          $r.cFreeGiBAfter=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,3)
+          Write-Host ('ANOMALIAZ_CACHE_CLEAN_STATE='+$r.state)
+          Write-Host ('ANOMALIAZ_C_FREE_BEFORE_GIB='+$r.cFreeGiBBefore)
+          Write-Host ('ANOMALIAZ_C_FREE_AFTER_GIB='+$r.cFreeGiBAfter)
+          Write-Host ('ANOMALIAZ_UNREAL_DDC_BYTES_GIB='+$r.cacheGiBBefore)
+          Write-Host ('ANOMALIAZ_D_PROJECT_SAVES_ASSETS_UNCHANGED=true')
+          if($r.error){Write-Host ('ANOMALIAZ_CACHE_CLEAN_BLOCKER='+$r.error)}
+          $out=Join-Path $env:RUNNER_TEMP 'anomaliaz-cache-cleanup-report.json'
+          ($r|ConvertTo-Json -Depth 5)|Set-Content -LiteralPath $out -Encoding UTF8
+          if($r.state -eq 'SKIPPED_OR_FAILED_SAFELY'){throw ('Cache cleanup blocked without touching project folders: '+$r.error)}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-safe-unreal-cache-cleanup-receipt
+          path: ${{ runner.temp }}/anomaliaz-cache-cleanup-report.json
+          if-no-files-found: warn
