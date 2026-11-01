@@ -119,6 +119,28 @@ jobs:
           Write-Host 'ANOMALIAZ_FALC_REAL_UE_LEVEL_INDEPENDENTLY_REOPENED=true'
           Write-Host 'ANOMALIAZ_NOW_15_REAL_NATIVE_WORLD_PACKAGES_PRESENT=true'
           Write-Host 'ANOMALIAZ_FALC_3D_GAMEPLAY_TEST_NOT_YET_RUN=true'
+      - name: Add FALC to Windows MapsToCook only after its native World Partition level was saved and reopened
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $level=Join-Path $root 'Content\Maps\PRIGIMALIA_FALC.umap'
+          $config=Join-Path $root 'Config\DefaultGame.ini'
+          $reopen=Join-Path $env:GITHUB_WORKSPACE 'falc-real-native-reopened.json'
+          if(!(Test-Path -LiteralPath $level -PathType Leaf) -or (Get-Item -LiteralPath $level).Length -lt 1024){throw 'Cannot cook FALC: real .umap absent'}
+          if(!(Test-Path -LiteralPath $reopen -PathType Leaf)){throw 'Cannot cook FALC: independent reopen receipt absent'}
+          $test=Get-Content -LiteralPath $reopen -Raw|ConvertFrom-Json
+          if($test.state -ne 'FALC_REAL_UNREAL_NATIVE_WORLD_REOPENED_2017_RAW16_COLLISION_VERIFIED'){throw 'Cannot cook FALC: native replay not validated'}
+          if(!(Test-Path -LiteralPath $config -PathType Leaf)){throw 'Native stage game cook settings absent'}
+          $line='+MapsToCook=(FilePath="/Game/Maps/PRIGIMALIA_FALC")'
+          $current=Get-Content -LiteralPath $config -Raw
+          if(!$current.Contains($line)){
+            $backup=Join-Path $root ('Saved\FALC\OriginalCookConfigBeforeFALC-'+$env:GITHUB_RUN_ID+'.ini')
+            Copy-Item -LiteralPath $config -Destination $backup -ErrorAction Stop
+            Add-Content -LiteralPath $config -Value ("\r\n"+$line) -Encoding UTF8
+          }
+          if(!((Get-Content -LiteralPath $config -Raw).Contains($line))){throw 'Original FALC map failed to enter native Windows cook manifest'}
+          Write-Host 'ANOMALIAZ_FALC_NATIVE_15TH_WORLD_ADDED_TO_WINDOWS_COOK_AFTER_REOPEN=true'
       - name: On C++ compile failure restore old C source; never alter any of the 14 worlds or D project
         if: failure()
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
