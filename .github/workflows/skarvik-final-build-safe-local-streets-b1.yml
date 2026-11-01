@@ -83,6 +83,7 @@ jobs:
           Write-Host ('SKARVIK_FINAL_NEW_LOCAL_ROADS_SITES='+$r.sitesWithRealNewAsphalt)
           Write-Host ('SKARVIK_FINAL_NEW_LOCAL_ROAD_METRES='+$r.pavedMetres)
           Write-Host ('SKARVIK_FINAL_PROVISIONAL_RELOCATED_SITES_PROTECTED='+$r.skippedRelocationReviewSites)
+          Write-Host ('SKARVIK_FINAL_UNFLAGGED_SHIFTED_SITES_PROTECTED='+@($r.skippedUnflaggedMovedSites).Count)
           if($code -ne 0 -or $r.state -ne 'FINAL_COAST_SAFE_NATIVE_TOWN_ACCESS_BATCH1_SAVED_NOT_FULLY_CONNECTED_OR_DRIVEN'){
             throw ('No confirmed native local streets saved, never claim success: '+$r.error)
           }
