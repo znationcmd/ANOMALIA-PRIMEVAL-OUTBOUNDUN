@@ -37,9 +37,25 @@ jobs:
           Write-Host 'ANOMALIAZ_FOURTEEN_NATIVE_MAP_PACKAGES_IN_ONE_PROJECT=true'
           Write-Host 'ANOMALIAZ_FALC_26_5KM_ORIGINAL_HEIGHTMAP_SOURCE_MISSING=true'
           Write-Host ('ANOMALIAZ_STAGE_REAL_MAPS_IMPORT_C_FREE_GIB='+$r.cFreeGiBAfter)
+      - name: Replace old incorrect UE desktop links with ONE verified native 14-map Editor launcher
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\repair-anomaliaz-14-native-map-desktop-editor.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'anomaliaz-14-map-desktop-shortcut.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Safe desktop repair script missing'}
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Desktop shortcut repair not verified; original maps remain imported and old links preserved'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'ONE_CORRECT_UE5_EDITOR_WITH_14_REAL_MAPS_OLD_LINKS_ARCHIVED_NO_FAKE_PUBLIC_BETA'){
+            throw 'New native 14-map editor shortcut has not been verified'
+          }
+          Write-Host 'ANOMALIAZ_SINGLE_REAL_14_MAP_EDITOR_DESKTOP_SHORTCUT_VERIFIED=true'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: anomaliaz-14-authentic-maps-in-one-unreal-native-world-project
-          path: ${{ runner.temp }}/anomaliaz-existing-14-maps-import.json
+          path: |
+            ${{ runner.temp }}/anomaliaz-existing-14-maps-import.json
+            anomaliaz-14-map-desktop-shortcut.json
           if-no-files-found: warn
