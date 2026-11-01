@@ -1,0 +1,42 @@
+name: ANOMALIAZ - import genuine 9 existing UE5 maps into original 7-island SKARVIK project
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-import-14-real-native-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  import-real-native-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Audit and import nine original World Partition maps with actors into existing five map project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\import-nine-authentic-maps-into-skarvik-native.ps1'
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-existing-14-maps-import.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Native map import aborted with rollback; see report'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'FOURTEEN_GENUINE_UMAP_PACKAGES_STAGED_IN_SINGLE_REAL_UE5_PROJECT_FALC_MISSING'){throw 'Not all 14 native worlds staged'}
+          if(@($r.worlds).Count -ne 9 -or @($r.worlds|Where-Object {$_.state -notlike '*HASH_VERIFIED*'}).Count){
+            throw 'Import receipt missing nine verified original native map packages'
+          }
+          Write-Host 'ANOMALIAZ_FOURTEEN_NATIVE_MAP_PACKAGES_IN_ONE_PROJECT=true'
+          Write-Host 'ANOMALIAZ_FALC_26_5KM_ORIGINAL_HEIGHTMAP_SOURCE_MISSING=true'
+          Write-Host ('ANOMALIAZ_STAGE_REAL_MAPS_IMPORT_C_FREE_GIB='+$r.cFreeGiBAfter)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-14-authentic-maps-in-one-unreal-native-world-project
+          path: ${{ runner.temp }}/anomaliaz-existing-14-maps-import.json
+          if-no-files-found: warn
