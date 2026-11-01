@@ -8,7 +8,9 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: anomalia-ue5-native-host
+  # Reserved merge queue: unrelated GUI/editor workflows must not cancel map import.
+  # Windows has one self-hosted anomalia-ue5 runner; script also checks active UE processes.
+  group: anomaliaz-import-original-14-map-queue
   cancel-in-progress: false
 jobs:
   import-real-native-maps:
