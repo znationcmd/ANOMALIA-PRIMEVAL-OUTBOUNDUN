@@ -4,7 +4,8 @@
 #include <iostream>
 #include <limits>
 using namespace AnomaliaZPrigimaliaArchipelago;
-using namespace AnomaliaZPrigimaliaSkarvikFinalCoast;
+using AnomaliaZPrigimaliaSkarvikFinalCoast::Pads;
+using AnomaliaZPrigimaliaSkarvikFinalCoast::Count;
 int main() {
  if(Count!=125){std::cerr<<"Expected 125 pad centres, got "<<Count<<"\n";return 2;}
  int wet=0;double maxgrade=0,minCoast=1e9,minHeight=1e9;
@@ -12,11 +13,11 @@ int main() {
   const double c=CoastDistance(p.East,p.North);
   minCoast=std::min(minCoast,c);
   if(c<105.){++wet;continue;}
-  const double z=Height(p.East,p.North);
+  const double z=AnomaliaZPrigimaliaSkarvikFinalCoast::Height(p.East,p.North);
   minHeight=std::min(z,minHeight);
   double minZ=z,maxZ=z;
   for(double e:{-40.,0.,40.})for(double n:{-40.,0.,40.}){
-   const double h=Height(p.East+e,p.North+n);
+   const double h=AnomaliaZPrigimaliaSkarvikFinalCoast::Height(p.East+e,p.North+n);
    if(!std::isfinite(h)){std::cerr<<"nonfinite native coastal height\n";return 3;}
    minZ=std::min(minZ,h);maxZ=std::max(maxZ,h);
   }
@@ -26,7 +27,7 @@ int main() {
  // Original ocean depths must not be raised by false 125-city mainland terraces.
  for(int e=-23500;e<23500;e+=350)for(int n=-23500;n<23500;n+=350){
   if(CoastDistance(e,n)>100.)continue;
-  if(std::abs(Height(e,n)-AnomaliaZPrigimaliaArchipelago::Height(e,n))>1.e-8){
+  if(std::abs(AnomaliaZPrigimaliaSkarvikFinalCoast::Height(e,n)-AnomaliaZPrigimaliaArchipelago::Height(e,n))>1.e-8){
    std::cerr<<"Ocean or beach height changed at "<<e<<","<<n<<"\n";return 5;
   }
  }
