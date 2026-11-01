@@ -46,12 +46,13 @@
       "nativeActorClassAndSourceAfterReopenStillUnverified": true,
       "namedActorDescriptorProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41241978956",
       "BigCitySourceWorldPointerReopenVerified": true,
-      "genuineSourceArchitecturalMeshesInMainGradedWorld": 180,
+      "genuineSourceArchitecturalMeshesInMainGradedWorld": 720,
       "authenticSmallDowntownSectorSaved": true,
       "smallDowntownSectorReloadVerified": true,
       "allSourceWorldActorsLoaded": false,
       "fullBigCityVisualIntegrationComplete": false,
-      "SM5RenderedProof": false
+      "SM5RenderedProof": false,
+      "nativeFourArchitecturalSectorsSaved": true
     }
   },
   "biomeZones": [
@@ -11840,7 +11841,7 @@
     "routeConnectionsInPlan": 382,
     "pavedRouteAttachmentsNotProvenContinuousOrDriven": true,
     "previousRouteTrioPlusTwoBatchesAndC3Metres": 245136.8,
-    "actualNativeCitySampleArchitectureComponents": 540,
+    "actualNativeCitySampleArchitectureComponents": 720,
     "nativeBigCityCoreRealAssetEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41246092695",
     "nativeBigCityCoreReopenVerified": true,
     "nativeBigCityCoreReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41246410566",
@@ -11865,7 +11866,16 @@
     "townGatewayNativeRealAsphaltActors": 1242,
     "townGatewayNativeRealAsphaltMetres": 5380.8,
     "thirdCityDistrictSavedAndReopened": true,
-    "independentLatestReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289518557"
+    "independentLatestReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289518557",
+    "fourthCitySampleDistrictNativeSaved": true,
+    "fourthCitySampleDistrictSourceRingMetres": [
+      1700,
+      2050
+    ],
+    "fourthCitySampleDistrictNativeActors": 180,
+    "fourthCitySampleDistrictRun": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41295580923",
+    "fourthCitySampleDistrictIndependentlyReopened": false,
+    "CitySampleSM5VisualGameplayStillUnverified": true
   },
   "nativeRoadConnectivityAudit": {
     "source": "Five native UE5 build and repair receipts independently cross-checked on GitHub-hosted Linux",
