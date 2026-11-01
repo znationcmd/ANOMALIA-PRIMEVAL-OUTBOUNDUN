@@ -264,7 +264,7 @@ jobs:
             notes='Compilation C++ and real asset checks do not imply playable packaged alpha'
             availableNTFSVolumes=@()
           }
-          $all=@(Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DriveType -eq 3 -and $_.FileSystem -eq 'NTFS'})
+          $all=@(Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DriveType -in @(2,3) -and $_.FileSystem -eq 'NTFS'})
           $candidates=@($all|Where-Object {$_.DeviceID -ne 'D:' -and ([double]$_.FreeSpace/1GB) -ge 90}|
             Sort-Object FreeSpace -Descending)
           foreach($disk in $all){
@@ -300,6 +300,21 @@ jobs:
           if($status.state -in @('NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED','NATIVE_COOK_COMPLETED_WITHOUT_GAME_EXE')){
             throw ('Actual Win64 packaging did not succeed: '+$status.state)
           }
+      - name: Create REAL JOUER desktop button only after cooked Win64 game and SKARVIK startup smoke test
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\create-real-game-desktop-link-after-package.ps1'
+          $package=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-win64-package-status.json'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-game-desktop-link-status.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Native executable-only desktop link validator absent'}
+          if(!(Test-Path -LiteralPath $package)){throw 'Cook/package receipt absent; never make a fake play button'}
+          & $script -PackageStatusPath $package -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Packaged game failed genuine startup, no new desktop Play shortcut was created'}
+          $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          Write-Host ('ANOMALIAZ_DESKTOP_REAL_JOUER_CREATED='+$result.playShortcutCreated)
+          Write-Host ('ANOMALIAZ_DESKTOP_JOUER_STATUS='+$result.state)
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -307,6 +322,7 @@ jobs:
           path: |
             skarvik-alpha-native-real-assets-loaded.json
             skarvik-alpha-win64-package-status.json
+            skarvik-real-game-desktop-link-status.json
           if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
