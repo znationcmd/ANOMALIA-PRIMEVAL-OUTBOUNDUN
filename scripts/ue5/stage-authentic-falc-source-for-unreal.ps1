@@ -43,9 +43,15 @@ try{
   $raw=Join-Path $root 'FALC_26_5KM_MASTER_2017.r16'
   $reference=Join-Path $root 'FALC_REFERENCE_ORIGINALE.jpeg'
   $manifest=Join-Path $root $manifestName
-  if((Test-Path -LiteralPath $raw -PathType Leaf) -and (Hash $raw) -eq $expected
-      -and (Test-Path -LiteralPath $reference -PathType Leaf) -and (Hash $reference) -eq $expectedReference
-      -and (Test-Path -LiteralPath $manifest -PathType Leaf)){
+  $hasOriginalOnStage = (
+    (Test-Path -LiteralPath $raw -PathType Leaf) -and
+    (Test-Path -LiteralPath $reference -PathType Leaf) -and
+    (Test-Path -LiteralPath $manifest -PathType Leaf)
+  )
+  if ($hasOriginalOnStage) {
+    $hasOriginalOnStage = (((Hash $raw) -eq $expected) -and ((Hash $reference) -eq $expectedReference))
+  }
+  if ($hasOriginalOnStage) {
     $result.state='ORIGINAL_FALC_USER_RAW16_ALREADY_STAGED_AND_HASH_VERIFIED'
     $result.sourceVerified=$true
   }else{
