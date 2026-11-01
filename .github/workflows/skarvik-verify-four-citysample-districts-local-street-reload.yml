@@ -1,0 +1,65 @@
+name: SKARVIK - independently verify four City Sample districts and real 39-town street extensions after reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-four-citysample-districts-local-street-reload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-map-actor-persistence:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Ensure native stage has both successful CitySample and town gateway backup markers
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Unsafe stage'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\NativeStreetRingAt39GatewaysRetry2_20261101\graded-before-local-ring.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictD4_20261101\graded-before-fourth-real-city-block.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required saved native world or original file missing $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor active'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_four_citysample_districts_and_real_local_streets.py')
+          if($LASTEXITCODE -ne 0){throw 'Independent native map source syntax invalid'}
+      - name: Reopen graded 48km World Partition and verify 720 authentic city parts, 1242 village road access meshes plus native local roads and old asphalt
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_COMBINED_20261101_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-four-citysample-districts-local-streets-reload.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_four_citysample_districts_and_real_local_streets.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_COMBINED_20261101_REPORT)){throw 'Missing independent native map validation evidence'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_COMBINED_20261101_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_CITY_AND_GATEWAY_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_GATEWAY_REOPEN_ACTORS='+$r.villageRoadAccessMeshesPreserved)
+          Write-Host ('SKARVIK_NATIVE_LOCAL_ROAD_ACTORS='+$r.realTownLocalStreetMeshes)
+          Write-Host ('SKARVIK_NATIVE_BIGCITY_FOUR_DISTRICTS_REOPEN_ACTORS='+$r.CitySampleArchitecturalMeshActorsPreserved)
+          if($code -ne 0 -or $r.state -ne 'NATIVE_FOUR_CITYSAMPLE_DISTRICTS_AND_REAL_LOCAL_STREETS_PERSIST_AFTER_REOPEN_NOT_DRIVEN'){
+            throw ('Native Big City and entrance actors did not reopen: '+$r.error)
+          }
+          Write-Host 'SKARVIK_NATIVE_FOUR_CITY_DISTRICTS_AND_LOCAL_ROADS_REOPEN_VERIFIED=true'
+          Write-Host 'SKARVIK_SM5_REAL_DRIVING_AND_ALL_BIG_CITY_86K_ACTORS_STILL_NOT_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-four-original-citysample-districts-real-village-street-reload
+          path: skarvik-four-citysample-districts-local-streets-reload.json
+          if-no-files-found: warn
