@@ -5,6 +5,7 @@ on:
     paths:
       - 'unreal/Source/**'
       - 'unreal/Config/**'
+      - 'unreal/Content/AnomaliaZPrigimalia/Data/**'
       - 'unreal/AnomaliaZPrigimalia.uproject'
       - '.github/workflows/skarvik-native-alpha-continuous-compile.yml'
   workflow_dispatch:
@@ -71,6 +72,35 @@ jobs:
             New-Item -Path $content -ItemType Junction -Target $sourceContent|Out-Null
           }
           if(!(Test-Path (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Isolated Content junction not mapped to original seven-island stage'}
+          # Stage the REAL source-controlled gameplay catalogues only into the
+          # isolated C: map content. Never change D:/ANOMALIA or any .umap.
+          # Existing differing JSON has a reversible SHA-named backup.
+          $alphaData=Join-Path $env:GITHUB_WORKSPACE 'unreal\Content\AnomaliaZPrigimalia\Data'
+          $stagedData=Join-Path $stage 'Content\AnomaliaZPrigimalia\Data'
+          if(!(Test-Path $alphaData)){throw 'Authoritative alpha Data catalogues missing in checkout'}
+          if(!(Test-Path $stagedData)){New-Item -ItemType Directory -Path $stagedData -Force|Out-Null}
+          foreach($name in @('loot_items_catalog.json','loot_spawns.json','loot_tiers.json','rp_items_catalog.json','rp_economy.json')){
+            $source=Join-Path $alphaData $name
+            $target=Join-Path $stagedData $name
+            if(!(Test-Path -LiteralPath $source)){throw ('Required native alpha data missing: '+$name)}
+            $parsed=Get-Content -LiteralPath $source -Raw | ConvertFrom-Json -ErrorAction Stop
+            if($null -eq $parsed){throw ('Invalid source JSON '+$name)}
+            $expected=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
+            if(Test-Path $target){
+              $old=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+              if($old -eq $expected){continue}
+              $backupRoot=Join-Path $candidate 'Saved\AlphaSourceHistory\GameplayData'
+              if(!(Test-Path $backupRoot)){New-Item -ItemType Directory -Path $backupRoot -Force|Out-Null}
+              $backup=Join-Path $backupRoot ($name+'.'+$old+'.backup')
+              if(!(Test-Path -LiteralPath $backup)){Copy-Item -LiteralPath $target -Destination $backup}
+            }
+            $tmp=$target+'.alpha-'+$env:GITHUB_RUN_ID+'.tmp'
+            Copy-Item -LiteralPath $source -Destination $tmp -Force
+            if((Get-FileHash -LiteralPath $tmp -Algorithm SHA256).Hash -ne $expected){throw ('Data hash mismatch: '+$name)}
+            Move-Item -LiteralPath $tmp -Destination $target -Force
+            if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $expected){throw ('Staged data hash mismatch: '+$name)}
+          }
+          Write-Host 'SKARVIK_ALPHA_REAL_LOOT_RP_CONFIGS_VERIFIED_IN_ISOLATED_C_STAGE=true'
           foreach($dir in @('Source','Config')){
             $from=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$dir)
             $to=Join-Path $candidate $dir
