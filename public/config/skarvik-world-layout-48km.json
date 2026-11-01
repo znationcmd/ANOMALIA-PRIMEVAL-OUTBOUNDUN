@@ -11840,7 +11840,7 @@
     "routeConnectionsInPlan": 382,
     "pavedRouteAttachmentsNotProvenContinuousOrDriven": true,
     "previousRouteTrioPlusTwoBatchesAndC3Metres": 245136.8,
-    "actualNativeCitySampleArchitectureComponents": 180,
+    "actualNativeCitySampleArchitectureComponents": 540,
     "nativeBigCityCoreRealAssetEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41246092695",
     "nativeBigCityCoreReopenVerified": true,
     "nativeBigCityCoreReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41246410566",
@@ -11860,7 +11860,12 @@
     "safeSwitchbackEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41246595152",
     "regionalConnectionsWithoutNativePavedActors": 282,
     "gradeFailedRoadGroupsPending": 12,
-    "bridgesOrCulvertsVerified": false
+    "bridgesOrCulvertsVerified": false,
+    "townGatewayNative3DAccessCount": 39,
+    "townGatewayNativeRealAsphaltActors": 1242,
+    "townGatewayNativeRealAsphaltMetres": 5380.8,
+    "thirdCityDistrictSavedAndReopened": true,
+    "independentLatestReopenProof": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289518557"
   },
   "nativeRoadConnectivityAudit": {
     "source": "Five native UE5 build and repair receipts independently cross-checked on GitHub-hosted Linux",
@@ -11930,8 +11935,13 @@
     "nativeRoadContinuityAndSM5VehicleDriveVerified": false,
     "trueCompleteBuildingsInteriorPlaytested": false,
     "independentCombinedReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289518557",
-    "independentCombinedReopenPassed": false,
+    "independentCombinedReopenPassed": true,
     "productionBranchMerged": false,
-    "noUserProductionDChanges": true
+    "noUserProductionDChanges": true,
+    "independentCombinedReopenState": "NATIVE_THREE_CITYSAMPLE_DISTRICTS_AND_39_REAL_TOWN_GATEWAYS_PERSIST_AFTER_REOPEN_NOT_DRIVEN",
+    "oldRoadAndRoadRepairMeshActorsPreserved": 13556,
+    "allPreservedRealRoadAndVillageAccessMeshActors": 14798,
+    "worldPartitionSourceActorCountForCompleteCityStillNotStreamed": true,
+    "sm5VehicleAndPedestrianGameplayStillPending": true
   }
 }
