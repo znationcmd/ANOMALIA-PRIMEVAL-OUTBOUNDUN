@@ -85,7 +85,7 @@ static constexpr Terrace Pads[]={
  {-15102.0,-873.0,90.0,130.0}, // pierrefeu RELOCATED_FROM_SEA
  {-12018.0,15869.0,90.0,130.0}, // granitel RELOCATED_FROM_SEA
  {-14820.0,5110.0,90.0,130.0}, // fonteval fixed-dry
- {-17870.0,19080.0,90.0,130.0}, // cairn-bas fixed-dry
+ {-17850.0,18750.0,90.0,130.0}, // cairn-bas fixed-dry
  {-12794.0,14556.0,90.0,130.0}, // lauzeveil RELOCATED_FROM_SEA
  {6930.0,-7940.0,90.0,130.0}, // fresnelac fixed-dry
  {4530.0,-5000.0,90.0,130.0}, // orme-bas fixed-dry
