@@ -1,0 +1,106 @@
+name: ANOMALIAZ - apply real Explorer setting to stop showing legacy hidden folders
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - '.github/workflows/anomaliaz-explorer-actually-hide-legacy-aliases.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  update-only-explorer-visible-user-preference:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Validate real links then disable Show hidden items for current desktop Explorer owner
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $report=[ordered]@{
+            state='NOT_STARTED'
+            userPreferenceChanged=$false
+            originalHiddenPreference=$null
+            newHiddenPreference=$null
+            originalProtectedPreference=$null
+            deletedFiles=0
+            deletedLinks=0
+            movedFiles=0
+            linksVerified=0
+            centralWorkspaceVisible=$false
+            explorerOwnerVerified=$false
+            reason=$null
+          }
+          try {
+            $central='D:\ANOMALIAZ'
+            $marker=Join-Path $central '.anomaliaz-one-workspace-marker'
+            if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne 'ANOMALIAZ_SAFE_CONSOLIDATION_V1_20261101'){throw 'Central project not safely identified'}
+            if(!(Test-Path -LiteralPath (Join-Path $central '01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'))){throw 'Actual primary project absent'}
+            if((([IO.File]::GetAttributes($central)) -band [IO.FileAttributes]::Hidden) -ne 0){throw 'Central project folder has Hidden attribute'}
+            $report.centralWorkspaceVisible=$true
+            $old=@(
+              'C:\ANOMALIA',
+              'C:\ANOMALIA-Validation',
+              'D:\ANOMALIA',
+              'D:\ANOMALIA-Validation',
+              'D:\ANOMALIA-Backups',
+              'D:\ANOMALIAZ-PRIGIMALIA'
+            )
+            foreach($p in $old){
+              if(!(Test-Path -LiteralPath $p -PathType Container)){throw ('Legacy compatibility link missing: '+$p)}
+              $attr=[IO.File]::GetAttributes($p)
+              if(($attr -band [IO.FileAttributes]::ReparsePoint) -eq 0){throw ('Refuse to change view when old path is a physical project: '+$p)}
+              if(($attr -band [IO.FileAttributes]::Hidden) -eq 0){throw ('Legacy link not already marked Hidden: '+$p)}
+              $report.linksVerified++
+            }
+            $shells=@(Get-CimInstance -ClassName Win32_Process -Filter "name = 'explorer.exe'" -ErrorAction Stop)
+            if($shells.Count -lt 1){throw 'Desktop Explorer process not found; cannot safely edit this account preference'}
+            $runnerUser=[System.Security.Principal.WindowsIdentity]::GetCurrent().Name
+            $parts=$runnerUser.Split([char]'\')
+            $runnerShort=$parts[$parts.Length-1]
+            $owners=@()
+            foreach($shell in $shells){
+              try{
+                $owner=Invoke-CimMethod -InputObject $shell -MethodName GetOwner -ErrorAction Stop
+                if($owner.User){$owners+=[string]$owner.User}
+              }catch{}
+            }
+            if(!(@($owners|Where-Object {$_ -ieq $runnerShort}).Count)){
+              throw ('Runner Windows account does not own open Explorer; do not modify another user registry: '+$runnerShort)
+            }
+            $report.explorerOwnerVerified=$true
+            $key='HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced'
+            $current=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+            $report.originalHiddenPreference=$current.Hidden
+            $report.originalProtectedPreference=$current.ShowSuperHidden
+            # Hidden=2 in current-user Explorer means hide hidden files.
+            # ShowSuperHidden=0 means do not show protected OS files.
+            # This alters only Explorer view, never contents or NTFS links.
+            New-ItemProperty -LiteralPath $key -Name Hidden -Value 2 -PropertyType DWord -Force|Out-Null
+            New-ItemProperty -LiteralPath $key -Name ShowSuperHidden -Value 0 -PropertyType DWord -Force|Out-Null
+            $check=Get-ItemProperty -LiteralPath $key -ErrorAction Stop
+            if($check.Hidden -ne 2 -or $check.ShowSuperHidden -ne 0){throw 'Current-user Explorer view setting verification failed'}
+            $report.newHiddenPreference=$check.Hidden
+            $report.userPreferenceChanged=$true
+            $report.state='EXPLORER_HIDDEN_ITEMS_DISABLED_ONE_CENTRAL_FOLDER_VISIBLE_AFTER_REFRESH'
+            Write-Host 'ANOMALIAZ_EXPLORER_SHOW_HIDDEN_ITEMS_DISABLED_FOR_DESKTOP_USER=true'
+            Write-Host 'ANOMALIAZ_OLD_COMPATIBILITY_PATHS_STILL_EXIST=true'
+            Write-Host 'ANOMALIAZ_CENTRAL_D_FOLDER_VISIBLE=true'
+            Write-Host 'ANOMALIAZ_NOTE_REOPEN_EXPLORER_OR_PRESS_F5_TO_UPDATE=true'
+          }catch{
+            $report.state='NOT_CHANGED_OR_PARTIAL_EXPLORER_VIEW'
+            $report.reason=$_.Exception.Message
+            Write-Host ('ANOMALIAZ_EXPLORER_SETTING_NOT_APPLIED='+$report.reason)
+          }finally{
+            $dest=Join-Path $env:RUNNER_TEMP 'anomaliaz-explorer-visibility-preference.json'
+            $report|ConvertTo-Json -Depth 7 |Set-Content -LiteralPath $dest -Encoding UTF8
+          }
+          if($report.state -ne 'EXPLORER_HIDDEN_ITEMS_DISABLED_ONE_CENTRAL_FOLDER_VISIBLE_AFTER_REFRESH'){exit 2}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-explorer-current-user-actual-hidden-preference-result
+          path: ${{ runner.temp }}/anomaliaz-explorer-visibility-preference.json
+          if-no-files-found: warn
