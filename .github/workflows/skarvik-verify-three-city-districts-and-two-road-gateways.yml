@@ -29,7 +29,7 @@ jobs:
             (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
             (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
             (Join-Path $root 'Saved\SkarvikCity\Second24RegionalTownGateways20261101\graded-before-gateway.umap'),
-            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictC3_20261101\graded-before-third-real-city-block.umap'))){
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictC3_20261101\graded-before-second-real-city-block.umap'))){
             if(!(Test-Path -LiteralPath $p)){throw "Required saved native world or original file missing $p"}
           }
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor active'}
