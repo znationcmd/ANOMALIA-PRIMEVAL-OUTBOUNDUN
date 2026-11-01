@@ -144,16 +144,26 @@
       "id": "falc-v1",
       "displayName": "F.A.L.C",
       "originalUnrealPackage": null,
-      "widthKm": null,
-      "heightKm": null,
+      "widthKm": 26.5,
+      "heightKm": 26.5,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "authentic-original-heightmap-not-accessible-on-Windows-native-world-not-created",
       "saveNamespace": "falc-v1",
       "packageDiscoveryPending": true,
-      "sourceMapPreserved": true,
+      "sourceMapPreserved": false,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_FALC",
+      "expectedTerrainFormat": "RAW16-2017x2017",
+      "originalReferenceArchive": "FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM.zip",
+      "terrainRegions": [
+        "Nordskar (montagnes enneigées du nord)",
+        "Drachenfels",
+        "Moorgrund (marécages)",
+        "Sonnenfeld",
+        "Feuerinsel (île volcanique sud-est)"
+      ]
     },
     {
       "id": "kolchiem-origins-v1",
