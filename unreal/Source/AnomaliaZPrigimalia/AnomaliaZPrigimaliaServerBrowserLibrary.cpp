@@ -7,7 +7,7 @@ TArray<FAnomaliaZPrigimaliaWorldChoice> UAnomaliaZPrigimaliaServerBrowserLibrary
     struct FWorld { const TCHAR* Id; const TCHAR* Title; const TCHAR* Package; };
     static const FWorld Worlds[] = {
         {TEXT("archipelago-v2"), TEXT("SKARVIK"), TEXT("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1")},
-        {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")},
+        {TEXT("inhabited-v2"), TEXT("DRAZOVIA"), TEXT("/Game/Maps/PRIGIMALIA_Inhabited_v2")},
         {TEXT("karskov-v1"), TEXT("KARSKOV"), TEXT("/Game/Maps/PRIGIMALIA_KARSKOV")},
         {TEXT("vorgrad-v1"), TEXT("VORGRAD"), TEXT("/Game/Maps/PRIGIMALIA_VORGRAD")},
         {TEXT("nemoris-v1"), TEXT("NEMORIS"), TEXT("/Game/Maps/PRIGIMALIA_NEMORIS")},
