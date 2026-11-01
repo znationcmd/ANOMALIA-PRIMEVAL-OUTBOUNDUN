@@ -1,0 +1,57 @@
+name: ANOMALIAZ - inspect local 3D maps and real Google Drive access safely
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - '.github/workflows/anomaliaz-google-drive-preflight.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  read-only-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect 2TB Google Drive mount and local real map/3D sources (READ ONLY)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Write-Host 'ANOMALIAZ_DRIVE_AUDIT_READ_ONLY=true'
+          $disks=@(Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,DriveType,FileSystem,Size,FreeSpace,VolumeName)
+          foreach($disk in $disks){Write-Host ('ANOMALIAZ_VOLUME '+($disk|ConvertTo-Json -Compress))}
+          $gprocess=@(Get-Process -Name GoogleDriveFS -ErrorAction SilentlyContinue)
+          Write-Host ('ANOMALIAZ_GOOGLE_DRIVE_PROCESS_PRESENT='+($gprocess.Count -gt 0).ToString().ToLowerInvariant())
+          $paths=@('G:\Mon Drive\ANOMALIAZ','G:\My Drive\ANOMALIAZ','G:\ANOMALIAZ')
+          foreach($p in $paths){
+            Write-Host ('ANOMALIAZ_LOCAL_DRIVE_FOLDER '+($p|ConvertTo-Json -Compress)+' EXISTS='+[bool](Test-Path -LiteralPath $p -PathType Container))
+          }
+          if(Test-Path -LiteralPath 'G:\' -PathType Container){
+            try {
+              $items=@(Get-ChildItem -LiteralPath 'G:\' -Force -ErrorAction Stop | Select-Object -First 25 -ExpandProperty Name)
+              Write-Host ('ANOMALIAZ_LOCAL_GOOGLE_DRIVE_ROOT_ENTRIES='+($items|ConvertTo-Json -Compress))
+            } catch {Write-Host ('ANOMALIAZ_LOCAL_GOOGLE_DRIVE_ROOT_ACCESS_ERROR='+$_.Exception.Message)}
+          } else {Write-Host 'ANOMALIAZ_LOCAL_GOOGLE_DRIVE_G_NOT_AVAILABLE=true'}
+          $roots=@(
+            'D:\ANOMALIA\unreal\Content',
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\sketchfab',
+            'D:\ANOMALIA\unreal\Content\Maps',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__'
+          )
+          foreach($p in $roots){
+            $exists=Test-Path -LiteralPath $p -PathType Container
+            Write-Host ('ANOMALIAZ_SOURCE_ROOT '+($p|ConvertTo-Json -Compress)+' EXISTS='+$exists)
+            if($exists){
+              $it=Get-Item -LiteralPath $p -Force
+              Write-Host ('ANOMALIAZ_SOURCE_ROOT_ATTRIBUTES '+($p|ConvertTo-Json -Compress)+' '+$it.Attributes)
+              $child=@(Get-ChildItem -LiteralPath $p -Force -ErrorAction SilentlyContinue | Select-Object -First 22 -ExpandProperty Name)
+              Write-Host ('ANOMALIAZ_SOURCE_CHILDREN '+($p|ConvertTo-Json -Compress)+' '+($child|ConvertTo-Json -Compress))
+              if($p -match '\\Content\\Maps$'){
+                $maps=@(Get-ChildItem -LiteralPath $p -File -Filter '*.umap' -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name)
+                Write-Host ('ANOMALIAZ_NATIVE_UMAPS '+($p|ConvertTo-Json -Compress)+' '+($maps|ConvertTo-Json -Compress))
+              }
+            }
+          }
+          Write-Host 'ANOMALIAZ_DRIVE_AUDIT_FINISHED=true'
