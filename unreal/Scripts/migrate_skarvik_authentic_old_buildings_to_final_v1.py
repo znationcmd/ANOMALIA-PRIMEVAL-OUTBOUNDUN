@@ -65,7 +65,7 @@ try:
   if len(desired)!=expected:
    raise RuntimeError("Source World Partition original mesh actor count changed "+sourceKind+" "+str(len(desired)))
   report["sourceGradedNativeActorCount" if sourceKind=="graded" else "sourceIslandNativeActorCount"]=len(desired)
-  sortedIds=sorted(sites,key=len,reverse)
+  sortedIds=sorted(sites,key=len,reverse=True)
   actorData=[]
   for offset in range(0,len(desired),64):
    batch=desired[offset:offset+64]
