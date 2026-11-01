@@ -5,6 +5,7 @@
 #include "AnomaliaZPrigimaliaNewFourWorldHeights.h"
 #include "AnomaliaZPrigimaliaSkarvikTerrain.h"
 #include "AnomaliaZPrigimaliaSkarvikGraded.h"
+#include "AnomaliaZPrigimaliaSkarvikFinalCoast.h"
 #if WITH_EDITOR
 #include "Editor.h"
 #include "Landscape.h"
@@ -526,6 +527,58 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateSkarvikGradedLandscape()
 #else
  return nullptr;
 #endif
+}
+
+
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateSkarvikFinalCoastalLandscape()
+{
+#if WITH_EDITOR
+ UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if(!World || World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"))
+  return nullptr;
+ for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr;
+ constexpr int32 Size=3025;
+ constexpr double SideMeters=48000., Half=24000.;
+ TArray<uint16> HeightsBuffer;
+ HeightsBuffer.SetNumUninitialized(Size*Size);
+ for(int32 Row=0;Row<Size;++Row)for(int32 Col=0;Col<Size;++Col)
+ {
+  const double East=-Half+SideMeters*Col/(Size-1);
+  const double North=Half-SideMeters*Row/(Size-1);
+  HeightsBuffer[Row*Size+Col]=AnomaliaZPrigimaliaSkarvikFinalCoast::Encode(
+    AnomaliaZPrigimaliaSkarvikFinalCoast::Height(East,North));
+ }
+ ALandscape* Landscape=World->SpawnActor<ALandscape>();
+ if(!Landscape)return nullptr;
+ Landscape->SetActorLabel(TEXT("PRIGIMALIA_SKARVIK_FINAL_48km_SevenIslandsTerracedCoast"));
+ Landscape->SetActorLocation(FVector(-Half*100.,-Half*100.,0.));
+ Landscape->SetActorScale3D(FVector(SideMeters*100./(Size-1),SideMeters*100./(Size-1),800.));
+ TMap<FGuid,TArray<uint16>> Elevations;
+ Elevations.Add(FGuid(),MoveTemp(HeightsBuffer));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Landscape->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Elevations,nullptr,Layers,
+                   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
+ Landscape->CreateLandscapeInfo();
+ Landscape->PostEditChange();
+ if(Landscape->LandscapeComponents.Num()!=576)
+ {
+  UE_LOG(LogTemp,Error,TEXT("SKARVIK_FINAL_COAST landscape component count mismatch: %d"),
+         Landscape->LandscapeComponents.Num());
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Landscape->GetLandscapeInfo(),2);
+ return Landscape;
+#else
+ return nullptr;
+#endif
+}
+
+
+double UAnomaliaZPrigimaliaWorldImportLibrary::SkarvikFinalCoastalHeight(double EastMeters,double NorthMeters)
+{
+ return AnomaliaZPrigimaliaSkarvikFinalCoast::Height(EastMeters,NorthMeters);
 }
 
 
