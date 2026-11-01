@@ -132,3 +132,4 @@ try{
  if($report.error){Write-Host ('ANOMALIAZ_UE5_DESKTOP_ERROR='+$report.error)}
 }
 if($report.state -ne 'ONE_CORRECT_UE5_EDITOR_WITH_14_REAL_MAPS_OLD_LINKS_ARCHIVED_NO_FAKE_PUBLIC_BETA'){exit 2}
+exit 0
