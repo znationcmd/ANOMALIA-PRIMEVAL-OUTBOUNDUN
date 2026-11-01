@@ -6,6 +6,7 @@
 #include "Misc/PackageName.h"
 #include "CollisionQueryParams.h"
 #include "Components/SkeletalMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "AnomaliaZPrigimaliaPlayableProbe.h"
 #include "AnomaliaZPrigimaliaVisualReviewProbe.h"
 #include "AnomaliaZPrigimaliaSessionWidget.h"
