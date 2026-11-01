@@ -1217,21 +1217,23 @@
       ],
       "targetKm": [
         11.57,
-        -10.76
+        -10.36
       ],
       "targetLandmass": "original-mainland",
       "hasExistingIslandNativeCore": false,
       "relocated": false,
       "relocationDistanceKm": 0,
       "sourceDryLand": true,
-      "targetCoastDistanceM": 178.3,
+      "targetCoastDistanceM": 817,
       "originalFootprintKm": [
         0.95,
         0.95
       ],
       "biome": "east",
       "siteTerrainFlatHalfM": 125,
-      "siteTerrainBlendM": 160
+      "siteTerrainBlendM": 160,
+      "coastalInlandAdjustmentKm": 0.4,
+      "adjustmentRationale": "Original coast centre only 178m inland; one test found an 80m building pad traversed original beach. Shift town 400m inland with 800m coast clearance."
     },
     {
       "id": "port-azur",
@@ -3291,5 +3293,6 @@
     }
   ],
   "sourceIslandDryCoastalInlandAdjustments": 1,
-  "finalReliefCorrectionStatus": "CI_SOURCE_COASTAL_TERRACE_INLAND_ADJUSTMENT_FOR_CAIRN_BAS"
+  "finalReliefCorrectionStatus": "CI_SOURCE_COASTAL_TERRACE_INLAND_ADJUSTMENT_FOR_CAIRN_BAS",
+  "sourceMainlandCoastalInlandAdjustments": 1
 }
