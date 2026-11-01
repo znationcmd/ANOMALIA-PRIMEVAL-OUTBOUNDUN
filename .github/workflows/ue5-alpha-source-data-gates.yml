@@ -1,0 +1,37 @@
+name: ANOMALIAZ UE5 Alpha - validate real native data and source game entry
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'unreal/Content/AnomaliaZPrigimalia/Data/**'
+      - 'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp'
+      - 'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp'
+      - 'unreal/Config/DefaultEngine.ini'
+      - 'tests/ue5-alpha-native-game-data.test.mjs'
+      - '.github/workflows/ue5-alpha-source-data-gates.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-alpha-source-content:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Verify exact UE5 native data files against 236 loot items and 79 RP items
+        run: node --test tests/ue5-alpha-native-game-data.test.mjs
+      - name: Verify SKARVIK real alpha boot configuration and C++ launch presence
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $config=Get-Content unreal/Config/DefaultEngine.ini -Raw
+          $game=Get-Content unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp -Raw
+          $menu=Get-Content unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaSessionWidget.cpp -Raw
+          if($config -notmatch 'GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'){throw 'Native alpha is not booting original final SKARVIK'}
+          if($game -notmatch 'TrySpawnSkarvikAlphaCompanions'){throw 'No real-asset gated companion hooks'}
+          if($menu -notmatch 'SKARVIK ALPHA'){throw 'No native SKARVIK menu'}
+          Write-Host 'UE5_NATIVE_ALPHA_SOURCE_AND_JSON_GATES_PASS=true'
+          Write-Host 'UE5_NATIVE_ALPHA_COMPILED_OR_PLAYABLE=false'
