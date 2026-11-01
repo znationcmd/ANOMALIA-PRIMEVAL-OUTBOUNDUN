@@ -5,15 +5,16 @@
     {
       "id": "archipelago-v2",
       "displayName": "SKARVIK",
-      "originalUnrealPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1",
       "widthKm": 48,
       "heightKm": 48,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-PIE-limited",
+      "validation": "authentic-native-seven-island-final-world-saved-source-available-not-yet-playtested",
       "saveNamespace": "archipelago-v2",
       "targetLocalities": 125,
-      "settlementPlacementStatus": "125-location-source-plan-native-placement-incomplete"
+      "settlementPlacementStatus": "125-location-source-plan-native-placement-incomplete",
+      "legacyOriginalUnrealPackage": "/Game/Maps/ANOMALIA_Archipelago_v2"
     },
     {
       "id": "inhabited-v2",
@@ -91,32 +92,34 @@
     {
       "id": "solynacalyra-v1",
       "displayName": "SOLYNACALYRA",
-      "originalUnrealPackage": null,
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_SOLYNACALYRA",
       "widthKm": null,
       "heightKm": null,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "native-original-migrated-world-file-found-awaiting-independent-UE-load",
       "saveNamespace": "solynacalyra-v1",
-      "packageDiscoveryPending": true,
+      "packageDiscoveryPending": false,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativePackageFileObserved": true
     },
     {
       "id": "nexavarkhos-v1",
       "displayName": "NEXAVARKHOS",
-      "originalUnrealPackage": null,
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_NEXAVARKHOS",
       "widthKm": null,
       "heightKm": null,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "native-original-migrated-world-file-found-awaiting-independent-UE-load",
       "saveNamespace": "nexavarkhos-v1",
-      "packageDiscoveryPending": true,
+      "packageDiscoveryPending": false,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativePackageFileObserved": true
     },
     {
       "id": "chernaskaluxria-v1",
@@ -155,17 +158,18 @@
     {
       "id": "kolchiem-origins-v1",
       "displayName": "KOLCHIEM ORIGINS",
-      "originalUnrealPackage": null,
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS",
       "widthKm": null,
       "heightKm": null,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "native-original-migrated-world-file-found-awaiting-independent-UE-load",
       "saveNamespace": "kolchiem-origins-v1",
-      "packageDiscoveryPending": true,
+      "packageDiscoveryPending": false,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "nativePackageFileObserved": true
     },
     {
       "id": "roskatvia-b1-v1",
