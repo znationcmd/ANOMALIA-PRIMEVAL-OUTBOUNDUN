@@ -52,6 +52,7 @@
 #include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -96,7 +97,20 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
     if(MenuArtwork) MenuArtwork->SetVisibility(ESlateVisibility::Collapsed);
     if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
     auto* PC=GetOwningPlayer();
-    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
+    const bool bSkarvikAlpha=GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"));
+    auto* MenuSurvivor=PC?Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()):nullptr;
+    if(bMainMenu && bSkarvikAlpha && Feedback)
+    {
+        // Never suggest that an invisible body or missing dog/car is already ready.
+        const bool bHasVisibleBody=MenuSurvivor && MenuSurvivor->GetMesh() &&
+            MenuSurvivor->GetMesh()->GetSkeletalMeshAsset();
+        Feedback->SetText(FText::FromString(bHasVisibleBody?
+            TEXT("SKARVIK ALPHA | Carte de test UE5.8. Les fonctions en développement restent expérimentales.") :
+            TEXT("SKARVIK ALPHA | Corps 3D du survivant absent. Test en cours, ressources à intégrer.")));
+    }
+    if(bMainMenu && PC && GetWorld() && MenuSurvivor && MenuSurvivor->GetMesh() &&
+       MenuSurvivor->GetMesh()->GetSkeletalMeshAsset() &&
+       (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) || bSkarvikAlpha))
     {
         // Frame the ACTUAL restored survivor in the ACTUAL world, at the
         // last saved location. Never teleport or replace player appearance.
