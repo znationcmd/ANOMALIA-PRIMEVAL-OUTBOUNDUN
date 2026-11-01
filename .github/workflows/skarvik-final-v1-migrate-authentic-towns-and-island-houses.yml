@@ -2,7 +2,7 @@ name: SKARVIK - migrate original true 3D houses from both maps onto final seven-
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-final-v1-migrate-authentic-towns-and-island-houses.yml']
+    paths: ['.github/workflows/skarvik-final-v1-migrate-authentic-towns-and-island-houses.yml', 'unreal/Scripts/migrate_skarvik_authentic_old_buildings_to_final_v1.py']
   workflow_dispatch:
 permissions:
   contents: read
