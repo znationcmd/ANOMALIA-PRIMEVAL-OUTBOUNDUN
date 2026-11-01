@@ -1,0 +1,92 @@
+name: SKARVIK - preflight real native Windows packaged game (never publish untested build)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-windows-game-package-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-native-windows-package-readiness:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify true SKARVIK saved native world, shipping target, Windows engine and C staging capacity
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-windows-packaging-readiness.json'
+          $result=[ordered]@{
+            state='BLOCKED'
+            targetMap='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+            requestedPlatform='Win64'
+            nativeProjectExists=$false
+            finalMapExists=$false
+            originalMapExists=$false
+            gameTargetExists=$false
+            editorExists=$false
+            automationToolExists=$false
+            enoughStageSpaceForFullCook=$false
+            stageFreeGiB=0
+            requiredSafeFreeGiB=60
+            packagedWin64ExePresent=$false
+            actualCookPerformed=$false
+            SM5WindowedGamePlaytested=$false
+            updatePublished=$false
+            missing=@()
+          }
+          try{
+            $marker=Join-Path $root '.skarvik-ci-stage-marker'
+            if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){
+              throw 'Trusted isolated stage C marker missing'
+            }
+            $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+            $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+            $original='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+            $result.nativeProjectExists=Test-Path $project
+            $result.finalMapExists=Test-Path $map
+            $result.originalMapExists=Test-Path $original
+            $gameTarget=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia.Target.cs'
+            $result.gameTargetExists=Test-Path $gameTarget
+            $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+            $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+            $result.editorExists=Test-Path $editor
+            $result.automationToolExists=Test-Path $uat
+            $result.stageFreeGiB=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+            $result.enoughStageSpaceForFullCook=($result.stageFreeGiB -ge $result.requiredSafeFreeGiB)
+            if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+              $result.missing+= 'Concurrent Unreal process active: packaging must not overlap editor work'
+            }
+            foreach($name in @('nativeProjectExists','finalMapExists','originalMapExists','gameTargetExists','editorExists','automationToolExists','enoughStageSpaceForFullCook')){
+              if(!$result[$name]){$result.missing+="Prerequisite not satisfied: $name"}
+            }
+            if($result.missing.Count -eq 0){
+              $result.state='READY_FOR_ISOLATED_NATIVE_WINDOWS_COOK_TRIAL_NOT_YET_PACKAGED'
+            }else{
+              $result.state='NATIVE_WINDOWS_GAME_PACKAGE_BLOCKED_REQUIRES_PREREQUISITES'
+            }
+          }catch{
+            $result.missing+= $_.Exception.Message
+            $result.state='NATIVE_WINDOWS_GAME_PACKAGE_PREFLIGHT_ERROR'
+          }
+          ($result|ConvertTo-Json -Depth 8) | Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_FINAL_NATIVE_WINDOWS_PACKAGE_STATUS='+$result.state)
+          Write-Host ('SKARVIK_FINAL_NATIVE_WINDOWS_PACKAGE_FREE_GIB='+$result.stageFreeGiB)
+          Write-Host ('SKARVIK_FINAL_NATIVE_WINDOWS_GAME_TARGET_EXISTS='+$result.gameTargetExists)
+          Write-Host ('SKARVIK_FINAL_NATIVE_WINDOWS_PACKAGE_BLOCKERS='+($result.missing -join '; '))
+          Write-Host 'SKARVIK_FINAL_NATIVE_WINDOWS_GAME_ALREADY_PUBLISHED=false'
+          if($result.state -eq 'NATIVE_WINDOWS_GAME_PACKAGE_PREFLIGHT_ERROR'){throw 'Preflight unexpected error: cannot package automatically'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-native-windows-package-prerequisites
+          path: skarvik-final-native-windows-packaging-readiness.json
+          if-no-files-found: warn
