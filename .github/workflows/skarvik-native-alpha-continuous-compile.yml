@@ -273,12 +273,19 @@ jobs:
           if($candidates.Count -gt 0){
             $disk=$candidates[0]
             $outDir=$disk.DeviceID+ '\\ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\\run-'+$env:GITHUB_RUN_ID
+            $stageDir=$disk.DeviceID+ '\\ANOMALIAZ_NATIVE_ALPHA_WIN64_STAGING\\run-'+$env:GITHUB_RUN_ID
+            # Cooked stage AND archive must live on the spare NTFS volume,
+            # not in the 43 GiB C: system drive or almost-full D: project drive.
+            if(Test-Path -LiteralPath $stageDir){throw 'Packaging staging directory already exists: refuse overwrite'}
             if(Test-Path -LiteralPath $outDir){throw 'Packaging output already exists: refuse overwrite'}
             New-Item -ItemType Directory -Path $outDir -Force|Out-Null
+            New-Item -ItemType Directory -Path $stageDir -Force|Out-Null
+            Write-Host ('SKARVIK_ALPHA_EXTERNAL_NTFS_PACKAGE_VOLUME='+$disk.DeviceID)
+            Write-Host ('SKARVIK_ALPHA_EXTERNAL_NTFS_STAGE_DIR='+$stageDir)
             $project='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\AnomaliaZPrigimalia.uproject'
             $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
             $status.state='NATIVE_SKARVIK_COOK_ATTEMPT_STARTED'
-            & $uat BuildCookRun "-project=$project" -noP4 -build -cook -stage -package -pak -archive "-archivedirectory=$outDir" -platform=Win64 -clientconfig=Development "-map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1" -unattended -utf8output
+            & $uat BuildCookRun "-project=$project" -noP4 -build -cook -stage -package -pak -archive "-stagingdirectory=$stageDir" "-archivedirectory=$outDir" -platform=Win64 -clientconfig=Development "-map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1" -unattended -utf8output
             if($LASTEXITCODE -ne 0){
               $status.state='NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED'
               $status.failureExitCode=$LASTEXITCODE
