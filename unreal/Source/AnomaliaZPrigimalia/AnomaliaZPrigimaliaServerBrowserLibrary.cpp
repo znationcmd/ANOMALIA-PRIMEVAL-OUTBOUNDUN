@@ -15,7 +15,7 @@ TArray<FAnomaliaZPrigimaliaWorldChoice> UAnomaliaZPrigimaliaServerBrowserLibrary
         {TEXT("solynacalyra-v1"), TEXT("SOLYNACALYRA"), TEXT("/Game/Maps/PRIGIMALIA_SOLYNACALYRA")},
         {TEXT("nexavarkhos-v1"), TEXT("NEXAVARKHOS"), TEXT("/Game/Maps/PRIGIMALIA_NEXAVARKHOS")},
         {TEXT("chernaskaluxria-v1"), TEXT("CHERNASKALUXRIA"), TEXT("/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA")},
-        {TEXT("falc-v1"), TEXT("F.A.L.C"), TEXT("")},
+        {TEXT("falc-v1"), TEXT("F.A.L.C"), TEXT("/Game/Maps/PRIGIMALIA_FALC")},
         {TEXT("kolchiem-origins-v1"), TEXT("KOLCHIEM ORIGINS"), TEXT("/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS")},
         {TEXT("roskatvia-b1-v1"), TEXT("ROSКАТVIA-B1"), TEXT("/Game/Maps/PRIGIMALIA_ROSKATVIA_B1")},
         {TEXT("nogokv-51-v1"), TEXT("НОГОКВ-51"), TEXT("/Game/Maps/PRIGIMALIA_NOGOKV_51")},
