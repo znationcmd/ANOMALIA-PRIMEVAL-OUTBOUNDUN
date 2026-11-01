@@ -20,6 +20,13 @@ public:
  /** Build a NEW, non-destructive 48km SKARVIK terrain with graded plots for 124 settlements; v1 and D: untouched. */
  UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
  static AActor* CreateSkarvikGradedLandscape();
+ /** Build a new 48x48km single final island-and-mainland graded coast in a NEW
+     World Partition package. Never replace original graded 1039-building map. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateSkarvikFinalCoastalLandscape();
+ /** Exact native source height for dry-land relocation, city pad and island cores. */
+ UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
+ static double SkarvikFinalCoastalHeight(double EastMeters,double NorthMeters);
  /** Height of the graded v2 buildable terrain in metres; source height v1 is unchanged. */
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double SkarvikGradedHeight(double EastMeters,double NorthMeters);
