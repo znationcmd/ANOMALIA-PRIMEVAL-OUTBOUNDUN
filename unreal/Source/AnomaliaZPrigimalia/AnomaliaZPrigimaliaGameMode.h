@@ -30,6 +30,8 @@ protected:
     virtual void BeginPlay() override;
     virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
     void SpawnConfiguredVehicles();
+    /** Isolated SKARVIK alpha: spawn only genuine, installed and validated dog/car resources. */
+    void TrySpawnSkarvikAlphaCompanions(APlayerController* PlayerController);
     /** Server-only import of its own validated Editor/world.json placeables. */
     void SpawnConfiguredHomestead();
     void LoadPersistentPlayer(APlayerController* PlayerController);
