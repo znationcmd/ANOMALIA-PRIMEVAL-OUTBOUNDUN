@@ -330,18 +330,45 @@ void AAnomaliaZPrigimaliaGameMode::TrySpawnSkarvikAlphaCompanions(APlayerControl
     }
     else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_DOG_NOT_SPAWNED_MISSING_REAL_ASSETS_OR_GROUND"));
 
-    // The catalog's 'car' has its own genuine mesh. An empty vehicle pawn
-    // should never be advertised as a visible, driveable alpha vehicle.
+    // Bind the genuine user-owned BMW E39 asset, not the invisible generic
+    // car pawn. The default vehicle controller already owns enter/exit,
+    // steering, camera and fuel logic; this does not assert Chaos physics.
+    const TCHAR* GenuineModels[]={
+        TEXT("/Game/Anomalia/NamedVehicles1/bmw_e39/SM_bmw_e39.SM_bmw_e39"),
+        TEXT("/Game/Anomalia/NamedVehicles2/bmw_e39/SM_bmw_e39.SM_bmw_e39")
+    };
+    UStaticMesh* GenuineE39=nullptr;
+    for(const TCHAR* ModelPath:GenuineModels)
+    {
+        GenuineE39=LoadObject<UStaticMesh>(nullptr,ModelPath,nullptr,LOAD_NoWarn);
+        if(GenuineE39)break;
+    }
     FVector CarLocation;
-    if(FPackageName::DoesPackageExist(TEXT("/Game/AnomaliaZPrigimalia/Vehicles/car/SM_car")) &&
-       GroundAt(Origin+Survivor->GetActorForwardVector()*520.f,CarLocation))
+    if(GenuineE39 && GroundAt(Origin+Survivor->GetActorForwardVector()*520.f,CarLocation))
     {
         CarLocation.Z+=105.f;
-        auto* Vehicle=SpawnServerVehicle(FName(TEXT("car")),
-            FTransform(Survivor->GetActorRotation(),CarLocation));
-        if(Vehicle) UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_CAR_CONFIGURED_REAL_MESH_PACKAGE_PRESENT"));
+        bool bAlreadyHasCar=false;
+        for(TActorIterator<AAnomaliaZPrigimaliaVehiclePawn> It(GetWorld());It;++It)
+        {
+            if(It->VehicleId==FName(TEXT("car")) &&
+               FVector::DistSquared(It->GetActorLocation(),CarLocation)<FMath::Square(1700.f))
+            { bAlreadyHasCar=true;break; }
+        }
+        if(!bAlreadyHasCar)
+        {
+            auto* Vehicle=SpawnServerVehicle(FName(TEXT("car")),
+                FTransform(Survivor->GetActorRotation(),CarLocation));
+            if(Vehicle)
+            {
+                Vehicle->PresentationMeshOverride=GenuineE39;
+                Vehicle->ConfigureVehicle(FName(TEXT("car")));
+                if(Vehicle->Body && Vehicle->Body->GetStaticMesh()==GenuineE39)
+                    UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_REAL_BMW_E39_CAR_MESH_AND_VEHICLE_PAWN_READY"));
+                else {Vehicle->Destroy();UE_LOG(LogTemp,Error,TEXT("SKARVIK_ALPHA_E39_BINDING_FAILED")); }
+            }
+        }
     }
-    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_CAR_NOT_SPAWNED_MISSING_REAL_MESH_OR_GROUND"));
+    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_E39_NOT_SPAWNED_MISSING_GENUINE_MESH_OR_GROUND"));
 }
 
 void AAnomaliaZPrigimaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController)
