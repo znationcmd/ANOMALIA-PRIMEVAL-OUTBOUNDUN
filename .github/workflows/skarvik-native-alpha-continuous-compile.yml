@@ -37,7 +37,8 @@ jobs:
           $free=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2)
           $ready=($busy.Count -eq 0 -and $free -ge 20)
           ('ready='+$ready.ToString().ToLowerInvariant()) >> $env:GITHUB_OUTPUT
-          Write-Host ('ALPHA_NATIVE_BUILD_GATE='+(if($ready){'READY'}else{'BLOCKED'}))
+          $gate=if($ready){'READY'}else{'BLOCKED'}
+          Write-Host ('ALPHA_NATIVE_BUILD_GATE='+$gate)
           Write-Host ('ALPHA_NATIVE_ACTIVE_UNREAL_PROCESSES='+$busy.Count)
           Write-Host ('ALPHA_NATIVE_FREE_C_GIB='+$free)
           if(!$ready){Write-Host 'No changes made to the stage or game; compile will run on an eligible manual re-run or branch push.'}
