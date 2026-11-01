@@ -237,13 +237,15 @@ double UAnomaliaZPrigimaliaWorldImportLibrary::ArchipelagoHeight(double EastMete
  if(!FMath::IsFinite(EastMeters)||!FMath::IsFinite(NorthMeters))return 0;
  return AnomaliaZPrigimaliaArchipelago::Height(EastMeters,NorthMeters);
 }
-static AActor* CreateLandscape(bool bInhabited)
+static AActor* CreateLandscape(bool bInhabited, bool bSkarvikIslandsV1=false)
 {
 #if WITH_EDITOR
  UWorld* World=GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
  if(!World)return nullptr;
  const FString Map=World->GetPackage()->GetName();
- if(bInhabited ? (Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v1")&&Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")) : Map!=TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))return nullptr;
+ if(bInhabited && bSkarvikIslandsV1)return nullptr;
+ const FString AllowedMap=bSkarvikIslandsV1 ? TEXT("/Game/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1") : TEXT("/Game/Maps/ANOMALIA_Archipelago_v2");
+ if(bInhabited ? (Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v1")&&Map!=TEXT("/Game/Maps/ANOMALIA_Inhabited_v2")) : Map!=AllowedMap)return nullptr;
  for(TActorIterator<ALandscape> It(World);It;++It)return nullptr; // Never overlay/replace existing terrain.
  constexpr int32 Size=3025;
  TArray<uint16> Samples; Samples.SetNumUninitialized(Size*Size);
@@ -254,7 +256,7 @@ static AActor* CreateLandscape(bool bInhabited)
  }
  ALandscape* Land=World->SpawnActor<ALandscape>();
  if(!Land)return nullptr;
- Land->SetActorLabel(bInhabited?TEXT("ANOMALIA_InhabitedArchipelago_48km"):TEXT("ANOMALIA_OriginalArchipelago_48km"));
+ Land->SetActorLabel(bSkarvikIslandsV1 ? TEXT("PRIGIMALIA_SKARVIK_ISLANDS_v1_OriginalCoasts_48km") : (bInhabited?TEXT("ANOMALIA_InhabitedArchipelago_48km"):TEXT("ANOMALIA_OriginalArchipelago_48km")));
  Land->SetActorLocation(FVector(-2400000,-2400000,0));
  Land->SetActorScale3D(FVector(4800000./(Size-1),4800000./(Size-1),800));
  TMap<FGuid,TArray<uint16>> Heights; Heights.Add(FGuid(),MoveTemp(Samples));
@@ -272,6 +274,7 @@ static AActor* CreateLandscape(bool bInhabited)
 }
 
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateArchipelagoLandscape() { return CreateLandscape(false); }
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateSkarvikIslandsV1Landscape() { return CreateLandscape(false,true); }
 AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateInhabitedArchipelagoLandscape() { return CreateLandscape(true); }
 
 namespace
