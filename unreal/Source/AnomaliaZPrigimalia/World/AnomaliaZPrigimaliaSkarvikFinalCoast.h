@@ -57,7 +57,7 @@ static constexpr Terrace Pads[]={
  {7552.0,10662.0,125.0,160.0}, // lysvik RELOCATED_FROM_SEA
  {13702.0,-1423.0,125.0,160.0}, // baie-argent RELOCATED_FROM_SEA
  {10970.0,-7150.0,125.0,160.0}, // hauterive fixed-dry
- {11570.0,-10760.0,125.0,160.0}, // coteverte fixed-dry
+ {11570.0,-10360.0,125.0,160.0}, // coteverte dry-coastal-adjusted
  {13574.0,-480.0,125.0,160.0}, // port-azur RELOCATED_FROM_SEA
  {4180.0,-14890.0,125.0,160.0}, // pont-vert fixed-dry
  {-4212.0,-13580.0,125.0,160.0}, // merivals RELOCATED_FROM_SEA
