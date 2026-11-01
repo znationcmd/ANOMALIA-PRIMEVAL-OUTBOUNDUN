@@ -363,8 +363,14 @@ void AAnomaliaZPrigimaliaGameMode::TrySpawnSkarvikAlphaCompanions(APlayerControl
                 Vehicle->PresentationMeshOverride=GenuineE39;
                 Vehicle->ConfigureVehicle(FName(TEXT("car")));
                 if(Vehicle->Body && Vehicle->Body->GetStaticMesh()==GenuineE39)
+                {
                     UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_REAL_BMW_E39_CAR_MESH_AND_VEHICLE_PAWN_READY"));
-                else {Vehicle->Destroy();UE_LOG(LogTemp,Error,TEXT("SKARVIK_ALPHA_E39_BINDING_FAILED")); }
+                }
+                else
+                {
+                    Vehicle->Destroy();
+                    UE_LOG(LogTemp,Error,TEXT("SKARVIK_ALPHA_E39_BINDING_FAILED"));
+                }
             }
         }
     }
