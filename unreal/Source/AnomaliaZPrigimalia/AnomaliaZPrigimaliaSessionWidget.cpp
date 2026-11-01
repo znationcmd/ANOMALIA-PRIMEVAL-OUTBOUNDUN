@@ -34,6 +34,7 @@
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/Paths.h"
+#include "Misc/PackageName.h"
 #include "Misc/FileHelper.h"
 #include "JsonObjectConverter.h"
 #include "AnomaliaZPrigimaliaModResolver.h"
@@ -1461,18 +1462,29 @@ void UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld()
     for(const FAnomaliaZPrigimaliaWorldChoice& Choice:Worlds)
     {
         if(Choice.DisplayName!=Selected) continue;
-        if(!Choice.bNativePackageFound)
-        {
-            if(ServerStatus) ServerStatus->SetText(FText::FromString(FString::Printf(
-                TEXT("%s : cette carte n'est pas encore installée dans la version actuelle. Aucune fausse carte ne sera lancée."),
-                *Selected)));
-            return;
-        }
         if(Choice.WorldPackage.IsEmpty() ||
            !Choice.WorldPackage.StartsWith(TEXT("/Game/Maps/")))
         {
             if(ServerStatus) ServerStatus->SetText(FText::FromString(
                 TEXT("Chemin de carte invalide : déplacement annulé.")));
+            return;
+        }
+        // The startup level IS the real SKARVIK map. Reopening that level
+        // restarts GameMode and displays the main menu again, trapping solo
+        // players in a loop. Resume the already loaded world instead.
+        const FString CurrentLevel=GetWorld()->GetMapName();
+        const FString RequestedLevel=FPackageName::GetShortName(Choice.WorldPackage);
+        if(CurrentLevel.EndsWith(RequestedLevel))
+        {
+            UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_RESUME_CURRENT_WORLD: %s"), *RequestedLevel);
+            ResumeLocalSession();
+            return;
+        }
+        if(!Choice.bNativePackageFound)
+        {
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(FString::Printf(
+                TEXT("%s : cette carte n'est pas encore installée dans la version actuelle. Aucune fausse carte ne sera lancée."),
+                *Selected)));
             return;
         }
         if(TravelStatus) TravelStatus->SetText(FText::FromString(
@@ -1481,7 +1493,10 @@ void UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld()
         UGameplayStatics::SetGamePaused(PC,false);
         PC->SetInputMode(FInputModeGameOnly());
         PC->bShowMouseCursor=false;
-        UGameplayStatics::OpenLevel(this,FName(*Choice.WorldPackage),true);
+        // Explicitly distinguish intentional solo travel from a fresh game
+        // launch: the destination GameMode must not reopen its startup menu.
+        UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_TO_WORLD: %s"), *Choice.WorldPackage);
+        UGameplayStatics::OpenLevel(this,FName(*Choice.WorldPackage),true,TEXT("AnomaliaZSoloStart=1"));
         return;
     }
     if(ServerStatus) ServerStatus->SetText(FText::FromString(
