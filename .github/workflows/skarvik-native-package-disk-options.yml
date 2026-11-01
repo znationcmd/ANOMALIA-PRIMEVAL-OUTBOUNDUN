@@ -31,7 +31,7 @@ jobs:
             [ordered]@{
               drive=$_.DeviceID
               filesystem=$_.FileSystem
-              driveType=($_.DriveType -eq 2 ? 'removable' : 'fixed')
+              driveType=$(if ($_.DriveType -eq 2) { 'removable' } else { 'fixed' })
               freeGiB=$free
               totalGiB=[math]::Round([double]$_.Size / 1GB,2)
               candidateExternalBuildVolume=($_.DeviceID -ne 'C:' -and $_.FileSystem -eq 'NTFS' -and $free -ge 80)
