@@ -208,6 +208,106 @@ jobs:
           ($receipt|ConvertTo-Json -Depth 5)|Set-Content -LiteralPath $dest -Encoding utf8
           Write-Host 'SKARVIK_ALPHA_REAL_CPP_COMPILE_PASSED=true'
           Write-Host 'SKARVIK_ALPHA_TRUE_GAMEPLAY_SMOKE_NOT_RUN=true'
+      - name: Verify REAL saved SKARVIK map and native Manny, dog and BMW E39 assets in Unreal
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $candidate='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE'
+          $project=Join-Path $candidate 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_native_alpha_assets_runtime.py'
+          if(!(Test-Path $editor) -or !(Test-Path $script)){throw 'Native Unreal asset validation cannot run'}
+          $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-native-real-assets-loaded.json'
+          $log=Join-Path $candidate ('Saved\Logs\alpha-real-asset-load-'+$env:GITHUB_RUN_ID+'.log')
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          $exitCode=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT)){
+            throw ('Unreal did not produce a real asset runtime report; exit='+$exitCode)
+          }
+          $result=Get-Content -LiteralPath $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT -Raw|ConvertFrom-Json
+          if($result.state -ne 'GENUINE_SKARVIK_AND_ALL_PLAYER_DOG_CAR_ASSETS_LOADED_IN_REAL_UNREAL_EDITOR'){
+            throw ('REAL UE5 ASSET TEST FAILED: '+$result.error)
+          }
+          Write-Host 'SKARVIK_ALPHA_REAL_WORLD_PLAYER_DOG_CAR_ASSETS_LOADED=true'
+          Write-Host ('SKARVIK_ALPHA_EDITOR_COMMANDLET_EXIT_CODE='+$exitCode)
+          Write-Host 'SKARVIK_ALPHA_VISUAL_GAMEPLAY_STILL_UNVERIFIED=true'
+      - name: Compile REAL Windows Development GAME target, not only Editor module
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\AnomaliaZPrigimalia.uproject'
+          $gameExe='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\Binaries\Win64\AnomaliaZPrigimalia.exe'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $free=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2)
+          if($free -lt 13){throw ('Not enough safe free C space for game target '+$free+' GiB')}
+          & $build AnomaliaZPrigimalia Win64 Development $project -WaitMutex -NoHotReloadFromIDE
+          if($LASTEXITCODE -ne 0){throw ('Real UE5 Win64 GAME target C++ compilation failed '+$LASTEXITCODE)}
+          if(!(Test-Path -LiteralPath $gameExe)){throw 'Real Win64 Game target compile produced no EXE'}
+          Write-Host ('SKARVIK_ALPHA_UNCOOKED_WIN64_GAME_TARGET_EXE_PRESENT='+$gameExe)
+          Write-Host 'SKARVIK_ALPHA_GAME_TARGET_IS_NOT_A_PLAYABLE_PACKAGE=true'
+      - name: Attempt REAL native Win64 cook package only when dedicated safe storage is mounted
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-win64-package-status.json'
+          $status=[ordered]@{
+            state='BLOCKED_INSUFFICIENT_NATIVE_PACKAGE_STORAGE'
+            realMap='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+            realMenuBuiltFromCPlusPlus=$true
+            allModelAssetsValidated=$true
+            installedGameUpdated=$false
+            publishedAlphaBuild=$false
+            packagedExeExists=$false
+            notes='Compilation C++ and real asset checks do not imply playable packaged alpha'
+            availableNTFSVolumes=@()
+          }
+          $all=@(Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DriveType -eq 3 -and $_.FileSystem -eq 'NTFS'})
+          $candidates=@($all|Where-Object {$_.DeviceID -ne 'D:' -and ([double]$_.FreeSpace/1GB) -ge 90}|
+            Sort-Object FreeSpace -Descending)
+          foreach($disk in $all){
+            $status.availableNTFSVolumes+=([ordered]@{drive=$disk.DeviceID;freeGiB=[math]::Round([double]$disk.FreeSpace/1GB,2)})
+          }
+          if($candidates.Count -gt 0){
+            $disk=$candidates[0]
+            $outDir=$disk.DeviceID+ '\\ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\\run-'+$env:GITHUB_RUN_ID
+            if(Test-Path -LiteralPath $outDir){throw 'Packaging output already exists: refuse overwrite'}
+            New-Item -ItemType Directory -Path $outDir -Force|Out-Null
+            $project='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\AnomaliaZPrigimalia.uproject'
+            $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+            $status.state='NATIVE_SKARVIK_COOK_ATTEMPT_STARTED'
+            & $uat BuildCookRun "-project=$project" -noP4 -build -cook -stage -package -pak -archive "-archivedirectory=$outDir" -platform=Win64 -clientconfig=Development "-map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1" -unattended -utf8output
+            if($LASTEXITCODE -ne 0){
+              $status.state='NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED'
+              $status.failureExitCode=$LASTEXITCODE
+            }else{
+              $exe=@(Get-ChildItem -LiteralPath $outDir -Filter 'AnomaliaZPrigimalia.exe' -Recurse -File -ErrorAction SilentlyContinue)
+              if($exe.Count -gt 0){
+                $status.state='NATIVE_SKARVIK_ALPHA_PACKAGED_NOT_YET_PLAYTESTED'
+                $status.packagedExeExists=$true
+                $status.executablePath=$exe[0].FullName
+                Write-Host ('SKARVIK_ALPHA_REAL_PACKAGED_WIN64_EXE='+$exe[0].FullName)
+              }else{
+                $status.state='NATIVE_COOK_COMPLETED_WITHOUT_GAME_EXE'
+              }
+            }
+          }
+          ($status|ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $report -Encoding utf8
+          Write-Host ('SKARVIK_ALPHA_REAL_WIN64_PACKAGE_STATE='+$status.state)
+          Write-Host ('SKARVIK_ALPHA_AVAILABLE_NTFS='+($status.availableNTFSVolumes|ConvertTo-Json -Compress))
+          if($status.state -in @('NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED','NATIVE_COOK_COMPLETED_WITHOUT_GAME_EXE')){
+            throw ('Actual Win64 packaging did not succeed: '+$status.state)
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-alpha-assets-and-packaged-status
+          path: |
+            skarvik-alpha-native-real-assets-loaded.json
+            skarvik-alpha-win64-package-status.json
+          if-no-files-found: warn
       - uses: actions/upload-artifact@v4
         if: always()
         with:
