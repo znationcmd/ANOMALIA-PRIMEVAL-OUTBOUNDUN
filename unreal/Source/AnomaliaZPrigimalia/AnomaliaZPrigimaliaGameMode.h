@@ -41,6 +41,9 @@ protected:
     FTimerHandle ProfileSaveTimer;
     FTimerHandle ProfileRecoveryTimer;
     TSet<FString> PendingProfileLoads;
+    // Set only by an explicit standalone OpenLevel(?AnomaliaZSoloStart=1).
+    // A fresh game launch still opens the main menu.
+    bool bStartStandaloneGameplayAfterTravel = false;
     void RetryPendingProfileLoads();
     virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 
