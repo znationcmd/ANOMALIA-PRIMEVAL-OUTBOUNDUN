@@ -18,7 +18,7 @@ jobs:
         with:
           clean: false
           persist-credentials: false
-      - name: Protect original Big City, existing real first 180-city-mesh core and graded SKARVIK World Partition
+      - name: Protect original Big City, existing real first 540-city-mesh core and graded SKARVIK World Partition
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -36,10 +36,10 @@ jobs:
           }
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal session active'}
           if(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB -lt 18){throw 'Insufficient C stage disk safety reserve'}
-          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\FourthParty\Python3\Win64\python.exe'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
           & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_skarvik_real_citysample_fourth_district_d4.py')
           if($LASTEXITCODE -ne 0){throw 'City Sample fourth district author Python invalid'}
-          Write-Host 'SKARVIK_CITY_SAMPLE_THIRD_DISTRICT_PROTECTED_PREFLIGHT_OK=true'
+          Write-Host 'SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_PROTECTED_PREFLIGHT_OK=true'
       - name: Save original Big City facades/roofs and street objects from separate 1700–2050m radius into existing 48km world
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -52,13 +52,13 @@ jobs:
           $code=$LASTEXITCODE
           if(!(Test-Path -LiteralPath $env:SKARVIK_VISIBLE_CITY_DISTRICT_D4_REPORT)){throw 'No fourth real CitySample district native result'}
           $d=Get-Content -LiteralPath $env:SKARVIK_VISIBLE_CITY_DISTRICT_D4_REPORT -Raw|ConvertFrom-Json
-          Write-Host ('SKARVIK_CITY_SAMPLE_THIRD_DISTRICT_STATE='+$d.state)
-          Write-Host ('SKARVIK_CITY_SAMPLE_THIRD_DISTRICT_NATIVE_MESH_ACTORS='+$d.realStaticMeshActorsSaved)
-          Write-Host ('SKARVIK_CITY_SAMPLE_THIRD_DISTRICT_SOURCE_ACTORS='+$d.sourceActorCountSampled)
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_STATE='+$d.state)
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_NATIVE_MESH_ACTORS='+$d.realStaticMeshActorsSaved)
+          Write-Host ('SKARVIK_CITY_SAMPLE_FOURTH_DISTRICT_SOURCE_ACTORS='+$d.sourceActorCountSampled)
           if($code -ne 0 -or $d.state -ne 'REAL_CITY_SAMPLE_FOURTH_DISTRICT_NATIVE_MESHES_SAVED_NO_FULL_CITY_CLAIM'){
             throw ('Fourth genuine Big City district not saved: '+$d.error)
           }
-          Write-Host 'SKARVIK_ORIGINAL_CITY_SAMPLE_THIRD_REAL_DISTRICT_SAVED_NATIVE=true'
+          Write-Host 'SKARVIK_ORIGINAL_CITY_SAMPLE_FOURTH_REAL_DISTRICT_SAVED_NATIVE=true'
           Write-Host 'SKARVIK_FULL_4KM_CITY_NPCS_TRAFFIC_AND_SM5_TEST_STILL_UNVERIFIED=true'
       - uses: actions/upload-artifact@v4
         if: always()
