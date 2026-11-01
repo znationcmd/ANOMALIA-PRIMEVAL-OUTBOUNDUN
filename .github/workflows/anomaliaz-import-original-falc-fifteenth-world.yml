@@ -137,7 +137,7 @@ jobs:
           if(!$current.Contains($line)){
             $backup=Join-Path $root ('Saved\FALC\OriginalCookConfigBeforeFALC-'+$env:GITHUB_RUN_ID+'.ini')
             Copy-Item -LiteralPath $config -Destination $backup -ErrorAction Stop
-            Add-Content -LiteralPath $config -Value ("\r\n"+$line) -Encoding UTF8
+            Add-Content -LiteralPath $config -Value $line -Encoding UTF8
           }
           if(!((Get-Content -LiteralPath $config -Raw).Contains($line))){throw 'Original FALC map failed to enter native Windows cook manifest'}
           Write-Host 'ANOMALIAZ_FALC_NATIVE_15TH_WORLD_ADDED_TO_WINDOWS_COOK_AFTER_REOPEN=true'
