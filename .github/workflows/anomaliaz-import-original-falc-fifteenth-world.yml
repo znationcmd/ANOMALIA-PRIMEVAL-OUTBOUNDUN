@@ -1,0 +1,134 @@
+name: ANOMALIAZ - import user original FALC 26.5km as true 15th UE5 World Partition map
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-import-original-falc-fifteenth-world.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomaliaz-native-falc-original-world-import
+  cancel-in-progress: false
+jobs:
+  create-fifteenth-real-native-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Find and SHA256-verify user's original Oct 31 ZIP and stage only authentic FALC RAW16
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\stage-authentic-falc-source-for-unreal.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'falc-original-2017-raw16-source.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Trusted ZIP source preparation script missing'}
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Original user FALC topographic source is not present on Windows; download the preserved FALC ZIP into Windows Downloads and rerun. Do not substitute a map.'}
+          $o=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if(!$o.sourceVerified){throw 'No authentic user RAW16 confirmation'}
+          Write-Host 'ANOMALIAZ_FALC_ORIGINAL_SOURCE_SHA256_CONFIRMED=true'
+      - name: Stage only reviewed FALC-enabled editor source in existing native fourteen-map C project, with independent backups
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage'}
+          $from=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia\World'
+          $to=Join-Path $stage 'Source\AnomaliaZPrigimalia\World'
+          $store=Join-Path $stage ('Saved\FALC\CppBackups\run-'+$env:GITHUB_RUN_ID)
+          if(Test-Path $store){throw 'FALC build source backup exists; refuse second source write'}
+          New-Item -ItemType Directory -Path $store -Force|Out-Null
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp')){
+            $old=Join-Path $to $name
+            $new=Join-Path $from $name
+            if(!(Test-Path -LiteralPath $old) -or !(Test-Path -LiteralPath $new)){throw ('Native C++ dependency missing '+$name)}
+            Copy-Item -LiteralPath $old -Destination (Join-Path $store $name) -ErrorAction Stop
+            if((Get-FileHash $old -Algorithm SHA256).Hash -eq (Get-FileHash $new -Algorithm SHA256).Hash){continue}
+            Copy-Item -LiteralPath $new -Destination $old -Force -ErrorAction Stop
+            if((Get-FileHash $old -Algorithm SHA256).Hash -ne (Get-FileHash $new -Algorithm SHA256).Hash){throw ('FALC native C++ source stage hash mismatch '+$name)}
+          }
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_falc_native.py'
+          $recheck=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_falc_native_reopen.py'
+          if(!(Test-Path $source) -or !(Test-Path $recheck)){throw 'Original FALC Python authoring/verification missing'}
+          if(!(Test-Path (Join-Path $stage 'TerrainSource\FALC\FALC_26_5KM_MASTER_2017.r16'))){throw 'Original landscape RAW16 not staged'}
+          Write-Host 'ANOMALIAZ_FALC_NATIVE_CPP_STAGED_IN_PROTECTED_C_ONLY=true'
+      - name: Compile FALC native UE5.8 editor landscape import library
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $bat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path $bat)){throw 'Unreal Engine 5.8 build compiler missing'}
+          & $bat AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('FALC original native importer UE build failed: '+$LASTEXITCODE)}
+          Write-Host 'ANOMALIAZ_FALC_ORIGINAL_NATIVE_CPP_EDITOR_COMPILED=true'
+      - name: Create and save real FALC 26.5km UE5 World Partition landscape and collision with original RAW16
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $exe=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_falc_native.py'
+          $env:ANOMALIAZ_FALC_NATIVE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'falc-original-native-2017-world.json'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'FALC original 2017 RAW16 authoring Python syntax failed'}
+          & $exe $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIAZ_FALC_NATIVE_REPORT)){throw ('Unreal did not produce original FALC map report: editor exit '+$rc)}
+          $o=Get-Content -LiteralPath $env:ANOMALIAZ_FALC_NATIVE_REPORT -Raw|ConvertFrom-Json
+          if($rc -ne 0 -or $o.state -ne 'ORIGINAL_FALC_2017_RAW16_IMPORTED_NATIVE_WORLD_SAVED_REOPEN_NOT_YET_TESTED'){
+            throw ('Genuine FALC editor world import failed: '+$o.error+' / process='+$rc)
+          }
+          $file=Join-Path $stage 'Content\Maps\PRIGIMALIA_FALC.umap'
+          if(!(Test-Path -LiteralPath $file)){throw 'FALC genuine 26.5km binary .umap not saved'}
+          if($o.landscapeComponents -ne 256 -or $o.collisionComponents -ne 256){throw 'FALC original collision or Landscape component count mismatch'}
+          Write-Host 'ANOMALIAZ_FIFTEENTH_ORIGINAL_FALC_WORLD_NATIVE_UMAP_SAVED=true'
+      - name: Independently reopen genuine FALC UWorld and verify landscape 256 components with collision
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          $exe=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_falc_native_reopen.py'
+          $env:ANOMALIAZ_FALC_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'falc-real-native-reopened.json'
+          & $exe $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIAZ_FALC_REOPEN_REPORT)){throw 'FALC reopen receipt missing'}
+          $result=Get-Content -LiteralPath $env:ANOMALIAZ_FALC_REOPEN_REPORT -Raw | ConvertFrom-Json
+          if($rc -ne 0 -or $result.state -ne 'FALC_REAL_UNREAL_NATIVE_WORLD_REOPENED_2017_RAW16_COLLISION_VERIFIED'){
+            throw ('FALC true level could not be independently loaded: '+$result.error)
+          }
+          Write-Host 'ANOMALIAZ_FALC_REAL_UE_LEVEL_INDEPENDENTLY_REOPENED=true'
+          Write-Host 'ANOMALIAZ_NOW_15_REAL_NATIVE_WORLD_PACKAGES_PRESENT=true'
+          Write-Host 'ANOMALIAZ_FALC_3D_GAMEPLAY_TEST_NOT_YET_RUN=true'
+      - name: On C++ compile failure restore old C source; never alter any of the 14 worlds or D project
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root ('Saved\FALC\CppBackups\run-'+$env:GITHUB_RUN_ID)
+          $destination=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
+          if(!(Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_FALC.umap'))){
+            foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp')){
+              $file=Join-Path $backup $name
+              if(Test-Path -LiteralPath $file){Copy-Item -LiteralPath $file -Destination (Join-Path $destination $name) -Force -ErrorAction SilentlyContinue}
+            }
+            Write-Host 'ANOMALIAZ_FALC_PREVIOUS_CPP_RESTORED_ON_FAILURE=true'
+          }
+          Write-Host 'ANOMALIAZ_PREEXISTING_14_MAP_PACKAGES_UNTOUCHED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-15th-true-user-original-falc-native-world-receipts
+          path: |
+            falc-original-2017-raw16-source.json
+            falc-original-native-2017-world.json
+            falc-real-native-reopened.json
+          if-no-files-found: warn
