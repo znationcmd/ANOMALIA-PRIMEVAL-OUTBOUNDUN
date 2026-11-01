@@ -11887,5 +11887,51 @@
     },
     "completeWorldSM5VehicleTestPassed": false,
     "bigCitySourceWorldPartitionFullyStreamed": false
+  },
+  "latestNativeProof20261101": {
+    "status": "THREE_CITY_SAMPLE_PARTIAL_ARCHITECTURE_DISTRICTS_AND_39_NATIVE_TOWN_GATEWAY_ACCESSES_SAVED_NOT_PLAYTESTED",
+    "workingUnrealMap": "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+    "originalOnDUnmodified": true,
+    "originalOnDPreserved": true,
+    "separateSourceCitySampleWorld": "/Game/Map/Big_City_LVL",
+    "realCitySampleActorsSavedByDistrict": [
+      180,
+      180,
+      180
+    ],
+    "realCitySampleArchitectureActorsSavedTotal": 540,
+    "fullyStreamedBigCityWorld": false,
+    "thirdDistrictBuildEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289014761",
+    "nativeTownGatewayBatches": [
+      {
+        "batch": "V1",
+        "townsSafelyPaved": 21,
+        "townsRejected": 3,
+        "nativeRoadMeshActors": 608,
+        "pavedMetres": 2617.1,
+        "evidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41277272235"
+      },
+      {
+        "batch": "V2",
+        "townsSafelyPaved": 18,
+        "townsRejected": 6,
+        "nativeRoadMeshActors": 634,
+        "pavedMetres": 2763.7,
+        "evidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41288947224"
+      }
+    ],
+    "actualTownGatewaysSafelyPavedTotal": 39,
+    "actualTownGatewayRoadMeshesTotal": 1242,
+    "actualTownGatewayPavedMetresTotal": 5380.8,
+    "regionalRoadPlanCount": 382,
+    "nativeRegionalCorridorCountWithSomeRealAsphalt": 100,
+    "full382RoadNetworkConstructed": false,
+    "otherRegionalRouteCountWithoutVerifiedAsphalt": 282,
+    "nativeRoadContinuityAndSM5VehicleDriveVerified": false,
+    "trueCompleteBuildingsInteriorPlaytested": false,
+    "independentCombinedReopenEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41289518557",
+    "independentCombinedReopenPassed": false,
+    "productionBranchMerged": false,
+    "noUserProductionDChanges": true
   }
 }
