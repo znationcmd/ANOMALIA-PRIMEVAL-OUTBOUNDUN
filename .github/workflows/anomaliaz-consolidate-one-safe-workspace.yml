@@ -1,0 +1,154 @@
+name: ANOMALIAZ - unify D workspace without copying or deleting game files
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-consolidate-one-safe-workspace.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  consolidate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - name: Relocate only separate D backups/validation/migration folders atomically with compatibility junctions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $base='D:\ANOMALIAZ'
+          $marker=Join-Path $base '.anomaliaz-one-workspace-marker'
+          $expected='ANOMALIAZ_SAFE_CONSOLIDATION_V1_20261101'
+          $report=[ordered]@{
+            state='PREFLIGHT'
+            unifiedFolder=$base
+            DOriginalMainProjectMoved=$false
+            CProjectOrSkarvikStageMoved=$false
+            duplicateFilesCreated=$false
+            userFilesDeleted=$false
+            movedWithCompatibilityJunctions=@()
+            linksToExistingProjects=@()
+            beforeFreeGiB=0
+            afterFreeGiB=0
+            error=$null
+          }
+          try{
+            if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject')){throw 'Original D project is not available: no consolidation'}
+            $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+            if(!(Test-Path (Join-Path $stage '.skarvik-ci-stage-marker')) -or
+               (Get-Content (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){
+              throw 'Real SKARVIK stage marker missing'
+            }
+            $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,UnrealBuildTool,ShaderCompileWorker,MSBuild -ErrorAction SilentlyContinue)
+            if($busy.Count){throw 'Unreal or compiler is currently running: do not move working directories'}
+            $dDrive=[IO.DriveInfo]::new('D')
+            if(!$dDrive.IsReady -or $dDrive.DriveFormat -ne 'NTFS'){throw 'D requires available NTFS volume'}
+            $report.beforeFreeGiB=[math]::Round($dDrive.AvailableFreeSpace/1GB,3)
+            if($dDrive.AvailableFreeSpace -lt 1GB){throw 'D has under 1 GiB free for directory metadata'}
+            if(Test-Path -LiteralPath $base){
+              if(!(Test-Path -LiteralPath $marker) -or
+                 (Get-Content -LiteralPath $marker -Raw).Trim() -ne $expected){
+                throw 'An unrelated D:\ANOMALIAZ exists; refuse overwrites'
+              }
+            }else{
+              New-Item -ItemType Directory -Path $base -ErrorAction Stop|Out-Null
+              [IO.File]::WriteAllText($marker,$expected,(New-Object Text.UTF8Encoding($false)))
+            }
+            $relocations=@(
+              @{original='D:\ANOMALIA-Backups';name='04_Sauvegardes'},
+              @{original='D:\ANOMALIA-Validation';name='03_Validation'},
+              @{original='D:\ANOMALIAZ-PRIGIMALIA';name='02_Projet_Migration'}
+            )
+            foreach($move in $relocations){
+              $old=$move.original
+              $dest=Join-Path $base $move.name
+              if(!(Test-Path -LiteralPath $old -PathType Container)){
+                if(Test-Path $dest){throw ('Original compatibility path is missing even though destination exists: '+$old)}
+                throw ('Required data source missing: '+$old)
+              }
+              $oldItem=Get-Item -LiteralPath $old -Force -ErrorAction Stop
+              if(($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+                if(!(Test-Path -LiteralPath $dest -PathType Container)){throw ('Compatibility junction points to unavailable destination '+$old)}
+                $report.movedWithCompatibilityJunctions+=([ordered]@{source=$old;location=$dest;state='already-junction-existing'})
+                continue
+              }
+              if(Test-Path -LiteralPath $dest){throw ('Destination conflict: '+$dest)}
+              if(@(Get-ChildItem -LiteralPath $old -Force | Select-Object -First 1).Count -eq 0){throw ('Empty source, unexpected: '+$old)}
+              # Same-NTFS-volume directory rename, NOT copy: uses no extra GB.
+              Move-Item -LiteralPath $old -Destination $dest -ErrorAction Stop
+              try{
+                New-Item -ItemType Junction -Path $old -Target $dest -ErrorAction Stop|Out-Null
+                if(!(Test-Path -LiteralPath $old -PathType Container) -or !(Test-Path -LiteralPath $dest -PathType Container)){
+                  throw 'Compatibility junction could not be verified'
+                }
+                $item=Get-Item -LiteralPath $old -Force
+                if(($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0){
+                  throw 'Compatibility alias is not a junction'
+                }
+              }catch{
+                # Attempt full same-disk rollback if the compatibility path cannot be created.
+                if(Test-Path -LiteralPath $old){
+                  $item=Get-Item -LiteralPath $old -Force
+                  if(($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+                    & cmd.exe /c ('rmdir "'+$old+'"') | Out-Null
+                  }
+                }
+                if(!(Test-Path -LiteralPath $old) -and (Test-Path -LiteralPath $dest)){
+                  Move-Item -LiteralPath $dest -Destination $old -ErrorAction Stop
+                }
+                throw
+              }
+              $report.movedWithCompatibilityJunctions+=([ordered]@{source=$old;location=$dest;state='same-volume-rename-verified-with-backcompat-junction'})
+              Write-Host ('ANOMALIAZ_REAL_DIRECTORY_RELOCATED_WITH_LEGACY_PATH='+$old+' => '+$dest)
+            }
+            $links=@(
+              @{name='01_Projet_Principal';target='D:\ANOMALIA'},
+              @{name='05_SKARVIK_C_Projet_Natif';target='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555'},
+              @{name='06_ALPHA_C_Compilation';target='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE'}
+            )
+            foreach($item in $links){
+              if(!(Test-Path -LiteralPath $item.target -PathType Container)){throw ('Unifying target missing '+$item.target)}
+              $link=Join-Path $base $item.name
+              if(Test-Path -LiteralPath $link){
+                if((([IO.File]::GetAttributes($link)) -band [IO.FileAttributes]::ReparsePoint) -eq 0){throw ('Unexpected non-link in workspace '+$link)}
+              }else{
+                New-Item -ItemType Junction -Path $link -Target $item.target -ErrorAction Stop|Out-Null
+              }
+              $report.linksToExistingProjects+=([ordered]@{alias=$link;actualPath=$item.target;noSecondCopyOfAssets=$true})
+            }
+            $guide=@(
+              'ANOMALIAZ - DOSSIER CENTRAL DE TON PROJET',
+              '01_Projet_Principal : D:\ANOMALIA, original preservé sans déplacement',
+              '02_Projet_Migration : autre version Unreal, conservée intacte',
+              '03_Validation : anciennes validations, aucun fichier supprimé',
+              '04_Sauvegardes : sauvegardes à ne jamais effacer sans contrôle',
+              '05_SKARVIK_C_Projet_Natif : lien vers la vraie carte et ses ressources sur C:',
+              '06_ALPHA_C_Compilation : lien vers le compilateur/éditeur sur C:',
+              'Les anciens chemins restent accessibles via des jonctions de compatibilité.',
+              'Les jonctions ne dupliquent PAS les fichiers et ne libèrent pas de Go.',
+              'Ne supprime ni les anciens chemins de compatibilité ni un projet sans audit.'
+            )
+            $readme=Join-Path $base 'LIRE-MOI_ANOMALIAZ.txt'
+            [IO.File]::WriteAllLines($readme,$guide,(New-Object Text.UTF8Encoding($false)))
+            $report.state='UNIFIED_D_PROJECT_WORKSPACE_CREATED_WITHOUT_DUPLICATING_UE_ASSETS'
+          }catch{
+            $report.state='STOPPED_SAFELY_PARTIAL_RELOCATION_POSSIBLE_CHECK_MANIFEST'
+            $report.error=$_.Exception.Message
+          }
+          $report.afterFreeGiB=[math]::Round(([IO.DriveInfo]::new('D')).AvailableFreeSpace/1GB,3)
+          $reportFile=Join-Path $env:RUNNER_TEMP 'anomaliaz-consolidation-report.json'
+          ($report|ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $reportFile -Encoding UTF8
+          Write-Host ('ANOMALIAZ_CONSOLIDATION_STATE='+$report.state)
+          Write-Host ('ANOMALIAZ_CONSOLIDATION_D_FREE_GIB_BEFORE='+$report.beforeFreeGiB)
+          Write-Host ('ANOMALIAZ_CONSOLIDATION_D_FREE_GIB_AFTER='+$report.afterFreeGiB)
+          Write-Host ('ANOMALIAZ_PROJECT_MAIN_D_UNTOUCHED='+(!$report.DOriginalMainProjectMoved))
+          Write-Host ('ANOMALIAZ_DATA_DELETED=false')
+          if($report.error){Write-Host ('ANOMALIAZ_CONSOLIDATION_ERROR='+$report.error);throw $report.error}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-one-folder-safe-d-consolidation-report
+          path: ${{ runner.temp }}/anomaliaz-consolidation-report.json
+          if-no-files-found: warn
