@@ -1,6 +1,7 @@
 param(
   [long]$MaxUploadBytes = 1073741824,
-  [int]$MaxUploadFiles = 70
+  [int]$MaxUploadFiles = 70,
+  [switch]$Continuous
 )
 $ErrorActionPreference='Stop'
 $cloud='H:\Mon Drive\ANOMALIAZ'
@@ -40,7 +41,7 @@ $roots=@(
   [pscustomobject]@{Name='Original_D_Maps'; Source='D:\ANOMALIA\unreal\Content\Maps'; Dest='01_Cartes_UE5\02_Original_D\Content\Maps'; SkipTop=@()},
   [pscustomobject]@{Name='FabImports_Rest'; Source='D:\ANOMALIA\FabImports'; Dest='02_Modeles_3D\FabImports'; SkipTop=@('CitySample')},
   [pscustomobject]@{Name='CitySample'; Source='D:\ANOMALIA\FabImports\CitySample'; Dest='02_Modeles_3D\City Sample - Unreal Engine\CitySample'; SkipTop=@()},
-  [pscustomobject]@{Name='UE5_Content_Models'; Source='D:\ANOMALIA\unreal\Content'; Dest='02_Modeles_3D\UE5_Content_Assets'; SkipTop=@('Maps','__ExternalActors__','__ExternalObjects__')}
+  [pscustomobject]@{Name='UE5_Content_Models'; Source='D:\ANOMALIA\unreal\Content'; Dest='02_Modeles_3D\UE5_Content_Assets'; SkipTop=@('Maps','__ExternalActors__','__ExternalObjects__')},
   [pscustomobject]@{Name='Stage_WorldPartition_Actors'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalActors__'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_WorldPartition_Objects'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalObjects__'; SkipTop=@()},
   [pscustomobject]@{Name='Original_D_WP_Actors'; Source='D:\ANOMALIA\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\02_Original_D\Content\__ExternalActors__'; SkipTop=@()},
@@ -76,7 +77,7 @@ foreach($root in $roots){
     $processed++
     $relative=$file.FullName.Substring($root.Source.Length).TrimStart('\')
     $target=Join-Path (Join-Path $cloud $root.Dest) $relative
-    if($file.Length -gt 768MB){
+    if(!$Continuous -and $file.Length -gt 768MB){
       $skippedOversized++
       continue
     }
@@ -93,7 +94,7 @@ foreach($root in $roots){
       $verifiedExisting++
       continue
     }
-    if($newFiles -ge $MaxUploadFiles -or $newBytes+$file.Length -gt $MaxUploadBytes){
+    if(!$Continuous -and ($newFiles -ge $MaxUploadFiles -or $newBytes+$file.Length -gt $MaxUploadBytes)){
       Write-Host 'ANOMALIAZ_BACKUP_BATCH_LIMIT_REACHED=TRUE'
       break
     }
@@ -122,7 +123,8 @@ foreach($root in $roots){
       break
     }
   }
-  if($newFiles -ge $MaxUploadFiles -or $newBytes -ge [long]($MaxUploadBytes * 0.90) -or [IO.DriveInfo]::new('C').AvailableFreeSpace -lt 23GB){break}
+  if(!$Continuous -and ($newFiles -ge $MaxUploadFiles -or $newBytes -ge [long]($MaxUploadBytes * 0.90))){break}
+  if([IO.DriveInfo]::new('C').AvailableFreeSpace -lt 23GB){break}
 }
 if($records.Count -gt 0){
   $records|Export-Csv -Path $report -Encoding UTF8 -NoTypeInformation
@@ -131,6 +133,7 @@ Write-Host ('ANOMALIAZ_BACKUP_LOCAL_COPY_VERIFIED_FILES='+$newFiles)
 Write-Host ('ANOMALIAZ_BACKUP_LOCAL_COPY_VERIFIED_GIB='+[math]::Round($newBytes/1GB,3))
 Write-Host ('ANOMALIAZ_BACKUP_PREEXISTING_MATCHED_FILES='+$verifiedExisting)
 Write-Host ('ANOMALIAZ_BACKUP_SKIPPED_OVER_768MB='+$skippedOversized)
+Write-Host ('ANOMALIAZ_BACKUP_CONTINUOUS_MODE='+[bool]$Continuous)
 Write-Host ('ANOMALIAZ_BACKUP_CONFLICTS='+$conflicts)
 Write-Host ('ANOMALIAZ_BACKUP_FILES_SCANNED='+$processed)
 Write-Host 'ANOMALIAZ_BACKUP_NOTE=COPY_ON_VIRTUAL_DRIVE_ONLY; CLOUD_SYNC_CONFIRMATION_REQUIRED_BEFORE_LOCAL_DELETIONS'
