@@ -44,7 +44,7 @@ $roots=@(
   [pscustomobject]@{Name='Stage_WorldPartition_Actors'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalActors__'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_WorldPartition_Objects'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalObjects__'; SkipTop=@()},
   [pscustomobject]@{Name='Original_D_WP_Actors'; Source='D:\ANOMALIA\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\02_Original_D\Content\__ExternalActors__'; SkipTop=@()},
-  [pscustomobject]@{Name='Original_D_WP_Objects'; Source='D:\ANOMALIA\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\02_Original_D\Content\__ExternalObjects__'; SkipTop=@()},
+  [pscustomobject]@{Name='Original_D_WP_Objects'; Source='D:\ANOMALIA\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\02_Original_D\Content\__ExternalObjects__'; SkipTop=@()}
 )
 function Enumerate-FilesWithoutLinks {
   param([string]$Path,[string[]]$SkipTop)
