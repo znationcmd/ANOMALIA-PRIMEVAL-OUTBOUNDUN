@@ -122,7 +122,7 @@ foreach($root in $roots){
       break
     }
   }
-  if($newFiles -ge $MaxUploadFiles -or $newBytes -ge $MaxUploadBytes -or [IO.DriveInfo]::new('C').AvailableFreeSpace -lt 23GB){break}
+  if($newFiles -ge $MaxUploadFiles -or $newBytes -ge [long]($MaxUploadBytes * 0.90) -or [IO.DriveInfo]::new('C').AvailableFreeSpace -lt 23GB){break}
 }
 if($records.Count -gt 0){
   $records|Export-Csv -Path $report -Encoding UTF8 -NoTypeInformation
