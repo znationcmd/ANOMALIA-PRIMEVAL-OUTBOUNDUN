@@ -12,17 +12,17 @@ concurrency:
 jobs:
   first-verified-copy-batch:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 90
+    timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
         with:
           clean: false
           persist-credentials: false
-      - name: Preserve all original maps and models, copy small verified batch to 2TB H only
+      - name: Copy next cloud-safe 3D and native map batch to H without deleting local originals
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\backup-anomaliaz-to-google-drive-2tb.ps1'
           if(!(Test-Path -LiteralPath $script)){throw 'Trusted backup script missing'}
-          & $script -MaxUploadBytes 5368709120 -MaxUploadFiles 400
+          & $script -MaxUploadBytes 4294967296 -MaxUploadFiles 1200
           Write-Host 'ANOMALIAZ_REAL_CLOUD_UPLOAD_MUST_STILL_BE_VERIFIED_WITH_DRIVE_API_BEFORE_ANY_LOCAL_DELETION=true'
