@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Check real SSD free space and safely identify disposable build caches (NO DELETIONS)
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           Write-Host 'ANOMALIAZ_DIAGNOSTIC_READ_ONLY=true'
