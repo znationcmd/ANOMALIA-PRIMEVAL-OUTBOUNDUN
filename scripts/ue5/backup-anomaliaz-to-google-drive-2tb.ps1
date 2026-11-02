@@ -31,7 +31,7 @@ if((Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAc
   exit 0
 }
 $free=[IO.DriveInfo]::new('C').AvailableFreeSpace
-if($free -lt 24GB){
+if($free -lt 23GB){
   Write-Host ('ANOMALIAZ_BACKUP_BLOCKED=INSUFFICIENT_C_CACHE_FREE GiB='+[math]::Round($free/1GB,2))
   exit 0
 }
@@ -40,7 +40,7 @@ $roots=@(
   [pscustomobject]@{Name='Stage_UE5_Maps'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\Maps'; SkipTop=@()},
   [pscustomobject]@{Name='Original_D_Maps'; Source='D:\ANOMALIA\unreal\Content\Maps'; Dest='01_Cartes_UE5\02_Original_D\Content\Maps'; SkipTop=@()},
   [pscustomobject]@{Name='FabImports_Rest'; Source='D:\ANOMALIA\FabImports'; Dest='02_Modeles_3D\FabImports'; SkipTop=@('CitySample')},
-  [pscustomobject]@{Name='CitySample'; Source='D:\ANOMALIA\FabImports\CitySample'; Dest='02_Modeles_3D\City Sample - Unreal Engine\CitySample'; SkipTop=@()},
+  [pscustomobject]@{Name='CitySample'; Source='D:\ANOMALIA\FabImports\CitySample'; Dest='02_Modeles_3D\City Sample - Unreal Engine\CitySample'; SkipTop=@('DerivedDataCache','Intermediate','Saved','.vs')},
   [pscustomobject]@{Name='UE5_Content_Models'; Source='D:\ANOMALIA\unreal\Content'; Dest='02_Modeles_3D\UE5_Content_Assets'; SkipTop=@('Maps','__ExternalActors__','__ExternalObjects__')},
   [pscustomobject]@{Name='Stage_WorldPartition_Actors'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalActors__'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_WorldPartition_Objects'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalObjects__'; SkipTop=@()},
@@ -103,6 +103,10 @@ foreach($root in $roots){
       Write-Host 'ANOMALIAZ_BACKUP_STOPPED=LOW_C_CACHE_CAPACITY'
       break
     }
+    if($file.Length -gt ($available - 23GB)){
+      Write-Host ('ANOMALIAZ_BACKUP_SKIPPED_REQUIRES_MORE_C_CACHE='+$root.Name+'\'+$relative+' bytes='+$file.Length)
+      continue
+    }
     $dir=Split-Path -Parent $target
     if(!(Test-Path -LiteralPath $dir -PathType Container)){New-Item -ItemType Directory -Path $dir -Force|Out-Null}
     $temp=$target+'.ANOMALIAZ_COPY_PARTIAL'
@@ -136,5 +140,7 @@ Write-Host ('ANOMALIAZ_BACKUP_SKIPPED_OVER_768MB='+$skippedOversized)
 Write-Host ('ANOMALIAZ_BACKUP_CONTINUOUS_MODE='+[bool]$Continuous)
 Write-Host ('ANOMALIAZ_BACKUP_CONFLICTS='+$conflicts)
 Write-Host ('ANOMALIAZ_BACKUP_FILES_SCANNED='+$processed)
+Write-Host ('ANOMALIAZ_C_FREE_GIB_AT_END='+[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2))
+Write-Host ('ANOMALIAZ_D_FREE_GIB_AT_END='+[math]::Round([IO.DriveInfo]::new('D').AvailableFreeSpace/1GB,2))
 Write-Host 'ANOMALIAZ_BACKUP_NOTE=COPY_ON_VIRTUAL_DRIVE_ONLY; CLOUD_SYNC_CONFIRMATION_REQUIRED_BEFORE_LOCAL_DELETIONS'
 Write-Host 'ANOMALIAZ_BACKUP_ORIGINAL_FILES_DELETED=0'
