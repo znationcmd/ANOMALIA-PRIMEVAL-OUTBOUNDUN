@@ -12,13 +12,13 @@ concurrency:
 jobs:
   first-verified-copy-batch:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 360
+    timeout-minutes: 1440
     steps:
       - uses: actions/checkout@v4
         with:
           clean: false
           persist-credentials: false
-      - name: Resume continuous complete ANOMALIAZ Drive H backup - no Unreal temporary cache
+      - name: Resume continuous complete ANOMALIAZ Drive H backup - extended 24h - no Unreal temporary cache
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
