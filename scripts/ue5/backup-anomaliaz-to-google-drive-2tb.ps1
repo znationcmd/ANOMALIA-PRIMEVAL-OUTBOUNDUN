@@ -35,6 +35,7 @@ if($free -lt 24GB){
   exit 0
 }
 $roots=@(
+  [pscustomobject]@{Name='Sketchfab'; Source='D:\ANOMALIA\sketchfab'; Dest='02_Modeles_3D\Sketchfab'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_UE5_Maps'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\Maps'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_WorldPartition_Actors'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalActors__'; SkipTop=@()},
   [pscustomobject]@{Name='Stage_WorldPartition_Objects'; Source='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\01_Stage_15_Cartes\Content\__ExternalObjects__'; SkipTop=@()},
@@ -43,7 +44,6 @@ $roots=@(
   [pscustomobject]@{Name='Original_D_WP_Objects'; Source='D:\ANOMALIA\unreal\Content\__ExternalObjects__'; Dest='01_Cartes_UE5\02_Original_D\Content\__ExternalObjects__'; SkipTop=@()},
   [pscustomobject]@{Name='CitySample'; Source='D:\ANOMALIA\FabImports\CitySample'; Dest='02_Modeles_3D\City Sample - Unreal Engine\CitySample'; SkipTop=@()},
   [pscustomobject]@{Name='FabImports_Rest'; Source='D:\ANOMALIA\FabImports'; Dest='02_Modeles_3D\FabImports'; SkipTop=@('CitySample')},
-  [pscustomobject]@{Name='Sketchfab'; Source='D:\ANOMALIA\sketchfab'; Dest='02_Modeles_3D\Sketchfab'; SkipTop=@()},
   [pscustomobject]@{Name='UE5_Content_Models'; Source='D:\ANOMALIA\unreal\Content'; Dest='02_Modeles_3D\UE5_Content_Assets'; SkipTop=@('Maps','__ExternalActors__','__ExternalObjects__')}
 )
 function Enumerate-FilesWithoutLinks {
