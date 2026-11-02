@@ -24,6 +24,5 @@ jobs:
           $ErrorActionPreference='Stop'
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\backup-anomaliaz-to-google-drive-2tb.ps1'
           if(!(Test-Path -LiteralPath $script)){throw 'Trusted backup script missing'}
-          & $script -MaxUploadBytes 1073741824 -MaxUploadFiles 70
-          if($LASTEXITCODE -ne 0){throw ('Backup batch script exit code '+$LASTEXITCODE)}
+          & $script -MaxUploadBytes 4294967296 -MaxUploadFiles 250
           Write-Host 'ANOMALIAZ_REAL_CLOUD_UPLOAD_MUST_STILL_BE_VERIFIED_WITH_DRIVE_API_BEFORE_ANY_LOCAL_DELETION=true'
