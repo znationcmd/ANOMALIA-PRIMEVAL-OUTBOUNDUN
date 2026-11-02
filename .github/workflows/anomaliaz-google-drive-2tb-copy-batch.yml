@@ -1,4 +1,4 @@
-name: ANOMALIAZ - backup native maps 3D to verified 2TB Google Drive H (safe batch)
+name: ANOMALIAZ - sauvegarde continue complete vers Drive H 2 To
 on:
   push:
     branches: [feature/skarvik-real-native-alpha-20261101]
@@ -12,17 +12,17 @@ concurrency:
 jobs:
   first-verified-copy-batch:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 120
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
         with:
           clean: false
           persist-credentials: false
-      - name: Copy next cloud-safe 3D and native map batch to H without deleting local originals
+      - name: Backup ALL native UE5 maps, World Partition, FabImports, CitySample and Sketchfab (no 3GiB limit)
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\backup-anomaliaz-to-google-drive-2tb.ps1'
           if(!(Test-Path -LiteralPath $script)){throw 'Trusted backup script missing'}
-          & $script -MaxUploadBytes 3221225472 -MaxUploadFiles 2000
+          & $script -Continuous
           Write-Host 'ANOMALIAZ_REAL_CLOUD_UPLOAD_MUST_STILL_BE_VERIFIED_WITH_DRIVE_API_BEFORE_ANY_LOCAL_DELETION=true'
