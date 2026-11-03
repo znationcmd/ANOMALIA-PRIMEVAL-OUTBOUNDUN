@@ -1,0 +1,69 @@
+name: ANOMALIA - read-only audit of local zombie character and animation sources
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-zombie-source-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Search only existing local asset folders; never copy or modify assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $roots=@(
+            'D:\ANOMALIA\unreal\Content',
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\sketchfab',
+            'D:\ANOMALIA\unreal\SourceAssets',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content'
+          )
+          $report=[ordered]@{
+            state='READ_ONLY_LOCAL_ZOMBIE_ASSET_AUDIT'
+            roots=@()
+            zombieCandidates=@()
+            skeletalMeshCandidates=@()
+            noAssetCopied=$true
+            noProjectModified=$true
+          }
+          foreach($root in $roots){
+            $exists=Test-Path -LiteralPath $root -PathType Container
+            $entry=[ordered]@{path=$root;exists=$exists;filesScanned=0}
+            if($exists){
+              $files=Get-ChildItem -LiteralPath $root -File -Recurse -ErrorAction SilentlyContinue
+              $entry.filesScanned=@($files).Count
+              foreach($f in $files){
+                if($f.Extension -notin @('.uasset','.umap','.fbx','.glb','.gltf','.blend','.obj','.gltf','.json','.manifest')){continue}
+                $candidate=[ordered]@{path=$f.FullName;bytes=$f.Length;extension=$f.Extension}
+                if($f.Name -match '(?i)zombie|undead|infected|ghoul|walker|crawler|mutant'){
+                  $report.zombieCandidates+= $candidate
+                }
+                if($f.Extension -eq '.uasset' -and $f.Name -match '(?i)skeleton|skeletal|character|npc|human|mannequin'){
+                  $report.skeletalMeshCandidates+= $candidate
+                }
+              }
+            }
+            $report.roots+= $entry
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE "anomalia-zombie-local-assets-$env:GITHUB_RUN_ID.json"
+          $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIA_ZOMBIE_CANDIDATES='+$report.zombieCandidates.Count)
+          Write-Host ('ANOMALIA_SKELETAL_CANDIDATES='+$report.skeletalMeshCandidates.Count)
+          Write-Host ('ANOMALIA_ZOMBIE_AUDIT_REPORT='+$out)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-zombie-local-source-audit
+          path: anomalia-zombie-local-assets-\${{ github.run_id }}.json
+          if-no-files-found: error
