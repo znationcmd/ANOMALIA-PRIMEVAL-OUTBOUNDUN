@@ -92,4 +92,4 @@ jobs:
           path: skarvik-final-real-regional-663-meshes-native-independent-reopen.json
           if-no-files-found: warn
 
-# Re-run the read-only independent reopen after the previous saved native batch.
+# Re-run the read-only independent reopen after the previous saved native batch; verify the recovered 663-actor receipt before any new road construction.
