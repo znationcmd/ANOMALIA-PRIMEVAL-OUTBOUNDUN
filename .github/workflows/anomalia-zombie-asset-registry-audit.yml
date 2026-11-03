@@ -74,3 +74,5 @@ jobs:
             zombie-asset-registry-${{ github.run_id }}.json
             zombie-assets-before.json
           if-no-files-found: error
+
+# Re-run the read-only UE asset registry inspection after workflow creation.
