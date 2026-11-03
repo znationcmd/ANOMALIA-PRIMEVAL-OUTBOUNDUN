@@ -35,10 +35,13 @@ jobs:
           if($free -lt 22){throw 'Insufficient C free space; preserve headroom'}
           if(!(Test-Path -LiteralPath (Join-Path $source 'Framework\BP_nightmode.uasset'))){throw 'BP_nightmode absent from original'}
           if(!(Test-Path -LiteralPath (Join-Path $source 'Framework\BP_CitySampleGameMode_SandboxIntro.uasset'))){throw 'SandboxIntro Blueprint absent from original'}
-          if(Test-Path -LiteralPath $destination){throw 'Target Gameplay folder already exists; refuse overwrite'}
-          & robocopy.exe $source $destination /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
-          $copyCode=$LASTEXITCODE
-          if($copyCode -ge 8){throw "GamePlay robocopy failed code=$copyCode"}
+          if(!(Test-Path -LiteralPath $destination)){
+            & robocopy.exe $source $destination /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /NP /NFL /NDL /NJH /NJS
+            $copyCode=$LASTEXITCODE
+            if($copyCode -ge 8){throw "GamePlay robocopy failed code=$copyCode"}
+          } else {
+            Write-Host 'SKARVIK_GAMEPLAY_DESTINATION_EXISTS_VERIFY_IN_PLACE=true'
+          }
           [long]$bytes=0;$checked=0;$errors=0
           foreach($f in (Get-ChildItem -LiteralPath $source -File -Recurse -Force -ErrorAction Stop)){
             $rel=$f.FullName.Substring($source.Length).TrimStart([char]'\')
@@ -53,3 +56,7 @@ jobs:
           Write-Host ("SKARVIK_GAMEPLAY_SIZE_GIB={0:N4}" -f ($bytes/1GB))
           Write-Host "SKARVIK_CITY_NATIVE_CPP_MODULES_STILL_MISSING=true"
           Write-Host "SKARVIK_CITY_LEVEL_INSTANCE_STILL_NOT_VERIFIED=true"
+          # Robocopy codes 1-7 are successful copy outcomes. The independent
+          # SHA256 verification above is authoritative; clear its informational exit code.
+          $global:LASTEXITCODE=0
+          exit 0
