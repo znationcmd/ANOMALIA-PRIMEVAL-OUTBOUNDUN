@@ -10,7 +10,7 @@ FILES = ('loot_items_catalog.json', 'loot_tiers.json', 'loot_spawns.json', 'rp_i
 
 
 def stage(root=ROOT):
-    destination = root / 'unreal/Content/Anomalia/Data'
+    destination = root / 'unreal/Content/AnomaliaZPrigimalia/Data'
     destination.mkdir(parents=True, exist_ok=True)
     owner_file = destination / 'stage-manifest.json'
     previous = json.loads(owner_file.read_text()) if owner_file.exists() else {'files': {}}
