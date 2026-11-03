@@ -4,9 +4,17 @@ param(
   [switch]$Continuous
 )
 $ErrorActionPreference='Stop'
-$cloud='H:\Mon Drive\ANOMALIAZ'
+# Google Drive for desktop can mount as G: or H:. Require the explicit authorization marker.
+$cloudCandidates=@('H:\Mon Drive\ANOMALIAZ','G:\Mon Drive\ANOMALIAZ','G:\My Drive\ANOMALIAZ','H:\My Drive\ANOMALIAZ')
+$cloud=$null
+foreach($candidate in $cloudCandidates){
+  $candidateToken=Join-Path $candidate '03_Rapports_Sauvegardes\AUTORISATION_SAUVEGARDE_2TO_ANOMALIAZ_20261102'
+  if((Test-Path -LiteralPath $candidate -PathType Container) -and (Test-Path -LiteralPath $candidateToken -PathType Leaf)){$cloud=$candidate;break}
+}
+if(!$cloud){Write-Host 'ANOMALIAZ_BACKUP_BLOCKED=AUTHORIZED_2TB_FOLDER_NOT_FOUND_ON_G_OR_H';exit 0}
 $token=Join-Path $cloud '03_Rapports_Sauvegardes\AUTORISATION_SAUVEGARDE_2TO_ANOMALIAZ_20261102'
 $manifestRoot=Join-Path $cloud '03_Rapports_Sauvegardes'
+$driveLetter=$cloud.Substring(0,1)
 $reportName='lots_UE5_sauvegarde_'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.csv'
 $report=Join-Path $manifestRoot $reportName
 $records=New-Object System.Collections.Generic.List[object]
@@ -17,14 +25,13 @@ $records=New-Object System.Collections.Generic.List[object]
 [int]$conflicts=0
 [int]$processed=0
 
-# Do not write anything unless this exact marker, created independently
-# through the authenticated 2TB Google Drive account, exists on local H:.
+# Do not write unless the exact authorization marker is visible on the discovered mount.
 if(!(Test-Path -LiteralPath $token -PathType Leaf)){
   Write-Host 'ANOMALIAZ_BACKUP_BLOCKED=CORRECT_2TB_CLOUD_MARKER_NOT_VISIBLE_TO_WINDOWS_RUNNER'
   exit 0
 }
-$volume=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'" -ErrorAction SilentlyContinue
-if(!$volume -or !$volume.Size){throw 'Missing or unready H: Google Drive volume'}
+$volume=Get-CimInstance Win32_LogicalDisk -Filter ("DeviceID='"+$driveLetter+":'") -ErrorAction SilentlyContinue
+if(!$volume -or !$volume.Size){throw ('Missing or unready Google Drive volume '+$driveLetter+':')}
 $driveProcess=@(Get-Process -Name GoogleDriveFS -ErrorAction SilentlyContinue)
 if($driveProcess.Count -eq 0){throw 'Google Drive for desktop process is not running; refusing local-only copy'}
 if(!(Test-Path -LiteralPath $cloud -PathType Container)){throw 'Google Drive ANOMALIAZ destination root is not mounted'}
@@ -82,10 +89,7 @@ foreach($root in $roots){
     $processed++
     $relative=$file.FullName.Substring($root.Source.Length).TrimStart('\')
     $target=Join-Path (Join-Path $cloud $root.Dest) $relative
-    if(!$Continuous -and $file.Length -gt 768MB){
-      $skippedOversized++
-      continue
-    }
+    # Large files are eligible; the normal batch byte limit decides when to stop.
     if(Test-Path -LiteralPath $target -PathType Leaf){
       $there=Get-Item -LiteralPath $target
       if($there.Length -ne $file.Length){
