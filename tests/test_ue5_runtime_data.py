@@ -63,6 +63,18 @@ class RuntimeDataTests(unittest.TestCase):
                 module.stage(root)
             self.assertEqual(staged.read_bytes(), before)
 
+    def test_stage_repo_catalogues_into_separate_existing_unreal_project(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            self.fixture(root)
+            project = root / 'separate-project'
+            project.mkdir()
+            (project / 'AnomaliaZPrigimalia.uproject').write_text('{}')
+            self.assertEqual(module.stage(root, project_dir=project), 5)
+            staged = project / 'Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
+            self.assertEqual(len(json.loads(staged.read_text())['items']), 236)
+            self.assertTrue((project / 'Content/AnomaliaZPrigimalia/Data/stage-manifest.json').is_file())
+
 
 if __name__ == '__main__':
     unittest.main()
