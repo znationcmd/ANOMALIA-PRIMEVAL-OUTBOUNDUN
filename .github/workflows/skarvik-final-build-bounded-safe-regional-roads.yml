@@ -111,3 +111,5 @@ jobs:
             skarvik-final-regional-native-dry-pilot-build.json
             skarvik-final-regional-native-dry-pilot-reopen.json
           if-no-files-found: warn
+
+# Re-triggered after the resumable City Sample Gameplay SHA256 verification; native road pilot remains guarded and isolated on C staging.
