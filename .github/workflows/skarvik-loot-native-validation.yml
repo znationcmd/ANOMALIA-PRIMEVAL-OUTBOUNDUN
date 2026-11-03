@@ -18,6 +18,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native-loot:
+    defaults:
+      run:
+        working-directory: a
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 150
     steps:
@@ -58,6 +61,6 @@ jobs:
         if: always()
         with:
           name: skarvik-native-loot-validation
-          path: unreal/Saved/SkarvikLootValidation/run-${{ github.run_id }}/**
+          path: a/unreal/Saved/SkarvikLootValidation/run-${{ github.run_id }}/**
           if-no-files-found: error
           compression-level: 6
