@@ -91,3 +91,5 @@ jobs:
           name: skarvik-final-regional-663-real-road-meshes-independent-reopen
           path: skarvik-final-real-regional-663-meshes-native-independent-reopen.json
           if-no-files-found: warn
+
+# Re-run the read-only independent reopen after the previous saved native batch.
