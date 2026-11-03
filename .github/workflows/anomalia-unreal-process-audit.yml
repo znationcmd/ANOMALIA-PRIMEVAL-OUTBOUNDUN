@@ -49,3 +49,5 @@ jobs:
           name: anomalia-unreal-process-audit
           path: anomalia-unreal-processes-${{ github.run_id }}.json
           if-no-files-found: error
+
+# Trigger read-only process inventory.
