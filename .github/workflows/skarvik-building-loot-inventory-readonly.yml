@@ -58,5 +58,5 @@ jobs:
         if: always()
         with:
           name: skarvik-real-building-transforms-readonly
-          path: skarvik-building-inventory-\${{ github.run_id }}.json
-          if-no-files-found: warn
+          path: skarvik-building-inventory-${{ github.run_id }}.json
+          if-no-files-found: error
