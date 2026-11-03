@@ -24,6 +24,8 @@ $records=New-Object System.Collections.Generic.List[object]
 [int]$skippedOversized=0
 [int]$conflicts=0
 [int]$processed=0
+$copyFailures=New-Object System.Collections.Generic.List[string]
+[int]$removedStalePartials=0
 
 # Do not write unless the exact authorization marker is visible on the discovered mount.
 if(!(Test-Path -LiteralPath $token -PathType Leaf)){
@@ -118,8 +120,15 @@ foreach($root in $roots){
     }
     $dir=Split-Path -Parent $target
     if(!(Test-Path -LiteralPath $dir -PathType Container)){New-Item -ItemType Directory -Path $dir -Force|Out-Null}
-    $temp=$target+'.ANOMALIAZ_COPY_PARTIAL'
-    if(Test-Path -LiteralPath $temp){Write-Host ('ANOMALIAZ_BACKUP_PARTIAL_PRESENT_SKIP='+$relative);continue}
+    $temp=$target+'.azpart'
+    # Remove only our own interrupted temporary file so the next run can retry it.
+    if(Test-Path -LiteralPath $temp -PathType Leaf){
+      $partial=Get-Item -LiteralPath $temp -Force
+      if(($partial.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){throw ('Unsafe partial transfer link: '+$temp)}
+      Remove-Item -LiteralPath $temp -Force -ErrorAction Stop
+      $removedStalePartials++
+      Write-Host ('ANOMALIAZ_BACKUP_STALE_PARTIAL_REMOVED='+$relative)
+    }
     try{
       Copy-Item -LiteralPath $file.FullName -Destination $temp -ErrorAction Stop
       $before=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
@@ -132,7 +141,13 @@ foreach($root in $roots){
       $newFiles++
       Write-Host ('ANOMALIAZ_BACKUP_LOCAL_COPY_VERIFIED='+$root.Name+'\'+$relative+' bytes='+$file.Length)
     }catch{
-      Write-Host ('ANOMALIAZ_BACKUP_COPY_FAILED='+$root.Name+'\'+$relative+' '+$_.Exception.Message)
+      $failure=$root.Name+'\'+$relative+' '+$_.Exception.Message
+      $copyFailures.Add($failure)
+      if(Test-Path -LiteralPath $temp -PathType Leaf){
+        try { Remove-Item -LiteralPath $temp -Force -ErrorAction Stop; Write-Host ('ANOMALIAZ_BACKUP_PARTIAL_CLEANED='+$relative) }
+        catch { $copyFailures.Add('Temporary-file cleanup failed: '+$temp+' '+$_.Exception.Message) }
+      }
+      Write-Host ('ANOMALIAZ_BACKUP_COPY_FAILED='+$failure)
       break
     }
   }
@@ -149,7 +164,10 @@ Write-Host ('ANOMALIAZ_BACKUP_SKIPPED_OVER_768MB='+$skippedOversized)
 Write-Host ('ANOMALIAZ_BACKUP_CONTINUOUS_MODE='+[bool]$Continuous)
 Write-Host ('ANOMALIAZ_BACKUP_CONFLICTS='+$conflicts)
 Write-Host ('ANOMALIAZ_BACKUP_FILES_SCANNED='+$processed)
+Write-Host ('ANOMALIAZ_BACKUP_STALE_PARTIALS_REMOVED='+$removedStalePartials)
+Write-Host ('ANOMALIAZ_BACKUP_COPY_FAILURES='+$copyFailures.Count)
 Write-Host ('ANOMALIAZ_C_FREE_GIB_AT_END='+[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2))
 Write-Host ('ANOMALIAZ_D_FREE_GIB_AT_END='+[math]::Round([IO.DriveInfo]::new('D').AvailableFreeSpace/1GB,2))
 Write-Host 'ANOMALIAZ_BACKUP_NOTE=COPY_ON_VIRTUAL_DRIVE_ONLY; CLOUD_SYNC_CONFIRMATION_REQUIRED_BEFORE_LOCAL_DELETIONS'
 Write-Host 'ANOMALIAZ_BACKUP_ORIGINAL_FILES_DELETED=0'
+if($copyFailures.Count -gt 0){ throw ('Backup incomplete: '+$copyFailures.Count+' file copy failure(s). See ANOMALIAZ_BACKUP_COPY_FAILED lines.') }
