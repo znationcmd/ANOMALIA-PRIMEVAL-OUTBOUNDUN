@@ -2,7 +2,9 @@ name: ANOMALIAZ - sauvegarde continue complete vers Drive H 2 To
 on:
   push:
     branches: [feature/skarvik-real-native-alpha-20261101]
-    paths: ['.github/workflows/anomaliaz-google-drive-2tb-copy-batch.yml']
+    paths:
+      - '.github/workflows/anomaliaz-google-drive-2tb-copy-batch.yml'
+      - 'scripts/ue5/backup-anomaliaz-to-google-drive-2tb.ps1'
   workflow_dispatch:
 permissions:
   contents: read
@@ -18,7 +20,7 @@ jobs:
         with:
           clean: false
           persist-credentials: false
-      - name: Resume continuous complete ANOMALIAZ Drive H backup - extended 24h - no Unreal temporary cache
+      - name: Resume continuous ANOMALIAZ Drive H backup - 24h - validate marker as file and Google Drive mount
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
@@ -28,3 +30,4 @@ jobs:
           & $script -Continuous
           Write-Host ('ANOMALIAZ_SSD_C_FREE_GIB_AFTER='+[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2))
           Write-Host 'ANOMALIAZ_REAL_CLOUD_UPLOAD_MUST_STILL_BE_VERIFIED_WITH_DRIVE_API_BEFORE_ANY_LOCAL_DELETION=true'
+          Write-Host 'ANOMALIAZ_ORIGINAL_SOURCE_FILES_MUST_NEVER_BE_DELETED_BY_THIS_JOB=true'
