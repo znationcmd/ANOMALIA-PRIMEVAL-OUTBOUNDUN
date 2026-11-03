@@ -19,13 +19,18 @@ $records=New-Object System.Collections.Generic.List[object]
 
 # Do not write anything unless this exact marker, created independently
 # through the authenticated 2TB Google Drive account, exists on local H:.
-if(!(Test-Path -LiteralPath $token -PathType Container)){
+if(!(Test-Path -LiteralPath $token -PathType Leaf)){
   Write-Host 'ANOMALIAZ_BACKUP_BLOCKED=CORRECT_2TB_CLOUD_MARKER_NOT_VISIBLE_TO_WINDOWS_RUNNER'
   exit 0
 }
 $volume=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'" -ErrorAction SilentlyContinue
-if(!$volume){throw 'Missing H: Google Drive drive'}
-Write-Host ('ANOMALIAZ_BACKUP_CLOUD_MARKER_VERIFIED=true; volume_label='+$volume.VolumeName)
+if(!$volume -or !$volume.Size){throw 'Missing or unready H: Google Drive volume'}
+$driveProcess=@(Get-Process -Name GoogleDriveFS -ErrorAction SilentlyContinue)
+if($driveProcess.Count -eq 0){throw 'Google Drive for desktop process is not running; refusing local-only copy'}
+if(!(Test-Path -LiteralPath $cloud -PathType Container)){throw 'Google Drive ANOMALIAZ destination root is not mounted'}
+Write-Host ('ANOMALIAZ_BACKUP_CLOUD_MARKER_VERIFIED=true; marker_type=FILE; volume_label='+$volume.VolumeName)
+Write-Host 'ANOMALIAZ_GOOGLE_DRIVE_DESKTOP_PROCESS_RUNNING=true'
+Write-Host 'ANOMALIAZ_CLOUD_SYNC_CONFIRMATION=NOT_PROVEN_BY_LOCAL_COPY'
 if((Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)){
   Write-Host 'ANOMALIAZ_BACKUP_DEFERRED=UNREAL_RUNNING_NO_CONCURRENT_SNAPSHOT'
   exit 0
