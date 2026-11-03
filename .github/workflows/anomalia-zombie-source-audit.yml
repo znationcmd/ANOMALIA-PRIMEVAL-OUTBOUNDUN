@@ -67,3 +67,5 @@ jobs:
           name: anomalia-zombie-local-source-audit
           path: anomalia-zombie-local-assets-${{ github.run_id }}.json
           if-no-files-found: error
+
+# Trigger the read-only local asset audit after the workflow is committed.
