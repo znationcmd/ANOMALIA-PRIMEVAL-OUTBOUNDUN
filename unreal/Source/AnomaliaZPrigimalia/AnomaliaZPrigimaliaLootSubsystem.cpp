@@ -10,6 +10,7 @@
 #include "Engine/StaticMesh.h"
 #include "Components/StaticMeshComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "GameFramework/Pawn.h"
 #include "NavigationSystem.h"
 #include "EngineUtils.h"
 #include "GameFramework/PlayerStart.h"
@@ -660,9 +661,26 @@ void UAnomaliaZPrigimaliaLootSubsystem::SyncActors()
     const auto Points = State->GetObjectField(TEXT("points"));
     for (const auto& Spawn : Spawns)
     {
+        auto& Weak = Pickups.FindOrAdd(Spawn.Id);
+        if (MapName == TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"))
+        {
+            bool bNearPlayer = false;
+            for (FConstPlayerControllerIterator It = GetWorld()->GetPlayerControllerIterator(); It; ++It)
+            {
+                const APlayerController* PC = It->Get();
+                const APawn* Pawn = PC ? PC->GetPawn() : nullptr;
+                if (Pawn && FVector::DistSquared(Pawn->GetActorLocation(), Spawn.Location) <= FMath::Square(4000.f))
+                { bNearPlayer = true; break; }
+            }
+            if (!bNearPlayer)
+            {
+                if (Weak.IsValid()) Weak->Destroy();
+                Weak.Reset();
+                continue;
+            }
+        }
         const auto Row = Points->GetObjectField(Spawn.Id);
         const FName Id(*Row->GetStringField(TEXT("itemId")));
-        auto& Weak = Pickups.FindOrAdd(Spawn.Id);
         const auto* Item = FindItem(Id);
         if (Weak.IsValid() && (Id.IsNone() || Weak->Generation != Row->GetStringField(TEXT("generation"))))
         { Weak->Destroy(); Weak.Reset(); }
