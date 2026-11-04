@@ -59,3 +59,13 @@ Les pourcentages globaux de réalisation ne sont pas calculables à ce stade : a
 3. Vérifier l'identité de l'archive circuit, sa licence et son contenu avant toute importation.
 4. Valider SKARVIK par chargement World Partition, navigation et parcours ; ne pas confondre nombre de meshes et villes complètes.
 5. Compléter les systèmes et tester chaque comportement dans le projet retenu, puis seulement installer les changements validés.
+
+## Preuves SKARVIK antérieures récupérées pendant la compilation
+
+Les artefacts suivants ont été ouverts, sans réexécuter leurs audits :
+
+- [41317643889](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41317643889), artefact 13087689621 : réouverture du niveau final, 720 composants City Sample des quatre premiers secteurs et 121 du cinquième, soit 841 composants. 12 meshes du cinquième secteur effectivement chargés ; 906 acteurs de bâtiments continentaux et 128 insulaires, soit 1 034. Cela ne prouve ni 841 bâtiments complets, ni des intérieurs explorables.
+- [41656792535](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41656792535), artefact 13239289055 : 663 tronçons régionaux persistés, 6 130 anciens tronçons secs, lots locaux de 1 674 et 1 298. Échantillonnage de 12 acteurs à mesh réel ; reçu de construction régional 2 971,6 mètres. Le rapport déclare explicitement all382RoadsConnected=false, allVillageRoutesComplete=false, SM5Driven=false. Ne pas additionner ces nombres pour annoncer des routes complètes ou uniques.
+- [41655148263](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41655148263), artefact 13238749705 : présence et empreintes des niveaux FINAL, GRADED, ISLANDS et Big_City_LVL dans C:\ANOMALIAZ_SKARVIK_STAGE_41188816555. Des lignes de journaux antérieurs signalent des matériaux City Sample introuvables ; leur résolution actuelle reste à vérifier.
+
+Le travail avancé n'est donc pas à recommencer. Il faut le réconcilier avec le projet installé et vérifier les dépendances, le streaming et les raccordements avant migration.
