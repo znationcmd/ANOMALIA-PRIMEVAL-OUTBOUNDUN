@@ -1,0 +1,117 @@
+name: ANOMALIA mission - validate actual default character and inventory grid interactions
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-default-character-inventory-validation.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Apply exact source changes only to the preserved validation copies
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $cache='D:\ANOMALIAZ\03_Validation\m41798670858'
+          $runtime='C:\ANOMALIA_MISSION_41801391717'
+          $out=Join-Path $env:RUNNER_TEMP ('default-inventory-validation-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_DEFAULT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $os=Get-CimInstance Win32_OperatingSystem
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          if($disk.FreeSpace -lt 6GB -or $os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured reserve for cached validation'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          foreach($root in @($cache,$runtime)){
+            if((Get-Content -LiteralPath (Join-Path $root 'unreal\Build\AnomaliaZPrigimaliaSourceCommit.generated.txt') -Raw).Trim() -ne '0360ec9cd8106097de8c8ba80c53f85349269d88'){throw 'Unexpected cached source stamp'}
+          }
+          $json=@'
+          [{"path":"unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp","old":"c5c22ebaa50d3bb849bc2f512003607fbb008f60","blob":"3346f367b7fa91de5b7c626ba5fefce830afe066","commit":"0a78c50fd8e67f7f92db5b316463a8804762dfa4"},{"path":"unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaLootPIETests.cpp","old":"d5bc8056939ec593021631987030b3b3b018734b","blob":"7af27c68a2e9a7994e9bcbada41403885cb0b812","commit":"79d124583c9c51dea4b44c5ba43b3f66f0da9f5e"}]
+          '@
+          $changes=@($json | ConvertFrom-Json)
+          foreach($change in $changes){
+            $download=Join-Path $out ([IO.Path]::GetFileName($change.path)+'.download')
+            Invoke-WebRequest -UseBasicParsing -Uri ('https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/'+$change.commit+'/'+$change.path) -OutFile $download
+            if((& git hash-object -- $download).Trim() -ne $change.blob){throw 'Source correction download hash mismatch'}
+            $index=0
+            foreach($root in @($cache,$runtime)){
+              $target=Join-Path $root $change.path
+              $before=(& git hash-object -- $target).Trim()
+              if($before -ne $change.old -and $before -ne $change.blob){throw 'Existing validation source differs; refuse overwrite'}
+              Copy-Item -LiteralPath $target -Destination (Join-Path $out ([IO.Path]::GetFileName($target)+'.before-'+$index))
+              Copy-Item -LiteralPath $download -Destination $target
+              $index++
+            }
+          }
+          [ordered]@{baseSource='0360ec9cd8106097de8c8ba80c53f85349269d88';navigationDependencyPatch='f0f5144c137e1da1f8dc0a5568dd8de9c29db093';sourceChanges=$changes;embeddedStampRetainedForCache='0360ec9cd8106097de8c8ba80c53f85349269d88';installedDProjectModified=$false} | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'source-patch-receipt.json') -Encoding UTF8
+      - name: Compile Editor incrementally, preserve prior binaries and compile Game
+        timeout-minutes: 50
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $engine='C:\Program Files\Epic Games\UE_5.8'
+          $build=Join-Path $engine 'Engine\Build\BatchFiles\Build.bat'
+          $cache='D:\ANOMALIAZ\03_Validation\m41798670858'
+          $runtime='C:\ANOMALIA_MISSION_41801391717'
+          $ErrorActionPreference='Continue'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development "-Project=$cache\unreal\AnomaliaZPrigimalia.uproject" -WaitMutex -NoHotReloadFromIDE *> (Join-Path $env:MISSION_DEFAULT_OUT 'Editor-build.log')
+          $editorExit=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          if($editorExit -ne 0){throw 'Corrected Editor build failed'}
+          $backup=Join-Path $runtime ('unreal\Saved\MissionBinaryBackups\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $backup | Out-Null
+          foreach($name in @('UnrealEditor-AnomaliaZPrigimalia.dll','UnrealEditor-AnomaliaZPrigimalia.pdb','UnrealEditor.modules','AnomaliaZPrigimaliaEditor.target')){
+            $source=Join-Path $cache ('unreal\Binaries\Win64\'+$name)
+            $target=Join-Path $runtime ('unreal\Binaries\Win64\'+$name)
+            if(Test-Path -LiteralPath $source){
+              if(Test-Path -LiteralPath $target){Copy-Item -LiteralPath $target -Destination (Join-Path $backup $name)}
+              Copy-Item -LiteralPath $source -Destination $target
+              if((Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash){throw 'Compiled binary copy differs'}
+            }
+          }
+          $ErrorActionPreference='Continue'
+          & $build AnomaliaZPrigimalia Win64 Development "-Project=$runtime\unreal\AnomaliaZPrigimalia.uproject" -WaitMutex -NoHotReloadFromIDE *> (Join-Path $env:MISSION_DEFAULT_OUT 'Game-build.log')
+          $gameExit=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          [ordered]@{EditorExitCode=$editorExit;GameExitCode=$gameExit;editorDLLSHA256=(Get-FileHash -LiteralPath (Join-Path $runtime 'unreal\Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll') -Algorithm SHA256).Hash;binaryBackup=$backup;packagedOrMainMapValidated=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $env:MISSION_DEFAULT_OUT 'build-summary.json') -Encoding UTF8
+          if($gameExit -ne 0){throw 'Corrected Game build failed'}
+      - name: Regress all actual native rules after code changes
+        timeout-minutes: 15
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:MISSION_DEFAULT_OUT 'native'
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project='C:\ANOMALIA_MISSION_41801391717\unreal\AnomaliaZPrigimalia.uproject'
+          $ErrorActionPreference='Continue'
+          & $editor $project -unattended -nopause -nosound -NullRHI '-ExecCmds=Automation RunTests AnomaliaZPrigimalia.Native.; Quit' "-ReportExportPath=$out" "-abslog=$out\editor.log" *> (Join-Path $out 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          $data=Get-Content -LiteralPath (Join-Path $out 'index.json') -Raw | ConvertFrom-Json
+          $tests=@($data.tests)
+          [ordered]@{exitCode=$code;tests=$tests.Count;failed=@($tests | Where-Object {$_.state -ne 'Success'}).Count;fullGameAcceptance=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'summary.json') -Encoding UTF8
+          if($code -ne 0 -or $tests.Count -ne 28 -or @($tests | Where-Object {$_.state -ne 'Success'}).Count){throw 'Actual native regression failed or test set differs'}
+      - name: Run actual default-spawn inventory and bank PIE interaction scenario
+        timeout-minutes: 12
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-Location -LiteralPath 'C:\ANOMALIA_MISSION_41801391717'
+          $env:GITHUB_SHA='79d124583c9c51dea4b44c5ba43b3f66f0da9f5e'
+          $engine='C:\Program Files\Epic Games\UE_5.8'
+          $python=Join-Path $engine 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if((& git hash-object -- scripts\ue5\run-loot-playtest.py).Trim() -ne '5ea2bf3a606f0e571aff121ec677232546fe2e23'){throw 'Corrected existing PIE driver identity differs'}
+          & $python scripts\ue5\run-loot-playtest.py --engine-root $engine --output (Join-Path $env:MISSION_DEFAULT_OUT 'loot')
+          if($LASTEXITCODE -ne 0){throw 'Actual default-character inventory/bank PIE interaction failed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_DEFAULT_OUT != ''
+        with:
+          name: mission-default-character-inventory-validation
+          path: ${{ env.MISSION_DEFAULT_OUT }}/
+          if-no-files-found: error
