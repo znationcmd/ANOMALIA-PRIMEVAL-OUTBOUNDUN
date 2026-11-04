@@ -30,8 +30,11 @@ jobs:
           foreach($entry in @(@('head','rev-parse','HEAD'),@('branch','branch','--show-current'),@('status','status','--porcelain=v1','--untracked-files=no'))){
             $name=$entry[0]
             $args=@('-C',$root)+$entry[1..($entry.Length-1)]
+            $ErrorActionPreference='Continue'
             $value=& $git.Source @args 2>&1
-            $report.git[$name]=@{exitCode=$LASTEXITCODE;output=@($value | ForEach-Object {"$_"})}
+            $nativeExit=$LASTEXITCODE
+            $ErrorActionPreference='Stop'
+            $report.git[$name]=@{exitCode=$nativeExit;output=@($value | ForEach-Object {"$_"})}
           }
           $groups=[ordered]@{
             companions='(?i)german.?shepherd|dog|monkey.?b3'
