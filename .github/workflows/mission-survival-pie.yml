@@ -62,8 +62,9 @@ jobs:
           $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
           $project='C:\ANOMALIA_MISSION_41801391717\unreal\AnomaliaZPrigimalia.uproject'
           $ErrorActionPreference='Continue'
-          & $editor $project -d3d11 -unattended -nosplash -nopause -nosound "-ExecutePythonScript=$env:MISSION_SURVIVAL_SCRIPT" "-abslog=$env:MISSION_SURVIVAL_OUT\editor.log" *> (Join-Path $env:MISSION_SURVIVAL_OUT 'process.log')
-          $code=$LASTEXITCODE
+          $arguments=@($project,'-d3d11','-unattended','-nosplash','-nopause','-nosound',"-ExecutePythonScript=$env:MISSION_SURVIVAL_SCRIPT","-abslog=$env:MISSION_SURVIVAL_OUT\editor.log")
+          $process=Start-Process -FilePath $editor -ArgumentList $arguments -PassThru -Wait -RedirectStandardOutput (Join-Path $env:MISSION_SURVIVAL_OUT 'process.log') -RedirectStandardError (Join-Path $env:MISSION_SURVIVAL_OUT 'stderr.log')
+          $code=$process.ExitCode
           $ErrorActionPreference='Stop'
           $result=Get-Content -LiteralPath (Join-Path $env:ANOMALIA_PIE_REPORT 'report.json') -Raw | ConvertFrom-Json
           if($code -ne 0 -or $result.state -ne 'SINGLE_PLAYER_PIE_API_CHECKS_PASSED_NOT_FULL_GAMEPLAY_ACCEPTANCE'){throw 'Actual character PIE regression failed'}
