@@ -177,8 +177,13 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
             Input(EKeys::Gamepad_Special_Left,IE_Released);
             if (!Survivor->InventoryComponent->bBankingAvailable) return false;
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
-            UButton* Deposit=Stack ? FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),Stack->StackId)) : nullptr;
-            if (!Deposit) return false;
+            if(!TestNotNull(TEXT("Collected note remains in inventory before bank deposit"),Stack)) return true;
+            const int32 NoteStackId=Stack->StackId;
+            auto* NoteTile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),NoteStackId));
+            if(!TestNotNull(TEXT("Actual note has a selectable inventory grid tile"),NoteTile)) return true;
+            NoteTile->OnClicked.Broadcast();
+            UButton* Deposit=FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),NoteStackId));
+            if(!TestNotNull(TEXT("Selecting note exposes its real deposit action"),Deposit)) return true;
             TestNotNull(TEXT("Gamepad inventory opens a safe-zone panel"),Cast<USafeZone>(Survivor->InventoryWidget->WidgetTree->RootWidget));
             Deposit->OnClicked.Broadcast(); Probe->Phase=6; Probe->NextAction=FPlatformTime::Seconds()+.25; return false;
         }
@@ -186,6 +191,9 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
         {
             if (Survivor->InventoryComponent->BankBalanceCents!=Probe->Value || FPlatformTime::Seconds()<Probe->NextAction) return false;
             TestEqual(TEXT("Actual bank UI deposit removes the physical note"),Units,1);
+            auto* BankTab=FindButton(TEXT("BankTab"));
+            if(!TestNotNull(TEXT("Actual bank tab exists"),BankTab)) return true;
+            BankTab->OnClicked.Broadcast();
             UButton* Withdraw=FindButton(TEXT("BankWithdraw_")+Probe->NoteId.ToString()+TEXT("_action"));
             if (!Withdraw) return false;
             Withdraw->OnClicked.Broadcast(); Probe->Phase=7; return false;
@@ -194,6 +202,9 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
         {
             if (Survivor->InventoryComponent->BankBalanceCents!=0 || Units!=2) return false;
             TestEqual(TEXT("Actual bank UI withdrawal restores exactly one note"),Units,2);
+            auto* InventoryTab=FindButton(TEXT("InventoryTab"));
+            if(!TestNotNull(TEXT("Equipment tab returns to real inventory grids"),InventoryTab)) return true;
+            InventoryTab->OnClicked.Broadcast();
             // Same real UMG panel, isolated storage fixture; never mutate the player's saved loot.
             AActor* PagingOwner=World->SpawnActor<AActor>();
             auto* Paging=NewObject<UAnomaliaZPrigimaliaInventoryComponent>(PagingOwner);
@@ -203,6 +214,9 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
             {
                 const int32 WoodId=Paging->Stacks[0].StackId;
                 Survivor->InventoryWidget->InitializeForInventory(Paging);
+                auto* WoodTile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),WoodId));
+                if(!TestNotNull(TEXT("Actual rotation item has a selectable grid tile"),WoodTile)) return true;
+                WoodTile->OnClicked.Broadcast();
                 auto* Rotate=FindButton(FString::Printf(TEXT("RotateStack_%d_action"),WoodId));
                 if(TestNotNull(TEXT("Real UMG rotation button exists"),Rotate))Rotate->OnClicked.Broadcast();
                 TestTrue(TEXT("Actual rotation button changes authoritative rectangle"),Paging->Stacks[0].bRotated);
@@ -215,16 +229,16 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
                     if(!Source || !Paging->TrySplitStack(Source->StackId,1,NewId)){AddError(TEXT("Cannot prepare real pagination fixture"));break;}
                 }
                 TestEqual(TEXT("41 real stacks form two pages"),Survivor->InventoryWidget->GetPageCount(),2);
-                auto CountRows=[Survivor]()
+                auto CountTiles=[Survivor]()
                 {
                     int32 Rows=0;
-                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* W){if(W && W->GetName().StartsWith(TEXT("InventoryStack_")))++Rows;});
+                    Survivor->InventoryWidget->WidgetTree->ForEachWidget([&](UWidget* W){if(W && W->GetName().StartsWith(TEXT("InventoryTile_")))++Rows;});
                     return Rows;
                 };
-                TestEqual(TEXT("UMG constructs at most 32 stored rows on page one"),CountRows(),32);
+                TestEqual(TEXT("UMG constructs at most 32 stored tiles on page one"),CountTiles(),32);
                 if(auto* Next=FindButton(TEXT("InventoryNextPage")))Next->OnClicked.Broadcast();
                 TestEqual(TEXT("Actual Next button selects second page"),Survivor->InventoryWidget->GetCurrentPage(),1);
-                TestEqual(TEXT("Last page displays remaining real stacks"),CountRows(),9);
+                TestEqual(TEXT("Last page displays remaining real stacks"),CountTiles(),9);
                 if(auto* Previous=FindButton(TEXT("InventoryPreviousPage")))Previous->OnClicked.Broadcast();
                 TestEqual(TEXT("Actual Previous button returns without moving items"),Survivor->InventoryWidget->GetCurrentPage(),0);
                 int32 PagingUnits=0;for(const auto& S:Paging->Stacks)PagingUnits+=S.Count;
