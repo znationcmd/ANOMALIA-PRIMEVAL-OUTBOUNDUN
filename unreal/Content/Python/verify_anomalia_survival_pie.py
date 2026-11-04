@@ -183,9 +183,20 @@ def tick(delta):
                 record()
                 s["index"]+=1
                 if s["index"]==len(names):
-                    finish()
+                    phase("screenshot_settle")
                 else:
                     begin_actor()
+        elif s["phase"]=="screenshot_settle" and elapsed>0.5:
+            s["pc"].set_control_rotation(unreal.Rotator(pitch=-5,yaw=-30,roll=0))
+            s["screenshot"]=OUT/"survival-pie.png"
+            report["screenshot"]=str(s["screenshot"])
+            unreal.SystemLibrary.execute_console_command(s["world"],
+                'HighResShot filename="'+s["screenshot"].as_posix()+'" 1280x720')
+            phase("screenshot_wait")
+        elif s["phase"]=="screenshot_wait":
+            if s["screenshot"].is_file() and s["screenshot"].stat().st_size>1000:
+                report["screenshotBytes"]=s["screenshot"].stat().st_size
+                finish()
     except Exception as exc:
         finish(exc)
 
