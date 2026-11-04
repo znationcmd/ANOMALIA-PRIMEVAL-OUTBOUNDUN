@@ -30,6 +30,8 @@ protected:
     virtual void BeginPlay() override;
     virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
     void SpawnConfiguredVehicles();
+    /** Isolated SKARVIK alpha: spawn only genuine, installed and validated dog/car resources. */
+    void TrySpawnSkarvikAlphaCompanions(APlayerController* PlayerController);
     /** Server-only import of its own validated Editor/world.json placeables. */
     void SpawnConfiguredHomestead();
     void LoadPersistentPlayer(APlayerController* PlayerController);
@@ -39,6 +41,9 @@ protected:
     FTimerHandle ProfileSaveTimer;
     FTimerHandle ProfileRecoveryTimer;
     TSet<FString> PendingProfileLoads;
+    // Set only by an explicit standalone OpenLevel(?AnomaliaZSoloStart=1).
+    // A fresh game launch still opens the main menu.
+    bool bStartStandaloneGameplayAfterTravel = false;
     void RetryPendingProfileLoads();
     virtual void InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage) override;
 

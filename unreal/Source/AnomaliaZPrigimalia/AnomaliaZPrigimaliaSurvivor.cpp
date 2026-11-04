@@ -44,6 +44,7 @@ AAnomaliaZPrigimaliaSurvivor::AAnomaliaZPrigimaliaSurvivor()
     {
         static const TCHAR* ApprovedProjectMeshes[]={
             TEXT("/Game/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"),
+            TEXT("/Game/ControlRig/Characters/Mannequins/Meshes/SKM_Manny.SKM_Manny"),
             TEXT("/Game/Characters/Mannequins/Meshes/SKM_Quinn.SKM_Quinn"),
             TEXT("/Game/Mannequin/Character/Mesh/SK_Mannequin.SK_Mannequin")
         };

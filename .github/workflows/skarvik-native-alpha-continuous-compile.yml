@@ -1,0 +1,356 @@
+name: ANOMALIAZ REAL UE5 ALPHA - independently compile native test game code
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'unreal/Source/**'
+      - 'unreal/Config/**'
+      - 'unreal/Content/AnomaliaZPrigimalia/Data/**'
+      - 'unreal/AnomaliaZPrigimalia.uproject'
+      - '.github/workflows/skarvik-native-alpha-continuous-compile.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-compile:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check actual Unreal engine, free disk, final map and no active games
+        id: prerequisites
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Trusted final SKARVIK stage missing'}
+          if(!(Test-Path (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Original final SKARVIK native map missing'}
+          if(!(Test-Path (Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'))){throw 'Unreal native build tool unavailable'}
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)
+          $free=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2)
+          $ready=($busy.Count -eq 0 -and $free -ge 20)
+          ('ready='+$ready.ToString().ToLowerInvariant()) >> $env:GITHUB_OUTPUT
+          $gate=if($ready){'READY'}else{'BLOCKED'}
+          Write-Host ('ALPHA_NATIVE_BUILD_GATE='+$gate)
+          Write-Host ('ALPHA_NATIVE_ACTIVE_UNREAL_PROCESSES='+$busy.Count)
+          Write-Host ('ALPHA_NATIVE_FREE_C_GIB='+$free)
+          if(!$ready){Write-Host 'No changes made to the stage or game; compile will run on an eligible manual re-run or branch push.'}
+      - name: Stage real licensed mannequin, dog and BMW E39 before compiling Unreal from D source into isolated SKARVIK UE stage
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong C stage: never touch user assets'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Original 7-island map absent'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal running: refuse concurrent asset write'}
+          $sourceRoot='D:\ANOMALIA\unreal\Content'
+          $targetRoot=Join-Path $stage 'Content'
+          $groups=@(
+            'ControlRig\Characters\Mannequins',
+            'German_Shepherd_3D_Model',
+            'Anomalia\NamedVehicles1\bmw_e39'
+          )
+          $essentials=@(
+            'ControlRig\Characters\Mannequins\Meshes\SKM_Manny.uasset',
+            'German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Idle_Playing_v01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Walk_Loop_v01.uasset',
+            'German_Shepherd_3D_Model\Animations\A_type1_Run_Loop_v01.uasset',
+            'Anomalia\NamedVehicles1\bmw_e39\SM_bmw_e39.uasset'
+          )
+          foreach($item in $essentials){if(!(Test-Path -LiteralPath (Join-Path $sourceRoot $item))){throw ('Required ORIGINAL model not present: '+$item)}}
+          $candidateFiles=New-Object System.Collections.Generic.List[object]
+          [long]$bytes=0
+          foreach($relative in $groups){
+            $src=Join-Path $sourceRoot $relative
+            if(!(Test-Path -LiteralPath $src -PathType Container)){throw ('Asset group missing: '+$relative)}
+            foreach($file in @(Get-ChildItem -LiteralPath $src -File -Recurse -ErrorAction Stop)){
+              $subpath=$file.FullName.Substring($sourceRoot.Length).TrimStart([char]'\')
+              $target=Join-Path $targetRoot $subpath
+              $bytes+=[long]$file.Length
+              $candidateFiles.Add([pscustomobject]@{source=$file.FullName;target=$target;relative=$subpath;size=$file.Length})
+            }
+          }
+          $totalGiB=[math]::Round($bytes/1GB,3)
+          $freeGiB=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,3)
+          if($totalGiB -gt 3){throw ('Real model dependency folders exceed safe budget, '+$totalGiB+' GiB')}
+          if(($freeGiB-$totalGiB) -lt 15){throw ('Not enough space to retain 15 GiB spare after staging real models: '+$freeGiB)}
+          # Preflight ALL names/hashes. Never overwrite different game assets.
+          foreach($item in $candidateFiles){
+            if(Test-Path -LiteralPath $item.target){
+              if((Get-FileHash -LiteralPath $item.target -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $item.source -Algorithm SHA256).Hash){
+                throw ('Collision with existing different staged asset: '+$item.relative)
+              }
+            }
+          }
+          $created=New-Object System.Collections.Generic.List[string]
+          try{
+            foreach($item in $candidateFiles){
+              if(Test-Path -LiteralPath $item.target){continue}
+              $folder=Split-Path -Parent $item.target
+              if(!(Test-Path -LiteralPath $folder)){New-Item -Path $folder -ItemType Directory -Force|Out-Null}
+              Copy-Item -LiteralPath $item.source -Destination $item.target -ErrorAction Stop
+              $created.Add($item.target)
+              if((Get-FileHash -LiteralPath $item.target -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $item.source -Algorithm SHA256).Hash){
+                throw ('Hash mismatch: '+$item.relative)
+              }
+            }
+          }catch{
+            foreach($made in $created){Remove-Item -LiteralPath $made -Force -ErrorAction SilentlyContinue}
+            throw
+          }
+          foreach($item in $essentials){if(!(Test-Path -LiteralPath (Join-Path $targetRoot $item))){throw ('Staged essential missing: '+$item)}}
+          Write-Host ('SKARVIK_REAL_LICENSED_NATIVE_3D_ASSETS_VERIFIED='+$candidateFiles.Count)
+          Write-Host ('SKARVIK_MODEL_ASSET_BYTES='+$bytes)
+          Write-Host 'SKARVIK_PLAYER_MANNY_MESH_ACTUAL_UASSET_STAGED=true'
+          Write-Host 'SKARVIK_GERMAN_SHEPHERD_AND_REAL_ANIMATIONS_STAGED=true'
+          Write-Host 'SKARVIK_GENUINE_BMW_E39_STATIC_MESH_STAGED=true'
+          Write-Host 'SKARVIK_UE5_IN_GAME_MODEL_RENDERING_NOT_YET_TESTED=true'
+          Write-Host 'SKARVIK_D_ORIGINAL_SOURCE_MODIFIED=false'
+      - name: Build independent alpha C++ candidate against existing real SKARVIK assets
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $candidate='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE'
+          $stamp='ANOMALIAZ_NATIVE_ALPHA_CANDIDATE_20261101'
+          $marker=Join-Path $candidate '.alpha-source-owner-marker'
+          if(Test-Path $candidate){
+            if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne $stamp){throw 'Unowned candidate folder: refusing modification'}
+            # Never sync into an alpha that might still be running.
+            if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal process detected'}
+            $versionDir=Join-Path $candidate ('Saved\AlphaSourceHistory\'+$env:GITHUB_RUN_ID)
+            New-Item -ItemType Directory -Force -Path $versionDir|Out-Null
+            foreach($item in @('Source','Config','AnomaliaZPrigimalia.uproject')){
+              $src=Join-Path $candidate $item
+              if(Test-Path $src){Copy-Item -LiteralPath $src -Destination (Join-Path $versionDir $item) -Recurse -Force}
+            }
+          }else{
+            New-Item -Path $candidate -ItemType Directory -Force|Out-Null
+            [IO.File]::WriteAllText($marker,$stamp,(New-Object Text.UTF8Encoding($false)))
+          }
+          $content=Join-Path $candidate 'Content'
+          $sourceContent=Join-Path $stage 'Content'
+          if(!(Test-Path $content)){
+            # The game candidate shares the existing 7-island UE assets to avoid
+            # duplicating ~100GB. Never overwrite Content or its saved maps.
+            New-Item -Path $content -ItemType Junction -Target $sourceContent|Out-Null
+          }
+          if(!(Test-Path (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Isolated Content junction not mapped to original seven-island stage'}
+          # Stage the REAL source-controlled gameplay catalogues only into the
+          # isolated C: map content. Never change D:/ANOMALIA or any .umap.
+          # Existing differing JSON has a reversible SHA-named backup.
+          $alphaData=Join-Path $env:GITHUB_WORKSPACE 'unreal\Content\AnomaliaZPrigimalia\Data'
+          $stagedData=Join-Path $stage 'Content\AnomaliaZPrigimalia\Data'
+          if(!(Test-Path $alphaData)){throw 'Authoritative alpha Data catalogues missing in checkout'}
+          if(!(Test-Path $stagedData)){New-Item -ItemType Directory -Path $stagedData -Force|Out-Null}
+          foreach($name in @('loot_items_catalog.json','loot_spawns.json','loot_tiers.json','rp_items_catalog.json','rp_economy.json')){
+            $source=Join-Path $alphaData $name
+            $target=Join-Path $stagedData $name
+            if(!(Test-Path -LiteralPath $source)){throw ('Required native alpha data missing: '+$name)}
+            $parsed=Get-Content -LiteralPath $source -Raw | ConvertFrom-Json -ErrorAction Stop
+            if($null -eq $parsed){throw ('Invalid source JSON '+$name)}
+            $expected=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash
+            if(Test-Path $target){
+              $old=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+              if($old -eq $expected){continue}
+              $backupRoot=Join-Path $candidate 'Saved\AlphaSourceHistory\GameplayData'
+              if(!(Test-Path $backupRoot)){New-Item -ItemType Directory -Path $backupRoot -Force|Out-Null}
+              $backup=Join-Path $backupRoot ($name+'.'+$old+'.backup')
+              if(!(Test-Path -LiteralPath $backup)){Copy-Item -LiteralPath $target -Destination $backup}
+            }
+            $tmp=$target+'.alpha-'+$env:GITHUB_RUN_ID+'.tmp'
+            Copy-Item -LiteralPath $source -Destination $tmp -Force
+            if((Get-FileHash -LiteralPath $tmp -Algorithm SHA256).Hash -ne $expected){throw ('Data hash mismatch: '+$name)}
+            Move-Item -LiteralPath $tmp -Destination $target -Force
+            if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $expected){throw ('Staged data hash mismatch: '+$name)}
+          }
+          Write-Host 'SKARVIK_ALPHA_REAL_LOOT_RP_CONFIGS_VERIFIED_IN_ISOLATED_C_STAGE=true'
+          foreach($dir in @('Source','Config')){
+            $from=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$dir)
+            $to=Join-Path $candidate $dir
+            if(!(Test-Path $to)){New-Item -ItemType Directory -Path $to -Force|Out-Null}
+            Copy-Item -Path (Join-Path $from '*') -Destination $to -Recurse -Force
+          }
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'unreal\AnomaliaZPrigimalia.uproject') -Destination (Join-Path $candidate 'AnomaliaZPrigimalia.uproject') -Force
+          $project=Join-Path $candidate 'AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE
+          if($LASTEXITCODE -ne 0){throw ('Native alpha C++ build failed exit='+$LASTEXITCODE)}
+          $module=Join-Path $candidate 'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          if(!(Test-Path $module)){throw 'Native alpha C++ module missing after build'}
+          $receipt=[ordered]@{
+            state='NATIVE_SKARVIK_ALPHA_CPLUSPLUS_COMPILED_NOT_YET_PLAYTESTED'
+            commit=$env:GITHUB_SHA
+            branch=$env:GITHUB_REF_NAME
+            nativeMap='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+            project=$project
+            compiledModuleExists=$true
+            stagesMadeOnlyInIndependentAlphaCandidate=$true
+            originalSourceDUnchanged=$true
+            alphaInstallerPublished=$false
+            packagedWin64ExeProduced=$false
+            alphaDogVisibleInPlaytest=$false
+            alphaCarVisibleInPlaytest=$false
+            alphaMenuTestedInGame=$false
+          }
+          $dest=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-alpha-compile-receipt.json'
+          ($receipt|ConvertTo-Json -Depth 5)|Set-Content -LiteralPath $dest -Encoding utf8
+          Write-Host 'SKARVIK_ALPHA_REAL_CPP_COMPILE_PASSED=true'
+          Write-Host 'SKARVIK_ALPHA_TRUE_GAMEPLAY_SMOKE_NOT_RUN=true'
+      - name: Verify REAL saved SKARVIK map and native Manny, dog and BMW E39 assets in Unreal
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $candidate='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE'
+          $project=Join-Path $candidate 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_native_alpha_assets_runtime.py'
+          if(!(Test-Path $editor) -or !(Test-Path $script)){throw 'Native Unreal asset validation cannot run'}
+          $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-native-real-assets-loaded.json'
+          $log=Join-Path $candidate ('Saved\Logs\alpha-real-asset-load-'+$env:GITHUB_RUN_ID+'.log')
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          $exitCode=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT)){
+            throw ('Unreal did not produce a real asset runtime report; exit='+$exitCode)
+          }
+          $result=Get-Content -LiteralPath $env:ANOMALIA_SKARVIK_ALPHA_ASSET_REPORT -Raw|ConvertFrom-Json
+          if($result.state -ne 'GENUINE_SKARVIK_AND_ALL_PLAYER_DOG_CAR_ASSETS_LOADED_IN_REAL_UNREAL_EDITOR'){
+            throw ('REAL UE5 ASSET TEST FAILED: '+$result.error)
+          }
+          Write-Host 'SKARVIK_ALPHA_REAL_WORLD_PLAYER_DOG_CAR_ASSETS_LOADED=true'
+          Write-Host ('SKARVIK_ALPHA_EDITOR_COMMANDLET_EXIT_CODE='+$exitCode)
+          Write-Host 'SKARVIK_ALPHA_VISUAL_GAMEPLAY_STILL_UNVERIFIED=true'
+      - name: Compile REAL Windows Development GAME target, not only Editor module
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\AnomaliaZPrigimalia.uproject'
+          $gameExe='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\Binaries\Win64\AnomaliaZPrigimalia.exe'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $free=[math]::Round([IO.DriveInfo]::new('C').AvailableFreeSpace/1GB,2)
+          if($free -lt 13){throw ('Not enough safe free C space for game target '+$free+' GiB')}
+          & $build AnomaliaZPrigimalia Win64 Development $project -WaitMutex -NoHotReloadFromIDE
+          if($LASTEXITCODE -ne 0){throw ('Real UE5 Win64 GAME target C++ compilation failed '+$LASTEXITCODE)}
+          if(!(Test-Path -LiteralPath $gameExe)){throw 'Real Win64 Game target compile produced no EXE'}
+          Write-Host ('SKARVIK_ALPHA_UNCOOKED_WIN64_GAME_TARGET_EXE_PRESENT='+$gameExe)
+          Write-Host 'SKARVIK_ALPHA_GAME_TARGET_IS_NOT_A_PLAYABLE_PACKAGE=true'
+      - name: Attempt REAL native Win64 cook package only when dedicated safe storage is mounted
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-win64-package-status.json'
+          $status=[ordered]@{
+            state='BLOCKED_INSUFFICIENT_NATIVE_PACKAGE_STORAGE'
+            realMap='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+            realMenuBuiltFromCPlusPlus=$true
+            allModelAssetsValidated=$true
+            installedGameUpdated=$false
+            publishedAlphaBuild=$false
+            packagedExeExists=$false
+            notes='Compilation C++ and real asset checks do not imply playable packaged alpha'
+            requestedPackageVolume='E:'
+            availableNTFSVolumes=@()
+          }
+          # User-confirmed external archive/staging drive E: only.
+          # Never silently fall back to Windows C: or the ANOMALIA D: project.
+          $all=@(Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DriveType -in @(2,3) -and $_.FileSystem -eq 'NTFS'})
+          $target=@(Get-CimInstance Win32_LogicalDisk | Where-Object {$_.DeviceID -eq 'E:'})
+          if($target.Count -gt 0){
+            Write-Host ('SKARVIK_ALPHA_USER_DISK_E_PRESENT=true TYPE='+$target[0].DriveType+' FILESYSTEM='+$target[0].FileSystem+' FREE_GIB='+([math]::Round([double]$target[0].FreeSpace/1GB,2)))
+          }else{
+            Write-Host 'SKARVIK_ALPHA_USER_DISK_E_PRESENT=false'
+          }
+          # BLOCK: ValiDrive previously validated only ~120.36 GiB of
+          # a claimed 6.29 TiB on user's E: drive ("No Storage" for most
+          # addresses). A filesystem reporting NTFS and 5854 GiB free is NOT
+          # proof of genuine capacity. Never cook, archive, or launch from E:
+          # unless a future full-capacity destructive media test confirms it.
+          Write-Host 'SKARVIK_ALPHA_EXTERNAL_E_DISK_BANNED_VALiDRIVE_FAILED=true'
+          Write-Host 'SKARVIK_ALPHA_EXTERNAL_PACKAGING_DISABLED_PENDING_GENUINE_VERIFIED_DISK=true'
+          $status.state='BLOCKED_UNTRUSTED_EXTERNAL_DISK_E'
+          $status.notes='Previous ValiDrive test disproved usable claimed 6TB; do not stage, back up, run or archive ANOMALIAZ on E. Preserve original D maps and 3D assets.'
+          $candidates=@()
+          foreach($disk in $all){
+            $status.availableNTFSVolumes+=([ordered]@{drive=$disk.DeviceID;freeGiB=[math]::Round([double]$disk.FreeSpace/1GB,2)})
+          }
+          if($candidates.Count -gt 0){
+            $disk=$candidates[0]
+            $outDir=Join-Path 'E:\' ('ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\run-'+$env:GITHUB_RUN_ID)
+            $stageDir=Join-Path 'E:\' ('ANOMALIAZ_NATIVE_ALPHA_WIN64_STAGING\run-'+$env:GITHUB_RUN_ID)
+            # Cooked stage AND archive must live on the spare NTFS volume,
+            # not in the 43 GiB C: system drive or almost-full D: project drive.
+            if(Test-Path -LiteralPath $stageDir){throw 'Packaging staging directory already exists: refuse overwrite'}
+            if(Test-Path -LiteralPath $outDir){throw 'Packaging output already exists: refuse overwrite'}
+            New-Item -ItemType Directory -Path $outDir -Force|Out-Null
+            New-Item -ItemType Directory -Path $stageDir -Force|Out-Null
+            Write-Host ('SKARVIK_ALPHA_EXTERNAL_NTFS_PACKAGE_VOLUME='+$disk.DeviceID)
+            Write-Host ('SKARVIK_ALPHA_EXTERNAL_NTFS_STAGE_DIR='+$stageDir)
+            $project='C:\ANOMALIAZ_SKARVIK_NATIVE_ALPHA_CANDIDATE\AnomaliaZPrigimalia.uproject'
+            $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+            $status.state='NATIVE_SKARVIK_COOK_ATTEMPT_STARTED'
+            & $uat BuildCookRun "-project=$project" -noP4 -build -cook -stage -package -pak -archive "-stagingdirectory=$stageDir" "-archivedirectory=$outDir" -platform=Win64 -clientconfig=Development "-map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1" -unattended -utf8output
+            if($LASTEXITCODE -ne 0){
+              $status.state='NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED'
+              $status.failureExitCode=$LASTEXITCODE
+            }else{
+              $exe=@(Get-ChildItem -LiteralPath $outDir -Filter 'AnomaliaZPrigimalia.exe' -Recurse -File -ErrorAction SilentlyContinue)
+              if($exe.Count -gt 0){
+                $status.state='NATIVE_SKARVIK_ALPHA_PACKAGED_NOT_YET_PLAYTESTED'
+                $status.packagedExeExists=$true
+                $status.executablePath=$exe[0].FullName
+                Write-Host ('SKARVIK_ALPHA_REAL_PACKAGED_WIN64_EXE='+$exe[0].FullName)
+              }else{
+                $status.state='NATIVE_COOK_COMPLETED_WITHOUT_GAME_EXE'
+              }
+            }
+          }
+          ($status|ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $report -Encoding utf8
+          Write-Host ('SKARVIK_ALPHA_REAL_WIN64_PACKAGE_STATE='+$status.state)
+          Write-Host ('SKARVIK_ALPHA_AVAILABLE_NTFS='+($status.availableNTFSVolumes|ConvertTo-Json -Compress))
+          if($status.state -in @('NATIVE_SKARVIK_COOK_OR_PACKAGE_FAILED','NATIVE_COOK_COMPLETED_WITHOUT_GAME_EXE')){
+            throw ('Actual Win64 packaging did not succeed: '+$status.state)
+          }
+      - name: Create REAL JOUER desktop button only after cooked Win64 game and SKARVIK startup smoke test
+        if: steps.prerequisites.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\create-real-game-desktop-link-after-package.ps1'
+          $package=Join-Path $env:GITHUB_WORKSPACE 'skarvik-alpha-win64-package-status.json'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-game-desktop-link-status.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Native executable-only desktop link validator absent'}
+          if(!(Test-Path -LiteralPath $package)){throw 'Cook/package receipt absent; never make a fake play button'}
+          & $script -PackageStatusPath $package -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Packaged game failed genuine startup, no new desktop Play shortcut was created'}
+          $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          Write-Host ('ANOMALIAZ_DESKTOP_REAL_JOUER_CREATED='+$result.playShortcutCreated)
+          Write-Host ('ANOMALIAZ_DESKTOP_JOUER_STATUS='+$result.state)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-alpha-assets-and-packaged-status
+          path: |
+            skarvik-alpha-native-real-assets-loaded.json
+            skarvik-alpha-win64-package-status.json
+            skarvik-real-game-desktop-link-status.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-native-alpha-compiled-build-receipt
+          path: skarvik-native-alpha-compile-receipt.json
+          if-no-files-found: warn

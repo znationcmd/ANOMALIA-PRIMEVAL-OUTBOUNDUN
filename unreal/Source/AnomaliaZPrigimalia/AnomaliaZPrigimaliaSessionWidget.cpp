@@ -34,6 +34,7 @@
 #include "HAL/FileManager.h"
 #include "HAL/PlatformProcess.h"
 #include "Misc/Paths.h"
+#include "Misc/PackageName.h"
 #include "Misc/FileHelper.h"
 #include "JsonObjectConverter.h"
 #include "AnomaliaZPrigimaliaModResolver.h"
@@ -52,6 +53,7 @@
 #include "TimerManager.h"
 #include "EngineUtils.h"
 #include "Components/StaticMeshComponent.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
@@ -96,7 +98,20 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
     if(MenuArtwork) MenuArtwork->SetVisibility(ESlateVisibility::Collapsed);
     if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
     auto* PC=GetOwningPlayer();
-    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
+    const bool bSkarvikAlpha=GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"));
+    auto* MenuSurvivor=PC?Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()):nullptr;
+    if(bMainMenu && bSkarvikAlpha && Feedback)
+    {
+        // Never suggest that an invisible body or missing dog/car is already ready.
+        const bool bHasVisibleBody=MenuSurvivor && MenuSurvivor->GetMesh() &&
+            MenuSurvivor->GetMesh()->GetSkeletalMeshAsset();
+        Feedback->SetText(FText::FromString(bHasVisibleBody?
+            TEXT("SKARVIK ALPHA | Carte de test UE5.8. Les fonctions en développement restent expérimentales.") :
+            TEXT("SKARVIK ALPHA | Corps 3D du survivant absent. Test en cours, ressources à intégrer.")));
+    }
+    if(bMainMenu && PC && GetWorld() && MenuSurvivor && MenuSurvivor->GetMesh() &&
+       MenuSurvivor->GetMesh()->GetSkeletalMeshAsset() &&
+       (GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) || bSkarvikAlpha))
     {
         // Frame the ACTUAL restored survivor in the ACTUAL world, at the
         // last saved location. Never teleport or replace player appearance.
@@ -577,9 +592,9 @@ void UAnomaliaZPrigimaliaSessionWidget::BuildServerBrowser(UCanvasPanel* Canvas)
     auto* Solo=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(),TEXT("ServerBrowserSolo"));
     Solo->SetBackgroundColor(FLinearColor(.70f,.06f,.045f,1.f));
     auto* SoloText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-    SoloText->SetText(FText::FromString(TEXT("CONTINUER EN SOLO")));
+    SoloText->SetText(FText::FromString(TEXT("JOUER EN SOLO : CARTE CHOISIE")));
     SoloText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-    Solo->SetContent(SoloText); Solo->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession);
+    Solo->SetContent(SoloText); Solo->OnClicked.AddDynamic(this,&UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld);
     FilterRows->AddChildToVerticalBox(Solo)->SetPadding(FMargin(5,14));
     ServerBrowserFrame->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -1425,6 +1440,67 @@ void UAnomaliaZPrigimaliaSessionWidget::Play()
 {
     if(bMainMenu){ ShowServerBrowser();return; }
     ResumeLocalSession();
+}
+void UAnomaliaZPrigimaliaSessionWidget::StartSelectedSoloWorld()
+{
+    // Offline SOLO travel only: never invent an official or multiplayer server.
+    // Changing a map starts a separate level; it does not teleport across worlds
+    // or claim that unbuilt terrain is playable.
+    auto* PC=GetOwningPlayer();
+    if(!PC || !GetWorld() || PC->GetNetMode()!=NM_Standalone)
+    {
+        if(ServerStatus) ServerStatus->SetText(FText::FromString(
+            TEXT("Sélection locale indisponible dans une session réseau.")));
+        return;
+    }
+    // Default to the existing native SKARVIK world instead of merely hiding
+    // the main menu and leaving the player looking at an empty startup level.
+    FString Selected=MapFilterSelect?MapFilterSelect->GetSelectedOption():FString();
+    if(Selected.IsEmpty() || Selected==TEXT("Toutes les cartes"))
+        Selected=TEXT("SKARVIK");
+    const auto Worlds=UAnomaliaZPrigimaliaServerBrowserLibrary::GetWorldChoices();
+    for(const FAnomaliaZPrigimaliaWorldChoice& Choice:Worlds)
+    {
+        if(Choice.DisplayName!=Selected) continue;
+        if(Choice.WorldPackage.IsEmpty() ||
+           !Choice.WorldPackage.StartsWith(TEXT("/Game/Maps/")))
+        {
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(
+                TEXT("Chemin de carte invalide : déplacement annulé.")));
+            return;
+        }
+        // The startup level IS the real SKARVIK map. Reopening that level
+        // restarts GameMode and displays the main menu again, trapping solo
+        // players in a loop. Resume the already loaded world instead.
+        const FString CurrentLevel=GetWorld()->GetMapName();
+        const FString RequestedLevel=FPackageName::GetShortName(Choice.WorldPackage);
+        if(CurrentLevel.EndsWith(RequestedLevel))
+        {
+            UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_RESUME_CURRENT_WORLD: %s"), *RequestedLevel);
+            ResumeLocalSession();
+            return;
+        }
+        if(!Choice.bNativePackageFound)
+        {
+            if(ServerStatus) ServerStatus->SetText(FText::FromString(FString::Printf(
+                TEXT("%s : cette carte n'est pas encore installée dans la version actuelle. Aucune fausse carte ne sera lancée."),
+                *Selected)));
+            return;
+        }
+        if(TravelStatus) TravelStatus->SetText(FText::FromString(
+            FString::Printf(TEXT("Chargement de %s (carte Unreal native)..."),*Selected)));
+        if(TravelLoadingFrame) TravelLoadingFrame->SetVisibility(ESlateVisibility::Visible);
+        UGameplayStatics::SetGamePaused(PC,false);
+        PC->SetInputMode(FInputModeGameOnly());
+        PC->bShowMouseCursor=false;
+        // Explicitly distinguish intentional solo travel from a fresh game
+        // launch: the destination GameMode must not reopen its startup menu.
+        UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_TO_WORLD: %s"), *Choice.WorldPackage);
+        UGameplayStatics::OpenLevel(this,FName(*Choice.WorldPackage),true,TEXT("AnomaliaZSoloStart=1"));
+        return;
+    }
+    if(ServerStatus) ServerStatus->SetText(FText::FromString(
+        TEXT("Carte inconnue : sélection invalide.")));
 }
 void UAnomaliaZPrigimaliaSessionWidget::ResumeLocalSession()
 {

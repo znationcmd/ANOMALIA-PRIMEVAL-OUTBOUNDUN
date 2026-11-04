@@ -1,0 +1,45 @@
+name: ANOMALIAZ - quarantine unsafe E disk alpha shortcut (preserve all data)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - '.github/workflows/anomaliaz-protect-from-unverified-e-disk.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomaliaz-quarantine-unverified-E-alpha-shortcut
+  cancel-in-progress: false
+jobs:
+  safeguard-user-desktop:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Preserve questionable E disk package; archive only ANOMALIAZ Play shortcut pointing at E
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $desk=[Environment]::GetFolderPath('Desktop')
+          if(!(Test-Path -LiteralPath $desk -PathType Container)){throw 'User desktop not found'}
+          $link=Join-Path $desk 'ANOMALIAZ - JOUER (ALPHA TEST).lnk'
+          if(!(Test-Path -LiteralPath $link -PathType Leaf)){
+            Write-Host 'ANOMALIAZ_UNSAFE_E_LINK_ALREADY_ABSENT=true'
+            exit 0
+          }
+          $w=New-Object -ComObject WScript.Shell
+          $target=[string]$w.CreateShortcut($link).TargetPath
+          Write-Host ('ANOMALIAZ_EXISTING_ALPHA_LINK_TARGET='+$target)
+          $unsafe='E:\ANOMALIAZ_NATIVE_ALPHA_WIN64_RELEASES\run-41361364261\Windows\AnomaliaZPrigimalia.exe'
+          if($target -ine $unsafe){
+            Write-Host 'ANOMALIAZ_LINK_POINTS_ELSEWHERE_NO_CHANGES=true'
+            exit 0
+          }
+          $folder=Join-Path $desk 'ANOMALIAZ - Raccourcis archives'
+          if(!(Test-Path -LiteralPath $folder)){New-Item -Path $folder -ItemType Directory -Force|Out-Null}
+          $dest=Join-Path $folder 'ANOMALIAZ - JOUER - E non fiable - archive.lnk'
+          if(Test-Path -LiteralPath $dest){throw 'Backup shortcut already exists; refuse overwrite'}
+          Move-Item -LiteralPath $link -Destination $dest -ErrorAction Stop
+          if((Test-Path -LiteralPath $link) -or !(Test-Path -LiteralPath $dest)){throw 'Quarantine shortcut verification failed'}
+          Write-Host 'ANOMALIAZ_UNVERIFIED_E_DRIVE_DESKTOP_LINK_SAFELY_ARCHIVED=true'
+          Write-Host 'ANOMALIAZ_E_DRIVE_FILES_NOT_DELETED_OR_CHANGED=true'
+          Write-Host 'ANOMALIAZ_C_D_DRIVE_ASSETS_UNTOUCHED=true'

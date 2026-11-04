@@ -1,7 +1,7 @@
 name: SKARVIK - safe native regional asphalt corridors on final seven islands
 on:
   push:
-    branches: [feature/skarvik-citysample-sm5-20261031]
+    branches: [feature/skarvik-citysample-sm5-20261031, feature/skarvik-real-native-alpha-20261101]
     paths: ['.github/workflows/skarvik-final-build-bounded-safe-regional-roads.yml']
   workflow_dispatch:
 permissions:

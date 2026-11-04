@@ -1,0 +1,44 @@
+name: ANOMALIAZ - finish old C snapshot dedup with long-path robocopy after verified backups
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'scripts/ue5/finish-longpath-anomalia-dedup-robocopy.ps1'
+      - '.github/workflows/anomaliaz-finalize-longpath-dedup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  finish-exact-snapshot-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify archived unique files and existing central project, remove exact old duplicate physical C snapshot
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\finish-longpath-anomalia-dedup-robocopy.ps1'
+          & $script
+          if($LASTEXITCODE -ne 0){throw 'Exact old physical duplicate folder still not safely removed; inspect report'}
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-final-long-path-snapshot-cleanup.json'
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'OLD_C_DUPLICATE_SNAPSHOT_FINALLY_REMOVED_ARCHIVE_AND_MAPS_PRESERVED'){
+            throw 'Missing proven final cleanup receipt'
+          }
+          Write-Host ('ANOMALIAZ_FINAL_TOTAL_FREE_C_GIB='+$r.cFreeGiBAfter)
+          Write-Host ('ANOMALIAZ_FINAL_GAIN_THIS_RUN_GIB='+([math]::Round($r.cFreeGiBAfter-$r.cFreeGiBBefore,3)))
+          Write-Host ('ANOMALIAZ_UNIQUE_OLD_C_ARCHIVED_FILE_COUNT='+$r.archivedUniqueCFilesSHA256Valid)
+          Write-Host 'ANOMALIAZ_ORIGINAL_D_196GB_AND_SKARVIK_UNCHANGED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-old-c-physical-snapshot-freed-long-path-proof
+          path: ${{ runner.temp }}/anomaliaz-final-long-path-snapshot-cleanup.json
+          if-no-files-found: warn

@@ -1,0 +1,48 @@
+name: ANOMALIAZ - reclaim old C duplicates with verified D backups and compatibility junctions
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths:
+      - 'scripts/ue5/deduplicate-anomalia-old-c-roots-safely.ps1'
+      - '.github/workflows/anomaliaz-reclaim-verified-c-duplicates.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  reclaim-c-without-loss:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify original D master and central folder, back up unique C data and remove SHA-proven duplicate snapshots
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\deduplicate-anomalia-old-c-roots-safely.ps1'
+          if(!(Test-Path -LiteralPath $script)){throw 'Untracked cleanup script missing'}
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-c-dedup-verified.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Original-safe duplicate cleanup blocked; inspect preserved report before retry'}
+          $r=Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+          if($r.state -ne 'VERIFIED_OLD_C_PROJECT_DUPLICATES_REMOVED_AND_JUNCTIONS_CREATED'){
+            throw 'Cleanup receipt not fully verified'
+          }
+          if(@($r.tasks | Where-Object { $_.state -ne 'C_DUPLICATES_REMOVED_ALL_UNIQUE_C_FILES_ARCHIVED' -and $_.state -ne 'ALREADY_CLEAN_WITH_VERIFIED_JUNCTION' }).Count){
+            throw 'One C copy has not been safely deduplicated'
+          }
+          Write-Host 'ANOMALIAZ_DEDUP_C_ORIGINALS_SHA_AND_ARCHIVES_VERIFIED=true'
+          Write-Host ('ANOMALIAZ_C_REAL_FREE_GAIN_GIB='+([math]::Round(($r.sourceDiskFreeGiBAfter-$r.sourceDiskFreeGiBBefore),3)))
+          Write-Host ('ANOMALIAZ_D_BACKUP_SPACE_USED_GIB='+([math]::Round(($r.archiveDiskFreeGiBBefore-$r.archiveDiskFreeGiBAfter),3)))
+          Write-Host 'ANOMALIAZ_MAIN_D_REAL_ORIGINAL_PROJECT_PRESERVED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-recovered-c-disk-gib-with-sha256-and-recovery-archive
+          path: ${{ runner.temp }}/anomaliaz-c-dedup-verified.json
+          if-no-files-found: warn

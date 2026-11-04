@@ -1,4 +1,6 @@
 #include "AnomaliaZPrigimaliaWorldImportLibrary.h"
+#include "Misc/FileHelper.h"
+#include "Misc/Paths.h"
 #include "AnomaliaZPrigimaliaArchipelagoHeight.h"
 #include "AnomaliaZPrigimaliaInhabitedHeight.h"
 #include "AnomaliaZPrigimaliaExtraWorldHeights.h"
@@ -335,6 +337,89 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
  }
  if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
   Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ return Land;
+#else
+ return nullptr;
+#endif
+}
+
+
+AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateFalcRaw16Landscape(const FString& OriginalRaw16Path)
+{
+#if WITH_EDITOR
+ // FALC is authored ONLY in a dedicated new FALC map package.
+ // No existing map, coastal geometry or World Partition actor can be replaced.
+ UWorld* World = GEditor ? GEditor->GetEditorWorldContext().World() : nullptr;
+ if (!World || World->GetPackage()->GetName() != TEXT("/Game/Maps/PRIGIMALIA_FALC"))
+ {
+  UE_LOG(LogTemp, Error, TEXT("FALC RAW16 refused: unexpected UE world"));
+  return nullptr;
+ }
+ for (TActorIterator<ALandscapeProxy> It(World); It; ++It)
+ {
+  UE_LOG(LogTemp, Error, TEXT("FALC RAW16 refused: existing Landscape"));
+  return nullptr;
+ }
+ constexpr int32 SamplesPerAxis = 2017;
+ constexpr int64 ExactBytes = int64(SamplesPerAxis) * SamplesPerAxis * 2;
+ const FString IntendedRoot = FPaths::ConvertRelativePathToFull(
+   FPaths::Combine(FPaths::ProjectDir(),TEXT("TerrainSource/FALC")));
+ const FString IntendedFile = FPaths::ConvertRelativePathToFull(
+   FPaths::Combine(IntendedRoot,TEXT("FALC_26_5KM_MASTER_2017.r16")));
+ const FString ActualFile = FPaths::ConvertRelativePathToFull(OriginalRaw16Path);
+ if (!FPaths::IsSamePath(ActualFile, IntendedFile))
+ {
+  UE_LOG(LogTemp, Error, TEXT("FALC RAW16 refused: source must be trusted FALC-only local directory"));
+  return nullptr;
+ }
+ TArray<uint8> RawBytes;
+ if (!FFileHelper::LoadFileToArray(RawBytes,*ActualFile)
+     || RawBytes.Num()!=ExactBytes)
+ {
+  UE_LOG(LogTemp, Error, TEXT("FALC RAW16 refused: missing exact 2017x2017 unsigned 16bit source"));
+  return nullptr;
+ }
+ TArray<uint16> Samples;
+ Samples.SetNumUninitialized(SamplesPerAxis*SamplesPerAxis);
+ // The original archive explicitly uses little-endian RAW16 encoding.
+ int32 AboveSea=0;
+ int32 BelowSea=0;
+ for (int32 I=0;I<Samples.Num();++I)
+ {
+  Samples[I]=uint16(RawBytes[2*I]) | (uint16(RawBytes[2*I+1]) << 8);
+  if(Samples[I]>32768)++AboveSea;
+  else if(Samples[I]<32768)++BelowSea;
+ }
+ if(AboveSea<500000 || BelowSea<250000)
+ {
+  UE_LOG(LogTemp, Error,TEXT("FALC RAW16 refused: original source coastline lacks expected land and ocean"));
+  return nullptr;
+ }
+ ALandscape* Land = World->SpawnActor<ALandscape>();
+ if(!Land)return nullptr;
+ Land->SetActorLabel(TEXT("PRIGIMALIA_FALC_Original_Reference_26_5km"));
+ const double HalfCm=2650000.0 / 2.0;
+ Land->SetActorLocation(FVector(-HalfCm,-HalfCm,0.0));
+ Land->SetActorScale3D(FVector(2650000.0 / double(SamplesPerAxis-1),
+                               2650000.0 / double(SamplesPerAxis-1),800.0));
+ TMap<FGuid,TArray<uint16>> Heights;
+ Heights.Add(FGuid(),MoveTemp(Samples));
+ TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;
+ Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
+ Land->Import(FGuid::NewGuid(),0,0,SamplesPerAxis-1,SamplesPerAxis-1,2,63,
+   Heights,nullptr,Layers,ELandscapeImportAlphamapType::Additive,
+   TArrayView<const FLandscapeLayer>());
+ Land->CreateLandscapeInfo();
+ Land->PostEditChange();
+ if(Land->LandscapeComponents.Num()!=256)
+ {
+  UE_LOG(LogTemp, Error,TEXT("FALC RAW16 import incomplete: expected 256 landscape components; got %d"),
+    Land->LandscapeComponents.Num());
+  return nullptr;
+ }
+ if(ULandscapeSubsystem* Subsystem=World->GetSubsystem<ULandscapeSubsystem>())
+  Subsystem->ChangeGridSize(Land->GetLandscapeInfo(),2);
+ UE_LOG(LogTemp, Display,TEXT("FALC_NATIVE_SOURCE_LANDSCAPE_2017_256_COMPONENTS_CREATED=true"));
  return Land;
 #else
  return nullptr;

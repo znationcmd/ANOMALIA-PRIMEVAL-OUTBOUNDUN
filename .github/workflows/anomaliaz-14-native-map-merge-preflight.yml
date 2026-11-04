@@ -1,0 +1,75 @@
+name: ANOMALIAZ - real 14/15 map dependency and safe merge preflight
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-14-native-map-merge-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-native-level-dependencies:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Verify 14 genuine .umap files and World Partition actor payload sizes WITHOUT MOVING them
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $migration='D:\ANOMALIAZ\02_Projet_Migration\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Original SKARVIK stage marker missing'}
+          $worlds=@(
+            @{name='SKARVIK';root=$stage;slug='PRIGIMALIA_SKARVIK_FINAL_v1'},
+            @{name='DRAZOVIA';root=$migration;slug='PRIGIMALIA_Inhabited_v2'},
+            @{name='KARSKOV';root=$migration;slug='PRIGIMALIA_KARSKOV'},
+            @{name='VORGRAD';root=$migration;slug='PRIGIMALIA_VORGRAD'},
+            @{name='NEMORIS';root=$migration;slug='PRIGIMALIA_NEMORIS'},
+            @{name='DRAKHEIM';root=$migration;slug='PRIGIMALIA_DRAKHEIM'},
+            @{name='SOLYNACALYRA';root=$migration;slug='PRIGIMALIA_SOLYNACALYRA'},
+            @{name='NEXAVARKHOS';root=$migration;slug='PRIGIMALIA_NEXAVARKHOS'},
+            @{name='CHERNASKALUXRIA';root=$migration;slug='PRIGIMALIA_CHERNASKALUXRIA'},
+            @{name='KOLCHIEM ORIGINS';root=$migration;slug='PRIGIMALIA_KOLCHIEM_ORIGINS'},
+            @{name='ROSKATVIA-B1';root=$stage;slug='PRIGIMALIA_ROSKATVIA_B1'},
+            @{name='NOGOKV-51';root=$stage;slug='PRIGIMALIA_NOGOKV_51'},
+            @{name='PARADISIOMANIA';root=$stage;slug='PRIGIMALIA_PARADISIOMANIA'},
+            @{name='DEADROOT';root=$stage;slug='PRIGIMALIA_DEADROOT'}
+          )
+          function SizeDir([string]$p){
+            if(!(Test-Path -LiteralPath $p -PathType Container)){return [ordered]@{exists=$false;files=0;GiB=0;junction=$false}}
+            $attr=[IO.File]::GetAttributes($p)
+            if(($attr -band [IO.FileAttributes]::ReparsePoint) -ne 0){return [ordered]@{exists=$true;files=0;GiB=$null;junction=$true}}
+            [long]$bytes=0;$num=0
+            foreach($f in (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction Stop)){$bytes+=[long]$f.Length;$num++}
+            return [ordered]@{exists=$true;files=$num;GiB=[math]::Round($bytes/1GB,4);junction=$false}
+          }
+          $report=[ordered]@{state='READONLY_FOURTEEN_REAL_MAPS_NATIVE_DEPENDENCY_CHECK';maps=@();all14UmapFilesPresent=$true;totalMigrationExternalActorGiB=0;totalMigrationMaps=0;missingFALC=$true;stageFreeGiB=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2);sourceFilesModified=$false;requiresIndependentUEReopen=$true}
+          foreach($w in $worlds){
+            $file=Join-Path $w.root ('Content\Maps\'+$w.slug+'.umap')
+            $actor=Join-Path $w.root ('Content\__ExternalActors__\Maps\'+$w.slug)
+            $obj=Join-Path $w.root ('Content\__ExternalObjects__\Maps\'+$w.slug)
+            $a=SizeDir $actor;$o=SizeDir $obj
+            $present=Test-Path -LiteralPath $file -PathType Leaf
+            $row=[ordered]@{map=$w.name;root=$w.root;slug=$w.slug;umapPresent=$present;umapBytes=$(if($present){(Get-Item -LiteralPath $file).Length}else{0});externalActors=$a;externalObjects=$o}
+            if(!$present){$report.all14UmapFilesPresent=$false}
+            if($w.root -eq $migration){$report.totalMigrationMaps++;$report.totalMigrationExternalActorGiB+=$a.GiB+$o.GiB}
+            $report.maps+=$row
+            Write-Host ('ANOMALIA_MAP_DEPENDENCY '+$w.name+' UMAP='+$present+' WP_ACTORS='+$a.files+' WP_GIB='+$a.GiB+' WP_OBJS='+$o.files+' WP_OBJ_GIB='+$o.GiB)
+          }
+          $report.totalMigrationExternalActorGiB=[math]::Round($report.totalMigrationExternalActorGiB,3)
+          $out=Join-Path $env:GITHUB_WORKSPACE 'anomaliaz-14-map-real-world-dependency-preflight.json'
+          $report|ConvertTo-Json -Depth 9|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIA_REAL_NATIVE_MAPS_FOUND='+@($report.maps|Where-Object umapPresent).Count+'/14')
+          Write-Host ('ANOMALIA_WORLD_PARTITION_EXTERNAL_GIB_TO_MERGE='+$report.totalMigrationExternalActorGiB)
+          Write-Host ('ANOMALIA_ACTUAL_C_STAGE_FREE_GIB='+$report.stageFreeGiB)
+          Write-Host 'ANOMALIA_MISSING_FALC_WORLD=true'
+          if(!$report.all14UmapFilesPresent){throw 'One or more mapped original UE5 worlds missing'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-real-14-map-external-actor-dependency-preflight
+          path: anomaliaz-14-map-real-world-dependency-preflight.json
+          if-no-files-found: warn

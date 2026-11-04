@@ -1,0 +1,88 @@
+name: ANOMALIAZ - prove duplicate bytes of C old projects against D (SHA256 read only)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-confirm-old-project-duplicates-sha256.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-identical-stored-byte-content:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 80
+    steps:
+      - name: Hash corresponding original C and D ANOMALIA and Validation assets, never delete
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $pairs=@(
+            @{name='ANOMALIA_OLD_PROJECT';from='C:\ANOMALIA';to='D:\ANOMALIA'},
+            @{name='ANOMALIA_VALIDATION';from='C:\ANOMALIA-Validation';to='D:\ANOMALIA-Validation'}
+          )
+          $report=[ordered]@{
+            state='HASH_C_D_DUPLICATE_INVENTORY_NO_DELETION'
+            pairs=@()
+            noFilesDeletedCopiedOrMoved=$true
+            verifiedAllFileHashesForSameSizePairs=$true
+            reclaimableIfUniqueFilesBackedUpGiB=0
+          }
+          foreach($pair in $pairs){
+            $src=$pair.from;$dst=$pair.to
+            if(!(Test-Path -LiteralPath $src) -or !(Test-Path -LiteralPath $dst)){throw ('Missing exact named roots '+$pair.name)}
+            foreach($folder in @($src,$dst)){
+              if((([IO.File]::GetAttributes($folder)) -band [IO.FileAttributes]::ReparsePoint) -ne 0){throw 'Do not scan root links'}
+            }
+            $matched=0;$missing=0;$different=0;$exactFiles=0
+            [long]$sameBytes=0;[long]$uniqueBytes=0;[long]$differentBytes=0
+            $samples=New-Object 'System.Collections.Generic.List[object]'
+            foreach($f in (Get-ChildItem -LiteralPath $src -Recurse -Force -File -ErrorAction Stop)){
+              $rel=$f.FullName.Substring($src.Length).TrimStart([char]'\')
+              $compare=Join-Path $dst $rel
+              if(!(Test-Path -LiteralPath $compare -PathType Leaf)){
+                $missing++;$uniqueBytes+=[long]$f.Length
+                if($samples.Count -lt 20){$samples.Add([ordered]@{kind='only-on-C';relative=$rel;bytes=$f.Length})}
+                continue
+              }
+              $other=Get-Item -LiteralPath $compare
+              if($f.Length -ne $other.Length){
+                $different++;$differentBytes+=[long]$f.Length
+                if($samples.Count -lt 20){$samples.Add([ordered]@{kind='different-length';relative=$rel;bytes=$f.Length})}
+                continue
+              }
+              $hashA=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash
+              $hashB=(Get-FileHash -LiteralPath $other.FullName -Algorithm SHA256).Hash
+              if($hashA -eq $hashB){$matched++;$sameBytes+=[long]$f.Length}
+              else{
+                $different++;$differentBytes+=[long]$f.Length
+                if($samples.Count -lt 20){$samples.Add([ordered]@{kind='different-hash';relative=$rel;bytes=$f.Length})}
+              }
+            }
+            $item=[ordered]@{
+              name=$pair.name
+              cRoot=$src
+              dRoot=$dst
+              sha256IdenticalFiles=$matched
+              sha256IdenticalGiB=[math]::Round($sameBytes/1GB,3)
+              cOnlyFiles=$missing
+              cOnlyGiB=[math]::Round($uniqueBytes/1GB,3)
+              differentFiles=$different
+              differentGiB=[math]::Round($differentBytes/1GB,3)
+              noDeletionSafeUntilUniqueAndChangedVersionsBackedUp=$true
+              sampleNonDuplicates=$samples
+            }
+            $report.pairs+=$item
+            $report.reclaimableIfUniqueFilesBackedUpGiB+=$item.sha256IdenticalGiB
+            Write-Host ("ANOMALIA_SHA_VERIFIED name={0} equalGiB={1} matchingFiles={2} onlyCGiB={3} changedGiB={4} missing={5} different={6}" -f $item.name,$item.sha256IdenticalGiB,$item.sha256IdenticalFiles,$item.cOnlyGiB,$item.differentGiB,$item.cOnlyFiles,$item.differentFiles)
+          }
+          $out=Join-Path $env:RUNNER_TEMP 'anomaliaz-verified-c-d-duplicate-files.json'
+          ($report|ConvertTo-Json -Depth 7)|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host 'ANOMALIA_SHA256_REVIEW_COMPLETED_NO_DELETION=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-c-and-d-sha256-duplicate-integrity-proof
+          path: ${{ runner.temp }}/anomaliaz-verified-c-d-duplicate-files.json
+          if-no-files-found: warn
