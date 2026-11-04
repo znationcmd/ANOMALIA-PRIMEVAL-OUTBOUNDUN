@@ -22,7 +22,9 @@ def checkpoint():
 def record(row,state,**extra):
     counts[state]+=1
     journal.write(json.dumps({"sourceId":row.get("sourceId"),"relative":row.get("relative"),"state":state,**extra},separators=(",",":"))+"\n")
-    if sum(counts.values())%256==0:journal.flush();checkpoint()
+    if sum(counts.values())%256==0:
+        journal.flush();checkpoint()
+        print(json.dumps({"counts":dict(counts),"elapsedSeconds":time.monotonic()-started}),flush=True)
 def check_process():
     global last_process_check
     if time.monotonic()-last_process_check<10:return
@@ -91,7 +93,19 @@ for drive in ["C:/","D:/"]:
                 if owner.get("mainContent")==str(root):allowed.append((marker.parent/"payload").resolve())
             except (OSError,ValueError):pass
 check_process()
-original_maps={p.relative_to(content).as_posix():digest(p) for p in content.rglob("*.umap")}
+prior_added=set(); completed=set()
+prior_journal=out/"prior"/"package-actions.jsonl"
+if prior_journal.exists():
+    with prior_journal.open(encoding="utf-8") as stream:
+        for line in stream:
+            item=json.loads(line)
+            if item["state"] in {"PACKAGE_ADDED_NATIVE_VALIDATION_REQUIRED","ALREADY_PRESENT_IDENTICAL"}:
+                completed.add((item["sourceId"],item["relative"]))
+            if item["state"]=="PACKAGE_ADDED_NATIVE_VALIDATION_REQUIRED" and item["relative"].lower().endswith(".umap"):
+                prior_added.add(item["relative"].casefold())
+original_maps={p.relative_to(content).as_posix():digest(p) for p in content.rglob("*.umap") if p.relative_to(content).as_posix().casefold() not in prior_added}
+summary["resumedFromRun"]=41846216338
+summary["previouslyCompletedSourceEntries"]=len(completed)
 original_map_keys={name.casefold() for name in original_maps}
 summary["originalMaps"]=len(original_maps);checkpoint()
 sources={s["id"]:s for s in plan["sourceProjects"]}
@@ -127,6 +141,9 @@ try:
         check_process()
         for row in by_source[source_id]:
             check_process()
+            if (row["sourceId"],row["relative"]) in completed:
+                counts["PRIOR_RECEIPT_ENTRY_RETAINED"]+=1
+                continue
             source=pathlib.Path(row["source"]);target=content/row["relative"]
             if not source.is_file() or not source_available(source):
                 record(row,"SOURCE_NOT_LOCAL_OR_MISSING");continue
