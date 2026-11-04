@@ -35,7 +35,7 @@ for second_pass in [False,True]:
                 if not second_pass:again.append(row);continue
                 entry.update(state="DEFERRED_SOURCE_SKELETON_REQUIRED",reason="No unique verified skeleton from this same source family")
                 report["deferred"].append(entry);checkpoint();continue
-            disk=pathlib.Path(unreal.Paths.project_content_dir())/"Anomalia/LocalResources"
+            disk=pathlib.Path(unreal.Paths.project_content_dir())/root[len("/Game/"):]
             if __import__("shutil").disk_usage(disk.resolve()).free<6*1024**3:
                 entry["state"]="DEFERRED_IMPORT_DISK_RESERVE";report["deferred"].append(entry);checkpoint();continue
             task=unreal.AssetImportTask()
