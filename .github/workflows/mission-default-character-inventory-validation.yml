@@ -39,7 +39,7 @@ jobs:
             if((Get-Content -LiteralPath (Join-Path $root 'unreal\Build\AnomaliaZPrigimaliaSourceCommit.generated.txt') -Raw).Trim() -ne '0360ec9cd8106097de8c8ba80c53f85349269d88'){throw 'Unexpected cached source stamp'}
           }
           $json=@'
-          [{"path":"unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp","old":"c5c22ebaa50d3bb849bc2f512003607fbb008f60","blob":"3346f367b7fa91de5b7c626ba5fefce830afe066","commit":"0a78c50fd8e67f7f92db5b316463a8804762dfa4"},{"path":"unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaLootPIETests.cpp","old":"d5bc8056939ec593021631987030b3b3b018734b","blob":"7af27c68a2e9a7994e9bcbada41403885cb0b812","commit":"79d124583c9c51dea4b44c5ba43b3f66f0da9f5e"}]
+          [{"path":"unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp","old":"3346f367b7fa91de5b7c626ba5fefce830afe066","blob":"undefined","commit":"undefined"},{"path":"unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaLootPIETests.cpp","old":"d5bc8056939ec593021631987030b3b3b018734b","blob":"7af27c68a2e9a7994e9bcbada41403885cb0b812","commit":"79d124583c9c51dea4b44c5ba43b3f66f0da9f5e"}]
           '@
           $changes=ConvertFrom-Json -InputObject $json
           foreach($change in $changes){
