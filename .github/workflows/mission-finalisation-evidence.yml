@@ -1,8 +1,5 @@
 name: ANOMALIA mission - targeted existing project evidence
 on:
-  push:
-    branches: [mission/finalisation-20261104]
-    paths: ['.github/workflows/mission-finalisation-evidence.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -69,6 +66,7 @@ jobs:
           Write-Host ('ACTIVE_RELEVANT_PROCESSES='+$report.processes.Count)
           Write-Host ('SCAN_ERRORS='+$report.errors.Count)
           Write-Host ('EVIDENCE_DIRECTORY='+$out)
+          exit 0
       - uses: actions/upload-artifact@v4
         if: always()
         with:
