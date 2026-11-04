@@ -1,0 +1,48 @@
+name: ANOMALIA mission - inspect existing Shanghai circuit archive
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-shanghai-circuit-evidence.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  circuit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read existing circuit archive without extracting or modifying source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $path='D:\ANOMALIA\sketchfab\shanghai-international-circuit-2018-layout.zip'
+          $out=Join-Path $env:RUNNER_TEMP ('circuit-evidence-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $before=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+          $zip=[IO.Compression.ZipFile]::OpenRead($path)
+          try{
+            $entries=@($zip.Entries | ForEach-Object {[ordered]@{name=$_.FullName;bytes=$_.Length;compressedBytes=$_.CompressedLength}})
+            $notices=@()
+            foreach($entry in $zip.Entries){
+              if($entry.FullName -match '(?i)(licen[sc]e|readme|attribution|credits|source|metadata).*\.(txt|md|json)$' -and $entry.Length -le 65536){
+                $reader=New-Object IO.StreamReader($entry.Open())
+                try{$notices+=[ordered]@{name=$entry.FullName;text=$reader.ReadToEnd()}}finally{$reader.Dispose()}
+              }
+            }
+          }finally{$zip.Dispose()}
+          $after=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash
+          if($before -ne $after){throw 'Original circuit archive changed during inspection'}
+          $report=[ordered]@{state='EXISTING_CIRCUIT_ARCHIVE_INSPECTED_NOT_IMPORTED';path=$path;sha256=$before;originalUnchanged=$true;entries=$entries;notices=$notices;licenseAccepted=$false;dimensionsVerified=$false;collisionsVerified=$false;continuousDrivableLapVerified=$false;PIE=$false}
+          $report | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath (Join-Path $out 'circuit.json') -Encoding UTF8
+          Write-Host ('CIRCUIT_ENTRY_COUNT='+$entries.Count)
+          Write-Host ('CIRCUIT_NOTICE_COUNT='+$notices.Count)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission-shanghai-circuit-evidence
+          path: ${{ runner.temp }}/circuit-evidence-${{ github.run_id }}/
+          if-no-files-found: error
