@@ -41,7 +41,7 @@ jobs:
           $json=@'
           [{"path":"unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp","old":"c5c22ebaa50d3bb849bc2f512003607fbb008f60","blob":"3346f367b7fa91de5b7c626ba5fefce830afe066","commit":"0a78c50fd8e67f7f92db5b316463a8804762dfa4"},{"path":"unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaLootPIETests.cpp","old":"d5bc8056939ec593021631987030b3b3b018734b","blob":"7af27c68a2e9a7994e9bcbada41403885cb0b812","commit":"79d124583c9c51dea4b44c5ba43b3f66f0da9f5e"}]
           '@
-          $changes=@($json | ConvertFrom-Json)
+          $changes=ConvertFrom-Json -InputObject $json
           foreach($change in $changes){
             $download=Join-Path $out ([IO.Path]::GetFileName($change.path)+'.download')
             $checkedSource=Join-Path $env:GITHUB_WORKSPACE ('mission-default-source-'+$env:GITHUB_RUN_ID+'\'+$change.path)
