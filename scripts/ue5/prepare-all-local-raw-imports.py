@@ -7,23 +7,27 @@ store=pathlib.Path(r"C:\AZRI")/os.environ["GITHUB_RUN_ID"]
 store.mkdir(parents=True,exist_ok=False)
 (store/"owner.json").write_text(json.dumps({"project":str(project),"purpose":"Local raw import inputs and newly created resource output"}),encoding="utf-8")
 content=store/"resources";content.mkdir()
-target=project/"Content/Anomalia/LocalResources"
+namespace="/Game/Anomalia/LocalResources/B_"+os.environ["GITHUB_RUN_ID"]
+target=project/"Content/Anomalia/LocalResources"/("B_"+os.environ["GITHUB_RUN_ID"])
 if target.exists():raise RuntimeError("Preserve existing LocalResources directory; choose its verified owner before importing")
 target.parent.mkdir(parents=True,exist_ok=True)
 import subprocess
 env=os.environ.copy();env["ANOMALIA_RAW_LINK"]=str(target);env["ANOMALIA_RAW_BACKING"]=str(content)
 subprocess.run(["powershell.exe","-NoProfile","-NonInteractive","-Command","$ErrorActionPreference='Stop'; New-Item -ItemType Junction -Path $env:ANOMALIA_RAW_LINK -Value $env:ANOMALIA_RAW_BACKING | Out-Null"],env=env,check=True,capture_output=True)
-existing_hashes=set()
+existing_hashes=set();skeletal_hashes=set()
 index=out/"registered/registered-source-import-data.jsonl"
 if index.is_file():
     for line in index.read_text(encoding="utf-8").splitlines():
         row=json.loads(line)
         value=row.get("tags",{}).get("SourceFile","")
-        existing_hashes.update(v.lower() for v in re.findall(r"(?<![0-9a-fA-F])[0-9a-fA-F]{32}(?![0-9a-fA-F])",value))
-report={"state":"PREPARING","sourcePlanRun":41842801517,"imports":[],"alreadyRegistered":[],"duplicates":[],"deferred":[],"archiveReceipts":[],"sourceFilesModified":0,"outputNamespace":"/Game/Anomalia/LocalResources","outputBacking":str(content)}
+        hashes={v.lower() for v in re.findall(r"(?<![0-9a-fA-F])[0-9a-fA-F]{32}(?![0-9a-fA-F])",value)}
+        existing_hashes.update(hashes)
+        if row.get("class")=="SkeletalMesh":skeletal_hashes.update(hashes)
+report={"state":"PREPARING","sourcePlanRun":41842801517,"imports":[],"alreadyRegistered":[],"duplicates":[],"deferred":[],"archiveReceipts":[],"sourceFilesModified":0,"outputNamespace":namespace,"outputBacking":str(content)}
 seen={}
 def save():
     (out/"raw-preparation-manifest.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+    print("RAW_PREP imports="+str(len(report["imports"]))+" registered="+str(len(report["alreadyRegistered"]))+" deferred="+str(len(report["deferred"])),flush=True)
 def family(path,archive=None):
     text=str(path).replace("\\","/")
     found=re.search(r"([0-9a-fA-F]{8})-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",text)
@@ -43,7 +47,7 @@ def add(path,archive=None):
     sha=h.hexdigest();md5=m.hexdigest()
     if sha in seen:report["duplicates"].append({"source":str(path),"sameAs":seen[sha]});return
     seen[sha]=str(path)
-    if md5 in existing_hashes:
+    if md5 in existing_hashes and md5 not in skeletal_hashes:
         report["alreadyRegistered"].append({"source":str(path),"sha256":sha,"sourceMD5":md5});return
     animation=path.suffix.casefold()==".fbx" and bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(path),re.I))
     report["imports"].append({"source":str(path),"prepared":str(path),"sha256":sha,"preparedSHA256":sha,"sourceMD5":md5,"family":family(path,archive),"animationOnly":animation})
