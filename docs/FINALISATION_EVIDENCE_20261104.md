@@ -142,3 +142,20 @@ Les pourcentages globaux par domaine restent **non calculables** tant que les cr
 - Les assertions PIE d'apparition effective du BP Survival, de mesh et d'instance d'animation passent dans cette exécution. Le scénario complet échoue ensuite sur la localisation de la tuile du billet. Aucun dépôt/retrait réussi n'est encore revendiqué.
 - Fixture 94724d9 : recherche de la liaison SelectStack du contrôle UMG vivant, couvrant mains et stockage ; seul le vrai clic du bouton est ensuite déclenché, sans appel direct de transaction. [Nouvelle validation 41810078053](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41810078053) en cours lors de cette mise à jour.
 - [Plan de transfert 41810344559](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41810344559) préparé : dépendances du niveau final existant, comparaison de présence/taille sur D:, conflits à préserver, empreinte du .umap avant/après. Ce travail ne copie aucun asset et ne sauvegarde aucun niveau. Une taille identique reste explicitement à comparer par empreinte avant transfert.
+
+## Réception du lot personnage par défaut et inventaire
+
+[41810078053](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41810078053), artefact **13311414267**, **réussi** :
+
+- Editor et Game : sortie 0 pour les sources effectives base 0360ec9 + NavigationSystem f0f5144 + GameMode e705bbf + fixture PIE 94724d9 ; reçu détaillé inclus. Le stamp seul n'identifie pas ces patches.
+- **28/28 tests natifs réussis**, 0 échec.
+- **AnomaliaZPrigimalia.Loot.PIE : Success**, durée 33,644 s, 0 erreur, 4 avertissements.
+- Le véritable BP Survival est apparu par le GameMode ; son mesh et son instance d'animation sont contrôlés. Aucun personnage provisoire ajouté.
+- Le scénario complet couvre ramassage par E et interaction tactile, relecture du profil persistant, ouverture/fermeture clavier et manette de l'UMG, dépôt/retrait exacts du billet, rotation du rectangle, pages 32 puis 9 piles sans variation de quantité, fermeture rétablissant les contrôles, HUD des besoins et repos de trente secondes.
+- Les clics du test sont diffusés sur les vrais boutons UMG trouvés par leurs liaisons ; aucune transaction bancaire directe n'a remplacé l'interaction testée. Il ne s'agit pas d'une réception manuelle de tous les périphériques physiques.
+- Les quatre avertissements sont deux émissions du diagnostic de mesh natif absent et deux avertissements de sauvegarde à la déconnexion préservant la sauvegarde existante. Le profil chargé et le personnage effectivement créé passent leurs assertions, mais ces avertissements doivent encore être expliqués avant une réception de publication.
+- DLL Editor vérifiée : **482DFC4B1A00EA06F4D463E74CA7DD463F79A3D1622EC26CD3A2DFA5A1EE3B08**. Ancien binaire conservé sous Saved/MissionBinaryBackups/41810078053 dans la copie de validation.
+- **Ce correctif reste dans la branche et les copies de validation ; D:\ANOMALIA n'est pas encore migré. Aucune carte modifiée par ce lot.**
+- Critères mis à jour : compilation 2/2, suite native 28/28, scénario inventaire complet 1/1 (100 % pour ces seuls critères). Cela ne change pas le statut incomplet de SKARVIK, des autres animations, des animaux, du circuit ou des véhicules.
+
+Le premier plan de dépendances s'est arrêté avant de lancer Unreal : marqueur cherché à la racine parente au lieu du sous-dossier unreal. Le chemin a été corrigé à partir du workflow historique de réouverture, sans recréer de marqueur ni contourner le contrôle de confiance.
