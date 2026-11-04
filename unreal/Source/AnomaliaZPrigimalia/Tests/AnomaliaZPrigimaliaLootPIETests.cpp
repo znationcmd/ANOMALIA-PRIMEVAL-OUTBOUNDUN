@@ -17,6 +17,7 @@
 #include "../AnomaliaZPrigimaliaBankTerminal.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "../AnomaliaZPrigimaliaLootPickup.h"
 #include "../AnomaliaZPrigimaliaInventoryComponent.h"
 #include "../AnomaliaZPrigimaliaInventoryWidget.h"
@@ -79,6 +80,12 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
             for (TActorIterator<AAnomaliaZPrigimaliaLootPickup> It(World); It; ++It)
                 if (It->SpawnId == TEXT("review-house-food")) { Food = *It; break; }
             if (!Food) return false;
+            if(UClass* InstalledProfile=LoadClass<AAnomaliaZPrigimaliaSurvivor>(nullptr,TEXT("/Game/Anomalia/Characters/BP_Anomalia_Survival.BP_Anomalia_Survival_C")))
+            {
+                TestTrue(TEXT("Actual default game spawns the installed playable character profile"),Survivor->IsA(InstalledProfile));
+                TestNotNull(TEXT("Default playable character has an actual body"),Survivor->GetMesh()->GetSkeletalMeshAsset());
+                TestNotNull(TEXT("Default playable character has a runtime animation instance"),Survivor->GetMesh()->GetAnimInstance());
+            }
             TestEqual(TEXT("Fresh isolated player inventory"), Units, 0);
             auto* Items=Survivor->InventoryComponent.Get();FString PolicyError;
             const auto PreviousSettings=Mode->ActiveServerSettings;
