@@ -36,9 +36,15 @@ function openInUnreal(packageName){
  if(typeof packageName!=='string'||!inventory.maps.some(m=>m.package===packageName))throw Error('Carte inconnue ou non installée');
  // The project file opens the actual UE editor. A map can be selected by a validated local package path.
  const map=inventory.maps.find(m=>m.package===packageName);
- const editor=process.env.ANOMALIA_UNREAL_EDITOR_EXE;
- const exe=editor&&fs.existsSync(editor)?editor:null;
- if(!exe)throw Error('Configurer ANOMALIA_UNREAL_EDITOR_EXE avec le chemin de UnrealEditor.exe pour ouvrir une carte');
+ const candidates=[
+  process.env.ANOMALIA_UNREAL_EDITOR_EXE,
+  process.env.UE_EDITOR_EXE,
+  'C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe',
+  'D:\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe',
+  'D:\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor.exe'
+ ];
+ const exe=candidates.find(candidate=>candidate&&fs.existsSync(candidate));
+ if(!exe)throw Error('UnrealEditor.exe introuvable. Définir ANOMALIA_UNREAL_EDITOR_EXE avec le chemin exact de Unreal Engine 5.8.');
  const child=spawn(exe,[inventory.project,map.package],{detached:true,stdio:'ignore',windowsHide:false});
  child.on('error',()=>{});
  child.unref();
