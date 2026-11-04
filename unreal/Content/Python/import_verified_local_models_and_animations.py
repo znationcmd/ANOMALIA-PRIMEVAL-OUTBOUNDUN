@@ -2,12 +2,14 @@
 import os,json,pathlib,hashlib,time,gc,unreal
 out=pathlib.Path(os.environ["MISSION_RAW_OUT"])
 manifest=json.loads(pathlib.Path(os.environ["MISSION_RAW_MANIFEST"]).read_text(encoding="utf-8"))
-root="/Game/Anomalia/LocalResources"
+root=manifest["outputNamespace"]
+assert root.startswith("/Game/Anomalia/LocalResources/B_")
 tools=unreal.AssetToolsHelpers.get_asset_tools()
 report={"state":"IMPORTING","sources":[],"errors":[],"deferred":[],"mapsSaved":0,"existingAssetsReplaced":False,"gameplayAccepted":False}
 owned_rigs={}
 def checkpoint():
     (out/"raw-import-report.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+    print("RAW_IMPORT saved="+str(len(report["sources"]))+" deferred="+str(len(report["deferred"]))+" failed="+str(len(report["errors"])),flush=True)
 def classify(path):
     obj=unreal.load_asset(path)
     if not obj:return None
@@ -87,7 +89,7 @@ for second_pass in [False,True]:
         except Exception as exc:
             entry.update(state="FAILED_PRESERVED_FOR_DIAGNOSIS",error=str(exc))
             report["errors"].append(entry)
-        checkpoint();gc.collect()
+        checkpoint();gc.collect();unreal.collect_garbage()
     pending=again
 report["state"]="RAW_IMPORT_FINISHED_WITH_DEFERRED_OR_ERRORS" if report["deferred"] or report["errors"] else "RAW_IMPORT_FINISHED_NOT_GAMEPLAY_ACCEPTED"
 checkpoint()
