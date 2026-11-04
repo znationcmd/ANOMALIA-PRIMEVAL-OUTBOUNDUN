@@ -55,8 +55,8 @@ jobs:
           }
           $receipt | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $out 'asset-copy-receipt.json') -Encoding UTF8
           $script=Join-Path $out 'verify_anomalia_survival_pie.py'
-          Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/5803704523ac17ea78cbe7f7258bbb7d8b94ccb3/unreal/Content/Python/verify_anomalia_survival_pie.py' -OutFile $script
-          if((& git hash-object -- $script).Trim() -ne '7f0a2ac4dcc2c49f78560faf227406e1d427acb4'){throw 'Existing PIE regression script blob differs'}
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/d611f43978c561707c5cf52e2ad886eef2f06d5a/unreal/Content/Python/verify_anomalia_survival_pie.py' -OutFile $script
+          if((& git hash-object -- $script).Trim() -ne 'f3d7d48abe7f55a20ccde0a14b4a386bdb2c2f29'){throw 'Existing PIE regression script blob differs'}
           "MISSION_SURVIVAL_SCRIPT=$script" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
       - name: Exercise existing animated Survival pawn in actual PIE without saving any map
         timeout-minutes: 15
