@@ -90,3 +90,44 @@ Le lanceur validate-build.py cherchait aussi l'ancien préfixe Anomalia.Native a
 Run [41801391717](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41801391717) : réserve du vrai C: contrôlée avant copie. Source, configuration, contenu versionné et binaire Editor compilé copiés vers un nouveau dossier C:\ANOMALIA_MISSION_<run>, sans Intermediate ni Saved ; empreinte DLL comparée avant/après, reçu de source conservé. Tests natifs avec bon préfixe et cible Game exécutés séparément afin qu'un échec indépendant ne masque pas l'autre. Résultats en attente à ce point.
 
 Inspection GLB [41800855341](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41800855341) **réussie** : GLB 2.0, 1 mesh / 1 nœud, 161 matériaux, 145 textures, 1 366 382 triangles d'après les accesseurs de la scène active. Aucune extension obligatoire ; KHR_materials_specular seulement déclarée utilisée. Bornes après transformation : 3 386,661 × 210,706 × 3 507,576 unités du fichier. Ces bornes ne prouvent ni l'échelle du circuit, ni une longueur de tour de 5,451 km, ni les collisions ; pas d'import Unreal effectué.
+
+## État consolidé vérifié — 4 novembre 2026
+
+Cette section remplace les mentions provisoires « résultats en attente » ci-dessus.
+
+### Compilation et tests réellement exécutés
+
+- [41801391717](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41801391717), artefact 13308500967 : **Game compilé, sortie 0 ; 28/28 tests natifs réussis, 0 échec**, dont les 19 requis présents. Avec Editor réussi dans 41800675310, les deux cibles ont compilé sur la base 0360ec9 + correctif NavigationSystem f0f5144. Cela ne valide pas les changements C++ ultérieurs.
+- [41804781472](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41804781472), artefact 13308509212 : **scénario Survival PIE réussi avec capture réelle 1280 × 720**. BP_Anomalia_Survival, squelette/Animation Blueprint compatibles, cinq vêtements existants. Marche 449,961 cm/s ; sprint 679,923 cm/s ; saut 89,977 cm ; variation osseuse 67,455 cm ; capsule 88 → 60 → 88 ; stamina 100 → 80,336 ; ajout/retrait pomme 0 → 0,15 → 0 kg ; retrait/rééquipement veste réussi.
+- [Capture réelle](https://chatgpt.com/library?file_id=libfile_8e42aa12a92c819186eae25ef5587ca9&account_id=personal) : personnage et vêtements visibles dans une scène de vérification transitoire, **pas SKARVIK**.
+- Le scénario pilote des API du personnage ; il ne valide pas toutes les touches physiques, les échelles, le franchissement, le rechargement, le multijoueur ou la persistance des compagnons.
+- Le premier scénario avait échoué sur un gel du temps simulé pendant l'accroupissement. Correctif du dispositif de test : finir la compilation d'assets et désactiver le throttling de cette session avant les phases chronométrées, sans réduire les seuils fonctionnels.
+- Des erreurs génériques LogAutomationTest apparaissent à l'initialisation ; leur origine reste à isoler. Le succès du scénario ne signifie pas que tous les journaux de démarrage sont propres.
+- Aucune mesure FPS de SKARVIK ou performance globale de version publiée. Le coût de capture ne constitue pas une mesure de fluidité.
+
+### Conservation et espace disque
+
+[41804514908](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41804514908), artefact 13309013918 : **1 782 fichiers de validation conservés**, 4 731 164 756 octets, empreintes comparées avant/après. Seul le dossier de validation créé par cette mission a été transféré vers C:\ANOMALIA_MISSION_ARCHIVE_m41798670858. Ancien chemin maintenu par jonction. **4 735 266 816 octets récupérés sur D:**, réserve finale 4 735 844 352 octets. Aucun contenu du véritable D:\ANOMALIA ni sauvegarde utilisateur supprimé.
+
+### Régressions et correctifs candidats encore non validés
+
+- [41805598581](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41805598581), artefact 13309073582 : **inventaire PIE en échec, phase 5**, dépôt bancaire introuvable. Ramassage physique, relecture de profil et ouverture clavier/manette avaient été atteints.
+- Le test utilisait l'ancienne présentation. L'interface actuelle exige de sélectionner une tuile avant d'afficher ses actions, et de choisir l'onglet banque avant retrait. Fixture corrigée sans contourner les transactions ni retirer les assertions de quantité/rotation/pagination.
+- Candidat GameMode 0a78c50 : utiliser le véritable BP Survival installé comme personnage par défaut seulement si son mesh et le squelette de son Animation Blueprint correspondent. Le repli natif reste explicite si les ressources manquent. Ce candidat exige encore compilation et PIE ; ne pas l'annoncer déployé dans D:.
+- Les premiers essais de relance ont échoué dans l'infrastructure avant compilation : accès raw HTTP 404 puis tableau JSON imbriqué sous Windows PowerShell 5. Récupération authentifiée et lecture du tableau corrigées. Nouvel essai [41809230466](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41809230466) en cours au moment de cette mise à jour.
+- La première comparaison des sources locales a expiré sans reçu exploitable ; le second essai utilisait l'alias Python Microsoft Store absent. Comparaison corrigée pour utiliser Python fourni avec Unreal et écrire un reçu après chaque projet ; aucun résultat de comparaison n'est encore revendiqué.
+
+### Progression sur critères vérifiables
+
+| Domaine | Résultat vérifié | Limite |
+|---|---|---|
+| Compilation de la base corrigée | 2/2 cibles, 100 % | Pas un pourcentage d'achèvement du jeu ; candidat GameMode exclu |
+| Suite native de la base | 28/28 tests, 100 % | Couverture limitée aux règles enregistrées |
+| Scénario Survival | 1/1 scénario exécuté réussi | Toutes les animations demandées ne sont pas couvertes |
+| Inventaire PIE complet | 0/1 scénario complet réussi | Nouvelle tentative nécessaire |
+| SKARVIK | Preuves historiques récupérées | Villes, 7 îles, routes raccordées et entrées de bâtiments non réceptionnées globalement |
+| Animaux | Modèles identifiés ; ancien système chien documenté | IA multi-espèces et compagnons simultanés non validés |
+| Circuit F1 | Archive et métadonnées vérifiées | Licence exacte, import, collisions et tour conduisible non validés |
+| Véhicules | Résultats E39 antérieurs récupérés | Aucune nouvelle réception de conduite sur SKARVIK/circuit |
+
+Les pourcentages globaux par domaine restent **non calculables** tant que les critères de réception et leur comptage ne sont pas vérifiés. Le « 55 % » antérieur n'est pas confirmé par ces preuves. Travail conservé sur mission/finalisation-20261104 et PR brouillon #64, sans fusion.
