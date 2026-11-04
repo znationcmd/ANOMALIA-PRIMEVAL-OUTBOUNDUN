@@ -59,10 +59,12 @@ jobs:
               }
             }
           }
-          $bytes=($plan | Measure-Object -Property bytes -Sum).Sum
+          [int64]$bytes=0
+          foreach($entry in $plan){$bytes += [int64]$entry.bytes}
           $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
           if($bytes -gt 2GB -or $disk.FreeSpace -lt (4GB+$bytes)){throw 'Bounded restoration exceeds reserve'}
           $receipt=[ordered]@{graphRun=41810570770;mapSHA256Before=$mapBefore;bytesPlanned=$bytes;unresolved=$unresolved;ambiguous=$ambiguous;files=@();mainDProjectModified=$false;mapsSaved=0}
+          $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'restoration-receipt.json') -Encoding UTF8
           foreach($entry in $plan){
             if((Get-FileHash -LiteralPath $entry.source -Algorithm SHA256).Hash -ne $entry.sha256){throw 'Original resource changed'}
             New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($entry.target)) -Force | Out-Null
