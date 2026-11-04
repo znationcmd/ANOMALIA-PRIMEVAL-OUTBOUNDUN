@@ -17,6 +17,13 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: mission-${{ github.run_id }}
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /public/config/
+            /unreal/Source/
+            /unreal/Config/
+            /unreal/*.uproject
           clean: false
           persist-credentials: false
       - name: Preserve installed projects and export this exact commit to a new short path
