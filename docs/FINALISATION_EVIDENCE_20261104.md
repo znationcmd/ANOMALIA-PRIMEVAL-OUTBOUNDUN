@@ -1,3 +1,27 @@
+> État courant — extension de mission du 4 novembre 2026 : intégrer les animations, véhicules et autres ressources locales Fab/Sketchfab et des autres projets Unreal dans le véritable D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject. L’intégration [41846216338](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41846216338) est en cours. Le contrôle de classes et de références dans cet éditeur réel est préparé ; ne pas assimiler la présence de fichiers à des animations retargetées ou des véhicules conduisibles.
+
+## Nouveau lot — ressources de tous les projets locaux
+
+- [41842801517](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41842801517), artefact 13329723977 : **59 dossiers de contenu**, **348 824 entrées de packages source** totalisant **205 082 964 567 octets**, avec doublons et versions multiples. Ce ne sont pas 348 824 assets uniques. **2 551 fichiers bruts/archives** répertoriés. 779 dossiers de racines inspectés, zéro erreur du rapprochement.
+- Les inventaires antérieurs sont conservés et réutilisés. Le nouvel inventaire est nécessaire pour les animations seules, les autres projets et les conflits de chemins : l’ancien inventaire thématique ne recensait pas toutes les animations.
+- L’ancien importeur Fab excluait explicitement les FBX d’animation seuls et reportait certains gros packs. Leur intégration n’est donc pas déjà acquise.
+- Les racines trouvées comprennent le projet SKARVIK avancé, les autres projets ANOMALIA, les projets Fab et les caches installés. Les copies de validation et sauvegardes identifiées sont exclues de la sélection de projets.
+- Le rapprochement élargi a retrouvé **330/330 chemins exacts de matériaux manquants** dans C:\ANOMALIA\StorageRecovery\CitySampleUniqueCacheFiles\Content, qui se résout physiquement sur D:. Les fichiers d’origine existent donc ; aucune reconstruction approximative de leurs paramètres n’est nécessaire.
+- L’intégration native est effectuée dans le Content du projet réel sur D:, avec refus d’écrasement, protection des cartes préexistantes et de leurs acteurs externes, réutilisation de fichiers identiques et journal persistant sous Saved/ImportReceipts. Les conflits et ressources nécessitant une conversion restent explicitement à traiter.
+- Les ressources brutes FBX/GLB/OBJ/ZIP doivent encore passer par les importeurs Unreal et leurs squelettes corrects. Un fichier brut catalogué n’est pas compté comme asset importé.
+- [Vérification dans le projet réel](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/blob/mission/finalisation-20261104/.github/workflows/mission-actual-D-resource-registration.yml) : lecture des classes réelles, références de squelettes, candidats véhicules et données de source pour éviter des réimportations inutiles. Aucun test de conduite ou retargeting n’est revendiqué par ce contrôle.
+
+## Nouveau lot — réparations SKARVIK réalisées et limites
+
+- [41811059564](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41811059564), artefact 13312048096 : 37 ressources manquantes retrouvées au chemin exact dans D: ; 33 fichiers déjà communs comparés et identiques.
+- [41836986289](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41836986289), artefact 13328000835 : **62 packages existants restaurés**, **767 033 433 octets**, dans la copie SKARVIK avancée. 37 OriginalImports et 25 Megascans ; empreintes source/copie vérifiées, source inchangée, aucun niveau sauvegardé.
+- [41838072041](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41838072041), artefact 13327617343 : erreur GameFeatureData corrigée en reprenant la règle du CitySample installé ; configuration précédente conservée sous Saved/MissionConfigurationBackups/41838072041. **Commandlet Unreal réussi**.
+- Graphe après cette restauration : 13 564 packages, 39 924 arcs, 330 chemins source encore manquants à ce stade, 13 164 fichiers absents de D:, 70 chemins de taille identique à comparer. 5 066 137 644 octets seraient nécessaires pour une copie physique naïve, alors que la dernière mesure de D: est 4 735 844 352 octets libres. L’intégration doit donc éviter la duplication.
+- [41839300043](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41839300043), artefact 13327523781 : lecture réelle de trois meshes de trois kits ; trois interfaces de matériau nulles, fichiers identiques aux originaux Fab, aucune sauvegarde.
+- Les tentatives de réaffectation de trois matériaux se sont arrêtées sur la vérification de géométrie **avant toute sauvegarde de mesh**. Elles ne sont pas annoncées comme appliquées. La découverte des 330 véritables instances permet de privilégier leur récupération exacte.
+
+Les sections suivantes conservent les preuves des lots précédents ; leurs mentions provisoires sont remplacées par les états consolidés plus récents.
+
 # Mission de finalisation — preuves P0, 4 novembre 2026
 
 ## Périmètre et préservation
