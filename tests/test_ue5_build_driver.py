@@ -77,16 +77,16 @@ class BuildDriverTests(unittest.TestCase):
         self.assertEqual(report["nativeTests"], "failed")
 
     def test_partial_test_report_does_not_pass(self):
-        code, report = self.run_native_fixture({"tests": [{"fullTestPath": "Anomalia.Native.VehicleCatalog", "state": "Success"}]})
+        code, report = self.run_native_fixture({"tests": [{"fullTestPath": "AnomaliaZPrigimalia.Native.VehicleCatalog", "state": "Success"}]})
         self.assertEqual(code, 1)
         self.assertEqual(report["nativeTests"], "failed")
 
     def test_all_expected_native_results_still_do_not_claim_playable_game(self):
         code, report = self.run_native_fixture({"tests": [
             {"fullTestPath": name, "state": "Success"} for name in
-            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics",
-             "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry",
-             "Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.POIResourceExclusivity", "Anomalia.Native.ChaosRoadConfiguration")]})
+            ("AnomaliaZPrigimalia.Native.VehicleCatalog", "AnomaliaZPrigimalia.Native.ProfileIsolation", "AnomaliaZPrigimalia.Native.TransportDynamics",
+             "AnomaliaZPrigimalia.Native.DoorLeafAuthorityAndCollision", "AnomaliaZPrigimalia.Native.CrewEntryAndSafeExitGeometry",
+             "AnomaliaZPrigimalia.Native.ReactiveWorldPersistenceAndPower", "AnomaliaZPrigimalia.Native.POIResourceExclusivity", "AnomaliaZPrigimalia.Native.ChaosRoadConfiguration")]})
         self.assertEqual(code, 0)
         self.assertEqual(report["nativeTests"], "passed")
         self.assertEqual(report["execution"], "not_run")
@@ -95,6 +95,17 @@ class BuildDriverTests(unittest.TestCase):
     def test_legacy_success_report_without_interaction_tests_is_rejected(self):
         code, report = self.run_native_fixture({"tests": [
             {"fullTestPath": name, "state": "Success"} for name in
-            ("Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics")]})
+            ("AnomaliaZPrigimalia.Native.VehicleCatalog", "AnomaliaZPrigimalia.Native.ProfileIsolation", "AnomaliaZPrigimalia.Native.TransportDynamics")]})
+        self.assertEqual(code, 1)
+        self.assertEqual(report["nativeTests"], "failed")
+
+    def test_complete_report_from_pre_rename_namespace_is_rejected(self):
+        names = ("VehicleCatalog", "ProfileIsolation", "TransportDynamics",
+                 "DoorLeafAuthorityAndCollision", "CrewEntryAndSafeExitGeometry",
+                 "ReactiveWorldPersistenceAndPower", "POIResourceExclusivity",
+                 "ChaosRoadConfiguration")
+        code, report = self.run_native_fixture({"tests": [
+            {"fullTestPath": "Anomalia.Native." + name, "state": "Success"}
+            for name in names]})
         self.assertEqual(code, 1)
         self.assertEqual(report["nativeTests"], "failed")
