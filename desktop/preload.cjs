@@ -6,6 +6,11 @@ contextBridge.exposeInMainWorld('anomaliaWorkshop',Object.freeze({
  list:()=>ipcRenderer.invoke('anomalia:workshop:list')
 }));
 
+contextBridge.exposeInMainWorld('anomaliaSkarvik',Object.freeze({
+ status:()=>ipcRenderer.invoke('anomalia:skarvik:status'),
+ openInUnreal:()=>ipcRenderer.invoke('anomalia:skarvik:launch')
+}));
+
 contextBridge.exposeInMainWorld('anomaliaUpdates',Object.freeze({
  status:()=>ipcRenderer.invoke('anomalia:update:status'),
  check:()=>ipcRenderer.invoke('anomalia:update:check'),

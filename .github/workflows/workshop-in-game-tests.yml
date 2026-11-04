@@ -44,7 +44,8 @@ jobs:
       - name: Windows unit tests
         run: npm test
   browser:
-    runs-on: ubuntu-latest
+    # Playwright 1.51.1 does not support ubuntu26.04; pin a supported image.
+    runs-on: ubuntu-24.04
     timeout-minutes: 9
     steps:
       - uses: actions/checkout@v4
