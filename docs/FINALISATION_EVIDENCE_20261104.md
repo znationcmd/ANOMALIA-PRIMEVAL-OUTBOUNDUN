@@ -1,0 +1,61 @@
+# Mission de finalisation — preuves P0, 4 novembre 2026
+
+## Périmètre et préservation
+
+Base : `e2f901d8d9857b0fe899dbe515dedf40bcec9d76`, branche demandée `feature/skarvik-citysample-sm5-20261031`.
+Travail isolé : `mission/finalisation-20261104`, PR #64.
+Aucune modification de D:\ANOMALIA, de PostgreSQL, des sauvegardes, des assets ou des cartes installées. Aucun merge, suppression de branche ou force-push.
+
+## État réellement constaté
+
+- Inventaire réutilisé, run [41794604995](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41794604995) : 127 .umap, 24 999 packages .uasset/.umap. Un seul projet, AnomaliaPrimeval.uproject.
+- Les niveaux identifiés par le filtre SKARVIK/City/Archipelago sont CitySampleVehicles, ANOMALIA_Archipelago_v1 et ANOMALIA_Archipelago_v2. Ce filtre ne constitue pas une inspection des acteurs. Aucun nombre de villes ou de routes praticables n'en est déduit.
+- Inspection ciblée [41798193651](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41798193651), artefact 13306197665 : 25 044 fichiers Content, 145 514 FabImports, 253 Sketchfab ; aucune erreur de parcours. D:\ANOMALIA n'est pas un checkout Git. Le descripteur charge le module AnomaliaPrimeval ; son EngineAssociation est un GUID. Ce GUID seul ne prouve pas la version du moteur.
+- Processus au moment de cette inspection : EpicGamesLauncher uniquement parmi les processus ciblés. Aucun Unreal/Robocopy ciblé détecté à cet instant ; ce résultat n'est pas une garantie permanente.
+- Modèles installés confirmés par chemin : German Shepherd, SK_Wolf, SK_Fox, SK_DeerStag, SK_DeerDoe, SK_Lion_LOD0 et SK_Lioness_LOD0. Il s'agit de présence de fichiers, pas de chargement, de compatibilité d'animations ou d'IA acceptée.
+- Archive circuit existante : D:\ANOMALIA\sketchfab\shanghai-international-circuit-2018-layout.zip, 105 849 006 octets. Les deux fichiers formula_one.uasset sont des candidats véhicule, pas la preuve d'un circuit importé.
+- L'inventaire antérieur [41663867323](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41663867323) est récupéré. Ses correspondances par nom comportent des faux positifs : identifiants World Partition contenant DOG/FOX et noms contenant ape. Ne pas compter ces correspondances comme espèces intégrées.
+
+## Résultats historiques conservés, sans les attribuer à D:
+
+Les rapports versionnés CHARACTER_VALIDATION_RESULTS_20261027.md, DOG_COMPANION_AUDIT_20261028.json et BMW_E39_NATIVE_STATUS.md décrivent des validations sur des copies C: distinctes.
+
+- Survival : run 40656105121, marche 449,98 cm/s, course 679,95 cm/s, accroupissement, saut et opérations d'inventaire par API en PIE. Cela ne valide pas toute l'animation, les entrées physiques ni l'installation D:.
+- Berger allemand : rapport historique de 28 tests natifs et 16 contrôles PIE. Follow/Stay et blessures non mortelles ; navigation, persistance et ordres manquants restent à traiter.
+- Singe B3 : fichiers et 19 noms de sources d'animation historiquement documentés ; compatibilité, présence actuelle dans le projet principal et compagnon non validés.
+- E39 : run 40655809703, 26 tests natifs, 64 contrôles physiques, 313 échantillons sur copie isolée. Freinages 30,87 m à 80,32 km/h sur adhérence 0,9 et 56,87 m à 80,04 km/h sur 0,45. Ces mesures ne sont ni des performances actuelles de D: ni une validation de toute la simulation demandée.
+- SKARVIK : les scripts existants ciblent notamment C:\ANOMALIAZ_SKARVIK_STAGE_41188816555 et PRIGIMALIA_SKARVIK_FINAL_v1. Leur code attend des comptes d'acteurs ; ces nombres ne sont pas des résultats réobservés. Ne pas recopier ce stage vers D: sans validation des dépendances et des différences.
+
+## Changements et erreurs de ce lot
+
+- Branche sécurisée et PR brouillon créées.
+- Inspection Windows sans checkout ni écriture dans le projet.
+- Premier essai d'inspection arrêté par l'absence de Git sur D:. Reprise : rapport complet publié, mais job rouge car le code de sortie Git 128 subsiste dans le wrapper PowerShell. Correction explicite de sortie enregistrée ; pas de nouveau scan automatique inutile.
+- Cause de l'échec natif antérieur 41699761070 vérifiée dans le journal : chemins UBT de 261 à 264 caractères, sortie 6, pas de PIE exécuté.
+- Nouvelle validation : checkout clairsemé dans un emplacement propre, export du commit exact vers un dossier court et unique C:\ANOMALIA-Validation\m<run>. Aucun projet alternatif conçu ; c'est une copie de compilation des sources existantes.
+- Première tentative courte 41798564805 : checkout arrêté par un long chemin d'asset. Correction par checkout clairsemé avant export complet.
+- Reprise native [41798670858](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41798670858) : prévalidation et export réussis, compilation en cours lors de rédaction. Tests natifs non encore acceptés.
+- Inspection de l'archive circuit [41798766216](https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41798766216) programmée dans le même groupe exclusif.
+
+## Acceptation fonctionnelle et progression
+
+Aucune carte, animation, espèce, circuit ou physique de véhicule n'a été modifiée ou nouvellement acceptée en jeu par ce lot. Aucun FPS, temps de frame ou budget mémoire en gameplay mesuré.
+
+Les pourcentages globaux de réalisation ne sont pas calculables à ce stade : absence de correspondance vérifiée entre le projet installé, les copies validées et leurs ressources. Leur attribuer arbitrairement un taux serait trompeur. Les compteurs ci-dessous mesurent seulement les nouvelles acceptations de cette mission, pas l'absence du travail historique.
+
+| Domaine | Critère d'acceptation actuel | Résultat |
+|---|---|---|
+| SKARVIK | 10 groupes de la mission validés sur la carte principale | 0/10 nouvellement acceptés (0 % de couverture nouvelle) |
+| Personnage | Scénario complet demandé en première/troisième personne | Non exécuté ; progression globale indéterminée |
+| Animaux | Espèces et deux compagnons simultanés testés sur la carte principale | Aucune nouvelle espèce acceptée ; progression globale indéterminée |
+| Circuit | Archive identifiée, licence, import, collisions, tour complet | Archive identifiée uniquement ; aucune acceptation de conduite |
+| Véhicule | Conduite sur route/circuit et fonctions complètes dans D: | Non exécuté sur D: ; preuves historiques distinctes |
+| Validation générale | Compilation + Blueprints + PIE + sauvegardes + performances sur version finale | En cours / non accepté |
+
+## Suite nécessaire
+
+1. Terminer et lire les journaux de compilation ; corriger les erreurs démontrées avant relance.
+2. Identifier les écarts exacts de modules/source entre D: et la copie SKARVIK avancée C:, ainsi que les dépendances de la vraie carte.
+3. Vérifier l'identité de l'archive circuit, sa licence et son contenu avant toute importation.
+4. Valider SKARVIK par chargement World Partition, navigation et parcours ; ne pas confondre nombre de meshes et villes complètes.
+5. Compléter les systèmes et tester chaque comportement dans le projet retenu, puis seulement installer les changements validés.
