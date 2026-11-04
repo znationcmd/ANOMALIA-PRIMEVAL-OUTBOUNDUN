@@ -5,12 +5,22 @@ out=Path(os.environ["PROJECT_DISCOVERY_OUT"]);out.mkdir(parents=True,exist_ok=Tr
 deadline=time.monotonic()+1100
 skip={"windows","$recycle.bin","system volume information","node_modules",".git","deriveddatacache","intermediate","binaries","saved","engine","content"}
 roots=[Path(f"{c}:/") for c in "CDEFGHIJKLMNOPQRSTUVWXYZ" if Path(f"{c}:/").exists()]
-projects=[];errors=[];seen=set()
+projects=[];errors=[];seen=set();sketchfab_dirs=[];sketchfab_files=[]
 def error(e):
     if len(errors)<200: errors.append(str(e))
 for root in roots:
     for base,dirs,files in os.walk(root,followlinks=False,onerror=error):
         if time.monotonic()>deadline: break
+        if "sketchfab" in Path(base).name.casefold():
+            sketchfab_dirs.append({"path":str(Path(base)),"resolved":str(Path(base).resolve())})
+        if any("sketchfab" in part.casefold() for part in Path(base).parts):
+            for f in files:
+                p_raw=Path(base,f)
+                if p_raw.suffix.casefold() in {".zip",".7z",".rar",".fbx",".glb",".gltf",".obj",".blend",".uproject"}:
+                    try:
+                        record={"path":str(p_raw),"bytes":p_raw.stat().st_size}
+                        sketchfab_files.append(record)
+                    except OSError as e:error(e)
         dirs[:]=[d for d in dirs if d.casefold() not in skip and not Path(base,d).is_symlink() and not getattr(os.path,"isjunction",lambda p: bool(os.lstat(p).st_file_attributes & 0x400))(Path(base,d))]
         for name in files:
             if not name.casefold().endswith(".uproject"):continue
@@ -44,6 +54,6 @@ for root in roots:
                 (out/"standalone-projects.json").write_text(json.dumps({"projects":projects,"errors":errors,"complete":False},indent=2),encoding="utf-8")
                 print("PROJECT",str(p),flush=True)
             except Exception as e:error(e)
-result={"projects":projects,"errors":errors,"complete":time.monotonic()<=deadline,"readOnly":True,"roots":[str(r) for r in roots],"excludedDirectoryNames":sorted(skip)}
+result={"sketchfabDirectories":sketchfab_dirs,"sketchfabSourceFiles":sketchfab_files,"projects":projects,"errors":errors,"complete":time.monotonic()<=deadline,"readOnly":True,"roots":[str(r) for r in roots],"excludedDirectoryNames":sorted(skip)}
 (out/"standalone-projects.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
 print(json.dumps({"projects":len(projects),"complete":result["complete"]}),flush=True)
