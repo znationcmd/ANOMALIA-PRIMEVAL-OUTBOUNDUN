@@ -18,34 +18,55 @@ concurrency:
   cancel-in-progress: false
 jobs:
   native-loot:
-    defaults:
-      run:
-        working-directory: a
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 150
     steps:
       - uses: actions/checkout@v4
         with:
-          path: a
+          path: native-source-${{ github.run_id }}
           clean: false
           persist-credentials: false
-      - name: Validate installed UE5 and isolated test scope
+          sparse-checkout-cone-mode: false
+          sparse-checkout: |
+            /scripts/
+            /public/config/
+            /unreal/Source/
+            /unreal/Config/
+            /unreal/*.uproject
+      - name: Validate UE5.8 and export exact sources to a new physical short path
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if(!$env:UE_ROOT){throw 'Installed UE_ROOT is required'}
+          $version=Get-Content -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Build\Build.version') -Raw | ConvertFrom-Json
+          if($version.MajorVersion -ne 5 -or $version.MinorVersion -ne 8){throw 'This project requires Unreal Engine 5.8'}
           if(!(Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'))){throw 'UE5 Build.bat missing'}
-          if(!(Test-Path -LiteralPath 'unreal\AnomaliaZPrigimalia.uproject')){throw 'ANOMALIA project missing'}
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          $os=Get-CimInstance Win32_OperatingSystem
+          $root=Join-Path 'C:\' ('ANOMALIA_NATIVE_'+$env:GITHUB_RUN_ID)
+          $preflight=Join-Path $env:RUNNER_TEMP ('anomalia-native-preflight-'+$env:GITHUB_RUN_ID+'.json')
+          [ordered]@{sourceCommit=$env:GITHUB_SHA;physicalRoot=$root;CFreeBytes=$disk.FreeSpace;freeMemoryKiB=$os.FreePhysicalMemory;freeVirtualMemoryKiB=$os.FreeVirtualMemory;engine=$version;installedProjectModified=$false} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath $preflight -Encoding UTF8
+          if($disk.DriveType -ne 3 -or $disk.FreeSpace -lt 12GB -or $os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient physical disk/RAM/virtual-memory validation reserve'}
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
-          Write-Host 'SKARVIK_LOOT_UE5_PREFLIGHT_OK=true'
+          if(Test-Path -LiteralPath $root){throw 'Unique validation root already exists; preserve it'}
+          $source=Join-Path $env:GITHUB_WORKSPACE ('native-source-'+$env:GITHUB_RUN_ID)
+          $zip=Join-Path $env:RUNNER_TEMP ('anomalia-native-source-'+$env:GITHUB_RUN_ID+'.zip')
+          & git -C $source archive --format=zip "--output=$zip" $env:GITHUB_SHA
+          if($LASTEXITCODE -ne 0){throw 'Exact source export failed'}
+          Expand-Archive -LiteralPath $zip -DestinationPath $root
+          if(!(Test-Path -LiteralPath (Join-Path $root 'unreal\AnomaliaZPrigimalia.uproject'))){throw 'Existing ANOMALIA project missing'}
+          $report=Join-Path $root ('unreal\Saved\SkarvikLootValidation\run-'+$env:GITHUB_RUN_ID)
+          "ANOMALIA_NATIVE_ROOT=$root" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "ANOMALIA_NATIVE_REPORT=$report" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Write-Host ('SKARVIK_NATIVE_PHYSICAL_ROOT='+$root)
       - name: Compile UE5 Editor and Game and run all native loot transaction regressions
         id: native
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
+          Set-Location -LiteralPath $env:ANOMALIA_NATIVE_ROOT
           $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
-          $out="unreal\Saved\SkarvikLootValidation\run-$env:GITHUB_RUN_ID"
-          & $python scripts\ue5\validate-build.py --engine-root "$env:UE_ROOT" --output "$out" --run-tests --require-loot-tests
+          & $python scripts\ue5\validate-build.py --engine-root "$env:UE_ROOT" --output "$env:ANOMALIA_NATIVE_REPORT" --run-tests --require-loot-tests
           if($LASTEXITCODE -ne 0){throw 'Native UE5 build or required loot tests failed'}
       - name: Run real Play In Editor pickup, inventory UI and persistence test
         id: pie
@@ -53,14 +74,21 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
+          Set-Location -LiteralPath $env:ANOMALIA_NATIVE_ROOT
           $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
-          $out="unreal\Saved\SkarvikLootValidation\run-$env:GITHUB_RUN_ID\pie"
+          $out=Join-Path $env:ANOMALIA_NATIVE_REPORT 'pie'
           & $python scripts\ue5\run-loot-playtest.py --engine-root "$env:UE_ROOT" --output "$out"
           if($LASTEXITCODE -ne 0){throw 'Actual loot PIE interaction test failed'}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: skarvik-native-preflight
+          path: ${{ runner.temp }}/anomalia-native-preflight-${{ github.run_id }}.json
+          if-no-files-found: warn
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_NATIVE_REPORT != ''
+        with:
           name: skarvik-native-loot-validation
-          path: a/unreal/Saved/SkarvikLootValidation/run-${{ github.run_id }}/**
+          path: ${{ env.ANOMALIA_NATIVE_REPORT }}/**
           if-no-files-found: error
           compression-level: 6
