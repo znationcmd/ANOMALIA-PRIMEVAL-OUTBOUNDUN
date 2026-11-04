@@ -18,8 +18,11 @@ def sha(path):
         while block:=stream.read(1024*1024):h.update(block)
     return h.hexdigest()
 def snapshot(mesh):
+    unreal.AutomationUtilsBlueprintLibrary.finish_all_asset_compilation()
     lods=mesh.get_num_lods()
-    return {"lods":lods,"triangles":[mesh.get_num_triangles(i) for i in range(lods)],"vertices":[mesh.get_num_vertices(i) for i in range(lods)],"bounds":str(mesh.get_bounding_box()),"slotNames":[str(s.get_editor_property("material_slot_name")) for s in mesh.get_editor_property("static_materials")]}
+    box=mesh.get_bounding_box()
+    bounds={"min":[box.min.x,box.min.y,box.min.z],"max":[box.max.x,box.max.y,box.max.z]}
+    return {"lods":lods,"triangles":[mesh.get_num_triangles(i) for i in range(lods)],"vertices":[mesh.get_num_vertices(i) for i in range(lods)],"bounds":bounds,"slotNames":[str(s.get_editor_property("material_slot_name")) for s in mesh.get_editor_property("static_materials")]}
 def ensure_package(package):
     relative=package[len("/Game/"):]
     target=stage/"Content"/(relative+".uasset")
@@ -96,7 +99,9 @@ save()
 for audited,mesh,slots,materials,geometry in prepared:
     for slot,material in zip(slots,materials):slot.set_editor_property("material_interface",material)
     mesh.set_editor_property("static_materials",slots)
-    assert snapshot(mesh)==geometry,"Material assignment changed geometry or slot names"
+    after=snapshot(mesh)
+    report["lastGeometryComparison"]={"package":audited["package"],"before":geometry,"after":after};save()
+    assert after==geometry,"Material assignment changed geometry or slot names"
     assert unreal.EditorAssetLibrary.save_asset(audited["package"],only_if_is_dirty=False)
     relative=audited["package"][len("/Game/"):]
     assert sha(golden/(relative+".uasset"))==audited["existingOriginalSHA256"],"Source CitySample original changed"
