@@ -24,7 +24,7 @@ for kind in ["__ExternalActors__","__ExternalObjects__"]:
 report["externalActorDirectories"]=external_dirs
 if not registry.get_assets_by_package_name(report["map"],True):
     raise RuntimeError("Existing final SKARVIK package is absent from the on-disk asset registry")
-seen=set();pending=list(roots);external=set();edges=0;started=time.monotonic()
+seen=set();pending=list(roots);external=set();native=set();edges=0;started=time.monotonic()
 while pending:
     if len(seen)>=20000 or time.monotonic()-started>150:
         report["errors"].append("Dependency traversal budget reached; plan is incomplete")
@@ -36,7 +36,8 @@ while pending:
         dep=str(dep);edges+=1
         if dep.startswith("/Game/"):
             if dep not in seen:pending.append(dep)
-        elif not dep.startswith(("/Engine/","/Script/")):external.add(dep)
+        elif dep.startswith("/Script/"):native.add(dep)
+        elif not dep.startswith("/Engine/"):external.add(dep)
 rows=[];missing_bytes=0;different_bytes=0
 for package in sorted(seen):
     relative=package[len("/Game/"):]
@@ -55,7 +56,7 @@ for package in sorted(seen):
         if status=="SIZE_DIFFERS_PRESERVE_BOTH":different_bytes+=size
         rows.append({"package":package,"path":rel.as_posix(),"bytes":size,"status":status})
 report.update(state="READ_ONLY_PLAN_COMPLETE" if not pending else "INCOMPLETE_PLAN",
-    dependencyPackages=len(seen),edges=edges,externalPluginPackages=sorted(external),
+    dependencyPackages=len(seen),edges=edges,externalPluginPackages=sorted(external),nativeScriptPackages=sorted(native),
     missingOnDBytes=missing_bytes,conflictingSourceBytes=different_bytes,
     files=rows,elapsedSeconds=time.monotonic()-started,
     sourceMapSHA256Before=before,sourceMapSHA256After=hashlib.sha256(map_file.read_bytes()).hexdigest(),
