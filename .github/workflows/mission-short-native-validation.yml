@@ -1,8 +1,5 @@
 name: ANOMALIA mission - isolated short path native validation
 on:
-  push:
-    branches: [mission/finalisation-20261104]
-    paths: ['.github/workflows/mission-short-native-validation.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -31,7 +28,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $source=Join-Path $env:GITHUB_WORKSPACE ('mission-'+$env:GITHUB_RUN_ID)
-          $destination=Join-Path 'C:\ANOMALIA-Validation' ('m'+$env:GITHUB_RUN_ID)
+          $destination=Join-Path 'C:\' ('ANOMALIA_MISSION_SOURCE_'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $destination){throw 'Unique validation destination already exists; preserve it'}
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal process active: refusing concurrent native validation'}
           $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
