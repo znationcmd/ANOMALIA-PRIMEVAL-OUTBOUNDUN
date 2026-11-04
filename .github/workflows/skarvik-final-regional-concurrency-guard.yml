@@ -1,0 +1,19 @@
+name: SKARVIK - preserve native map by superseding redundant pending regional writer
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-regional-concurrency-guard.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  guard-no-native-mutation:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Preserve the running native regional writer and do not launch a second import
+        run: |
+          echo 'SKARVIK_REGIONAL_IMPORT_CONFLICT_PREVENTION=true'
+          echo 'No Unreal processes are started and no maps are modified.'
+          echo 'The current native regional writer is allowed to complete first.'

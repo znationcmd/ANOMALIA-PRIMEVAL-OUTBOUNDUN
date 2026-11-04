@@ -1,0 +1,48 @@
+name: SKARVIK - City Sample content size breakdown (read only)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-citysample-folder-sizes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  breakdown:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Inspect City Sample content directories, never modify any asset
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          if(-not(Test-Path -LiteralPath (Join-Path $source 'CitySample.uproject'))){throw 'City Sample project not installed'}
+          foreach($name in @('C','D')){
+            $disk=[IO.DriveInfo]::new($name)
+            Write-Host ("SKARVIK_DISK {0} freeGiB={1:N2}" -f $name,($disk.AvailableFreeSpace/1GB))
+          }
+          $rows=New-Object 'System.Collections.Generic.List[object]'
+          foreach($sub in @('Content','Plugins','Source','Config')){
+            $root=Join-Path $source $sub
+            if(-not(Test-Path -LiteralPath $root)){continue}
+            foreach($dir in (Get-ChildItem -LiteralPath $root -Directory -Force | Sort-Object Name)){
+              $bytes=[long]0;$count=0
+              foreach($file in (Get-ChildItem -LiteralPath $dir.FullName -File -Recurse -Force -ErrorAction Stop)){
+                $bytes+=[long]$file.Length;$count++
+              }
+              $row=[ordered]@{directory=($sub+'/'+$dir.Name);files=$count;bytes=$bytes;GiB=[math]::Round($bytes/1GB,3)}
+              $rows.Add([pscustomobject]$row)
+              Write-Host ("SKARVIK_CITY_SAMPLE_FOLDER={0} FILES={1} GiB={2:N3}" -f $row.directory,$count,($bytes/1GB))
+            }
+          }
+          Write-Host 'SKARVIK_BREAKDOWN_READONLY_SUCCESS=true'
+          $json=$rows|ConvertTo-Json -Depth 5
+          $output=Join-Path $env:GITHUB_WORKSPACE 'skarvik-citysample-folder-breakdown.json'
+          [IO.File]::WriteAllText($output,$json,(New-Object System.Text.UTF8Encoding($false)))
+      - name: Upload JSON audit only
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-citysample-folder-breakdown
+          if-no-files-found: warn
+          path: skarvik-citysample-folder-breakdown.json

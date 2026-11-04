@@ -1,0 +1,50 @@
+name: SKARVIK - verify dimensions of genuine ANOMALIA 3D houses
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-owned-house-meshes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate imported houses are real UE5 StaticMesh objects with size
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor is running'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_owned_house_dimensions.py'
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-owned-house-dimensions.json'
+          $env:SKARVIK_OWNED_MESH_DIMENSIONS_REPORT=$out
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $result=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $out)){throw "No UE5 size audit available, exit=$result"}
+          $data=Get-Content -LiteralPath $out -Raw|ConvertFrom-Json
+          Write-Host ("SKARVIK_OWNED_HOUSES_AVAILABLE="+$data.availableCount)
+          foreach($entry in $data.objects.PSObject.Properties){
+            $x=$entry.Value
+            Write-Host ("SKARVIK_OWNED_HOUSE_DETAIL={0} available={1} dimensions={2}" -f $entry.Name,$x.available,($x.dimensionsMeters -join 'x'))
+          }
+          if($result -ne 0 -or $data.state -ne 'REAL_ANOMALIA_HOUSE_MESH_DIMENSIONS_VERIFIED_NO_WORLD_MODIFICATION'){throw ('Owned mesh audit failed: '+$data.error)}
+          Write-Host 'SKARVIK_AUTHENTIC_HOUSES_VALIDATED=true'
+          Write-Host 'SKARVIK_125_NATIVE_SITES_NOT_YET_CONSTRUCTED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-authentic-house-mesh-dimensions
+          path: skarvik-owned-house-dimensions.json
+          if-no-files-found: warn

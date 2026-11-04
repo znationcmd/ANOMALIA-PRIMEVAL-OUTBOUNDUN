@@ -1,0 +1,62 @@
+name: SKARVIK - inspect safe external Windows packaging disk capacity
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-package-disk-options.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  check-volume-availability:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory free disk capacity without moving, deleting or cooking any asset
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $mark=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $mark) -or (Get-Content -LiteralPath $mark -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-cook-volume-suitability.json'
+          $volumes=@(Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -in @(2,3) } | ForEach-Object {
+            $free=[math]::Round([double]$_.FreeSpace / 1GB,2)
+            [ordered]@{
+              drive=$_.DeviceID
+              filesystem=$_.FileSystem
+              driveType=$(if ($_.DriveType -eq 2) { 'removable' } else { 'fixed' })
+              freeGiB=$free
+              totalGiB=[math]::Round([double]$_.Size / 1GB,2)
+              candidateExternalBuildVolume=($_.DeviceID -ne 'C:' -and $_.FileSystem -eq 'NTFS' -and $free -ge 80)
+              safeOutputRequiresSeparateDirectoryAndNoOriginalAssetMutation=$true
+            }
+          })
+          $report=[ordered]@{
+            state='READONLY_NATIVE_PACKAGING_VOLUMES_AUDITED_NOT_COOKED'
+            nativeStageRoot=$root
+            stagesWritten=$false
+            assetsMovedOrDeleted=$false
+            noOverwriteDAnomalia=$true
+            nativeWindowsBuildPublished=$false
+            volumes=$volumes
+            cDriveFreeGiB=@($volumes | Where-Object { $_['drive'] -eq 'C:' } | ForEach-Object { $_['freeGiB'] })[0]
+            alternativeNTFSVolumes=@($volumes | Where-Object { $_['candidateExternalBuildVolume'] } | ForEach-Object { $_['drive'] })
+            packagingRequiresVerifiedCookAndRealPlaytest=$true
+          }
+          ($report|ConvertTo-Json -Depth 7)|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_NATIVE_WINDOWS_C_FREE_GIB='+$report.cDriveFreeGiB)
+          Write-Host ('SKARVIK_NATIVE_WINDOWS_ALTERNATE_NTFS_VOLUMES='+($report.alternativeNTFSVolumes -join ','))
+          Write-Host 'SKARVIK_NATIVE_WINDOWS_PACKAGE_NOT_YET_BUILT=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-readonly-native-windows-cook-disk-volume-options
+          path: skarvik-native-cook-volume-suitability.json
+          if-no-files-found: warn

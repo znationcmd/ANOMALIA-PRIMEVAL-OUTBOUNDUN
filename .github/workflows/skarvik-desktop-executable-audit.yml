@@ -1,0 +1,76 @@
+name: SKARVIK - diagnose missing desktop Win64 game executable (read only)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-desktop-executable-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  diagnose-actual-windows-machine:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Diagnose the actual missing EXE before writing or fixing any shortcut
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $trusted='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $trusted '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Trusted stage marker not found: refuse any desktop repair'}
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          $projectName='AnomaliaZPrigimalia'
+          $candidateFolders=@(
+            (Join-Path $desktop $projectName),
+            ('C:\Users\utilisateur\Desktop\'+$projectName),
+            $trusted
+          )|Select-Object -Unique
+          $details=@()
+          foreach($folder in $candidateFolders){
+            $uproject=Join-Path $folder 'AnomaliaZPrigimalia.uproject'
+            $gameExe=Join-Path $folder 'Binaries\Win64\AnomaliaZPrigimalia.exe'
+            $editorDll=Join-Path $folder 'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+            $map=Join-Path $folder 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+            $details+=([ordered]@{
+              kind=$(if ($folder -eq $trusted) {'trusted-stage'} else {'desktop-candidate'})
+              projectExists=(Test-Path $uproject)
+              gameExeExists=(Test-Path $gameExe)
+              editorModuleExists=(Test-Path $editorDll)
+              finalSkarvikMapExists=(Test-Path $map)
+              onlyDiagnosticsNoFilesModified=$true
+            })
+          }
+          $editors=@(
+            (Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'),
+            'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor.exe'
+          )|Where-Object { $_ -and (Test-Path $_) }
+          $report=[ordered]@{
+            state='UNREAL_NATIVE_EXECUTABLE_READONLY_DIAGNOSIS'
+            windowsCreateProcessError2='Executable was not found at the path used for launch'
+            projectDirectories=$details
+            unrealEditorAvailable=($editors.Count -gt 0)
+            noBuildPerformed=$true
+            noShortcutChanged=$true
+            noOriginalAssetsModified=$true
+            candidateFix='Open an existing verified .uproject with UnrealEditor.exe for an editor preview; native .exe requires a real Win64 cook/build/package'
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-desktop-executable-diagnosis.json'
+          ($report|ConvertTo-Json -Depth 6)|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('SKARVIK_DESKTOP_USER_PROJECT_EXISTS='+$details[1].projectExists)
+          Write-Host ('SKARVIK_DESKTOP_USER_GAME_EXE_EXISTS='+$details[1].gameExeExists)
+          Write-Host ('SKARVIK_TRUSTED_NATIVE_FINAL_MAP_EXISTS='+$details[-1].finalSkarvikMapExists)
+          Write-Host ('SKARVIK_UNREAL_EDITOR_FOUND='+$report.unrealEditorAvailable)
+          Write-Host 'SKARVIK_REPAIR_APPLIED=false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-desktop-win64-exe-readonly-diagnosis
+          path: skarvik-desktop-executable-diagnosis.json
+          if-no-files-found: warn

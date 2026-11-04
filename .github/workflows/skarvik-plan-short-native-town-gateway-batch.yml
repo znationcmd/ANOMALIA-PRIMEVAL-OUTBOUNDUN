@@ -1,0 +1,49 @@
+name: SKARVIK - select 24 short regional road to town-street gateways
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-plan-short-native-town-gateway-batch.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  source-evidence-planning:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-native-road-graph-382-planned-100-actual-gateway-audit
+          run-id: 41277057421
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts
+      - name: Select 24 distinct inhabited localities with short existing-road access gaps
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 scripts/plan_skarvik_native_town_gateway_batch.py \
+            --audit receipts/skarvik-road-connectivity-evidence.json \
+            --out artifacts/skarvik-first-24-town-access-gateways.json \
+            --max-distance 150 --limit 24
+          python3 - <<'PY'
+          import json
+          d=json.load(open('artifacts/skarvik-first-24-town-access-gateways.json'))
+          assert d['state']=='TOWN_GATEWAY_SHORT_CANDIDATES_SELECTED_NOT_BUILT'
+          assert d['selectedCount']==24
+          assert len({s['settlementId'] for s in d['selected']})==24
+          assert all(s['straightLineGapMetres']<=150 for s in d['selected'])
+          assert all(s['terrainAndCollisionCheckRequired'] for s in d['selected'])
+          assert d['physicalRoadsCreated']==0
+          print('SKARVIK_24_DISTINCT_TOWN_GATEWAY_SOURCE_PLANNING_VERIFIED=true')
+          PY
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-24-town-gateway-native-terrain-collision-survey-candidates
+          path: artifacts/skarvik-first-24-town-access-gateways.json
+          if-no-files-found: warn

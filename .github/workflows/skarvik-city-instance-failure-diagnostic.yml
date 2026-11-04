@@ -1,0 +1,59 @@
+name: SKARVIK - diagnose failed Big City native integration (READ ONLY)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-city-instance-failure-diagnostic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect Unreal launch failure, recent logs and Python errors without writing to D
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker'))){throw 'Missing trusted stage'}
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Incorrect stage'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("SKARVIK_DIAG_FREE_C_GIB={0:N2}" -f $free)
+          $running=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue)
+          Write-Host "SKARVIK_DIAG_RUNNING_EDITORS=$($running.Count)"
+          $report=Join-Path $root 'Saved\SkarvikCity\city-instance.json'
+          $sourceReport=Join-Path $env:GITHUB_WORKSPACE 'skarvik-city-instance-result.json'
+          foreach($p in @($report,$sourceReport)){
+            if(Test-Path -LiteralPath $p){Write-Host "SKARVIK_DIAG_REPORT_EXISTS=$p";Get-Content -LiteralPath $p -Raw}
+            else{Write-Host "SKARVIK_DIAG_REPORT_MISSING=$p"}
+          }
+          $logs=Join-Path $root 'Saved\Logs'
+          foreach($f in (Get-ChildItem -LiteralPath $logs -File -Filter '*.log' -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending | Select-Object -First 5)){
+            Write-Host ("SKARVIK_DIAG_LOG={0} bytes={1} modified={2:o}" -f $f.Name,$f.Length,$f.LastWriteTimeUtc)
+            $lines=@(Get-Content -LiteralPath $f.FullName -Tail 800 -ErrorAction SilentlyContinue)
+            $match=@($lines|Where-Object{$_ -match 'LogPython|PythonScript|Error:|Error |Fatal|Critical|Access violation|exception|ensure\(|CitySample|LevelInstance|SKARVIK|LogLinker|Missing|ModuleManager|LogPluginManager|LogWindows|Assertion failed|LogUObjectGlobals' })
+            if($match.Count -gt 0){
+              Write-Host "SKARVIK_DIAG_MATCHED_LINES_BEGIN"
+              $match|Select-Object -Last 95|ForEach-Object{Write-Host $_}
+              Write-Host "SKARVIK_DIAG_MATCHED_LINES_END"
+            }else{
+              Write-Host "SKARVIK_DIAG_NO_MATCHES_SHOW_LAST_60_LINES"
+              $lines|Select-Object -Last 60|ForEach-Object{Write-Host $_}
+            }
+          }
+          $crashes=Join-Path $root 'Saved\Crashes'
+          if(Test-Path -LiteralPath $crashes){
+            Get-ChildItem -LiteralPath $crashes -Directory | Sort-Object LastWriteTime -Descending |
+              Select-Object -First 3|ForEach-Object{Write-Host ("SKARVIK_DIAG_CRASH_DIR={0} modified={1:o}" -f $_.Name,$_.LastWriteTimeUtc)}
+          }
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'
+          if(Test-Path -LiteralPath $map){
+            $f=Get-Item -LiteralPath $map
+            Write-Host ("SKARVIK_DIAG_MAP_EXISTS=true size={0} utc={1:o}" -f $f.Length,$f.LastWriteTimeUtc)
+          }
+          Write-Host 'SKARVIK_DIAGNOSTIC_READ_ONLY_COMPLETE=true'

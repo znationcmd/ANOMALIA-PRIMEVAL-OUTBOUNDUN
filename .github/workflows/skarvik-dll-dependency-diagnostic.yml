@@ -1,0 +1,48 @@
+name: SKARVIK - investigate native DLL load error 126
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-dll-dependency-diagnostic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect compiled CitySample DLL imports on the original Windows runner, read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Stage marker mismatch'}
+          $dll=Join-Path $root 'Binaries\Win64\UnrealEditor-CitySample.dll'
+          if(!(Test-Path $dll)){throw 'CitySample DLL missing'}
+          $vswhere=Join-Path ([Environment]::GetFolderPath('ProgramFilesX86')) 'Microsoft Visual Studio\Installer\vswhere.exe'
+          if(!(Test-Path $vswhere)){throw 'Visual Studio locator missing'}
+          $vsroot=(& $vswhere -latest -products '*' -property installationPath|Select-Object -First 1)
+          if(!$vsroot){throw 'Visual Studio path missing'}
+          $dumpbin=Get-ChildItem -LiteralPath (Join-Path $vsroot 'VC\Tools\MSVC') -Filter dumpbin.exe -File -Recurse |
+            Where-Object{$_.FullName -match 'Hostx64\\x64\\dumpbin.exe$'}|Sort-Object FullName -Descending|Select-Object -First 1
+          if(!$dumpbin){throw 'MSVC dumpbin not found'}
+          Write-Host 'SKARVIK_DLL_DUMPBIN_AVAILABLE=true'
+          $output=@(& $dumpbin.FullName /dependents $dll)
+          $imported=@($output|Select-String -Pattern '^\s*([A-Za-z0-9_\-\.]+\.dll)\s*$'|ForEach-Object{$_.Matches[0].Groups[1].Value}|Select-Object -Unique)
+          $paths=@((Join-Path $root 'Binaries\Win64'),(Join-Path $env:UE_ROOT 'Engine\Binaries\Win64'))
+          $paths+=@(Get-ChildItem -LiteralPath (Join-Path $root 'Plugins') -Recurse -Directory|Where-Object{$_.FullName -match 'Binaries\\Win64$'}|ForEach-Object{$_.FullName})
+          foreach($name in $imported){
+            if($name -match '^(KERNEL32|USER32|SHELL32|ADVAPI32|OLE32|OLEAUT32|GDI32|WS2_32|CRYPT32|NTDLL|VCRUNTIME|MSVCP|api-ms|ext-ms|UCRTBASE|COMBASE|VERSION)'){continue}
+            $matches=@($paths|Where-Object{Test-Path -LiteralPath (Join-Path $_ $name)})
+            Write-Host ("SKARVIK_DLL_IMPORT={0} FOUND_IN_PROJECT_OR_ENGINE={1} PATHS={2}" -f $name,($matches.Count -gt 0),($matches -join ';'))
+          }
+          foreach($plugin in @('WorldAudioDataSystem','Traffic','CitySampleMassCrowd','HoverDrone','RuleProcessor','Crossfader')){
+            $bin=Join-Path $root ('Plugins\'+$plugin+'\Binaries\Win64')
+            $dlls=@(Get-ChildItem -LiteralPath $bin -File -Filter '*.dll' -ErrorAction SilentlyContinue)
+            Write-Host ("SKARVIK_PLUGIN_DLL={0} COUNT={1} NAMES={2}" -f $plugin,$dlls.Count,($dlls.Name -join ','))
+          }
+          Write-Host 'SKARVIK_DLL_READ_ONLY_DIAGNOSTIC_DONE=true'

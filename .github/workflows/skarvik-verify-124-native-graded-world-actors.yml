@@ -1,0 +1,57 @@
+name: SKARVIK - independently verify 124 saved 3D town sites reopen from World Partition
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-124-native-graded-world-actors.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Safeguard original data and assert native population attempt exists
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\BeforePopulatingGradedV2\graded-v2-clean.umap'))){throw 'No recorded original graded map backup; skip claiming native placement'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal already active'}
+      - name: Reopen World Partition and count real saved mesh actor descriptors across 124 sites
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_graded_v2_buildings_persisted.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Python verification source invalid'}
+          $env:SKARVIK_GRADED_REOPEN_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-native-persisted-124-site-validation.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT)){throw 'Native audit did not produce result'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_124_REOPEN_STATUS='+$d.state)
+          Write-Host ('SKARVIK_NATIVE_124_REOPEN_SITES='+$d.sitesWithSavedMeshActors)
+          Write-Host ('SKARVIK_NATIVE_124_REOPEN_REAL_MESH_ACTORS='+$d.savedMeshActors)
+          if($rc -ne 0 -or $d.state -ne 'GRADED_48KM_WORLD_124_SITES_REAL_MESH_ACTORS_PERSISTED_WP_REOPENED_NOT_PLAYTESTED'){
+            throw ('124 site native persistence verification failed: '+$d.error)
+          }
+          Write-Host 'SKARVIK_NATIVE_GRADED_124_LOCALITY_BUILDINGS_PERSISTENT=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-graded-124-native-actors-persistence-proof
+          path: skarvik-native-persisted-124-site-validation.json
+          if-no-files-found: warn

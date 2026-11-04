@@ -1,0 +1,64 @@
+name: SKARVIK - independently reopen 1034 original 3D buildings on final 7-island coast
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-final-1034-authentic-building-actors.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  independent-final-reopen:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify final native stage and prior original building migration evidence before reopening
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong C stage'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\FinalV1AuthenticOriginalBuildingMigration_20261101\final-before-houses.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required original migration evidence or world missing $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE session'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_1034_authentic_buildings_after_reopen.py')
+          if($LASTEXITCODE -ne 0){throw 'Native independent reopen source Python invalid'}
+      - name: Validate 1034 persisted genuine StaticMesh actors in final seven-island World Partition after restart
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_HOUSES_INDEPENDENT_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-1034-authentic-real-meshes-reopened.json'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_1034_authentic_buildings_after_reopen.py'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_HOUSES_INDEPENDENT_REOPEN_REPORT)){throw 'Independent WP evidence missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_HOUSES_INDEPENDENT_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_INDEPENDENT_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_INDEPENDENT_REOPEN_MAINLAND_MESHES='+$r.actualSavedOriginalGradedStaticMeshActors)
+          Write-Host ('SKARVIK_FINAL_INDEPENDENT_REOPEN_ISLAND_MESHES='+$r.actualSavedOriginalIslandStaticMeshActors)
+          if($r.state -ne 'FINAL_COAST_906_MAINLAND_AND_128_ISLAND_AUTHENTIC_SOURCE_3D_ACTORS_PERSIST_AFTER_REOPEN'){
+            throw ('Native migrated 1034 actors did not independently persist: '+$r.error)
+          }
+          if($code -ne 0){Write-Host ('SKARVIK_READONLY_UE_UNATTENDED_SHUTDOWN_NONZERO='+$code)}
+          Write-Host 'SKARVIK_FINAL_1034_REAL_NATIVE_SOURCE_BUILDINGS_AFTER_REOPEN_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-1034-real-authentic-migrated-3d-meshes-reopen
+          path: skarvik-final-1034-authentic-real-meshes-reopened.json
+          if-no-files-found: warn

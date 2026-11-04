@@ -50,6 +50,7 @@ private:
     UPROPERTY() TObjectPtr<UVerticalBox> ServerResults;
     UPROPERTY() TObjectPtr<UVerticalBox> OnlinePlayerRows;
     UPROPERTY() TObjectPtr<UEditableTextBox> ServerSearch;
+    UPROPERTY() TObjectPtr<UComboBoxString> MapFilterSelect;
     UPROPERTY() TObjectPtr<UComboBoxString> ServerSelect;
     UPROPERTY() TObjectPtr<UTextBlock> ServerStatus;
     UPROPERTY() TObjectPtr<UTextBlock> TravelStatus;
@@ -92,6 +93,7 @@ private:
     UFUNCTION() void TabFavoriteServers();
     UFUNCTION() void RefreshServerBrowser();
     UFUNCTION() void ServerSearchChanged(const FText& NewText);
+    UFUNCTION() void MapFilterChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void ServerSelectionChanged(FString SelectedItem, ESelectInfo::Type SelectionType);
     UFUNCTION() void JoinSelectedServer();
     UFUNCTION() void ResumeLocalSession();

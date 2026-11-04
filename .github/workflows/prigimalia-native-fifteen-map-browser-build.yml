@@ -1,0 +1,79 @@
+name: ANOMALIA - compile native menu choice of all 15 maps (safe C stage)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/prigimalia-native-fifteen-map-browser-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  build:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Guard protected original project and existing native stage
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Unsafe stage; refuse'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Protected original source not found'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_ROSKATVIA_B1.umap'))){throw 'Four newly created native worlds are not in expected stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other Unreal Editor currently running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('PRIGIMALIA_FIFTEEN_MAP_SELECTOR_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Disk headroom below 18 GiB'}
+          $src=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia'
+          $target=Join-Path $root 'Source\AnomaliaZPrigimalia'
+          foreach($name in @('AnomaliaZPrigimaliaServerBrowserLibrary.cpp','AnomaliaZPrigimaliaServerBrowserLibrary.h','AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h')){
+            if(!(Test-Path -LiteralPath (Join-Path $src $name)) -or !(Test-Path -LiteralPath (Join-Path $target $name))){throw "Missing source $name"}
+          }
+          Write-Host 'PRIGIMALIA_FIFTEEN_MAP_SELECTOR_PREFLIGHT_PASSED=true'
+      - name: Back up and stage only 4 native UI files in isolated C directory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $target=Join-Path $root 'Source\AnomaliaZPrigimalia'
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia'
+          $backup=Join-Path $root ("Saved\FifteenMapBrowser\backup-"+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'Refuse duplicate backup and C modification'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          foreach($name in @('AnomaliaZPrigimaliaServerBrowserLibrary.cpp','AnomaliaZPrigimaliaServerBrowserLibrary.h','AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h')){
+            Copy-Item -LiteralPath (Join-Path $target $name) -Destination (Join-Path $backup $name) -ErrorAction Stop
+          }
+          foreach($name in @('AnomaliaZPrigimaliaServerBrowserLibrary.cpp','AnomaliaZPrigimaliaServerBrowserLibrary.h','AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h')){
+            Copy-Item -LiteralPath (Join-Path $source $name) -Destination (Join-Path $target $name) -ErrorAction Stop
+          }
+          Write-Host 'PRIGIMALIA_FIFTEEN_MAP_BROWSER_NATIVE_SOURCES_STAGED_ON_C=true'
+      - name: Compile Unreal Engine 5.8 native map filter controls
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('Unreal native 15-map UI compile failed exit='+$LASTEXITCODE)}
+          Write-Host 'PRIGIMALIA_NATIVE_15_MAP_BROWSER_COMPILED=true'
+          Write-Host 'PRIGIMALIA_NATIVE_15_MAP_FILTER_SERVER_DATA_NOT_DEPLOYED=true'
+      - name: Roll back only C staging files if native compilation fails
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $target=Join-Path $root 'Source\AnomaliaZPrigimalia'
+          $backup=Join-Path $root ("Saved\FifteenMapBrowser\backup-"+$env:GITHUB_RUN_ID)
+          foreach($name in @('AnomaliaZPrigimaliaServerBrowserLibrary.cpp','AnomaliaZPrigimaliaServerBrowserLibrary.h','AnomaliaZPrigimaliaSessionWidget.cpp','AnomaliaZPrigimaliaSessionWidget.h')){
+            $src=Join-Path $backup $name
+            if(Test-Path -LiteralPath $src){Copy-Item -LiteralPath $src -Destination (Join-Path $target $name) -Force}
+          }
+          Write-Host 'PRIGIMALIA_MAP_BROWSER_C_SOURCE_ROLLBACK_COMPLETED=true'
+          Write-Host 'PRIGIMALIA_ORIGINAL_D_CONTENT_UNMODIFIED=true'

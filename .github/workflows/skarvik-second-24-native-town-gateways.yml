@@ -1,0 +1,116 @@
+name: SKARVIK - second 24 native village road gateways
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-second-24-native-town-gateways.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-native-road-graph-382-planned-100-actual-gateway-audit
+          run-id: 41277057421
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/audit
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-24-town-gateway-native-terrain-collision-survey-candidates
+          run-id: 41277167745
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/first-plan
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-24-candidates-native-real-gateway-asphalt-results
+          run-id: 41277272235
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/first-result
+      - name: Select 24 distinct villages not attempted in first gateway batch
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/plan_skarvik_native_town_gateway_batch2.py
+          python scripts/plan_skarvik_native_town_gateway_batch2.py --audit receipts/audit/skarvik-road-connectivity-evidence.json --first-plan receipts/first-plan/skarvik-first-24-town-access-gateways.json --first-native receipts/first-result/skarvik-real-ue5-village-gateway-actors.json --out skarvik-second-24-town-access-gateways.json
+          python -c "import json; d=json.load(open('skarvik-second-24-town-access-gateways.json')); assert d['selectedCount']==24 and len(set(x['settlementId'] for x in d['selected']))==24"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-second-24-gateway-candidates-unique
+          path: skarvik-second-24-town-access-gateways.json
+          if-no-files-found: error
+  native-build:
+    needs: plan
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-second-24-gateway-candidates-unique
+          path: receipts/town-gateway-batch2
+      - name: Preflight safe C stage and existing CitySample towns and roads
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\First24RegionalTownGateways20261101\graded-before-gateway.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\VisibleBigCitySampleDistrictB2_20261101\graded-before-second-real-city-block.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Protected previous world or backup missing: $f"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\Second24RegionalTownGateways20261101\graded-before-gateway.umap')){throw 'Batch already attempted'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE process'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Insufficient C stage disk space'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_native_town_gateway_batch2.py')
+          if($LASTEXITCODE -ne 0){throw 'Batch2 native Python syntax error'}
+          Write-Host 'SKARVIK_GATEWAY_BATCH2_SAFE_NATIVE_PREFLIGHT_PASSED=true'
+      - name: Build short authentic native road meshes only where grade and building bounds allow
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_TOWN_GATEWAY_PLAN=Join-Path $env:GITHUB_WORKSPACE 'receipts\town-gateway-batch2\skarvik-second-24-town-access-gateways.json'
+          $env:SKARVIK_TOWN_GATEWAY_TRANSPORT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-transport-network-v2.json'
+          $env:SKARVIK_TOWN_GATEWAY_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-second-native-town-gateways.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_native_town_gateway_batch2.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_TOWN_GATEWAY_RESULT)){throw 'Missing native town gateway batch2 report'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_TOWN_GATEWAY_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_STATE='+$d.state)
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_TOWNS='+$d.nativeTownEntrancesAuthored)
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_NEW_ROAD_ACTORS='+$d.nativeCompletedTownEntranceMeshes)
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_METRES='+$d.nativePavedMetres)
+          Write-Host ('SKARVIK_GATEWAY_BATCH2_REJECTIONS='+@($d.rejectedEntrances).Count)
+          if($code -ne 0 -or $d.state -ne 'NATIVE_TOWN_GATEWAY_BATCH2_SHORT_ROAD_SECTIONS_SAVED_NOT_DRIVEN'){
+            throw ('Unsafe or unsuccessful second gateway import: '+$d.error)
+          }
+          Write-Host 'SKARVIK_GATEWAY_BATCH2_REAL_ROADS_SAVED_NOT_VEHICLE_TESTED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-second-24-native-town-gateways-build-result
+          path: skarvik-second-native-town-gateways.json
+          if-no-files-found: warn

@@ -80,7 +80,9 @@ bool FAnomaliaZPrigimaliaLootTransactionTest::RunTest(const FString& Parameters)
     auto* Loot = World->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
     if (!Loot || !TestTrue(TEXT("Load shipped catalogue tiers and layout"), Loot->Configure(Server, TEXT("ANOMALIA_LootReview_v1"), Error)))
     { AddError(Error); World->DestroyWorld(false); return false; }
+    TestEqual(TEXT("Loot review fixture keeps its six explicit test points"), Loot->GetRegisteredSpawnCount(), 6);
     Loot->RefreshLoot();
+    TestEqual(TEXT("SKARVIK building discovery never contaminates the isolated review map"), Loot->GetRegisteredSpawnCount(), 6);
     auto* Pickup = Food(World);
     if (!TestNotNull(TEXT("Real native pickup spawned from tier-one catalogue"), Pickup)) { World->DestroyWorld(false); return false; }
     auto* Survivor = World->SpawnActor<AAnomaliaZPrigimaliaSurvivor>();

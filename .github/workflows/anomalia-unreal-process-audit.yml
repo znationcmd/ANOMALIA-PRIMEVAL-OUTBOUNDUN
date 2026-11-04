@@ -1,0 +1,53 @@
+name: ANOMALIA - read-only Unreal process audit for safe native validation
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-unreal-process-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Read Unreal process identity and project command lines without stopping anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $names=@('UnrealEditor.exe','UnrealEditor-Cmd.exe','AnomaliaPrimeval.exe','AnomaliaZPrigimalia.exe')
+          $rows=@(Get-CimInstance Win32_Process | Where-Object {$names -contains $_.Name} | ForEach-Object {
+            [ordered]@{
+              name=$_.Name
+              pid=$_.ProcessId
+              parentPid=$_.ParentProcessId
+              executablePath=$_.ExecutablePath
+              commandLine=$_.CommandLine
+              created=$_.CreationDate
+            }
+          })
+          $doc=[ordered]@{
+            state=if($rows.Count){'UNREAL_PROCESS_PRESENT_READONLY'}else{'NO_UNREAL_PROCESS_PRESENT'}
+            processes=$rows
+            noProcessStopped=$true
+            noProjectModified=$true
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE "anomalia-unreal-processes-$env:GITHUB_RUN_ID.json"
+          $doc | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIA_UNREAL_PROCESS_COUNT='+$rows.Count)
+          foreach($p in $rows){Write-Host ('ANOMALIA_UNREAL_PROCESS='+($p|ConvertTo-Json -Compress))}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-unreal-process-audit
+          path: anomalia-unreal-processes-${{ github.run_id }}.json
+          if-no-files-found: error
+
+# Trigger read-only process inventory.

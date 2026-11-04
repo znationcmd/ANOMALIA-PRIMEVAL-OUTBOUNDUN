@@ -1,0 +1,67 @@
+name: SKARVIK - independent native cross-batch regional road overlap audit
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-audit-cross-regional-road-overlaps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  read-only-regional-cross-pilot-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect all originals and avoid concurrent Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $mark=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $mark) -or (Get-Content $mark -Raw).Trim() -ne '41188816555'){throw 'Unsafe native staging marker'}
+          foreach($file in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+             if(!(Test-Path $file)){throw "Protected native map missing $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent Unreal session detected'
+          }
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_cross_pilot_native_road_overlaps.py')
+          if($LASTEXITCODE -ne 0){throw 'Read-only geometry audit syntax invalid'}
+      - name: Re-open real final world and detect possible road overlaps without mutating a single actor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REGIONAL_CROSS_PILOT_AUDIT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-native-regional-pilots-overlap-review.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $src=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_cross_pilot_native_road_overlaps.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$src" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_FINAL_REGIONAL_CROSS_PILOT_AUDIT)){throw 'Native read-only overlap receipt missing'}
+          $r=Get-Content $env:SKARVIK_FINAL_REGIONAL_CROSS_PILOT_AUDIT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_REGIONAL_CROSS_BATCH_AUDIT_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_REGIONAL_AUDITED_PILOT_A_ACTORS='+$r.nativeRealRoadActorCounts.newRegionalA)
+          Write-Host ('SKARVIK_FINAL_REGIONAL_AUDITED_PILOT_B_ACTORS='+$r.nativeRealRoadActorCounts.newRegionalB)
+          Write-Host ('SKARVIK_FINAL_REGIONAL_POTENTIAL_OVERLAP_REQUIRES_REVIEW='+$r.requiresVehicleAndFootprintVisualReview)
+          if($code -ne 0 -or $r.state -ne 'SKARVIK_FINAL_MULTIPLE_NATIVE_ROAD_BATCHES_READONLY_OVERLAP_REVIEW_READY'){
+            throw ('Protected native overlap audit could not finish: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_REGIONAL_NATIVE_PILOT_OVERLAPS_AUDITED_READONLY=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-independent-native-cross-pilot-road-overlap-review
+          path: skarvik-final-native-regional-pilots-overlap-review.json
+          if-no-files-found: warn

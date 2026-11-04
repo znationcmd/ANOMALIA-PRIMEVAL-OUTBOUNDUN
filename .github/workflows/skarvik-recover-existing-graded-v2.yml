@@ -1,0 +1,61 @@
+name: SKARVIK - recover graded terrain native 576 components after false GitHub hash failure
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-recover-existing-graded-v2.yml', 'unreal/Scripts/audit_existing_skarvik_graded_v2.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  recover-grading:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify protected original and stage, no concurrent Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Invalid stage'}
+          $files=@('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'))
+          foreach($file in $files){if(!(Test-Path -LiteralPath $file)){throw "Missing required world file: $file"}}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal already active'}
+          Write-Host 'SKARVIK_GRADED_V2_FOUND_ON_C=true'
+      - name: Reopen actual graded v2 World Partition and check collision, no saves
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_existing_skarvik_graded_v2.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Graded audit Python invalid'}
+          $env:SKARVIK_GRADED_EXISTING_AUDIT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-graded-v2-existing-native-proof.json'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_EXISTING_AUDIT_REPORT)){throw 'Native report absent'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_GRADED_EXISTING_AUDIT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_GRADED_V2_EXISTING_STATE='+$r.state)
+          Write-Host ('SKARVIK_GRADED_V2_LOADED_LANDSCAPE_COMPONENTS='+$r.loadedLandscapeComponentCount)
+          Write-Host ('SKARVIK_GRADED_V2_LOADED_COLLISION_COMPONENTS='+$r.loadedCollisionComponentCount)
+          if($code -ne 0 -or $r.state -ne 'REAL_GRADED_48KM_WORLD_REOPENED_WITH_WORLD_PARTITION_DESCRIPTORS_AND_LOADED_COLLISION'){
+            throw ("Graded native audit failed: "+$r.error)
+          }
+          Write-Host 'SKARVIK_GRADED_V2_REOPEN_AND_ORIGINAL_HASHES_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-graded-v2-native-existing-proof
+          path: skarvik-graded-v2-existing-native-proof.json
+          if-no-files-found: warn

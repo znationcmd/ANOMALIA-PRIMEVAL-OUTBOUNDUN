@@ -1,0 +1,120 @@
+name: ANOMALIA - safely author four new native UE5.8 map packages in C staging
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/prigimalia-four-new-native-maps-ue5.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  four-new-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect all 11 original maps, confirm source stage and disk before edits
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted protected stage'}
+          if(!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Original D source map not found'}
+          if(!(Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Existing SKARVIK staging map missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another UE session active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ("PRIGIMALIA_NEW_FOUR_C_FREE_GIB="+[math]::Round($free,2))
+          if($free -lt 21){throw 'C must have >21 GiB free for this protected four-map build'}
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia\World'
+          foreach($p in @('AnomaliaZPrigimaliaNewFourWorldHeights.h','AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp')){
+            if(!(Test-Path -LiteralPath (Join-Path $source $p))){throw "Missing Git source file $p"}
+          }
+          $project=Join-Path $stage 'AnomaliaZPrigimalia.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'Staged Unreal project missing'}
+          foreach($id in @('ROSKATVIA_B1','NOGOKV_51','PARADISIOMANIA','DEADROOT')){
+            $name='PRIGIMALIA_'+$id
+            foreach($path in @("Content\Maps\$name.umap","Content\__ExternalActors__\Maps\$name","Content\__ExternalObjects__\Maps\$name")){
+              if(Test-Path -LiteralPath (Join-Path $stage $path)){throw "Destination already exists; preserve until reviewed: $path"}
+            }
+          }
+          Write-Host 'PRIGIMALIA_FOUR_NEW_NATIVE_SAFETY_PREFLIGHT_OK=true'
+      - name: Stage only new C++ source with recoverable backups in isolated C project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $target=Join-Path $stage 'Source\AnomaliaZPrigimalia\World'
+          $source=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia\World'
+          $backup=Join-Path $stage 'Saved\NewFourMaps\source-backup-20261031'
+          if(Test-Path -LiteralPath $backup){throw 'Backup already exists; refuse possible second import'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp')){
+            Copy-Item -LiteralPath (Join-Path $target $name) -Destination (Join-Path $backup $name) -ErrorAction Stop
+          }
+          $new=Join-Path $target 'AnomaliaZPrigimaliaNewFourWorldHeights.h'
+          if(Test-Path -LiteralPath $new){throw 'New map native source already present: refuse overwrite'}
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaNewFourWorldHeights.h')){
+            Copy-Item -LiteralPath (Join-Path $source $name) -Destination (Join-Path $target $name) -ErrorAction Stop
+          }
+          Write-Host 'PRIGIMALIA_FOUR_NEW_NATIVE_CPP_STAGED_ONLY_ON_C=true'
+      - name: Compile native UE5.8 module with four new terrain height samplers
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path $build)){throw 'UE5.8 native compiler missing'}
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw "New four-map native build failed, exit=$LASTEXITCODE"}
+          Write-Host 'PRIGIMALIA_FOUR_NEW_CPP_COMPILE_OK=true'
+      - name: Author four native maps one at a time without touching original 11
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_new_four_native_ue5_maps.py'
+          & $py -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Python map author syntax error'}
+          foreach($id in @('ROSKATVIA_B1','NOGOKV_51','PARADISIOMANIA','DEADROOT')){
+            $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+            if($free -lt 19){throw "C disk too full to create $id safely"}
+            $env:PRIGIMALIA_NEW_FOUR_MAP=$id
+            $env:PRIGIMALIA_NEW_FOUR_REPORT=Join-Path $env:GITHUB_WORKSPACE "native-map-$id.json"
+            & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+            $rc=$LASTEXITCODE
+            if(!(Test-Path -LiteralPath $env:PRIGIMALIA_NEW_FOUR_REPORT)){throw "Native Unreal map $id did not write report, exit=$rc"}
+            $receipt=Get-Content $env:PRIGIMALIA_NEW_FOUR_REPORT -Raw|ConvertFrom-Json
+            Write-Host "PRIGIMALIA_NEW_FOUR_NAME=$id STATE=$($receipt.state) COMPONENTS=$($receipt.landscapeComponents)"
+            if($rc -ne 0 -or $receipt.state -ne 'NEW_NATIVE_TERRAIN_SAVED_NOT_PLAYTESTED' -or !$receipt.actualLandscapeSaved){throw "Real Unreal generation failed for $id : $($receipt.error)"}
+            if(!(Test-Path -LiteralPath (Join-Path $root "Content\Maps\PRIGIMALIA_$id.umap"))){throw "Saved map package missing $id"}
+            Write-Host "PRIGIMALIA_NEW_FOUR_NATIVE_WORLD_CREATED=$id"
+          }
+          Write-Host 'PRIGIMALIA_FOUR_NEW_UE5_TERRAINS_SAVED_NO_GAMEPLAY_CLAIM=true'
+      - name: On compilation failure, restore prior C source; never change D originals
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $backup=Join-Path $root 'Saved\NewFourMaps\source-backup-20261031'
+          $target=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
+          foreach($name in @('AnomaliaZPrigimaliaWorldImportLibrary.h','AnomaliaZPrigimaliaWorldImportLibrary.cpp')){
+            $src=Join-Path $backup $name
+            if(Test-Path -LiteralPath $src){Copy-Item -LiteralPath $src -Destination (Join-Path $target $name) -Force}
+          }
+          Write-Host 'PRIGIMALIA_FOUR_NEW_SOURCE_RECOVERY_EXECUTED=true'
+          Write-Host 'PRIGIMALIA_ORIGINAL_D_CONTENT_PRESERVED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: prigimalia-four-new-native-world-receipts
+          if-no-files-found: warn
+          path: native-map-*.json

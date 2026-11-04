@@ -1,0 +1,67 @@
+name: SKARVIK - native true coast survey of all 382 regional road alignments
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-audit-all-regional-road-alignments.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  survey-true-coast-routes:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate original final seven-island project and native road survey source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $mark=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $mark) -or (Get-Content $mark -Raw).Trim() -ne '41188816555'){throw 'Untrusted native project'}
+          foreach($file in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path $file)){throw "Missing protected map $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent native import or Editor active'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_382_native_road_alignments.py')
+          if($LASTEXITCODE -ne 0){throw 'Invalid road survey script syntax'}
+      - name: Native read-only terrain survey of 245 real polylines and 137 unpositioned source links
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_REGIONAL_ROAD_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_FINAL_REGIONAL_ROAD_SURVEY_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-382-regional-road-coastal-feasibility.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_382_native_road_alignments.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_REGIONAL_ROAD_SURVEY_RESULT)){throw 'No native road survey proof'}
+          $r=Get-Content $env:SKARVIK_FINAL_REGIONAL_ROAD_SURVEY_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_382_ROUTE_SURVEY_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_382_ROUTE_NO_WAYPOINTS='+$r.noGeometryRoadCount)
+          Write-Host ('SKARVIK_FINAL_382_ROUTE_ACTUAL_SOURCE_POLYLINES='+$r.surveyedWaypointRoadCount)
+          Write-Host ('SKARVIK_FINAL_382_ROUTE_DRY_GRADE_ROUTE_COUNT='+$r.fullyDryGradeSurveyedRouteCount)
+          Write-Host ('SKARVIK_FINAL_382_ROUTE_NEED_BRIDGE_GRADE_REPLAN='+$r.routesNeedingWaterOrGradeDesign)
+          if($code -ne 0 -or $r.state -ne 'SKARVIK_FINAL_382_ROUTE_NATIVE_COAST_FEASIBILITY_SURVEY_ONLY_NO_BUILD'){
+            throw ('Native true-coast regional road survey failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_382_NATIVE_ROAD_SURVEY_IS_DATA_ONLY_NOT_PLAYABLE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-382-regional-route-native-coast-audit
+          path: skarvik-final-382-regional-road-coastal-feasibility.json
+          if-no-files-found: warn
