@@ -17,7 +17,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: map-deps-${{ github.run_id }}
-          sparse-checkout: unreal/Content/Python/plan_skarvik_existing_map_transfer.py
+          sparse-checkout: |
+            unreal/Content/Python/plan_skarvik_existing_map_transfer.py
+            scripts/ue5/repair-skarvik-assetmanager-existing-rule.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
       - name: Inspect only the existing map package dependencies and potential D transfer conflicts
@@ -37,6 +39,9 @@ jobs:
           $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
           if((Get-Content -LiteralPath 'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\.skarvik-ci-stage-marker' -Raw).Trim() -ne '41188816555'){throw 'Existing SKARVIK stage marker differs'}
           $script=Join-Path $env:GITHUB_WORKSPACE ('map-deps-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\plan_skarvik_existing_map_transfer.py')
+          $repair=Join-Path $env:GITHUB_WORKSPACE ('map-deps-'+$env:GITHUB_RUN_ID+'\scripts\ue5\repair-skarvik-assetmanager-existing-rule.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $repair
+          if($LASTEXITCODE -ne 0){throw 'Existing AssetManager rule could not be safely restored'}
           $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $ErrorActionPreference='Continue'
           & $editor "$stage\AnomaliaZPrigimalia.uproject" -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$out\engine.log" *> (Join-Path $out 'process.log')
