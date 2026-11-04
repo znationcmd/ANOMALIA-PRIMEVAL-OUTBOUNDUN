@@ -14,6 +14,14 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 90
     steps:
+      - uses: actions/checkout@v4
+        with:
+          path: mission-default-source-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp
+            unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaLootPIETests.cpp
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
       - name: Apply exact source changes only to the preserved validation copies
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -36,7 +44,8 @@ jobs:
           $changes=@($json | ConvertFrom-Json)
           foreach($change in $changes){
             $download=Join-Path $out ([IO.Path]::GetFileName($change.path)+'.download')
-            Invoke-WebRequest -UseBasicParsing -Uri ('https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/'+$change.commit+'/'+$change.path) -OutFile $download
+            $checkedSource=Join-Path $env:GITHUB_WORKSPACE ('mission-default-source-'+$env:GITHUB_RUN_ID+'\'+$change.path)
+            Copy-Item -LiteralPath $checkedSource -Destination $download
             if((& git hash-object -- $download).Trim() -ne $change.blob){throw 'Source correction download hash mismatch'}
             $index=0
             foreach($root in @($cache,$runtime)){
