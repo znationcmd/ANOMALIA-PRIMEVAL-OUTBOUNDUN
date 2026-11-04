@@ -17,6 +17,7 @@
 #include "../AnomaliaZPrigimaliaBankTerminal.h"
 #include "Blueprint/WidgetTree.h"
 #include "Components/Button.h"
+#include "UObject/UObjectHash.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "../AnomaliaZPrigimaliaLootPickup.h"
 #include "../AnomaliaZPrigimaliaInventoryComponent.h"
@@ -179,6 +180,20 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
                 { if (Widget && (Widget->GetName()==Prefix || Widget->GetName().StartsWith(Prefix+TEXT("_")))) Found=Cast<UButton>(Widget); });
             return Found;
         };
+        auto FindStackSelection=[Survivor](int32 StackId)->UButton*
+        {
+            auto* Screen=Survivor->InventoryWidget.Get();
+            if(!Screen || !Screen->WidgetTree)return nullptr;
+            TSet<UButton*> LiveButtons;
+            Screen->WidgetTree->ForEachWidget([&](UWidget* W){if(auto* B=Cast<UButton>(W))LiveButtons.Add(B);});
+            TArray<UObject*> Children;GetObjectsWithOuter(Screen,Children,true);
+            for(UObject* Child:Children)
+                if(auto* Relay=Cast<UAnomaliaZPrigimaliaInventoryActionRelay>(Child);
+                    Relay && Relay->Action==EAnomaliaZPrigimaliaInventoryAction::SelectStack &&
+                    Relay->StackId==StackId && LiveButtons.Contains(Relay->Button.Get()))
+                    return Relay->Button.Get();
+            return nullptr;
+        };
         if (Probe->Phase == 5)
         {
             Input(EKeys::Gamepad_Special_Left,IE_Released);
@@ -186,8 +201,8 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
             const auto* Stack=Survivor->InventoryComponent->Stacks.FindByPredicate([&](const auto& Row) { return Row.ItemId==Probe->NoteId; });
             if(!TestNotNull(TEXT("Collected note remains in inventory before bank deposit"),Stack)) return true;
             const int32 NoteStackId=Stack->StackId;
-            auto* NoteTile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),NoteStackId));
-            if(!TestNotNull(TEXT("Actual note has a selectable inventory grid tile"),NoteTile)) return true;
+            auto* NoteTile=FindStackSelection(NoteStackId);
+            if(!TestNotNull(TEXT("Actual note has a live selectable UMG control"),NoteTile)) return true;
             NoteTile->OnClicked.Broadcast();
             UButton* Deposit=FindButton(FString::Printf(TEXT("BankDeposit_%d_action"),NoteStackId));
             if(!TestNotNull(TEXT("Selecting note exposes its real deposit action"),Deposit)) return true;
@@ -221,7 +236,7 @@ bool FAnomaliaZPrigimaliaLootPIETest::RunTest(const FString& Parameters)
             {
                 const int32 WoodId=Paging->Stacks[0].StackId;
                 Survivor->InventoryWidget->InitializeForInventory(Paging);
-                auto* WoodTile=FindButton(FString::Printf(TEXT("InventoryTile_%d"),WoodId));
+                auto* WoodTile=FindStackSelection(WoodId);
                 if(!TestNotNull(TEXT("Actual rotation item has a selectable grid tile"),WoodTile)) return true;
                 WoodTile->OnClicked.Broadcast();
                 auto* Rotate=FindButton(FString::Printf(TEXT("RotateStack_%d_action"),WoodId));
