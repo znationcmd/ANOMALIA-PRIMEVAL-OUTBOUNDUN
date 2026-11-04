@@ -32,6 +32,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: c48dd694637afdea67fcb8471dacbcb4d8c42803
           path: standalone-discovery-${{ github.run_id }}
           sparse-checkout: scripts/ue5/discover-standalone-unreal-projects.py
           sparse-checkout-cone-mode: false
