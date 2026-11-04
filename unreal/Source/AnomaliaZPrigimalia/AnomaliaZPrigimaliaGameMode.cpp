@@ -9,6 +9,9 @@
 #include "AnomaliaZPrigimaliaEconomySubsystem.h"
 #include "Vehicles/AnomaliaZPrigimaliaVehicleSurvival.h"
 #include "AnomaliaZPrigimaliaInventoryComponent.h"
+#include "Animation/AnimBlueprintGeneratedClass.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "AnomaliaZPrigimaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
@@ -36,6 +39,24 @@
 AAnomaliaZPrigimaliaGameMode::AAnomaliaZPrigimaliaGameMode()
 {
     DefaultPawnClass = AAnomaliaZPrigimaliaSurvivor::StaticClass();
+    // Prefer the installed, already audited playable profile. Do not rewrite
+    // its Blueprint or invent body/clothing assets when the pack is absent.
+    UClass* Profile = LoadClass<AAnomaliaZPrigimaliaSurvivor>(nullptr,
+        TEXT("/Game/Anomalia/Characters/BP_Anomalia_Survival.BP_Anomalia_Survival_C"));
+    if (Profile)
+    {
+        const auto* Defaults = Profile->GetDefaultObject<AAnomaliaZPrigimaliaSurvivor>();
+        const auto* Mesh = Defaults ? Defaults->GetMesh() : nullptr;
+        const auto* Body = Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr;
+        const auto* Animation = Mesh ? Cast<UAnimBlueprintGeneratedClass>(Mesh->GetAnimClass()) : nullptr;
+        if (Body && Body->GetSkeleton() && Animation && Animation->TargetSkeleton == Body->GetSkeleton())
+        {
+            DefaultPawnClass = Profile;
+            UE_LOG(LogTemp, Display, TEXT("ANOMALIA_DEFAULT_PLAYABLE_PROFILE=%s"), *Profile->GetPathName());
+        }
+        else
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA_DEFAULT_PROFILE_NOT_READY: installed Survival profile lacks a compatible animated body"));
+    }
 }
 
 void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
