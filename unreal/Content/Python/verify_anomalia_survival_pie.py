@@ -88,6 +88,10 @@ def tick(delta):
     try:
         now=time.monotonic()
         require(now-s["start"]<240, "PIE check timed out at "+s["phase"])
+        gap=now-s.get("last_tick_wall",now)
+        s["last_tick_wall"]=now
+        report["maxEditorTickGapSeconds"]=max(report.get("maxEditorTickGapSeconds",0.0),gap)
+        report["editorTickCount"]=report.get("editorTickCount",0)+1
         if s["phase"]=="wait_world":
             w=worlds.get_game_world()
             if not editor.is_in_play_in_editor() or not w:
@@ -108,6 +112,11 @@ def tick(delta):
         row["lastPositionCm"]=pos(actor)
         row["phase"]=s["phase"]
         row["phaseSimulationSeconds"]=elapsed
+        row["phaseWallSeconds"]=now-s["phase_at_wall"]
+        row["worldPaused"]=unreal.GameplayStatics.is_game_paused(s["world"])
+        row["globalTimeDilation"]=unreal.GameplayStatics.get_global_time_dilation(s["world"])
+        row["actorTimeDilation"]=actor.get_editor_property("custom_time_dilation")
+        require(not row["worldPaused"],"PIE became paused during "+s["phase"])
         require(not row["inputIgnored"],"Possessed character has movement input disabled")
         require(now-s["phase_at_wall"]<25,"Simulation phase stalled: "+s["phase"])
         if now-s.get("checkpoint_at",0)>1:
@@ -188,7 +197,8 @@ try:
     w.get_world_settings().set_editor_property("default_game_mode",unreal.GameModeBase.static_class())
     for command in ("r.DynamicGlobalIlluminationMethod 0","r.ReflectionMethod 0",
                     "r.Shadow.Virtual.Enable 0","r.Nanite 0","sg.TextureQuality 1",
-                    "r.Streaming.MipBias 1","t.MaxFPS 30","t.IdleWhenNotForeground 0"):
+                    "r.Streaming.MipBias 1","t.MaxFPS 30","t.IdleWhenNotForeground 0",
+                    "Slate.bAllowThrottling 0"):
         unreal.SystemLibrary.execute_console_command(w,command)
     s["classes"]={n:unreal.EditorAssetLibrary.load_blueprint_class("/Game/Anomalia/Characters/BP_Anomalia_"+n) for n in names}
     require(all(s["classes"].values()),"Test Blueprint classes failed to load before PIE")
@@ -213,6 +223,14 @@ try:
             s["jacket"]=garment
     report["fixture"]="transient_single_Survival_world; existing maps and defaults unchanged"
     report["texturePreview"]="lower texture quality and mip bias in this process only"
+    # Keep asynchronous asset work outside the timed movement phases. This
+    # changes only test scheduling, never movement/animation acceptance limits.
+    warmup_started=time.monotonic()
+    unreal.AutomationUtilsBlueprintLibrary.finish_all_asset_compilation()
+    report["assetCompilationWarmupSeconds"]=time.monotonic()-warmup_started
+    report["editorSlateThrottlingDisabledForThisProcess"]=True
+    s["start"]=time.monotonic()
+    s["until"]=s["start"]+3
     editor.editor_request_begin_play()
     s["handle"]=unreal.register_slate_post_tick_callback(tick)
 except Exception as exc:
