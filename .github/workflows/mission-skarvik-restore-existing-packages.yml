@@ -36,6 +36,32 @@ jobs:
           $mapBefore=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
           if($mapBefore.ToLowerInvariant() -ne $graph.sourceMapSHA256After){throw 'Map changed since dependency graph'}
           $sources=@('D:\ANOMALIA\unreal\Content','D:\ANOMALIA\FabImports\CitySample\Content','D:\ANOMALIA\FabImports\DerelictCorridorMegascans\Content')
+          $queue=New-Object 'System.Collections.Generic.Queue[object]'
+          $queue.Enqueue(@{path='D:\ANOMALIA\FabImports\CitySample';depth=0})
+          $inspected=@();$configRules=@()
+          while($queue.Count){
+            $candidate=$queue.Dequeue()
+            if($inspected.Count -ge 256){throw 'Bounded CitySample root search exceeded'}
+            if(!(Test-Path -LiteralPath $candidate.path -PathType Container)){continue}
+            $inspected+=$candidate.path
+            $content=Join-Path $candidate.path 'Content'
+            if(Test-Path -LiteralPath $content -PathType Container){$sources+=$content}
+            foreach($name in @('DefaultGame.ini','DefaultEngine.ini')){
+              $config=Join-Path $candidate.path ('Config\'+$name)
+              if(Test-Path -LiteralPath $config -PathType Leaf){
+                $configRules+=@{path=$config;lines=@(Get-Content -LiteralPath $config | Where-Object {$_ -match 'PrimaryAssetTypesToScan.*GameFeatureData'})}
+              }
+            }
+            if($candidate.depth -lt 3){
+              foreach($dir in @(Get-ChildItem -LiteralPath $candidate.path -Directory)){
+                if($dir.Name -notin @('Content','Plugins','Source','Intermediate','Saved','DerivedDataCache','.git')){
+                  $queue.Enqueue(@{path=$dir.FullName;depth=($candidate.depth+1)})
+                }
+              }
+            }
+          }
+          $sources=@($sources | Select-Object -Unique | Where-Object {Test-Path -LiteralPath $_ -PathType Container})
+          [ordered]@{roots=$sources;inspected=$inspected;existingGameFeatureRules=$configRules} | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $out 'existing-source-roots-and-rules.json') -Encoding UTF8
           $plan=@();$unresolved=@();$ambiguous=@()
           foreach($row in $graph.files){
             if($row.status -ne 'SOURCE_PACKAGE_FILE_MISSING'){continue}
