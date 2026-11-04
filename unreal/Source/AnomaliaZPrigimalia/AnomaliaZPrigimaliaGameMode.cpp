@@ -46,7 +46,7 @@ AAnomaliaZPrigimaliaGameMode::AAnomaliaZPrigimaliaGameMode()
     if (Profile)
     {
         const auto* Defaults = Profile->GetDefaultObject<AAnomaliaZPrigimaliaSurvivor>();
-        const auto* Mesh = Defaults ? Defaults->GetMesh() : nullptr;
+        auto* Mesh = Defaults ? Defaults->GetMesh() : nullptr;
         const auto* Body = Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr;
         const auto* Animation = Mesh ? Cast<UAnimBlueprintGeneratedClass>(Mesh->GetAnimClass()) : nullptr;
         if (Body && Body->GetSkeleton() && Animation && Animation->TargetSkeleton == Body->GetSkeleton())
