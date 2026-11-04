@@ -82,8 +82,17 @@ def prepare_parent(target,source):
 def source_available(path):
     stat=path.stat()
     return not (getattr(stat,"st_file_attributes",0)&(0x1000|0x400000))
+for drive in ["C:/","D:/"]:
+    existing=pathlib.Path(drive)/"AZRP"
+    if existing.is_dir():
+        for marker in existing.glob("*/owner.json"):
+            try:
+                owner=json.loads(marker.read_text(encoding="utf-8"))
+                if owner.get("mainContent")==str(root):allowed.append((marker.parent/"payload").resolve())
+            except (OSError,ValueError):pass
 check_process()
 original_maps={p.relative_to(content).as_posix():digest(p) for p in content.rglob("*.umap")}
+original_map_keys={name.casefold() for name in original_maps}
 summary["originalMaps"]=len(original_maps);checkpoint()
 sources={s["id"]:s for s in plan["sourceProjects"]}
 authoritative=pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content").resolve()
@@ -101,10 +110,13 @@ for source_id in source_order:
     for row in by_source[source_id]:
         if pathlib.Path(row["relative"]).suffix.casefold()==".umap":
             stem=row["relative"][:-5];stems.append(stem)
-            if row["relative"] not in original_maps:map_owners.setdefault(stem,source_id)
+            if row["relative"].casefold() not in original_map_keys:map_owners.setdefault(stem.casefold(),source_id)
     map_stems[source_id]=sorted(stems,key=len,reverse=True)
-def alternate(source,row,extension=None):
-    if source.stat().st_dev==target_device:return source
+def alternate(source,row,target,extension=None):
+    parent=target.parent
+    while not parent.exists():parent=parent.parent
+    preferred=parent.resolve().stat().st_dev
+    if source.stat().st_dev==preferred or preferred!=target_device:return source
     for candidate in same_volume.get(row["relative"].casefold(),[]):
         path=pathlib.Path(candidate["source"])
         if extension:path=path.with_suffix(extension)
@@ -122,12 +134,12 @@ try:
             if stat.st_size!=row["bytes"] or stat.st_mtime_ns!=row["mtimeNS"]:
                 record(row,"SOURCE_CHANGED_PRESERVED");continue
             relative=row["relative"]
-            if relative.startswith(("__ExternalActors__/","__ExternalObjects__/")):
+            if relative.casefold().startswith(("__externalactors__/","__externalobjects__/")):
                 world_path=relative.split("/",1)[1]
-                owning=next((stem for stem in map_stems[source_id] if world_path.startswith(stem+"/")),None)
-                if owning is None or owning+".umap" in original_maps or map_owners.get(owning)!=source_id:
+                owning=next((stem for stem in map_stems[source_id] if world_path.casefold().startswith(stem.casefold()+"/")),None)
+                if owning is None or (owning+".umap").casefold() in original_map_keys or map_owners.get(owning.casefold())!=source_id:
                     record(row,"EXISTING_OR_UNOWNED_LEVEL_EXTERNALS_PRESERVED");continue
-            if source.suffix.casefold()==".umap" and relative not in original_maps and map_owners.get(relative[:-5])!=source_id:
+            if source.suffix.casefold()==".umap" and relative.casefold() not in original_map_keys and map_owners.get(relative[:-5].casefold())!=source_id:
                 record(row,"OTHER_SOURCE_LEVEL_VERSION_PRESERVED");continue
             if target.is_file():
                 if not identical(source,target):record(row,"EXISTING_ASSET_CONFLICT_PRESERVED");continue
@@ -147,12 +159,14 @@ try:
             prepared=[]
             for src,dst,ext in payloads:
                 if not source_available(src):raise RuntimeError("Source sidecar is not local")
-                backing=alternate(src,row,ext)
+                backing=alternate(src,row,dst,ext)
                 prepare_parent(dst,backing)
                 prepared.append((src,backing,dst))
-            copy_bytes=sum(src.stat().st_size for src,backing,dst in prepared if backing.stat().st_dev!=dst.parent.resolve().stat().st_dev)
-            if shutil.disk_usage(main).free<4*1024**3+copy_bytes:
-                record(row,"DEFERRED_DISK_RESERVE",copyBytesRequired=copy_bytes);continue
+            copy_by_drive=collections.Counter()
+            for src,backing,dst in prepared:
+                if backing.stat().st_dev!=dst.parent.resolve().stat().st_dev:copy_by_drive[dst.parent.resolve().anchor]+=src.stat().st_size
+            if any(shutil.disk_usage(drive).free<4*1024**3+count for drive,count in copy_by_drive.items()):
+                record(row,"DEFERRED_DISK_RESERVE",copyBytesRequired=dict(copy_by_drive));continue
             actions=[]
             for src,backing,dst in prepared:
                 before=src.stat()
