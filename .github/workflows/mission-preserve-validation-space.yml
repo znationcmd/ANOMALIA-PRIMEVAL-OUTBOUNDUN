@@ -25,7 +25,8 @@ jobs:
           "MISSION_PRESERVE_REPORT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           if(!(Test-Path -LiteralPath $origin -PathType Container)){throw 'Mission validation directory missing'}
           if((Get-Item -LiteralPath $origin).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Origin is already a reparse point; refuse automatic relocation'}
-          if(Test-Path -LiteralPath $archive){throw 'Archive already exists; preserve both locations for review'}
+          $archiveExists=Test-Path -LiteralPath $archive -PathType Container
+          if((Test-Path -LiteralPath $archive) -and !$archiveExists){throw 'Archive path is not a directory'}
           $stamp=Join-Path $origin 'unreal\Build\AnomaliaZPrigimaliaSourceCommit.generated.txt'
           if((Get-Content -LiteralPath $stamp -Raw).Trim() -ne '0360ec9cd8106097de8c8ba80c53f85349269d88'){throw 'Mission source stamp mismatch'}
           $patchReceipt=Join-Path $origin 'unreal\Saved\MissionResume\41800675310\source-patch-receipt.json'
@@ -38,10 +39,18 @@ jobs:
           $c=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
           $beforeD=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
           [ordered]@{origin=$origin;archive=$archive;files=$files.Count;bytes=$bytes;CFreeBefore=$c.FreeSpace;DFreeBefore=$beforeD;installedDProjectTouched=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'preflight.json') -Encoding UTF8
-          if($c.FreeSpace -lt ($bytes+4GB)){throw 'Insufficient physical C capacity to preserve full mission validation; nothing moved'}
+          $reserve=$(if($archiveExists){($files | Measure-Object Length -Maximum).Maximum+4GB}else{$bytes+4GB})
+          if($c.FreeSpace -lt $reserve){throw 'Insufficient physical C capacity; preserve both locations'}
           $manifest=@($files | ForEach-Object {[ordered]@{relative=$_.FullName.Substring($origin.Length+1);bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
           $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out 'full-file-manifest.json') -Encoding UTF8
-          New-Item -ItemType Directory -Path $archive | Out-Null
+          if($archiveExists){
+            $archived=@(Get-ChildItem -LiteralPath $archive -Recurse -File -Force)
+            if($archived.Count -ne $manifest.Count){throw 'Existing archive file count differs; preserve both copies'}
+            foreach($file in $manifest){
+              $target=Join-Path $archive $file.relative
+              if(!(Test-Path -LiteralPath $target) -or (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $file.sha256){throw 'Existing archive differs; refuse overwrite'}
+            }
+          }else{New-Item -ItemType Directory -Path $archive | Out-Null}
           & robocopy $origin $archive /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NP /NFL /NDL *> (Join-Path $out 'copy.log')
           if($LASTEXITCODE -ge 8){throw 'Preserving copy failed; originals retained'}
           foreach($file in $manifest){
@@ -51,10 +60,14 @@ jobs:
           }
           # Both complete copies have been independently hashed. Move only this
           # mission-created directory's files; never purge, mirror or touch D:\ANOMALIA.
-          & robocopy $origin $archive /E /MOVE /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NP /NFL /NDL *> (Join-Path $out 'relocate.log')
+          & robocopy $origin $archive /E /MOVE /IS /IT /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NP /NFL /NDL *> (Join-Path $out 'relocate.log')
           if($LASTEXITCODE -ge 8){throw 'Relocation incomplete; all copies retained for review'}
           if(Test-Path -LiteralPath $origin){
-            if(@(Get-ChildItem -LiteralPath $origin -Force).Count){throw 'Origin not empty; keep remaining files'}
+            if(@(Get-ChildItem -LiteralPath $origin -Recurse -File -Force).Count){throw 'Origin still contains files; preserve them'}
+            foreach($dir in @(Get-ChildItem -LiteralPath $origin -Recurse -Directory -Force | Sort-Object {$_.FullName.Length} -Descending)){
+              if(@(Get-ChildItem -LiteralPath $dir.FullName -Force).Count){throw 'Nonempty directory retained'}
+              [IO.Directory]::Delete($dir.FullName)
+            }
             [IO.Directory]::Delete($origin)
           }
           New-Item -ItemType Junction -Path $origin -Target $archive | Out-Null
