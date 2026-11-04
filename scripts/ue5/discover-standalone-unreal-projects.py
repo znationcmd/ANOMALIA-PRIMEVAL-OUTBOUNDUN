@@ -11,7 +11,7 @@ def error(e):
 for root in roots:
     for base,dirs,files in os.walk(root,followlinks=False,onerror=error):
         if time.monotonic()>deadline: break
-        dirs[:]=[d for d in dirs if d.casefold() not in skip and not Path(base,d).is_symlink() and not os.path.isjunction(Path(base,d))]
+        dirs[:]=[d for d in dirs if d.casefold() not in skip and not Path(base,d).is_symlink() and not getattr(os.path,"isjunction",lambda p: bool(os.lstat(p).st_file_attributes & 0x400))(Path(base,d))]
         for name in files:
             if not name.casefold().endswith(".uproject"):continue
             p=Path(base,name)
