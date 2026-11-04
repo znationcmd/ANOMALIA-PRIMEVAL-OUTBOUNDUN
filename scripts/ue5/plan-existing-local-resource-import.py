@@ -37,7 +37,7 @@ while queue:
         if depth<5:
             for child in children:
                 name=child.name.casefold()
-                if child.is_dir() and name not in excluded and not any(t in name for t in ["03_validation","mission_archive","mission_source","mission_native","mission_config","missionmaterialbackups"]):
+                if child.is_dir() and name not in excluded and not any(t in name for t in ["validation","archive","backup","sauvegarde","mission_source","mission_native","mission_config"]):
                     queue.append((child,depth+1))
     except (OSError,ValueError) as exc:errors.append({"path":str(folder),"error":str(exc)})
 sources=sorted(content.values(),key=lambda p:(p["priority"],p["content"].casefold()))
