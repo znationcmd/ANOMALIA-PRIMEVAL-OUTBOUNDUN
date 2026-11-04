@@ -1,0 +1,56 @@
+name: ANOMALIA mission - locate existing SKARVIK dependencies
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-skarvik-locate-missing.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  locate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Reuse existing graph, check exact D packages and preserve all assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $prior=Join-Path $env:RUNNER_TEMP 'skarvik-transfer-plan-41810570770\skarvik-dependency-transfer-plan.json'
+          $graph=Get-Content -LiteralPath $prior -Raw | ConvertFrom-Json
+          if($graph.state -ne 'READ_ONLY_PLAN_COMPLETE' -or $graph.errors.Count){throw 'Incomplete prior graph'}
+          if((Get-FileHash -LiteralPath "$stage\Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap" -Algorithm SHA256).Hash.ToLowerInvariant() -ne $graph.sourceMapSHA256After){throw 'Original map differs'}
+          $out=Join-Path $env:RUNNER_TEMP ('skarvik-locate-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $report=[ordered]@{priorGraphRun=41810570770;graphRerun=$false;assetsCopied=0;roots=@();missing=@();equalSizeComparisons=@();diskFree=@()}
+          foreach($root in @("$stage\Content",'D:\ANOMALIA\FabImports','D:\ANOMALIA\unreal\Content')){
+            if(Test-Path -LiteralPath $root){
+              $report.roots+=@{root=$root;children=@(Get-ChildItem -LiteralPath $root -Directory | Select-Object Name,FullName,LinkType,Target)}
+            }
+          }
+          foreach($row in $graph.files){
+            if($row.status -eq 'SOURCE_PACKAGE_FILE_MISSING'){
+              $relative=$row.package.Substring(6).Replace('/','\')
+              $matches=@()
+              foreach($ext in @('.uasset','.umap')){
+                $path=Join-Path 'D:\ANOMALIA\unreal\Content' ($relative+$ext)
+                if(Test-Path -LiteralPath $path -PathType Leaf){$matches+=@{path=$path;bytes=(Get-Item -LiteralPath $path).Length;sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}}
+              }
+              $report.missing+=@{package=$row.package;exactInstalledMatches=$matches}
+            }elseif($row.status -eq 'SAME_SIZE_HASH_COMPARISON_REQUIRED'){
+              $a=Get-FileHash -LiteralPath (Join-Path $stage $row.path) -Algorithm SHA256
+              $b=Get-FileHash -LiteralPath (Join-Path 'D:\ANOMALIA\unreal' $row.path) -Algorithm SHA256
+              $report.equalSizeComparisons+=@{path=$row.path;sourceSHA256=$a.Hash;installedSHA256=$b.Hash;identical=($a.Hash -eq $b.Hash)}
+            }
+          }
+          $report.diskFree=@(Get-CimInstance Win32_LogicalDisk | Where-Object {$_.DeviceID -in @('C:','D:')} | Select-Object DeviceID,FreeSpace)
+          $report | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath (Join-Path $out 'existing-dependency-locations.json') -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission-existing-skarvik-dependency-locations
+          path: ${{ runner.temp }}/skarvik-locate-${{ github.run_id }}/
+          if-no-files-found: error
