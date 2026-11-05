@@ -153,7 +153,8 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
 void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
 {
     UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MEDIA_FAILED: %s"), *FailedUrl);
-    FinishToMainMenu();
+    // The title voice must never be interrupted if the optional blood video fails.
+    if (!bClicked) FinishToMainMenu();
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
