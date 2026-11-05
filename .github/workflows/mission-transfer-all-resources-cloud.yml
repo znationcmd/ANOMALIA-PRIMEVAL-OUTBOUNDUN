@@ -1,0 +1,58 @@
+name: ANOMALIA mission - transfer all game resources to Google Drive
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-transfer-all-resources-cloud.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: false
+jobs:
+  transfer:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cloud-resources-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/transfer-all-inventoried-resources-to-cloud.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare cloud transfer journal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('cloud-resources-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
+      - name: Transfer verified missing resource bytes through existing Google Drive client
+        timeout-minutes: 300
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cloud-resources-'+$env:GITHUB_RUN_ID+'\scripts\ue5\transfer-all-inventoried-resources-to-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cloud transfer interrupted; retain local originals and persistent resume journal'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: all-resources-cloud-transfer-receipts
+          path: |
+            ${{ env.CLOUD_TRANSFER_OUT }}/cloud-transfer-summary.json
+            ${{ env.CLOUD_TRANSFER_OUT }}/resource-transfers.jsonl
+          if-no-files-found: error
