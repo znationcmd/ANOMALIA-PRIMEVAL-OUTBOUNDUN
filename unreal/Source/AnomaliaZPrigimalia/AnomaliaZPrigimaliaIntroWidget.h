@@ -29,6 +29,7 @@ public:
 protected:
     virtual TSharedRef<SWidget> RebuildWidget() override;
     virtual void NativeConstruct() override;
+    virtual void NativeTick(const FGeometry& Geometry, float DeltaTime) override;
     virtual void NativeDestruct() override;
 
 private:
@@ -50,4 +51,7 @@ private:
 
     bool bClicked = false;
     bool bMenuOpened = false;
+    bool bBloodFinished = false;
+    bool bVoiceFinished = false;
+    double ClickStartedAt = -1.0;
 };
