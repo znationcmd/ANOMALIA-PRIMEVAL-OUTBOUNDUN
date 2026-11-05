@@ -1,4 +1,4 @@
-name: ANOMALIA mission - recover confirmed C resources into D
+name: ANOMALIA mission - recover new C Sketchfab and CMD additions into D
 on:
   push:
     branches: [mission/finalisation-20261104]
