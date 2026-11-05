@@ -19,6 +19,7 @@ jobs:
         with:
           path: cloud-resume-${{ github.run_id }}
           sparse-checkout: |
+            scripts/ue5/release-inactive-legacy-ddc-for-cloud.py
             scripts/ue5/reference-server-verified-cloud-archives.py
             scripts/ue5/verified-cloud-archive-offload-20261105.json
             scripts/ue5/transfer-all-inventoried-resources-to-cloud.py
@@ -30,6 +31,13 @@ jobs:
           $out=Join-Path $env:RUNNER_TEMP ('verified-cloud-resume-'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out | Out-Null
           "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Release old regenerable legacy UDD cache with editor-off guards
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cloud-resume-'+$env:GITHUB_RUN_ID+'\scripts\ue5\release-inactive-legacy-ddc-for-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cache safety guard stopped cleanup; sources preserved'}
       - name: Retain server-verified cold archives online and measure released C space
         id: offload
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -68,6 +76,7 @@ jobs:
         with:
           name: verified-cloud-offload-and-resume-receipts
           path: |
+            ${{ env.CLOUD_TRANSFER_OUT }}/legacy-ddc-cleanup*.json*
             ${{ env.CLOUD_TRANSFER_OUT }}/verified-archive-offload.json
             ${{ env.CLOUD_TRANSFER_OUT }}/cloud-transfer-summary.json
             ${{ env.CLOUD_TRANSFER_OUT }}/resource-transfers.jsonl
