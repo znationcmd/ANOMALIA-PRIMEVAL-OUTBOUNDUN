@@ -45,4 +45,5 @@ for p in sources:
   report["files"].append(item);print(json.dumps(item),flush=True)
  except Exception as e:report["files"].append({"source":str(p),"state":"ERROR_PRESERVED","error":str(e)})
  (out/"C-resource-recovery.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+(out/"C-resource-recovery.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
 print(json.dumps({"files":len(report["files"]),"copied":sum(x["state"]=="COPIED_AND_HASH_VERIFIED" for x in report["files"]),"deferred":sum(x["state"]=="DEFERRED_DISK_RESERVE" for x in report["files"])}),flush=True)
