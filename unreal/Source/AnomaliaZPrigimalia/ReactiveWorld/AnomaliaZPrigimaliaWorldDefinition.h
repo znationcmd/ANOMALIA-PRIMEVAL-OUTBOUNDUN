@@ -27,6 +27,8 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float RepairSeconds = 10;
     /** Optional required inventory fuse. None preserves existing generator definitions. */
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power") FName RequiredFuseItem;
+    /** True for player base generators; false for fixed city/village electrical networks. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power") bool bRequiresFuel = true;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName FuelItem = TEXT("gasoline");
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float FuelSecondsPerItem = 300;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float OutputWatts = 1000;
