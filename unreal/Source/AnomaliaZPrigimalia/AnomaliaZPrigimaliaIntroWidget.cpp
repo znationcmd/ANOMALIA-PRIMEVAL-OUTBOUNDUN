@@ -35,7 +35,7 @@ namespace
         // The spoken title remains the separate SW_IntroTitle SoundWave.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("CLIC_SANG_6s_SANS_AUDIO.mp4")));
+            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4")));
     }
 }
 
