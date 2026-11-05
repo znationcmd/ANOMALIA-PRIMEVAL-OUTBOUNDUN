@@ -1,34 +1,37 @@
-# ANOMALIA'Z PRIGIMALIA — Intro de survie horrifique v4 (88 secondes, SANS TITRE ÉCRIT)
+# ANOMALIA'Z PRIGIMALIA — Générique original, 30 secondes maximum
 
-Branche PR #65 — **draft**, non fusionnée à la branche Work. Préserve les 15 cartes, le multijoueur, les sauvegardes et les fichiers de l'éditeur.
+PR GitHub #65 — branche de test **non fusionnée**. Préserve les cartes, les sauvegardes et le travail de Work.
 
-## Fonctionnement souhaité
+## Fonctionnement
 
-1. Depuis `ANOMALIA_Playable_v1` en solo, afficher le **film animé de 88 secondes**, centré sur le survivant et son berger allemand. **Aucun nom de jeu ou logo textuel n'apparaît.**
-2. L'ambiance utilise **une musique d'horreur ORIGINALE**, des grognements synthétiques de zombies et des craquements de bois. **Ce n'est pas la chanson HA HA HA de TheTrapLabb** : un enregistrement tiers non autorisé n'a pas été téléchargé.
-3. Pendant les 88 secondes, le bouton **PASSER** permet d'interrompre la vidéo pour aller directement au clic/voix.
-4. À la fin, le bouton **CLIQUER POUR COMMENCER** apparaît. Au clic, le bouton disparaît (aucun titre écrit), la vidéo muette de sang coulant de 6 secondes démarre et la **voix gutturale de zombie** prononce **oralement** « ANOMALIA'Z PRIGIMALIA ».
-5. Lorsque la voix est terminée, le véritable menu Unreal `UAnomaliaZPrigimaliaSessionWidget` s'ouvre. En cas de média manquant ou d'erreur, retour au menu d'origine.
+- **24 premières secondes :** la scène VISUELLE DE LA VIDÉO D'ORIGINE ENVOYÉE par l'utilisateur (survivant, chien, ville) avec ajout d'une musique originale horrifique et des bruitages de zombies et de bois qui craque. Ne pas remplacer le décor par une image générée artificiellement.
+- **À la fin de ces 24 secondes, ou plus tôt via PASSER :** bouton **CLIQUER POUR COMMENCER**.
+- **Au clic :** jusqu'à 6 secondes de sang coulant sur la scène de départ ; déclenchement du **son vocal directement extrait de la vidéo originale** (pas de doublage robotique, pas de pitch modifié). Le menu natif du jeu s'ouvre à la fin du son.
+- **Durée totale de la démonstration MP4 : 30.000 secondes**, avec un clic simulé au temps 24s. Dans l'expérience interactive, un clic anticipé réduit la durée plutôt que de l'allonger.
 
-## Médias v4 à installer
+## Pack média à télécharger séparément
 
-Récupérer le pack `ANOMALIAZ_PRIGIMALIA_KIT_88S_VOIX_ZOMBIE.zip` livré dans la conversation, l'extraire dans le dossier de la copie de test contenant `unreal/AnomaliaZPrigimalia.uproject`. Les médias suivants seront alors présents :
+Le ZIP `ANOMALIAZ_PRIGIMALIA_KIT_ORIGINAL_30s_CLIC.zip` livré dans la conversation contient :
 
-- `unreal/SourceAssets/Intro/ANOMALIAZ_PRIGIMALIA_Intro_SANS_TEXTE_88s.mp4` — cinématique avec audio original 88s.
-- `unreal/SourceAssets/Intro/ANOMALIAZ_PRIGIMALIA_Clic_Sang_SANS_TEXTE_v4.mp4` — clip de sang de 6s sans texte ni audio.
-- `unreal/SourceAssets/Intro/SW_IntroTitle_Zombie_v4.wav` — annonce grave/gutturale séparée.
+- `INTRO_JEU_24s_MUSIQUE.mp4` — images originales, musique et bruitages d'horreur, aucune voix de synthèse.
+- `CLIC_SANG_6s_SANS_AUDIO.mp4` — coulées de sang, scène originale.
+- `VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav` — bande audio EXTRAITE du MP4 original reçu, sans changement de timbre ni de hauteur. Elle contient les sons originaux autour de la voix, car elle n'est pas isolée par stem.
+- `OUVRIR_GENERIQUE_CLIC.html` — aperçu où le bouton déclenche réellement l'animation et l'audio, séparément du MP4 de démonstration.
+- `LISEZ_MOI.txt`.
 
-Dans **Unreal Engine 5.8**, activer Python Editor Script Plugin, ouvrir le véritable `AnomaliaZPrigimalia.uproject`, exécuter `unreal/Scripts/install_prigimalia_intro.py`, puis compiler le module C++ de la PR. Le script vérifie le projet et tous les médias avant de copier et **n'écrase pas de fichier différent déjà présent**. La voix est importée sous `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Zombie_v4`.
+## Installation UE5.8
 
-## Contrôles obligatoires avant toute fusion
+Décompresser les trois médias sous `unreal/SourceAssets/Intro/` dans une **copie test** du projet `unreal/AnomaliaZPrigimalia.uproject`. Sur la branche PR #65, exécuter le script `unreal/Scripts/install_prigimalia_intro.py` dans Unreal Editor avec Python Editor Script Plugin. Il refuse d'écraser un média existant différent, copie les deux MP4 dans `Content/Movies`, et importe l'audio original en SoundWave sous `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Original_v5`.
 
-- Vérifier dans une build Windows standalone : vidéo 88s sans nom écrit, titre prononcé une seule fois au clic, bruitages audibles, sang visible, bouton PASSER, absence de titre après clic.
-- Vérifier le repli menu en cas de média manquant, la sortie d'écran/retour et les profils de sauvegarde inchangés.
-- Vérifier que les **deux films MP4** sont dans les médias packagés de `Content/Movies`.
-- Ni la compilation native UE5, ni l'export du jeu, ni les tests sur le PC de l'utilisateur n'ont été effectués depuis le chat.
-- Le survivant et le chien dans la vidéo sont animés **en compositing 2D** à partir du visuel initial. La véritable séquence animée avec rigs 3D Unreal reste à produire et vérifier : PR #66.
-- La voix zombie est une transformation de la voix synthétique existante. Elle est plus gutturale, mais n'est pas un comédien vocal enregistré.
+Tester compilation native, playback MediaPlayer, fin de vidéo, clic, fin de l'audio, transition dans le **vrai menu**, puis packaging Windows. Tous ces tests UE5 restent à faire sur le PC contenant le jeu. Le script n'a pas été exécuté sur ce PC depuis ce chat.
 
-## Droits musicaux
+## Limites
 
-« HA HA HA » de TheTrapLabb est une **référence demandée**, pas une piste incluse dans le pack. Pour commercialiser ou diffuser le jeu avec la chanson entière, obtenir une licence valide portant sur synchronisation et distribution du master. Remplacer la musique originale dans la vidéo seulement lorsque le fichier autorisé est disponible. Ne pas prétendre que le master commercial est déjà inclus.
+- Le rendu animé du personnage et du chien provient encore des images du MP4 d'origine. Il n'est pas une animation squelettique 3D exportée depuis Sequencer (travail séparé de la PR #66).
+- Le MP4 d'origine comporte déjà des éléments de texte/logos : ils sont préservés pour ne pas modifier le visuel demandé. Aucun titre supplémentaire n'est introduit.
+- La musique de TheTrapLabb **n'est pas incluse** : les nouvelles pistes sont originales, en l'absence d'une licence de synchronisation/master.
+- Les fichiers binaires audio/vidéo doivent être importés depuis le ZIP ; les commits GitHub contiennent le code et l'installateur, pas le master commercial ni un build Unreal testé.
+
+## Retour arrière
+
+L'appel d'introduction depuis GameMode peut être retiré dans une copie test afin de revenir au menu standard. Ne jamais supprimer les fichiers `Saved/` ni les 15 cartes.
