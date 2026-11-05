@@ -1,4 +1,4 @@
-name: ANOMALIA mission - verified cloud offload and resume full transfer
+name: ANOMALIA mission - largest files first cloud transfer
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -9,7 +9,7 @@ permissions:
   actions: read
 concurrency:
   group: anomalia-full-resource-cloud-transfer
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   resume:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
@@ -62,7 +62,7 @@ jobs:
           run-id: 41974129695
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
-      - name: Resume verified uploaded objects and publish live cloud progress
+      - name: Transfer largest resources first and publish live cloud progress
         if: steps.offload.outputs.ready == 'true'
         timeout-minutes: 300
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
