@@ -1,4 +1,4 @@
-name: ANOMALIA mission - largest files first cloud transfer
+name: ANOMALIA mission - City Sample first cloud transfer
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -62,7 +62,7 @@ jobs:
           run-id: 41974129695
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
-      - name: Transfer largest resources first and publish live cloud progress
+      - name: Transfer City Sample first and publish live cloud progress
         if: steps.offload.outputs.ready == 'true'
         timeout-minutes: 300
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
