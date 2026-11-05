@@ -17,6 +17,7 @@
 #include "MediaSoundComponent.h"
 #include "MediaTexture.h"
 #include "Misc/Paths.h"
+#include "HAL/PlatformTime.h"
 #include "Sound/SoundBase.h"
 
 namespace
@@ -155,11 +156,13 @@ void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
     UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MEDIA_FAILED: %s"), *FailedUrl);
     // The title voice must never be interrupted if the optional blood video fails.
     if (!bClicked) FinishToMainMenu();
+    else { bBloodFinished = true; if (bVoiceFinished) FinishToMainMenu(); }
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
 {
-    if (bClicked || bMenuOpened) return;
+    if (bClicked) { bBloodFinished = true; if (bVoiceFinished) FinishToMainMenu(); return; }
+    if (bMenuOpened) return;
     if (ContinueButton) ContinueButton->SetVisibility(ESlateVisibility::Visible);
     if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -168,6 +171,8 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 {
     if (bClicked || bMenuOpened) return;
     bClicked = true;
+    ClickStartedAt = FPlatformTime::Seconds();
+    bBloodFinished = true; // Fallback when the blood clip cannot be opened.
     if (VideoPlayer)
     {
         VideoPlayer->Close();
@@ -178,6 +183,7 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
         {
             if (!VideoPlayer->OpenFile(ClickBloodMoviePath()))
                 UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_FAILED"));
+            else bBloodFinished = false;
         }
         else
         {
@@ -211,7 +217,9 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded()
 {
-    FinishToMainMenu();
+    bVoiceFinished = true;
+    // Let the user-provided blood animation finish before opening the menu.
+    if (bBloodFinished) FinishToMainMenu();
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::FinishToMainMenu()
@@ -227,6 +235,19 @@ void UAnomaliaZPrigimaliaIntroWidget::FinishToMainMenu()
         FInputModeGameOnly Mode;
         PC->SetInputMode(Mode);
         PC->bShowMouseCursor = false;
+    }
+}
+
+
+void UAnomaliaZPrigimaliaIntroWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
+{
+    Super::NativeTick(Geometry, DeltaTime);
+    // UI ticks while game is paused. Failsafe prevents an infinite black-screen
+    // if the MediaPlayer end callback is not delivered on a Windows backend.
+    if (bClicked && !bMenuOpened && ClickStartedAt >= 0.0 &&
+        FPlatformTime::Seconds() - ClickStartedAt >= 6.25)
+    {
+        FinishToMainMenu();
     }
 }
 
