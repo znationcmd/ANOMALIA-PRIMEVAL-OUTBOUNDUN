@@ -33,6 +33,7 @@ protected:
 
 private:
     UFUNCTION() void OnVideoEnded();
+    UFUNCTION() void OnMovieOpenFailed(FString FailedUrl);
     UFUNCTION() void OnContinueClicked();
     UFUNCTION() void OnVoiceEnded();
 
