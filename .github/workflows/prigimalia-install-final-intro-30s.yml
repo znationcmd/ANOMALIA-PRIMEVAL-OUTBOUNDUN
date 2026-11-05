@@ -1,0 +1,101 @@
+name: ANOMALIAZ - Installer intro validee dans vrai Unreal 5.8
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-install-final-intro-30s.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-intro:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Check correct game, synchronized Drive media, and safe Windows state
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $marker='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\verified-source-backup.marker'
+          $archive='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_INSTALLATION_VRAI_JEU_30s.zip'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'INSTALL_BLOCKED: native game project missing'}
+          if(!(Test-Path -LiteralPath $original -PathType Leaf)){throw 'INSTALL_BLOCKED: original source project missing'}
+          if(!(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'INSTALL_BLOCKED: source backup marker missing'}
+          $metadata=Get-Content $project -Raw | ConvertFrom-Json
+          if(@($metadata.Modules | ForEach-Object{$_.Name}) -notcontains 'AnomaliaZPrigimalia'){
+            throw 'INSTALL_BLOCKED: wrong game module'
+          }
+          if(!(Test-Path -LiteralPath $archive -PathType Leaf)){throw 'INSTALL_BLOCKED: cloud ZIP not synced to Windows H: yet'}
+          $hash=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
+          if($hash -ne '0bd9c4aae2f7fdd5309028674979b0921e0f37ceeaf3c98027e02c53773d71e7'){
+            throw 'INSTALL_BLOCKED: cloud ZIP checksum differs from validated 30-second pack'
+          }
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue)
+          if($busy.Count -gt 0){throw 'INSTALL_BLOCKED: game, Unreal or transfer still working'}
+          $cloudTasks=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {
+            $_.CommandLine -match 'transfer-all-inventoried-resources-to-cloud|reference-server-verified-cloud-archives'
+          })
+          if($cloudTasks.Count -gt 0){throw 'INSTALL_BLOCKED: City Sample cloud transfer still running'}
+          $target='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia'
+          $staged=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia'
+          foreach($name in @('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')){
+            $existing=Join-Path $target $name
+            $new=Join-Path $staged $name
+            if(!(Test-Path -LiteralPath $new)){throw 'INSTALL_BLOCKED: expected GitHub intro code missing'}
+            if((Test-Path -LiteralPath $existing) -and
+               (Get-FileHash -LiteralPath $existing).Hash -ne (Get-FileHash -LiteralPath $new).Hash){
+              throw 'INSTALL_BLOCKED: Work has different intro source, refusing to overwrite it'
+            }
+          }
+          Write-Host 'REAL_ANOMALIAZ_GAME_AND_CLOUD_MEDIA_PREFLIGHT_PASSED=true'
+      - name: Install on actual Win64 project, compile native UE5 module, import original voice
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_INSTALLATION_VRAI_JEU_30s.zip'
+          $temp=Join-Path $env:RUNNER_TEMP ('intro-30s-install-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $temp){throw 'Refuse existing extraction path'}
+          Expand-Archive -LiteralPath $source -DestinationPath $temp
+          $script=Join-Path $temp 'INSTALLER_DANS_LE_VRAI_JEU.ps1'
+          if(!(Test-Path -LiteralPath $script -PathType Leaf)){throw 'INSTALL_BLOCKED: install script not in ZIP'}
+          $engine=if($env:UE_ROOT){$env:UE_ROOT}else{'C:\Program Files\Epic Games\UE_5.8'}
+          try {
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -ProjectFile 'D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject' -UE_ROOT $engine
+            if($LASTEXITCODE -ne 0){throw ('Native installer failed with code '+$LASTEXITCODE)}
+          } finally {
+            # Media originals remain safely in Google Drive and existing Saved/ backups are retained.
+            Remove-Item -LiteralPath $temp -Recurse -Force -ErrorAction SilentlyContinue
+          }
+          Write-Host 'REAL_ANOMALIAZ_UE5_NATIVE_INSTALLER_FINISHED=true'
+      - name: Verify installed blood scene, original voice asset and game-mode startup
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $movie=Join-Path $root 'Content\Movies\INTRO_JEU_24s_MUSIQUE.mp4'
+          $blood=Join-Path $root 'Content\Movies\ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4'
+          $voice=Join-Path $root 'Content\AnomaliaZPrigimalia\Branding\SW_IntroTitle_Original_v5.uasset'
+          $mode=Join-Path $root 'Source\AnomaliaZPrigimalia\AnomaliaZPrigimaliaGameMode.cpp'
+          foreach($path in @($movie,$blood,$voice,$mode)){
+            if(!(Test-Path -LiteralPath $path -PathType Leaf)){throw 'INSTALL_INCOMPLETE: required actual Unreal file missing'}
+          }
+          if((Get-FileHash $movie -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'f88c9016797361b3b5341afc23a3530df029a0c65815e36127efde6d618f3b5b'){
+            throw 'INSTALL_INCOMPLETE: intro movie differs'
+          }
+          if((Get-FileHash $blood -Algorithm SHA256).Hash.ToLowerInvariant() -ne 'e9c7b9659babf09bae103b508a2982c528173c6b5a3c1ac34dcfb19cd3900a15'){
+            throw 'INSTALL_INCOMPLETE: user blood clip differs'
+          }
+          if(!(Select-String $mode -Pattern 'UAnomaliaZPrigimaliaIntroWidget::Open' -Quiet)){
+            throw 'INSTALL_INCOMPLETE: GameMode does not call intro widget'
+          }
+          Write-Host 'REAL_ANOMALIAZ_INTRO30_NATIVE_ASSETS_AND_SOURCE_INSTALLED=true'
+          Write-Host 'PACKAGED_GAME_AND_INTERACTIVE_VISUAL_SMOKE_NOT_YET_VERIFIED=true'
