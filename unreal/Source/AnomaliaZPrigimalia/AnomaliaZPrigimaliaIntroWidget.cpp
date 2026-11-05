@@ -28,6 +28,15 @@ namespace
             FPaths::ProjectContentDir(), TEXT("Movies"),
             TEXT("ANOMALIAZ_PRIGIMALIA_Intro_Instrumental_30s.mp4")));
     }
+
+    FString ClickBloodMoviePath()
+    {
+        // Click-only original liquid blood animation, no spoken audio embedded.
+        // The spoken title remains the separate SW_IntroTitle SoundWave.
+        return FPaths::ConvertRelativePathToFull(FPaths::Combine(
+            FPaths::ProjectContentDir(), TEXT("Movies"),
+            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4")));
+    }
 }
 
 UAnomaliaZPrigimaliaIntroWidget* UAnomaliaZPrigimaliaIntroWidget::Open(APlayerController* PC)
@@ -158,7 +167,22 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 {
     if (bClicked || bMenuOpened) return;
     bClicked = true;
-    if (VideoPlayer) VideoPlayer->Close();
+    if (VideoPlayer)
+    {
+        VideoPlayer->Close();
+        // As soon as the player clicks, this replaces the intro by six seconds
+        // of visibly flowing crimson drips over the existing game artwork.
+        // The sequence is deliberately silent; voice is triggered below.
+        if (FPaths::FileExists(ClickBloodMoviePath()))
+        {
+            if (!VideoPlayer->OpenFile(ClickBloodMoviePath()))
+                UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_FAILED"));
+        }
+        else
+        {
+            UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_MISSING"));
+        }
+    }
     if (ContinueButton) ContinueButton->SetIsEnabled(false);
     if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
     if (ContinueText)
