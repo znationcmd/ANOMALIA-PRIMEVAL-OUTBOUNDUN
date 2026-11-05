@@ -104,7 +104,7 @@ try:
       if cloud.stat().st_size!=before.st_size or sha(cloud)!=digest:raise RuntimeError("Existing cloud object differs; preserve it")
       state="EXISTING_OBJECT_HASH_VERIFIED"
      else:
-      temporary=cloud.with_name(cloud.name+".upload-"+uuid.uuid4().hex)
+      temporary=cloud.with_name("upload_"+uuid.uuid4().hex[:16]+p.suffix)
       with p.open("rb") as src,temporary.open("xb") as dst:shutil.copyfileobj(src,dst,4*1024*1024)
       if sha(temporary)!=digest:raise RuntimeError("Drive-client readback checksum mismatch; local original retained")
       after=p.stat()
