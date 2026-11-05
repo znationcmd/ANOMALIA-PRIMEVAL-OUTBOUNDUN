@@ -17,6 +17,8 @@ public class AnomaliaZPrigimalia : ModuleRules
         PrivateDependencyModuleNames.Add("NavigationSystem");
         // MoviePlayer renders rotating user-provided loading artwork during map travel.
         PrivateDependencyModuleNames.Add("MoviePlayer");
+        // Native startup cinematic using the already existing main-menu UI.
+        PrivateDependencyModuleNames.AddRange(new string[] { "MediaAssets" });
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
     }
 }
