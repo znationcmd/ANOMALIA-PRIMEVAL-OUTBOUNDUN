@@ -30,10 +30,10 @@ for _ in range(12):
  time.sleep(10)
 if not DEST.is_dir():raise RuntimeError("Connector-created cloud folder not visible on verified H mount; no transfer started")
 sources={}
-def add(name,provenance):
+def add(name,provenance,whole_city_project=False):
  try:
   p=pathlib.Path(name)
-  if not p.is_file() or p.suffix.lower() not in EXT:return
+  if not p.is_file() or (not whole_city_project and p.suffix.lower() not in EXT):return
   resolved=p.resolve()
   if resolved.drive.casefold() not in {"c:","d:"}:return
   st=p.stat()
@@ -60,6 +60,16 @@ for catalog in (MAIN/"SourceAssets/ExternalResources").glob("original-source-cat
  data=json.loads(catalog.read_text(encoding="utf-8-sig"))
  for row in data.get("files",[]):
   if row.get("importSource"):add(row["importSource"],"verified-original-source-catalog")
+# Include the known complete City Sample source projects, including config, source and plugins.
+# Existing manifests remain authoritative for all other game resources.
+city_roots=[pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample"),pathlib.Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data")]
+summary["citySampleRoots"]=[]
+for city_root in city_roots:
+ if not city_root.is_dir():continue
+ summary["citySampleRoots"].append(str(city_root))
+ for base,dirs,names in os.walk(city_root,followlinks=False):
+  dirs[:]=[d for d in dirs if d not in {".git",".tmp.driveupload"} and not (getattr((pathlib.Path(base)/d).stat(),"st_file_attributes",0)&0x400)]
+  for name in names:add(str(pathlib.Path(base,name)),"complete-citysample-project",True)
 summary["sourceFilesPlanned"]=len(sources);summary["logicalSourceBytesBeforeContentDedup"]=sum(x["bytes"] for x in sources.values())
 summary["state"]="TRANSFERRING";save()
 print(json.dumps({k:v for k,v in summary.items() if k!="errors"}),flush=True)
@@ -82,8 +92,10 @@ if journal_path.exists():
    if p.is_file() and p.stat().st_size==item["bytes"]:objects[item["sha256"]]=p
   except (OSError,ValueError,KeyError):pass
 # User requested largest resources first, across all inventoried game-resource formats.
-priority=lambda row:(-row["bytes"],row["path"].casefold())
-summary["transferOrder"]="LARGEST_BYTES_FIRST"
+priority=lambda row:(0 if "citysample" in row["path"].casefold() else 1,-row["bytes"],row["path"].casefold())
+summary["transferOrder"]="CITY_SAMPLE_FIRST_THEN_LARGEST_BYTES"
+summary["citySampleSourceFilesPlanned"]=sum("citysample" in r["path"].casefold() for r in sources.values())
+summary["citySampleLogicalBytesPlanned"]=sum(r["bytes"] for r in sources.values() if "citysample" in r["path"].casefold())
 summary["largestInventoriedSources"]=[{"path":r["path"],"bytes":r["bytes"]} for r in sorted(sources.values(),key=priority)[:20]]
 summary["CFreeBeforeLargestFirst"]=shutil.disk_usage("C:/").free
 save()
