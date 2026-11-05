@@ -14,7 +14,7 @@ class UMediaTexture;
 class UTextBlock;
 
 /**
- * Local startup only: a 24-second original-scene movie followed by the original voice and blood on click.
+ * Local startup only: a 24-second original-scene movie followed by the user's original voice and blood on click, then 5 seconds of red emergency announcement.
  * All existing game / server / persistence state stays in the original GameMode.
  */
 UCLASS()
@@ -38,6 +38,7 @@ private:
     UFUNCTION() void OnContinueClicked();
     UFUNCTION() void OnVoiceEnded();
 
+    void BeginEmergencyScreen();
     void FinishToMainMenu();
 
     UPROPERTY(Transient) TObjectPtr<UMediaPlayer> VideoPlayer;
@@ -49,9 +50,12 @@ private:
     UPROPERTY(Transient) TObjectPtr<UButton> SkipButton;
     UPROPERTY(Transient) TObjectPtr<UTextBlock> ContinueText;
 
+    enum class EIntroPhase : uint8 { Intro, BloodAndVoice, Emergency };
+    EIntroPhase Phase = EIntroPhase::Intro;
     bool bClicked = false;
     bool bMenuOpened = false;
     bool bBloodFinished = false;
     bool bVoiceFinished = false;
     double ClickStartedAt = -1.0;
+    double EmergencyStartedAt = -1.0;
 };
