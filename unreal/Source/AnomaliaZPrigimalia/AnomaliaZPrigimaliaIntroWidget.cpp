@@ -133,6 +133,7 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
     VideoPlayer->PlayOnOpen = true;
     VideoPlayer->OnEndReached.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
     VideoPlayer->OnMediaOpenFailed.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
+    VideoPlayer->OnMediaOpened.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened);
     VideoTexture->SetMediaPlayer(VideoPlayer);
     VideoTexture->UpdateResource();
 
@@ -178,6 +179,13 @@ void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
     {
         FinishToMainMenu();
     }
+}
+
+void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened(FString OpenedUrl)
+{
+    // Begin the exact five-second hold when the image decoder is ready.
+    if (!bMenuOpened && Phase == EIntroPhase::Emergency)
+        EmergencyStartedAt = FPlatformTime::Seconds();
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
@@ -328,6 +336,7 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeDestruct()
     {
         VideoPlayer->OnEndReached.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
         VideoPlayer->OnMediaOpenFailed.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
+        VideoPlayer->OnMediaOpened.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened);
         VideoPlayer->Close();
     }
     if (VideoSound)
