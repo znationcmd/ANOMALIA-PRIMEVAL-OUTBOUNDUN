@@ -1,4 +1,4 @@
-name: ANOMALIA mission - recover new C Sketchfab and CMD additions into D
+name: ANOMALIA mission - reference existing C resources without duplicate copies
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -20,7 +20,7 @@ jobs:
           sparse-checkout: scripts/ue5/recover-confirmed-C-sketchfab-resources.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      - name: Copy missing sources to D without overwriting or deleting originals
+      - name: Reference verified original sources without copying payloads to D
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
