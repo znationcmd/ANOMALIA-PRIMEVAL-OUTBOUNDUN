@@ -50,15 +50,22 @@ def move_verified_cold_zip(source,cloud,expected,size,allowed_root,drive_id):
  return "VERIFIED_ZIP_MOVED_TO_CLOUD_REFERENCE_RETAINED"
 def main():
  expected_root=pathlib.Path(r"C:\sketchfab")
+ approved_roots=[expected_root,pathlib.Path(r"D:\ANOMALIA\sketchfab")]
  cloud_root=pathlib.Path(r"H:\Mon Drive\ANOMALIAZ\02_Modeles_3D")
  manifest=json.loads((pathlib.Path(__file__).with_name("verified-cloud-archive-offload-20261105.json")).read_text(encoding="utf-8"))
+ if os.environ.get("CLOUD_OFFLOAD_INCLUDE_D")=="1":
+  manifest["archives"] += [{**a,"source":str(approved_roots[1]/pathlib.Path(a["source"]).name)} for a in list(manifest["archives"])]
  out=pathlib.Path(os.environ["CLOUD_TRANSFER_OUT"]);out.mkdir(parents=True,exist_ok=True)
  journal=pathlib.Path(r"D:\ANOMALIA\unreal\Saved\CloudTransfer\20261105\verified-archive-offload.jsonl")
  journal.parent.mkdir(parents=True,exist_ok=True)
- report={"nativeAssetsModified":0,"saveFilesModified":0,"archivePathsRetained":True,"sourceContentsRetainedOnDrive":True,"CFreeBefore":shutil.disk_usage("C:/").free,"archives":[]}
+ report={"nativeAssetsModified":0,"saveFilesModified":0,"archivePathsRetained":True,"sourceContentsRetainedOnDrive":True,"CFreeBefore":shutil.disk_usage("C:/").free,"DFreeBefore":shutil.disk_usage("D:/").free,"archives":[]}
  for row in manifest["archives"]:
   result=dict(row)
   try:
+   source_path=pathlib.Path(row["source"])
+   matches=[root for root in approved_roots if source_path.parent.resolve()==root.resolve()]
+   if not matches:raise ValueError("Unapproved archive source root; preserve original")
+   expected_root=matches[0]
    if not row["remoteServerSHA256Verified"]:raise ValueError("Missing independent server checksum verification")
    if not pathlib.Path(row["cloudPath"]).resolve().is_relative_to(cloud_root.resolve()):raise ValueError("Unexpected cloud account folder")
    with journal.open("a",encoding="utf-8") as f:
@@ -68,6 +75,7 @@ def main():
    catalog_path.parent.mkdir(parents=True,exist_ok=True)
    catalog={"mode":"REFERENCE_ORIGINALS_NO_PAYLOAD_COPY","files":[{"source":a["source"],"importSource":a["cloudPath"],"bytes":a["bytes"],"sha256":a["sha256"],"state":"ORIGINAL_SOURCE_REFERENCED_NO_COPY"} for a in manifest["archives"]]}
    with catalog_path.open("w",encoding="utf-8") as f:json.dump(catalog,f,indent=2);f.flush();os.fsync(f.fileno())
+   if digest(pathlib.Path(row["cloudPath"]))!=row["sha256"]:raise ValueError("Cloud contents changed since independent server verification")
    try:
     result["state"]=reference_verified_archive(row["source"],row["cloudPath"],row["sha256"],row["bytes"],expected_root)
    except OSError as error:
@@ -78,6 +86,8 @@ def main():
   except Exception as e:result["state"]="ORIGINAL_PRESERVED";result["error"]=str(e)
   report["archives"].append(result)
   with journal.open("a",encoding="utf-8") as f:f.write(json.dumps(result)+"\n");f.flush()
+ report["DFreeAfter"]=shutil.disk_usage("D:/").free
+ report["measuredDFreeDelta"]=report["DFreeAfter"]-report["DFreeBefore"]
  report["CFreeAfter"]=shutil.disk_usage("C:/").free
  report["measuredCFreeDelta"]=report["CFreeAfter"]-report["CFreeBefore"]
  report["resumeReserveAvailable"]=report["CFreeAfter"]>=2*1024**3
