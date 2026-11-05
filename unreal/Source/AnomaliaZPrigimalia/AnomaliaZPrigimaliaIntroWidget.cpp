@@ -26,7 +26,7 @@ namespace
         // Staged non-UAsset movie: ensure packaging copies Content/Movies.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Intro_SANS_TEXTE_88s.mp4")));
+            TEXT("INTRO_JEU_24s_MUSIQUE.mp4")));
     }
 
     FString ClickBloodMoviePath()
@@ -35,7 +35,7 @@ namespace
         // The spoken title remains the separate SW_IntroTitle SoundWave.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_SANS_TEXTE_v4.mp4")));
+            TEXT("CLIC_SANG_6s_SANS_AUDIO.mp4")));
     }
 }
 
@@ -191,10 +191,10 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 
     // Independent voice on click; movie sound does NOT substitute for the click reaction.
     USoundBase* Voice = LoadObject<USoundBase>(nullptr,
-        TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Zombie_v4.SW_IntroTitle_Zombie_v4"));
+        TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Original_v5.SW_IntroTitle_Original_v5"));
     if (!Voice)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import SW_IntroTitle_Zombie_v4.wav"));
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav"));
         FinishToMainMenu();
         return;
     }
