@@ -1,41 +1,48 @@
-# ANOMALIA'Z PRIGIMALIA — Générique original, 30 secondes maximum
+# ANOMALIA’Z PRIGIMALIA — Générique original + écran rouge d'urgence avant menu
 
-PR GitHub #65 — branche de test **non fusionnée**. Préserve les cartes, les sauvegardes et le travail de Work.
+**Intégration au vrai projet Unreal Engine 5.8** (PR #65, branche distincte de Work).
 
-## Fonctionnement
+## Chronologie exacte
 
-- **24 premières secondes :** la scène VISUELLE DE LA VIDÉO D'ORIGINE ENVOYÉE par l'utilisateur (survivant, chien, ville) avec ajout d'une musique originale horrifique et des bruitages de zombies et de bois qui craque. Ne pas remplacer le décor par une image générée artificiellement.
-- **À la fin de ces 24 secondes, ou plus tôt via PASSER :** bouton **CLIQUER POUR COMMENCER**.
-- **Au clic :** jusqu'à 6 secondes de sang coulant sur la scène de départ ; déclenchement du **son vocal directement extrait de la vidéo originale** (pas de doublage robotique, pas de pitch modifié). Le menu natif du jeu s'ouvre à la fin du son.
-- **Durée totale de la démonstration MP4 : 30.000 secondes**, avec un clic simulé au temps 24s. Dans l'expérience interactive, un clic anticipé réduit la durée plutôt que de l'allonger.
+1. **Lancement :** 24 secondes de générique avec le survivant, le berger allemand, la musique originale d'horreur et les bruitages. Le bouton **PASSER** permet de déclencher la suite avant la fin de l'intro.
+2. **Après clic ou PASSER :** lecture **exacte et non retouchée** du clip `ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4` fourni par l'utilisateur, avec la voix originale `VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav` déclenchée au même moment. Attendre la **fin du sang ET de la voix**, pas seulement l'un des deux. Ne pas générer de nouvelle voix ou de faux sang.
+3. **Après le sang et la voix :** afficher **5 secondes** l'écran rouge approuvé « Système d'urgence intégré », écriture jaune, avec le texte « Anomalia’z » et le logo circulaire modifié (aucune mention « AMERICA »).
+4. **Après l'écran rouge :** ouvrir automatiquement le **véritable** `UAnomaliaZPrigimaliaSessionWidget` et permettre au joueur de démarrer le jeu.
 
-## Pack média à télécharger séparément
+**Durée nominale : 24 + 6 + 5 = 35 secondes**, si le joueur attend la fin des 24 secondes avant de cliquer. Un clic anticipé réduit la durée. L'écran rouge joue toujours 5 s après la fin du sang et de la voix.
 
-Le ZIP `ANOMALIAZ_PRIGIMALIA_KIT_SANG_IDENTIQUE_30s.zip` livré dans la conversation contient :
+## Médias transmis dans le chat
 
-- `INTRO_JEU_24s_MUSIQUE.mp4` — images originales, musique et bruitages d'horreur, aucune voix de synthèse.
-- `ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4` — coulées de sang, scène originale.
-- `VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav` — bande audio EXTRAITE du MP4 original reçu, sans changement de timbre ni de hauteur. Elle contient les sons originaux autour de la voix, car elle n'est pas isolée par stem.
-- `OUVRIR_GENERIQUE_CLIC.html` — aperçu où le bouton déclenche réellement l'animation et l'audio, séparément du MP4 de démonstration.
-- `LISEZ_MOI.txt`.
+Pack version finale : `ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s_v2.zip`, contenant exactement :
 
-## Installation UE5.8
+- `INTRO_JEU_24s_MUSIQUE.mp4`
+- `ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4` — clip sanguinolent fourni, fichier préservé, copie SHA256 `e9c7b9659babf09bae103b508a2982c528173c6b5a3c1ac34dcfb19cd3900a15`
+- `VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav` — bande vocale extraite de la vidéo initiale
+- `ANOMALIAZ_Alerte_Rouge_5s.mp4` — export sans son, 5 secondes de l'image rouge/jaune choisie
+- `ANOMALIAZ_Ecran_Urgence_Rouge_Original.png` — image approuvée et source de l'export
+- `INSTALLER_DANS_LE_VRAI_JEU.ps1`, `LISEZ_MOI_INSTALLATION_VRAI_JEU.txt`
 
-Décompresser les trois médias sous `unreal/SourceAssets/Intro/` dans une **copie test** du projet `unreal/AnomaliaZPrigimalia.uproject`. Sur la branche PR #65, exécuter le script `unreal/Scripts/install_prigimalia_intro.py` dans Unreal Editor avec Python Editor Script Plugin. Il refuse d'écraser un média existant différent, copie les deux MP4 dans `Content/Movies`, et importe l'audio original en SoundWave sous `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Original_v5`.
+Copie vérifiée sur le Google Drive relié au PC : `ANOMALIAZ/04_Intro_Installation/ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s_v2.zip`. Le workflow de déploiement associé est `.github/workflows/prigimalia-install-final-intro-30s.yml` (nom historique, **installation mise à jour pour 35 s**).
 
-Tester compilation native, playback MediaPlayer, fin de vidéo, clic, fin de l'audio, transition dans le **vrai menu**, puis packaging Windows. Tous ces tests UE5 restent à faire sur le PC contenant le jeu. Le script n'a pas été exécuté sur ce PC depuis ce chat.
+## Installation réelle sur ANOMALIA-PC
 
-## Limites
+- Runner Windows self-hosted `ANOMALIA-PC` / UE5.8. **Ne pas interrompre City Sample ni lancer deux modifications concurrentes.**
+- Le workflow vérifie le `D:\\ANOMALIAZ-PRIGIMALIA\\unreal\\AnomaliaZPrigimalia.uproject`, la copie source `D:\\ANOMALIA`, son marqueur de sauvegarde, la disponibilité et le SHA256 du pack Google Drive, et l'absence de processus bloquants.
+- Il accepte un widget Unreal encore absent, le widget version précédente validée, ou le widget de cette version. **Toute différence non reconnue provoque un arrêt plutôt qu'un écrasement de Work.**
+- L'installateur réalise une sauvegarde, copie les trois MP4 dans `Content/Movies`, importe le fichier audio en `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Original_v5`, met à jour C++/GameMode et compile `AnomaliaZPrigimaliaEditor` et `AnomaliaZPrigimalia`.
 
-- Le rendu animé du personnage et du chien provient encore des images du MP4 d'origine. Il n'est pas une animation squelettique 3D exportée depuis Sequencer (travail séparé de la PR #66).
-- Le MP4 d'origine comporte déjà des éléments de texte/logos : ils sont préservés pour ne pas modifier le visuel demandé. Aucun titre supplémentaire n'est introduit.
-- La musique de TheTrapLabb **n'est pas incluse** : les nouvelles pistes sont originales, en l'absence d'une licence de synchronisation/master.
-- Les fichiers binaires audio/vidéo doivent être importés depuis le ZIP ; les commits GitHub contiennent le code et l'installateur, pas le master commercial ni un build Unreal testé.
+## Validation à effectuer
+
+La bande-annonce vidéo démonstrative 35 secondes est rendue et téléchargeable dans la conversation. **Le jeu Unreal n'est PAS déclaré installé tant que le job Windows ne termine pas**, et ne sera déclaré fonctionnel que lorsque l'ouverture réelle du jeu et du menu aura été vérifiée.
+
+Après le job, vérifier dans le jeu :
+- Le bouton PASSER, le clic, l'annonce vocale intacte et **l'effet sanguin exact**.
+- L'alerte rouge apparaît **uniquement après** la voix et le sang, reste 5 secondes entières, puis le vrai menu fonctionne.
+- La carte d'accueil, les sauvegardes, le multijoueur et les quinze cartes restent intacts.
+- Les trois MP4 sont copiés dans un véritable build Windows packagé.
+
+Les fichiers MP4 utilisent du compositing 2D ; aucune animation squelettique Unreal du chien ou du personnage n'est prétendue complète. La piste commerciale TheTrapLabb n'est pas incluse, faute de master avec droits d'utilisation.
 
 ## Retour arrière
 
-L'appel d'introduction depuis GameMode peut être retiré dans une copie test afin de revenir au menu standard. Ne jamais supprimer les fichiers `Saved/` ni les 15 cartes.
-
-## Référence sang imposée par l'utilisateur (05/11/2026)
-
-Le clip **`ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4`** a été fourni directement dans cette conversation. C'est **exactement ce média** (6 secondes, 910×512, 15 i/s) qui doit être déclenché par le clic, et **non un effet de sang redessiné ou simulé**. Le pack téléchargé contient une copie bit-à-bit identique du clip fourni. Le montage 30 secondes utilise 24 secondes de l'intro puis ce clip de 6 secondes, avec la bande vocale issue du MP4 original. Le sang et l'annonce sont déclenchés ensemble dans le test HTML. Aucune modification aux cartes/ressources locales n'a été testée depuis cette conversation.
+Les sauvegardes avant installation sont conservées dans `Saved/IntroInstall`; ne jamais supprimer les fichiers `Saved/` de joueur.
