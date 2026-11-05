@@ -58,6 +58,26 @@ bool FAnomaliaZPrigimaliaReactiveWorldTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Unloaded relay disconnects consumers"),Lamp->bPowered);
     TestTrue(TEXT("Relay restored after cell reload"),Store->Register(Relay));TestTrue(TEXT("Reload restores cable path"),Lamp->bPowered);
     Fuel.FuelSeconds=0;Store->RefreshActors();TestFalse(TEXT("Empty generator cannot supply devices"),Lamp->bPowered);
+    // Independent fixed village network: fuse required, no fuel item or fuel balance.
+    auto* VillageSupply=Make(TEXT("village-supply"),EAnomaliaZPrigimaliaWorldMechanism::Generator,10000);
+    auto* VillageLamp=Make(TEXT("village-lamp"),EAnomaliaZPrigimaliaWorldMechanism::Consumer,10200);
+    VillageSupply->Definition->bRequiresFuel=false;
+    VillageSupply->Definition->RequiredFuseItem=TEXT("test_city_fuse");
+    VillageSupply->ConnectedNodeIds.Add(VillageLamp->StableId);
+    auto& VillageState=Store->States.FindChecked(VillageSupply->StableId);
+    VillageState.bSwitchedOn=true;VillageState.FuelSeconds=0;
+    Store->RefreshActors();
+    TestFalse(TEXT("Fixed village network still requires a fuse"),VillageLamp->bPowered);
+    VillageState.InstalledFuseItem=TEXT("test_city_fuse");
+    Store->RefreshActors();
+    TestTrue(TEXT("Village fuse restores power with zero fuel"),VillageLamp->bPowered);
+    TestFalse(TEXT("Village supply does not power disconnected player network"),Lamp->bPowered);
+    Store->Tick(1.1f);
+    TestTrue(TEXT("Fixed network stays powered without fuel consumption"),VillageLamp->bPowered);
+    TestEqual(TEXT("Fixed source does not create or consume a fuel balance"),VillageState.FuelSeconds,0.);
+    VillageState.bSwitchedOn=false;Store->RefreshActors();
+    TestFalse(TEXT("Fixed network switch still cuts power"),VillageLamp->bPowered);
+    VillageState.bSwitchedOn=true;Store->RefreshActors();
     auto* Bridge=Make(TEXT("bridge"),EAnomaliaZPrigimaliaWorldMechanism::Repair,400);
     auto& Repair=Store->States.FindChecked(Bridge->StableId);
     Repair.AddDeposited(TEXT("scrap"),100);Repair.AddDeposited(TEXT("wood"),50);
