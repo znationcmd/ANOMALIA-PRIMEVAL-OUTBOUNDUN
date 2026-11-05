@@ -24,7 +24,7 @@ Les binaires MP4/WAV sont fournis **séparément** : ils ne sont PAS poussés en
 
 * La vidéo jointe anime l'image d'origine en **compositing 2D** (travelling, effets de fumée, mouvement apparent du survivant et du berger allemand) : **elle ne contient pas de modèles squelettiques 3D**.
 * Le dépôt référence bien un personnage Survival et des assets/animations de berger allemand, mais cette branche ne les convertit pas en **Level Sequence 3D**; le vrai rendu animé 3D devra être construit et testé sur la copie UE5 contenant ces assets (marche, respiration, orientation du regard, pas du chien), avec validation des rigs et des droits de chaque asset. Ne pas prétendre que cela est déjà fait.
-* La bande-son est originale pour la démonstration. La voix `SW_IntroTitle` est une **voix synthétique provisoire**. La remplacer par un master vocal validé si nécessaire.
+* La vidéo de jeu est la version **instrumentale seule** : ainsi, le titre n'est prononcé **qu'au clic**. La version vidéo déjà livrée avec annonce vocale intégrée reste une bande-annonce/aperçu distinct. La bande-son est originale pour la démonstration. La voix `SW_IntroTitle` est une **voix synthétique provisoire**. La remplacer par un master vocal validé si nécessaire.
 * Les tests de compilation UE5, de média WMF Windows, d'affichage en packaging et de lecture du son **nécessitent la machine contenant Unreal**. Aucun test UE5 réel n'a été exécuté depuis ce chat.
 * Pour un lancement directement dans un niveau multijoueur, le générique n'est pas activé par ce patch; le serveur et ses profils restent inchangés.
 
