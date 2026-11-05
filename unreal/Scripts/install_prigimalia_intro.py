@@ -12,7 +12,7 @@ import filecmp
 import shutil
 import unreal
 
-movie_name = "ANOMALIAZ_PRIGIMALIA_Intro_Cinematique_30s.mp4"
+movie_name = "ANOMALIAZ_PRIGIMALIA_Intro_Instrumental_30s.mp4"
 voice_name = "SW_IntroTitle.wav"
 project_file = Path(str(unreal.Paths.get_project_file_path())).resolve()
 unreal_root = project_file.parent
