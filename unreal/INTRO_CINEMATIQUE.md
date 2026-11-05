@@ -1,33 +1,40 @@
-# Générique ANOMALIA'Z PRIGIMALIA — introduction cinématique (branche isolée)
+# ANOMALIA'Z PRIGIMALIA — Générique d'horreur original + sang animé au clic
 
-Cette intégration est volontairement distincte des cartes et des sauvegardes UE5.
+Cette PR reste **en brouillon**, indépendante des tâches en cours sur les cartes, personnages, sauvegardes et serveurs.
 
-## Fonctionnement prévu
+## Expérience proposée
 
-1. Sur la carte de démarrage **ANOMALIA_Playable_v1**, en **standalone/solo uniquement**, le GameMode essaie d'ouvrir la vidéo de 30 secondes.
-2. Pendant la vidéo : le bouton **PASSER** coupe la projection.
-3. À la fin : le bouton **CLIQUER POUR COMMENCER** apparaît.
-4. Au clic : lecture de **SW_IntroTitle** (voix grave prononçant le nom), puis ouverture du véritable **UAnomaliaZPrigimaliaSessionWidget** existant. Ce n'est pas une image de menu.
-5. Si la vidéo est absente ou si l'import de voix a échoué : repli sur le menu existant. Aucun profil/joueur/monde n'est supprimé.
+1. **Démarrage solo / ANOMALIA_Playable_v1** : lancement de la cinématique 30 secondes, avec **musique horrifique originale**, synthèse de grognements de zombies, craquements de bois, vent et impacts graves.
+2. **PASSER** : saute à l'annonce du titre. À la fin de la vidéo : **CLIQUER POUR COMMENCER** apparaît.
+3. **Au clic seulement** : passage à un clip muet de six secondes **où des coulées de sang rouge progressent sur le logo**, et **lecture synchronisée de la voix grave** « ANOMALIA'Z PRIGIMALIA ».
+4. Dès que la voix est terminée : ouverture du **véritable menu natif UAnomaliaZPrigimaliaSessionWidget**, pas un faux menu imprimé dans la vidéo. En cas de média manquant, repli sur le menu existant.
+5. Pas de modification aux profils personnels, sauvegardes, autres maps, ou logique réseau.
 
-## Installation des médias sur la copie Windows
+## Fichiers médias v2 (nouveaux noms, pas d'écrasement des médias v1)
 
-Les binaires MP4/WAV sont fournis **séparément** : ils ne sont PAS poussés en tant qu'assets Unreal par cette PR.
+Décompresser le pack livré indépendamment de GitHub dans le dossier contenant **unreal/AnomaliaZPrigimalia.uproject**, ce qui crée :
 
-* Décompresser le kit dans le dossier racine de travail qui contient **unreal/AnomaliaZPrigimalia.uproject**. Le ZIP ajoute `unreal/SourceAssets/Intro/`.
-* Après avoir synchronisé/compilé cette branche **sans fusion aveugle** des autres travaux, ouvrir **ce projet exact** dans Unreal Engine 5.8.
-* Activer le plugin **Python Editor Script Plugin** puis exécuter `unreal/Scripts/install_prigimalia_intro.py` via **Tools → Execute Python Script**. L'installateur vérifie le projet et les fichiers et **refuse d'écraser** un média différent. La voix est importée en `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle`; la vidéo est copiée vers `Content/Movies/`.
-* Vérifier le packaging Windows : le fichier du dossier `Content/Movies` doit être **staged** dans le build. Pour un build distribué, vérifier la présence du MP4 dans le dossier livré.
-* Tester en **Standalone Game** : démarrage → cinématique → clic/voix → vrai menu → jouer; puis refaire le test avec **PASSER**. Vérifier que menu, inventaire et chargements multi-cartes ne régressent pas.
+- `unreal/SourceAssets/Intro/ANOMALIAZ_PRIGIMALIA_Intro_Horreur_30s.mp4` — vidéo avec musique + sons de zombies + bois qui craque, **sans annonce vocale**.
+- `unreal/SourceAssets/Intro/ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4` — animation sang sur le logo **sans audio**, déclenchée au clic seulement.
+- `unreal/SourceAssets/Intro/SW_IntroTitle_Deep_v2.wav` — voix française grave, légèrement réverbérée, **distincte**.
+- Bonus facultatif dans le pack : `SW_HorrorAmbience_Original_30s.wav` (musique + bruitages en haute qualité), et `SW_ZombieWood_Foley_30s.wav` (bruitages isolés).
 
-## Points importants / limites vérifiées
+## Installation Unreal 5.8
 
-* La vidéo jointe anime l'image d'origine en **compositing 2D** (travelling, effets de fumée, mouvement apparent du survivant et du berger allemand) : **elle ne contient pas de modèles squelettiques 3D**.
-* Le dépôt référence bien un personnage Survival et des assets/animations de berger allemand, mais cette branche ne les convertit pas en **Level Sequence 3D**; le vrai rendu animé 3D devra être construit et testé sur la copie UE5 contenant ces assets (marche, respiration, orientation du regard, pas du chien), avec validation des rigs et des droits de chaque asset. Ne pas prétendre que cela est déjà fait.
-* La vidéo de jeu est la version **instrumentale seule** : ainsi, le titre n'est prononcé **qu'au clic**. La version vidéo déjà livrée avec annonce vocale intégrée reste une bande-annonce/aperçu distinct. La bande-son est originale pour la démonstration. La voix `SW_IntroTitle` est une **voix synthétique provisoire**. La remplacer par un master vocal validé si nécessaire.
-* Les tests de compilation UE5, de média WMF Windows, d'affichage en packaging et de lecture du son **nécessitent la machine contenant Unreal**. Aucun test UE5 réel n'a été exécuté depuis ce chat.
-* Pour un lancement directement dans un niveau multijoueur, le générique n'est pas activé par ce patch; le serveur et ses profils restent inchangés.
+1. Vérifier qu'il s'agit du bon **AnomaliaZPrigimalia.uproject**.
+2. Synchroniser cette PR sur une branche de test **sans fusion non validée**. Il faut une compilation native C++ de `UAnomaliaZPrigimaliaIntroWidget` (MediaAssets déjà ajouté au Build.cs).
+3. Activer le plugin **Python Editor Script Plugin** ; exécuter `unreal/Scripts/install_prigimalia_intro.py` dans l'éditeur. Le script vérifie les 3 médias avant de copier, ne remplace jamais une version différente et importe la voix sous `/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Deep_v2`.
+4. Tester avec Standalone Game : **30s audio d'horreur → clic / sang coulant / voix → véritable menu**. Tester aussi **PASSER**, média absent, retour au menu, chargement du jeu et sortie.
+5. Pour le build distribué Windows, s'assurer que les **deux fichiers MP4** de `Content/Movies` sont inclus lors du packaging.
+
+## Limitations vérifiées
+
+- La musique et les sons sont **une création synthétisée originale**, pas une piste licenciée de Resident Evil. Les grognements et craquements sont générés, non enregistrés à partir de vrais zombies ou planches.
+- La vidéo et le sang utilisent du compositing 2D à partir de l'image actuelle du jeu. Ce changement **ne remplace pas le projet de Level Sequence 3D** de la PR #66 (personnage/chien véritablement animés en 3D dans Unreal).
+- Depuis ce chat, les médias sont rendus et vérifiables hors Unreal, mais **ni la compilation UE5.8, ni la lecture réelle de MediaPlayer/WMF, ni le packaged build Windows n'ont été testés sur la machine du jeu**.
+- La voix grave est encore une voix de synthèse provisoire.
+- Cette version est activée uniquement sur la carte solo de démarrage `ANOMALIA_Playable_v1`. Elle ne bloque pas les connexions multi.
 
 ## Revenir en arrière
 
-Retirer/annuler le commit de l'appel à `UAnomaliaZPrigimaliaIntroWidget::Open` dans GameMode pour rétablir l'ancien affichage. Les médias ajoutés sont indépendants. Ne supprimer aucun fichier sous `Saved/`.
+Dans une copie test, retirer l'appel à `UAnomaliaZPrigimaliaIntroWidget::Open` du GameMode et rétablir l'appel direct au menu. Les médias v2 sont isolés. Ne rien supprimer sous `Saved/`.
