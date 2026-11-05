@@ -17,7 +17,7 @@ import unreal
 
 movie_names = (
     "INTRO_JEU_24s_MUSIQUE.mp4",
-    "CLIC_SANG_6s_SANS_AUDIO.mp4",
+    "ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4",
 )
 voice_name = "VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav"
 voice_object_name = "SW_IntroTitle_Original_v5"
