@@ -1,4 +1,4 @@
-"""Install ANOMALIA'Z PRIGIMALIA 24-second original-film horror intro plus 6-second blood click scene and click-only blood scene.
+"""Install ANOMALIA'Z PRIGIMALIA 24-second original intro, 6-second original blood/voice, 5-second emergency screen.
 
 Execute from the actual Unreal Editor's Python scripting console:
     py unreal/Scripts/install_prigimalia_intro.py
@@ -18,6 +18,7 @@ import unreal
 movie_names = (
     "INTRO_JEU_24s_MUSIQUE.mp4",
     "ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4",
+    "ANOMALIAZ_Alerte_Rouge_5s.mp4",
 )
 voice_name = "VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav"
 voice_object_name = "SW_IntroTitle_Original_v5"
@@ -34,7 +35,7 @@ if project_file.name != "AnomaliaZPrigimalia.uproject":
 for filename in (*movie_names, voice_name):
     path = source_folder / filename
     if not path.is_file() or path.stat().st_size < 1024:
-        raise RuntimeError(f"Required 30-second intro media missing: {path}. No modifications applied.")
+        raise RuntimeError(f"Required 35-second intro sequence media missing: {path}. No modifications applied.")
 
 for name in movie_names:
     source = source_folder / name
@@ -43,7 +44,7 @@ for name in movie_names:
         raise RuntimeError(f"Different movie already installed: {target}. Refusing overwrite.")
 
 if unreal.EditorAssetLibrary.does_asset_exist(voice_asset):
-    unreal.log_warning(f"Deep title voice already imported; preserved: {voice_asset}")
+    unreal.log_warning(f"Original title voice already imported; preserved: {voice_asset}")
     voice_imported = True
 else:
     voice_imported = False
@@ -72,6 +73,6 @@ if not voice_imported:
 
 unreal.log(
     "PRIGIMALIA_HORROR_V2_MEDIA_READY: 24-second original visual intro with horror score, "
-    "silent bleeding title movie and deep title voice prepared. "
+    "original voice and user-approved five-second emergency screen prepared. "
     "C++ compilation + packaged Windows test still required."
 )
