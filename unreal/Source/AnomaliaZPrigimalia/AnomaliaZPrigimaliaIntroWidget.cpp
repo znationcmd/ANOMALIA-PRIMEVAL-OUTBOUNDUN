@@ -30,6 +30,14 @@ namespace
             TEXT("INTRO_JEU_24s_MUSIQUE.mp4")));
     }
 
+    FString EmergencyMoviePath()
+    {
+        // Exactly five seconds of the user-approved red/yellow alert screen.
+        return FPaths::ConvertRelativePathToFull(FPaths::Combine(
+            FPaths::ProjectContentDir(), TEXT("Movies"),
+            TEXT("ANOMALIAZ_Alerte_Rouge_5s.mp4")));
+    }
+
     FString ClickBloodMoviePath()
     {
         // Click-only original liquid blood animation, no spoken audio embedded.
@@ -154,15 +162,38 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
 void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
 {
     UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MEDIA_FAILED: %s"), *FailedUrl);
-    // The title voice must never be interrupted if the optional blood video fails.
-    if (!bClicked) FinishToMainMenu();
-    else { bBloodFinished = true; if (bVoiceFinished) FinishToMainMenu(); }
+    if (bMenuOpened) return;
+
+    if (Phase == EIntroPhase::Emergency)
+    {
+        // Never trap the game if the five-second clip is missing or unreadable.
+        FinishToMainMenu();
+    }
+    else if (Phase == EIntroPhase::BloodAndVoice)
+    {
+        bBloodFinished = true;
+        if (bVoiceFinished) BeginEmergencyScreen();
+    }
+    else
+    {
+        FinishToMainMenu();
+    }
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
 {
-    if (bClicked) { bBloodFinished = true; if (bVoiceFinished) FinishToMainMenu(); return; }
     if (bMenuOpened) return;
+    if (Phase == EIntroPhase::Emergency)
+    {
+        // NativeTick enforces 5 seconds regardless of early decoder callbacks.
+        return;
+    }
+    if (Phase == EIntroPhase::BloodAndVoice)
+    {
+        bBloodFinished = true;
+        if (bVoiceFinished) BeginEmergencyScreen();
+        return;
+    }
     if (ContinueButton) ContinueButton->SetVisibility(ESlateVisibility::Visible);
     if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
 }
@@ -171,6 +202,7 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 {
     if (bClicked || bMenuOpened) return;
     bClicked = true;
+    Phase = EIntroPhase::BloodAndVoice;
     ClickStartedAt = FPlatformTime::Seconds();
     bBloodFinished = true; // Fallback when the blood clip cannot be opened.
     if (VideoPlayer)
@@ -201,7 +233,8 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
     if (!Voice)
     {
         UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav"));
-        FinishToMainMenu();
+        bVoiceFinished = true;
+        if (bBloodFinished) BeginEmergencyScreen();
         return;
     }
     VoiceComponent = UGameplayStatics::CreateSound2D(
@@ -212,14 +245,39 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
         VoiceComponent->OnAudioFinished.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded);
         VoiceComponent->Play();
     }
-    else FinishToMainMenu();
+    else
+    {
+        bVoiceFinished = true;
+        if (bBloodFinished) BeginEmergencyScreen();
+    }
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded()
 {
+    if (bMenuOpened || Phase != EIntroPhase::BloodAndVoice) return;
     bVoiceFinished = true;
-    // Let the user-provided blood animation finish before opening the menu.
-    if (bBloodFinished) FinishToMainMenu();
+    // Wait for BOTH the original voice and the exact six-second blood animation.
+    if (bBloodFinished) BeginEmergencyScreen();
+}
+
+void UAnomaliaZPrigimaliaIntroWidget::BeginEmergencyScreen()
+{
+    if (bMenuOpened || Phase != EIntroPhase::BloodAndVoice) return;
+    if (!bVoiceFinished || !bBloodFinished) return;
+    Phase = EIntroPhase::Emergency;
+    EmergencyStartedAt = FPlatformTime::Seconds();
+    if (!VideoPlayer || !FPaths::FileExists(EmergencyMoviePath()))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_EMERGENCY_5S_MOVIE_MISSING"));
+        FinishToMainMenu();
+        return;
+    }
+    VideoPlayer->Close();
+    if (!VideoPlayer->OpenFile(EmergencyMoviePath()))
+    {
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_EMERGENCY_5S_MOVIE_OPEN_FAILED"));
+        FinishToMainMenu();
+    }
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::FinishToMainMenu()
@@ -242,11 +300,24 @@ void UAnomaliaZPrigimaliaIntroWidget::FinishToMainMenu()
 void UAnomaliaZPrigimaliaIntroWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
 {
     Super::NativeTick(Geometry, DeltaTime);
-    // UI ticks while game is paused. Failsafe prevents an infinite black-screen
-    // if the MediaPlayer end callback is not delivered on a Windows backend.
-    if (bClicked && !bMenuOpened && ClickStartedAt >= 0.0 &&
-        FPlatformTime::Seconds() - ClickStartedAt >= 6.25)
+    if (bMenuOpened) return;
+    const double Now = FPlatformTime::Seconds();
+    if (Phase == EIntroPhase::BloodAndVoice && ClickStartedAt >= 0.0)
     {
+        // Windows MediaPlayer end callbacks can be missed in paused UI scenes.
+        // The actual blood video is exactly six seconds long.
+        if (!bBloodFinished && Now - ClickStartedAt >= 6.25)
+            bBloodFinished = true;
+        // Failsafe only: the original recording is ~5.04s, don't risk a frozen menu.
+        if (!bVoiceFinished && Now - ClickStartedAt >= 9.0)
+            bVoiceFinished = true;
+        if (bBloodFinished && bVoiceFinished)
+            BeginEmergencyScreen();
+    }
+    else if (Phase == EIntroPhase::Emergency && EmergencyStartedAt >= 0.0 &&
+             Now - EmergencyStartedAt >= 5.0)
+    {
+        // Show exactly five seconds, THEN open the real Unreal session menu.
         FinishToMainMenu();
     }
 }
