@@ -11,10 +11,10 @@ PR GitHub #65 — branche de test **non fusionnée**. Préserve les cartes, les 
 
 ## Pack média à télécharger séparément
 
-Le ZIP `ANOMALIAZ_PRIGIMALIA_KIT_ORIGINAL_30s_CLIC.zip` livré dans la conversation contient :
+Le ZIP `ANOMALIAZ_PRIGIMALIA_KIT_SANG_IDENTIQUE_30s.zip` livré dans la conversation contient :
 
 - `INTRO_JEU_24s_MUSIQUE.mp4` — images originales, musique et bruitages d'horreur, aucune voix de synthèse.
-- `CLIC_SANG_6s_SANS_AUDIO.mp4` — coulées de sang, scène originale.
+- `ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4` — coulées de sang, scène originale.
 - `VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav` — bande audio EXTRAITE du MP4 original reçu, sans changement de timbre ni de hauteur. Elle contient les sons originaux autour de la voix, car elle n'est pas isolée par stem.
 - `OUVRIR_GENERIQUE_CLIC.html` — aperçu où le bouton déclenche réellement l'animation et l'audio, séparément du MP4 de démonstration.
 - `LISEZ_MOI.txt`.
@@ -35,3 +35,7 @@ Tester compilation native, playback MediaPlayer, fin de vidéo, clic, fin de l'a
 ## Retour arrière
 
 L'appel d'introduction depuis GameMode peut être retiré dans une copie test afin de revenir au menu standard. Ne jamais supprimer les fichiers `Saved/` ni les 15 cartes.
+
+## Référence sang imposée par l'utilisateur (05/11/2026)
+
+Le clip **`ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4`** a été fourni directement dans cette conversation. C'est **exactement ce média** (6 secondes, 910×512, 15 i/s) qui doit être déclenché par le clic, et **non un effet de sang redessiné ou simulé**. Le pack téléchargé contient une copie bit-à-bit identique du clip fourni. Le montage 30 secondes utilise 24 secondes de l'intro puis ce clip de 6 secondes, avec la bande vocale issue du MP4 original. Le sang et l'annonce sont déclenchés ensemble dans le test HTML. Aucune modification aux cartes/ressources locales n'a été testée depuis cette conversation.
