@@ -228,15 +228,16 @@ bool UAnomaliaZPrigimaliaWorldStateSubsystem::Interact(AAnomaliaZPrigimaliaWorld
     else if(D->Kind==EAnomaliaZPrigimaliaWorldMechanism::Generator)
     {
         if(!D->RequiredFuseItem.IsNone() && !SafeId(D->RequiredFuseItem.ToString())) return false;
-        if(!FMath::IsFinite(D->FuelSecondsPerItem) || D->FuelSecondsPerItem<=0 || D->FuelSecondsPerItem>86400) return false;
+        if(D->bRequiresFuel && (!FMath::IsFinite(D->FuelSecondsPerItem) || D->FuelSecondsPerItem<=0 || D->FuelSecondsPerItem>86400)) return false;
         if(!D->RequiredFuseItem.IsNone() && Current->InstalledFuseItem!=D->RequiredFuseItem)
         {
             // Existing durable inventory transaction installs exactly one real item.
             // A missing inventory fuse rolls back both generator state and inventory.
             if(!Current->InstalledFuseItem.IsNone()) return false;
             Cost.Add(D->RequiredFuseItem,1);Current->InstalledFuseItem=D->RequiredFuseItem;
-            Current->bSwitchedOn=Current->FuelSeconds>0;
+            Current->bSwitchedOn=!D->bRequiresFuel || Current->FuelSeconds>0;
         }
+        else if(!D->bRequiresFuel) Current->bSwitchedOn=!Current->bSwitchedOn;
         else if(Current->FuelSeconds<=0)
         {Cost.Add(D->FuelItem,1);Current->FuelSeconds=D->FuelSecondsPerItem;Current->bSwitchedOn=true;}
         else Current->bSwitchedOn=!Current->bSwitchedOn;
@@ -289,7 +290,7 @@ void UAnomaliaZPrigimaliaWorldStateSubsystem::SolvePower()
             auto* Node=Actors.FindRef(Id).Get();if(!Node || !Node->Definition) continue;
             Seen.Add(Id);Group.Add(Node);const auto* D=Node->Definition.Get();const auto& S=States.FindChecked(Id);
             if(S.Repair==EAnomaliaZPrigimaliaRepairState::Disabled) continue;
-            if(D->Kind==EAnomaliaZPrigimaliaWorldMechanism::Generator && S.bSwitchedOn && S.FuelSeconds>0 && (D->RequiredFuseItem.IsNone() || S.InstalledFuseItem==D->RequiredFuseItem) && FMath::IsFinite(D->OutputWatts)) Supply+=FMath::Max(0.f,D->OutputWatts);
+            if(D->Kind==EAnomaliaZPrigimaliaWorldMechanism::Generator && S.bSwitchedOn && (!D->bRequiresFuel || S.FuelSeconds>0) && (D->RequiredFuseItem.IsNone() || S.InstalledFuseItem==D->RequiredFuseItem) && FMath::IsFinite(D->OutputWatts)) Supply+=FMath::Max(0.f,D->OutputWatts);
             if(D->Kind==EAnomaliaZPrigimaliaWorldMechanism::Consumer || D->bRequiresPower)
                 if(FMath::IsFinite(D->DemandWatts)) Demand+=FMath::Max(0.f,D->DemandWatts);
             for(const auto& Other:Actors)
@@ -327,7 +328,7 @@ void UAnomaliaZPrigimaliaWorldStateSubsystem::Tick(float Dt)
         {S.Repair=EAnomaliaZPrigimaliaRepairState::Repaired;S.RepairEndsUtc=0;Changed=true;}
         // Unloaded generators retain their state and pause consumption; their absent nodes cannot power devices.
         const auto* Active=Actors.FindRef(Pair.Key).Get();
-        if(Active && Active->Definition && Active->Definition->Kind==EAnomaliaZPrigimaliaWorldMechanism::Generator &&
+        if(Active && Active->Definition && Active->Definition->Kind==EAnomaliaZPrigimaliaWorldMechanism::Generator && Active->Definition->bRequiresFuel &&
            (Active->Definition->RequiredFuseItem.IsNone() || S.InstalledFuseItem==Active->Definition->RequiredFuseItem) && S.bSwitchedOn && S.FuelSeconds>0)
         {S.FuelSeconds=FMath::Max(0.,S.FuelSeconds-Elapsed);if(S.FuelSeconds<=0) S.bSwitchedOn=false;Changed=true;}
         if(S.PortalEndsUtc>0 && S.PortalEndsUtc<=NowUtc()) {S.PortalEndsUtc=0;Changed=true;}
