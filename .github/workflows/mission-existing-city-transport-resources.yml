@@ -1,0 +1,40 @@
+name: ANOMALIA mission - locate existing lift cablecar and rail resources
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-existing-city-transport-resources.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  find:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: prior
+      - name: Reuse completed inventory to locate existing transport resources
+        shell: python
+        run: |
+          import json,pathlib,re,collections
+          pattern=re.compile(r"elevator|ascenseur|lift.?button|cable.?car|telepher|gondola|funicular|ski.?lift|chair.?lift|subway|metro|rail.?track|railway",re.I)
+          found=[]
+          for line in pathlib.Path("prior/source-packages.jsonl").open(encoding="utf-8-sig"):
+              row=json.loads(line)
+              if pattern.search(row["relative"]):found.append(row)
+          plan=json.loads(pathlib.Path("prior/bulk-import-summary.json").read_text(encoding="utf-8-sig"))
+          raw=[r for r in plan.get("rawSources",[]) if pattern.search(r["path"])]
+          result={"priorInventoryRun":41842801517,"packageMatches":found,"rawMatches":raw,"notPlacementOrGameplayAcceptance":True}
+          pathlib.Path("transport-resource-candidates.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+          print("PACKAGE_MATCH_COUNT",len(found))
+          for row in found[:60]:print("PACKAGE",row["source"])
+          for row in raw[:60]:print("RAW",row["path"])
+      - uses: actions/upload-artifact@v4
+        with:
+          name: existing-city-transport-resource-candidates
+          path: transport-resource-candidates.json
