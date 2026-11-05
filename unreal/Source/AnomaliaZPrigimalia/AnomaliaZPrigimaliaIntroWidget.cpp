@@ -26,7 +26,7 @@ namespace
         // Staged non-UAsset movie: ensure packaging copies Content/Movies.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Intro_Horreur_30s.mp4")));
+            TEXT("ANOMALIAZ_PRIGIMALIA_Intro_SANS_TEXTE_88s.mp4")));
     }
 
     FString ClickBloodMoviePath()
@@ -35,7 +35,7 @@ namespace
         // The spoken title remains the separate SW_IntroTitle SoundWave.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4")));
+            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_SANS_TEXTE_v4.mp4")));
     }
 }
 
@@ -186,15 +186,15 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
     }
     if (ContinueButton) ContinueButton->SetIsEnabled(false);
     if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
-    if (ContinueText)
-        ContinueText->SetText(FText::FromString(TEXT("ANOMALIA'Z PRIGIMALIA")));
+    // No on-screen title. The zombie voice is the only title announcement.
+    if (ContinueButton) ContinueButton->SetVisibility(ESlateVisibility::Collapsed);
 
     // Independent voice on click; movie sound does NOT substitute for the click reaction.
     USoundBase* Voice = LoadObject<USoundBase>(nullptr,
-        TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Deep_v2.SW_IntroTitle_Deep_v2"));
+        TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Zombie_v4.SW_IntroTitle_Zombie_v4"));
     if (!Voice)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import SW_IntroTitle_Deep_v2.wav"));
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import SW_IntroTitle_Zombie_v4.wav"));
         FinishToMainMenu();
         return;
     }
