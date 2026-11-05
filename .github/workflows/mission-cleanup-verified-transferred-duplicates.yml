@@ -1,4 +1,4 @@
-name: ANOMALIA mission - verified duplicate cleanup after cloud transfer
+name: ANOMALIA mission - verified cleanup after City Sample transfer
 on:
   push:
     branches: [mission/finalisation-20261104]
