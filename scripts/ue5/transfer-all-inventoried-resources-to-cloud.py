@@ -12,6 +12,12 @@ summary={"state":"PREPARING","destination":str(DEST),"cloudFolderId":"1DM8M8wWZc
 def save():
  (out/"cloud-transfer-summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")
  (persistent/"summary.json").write_text(json.dumps(summary,indent=2),encoding="utf-8")
+ try:
+  summary["reportedAtUTC"]=time.strftime("%Y-%m-%dT%H:%M:%SZ",time.gmtime())
+  live=DEST/("progress-"+os.environ["GITHUB_RUN_ID"]+".tmp")
+  live.write_text(json.dumps(summary,indent=2),encoding="utf-8")
+  os.replace(live,DEST/"transfer-progress.json")
+ except OSError as e:summary["progressPublicationError"]=str(e)
 def sha(p):
  h=hashlib.sha256()
  with p.open("rb") as stream:
@@ -95,6 +101,9 @@ try:
     if cloud is None:
      if not reserve(before.st_size):
       counts["DEFERRED_LOCAL_CACHE_OR_CLOUD_RESERVE"]+=1
+      if priority(row)[0]==2:
+       summary["state"]="PARTIAL_CACHE_RESERVE_REQUIRES_RESUME"
+       break
       continue
      name=replaced_name=p.name
      if len(name)>100:name=p.stem[:60]+"_"+digest[:12]+p.suffix
