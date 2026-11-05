@@ -26,7 +26,7 @@ namespace
         // Staged non-UAsset movie: ensure packaging copies Content/Movies.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Intro_Cinematique_30s.mp4")));
+            TEXT("ANOMALIAZ_PRIGIMALIA_Intro_Instrumental_30s.mp4")));
     }
 }
 
