@@ -14,7 +14,7 @@ class UMediaTexture;
 class UTextBlock;
 
 /**
- * Local startup only: an 88-second text-free movie followed by a zombie voice on click.
+ * Local startup only: a 24-second original-scene movie followed by the original voice and blood on click.
  * All existing game / server / persistence state stays in the original GameMode.
  */
 UCLASS()
