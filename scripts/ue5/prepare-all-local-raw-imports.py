@@ -3,6 +3,21 @@ import os,pathlib,json,hashlib,zipfile,re,shutil,collections
 out=pathlib.Path(os.environ["MISSION_RAW_OUT"])
 inventory=json.loads((out/"plan/bulk-import-summary.json").read_text(encoding="utf-8"))
 project=pathlib.Path(r"D:\ANOMALIA\unreal")
+# New C/CMD resources stay at their verified original paths instead of being copied to D.
+catalogs=project/"SourceAssets"/"ExternalResources"
+known_paths={str(pathlib.Path(row["path"])).casefold() for row in inventory["rawSources"]}
+source_catalogs=[]
+if catalogs.exists():
+    for catalog in sorted(catalogs.glob("original-source-catalog-*.json"),key=lambda p:p.stat().st_mtime_ns):
+        data=json.loads(catalog.read_text(encoding="utf-8-sig"))
+        if data.get("mode")!="REFERENCE_ORIGINALS_NO_PAYLOAD_COPY":continue
+        source_catalogs.append(str(catalog))
+        for row in data.get("files",[]):
+            if row.get("state")!="ORIGINAL_SOURCE_REFERENCED_NO_COPY":continue
+            path=pathlib.Path(row["importSource"]);key=str(path).casefold()
+            if path.suffix.casefold() not in {".fbx",".glb",".gltf",".obj",".zip"} or key in known_paths:continue
+            inventory["rawSources"].append({"path":str(path),"sourceCatalog":str(catalog)})
+            known_paths.add(key)
 store=pathlib.Path(r"C:\AZRI")/os.environ["GITHUB_RUN_ID"]
 store.mkdir(parents=True,exist_ok=False)
 (store/"owner.json").write_text(json.dumps({"project":str(project),"purpose":"Local raw import inputs and newly created resource output"}),encoding="utf-8")
@@ -24,7 +39,8 @@ if index.is_file():
         existing_hashes.update(hashes)
         if row.get("class")=="SkeletalMesh":skeletal_hashes.update(hashes)
 report={"state":"PREPARING","sourcePlanRun":41842801517,"imports":[],"alreadyRegistered":[],"duplicates":[],"deferred":[],"archiveReceipts":[],"sourceFilesModified":0,"outputNamespace":namespace,"outputBacking":str(content)}
-seen={}
+seen={};seen_archives={}
+report["originalSourceCatalogs"]=source_catalogs
 def save():
     (out/"raw-preparation-manifest.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
     print("RAW_PREP imports="+str(len(report["imports"]))+" registered="+str(len(report["alreadyRegistered"]))+" deferred="+str(len(report["deferred"])),flush=True)
@@ -61,10 +77,15 @@ for source in inventory["rawSources"]:
         with zipfile.ZipFile(path) as archive:
             members=archive.infolist()
             if not any(pathlib.PurePosixPath(m.filename).suffix.casefold() in {".fbx",".glb",".gltf",".obj"} for m in members):continue
+            archive_digest=hashlib.sha256()
+            with path.open("rb") as inp:
+                while chunk:=inp.read(1024*1024):archive_digest.update(chunk)
+            archive_hash=archive_digest.hexdigest()
+            if archive_hash in seen_archives:
+                report["duplicates"].append({"source":str(path),"sameAs":seen_archives[archive_hash],"reason":"Identical complete archive; no second extraction"});continue
             total=sum(m.file_size for m in members if not m.is_dir())
             if total>2*1024**3 or shutil.disk_usage(store).free<total+6*1024**3:
                 report["deferred"].append({"source":str(path),"reason":"Archive extraction exceeds bounded disk reserve","uncompressedBytes":total});continue
-            archive_hash=hashlib.sha256(path.read_bytes()).hexdigest()
             folder=store/"inputs"/archive_hash[:20];folder.mkdir(parents=True,exist_ok=True)
             extracted=[]
             for member in members:
@@ -80,6 +101,7 @@ for source in inventory["rawSources"]:
                     with archive.open(member) as inp,destination.open("xb") as dst:shutil.copyfileobj(inp,dst)
                 if pure.suffix.casefold() in {".fbx",".glb",".gltf",".obj"}:extracted.append(destination)
             assert hashlib.sha256(path.read_bytes()).hexdigest()==archive_hash
+            seen_archives[archive_hash]=str(path)
             report["archiveReceipts"].append({"source":str(path),"sha256":archive_hash,"models":len(extracted),"sourceUnchanged":True})
             for model in extracted:add(model,archive_hash)
     except Exception as exc:report["deferred"].append({"source":str(path),"reason":str(exc)})
