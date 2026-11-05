@@ -43,6 +43,7 @@ UAnomaliaZPrigimaliaIntroWidget* UAnomaliaZPrigimaliaIntroWidget::Open(APlayerCo
     auto* Intro = CreateWidget<UAnomaliaZPrigimaliaIntroWidget>(PC, StaticClass());
     if (!Intro) return nullptr;
     Intro->AddToViewport(120);
+    if (Intro->bMenuOpened) return Intro; // OpenFile may have failed during NativeConstruct.
     UGameplayStatics::SetGamePaused(PC, true);
     FInputModeUIOnly Mode;
     Mode.SetWidgetToFocus(Intro->TakeWidget());
@@ -113,6 +114,7 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
     VideoPlayer->SetLooping(false);
     VideoPlayer->PlayOnOpen = true;
     VideoPlayer->OnEndReached.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
+    VideoPlayer->OnMediaOpenFailed.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
     VideoTexture->SetMediaPlayer(VideoPlayer);
     VideoTexture->UpdateResource();
 
@@ -139,6 +141,12 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
     }
 }
 
+void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
+{
+    UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MEDIA_FAILED: %s"), *FailedUrl);
+    FinishToMainMenu();
+}
+
 void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
 {
     if (bClicked || bMenuOpened) return;
@@ -157,7 +165,7 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
         ContinueText->SetText(FText::FromString(TEXT("ANOMALIA'Z PRIGIMALIA")));
 
     // Independent voice on click; movie sound does NOT substitute for the click reaction.
-    const USoundBase* Voice = LoadObject<USoundBase>(nullptr,
+    USoundBase* Voice = LoadObject<USoundBase>(nullptr,
         TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle.SW_IntroTitle"));
     if (!Voice)
     {
@@ -165,12 +173,13 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
         FinishToMainMenu();
         return;
     }
-    VoiceComponent = UGameplayStatics::SpawnSound2D(
-        this, const_cast<USoundBase*>(Voice), 1.f, 1.f, 0.f, nullptr, false, false);
+    VoiceComponent = UGameplayStatics::CreateSound2D(
+        this, Voice, 1.f, 1.f, 0.f, nullptr, false, false);
     if (VoiceComponent)
     {
         VoiceComponent->bIsUISound = true;
         VoiceComponent->OnAudioFinished.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded);
+        VoiceComponent->Play();
     }
     else FinishToMainMenu();
 }
@@ -201,6 +210,7 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeDestruct()
     if (VideoPlayer)
     {
         VideoPlayer->OnEndReached.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
+        VideoPlayer->OnMediaOpenFailed.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
         VideoPlayer->Close();
     }
     if (VideoSound)
