@@ -11,7 +11,10 @@ Les connexions sont explicites et limitées en distance: ne pas alimenter toutes
 - State.InstalledFuseItem: identité du composant installé, sauvegardée avec le générateur et répliquée dans son état.
 - Première interaction avec un générateur qui exige le fusible: installation d'un objet réel via la transaction d'inventaire existante, ou échec avec restauration de l'état si l'objet manque.
 - Le générateur ne fournit aucun courant avec un fusible absent ou différent. Il ne consomme pas de carburant dans ce cas.
-- Après installation, le carburant et l'interrupteur existants restent nécessaires.
+- Réseaux fixes des villes/villages: bRequiresFuel=false et RequiredFuseItem configuré; le bon fusible rétablit le courant sans carburant.
+- Générateurs des bases des joueurs hors des localités: bRequiresFuel=true; ils utilisent du carburant et restent indépendants du réseau de la ville.
+- Le réglage par défaut conserve le fonctionnement à carburant des définitions existantes; les réseaux fixes doivent être configurés explicitement.
+- À l’installation du fusible d’un réseau fixe, l’alimentation est activée. L’interrupteur permet ensuite l’arrêt/remise en marche.
 - Tests natifs étendus: fusible absent/incorrect/correct, coupure, pause de consommation, identité conservée après redémarrage. Ces ajouts ne sont pas encore annoncés comme compilés ou exécutés.
 
 ## Travail restant dans le véritable projet
