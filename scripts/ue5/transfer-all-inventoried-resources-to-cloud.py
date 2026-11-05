@@ -81,7 +81,12 @@ if journal_path.exists():
    p=pathlib.Path(item["cloudPath"])
    if p.is_file() and p.stat().st_size==item["bytes"]:objects[item["sha256"]]=p
   except (OSError,ValueError,KeyError):pass
-priority=lambda row:(0 if any(w in row["path"].lower() for w in ["sand-mountain","karting-club","shanghai-international"]) else 1 if pathlib.Path(row["path"]).suffix.lower() in {".zip",".fbx",".glb",".gltf",".obj"} else 2,row["bytes"])
+# User requested largest resources first, across all inventoried game-resource formats.
+priority=lambda row:(-row["bytes"],row["path"].casefold())
+summary["transferOrder"]="LARGEST_BYTES_FIRST"
+summary["largestInventoriedSources"]=[{"path":r["path"],"bytes":r["bytes"]} for r in sorted(sources.values(),key=priority)[:20]]
+summary["CFreeBeforeLargestFirst"]=shutil.disk_usage("C:/").free
+save()
 try:
  with journal_path.open("a",encoding="utf-8") as journal:
   for row in sorted(sources.values(),key=priority):
@@ -101,7 +106,7 @@ try:
     if cloud is None:
      if not reserve(before.st_size):
       counts["DEFERRED_LOCAL_CACHE_OR_CLOUD_RESERVE"]+=1
-      if priority(row)[0]==2:
+      if shutil.disk_usage("C:/").free < 1024**3+1024**2:
        summary["state"]="PARTIAL_CACHE_RESERVE_REQUIRES_RESUME"
        break
       continue
@@ -135,7 +140,7 @@ try:
  if summary["state"]=="TRANSFERRING":
   summary["state"]="BATCH_WRITTEN_REMOTE_CONFIRMATION_PENDING" if not counts["DEFERRED_LOCAL_CACHE_OR_CLOUD_RESERVE"] and not counts["ERROR_ORIGINAL_RETAINED"] else "PARTIAL_REQUIRES_CACHE_SPACE_OR_ERROR_CORRECTION"
 finally:
- summary["counts"]=dict(counts);summary["uniqueContentObjectsReferenced"]=len(objects);save()
+ summary["counts"]=dict(counts);summary["uniqueContentObjectsReferenced"]=len(objects);summary["CFreeAfter"]=shutil.disk_usage("C:/").free;save()
  shutil.copyfile(journal_path,out/"resource-transfers.jsonl")
  # The restore manifest retains every original path while identical payloads are stored once.
  if reserve(journal_path.stat().st_size):
