@@ -25,6 +25,12 @@ jobs:
           path: previous-intro-${{ github.run_id }}
           persist-credentials: false
           clean: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 31bfda79e43391b4c9ee1d23000e0621537a200a
+          path: prior-emergency-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
       - name: Check correct game, synchronized Drive media, and safe Windows state
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -32,7 +38,7 @@ jobs:
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
           $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $marker='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\verified-source-backup.marker'
-          $archive='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s.zip'
+          $archive='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s_v2.zip'
           if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'INSTALL_BLOCKED: native game project missing'}
           if(!(Test-Path -LiteralPath $original -PathType Leaf)){throw 'INSTALL_BLOCKED: original source project missing'}
           if(!(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'INSTALL_BLOCKED: source backup marker missing'}
@@ -42,7 +48,7 @@ jobs:
           }
           if(!(Test-Path -LiteralPath $archive -PathType Leaf)){throw 'INSTALL_BLOCKED: cloud ZIP not synced to Windows H: yet'}
           $hash=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if($hash -ne '6ef091d21a285cc9b948fdccefb9a07e19025ff886521afa13291a88b66d8957'){
+          if($hash -ne '5f2c12a330aa417bf6894b3f2026f768a9fe195397abeb94adaf15e7eee39c55'){
             throw 'INSTALL_BLOCKED: cloud ZIP checksum differs from validated 30-second pack'
           }
           $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue)
@@ -54,18 +60,21 @@ jobs:
           $target='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia'
           $staged=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia'
           $priorStage=Join-Path $env:GITHUB_WORKSPACE ('previous-intro-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $priorEmergency=Join-Path $env:GITHUB_WORKSPACE ('prior-emergency-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
           foreach($name in @('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')){
             $existing=Join-Path $target $name
             $new=Join-Path $staged $name
             $old=Join-Path $priorStage $name
-            if(!(Test-Path -LiteralPath $new) -or !(Test-Path -LiteralPath $old)){
+            $intermediate=Join-Path $priorEmergency $name
+            if(!(Test-Path -LiteralPath $new) -or !(Test-Path -LiteralPath $old) -or !(Test-Path -LiteralPath $intermediate)){
               throw 'INSTALL_BLOCKED: GitHub intro sources missing'
             }
             if(Test-Path -LiteralPath $existing) {
               $hash=(Get-FileHash -LiteralPath $existing).Hash
               $knownOld=(Get-FileHash -LiteralPath $old).Hash
+              $knownIntermediate=(Get-FileHash -LiteralPath $intermediate).Hash
               $knownNew=(Get-FileHash -LiteralPath $new).Hash
-              if($hash -ne $knownOld -and $hash -ne $knownNew) {
+              if($hash -ne $knownOld -and $hash -ne $knownIntermediate -and $hash -ne $knownNew) {
                 throw 'INSTALL_BLOCKED: Work has modified the live intro. No overwrite permitted.'
               }
             }
