@@ -1,4 +1,5 @@
 import worldMetrics from "./world-metrics.json";
+import {RADIO_BUNKERS,RADIO_ANTENNAS,ACCESS_ITEMS,BUNKER_FREQUENCY,activeBunkers,broadcast,canHearBroadcast,unlockRadioBunker,claimRadioBunkerLoot,radioDoorOpen,radioTime} from "./bunker-radio.js";
 import {createConstructionUI} from "./construction-ui.js";
 import {createConstructionWorld} from "./construction-world.js";
 import {validateConstruction} from "./construction.js";
@@ -50,6 +51,9 @@ let state=normalizeState(saved);state.equipment={head:null,torso:"shirt",vest:nu
 state.illness=saved?.illness||null;state.infection=Number(saved?.infection)||0;state.temperature=Number(saved?.temperature)||37;
 state.tamed=Array.isArray(saved?.tamed)?saved.tamed:[];state.dinoTrust=saved?.dinoTrust||{};
 state.mounted=saved?.mounted||null;state.weapon=saved?.weapon||"pistol";state.underground=null;
+state.radioFrequency=Number.isFinite(Number(saved?.radioFrequency))?Number(saved.radioFrequency):BUNKER_FREQUENCY;
+state.radioOpenUntil=saved?.radioOpenUntil&&typeof saved.radioOpenUntil==='object'&&!Array.isArray(saved.radioOpenUntil)?{...saved.radioOpenUntil}:{};
+
 state.inventory={...state.inventory,...saved?.inventory};
 state.hunted=Array.isArray(saved?.hunted)?saved.hunted:[];
 state.mapPins=Array.isArray(saved?.mapPins)?saved.mapPins.slice(0,120):[];
@@ -171,11 +175,52 @@ function makeTerrain(cx,cz){
  graphics.groundCover(group,grassPoints);
  for(const site of SITES){
   if(site.x<group.position.x-CHUNK_SIZE/2||site.x>=group.position.x+CHUNK_SIZE/2||site.z<group.position.z-CHUNK_SIZE/2||site.z>=group.position.z+CHUNK_SIZE/2)continue;
-  if(state.collected.includes(site.id)&&["key","container"].includes(site.type))continue;
+  if(state.collected.includes(site.id)&&["key","container","access-cache"].includes(site.type))continue;
   const y=Math.max(2,heightAt(site.x,site.z));
-  const material=site.required&&!state.unlocked.includes(site.id)?m.locked:site.type==="key"?m.loot:m.rock;
+  const material=(site.required||site.access)&&!state.unlocked.includes(site.id)?m.locked:["key","access-cache"].includes(site.type)?m.loot:m.rock;
   let marker;
-  if(site.type==="metro"||site.type==="catacomb"){
+  if(site.type==="radio-bunker"){
+   // Entrées originales : civils, hangars, hôpitaux, laboratoires et quelques bases fortifiées.
+   const px=site.x-group.position.x,pz=site.z-group.position.z;
+   const military=site.building==='military',industrial=site.building==='industrial';
+   const medical=site.building==='medical',research=site.building==='research';
+   const w=military?29:industrial?27:medical?23:research?24:19;
+   marker=meshBox(group,px,y+3.4,pz,w,6.8,military?23:16,medical?m.wall:industrial?m.wood:research?m.rock:m.roof);
+   meshBox(group,px,y+7.1,pz,w+1,.8,military?24:17,m.road);
+   meshBox(group,px,y+2,pz+((military?23:16)/2)+.6,6,4,1,radioDoorOpen(state,site.id)?m.open:m.locked);
+   if(military){
+    for(const side of [-1,1]){
+     meshBox(group,px+side*21,y+4,pz,3,8,3,m.rock);
+     meshBox(group,px+side*20,y+.6,pz-14,12,1,1,m.wall);
+     meshBox(group,px+side*20,y+.6,pz+14,12,1,1,m.wall);
+    }
+    meshBox(group,px,y+1.2,pz-16,12,2,6,m.wood);
+   }else if(industrial){
+    for(const side of [-1,1])meshBox(group,px+side*18,y+2,pz-6,7,4,9,m.wood);
+    meshBox(group,px+3,y+2,pz+9,9,4,1,m.locked);
+   }else if(medical){
+    meshBox(group,px,y+8.9,pz,3,2,.7,m.open);
+    meshBox(group,px,y+8.9,pz,.7,2,3,m.open);
+   }else if(research){
+    const beacon=new THREE.PointLight(0x83b5dd,1.7,24);
+    beacon.position.set(site.x,y+10,site.z);group.add(beacon);
+    meshBox(group,px-7,y+2.5,pz-11,7,5,5,m.rock);
+   }else{
+    meshBox(group,px+7,y+2,pz-10,7,4,8,m.wood);
+   }
+   solids.push({x:site.x,z:site.z,width:w,depth:military?23:16});
+  }else if(site.type==="radio-antenna"){
+   const px=site.x-group.position.x,pz=site.z-group.position.z;
+   marker=meshBox(group,px,y+1.1,pz,8,2,8,m.wall);
+   meshBox(group,px,y+11,pz,1.5,20,1.5,m.rock);
+   for(const z of [8,13,18])meshBox(group,px,y+z,pz,9,.65,1.3,m.wood);
+   const lamp=new THREE.PointLight(0xffc262,2,60);lamp.position.set(site.x,y+23,site.z);group.add(lamp);
+  }else if(site.type==="access-cache"){
+   const px=site.x-group.position.x,pz=site.z-group.position.z;
+   marker=meshBox(group,px,y+1.6,pz,5,3.2,5,site.building==='military'?m.rock:m.wood);
+   meshBox(group,px,y+3.5,pz,5.8,.6,5.8,m.roof);
+   meshBox(group,px,y+3.7,pz+1.8,1.7,.22,.6,m.loot);
+  }else if(site.type==="metro"||site.type==="catacomb"){
    marker=meshBox(group,site.x-group.position.x,y+.6,site.z-group.position.z,11,1,11,m.road);
    meshBox(group,site.x-group.position.x,y+3.5,site.z-group.position.z-5,10,6,1,m.wall);
   }else if(site.type==="boat"){
@@ -323,6 +368,12 @@ function interaction(){
   if(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z-69))<9){
    const unique="treasure-"+state.entrySite.id;
    if(state.collected.includes(unique)){notice("Ce coffre a déjà été fouillé.");return}
+   if(RADIO_BUNKERS.some(b=>b.id===state.entrySite.id)){
+    const found=claimRadioBunkerLoot(state,state.entrySite.id);
+    notice(found.message);
+    if(found.ok)syncInventory(state);
+    save();return;
+   }
    state.collected.push(unique);const reward=rewardLoot(state,6+state.collected.length);
    notice("Trésor souterrain : "+reward.message);save();return;
   }
@@ -335,6 +386,15 @@ function interaction(){
  }
  if(nearby){
   const site=nearby.site;
+  if(site.type==="radio-bunker"){
+   if(radioDoorOpen(state,site.id)){openInterior(site);return;}
+   if(site.access==="morse"){openBunkerCodePanel(site);return;}
+   const result=unlockRadioBunker(state,site.id,"");
+   notice(result.message);
+   if(result.ok){openInterior(site);updateChunks(true);save();}
+   return;
+  }
+  if(site.type==="radio-antenna"){openRadioPanel();return;}
   if(site.underground){openInterior(site);return}
   if(site.type==="boat"){
    state.boat=!state.boat;if(state.boat){state.mounted=null;state.position.x=site.x;state.position.z=site.z;notice("Bateau lancé : ZQSD/WASD. E pour débarquer près d'une côte.")}else notice("Bateau quitté.");save();return;
@@ -531,7 +591,7 @@ function updateHud(dt){
  const hint=$("interaction");
  let text="";
  if(state.underground)text="E · "+(state.entrySite&&Math.hypot(state.position.x-state.entrySite.x,state.position.z-(state.entrySite.z+2))<7?"REMONTER À LA SURFACE":"EXPLORER / OUVRIR COFFRE");
- else if(site)text="E · "+site.site.label+(site.site.required?" · VERROUILLAGE À CLÉ":"");
+ else if(site)text="E · "+site.site.label+(site.site.access==="card"?" · CARTE PERFORÉE":site.site.access==="morse"?" · CODE MORSE":site.site.access==="key"?" · CLÉ DE SÉCURITÉ":site.site.required?" · VERROUILLAGE À CLÉ":"");
  else if(closestDino)text=closestDino.unconscious?"E · Donner des croquettes à "+closestDino.type:"V · Fléchettes pour endormir "+closestDino.type+" · E nourrir une fois endormi";
  else if(state.boat)text="BATEAU · navigue vers les îles sans pont";
  else text="E · Récolter œufs/baies · P Pêcher · G Feu de camp · K Cuisiner · V Fléchettes · M Carte";
