@@ -1,0 +1,65 @@
+name: ANOMALIA mission - direct complete 3D resource transfer
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-direct-all-models-cloud.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  copy:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: direct-models-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: scripts/ue5/direct-copy-all-game-models-to-cloud.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare direct-copy checkpoint and reports
+        id: plan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}')
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $missing=!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\direct-source-plan.jsonl')
+          "needed=$($missing.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
+      - name: Copy City Sample then all remaining game model resources directly
+        timeout-minutes: 300
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\scripts\ue5\direct-copy-all-game-models-to-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Direct copy stopped; originals preserved and next batch can resume'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: direct-models-cloud-receipts-${{ matrix.batch }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/direct-transfer-summary.json
+          if-no-files-found: warn
