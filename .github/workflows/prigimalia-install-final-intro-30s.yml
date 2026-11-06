@@ -23,6 +23,7 @@ jobs:
           # because deeply nested 3D imported asset names exceed its path length.
           sparse-checkout: |
             unreal/Source/AnomaliaZPrigimalia
+            unreal/Scripts
           sparse-checkout-cone-mode: true
       - uses: actions/checkout@v4
         with:
@@ -62,7 +63,7 @@ jobs:
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
           $original='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $marker='D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration\verified-source-backup.marker'
-          $archive='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s_v3.zip'
+          $archive='H:\Mon Drive\ANOMALIAZ\04_Intro_Installation\ANOMALIAZ_PRIGIMALIA_INSTALLATION_VRAI_JEU_ALERTE_35s_v4.zip'
           if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'INSTALL_BLOCKED: native game project missing'}
           if(!(Test-Path -LiteralPath $original -PathType Leaf)){throw 'INSTALL_BLOCKED: original source project missing'}
           if(!(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'INSTALL_BLOCKED: source backup marker missing'}
@@ -72,8 +73,8 @@ jobs:
           }
           if(!(Test-Path -LiteralPath $archive -PathType Leaf)){throw 'INSTALL_BLOCKED: cloud ZIP not synced to Windows H: yet'}
           $hash=(Get-FileHash -LiteralPath $archive -Algorithm SHA256).Hash.ToLowerInvariant()
-          if($hash -ne 'fa8fcc4b32f0d8a33109b20b055826cea728c286af50f0ca3600213e96c136f7'){
-            throw 'INSTALL_BLOCKED: cloud ZIP checksum differs from validated 35-second V3 pack'
+          if($hash -ne 'a3d7559daa7d4b4baa0f0450e5a2e83bc1db90978a940eabe18e6445c6530ccc'){
+            throw 'INSTALL_BLOCKED: cloud ZIP checksum differs from validated 35-second V4 pack'
           }
           $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue)
           if($busy.Count -gt 0){throw 'INSTALL_BLOCKED: game, Unreal or transfer still working'}
@@ -135,7 +136,9 @@ jobs:
           if(!(Test-Path -LiteralPath $script -PathType Leaf)){throw 'INSTALL_BLOCKED: install script not in ZIP'}
           $engine=if($env:UE_ROOT){$env:UE_ROOT}else{'C:\Program Files\Epic Games\UE_5.8'}
           try {
-            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -ProjectFile 'D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject' -UE_ROOT $engine
+            $verifiedRepo=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\install_prigimalia_intro.py'
+            if(!(Test-Path -LiteralPath $verifiedRepo -PathType Leaf)){throw 'INSTALL_BLOCKED: missing checked-out Unreal importer script'}
+            & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $script -ProjectFile 'D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject' -UE_ROOT $engine -VerifiedRepoRoot $env:GITHUB_WORKSPACE
             if($LASTEXITCODE -ne 0){throw ('Native installer failed with code '+$LASTEXITCODE)}
           } finally {
             # Media originals remain safely in Google Drive and existing Saved/ backups are retained.
