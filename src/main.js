@@ -1,5 +1,6 @@
 import worldMetrics from "./world-metrics.json";
 import {RADIO_BUNKERS,RADIO_ANTENNAS,ACCESS_ITEMS,BUNKER_FREQUENCY,activeBunkers,broadcast,canHearBroadcast,unlockRadioBunker,claimRadioBunkerLoot,radioDoorOpen,radioTime} from "./bunker-radio.js";
+import {openRadioConsole,openBunkerLock} from "./bunker-radio-ui.js";
 import {createConstructionUI} from "./construction-ui.js";
 import {createConstructionWorld} from "./construction-world.js";
 import {validateConstruction} from "./construction.js";
@@ -463,6 +464,15 @@ function toggleTranqMode(){
 }
 function openPanel(){constructionUI?.cancel();if(mapEditor?.opened)mapEditor.exit();paused=true;$("panel").classList.remove("hidden");if(document.pointerLockElement)document.exitPointerLock()}
 function closePanel(){inventoryUI?.cleanup();worldRuntime?.cleanup();paused=false;$("panel").classList.add("hidden")}
+function openRadioPanel(){
+ inventoryUI?.cleanup();worldRuntime?.cleanup();
+ openRadioConsole({state,panelBody:$("panelBody"),panelTitle:$("panelTitle"),openPanel,notice});
+}
+function openBunkerCodePanel(site){
+ inventoryUI?.cleanup();worldRuntime?.cleanup();
+ openBunkerLock({state,site,panelBody:$("panelBody"),panelTitle:$("panelTitle"),openPanel,closePanel,notice,save,
+  onUnlocked:()=>{openInterior(site);updateChunks(true);save();}});
+}
 function buildShelter(){if(state.underground)return notice('Construction disponible en surface.');constructionUI.show();}
 function reload(){
  const available=state.inventory.ammo||0,need=state.magazine-state.ammo;
