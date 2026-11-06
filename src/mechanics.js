@@ -1,4 +1,5 @@
 import {inJungle} from "./ecology.js";
+import {RADIO_BUNKERS, ACCESS_SITES, RADIO_ANTENNAS, ACCESS_ITEMS} from "./bunker-radio.js";
 /** Pure, deterministic world rules. Coordinates are in metres. No copyrighted game assets. */
 export const WORLD_HALF=24000;
 export const CHUNK_SIZE=256;
@@ -64,11 +65,15 @@ export const SITES=[
  {id:"village-ashen",type:"village",label:"Village caché de Cendre",x:3500,z:-5910,loot:{food:3,water:2}},
  {id:"village-atoll",type:"village",label:"Refuge de l'Atoll",x:8010,z:-4130,loot:{water:5,wood:10}},
  {id:"cargo-blue-key",type:"key",label:"Clé du conteneur bleu",x:3930,z:570,item:"key_blue"},
- {id:"cargo-blue",type:"container",label:"Conteneur sécurisé BLEU",x:4020,z:480,required:"key_blue",loot:{ammo:30,scrap:16}}
+ {id:"cargo-blue",type:"container",label:"Conteneur sécurisé BLEU",x:4020,z:480,required:"key_blue",loot:{ammo:30,scrap:16}},
+ ...RADIO_BUNKERS,
+ ...ACCESS_SITES,
+ ...RADIO_ANTENNAS
 ];
 export const ITEM_NAMES={
  wood:"Bois",scrap:"Pièces métalliques",food:"Rations",water:"Eau potable",medkit:"Kit médical",
- ammo:"Munitions",key_alpha:"Clé Alpha",key_red:"Clé rouge",key_omega:"Clé Omega",key_abyss:"Clé Abysse",key_blue:"Clé bleue"
+ ammo:"Munitions",key_alpha:"Clé Alpha",key_red:"Clé rouge",key_omega:"Clé Omega",key_abyss:"Clé Abysse",key_blue:"Clé bleue",
+ ...ACCESS_ITEMS
 };
 export function clamp(v,min,max){return Math.min(max,Math.max(min,v))}
 export function smooth(t){t=clamp(t,0,1);return t*t*(3-2*t)}
@@ -85,7 +90,12 @@ export function normalizeState(v){const d=initialState();if(!v||v.version!==1)re
 export function hasItem(state,item){return (state.inventory[item]||0)>0}
 export function addItems(state,loot){for(const [key,value]of Object.entries(loot)){state.inventory[key]=(state.inventory[key]||0)+value}}
 export function unlockSite(state,site){if(state.collected.includes(site.id))return {ok:false,message:"Déjà exploré : "+site.label};
- if(site.type==="key"){state.inventory[site.item]=(state.inventory[site.item]||0)+1;state.collected.push(site.id);return {ok:true,message:"Trouvé : "+ITEM_NAMES[site.item]}}
+ if(site.type==="key"||site.type==="access-cache"){
+  state.inventory[site.item]=(state.inventory[site.item]||0)+1;
+  state.collected.push(site.id);
+  return {ok:true,message:"Trouvé : "+(ITEM_NAMES[site.item]||site.item)};
+ }
+ if(site.type==="radio-antenna")return {ok:true,message:"Relais radio trouvé : fréquence 80,0 MHz. Ouvre le récepteur (U)."};
  if(site.required&&!hasItem(state,site.required))return {ok:false,locked:true,message:"Verrouillé — clé requise : "+ITEM_NAMES[site.required]};
  if(site.loot){if(site.required)state.unlocked.push(site.id);addItems(state,site.loot);state.collected.push(site.id);return {ok:true,message:site.label+" ouvert · butin récupéré"}}
  return {ok:true,message:site.label};
