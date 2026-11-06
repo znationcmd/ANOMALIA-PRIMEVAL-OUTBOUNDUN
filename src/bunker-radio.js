@@ -40,13 +40,39 @@ const areas=[
   ['Bunker des Cendres',3260,-5890,'stockage'],
   ['Bunker de l’Atoll',8020,-4080,'militaire']
 ];
-export const RADIO_BUNKERS=Object.freeze(areas.map(([label,x,z,kind],i)=>Object.freeze({
+export const ACCESS_ITEMS=Object.freeze({
+ security_key_a:'Clé de sécurité A',security_key_b:'Clé de sécurité B',security_key_c:'Clé de sécurité C',
+ punch_card_level1:'Carte perforée niveau I',punch_card_level2:'Carte perforée niveau II',
+ punch_card_level3:'Carte perforée niveau III',
+ radio_transceiver:'Émetteur-récepteur radio',radio_battery:'Batterie radio'
+});
+const KEYS=['security_key_a','security_key_b','security_key_c'];
+const CARDS=['punch_card_level1','punch_card_level2','punch_card_level3'];
+const BUILDINGS=['civilian','industrial','medical','research','military'];
+const BUILDING_NAMES={civilian:'Sous-sol civil',industrial:'Entrepôt industriel',
+ medical:'Complexe médical',research:'Laboratoire',military:'Base militaire'};
+export const RADIO_BUNKERS=Object.freeze(areas.map(([label,x,z,kind],i)=>{
+ const access=['key','card','morse'][i%3];
+ const required=access==='key'?KEYS[Math.floor(i/3)%KEYS.length]:
+   access==='card'?CARDS[Math.floor(i/3)%CARDS.length]:null;
+ const building=BUILDINGS[(i*2+Math.floor(i/5))%BUILDINGS.length];
+ return Object.freeze({
   id:'radio-bunker-'+String(i+1).padStart(2,'0'),
-  type:'radio-bunker',
-  label,
-  x,z,kind,grid:mapGrid(x,z),
-  loot:{ammo:18+(i%4)*10,scrap:8+(i%3)*7,medkit:1+(i%2),food:2}
-})));
+  type:'radio-bunker',label,x,z,kind,access,required,building,buildingLabel:BUILDING_NAMES[building],
+  grid:mapGrid(x,z),loot:{ammo:18+(i%4)*10,scrap:8+(i%3)*7,medkit:1+(i%2),food:2}
+ });
+}));
+export const ACCESS_SITES=Object.freeze([
+ ['radio-transceiver-helion','Radio abandonnée — gare d’Hélion','radio_transceiver',110,185,'civilian'],
+ ['radio-battery-helion','Batterie — poste de secours','radio_battery',-90,180,'medical'],
+ ['security-key-helion','Clé A — bureau du concierge','security_key_a',180,-95,'civilian'],
+ ['punch-card-helion','Carte perforée I — archives','punch_card_level1',-210,-120,'civilian'],
+ ['security-key-borealis','Clé B — dépôt ferroviaire','security_key_b',-2320,1010,'industrial'],
+ ['punch-card-vanta','Carte perforée II — centre logistique','punch_card_level2',3880,660,'industrial'],
+ ['security-key-nordheim','Clé C — poste de garde','security_key_c',-11480,-11420,'military'],
+ ['punch-card-austral','Carte perforée III — centre de recherche','punch_card_level3',10900,12400,'research']
+].map(([id,label,item,x,z,building])=>Object.freeze({id,type:'access-cache',label,item,x,z,building})));
+
 export const RADIO_ANTENNAS=Object.freeze([
  ['Antenne Hélion',160,320],['Antenne Boréalis',-2060,680],['Tour Vanta',3920,700],
  ['Relais de Borée',-11800,-11500],['Relais Austral',11000,12700],
@@ -88,7 +114,7 @@ export function activeBunkers(state){
   if(!t.onAir)return [];
   const night=t.nightId;
   // Permutation déterministe pour que les trois emplacements soient distincts.
-  const pool=RADIO_BUNKERS.map((b,i)=>({b,key:stableHash((night+131)*53+i*7919)}))
+  const pool=RADIO_BUNKERS.filter(b=>b.access==='morse').map((b,i)=>({b,key:stableHash((night+131)*53+i*7919)}))
     .sort((a,b)=>a.key-b.key).slice(0,3);
   return pool.map(({b})=>({...b,code:String(stableHash((night+709)*9973+Number(b.id.slice(-2))*191)%10000).padStart(4,'0')}));
 }
@@ -117,23 +143,35 @@ export function canHearBroadcast(state, position){
   return RADIO_ANTENNAS.some(a=>Math.hypot(a.x-x,a.z-z)<=RADIO_RANGE_METERS);
 }
 export function unlockRadioBunker(state,bunkerId,enteredCode){
-  const bunker=RADIO_BUNKERS.find(b=>b.id===bunkerId);
-  if(!bunker)return {ok:false,message:'Bunker inconnu.'};
+ const bunker=RADIO_BUNKERS.find(b=>b.id===bunkerId);
+ if(!bunker)return {ok:false,message:'Bunker inconnu.'};
+ if(!state?.position||Math.hypot(Number(state.position.x)-bunker.x,Number(state.position.z)-bunker.z)>22)
+  return {ok:false,message:'Approche-toi de la porte du bunker pour l’ouvrir.'};
+ if(bunker.access==='key'||bunker.access==='card'){
+  if((state.inventory?.[bunker.required]||0)<1)
+   return {ok:false,message:(bunker.access==='card'?'Carte perforée requise : ':'Clé requise : ')+ACCESS_ITEMS[bunker.required]};
+ }else{
   const available=activeBunkers(state).find(b=>b.id===bunkerId);
-  if(!available)return {ok:false,message:'Ce bunker est fermé pendant ce cycle radio.'};
+  if(!available)return {ok:false,message:'Bunker à code inactif pour cette nuit.'};
   if(!/^\d{4}$/.test(String(enteredCode||''))||String(enteredCode)!==available.code)
-    return {ok:false,message:'Code incorrect ou incomplet.'};
-  state.radioOpenUntil ||= {};
-  state.radioOpenUntil[bunkerId]=Number(state.elapsed||0)+12;
-  const alreadyCollected=Array.isArray(state.collected)&&state.collected.includes(bunkerId);
-  if(!alreadyCollected){
-    state.collected ||= [];
-    state.collected.push(bunkerId);
-    state.inventory ||= {};
-    for(const [item,quantity] of Object.entries(bunker.loot))state.inventory[item]=(state.inventory[item]||0)+quantity;
-  }
-  return {ok:true,looted:!alreadyCollected,bunker,
-    message:alreadyCollected?'Porte ouverte : butin déjà récupéré.':'Bunker ouvert ! Coffre rare récupéré.'};
+   return {ok:false,message:'Code Morse incorrect ou incomplet.'};
+ }
+ state.radioOpenUntil ||= {};
+ state.radioOpenUntil[bunkerId]=Number(state.elapsed||0)+180;
+ state.unlocked ||= [];
+ if(!state.unlocked.includes(bunkerId))state.unlocked.push(bunkerId);
+ return {ok:true,bunker,message:bunker.access==='morse'?'Cadenas électronique déverrouillé.':'Accès autorisé : '+ACCESS_ITEMS[bunker.required]};
+}
+export function claimRadioBunkerLoot(state,bunkerId){
+ const bunker=RADIO_BUNKERS.find(b=>b.id===bunkerId);
+ if(!bunker)return {ok:false,message:'Coffre inconnu.'};
+ if(!radioDoorOpen(state,bunkerId))return {ok:false,message:'Le sas du bunker est verrouillé.'};
+ state.collected ||= [];
+ if(state.collected.includes('treasure-'+bunkerId))return {ok:false,message:'Coffre déjà fouillé.'};
+ state.collected.push('treasure-'+bunkerId);
+ state.inventory ||= {};
+ for(const [item,qty]of Object.entries(bunker.loot))state.inventory[item]=(state.inventory[item]||0)+qty;
+ return {ok:true,loot:bunker.loot,message:'Coffre sécurisé : '+Object.entries(bunker.loot).map(([k,n])=>k+' ×'+n).join(', ')};
 }
 export function radioDoorOpen(state,bunkerId){
   return Number(state?.radioOpenUntil?.[bunkerId]||0)>Number(state?.elapsed||0);
