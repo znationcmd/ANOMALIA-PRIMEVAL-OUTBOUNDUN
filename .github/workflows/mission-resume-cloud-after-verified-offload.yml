@@ -81,3 +81,5 @@ jobs:
             ${{ env.CLOUD_TRANSFER_OUT }}/cloud-transfer-summary.json
             ${{ env.CLOUD_TRANSFER_OUT }}/resource-transfers.jsonl
           if-no-files-found: error
+
+# Resume remaining City Sample resources from verified journal on 2026-11-06.
