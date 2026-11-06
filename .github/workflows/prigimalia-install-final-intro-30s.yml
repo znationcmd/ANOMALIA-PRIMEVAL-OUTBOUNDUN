@@ -96,13 +96,22 @@ jobs:
               throw 'INSTALL_BLOCKED: GitHub intro sources missing'
             }
             if(Test-Path -LiteralPath $existing) {
-              $hash=(Get-FileHash -LiteralPath $existing).Hash
-              $knownOld=(Get-FileHash -LiteralPath $old).Hash
-              $knownIntermediate=(Get-FileHash -LiteralPath $intermediate).Hash
-              $knownFailed=(Get-FileHash -LiteralPath $failed).Hash
-              $knownNew=(Get-FileHash -LiteralPath $new).Hash
-              if($hash -ne $knownOld -and $hash -ne $knownIntermediate -and $hash -ne $knownFailed -and $hash -ne $knownNew) {
-                throw 'INSTALL_BLOCKED: Work has modified the live intro. No overwrite permitted.'
+              # This Windows project uses CRLF while GitHub snapshots use LF.
+              # Exact SHA256 of raw bytes rejects the same code as a false Work conflict.
+              # Compare ALL text, normalized only for line endings and optional UTF-8 BOM.
+              $liveText=[IO.File]::ReadAllText($existing).TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+              $approved=@($old,$intermediate,$failed,$new)
+              $matchesKnown=$false
+              foreach($candidate in $approved) {
+                $approvedText=[IO.File]::ReadAllText($candidate).TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+                if([string]::Equals($liveText,$approvedText,[StringComparison]::Ordinal)) {
+                  $matchesKnown=$true
+                  Write-Host ('APPROVED_INTRO_VERSION='+$name+' candidate='+$candidate)
+                  break
+                }
+              }
+              if(-not $matchesKnown) {
+                throw ('INSTALL_BLOCKED: The live '+$name+' differs in content from ALL four approved versions; preserve Work changes.')
               }
             }
           }
