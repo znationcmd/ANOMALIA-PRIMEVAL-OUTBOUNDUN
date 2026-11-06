@@ -39,10 +39,25 @@ jobs:
             }
             Write-Host ('EXPECTED_SHA256='+(Get-FileHash $ref -Algorithm SHA256).Hash)
             Write-Host ('LIVE_SHA256='+(Get-FileHash $actual -Algorithm SHA256).Hash)
+            Write-Host ('LIVE_MODIFIED_UTC='+[IO.File]::GetLastWriteTimeUtc($actual).ToString('o'))
+            $src=[IO.File]::ReadAllText($actual)
+            Write-Host ('LIVE_HAS_ON_MEDIA_OPENED='+($src.Contains('OnMovieOpened')))
+            Write-Host ('LIVE_HAS_BLOOD_BRACES='+($src.Contains('if (!VideoPlayer->OpenFile(ClickBloodMoviePath()))'+"\r\n"+'            {')))
+            $rows=$src.Replace("`r`n","`n").Split([char]10)
+            for($i=205;$i -lt [Math]::Min(240,$rows.Length);$i++){
+              Write-Host ('LIVE_LINE_'+($i+1)+': '+$rows[$i])
+            }
             $diff = & git.exe --no-pager diff --no-index --color=never --ignore-space-at-eol -- $ref $actual
+            if($LASTEXITCODE -gt 1){throw ('Diff command failed: '+$LASTEXITCODE)}
+            $global:LASTEXITCODE=0
             $lines = @($diff)
             Write-Host ('DIFF_LINE_COUNT='+$lines.Count)
             foreach ($line in ($lines | Select-Object -First 180)) { Write-Host $line }
             if ($lines.Count -gt 180) { Write-Host 'DIFF_TRUNCATED' }
           }
+          $gameMode=Join-Path $live 'AnomaliaZPrigimaliaGameMode.cpp'
+          if(Test-Path -LiteralPath $gameMode -PathType Leaf){
+            Write-Host ('GAMEMODE_HAS_INTRO_START='+((Get-Content -LiteralPath $gameMode -Raw).Contains('UAnomaliaZPrigimaliaIntroWidget::Open(PC)')))
+          }
           Write-Host 'READ_ONLY_DIFF_COMPLETE_NO_LOCAL_MODIFICATIONS=true'
+          $global:LASTEXITCODE=0
