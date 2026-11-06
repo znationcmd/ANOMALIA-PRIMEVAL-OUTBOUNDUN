@@ -1,0 +1,28 @@
+name: ANOMALIA — bunkers et radio Morse
+on:
+  pull_request:
+    paths:
+      - 'src/bunker-radio*.js'
+      - 'src/main.js'
+      - 'src/mechanics.js'
+      - 'src/systems.js'
+      - 'src/style.css'
+      - 'tests/bunker-radio.test.mjs'
+      - '.github/workflows/bunker-radio-pr.yml'
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+      - name: Bunkers, card readers, Morse tests
+        run: npm test
+      - name: Compile playable browser prototype
+        run: npm run build
