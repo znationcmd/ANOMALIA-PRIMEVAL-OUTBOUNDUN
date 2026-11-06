@@ -222,8 +222,13 @@ void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
         if (FPaths::FileExists(ClickBloodMoviePath()))
         {
             if (!VideoPlayer->OpenFile(ClickBloodMoviePath()))
+            {
                 UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_FAILED"));
-            else bBloodFinished = false;
+            }
+            else
+            {
+                bBloodFinished = false;
+            }
         }
         else
         {
