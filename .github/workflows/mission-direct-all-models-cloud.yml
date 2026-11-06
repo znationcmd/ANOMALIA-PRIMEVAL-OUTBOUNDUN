@@ -1,4 +1,4 @@
-name: ANOMALIA mission - direct complete 3D resource transfer
+name: ANOMALIA mission - accelerated complete 3D resource transfer
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -49,7 +49,7 @@ jobs:
           run-id: 41974129695
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
-      - name: Copy City Sample then all remaining game model resources directly
+      - name: Benchmark and accelerate City Sample and remaining resource copies
         timeout-minutes: 300
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
