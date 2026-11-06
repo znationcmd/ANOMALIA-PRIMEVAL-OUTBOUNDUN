@@ -22,36 +22,27 @@ jobs:
           sparse-checkout: |
             unreal/Source/AnomaliaZPrigimalia
           sparse-checkout-cone-mode: true
-      - name: Compare live source and staged version without changing any game files
+      - name: Compare live intro code without changing any game files
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
-          $ErrorActionPreference='Stop'
-          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
-          $expected=Join-Path $env:GITHUB_WORKSPACE ('intro-audit-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
-          $live='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia'
-          if(!(Test-Path -LiteralPath $py -PathType Leaf)){throw 'Python unavailable'}
-          if(!(Test-Path -LiteralPath $live -PathType Container)){throw 'True game source directory unavailable'}
-          $script=Join-Path $env:RUNNER_TEMP ('audit-only-intro-'+$env:GITHUB_RUN_ID+'.py')
-          @'
-import pathlib, sys, difflib, hashlib, json
-exp=pathlib.Path(sys.argv[1])
-real=pathlib.Path(sys.argv[2])
-for filename in ('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h'):
-    a,b=exp/filename,real/filename
-    print('FILE',filename,flush=True)
-    if not a.is_file() or not b.is_file():
-        print('MISSING',a.is_file(),b.is_file(),flush=True);continue
-    ab,bb=a.read_bytes(),b.read_bytes()
-    print('SHA256_EXPECTED',hashlib.sha256(ab).hexdigest(),flush=True)
-    print('SHA256_LIVE',hashlib.sha256(bb).hexdigest(),flush=True)
-    al=ab.decode('utf-8-sig',errors='replace').splitlines()
-    bl=bb.decode('utf-8-sig',errors='replace').splitlines()
-    print('NORMALIZED_SAME',al==bl,'LINE_COUNTS',len(al),len(bl),flush=True)
-    diff=list(difflib.unified_diff(al,bl,fromfile='GITHUB/'+filename,tofile='ANOMALIA-PC/'+filename,lineterm='',n=3))
-    print('DIFF_LINES',len(diff),flush=True)
-    for line in diff[:230]:print(line,flush=True)
-    if len(diff)>230:print('DIFF_TRUNCATED',flush=True)
-'@ | Set-Content -LiteralPath $script -Encoding UTF8
-          & $py -B $script $expected $live
-          if($LASTEXITCODE -ne 0){throw 'Read-only source comparison failed'}
+          $ErrorActionPreference = 'Stop'
+          $expected = Join-Path $env:GITHUB_WORKSPACE ('intro-audit-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $live = 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia'
+          if (!(Test-Path -LiteralPath $live -PathType Container)) { throw 'Real game source folder absent' }
+          foreach ($name in @('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')) {
+            $ref = Join-Path $expected $name
+            $actual = Join-Path $live $name
+            Write-Host ('FILE '+$name)
+            if (!(Test-Path $ref -PathType Leaf) -or !(Test-Path $actual -PathType Leaf)) {
+              Write-Host ('MISSING REFERENCE='+[bool](Test-Path $ref)+' LIVE='+[bool](Test-Path $actual))
+              continue
+            }
+            Write-Host ('EXPECTED_SHA256='+(Get-FileHash $ref -Algorithm SHA256).Hash)
+            Write-Host ('LIVE_SHA256='+(Get-FileHash $actual -Algorithm SHA256).Hash)
+            $diff = & git.exe --no-pager diff --no-index --color=never --ignore-space-at-eol -- $ref $actual
+            $lines = @($diff)
+            Write-Host ('DIFF_LINE_COUNT='+$lines.Count)
+            foreach ($line in ($lines | Select-Object -First 180)) { Write-Host $line }
+            if ($lines.Count -gt 180) { Write-Host 'DIFF_TRUNCATED' }
+          }
           Write-Host 'READ_ONLY_DIFF_COMPLETE_NO_LOCAL_MODIFICATIONS=true'
