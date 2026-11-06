@@ -19,18 +19,33 @@ jobs:
         with:
           persist-credentials: false
           clean: false
+          # Only C++ intro sources are needed; full checkout fails on Windows MAX_PATH
+          # because deeply nested 3D imported asset names exceed its path length.
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
       - uses: actions/checkout@v4
         with:
           ref: 6dc5851676d1e511ab1094993e09cfa55614105a
           path: previous-intro-${{ github.run_id }}
           persist-credentials: false
           clean: false
+          # Only C++ intro sources are needed; full checkout fails on Windows MAX_PATH
+          # because deeply nested 3D imported asset names exceed its path length.
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
       - uses: actions/checkout@v4
         with:
           ref: 31bfda79e43391b4c9ee1d23000e0621537a200a
           path: prior-emergency-${{ github.run_id }}
           persist-credentials: false
           clean: false
+          # Only C++ intro sources are needed; full checkout fails on Windows MAX_PATH
+          # because deeply nested 3D imported asset names exceed its path length.
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
       - name: Check correct game, synchronized Drive media, and safe Windows state
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
