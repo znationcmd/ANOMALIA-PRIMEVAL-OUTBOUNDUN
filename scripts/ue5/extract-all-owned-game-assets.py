@@ -131,7 +131,9 @@ def main():
     required=sum(r["size"] for r in rows)
     # Reuse complete prior extractions instead of creating a second physical copy.
     old_folder=pathlib.Path(r"C:\AZRI\41851208057\inputs")/archive_hash[:20]
-    if path.suffix.lower()==".zip" and old_folder.is_dir() and all(old_folder.joinpath(*pathlib.PurePosixPath(r["path"]).parts).is_file() for r in rows):
+    if path.suffix.lower()==".zip" and old_folder.is_dir():
+     missing=sum(r["size"] for r in rows if not old_folder.joinpath(*pathlib.PurePosixPath(r["path"]).parts).is_file())
+     if missing and shutil.disk_usage(old_folder).free<missing+8*1024**3:raise RuntimeError("Prior extraction needs missing dependencies but C reserve must be retained")
      folder=old_folder;extract_zip(path,folder,rows);summary["archivesReused"]+=1
     else:
      root=project/"SourceAssets/AllExtracted";root.mkdir(parents=True,exist_ok=True)
