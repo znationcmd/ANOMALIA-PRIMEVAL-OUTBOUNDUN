@@ -42,8 +42,8 @@ enum class EAnomaliaZPrigimaliaInventoryAction : uint8
     ToggleContainer,
     StowInContainer,
     CollectNearby,
-    WetHead,
-    DogCommand
+    DogCommand,
+    WetHead
 };
 
 UCLASS()
