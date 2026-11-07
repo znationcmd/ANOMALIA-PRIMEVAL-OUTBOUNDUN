@@ -80,7 +80,7 @@ jobs:
       - name: Import and verify original models in actual D project
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         env:
-          IMPORT_pilot: 'pilot'
+          IMPORT_BATCH: 'pilot'
           IMPORT_MAX_SOURCES: '5'
         run: |
           $ErrorActionPreference='Stop'
@@ -164,7 +164,7 @@ jobs:
       - name: Import and verify original models in actual D project
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         env:
-          IMPORT_${{ matrix.batch }}: '${{ matrix.batch }}'
+          IMPORT_BATCH: '${{ matrix.batch }}'
           IMPORT_MAX_SOURCES: '100'
         run: |
           $ErrorActionPreference='Stop'
