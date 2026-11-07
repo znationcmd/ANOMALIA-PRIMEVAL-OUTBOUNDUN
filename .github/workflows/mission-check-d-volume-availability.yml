@@ -32,3 +32,5 @@ jobs:
             $events=@(Get-WinEvent -FilterHashtable @{LogName='System';StartTime=(Get-Date).AddMinutes(-20);Id=7,51,55,129,153,157} -MaxEvents 8 -ErrorAction Stop | ForEach-Object {[ordered]@{time=$_.TimeCreated.ToUniversalTime().ToString('o');id=$_.Id;provider=$_.ProviderName;message=($_.Message -replace '[\r\n]+',' ').Substring(0,[Math]::Min(220,($_.Message -replace '[\r\n]+',' ').Length))}})
             Write-Output ('RECENT_DISK_EVENTS '+($events|ConvertTo-Json -Compress))
           } catch {Write-Output 'RECENT_DISK_EVENTS_UNAVAILABLE_OR_NONE'}
+
+# Recheck drive availability before user-requested full transfer and cleanup.
