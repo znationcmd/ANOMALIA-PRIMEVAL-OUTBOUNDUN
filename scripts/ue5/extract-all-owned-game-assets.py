@@ -5,7 +5,7 @@ OTHER_MODELS={".blend",".abc",".usd",".usdz",".usda",".usdc",".dae",".stl",".3ds
 NATIVE={".uasset",".umap"}
 ARCHIVES={".zip",".7z",".rar"}
 GENERATED={".git","node_modules","intermediate","deriveddatacache","__macosx",".tmp.driveupload"}
-EXECUTABLE={".exe",".dll",".msi",".com",".scr"}
+EXECUTABLE={".exe",".dll",".msi",".com",".scr",".ddp",".pdb",".pak",".ucas",".utoc"}
 CATEGORIES={
 "bank_cards":r"bank.?card|credit.?card|debit.?card|carte.?banc|carte.?bleue",
 "keys":r"(?:^|[/_ -])(?:key|keys|keycard|cle|clé)(?:[/_. -]|$)|padlock|container.?key",
@@ -96,7 +96,7 @@ def main():
    p=pathlib.Path(row.get("importSource",""))
    if p.suffix.lower() in ARCHIVES:candidates.setdefault(str(p).casefold(),p)
  queue=collections.deque((p,0) for p in sorted(candidates.values(),key=lambda p:str(p).casefold()))
- summary={"state":"EXTRACTING","inventoriedArchives":len(queue),"archivesNewlyExtracted":0,"archivesReused":0,"newRawModels":0,"nativePackagesPrepared":0,"nativeContentRoots":[],"categories":{},"blocked":[],"originalFilesDeleted":0,"existingAssetsOverwritten":0}
+ summary={"state":"EXTRACTING","inventoriedArchives":len(queue),"archivesNewlyExtracted":0,"archivesReused":0,"newRawModels":0,"nativePackagesPrepared":0,"nativeContentRoots":[],"nativeMountReview":[],"categories":{},"blocked":[],"originalFilesDeleted":0,"existingAssetsOverwritten":0}
  native_roots=set();processed=set();started=time.monotonic()
  def save():
   summary["elapsedSeconds"]=time.monotonic()-started
@@ -136,7 +136,8 @@ def main():
     else:
      root=project/"SourceAssets/AllExtracted";root.mkdir(parents=True,exist_ok=True)
      if shutil.disk_usage(root).free<required+12*1024**3:raise RuntimeError("Insufficient space to extract this archive while retaining 12 GiB D reserve; requiredBytes="+str(required))
-     folder=root/archive_hash
+     folder=root/archive_hash[:20]
+     if folder.exists() and getattr(folder.lstat(),"st_file_attributes",0)&0x400:raise RuntimeError("Existing extraction directory reparse point preserved")
      if path.suffix.lower()==".zip":
       folder.mkdir(exist_ok=True);extract_zip(path,folder,rows)
      else:
@@ -160,7 +161,9 @@ def main():
    for category in categories([r["path"] for r in rows]):summary["categories"][category]=summary["categories"].get(category,0)+1
    for row in rows:
     p=folder.joinpath(*pathlib.PurePosixPath(row["path"]).parts)
-    if p.suffix.lower() in ARCHIVES and depth<3:queue.append((p,depth+1))
+    if p.suffix.lower() in ARCHIVES:
+     if depth<3:queue.append((p,depth+1))
+     else:summary["blocked"].append({"archive":str(p),"reason":"Nested archive depth exceeds the bounded pass; original retained"})
     if p.suffix.lower() in MODELS:
      sha=digest(p)
      if sha not in seen_models:
@@ -170,8 +173,12 @@ def main():
     if p.suffix.lower() in NATIVE:
      summary["nativePackagesPrepared"]+=1
      parts=pathlib.PurePosixPath(row["path"]).parts
-     if "Content" in parts and "Plugins" not in parts[:parts.index("Content")]:
-      native_roots.add(str(folder.joinpath(*parts[:parts.index("Content")+1])))
+     content_index=next((i for i,v in enumerate(parts) if v.casefold()=="content"),None)
+     if content_index is not None and not any(v.casefold()=="plugins" for v in parts[:content_index]):
+      native_roots.add(str(folder.joinpath(*parts[:content_index+1])))
+     else:
+      mount={"package":str(p),"reason":"Plugin mount or original Content root must be resolved before installation"}
+      if len(summary["nativeMountReview"])<200:summary["nativeMountReview"].append(mount)
    save()
   except Exception as exc:summary["blocked"].append({"archive":str(path),"reason":str(exc)});save()
  summary["remainingQueuedArchives"]=len(queue)
