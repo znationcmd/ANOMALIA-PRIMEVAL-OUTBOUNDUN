@@ -45,6 +45,9 @@ def safe_member(m):
  if p.is_absolute() or ".." in p.parts or any(":" in s or s.endswith((" ",".")) for s in p.parts):raise ValueError("Unsafe archive path preserved")
  if stat.S_IFMT(m.external_attr>>16)==stat.S_IFLNK:raise ValueError("Archive symlink preserved")
  return p
+if os.environ.get("PREPARE_EXISTING_ONLY")=="1":
+ report["state"]="PRIOR_VERIFIED_INPUTS_RESTORED_FOR_NATIVE_RESUME";save();print("EXTRACTION_RESULT "+json.dumps(summary),flush=True)
+ raise SystemExit(0)
 for raw in sorted(sources.values(),key=lambda s:(pathlib.PureWindowsPath(s).suffix.lower()!=".zip",s.casefold())):
  if time.monotonic()-started>45*60:
   report["deferred"].append({"source":raw,"reason":"Preparation time budget; resume from durable receipts"});break
