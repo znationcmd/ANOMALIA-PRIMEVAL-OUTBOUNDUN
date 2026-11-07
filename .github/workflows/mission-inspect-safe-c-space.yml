@@ -1,0 +1,60 @@
+name: ANOMALIA mission - inspect safe C space recovery candidates
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-inspect-safe-c-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read cache and archived validation sizes without changing game files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|zenserver|ZenServer|UnrealBuildTool|ShaderCompileWorker)$'} | Select-Object Name,Id | ConvertTo-Json -Compress | Write-Output
+          $code=@'
+          import os,pathlib,json,stat,shutil,collections
+          roots=[
+           pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/DerivedDataCache",
+           pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/Zen/Data",
+           pathlib.Path(r"C:\ProgramData\Epic\Zen\Data"),
+           pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_41801391717\unreal\DerivedDataCache"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858")
+          ]
+          for root in roots:
+           if not root.exists():continue
+           st=root.lstat()
+           if getattr(st,"st_file_attributes",0)&0x400:print("RECOVERY_CANDIDATE "+json.dumps({"path":str(root),"reparse":True}));continue
+           total=unique=count=links=0;exts=collections.Counter();largest=[];reparse=[]
+           for base,dirs,names in os.walk(root,followlinks=False):
+            clean=[]
+            for name in dirs:
+             p=pathlib.Path(base)/name
+             if getattr(p.lstat(),"st_file_attributes",0)&0x400:reparse.append(str(p))
+             else:clean.append(name)
+            dirs[:]=clean
+            for name in names:
+             p=pathlib.Path(base)/name
+             try:
+              s=p.lstat()
+              if not stat.S_ISREG(s.st_mode) or getattr(s,"st_file_attributes",0)&0x400:reparse.append(str(p));continue
+              total+=s.st_size;count+=1;exts[p.suffix.lower()]+=s.st_size
+              if s.st_nlink==1:unique+=s.st_size
+              else:links+=1
+              largest.append((s.st_size,str(p)))
+             except OSError:pass
+           print("RECOVERY_CANDIDATE "+json.dumps({"path":str(root),"bytes":total,"unsharedBytes":unique,"files":count,"sharedFiles":links,"reparseCount":len(reparse),"extensionsByBytes":exts.most_common(8),"largest":sorted(largest,reverse=True)[:5]}),flush=True)
+          print("ACTUAL_SPACE "+json.dumps({drive:shutil.disk_usage(drive+":/").free for drive in ["C","D"]}),flush=True)
+          '@
+          $script=Join-Path $env:RUNNER_TEMP ('safe-c-space-'+$env:GITHUB_RUN_ID+'.py')
+          [IO.File]::WriteAllText($script,$code,(New-Object Text.UTF8Encoding($false)))
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only cache inventory failed'}
