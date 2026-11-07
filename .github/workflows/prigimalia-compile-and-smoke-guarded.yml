@@ -100,7 +100,15 @@ jobs:
           Write-Host 'VISIBLE_CLICK_AUDIO_MENU_ACCEPTANCE_TEST_STILL_NEEDED=true'
       - name: Report explicit pending work if storage or project is not ready
         if: steps.guard.outputs.ready != 'true'
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           Write-Host 'SKIPPED_COMPILATION_TO_PROTECT_REAL_GAME=true'
-          Write-Host 'FIX_VOLUME_OR_SPACE_THEN_RERUN_THIS_WORKFLOW=true'
+          Write-Host 'FIX_USB_D_DISK_AND_FREE_SPACE_THEN_RERUN_THIS_WORKFLOW=true'
+          @'
+### ANOMALIA’Z PRIGIMALIA — compilation volontairement suspendue
+Les sources et le film de 35 secondes sont déjà copiés dans le projet.
+Le contrôle du stockage n'autorise pas la compilation actuellement.
+Il faut résoudre les erreurs d'entrée/sortie du disque USB D: et disposer
+d'au moins 8 Gio libres sur C: et 10 Gio sur D:.
+**Aucune compilation ou vérification de menu n'a été effectuée pendant cette tentative.**
+'@ | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
