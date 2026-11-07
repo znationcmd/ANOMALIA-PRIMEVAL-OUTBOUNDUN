@@ -1,0 +1,123 @@
+name: ANOMALIAZ - Corriger seulement les 2 fichiers C++ du generique
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-hotfix-intro-cpp-only.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  hotfix:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: corrected-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        with:
+          ref: 31bfda79e43391b4c9ee1d23000e0621537a200a
+          path: approved-previous-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
+      - name: Back up and correct exactly two native intro sources only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $uproj=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          if(!(Test-Path $uproj -PathType Leaf)){throw 'Wrong or missing real Unreal project'}
+          $meta=Get-Content -LiteralPath $uproj -Raw|ConvertFrom-Json
+          if(@($meta.Modules|ForEach-Object{$_.Name}) -notcontains 'AnomaliaZPrigimalia'){throw 'Wrong Unreal game module'}
+          $running=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaZPrigimalia,AnomaliaPrimeval,robocopy -ErrorAction SilentlyContinue)
+          if($running.Count -gt 0){throw 'HOTFIX_PAUSED: Unreal or transfer is currently active'}
+          $newRoot=Join-Path $env:GITHUB_WORKSPACE ('corrected-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $oldRoot=Join-Path $env:GITHUB_WORKSPACE ('approved-previous-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $liveRoot=Join-Path $root 'Source\AnomaliaZPrigimalia'
+          $names=@('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')
+          $normalize={
+            param([string]$p)
+            return [IO.File]::ReadAllText($p).TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+          }
+          $hashBefore=@{}
+          foreach($name in $names){
+            $live=Join-Path $liveRoot $name
+            $old=Join-Path $oldRoot $name
+            $new=Join-Path $newRoot $name
+            foreach($p in @($live,$old,$new)){
+              if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw ('Required C++ file absent: '+$p)}
+              if((Get-Item -LiteralPath $p).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Refuse symlink'}
+            }
+            $liveText=& $normalize $live
+            $oldText=& $normalize $old
+            $newText=& $normalize $new
+            if($liveText -cne $oldText -and $liveText -cne $newText){
+              throw ('HOTFIX_BLOCKED: local '+$name+' differs from the two reviewed versions; do not overwrite Work')
+            }
+            $hashBefore[$name]=(Get-FileHash -LiteralPath $live -Algorithm SHA256).Hash
+            if($name.EndsWith('.cpp')){
+              if(!$newText.Contains('OnMovieOpened') -or !$newText.Contains('BeginEmergencyScreen') -or
+                 $newText.Contains('            else bBloodFinished = false;')){
+                throw 'The staged fixed cpp is not valid for the approved five-second emergency sequence'
+              }
+            } else {
+              if(!$newText.Contains('UFUNCTION() void OnMovieOpened(FString OpenedUrl);')){throw 'Corrected header lacks OnMovieOpened declaration'}
+            }
+          }
+          $backup=Join-Path $root ('Saved\IntroInstall\SourceHotfix-'+$env:GITHUB_RUN_ID)
+          if(Test-Path $backup){throw 'Refusing existing backup destination'}
+          New-Item -ItemType Directory -Path $backup -Force | Out-Null
+          foreach($name in $names){
+            Copy-Item -LiteralPath (Join-Path $liveRoot $name) -Destination (Join-Path $backup $name) -ErrorAction Stop
+            if((Get-FileHash (Join-Path $backup $name)).Hash -ne $hashBefore[$name]){throw 'BACKUP_HASH_MISMATCH'}
+          }
+          Write-Host ('BACKUP_CONFIRMED='+$backup)
+          foreach($name in $names){
+            $live=Join-Path $liveRoot $name
+            if((Get-FileHash -LiteralPath $live -Algorithm SHA256).Hash -ne $hashBefore[$name]){
+              throw ('Source changed after backup - ABORT '+$name)
+            }
+          }
+          try {
+            foreach($name in $names){
+              Copy-Item -LiteralPath (Join-Path $newRoot $name) -Destination (Join-Path $liveRoot $name) -Force -ErrorAction Stop
+            }
+            foreach($name in $names){
+              $dest=Join-Path $liveRoot $name
+              $ref=Join-Path $newRoot $name
+              if((Get-FileHash -LiteralPath $dest).Hash -ne (Get-FileHash -LiteralPath $ref).Hash){
+                throw ('VERIFY_FAILED '+$name)
+              }
+              Write-Host ('FIXED_SOURCE_CONFIRMED='+$name)
+            }
+          } catch {
+            Write-Warning 'Restoring both original intro files from verified backup'
+            foreach($name in $names){Copy-Item -LiteralPath (Join-Path $backup $name) -Destination (Join-Path $liveRoot $name) -Force}
+            throw
+          }
+          Write-Host 'CPP_HOTFIX_INSTALLED_IN_REAL_PROJECT=true'
+          Write-Host 'NO_COMPILATION_OR_MEDIA_IMPORT_PERFORMED=true'
+      - name: Verify real project source after patch (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia'
+          $cpp=Get-Content -LiteralPath (Join-Path $src 'AnomaliaZPrigimaliaIntroWidget.cpp') -Raw
+          $header=Get-Content -LiteralPath (Join-Path $src 'AnomaliaZPrigimaliaIntroWidget.h') -Raw
+          if($cpp.Contains('            else bBloodFinished = false;')){throw 'C2181 legacy source still installed'}
+          if(!$cpp.Contains('OnMovieOpened') -or !$cpp.Contains('BeginEmergencyScreen')){throw 'Emergency transition missing'}
+          if(!$header.Contains('OnMovieOpened')){throw 'Header declaration missing'}
+          Write-Host 'VERIFIED_C2181_FIXED_IN_LIVE_REAL_UNREAL_SOURCE=true'
+          Write-Host 'COMPILE_AND_REAL_MENU_SMOKE_TEST_STILL_REQUIRED=true'
