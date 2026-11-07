@@ -5,8 +5,21 @@ on:
     paths: ['.github/workflows/mission-weather-source-merge-review.yml']
 permissions:
   contents: read
+  actions: write
 jobs:
+  superseded_review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Cancel only the superseded read-only review
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          status=$(gh api "repos/$GH_REPO/actions/runs/42380099061" --jq .status)
+          if [ "$status" != completed ]; then gh api --method POST "repos/$GH_REPO/actions/runs/42380099061/cancel"; fi
   merge_review:
+    needs: superseded_review
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 15
     steps:
@@ -14,7 +27,7 @@ jobs:
         with:
           path: weather-merge-${{ github.run_id }}
           sparse-checkout: |
-            scripts/ue5/prepare-weather-real-source-merge.py
+            scripts/ue5
             unreal/Source
           persist-credentials: false
       - uses: actions/checkout@v4
@@ -36,4 +49,44 @@ jobs:
         with:
           name: real-project-weather-three-way-merge-review
           path: D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/
+          if-no-files-found: warn
+  actual_native:
+    needs: merge_review
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: weather-apply-${{ github.run_id }}
+          sparse-checkout: scripts/ue5
+          persist-credentials: false
+      - name: Apply only clean merged source and require actual native regressions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal active; source installation preserved'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured native-build memory reserve'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('weather-apply-'+$env:GITHUB_RUN_ID+'\scripts\ue5\apply-reviewed-weather-merge.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Merged native validation failed; inspect rollback receipts'}
+      - name: Restore an interrupted installation only when current files still match this owned patch
+        if: failure() || cancelled()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('weather-apply-'+$env:GITHUB_RUN_ID+'\scripts\ue5\apply-reviewed-weather-merge.py')
+          if(Test-Path -LiteralPath $script){
+            & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script --rollback-only
+            if($LASTEXITCODE -ne 0){throw 'New concurrent source changes or locked files were preserved with original snapshots'}
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-merged-weather-native-builds-and-tests
+          path: |
+            D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/merge-review.json
+            D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/native-validation/actual-native-result.json
+            D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/native-validation/*.log
+            D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/native-validation/automation-*/
           if-no-files-found: warn
