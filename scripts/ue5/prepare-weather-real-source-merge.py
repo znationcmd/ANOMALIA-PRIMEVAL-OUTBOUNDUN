@@ -1,5 +1,5 @@
 """Prepare three-way weather merges against actual user source; never modify the main project."""
-import os,sys,pathlib,json,subprocess,hashlib
+import os,sys,pathlib,json,subprocess,hashlib,re
 NEW=pathlib.Path(sys.argv[1]);BASE=pathlib.Path(sys.argv[2])
 MAIN=pathlib.Path(r"D:\ANOMALIA\unreal")
 OUT=MAIN/"Saved/WeatherMergeReview"/os.environ["GITHUB_RUN_ID"]
@@ -30,7 +30,21 @@ for name in FILES:
    old.write_text(legacy(expected.read_text(encoding="utf-8-sig")),encoding="utf-8")
    result=subprocess.run(["git","merge-file","--stdout",str(current),str(old),str(future)],capture_output=True)
    code=result.returncode
-   merged.write_bytes(result.stdout)
+   merged_bytes=result.stdout
+   if code==1 and relative=="AnomaliaInventoryWidget.h":
+    text=merged_bytes.decode("utf-8")
+    pattern=r"<<<<<<<[^\n]*\n(.*?)\n=======\n(.*?)\n>>>>>>>[^\n]*\n"
+    match=re.search(pattern,text,re.S)
+    if match:
+     ours=[v.strip().rstrip(",") for v in match.group(1).splitlines() if v.strip()]
+     theirs=[v.strip().rstrip(",") for v in match.group(2).splitlines() if v.strip()]
+     if ours==["DogCommand","QuickbarActivate","CombineCraft"] and set(theirs)=={"DogCommand","WetHead"} and len(theirs)==2:
+      replacement="\n".join("    "+name+("," if i<3 else "") for i,name in enumerate(ours+["WetHead"]))+"\n"
+      text=text[:match.start()]+replacement+text[match.end():]
+      if not re.search(r"^(?:<<<<<<<|=======|>>>>>>>)",text,re.M):
+       merged_bytes=text.encode("utf-8");code=0
+       report.setdefault("resolutions",[]).append({"path":str(actual),"reason":"Preserved existing DogCommand/QuickbarActivate/CombineCraft action order and appended WetHead"})
+   merged.write_bytes(merged_bytes)
    if code<0 or code>127:raise RuntimeError(result.stderr.decode(errors="replace"))
   item={"path":str(actual),"originalSHA256":hashlib.sha256(raw).hexdigest(),"merged":str(merged),"conflictCount":code}
   (report["conflicts"] if code else report["clean"]).append(item)
