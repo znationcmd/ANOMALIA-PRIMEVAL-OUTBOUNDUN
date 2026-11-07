@@ -65,3 +65,5 @@ jobs:
           if-no-files-found: warn
 
 # Resume after read-only confirmation that D and the actual game project are accessible again.
+
+# Apply bounded Drive cache backpressure so automatic batches keep waiting for upload drainage.
