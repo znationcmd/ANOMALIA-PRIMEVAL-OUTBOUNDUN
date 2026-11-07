@@ -20,7 +20,7 @@ jobs:
           $ErrorActionPreference='Stop'
           Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|zenserver|ZenServer|UnrealBuildTool|ShaderCompileWorker)$'} | Select-Object Name,Id | ConvertTo-Json -Compress | Write-Output
           $code=@'
-          import os,pathlib,json,stat,shutil,collections
+          import os,pathlib,json,stat,shutil,collections,time,subprocess
           roots=[
            pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/DerivedDataCache",
            pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/Zen/Data",
@@ -60,6 +60,43 @@ jobs:
              except OSError:pass
            print("RECOVERY_CANDIDATE "+json.dumps({"path":str(root),"bytes":total,"unsharedBytes":unique,"files":count,"sharedFiles":links,"reparseCount":len(reparse),"extensionsByBytes":exts.most_common(8),"largest":sorted(largest,reverse=True)[:5]}),flush=True)
           print("ACTUAL_SPACE "+json.dumps({drive:shutil.disk_usage(drive+":/").free for drive in ["C","D"]}),flush=True)
+
+          # Remove only old unshared generated precompiled headers from known build caches.
+          check=subprocess.run(["powershell","-NoProfile","-Command","@(Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|cl|link)
+          $script=Join-Path $env:RUNNER_TEMP ('safe-c-space-'+$env:GITHUB_RUN_ID+'.py')
+          [IO.File]::WriteAllText($script,$code,(New-Object Text.UTF8Encoding($false)))
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only cache inventory failed'}
+}).Count"],capture_output=True,text=True,check=True)
+          if check.stdout.strip()!="0":raise RuntimeError("Compilation/editor active; cache cleanup preserved all files")
+          before={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
+          ledger=pathlib.Path(os.environ["LOCALAPPDATA"])/"ANOMALIAZ/CleanupReceipts"
+          ledger.mkdir(parents=True,exist_ok=True)
+          journal=ledger/("generated-pch-"+os.environ["GITHUB_RUN_ID"]+".jsonl")
+          removed=[];errors=[];cutoff=time.time()-86400
+          for root in roots:
+           if root.name.lower()!="build" or root.parent.name.lower()!="intermediate" or not root.exists():continue
+           if getattr(root.lstat(),"st_file_attributes",0)&0x400:continue
+           for base,dirs,names in os.walk(root,followlinks=False):
+            dirs[:]=[n for n in dirs if not getattr((pathlib.Path(base)/n).lstat(),"st_file_attributes",0)&0x400]
+            for name in names:
+             if not name.endswith(".pch") or not name.startswith(("SharedPCH.","PCH.")):continue
+             p=pathlib.Path(base)/name
+             try:
+              s=p.lstat()
+              if not stat.S_ISREG(s.st_mode) or s.st_nlink!=1 or s.st_mtime>cutoff or getattr(s,"st_file_attributes",0)&0x400:continue
+              entry={"path":str(p),"bytes":s.st_size,"mtime_ns":s.st_mtime_ns,"kind":"regenerable-precompiled-header"}
+              with journal.open("a",encoding="utf-8") as out:
+               out.write(json.dumps(dict(entry,state="planned"))+"\n");out.flush();os.fsync(out.fileno())
+              now=p.lstat()
+              if (now.st_ino,now.st_size,now.st_mtime_ns,now.st_nlink)!=(s.st_ino,s.st_size,s.st_mtime_ns,1):raise RuntimeError("File changed; preserved")
+              p.unlink()
+              removed.append(entry)
+              with journal.open("a",encoding="utf-8") as out:
+               out.write(json.dumps(dict(entry,state="removed"))+"\n");out.flush();os.fsync(out.fileno())
+             except Exception as exc:errors.append({"path":str(p),"error":str(exc)})
+          after={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
+          print("REAL_CLEANUP_RESULT "+json.dumps({"removed":removed,"errors":errors,"freeBefore":before,"freeAfter":after,"measuredFreeDelta":{d:after[d]-before[d] for d in before},"receipt":str(journal),"gameAssetsRemoved":0,"savesRemoved":0}),flush=True)
           '@
           $script=Join-Path $env:RUNNER_TEMP ('safe-c-space-'+$env:GITHUB_RUN_ID+'.py')
           [IO.File]::WriteAllText($script,$code,(New-Object Text.UTF8Encoding($false)))
