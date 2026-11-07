@@ -1,0 +1,39 @@
+name: ANOMALIA mission - preserve and reconcile real weather sources
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-weather-source-merge-review.yml']
+permissions:
+  contents: read
+jobs:
+  merge_review:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: weather-merge-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/prepare-weather-real-source-merge.py
+            unreal/Source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 98e00bf15e2607c0a72b979f58e53fcea1c8d2f3
+          path: weather-merge-base-${{ github.run_id }}
+          sparse-checkout: unreal/Source
+          persist-credentials: false
+      - name: Merge into review outputs without writing any actual source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $new=Join-Path $env:GITHUB_WORKSPACE ('weather-merge-'+$env:GITHUB_RUN_ID)
+          $base=Join-Path $env:GITHUB_WORKSPACE ('weather-merge-base-'+$env:GITHUB_RUN_ID)
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B (Join-Path $new 'scripts\ue5\prepare-weather-real-source-merge.py') $new $base
+          if($LASTEXITCODE -ne 0){throw 'Read-only source reconciliation failed; actual files retained'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: real-project-weather-three-way-merge-review
+          path: D:/ANOMALIA/unreal/Saved/WeatherMergeReview/${{ github.run_id }}/
+          if-no-files-found: warn
