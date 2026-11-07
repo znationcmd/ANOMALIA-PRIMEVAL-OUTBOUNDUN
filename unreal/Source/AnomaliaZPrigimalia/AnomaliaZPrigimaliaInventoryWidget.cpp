@@ -417,9 +417,25 @@ void UAnomaliaZPrigimaliaInventoryWidget::AddStackRow(const FAnomaliaZPrigimalia
             MakeUniqueObjectName(WidgetTree,UButton::StaticClass(),FName(*FString::Printf(TEXT("UseStack_%d_action"),Stack.StackId))));
         auto* UseText=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
         UseText->SetText(FText::FromString(UseLabel));UseButton->SetContent(UseText);
-        UseButton->SetIsEnabled(!Inventory->IsPersistenceLocked());
+        const bool Provision=UseLabel==TEXT("Manger")||UseLabel==TEXT("Boire");
+        if(Provision)
+        {
+            const FString State=Stack.FrozenFraction>.01f||Stack.TemperatureC<0?TEXT("gelé"):Stack.TemperatureC>60?TEXT("trop chaud"):TEXT("prêt");
+            Label->SetText(FText::FromString(FString::Printf(TEXT("%s ×%d · %.0f °C · %s"),*Inventory->GetItemDisplayName(Stack.ItemId),Stack.Count,Stack.TemperatureC,*State)));
+        }
+        UseButton->SetIsEnabled(!Inventory->IsPersistenceLocked()&&(!Provision||Inventory->CanConsumeStack(Stack.StackId)));
         Row->AddChildToHorizontalBox(UseButton)->SetPadding(FMargin(5.f));
         BindAction(UseButton,EAnomaliaZPrigimaliaInventoryAction::Use,Stack.StackId,Stack.Count);
+        static const TSet<FName> CleanWater={TEXT("water"),TEXT("water_bottle"),TEXT("military_canteen"),TEXT("filter_canteen"),TEXT("drinking_water_carton")};
+        if(CleanWater.Contains(Stack.ItemId))
+        {
+            auto* Cool=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Text->SetText(FText::FromString(TEXT("Se mouiller la tête")));Cool->SetContent(Text);
+            Cool->SetIsEnabled(!Inventory->IsPersistenceLocked()&&Inventory->CanConsumeStack(Stack.StackId));
+            Row->AddChildToHorizontalBox(Cool)->SetPadding(FMargin(5.f));
+            BindAction(Cool,EAnomaliaZPrigimaliaInventoryAction::WetHead,Stack.StackId,Stack.Count);
+        }
     }
 
     if (Inventory && Inventory->bBankingAvailable && Stack.ItemId.ToString().StartsWith(TEXT("eur_note_")))
@@ -569,6 +585,8 @@ void UAnomaliaZPrigimaliaInventoryWidget::PerformAction(EAnomaliaZPrigimaliaInve
         case EAnomaliaZPrigimaliaInventoryAction::Merge:
             Inventory->RequestMergeStacks(StackId, OtherStackId);
             break;
+        case EAnomaliaZPrigimaliaInventoryAction::WetHead:
+            Inventory->RequestWetHead(StackId,Count);FocusFirstAction();break;
         case EAnomaliaZPrigimaliaInventoryAction::Use:
             Inventory->RequestUseStack(StackId,Count);
             FocusFirstAction();
@@ -1024,3 +1042,4 @@ void UAnomaliaZPrigimaliaInventoryWidget::AddAttachmentSlots(FName ParentId)
     if(Children.IsEmpty())Row->SetVisibility(ESlateVisibility::Collapsed);
     for(const FName Child:Children)AddAttachmentSlots(Child);
 }
+

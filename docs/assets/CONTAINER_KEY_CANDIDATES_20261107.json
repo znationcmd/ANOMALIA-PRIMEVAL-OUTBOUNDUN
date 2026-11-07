@@ -1,0 +1,31 @@
+{
+  "verifiedDate": "2026-11-07",
+  "purpose": "Original container-key assets for ANOMALIA; prefer already owned local sources",
+  "models": [
+    {
+      "name": "padlock key",
+      "author": "Victor.Alfonso.Ibarra.Ortega",
+      "url": "https://sketchfab.com/3d-models/padlock-key-552aaa3c2ef844e688313ce1b8bb776e",
+      "license": "CC Attribution (confirm exact version in downloaded license)",
+      "triangles": 640,
+      "vertices": 324,
+      "state": "DOWNLOAD_CANDIDATE_NOT_IMPORTED",
+      "intendedItemId": "key_container"
+    },
+    {
+      "name": "KEY",
+      "author": "spooneystone",
+      "url": "https://sketchfab.com/3d-models/key-aeb6b20f890a4ea68b9720c213995984",
+      "license": "CC Attribution (confirm exact version in downloaded license)",
+      "triangles": 1100,
+      "state": "ALTERNATIVE_DOWNLOAD_CANDIDATE_NOT_IMPORTED"
+    }
+  ],
+  "acceptance": [
+    "Verify original license and attribution file",
+    "Download licensed source through authorized account if required",
+    "Import actual mesh and materials; verify scale and inventory appearance",
+    "Bind key_container to its approved mesh",
+    "Verify key requirement, correct and incorrect keys, persistence and multiplayer on actual container"
+  ]
+}

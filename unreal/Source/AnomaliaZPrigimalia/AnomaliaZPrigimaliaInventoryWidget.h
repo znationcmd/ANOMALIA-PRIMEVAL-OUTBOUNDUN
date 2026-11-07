@@ -42,7 +42,8 @@ enum class EAnomaliaZPrigimaliaInventoryAction : uint8
     ToggleContainer,
     StowInContainer,
     CollectNearby,
-    DogCommand
+    DogCommand,
+    WetHead
 };
 
 UCLASS()
@@ -194,6 +195,7 @@ private:
     int32 DraggedStackId=0,DraggedCount=0;
     bool bDraggingFromVehicle=false;
 };
+
 
 
 

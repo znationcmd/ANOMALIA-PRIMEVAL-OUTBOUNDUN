@@ -24,6 +24,12 @@ public:
     UPROPERTY(ReplicatedUsing=OnRep_Vitals, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float BodyTemperatureC = 37.f;
 
+    UPROPERTY(ReplicatedUsing=OnRep_Vitals, BlueprintReadOnly, Category="ANOMALIA|Weather") float Wetness=0.f;
+    UPROPERTY(ReplicatedUsing=OnRep_Vitals, BlueprintReadOnly, Category="ANOMALIA|Weather") float HeadWetness=0.f;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Weather") float AmbientTemperatureC=20.f;
+    UPROPERTY(BlueprintReadOnly, Category="ANOMALIA|Weather") float NearbyHeat=0.f;
+    void RestoreExposure(float SavedWetness,float SavedHeadWetness);
+
     UPROPERTY(ReplicatedUsing=OnRep_Sprinting, BlueprintReadOnly, Category="ANOMALIA|Survival")
     bool bIsSprinting = false;
 
@@ -81,8 +87,10 @@ protected:
     void ServerRequestSprint(bool bWanted);
 
 private:
+    float ExposureElapsed=0.f;
     bool bSprintRequested = false;
     UPROPERTY(ReplicatedUsing=OnRep_PaceStep)
     bool bExhausted = false;
     void ApplyMovementSpeed();
 };
+

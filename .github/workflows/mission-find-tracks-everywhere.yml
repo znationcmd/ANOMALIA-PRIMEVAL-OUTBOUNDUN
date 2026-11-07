@@ -1,0 +1,41 @@
+name: ANOMALIA mission - find tracks everywhere on attached disks
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-find-tracks-everywhere.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  discover:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    concurrency:
+      group: anomalia-read-only-track-discovery
+      cancel-in-progress: false
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: dc20177d817f0b54bfeb497cc58bdbcc945bc761
+          path: standalone-discovery-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/find-all-local-tracks-and-projects.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Find project-only Fab packs on attached disks without changing content
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('standalone-projects-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "PROJECT_DISCOVERY_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:PROJECT_DISCOVERY_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('standalone-discovery-'+$env:GITHUB_RUN_ID+'\scripts\ue5\find-all-local-tracks-and-projects.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Standalone project discovery failed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.PROJECT_DISCOVERY_OUT != ''
+        with:
+          name: all-disks-circuit-motocross-and-project-candidates
+          path: ${{ env.PROJECT_DISCOVERY_OUT }}/
+          if-no-files-found: error

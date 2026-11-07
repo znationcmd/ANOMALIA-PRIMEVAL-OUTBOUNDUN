@@ -1,0 +1,42 @@
+name: ANOMALIA mission - inspect regenerable Unreal cache space
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-inspect-unreal-cache-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read cache sizes and active editor processes only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker -ErrorAction SilentlyContinue | Select-Object Name,Id | ConvertTo-Json -Compress | Write-Output
+          Get-PSDrive -PSProvider FileSystem | Select-Object Name,Free,Used | ConvertTo-Json -Compress | Write-Output
+          $roots=@(
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\DerivedDataCache'),
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\Zen\Data'),
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache',
+            'C:\ANOMALIA_MISSION_41801391717\unreal\DerivedDataCache',
+            'D:\ANOMALIA\unreal\DerivedDataCache'
+          )
+          foreach($root in $roots) {
+            if(!(Test-Path -LiteralPath $root)){continue}
+            $rootItem=Get-Item -LiteralPath $root
+            if($rootItem.Attributes -band [IO.FileAttributes]::ReparsePoint){Write-Output "SKIP_REPARSE $root";continue}
+            $bytes=[long]0;$count=0;$shared=0;$errors=0
+            $stack=New-Object 'System.Collections.Generic.Stack[string]'
+            $stack.Push($root)
+            while($stack.Count -gt 0) {
+              $current=$stack.Pop()
+              foreach($item in @(Get-ChildItem -LiteralPath $current -Force -ErrorAction SilentlyContinue)) {
+                if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){continue}
+                if($item.PSIsContainer){$stack.Push($item.FullName)}else{$bytes+=$item.Length;$count++}
+              }
+            }
+            Write-Output ('CACHE_INVENTORY '+([ordered]@{path=$root;bytes=$bytes;files=$count;modified=$rootItem.LastWriteTimeUtc.ToString('o')}|ConvertTo-Json -Compress))
+          }

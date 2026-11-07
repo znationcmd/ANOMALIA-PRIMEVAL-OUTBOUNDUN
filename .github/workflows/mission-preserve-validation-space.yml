@@ -1,0 +1,85 @@
+name: ANOMALIA mission - preserve and relocate own validation outputs
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-preserve-validation-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  preserve:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Relocate only the validation directory created by this mission while preserving every file and logical path
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $origin='D:\ANOMALIAZ\03_Validation\m41798670858'
+          $archive='C:\ANOMALIA_MISSION_ARCHIVE_m41798670858'
+          $out=Join-Path $env:RUNNER_TEMP ('mission-preserve-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_PRESERVE_REPORT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if(!(Test-Path -LiteralPath $origin -PathType Container)){throw 'Mission validation directory missing'}
+          if((Get-Item -LiteralPath $origin).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Origin is already a reparse point; refuse automatic relocation'}
+          $archiveExists=Test-Path -LiteralPath $archive -PathType Container
+          if((Test-Path -LiteralPath $archive) -and !$archiveExists){throw 'Archive path is not a directory'}
+          $stamp=Join-Path $origin 'unreal\Build\AnomaliaZPrigimaliaSourceCommit.generated.txt'
+          if((Get-Content -LiteralPath $stamp -Raw).Trim() -ne '0360ec9cd8106097de8c8ba80c53f85349269d88'){throw 'Mission source stamp mismatch'}
+          $patchReceipt=Join-Path $origin 'unreal\Saved\MissionResume\41800675310\source-patch-receipt.json'
+          $receipt=Get-Content -LiteralPath $patchReceipt -Raw | ConvertFrom-Json
+          if($receipt.correctedBlob -ne '220cf239429c9d4489d6154edf13cb51a99a0a6f'){throw 'Mission patch identity mismatch'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal active; do not relocate outputs'}
+          if(@(Get-ChildItem -LiteralPath $origin -Recurse -Force | Where-Object {$_.Attributes -band [IO.FileAttributes]::ReparsePoint}).Count){throw 'Nested reparse points found; refuse relocation'}
+          $files=@(Get-ChildItem -LiteralPath $origin -Recurse -File -Force)
+          $bytes=($files | Measure-Object Length -Sum).Sum
+          $c=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          $beforeD=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
+          [ordered]@{origin=$origin;archive=$archive;files=$files.Count;bytes=$bytes;CFreeBefore=$c.FreeSpace;DFreeBefore=$beforeD;installedDProjectTouched=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'preflight.json') -Encoding UTF8
+          $reserve=$(if($archiveExists){($files | Measure-Object Length -Maximum).Maximum+4GB}else{$bytes+4GB})
+          if($c.FreeSpace -lt $reserve){throw 'Insufficient physical C capacity; preserve both locations'}
+          $manifest=@($files | ForEach-Object {[ordered]@{relative=$_.FullName.Substring($origin.Length+1);bytes=$_.Length;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $manifest | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $out 'full-file-manifest.json') -Encoding UTF8
+          if($archiveExists){
+            $archived=@(Get-ChildItem -LiteralPath $archive -Recurse -File -Force)
+            if($archived.Count -ne $manifest.Count){throw 'Existing archive file count differs; preserve both copies'}
+            foreach($file in $manifest){
+              $target=Join-Path $archive $file.relative
+              if(!(Test-Path -LiteralPath $target) -or (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $file.sha256){throw 'Existing archive differs; refuse overwrite'}
+            }
+          }else{New-Item -ItemType Directory -Path $archive | Out-Null}
+          & robocopy $origin $archive /E /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NP /NFL /NDL *> (Join-Path $out 'copy.log')
+          if($LASTEXITCODE -ge 8){throw 'Preserving copy failed; originals retained'}
+          foreach($file in $manifest){
+            $target=Join-Path $archive $file.relative
+            if(!(Test-Path -LiteralPath $target) -or (Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $file.sha256){throw 'Preserved copy hash mismatch; originals retained'}
+            if((Get-FileHash -LiteralPath (Join-Path $origin $file.relative) -Algorithm SHA256).Hash -ne $file.sha256){throw 'Source changed during verification; originals retained'}
+          }
+          # Both complete copies have been independently hashed. Move only this
+          # mission-created directory's files; never purge, mirror or touch D:\ANOMALIA.
+          & robocopy $origin $archive /E /MOVE /IS /IT /COPY:DAT /DCOPY:DAT /R:1 /W:1 /XJ /NP /NFL /NDL *> (Join-Path $out 'relocate.log')
+          if($LASTEXITCODE -ge 8){throw 'Relocation incomplete; all copies retained for review'}
+          if(Test-Path -LiteralPath $origin){
+            if(@(Get-ChildItem -LiteralPath $origin -Recurse -File -Force).Count){throw 'Origin still contains files; preserve them'}
+            foreach($dir in @(Get-ChildItem -LiteralPath $origin -Recurse -Directory -Force | Sort-Object {$_.FullName.Length} -Descending)){
+              if(@(Get-ChildItem -LiteralPath $dir.FullName -Force).Count){throw 'Nonempty directory retained'}
+              [IO.Directory]::Delete($dir.FullName)
+            }
+            [IO.Directory]::Delete($origin)
+          }
+          New-Item -ItemType Junction -Path $origin -Target $archive | Out-Null
+          foreach($file in $manifest){
+            if((Get-FileHash -LiteralPath (Join-Path $origin $file.relative) -Algorithm SHA256).Hash -ne $file.sha256){throw 'Restored logical path hash differs'}
+          }
+          $afterD=(Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='D:'").FreeSpace
+          [ordered]@{state='OWN_MISSION_VALIDATION_RELOCATED_ALL_CONTENT_PRESERVED';originLogicalPath=$origin;archivePhysicalPath=$archive;filesVerified=$manifest.Count;bytesPreserved=$bytes;DBytesRecovered=($afterD-$beforeD);DFreeAfter=$afterD;allOriginalLogicalPathsResolve=$true;installedProjectModified=$false;userAssetsOrSavesDeleted=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'result.json') -Encoding UTF8
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_PRESERVE_REPORT != ''
+        with:
+          name: mission-preserved-validation-space
+          path: ${{ env.MISSION_PRESERVE_REPORT }}/
+          if-no-files-found: error
