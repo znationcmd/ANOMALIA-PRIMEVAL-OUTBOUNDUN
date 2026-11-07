@@ -51,4 +51,18 @@ bool FAnomaliaFrozenInventoryTest::RunTest(const FString& Parameters)
     TestEqual(TEXT("Empty bottle retained"),Inventory->Stacks[0].ItemId,FName(TEXT("empty_water_bottle")));
     World->DestroyWorld(false);return true;
 }
+IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaFarmFoodTest,"AnomaliaZPrigimalia.Native.FarmFoodConsumption",EAutomationTestFlags::EditorContext|EAutomationTestFlags::EngineFilter)
+bool FAnomaliaFarmFoodTest::RunTest(const FString& Parameters)
+{
+    auto* World=UWorld::CreateWorld(EWorldType::Game,false);if(!TestNotNull(TEXT("World"),World))return false;
+    const FString Scope=TEXT("farm-food-")+FGuid::NewGuid().ToString(EGuidFormats::Digits);FString Error;
+    for(const FName Id:{FName(TEXT("milk")),FName(TEXT("egg")),FName(TEXT("honey")),FName(TEXT("vegetable")),FName(TEXT("raw_meat")),FName(TEXT("raw_fish"))})
+    {
+        auto* Survivor=World->SpawnActor<AAnomaliaZPrigimaliaSurvivor>();Survivor->RestoreSurvival(10,10,100);
+        auto* Items=Survivor->InventoryComponent.Get();
+        const bool Added=Items->TryAddItem(Id,1);TestTrue(*FString::Printf(TEXT("Farm food can be carried: %s"),*Id.ToString()),Added);
+        if(Added)TestTrue(*FString::Printf(TEXT("Farm food is consumable: %s"),*Id.ToString()),Items->TryUseStack(Items->Stacks[0].StackId,1,Scope,Id.ToString(),Error));
+    }
+    World->DestroyWorld(false);return true;
+}
 #endif

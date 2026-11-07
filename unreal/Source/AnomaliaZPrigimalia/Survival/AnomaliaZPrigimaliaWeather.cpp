@@ -73,9 +73,10 @@ float UAnomaliaZPrigimaliaHeatSourceComponent::Sample(UWorld* World,const FVecto
     {
         const auto* Source=Weak.Get();const auto* Owner=Source?Source->GetOwner():nullptr;
         if(!Owner||Owner->GetWorld()!=World||!Source->bBurning||!FMath::IsFinite(Source->FuelSeconds)||Source->FuelSeconds<=0||!FMath::IsFinite(Source->RadiusCm)||Source->RadiusCm<=0)continue;
-        const float Distance=FVector::Dist(Location,Owner->GetActorLocation());if(Distance>=Source->RadiusCm)continue;
+        const FVector Flame=Owner->GetActorLocation()+FVector(0,0,60);
+        const float Distance=FVector::Dist(Location,Flame);if(Distance>=Source->RadiusCm)continue;
         FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaFireHeat),true,Ignored);Query.AddIgnoredActor(Owner);FHitResult Hit;
-        if(!World->LineTraceSingleByChannel(Hit,Location,Owner->GetActorLocation(),ECC_Visibility,Query))Heat=FMath::Max(Heat,1-Distance/Source->RadiusCm);
+        if(!World->LineTraceSingleByChannel(Hit,Location,Flame,ECC_Visibility,Query))Heat=FMath::Max(Heat,1-Distance/Source->RadiusCm);
     }
     return Heat;
 }

@@ -784,6 +784,11 @@ FAnomaliaZPrigimaliaItemUseRule UAnomaliaZPrigimaliaInventoryComponent::GetUseRu
     FAnomaliaZPrigimaliaItemUseRule Rule;
     if(ItemId==TEXT("food") || ItemId==TEXT("meat") || ItemId==TEXT("cooked_meat") || ItemId==TEXT("cooked_fish"))
     { Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("food")?27.f:34.f; }
+    else if(ItemId==TEXT("raw_meat") || ItemId==TEXT("raw_fish") || ItemId==TEXT("egg"))
+    {Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("egg")?8.f:12.f;Rule.Effect=TEXT("raw_food");}
+    else if(ItemId==TEXT("milk")){Rule.Action=TEXT("drink");Rule.Hunger=10.f;Rule.Thirst=25.f;}
+    else if(ItemId==TEXT("honey")){Rule.Action=TEXT("eat");Rule.Hunger=25.f;}
+    else if(ItemId==TEXT("vegetable")){Rule.Action=TEXT("eat");Rule.Hunger=12.f;Rule.Thirst=5.f;}
     else if(ItemId==TEXT("berry")) { Rule.Action=TEXT("eat");Rule.Hunger=7.f;Rule.Thirst=3.f; }
     else if(ItemId==TEXT("water")) { Rule.Action=TEXT("drink");Rule.Thirst=38.f; }
     else if(ItemId==TEXT("bandage") || ItemId==TEXT("medkit"))
@@ -843,6 +848,12 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     if(!Rule.RequiredItem.IsNone() && !Stacks.ContainsByPredicate([&](const auto& S)
         { return S.Count>0 && (S.ItemId==Rule.RequiredItem || (Rule.RequiredItem==TEXT("lighter") && S.ItemId==TEXT("matches"))); }))
     { OutError=TEXT("Matériel nécessaire : ")+GetItemDisplayName(Rule.RequiredItem);return false; }
+    if(Rule.Action==TEXT("purify"))
+    {
+        const auto* Input=Stacks.FindByPredicate([&](const auto& S){return S.ItemId==Rule.RequiredItem&&S.Count>0;});
+        if(!Input||!CanConsumeStack(Input->StackId))
+        {OutError=TEXT("Dégelez d’abord l’eau avant de la purifier.");return false;}
+    }
     auto* Effects=Survivor->ItemEffectsComponent.Get();
     FAnomaliaZPrigimaliaItemEffectsState NextEffects;
     if(!Effects || !Effects->PreviewUse(Rule.Effect,NextEffects))
