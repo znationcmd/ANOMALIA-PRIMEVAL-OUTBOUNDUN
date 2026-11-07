@@ -36,10 +36,10 @@ void AAnomaliaZPrigimaliaWeather::Tick(float Delta)
 {
     Super::Tick(Delta);if(!HasAuthority()||!bAutomaticStorms||!FMath::IsFinite(Delta)||Delta<=0)return;
     RemainingSeconds-=FMath::Min(Delta,2.f);if(RemainingSeconds>0)return;
-    if(Storm!=EAnomaliaStorm::Clear){SetStorm(EAnomaliaStorm::Clear,0,BaselineTemperatureC,FMath::FRandRange(900,2400));return;}
+    if(Storm!=EAnomaliaStorm::Clear){SetStorm(EAnomaliaStorm::Clear,0,BaselineTemperatureC,FMath::FRandRange(900.f,2400.f));return;}
     const auto Kind=BaselineTemperatureC<=0?EAnomaliaStorm::Snow:BaselineTemperatureC>=35?EAnomaliaStorm::Sand:EAnomaliaStorm::Rain;
     const float Temperature=Kind==EAnomaliaStorm::Snow?FMath::Min(-12.f,BaselineTemperatureC-8):Kind==EAnomaliaStorm::Sand?BaselineTemperatureC+5:BaselineTemperatureC-6;
-    SetStorm(Kind,FMath::FRandRange(.75f,1.f),FMath::Clamp(Temperature,-60.f,60.f),FMath::FRandRange(300,900));
+    SetStorm(Kind,FMath::FRandRange(.75f,1.f),FMath::Clamp(Temperature,-60.f,60.f),FMath::FRandRange(300.f,900.f));
 }
 void AAnomaliaZPrigimaliaWeather::OnRep_Weather()
 {
