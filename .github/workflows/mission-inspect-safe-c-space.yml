@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: anomalia-full-resource-cloud-transfer
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   inspect:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
@@ -27,7 +27,14 @@ jobs:
            pathlib.Path(r"C:\ProgramData\Epic\Zen\Data"),
            pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache"),
            pathlib.Path(r"C:\ANOMALIA_MISSION_41801391717\unreal\DerivedDataCache"),
-           pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858")
+           pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_41801391717\unreal\Intermediate\Build"),
+           pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\unreal\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample\Intermediate\Build"),
+           pathlib.Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample\DerivedDataCache"),
+           pathlib.Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data\DerivedDataCache")
           ]
           for root in roots:
            if not root.exists():continue
