@@ -1,6 +1,8 @@
 """Relocate inactive archived Unreal Intermediate cache with full verification and a junction."""
 import os,pathlib,stat,json,hashlib,shutil,subprocess,uuid,time
-SOURCE=pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858\unreal\Intermediate")
+KIND=os.environ.get("ANOMALIA_CACHE_KIND","ARCHIVED_INTERMEDIATE")
+if KIND not in {"ARCHIVED_INTERMEDIATE","COMMON_ZEN"}:raise ValueError("Unapproved cache selection")
+SOURCE=pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/Zen/Data" if KIND=="COMMON_ZEN" else pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858\unreal\Intermediate")
 CACHE_ROOT=pathlib.Path(r"D:\ANOMALIAZ\03_Caches_Unreal")
 PROTECTED={".uasset",".umap",".fbx",".glb",".gltf",".blend",".sav",".uproject"}
 def sha(p):
@@ -28,6 +30,8 @@ def verified_copy(root,dest,manifest):
  root=pathlib.Path(root);dest=pathlib.Path(dest)
  if dest.exists():raise FileExistsError("Never overwrite an existing cache destination")
  dest.mkdir(parents=True)
+ for base,dirs,names in os.walk(root,followlinks=False):
+  (dest/pathlib.Path(base).relative_to(root)).mkdir(parents=True,exist_ok=True)
  for rel,row in manifest.items():
   source=root/rel;target=dest/rel
   if ident(source.stat())!=row["identity"]:raise RuntimeError("Source changed before copy")
@@ -38,7 +42,7 @@ def verified_copy(root,dest,manifest):
  fresh=snapshot(root)
  if {k:v["identity"] for k,v in fresh.items()}!={k:v["identity"] for k,v in manifest.items()}:raise RuntimeError("Source tree changed; original preserved")
 def active_build_processes():
- command="Get-Process -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|cl|link|MSBuild)$'} | ForEach-Object {$_.ProcessName}"
+ command="Get-Process -ErrorAction SilentlyContinue | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|zenserver|cl|link|MSBuild)$'} | ForEach-Object {$_.ProcessName}"
  output=subprocess.check_output(["powershell.exe","-NoProfile","-NonInteractive","-Command",command],text=True)
  return [x.strip() for x in output.splitlines() if x.strip()]
 def create_junction(source,target):
@@ -58,13 +62,13 @@ def main():
  manifest=snapshot(SOURCE);total=sum(r["bytes"] for r in manifest.values())
  if not total:raise RuntimeError("No cache bytes to relocate")
  if shutil.disk_usage("D:/").free<total+6*1024**3:raise RuntimeError("Preserve 6 GiB D reserve; relocation not started")
- run=os.environ["GITHUB_RUN_ID"];target=CACHE_ROOT/("Archived_Intermediate_"+run);CACHE_ROOT.mkdir(parents=True,exist_ok=True)
+ run=os.environ["GITHUB_RUN_ID"];target=CACHE_ROOT/(("Common_Zen_Data_" if KIND=="COMMON_ZEN" else "Archived_Intermediate_")+run);CACHE_ROOT.mkdir(parents=True,exist_ok=True)
  report.update({"target":str(target),"files":len(manifest),"cacheBytes":total,"state":"COPYING_ORIGINAL_INTACT"})
  verified_copy(SOURCE,target,manifest)
  durable=persistent/("intermediate-relocation-"+run+".json")
  durable.write_text(json.dumps({"source":str(SOURCE),"target":str(target),"files":manifest},indent=2),encoding="utf-8")
  if active_build_processes():raise RuntimeError("Build started during copy; original cache preserved")
- stash=SOURCE.with_name("Intermediate_verified_move_"+uuid.uuid4().hex[:12])
+ stash=SOURCE.with_name(SOURCE.name+"_verified_move_"+uuid.uuid4().hex[:12])
  os.rename(SOURCE,stash)
  try:
   create_junction(SOURCE,target)
