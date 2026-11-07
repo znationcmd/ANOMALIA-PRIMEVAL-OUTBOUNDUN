@@ -15,6 +15,7 @@ FILES=[
 "Tests/AnomaliaZPrigimaliaWeatherSurvivalTests.cpp"]
 report={"mainProject":str(MAIN/"AnomaliaPrimeval.uproject"),"validationProject":str(VALIDATION/"unreal/AnomaliaZPrigimalia.uproject"),"commit":os.environ["GITHUB_SHA"],"mainProjectUpdated":False,"originalMapsModified":0,"saveFilesModified":0,"matches":[],"conflicts":[],"checks":[],"gameplayAccepted":False}
 def norm(text):return text.replace("\r\n","\n").lstrip("\ufeff").rstrip()+"\n"
+report["sourceFingerprint"]=hashlib.sha256(b"".join(name.encode()+b"\0"+hashlib.sha256(norm((NEW/"unreal/Source/AnomaliaZPrigimalia"/name).read_text(encoding="utf-8-sig")).encode()).digest() for name in sorted(FILES))).hexdigest()
 def convert(text,old):
  if not old:return text
  return text.replace("ANOMALIAZPRIGIMALIA_API","ANOMALIAPRIMEVAL_API").replace("AnomaliaZPrigimalia","Anomalia")
