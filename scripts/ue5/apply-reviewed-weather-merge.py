@@ -41,10 +41,14 @@ if "--rollback-only" in sys.argv:
 save()
 if report["conflicts"] or report["errors"]:
  result["state"]="UNRESOLVED_MERGES_PRESERVED";save();raise SystemExit(0)
-prior=MAIN/"Saved/WeatherValidation/42379630246/weather-validation-report.json"
-prior_data=json.loads(prior.read_text(encoding="utf-8"))
-if not any(c.get("project")=="preserved_source_validation" and c.get("exitCode")==0 for c in prior_data["checks"]):
- raise RuntimeError("Previous engine build/regressions did not pass; preserve actual source")
+validated=[]
+for prior in (MAIN/"Saved/WeatherValidation").glob("*/weather-validation-report.json"):
+ try:
+  data=json.loads(prior.read_text(encoding="utf-8"))
+  if data.get("sourceFingerprint")==report.get("proposedSourceFingerprint") and data.get("sourceFingerprint") and any(v.get("project")=="preserved_source_validation" and v.get("exitCode")==0 for v in data.get("checks",[])):validated.append(prior)
+ except (ValueError,OSError):pass
+if not validated:raise RuntimeError("These exact proposed native sources have no passed engine build/regressions; preserve main source")
+result["validatedSourceReport"]=str(max(validated,key=lambda p:p.stat().st_mtime_ns))
 if shutil.disk_usage("D:/").free<10*1024**3:raise RuntimeError("Preserve 10 GiB main native build reserve")
 sources=MAIN/"Source/AnomaliaPrimeval"
 allowed={"AnomaliaInventoryComponent.cpp","AnomaliaInventoryComponent.h","AnomaliaInventoryWidget.cpp","AnomaliaInventoryWidget.h","AnomaliaVitalsComponent.cpp","AnomaliaVitalsComponent.h","AnomaliaGameMode.cpp","Survival/AnomaliaWeather.cpp","Survival/AnomaliaWeather.h","Survival/AnomaliaThermalModel.h","Tests/AnomaliaWeatherSurvivalTests.cpp"}
