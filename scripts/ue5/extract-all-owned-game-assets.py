@@ -70,6 +70,15 @@ def extract_zip(path,folder,rows):
     if crc&0xffffffff!=row["crc"]:raise ValueError("Existing extraction CRC differs; no overwrite")
    else:
     with z.open(row["zipName"]) as src,target.open("xb") as dst:shutil.copyfileobj(src,dst,4*1024**2)
+def model_family(path,archive=None):
+ text=str(path).replace("\\","/")
+ found=re.search(r"([0-9a-fA-F]{8})-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}",text)
+ if found:key=found.group(1).lower()
+ elif "/FabImports/" in text:key=text.split("/FabImports/",1)[1].split("/")[0].lower()
+ else:key=archive or str(path.parent).casefold()
+ variant=re.search(r"(FbxUE[45]|Fbx3DSmax|FbxMaya|FbxBlender|FbxUnity|FbxC4D)",text,re.I)
+ if variant:key+="|"+variant.group(1).lower()
+ return hashlib.sha256(key.encode("utf-8")).hexdigest()
 def main():
  project=pathlib.Path(r"D:\ANOMALIA\unreal");assert (project/"AnomaliaPrimeval.uproject").is_file()
  state=project/"Saved/ImportReceipts/AllResources20261107";state.mkdir(parents=True,exist_ok=True)
@@ -193,7 +202,7 @@ def main():
      sha=digest(p)
      if sha not in seen_models:
       seen_models.add(sha)
-      raw["imports"].append({"source":str(p),"prepared":str(p),"sha256":sha,"preparedSHA256":sha,"family":hashlib.sha256(archive_hash.encode()).hexdigest(),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(p),re.I))})
+      raw["imports"].append({"source":str(p),"prepared":str(p),"sha256":sha,"preparedSHA256":sha,"family":model_family(p,archive_hash),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(p),re.I))})
       summary["newRawModels"]+=1
     if p.suffix.lower() in NATIVE:
      summary["nativePackagesPrepared"]+=1
@@ -213,7 +222,7 @@ def main():
    sha=digest(p)
    if sha in seen_models:continue
    seen_models.add(sha)
-   raw["imports"].append({"source":str(p),"prepared":str(p),"sha256":sha,"preparedSHA256":sha,"family":hashlib.sha256(str(p.parent).casefold().encode()).hexdigest(),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(p),re.I))})
+   raw["imports"].append({"source":str(p),"prepared":str(p),"sha256":sha,"preparedSHA256":sha,"family":model_family(p),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(p),re.I))})
    summary["newRawModels"]+=1
   except Exception as exc:summary["blocked"].append({"source":str(p),"reason":str(exc)})
  summary["remainingQueuedArchives"]=len(queue)
