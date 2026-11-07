@@ -11,7 +11,36 @@ concurrency:
   group: anomalia-full-resource-cloud-transfer
   cancel-in-progress: true
 jobs:
+  cleanup_archived_compilation_cache:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: pch-cleanup-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/release-regenerable-archived-pch-cache.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Release only old regenerable precompiled-header cache
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('pch-cleanup-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CLOUD_TRANSFER_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('pch-cleanup-'+$env:GITHUB_RUN_ID+'\scripts\ue5\release-regenerable-archived-pch-cache.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Generated-cache safety guard preserved files; upload continuation is independent'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: generated-pch-cleanup-receipts
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/generated-pch-cleanup-summary.json
+          if-no-files-found: warn
   copy:
+    needs: cleanup_archived_compilation_cache
+    if: always()
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 320
     strategy:
