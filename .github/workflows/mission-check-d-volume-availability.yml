@@ -1,0 +1,34 @@
+name: ANOMALIA mission - read-only D volume availability check
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-check-d-volume-availability.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read disk connection state without repair, mount changes or file writes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Continue'
+          Write-Output ('D_ROOT_ACCESSIBLE '+[bool](Test-Path -LiteralPath 'D:\'))
+          Write-Output ('MAIN_PROJECT_ACCESSIBLE '+[bool](Test-Path -LiteralPath 'D:\ANOMALIA\unreal'))
+          try {
+            $logical=@(Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,DriveType,FileSystem,FreeSpace,Size)
+            Write-Output ('LOGICAL_DISKS '+($logical|ConvertTo-Json -Compress))
+          } catch {Write-Output ('LOGICAL_QUERY_ERROR '+$_.Exception.Message)}
+          try {
+            $physical=@(Get-Disk | Select-Object Number,FriendlyName,OperationalStatus,HealthStatus,IsOffline,IsReadOnly,Size)
+            Write-Output ('PHYSICAL_DISKS '+($physical|ConvertTo-Json -Depth 4 -Compress))
+          } catch {Write-Output ('PHYSICAL_QUERY_ERROR '+$_.Exception.Message)}
+          try {
+            $events=@(Get-WinEvent -FilterHashtable @{LogName='System';StartTime=(Get-Date).AddMinutes(-20);Id=7,51,55,129,153,157} -MaxEvents 8 -ErrorAction Stop | ForEach-Object {[ordered]@{time=$_.TimeCreated.ToUniversalTime().ToString('o');id=$_.Id;provider=$_.ProviderName;message=($_.Message -replace '[\r\n]+',' ').Substring(0,[Math]::Min(220,($_.Message -replace '[\r\n]+',' ').Length))}})
+            Write-Output ('RECENT_DISK_EVENTS '+($events|ConvertTo-Json -Compress))
+          } catch {Write-Output 'RECENT_DISK_EVENTS_UNAVAILABLE_OR_NONE'}
