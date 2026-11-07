@@ -63,3 +63,5 @@ jobs:
           name: direct-models-cloud-receipts-${{ matrix.batch }}
           path: ${{ env.CLOUD_TRANSFER_OUT }}/direct-transfer-summary.json
           if-no-files-found: warn
+
+# Resume after read-only confirmation that D and the actual game project are accessible again.
