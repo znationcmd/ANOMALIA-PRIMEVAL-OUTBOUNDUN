@@ -3,7 +3,7 @@
 Does not place visual-only locks on sealed meshes or modify/save a level.
 Run again in a fresh editor process with AZ68_VERIFY_ONLY=1 to verify disk packages.
 """
-import hashlib,json,os,pathlib,traceback,unreal
+import hashlib,json,os,pathlib,traceback,shutil,unreal
 
 PROJECT=pathlib.Path(r"D:\ANOMALIA\unreal")
 OUT=pathlib.Path(os.environ["AZ68_OUT"])
@@ -27,6 +27,9 @@ for row in manifest["models"]:
         assert hashlib.sha256(source.read_bytes()).hexdigest()==row["sha256"],"Source checksum differs"
         path=row["assetPath"]
         assert path.startswith("/Game/ANOMALIAZ/Items/ContainerLocks/"),"Unexpected namespace"
+        # Interchange stores the actual mesh beneath the per-source folder.
+        nested=path+"/StaticMeshes/"+path.rsplit("/",1)[1]
+        if not unreal.EditorAssetLibrary.does_asset_exist(path) and unreal.EditorAssetLibrary.does_asset_exist(nested):path=nested
         existing=unreal.EditorAssetLibrary.does_asset_exist(path)
         if not existing:
             assert not VERIFY,"Saved package is missing in fresh editor process"
@@ -38,10 +41,21 @@ for row in manifest["models"]:
             task=unreal.AssetImportTask()
             for key,value in {"filename":str(source),"destination_path":folder,"destination_name":prefix,"automated":True,"replace_existing":False,"replace_existing_settings":False,"save":True}.items():task.set_editor_property(key,value)
             tools.import_asset_tasks([task])
+        if not existing and unreal.EditorAssetLibrary.does_asset_exist(nested):path=nested
         obj=unreal.load_asset(path)
         assert isinstance(obj,unreal.StaticMesh),"Expected single StaticMesh was not produced"
         if existing or VERIFY:
-            assert unreal.EditorAssetLibrary.get_metadata_tag(obj,"AZ68_PreparedSHA256")==row["sha256"],"Existing asset is not owned by this verified import; preserved"
+            owned=unreal.EditorAssetLibrary.get_metadata_tag(obj,"AZ68_PreparedSHA256")==row["sha256"]
+            if not owned and not VERIFY:
+                data=obj.get_editor_property("asset_import_data")
+                filenames=data.extract_filenames() if data else []
+                # Adopt only a prior import with an unchanged, hash-proven source.
+                owned=any(pathlib.Path(f).is_file() and hashlib.sha256(pathlib.Path(f).read_bytes()).hexdigest()==row["sha256"] for f in filenames)
+                if owned:
+                    package=PROJECT/"Content"/(path[len("/Game/"):]+".uasset")
+                    backup=OUT/"Backups"/(path[len("/Game/"):]+".uasset");backup.parent.mkdir(parents=True,exist_ok=True)
+                    if package.is_file() and not backup.exists():shutil.copy2(package,backup)
+            assert owned,"Existing asset source is not checksum-proven; preserved"
         bounds=obj.get_bounds();extent=bounds.box_extent
         dimensions=[2*float(extent.x),2*float(extent.y),2*float(extent.z)]
         assert .1<min(dimensions) and max(dimensions)<40,"Unexpected centimetre bounds: "+str(dimensions)

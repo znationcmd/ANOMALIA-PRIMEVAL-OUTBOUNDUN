@@ -22,7 +22,7 @@ def color_value(g,binary,index):
  if len(value)==3:value.append(1.)
  if any(n<0 or n>1 for n in value):raise ValueError("Out-of-range source vertex colors")
  return value
-def prepare(blob,name):
+def prepare(blob,name,source_pack_sha=PACK_SHA):
  original=chunks(blob);g=json.loads(next(v for k,v in original if k==0x4e4f534a))
  binary=next(v for k,v in original if k==0x004e4942)
  if any(any(k in n for k in ("matrix","translation","rotation","scale","skin")) for n in g["nodes"]):raise ValueError("Transforms or skinning require reviewed geometry baking")
@@ -44,7 +44,7 @@ def prepare(blob,name):
    primitives.append(p)
  g["materials"]=materials;g["meshes"]=[{"name":name,"primitives":primitives}]
  g["nodes"]=[{"name":name,"mesh":0}];g["scenes"]=[{"nodes":[0]}];g["scene"]=0
- g.setdefault("extras",{})["AnomaliaSourcePackSHA256"]=PACK_SHA
+ g.setdefault("extras",{})["AnomaliaSourcePackSHA256"]=source_pack_sha
  payload=json.dumps(g,separators=(",",":"),ensure_ascii=False).encode("utf-8");payload+=b" "*((-len(payload))%4)
  parts=[(0x4e4f534a,payload)]+[(k,v) for k,v in original if k!=0x4e4f534a]
  output=b"".join(struct.pack("<II",len(v),k)+v for k,v in parts)

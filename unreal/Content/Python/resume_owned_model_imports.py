@@ -7,7 +7,8 @@ manifest=json.loads((STATE/"raw-preparation-manifest.json").read_text(encoding="
 root=manifest["outputNamespace"]
 assert root=="/Game/Anomalia/LocalResources/B_41851208057"
 assert pathlib.Path(unreal.Paths.project_content_dir()).resolve()==(PROJECT/"Content").resolve(), "Refuse to import into a different project"
-prior=json.loads((OUT/"prior/raw-import-report.json").read_text(encoding="utf-8"))
+prior_path=OUT/"prior/raw-import-report.json"
+prior=json.loads(prior_path.read_text(encoding="utf-8")) if prior_path.is_file() else {"sources":[],"errors":[]}
 receipt=STATE/"raw-import-report.json"
 report=json.loads(receipt.read_text(encoding="utf-8")) if receipt.exists() else {"sources":prior["sources"],"errors":prior["errors"],"deferred":[],"state":"RESUMING"}
 report.update(gameplayAccepted=False,mapsSaved=0,existingAssetsReplaced=False)
