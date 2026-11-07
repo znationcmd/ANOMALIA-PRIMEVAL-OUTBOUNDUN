@@ -85,6 +85,8 @@ for raw in sorted(sources.values(),key=lambda s:(pathlib.PureWindowsPath(s).suff
    extracted=[]
    for m,pure in chosen:
     dst=folder.joinpath(*pure.parts)
+    if not dst.parent.resolve().is_relative_to(folder.resolve()):raise ValueError("Extracted path crosses an external link")
+    if dst.exists() and getattr(dst.lstat(),"st_file_attributes",0)&0x400:raise ValueError("Existing extraction reparse point preserved")
     if dst.exists():
      if not dst.is_file() or dst.stat().st_size!=m.file_size:raise ValueError("Existing extracted file differs; no overwrite")
      import zlib
