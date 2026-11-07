@@ -18,7 +18,7 @@ jobs:
         shell: bash
         run: |
           set -eu
-          run=42363945390
+          run=42377380936
           status=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
           if [ "$status" = completed ]; then
             echo "Old transfer already stopped"
