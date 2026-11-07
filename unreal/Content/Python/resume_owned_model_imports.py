@@ -6,7 +6,7 @@ OUT=pathlib.Path(os.environ["MISSION_RAW_OUT"])
 manifest=json.loads((STATE/"raw-preparation-manifest.json").read_text(encoding="utf-8"))
 root=manifest["outputNamespace"]
 assert root=="/Game/Anomalia/LocalResources/B_41851208057"
-assert pathlib.Path(unreal.Paths.project_file_path()).resolve()==(PROJECT/"AnomaliaPrimeval.uproject").resolve()
+assert pathlib.Path(unreal.Paths.project_content_dir()).resolve()==(PROJECT/"Content").resolve(), "Refuse to import into a different project"
 prior=json.loads((OUT/"prior/raw-import-report.json").read_text(encoding="utf-8"))
 receipt=STATE/"raw-import-report.json"
 report=json.loads(receipt.read_text(encoding="utf-8")) if receipt.exists() else {"sources":prior["sources"],"errors":prior["errors"],"deferred":[],"state":"RESUMING"}
