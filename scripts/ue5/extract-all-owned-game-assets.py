@@ -85,19 +85,34 @@ def main():
  tool=pathlib.Path(os.environ["ANOMALIA_7ZIP"]) if os.environ.get("ANOMALIA_7ZIP") else None
  out=pathlib.Path(os.environ["MISSION_ALL_OUT"]);out.mkdir(parents=True,exist_ok=True)
  plan=project/"Saved/CloudTransfer/Direct20261106/direct-source-plan.jsonl"
- candidates={}
+ candidates={};loose_models={}
  for line in plan.open(encoding="utf-8"):
   p=pathlib.Path(json.loads(line)["path"])
-  if p.suffix.lower() in ARCHIVES and not GENERATED.intersection(x.lower() for x in p.parts):candidates.setdefault(str(p).casefold(),p)
+  if GENERATED.intersection(x.lower() for x in p.parts):continue
+  if p.suffix.lower() in ARCHIVES:candidates.setdefault(str(p).casefold(),p)
+  elif p.suffix.lower() in MODELS:loose_models.setdefault(str(p).casefold(),p)
  # Reuse prior inventories and references; no global personal-disk rescan.
  for catalog in (project/"SourceAssets/ExternalResources").glob("original-source-catalog-*.json"):
   data=json.loads(catalog.read_text(encoding="utf-8-sig"))
   for row in data.get("files",[]):
    p=pathlib.Path(row.get("importSource",""))
    if p.suffix.lower() in ARCHIVES:candidates.setdefault(str(p).casefold(),p)
+ # Incremental discovery is limited to previously identified resource/download/project locations.
+ roots=[pathlib.Path(r"C:\sketchfab"),pathlib.Path(r"D:\ANOMALIA\sketchfab"),pathlib.Path(r"D:\ANOMALIA\FabImports"),pathlib.Path(r"D:\ANOMALIA\SketchfabExtracted"),pathlib.Path(r"D:\ANOMALIA\StorageRecovery"),pathlib.Path(os.environ["USERPROFILE"])/"Downloads",pathlib.Path(os.environ["USERPROFILE"])/"Documents/Unreal Projects",pathlib.Path(os.environ["USERPROFILE"])/"OneDrive/Documents/Unreal Projects"]
+ native_existing=[]
+ prior_plan=raw_state/"Session/prior/plan/bulk-import-summary.json"
+ if prior_plan.exists():native_existing=json.loads(prior_plan.read_text(encoding="utf-8")).get("sourceProjects",[])
+ for root in roots:
+  if not root.is_dir():continue
+  for base,dirs,names in os.walk(root,followlinks=False):
+   dirs[:]=[d for d in dirs if d.lower() not in GENERATED|{"saved","binaries","allextracted"} and not getattr((pathlib.Path(base)/d).lstat(),"st_file_attributes",0)&0x400]
+   for name in names:
+    p=pathlib.Path(base)/name
+    if p.suffix.lower() in ARCHIVES:candidates.setdefault(str(p).casefold(),p)
+    elif p.suffix.lower() in MODELS:loose_models.setdefault(str(p).casefold(),p)
  queue=collections.deque((p,0) for p in sorted(candidates.values(),key=lambda p:str(p).casefold()))
  summary={"state":"EXTRACTING","inventoriedArchives":len(queue),"archivesNewlyExtracted":0,"archivesReused":0,"newRawModels":0,"nativePackagesPrepared":0,"nativeContentRoots":[],"nativeMountReview":[],"categories":{},"blocked":[],"originalFilesDeleted":0,"existingAssetsOverwritten":0}
- native_roots=set();processed=set();started=time.monotonic()
+ native_roots={r["content"] for r in native_existing if pathlib.Path(r["content"]).is_dir()};processed=set();started=time.monotonic()
  def save():
   summary["elapsedSeconds"]=time.monotonic()-started
   summary["freeBytes"]={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
@@ -115,7 +130,15 @@ def main():
     if ref.exists():
      data=json.loads(ref.read_text(encoding="utf-8"));path=pathlib.Path(data["retainedOriginalPath"])
      if digest(path)!=data["sha256"]:raise ValueError("Retained duplicate archive differs")
-    else:raise FileNotFoundError("Inventoried archive not local; reference retained")
+    else:
+     cloud_ref=path.with_name(path.name+".cloud.json")
+     if cloud_ref.exists():
+      data=json.loads(cloud_ref.read_text(encoding="utf-8"))
+      alternatives=[p for p in candidates.values() if p.name.casefold()==path.name.casefold() and p.is_file()]
+      local=next((p for p in alternatives if digest(p)==data["sha256"]),None)
+      if not local:raise FileNotFoundError("Verified cloud archive has no resident local counterpart; cloud original retained")
+      path=local
+     else:raise FileNotFoundError("Inventoried archive not local; reference retained")
    before=path.stat()
    if getattr(before,"st_file_attributes",0)&(0x1000|0x400000):raise ValueError("Archive is not resident locally")
    archive_hash=digest(path)
@@ -183,6 +206,16 @@ def main():
       if len(summary["nativeMountReview"])<200:summary["nativeMountReview"].append(mount)
    save()
   except Exception as exc:summary["blocked"].append({"archive":str(path),"reason":str(exc)});save()
+ # Include loose original models as well as archive members.
+ for p in loose_models.values():
+  try:
+   if not p.is_file() or getattr(p.stat(),"st_file_attributes",0)&(0x1000|0x400000):continue
+   sha=digest(p)
+   if sha in seen_models:continue
+   seen_models.add(sha)
+   raw["imports"].append({"source":str(p),"prepared":str(p),"sha256":sha,"preparedSHA256":sha,"family":hashlib.sha256(str(p.parent).casefold().encode()).hexdigest(),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(p),re.I))})
+   summary["newRawModels"]+=1
+  except Exception as exc:summary["blocked"].append({"source":str(p),"reason":str(exc)})
  summary["remainingQueuedArchives"]=len(queue)
  summary["state"]="EXTRACTION_FINISHED_WITH_EXPLICIT_BLOCKERS" if summary["blocked"] or queue else "ALL_INVENTORIED_SUPPORTED_ARCHIVES_EXTRACTED"
  raw["imports"].sort(key=lambda r:(r.get("animationOnly",False),r["source"].casefold()));save()
