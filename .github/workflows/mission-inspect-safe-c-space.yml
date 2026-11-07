@@ -62,12 +62,7 @@ jobs:
           print("ACTUAL_SPACE "+json.dumps({drive:shutil.disk_usage(drive+":/").free for drive in ["C","D"]}),flush=True)
 
           # Remove only old unshared generated precompiled headers from known build caches.
-          check=subprocess.run(["powershell","-NoProfile","-Command","@(Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|cl|link)
-          $script=Join-Path $env:RUNNER_TEMP ('safe-c-space-'+$env:GITHUB_RUN_ID+'.py')
-          [IO.File]::WriteAllText($script,$code,(New-Object Text.UTF8Encoding($false)))
-          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
-          if($LASTEXITCODE -ne 0){throw 'Read-only cache inventory failed'}
-}).Count"],capture_output=True,text=True,check=True)
+          check=subprocess.run(["powershell","-NoProfile","-Command","@(Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|cl|link)$'}).Count"],capture_output=True,text=True,check=True)
           if check.stdout.strip()!="0":raise RuntimeError("Compilation/editor active; cache cleanup preserved all files")
           before={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
           ledger=pathlib.Path(os.environ["LOCALAPPDATA"])/"ANOMALIAZ/CleanupReceipts"
