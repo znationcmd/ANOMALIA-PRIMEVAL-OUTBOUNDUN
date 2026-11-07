@@ -7,6 +7,7 @@ OUT.mkdir(parents=True,exist_ok=True)
 FILES=["AnomaliaZPrigimaliaInventoryComponent.cpp","AnomaliaZPrigimaliaInventoryComponent.h","AnomaliaZPrigimaliaInventoryWidget.cpp","AnomaliaZPrigimaliaInventoryWidget.h","AnomaliaZPrigimaliaVitalsComponent.cpp","AnomaliaZPrigimaliaVitalsComponent.h","AnomaliaZPrigimaliaGameMode.cpp","Survival/AnomaliaZPrigimaliaWeather.cpp","Survival/AnomaliaZPrigimaliaWeather.h","Survival/AnomaliaZPrigimaliaThermalModel.h","Tests/AnomaliaZPrigimaliaWeatherSurvivalTests.cpp"]
 def legacy(s):return s.replace("ANOMALIAZPRIGIMALIA_API","ANOMALIAPRIMEVAL_API").replace("AnomaliaZPrigimalia","Anomalia").replace("\r\n","\n").lstrip("\ufeff").rstrip()+"\n"
 report={"mainProject":str(MAIN/"AnomaliaPrimeval.uproject"),"mainFilesModified":0,"commit":os.environ["GITHUB_SHA"],"clean":[],"conflicts":[],"errors":[]}
+report["proposedSourceFingerprint"]=hashlib.sha256(b"".join(name.encode()+b"\0"+hashlib.sha256(((NEW/"unreal/Source/AnomaliaZPrigimalia"/name).read_text(encoding="utf-8-sig").replace("\r\n","\n").lstrip("\ufeff").rstrip()+"\n").encode()).digest() for name in sorted(FILES))).hexdigest()
 for name in FILES:
  relative=name.replace("AnomaliaZPrigimalia","Anomalia")
  actual=MAIN/"Source/AnomaliaPrimeval"/relative
