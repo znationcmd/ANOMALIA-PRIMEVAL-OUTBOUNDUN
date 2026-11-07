@@ -10,6 +10,34 @@ def save():
  (OUT/"actual-native-result.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
  print("ACTUAL_MERGED_NATIVE "+json.dumps(result),flush=True)
 def digest(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def rollback():
+ plan_path=OUT/"deployment-plan.json"
+ if not plan_path.exists():return
+ plan=json.loads(plan_path.read_text(encoding="utf-8"))
+ if plan.get("mainProject")!=str(MAIN):raise RuntimeError("Rollback owner mismatch; preserve all files")
+ if (OUT/"actual-native-result.json").exists():
+  prior=json.loads((OUT/"actual-native-result.json").read_text(encoding="utf-8"))
+  if prior.get("mainProjectUpdated"):return
+ for row in plan["files"]:
+  dst=pathlib.Path(row["path"])
+  if dst.exists() and digest(dst) not in {row["desiredSHA256"],row.get("originalSHA256")}:
+   raise RuntimeError("New source changes detected after installation; preserve them and all backups")
+ failed=OUT/"failed-native-output";failed.mkdir(exist_ok=True)
+ for row in plan["files"]:
+  dst=pathlib.Path(row["path"])
+  if row["existed"]:
+   original=OUT/"originals/Source"/dst.relative_to(MAIN/"Source/AnomaliaPrimeval")
+   if not original.is_file():raise RuntimeError("Rollback original missing; preserve diagnostics")
+   temporary=dst.with_name(dst.name+".restore-"+uuid.uuid4().hex)
+   shutil.copy2(original,temporary);os.replace(temporary,dst)
+  elif dst.exists():
+   archived=failed/"Source"/dst.relative_to(MAIN/"Source/AnomaliaPrimeval");archived.parent.mkdir(parents=True,exist_ok=True);shutil.move(dst,archived)
+ if plan.get("binariesBackedUp"):
+  if (MAIN/"Binaries").exists():
+   destination=failed/("Binaries-"+uuid.uuid4().hex[:8]);shutil.move(MAIN/"Binaries",destination)
+  shutil.copytree(OUT/"originals/Binaries",MAIN/"Binaries")
+if "--rollback-only" in sys.argv:
+ rollback();print("Rollback guard completed; confirmed successful installations are retained",flush=True);raise SystemExit(0)
 save()
 if report["conflicts"] or report["errors"]:
  result["state"]="UNRESOLVED_MERGES_PRESERVED";save();raise SystemExit(0)
@@ -39,12 +67,16 @@ def atomic_copy(src,dst):
  with temporary.open("xb") as f:
   f.write(src.read_bytes());f.flush();os.fsync(f.fileno())
  os.replace(temporary,dst)
-written=[]
+plan={"mainProject":str(MAIN),"binariesBackedUp":(backup/"Binaries").exists(),"files":[]}
+for dst,src,existed in entries:
+ if existed:
+  original=backup/"Source"/dst.relative_to(sources);original.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(dst,original)
+ plan["files"].append({"path":str(dst),"existed":existed,"originalSHA256":digest(dst) if existed else None,"desiredSHA256":digest(src)})
+with (OUT/"deployment-plan.json").open("x",encoding="utf-8") as f:
+ json.dump(plan,f);f.flush();os.fsync(f.fileno())
 try:
  for dst,src,existed in entries:
-  if existed:
-   original=backup/"Source"/dst.relative_to(sources);original.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(dst,original)
-  dst.parent.mkdir(parents=True,exist_ok=True);atomic_copy(src,dst);written.append((dst,existed))
+  dst.parent.mkdir(parents=True,exist_ok=True);atomic_copy(src,dst)
  for target in ["AnomaliaPrimevalEditor","AnomaliaPrimeval"]:
   cmd=[os.environ.get("COMSPEC","cmd.exe"),"/d","/c",str(ENGINE/"Engine/Build/BatchFiles/Build.bat"),target,"Win64","Development","-Project="+str(MAIN/"AnomaliaPrimeval.uproject"),"-WaitMutex","-NoHotReloadFromIDE"]
   with (OUT/(target+".log")).open("w",encoding="utf-8") as f:code=subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT).returncode
@@ -61,12 +93,7 @@ try:
  if code or failures or not expected.issubset(passed):raise RuntimeError("Required actual main regressions did not pass; restoring originals")
  result["mainProjectUpdated"]=True;result["state"]="ACTUAL_MAIN_BUILDS_AND_NATIVE_REGRESSIONS_PASSED_PIE_REQUIRED";save()
 except BaseException as exc:
- failed=OUT/"failed-native-output";failed.mkdir(exist_ok=True)
- for dst,existed in written:
-  if existed:atomic_copy(backup/"Source"/dst.relative_to(sources),dst)
-  elif dst.exists():
-   archived=failed/"Source"/dst.relative_to(sources);archived.parent.mkdir(parents=True,exist_ok=True);shutil.move(dst,archived)
- if (backup/"Binaries").exists():
-  if (MAIN/"Binaries").exists():shutil.move(MAIN/"Binaries",failed/"Binaries")
-  shutil.copytree(backup/"Binaries",MAIN/"Binaries")
- result["state"]="NATIVE_FAILURE_ORIGINALS_RESTORED";result["error"]=str(exc);save();raise
+ try:rollback()
+ except Exception as restore_error:result["restoreError"]=str(restore_error)
+ result["state"]="NATIVE_FAILURE_ORIGINALS_RESTORED" if not result.get("restoreError") else "NATIVE_FAILURE_NEW_CHANGES_AND_BACKUPS_PRESERVED"
+ result["error"]=str(exc);save();raise
