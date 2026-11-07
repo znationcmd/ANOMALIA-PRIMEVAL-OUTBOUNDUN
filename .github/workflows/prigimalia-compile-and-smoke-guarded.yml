@@ -1,0 +1,115 @@
+name: ANOMALIAZ - Compilation finale et test protege du generique 35s
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-compile-and-smoke-guarded.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  build-and-check:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Confirm healthy project volume, sufficient free space, and exact staged 35s media
+        id: guard
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $movie='D:\ANOMALIAZ-PRIGIMALIA\unreal\Content\Movies\ANOMALIAZ_PRIGIMALIA_GENERIQUE_35s_ALERTE_ROUGE.mp4'
+          $cpp='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia\AnomaliaZPrigimaliaIntroWidget.cpp'
+          $header='D:\ANOMALIAZ-PRIGIMALIA\unreal\Source\AnomaliaZPrigimalia\AnomaliaZPrigimaliaIntroWidget.h'
+          $engine='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          $expectedHash='29e4f8c5f00a08877e49fa856707755e0cd257eead26d4c411a38e1960403ccf'
+          $reasons=New-Object 'System.Collections.Generic.List[string]'
+          $disks=@(Get-CimInstance Win32_LogicalDisk | Where-Object { $_.DriveType -eq 3 } | Select-Object DeviceID,FreeSpace,Size,FileSystem)
+          Write-Host ('VISIBLE_FIXED_VOLUMES='+($disks|ConvertTo-Json -Compress))
+          $diskC=$disks | Where-Object { $_.DeviceID -eq 'C:' } | Select-Object -First 1
+          $diskD=$disks | Where-Object { $_.DeviceID -eq 'D:' } | Select-Object -First 1
+          if(!$diskC){$reasons.Add('SYSTEM_C_VOLUME_MISSING')}
+          if(!$diskD){$reasons.Add('PROJECT_D_VOLUME_MISSING')}
+          if($diskC -and [int64]$diskC.FreeSpace -lt 8GB){$reasons.Add('SYSTEM_C_LOW_SPACE_8GIB_MIN')}
+          if($diskD -and [int64]$diskD.FreeSpace -lt 10GB){$reasons.Add('PROJECT_D_LOW_SPACE_10GIB_MIN')}
+          if(!(Test-Path -LiteralPath $project -PathType Leaf)){$reasons.Add('REAL_UNREAL_PROJECT_NOT_FOUND')}
+          if(!(Test-Path -LiteralPath $engine -PathType Leaf)){$reasons.Add('UNREAL_5_8_BUILD_SCRIPT_MISSING')}
+          if(!(Test-Path -LiteralPath $movie -PathType Leaf)){
+            $reasons.Add('STAGED_UNIFIED_35S_MOVIE_MISSING')
+          }elseif((Get-FileHash -LiteralPath $movie -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedHash){
+            $reasons.Add('STAGED_UNIFIED_35S_MOVIE_HASH_MISMATCH')
+          }
+          if(!(Test-Path -LiteralPath $cpp -PathType Leaf) -or !(Test-Path -LiteralPath $header -PathType Leaf)){
+            $reasons.Add('INTRO_CPP_SOURCES_MISSING')
+          }else{
+            $actualCpp=Get-Content -LiteralPath $cpp -Raw
+            $actualHeader=Get-Content -LiteralPath $header -Raw
+            if(!$actualCpp.Contains('ANOMALIAZ_PRIGIMALIA_GENERIQUE_35s_ALERTE_ROUGE.mp4') -or
+               !$actualCpp.Contains('FinishToMainMenu') -or
+               !$actualCpp.Contains('PauseAtClick') -or
+               !$actualHeader.Contains('PauseAtClick') -or
+               $actualCpp.Contains('            else bBloodFinished = false;')){
+              $reasons.Add('INTRO_SOURCE_IS_NOT_CORRECT_UNIFIED35_VARIANT')
+            }
+          }
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaZPrigimalia,AnomaliaPrimeval,robocopy -ErrorAction SilentlyContinue)
+          if($busy.Count -gt 0){$reasons.Add('UNREAL_OR_COPY_PROCESS_ALREADY_ACTIVE')}
+          $ioEvents=@(Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='disk';Id=7,51,153;StartTime=(Get-Date).AddHours(-2)} -ErrorAction SilentlyContinue)
+          Write-Host ('RECENT_DISK_IO_ERRORS_COUNT='+$ioEvents.Count)
+          if($ioEvents.Count -gt 0){$reasons.Add('RECENT_DISK_IO_ERRORS_REQUIRE_USER_HARDWARE_CHECK')}
+          if($reasons.Count -gt 0){
+            foreach($reason in $reasons){Write-Host ('FINAL_BUILD_BLOCKED='+$reason)}
+            "ready=false" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
+            Write-Host 'NO_NATIVE_BUILD_STARTED_AND_NO_GAME_FILES_MODIFIED=true'
+          }else{
+            "ready=true" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding ascii -Append
+            Write-Host 'NATIVE_FINAL_BUILD_PREFLIGHT_PASSED=true'
+          }
+      - name: Compile native UE5.8 Editor project
+        if: steps.guard.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $p='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $builder='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          & $builder 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' ('-Project='+$p) '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+          if($LASTEXITCODE -ne 0){throw ('REAL_EDITOR_BUILD_FAILED_EXITCODE_'+$LASTEXITCODE)}
+          Write-Host 'REAL_ANOMALIAZ_EDITOR_NATIVE_BUILD_SUCCEEDED=true'
+      - name: Smoke-test real Unreal game starts and intro movie exists
+        if: steps.guard.outputs.ready == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        timeout-minutes: 15
+        run: |
+          $ErrorActionPreference='Stop'
+          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $exe='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path $exe -PathType Leaf)){throw 'UNREAL_EDITOR_CMD_NOT_FOUND'}
+          $log=Join-Path $env:RUNNER_TEMP ('prigimalia-intro-smoke-'+$env:GITHUB_RUN_ID+'.log')
+          $args=@($project,'-game','-nullrhi','-unattended','-nosplash','-nop4','-log='+$log,'-ExecCmds=quit')
+          $proc=Start-Process -FilePath $exe -ArgumentList $args -PassThru -Wait -NoNewWindow
+          Write-Host ('REAL_GAME_SMOKE_PROCESS_EXIT_CODE='+$proc.ExitCode)
+          if(Test-Path $log -PathType Leaf){
+            Get-Content $log -Tail 100 | ForEach-Object {Write-Host $_}
+          }else{
+            Write-Host 'GAME_SMOKE_LOG_NOT_FOUND'
+          }
+          if($proc.ExitCode -ne 0){throw 'REAL_GAME_SMOKE_EXIT_NONZERO'}
+          Write-Host 'GAME_HEADLESS_STARTUP_SMOKE_PASSED=true'
+          Write-Host 'VISIBLE_CLICK_AUDIO_MENU_ACCEPTANCE_TEST_STILL_NEEDED=true'
+      - name: Report explicit pending work if storage or project is not ready
+        if: steps.guard.outputs.ready != 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          Write-Host 'SKIPPED_COMPILATION_TO_PROTECT_REAL_GAME=true'
+          Write-Host 'FIX_USB_D_DISK_AND_FREE_SPACE_THEN_RERUN_THIS_WORKFLOW=true'
+          $message=@(
+            '### ANOMALIAZ PRIGIMALIA - compilation volontairement suspendue',
+            'Les sources et le film de 35 secondes sont deja copies dans le projet.',
+            'Le controle du stockage interdit actuellement la compilation.',
+            'Verifier la connexion du disque USB D et ses erreurs I/O.',
+            'Liberer au minimum 8 Gio sur C et 10 Gio sur D avant de relancer.',
+            'Aucune compilation ou verification du menu effectuee lors de ce lancement.'
+          )
+          $message | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append

@@ -1,0 +1,50 @@
+name: ANOMALIAZ - Verifier intro 35s dans cloud GitHub (sans UE5)
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths:
+      - .github/workflows/prigimalia-intro-cloud-source-validation.yml
+      - scripts/cloud/verify_prigimalia_intro.py
+      - unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaIntroWidget.cpp
+      - unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaIntroWidget.h
+      - unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaGameMode.cpp
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomaliaz-prigimalia-cloud-check-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  verify-intro-source:
+    name: Sources et lancement du menu (analyse statique)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          sparse-checkout: |
+            scripts/cloud
+            unreal/AnomaliaZPrigimalia.uproject
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate intro source, 35s movie name and native menu fallback
+        run: |
+          python scripts/cloud/verify_prigimalia_intro.py --root . --report build-reports/intro-35s-cloud-validation.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-intro-cloud-source-validation
+          path: build-reports/intro-35s-cloud-validation.json
+          if-no-files-found: warn
+          retention-days: 14
+      - name: Explain precise test limitations
+        if: always()
+        run: |
+          echo "### ANOMALIA'Z PRIGIMALIA - cloud source validation" >> "${GITHUB_STEP_SUMMARY}"
+          echo "This job checks the C++ intro and menu integration on GitHub-hosted Linux." >> "${GITHUB_STEP_SUMMARY}"
+          echo "It does NOT compile Unreal Engine, verify the MP4 bytes, or run a graphical in-game test." >> "${GITHUB_STEP_SUMMARY}"
+          echo "Complete UE5.8 Windows builds require a separate provisioned licensed runner with enough disk." >> "${GITHUB_STEP_SUMMARY}"

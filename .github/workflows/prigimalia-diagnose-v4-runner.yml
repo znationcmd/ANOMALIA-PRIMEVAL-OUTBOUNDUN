@@ -1,0 +1,78 @@
+name: ANOMALIAZ - Diagnostic V4 Windows sans compilation
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-diagnose-v4-runner.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-intro-diagnostics-v4
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: source-v4-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
+      - name: Check real native intro, staged media and recent Unreal build failure (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $src = 'D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $expected = Join-Path $env:GITHUB_WORKSPACE ('source-v4-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $actual = Join-Path $src 'Source\AnomaliaZPrigimalia'
+          Write-Host 'READ_ONLY_DIAG_V4_START'
+          Write-Host ('NOW_UTC='+(Get-Date).ToUniversalTime().ToString('o'))
+          Write-Host ('PROJECT_EXISTS='+(Test-Path -LiteralPath (Join-Path $src 'AnomaliaZPrigimalia.uproject') -PathType Leaf))
+          foreach($name in @('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')) {
+            $live=Join-Path $actual $name
+            $exp=Join-Path $expected $name
+            if(!(Test-Path $live -PathType Leaf) -or !(Test-Path $exp -PathType Leaf)) {
+              Write-Host ('FILE_MISSING='+$name)
+              continue
+            }
+            $txt=[IO.File]::ReadAllText($live)
+            $ref=[IO.File]::ReadAllText($exp)
+            $norm=$txt.TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+            $refnorm=$ref.TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+            Write-Host ('FILE='+$name)
+            Write-Host ('LOCAL_SHA256='+(Get-FileHash $live -Algorithm SHA256).Hash)
+            Write-Host ('GITHUB_SHA256='+(Get-FileHash $exp -Algorithm SHA256).Hash)
+            Write-Host ('CONTENTS_MATCH=' + [string]::Equals($norm,$refnorm,[StringComparison]::Ordinal))
+            Write-Host ('LIVE_MODIFIED_UTC='+[IO.File]::GetLastWriteTimeUtc($live).ToString('o'))
+            if($name.EndsWith('.cpp')){
+              Write-Host ('LIVE_HAS_BAD_ELSE='+$txt.Contains('            else bBloodFinished = false;'))
+              Write-Host ('LIVE_HAS_CORRECTED_CALLBACK='+$txt.Contains('OnMovieOpened'))
+              Write-Host ('LIVE_HAS_EMERGENCY='+$txt.Contains('BeginEmergencyScreen'))
+            }
+          }
+          foreach($name in @('INTRO_JEU_24s_MUSIQUE.mp4','ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4','ANOMALIAZ_Alerte_Rouge_5s.mp4')){
+            $p=Join-Path $src ('Content\Movies\'+$name)
+            Write-Host ('MEDIA_PRESENT '+$name+'='+(Test-Path $p -PathType Leaf))
+          }
+          $voice=Join-Path $src 'Content\AnomaliaZPrigimalia\Branding\SW_IntroTitle_Original_v5.uasset'
+          Write-Host ('ORIGINAL_VOICE_UASSET_PRESENT='+(Test-Path $voice -PathType Leaf))
+          $bk=Join-Path $src 'Saved\IntroInstall'
+          if(Test-Path $bk -PathType Container){
+            Get-ChildItem -LiteralPath $bk -Directory | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 3 | ForEach-Object {
+              Write-Host ('INTRO_BACKUP_FOUND='+$_.Name+' UTC='+$_.LastWriteTimeUtc.ToString('o'))
+            }
+          }
+          $ubt=Join-Path $env:LOCALAPPDATA 'UnrealBuildTool\Log.txt'
+          if(Test-Path $ubt -PathType Leaf){
+            Write-Host ('UBT_LOG_UPDATED='+[IO.File]::GetLastWriteTimeUtc($ubt).ToString('o'))
+            Get-Content -LiteralPath $ubt -Tail 300 | Where-Object {
+              $_ -match 'error C[0-9]+|fatal error|Result:|BUILD FAILED|Exception:|Total execution time|PREBUILD_|Missing|Failed|NoUBA|UBT ERROR|Compilation native'
+            } | Select-Object -Last 40 | ForEach-Object { Write-Host ('UBT: '+$_) }
+          } else {Write-Host 'UBT_LOG_NOT_FOUND'}
+          $busy=Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,MSBuild,dotnet -ErrorAction SilentlyContinue | Select-Object -ExpandProperty ProcessName -Unique
+          Write-Host ('RELATED_PROCESS_NAMES='+($busy -join ','))
+          Write-Host 'READ_ONLY_DIAG_V4_COMPLETE_NO_PROJECT_CHANGES=true'
