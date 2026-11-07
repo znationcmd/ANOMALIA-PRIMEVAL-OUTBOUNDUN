@@ -41,7 +41,7 @@ checkpoint()
 for row in manifest["imports"]:
  if row["sha256"] in completed:batch["skippedPriorSources"]+=1;continue
  if row["sha256"] in failed:continue
- if attempts>=100 or time.monotonic()-started>25*60:break
+ if attempts>=int(os.environ.get("IMPORT_MAX_SOURCES","100")) or time.monotonic()-started>25*60:break
  if min(shutil.disk_usage(d+":/").free for d in ["C","D"])<8*1024**3:
   batch["pausedForDiskReserve"]=True;break
  source=pathlib.Path(row["prepared"]);family=row["family"]
