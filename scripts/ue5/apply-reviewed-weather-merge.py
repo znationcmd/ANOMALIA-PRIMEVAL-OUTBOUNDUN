@@ -29,15 +29,22 @@ for row in report["clean"]:
  elif dst.exists():raise RuntimeError("A reviewed new native path now exists; preserve it")
  text=src.read_text(encoding="utf-8")
  if any(line.startswith(("<<<<<<<","=======",">>>>>>>")) for line in text.splitlines()):raise RuntimeError("Unresolved conflict marker; source preserved")
+ if dst.exists() and getattr(dst.lstat(),"st_file_attributes",0)&0x400:raise RuntimeError("Existing source reparse point preserved")
+ if not dst.parent.resolve().is_relative_to(sources.resolve()):raise RuntimeError("Main source parent escapes the actual module")
  entries.append((dst,src,dst.exists()))
 backup=OUT/"originals";backup.mkdir()
 if (MAIN/"Binaries").exists():shutil.copytree(MAIN/"Binaries",backup/"Binaries")
+def atomic_copy(src,dst):
+ temporary=dst.with_name(dst.name+".weather-"+uuid.uuid4().hex+".tmp")
+ with temporary.open("xb") as f:
+  f.write(src.read_bytes());f.flush();os.fsync(f.fileno())
+ os.replace(temporary,dst)
 written=[]
 try:
  for dst,src,existed in entries:
   if existed:
    original=backup/"Source"/dst.relative_to(sources);original.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(dst,original)
-  dst.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(src,dst);written.append((dst,existed))
+  dst.parent.mkdir(parents=True,exist_ok=True);atomic_copy(src,dst);written.append((dst,existed))
  for target in ["AnomaliaPrimevalEditor","AnomaliaPrimeval"]:
   cmd=[os.environ.get("COMSPEC","cmd.exe"),"/d","/c",str(ENGINE/"Engine/Build/BatchFiles/Build.bat"),target,"Win64","Development","-Project="+str(MAIN/"AnomaliaPrimeval.uproject"),"-WaitMutex","-NoHotReloadFromIDE"]
   with (OUT/(target+".log")).open("w",encoding="utf-8") as f:code=subprocess.run(cmd,stdout=f,stderr=subprocess.STDOUT).returncode
@@ -56,7 +63,7 @@ try:
 except BaseException as exc:
  failed=OUT/"failed-native-output";failed.mkdir(exist_ok=True)
  for dst,existed in written:
-  if existed:shutil.copy2(backup/"Source"/dst.relative_to(sources),dst)
+  if existed:atomic_copy(backup/"Source"/dst.relative_to(sources),dst)
   elif dst.exists():
    archived=failed/"Source"/dst.relative_to(sources);archived.parent.mkdir(parents=True,exist_ok=True);shutil.move(dst,archived)
  if (backup/"Binaries").exists():
