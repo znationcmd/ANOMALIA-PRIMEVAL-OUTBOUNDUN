@@ -5,17 +5,18 @@
 #include "AnomaliaZPrigimaliaIntroWidget.generated.h"
 
 class APlayerController;
-class UAudioComponent;
 class UButton;
 class UImage;
 class UMediaPlayer;
 class UMediaSoundComponent;
 class UMediaTexture;
-class UTextBlock;
 
 /**
- * Local startup only: a 24-second original-scene movie followed by the user's original voice and blood on click, then 5 seconds of red emergency announcement.
- * All existing game / server / persistence state stays in the original GameMode.
+ * A SINGLE, user-approved 35-second H.264/AAC movie (24s intro, 6s original
+ * blood and spoken title, 5s red emergency card), then the genuine native menu.
+ * At 24 seconds the ONE movie pauses for the original "click to start" action.
+ * The remaining 11 seconds play from the SAME media file after the click.
+ * No separate voice, blood movie, alert movie or spliced playback is required.
  */
 UCLASS()
 class ANOMALIAZPRIGIMALIA_API UAnomaliaZPrigimaliaIntroWidget : public UUserWidget
@@ -23,7 +24,7 @@ class ANOMALIAZPRIGIMALIA_API UAnomaliaZPrigimaliaIntroWidget : public UUserWidg
     GENERATED_BODY()
 
 public:
-    /** nullptr means media is absent; caller should open the original menu. */
+    /** Return nullptr if the merged movie is missing, allowing the GameMode's real menu fallback. */
     static UAnomaliaZPrigimaliaIntroWidget* Open(APlayerController* PC);
 
 protected:
@@ -35,28 +36,21 @@ protected:
 private:
     UFUNCTION() void OnVideoEnded();
     UFUNCTION() void OnMovieOpenFailed(FString FailedUrl);
-    UFUNCTION() void OnMovieOpened(FString OpenedUrl);
     UFUNCTION() void OnContinueClicked();
-    UFUNCTION() void OnVoiceEnded();
+    UFUNCTION() void OnSkipClicked();
 
-    void BeginEmergencyScreen();
+    void PauseAtClick();
     void FinishToMainMenu();
 
     UPROPERTY(Transient) TObjectPtr<UMediaPlayer> VideoPlayer;
     UPROPERTY(Transient) TObjectPtr<UMediaTexture> VideoTexture;
     UPROPERTY(Transient) TObjectPtr<UMediaSoundComponent> VideoSound;
-    UPROPERTY(Transient) TObjectPtr<UAudioComponent> VoiceComponent;
     UPROPERTY(Transient) TObjectPtr<UImage> VideoImage;
     UPROPERTY(Transient) TObjectPtr<UButton> ContinueButton;
     UPROPERTY(Transient) TObjectPtr<UButton> SkipButton;
-    UPROPERTY(Transient) TObjectPtr<UTextBlock> ContinueText;
 
-    enum class EIntroPhase : uint8 { Intro, BloodAndVoice, Emergency };
-    EIntroPhase Phase = EIntroPhase::Intro;
+    bool bAwaitingClick = false;
     bool bClicked = false;
     bool bMenuOpened = false;
-    bool bBloodFinished = false;
-    bool bVoiceFinished = false;
     double ClickStartedAt = -1.0;
-    double EmergencyStartedAt = -1.0;
 };
