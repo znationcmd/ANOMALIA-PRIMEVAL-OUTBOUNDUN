@@ -13,6 +13,7 @@
 #include "Components/SkeletalMeshComponent.h"
 #include "Engine/SkeletalMesh.h"
 #include "AnomaliaZPrigimaliaVitalsComponent.h"
+#include "Survival/AnomaliaZPrigimaliaWeather.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -367,6 +368,10 @@ void AAnomaliaZPrigimaliaGameMode::LoadPersistentPlayer(APlayerController* Playe
         }
         if (bValidVitals)
             Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
+        double Wetness=0,HeadWetness=0;
+        if(Survival->HasField(TEXT("wetness")))Survival->TryGetNumberField(TEXT("wetness"),Wetness);
+        if(Survival->HasField(TEXT("headWetness")))Survival->TryGetNumberField(TEXT("headWetness"),HeadWetness);
+        Survivor->VitalsComponent->RestoreExposure(static_cast<float>(Wetness),static_cast<float>(HeadWetness));
     }
     if(Survivor->ItemEffectsComponent)
     {
@@ -450,6 +455,8 @@ bool AAnomaliaZPrigimaliaGameMode::SavePersistentPlayer(AController* Controller)
         Survival->SetNumberField(TEXT("stamina"), FMath::Clamp(Survivor->VitalsComponent->Stamina, 0.f, 100.f));
         Survival->SetNumberField(TEXT("bodyTemperatureC"),
             FMath::Clamp(Survivor->VitalsComponent->BodyTemperatureC, 25.f, 45.f));
+        Survival->SetNumberField(TEXT("wetness"),Survivor->VitalsComponent->Wetness);
+        Survival->SetNumberField(TEXT("headWetness"),Survivor->VitalsComponent->HeadWetness);
     }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
@@ -529,6 +536,7 @@ AAnomaliaZPrigimaliaVehiclePawn* AAnomaliaZPrigimaliaGameMode::SpawnServerVehicl
 
 void AAnomaliaZPrigimaliaGameMode::BeginPlay()
 {
+    if(HasAuthority()&&!AAnomaliaZPrigimaliaWeather::Find(GetWorld()))GetWorld()->SpawnActor<AAnomaliaZPrigimaliaWeather>();
     Super::BeginPlay();
     if (HasAuthority())
     {
@@ -776,3 +784,4 @@ void AAnomaliaZPrigimaliaGameMode::RetryPendingProfileLoads()
             LoadPersistentPlayer(Controller);
     }
 }
+
