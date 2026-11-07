@@ -2,15 +2,12 @@
 
 #include "AnomaliaZPrigimaliaSessionWidget.h"
 #include "Blueprint/WidgetTree.h"
-#include "Components/AudioComponent.h"
 #include "Components/Border.h"
 #include "Components/Button.h"
 #include "Components/Image.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/TextBlock.h"
-#include "Components/VerticalBox.h"
-#include "Components/VerticalBoxSlot.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "MediaPlayer.h"
@@ -18,33 +15,16 @@
 #include "MediaTexture.h"
 #include "Misc/Paths.h"
 #include "HAL/PlatformTime.h"
-#include "Sound/SoundBase.h"
 
 namespace
 {
-    FString IntroMoviePath()
+    FString UnifiedMoviePath()
     {
-        // Staged non-UAsset movie: ensure packaging copies Content/Movies.
+        // ONE continuous H264/AAC MP4, duration 35.000s. All sounds and scenes
+        // are embedded: no extra Voice SoundWave, blood or emergency file.
         return FPaths::ConvertRelativePathToFull(FPaths::Combine(
             FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("INTRO_JEU_24s_MUSIQUE.mp4")));
-    }
-
-    FString EmergencyMoviePath()
-    {
-        // Exactly five seconds of the user-approved red/yellow alert screen.
-        return FPaths::ConvertRelativePathToFull(FPaths::Combine(
-            FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_Alerte_Rouge_5s.mp4")));
-    }
-
-    FString ClickBloodMoviePath()
-    {
-        // Click-only original liquid blood animation, no spoken audio embedded.
-        // The spoken title remains the separate SW_IntroTitle SoundWave.
-        return FPaths::ConvertRelativePathToFull(FPaths::Combine(
-            FPaths::ProjectContentDir(), TEXT("Movies"),
-            TEXT("ANOMALIAZ_PRIGIMALIA_Clic_Sang_6s.mp4")));
+            TEXT("ANOMALIAZ_PRIGIMALIA_GENERIQUE_35s_ALERTE_ROUGE.mp4")));
     }
 }
 
@@ -52,16 +32,16 @@ UAnomaliaZPrigimaliaIntroWidget* UAnomaliaZPrigimaliaIntroWidget::Open(APlayerCo
 {
     if (!PC || !PC->IsLocalController() || PC->GetNetMode() != NM_Standalone)
         return nullptr;
-    if (!FPaths::FileExists(IntroMoviePath()))
+    if (!FPaths::FileExists(UnifiedMoviePath()))
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MOVIE_MISSING: %s"), *IntroMoviePath());
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_MOVIE_MISSING: %s"), *UnifiedMoviePath());
         return nullptr;
     }
 
     auto* Intro = CreateWidget<UAnomaliaZPrigimaliaIntroWidget>(PC, StaticClass());
     if (!Intro) return nullptr;
     Intro->AddToViewport(120);
-    if (Intro->bMenuOpened) return Intro; // OpenFile may have failed during NativeConstruct.
+    if (Intro->bMenuOpened) return Intro;
     UGameplayStatics::SetGamePaused(PC, true);
     FInputModeUIOnly Mode;
     Mode.SetWidgetToFocus(Intro->TakeWidget());
@@ -84,14 +64,14 @@ TSharedRef<SWidget> UAnomaliaZPrigimaliaIntroWidget::RebuildWidget()
         Backdrop->SetBrushColor(FLinearColor::Black);
         Root->AddChildToOverlay(Backdrop);
 
-        VideoImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("IntroMovieFrame"));
+        VideoImage = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass(), TEXT("Unified35sMovie"));
         VideoImage->SetVisibility(ESlateVisibility::HitTestInvisible);
         auto* MovieSlot = Root->AddChildToOverlay(VideoImage);
         MovieSlot->SetHorizontalAlignment(HAlign_Fill);
         MovieSlot->SetVerticalAlignment(VAlign_Fill);
 
         ContinueButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("IntroContinue"));
-        ContinueText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("IntroContinueLabel"));
+        auto* ContinueText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("IntroContinueLabel"));
         ContinueText->SetText(FText::FromString(TEXT("CLIQUER POUR COMMENCER")));
         ContinueText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
         ContinueText->SetJustification(ETextJustify::Center);
@@ -104,11 +84,11 @@ TSharedRef<SWidget> UAnomaliaZPrigimaliaIntroWidget::RebuildWidget()
         ContinueSlot->SetPadding(FMargin(24.f, 24.f, 24.f, 84.f));
 
         SkipButton = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), TEXT("IntroSkip"));
-        auto* SkipLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
-        SkipLabel->SetText(FText::FromString(TEXT("PASSER  >>")));
-        SkipLabel->SetColorAndOpacity(FSlateColor(FLinearColor::White));
-        SkipButton->SetContent(SkipLabel);
-        SkipButton->OnClicked.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked);
+        auto* SkipText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass(), TEXT("IntroSkipLabel"));
+        SkipText->SetText(FText::FromString(TEXT("PASSER  >>")));
+        SkipText->SetColorAndOpacity(FSlateColor(FLinearColor::White));
+        SkipButton->SetContent(SkipText);
+        SkipButton->OnClicked.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnSkipClicked);
         auto* SkipSlot = Root->AddChildToOverlay(SkipButton);
         SkipSlot->SetHorizontalAlignment(HAlign_Right);
         SkipSlot->SetVerticalAlignment(VAlign_Bottom);
@@ -121,7 +101,6 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
 {
     Super::NativeConstruct();
     SetIsFocusable(true);
-
     VideoPlayer = NewObject<UMediaPlayer>(this);
     VideoTexture = NewObject<UMediaTexture>(this);
     if (!VideoPlayer || !VideoTexture)
@@ -133,7 +112,6 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
     VideoPlayer->PlayOnOpen = true;
     VideoPlayer->OnEndReached.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
     VideoPlayer->OnMediaOpenFailed.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
-    VideoPlayer->OnMediaOpened.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened);
     VideoTexture->SetMediaPlayer(VideoPlayer);
     VideoTexture->UpdateResource();
 
@@ -144,7 +122,7 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
 
     if (APlayerController* PC = GetOwningPlayer())
     {
-        VideoSound = NewObject<UMediaSoundComponent>(PC, TEXT("PrigimaliaIntroMovieSound"));
+        VideoSound = NewObject<UMediaSoundComponent>(PC, TEXT("PrigimaliaUnified35sSound"));
         if (VideoSound)
         {
             VideoSound->SetMediaPlayer(VideoPlayer);
@@ -152,143 +130,81 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeConstruct()
             VideoSound->Activate(true);
         }
     }
-
-    if (!VideoPlayer->OpenFile(IntroMoviePath()))
+    if (!VideoPlayer->OpenFile(UnifiedMoviePath()))
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_OPEN_FAILED"));
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_OPEN_FAILED"));
         FinishToMainMenu();
     }
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed(FString FailedUrl)
 {
-    UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_MEDIA_FAILED: %s"), *FailedUrl);
-    if (bMenuOpened) return;
-
-    if (Phase == EIntroPhase::Emergency)
-    {
-        // Never trap the game if the five-second clip is missing or unreadable.
-        FinishToMainMenu();
-    }
-    else if (Phase == EIntroPhase::BloodAndVoice)
-    {
-        bBloodFinished = true;
-        if (bVoiceFinished) BeginEmergencyScreen();
-    }
-    else
-    {
-        FinishToMainMenu();
-    }
+    UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_MEDIA_FAILED: %s"), *FailedUrl);
+    FinishToMainMenu();
 }
 
-void UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened(FString OpenedUrl)
+void UAnomaliaZPrigimaliaIntroWidget::PauseAtClick()
 {
-    // Begin the exact five-second hold when the image decoder is ready.
-    if (!bMenuOpened && Phase == EIntroPhase::Emergency)
-        EmergencyStartedAt = FPlatformTime::Seconds();
-}
-
-void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
-{
-    if (bMenuOpened) return;
-    if (Phase == EIntroPhase::Emergency)
-    {
-        // NativeTick enforces 5 seconds regardless of early decoder callbacks.
-        return;
-    }
-    if (Phase == EIntroPhase::BloodAndVoice)
-    {
-        bBloodFinished = true;
-        if (bVoiceFinished) BeginEmergencyScreen();
-        return;
-    }
-    if (ContinueButton) ContinueButton->SetVisibility(ESlateVisibility::Visible);
+    if (bAwaitingClick || bClicked || bMenuOpened) return;
+    bAwaitingClick = true;
+    if (VideoPlayer) VideoPlayer->Pause();
     if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
+    if (ContinueButton)
+    {
+        ContinueButton->SetIsEnabled(true);
+        ContinueButton->SetVisibility(ESlateVisibility::Visible);
+    }
+    UE_LOG(LogTemp, Log, TEXT("PRIGIMALIA_UNIFIED_35S_PAUSED_AT_CLICK"));
+}
+
+void UAnomaliaZPrigimaliaIntroWidget::OnSkipClicked()
+{
+    if (bClicked || bAwaitingClick || bMenuOpened || !VideoPlayer) return;
+    // PASSER skips only the first 24 seconds, not the original spoken name,
+    // blood sequence or five-second red announcement.
+    if (!VideoPlayer->Seek(FTimespan::FromSeconds(23.9)))
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_SKIP_SEEK_FAILED"));
+    PauseAtClick();
 }
 
 void UAnomaliaZPrigimaliaIntroWidget::OnContinueClicked()
 {
-    if (bClicked || bMenuOpened) return;
+    if (bClicked || bMenuOpened || !bAwaitingClick) return;
     bClicked = true;
-    Phase = EIntroPhase::BloodAndVoice;
+    bAwaitingClick = false;
     ClickStartedAt = FPlatformTime::Seconds();
-    bBloodFinished = true; // Fallback when the blood clip cannot be opened.
-    if (VideoPlayer)
-    {
-        VideoPlayer->Close();
-        // As soon as the player clicks, this replaces the intro by six seconds
-        // of visibly flowing crimson drips over the existing game artwork.
-        // The sequence is deliberately silent; voice is triggered below.
-        if (FPaths::FileExists(ClickBloodMoviePath()))
-        {
-            if (!VideoPlayer->OpenFile(ClickBloodMoviePath()))
-            {
-                UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_FAILED"));
-            }
-            else
-            {
-                bBloodFinished = false;
-            }
-        }
-        else
-        {
-            UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_BLOOD_MOVIE_MISSING"));
-        }
-    }
-    if (ContinueButton) ContinueButton->SetIsEnabled(false);
-    if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
-    // No on-screen title. The zombie voice is the only title announcement.
     if (ContinueButton) ContinueButton->SetVisibility(ESlateVisibility::Collapsed);
-
-    // Independent voice on click; movie sound does NOT substitute for the click reaction.
-    USoundBase* Voice = LoadObject<USoundBase>(nullptr,
-        TEXT("/Game/AnomaliaZPrigimalia/Branding/SW_IntroTitle_Original_v5.SW_IntroTitle_Original_v5"));
-    if (!Voice)
+    if (SkipButton) SkipButton->SetVisibility(ESlateVisibility::Collapsed);
+    // Resume THE SAME 35-second file at 24 seconds: embedded original voice,
+    // six seconds of original blood and five seconds of the red emergency card.
+    if (!VideoPlayer || !VideoPlayer->Play())
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_INTRO_TITLE_VOICE_MISSING: import VOIX_ET_SON_ORIGINAUX_NON_MODIFIES.wav"));
-        bVoiceFinished = true;
-        if (bBloodFinished) BeginEmergencyScreen();
-        return;
-    }
-    VoiceComponent = UGameplayStatics::CreateSound2D(
-        this, Voice, 1.f, 1.f, 0.f, nullptr, false, false);
-    if (VoiceComponent)
-    {
-        VoiceComponent->bIsUISound = true;
-        VoiceComponent->OnAudioFinished.AddDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded);
-        VoiceComponent->Play();
-    }
-    else
-    {
-        bVoiceFinished = true;
-        if (bBloodFinished) BeginEmergencyScreen();
-    }
-}
-
-void UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded()
-{
-    if (bMenuOpened || Phase != EIntroPhase::BloodAndVoice) return;
-    bVoiceFinished = true;
-    // Wait for BOTH the original voice and the exact six-second blood animation.
-    if (bBloodFinished) BeginEmergencyScreen();
-}
-
-void UAnomaliaZPrigimaliaIntroWidget::BeginEmergencyScreen()
-{
-    if (bMenuOpened || Phase != EIntroPhase::BloodAndVoice) return;
-    if (!bVoiceFinished || !bBloodFinished) return;
-    Phase = EIntroPhase::Emergency;
-    EmergencyStartedAt = FPlatformTime::Seconds();
-    if (!VideoPlayer || !FPaths::FileExists(EmergencyMoviePath()))
-    {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_EMERGENCY_5S_MOVIE_MISSING"));
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_RESUME_FAILED"));
         FinishToMainMenu();
-        return;
     }
-    VideoPlayer->Close();
-    if (!VideoPlayer->OpenFile(EmergencyMoviePath()))
+}
+
+void UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded()
+{
+    // At second 35, the actual native Unreal main menu appears automatically.
+    FinishToMainMenu();
+}
+
+void UAnomaliaZPrigimaliaIntroWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
+{
+    Super::NativeTick(Geometry, DeltaTime);
+    if (bMenuOpened || !VideoPlayer) return;
+    if (!bClicked && !bAwaitingClick && VideoPlayer->GetTime().GetTotalSeconds() >= 23.95)
     {
-        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_EMERGENCY_5S_MOVIE_OPEN_FAILED"));
+        // Do not interrupt the title voice which begins in the same MP4 at 24s.
+        PauseAtClick();
+    }
+    if (bClicked && ClickStartedAt >= 0.0 &&
+        FPlatformTime::Seconds() - ClickStartedAt > 12.5)
+    {
+        // The remaining integrated movie is only 11 seconds. Prevent a
+        // permanently paused/black UI if an end callback is lost.
+        UE_LOG(LogTemp, Warning, TEXT("PRIGIMALIA_UNIFIED_35S_END_CALLBACK_TIMEOUT"));
         FinishToMainMenu();
     }
 }
@@ -301,37 +217,11 @@ void UAnomaliaZPrigimaliaIntroWidget::FinishToMainMenu()
     RemoveFromParent();
     if (PC && !UAnomaliaZPrigimaliaSessionWidget::Open(PC, true))
     {
-        // Never leave a player permanently paused when the UI cannot be built.
+        // Never strand the player on a paused intro if the menu cannot open.
         UGameplayStatics::SetGamePaused(PC, false);
         FInputModeGameOnly Mode;
         PC->SetInputMode(Mode);
         PC->bShowMouseCursor = false;
-    }
-}
-
-
-void UAnomaliaZPrigimaliaIntroWidget::NativeTick(const FGeometry& Geometry, float DeltaTime)
-{
-    Super::NativeTick(Geometry, DeltaTime);
-    if (bMenuOpened) return;
-    const double Now = FPlatformTime::Seconds();
-    if (Phase == EIntroPhase::BloodAndVoice && ClickStartedAt >= 0.0)
-    {
-        // Windows MediaPlayer end callbacks can be missed in paused UI scenes.
-        // The actual blood video is exactly six seconds long.
-        if (!bBloodFinished && Now - ClickStartedAt >= 6.25)
-            bBloodFinished = true;
-        // Failsafe only: the original recording is ~5.04s, don't risk a frozen menu.
-        if (!bVoiceFinished && Now - ClickStartedAt >= 9.0)
-            bVoiceFinished = true;
-        if (bBloodFinished && bVoiceFinished)
-            BeginEmergencyScreen();
-    }
-    else if (Phase == EIntroPhase::Emergency && EmergencyStartedAt >= 0.0 &&
-             Now - EmergencyStartedAt >= 5.0)
-    {
-        // Show exactly five seconds, THEN open the real Unreal session menu.
-        FinishToMainMenu();
     }
 }
 
@@ -341,7 +231,6 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeDestruct()
     {
         VideoPlayer->OnEndReached.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVideoEnded);
         VideoPlayer->OnMediaOpenFailed.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpenFailed);
-        VideoPlayer->OnMediaOpened.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnMovieOpened);
         VideoPlayer->Close();
     }
     if (VideoSound)
@@ -349,13 +238,6 @@ void UAnomaliaZPrigimaliaIntroWidget::NativeDestruct()
         VideoSound->Stop();
         VideoSound->DestroyComponent();
         VideoSound = nullptr;
-    }
-    if (VoiceComponent)
-    {
-        VoiceComponent->OnAudioFinished.RemoveDynamic(this, &UAnomaliaZPrigimaliaIntroWidget::OnVoiceEnded);
-        VoiceComponent->Stop();
-        VoiceComponent->DestroyComponent();
-        VoiceComponent = nullptr;
     }
     Super::NativeDestruct();
 }
