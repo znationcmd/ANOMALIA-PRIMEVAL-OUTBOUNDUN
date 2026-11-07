@@ -29,6 +29,7 @@ def checkpoint():
  batch["completedSourcesTotal"]=len(completed);batch["remainingSources"]=report["remainingSources"]
  batch["freeNow"]={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
  (OUT/"import-batch-summary.json").write_text(json.dumps(batch,indent=2),encoding="utf-8")
+ (STATE/"last-import-batch.json").write_text(json.dumps(batch,indent=2),encoding="utf-8")
  print("ACTUAL_PROJECT_IMPORT "+json.dumps(batch),flush=True)
 def sha(p):
  h=hashlib.sha256()
