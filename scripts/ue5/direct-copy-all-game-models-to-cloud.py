@@ -124,6 +124,18 @@ def transfer_pending(items,db,journal,dest,previous,summary,deadline,save,worker
      done,_=wait(pending,return_when=FIRST_COMPLETED)
      for future in done:receive(future)
     cfree,hfree=capacity()
+    if cfree<832*1024**2 or hfree<320*1024**2:
+     previous_state=summary.get("state","COPYING_CITY_SAMPLE_FIRST")
+     summary["state"]="WAITING_FOR_DRIVE_CACHE_SPACE";flush(True)
+     waited=time.monotonic()
+     while time.monotonic()<deadline:
+      cfree,hfree=capacity()
+      summary["CFreeNow"]=cfree;summary["DriveClientFreeNow"]=hfree
+      if cfree>=832*1024**2 and hfree>=320*1024**2:break
+      time.sleep(min(5,max(0,deadline-time.monotonic())));flush()
+     summary["cacheWaitSeconds"]=summary.get("cacheWaitSeconds",0)+(time.monotonic()-waited)
+     summary["state"]=previous_state
+     if time.monotonic()>=deadline:exhausted=False;break
     if cfree-reserved<size+768*1024**2 or hfree-reserved<size+256*1024**2:
      summary["deferred"]+=1;flush();continue
     relative=target_relative(raw);plain_target=dest/relative
