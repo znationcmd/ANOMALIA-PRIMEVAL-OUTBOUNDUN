@@ -61,10 +61,13 @@ def tick(delta):
    if package(world)!=MAP:raise RuntimeError('Actual editor world differs from installed main route')
    report['actualEditorWorld']=world.get_path_name()
    browser=getattr(unreal,'AnomaliaServerBrowserLibrary',None)
-   if browser:
+   if browser and hasattr(browser,'get_world_choices'):
     route=[x for x in browser.get_world_choices() if str(x.map_id)=='archipelago-v2']
     report['loadedNativeSkarvikRoute']=str(route[0].world_package) if route else None
     if route and P['basis']=='INSTALLED_NATIVE_SKARVIK_WORLD_CHOICE' and str(route[0].world_package)!=MAP:raise RuntimeError('Compiled map route differs from installed source; do not validate the wrong world')
+   elif P['basis']=='INSTALLED_NATIVE_SKARVIK_WORLD_CHOICE':
+    raise RuntimeError('Installed native browser route cannot be compared; preserve main-map identity guard')
+   else:report['loadedNativeBrowserUnavailable']=True
    for var in ['r.Nanite','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.Shadow.Virtual.Enable']:
     unreal.SystemLibrary.execute_console_command(world,var+' 0')
    report['testRenderingOverrides']={v:unreal.SystemLibrary.get_console_variable_int_value(v) for v in ['r.Nanite','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.Shadow.Virtual.Enable']}
