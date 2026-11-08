@@ -32,6 +32,7 @@ jobs:
             public/config/anomalia-map-catalog.json
             public/config/anomalia-locality-names.json
           sparse-checkout-cone-mode: false
+          sparse-checkout-cone-mode: false
           persist-credentials: false
       - name: Preserve existing maps and install narrowly matched sources with backups
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -79,6 +80,12 @@ jobs:
           if((Test-Path $backup) -and !(Test-Path (Join-Path $env:THREE_MAP_OUT 'compiled.marker'))) {
             foreach($row in (Get-Content $backup -Raw | ConvertFrom-Json)) {
               if($row.backup){Copy-Item -LiteralPath $row.backup -Destination $row.path -Force}
+              elseif($row.sha256 -and (Test-Path -LiteralPath $row.path)) {
+                if((Get-FileHash -LiteralPath $row.path -Algorithm SHA256).Hash -ne $row.sha256){throw 'New source changed externally; preserved for review'}
+                $quarantine=Join-Path $env:THREE_MAP_OUT ('failed-addon/'+[IO.Path]::GetFileName($row.path))
+                New-Item -ItemType Directory -Force -Path (Split-Path -Parent $quarantine) | Out-Null
+                Move-Item -LiteralPath $row.path -Destination $quarantine
+              }
             }
           }
           $before=Join-Path $env:THREE_MAP_OUT 'original-maps.json'
