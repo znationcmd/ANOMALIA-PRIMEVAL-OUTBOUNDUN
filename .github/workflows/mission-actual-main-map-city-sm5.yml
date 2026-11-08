@@ -1,0 +1,75 @@
+name: ANOMALIA mission - actual main SKARVIK City Sample DX11 SM5 and PIE validation
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-actual-main-map-city-sm5.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  main_route_tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            scripts/ue5/prepare-actual-main-map-sm5-check.py
+            tests/test_actual_main_map_selection.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - run: python -m unittest discover -s tests -p test_actual_main_map_selection.py -v
+  actual_main_map:
+    needs: main_route_tests
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: actual-main-sm5-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/prepare-actual-main-map-sm5-check.py
+            scripts/ue5/run-actual-main-map-sm5-validation.py
+            unreal/Content/Python/check_actual_main_map_city_sm5.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Resolve the installed main SKARVIK route and protect its original packages
+        timeout-minutes: 15
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory for rendered main-map check'}
+          if((Get-PSDrive C).Free -lt 12GB -or (Get-PSDrive D).Free -lt 8GB){throw 'Insufficient measured disk reserve for actual main-map check'}
+          $out='D:\ANOMALIA\unreal\Saved\MissionMainMapSM5\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "MAIN_MAP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:MAIN_MAP_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('actual-main-sm5-'+$env:GITHUB_RUN_ID+'\scripts\ue5\prepare-actual-main-map-sm5-check.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Actual main SKARVIK route could not be proven; no alternate map opened'}
+          exit 0
+      - name: Check City Sample buildings and attempt real DX11 SM5 PIE on that exact main map
+        timeout-minutes: 70
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('actual-main-sm5-'+$env:GITHUB_RUN_ID)
+          $launcher=Join-Path $repo 'scripts\ue5\run-actual-main-map-sm5-validation.py'
+          $native=Join-Path $repo 'unreal\Content\Python\check_actual_main_map_city_sm5.py'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $launcher $native
+          if($LASTEXITCODE -ne 0){throw 'Main-map validation found blockers; no other map substituted'}
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MAIN_MAP_OUT != ''
+        with:
+          name: actual-main-skarvik-city-sm5-pie-evidence
+          path: |
+            ${{ env.MAIN_MAP_OUT }}/main-map-preflight.json
+            ${{ env.MAIN_MAP_OUT }}/main-map-city-sm5.json
+            ${{ env.MAIN_MAP_OUT }}/main-map-sm5-validation.json
+            ${{ env.MAIN_MAP_OUT }}/main-map-sm5-engine.log
+            ${{ env.MAIN_MAP_OUT }}/main-map-sm5-process.log
+            ${{ env.MAIN_MAP_OUT }}/*.png
+          if-no-files-found: warn

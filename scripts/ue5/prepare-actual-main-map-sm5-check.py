@@ -1,0 +1,44 @@
+"""Resolve SKARVIK from the installed game's actual routing; never select a staging map."""
+import pathlib,os,re,json,hashlib,shutil
+PROJECT=pathlib.Path(r'D:\ANOMALIA\unreal')
+def sha(p):return hashlib.sha256(p.read_bytes()).hexdigest()
+def value(text,section,key):
+ current='';result=None
+ for line in text.splitlines():
+  line=line.strip()
+  if line.startswith('[') and line.endswith(']'):current=line[1:-1]
+  elif current==section and '=' in line and not line.startswith((';','#')):
+   name,v=line.split('=',1)
+   if name.strip()==key:result=v.strip()
+ return result
+def select_main(engine,source):
+ boot=value(engine,'/Script/EngineSettings.GameMapsSettings','GameDefaultMap')
+ match=re.search(r'TEXT\("archipelago-v2"\)\s*,\s*TEXT\("SKARVIK"\)\s*,\s*TEXT\("(/Game/[^\"]+)"\)',source)
+ routed=match.group(1) if match else None
+ if boot and ('SKARVIK' in boot.upper() or 'ARCHIPELAGO' in boot.upper()):selected=boot;basis='INSTALLED_GAME_DEFAULT_SKARVIK_MAP'
+ elif routed:selected=routed;basis='INSTALLED_NATIVE_SKARVIK_WORLD_CHOICE'
+ else:raise ValueError('Installed main SKARVIK route is unresolved; do not test a replacement map')
+ if not selected.startswith('/Game/') or '..' in selected:raise ValueError('Unsafe main map route')
+ return {'mainMap':selected,'basis':basis,'gameDefaultMap':boot,'nativeSkarvikRoute':routed,'bootRouteMismatch':bool(boot and boot!=selected)}
+def main():
+ out=pathlib.Path(os.environ['MAIN_MAP_OUT']);out.mkdir(parents=True,exist_ok=True)
+ assert (PROJECT/'AnomaliaPrimeval.uproject').is_file(),'Actual D project unavailable'
+ engine_path=PROJECT/'Config/DefaultEngine.ini';engine=engine_path.read_text(encoding='utf-8-sig')
+ browser=PROJECT/'Source/AnomaliaPrimeval/AnomaliaServerBrowserLibrary.cpp'
+ if not browser.is_file():raise ValueError('Installed native map routing source unavailable; preserve project')
+ route=select_main(engine,browser.read_text(encoding='utf-8-sig'))
+ file=PROJECT/'Content'/(route['mainMap'][len('/Game/'):]+'.umap')
+ if not file.is_file():raise ValueError('Configured main map is absent: '+str(file))
+ mode=PROJECT/'Source/AnomaliaPrimeval/AnomaliaGameMode.cpp'
+ code=mode.read_text(encoding='utf-8-sig') if mode.is_file() else ''
+ scope=re.search(r'FParse::Value\(FCommandLine::Get\(\),\s*TEXT\("([^\"]*AutomationServerId=)"\)',code)
+ report={**route,'project':str(PROJECT),'readOnly':True,'mapFile':str(file),'mapSHA256':sha(file),'engineConfigSHA256':sha(engine_path),'scopeOption':scope.group(1) if scope else None,'PIEAllowedWithIsolatedProfile':bool(scope),'advancedFinalExistsWithoutBeingOpened':(PROJECT/'Content/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.umap').is_file(),'persistentSM5TargetConfigured':'PCD3D_SM5' in engine,'persistentDefaultRHI':value(engine,'/Script/WindowsTargetPlatform.WindowsTargetSettings','DefaultGraphicsRHI'),'rendererSettings':{k:value(engine,'/Script/Engine.RendererSettings',k) for k in ['r.Nanite.ProjectEnabled','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.Shadow.Virtual.Enable']},'freeBytes':{d:shutil.disk_usage(d+':/').free for d in ['C','D']}}
+ protected=[]
+ for kind in ['__ExternalActors__','__ExternalObjects__']:
+  directory=PROJECT/'Content'/kind/route['mainMap'][len('/Game/'):]
+  if directory.is_dir():
+   for f in directory.rglob('*.uasset'):protected.append({'path':str(f),'bytes':f.stat().st_size,'sha256':sha(f)})
+ (out/'protected-main-map-packages.json').write_text(json.dumps(protected),encoding='utf-8')
+ (out/'main-map-preflight.json').write_text(json.dumps(report,indent=2),encoding='utf-8')
+ print(json.dumps(report),flush=True)
+if __name__=='__main__':main()
