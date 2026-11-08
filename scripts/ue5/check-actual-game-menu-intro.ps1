@@ -12,19 +12,46 @@ function ProjectRefs([string]$text) {
         [ordered]@{path=$path;exists=$exists;projectDescriptorMatchesActual=($exists -and ((Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash -eq $canonical))}
     })
 }
+$worker=Join-Path $OutputDirectory 'resolve-one-shortcut.ps1'
+@'
+param([string]$Shortcut,[string]$Output)
+$ErrorActionPreference='Stop'
 $shell=New-Object -ComObject WScript.Shell
+$link=$shell.CreateShortcut($Shortcut)
+$projects=@([regex]::Matches([string]$link.Arguments,'(?i)([A-Z]:[^"\r\n]*?\.uproject)') | ForEach-Object {$_.Groups[1].Value})
+$launchers=@([regex]::Matches([string]$link.Arguments,'(?i)([A-Z]:[^"\r\n]*?\.(?:ps1|cmd|bat|vbs))') | ForEach-Object {$_.Groups[1].Value})
+[ordered]@{TargetPath=[string]$link.TargetPath;ProjectPaths=$projects;LauncherPaths=$launchers} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath $Output -Encoding utf8
+'@ | Set-Content -LiteralPath $worker -Encoding utf8
+$shortcutCount=0
+$progress=@()
+function WriteProgress {
+    [ordered]@{state='IDENTITY_CHECK_PROGRESS_NOT_RUNTIME_ACCEPTED';shortcutsSeen=$shortcutCount;events=$progress} | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'identity-progress.json') -Encoding utf8
+}
 $shortcuts=@()
 $folders=@([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('CommonDesktopDirectory')) | Select-Object -Unique
 foreach($folder in $folders){
     if(!(Test-Path -LiteralPath $folder)){continue}
-    foreach($file in (Get-ChildItem -LiteralPath $folder -File | Where-Object {$_.Name -match '(?i)anomalia|prigimalia'})){
+    foreach($file in (Get-ChildItem -LiteralPath $folder -File | Where-Object {$_.Name -match '(?i)anomalia|prigimalia'} | Sort-Object LastWriteTimeUtc -Descending)){
+        if($shortcutCount -ge 24){break}
+        $shortcutCount++
+        $progress+=@([ordered]@{file=$file.FullName;state='READING_TARGET'})
+        WriteProgress
         $row=[ordered]@{name=$file.Name;path=$file.FullName;type=$file.Extension;targetExists=$null;projects=@();nestedLaunchers=@();gameContentVersionVerified=$false}
         $text='';$target=$file.FullName
         if($file.Extension -eq '.lnk'){
-            $link=$shell.CreateShortcut($file.FullName)
+            $workerOut=Join-Path $OutputDirectory ('shortcut-'+$shortcutCount+'.json')
+            $child=Start-Process -FilePath 'powershell.exe' -ArgumentList @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',('"'+$worker+'"'),'-Shortcut',('"'+$file.FullName+'"'),'-Output',('"'+$workerOut+'"')) -PassThru -WindowStyle Hidden
+            if(!$child.WaitForExit(12000)){
+                $child.Kill()
+                $row.shortcutReadTimedOut=$true;$shortcuts+=@($row);continue
+            }
+            if($child.ExitCode -ne 0 -or !(Test-Path -LiteralPath $workerOut)){
+                $row.shortcutReadFailed=$true;$shortcuts+=@($row);continue
+            }
+            $link=Get-Content -LiteralPath $workerOut -Raw | ConvertFrom-Json
             $target=[string]$link.TargetPath
             $row.target=$target;$row.targetExists=Test-Path -LiteralPath $target
-            $text=[string]$link.Arguments
+            $text=(@($link.ProjectPaths)+@($link.LauncherPaths)) -join [Environment]::NewLine
         }
         $row.projects=@(ProjectRefs $text)
         if((Test-Path -LiteralPath $target -PathType Leaf) -and ([IO.Path]::GetExtension($target) -in @('.ps1','.cmd','.bat','.vbs'))){
@@ -45,9 +72,13 @@ foreach($folder in $folders){
         }
         if((Test-Path -LiteralPath $target -PathType Leaf) -and [IO.Path]::GetExtension($target) -eq '.exe'){
             $item=Get-Item -LiteralPath $target
-            $row.executable=[ordered]@{path=$target;product=$item.VersionInfo.ProductName;version=$item.VersionInfo.FileVersion;sha256=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash;electronResourcesPresent=(Test-Path -LiteralPath (Join-Path $item.DirectoryName 'resources/app.asar'))}
+            $binaryHash=$null
+            if($item.Length -le 32MB -and !($item.Attributes -band [IO.FileAttributes]::Offline)){$binaryHash=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash}
+            $row.executable=[ordered]@{path=$target;product=$item.VersionInfo.ProductName;version=$item.VersionInfo.FileVersion;sha256=$binaryHash;bytes=$item.Length;electronResourcesPresent=(Test-Path -LiteralPath (Join-Path $item.DirectoryName 'resources/app.asar'))}
         }
         $shortcuts+=@($row)
+        $progress+=@([ordered]@{file=$file.FullName;state='TARGET_RECORDED'})
+        WriteProgress
     }
 }
 $processes=@(Get-CimInstance Win32_Process | Where-Object {$_.Name -match '^(UnrealEditor(?:-Cmd)?|AnomaliaPrimeval(?:-Win64-Development)?|AnomaliaZPrigimalia(?:-Win64-Development)?)\.exe$'} | ForEach-Object {
