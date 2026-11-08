@@ -20,6 +20,10 @@ for row in completed.values():
   if asset.get("class")=="SkeletalMesh" and asset.get("skeleton") and unreal.EditorAssetLibrary.does_asset_exist(asset["skeleton"]):
    rigs.setdefault(row["family"],set()).add(asset["skeleton"])
 tools=unreal.AssetToolsHelpers.get_asset_tools()
+def write_active(row=None,destination=None):
+ data={"state":"IDLE"} if row is None else {"state":"IMPORTING_SOURCE","source":row["source"],"sha256":row["sha256"],"preparedSHA256":row["preparedSHA256"],"family":row["family"],"destination":destination,"startedUTC":time.time()}
+ target=OUT/"active-source.json";temp=target.with_suffix(".tmp")
+ temp.write_text(json.dumps(data),encoding="utf-8");os.replace(temp,target)
 started=time.monotonic();attempts=0
 batch={"newSources":0,"newAssets":0,"errors":[],"skippedPriorSources":0,"deferredSkeletons":0,"freeBefore":{d:shutil.disk_usage(d+":/").free for d in ["C","D"]}}
 def checkpoint():
@@ -50,8 +54,9 @@ for row in manifest["imports"]:
  owned=rigs.get(family,set())
  if animation and len(owned)!=1:batch["deferredSkeletons"]+=1;continue
  attempts+=1
- entry={"source":row["source"],"sha256":row["sha256"],"family":family,"assets":[]}
+ entry={"source":row["source"],"sha256":row["sha256"],"preparedSHA256":row["preparedSHA256"],"family":family,"assets":[]}
  destination=root+"/G_"+family[:12]+"/S_"+row["sha256"][:16]
+ write_active(row,destination)
  try:
   if not source.is_file():raise RuntimeError("Prepared source missing; retained source path requires recovery")
   if sha(source)!=row["preparedSHA256"]:raise RuntimeError("Prepared source SHA256 differs; preserved")
@@ -72,6 +77,7 @@ for row in manifest["imports"]:
     options.set_editor_property("mesh_type_to_import",unreal.FBXImportType.FBXIT_ANIMATION)
     options.set_editor_property("skeleton",unreal.load_asset(next(iter(owned))))
    task.set_editor_property("options",options);task.set_editor_property("factory",unreal.FbxFactory())
+  write_active(row,destination)
   tools.import_asset_tasks([task])
   paths=unreal.EditorAssetLibrary.list_assets(destination,recursive=True,include_folder=False)
   accepted=0
@@ -105,6 +111,6 @@ for row in manifest["imports"]:
   entry.update(state="FAILED_PRESERVED_FOR_DIAGNOSIS",error=str(exc))
   report["errors"].append(entry);failed.add(row["sha256"])
   batch["errors"].append({"source":str(source),"error":str(exc)})
- checkpoint();gc.collect();unreal.collect_garbage()
+ checkpoint();write_active();gc.collect();unreal.collect_garbage()
 report["state"]="RESUME_FINISHED_WITH_REMAINING_OR_ERRORS" if report.get("remainingSources") or failed else "IMPORTED_SAVED_RELOADED_GAMEPLAY_VALIDATION_REQUIRED"
 checkpoint()

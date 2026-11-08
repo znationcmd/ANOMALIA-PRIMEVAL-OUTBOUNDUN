@@ -1,8 +1,5 @@
 name: ANOMALIA mission - reclaim safe caches and resume models after disk unblock
 on:
-  push:
-    branches: [mission/finalisation-20261104]
-    paths: ['.github/workflows/mission-reclaim-ddc-and-resume-models.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -78,7 +75,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           path: resume-all-${{ github.run_id }}-${{ matrix.batch }}
-          sparse-checkout: unreal/Content/Python/resume_owned_model_imports.py
+          sparse-checkout: |
+            unreal/Content/Python/resume_owned_model_imports.py
+            scripts/ue5/run-owned-model-import-with-watchdog.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
       - name: Resume durable all-category source manifest in the actual project
@@ -101,7 +100,8 @@ jobs:
           $env:IMPORT_BATCH='${{ matrix.batch }}'
           $script=Join-Path $env:GITHUB_WORKSPACE ('resume-all-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\unreal\Content\Python\resume_owned_model_imports.py')
           $ErrorActionPreference='Continue'
-          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$out\engine.log" *> (Join-Path $out 'process.log')
+          $launcher=Join-Path $env:GITHUB_WORKSPACE ('resume-all-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\scripts\ue5\run-owned-model-import-with-watchdog.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $launcher $script *> (Join-Path $out 'process.log')
           $code=$LASTEXITCODE
           $ErrorActionPreference='Stop'
           $r=Get-Content -LiteralPath (Join-Path $out 'import-batch-summary.json') -Raw | ConvertFrom-Json
@@ -118,6 +118,9 @@ jobs:
             ${{ env.MODEL_OUT }}/import-batch-summary.json
             ${{ env.MODEL_OUT }}/engine.log
             ${{ env.MODEL_OUT }}/process.log
+            ${{ env.MODEL_OUT }}/native-process.log
+            ${{ env.MODEL_OUT }}/owned-import-process.json
+            ${{ env.MODEL_OUT }}/active-source.json
           if-no-files-found: warn
 
 # Resume requested after user closed applications, 2026-11-08; keep accepted-source ledger.
