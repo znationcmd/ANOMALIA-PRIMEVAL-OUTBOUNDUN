@@ -23,6 +23,15 @@ def select_main(engine,source):
  else:raise ValueError('Installed main SKARVIK route is unresolved; do not test a replacement map')
  if not selected.startswith('/Game/') or '..' in selected:raise ValueError('Unsafe main map route')
  return {'mainMap':selected,'basis':basis,'gameDefaultMap':boot,'nativeSkarvikRoute':routed,'bootRouteMismatch':bool(boot and boot!=selected)}
+def isolated_scope(code,main_map):
+ scope=re.search(r'FParse::Value\(FCommandLine::Get\(\),\s*TEXT\("([^"]*AutomationServerId=)"\)',code)
+ if not scope:return None,False
+ guard=code[max(0,scope.start()-900):scope.start()]
+ # This validator requests normal Editor PIE, not an Automation RunTests session.
+ if 'GIsAutomationTesting' in guard:return scope.group(1),False
+ restricted=re.findall(r'MapName\.EndsWith\(TEXT\("([^"]+)"\)\)',guard)
+ if restricted and not any(main_map.endswith(name) for name in restricted):return scope.group(1),False
+ return scope.group(1),True
 def main():
  out=pathlib.Path(os.environ['MAIN_MAP_OUT']);out.mkdir(parents=True,exist_ok=True)
  assert (PROJECT/'AnomaliaPrimeval.uproject').is_file(),'Actual D project unavailable'
@@ -40,8 +49,8 @@ def main():
  if not file.is_file():raise ValueError('Configured main map is absent: '+str(file))
  mode=PROJECT/'Source/AnomaliaPrimeval/AnomaliaGameMode.cpp'
  code=mode.read_text(encoding='utf-8-sig') if mode.is_file() else ''
- scope=re.search(r'FParse::Value\(FCommandLine::Get\(\),\s*TEXT\("([^\"]*AutomationServerId=)"\)',code)
- report={**route,'project':str(PROJECT),'readOnly':True,'mapFile':str(file),'mapSHA256':sha(file),'engineConfigSHA256':sha(engine_path),'scopeOption':scope.group(1) if scope else None,'PIEAllowedWithIsolatedProfile':bool(scope),'advancedFinalExistsWithoutBeingOpened':(PROJECT/'Content/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.umap').is_file(),'persistentSM5TargetConfigured':'PCD3D_SM5' in engine,'persistentDefaultRHI':value(engine,'/Script/WindowsTargetPlatform.WindowsTargetSettings','DefaultGraphicsRHI'),'rendererSettings':{k:value(engine,'/Script/Engine.RendererSettings',k) for k in ['r.Nanite.ProjectEnabled','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.Shadow.Virtual.Enable']},'freeBytes':{d:shutil.disk_usage(d+':/').free for d in ['C','D']}}
+ scope_option,scope_allowed=isolated_scope(code,route['mainMap'])
+ report={**route,'project':str(PROJECT),'readOnly':True,'mapFile':str(file),'mapSHA256':sha(file),'engineConfigSHA256':sha(engine_path),'scopeOption':scope_option,'PIEAllowedWithIsolatedProfile':scope_allowed,'advancedFinalExistsWithoutBeingOpened':(PROJECT/'Content/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.umap').is_file(),'persistentSM5TargetConfigured':'PCD3D_SM5' in engine,'persistentDefaultRHI':value(engine,'/Script/WindowsTargetPlatform.WindowsTargetSettings','DefaultGraphicsRHI'),'rendererSettings':{k:value(engine,'/Script/Engine.RendererSettings',k) for k in ['r.Nanite.ProjectEnabled','r.DynamicGlobalIlluminationMethod','r.ReflectionMethod','r.Shadow.Virtual.Enable']},'freeBytes':{d:shutil.disk_usage(d+':/').free for d in ['C','D']}}
  protected=[]
  for kind in ['__ExternalActors__','__ExternalObjects__']:
   directory=PROJECT/'Content'/kind/route['mainMap'][len('/Game/'):]
