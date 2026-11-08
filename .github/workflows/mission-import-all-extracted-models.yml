@@ -156,3 +156,5 @@ jobs:
             ${{ env.MODEL_OUT }}/engine.log
             ${{ env.MODEL_OUT }}/process.log
           if-no-files-found: warn
+
+# Resume requested after user closed applications, 2026-11-08; keep accepted-source ledger.
