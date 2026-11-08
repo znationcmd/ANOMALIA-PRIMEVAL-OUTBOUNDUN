@@ -68,6 +68,11 @@ public:
     TObjectPtr<UChaosWheeledVehicleMovementComponent> ChaosMovement;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
     TObjectPtr<USkeletalMesh> RoadMesh;
+    /** Complete authored skeletal car, including its visible body and wheels. Modular art stays the default. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") bool bUseIntegratedSkeletalVisuals=false;
+    /** Preserve the source vehicle wheel classes and per-wheel radii in their authored setup order. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<TSubclassOf<UChaosVehicleWheel>> AuthoredWheelClasses;
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos") TArray<float> AuthoredWheelRadiiCm;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Chaos")
     TSubclassOf<UAnimInstance> RoadAnimation;
     /** Licensed modular art, assembled on the actual animated skeleton. */

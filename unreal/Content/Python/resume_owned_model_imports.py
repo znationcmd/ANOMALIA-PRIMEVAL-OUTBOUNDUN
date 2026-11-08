@@ -24,14 +24,21 @@ def write_active(row=None,destination=None):
  data={"state":"IDLE"} if row is None else {"state":"IMPORTING_SOURCE","source":row["source"],"sha256":row["sha256"],"preparedSHA256":row["preparedSHA256"],"family":row["family"],"destination":destination,"startedUTC":time.time()}
  target=OUT/"active-source.json";temp=target.with_suffix(".tmp")
  temp.write_text(json.dumps(data),encoding="utf-8");os.replace(temp,target)
+scope_names=tuple(x.strip().casefold() for x in os.environ.get("IMPORT_SOURCE_NAMES","").split(",") if x.strip())
+def in_scope(row):
+ return not scope_names or any(name in str(row.get("source","")).casefold() for name in scope_names)
 started=time.monotonic();attempts=0
-batch={"newSources":0,"newAssets":0,"errors":[],"skippedPriorSources":0,"deferredSkeletons":0,"freeBefore":{d:shutil.disk_usage(d+":/").free for d in ["C","D"]}}
+batch={"scopeNames":list(scope_names),"circuitPlacementValidated":False,"newSources":0,"newAssets":0,"errors":[],"skippedPriorSources":0,"deferredSkeletons":0,"freeBefore":{d:shutil.disk_usage(d+":/").free for d in ["C","D"]}}
 def checkpoint():
  report["remainingSources"]=sum(r["sha256"] not in completed and r["sha256"] not in failed for r in manifest["imports"])
  report["completedSourceCount"]=len(completed);report["failedSourceCount"]=len(failed)
  tmp=receipt.with_suffix(".tmp");tmp.write_text(json.dumps(report,indent=2),encoding="utf-8");os.replace(tmp,receipt)
  batch["elapsedSeconds"]=time.monotonic()-started
  batch["completedSourcesTotal"]=len(completed);batch["remainingSources"]=report["remainingSources"]
+ batch["scopedPendingSources"]=sum(in_scope(r) and r["sha256"] not in completed and r["sha256"] not in failed for r in manifest["imports"])
+ batch["scopedFailedSources"]=[{"source":r.get("source"),"sha256":r["sha256"]} for r in manifest["imports"] if in_scope(r) and r["sha256"] in failed]
+ if scope_names:
+  batch["scopedAcceptedSources"]=[{"source":r.get("source"),"sha256":r["sha256"],"assetCount":len(completed[r["sha256"]].get("assets",[])),"assetExamples":completed[r["sha256"]].get("assets",[])[:12]} for r in manifest["imports"] if in_scope(r) and r["sha256"] in completed]
  batch["freeNow"]={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
  (OUT/"import-batch-summary.json").write_text(json.dumps(batch,indent=2),encoding="utf-8")
  (STATE/"last-import-batch.json").write_text(json.dumps(batch,indent=2),encoding="utf-8")
@@ -44,6 +51,7 @@ def sha(p):
 unreal.SystemLibrary.execute_console_command(None,"Interchange.FeatureFlags.Import.FBX 0")
 checkpoint()
 for row in manifest["imports"]:
+ if not in_scope(row):continue
  if row["sha256"] in completed:batch["skippedPriorSources"]+=1;continue
  if row["sha256"] in failed:continue
  if attempts>=int(os.environ.get("IMPORT_MAX_SOURCES","100")) or time.monotonic()-started>25*60:break

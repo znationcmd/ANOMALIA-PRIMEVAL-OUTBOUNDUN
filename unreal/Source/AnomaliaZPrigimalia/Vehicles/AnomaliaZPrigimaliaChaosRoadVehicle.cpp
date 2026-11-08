@@ -6,6 +6,8 @@
 #include "AnomaliaZPrigimaliaVehiclePanelComponent.h"
 #include "ChaosWheeledVehicleMovementComponent.h"
 #include "VehicleAnimationInstance.h"
+#include "Animation/AnimBlueprintGeneratedClass.h"
+#include "AnomaliaZPrigimaliaVehicleArtLayout.h"
 #include "Components/SkeletalMeshComponent.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -132,9 +134,25 @@ AAnomaliaZPrigimaliaChaosRoadVehicle::AAnomaliaZPrigimaliaChaosRoadVehicle()
 
 bool AAnomaliaZPrigimaliaChaosRoadVehicle::HasValidRoadRig() const
 {
-    if(!RoadMesh || !RoadMesh->GetPhysicsAsset() || !RoadBodyMesh || !RoadWheelMesh || !RoadAnimation ||
+    if(!RoadMesh || !RoadMesh->GetPhysicsAsset() || !RoadAnimation ||
        !RoadAnimation->IsChildOf(UVehicleAnimationInstance::StaticClass()) || WheelBones.Num()!=4 ||
        !FMath::IsFinite(WheelRadiusCm) || WheelRadiusCm<10.f || WheelRadiusCm>100.f) return false;
+    using namespace AnomaliaZPrigimaliaVehicleArt;
+    const bool bAnyDetachedArt=RoadBodyMesh || RoadWheelMesh || RoadGlassMesh || DriverDoorMesh ||
+        RoadWheelMeshes.Num()!=0 || RoadWheelHubTargetsCm.Num()!=0 || AdditionalPanelDefinitions.Num()!=0;
+    if(!IsLayoutConsistent(bUseIntegratedSkeletalVisuals,bAnyDetachedArt,
+        RoadBodyMesh!=nullptr,RoadWheelMesh!=nullptr,
+        AuthoredWheelClasses.Num(),AuthoredWheelRadiiCm.Num()))return false;
+    if(bUseIntegratedSkeletalVisuals)
+    {
+        const auto* Animation=Cast<UAnimBlueprintGeneratedClass>(RoadAnimation.Get());
+        if(!Animation || Animation->TargetSkeleton!=RoadMesh->GetSkeleton() ||
+            RoadMesh->GetPhysicsAsset()->SkeletalBodySetups.Num()==0)return false;
+        for(int32 Index=0;Index<4;++Index)
+            if(!AuthoredWheelClasses[Index] || AuthoredWheelClasses[Index]->HasAnyClassFlags(CLASS_Abstract) ||
+               !FMath::IsFinite(AuthoredWheelRadiiCm[Index]) ||
+               AuthoredWheelRadiiCm[Index]<10.f || AuthoredWheelRadiiCm[Index]>100.f)return false;
+    }
     if(AdditionalPanelDefinitions.Num()>AdditionalPanels.Num())return false;
     TSet<FName> PanelIds;PanelIds.Add(TEXT("driver_door"));
     for(const auto& Panel:AdditionalPanelDefinitions)
@@ -232,15 +250,18 @@ void AAnomaliaZPrigimaliaChaosRoadVehicle::ApplyRoadRig()
         Setup.BoneName=WheelBones[Index];
         if(bAuthoredWheels)
             Setup.AdditionalOffset=RoadWheelHubTargetsCm[Index]-ReferenceBoneTransform(WheelBones[Index]).GetTranslation();
-        Setup.WheelClass=Index<2?UAnomaliaZPrigimaliaRoadFrontWheel::StaticClass():UAnomaliaZPrigimaliaRoadRearWheel::StaticClass();
+        if(bUseIntegratedSkeletalVisuals)Setup.WheelClass=AuthoredWheelClasses[Index];
+        else Setup.WheelClass=Index<2?UAnomaliaZPrigimaliaRoadFrontWheel::StaticClass():UAnomaliaZPrigimaliaRoadRearWheel::StaticClass();
         ChaosMovement->WheelSetups.Add(Setup);
     }
     ChaosMovement->SetUpdatedComponent(Chassis);
     if(GetWorld() && GetWorld()->IsGameWorld())
     {
-        // A road chassis is one rigid body, not the template's articulated
-        // suspension ragdoll. Override this component only; keep shared art intact.
+        // Modular art gets a per-instance chassis body. Complete skeletal cars
+        // retain their authored physics asset; never rewrite shared art.
         const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
+        if(!bUseIntegratedSkeletalVisuals)
+        {
         RuntimeChassisPhysics=NewObject<UPhysicsAsset>(this,NAME_None,RF_Transient);
         USkeletalBodySetup* ChassisBody=NewObject<USkeletalBodySetup>(RuntimeChassisPhysics);
         ChassisBody->BoneName=RootBone;
@@ -264,6 +285,8 @@ void AAnomaliaZPrigimaliaChaosRoadVehicle::ApplyRoadRig()
         RuntimeChassisPhysics->SkeletalBodySetups.Add(ChassisBody);
         RuntimeChassisPhysics->BoundsBodies.Add(0);
         RuntimeChassisPhysics->BodySetupIndexMap.Add(RootBone,0);
+        }
+        else RuntimeChassisPhysics=nullptr; // Use the vendor physics asset without modifying it.
         // Chaos re-applies its Mass property whenever body mass is recalculated.
         // Keep that source of truth in sync, preserving the authored dry mass
         // across physics-state recreation and repeated inventory notifications.
@@ -272,13 +295,13 @@ void AAnomaliaZPrigimaliaChaosRoadVehicle::ApplyRoadRig()
         ChaosMovement->Mass = UnladenMassKg +
             (FMath::IsFinite(InitialCargo) && InitialCargo >= 0.f ? InitialCargo : 0.f);
         LastCargoMassKg = -1.f;
-        Chassis->SetPhysicsAsset(RuntimeChassisPhysics,true);
+        Chassis->SetPhysicsAsset(bUseIntegratedSkeletalVisuals?RoadMesh->GetPhysicsAsset():RuntimeChassisPhysics.Get(),true);
         Chassis->SetSimulatePhysics(HasAuthority());
-        Chassis->SetMassOverrideInKg(RootBone,ChaosMovement->Mass,true);
+        Chassis->SetMassOverrideInKg(bUseIntegratedSkeletalVisuals?FName(NAME_None):RootBone,ChaosMovement->Mass,true);
         ChaosMovement->SetComponentTickEnabled(HasAuthority());
         ChaosMovement->RecreatePhysicsState();
         for(int32 Index=0;Index<ChaosMovement->Wheels.Num();++Index)
-            ChaosMovement->SetWheelRadius(Index,WheelRadiusCm);
+            ChaosMovement->SetWheelRadius(Index,bUseIntegratedSkeletalVisuals?AuthoredWheelRadiiCm[Index]:WheelRadiusCm);
         // This pawn deliberately preserves ANOMALIA's existing crew/fuel base.
         // Bind the vehicle animation interface explicitly instead of relying on a template pawn cast.
         if(auto* Animation=Cast<UVehicleAnimationInstance>(Chassis->GetAnimInstance()))
@@ -537,6 +560,6 @@ void AAnomaliaZPrigimaliaChaosRoadVehicle::UpdateCargoPhysicalMass()
     // Updating only the body override would immediately restore the dry Mass.
     ChaosMovement->Mass=TotalMass;
     const FName RootBone=RoadMesh->GetRefSkeleton().GetBoneName(0);
-    Chassis->SetMassOverrideInKg(RootBone,TotalMass,true);
+    Chassis->SetMassOverrideInKg(bUseIntegratedSkeletalVisuals?FName(NAME_None):RootBone,TotalMass,true);
     LastCargoMassKg=CargoMass;
 }
