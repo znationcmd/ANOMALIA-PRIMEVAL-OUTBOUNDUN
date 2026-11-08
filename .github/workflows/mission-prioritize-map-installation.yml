@@ -1,0 +1,56 @@
+name: ANOMALIA - prioritize map installation after active import checkpoint
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-prioritize-map-installation.yml']
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+jobs:
+  prioritize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const jobs=async(run_id)=>(await github.paginate(github.rest.actions.listJobsForWorkflowRun,{owner,repo,run_id,per_page:100}));
+            async function cancelOnlyIdle(run_id) {
+              const list=await jobs(run_id);
+              if(list.some(j=>j.status==='in_progress')) { core.info('Preserved active run '+run_id);return false; }
+              const run=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+              if(run.status==='completed')return true;
+              await github.rest.actions.cancelWorkflowRun({owner,repo,run_id}).catch(e=>{if(e.status!==409)throw e});
+              await new Promise(r=>setTimeout(r,8000));
+              const after=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+              if(after.status!=='completed') {
+                const current=await jobs(run_id);
+                if(current.some(j=>j.status==='in_progress')) {core.info('New active job preserved '+run_id);return false;}
+                await github.rest.actions.forceCancelWorkflowRun({owner,repo,run_id}).catch(e=>{if(e.status!==409)throw e});
+              }
+              return true;
+            }
+            // Release the older queued bulk-import campaign; preserve every existing receipt/source.
+            await cancelOnlyIdle(42478531036);
+            const activeRun=42469646312;
+            const deadline=Date.now()+72*60*1000;
+            while(Date.now()<deadline) {
+              const list=await jobs(activeRun);
+              const active=list.filter(j=>j.status==='in_progress');
+              if(active.length===0) {
+                await cancelOnlyIdle(activeRun);
+                break;
+              }
+              core.info('Waiting for owned import checkpoint: '+active.map(j=>j.name).join(', '));
+              await new Promise(r=>setTimeout(r,10000));
+            }
+            const remaining=await jobs(activeRun);
+            if(remaining.some(j=>j.status==='in_progress')) {
+              core.setFailed('Active import still writing; preserved, no forced interruption.');
+              return;
+            }
+            await core.summary.addHeading('Map installation priority restored')
+              .addRaw('Queued bulk import campaigns paused; accepted sources, partial assets and receipts preserved. Existing map runs 42479496295 and 42479848484 remain queued for the Windows runner. This controller does not prove native compilation or landscape creation.')
+              .write();
