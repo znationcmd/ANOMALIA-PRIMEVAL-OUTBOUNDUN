@@ -12,6 +12,10 @@ def local(s):return s.replace('AnomaliaZPrigimalia',prefix).replace('ANOMALIAZPR
 target=root/'Source'/module
 source=repo/'unreal/Source/AnomaliaZPrigimalia'
 headers=list((target/'World').glob('*ExtraWorldHeights.h'))
+if len(headers)==0:
+ import runpy
+ runpy.run_path(str(repo/'scripts/ue5/install-requested-world-addon.py'),run_name='__main__')
+ raise SystemExit(0)
 if len(headers)!=1:raise RuntimeError('Unique installed terrain header required')
 header=headers[0]
 prefix=header.stem.removesuffix('ExtraWorldHeights')
