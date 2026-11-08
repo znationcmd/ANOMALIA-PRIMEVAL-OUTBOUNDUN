@@ -287,6 +287,9 @@ namespace
   if(MapIdentifier==TEXT("VORGRAD"))return EWorld::Vorgrad;
   if(MapIdentifier==TEXT("NEMORIS"))return EWorld::Nemoris;
   if(MapIdentifier==TEXT("DRAKHEIM"))return EWorld::Drakheim;
+  if(MapIdentifier==TEXT("YUDINAVIA"))return EWorld::Yudinavia;
+  if(MapIdentifier==TEXT("MOSCOVIE"))return EWorld::Moscovie;
+  if(MapIdentifier==TEXT("CORSIVIA"))return EWorld::Corsivia;
   return EWorld::Invalid;
  }
 }
@@ -326,7 +329,7 @@ AActor* UAnomaliaZPrigimaliaWorldImportLibrary::CreateNamedWorldLandscape(const 
   ELandscapeImportAlphamapType::Additive,TArrayView<const FLandscapeLayer>());
  Land->CreateLandscapeInfo();
  Land->PostEditChange();
- const int32 Expected=(Size==3025?576:256);
+ const int32 Expected=((Size-1)/126)*((Size-1)/126);
  if(Land->LandscapeComponents.Num()!=Expected)
  {
   UE_LOG(LogTemp,Error,TEXT("PRIGIMALIA %s terrain components mismatch: %d != %d"),
