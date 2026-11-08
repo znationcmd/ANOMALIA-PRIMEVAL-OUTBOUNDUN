@@ -73,3 +73,5 @@ jobs:
             ${{ env.MAIN_MAP_OUT }}/main-map-sm5-process.log
             ${{ env.MAIN_MAP_OUT }}/*.png
           if-no-files-found: warn
+
+# Re-run requested main-map validation with migration-safe routing, 2026-11-08.
