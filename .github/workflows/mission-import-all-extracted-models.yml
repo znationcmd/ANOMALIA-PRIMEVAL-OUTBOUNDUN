@@ -8,6 +8,7 @@ permissions:
   contents: read
 jobs:
   targeted:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 105
     strategy:
@@ -81,9 +82,28 @@ jobs:
           name: verified-real-project-model-pack-${{ matrix.pack }}
           path: ${{ env.MODEL_OUT }}/
           if-no-files-found: error
+  resume_preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Check rebooted PC memory and preserve existing import checkpoint
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $os=Get-CimInstance Win32_OperatingSystem
+          $state='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107'
+          $receipt=Join-Path $state 'raw-import-report.json'
+          if(!(Test-Path -LiteralPath $receipt)){throw 'Durable receipt unavailable; preserve all imported content'}
+          $r=Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
+          Write-Output ("FREE_PHYSICAL_BYTES="+($os.FreePhysicalMemory*1KB))
+          Write-Output ("FREE_VIRTUAL_BYTES="+($os.FreeVirtualMemory*1KB))
+          Write-Output ("COMPLETED_SOURCES="+$r.completedSourceCount)
+          Write-Output ("REMAINING_SOURCES="+$r.remainingSources)
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient current memory; leave applications and imports untouched'}
   remaining:
-    needs: targeted
-    if: ${{ !cancelled() }}
+    needs: [targeted, resume_preflight]
+    if: ${{ !cancelled() && needs.resume_preflight.result == 'success' }}
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 70
     strategy:
