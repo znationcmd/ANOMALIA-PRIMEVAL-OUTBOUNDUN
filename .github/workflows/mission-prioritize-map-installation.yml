@@ -54,3 +54,46 @@ jobs:
             await core.summary.addHeading('Map installation priority restored')
               .addRaw('Queued bulk import campaigns paused; accepted sources, partial assets and receipts preserved. Existing map runs 42479496295 and 42479848484 remain queued for the Windows runner. This controller does not prove native compilation or landscape creation.')
               .write();
+
+  resume_models_after_maps:
+    needs: prioritize
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    concurrency:
+      group: anomalia-resume-models-after-map-installation
+      cancel-in-progress: false
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo;
+            const mapRuns=[42479496295,42479848484];
+            const deadline=Date.now()+320*60*1000;
+            const conclusions={};
+            while(Date.now()<deadline) {
+              let finished=true;
+              for(const run_id of mapRuns) {
+                const r=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+                if(r.status!=='completed')finished=false;
+                else conclusions[run_id]=r.conclusion;
+              }
+              if(finished)break;
+              await new Promise(resolve=>setTimeout(resolve,30000));
+            }
+            for(const run_id of mapRuns) {
+              const r=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+              if(r.status!=='completed')throw Error('Maps still active or queued; preserve serialization, no import dispatch');
+            }
+            // Map failures remain visible, but do not block independent model recovery/import.
+            const workflow_id='mission-reclaim-ddc-and-resume-models.yml';
+            const runs=await github.paginate(github.rest.actions.listWorkflowRuns,{owner,repo,workflow_id,branch:'mission/finalisation-20261104',per_page:100});
+            const existing=runs.find(r=>r.status!=='completed');
+            if(existing) {
+              core.info('Existing model campaign reused: '+existing.id);
+            } else {
+              await github.rest.actions.createWorkflowDispatch({owner,repo,workflow_id,ref:'mission/finalisation-20261104'});
+              core.info('Durable model manifest resume dispatched with source watchdog');
+            }
+            await core.summary.addHeading('Model extraction/import continuation')
+              .addRaw('Map task results: '+JSON.stringify(conclusions)+'. Resume uses the existing extracted-source manifest and accepted-source receipts. Original archives and failed/ambiguous sources remain preserved. No claim that all sources are extracted or imported.')
+              .write();
