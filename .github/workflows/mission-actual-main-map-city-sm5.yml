@@ -80,3 +80,5 @@ jobs:
           if-no-files-found: warn
 
 # Re-run requested main-map validation with migration-safe routing, 2026-11-08.
+
+# Retry actual SKARVIK with legacy API detection and per-map isolated-profile validation.
