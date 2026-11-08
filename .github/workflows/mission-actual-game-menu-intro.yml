@@ -33,5 +33,7 @@ jobs:
         if: always() && env.GAME_IDENTITY_OUT != ''
         with:
           name: actual-pc-game-menu-intro-identity
-          path: ${{ env.GAME_IDENTITY_OUT }}/installed-game-menu-intro.json
+          path: |
+            ${{ env.GAME_IDENTITY_OUT }}/installed-game-menu-intro.json
+            ${{ env.GAME_IDENTITY_OUT }}/identity-progress.json
           if-no-files-found: warn
