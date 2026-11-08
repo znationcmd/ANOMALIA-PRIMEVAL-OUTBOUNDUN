@@ -31,9 +31,10 @@ jobs:
             unreal/Source/AnomaliaZPrigimalia
             public/config/anomalia-map-catalog.json
             public/config/anomalia-locality-names.json
+          sparse-checkout-cone-mode: false
           persist-credentials: false
       - name: Preserve existing maps and install narrowly matched sources with backups
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
@@ -47,7 +48,7 @@ jobs:
           & $py -B "$env:GITHUB_WORKSPACE\three-requested-maps\scripts\ue5\install-three-map-sources.py"
           if($LASTEXITCODE -ne 0){throw 'Local source differs; guarded merge refused without overwriting local work'}
       - name: Compile actual installed Unreal module
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $module=(Get-Content (Join-Path $env:THREE_MAP_OUT 'source-install.json') -Raw | ConvertFrom-Json).module
@@ -55,10 +56,10 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Native compile failed; maps not generated'}
           'compiled' | Set-Content (Join-Path $env:THREE_MAP_OUT 'compiled.marker')
       - name: Create the three separate real landscape drafts without overwrites
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          foreach($id in @('BOT_SEVER')) {
+          foreach($id in @('YUDINAVIA','MOSCOVIE','CORSIVIA','BOT_SEVER')) {
             if((Get-PSDrive D).Free -lt 10GB){throw 'Landscape disk reserve reached'}
             $env:PRIGIMALIA_THREE_MAP=$id
             $env:PRIGIMALIA_THREE_REPORT=Join-Path $env:THREE_MAP_OUT ($id+'.json')
@@ -70,7 +71,7 @@ jobs:
           }
       - name: Verify original map packages and retain recovery evidence
         if: always()
-        shell: powershell
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if(!$env:THREE_MAP_OUT){exit 0}
@@ -87,7 +88,7 @@ jobs:
             }
           }
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && env.THREE_MAP_OUT != ''
         with:
           name: three-requested-native-map-evidence
           if-no-files-found: warn
