@@ -1,5 +1,5 @@
 """Recover explicitly blocked owned ZIP models; no repeated global audit, no source deletion."""
-import os,pathlib,json,hashlib,zipfile,time,shutil,importlib.util
+import os,pathlib,json,hashlib,zipfile,time,shutil,importlib.util,re
 PROJECT=pathlib.Path(r"D:\ANOMALIA\unreal")
 STATE=PROJECT/"Saved/ImportReceipts/AllResources20261107"
 RAW=PROJECT/"Saved/ImportReceipts/RawResume20261107/raw-preparation-manifest.json"
@@ -10,20 +10,23 @@ def file_sha(p):
   for b in iter(lambda:f.read(4*1024**2),b""):h.update(b)
  return h.hexdigest()
 def canonical_rows(z,rows):
- unique={};digests={}
+ unique={};digests={};member_infos={};by_name={}
+ for info in z.infolist():by_name.setdefault(info.filename,[]).append(info)
  for row in rows:
   key=row["path"].casefold()
+  info=by_name[row["zipName"]].pop(0);member_infos[id(row)]=info
   if key in unique:
    prev=unique[key]
    if (prev["size"],prev["crc"])!=(row["size"],row["crc"]):raise ValueError("Same Windows path has different contents")
-   def member_sha(name):
+   def member_sha(member):
+    name=member.header_offset
     if name not in digests:
      h=hashlib.sha256()
-     with z.open(name) as f:
+     with z.open(member) as f:
       for b in iter(lambda:f.read(4*1024**2),b""):h.update(b)
      digests[name]=h.hexdigest()
     return digests[name]
-   if member_sha(prev["zipName"])!=member_sha(row["zipName"]):raise ValueError("Conflicting duplicate member retained")
+   if member_sha(member_infos[id(prev)])!=member_sha(info):raise ValueError("Conflicting duplicate member retained")
   else:unique[key]=row
  return list(unique.values())
 def main():
@@ -64,7 +67,7 @@ def main():
     if model.suffix.lower() in ex.MODELS:
      digest=file_sha(model)
      if digest not in seen:
-      raw["imports"].append({"source":str(model),"prepared":str(model),"sha256":digest,"preparedSHA256":digest,"family":ex.model_family(model,sha),"animationOnly":False})
+      raw["imports"].append({"source":str(model),"prepared":str(model),"sha256":digest,"preparedSHA256":digest,"family":ex.model_family(model,sha),"animationOnly":bool(re.search(r"[/\\](?:animations?|motions?)[/\\]|[/\\]RM_|[/\\]IP_",str(model),re.I))})
       seen.add(digest);added+=1
     if model.suffix.lower() in ex.NATIVE:
      parts=pathlib.PurePosixPath(row["path"]).parts
