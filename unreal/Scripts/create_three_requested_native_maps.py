@@ -35,7 +35,7 @@ try:
  external2=ROOT/"Content/__ExternalObjects__/Maps"/("PRIGIMALIA_"+IDENT)
  if file.exists() or external.exists() or external2.exists() or unreal.EditorAssetLibrary.does_asset_exist(pkg):
   raise RuntimeError("Map or partial World Partition data already exists, refuse overwrite")
- native=getattr(unreal,"AnomaliaWorldImportLibrary",None) or getattr(unreal,"AnomaliaPrimevalWorldImportLibrary",None) or getattr(unreal,"AnomaliaZPrigimaliaWorldImportLibrary",None)
+ native=getattr(unreal,"AnomaliaPrimevalRequestedWorldLibrary",None) or getattr(unreal,"AnomaliaZPrigimaliaRequestedWorldLibrary",None) or getattr(unreal,"AnomaliaWorldImportLibrary",None) or getattr(unreal,"AnomaliaPrimevalWorldImportLibrary",None) or getattr(unreal,"AnomaliaZPrigimaliaWorldImportLibrary",None)
  if not native or not hasattr(native,"create_named_world_landscape") or not hasattr(native,"named_world_height"):
   raise RuntimeError("Native C++ 4-map terrain module is not compiled and loaded")
  levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
