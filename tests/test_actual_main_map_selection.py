@@ -12,4 +12,9 @@ class MainMapRoutingTests(unittest.TestCase):
   with self.assertRaises(ValueError):m.select_main('[/Script/EngineSettings.GameMapsSettings]\nGameDefaultMap=/Engine/Maps/Entry','')
  def test_invalid_route_is_rejected(self):
   with self.assertRaises(ValueError):m.select_main('[/Script/EngineSettings.GameMapsSettings]\nGameDefaultMap=/Game/../SKARVIK','')
+ def test_migrated_id_still_uses_explicit_installed_skarvik_route(self):
+  source='{ TEXT ( "skarvik-final-v1" ), TEXT ( "SKARVIK" ), TEXT ( "/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1" ) }'
+  self.assertEqual(m.select_main('',source)['mainMap'],'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1')
+ def test_ambiguous_installed_routes_are_not_guessed(self):
+  with self.assertRaises(ValueError):m.select_main('', '{TEXT("a"),TEXT("SKARVIK"),TEXT("/Game/Maps/A")},{TEXT("b"),TEXT("SKARVIK"),TEXT("/Game/Maps/B")}')
 if __name__=='__main__':unittest.main()
