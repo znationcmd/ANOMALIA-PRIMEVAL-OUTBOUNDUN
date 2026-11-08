@@ -27,6 +27,7 @@ $progress=@()
 function WriteProgress {
     [ordered]@{state='IDENTITY_CHECK_PROGRESS_NOT_RUNTIME_ACCEPTED';shortcutsSeen=$shortcutCount;events=$progress} | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $OutputDirectory 'identity-progress.json') -Encoding utf8
 }
+WriteProgress
 $shortcuts=@()
 $folders=@([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('CommonDesktopDirectory')) | Select-Object -Unique
 foreach($folder in $folders){
@@ -52,6 +53,12 @@ foreach($folder in $folders){
             $target=[string]$link.TargetPath
             $row.target=$target;$row.targetExists=Test-Path -LiteralPath $target
             $text=(@($link.ProjectPaths)+@($link.LauncherPaths)) -join [Environment]::NewLine
+        }
+        if(Test-Path -LiteralPath $target -PathType Leaf){
+            $targetItem=Get-Item -LiteralPath $target
+            if($targetItem.Attributes -band [IO.FileAttributes]::Offline){
+                $row.cloudOnlyTargetNotHydrated=$true;$shortcuts+=@($row);continue
+            }
         }
         $row.projects=@(ProjectRefs $text)
         if((Test-Path -LiteralPath $target -PathType Leaf) -and ([IO.Path]::GetExtension($target) -in @('.ps1','.cmd','.bat','.vbs'))){
