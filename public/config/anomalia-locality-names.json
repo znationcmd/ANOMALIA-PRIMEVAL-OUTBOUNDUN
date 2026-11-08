@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 1,
+  "coordinateSystem": {
+    "unit": "metres",
+    "origin": "map-centre",
+    "northAxis": "+Y"
+  },
+  "status": "authored-naming-plan-not-placed-localities",
+  "maps": [
+    {
+      "mapId": "bot-sever-v1",
+      "displayName": "БОТ СЕВЕР",
+      "widthMetres": 50000,
+      "heightMetres": 50000,
+      "regions": [
+        {
+          "id": "south-georgian",
+          "language": "ka",
+          "script": "Geor",
+          "direction": "ltr",
+          "southMetres": -25000,
+          "northMetres": -17500,
+          "westMetres": -25000,
+          "eastMetres": 25000,
+          "areaFraction": 0.15,
+          "boundaryRule": "south-inclusive-north-exclusive"
+        },
+        {
+          "id": "north-russian",
+          "language": "ru",
+          "script": "Cyrl",
+          "direction": "ltr",
+          "southMetres": -17500,
+          "northMetres": 25000,
+          "westMetres": -25000,
+          "eastMetres": 25000,
+          "areaFraction": 0.85,
+          "boundaryRule": "south-inclusive-north-inclusive"
+        }
+      ],
+      "cityNames": {
+        "ru": [
+          "Североград",
+          "Белореченск",
+          "Сосновогорск",
+          "Заречье",
+          "Каменогорск",
+          "Лесогорск"
+        ],
+        "ka": [
+          "მთისქალაქი",
+          "მზექალაქი",
+          "მდინარისპირი"
+        ]
+      },
+      "villageNames": {
+        "ru": [
+          "Берёзовка",
+          "Сосновка",
+          "Озёрное",
+          "Луговое",
+          "Ключи",
+          "Дубравка",
+          "Речное",
+          "Лесное"
+        ],
+        "ka": [
+          "მთისძირი",
+          "ახალხევი",
+          "წყაროსთავი",
+          "ტყისპირი"
+        ]
+      }
+    },
+    {
+      "mapId": "vorgrad-v1",
+      "displayName": "VORGRAD",
+      "language": "ar",
+      "script": "Arab",
+      "direction": "rtl",
+      "cityNames": [
+        "مدينة النور",
+        "واحة السلام",
+        "عين الرمل",
+        "قلعة الجبل",
+        "مدينة الواحة"
+      ],
+      "villageNames": [
+        "وادي النخيل",
+        "بئر الرمال",
+        "عين الصفا",
+        "قرية التلال",
+        "وادي الحجر",
+        "الواحة الخضراء"
+      ]
+    },
+    {
+      "mapId": "corsivia-v1",
+      "displayName": "CORSIVIA",
+      "language": "co",
+      "script": "Latn",
+      "direction": "ltr",
+      "cityNames": [
+        "Aiacciu",
+        "Bastia",
+        "Corti",
+        "Bunifaziu",
+        "Portivechju",
+        "Calvi",
+        "L’Isula Rossa"
+      ],
+      "villageNames": [
+        "Bocca Serena",
+        "Valle Fonda",
+        "Punta Rossa",
+        "Funtana Nova",
+        "Costa Verde",
+        "A Petra",
+        "U Poghju",
+        "U Castellu"
+      ]
+    }
+  ],
+  "rules": {
+    "stableIdsUseAscii": true,
+    "saveNamespacesUnchanged": true,
+    "namesAreAuthoredLabelsNotVerifiedPlacements": true,
+    "existingSettlementNamesPreservedUntilExplicitMigration": true,
+    "georgianFractionMeansMapAreaNotLocalityCount": true,
+    "signageAndFontRenderingTested": false
+  }
+}

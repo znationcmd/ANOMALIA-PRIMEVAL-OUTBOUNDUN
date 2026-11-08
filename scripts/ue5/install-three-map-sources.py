@@ -17,15 +17,16 @@ header=headers[0]
 prefix=header.stem.removesuffix('ExtraWorldHeights')
 current=canonical(header.read_text(encoding='utf-8-sig'))
 new=(source/'World/AnomaliaZPrigimaliaExtraWorldHeights.h').read_text().strip()
-if current!=new and hashlib.sha256(current.encode()).hexdigest()!='8244ae65b368448c7c46b292238bb55da723fdc15efa481a2baefd94d3458ac8':
+if current!=new and hashlib.sha256(current.encode()).hexdigest() not in ('8244ae65b368448c7c46b292238bb55da723fdc15efa481a2baefd94d3458ac8','ece51bd51f55bc015e804b53b0915321bcc4189559bd2751e704f6b936efd73d'):
  raise RuntimeError('Installed terrain header differs; preserve local work and defer merge')
 cpp=target/'World'/(prefix+'WorldImportLibrary.cpp')
 text=cpp.read_text(encoding='utf-8-sig')
 anchor='  if(MapIdentifier==TEXT("DRAKHEIM"))return EWorld::Drakheim;'
-extra='\n  if(MapIdentifier==TEXT("YUDINAVIA"))return EWorld::Yudinavia;\n  if(MapIdentifier==TEXT("MOSCOVIE"))return EWorld::Moscovie;\n  if(MapIdentifier==TEXT("CORSIVIA"))return EWorld::Corsivia;'
-if 'EWorld::Yudinavia' not in text:
- if text.count(anchor)!=1:raise RuntimeError('Installed terrain resolver differs; no broad source replacement')
- text=text.replace(anchor,anchor+extra)
+for ident,kind in [('YUDINAVIA','Yudinavia'),('MOSCOVIE','Moscovie'),('CORSIVIA','Corsivia'),('BOT_SEVER','BotSever')]:
+ if ('EWorld::'+kind) not in text:
+  if text.count(anchor)!=1:raise RuntimeError('Installed terrain resolver differs')
+  text=text.replace(anchor,anchor+'\n  if(MapIdentifier==TEXT("'+ident+'"))return EWorld::'+kind+';')
+
 old='const int32 Expected=(Size==3025?576:256);'
 updated='const int32 Expected=((Size-1)/126)*((Size-1)/126);'
 if old in text:text=text.replace(old,updated)
@@ -33,13 +34,15 @@ elif updated not in text:raise RuntimeError('Installed component validator diffe
 browser=target/(prefix+'ServerBrowserLibrary.cpp')
 browsertext=browser.read_text(encoding='utf-8-sig')
 anchor='{TEXT("deadroot-v1"), TEXT("DEADROOT"), TEXT("/Game/Maps/PRIGIMALIA_DEADROOT")}'
-extra=',\n'+',\n'.join('        {TEXT("'+n.lower()+'-v1"), TEXT("'+n+'"), TEXT("/Game/Maps/PRIGIMALIA_'+n+'")}' for n in ('YUDINAVIA','MOSCOVIE','CORSIVIA'))
-if 'TEXT("yudinavia-v1")' not in browsertext:
- if browsertext.count(anchor)!=1:raise RuntimeError('Installed browser differs; no broad replacement')
- browsertext=browsertext.replace(anchor,anchor+extra)
+for ident,title,mid in [('YUDINAVIA','YUDINAVIA','yudinavia-v1'),('MOSCOVIE','MOSCOVIE','moscovie-v1'),('CORSIVIA','CORSIVIA','corsivia-v1'),('BOT_SEVER','БОТ СЕВЕР','bot-sever-v1')]:
+ if ('TEXT("'+mid+'")') not in browsertext:
+  if browsertext.count(anchor)!=1:raise RuntimeError('Installed browser differs')
+  browsertext=browsertext.replace(anchor,anchor+',\n        {TEXT("'+mid+'"), TEXT("'+title+'"), TEXT("/Game/Maps/PRIGIMALIA_'+ident+'")}')
+
 catalog=root/'Config/Anomalia/map-catalog.json'
 cli=root/'Saved/MapIntegration/anomalia-editor-tools.py'
 plan=[(header,local(new)+'\n'),(cpp,text),(browser,browsertext),
+      (root/'Config/Anomalia/locality-names.json',(repo/'public/config/anomalia-locality-names.json').read_text(encoding='utf-8')),
       (catalog,(repo/'public/config/anomalia-map-catalog.json').read_text(encoding='utf-8')),
       (cli,(repo/'scripts/ue5/anomalia-editor-tools.py').read_text(encoding='utf-8'))]
 backup=out/'source-backup'

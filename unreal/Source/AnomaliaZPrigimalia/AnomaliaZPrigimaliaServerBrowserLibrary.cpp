@@ -23,7 +23,8 @@ TArray<FAnomaliaZPrigimaliaWorldChoice> UAnomaliaZPrigimaliaServerBrowserLibrary
         {TEXT("deadroot-v1"), TEXT("DEADROOT"), TEXT("/Game/Maps/PRIGIMALIA_DEADROOT")},
         {TEXT("yudinavia-v1"), TEXT("YUDINAVIA"), TEXT("/Game/Maps/PRIGIMALIA_YUDINAVIA")},
         {TEXT("moscovie-v1"), TEXT("MOSCOVIE"), TEXT("/Game/Maps/PRIGIMALIA_MOSCOVIE")},
-        {TEXT("corsivia-v1"), TEXT("CORSIVIA"), TEXT("/Game/Maps/PRIGIMALIA_CORSIVIA")}
+        {TEXT("corsivia-v1"), TEXT("CORSIVIA"), TEXT("/Game/Maps/PRIGIMALIA_CORSIVIA")},
+        {TEXT("bot-sever-v1"), TEXT("БОТ СЕВЕР"), TEXT("/Game/Maps/PRIGIMALIA_BOT_SEVER")}
     };
     TArray<FAnomaliaZPrigimaliaWorldChoice> Result;
     Result.Reserve(UE_ARRAY_COUNT(Worlds));

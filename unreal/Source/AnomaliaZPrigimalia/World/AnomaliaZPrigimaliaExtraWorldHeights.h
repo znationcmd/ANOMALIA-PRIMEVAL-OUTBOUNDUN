@@ -7,16 +7,16 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
         (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 :
         world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
-        world==EWorld::Corsivia ? 15000 : 0;
+        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 : 0;
 }
-inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : side==20000 ? 2017 : side>0 ? 1009 : 0; }
+inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : (side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
 inline double Smooth(double v) { v=Clamp(v,0.,1.); return v*v*(3.-2.*v); }
 inline double Hash(int x,int y,int seed)
@@ -52,6 +52,13 @@ inline double Height(EWorld world,double east,double north)
  const double n=Fractal(east,north,100+int(world)*97);
  const double r=Fractal(east+2311.,north-1427.,510+int(world)*71);
  // Original draft landforms, not surveyed Moscow/Corsica/Scandinavia data.
+ if(world==EWorld::BotSever){
+  // Original continental draft; southern naming boundary is exactly -17500 m.
+  const double river=north-(2400.*std::sin(east/4500.)-1200.);
+  const double valley=95.*std::exp(-river*river/(1500.*1500.));
+  const double southern=Smooth((-north-14000.)/7000.);
+  return 130.+85.*n-valley+southern*(350.+450.*std::abs(r));
+ }
  if(world==EWorld::Yudinavia){
   const double ridge=620.*Gaussian(east,north,1300.,1100.,3200.,4900.);
   const double coast=Smooth((east+5600.+500.*std::sin(north/900.))/1700.);

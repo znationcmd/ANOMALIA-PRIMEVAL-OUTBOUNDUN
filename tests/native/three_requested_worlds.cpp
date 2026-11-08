@@ -17,5 +17,10 @@ int main(){
   assert(Height(EWorld::Corsivia,i,-7500)<0);assert(Height(EWorld::Corsivia,i,7500)<0);
   assert(Height(EWorld::Corsivia,-7500,i)<0);assert(Height(EWorld::Corsivia,7500,i)<0);
  }
+ assert(SideMeters(EWorld::BotSever)==50000);
+ assert(Resolution(EWorld::BotSever)==2017);
+ for(int x=-25000;x<=25000;x+=311)for(int y=-25000;y<=25000;y+=313){
+  double h=Height(EWorld::BotSever,x,y);assert(std::isfinite(h));assert(h>-2048 && h<2047);
+ }
  assert(SideMeters(EWorld::Invalid)==0);
 }

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "18 independent ANOMALIA’Z map identities: 15 prior entries preserved and three additional user-requested world designs. Catalogue presence is not proof of native creation, import or playability.",
+  "description": "19 independent ANOMALIA’Z map identities: 15 prior entries preserved and four additional user-requested world designs. Catalogue presence is not proof of native creation, import or playability.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -56,7 +56,11 @@
       "terrainBiome": "continental-ruins-plains-rivers",
       "expectedLandscapeComponents": 576,
       "targetLocalities": 30,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "localityNamingFile": "config/anomalia-locality-names.json",
+      "localityLanguages": [
+        "ar"
+      ]
     },
     {
       "id": "nemoris-v1",
@@ -388,18 +392,47 @@
       "gameplayAndCollisionPlaytested": false,
       "multiplayerReady": false,
       "targetLocalities": null,
-      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending",
+      "localityNamingFile": "config/anomalia-locality-names.json",
+      "localityLanguages": [
+        "co"
+      ]
+    },
+    {
+      "id": "bot-sever-v1",
+      "displayName": "БОТ СЕВЕР",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_BOT_SEVER",
+      "widthKm": 50,
+      "heightKm": 50,
+      "areaKm2": 2500,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "user-approved-design-native-world-not-created",
+      "saveNamespace": "bot-sever-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "multiplayerReady": false,
+      "localityNamingFile": "config/anomalia-locality-names.json",
+      "localityLanguages": [
+        "ru",
+        "ka"
+      ],
+      "southernGeorgianAreaFraction": 0.15,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "naming-plan-native-placement-pending"
     }
   ],
-  "mapCount": 18,
+  "mapCount": 19,
   "catalogAudit": {
-    "confirmedNamedMaps": 18,
+    "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
     "additionalSourcePackagesPendingVerification": 5,
     "categoryDistinction": "Six SKARVIK biome regions are NOT the 11 separate ANOMALIA’Z maps",
     "protection": "Do not remove, rename, overwrite, or merge existing Unreal maps from D:/ANOMALIA during map catalogue repairs",
     "originalWorldsPreserved": 11,
-    "additionalPlannedWorlds": 7,
+    "additionalPlannedWorlds": 8,
     "exactMeasurementsNeedRealEngineVerification": true,
     "newWorldsNativePlayable": false,
     "settlementScalingPolicy": "Size and biome determine count; 100% PVP DEADROOT has no civilian settlements. Unknown original map dimensions must be audited rather than guessed.",

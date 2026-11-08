@@ -290,6 +290,7 @@ namespace
   if(MapIdentifier==TEXT("YUDINAVIA"))return EWorld::Yudinavia;
   if(MapIdentifier==TEXT("MOSCOVIE"))return EWorld::Moscovie;
   if(MapIdentifier==TEXT("CORSIVIA"))return EWorld::Corsivia;
+  if(MapIdentifier==TEXT("BOT_SEVER"))return EWorld::BotSever;
   return EWorld::Invalid;
  }
 }

@@ -15,7 +15,8 @@ IDENT=os.environ.get("PRIGIMALIA_THREE_MAP","")
 SPECS={
  "YUDINAVIA":{"size":12500,"resolution":1009,"components":64,"display":"YUDINAVIA"},
  "MOSCOVIE":{"size":10000,"resolution":1009,"components":64,"display":"MOSCOVIE"},
- "CORSIVIA":{"size":15000,"resolution":1009,"components":64,"display":"CORSIVIA"}
+ "CORSIVIA":{"size":15000,"resolution":1009,"components":64,"display":"CORSIVIA"},
+ "BOT_SEVER":{"size":50000,"resolution":2017,"components":256,"display":"БОТ СЕВЕР"}
 }
 REPORT=Path(os.environ.get("PRIGIMALIA_THREE_REPORT",str(ROOT/"Saved/NewFourMaps"/(IDENT+".json"))))
 result={"state":"BLOCKED","name":IDENT,"actualLandscapeSaved":False,

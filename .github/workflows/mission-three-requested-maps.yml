@@ -1,4 +1,4 @@
-name: ANOMALIA - integrate three requested draft landscapes into actual project
+name: ANOMALIA - integrate requested draft landscapes and BOT SEVER into actual project
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -15,6 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - run: g++ -std=c++17 -I. tests/native/three_requested_worlds.cpp -o /tmp/three-worlds && /tmp/three-worlds
+      - run: python -m unittest discover -s tests -p test_locality_naming.py -v
       - run: python -m py_compile scripts/ue5/install-three-map-sources.py unreal/Scripts/create_three_requested_native_maps.py
   integrate_actual_project:
     needs: terrain_checks
@@ -29,6 +30,7 @@ jobs:
             unreal/Scripts/create_three_requested_native_maps.py
             unreal/Source/AnomaliaZPrigimalia
             public/config/anomalia-map-catalog.json
+            public/config/anomalia-locality-names.json
           persist-credentials: false
       - name: Preserve existing maps and install narrowly matched sources with backups
         shell: powershell
@@ -56,7 +58,7 @@ jobs:
         shell: powershell
         run: |
           $ErrorActionPreference='Stop'
-          foreach($id in @('YUDINAVIA','MOSCOVIE','CORSIVIA')) {
+          foreach($id in @('BOT_SEVER')) {
             if((Get-PSDrive D).Free -lt 10GB){throw 'Landscape disk reserve reached'}
             $env:PRIGIMALIA_THREE_MAP=$id
             $env:PRIGIMALIA_THREE_REPORT=Join-Path $env:THREE_MAP_OUT ($id+'.json')

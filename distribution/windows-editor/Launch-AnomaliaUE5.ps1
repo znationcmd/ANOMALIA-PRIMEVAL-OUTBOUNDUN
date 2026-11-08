@@ -1,4 +1,4 @@
-param([ValidateSet('','yudinavia-v1','moscovie-v1','corsivia-v1')][string]$MapId='')
+param([ValidateSet('','yudinavia-v1','moscovie-v1','corsivia-v1','bot-sever-v1')][string]$MapId='')
 $ErrorActionPreference = 'Stop'
 try {
     $installRoot = Split-Path -Parent $PSScriptRoot
@@ -12,7 +12,7 @@ try {
     $map='/Game/Maps/ANOMALIA_Archipelago_v2'
     if ($active.mapPackage -in @('/Game/Maps/ANOMALIA_Archipelago_v2','/Game/Maps/ANOMALIA_Inhabited_v2')) { $map=[string]$active.mapPackage }
     if ($MapId) {
-        $requested=@{'yudinavia-v1'='PRIGIMALIA_YUDINAVIA';'moscovie-v1'='PRIGIMALIA_MOSCOVIE';'corsivia-v1'='PRIGIMALIA_CORSIVIA'}[$MapId]
+        $requested=@{'yudinavia-v1'='PRIGIMALIA_YUDINAVIA';'moscovie-v1'='PRIGIMALIA_MOSCOVIE';'corsivia-v1'='PRIGIMALIA_CORSIVIA';'bot-sever-v1'='PRIGIMALIA_BOT_SEVER'}[$MapId]
         $map='/Game/Maps/'+$requested
         $mapFile=Join-Path (Split-Path -Parent $project) ('Content/Maps/'+$requested+'.umap')
         if (!(Test-Path -LiteralPath $mapFile)) { throw 'Cette carte n’est pas encore installée dans ce projet Unreal.' }
