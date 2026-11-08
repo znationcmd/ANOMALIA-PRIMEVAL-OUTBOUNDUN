@@ -93,7 +93,8 @@ def tick(delta):
    if i>=len(candidates):
     if not report['cityActorsInspected']:report['errors'].append('No City Sample building actors verified on the actual main map')
     if not P['PIEAllowedWithIsolatedProfile']:
-     finish('Installed GameMode cannot prove an isolated automation profile; PIE not started');return
+     state['finalError']='Installed GameMode cannot prove an isolated automation profile on this map; PIE not started'
+     screenshot('main-map-editor-profile-blocked');state['phase']='SAFE_RENDER_ONLY';state['phaseTime']=now;return
     levels.editor_request_begin_play();state['phase']='WAIT_PIE';state['phaseTime']=now;save();return
    batch=candidates[i:i+6];state['index']+=len(batch)
    unreal.WorldPartitionBlueprintLibrary.load_actors([d.guid for d in batch]);state['loaded']=[d.guid for d in batch]
@@ -109,6 +110,9 @@ def tick(delta):
      p=found[0].get_actor_location();unreal.EditorLevelLibrary.set_level_viewport_camera_info(p+unreal.Vector(-2500,-2500,1500),unreal.Rotator(-15,45,0))
      screenshot('main-map-city-first-group');state['phase']='WAIT_SHOT';state['phaseTime']=now
    save();return
+  if phase=='SAFE_RENDER_ONLY':
+   if now-state['phaseTime']>8:finish(state['finalError'])
+   return
   if phase=='WAIT_SHOT':
    if now-state['phaseTime']>8:state['phase']='BATCH'
    return
