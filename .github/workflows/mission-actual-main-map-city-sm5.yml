@@ -30,6 +30,7 @@ jobs:
           sparse-checkout: |
             scripts/ue5/prepare-actual-main-map-sm5-check.py
             scripts/ue5/run-actual-main-map-sm5-validation.py
+            scripts/ue5/route-existing-main-skarvik.py
             unreal/Content/Python/check_actual_main_map_city_sm5.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
@@ -46,6 +47,9 @@ jobs:
           New-Item -ItemType Directory -Force -Path $out | Out-Null
           "MAIN_MAP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           $env:MAIN_MAP_OUT=$out
+          $routing=Join-Path $env:GITHUB_WORKSPACE ('actual-main-sm5-'+$env:GITHUB_RUN_ID+'\scripts\ue5\route-existing-main-skarvik.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $routing
+          if($LASTEXITCODE -ne 0){throw 'Existing main map fingerprint or route guard failed; preserve current config'}
           $script=Join-Path $env:GITHUB_WORKSPACE ('actual-main-sm5-'+$env:GITHUB_RUN_ID+'\scripts\ue5\prepare-actual-main-map-sm5-check.py')
           & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
           if($LASTEXITCODE -ne 0){throw 'Actual main SKARVIK route could not be proven; no alternate map opened'}
@@ -67,6 +71,7 @@ jobs:
           name: actual-main-skarvik-city-sm5-pie-evidence
           path: |
             ${{ env.MAIN_MAP_OUT }}/main-map-preflight.json
+            ${{ env.MAIN_MAP_OUT }}/main-map-routing.json
             ${{ env.MAIN_MAP_OUT }}/main-map-city-sm5.json
             ${{ env.MAIN_MAP_OUT }}/main-map-sm5-validation.json
             ${{ env.MAIN_MAP_OUT }}/main-map-sm5-engine.log
