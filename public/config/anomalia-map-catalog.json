@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "15 independent ANOMALIA’Z maps, 11 original identities preserved and four new independently packaged terrain plans. No world is considered native imported solely because it is listed in this JSON.",
+  "description": "18 independent ANOMALIA’Z map identities: 15 prior entries preserved and three additional user-requested world designs. Catalogue presence is not proof of native creation, import or playability.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -289,23 +289,128 @@
       "multiplayerReady": false,
       "actualVegetationAndWaterPopulated": false,
       "gameplayAndCollisionPlaytested": false
+    },
+    {
+      "id": "yudinavia-v1",
+      "displayName": "YUDINAVIA",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_YUDINAVIA",
+      "widthKm": 12.5,
+      "heightKm": 12.5,
+      "areaKm2": 156.25,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "user-approved-design-native-world-not-created",
+      "saveNamespace": "yudinavia-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "scandinavian-fjords-conifer-forests-mountains-lakes",
+      "features": [
+        "Relief d’inspiration scandinave",
+        "Fjords, lacs et rivières",
+        "Forêts de conifères et vallées",
+        "Villes et villages reliés par routes et ponts"
+      ],
+      "geographicIntent": {
+        "inspiration": "Scandinavie",
+        "representation": "Adaptation à la surface demandée ; pas une reproduction intégrale à l’échelle 1:1.",
+        "referenceDataSelected": false,
+        "referenceDataLicenseVerified": false
+      },
+      "nativeWorldCreated": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "multiplayerReady": false,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
+    },
+    {
+      "id": "moscovie-v1",
+      "displayName": "MOSCOVIE",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_MOSCOVIE",
+      "widthKm": 10,
+      "heightKm": 10,
+      "areaKm2": 100,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "user-approved-design-native-world-not-created",
+      "saveNamespace": "moscovie-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "moscow-inspired-dense-city-river-ring-roads",
+      "features": [
+        "Morphologie urbaine inspirée de Moscou",
+        "Rivière traversant la ville et ponts",
+        "Centre dense, grandes avenues et quartiers périphériques",
+        "Métro, gares et zones industrielles à intégrer avec de véritables ressources"
+      ],
+      "geographicIntent": {
+        "inspiration": "Moscou",
+        "representation": "Adaptation à la surface demandée ; pas une reproduction intégrale à l’échelle 1:1.",
+        "referenceDataSelected": false,
+        "referenceDataLicenseVerified": false
+      },
+      "nativeWorldCreated": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "multiplayerReady": false,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
+    },
+    {
+      "id": "corsivia-v1",
+      "displayName": "CORSIVIA",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_CORSIVIA",
+      "widthKm": 15,
+      "heightKm": 15,
+      "areaKm2": 225,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "user-approved-design-native-world-not-created",
+      "saveNamespace": "corsivia-v1",
+      "sourceMapPreserved": true,
+      "terrainBiome": "corsican-mountain-island-mediterranean-coast-rivers",
+      "features": [
+        "Île entourée d’eau sur tous les côtés",
+        "Relief montagneux central et vallées encaissées",
+        "Rivières continues jusqu’à la mer",
+        "Villes côtières, villages de montagne et ports",
+        "Maquis, forêts, plages et côtes rocheuses"
+      ],
+      "geographicIntent": {
+        "inspiration": "Corse",
+        "representation": "Adaptation à la surface demandée ; pas une reproduction intégrale à l’échelle 1:1.",
+        "referenceDataSelected": false,
+        "referenceDataLicenseVerified": false
+      },
+      "nativeWorldCreated": false,
+      "actualVegetationAndWaterPopulated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "multiplayerReady": false,
+      "targetLocalities": null,
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
     }
   ],
-  "mapCount": 15,
+  "mapCount": 18,
   "catalogAudit": {
-    "confirmedNamedMaps": 15,
+    "confirmedNamedMaps": 18,
     "verifiedSourcePackages": 6,
     "additionalSourcePackagesPendingVerification": 5,
     "categoryDistinction": "Six SKARVIK biome regions are NOT the 11 separate ANOMALIA’Z maps",
     "protection": "Do not remove, rename, overwrite, or merge existing Unreal maps from D:/ANOMALIA during map catalogue repairs",
     "originalWorldsPreserved": 11,
-    "additionalPlannedWorlds": 4,
+    "additionalPlannedWorlds": 7,
     "exactMeasurementsNeedRealEngineVerification": true,
     "newWorldsNativePlayable": false,
     "settlementScalingPolicy": "Size and biome determine count; 100% PVP DEADROOT has no civilian settlements. Unknown original map dimensions must be audited rather than guessed.",
     "additionalNativeWorldsSaved": 4,
     "additionalWorldsGameSelectable": 0,
     "mapSelectionImplementationPending": true,
-    "multiplayerMapSelectionImplementationPending": true
+    "multiplayerMapSelectionImplementationPending": true,
+    "latestRequestedWorlds": [
+      "yudinavia-v1",
+      "moscovie-v1",
+      "corsivia-v1"
+    ]
   }
 }
