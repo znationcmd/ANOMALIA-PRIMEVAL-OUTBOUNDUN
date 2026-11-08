@@ -32,7 +32,6 @@ jobs:
             public/config/anomalia-map-catalog.json
             public/config/anomalia-locality-names.json
           sparse-checkout-cone-mode: false
-          sparse-checkout-cone-mode: false
           persist-credentials: false
       - name: Preserve existing maps and install narrowly matched sources with backups
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
