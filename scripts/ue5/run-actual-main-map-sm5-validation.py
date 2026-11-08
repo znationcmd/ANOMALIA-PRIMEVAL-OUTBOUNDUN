@@ -11,9 +11,9 @@ def main():
  assert pre['project']==str(ROOT)
  profile='mainmap-'+os.environ['GITHUB_RUN_ID'];os.environ['MAIN_MAP_TEST_PROFILE']=profile
  backups=out/'SaveBackups';old={}
- save_bytes=sum(p.stat().st_size for name in ['Servers','SaveGames'] for p in (ROOT/'Saved'/name).rglob('*') if p.is_file())
+ save_bytes=sum(p.stat().st_size for name in ['Servers','SaveGames','Characters'] for p in (ROOT/'Saved'/name).rglob('*') if p.is_file())
  if shutil.disk_usage(out).free<save_bytes+8*1024**3:raise RuntimeError('Insufficient measured space for save protection and disk reserve')
- for name in ['Servers','SaveGames']:
+ for name in ['Servers','SaveGames','Characters']:
   folder=ROOT/'Saved'/name
   if folder.is_dir():
    for p in folder.rglob('*'):
@@ -43,7 +43,7 @@ def main():
     retained=out/'UnexpectedSaveWrites'/relative;retained.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,retained)
    p.parent.mkdir(parents=True,exist_ok=True);temp=p.with_suffix(p.suffix+'.validation-restore');shutil.copy2(backups/relative,temp);os.replace(temp,p)
  result['unexpectedNewSaveFiles']=[]
- for name in ['Servers','SaveGames']:
+ for name in ['Servers','SaveGames','Characters']:
   folder=ROOT/'Saved'/name
   for p in list(folder.rglob('*')):
    if not p.is_file():continue
