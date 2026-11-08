@@ -1,0 +1,77 @@
+name: ANOMALIA mission - unblock disk pressure without deleting assets
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-unblock-model-import-disk.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  pause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            for(const run_id of [42461771380,42462980876]){
+              let {data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id});
+              if(data.status==='completed')continue;
+              try{await github.rest.actions.cancelWorkflowRun({...context.repo,run_id});}catch(e){core.warning(String(e));}
+              await new Promise(r=>setTimeout(r,20000));
+              ({data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id}));
+              if(data.status!=='completed')await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/force-cancel',{...context.repo,run_id});
+            }
+  inspect_and_clean_verified_archives:
+    needs: pause
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: disk-unblock-${{ github.run_id }}
+          sparse-checkout: scripts/ue5
+          persist-credentials: false
+      - name: Measure disk pressure and known regenerable caches without deleting project files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Unreal remains active; preserve session before any cleanup'}
+          $out='D:\ANOMALIA\unreal\Saved\CleanupReceipts\DiskUnblock20261108\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "ZIP_CLEANUP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $candidates=@(
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\DerivedDataCache'),
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\Zen\Data'),
+            'C:\ANOMALIA_MISSION_41801391717\unreal\DerivedDataCache',
+            'D:\ANOMALIA\unreal\DerivedDataCache',
+            'C:\ANOMALIA_ResourceRecovery20261108'
+          )
+          $rows=@()
+          foreach($path in $candidates){
+            if(Test-Path -LiteralPath $path){
+              $files=@(Get-ChildItem -LiteralPath $path -File -Recurse -ErrorAction SilentlyContinue)
+              $rows+=@{path=$path;bytes=($files | Measure-Object -Property Length -Sum).Sum;files=$files.Count;deleted=$false}
+            }
+          }
+          $os=Get-CimInstance Win32_OperatingSystem
+          $report=@{disks=@(Get-PSDrive C,D | Select-Object Name,Free,Used);candidates=$rows;memory=@{freePhysicalBytes=$os.FreePhysicalMemory*1KB;freeVirtualBytes=$os.FreeVirtualMemory*1KB};pageFiles=@(Get-CimInstance Win32_PageFileUsage | Select-Object Name,AllocatedBaseSize,CurrentUsage,PeakUsage)}
+          $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'disk-pressure-report.json') -Encoding UTF8
+          Write-Output ($report | ConvertTo-Json -Depth 8 -Compress)
+      - name: Remove only ZIPs with a complete byte-for-byte verified extraction
+        timeout-minutes: 50
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:ZIP_CLEANUP_OUT=$env:ZIP_CLEANUP_OUT
+          $script=Join-Path $env:GITHUB_WORKSPACE ('disk-unblock-'+$env:GITHUB_RUN_ID+'\scripts\ue5\remove-only-completely-verified-extracted-zips.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Unverified archives preserved'}
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ZIP_CLEANUP_OUT != ''
+        with:
+          name: actual-disk-pressure-and-verified-zip-cleanup
+          path: ${{ env.ZIP_CLEANUP_OUT }}/
+          if-no-files-found: warn
