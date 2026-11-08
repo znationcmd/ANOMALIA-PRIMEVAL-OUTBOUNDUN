@@ -13,8 +13,11 @@ def value(text,section,key):
  return result
 def select_main(engine,source):
  boot=value(engine,'/Script/EngineSettings.GameMapsSettings','GameDefaultMap')
- match=re.search(r'TEXT\("archipelago-v2"\)\s*,\s*TEXT\("SKARVIK"\)\s*,\s*TEXT\("(/Game/[^\"]+)"\)',source)
- routed=match.group(1) if match else None
+ # Map IDs can change during migration; use the explicit installed SKARVIK title.
+ rows=re.findall(r'TEXT\s*\(\s*"([^"]*)"\s*\)\s*,\s*TEXT\s*\(\s*"([^"]*)"\s*\)\s*,\s*TEXT\s*\(\s*"(/Game/[^"]+)"\s*\)',source)
+ routes={package for ident,title,package in rows if title.strip().upper()=='SKARVIK'}
+ if len(routes)>1:raise ValueError('Multiple installed SKARVIK routes; refuse an arbitrary map')
+ routed=next(iter(routes),None)
  if boot and ('SKARVIK' in boot.upper() or 'ARCHIPELAGO' in boot.upper()):selected=boot;basis='INSTALLED_GAME_DEFAULT_SKARVIK_MAP'
  elif routed:selected=routed;basis='INSTALLED_NATIVE_SKARVIK_WORLD_CHOICE'
  else:raise ValueError('Installed main SKARVIK route is unresolved; do not test a replacement map')
@@ -26,7 +29,13 @@ def main():
  engine_path=PROJECT/'Config/DefaultEngine.ini';engine=engine_path.read_text(encoding='utf-8-sig')
  browser=PROJECT/'Source/AnomaliaPrimeval/AnomaliaServerBrowserLibrary.cpp'
  if not browser.is_file():raise ValueError('Installed native map routing source unavailable; preserve project')
- route=select_main(engine,browser.read_text(encoding='utf-8-sig'))
+ source=browser.read_text(encoding='utf-8-sig')
+ try:
+  route=select_main(engine,source)
+ except ValueError as exc:
+  evidence={'error':str(exc),'project':str(PROJECT),'gameDefaultMap':value(engine,'/Script/EngineSettings.GameMapsSettings','GameDefaultMap'),'installedRoutingLines':[line for line in source.splitlines() if any(word in line.upper() for word in ['SKARVIK','ARCHIPELAGO','/GAME/MAPS/'])]}
+  (out/'main-map-preflight.json').write_text(json.dumps(evidence,ensure_ascii=False,indent=2),encoding='utf-8')
+  raise
  file=PROJECT/'Content'/(route['mainMap'][len('/Game/'):]+'.umap')
  if not file.is_file():raise ValueError('Configured main map is absent: '+str(file))
  mode=PROJECT/'Source/AnomaliaPrimeval/AnomaliaGameMode.cpp'
