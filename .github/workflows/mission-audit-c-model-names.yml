@@ -2,7 +2,7 @@ name: ANOMALIA - inventory new C drive models and same-name variants
 on:
   push:
     branches: [mission/finalisation-20261104]
-    paths: ['.github/workflows/mission-audit-c-model-names.yml']
+    paths: ['.github/workflows/mission-audit-c-model-names.yml', 'scripts/ue5/audit-c-model-names.py']
   workflow_dispatch:
 permissions:
   contents: read

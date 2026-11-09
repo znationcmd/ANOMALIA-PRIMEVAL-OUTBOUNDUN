@@ -5,10 +5,12 @@ from datetime import datetime, timedelta, timezone
 import hashlib
 import json
 import os
+import re
 from pathlib import Path
 import stat
 import time
 import unicodedata
+import zipfile
 
 MODEL = {".fbx", ".glb", ".gltf", ".obj", ".blend", ".dae", ".usd", ".usda", ".usdc", ".usdz", ".stl", ".uasset"}
 ARCHIVE = {".zip", ".7z", ".rar"}
@@ -44,17 +46,37 @@ def read_metadata(path):
     return info
 
 
-def content_hash(path, before, deadline):
+def hash_stream(stream, deadline):
     digest = hashlib.sha256()
+    for block in iter(lambda: stream.read(2**20), b""):
+        if time.monotonic() >= deadline:
+            raise TimeoutError("Time limit reached")
+        digest.update(block)
+    return digest.hexdigest()
+
+
+def content_hash(path, before, deadline):
     with path.open("rb") as stream:
-        for block in iter(lambda: stream.read(2**20), b""):
-            if time.monotonic() >= deadline:
-                raise TimeoutError("Time limit reached")
-            digest.update(block)
+        digest = hash_stream(stream, deadline)
     after = path.stat()
     if (after.st_size, after.st_mtime_ns) != (before.st_size, before.st_mtime_ns):
         raise OSError("File changed while being read")
-    return digest.hexdigest()
+    return digest
+
+
+def zip_model_hashes(path, deadline):
+    with zipfile.ZipFile(path) as archive:
+        members = [
+            item for item in archive.infolist()
+            if not item.is_dir() and Path(item.filename).suffix.lower() in MODEL
+        ]
+        if sum(item.file_size for item in members) > 512 * 2**20 or len(members) > 512:
+            raise ValueError("Archive model payload exceeds read-only verification budget")
+        models = []
+        for item in members:
+            with archive.open(item) as stream:
+                models.append({"member": item.filename, "sha256": hash_stream(stream, deadline)})
+        return models
 
 
 def audit(roots, downloads, out):
@@ -100,7 +122,8 @@ def audit(roots, downloads, out):
                     "sha256": None,
                 }
                 inventory.append(row)
-                name_key = unicodedata.normalize("NFC", path.name).casefold()
+                stem = re.sub(r" \(\d+\)$", "", path.stem)
+                name_key = unicodedata.normalize("NFC", stem + path.suffix).casefold()
                 names[name_key].append((path, info, row))
             except OSError as exc:
                 errors.append(str(exc))
@@ -128,6 +151,17 @@ def audit(roots, downloads, out):
                 hashes[row["sha256"]].append(row)
         entry = {"name": key, "files": [row for _, _, row in group]}
         if len(hashes) > 1:
+            for path, info, row in group:
+                if path.suffix.lower() != ".zip" or row["sha256"] is None:
+                    continue
+                try:
+                    row["zipModels"] = zip_model_hashes(path, deadline)
+                    after = path.stat()
+                    if (info.st_size, info.st_mtime_ns) != (after.st_size, after.st_mtime_ns):
+                        del row["zipModels"]
+                        raise OSError("Archive changed while being read")
+                except (OSError, RuntimeError, ValueError, zipfile.BadZipFile) as exc:
+                    errors.append(f"{path}: {exc}")
             different.append(entry)
         if any(row["sha256"] is None for row in entry["files"]):
             unresolved.append(entry)
@@ -155,7 +189,17 @@ def audit(roots, downloads, out):
     print(json.dumps(summary, ensure_ascii=True), flush=True)
     # Keep logs small. Full groups, including hashes and locations, are in the report.
     for entry in different[:35]:
-        print(json.dumps(entry, ensure_ascii=True), flush=True)
+        log_entry = {"name": entry["name"], "files": []}
+        for row in entry["files"]:
+            log_row = {key: row[key] for key in ("path", "bytes", "sha256", "recent")}
+            if "zipModels" in row:
+                log_row["zipModelCount"] = len(row["zipModels"])
+                log_row["zipModelHashes"] = sorted(m["sha256"] for m in row["zipModels"][:20])
+                log_row["zipModelExamples"] = [m["member"] for m in row["zipModels"][:5]]
+            log_entry["files"].append(log_row)
+        print(json.dumps(log_entry, ensure_ascii=True), flush=True)
+    for entry in identical[:35]:
+        print(json.dumps({"identicalName": entry["name"], "paths": [row["path"] for row in entry["files"]]}, ensure_ascii=True), flush=True)
     return bool(checked)
 
 
