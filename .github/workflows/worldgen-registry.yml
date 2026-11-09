@@ -1,0 +1,30 @@
+name: ANOMALIA worldgen registry checks
+
+on:
+  push:
+    paths:
+      - 'config/worldgen/**'
+      - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
+      - 'scripts/ue5/worldgen/**'
+      - 'tests/test_worldgen_catalog.py'
+      - '.github/workflows/worldgen-registry.yml'
+  pull_request:
+    paths:
+      - 'config/worldgen/**'
+      - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
+      - 'scripts/ue5/worldgen/**'
+      - 'tests/test_worldgen_catalog.py'
+      - '.github/workflows/worldgen-registry.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate world catalog without modifying Unreal assets
+        run: |
+          python scripts/ue5/worldgen/validate_world_catalog.py
+          python -m unittest discover -s tests -p 'test_worldgen_catalog.py' -v
