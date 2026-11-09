@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "baseCatalog": "config/worldgen/worlds.json",
+  "baseMaps": 20,
+  "note": "Additional user-approved maps, not proof of native UE5 world creation. 20 original maps are left unchanged.",
+  "worlds": [
+    {
+      "order": 21,
+      "id": "unknown-horror-x",
+      "name": "UNKNOWN HORROR X",
+      "widthKm": 20,
+      "heightKm": 20,
+      "areaKm2": 400,
+      "biomeTheme": "horror-survival",
+      "status": "source-kit-not-native-UE5"
+    },
+    {
+      "order": 22,
+      "id": "koenigsbrueck",
+      "name": "KÖNIGSBRÜCK",
+      "widthKm": 30,
+      "heightKm": 30,
+      "areaKm2": 900,
+      "biomeTheme": "German countryside",
+      "status": "planned"
+    },
+    {
+      "order": 23,
+      "id": "skjaeroyaas",
+      "name": "SKJÆRØYÅS",
+      "widthKm": 15,
+      "heightKm": 15,
+      "areaKm2": 225,
+      "seed": "ANOMALIA-2026-SKJAEROYAAS",
+      "biomeTheme": "Norwegian coastal survival / fjords",
+      "status": "R16-source-generator-developed; no .umap"
+    }
+  ],
+  "combinedAreaKm2": 25865.18
+}
