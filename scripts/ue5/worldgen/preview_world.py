@@ -16,6 +16,7 @@ import hashlib
 import heapq
 import json
 import math
+import struct
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -87,13 +88,40 @@ def load_protected(path: Path | None) -> list[dict]:
     return protected
 
 
+def sample_existing_r16(path: Path, grid: int, sea_level_u16: int) -> tuple[set[int], str, int]:
+    """Sample land from an ORIGINAL, read-only unsigned little-endian R16 heightmap.
+
+    WARNING: the true sea-level threshold must be supplied by the author; no
+    elevation scale or native Landscape import is inferred from this preview.
+    """
+    safe_grid_bounds(grid)
+    if isinstance(sea_level_u16, bool) or not isinstance(sea_level_u16, int) or not 0 <= sea_level_u16 <= 65535:
+        raise ValueError("Sea level must be an unsigned R16 value 0..65535")
+    raw = path.read_bytes()
+    if len(raw) % 2:
+        raise ValueError("R16 source must contain whole uint16 samples")
+    resolution = math.isqrt(len(raw) // 2)
+    if resolution * resolution * 2 != len(raw) or resolution < grid or resolution > 16385:
+        raise ValueError("Expected a square R16 source with at least grid samples per axis")
+    land = set()
+    for y in range(grid):
+        sy = min(resolution - 1, int((y + .5) / grid * resolution))
+        for x in range(grid):
+            sx = min(resolution - 1, int((x + .5) / grid * resolution))
+            value = struct.unpack_from("<H", raw, 2 * (sy * resolution + sx))[0]
+            if value > sea_level_u16:
+                land.add(y * grid + x)
+    return land, hashlib.sha256(raw).hexdigest(), resolution
+
+
 def safe_grid_bounds(grid: int) -> None:
     if not isinstance(grid, int) or not 32 <= grid <= 160:
         raise ValueError("Preview grid size must be 32..160")
 
 
 def generate_plan(profile: dict, grid: int = 64, protected: list[dict] | None = None,
-                  seed_override: str | None = None) -> dict:
+                  seed_override: str | None = None, source_land_cells: set[int] | None = None,
+                  source_sha: str | None = None, source_resolution: int | None = None) -> dict:
     """Generate candidate planning data ONLY; no files and no UE5 mutations."""
     safe_grid_bounds(grid)
     protected = list(protected or [])
@@ -118,7 +146,10 @@ def generate_plan(profile: dict, grid: int = 64, protected: list[dict] | None = 
     if target_land is None:
         target_land = .60  # illustration, explicitly not the original map land fraction
     land_count = min(len(scores), max(1, round(len(scores) * target_land)))
-    land_ids = set(sorted(range(len(scores)), key=lambda i: (-scores[i], i))[:land_count])
+    land_ids = (set(sorted(range(len(scores)), key=lambda i: (-scores[i], i))[:land_count])
+                if source_land_cells is None else set(source_land_cells))
+    if any(i < 0 or i >= grid*grid for i in land_ids):
+        raise ValueError("Source land mask has out-of-bounds cell indexes")
     def is_land(x: int, y: int) -> bool:
         return 0 <= x < grid and 0 <= y < grid and (y * grid + x) in land_ids
 
@@ -229,6 +260,7 @@ def generate_plan(profile: dict, grid: int = 64, protected: list[dict] | None = 
         "dimensionsKm": [profile["widthKm"], profile["heightKm"]],
         "seed": seed, "grid": grid, "biomeCounts": counts,
         "previewLandFraction": round(len(land_ids)/(grid*grid), 6),
+        "sourceR16HashSha256": source_sha, "sourceR16Resolution": source_resolution,
         "originalLandFractionKnown": profile.get("landFraction"),
         "density": density, "pcgEligibleCells": len(eligible), "pcgCandidateCells": len(scatter),
         "scatterIndices": scatter, "biomes": biomes, "settlements": centres, "roads": roads,
@@ -239,7 +271,9 @@ def generate_plan(profile: dict, grid: int = 64, protected: list[dict] | None = 
         "terrainPolicy": profile["terrainPolicy"],
         "externalSourcePackage": profile["sourcePackage"],
         "warnings": [
-            "Synthetic BIOME/COAST preview only: not derived from original terrain or user heightmaps.",
+            ("Synthetic BIOME/COAST preview only: not derived from original terrain or user heightmaps."
+             if source_land_cells is None else
+             "Coastline samples ORIGINAL R16 read-only; biome heights, roads and settlements are still synthetic proposals."),
             "Roads/settlements are proposals only, NOT merged with original roads, cities or protected UE actors.",
             "A native UE5 source audit and authoritative protected-actors manifest are required before any placement.",
         ],
@@ -283,14 +317,25 @@ def main(argv: list[str] | None = None) -> dict:
     cli.add_argument("--seed", default=None)
     cli.add_argument("--protected", type=Path, default=None,
                      help="Optional exported, verified actor circles; never changed")
+    cli.add_argument("--source-r16", type=Path, default=None,
+                     help="Optional existing square R16 heightmap, read-only")
+    cli.add_argument("--sea-level-u16", type=int, default=None,
+                     help="Required original RAW16 sea-level threshold when using --source-r16")
     cli.add_argument("--write", action="store_true",
                      help="Write a new, isolated preview folder; default is dry-run")
     cli.add_argument("--output", type=Path, default=None)
     args = cli.parse_args(argv)
     if args.write != (args.output is not None):
         cli.error("--write and --output must be supplied together")
+    if (args.source_r16 is None) != (args.sea_level_u16 is None):
+        cli.error("--source-r16 and --sea-level-u16 must be supplied together")
     profile = load_profiles()[args.world]
-    plan = generate_plan(profile, args.grid, load_protected(args.protected), args.seed)
+    src_cells, src_sha, src_resolution = None, None, None
+    if args.source_r16 is not None:
+        src_cells, src_sha, src_resolution = sample_existing_r16(
+            args.source_r16, args.grid, args.sea_level_u16)
+    plan = generate_plan(profile, args.grid, load_protected(args.protected),
+                         args.seed, src_cells, src_sha, src_resolution)
     if args.write:
         paths = write_isolated(plan, args.output)
     else:
