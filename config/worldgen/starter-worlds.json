@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "note": "Preview targets only. Unreal levels, CitySample assets, and original map sources remain protected and unmodified.",
+  "profiles": [
+    {
+      "worldId": "racconia-varkovia",
+      "name": "RACCONIA-VARKOVIA",
+      "widthKm": 16,
+      "heightKm": 16,
+      "landFraction": 0.65,
+      "seed": "ANOMALIA-2026",
+      "density": 0.65,
+      "sourcePackage": "RACCONIA_VARKOVIA_16x16_29_LIEUX_UE5_SOURCE.zip",
+      "sourceStatus": "external-source-kit",
+      "protectedSites": 29,
+      "terrainPolicy": "preserve-original; synthetic preview only"
+    },
+    {
+      "worldId": "unknown-horror-x",
+      "name": "UNKNOWN HORROR X",
+      "widthKm": 20,
+      "heightKm": 20,
+      "landFraction": 0.8,
+      "seed": "ANOMALIA-2026-UNKNOWN-HORROR-X",
+      "density": 0.65,
+      "sourcePackage": "UNKNOWN_HORROR_X_20x20_UE5_SOURCE.zip",
+      "sourceStatus": "external-source-kit",
+      "protectedSites": 20,
+      "undergroundAreaKm2": 256,
+      "terrainPolicy": "preserve-original; synthetic preview only"
+    },
+    {
+      "worldId": "skarvik",
+      "name": "SKARVIK",
+      "widthKm": 48,
+      "heightKm": 48,
+      "landFraction": null,
+      "seed": "ANOMALIA-2026-SKARVIK",
+      "density": 0.65,
+      "sourcePackage": "existing UE5/City Sample assets and custom maps on Windows",
+      "sourceStatus": "existing-edited-world",
+      "protectedSites": null,
+      "terrainPolicy": "preserve-verified-UE5-heightmap-and-CitySample; synthetic preview only"
+    },
+    {
+      "worldId": "drazovia",
+      "name": "DRAZOVIA",
+      "widthKm": 48,
+      "heightKm": 48,
+      "landFraction": null,
+      "seed": "ANOMALIA-2026-DRAZOVIA",
+      "density": 0.65,
+      "sourcePackage": "user reference topography and independent Drazovia UE5 candidate",
+      "sourceStatus": "existing-edited-world",
+      "protectedSites": null,
+      "terrainPolicy": "preserve-user-topography; synthetic preview only"
+    }
+  ]
+}

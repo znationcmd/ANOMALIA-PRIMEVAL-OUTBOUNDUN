@@ -1,0 +1,51 @@
+name: ANOMALIA worldgen registry checks
+
+on:
+  push:
+    paths:
+      - 'config/worldgen/**'
+      - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
+      - 'scripts/ue5/worldgen/**'
+      - 'tests/test_worldgen_catalog.py'
+      - 'tests/test_worldgen_preview.py'
+      - '.github/workflows/worldgen-registry.yml'
+  pull_request:
+    paths:
+      - 'config/worldgen/**'
+      - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
+      - 'scripts/ue5/worldgen/**'
+      - 'tests/test_worldgen_catalog.py'
+      - 'tests/test_worldgen_preview.py'
+      - '.github/workflows/worldgen-registry.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate world catalog without modifying Unreal assets
+        run: |
+          python scripts/ue5/worldgen/validate_world_catalog.py
+          python -m unittest discover -s tests -p 'test_worldgen_catalog.py' -v
+          python -m unittest discover -s tests -p 'test_worldgen_preview.py' -v
+          python scripts/ue5/worldgen/preview_world.py --world racconia-varkovia
+          python scripts/ue5/worldgen/preview_world.py --world unknown-horror-x
+          python scripts/ue5/worldgen/preview_world.py --world skarvik
+          python scripts/ue5/worldgen/preview_world.py --world drazovia
+
+      - name: Build four read-only worldgen preview packages
+        run: |
+          mkdir -p /tmp/anomalia-worldgen-previews
+          for world in racconia-varkovia unknown-horror-x skarvik drazovia; do
+            python scripts/ue5/worldgen/preview_world.py --world "$world" --write --output "/tmp/anomalia-worldgen-previews/$world"
+          done
+      - name: Upload four previews (PNG, PPM and JSON)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-WORLDGEN-FOUR-WORLDS-PREVIEWS
+          path: /tmp/anomalia-worldgen-previews/
+          retention-days: 14
+          if-no-files-found: error
