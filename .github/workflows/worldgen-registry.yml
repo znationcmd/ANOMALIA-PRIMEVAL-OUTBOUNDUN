@@ -7,6 +7,7 @@ on:
       - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
       - 'scripts/ue5/worldgen/**'
       - 'tests/test_worldgen_catalog.py'
+      - 'tests/test_worldgen_preview.py'
       - '.github/workflows/worldgen-registry.yml'
   pull_request:
     paths:
@@ -14,6 +15,7 @@ on:
       - 'docs/ANOMALIA_WORLDGEN_MULTI_MAPS_SPEC.md'
       - 'scripts/ue5/worldgen/**'
       - 'tests/test_worldgen_catalog.py'
+      - 'tests/test_worldgen_preview.py'
       - '.github/workflows/worldgen-registry.yml'
 
 jobs:
@@ -28,3 +30,8 @@ jobs:
         run: |
           python scripts/ue5/worldgen/validate_world_catalog.py
           python -m unittest discover -s tests -p 'test_worldgen_catalog.py' -v
+          python -m unittest discover -s tests -p 'test_worldgen_preview.py' -v
+          python scripts/ue5/worldgen/preview_world.py --world racconia-varkovia
+          python scripts/ue5/worldgen/preview_world.py --world unknown-horror-x
+          python scripts/ue5/worldgen/preview_world.py --world skarvik
+          python scripts/ue5/worldgen/preview_world.py --world drazovia
