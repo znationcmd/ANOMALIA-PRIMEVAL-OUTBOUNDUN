@@ -56,8 +56,6 @@ def create_new_partitioned_staging_level(layout_path: str | Path,
         import unreal  # available only in native Unreal Editor with Python plugin
     except ImportError as ex:
         raise RuntimeError("Requires UE5 editor's PythonScriptPlugin, not regular Python") from ex
-    if unreal.SystemLibrary.is_playing(unreal.EditorLevelLibrary.get_editor_world()):
-        raise RuntimeError("Cannot create a level during Play In Editor")
     # The physical and registry checks are BOTH needed, because a level asset can
     # be absent from registry when an editor scan has not yet completed.
     content=Path(unreal.Paths.project_content_dir()).resolve()
@@ -66,6 +64,8 @@ def create_new_partitioned_staging_level(layout_path: str | Path,
         raise FileExistsError("Refusing to overwrite an existing SKJÆRØYÅS level")
     level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
     actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    if level.is_in_play_in_editor():
+        raise RuntimeError("Cannot create a level during Play In Editor")
     if not level.new_level(ASSET,is_partitioned_world=True):
         raise RuntimeError("UE failed to create a new World Partition level")
     count=0
