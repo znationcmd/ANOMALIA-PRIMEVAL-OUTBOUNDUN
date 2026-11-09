@@ -29,7 +29,7 @@ const species=[
  ['carnotaurus','Carnotaurus','dinosaur',['surface','undergroundCity','abyss'],5,530,true],
  ['ankylosaurus','Ankylosaure','dinosaur',['surface','undergroundCity','abyss'],4,460,true],
  ['spinosaurus','Spinosaure','dinosaur',['surface','abyss'],5,800,true],
- ['deinonychus','Deinonychus','dinosaur',['metro','undergroundCity','abyss'],4,260,true]
+ ['deinonychus','Deinonychus','dinosaur',['metro','labs','undergroundCity','abyss'],4,260,true]
 ];
 export const HORROR_CREATURES=Object.freeze(Object.fromEntries(species.map(([id,name,kind,layers,danger,hp,tamable])=>[
  id,Object.freeze({id,name,kind,layers:Object.freeze(layers),danger,hp,tamable})
@@ -37,7 +37,7 @@ export const HORROR_CREATURES=Object.freeze(Object.fromEntries(species.map(([id,
 export const HORROR_SPAWN_PROFILES=Object.freeze({
  surface:{zombie:0.45,animal:0.32,dinosaur:0.23},
  metro:{zombie:0.58,animal:0.27,dinosaur:0.15},
- labs:{zombie:0.75,animal:0.25,dinosaur:0},
+ labs:{zombie:0.66,animal:0.22,dinosaur:0.12},
  undergroundCity:{zombie:0.55,animal:0.15,dinosaur:0.30},
  abyss:{zombie:0.34,animal:0.27,dinosaur:0.39}
 });
