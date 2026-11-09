@@ -96,8 +96,9 @@ class WorldgenPreviewTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as folder:
             dest = Path(folder) / "new-run"
             result = worldgen.write_isolated(plan, dest)
-            self.assertEqual(len(result), 2)
+            self.assertEqual(len(result), 3)
             self.assertTrue((dest / "preview.ppm").read_bytes().startswith(b"P6\n"))
+            self.assertTrue((dest / "preview.png").read_bytes().startswith(b"\x89PNG\r\n\x1a\n"))
             with self.assertRaises(FileExistsError):
                 worldgen.write_isolated(plan, dest)
             with self.assertRaisesRegex(ValueError, "OUTSIDE"):
