@@ -17,6 +17,7 @@ import heapq
 import json
 import math
 import struct
+import zlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -295,6 +296,36 @@ def render_ppm(plan: dict) -> bytes:
     return f"P6\n{grid} {grid}\n255\n".encode("ascii") + bytes(v for pix in pixels for v in pix)
 
 
+def render_png(plan: dict, scale: int = 8) -> bytes:
+    """Viewable true-color PNG; Python standard library only."""
+    if not 1 <= scale <= 24:
+        raise ValueError("Invalid PNG preview scale")
+    grid = plan["grid"]
+    pixels = [COLORS[b] for b in plan["biomes"]]
+    for road in plan["roads"]:
+        for x, y in road["cells"]:
+            pixels[y * grid + x] = (177, 146, 118)
+    for centre in plan["settlements"]:
+        x, y = centre["cell"]
+        pixels[y * grid + x] = (220, 80, 75)
+    width = grid * scale
+    data = bytearray()
+    for y in range(grid):
+        scan = b"".join(bytes(pixels[y*grid+x]) * scale for x in range(grid))
+        for _ in range(scale):
+            data.extend(b"\x00")
+            data.extend(scan)
+
+    def chunk(name: bytes, payload: bytes) -> bytes:
+        return (struct.pack(">I", len(payload)) + name + payload +
+                struct.pack(">I", zlib.crc32(name + payload) & 0xffffffff))
+
+    return (b"\x89PNG\r\n\x1a\n" +
+            chunk(b"IHDR", struct.pack(">IIBBBBB", width, width, 8, 2, 0, 0, 0)) +
+            chunk(b"IDAT", zlib.compress(bytes(data), 6)) +
+            chunk(b"IEND", b""))
+
+
 def write_isolated(plan: dict, folder: Path) -> list[str]:
     folder = folder.expanduser().resolve()
     # Refuse any path inside the checked-out source tree.
@@ -305,9 +336,11 @@ def write_isolated(plan: dict, folder: Path) -> list[str]:
     folder.mkdir(parents=True, exist_ok=False)
     report = folder / "world-preview.json"
     image_path = folder / "preview.ppm"
+    png_path = folder / "preview.png"
     report.write_text(json.dumps(plan, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     image_path.write_bytes(render_ppm(plan))
-    return [str(report), str(image_path)]
+    png_path.write_bytes(render_png(plan, max(1, 512 // plan["grid"])))
+    return [str(report), str(image_path), str(png_path)]
 
 
 def main(argv: list[str] | None = None) -> dict:
