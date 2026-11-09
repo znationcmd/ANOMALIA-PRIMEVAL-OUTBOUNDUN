@@ -52,7 +52,7 @@ class NorwegianWorldTests(unittest.TestCase):
             self.assertFalse(manifest["nativeLevelPackaged"])
             self.assertTrue((target / "skjaeroyaas-overview.png").read_bytes().startswith(
                 b"\x89PNG\r\n\x1a\n"))
-            self.assertTrue(0.05 < manifest["previewLandFraction"] < 0.98)
+            self.assertTrue(0.58 < manifest["previewLandFraction"] < 0.67)
             n = 33
             for y in range(3):
                 for x in range(3):
