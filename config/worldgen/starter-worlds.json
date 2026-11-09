@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "note": "Preview targets only. Unreal levels, CitySample assets, and original map sources remain protected and unmodified.",
+  "note": "Planning & native R16 source profiles for four prior worlds plus two new worlds. Land proportions for KÖNIGSBRÜCK and SKJÆRØYÅS are design defaults, not user-confirmed. Unreal assets and existing levels unmodified.",
   "profiles": [
     {
       "worldId": "racconia-varkovia",
@@ -54,6 +54,32 @@
       "sourceStatus": "existing-edited-world",
       "protectedSites": null,
       "terrainPolicy": "preserve-user-topography; synthetic preview only"
+    },
+    {
+      "worldId": "koenigsbrueck",
+      "name": "KÖNIGSBRÜCK",
+      "widthKm": 30,
+      "heightKm": 30,
+      "landFraction": 0.92,
+      "seed": "ANOMALIA-2026-KOENIGSBRUECK",
+      "density": 0.65,
+      "sourcePackage": "not yet built",
+      "sourceStatus": "new-design-only",
+      "protectedSites": null,
+      "terrainPolicy": "original German-inspired procedural planning only"
+    },
+    {
+      "worldId": "skjaeroyaas",
+      "name": "SKJÆRØYÅS",
+      "widthKm": 15,
+      "heightKm": 15,
+      "landFraction": 0.62,
+      "seed": "ANOMALIA-2026-SKJAEROYAAS",
+      "density": 0.55,
+      "sourcePackage": "generate_skjaeroyaas.py -> 9 staged RAW16 tiles",
+      "sourceStatus": "original-R16-generator",
+      "protectedSites": null,
+      "terrainPolicy": "original fictional Norway inspired terrain; never replace another map"
     }
   ]
 }
