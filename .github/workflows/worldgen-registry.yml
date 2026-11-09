@@ -35,3 +35,17 @@ jobs:
           python scripts/ue5/worldgen/preview_world.py --world unknown-horror-x
           python scripts/ue5/worldgen/preview_world.py --world skarvik
           python scripts/ue5/worldgen/preview_world.py --world drazovia
+
+      - name: Build four read-only worldgen preview packages
+        run: |
+          mkdir -p /tmp/anomalia-worldgen-previews
+          for world in racconia-varkovia unknown-horror-x skarvik drazovia; do
+            python scripts/ue5/worldgen/preview_world.py --world "$world" --write --output "/tmp/anomalia-worldgen-previews/$world"
+          done
+      - name: Upload four previews (PNG, PPM and JSON)
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-WORLDGEN-FOUR-WORLDS-PREVIEWS
+          path: /tmp/anomalia-worldgen-previews/
+          retention-days: 14
+          if-no-files-found: error
