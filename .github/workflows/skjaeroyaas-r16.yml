@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - 'scripts/ue5/worldgen/generate_skjaeroyaas.py'
+      - 'scripts/ue5/worldgen/prepare_skjaeroyaas_import.py'
+      - 'unreal/EditorPython/stage_skjaeroyaas_world.py'
+      - 'tests/test_skjaeroyaas_import.py'
+      - 'docs/SKJAEROYAAS_15KM_IMPORT_GUIDE.md'
       - 'config/worldgen/expansion-worlds.json'
       - 'config/worldgen/starter-worlds.json'
       - 'tests/test_skjaeroyaas_nordic_terrain.py'
@@ -10,6 +14,10 @@ on:
   pull_request:
     paths:
       - 'scripts/ue5/worldgen/generate_skjaeroyaas.py'
+      - 'scripts/ue5/worldgen/prepare_skjaeroyaas_import.py'
+      - 'unreal/EditorPython/stage_skjaeroyaas_world.py'
+      - 'tests/test_skjaeroyaas_import.py'
+      - 'docs/SKJAEROYAAS_15KM_IMPORT_GUIDE.md'
       - 'config/worldgen/expansion-worlds.json'
       - 'config/worldgen/starter-worlds.json'
       - 'tests/test_skjaeroyaas_nordic_terrain.py'
@@ -26,11 +34,13 @@ jobs:
       - name: Run seams / source-isolation / catalog tests
         run: |
           python -m unittest discover -s tests -p 'test_skjaeroyaas_nordic_terrain.py' -v
+          python -m unittest discover -s tests -p 'test_skjaeroyaas_import.py' -v
           python -m unittest discover -s tests -p 'test_worldgen_preview.py' -v
       - name: Generate full 15x15 km Nordic R16 source (9 tiles)
         run: |
           python scripts/ue5/worldgen/generate_skjaeroyaas.py --output /tmp/SKJAEROYAAS_R16_SOURCE --samples 505 --preview-size 512
           python scripts/ue5/worldgen/preview_world.py --world skjaeroyaas --write --output /tmp/SKJAEROYAAS_PCG_PREVIEW
+          python scripts/ue5/worldgen/prepare_skjaeroyaas_import.py --tiles /tmp/SKJAEROYAAS_R16_SOURCE --output /tmp/SKJAEROYAAS_UE5_IMPORT
       - name: Upload real RAW16 heightmap source and overview
         uses: actions/upload-artifact@v4
         with:
@@ -38,5 +48,6 @@ jobs:
           path: |
             /tmp/SKJAEROYAAS_R16_SOURCE/
             /tmp/SKJAEROYAAS_PCG_PREVIEW/
+            /tmp/SKJAEROYAAS_UE5_IMPORT/
           if-no-files-found: error
           retention-days: 30
