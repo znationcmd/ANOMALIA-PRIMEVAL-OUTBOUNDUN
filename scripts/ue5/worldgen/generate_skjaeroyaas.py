@@ -54,11 +54,14 @@ def terrain(x: float, y: float) -> float:
     west_bay = -4600 < x < 900 and abs(y - (760 + 590 * math.sin(x / 1360))) < 400
     east_bay = 150 < x < 7300 and abs(y - (-1700 + 650 * math.sin(x / 1120))) < 350
 
-    if solidity < .11 or main_fjord or west_bay or east_bay:
-        depth = -145 - 55 * math.sin(x / 1800) ** 2 - 32 * math.cos(y / 1200) ** 2
-        return depth  # navigable sea bed, below zero
+    if main_fjord or west_bay or east_bay:
+        return -145 - 55 * math.sin(x / 1800) ** 2 - 32 * math.cos(y / 1200) ** 2
+    if solidity < .60:
+        # Smooth, increasingly deep offshore bathymetry instead of a sudden
+        # 150 m cliff at every shoreline. Fjords retain their steep walls.
+        return -max(1.0, min(210.0, (.60 - solidity) * 260.0))
 
-    interior = min(1.0, max(0.0, (solidity - .11) / .44))
+    interior = min(1.0, max(0.0, (solidity - .60) / .37))
     floor = 15 + 170 * interior
     rough = (35 * math.sin(x / 1100) * math.cos(y / 1370) +
              19 * math.sin(x / 335 + y / 480))
