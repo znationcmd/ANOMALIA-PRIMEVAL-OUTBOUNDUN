@@ -1,4 +1,4 @@
-"""UE5.8 Editor-only SAFE staging entrypoint for SKJÆRØYÅS.
+r"""UE5.8 Editor-only SAFE staging entrypoint for SKJÆRØYÅS.
 
 Run from UE Python console in a COPY of the project (not the original):
   import sys
