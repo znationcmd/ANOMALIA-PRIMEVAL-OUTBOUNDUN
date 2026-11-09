@@ -1,5 +1,6 @@
 // ANOMALIA'Z Morse protocol, independent from any DayZ assets.
 // Public decoders never generate or expose private live bunker codes.
+export const ANOMALIA_RADIO_FREQUENCY_MHZ=107;
 // Browser-compatible secure crypto supplied by the runtime.
 const MORSE_DIGITS = ['-----','.----','..---','...--','....-','.....','-....','--...','---..','----.'];
 const REVERSE = Object.fromEntries(MORSE_DIGITS.map((m,i)=>[m,String(i)]));
