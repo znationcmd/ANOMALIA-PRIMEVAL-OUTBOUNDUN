@@ -7,6 +7,10 @@ export const UNKNOWN_HORROR_X = Object.freeze({
   undergroundPlanningFractionOfLand:0.8,undergroundPlanningAreaKm2:256,
   metroLines:5,metroStations:26,surfaceRoutes:18,
   undergroundLandmarks:12,surfaceLandmarks:8,
+  creatureCatalog:'./unknown-horror-x-creatures.js',
+  creatureLayers:['surface','metro','labs','undergroundCity','abyss'],
+  creatureCategories:['zombie','animal','dinosaur'],
+  creatureSpawnsConfigured:true,creatureSpawnsLiveInUE5:false,
   independent:true,replaces:null,
   terrainDataPackage:'UNKNOWN_HORROR_X_20x20_UE5_SOURCE.zip',
   importedInUE5:false,playable:false
