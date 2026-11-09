@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import struct
 from pathlib import Path
 import tempfile
 import unittest
@@ -62,6 +63,25 @@ class WorldgenPreviewTests(unittest.TestCase):
         for r in plan["roads"]:
             for x, y in r["cells"]:
                 self.assertNotIn(y * 32 + x, blocked)
+
+    def test_existing_r16_is_sampled_readonly(self):
+        with tempfile.TemporaryDirectory() as folder:
+            source = Path(folder) / "existing.r16"
+            # 33 x 33 ORIGINAL samples; left half land, right half sea.
+            raw = b"".join(struct.pack("<H", 40000 if x < 16 else 21000)
+                           for y in range(33) for x in range(33))
+            source.write_bytes(raw)
+            cells, checksum, size = worldgen.sample_existing_r16(source, 32, 32768)
+            self.assertEqual(size, 33)
+            self.assertEqual(len(cells), 16*32)
+            plan = worldgen.generate_plan(
+                worldgen.load_profiles()["drazovia"], 32,
+                source_land_cells=cells, source_sha=checksum, source_resolution=size)
+            self.assertEqual(plan["sourceR16HashSha256"], checksum)
+            self.assertAlmostEqual(plan["previewLandFraction"], .5)
+            self.assertEqual(source.read_bytes(), raw)
+            self.assertIn("read-only", plan["warnings"][0])
+            self.assertFalse(plan["originalWorldModified"])
 
     def test_protection_schema_rejects_invalid(self):
         with tempfile.TemporaryDirectory() as folder:
