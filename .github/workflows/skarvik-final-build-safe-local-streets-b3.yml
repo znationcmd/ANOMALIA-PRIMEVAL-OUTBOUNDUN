@@ -1,6 +1,8 @@
 name: SKARVIK - third final coast village streets keep both previous batches
 # 2026-11-10: re-attempt only on trusted isolated C staging, with existing
 # source/actors/backup and receipt guards. NEVER edits D:/ANOMALIA originals.
+# 2026-11-10: verified 17.529 GiB C: free after safe DerivedDataCache cleanup,
+# GitHub cloud snapshot of FINAL and seven islands preserved before any writes.
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
