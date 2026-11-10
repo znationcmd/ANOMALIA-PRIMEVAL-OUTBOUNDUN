@@ -444,7 +444,7 @@ async function start(){
     if(window.matchMedia('(max-width:1024px)').matches)requestAnimationFrame(()=>{resize();frameScene();});
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
-start();
+const startupPromise=start();
 bindGameLibrary({
   notify:toast,
   placeGLB:async item=>{
@@ -464,6 +464,6 @@ bindGameLibrary({
 // All mobile updates must preserve the user's unsynced local scene first.
 // The web revision is published atomically with the built frontend.
 startMobileAutoUpdates({
-  saveBeforeReload:()=>storeProject(history.project),
+  saveBeforeReload:async()=>{await startupPromise;await storeProject(history.project);},
   notify:message=>status(message),
 });
