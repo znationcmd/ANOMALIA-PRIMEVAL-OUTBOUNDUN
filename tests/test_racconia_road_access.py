@@ -25,7 +25,7 @@ def fixture(path:Path):
                       "points_km":[[x,8],[x+.1,8.1]],
                       "points_xyz_m":[[x,8,100.],[x+.1,8.1,101.]]})
     doc={"map":"RACCONIA-VARKOVIA","landscapeWidthKm":16,"landscapeHeightKm":16,
-         "heightmapResolution":1025,"origin":"southwest km","sites":sites,"roads":roads}
+         "heightmapResolution":1025,"origin":"southwest","unit":"km","sites":sites,"roads":roads}
     with zipfile.ZipFile(path,"w") as z:
         z.writestr(mod.SOURCE,json.dumps(doc))
         z.writestr(mod.HEIGHT,b"\x89PNG"+b"0"*12_000)
