@@ -7,6 +7,7 @@ import './style.css';
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
+import {startMobileAutoUpdates} from './mobile-auto-updates.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -460,6 +461,9 @@ bindGameLibrary({
   }
 });
 
-if ('serviceWorker' in navigator && !window.anomaliaDesktop && (location.protocol==='https:'||location.hostname==='localhost')) {
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-}
+// All mobile updates must preserve the user's unsynced local scene first.
+// The web revision is published atomically with the built frontend.
+startMobileAutoUpdates({
+  saveBeforeReload:()=>storeProject(history.project),
+  notify:message=>status(message),
+});
