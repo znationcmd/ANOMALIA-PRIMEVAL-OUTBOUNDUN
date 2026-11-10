@@ -1,0 +1,66 @@
+name: SKARVIK - verification PC Unreal des vraies cartes sans modification
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-real-ue-readiness-20261110.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit-pc-unreal:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Vérifier le runner, les fichiers d'origine et les niveaux SKARVIK en lecture seule
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $original='D:\ANOMALIA\unreal'
+          $data=[ordered]@{
+            timestampUTC=[DateTime]::UtcNow.ToString('o')
+            state='READ_ONLY_PRESENCE_SURVEY'
+            runnerReady=$true
+            noFilesModified=$true
+            sourceOriginal='D:\ANOMALIA'
+            stageRoot=$stage
+            expectedWorldKm=@(48,48)
+            sevenIslandsOriginalLevelExists=$false
+            gradedExistingLevelExists=$false
+            finalExistingLevelExists=$false
+            bigCitySourceLevelExists=$false
+            nativeUE58Installed=$false
+            liveNativePIEAndDriveTestPassed=$false
+            nativeRacconiaPresent=$false
+          }
+          $data.originalSkarvikExists=Test-Path -LiteralPath (Join-Path $original 'Content\Maps\ANOMALIA_Archipelago_v2.umap')
+          $data.stageMarkerValid=(Test-Path -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker')) -and
+            ((Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -eq '41188816555')
+          $data.sevenIslandsOriginalLevelExists=Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap')
+          $data.gradedExistingLevelExists=Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap')
+          $data.finalExistingLevelExists=Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap')
+          $data.bigCitySourceLevelExists=Test-Path -LiteralPath (Join-Path $stage 'Content\Map\Big_City_LVL.umap')
+          $data.nativeRacconiaPresent=Test-Path -LiteralPath (Join-Path $stage 'Content\Maps\RACCONIA_VARKOVIA.umap')
+          if($env:UE_ROOT){
+            $data.nativeUE58Installed=Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe')
+          }
+          $data | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:GITHUB_WORKSPACE\SKARVIK_NATIVE_PC_READINESS_20261110.json" -Encoding UTF8
+          Write-Host ('SKARVIK_NATIVE_PC_RUNNER_AVAILABLE=true')
+          Write-Host ('SKARVIK_FINAL_WORLD_FILE_EXISTS='+$data.finalExistingLevelExists)
+          Write-Host ('SKARVIK_ISLAND_WORLD_FILE_EXISTS='+$data.sevenIslandsOriginalLevelExists)
+          Write-Host ('SKARVIK_BIGCITY_REFERENCE_FILE_EXISTS='+$data.bigCitySourceLevelExists)
+          Write-Host ('SKARVIK_NATIVE_WIN_UE_EDITOR_AVAILABLE='+$data.nativeUE58Installed)
+          Write-Host 'SKARVIK_NATIVE_GAMEPLAY_OR_DRIVER_TEST_PROVEN=false'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-NATIVE-PC-READONLY-STATUS
+          path: SKARVIK_NATIVE_PC_READINESS_20261110.json
+          retention-days: 14
+          if-no-files-found: error
