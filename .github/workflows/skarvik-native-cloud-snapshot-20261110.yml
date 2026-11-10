@@ -1,0 +1,90 @@
+name: SKARVIK - copie cloud native du World Partition et des sept iles
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-cloud-snapshot-20261110.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-cloud-snapshot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Verifier tous les fichiers sans effacer, copier ni resauver le projet source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted staging area'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){
+            throw 'UE5 is running: refuse copying files being written'
+          }
+          $final=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1'
+          $islands=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1'
+          $required=@(
+             'AnomaliaZPrigimalia.uproject',
+             'Config\DefaultEngine.ini',
+             'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap',
+             'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap',
+             'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap',
+             'Content\Map\Big_City_LVL.umap')
+          foreach($p in $required){if(!(Test-Path -LiteralPath (Join-Path $root $p))){throw ('Missing original native file: '+$p)}}
+          if(!(Test-Path -LiteralPath $final) -or !(Test-Path -LiteralPath $islands)){
+            throw 'Missing external World Partition actor directories'
+          }
+          $countFinal=@(Get-ChildItem -LiteralPath $final -Recurse -File).Count
+          $countIslands=@(Get-ChildItem -LiteralPath $islands -Recurse -File).Count
+          if($countFinal -lt 12500 -or $countIslands -lt 250){
+            throw ('Unexpected missing real actors: '+$countFinal+'/'+$countIslands)
+          }
+          $umaps=@(foreach($p in $required | Where-Object {$_ -like '*.umap'}){
+             $file=Join-Path $root $p
+             [ordered]@{relative=$p;bytes=(Get-Item -LiteralPath $file).Length;sha256=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash}
+          })
+          $manifest=[ordered]@{
+            schema='SKARVIK_NATIVE_UNREAL_CLOUD_SNAPSHOT_V1'
+            createdUTC=[DateTime]::UtcNow.ToString('o')
+            source='trusted isolated Windows stage C, NOT D original'
+            world='SKARVIK';areaKm2=2304
+            finalLevel='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+            externalActorsFinalCount=$countFinal
+            externalActorsSevenIslandsCount=$countIslands
+            originalDDriveUntouched=$true
+            noLevelSavedOrModified=$true
+            includesAllSharedTexturesModelsMaterials=$false
+            restoreRequiresMatchingBaseProjectAndUE58=$true
+            umapFiles=$umaps
+          }
+          $manifest|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'SKARVIK_NATIVE_WORLD_CLOUD_SNAPSHOT_MANIFEST_20261110.json') -Encoding UTF8
+          Write-Host ('SKARVIK_SNAPSHOT_FINAL_EXTERNAL_ACTORS='+$countFinal)
+          Write-Host ('SKARVIK_SNAPSHOT_ISLANDS_EXTERNAL_ACTORS='+$countIslands)
+          Write-Host 'SKARVIK_SNAPSHOT_NATIVE_SOURCE_UNMODIFIED=true'
+      - name: Upload native UE5 World Partition asset files to GitHub cloud directly without staging a second local copy
+        uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-UE5-NATIVE-FINAL-AND-SEVEN-ISLANDS-20261110
+          path: |
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/AnomaliaZPrigimalia.uproject
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Config/DefaultEngine.ini
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.umap
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1.umap
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/Maps/PRIGIMALIA_SKARVIK_GRADED_v2.umap
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/Map/Big_City_LVL.umap
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_SKARVIK_FINAL_v1/**
+            C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1/**
+            SKARVIK_NATIVE_WORLD_CLOUD_SNAPSHOT_MANIFEST_20261110.json
+          compression-level: 6
+          include-hidden-files: true
+          retention-days: 30
+          if-no-files-found: error
+      - name: No local copies deleted
+        run: echo SKARVIK_NATIVE_SNAPSHOT_UPLOAD_REQUESTED_NO_SOURCE_DELETE
