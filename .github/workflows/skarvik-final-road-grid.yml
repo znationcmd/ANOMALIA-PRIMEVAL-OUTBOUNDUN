@@ -3,10 +3,12 @@ on:
   push:
     paths:
       - 'tests/native/skarvik_final_road_terrain_grid.cpp'
+      - 'scripts/plan_skarvik_native_coastal_routes.py'
       - '.github/workflows/skarvik-final-road-grid.yml'
   pull_request:
     paths:
       - 'tests/native/skarvik_final_road_terrain_grid.cpp'
+      - 'scripts/plan_skarvik_native_coastal_routes.py'
       - '.github/workflows/skarvik-final-road-grid.yml'
 permissions:
   contents: read
@@ -27,6 +29,30 @@ jobs:
         run: |
           cp public/config/skarvik-world-layout-48km.json /tmp/SKARVIK_REAL_SOURCE_ROADS/
           cp public/config/skarvik-final-coastal-migration-125-sites.json /tmp/SKARVIK_REAL_SOURCE_ROADS/
+      - name: Generate 382 proposed roads from actual seven-island C++ terrain
+        run: |
+          python scripts/plan_skarvik_native_coastal_routes.py \
+            --grid /tmp/SKARVIK_REAL_SOURCE_ROADS/skarvik-coastal-native-grid-200m.csv \
+            --world public/config/skarvik-world-layout-48km.json \
+            --coast public/config/skarvik-final-coastal-migration-125-sites.json \
+            --output /tmp/SKARVIK_382_ROUTE_DESIGN
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p=Path('/tmp/SKARVIK_382_ROUTE_DESIGN/skarvik-382-route-geometry-candidates.json')
+          x=json.loads(p.read_text())
+          assert x['originalSiteCount']==125
+          assert x['provisionalRelocationsNotApproved']==67
+          assert x['originalRegionalRoutes']==382
+          assert len(x['roads'])==382
+          assert sum(x['statusCounts'].values())==382
+          assert x['nativeRoadMeshesBuilt']==0
+          assert x['statusCounts'].get('COAST_SAFE_200M_CANDIDATE_NOT_BUILT',0)>=250
+          assert x['statusCounts'].get('NO_SEVEN_ISLAND_LAND_LINK_BRIDGE_OR_FERRY_REVIEW',0)>=1
+          print('SKARVIK_APPROVED_SOURCE_GRAPH_ANALYSIS_PASSED=true')
+          print('SKARVIK_LAND_ROUTE_DESIGN_CANDIDATES='+str(x['statusCounts']['COAST_SAFE_200M_CANDIDATE_NOT_BUILT']))
+          PY
+          cp -r /tmp/SKARVIK_382_ROUTE_DESIGN/. /tmp/SKARVIK_REAL_SOURCE_ROADS/
       - uses: actions/upload-artifact@v4
         with:
           name: SKARVIK-SEVEN-ISLAND-TRUE-CXX-COAST-ROUTING-SOURCE
