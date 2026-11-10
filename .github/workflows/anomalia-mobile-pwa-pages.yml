@@ -40,6 +40,8 @@ jobs:
           npm install --no-audit --no-fund
           npm test
           npm run build
+          test -s dist/release.json
+          python3 -c "import json; x=json.load(open('dist/release.json')); assert x['app']=='ANOMALIA Editor PWA'; assert len(x['revision'])>=6"
       - name: Tester et compiler Tools
         working-directory: tools/apps/anomalia-tools
         run: |
@@ -65,6 +67,13 @@ jobs:
           <a href="./tools/"><strong>ANOMALIA Tools</strong><p>Workbench, terrains, assets et mods →</p></a>
           <p><small>CMD Studio est une application privée. Elle n'est volontairement pas publiée ici. Unreal Engine et Blender natifs restent sur PC. Cette page ne synchronise pas les projets entre appareils.</small></p></main></html>
           HTML
+      - name: Conserver un pack de sauvegarde des PWA même si Pages n'est pas activé
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-Editor-Tools-PWA-publication
+          path: _site
+          retention-days: 30
+          if-no-files-found: error
       - uses: actions/configure-pages@v5
         with:
           enablement: true
