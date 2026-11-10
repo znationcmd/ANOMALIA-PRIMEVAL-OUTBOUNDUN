@@ -9,7 +9,7 @@ test('iPhone interface undoes the 940px desktop header and uses two-column actio
  const css=get('src/style.css');
  const mobile=css.slice(css.indexOf('/* iPhone / Android viewport fix'));
  assert.ok(mobile.startsWith('/* iPhone'));
- assert.match(mobile,/@media\(max-width:820px\)/);
+ assert.match(mobile,/@media\(max-width:1024px\)/);
  assert.match(mobile,/\.top\{[^}]*min-width:0!important/);
  assert.match(mobile,/\.top>\.topButtons\{[^}]*grid-template-columns:repeat\(2,minmax\(0,1fr\)\)/);
  assert.match(mobile,/\.workspace[^}]*min-width:0!important/);
@@ -25,7 +25,7 @@ test('viewport touch controls have buttons and resize-aware camera framing',()=>
  }
  assert.match(js,/const halfHorizontal=Math\.atan\(Math\.tan\(halfVertical\)\*viewportAspect\)/);
  assert.match(js,/const dist=Math\.min\(orbit.maxDistance\*\.85,Math\.max\(8,/);
- assert.match(js,/window\.matchMedia\('\(max-width:820px\)'\)\.matches\)requestAnimationFrame/);
+ assert.match(js,/window\.matchMedia\('\(max-width:1024px\)'\)\.matches\)requestAnimationFrame/);
  assert.match(css,/\.viewportCameraControls button\{min-width:42px/);
 });
 
