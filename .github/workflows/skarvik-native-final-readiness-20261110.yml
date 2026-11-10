@@ -1,0 +1,59 @@
+name: SKARVIK - véritable audit UE5 48km des bâtiments et routes sauvegardés
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'unreal/Scripts/audit_skarvik_final_ue5_readonly_20261110.py'
+      - '.github/workflows/skarvik-native-final-readiness-20261110.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-ue5-native-source-readiness:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 22
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Vérifier que seule la copie isolée est ouverte en audit
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker'))){throw 'No verified staged project marker'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){
+            throw 'Another UE5 editor is running; no concurrent native audit'
+          }
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_ue5_readonly_20261110.py')
+          if($LASTEXITCODE -ne 0){throw 'Unreal audit syntax failed'}
+      - name: Ouvrir et auditer SEULEMENT les descripteurs du vrai World Partition final
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_NATIVE_FINAL_READINESS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-native-readonly-actors-report.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$env:GITHUB_WORKSPACE\unreal\Scripts\audit_skarvik_final_ue5_readonly_20261110.py" -nullrhi -unattended -nosplash -nosound -nopause
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_NATIVE_FINAL_READINESS_REPORT)){throw 'Missing genuine UE audit report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_NATIVE_FINAL_READINESS_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_UE_SOURCE_RESULT='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_WP_DESCRIPTORS='+$r.nativePartitionDescriptors)
+          Write-Host ('SKARVIK_NATIVE_ROAD_ACTORS='+$r.knownSavedRoadMeshActors)
+          Write-Host ('SKARVIK_NATIVE_BUILDING_ACTORS='+$r.knownSavedBuildingMeshActors)
+          if($exit -ne 0 -or $r.state -ne 'ACTUAL_UE5_NATIVE_FINAL_WORLD_DESCRIPTOR_AUDIT_NO_SAVE'){
+            throw ('Real native Unreal audit failed '+$r.error)
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: SKARVIK-REAL-UNREAL-48KM-ACTOR-STATUS
+          path: skarvik-real-native-readonly-actors-report.json
+          if-no-files-found: warn
+          retention-days: 14
