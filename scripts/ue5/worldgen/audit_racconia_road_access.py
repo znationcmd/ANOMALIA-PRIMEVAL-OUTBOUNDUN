@@ -53,7 +53,7 @@ def load_kit(path:Path)->dict:
         if (data.get("map")!="RACCONIA-VARKOVIA" or
                 data.get("landscapeWidthKm")!=16 or data.get("landscapeHeightKm")!=16 or
                 data.get("heightmapResolution")!=1025 or
-                data.get("origin")!="southwest km"):
+                data.get("origin")!="southwest" or data.get("unit")!="km"):
             raise ValueError("Unknown RACCONIA source manifest")
         if len(data.get("sites",[]))!=29 or len(data.get("roads",[]))!=33:
             raise ValueError("Original 29 sites / 33 route count changed")
