@@ -1,0 +1,38 @@
+name: RACCONIA 16km - 29 sites and 33-road source audit
+on:
+  push:
+    paths:
+      - 'scripts/ue5/worldgen/audit_racconia_road_access.py'
+      - 'tests/test_racconia_road_access.py'
+      - '.github/workflows/racconia-road-audit.yml'
+  pull_request:
+    paths:
+      - 'scripts/ue5/worldgen/audit_racconia_road_access.py'
+      - 'tests/test_racconia_road_access.py'
+      - '.github/workflows/racconia-road-audit.yml'
+permissions:
+  contents: read
+jobs:
+  racconia-road-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate non-destructive old ZIP format, exact roads, marine links and UE CSV outputs
+        run: |
+          python -m unittest discover -s tests -p 'test_racconia_road_access.py' -v
+          python -m py_compile scripts/ue5/worldgen/audit_racconia_road_access.py
+      - name: Make operator instructions accessible
+        run: |
+          mkdir -p /tmp/RACCONIA_ROAD_AUDIT_SOURCE
+          cp scripts/ue5/worldgen/audit_racconia_road_access.py /tmp/RACCONIA_ROAD_AUDIT_SOURCE/
+          cp docs/RACCONIA_VARKOVIA_TERRAIN_29_SITES_UE5.md /tmp/RACCONIA_ROAD_AUDIT_SOURCE/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RACCONIA-16KM-ROAD-AND-29-SITES-AUDIT-SCRIPT
+          path: /tmp/RACCONIA_ROAD_AUDIT_SOURCE/
+          retention-days: 30
+          if-no-files-found: error

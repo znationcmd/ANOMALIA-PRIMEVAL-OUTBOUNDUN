@@ -24,3 +24,23 @@ Les modèles 3D préliminaires, terrain, tracés et données de placement ont é
 3. Importer/remplacer les blockouts des 29 lieux, générer LOD/HLOD, collisions, navmesh, streaming.
 4. Terminer les intérieurs, animer portes et puzzles, IA, inventaire, loot, réseau.
 5. Tester chaque voie en véhicule, les 29 sites et faire un vrai build Unreal multijoueur.
+
+
+## Avancement contrôlé le 10 novembre 2026 — raccordements des 29 sites
+
+Le script `scripts/ue5/worldgen/audit_racconia_road_access.py` relit **directement le ZIP original** plutôt que de refaire RACCONIA-VARKOVIA. Une exécution sur le kit d'origine a confirmé : **29 sites**, **33 liaisons**, dont **28 terrestres** et **5 maritimes** ; **48,41 km de tracés terrestres** et **13,48 km de lignes maritimes**. Aucune pente segmentaire supérieure à 15 % n'a été signalée dans les points d'échantillonnage du kit, **ce qui ne prouve pas** que le relief entre ces points est carrossable.
+
+État des accès calculés par proximité aux tracés **existants** :
+- **24 sites** avec un accès candidat de moins de 200 m, en attente du contrôle terrain/collision, de vrais meshes/splines et d'un essai véhicule ;
+- **2 sites** éloignés des voies terrestres existantes : **Pénitencier de Karsen** et **Tour Noctis** ; leurs accès nécessitent une conception routière nouvelle ;
+- **3 sites** maritimes ou insulaires (**Paquebot Néréide**, **Épave du Léviathan**, **Île militaire de Krovak**) : **ne pas prolonger automatiquement de l'asphalte dans la mer**. Prévoir ferry, embarcadère ou accès bateau après étude.
+
+### Reprendre depuis le vrai projet (sans doublons)
+
+```powershell
+python scripts/ue5/worldgen/audit_racconia_road_access.py --kit "C:\STAGING\RACCONIA_VARKOVIA_16x16_29_LIEUX_UE5_SOURCE.zip" --output "C:\STAGING\RACCONIA_CONTINUITE_NOUVELLE"
+```
+
+Le dossier destination doit être neuf et extérieur au projet source. Les fichiers de sortie `racconia-29-sites-ue5.csv`, `racconia-33-routes-ue5.csv`, `racconia-site-access-review.csv` et `racconia-continuation-report.json` fournissent les implantations existantes pour travailler dans **la même** map RACCONIA. L'axe Y suit la convention de ce kit RACCONIA (**Y nord positif**) ; **ne pas** appliquer la convention `-Y nord` de SKARVIK.
+
+Ces fichiers ne créent pas automatiquement les routes Unreal, ni les bâtiments physiques, ni les collisions. Le ZIP d'origine, SKARVIK et les cartes jouables déjà installées restent inchangés.
