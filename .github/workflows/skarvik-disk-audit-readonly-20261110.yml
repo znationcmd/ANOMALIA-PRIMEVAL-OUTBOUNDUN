@@ -1,0 +1,71 @@
+name: SKARVIK - audit espace disque avant native roads
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-disk-audit-readonly-20261110.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-disk:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Mesurer les disques et dossiers de cache sans rien effacer
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          $disks=@(Get-CimInstance Win32_LogicalDisk | Where-Object DriveType -in @(2,3) | ForEach-Object {
+            [ordered]@{drive=$_.DeviceID;sizeGiB=[math]::Round($_.Size/1GB,2);freeGiB=[math]::Round($_.FreeSpace/1GB,2)}
+          })
+          function SizeOf($p){
+            if(!(Test-Path -LiteralPath $p)){return [ordered]@{path=$p;present=$false;sizeGiB=0}}
+            $total=0L
+            $n=0
+            Get-ChildItem -LiteralPath $p -Force -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+              $total+=$_.Length;$n++
+            }
+            return [ordered]@{path=$p;present=$true;sizeGiB=[math]::Round($total/1GB,3);files=$n}
+          }
+          $roots=@(
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Saved',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Binaries',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content',
+            'C:\Users\utilisateur\actions-runner\_work\_temp',
+            'C:\Users\utilisateur\actions-runner\_work\_tool',
+            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\DerivedDataCache',
+            'C:\Windows\Temp'
+          )
+          $sizes=@($roots | ForEach-Object {SizeOf $_})
+          $r=[ordered]@{
+            state='READ_ONLY_DISK_SURVEY_NO_DELETE'
+            timestamp=[DateTime]::UtcNow.ToString('o')
+            noFilesDeleted=$true
+            noGameFilesModified=$true
+            disks=$disks
+            measuredFolders=$sizes
+            clearableFoldersNotConfirmed=$true
+            minimumFreeGiBForRoadBatch=12
+          }
+          $r | ConvertTo-Json -Depth 5 | Set-Content -Path "$env:GITHUB_WORKSPACE\SKARVIK_DISK_AUDIT_READONLY_20261110.json" -Encoding UTF8
+          Write-Host 'SKARVIK_DISK_SURVEY_NO_DELETIONS=true'
+          foreach($d in $disks){Write-Host ('AVAILABLE_DISK='+$d.drive+' '+$d.freeGiB+' GiB')}
+          foreach($p in $sizes){Write-Host ('DISK_FOLDER_GIB='+$p.path+'='+$p.sizeGiB)}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-DISK-AUDIT-READONLY
+          path: SKARVIK_DISK_AUDIT_READONLY_20261110.json
+          if-no-files-found: error
+          retention-days: 14
