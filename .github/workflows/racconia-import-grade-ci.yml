@@ -1,0 +1,29 @@
+name: RACCONIA - 1009 RAW16 / correct Z scale import verification
+on:
+  push:
+    paths:
+      - 'scripts/ue5/worldgen/prepare_racconia_import_grade.py'
+      - 'tests/test_racconia_import_grade.py'
+      - '.github/workflows/racconia-import-grade-ci.yml'
+  pull_request:
+    paths:
+      - 'scripts/ue5/worldgen/prepare_racconia_import_grade.py'
+      - 'tests/test_racconia_import_grade.py'
+      - '.github/workflows/racconia-import-grade-ci.yml'
+permissions:
+  contents: read
+jobs:
+  verify-original-map-import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install required image library
+        run: python -m pip install --quiet Pillow
+      - name: Verify 29 site height, 33 road records, 16bit terrain and non-overwrite
+        run: |
+          python -m unittest discover -s tests -p 'test_racconia_import_grade.py' -v
+          python -m py_compile scripts/ue5/worldgen/prepare_racconia_import_grade.py

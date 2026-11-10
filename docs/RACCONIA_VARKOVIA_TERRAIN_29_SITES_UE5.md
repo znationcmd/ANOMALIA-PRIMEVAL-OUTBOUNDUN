@@ -5,7 +5,8 @@ NOUVELLE CARTE indépendante de **SKARVIK**. Taille **16 × 16 km = 256 km²**, 
 Un **vrai kit de données 3D généré hors Unreal** a été livré sous `RACCONIA_VARKOVIA_16x16_29_LIEUX_UE5_SOURCE.zip` dans le Google Drive ANOMALIAZ_PRIGIMALIA.
 
 ## Contenu contrôlé
-- `Terrain/RACCONIA_VARKOVIA_1025_R16.png` heightmap R16 1025×1025 ; Landscape Scale X=1562.5, Y=1562.5, Z=100 (centimètres).
+- `Terrain/RACCONIA_VARKOVIA_1025_R16.png` est le PNG **source** 1025×1025, dont la première ligne est au sud. **Ne pas utiliser Z=100** : une vérification des 29 altitudes indique un décalage vertical d'un facteur 25. Pour préserver les altitudes originales, utiliser **Z=2500 cm**.
+- Nouvelle conversion non destructive `scripts/ue5/worldgen/prepare_racconia_import_grade.py` → **1009×1009 RAW16 / PNG 16 bits nord en haut** ; Landscape UE5 (8×8 composants, 2×2 sections, 63 quads/section), **X=Y=1587,301587 cm et Z=2500 cm**, position recommandée (-800000,-800000,0) cm. Avant tout placement, vérifier le sens du nord et les collisions dans UE5.
 - `Terrain/LandMask_1025.png` masque terre/eau.
 - `Terrain/RacconiaVarkovia_Preview_Complet.glb` terrain 3D + routes + marqueurs de 29 sites.
 - `Terrain/RacconiaVarkovia_Plan_29_Lieux.png` plan lisible avec les 29 emplacements.
@@ -64,3 +65,9 @@ python scripts/ue5/worldgen/prepare_racconia_ue5_v2.py --kit "C:\Sources\RACCONI
 Un dossier de sortie neuf à l'extérieur de `D:\ANOMALIA` et des fichiers source est obligatoire. **Ne pas importer ces données dans SKARVIK** : coordonnées et niveaux indépendants. Dans UE5.8, créer une copie de staging du projet, un niveau World Partition séparé, importer RAW16 puis les 29 OBJ avec échelle import 1 (les sommets sont déjà en centimètres), placer les 29 acteurs aux coordonnées du CSV après validation de l'orientation de l'axe Y, des collisions, des niveaux de sous-sol et de l'eau. Les bandes routières du CSV sont des tracés de conception : il faut encore construire de vrais splines/meshes, intersections, ponts et tests véhicules.
 
 **Statut réel :** ce pack a été généré hors Unreal à partir de l'archive originale ; les modèles restent des **blockouts**. Les niveaux natifs `.umap`, intérieurs finaux, animations, IA et routes carrossables ne sont **pas** attestés comme importés ou jouables. Ne jamais écraser les véritables cartes de `D:\ANOMALIA`.
+
+## Correction critique des altitudes — 10 novembre 2026
+
+Le ZIP historique conserve volontairement ses données d'origine (1025 px et ses modèles GLB). Ne pas réinjecter directement sa valeur `landscapeScaleCm[2]=100` dans le Landscape réel : le terrain serait 25 fois trop bas. La formule Unreal vérifiée contre les 29 emplacements est `h_m = (R16 - 32768) × ZScaleCm / 12800`, d'où **ZScaleCm = 2500** pour ce pack.
+
+Créer le kit d'import séparé avec `python scripts/ue5/worldgen/prepare_racconia_import_grade.py --kit RACCONIA_VARKOVIA_16x16_29_LIEUX_UE5_SOURCE.zip --output C:/RACCONIA_IMPORT_NEW` (installer Pillow). **Le résultat reste une source**, non une carte `.umap` finie ; l'import Landscape via l'éditeur et le placement des vrais modèles sont obligatoires. Les 5 liaisons maritimes ne sont jamais transformées en routes carrossables. Toute route doit être vérifiée en collision/relief avant création de vrais splines, puis testée en véhicule dans une build UE5.
