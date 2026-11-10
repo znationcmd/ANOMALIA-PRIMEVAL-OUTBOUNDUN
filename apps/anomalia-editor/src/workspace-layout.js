@@ -15,7 +15,7 @@ function load(){
     };
   }catch{return {...defaults};}
 }
-const isMobile=()=>window.matchMedia('(max-width:820px)').matches;
+const isMobile=()=>window.matchMedia('(max-width:1024px)').matches;
 let state=load();
 if(isMobile()){state.library=false;state.inspector=false;state.focus=false;}
 let prior=null;

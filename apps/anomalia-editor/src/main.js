@@ -295,11 +295,31 @@ async function stepHistory(direction) {
   const next=direction==='undo'?history.undo():history.redo();
   if(next){await rebuild(next);afterCommit();}
 }
-function focusObject() {
-  const mesh=meshed.get(selectedId);if(!mesh)return;
-  orbit.target.copy(mesh.position);
-  camera.position.copy(mesh.position).add(new THREE.Vector3(11,10,13));orbit.update();
+// Mobile-first camera framing: focus an actual project object, not the huge
+// 800m floor. This fixes the tiny distant house visible on narrow phones.
+function frameScene(){
+  const mesh=(selectedId&&meshed.get(selectedId))||meshed.values().next().value;
+  const bounds=mesh?new THREE.Box3().setFromObject(mesh):null;
+  const center=bounds&&!bounds.isEmpty()?bounds.getCenter(new THREE.Vector3()):new THREE.Vector3(0,1.5,0);
+  const size=bounds&&!bounds.isEmpty()?bounds.getSize(new THREE.Vector3()):new THREE.Vector3(7,5,7);
+  const viewportAspect=Math.max(.24,camera.aspect||1);
+  const halfVertical=THREE.MathUtils.degToRad(camera.fov)/2;
+  const halfHorizontal=Math.atan(Math.tan(halfVertical)*viewportAspect);
+  const dist=Math.min(orbit.maxDistance*.85,Math.max(8,
+    Math.max(size.x,size.z,4)/(2*Math.tan(halfHorizontal))*1.38,
+    Math.max(size.y,4)/(2*Math.tan(halfVertical))*1.5));
+  orbit.target.copy(center);
+  camera.position.copy(center).add(new THREE.Vector3(.75,.60,1).normalize().multiplyScalar(dist));
+  camera.lookAt(center);orbit.update();
 }
+function adjustCameraZoom(factor){
+  const delta=camera.position.clone().sub(orbit.target);
+  const distance=Math.max(orbit.minDistance,Math.min(orbit.maxDistance,delta.length()*factor));
+  if(delta.lengthSq()<.0001)return;
+  camera.position.copy(orbit.target).addScaledVector(delta.normalize(),distance);
+  camera.lookAt(orbit.target);orbit.update();
+}
+function focusObject(){if(meshed.has(selectedId))frameScene();}
 function download(filename,contents,mime) {
   const blob=new Blob([contents],{type:mime});
   const url=URL.createObjectURL(blob);const link=document.createElement('a');
@@ -351,6 +371,9 @@ for(const mode of ['select','move','rotate','scale','brush'])$('#'+mode+'Tool').
 $('#undo').onclick=()=>stepHistory('undo');$('#redo').onclick=()=>stepHistory('redo');
 $('#duplicate').onclick=duplicateObject;$('#inspectorDuplicate').onclick=duplicateObject;
 $('#delete').onclick=removeSelected;$('#focusObject').onclick=focusObject;
+$('#frameScene').onclick=frameScene;
+$('#cameraZoomIn').onclick=()=>adjustCameraZoom(.78);
+$('#cameraZoomOut').onclick=()=>adjustCameraZoom(1.28);
 $('#assetSearch').addEventListener('input',renderCatalog);
 $('#inspector').addEventListener('change',e=>{if(e.target.matches('input[data-group]'))changeProperty();});
 $('#objectName').addEventListener('change',renameObject);
@@ -417,6 +440,7 @@ async function start(){
       status('Scène de démonstration locale créée : utilise le catalogue pour ajouter des objets.');
     }
     updateCount();
+    if(window.matchMedia('(max-width:1024px)').matches)requestAnimationFrame(()=>{resize();frameScene();});
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
 start();

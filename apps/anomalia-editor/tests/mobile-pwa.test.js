@@ -13,7 +13,7 @@ test('éditeur sur iPhone, iPad et Android : PWA installable',()=>{
 });
 test('panneaux 3D accessibles au tactile et positionnement local sauvegardé',()=>{
  const style=read('src/style.css'),layout=read('src/workspace-layout.js');
- assert.match(style,/@media\(max-width:820px\)/);
+ assert.match(style,/@media\(max-width:1024px\)/);
  assert.match(style,/touch-action:none/);
  assert.match(style,/mobilePanelBackdrop/);
  assert.match(layout,/isMobile\(\)/);
