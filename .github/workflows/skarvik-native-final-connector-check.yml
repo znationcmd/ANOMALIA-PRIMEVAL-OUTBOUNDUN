@@ -50,7 +50,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
-          $dst=Join-Path $env:GITHUB_WORKSPACE 'skarvik-next-coastal-connectors-norewrite'
+          $dst=Join-Path $env:RUNNER_TEMP 'skarvik-next-coastal-connectors-norewrite'
           if(Test-Path -LiteralPath $dst){throw 'A previous audit folder already exists'}
           & $py (Join-Path $env:GITHUB_WORKSPACE 'scripts\skarvik_design_missing_connectors.py') --out $dst
           if($LASTEXITCODE -ne 0){throw 'Cannot produce safe final-coast review'}
@@ -61,7 +61,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
-          $env:SKARVIK_NATIVE_NEW_CONNECTORS_INPUT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-next-coastal-connectors-norewrite\skarvik-all-connector-review.json'
+          $env:SKARVIK_NATIVE_NEW_CONNECTORS_INPUT=Join-Path $env:RUNNER_TEMP 'skarvik-next-coastal-connectors-norewrite\skarvik-all-connector-review.json'
           $env:SKARVIK_NATIVE_NEW_CONNECTORS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-native-connector-height-check.json'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_final_connector_height_readonly.py'
@@ -81,6 +81,6 @@ jobs:
           name: SKARVIK-REAL-NATIVE-COAST-CONNECTOR-READONLY-RESULT
           path: |
             skarvik-real-native-connector-height-check.json
-            skarvik-next-coastal-connectors-norewrite/
+            ${{ runner.temp }}/skarvik-next-coastal-connectors-norewrite/
           if-no-files-found: warn
           retention-days: 30
