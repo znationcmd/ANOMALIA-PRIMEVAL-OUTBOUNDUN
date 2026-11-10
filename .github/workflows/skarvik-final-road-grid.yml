@@ -1,0 +1,35 @@
+name: SKARVIK - generate real seven island road routing source grid
+on:
+  push:
+    paths:
+      - 'tests/native/skarvik_final_road_terrain_grid.cpp'
+      - '.github/workflows/skarvik-final-road-grid.yml'
+  pull_request:
+    paths:
+      - 'tests/native/skarvik_final_road_terrain_grid.cpp'
+      - '.github/workflows/skarvik-final-road-grid.yml'
+permissions:
+  contents: read
+jobs:
+  coast-native-topology-source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and sample actual SKARVIK C++ terrain without Unreal Editor
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/skarvik_final_road_terrain_grid.cpp -o /tmp/skarvik-road-source-grid
+          mkdir -p /tmp/SKARVIK_REAL_SOURCE_ROADS
+          /tmp/skarvik-road-source-grid /tmp/SKARVIK_REAL_SOURCE_ROADS/skarvik-coastal-native-grid-200m.csv | tee /tmp/SKARVIK_REAL_SOURCE_ROADS/road-grid-validation.txt
+          grep -q '^SKARVIK_AUTHOR_CXX_GRID=241x241$' /tmp/SKARVIK_REAL_SOURCE_ROADS/road-grid-validation.txt
+      - name: Include original approved road and 125-town metadata read only
+        run: |
+          cp public/config/skarvik-world-layout-48km.json /tmp/SKARVIK_REAL_SOURCE_ROADS/
+          cp public/config/skarvik-final-coastal-migration-125-sites.json /tmp/SKARVIK_REAL_SOURCE_ROADS/
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-SEVEN-ISLAND-TRUE-CXX-COAST-ROUTING-SOURCE
+          path: /tmp/SKARVIK_REAL_SOURCE_ROADS
+          retention-days: 30
+          if-no-files-found: error
