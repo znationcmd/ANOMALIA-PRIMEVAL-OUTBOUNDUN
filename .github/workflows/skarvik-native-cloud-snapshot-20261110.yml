@@ -81,10 +81,16 @@ jobs:
             C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/Map/Big_City_LVL.umap
             C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_SKARVIK_FINAL_v1/**
             C:/ANOMALIAZ_SKARVIK_STAGE_41188816555/unreal/Content/__ExternalActors__/Maps/PRIGIMALIA_SKARVIK_ISLANDS_v1/**
-            SKARVIK_NATIVE_WORLD_CLOUD_SNAPSHOT_MANIFEST_20261110.json
           compression-level: 6
           include-hidden-files: true
           retention-days: 30
           if-no-files-found: error
+      - name: Upload companion manifest separately without changing staging files
+        uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-UE5-NATIVE-SNAPSHOT-MANIFEST-20261110
+          path: SKARVIK_NATIVE_WORLD_CLOUD_SNAPSHOT_MANIFEST_20261110.json
+          if-no-files-found: error
+          retention-days: 30
       - name: No local copies deleted
         run: echo SKARVIK_NATIVE_SNAPSHOT_UPLOAD_REQUESTED_NO_SOURCE_DELETE
