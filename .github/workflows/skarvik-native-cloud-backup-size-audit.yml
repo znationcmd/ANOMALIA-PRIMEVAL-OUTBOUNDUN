@@ -1,0 +1,72 @@
+name: SKARVIK - mesure des niveaux natifs pour sauvegarde cloud complete
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-cloud-backup-size-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  size-native-snapshot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Mesurer uniquement les fichiers UE5 a sauvegarder sans copie ou suppression
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Refusing unknown project'}
+          $paths=@(
+            'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap',
+            'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1',
+            'Content\__ExternalObjects__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1',
+            'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap',
+            'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1',
+            'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap',
+            'Content\Map\Big_City_LVL.umap',
+            'Config\DefaultEngine.ini',
+            'AnomaliaZPrigimalia.uproject'
+          )
+          $info=@(foreach($rel in $paths){
+            $file=Join-Path $root $rel
+            if(!(Test-Path -LiteralPath $file)){
+              [ordered]@{relativePath=$rel;present=$false;files=0;sizeBytes=0}
+              continue
+            }
+            $item=Get-Item -LiteralPath $file
+            if($item.PSIsContainer){
+              $count=0;$total=[int64]0
+              Get-ChildItem -LiteralPath $file -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+                $count++;$total+=$_.Length
+              }
+            }else{$count=1;$total=[int64]$item.Length}
+            [ordered]@{relativePath=$rel;present=$true;files=$count;sizeBytes=$total;sizeGiB=[math]::Round($total/1GB,3)}
+          })
+          $report=[ordered]@{
+            state='NATIVE_SNAPSHOT_SIZE_ONLY'
+            project='SKARVIK 48x48km seven islands'
+            originalProjectDUnmodified=$true
+            filesCopiedOrDeleted=$false
+            requiresSaveBeforeCleanup=$true
+            measuredFiles=$info
+            timestampUTC=[DateTime]::UtcNow.ToString('o')
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'SKARVIK_NATIVE_CLOUD_BACKUP_SIZES_20261110.json'
+          $report|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $out -Encoding utf8
+          foreach($entry in $info){Write-Host ('CLOUD_BACKUP_SOURCE='+$entry.relativePath+'|'+$entry.files+'|'+$entry.sizeBytes)}
+          Write-Host 'ORIGINAL_UNREAL_PROJECT_UNMODIFIED=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-NATIVE-CLOUD-BACKUP-SIZE-READONLY
+          path: SKARVIK_NATIVE_CLOUD_BACKUP_SIZES_20261110.json
+          if-no-files-found: error
+          retention-days: 30
