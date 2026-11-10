@@ -1,4 +1,6 @@
 name: SKARVIK - third final coast village streets keep both previous batches
+# 2026-11-10: re-attempt only on trusted isolated C staging, with existing
+# source/actors/backup and receipt guards. NEVER edits D:/ANOMALIA originals.
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
