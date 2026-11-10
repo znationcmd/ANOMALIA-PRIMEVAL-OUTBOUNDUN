@@ -7,6 +7,7 @@ import './style.css';
 import './updates-ui.js';
 import './workspace-layout.js';
 import { bindGameLibrary } from './game-library-ui.js';
+import {startMobileAutoUpdates} from './mobile-auto-updates.js';
 
 const $ = s => document.querySelector(s);
 const $$ = s => Array.from(document.querySelectorAll(s));
@@ -443,7 +444,7 @@ async function start(){
     if(window.matchMedia('(max-width:1024px)').matches)requestAnimationFrame(()=>{resize();frameScene();});
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
-start();
+const startupPromise=start();
 bindGameLibrary({
   notify:toast,
   placeGLB:async item=>{
@@ -460,6 +461,9 @@ bindGameLibrary({
   }
 });
 
-if ('serviceWorker' in navigator && !window.anomaliaDesktop && (location.protocol==='https:'||location.hostname==='localhost')) {
-  window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));
-}
+// All mobile updates must preserve the user's unsynced local scene first.
+// The web revision is published atomically with the built frontend.
+startMobileAutoUpdates({
+  saveBeforeReload:async()=>{await startupPromise;await storeProject(history.project);},
+  notify:message=>status(message),
+});
