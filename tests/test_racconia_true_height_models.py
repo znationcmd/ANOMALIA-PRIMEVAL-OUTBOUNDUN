@@ -21,7 +21,7 @@ spec.loader.exec_module(mod)
 def sample_source(dest:Path):
     arr=np.full((1025,1025),32768+512,dtype=np.uint16)  # Exactly 100 m.
     stream=io.BytesIO()
-    Image.fromarray(arr,mode="I;16").save(stream,format="PNG")
+    Image.fromarray(arr).save(stream,format="PNG")
     cube=trimesh.creation.box(extents=(4,4,4))
     # Every geometry can be a simple independent model in a synthetic test.
     mesh=cube.scene().export(file_type="glb")
