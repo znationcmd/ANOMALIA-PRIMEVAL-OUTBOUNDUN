@@ -1,0 +1,35 @@
+name: ANOMALIA Editor - 23 map catalog checks
+on:
+  pull_request:
+    paths:
+      - 'src/editor-world-catalog.js'
+      - 'src/map-editor.js'
+      - 'config/worldgen/**'
+      - 'tests/editor-world-catalog.test.mjs'
+      - '.github/workflows/editor-map-catalog-ci.yml'
+  push:
+    paths:
+      - 'src/editor-world-catalog.js'
+      - 'src/map-editor.js'
+      - 'tests/editor-world-catalog.test.mjs'
+      - '.github/workflows/editor-map-catalog-ci.yml'
+permissions:
+  contents: read
+jobs:
+  editor-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Test editor catalogue and map code syntax
+        run: |
+          node --test tests/editor-world-catalog.test.mjs
+          node --check src/map-editor.js
+          node --check src/editor-world-catalog.js
+      - name: Compile game frontend with catalogue integration
+        run: |
+          npm install --no-audit --no-fund
+          npm run build
