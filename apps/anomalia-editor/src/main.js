@@ -440,7 +440,7 @@ async function start(){
       status('Scène de démonstration locale créée : utilise le catalogue pour ajouter des objets.');
     }
     updateCount();
-    if(window.matchMedia('(max-width:820px)').matches)requestAnimationFrame(()=>{resize();frameScene();});
+    if(window.matchMedia('(max-width:1024px)').matches)requestAnimationFrame(()=>{resize();frameScene();});
   }catch(e){toast('Stockage privé inaccessible : '+e.message,true);}
 }
 start();
