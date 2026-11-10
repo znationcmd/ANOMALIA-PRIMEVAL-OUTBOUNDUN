@@ -305,7 +305,7 @@ function frameScene(){
   const viewportAspect=Math.max(.24,camera.aspect||1);
   const halfVertical=THREE.MathUtils.degToRad(camera.fov)/2;
   const halfHorizontal=Math.atan(Math.tan(halfVertical)*viewportAspect);
-  const dist=Math.max(8,Math.min(orbit.maxDistance*.85,
+  const dist=Math.min(orbit.maxDistance*.85,Math.max(8,
     Math.max(size.x,size.z,4)/(2*Math.tan(halfHorizontal))*1.38,
     Math.max(size.y,4)/(2*Math.tan(halfVertical))*1.5));
   orbit.target.copy(center);
