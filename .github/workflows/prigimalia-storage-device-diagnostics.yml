@@ -1,0 +1,38 @@
+name: ANOMALIAZ - Diagnostic disque physique du projet (lecture seule)
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-storage-device-diagnostics.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Find underlying D physical disk and recent hardware errors without modifying partitions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $vol=@(Get-Volume -DriveLetter C,D -ErrorAction SilentlyContinue |
+            Select-Object DriveLetter,FileSystem,HealthStatus,OperationalStatus,SizeRemaining,Size)
+          Write-Host ('PROJECT_DEVICE_VOLUME_HEALTH='+($vol|ConvertTo-Json -Compress))
+          foreach($letter in @('C','D')){
+            $parts=@(Get-Partition -DriveLetter $letter -ErrorAction SilentlyContinue)
+            foreach($part in $parts){
+              $disk=Get-Disk -Number $part.DiskNumber -ErrorAction SilentlyContinue
+              if($disk){
+                Write-Host ('VOLUME_PHYSICAL_DISK='+($letter+':')+' '+([ordered]@{Number=$disk.Number;FriendlyName=$disk.FriendlyName;BusType=$disk.BusType.ToString();OperationalStatus=$disk.OperationalStatus.ToString();HealthStatus=$disk.HealthStatus.ToString();IsOffline=$disk.IsOffline;IsReadOnly=$disk.IsReadOnly;PartitionStyle=$disk.PartitionStyle.ToString();Size=$disk.Size}|ConvertTo-Json -Compress))
+              }
+            }
+          }
+          $events=@(Get-WinEvent -FilterHashtable @{LogName='System';ProviderName='disk';Id=7,51,153;StartTime=(Get-Date).AddHours(-12)} -ErrorAction SilentlyContinue)
+          foreach($e in ($events|Select-Object -First 12)){
+            Write-Host ('PHYSICAL_IO_EVENT '+([ordered]@{Utc=$e.TimeCreated.ToUniversalTime().ToString('o');Id=$e.Id;Message=$e.Message}|ConvertTo-Json -Compress))
+          }
+          Write-Host ('DISK_IO_EVENT_COUNT_12H='+$events.Count)
+          Write-Host 'READ_ONLY_DISK_DIAG_COMPLETE=true'

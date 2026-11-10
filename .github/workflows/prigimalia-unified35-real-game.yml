@@ -1,0 +1,141 @@
+name: ANOMALIAZ - Installer film unique 35s dans le vrai jeu
+on:
+  push:
+    branches: [feature/intro-cinematique-prigimalia-20261105]
+    paths: [.github/workflows/prigimalia-unified35-real-game.yml]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-unified-movie:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: unified35-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
+      - uses: actions/checkout@v4
+        with:
+          ref: 216fd754e260d6c908e51c52d5a4f59c2982f563
+          path: approved-kit-${{ github.run_id }}
+          persist-credentials: false
+          clean: false
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia
+          sparse-checkout-cone-mode: true
+      - name: Copy one complete MP4 and only two reviewed C++ sources with backup
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-StrictMode -Version Latest
+          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $proj=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          if(!(Test-Path -LiteralPath $proj -PathType Leaf)){throw 'UNIFIED35_BLOCKED: Real Unreal project not found'}
+          $j=Get-Content -LiteralPath $proj -Raw | ConvertFrom-Json
+          if(@($j.Modules | ForEach-Object { $_.Name }) -notcontains 'AnomaliaZPrigimalia'){
+            throw 'UNIFIED35_BLOCKED: Wrong Unreal module'
+          }
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia,robocopy -ErrorAction SilentlyContinue)
+          if($busy.Count -gt 0){throw 'UNIFIED35_BLOCKED: Unreal game or source transfer still running'}
+          $correct=Join-Path $env:GITHUB_WORKSPACE ('unified35-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $approved=Join-Path $env:GITHUB_WORKSPACE ('approved-kit-'+$env:GITHUB_RUN_ID+'\unreal\Source\AnomaliaZPrigimalia')
+          $live=Join-Path $root 'Source\AnomaliaZPrigimalia'
+          $movieName='ANOMALIAZ_PRIGIMALIA_GENERIQUE_35s_ALERTE_ROUGE.mp4'
+          $movieSource=Join-Path 'H:\Mon Drive\ANOMALIAZ\04_Intro_Installation' $movieName
+          $movieTarget=Join-Path $root ('Content\Movies\'+$movieName)
+          $expectedMovieHash='29e4f8c5f00a08877e49fa856707755e0cd257eead26d4c411a38e1960403ccf'
+          if(!(Test-Path -LiteralPath $movieSource -PathType Leaf)){throw 'UNIFIED35_BLOCKED: one full 35s movie has not synced to H drive'}
+          if((Get-FileHash $movieSource -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedMovieHash){
+            throw 'UNIFIED35_BLOCKED: full 35s movie SHA256 mismatch'
+          }
+          $names=@('AnomaliaZPrigimaliaIntroWidget.cpp','AnomaliaZPrigimaliaIntroWidget.h')
+          $normalize={
+            param([string]$p)
+            [IO.File]::ReadAllText($p).TrimStart([char]0xFEFF).Replace("`r`n","`n").Replace("`r","`n")
+          }
+          foreach($name in $names){
+            $dest=Join-Path $live $name
+            $old=Join-Path $approved $name
+            $new=Join-Path $correct $name
+            foreach($file in @($dest,$old,$new)){
+              if(!(Test-Path -LiteralPath $file -PathType Leaf)){throw ('UNIFIED35_BLOCKED: C++ file missing: '+$file)}
+            }
+            $currentText=& $normalize $dest
+            if($currentText -cne (& $normalize $old) -and $currentText -cne (& $normalize $new)){
+              throw ('UNIFIED35_BLOCKED: Work has changed '+$name+'; no overwrite permitted')
+            }
+          }
+          $newCpp=Get-Content -LiteralPath (Join-Path $correct 'AnomaliaZPrigimaliaIntroWidget.cpp') -Raw
+          $newHeader=Get-Content -LiteralPath (Join-Path $correct 'AnomaliaZPrigimaliaIntroWidget.h') -Raw
+          if(!$newCpp.Contains($movieName) -or !$newCpp.Contains('GetTime().GetTotalSeconds() >= 23.95') -or
+             !$newCpp.Contains('FinishToMainMenu()') -or $newCpp.Contains('ClickBloodMoviePath') -or
+             $newCpp.Contains('SW_IntroTitle_Original_v5') -or !$newHeader.Contains('PauseAtClick')){
+            throw 'UNIFIED35_BLOCKED: staged C++ still refers to multipart media or does not implement original click'
+          }
+          if(Test-Path $movieTarget -PathType Leaf){
+            if((Get-FileHash $movieTarget -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedMovieHash){
+              throw 'UNIFIED35_BLOCKED: Different movie with same name already exists'
+            }
+          }
+          $backup=Join-Path $root ('Saved\IntroInstall\Unified35-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $backup){throw 'UNIFIED35_BLOCKED: backup path already exists'}
+          New-Item -ItemType Directory -Path $backup -Force | Out-Null
+          $priorHashes=@{}
+          foreach($name in $names){
+            $src=Join-Path $live $name
+            $priorHashes[$name]=(Get-FileHash $src -Algorithm SHA256).Hash
+            Copy-Item -LiteralPath $src -Destination (Join-Path $backup $name) -ErrorAction Stop
+            if((Get-FileHash (Join-Path $backup $name)).Hash -ne $priorHashes[$name]){
+              throw 'UNIFIED35_BLOCKED: backup hash mismatch'
+            }
+          }
+          $moviePreviouslyPresent=Test-Path -LiteralPath $movieTarget -PathType Leaf
+          if($moviePreviouslyPresent){
+            Copy-Item -LiteralPath $movieTarget -Destination (Join-Path $backup $movieName) -ErrorAction Stop
+          }
+          foreach($name in $names){
+            if((Get-FileHash (Join-Path $live $name)).Hash -ne $priorHashes[$name]){
+              throw 'UNIFIED35_BLOCKED: source changed during backup'
+            }
+          }
+          Write-Host ('UNIFIED35_BACKUP_CONFIRMED='+$backup)
+          try{
+            $movieDir=Split-Path -Path $movieTarget -Parent
+            if(!(Test-Path -LiteralPath $movieDir -PathType Container)){
+              New-Item -ItemType Directory -Path $movieDir -Force | Out-Null
+            }
+            if(!$moviePreviouslyPresent){
+              Copy-Item -LiteralPath $movieSource -Destination $movieTarget -ErrorAction Stop
+            }
+            foreach($name in $names){
+              Copy-Item -LiteralPath (Join-Path $correct $name) -Destination (Join-Path $live $name) -Force -ErrorAction Stop
+            }
+            if((Get-FileHash $movieTarget -Algorithm SHA256).Hash.ToLowerInvariant() -ne $expectedMovieHash){
+              throw 'UNIFIED35_VERIFY_FAILED: movie hash mismatch'
+            }
+            foreach($name in $names){
+              if((Get-FileHash (Join-Path $live $name)).Hash -ne (Get-FileHash (Join-Path $correct $name)).Hash){
+                throw ('UNIFIED35_VERIFY_FAILED: C++ code copy mismatch: '+$name)
+              }
+              Write-Host ('UNIFIED35_CXX_VERIFIED='+$name)
+            }
+          } catch {
+            foreach($name in $names){
+              Copy-Item -LiteralPath (Join-Path $backup $name) -Destination (Join-Path $live $name) -Force
+            }
+            if(!$moviePreviouslyPresent -and (Test-Path -LiteralPath $movieTarget)){
+              Remove-Item -LiteralPath $movieTarget -Force
+            }
+            throw
+          }
+          Write-Host 'REAL_UNREAL_PROJECT_STAGED_WITH_ONE_COMPLETE_35S_MOVIE=true'
+          Write-Host 'NO_SEPARATE_BLOOD_AUDIO_ALERT_FILES_USED_BY_NEW_WIDGET=true'
+          Write-Host 'NO_COMPILATION_DONE_NEEDS_NATIVE_BUILD_AND_GAME_TEST=true'
