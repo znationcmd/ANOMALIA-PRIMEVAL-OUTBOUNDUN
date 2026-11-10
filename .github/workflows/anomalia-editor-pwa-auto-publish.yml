@@ -1,0 +1,25 @@
+name: ANOMALIA Editor PWA - déclenchement automatique
+on:
+  push:
+    branches:
+      - feature/anomalia-editor-mobile-pwa-20261023
+    paths:
+      - 'apps/anomalia-editor/**'
+      - '.github/workflows/anomalia-editor-pwa-auto-publish.yml'
+permissions:
+  actions: write
+  contents: read
+jobs:
+  trigger-mobile-publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Demander la publication mobile des applications sans réinstallation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run anomalia-mobile-pwa-pages.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref main
+          echo "Publication demandée. Le site hôte GitHub Pages doit être activé pour qu'elle aboutisse."

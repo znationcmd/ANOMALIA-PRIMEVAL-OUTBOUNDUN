@@ -190,3 +190,31 @@ les centaines de mégaoctets d'assets sur chaque PC : il faut fournir
 les ZIP une première fois sur cet appareil et les choisir dans
 l'éditeur, ou synchroniser un dossier local. Les nouveautés suivantes
 dans ces dossiers apparaissent automatiquement au catalogue.
+
+## ANOMALIA Editor sur iPhone, iPad et Android (PWA)
+
+La version Web 3D existante utilise maintenant une PWA installable, un cache
+hors ligne et une **interface tactile** : les panneaux Bibliothèque et
+Inspecteur s'ouvrent par les icônes de gauche et se ferment via l'arrière-plan ;
+le viewport est disponible en portrait/paysage, avec les contrôles de caméra
+Three.js tactiles et les commandes d'édition habituelles. Les scènes JSON
+peuvent être enregistrées/exportées localement dans les limites du navigateur.
+
+`npm install && npm test && npm run build` génère `dist/` pour un
+hébergement **HTTPS**. La PWA se met à jour lors de la prochaine connexion,
+sans installateur EXE. Pour iPhone/iPad, ouvrir dans Safari puis « Sur
+l'écran d'accueil » ; pour Android, ouvrir Chrome puis « Installer ».
+
+**À distinguer** : le catalogue de fichiers locaux `.uasset`, `.umap`
+et les imports automatiques par dossier Windows sont **exclusifs à
+l'ANOMALIA Editor Windows**. Le navigateur mobile ne peut pas scanner
+librement le disque ni afficher une carte World Partition Unreal.
+Sur mobile, on utilise les vraies scènes JSON et modèles GLB pris en
+charge par la version Web. Les fichiers et projets sont stockés
+localement par appareil ; aucune synchronisation automatique entre
+profils Windows/iOS/Android n'est encore déployée. Exporter et importer
+les scènes pour transférer le travail.
+
+Un service public GitHub Pages (ou autre HTTPS) peut héberger la version Web
+si les réglages du dépôt le permettent. La présence du code PWA ne
+signifie pas qu'un site est déjà publié.
