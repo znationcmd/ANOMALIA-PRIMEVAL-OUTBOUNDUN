@@ -1,0 +1,87 @@
+name: ANOMALIA - inspect missing actual SKARVIK buildings and SM5 mesh geometry
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-inspect-main-building-visibility-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Native session open'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-building-visibility-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('VISIBILITY_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_VISIBILITY_OUT=$out
+          $script=Join-Path $out 'inspect.py'
+          @'
+          import unreal,json,os,traceback
+          from pathlib import Path
+          r={"state":"FAILED","actors":[],"meshSamples":[]}
+          try:
+              level=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if not level.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Main map missing")
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+              candidates=[d for d in descs if "CITYSAMPLE" in str(d.label) and ("CITYSAMPLE_3D_SOURCE_" in str(d.label) or "REAL_CITYSAMPLE_DISTRICT_" in str(d.label))]
+              r["cityDescriptors"]=len(candidates)
+              r["allDescriptors"]=len(descs)
+              def distance(d):
+                  b=d.bounds
+                  return ((b.min.x+b.max.x)*.5-200000)**2+((b.min.y+b.max.y)*.5-800000)**2
+              chosen=sorted(candidates,key=distance)[:12]
+              unreal.WorldPartitionBlueprintLibrary.load_actors([d.guid for d in chosen])
+              labels={str(d.label) for d in chosen}
+              sm=unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+              r["meshEditorMethods"]=[x for x in dir(sm) if any(y in x for y in ["nanite","number","lod","mesh_description"])]
+              r["methodDocs"]={x:str(getattr(sm,x).__doc__) for x in ["get_number_verts","get_nanite_settings","set_nanite_settings","get_lod_count"] if hasattr(sm,x)}
+              seen=set()
+              for a in actors.get_all_level_actors():
+                  if a.get_actor_label() not in labels:continue
+                  loc=a.get_actor_location()
+                  info={"label":a.get_actor_label(),"position":[loc.x,loc.y,loc.z],"meshes":[]}
+                  for comp in a.get_components_by_class(unreal.StaticMeshComponent):
+                      mesh=comp.get_editor_property("static_mesh")
+                      if not mesh:continue
+                      path=mesh.get_path_name()
+                      info["meshes"].append(path)
+                      if path in seen:continue
+                      seen.add(path)
+                      item={"path":path,"materials":[str(comp.get_material(i)) for i in range(comp.get_num_materials())]}
+                      try:item["lodCount"]=sm.get_lod_count(mesh)
+                      except Exception as e:item["lodError"]=str(e)
+                      try:item["verticesLOD0"]=sm.get_number_verts(mesh,0)
+                      except Exception as e:item["verticesError"]=str(e)
+                      try:
+                          n=sm.get_nanite_settings(mesh)
+                          item["nanite"]=str(n)
+                          item["naniteAttributes"]=[x for x in dir(n) if not x.startswith("_")]
+                      except Exception as e:item["naniteError"]=str(e)
+                      r["meshSamples"].append(item)
+                  r["actors"].append(info)
+              r["state"]="NATIVE_CITY_BUILDING_VISIBILITY_INSPECTED"
+          except Exception:r["error"]=traceback.format_exc()
+          finally:
+              Path(os.environ["ANOMALIA_VISIBILITY_OUT"],"inspection.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $out 'inspection.log'
+          $args=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosound','-nosplash',('-abslog="'+$log+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(360000)){$p.Kill();throw 'Bounded building inspection timeout'}
+          $report=Join-Path $out 'inspection.json'
+          if(Test-Path $report){Get-Content $report -Raw|Write-Host}else{Get-Content $log -Tail 80;throw 'No native inspection report'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-BUILDING-VISIBILITY-INSPECTION
+          path: ${{ env.VISIBILITY_OUT }}
+          if-no-files-found: warn
