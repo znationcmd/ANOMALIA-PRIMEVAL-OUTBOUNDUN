@@ -104,3 +104,42 @@
 @media(prefers-reduced-motion:reduce){
  .prigimalia-launch-splash{transition:none}
 }
+
+
+/* WorkForge shared overlay: genuine in-game and Windows desktop application. */
+.wf-root{position:fixed;inset:0;z-index:105;display:flex;flex-direction:column;color:#f5f1eb;background:#080b10;font-family:Inter,Segoe UI,sans-serif;overflow:auto;font-size:13px}
+.wf-root.hidden{display:none!important}
+.wf-root *{box-sizing:border-box}
+.wf-top{display:flex;align-items:center;gap:18px;min-height:78px;padding:9px 20px;border-bottom:1px solid #6a2d20;background:linear-gradient(90deg,#080a0d,#1a1110 51%,#090b0f)}
+.wf-logo{font-size:26px;font-weight:900;letter-spacing:.08em;color:#ff793a;display:flex;align-items:center;gap:12px;white-space:nowrap}
+.wf-logo span{color:#eee;font-size:19px}.wf-logo small,.wf-heading small{display:block;color:#baad9e;font-size:10px;letter-spacing:.38em}
+.wf-heading{color:#fba362;text-shadow:0 0 12px #fa3e1a;font-size:clamp(20px,2.4vw,40px);letter-spacing:.12em;white-space:nowrap}
+.wf-search{margin-left:auto;flex:1;max-width:340px}
+.wf-search input{width:100%;padding:12px;background:#121820;border:1px solid #42464b;border-radius:6px;color:#fff}
+.wf-top button,.wf-primary{background:linear-gradient(#ef3f17,#8f0d05);border:1px solid #ff7438;box-shadow:inset 0 0 8px #ff7e38,0 0 12px #94280e;color:white;border-radius:5px;padding:11px 18px;font-weight:bold}
+.wf-body{display:grid;grid-template-columns:155px minmax(0,1fr) 265px;gap:12px;flex:1;min-height:0;padding:12px}
+.wf-nav{display:flex;flex-direction:column;gap:6px;padding:8px 5px;background:#10151a;border:1px solid #2d3035;border-radius:8px}
+.wf-nav button{text-align:left;background:transparent;border:0;color:#ddd;padding:13px;border-radius:4px;font-weight:600}
+.wf-nav button.active,.wf-nav button:hover{background:linear-gradient(90deg,#93231a,#42100d);box-shadow:0 0 8px #b12f20}
+.wf-nav-note{margin-top:auto;background:linear-gradient(160deg,#442319,#0c0e12);padding:22px 10px;text-align:center;line-height:2.3;letter-spacing:.16em;font-weight:700}
+.wf-main{overflow:auto;min-width:0}
+.wf-hero{min-height:245px;border:1px solid #76442d;border-radius:9px;background:linear-gradient(90deg,#030507 0%,#1e1211b8 50%,#24130b65),url('/prigimalia-startup-poster.jpg') center/cover;overflow:hidden;box-shadow:0 5px 28px #000b}
+.wf-hero-shade{padding:26px 32px;background:linear-gradient(90deg,#04070bbd,transparent);height:100%}
+.wf-kicker{font-size:12px;letter-spacing:.24em;color:#ffc690}.wf-hero h2{font-size:clamp(36px,4vw,65px);margin:5px 0;color:#ffbd79;text-shadow:0 0 13px #d5280d}
+.wf-hero-copy{max-width:500px;color:#ddd}.wf-metrics{display:flex;gap:25px;margin-top:20px;flex-wrap:wrap}.wf-metrics span{border-left:2px solid #bd411e;padding-left:12px}.wf-metrics b{font-size:21px;color:#ffc17a}
+.wf-categories{display:grid;grid-template-columns:repeat(9,minmax(90px,1fr));gap:7px;margin:12px 0;overflow-x:auto;padding-bottom:5px}
+.wf-category{display:flex;flex-direction:column;align-items:center;gap:10px;min-height:90px;padding:14px 5px;color:#eee;background:linear-gradient(#202732,#080b10);border:1px solid #4c4440;border-radius:7px}
+.wf-category span{font-size:27px}.wf-category b{font-size:11px}.wf-category.active{border-color:#ff783f;box-shadow:inset 0 0 14px #8b221b,0 0 9px #b82e1b}
+.wf-section-title{display:flex;align-items:center;justify-content:space-between;gap:16px}.wf-section-title h3{font-size:21px;margin:10px 0}.wf-section-title select{background:#171b20;color:white;padding:8px;border:1px solid #5d4034;border-radius:5px}
+.wf-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(205px,1fr));gap:12px}.wf-card{overflow:hidden;border-radius:8px;background:linear-gradient(#181e23,#080c11);border:1px solid #4d3d36;display:flex;flex-direction:column}
+.wf-card-art{height:115px;background:linear-gradient(145deg,#603020,#1d2429 60%,#090c12);display:grid;place-items:center;font-size:65px;color:#ef6a30}
+.wf-card-body{padding:11px;flex:1}.wf-card-body h4{margin:0 0 5px;font-size:15px}.wf-card-body p{color:#aeb4bb;overflow-wrap:anywhere}.wf-card-status{color:#edaf70;font-size:11px}
+.wf-card>.wf-primary{margin:0 11px 12px}.wf-empty{grid-column:1/-1;padding:45px 25px;text-align:center;background:#141a1d;border:1px dashed #745b4b;border-radius:8px}
+.wf-disclaimer{color:#abb0b4;font-size:12px;line-height:1.5}
+.wf-side{display:flex;flex-direction:column;gap:12px}.wf-panel{padding:15px;border-radius:8px;border:1px solid #52453f;background:linear-gradient(#131a1e,#0a0e13)}
+.wf-panel h3{color:#f8c99f;font-size:14px}.wf-panel p{color:#bcc1c4;line-height:1.5}.wf-panel div{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #313037}.wf-panel strong{color:#ffb66f;text-align:right}.wf-panel .wf-primary{width:100%;margin-top:17px}
+#wfClose{padding:7px 13px;background:#1e242a;border-color:#6c3835}
+#workforgeHudBtn{position:absolute;right:16px;top:62px;z-index:10;background:linear-gradient(#c43a22,#571510);border:1px solid #fa7b37;color:white;font-size:11px;letter-spacing:.06em}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
+@media(max-width:1100px){.wf-body{grid-template-columns:140px minmax(0,1fr)}.wf-side{grid-column:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.wf-panel:last-child{display:none}.wf-heading{font-size:22px}}
+@media(max-width:680px){.wf-top{flex-wrap:wrap}.wf-search{order:4;max-width:none;flex-basis:100%}.wf-body{display:block;padding:7px}.wf-nav{flex-direction:row;overflow-x:auto;margin-bottom:9px}.wf-nav button{white-space:nowrap}.wf-nav-note{display:none}.wf-categories{grid-template-columns:repeat(9,100px)}.wf-side{display:block}.wf-panel{margin-top:10px}.wf-logo{font-size:16px}.wf-logo span{font-size:13px}}
