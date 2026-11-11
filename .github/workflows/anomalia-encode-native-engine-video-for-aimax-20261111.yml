@@ -12,7 +12,7 @@ jobs:
     timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
-      SOURCE_RUN: '43036670565'
+      SOURCE_RUN: '43036950437'
     steps:
       - uses: actions/checkout@v4
       - name: Wait for the original rendered Unreal screenshot artifact
@@ -60,7 +60,7 @@ jobs:
             assert hashlib.sha256(f.read_bytes()).hexdigest()==entry['sha256']
           assert len(list(root.rglob('ue5_real_*.png')))==36
           Path('ue5-video-native-source-report.json').write_text(json.dumps({
-            'sourceRun':43036670565,'originalUE5Frames':36,'PIEStarted':True,
+            'sourceRun':43036950437,'originalUE5Frames':36,'PIEStarted':True,
             'realBMWv7':True,'realSurvivor':True,'realGermanShepherd':True,
             'realCitySourceMeshes':doc['realCityMeshActorsSelected'],
             'videoType':'UE5 in-engine PIE camera footage; not direct player-controlled 24fps gameplay',
