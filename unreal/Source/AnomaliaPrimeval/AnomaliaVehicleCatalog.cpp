@@ -24,6 +24,7 @@ TArray<FAnomaliaVehicleDefinition> UAnomaliaVehicleCatalog::GetDefaultVehicleCat
     using D = EAnomaliaVehicleDomain;
     return {
         MakeVehicle(TEXT("transport_truck"), TEXT("Camion de transport"), D::Ground, 100, 3, 150),
+        MakeVehicle(TEXT("farm_tractor"), TEXT("Tracteur agricole"), D::Ground, 35, 2, 45),
         MakeVehicle(TEXT("semi_truck"), TEXT("Poids lourd avec remorque"), D::Ground, 95, 2, 300),
         MakeVehicle(TEXT("quad"), TEXT("Quad"), D::Ground, 95, 2, 10),
         MakeVehicle(TEXT("buggy"), TEXT("Buggy"), D::Ground, 120, 2, 25),

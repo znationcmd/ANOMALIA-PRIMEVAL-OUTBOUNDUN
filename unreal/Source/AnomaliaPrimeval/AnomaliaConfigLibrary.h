@@ -38,6 +38,10 @@ struct FAnomaliaServerSettings
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="0.0", ClampMax="10.0"))
     float StarvationDamagePerSecond = 0.25f;
 
+    /** First-pass constant ambient environment; weather and clothing are later systems. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Survival", meta=(ClampMin="-50.0", ClampMax="60.0"))
+    float AmbientTemperatureC = 20.f;
+
         // Intentionally no password/admin key in this Blueprint struct.
 };
 
