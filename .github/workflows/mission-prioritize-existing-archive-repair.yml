@@ -1,0 +1,65 @@
+name: ANOMALIA mission - prioritize actual archive repair before more model batches
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-prioritize-existing-archive-repair.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  prioritize_at_checkpoint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 85
+    steps:
+      - name: Let the active source batch finish before pausing its remaining queue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const end=Date.now()+78*60*1000;
+            while(Date.now()<end){
+              const {data}=await github.rest.actions.getJobForWorkflowRun({...context.repo,job_id:128694265007});
+              if(data.status==='completed'){core.info('Active batch ended; completed checkpoints preserved');break;}
+              core.info('Preserving active model batch before prioritizing archive repair');
+              await new Promise(r=>setTimeout(r,15000));
+            }
+            const active=await github.rest.actions.getJobForWorkflowRun({...context.repo,job_id:128694265007});
+            if(active.data.status!=='completed')throw Error('Existing source batch still active; do not interrupt its write');
+            async function pause(run_id){
+              let {data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id});
+              if(data.status==='completed')return;
+              try{await github.rest.actions.cancelWorkflowRun({...context.repo,run_id});}catch(e){core.warning(String(e));}
+              await new Promise(r=>setTimeout(r,20000));
+              ({data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id}));
+              if(data.status!=='completed')await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/force-cancel',{...context.repo,run_id});
+            }
+            // Preserve the completed batch; release queued imports to the existing repair job.
+            await pause(42468497577);
+            const jobs=await github.paginate(github.rest.actions.listJobsForWorkflowRun,{...context.repo,run_id:42468767001,per_page:100});
+            if(!jobs.some(j=>j.status==='in_progress'))await pause(42468767001);
+  resume_after_actual_repair:
+    needs: prioritize_at_checkpoint
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - name: Resume existing workflows only after the Windows repair step finishes
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const end=Date.now()+95*60*1000;
+            let passed=false;
+            while(Date.now()<end){
+              const jobs=await github.paginate(github.rest.actions.listJobsForWorkflowRun,{...context.repo,run_id:42469646312,per_page:100});
+              const repair=jobs.find(j=>j.name==='repair');
+              if(repair?.status==='completed'){
+                if(repair.conclusion!=='success')throw Error('Actual Windows path repair failed; preserve reports and originals');
+                passed=true;break;
+              }
+              core.info('Waiting for actual Windows extraction/reference repair, not just source tests');
+              await new Promise(r=>setTimeout(r,30000));
+            }
+            if(!passed)throw Error('Windows repair not finished; do not claim archives unblocked');
+            for(const workflow_id of ['mission-reclaim-ddc-and-resume-models.yml','mission-citysample-independent-duplicates.yml']){
+              await github.rest.actions.createWorkflowDispatch({...context.repo,workflow_id,ref:'mission/finalisation-20261104'});
+              core.info('Dispatched guarded continuation: '+workflow_id);
+            }

@@ -1,0 +1,54 @@
+name: ANOMALIA mission - read completed local resource receipts
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-read-local-resource-receipts.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  read:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: all-disks-circuit-motocross-and-project-candidates
+          run-id: 41884181592
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: receipts/discovery
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-actual-D-resource-integration
+          run-id: 41869346164
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: receipts/integration
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-actual-D-raw-resource-import
+          run-id: 41851208057
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: receipts/raw
+      - name: Print verified paths and result summaries only
+        shell: python
+        run: |
+          import pathlib,json
+          for p in pathlib.Path("receipts").rglob("*.json"):
+              if "input" in p.parts or "prior" in p.parts: continue
+              if p.stat().st_size>3000000: continue
+              if p.name=="preflight.json":continue
+              try:d=json.loads(p.read_text(encoding="utf-8-sig"))
+              except Exception:continue
+              print("RECEIPT_FILE",str(p))
+              if "projects" in d:
+                  print("SKETCHFAB_DIRECTORIES",json.dumps(d.get("sketchfabDirectories",[])))
+                  print("TRACK_CANDIDATES",json.dumps(d.get("trackCandidatesAcrossAllDisks",[])[:160]))
+                  raw=d.get("sketchfabSourceFiles",[])
+                  print("SKETCHFAB_TRACK_SOURCES",json.dumps([x for x in raw if any(t in x["path"].lower() for t in ["circuit","motocross","track","race","cross","speedway"])][:100]))
+                  print("SCAN_COMPLETE",d.get("complete"))
+              else:
+                  small={k:v for k,v in d.items() if not isinstance(v,list)}
+                  print("SUMMARY",json.dumps(small,default=str)[:18000])
+                  for k,v in d.items():
+                      if isinstance(v,list): print("LIST",k,"COUNT",len(v),"SAMPLE",json.dumps(v[:4],default=str)[:6000])

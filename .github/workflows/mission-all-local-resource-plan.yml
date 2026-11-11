@@ -1,0 +1,40 @@
+name: ANOMALIA mission - reconcile all existing local project resources
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-all-local-resource-plan.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: resource-plan-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/plan-existing-local-resource-import.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Reconcile source projects and raw archives with actual D content without modifying assets
+        timeout-minutes: 22
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('all-local-resources-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_BULK_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:MISSION_BULK_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('resource-plan-'+$env:GITHUB_RUN_ID+'\scripts\ue5\plan-existing-local-resource-import.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Existing local resource planning failed; no asset import was attempted'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_BULK_OUT != ''
+        with:
+          name: mission-all-existing-local-resource-plan
+          path: ${{ env.MISSION_BULK_OUT }}/
+          if-no-files-found: error

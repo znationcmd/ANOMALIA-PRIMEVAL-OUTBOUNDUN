@@ -1,0 +1,126 @@
+name: ANOMALIA mission - reclaim safe caches and resume models after disk unblock
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  wait_for_archive_cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const end=Date.now()+70*60*1000;
+            while(Date.now()<end){
+              const {data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id:42468360087});
+              if(data.status==='completed'){
+                if(data.conclusion!=='success')throw Error('Disk inspection/ZIP cleanup not confirmed; preserve current state');
+                return;
+              }
+              await new Promise(r=>setTimeout(r,30000));
+            }
+            throw Error('Existing cleanup still running; do not interrupt');
+  reclaim:
+    needs: wait_for_archive_cleanup
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ddc-reclaim-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/release-only-regenerable-filesystem-ddc.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Reclaim only known regenerable cache files if disk pressure remains
+        timeout-minutes: 20
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Active editor preserved'}
+          $out='D:\ANOMALIA\unreal\Saved\CleanupReceipts\DDCReclaim20261108\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "DDC_CLEANUP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:DDC_CLEANUP_OUT=$out
+          if((Get-PSDrive C).Free -lt 16GB){
+            $script=Join-Path $env:GITHUB_WORKSPACE ('ddc-reclaim-'+$env:GITHUB_RUN_ID+'\scripts\ue5\release-only-regenerable-filesystem-ddc.py')
+            & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+            if($LASTEXITCODE -ne 0){throw 'Cache cleanup stopped; assets preserved'}
+          }
+          $os=Get-CimInstance Win32_OperatingSystem
+          $report=@{disks=@(Get-PSDrive C,D | Select-Object Name,Free);freePhysicalBytes=$os.FreePhysicalMemory*1KB;freeVirtualBytes=$os.FreeVirtualMemory*1KB}
+          $report | ConvertTo-Json -Depth 6 | Set-Content -LiteralPath (Join-Path $out 'resume-reserves.json') -Encoding UTF8
+          Write-Output ($report | ConvertTo-Json -Depth 6 -Compress)
+          if((Get-PSDrive C).Free -lt 12GB -or (Get-PSDrive D).Free -lt 8GB){throw 'Insufficient measured disk reserve remains; preserve files and pause imports'}
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory remains; preserve sessions'}
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.DDC_CLEANUP_OUT != ''
+        with:
+          name: regenerable-cache-reclaim-and-resume-reserves
+          path: ${{ env.DDC_CLEANUP_OUT }}/
+          if-no-files-found: warn
+  remaining:
+    needs: reclaim
+    if: ${{ !cancelled() && needs.reclaim.result == 'success' }}
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: resume-all-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: |
+            unreal/Content/Python/resume_owned_model_imports.py
+            scripts/ue5/run-owned-model-import-with-watchdog.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Resume durable all-category source manifest in the actual project
+        timeout-minutes: 65
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $state='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107'
+          foreach($name in @('raw-preparation-manifest.json','raw-import-report.json')){
+            if(!(Test-Path -LiteralPath (Join-Path $state $name))){throw 'Durable import ledger missing; do not repeat accepted sources'}
+          }
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory'}
+          $out=Join-Path $state ('AllModels-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}')
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "MODEL_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:MISSION_RAW_OUT=$out
+          $env:IMPORT_MAX_SOURCES='250'
+          $env:IMPORT_BATCH='${{ matrix.batch }}'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('resume-all-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\unreal\Content\Python\resume_owned_model_imports.py')
+          $ErrorActionPreference='Continue'
+          $launcher=Join-Path $env:GITHUB_WORKSPACE ('resume-all-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\scripts\ue5\run-owned-model-import-with-watchdog.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $launcher $script *> (Join-Path $out 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          $r=Get-Content -LiteralPath (Join-Path $out 'import-batch-summary.json') -Raw | ConvertFrom-Json
+          Write-Output ("NATIVE_EXIT="+$code)
+          Write-Output ($r | ConvertTo-Json -Depth 8 -Compress)
+          if($code -ne 0 -and $r.newSources -eq 0){throw 'No new accepted source before editor failure; retain receipts'}
+          # Independent source failures remain in the durable error list, not falsely accepted.
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MODEL_OUT != ''
+        with:
+          name: all-model-import-batch-${{ matrix.batch }}
+          path: |
+            ${{ env.MODEL_OUT }}/import-batch-summary.json
+            ${{ env.MODEL_OUT }}/engine.log
+            ${{ env.MODEL_OUT }}/process.log
+            ${{ env.MODEL_OUT }}/native-process.log
+            ${{ env.MODEL_OUT }}/owned-import-process.json
+            ${{ env.MODEL_OUT }}/active-source.json
+          if-no-files-found: warn
+
+# Resume requested after user closed applications, 2026-11-08; keep accepted-source ledger.

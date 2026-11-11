@@ -1,0 +1,68 @@
+name: ANOMALIA - finish requested maps using confirmed native build
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-finish-compiled-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  finish_compiled_maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: finish-compiled-maps
+          sparse-checkout: |
+            scripts/ue5/reuse-compiled-requested-world-build.py
+            unreal/Scripts/create_three_requested_native_maps.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify successful build fingerprints and release only compiler intermediates
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,cl,link -ErrorAction SilentlyContinue).Count){throw 'Active editor/compiler preserved'}
+          $out='D:\ANOMALIA\unreal\Saved\ThreeRequestedMaps\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "THREE_MAP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:THREE_MAP_OUT=$out
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B "$env:GITHUB_WORKSPACE\finish-compiled-maps\scripts\ue5\reuse-compiled-requested-world-build.py"
+          if($LASTEXITCODE -ne 0){throw 'Confirmed build reuse or disk reserve check failed'}
+      - name: Create requested new landscapes without changing old maps
+        timeout-minutes: 95
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($id in @('YUDINAVIA','MOSCOVIE','CORSIVIA','BOT_SEVER')) {
+            if((Get-PSDrive D).Free -lt 10GB){throw 'Landscape reserve reached; source content preserved'}
+            $env:PRIGIMALIA_THREE_MAP=$id
+            $env:PRIGIMALIA_THREE_REPORT=Join-Path $env:THREE_MAP_OUT ($id+'.json')
+            $script="$env:GITHUB_WORKSPACE\finish-compiled-maps\unreal\Scripts\create_three_requested_native_maps.py"
+            & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:THREE_MAP_OUT\$id-engine.log"
+            if($LASTEXITCODE -ne 0){throw "Native map creation failed: $id"}
+            $r=Get-Content $env:PRIGIMALIA_THREE_REPORT -Raw | ConvertFrom-Json
+            if(!$r.actualLandscapeSaved){throw "Landscape not saved: $id $($r.error)"}
+          }
+      - name: Verify all prior maps retain their content hashes
+        if: always() && env.THREE_MAP_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $before='D:\ANOMALIA\unreal\Saved\ThreeRequestedMaps\42487952988\original-maps.json'
+          foreach($row in (Get-Content $before -Raw | ConvertFrom-Json)) {
+            if((Get-FileHash -LiteralPath $row.path -Algorithm SHA256).Hash -ne $row.sha256){throw 'Prior map changed unexpectedly'}
+          }
+      - uses: actions/upload-artifact@v4
+        if: always() && env.THREE_MAP_OUT != ''
+        with:
+          name: compiled-map-creation-and-safe-disk-reclaim
+          path: |
+            ${{ env.THREE_MAP_OUT }}/*.json
+            ${{ env.THREE_MAP_OUT }}/*.jsonl
+            ${{ env.THREE_MAP_OUT }}/*.log
+          if-no-files-found: warn

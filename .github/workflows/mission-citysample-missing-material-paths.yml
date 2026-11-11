@@ -1,0 +1,57 @@
+name: ANOMALIA mission - locate remaining CitySample material files
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-citysample-missing-material-paths.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  locate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-existing-skarvik-transfer-plan
+          run-id: 41810570770
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/prior-skarvik-graph/
+      - name: Inspect only material kits named by the unresolved existing dependency graph
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('city-material-paths-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $graph=Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prior-skarvik-graph\skarvik-dependency-transfer-plan.json') -Raw | ConvertFrom-Json
+          $missing=@($graph.files | Where-Object {$_.status -eq 'SOURCE_PACKAGE_FILE_MISSING' -and $_.package.StartsWith('/Game/Building/')})
+          $report=[ordered]@{graphRun=41810570770;packages=$missing.Count;assetsModified=0;kits=@()}
+          $groups=$missing | Group-Object {($_.package -split '/Material/')[0]}
+          foreach($group in $groups){
+            $relative=$group.Name.Substring(6).Replace('/','\')
+            $root=Join-Path 'D:\ANOMALIA\FabImports\CitySample\Content' $relative
+            $parent=Split-Path $root -Parent
+            $entry=[ordered]@{packageKit=$group.Name;expectedRoot=$root;exists=(Test-Path -LiteralPath $root -PathType Container);expectedMaterials=$group.Count;matches=@();parentDirectories=@();kitDirectories=@();sampleMaterialNames=@()}
+            if(Test-Path -LiteralPath $parent -PathType Container){$entry.parentDirectories=@(Get-ChildItem -LiteralPath $parent -Directory | ForEach-Object {[string]$_.Name})}
+            if($entry.exists){
+              $entry.kitDirectories=@(Get-ChildItem -LiteralPath $root -Directory | ForEach-Object {[string]$_.Name})
+              $files=@(Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.uasset')
+              $wanted=@{};foreach($row in $group.Group){$wanted[($row.package.Split('/')[-1]+'.uasset')]=$row.package}
+              foreach($file in $files){
+                if($wanted.ContainsKey($file.Name)){$entry.matches+=@{wanted=$wanted[$file.Name];path=$file.FullName;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash}}
+              }
+              $entry.sampleMaterialNames=@($files | Where-Object {$_.Name.StartsWith('MI_') -or $_.Name.StartsWith('M_')} | Select-Object -First 12 | ForEach-Object {[string]$_.FullName})
+            }
+            $report.kits+=$entry
+            $report | ConvertTo-Json -Depth 9 | Set-Content -LiteralPath (Join-Path $out 'material-paths.json') -Encoding UTF8
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission-existing-citysample-material-paths
+          path: ${{ runner.temp }}/city-material-paths-${{ github.run_id }}/
+          if-no-files-found: error

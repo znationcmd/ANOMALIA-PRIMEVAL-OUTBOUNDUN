@@ -1,0 +1,257 @@
+name: ANOMALIA mission - resume actual project 3D imports
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-resume-owned-3d-imports.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  pause_transfer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Pause checkpointed upload for actual project imports
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          run=42373342885
+          status=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
+          if [ "$status" != completed ]; then
+            gh api --method POST "repos/$GH_REPO/actions/runs/$run/cancel" || true
+            sleep 15
+            status=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
+            if [ "$status" != completed ]; then
+              gh api --method POST "repos/$GH_REPO/actions/runs/$run/force-cancel"
+            fi
+          fi
+  restore_inputs:
+    needs: pause_transfer
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: restore-inputs-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/resume-owned-model-extraction.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare durable model receipts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\Session'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "MISSION_RAW_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-actual-D-raw-resource-import
+          run-id: 41851208057
+          github-token: ${{ github.token }}
+          path: ${{ env.MISSION_RAW_OUT }}/prior/
+      - name: Restore existing verified inputs and report free space
+        env:
+          PREPARE_EXISTING_ONLY: '1'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('restore-inputs-'+$env:GITHUB_RUN_ID+'\scripts\ue5\resume-owned-model-extraction.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Input receipt restore failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: restored-model-input-status
+          path: ${{ env.MISSION_RAW_OUT }}/preparation-summary.json
+  pilot:
+    needs: restore_inputs
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: native-resume-${{ github.run_id }}-pilot
+          sparse-checkout: unreal/Content/Python/resume_owned_model_imports.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Import and verify original models in actual D project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        env:
+          IMPORT_BATCH: 'pilot'
+          IMPORT_MAX_SOURCES: '5'
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:MISSION_RAW_OUT='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\Session'
+          "MISSION_RAW_OUT=$env:MISSION_RAW_OUT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $last='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\last-import-batch.json'
+          if(Test-Path -LiteralPath $last){
+            $previous=Get-Content -LiteralPath $last -Raw | ConvertFrom-Json
+            if($previous.pausedForDiskReserve){Write-Output 'Paused for disk reserve; original sources retained';exit 0}
+            if($previous.remainingSources -eq 0){Write-Output 'All prepared sources processed; gameplay validation remains';exit 0}
+            if($previous.newSources -eq 0 -and @($previous.errors).Count -eq 0){Write-Output 'Remaining animations need verified source-family skeletons';exit 0}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory reserve'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('native-resume-'+$env:GITHUB_RUN_ID+'-pilot\unreal\Content\Python\resume_owned_model_imports.py')
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $ErrorActionPreference='Continue'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:MISSION_RAW_OUT\native-pilot-engine.log" *> (Join-Path $env:MISSION_RAW_OUT 'native-pilot-process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          Write-Output "UNREAL_IMPORT_EXIT_CODE=$code"
+          $summary=Join-Path $env:MISSION_RAW_OUT 'import-batch-summary.json'
+          if(!(Test-Path -LiteralPath $summary)){throw 'No native import receipt was produced'}
+          $result=Get-Content -LiteralPath $summary -Raw | ConvertFrom-Json
+          Write-Output ('NATIVE_IMPORT_RESULT '+($result | ConvertTo-Json -Compress -Depth 8))
+          if($result.newSources -lt 1){throw 'Pilot produced no newly verified model; preserve sources and correct before expansion'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RAW_OUT != ''
+        with:
+          name: actual-project-model-import-pilot
+          path: |
+            ${{ env.MISSION_RAW_OUT }}/import-batch-summary.json
+            ${{ env.MISSION_RAW_OUT }}/native-pilot-engine.log
+            ${{ env.MISSION_RAW_OUT }}/native-pilot-process.log
+          if-no-files-found: warn
+  extract_remaining:
+    needs: pilot
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: extract-remaining-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/resume-owned-model-extraction.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Extract remaining model archives preserving originals and free-space reserve
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:MISSION_RAW_OUT='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\Session'
+          "MISSION_RAW_OUT=$env:MISSION_RAW_OUT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $script=Join-Path $env:GITHUB_WORKSPACE ('extract-remaining-'+$env:GITHUB_RUN_ID+'\scripts\ue5\resume-owned-model-extraction.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Extraction stopped; original archives retained'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RAW_OUT != ''
+        with:
+          name: remaining-model-extraction-results
+          path: |
+            ${{ env.MISSION_RAW_OUT }}/preparation-summary.json
+            D:/ANOMALIA/unreal/Saved/ImportReceipts/RawResume20261107/raw-preparation-manifest.json
+          if-no-files-found: warn
+  import_remaining:
+    needs: extract_remaining
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: native-resume-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: unreal/Content/Python/resume_owned_model_imports.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Import and verify original models in actual D project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        env:
+          IMPORT_BATCH: '${{ matrix.batch }}'
+          IMPORT_MAX_SOURCES: '100'
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:MISSION_RAW_OUT='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\Session'
+          "MISSION_RAW_OUT=$env:MISSION_RAW_OUT" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $last='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107\last-import-batch.json'
+          if(Test-Path -LiteralPath $last){
+            $previous=Get-Content -LiteralPath $last -Raw | ConvertFrom-Json
+            if($previous.pausedForDiskReserve){Write-Output 'Paused for disk reserve; original sources retained';exit 0}
+            if($previous.remainingSources -eq 0){Write-Output 'All prepared sources processed; gameplay validation remains';exit 0}
+            if($previous.newSources -eq 0 -and @($previous.errors).Count -eq 0){Write-Output 'Remaining animations need verified source-family skeletons';exit 0}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory reserve'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('native-resume-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\unreal\Content\Python\resume_owned_model_imports.py')
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $ErrorActionPreference='Continue'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:MISSION_RAW_OUT\native-${{ matrix.batch }}-engine.log" *> (Join-Path $env:MISSION_RAW_OUT 'native-${{ matrix.batch }}-process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          Write-Output "UNREAL_IMPORT_EXIT_CODE=$code"
+          $summary=Join-Path $env:MISSION_RAW_OUT 'import-batch-summary.json'
+          if(!(Test-Path -LiteralPath $summary)){throw 'No native import receipt was produced'}
+          $result=Get-Content -LiteralPath $summary -Raw | ConvertFrom-Json
+          Write-Output ('NATIVE_IMPORT_RESULT '+($result | ConvertTo-Json -Compress -Depth 8))
+          if($code -ne 0){Write-Warning 'Unreal reported import errors; per-source receipts preserve successful results'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RAW_OUT != ''
+        with:
+          name: actual-project-model-import-${{ matrix.batch }}
+          path: |
+            ${{ env.MISSION_RAW_OUT }}/import-batch-summary.json
+            ${{ env.MISSION_RAW_OUT }}/native-${{ matrix.batch }}-engine.log
+            ${{ env.MISSION_RAW_OUT }}/native-${{ matrix.batch }}-process.log
+          if-no-files-found: warn
+  copy:
+    needs: import_remaining
+    if: ${{ !cancelled() }}
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: direct-models-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: scripts/ue5/direct-copy-all-game-models-to-cloud.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare direct-copy checkpoint and reports
+        id: plan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}')
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $missing=!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\direct-source-plan.jsonl')
+          "needed=$($missing.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
+      - name: Benchmark and accelerate City Sample and remaining resource copies
+        timeout-minutes: 300
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\scripts\ue5\direct-copy-all-game-models-to-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Direct copy stopped; originals preserved and next batch can resume'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: direct-models-cloud-receipts-${{ matrix.batch }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/direct-transfer-summary.json
+          if-no-files-found: warn

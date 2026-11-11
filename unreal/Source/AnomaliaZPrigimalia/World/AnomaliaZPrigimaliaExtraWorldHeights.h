@@ -7,14 +7,16 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
-        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 : 0;
+        (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 :
+        world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
+        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 : 0;
 }
-inline int Resolution(EWorld world) { return SideMeters(world)==30000 ? 3025 : SideMeters(world)==20000 ? 2017 : 0; }
+inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : (side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
 inline double Smooth(double v) { v=Clamp(v,0.,1.); return v*v*(3.-2.*v); }
 inline double Hash(int x,int y,int seed)
@@ -49,6 +51,34 @@ inline double Height(EWorld world,double east,double north)
     std::abs(east)>side/2. || std::abs(north)>side/2.)return -400.;
  const double n=Fractal(east,north,100+int(world)*97);
  const double r=Fractal(east+2311.,north-1427.,510+int(world)*71);
+ // Original draft landforms, not surveyed Moscow/Corsica/Scandinavia data.
+ if(world==EWorld::BotSever){
+  // Original continental draft; southern naming boundary is exactly -17500 m.
+  const double river=north-(2400.*std::sin(east/4500.)-1200.);
+  const double valley=95.*std::exp(-river*river/(1500.*1500.));
+  const double southern=Smooth((-north-14000.)/7000.);
+  return 130.+85.*n-valley+southern*(350.+450.*std::abs(r));
+ }
+ if(world==EWorld::Yudinavia){
+  const double ridge=620.*Gaussian(east,north,1300.,1100.,3200.,4900.);
+  const double coast=Smooth((east+5600.+500.*std::sin(north/900.))/1700.);
+  const double fjord=310.*Gaussian(east,north,-1800.,900.,2900.,350.)+
+                     240.*Gaussian(east,north,-2800.,-1800.,2500.,420.);
+  return (100.+ridge+95.*n-fjord)*coast-95.*(1.-coast);
+ }
+ if(world==EWorld::Moscovie){
+  const double river=north-(630.*std::sin(east/1400.)+270.*std::sin(east/570.));
+  const double bank=Smooth((std::abs(river)-70.)/170.);
+  return -6.+bank*(24.+12.*n+5.*r);
+ }
+ if(world==EWorld::Corsivia){
+  // All four edges are below sea level; no artificial rectangular island cliff.
+  const double island=Smooth((1.-std::hypot((east+450.*std::sin(north/1700.))/4700.,north/6500.))/.24);
+  const double spine=1120.*Gaussian(east,north,-600.,900.,1800.,4100.)*(.78+.22*r);
+  const double river=north-(1100.+450.*std::sin(east/1100.));
+  const double valley=150.*std::exp(-river*river/(300.*300.));
+  return island*std::max(15.,70.+spine+85.*n-valley)-110.*(1.-island);
+ }
  if(world==EWorld::Karskov){
   // LIVONIA-like original geography: continuous wooded country, rolling meadows,
   // rural farming valleys, a meandering river, dense southern ridges (no fjords).

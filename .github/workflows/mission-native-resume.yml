@@ -1,0 +1,55 @@
+name: ANOMALIA mission - resume NavigationSystem link correction
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-native-resume.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Apply exact dependency correction to preserved validation copy only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIA-Validation\m41798670858'
+          $base='0360ec9cd8106097de8c8ba80c53f85349269d88'
+          $file=Join-Path $root 'unreal\Source\AnomaliaZPrigimalia\AnomaliaZPrigimalia.Build.cs'
+          $stamp=Join-Path $root 'unreal\Build\AnomaliaZPrigimaliaSourceCommit.generated.txt'
+          if(!(Test-Path -LiteralPath $stamp) -or (Get-Content -LiteralPath $stamp -Raw).Trim() -ne $base){throw 'Unexpected validation source stamp'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $out=Join-Path $root ('unreal\Saved\MissionResume\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $old=(& git hash-object -- $file).Trim()
+          if($LASTEXITCODE -ne 0 -or $old -ne '5342f214ebfd4b2694a6ddcb44ac7215e7ea6d12'){throw 'Original Build.cs differs; refusing overwrite'}
+          Copy-Item -LiteralPath $file -Destination (Join-Path $out 'original.Build.cs')
+          $download=Join-Path $out 'corrected.Build.cs'
+          Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/f0f5144c137e1da1f8dc0a5568dd8de9c29db093/unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimalia.Build.cs' -OutFile $download
+          $new=(& git hash-object -- $download).Trim()
+          if($LASTEXITCODE -ne 0 -or $new -ne '220cf239429c9d4489d6154edf13cb51a99a0a6f'){throw 'Corrected Build.cs blob mismatch'}
+          Copy-Item -LiteralPath $download -Destination $file
+          $receipt=[ordered]@{baseSourceCommit=$base;effectivePatchCommit='f0f5144c137e1da1f8dc0a5568dd8de9c29db093';workflowCommit=$env:GITHUB_SHA;patchPath='unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimalia.Build.cs';originalBlob=$old;correctedBlob=$new;cachedEmbeddedStamp=$base;installedProjectChanged=$false;note='Embedded stamp is retained for incremental compilation; this receipt identifies the actual corrected source separately.'}
+          $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'source-patch-receipt.json') -Encoding UTF8
+          "MISSION_RESUME_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Compile corrected existing sources and run required native tests
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-Location -LiteralPath 'C:\ANOMALIA-Validation\m41798670858'
+          $engine='C:\Program Files\Epic Games\UE_5.8'
+          $python=Join-Path $engine 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $env:GITHUB_SHA='0360ec9cd8106097de8c8ba80c53f85349269d88'
+          & $python scripts\ue5\validate-build.py --engine-root $engine --output $env:MISSION_RESUME_OUT --run-tests --require-loot-tests
+          if($LASTEXITCODE -ne 0){throw 'Corrected native validation failed; preserved receipt defines exact patched sources'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RESUME_OUT != ''
+        with:
+          name: mission-native-resume
+          path: ${{ env.MISSION_RESUME_OUT }}/
+          if-no-files-found: error

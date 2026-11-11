@@ -1,0 +1,39 @@
+name: ANOMALIA - verify actual installed game menu and intro references
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-actual-game-menu-intro.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  installed_game_identity:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: actual-game-identity
+          sparse-checkout: scripts/ue5/check-actual-game-menu-intro.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inspect existing desktop targets and native intro configuration without launching unknown games
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIA\unreal\Saved\ActualGameIdentity\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "GAME_IDENTITY_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $script=Join-Path $env:GITHUB_WORKSPACE 'actual-game-identity/scripts/ue5/check-actual-game-menu-intro.ps1'
+          $tokens=$null;$parseErrors=$null
+          [System.Management.Automation.Language.Parser]::ParseFile($script,[ref]$tokens,[ref]$parseErrors) | Out-Null
+          if($parseErrors.Count){throw ($parseErrors | Out-String)}
+          & $script -OutputDirectory $out
+      - uses: actions/upload-artifact@v4
+        if: always() && env.GAME_IDENTITY_OUT != ''
+        with:
+          name: actual-pc-game-menu-intro-identity
+          path: |
+            ${{ env.GAME_IDENTITY_OUT }}/installed-game-menu-intro.json
+            ${{ env.GAME_IDENTITY_OUT }}/identity-progress.json
+          if-no-files-found: warn

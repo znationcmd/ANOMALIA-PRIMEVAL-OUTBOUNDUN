@@ -1,0 +1,58 @@
+name: ANOMALIA mission - existing SKARVIK dependency transfer plan
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-skarvik-transfer-plan.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  plan:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: map-deps-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Content/Python/plan_skarvik_existing_map_transfer.py
+            scripts/ue5/repair-skarvik-assetmanager-existing-rule.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inspect only the existing map package dependencies and potential D transfer conflicts
+        timeout-minutes: 15
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('skarvik-transfer-plan-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $env:MISSION_MAP_OUT=$out
+          "MISSION_MAP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $os=Get-CimInstance Win32_OperatingSystem
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          [ordered]@{CFreeBytes=$disk.FreeSpace;freeRAMBytes=$os.FreePhysicalMemory*1KB;freeVirtualBytes=$os.FreeVirtualMemory*1KB;sourceReconciliationRun=41809486397;readonly=$true} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'preflight.json') -Encoding UTF8
+          if($disk.FreeSpace -lt 3GB -or $os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient reserve to open the existing stage commandlet'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath 'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\.skarvik-ci-stage-marker' -Raw).Trim() -ne '41188816555'){throw 'Existing SKARVIK stage marker differs'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('map-deps-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\plan_skarvik_existing_map_transfer.py')
+          $repair=Join-Path $env:GITHUB_WORKSPACE ('map-deps-'+$env:GITHUB_RUN_ID+'\scripts\ue5\repair-skarvik-assetmanager-existing-rule.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $repair
+          if($LASTEXITCODE -ne 0){throw 'Existing AssetManager rule could not be safely restored'}
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $ErrorActionPreference='Continue'
+          & $editor "$stage\AnomaliaZPrigimalia.uproject" -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$out\engine.log" *> (Join-Path $out 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          if($code -ne 0){throw 'Existing SKARVIK dependency inspection failed; no transfer attempted'}
+          $report=Get-Content -LiteralPath (Join-Path $out 'skarvik-dependency-transfer-plan.json') -Raw | ConvertFrom-Json
+          if($report.state -ne 'READ_ONLY_PLAN_COMPLETE' -or $report.sourceMapSHA256Before -ne $report.sourceMapSHA256After){throw 'Incomplete plan or changed source map'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_MAP_OUT != ''
+        with:
+          name: mission-existing-skarvik-transfer-plan
+          path: ${{ env.MISSION_MAP_OUT }}/
+          if-no-files-found: error

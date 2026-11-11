@@ -1,0 +1,40 @@
+name: ANOMALIA - inventory new C drive models and same-name variants
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-c-model-names.yml', 'scripts/ue5/audit-c-model-names.py']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-c-model-audit
+  cancel-in-progress: false
+jobs:
+  scan:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 17
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: c-model-audit-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/audit-c-model-names.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Compare same-name 3D files by SHA-256
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $env:PYTHONUTF8 = '1'
+          $report = Join-Path $env:RUNNER_TEMP ('c-model-inventory-' + $env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $report | Out-Null
+          "C_MODEL_REPORT=$report" | Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $checkout = Join-Path $env:GITHUB_WORKSPACE ('c-model-audit-' + $env:GITHUB_RUN_ID)
+          $script = Join-Path $checkout 'scripts/ue5/audit-c-model-names.py'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script --out $report
+          if ($LASTEXITCODE -ne 0) { throw 'No scoped C model directory could be read' }
+      - uses: actions/upload-artifact@v4
+        if: always() && env.C_MODEL_REPORT != ''
+        with:
+          name: c-model-name-inventory
+          path: ${{ env.C_MODEL_REPORT }}/C-model-inventory.json
+          if-no-files-found: error

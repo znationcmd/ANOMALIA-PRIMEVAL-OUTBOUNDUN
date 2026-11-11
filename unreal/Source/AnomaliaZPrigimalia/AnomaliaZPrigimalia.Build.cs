@@ -13,6 +13,8 @@ public class AnomaliaZPrigimalia : ModuleRules
         // FUniqueNetIdRepl / FUniqueNetIdWrapper::ToString() used for per-player persistence.
         PrivateDependencyModuleNames.Add("CoreOnline");
         PrivateDependencyModuleNames.Add("PhysicsCore");
+        // Loot spawn discovery projects candidate positions onto the navigation mesh.
+        PrivateDependencyModuleNames.Add("NavigationSystem");
         // MoviePlayer renders rotating user-provided loading artwork during map travel.
         PrivateDependencyModuleNames.Add("MoviePlayer");
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });

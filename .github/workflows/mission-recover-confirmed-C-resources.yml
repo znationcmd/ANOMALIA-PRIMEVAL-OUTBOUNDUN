@@ -1,0 +1,39 @@
+name: ANOMALIA mission - reference existing C resources without duplicate copies
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-recover-confirmed-C-resources.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-raw-source-recovery
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: confirmed-C-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/recover-confirmed-C-sketchfab-resources.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Reference verified original sources without copying payloads to D
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('confirmed-C-resources-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "RECOVERY_REPORT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:RECOVERY_REPORT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('confirmed-C-'+$env:GITHUB_RUN_ID+'\scripts\ue5\recover-confirmed-C-sketchfab-resources.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Review partial recovery receipt; originals retained'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.RECOVERY_REPORT != ''
+        with:
+          name: confirmed-C-sketchfab-and-tracks-recovery
+          path: ${{ env.RECOVERY_REPORT }}/
+          if-no-files-found: error

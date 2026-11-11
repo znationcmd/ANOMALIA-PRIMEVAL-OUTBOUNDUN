@@ -9,6 +9,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Engine/StaticMesh.h"
 #include "AnomaliaZPrigimaliaVitalsComponent.h"
+#include "Survival/AnomaliaZPrigimaliaThermalModel.h"
 #include "AnomaliaZPrigimaliaGameMode.h"
 #include "Engine/World.h"
 #include "Dom/JsonObject.h"
@@ -301,7 +302,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryAddItem(FName ItemId, int32 Coun
     int32 CandidateNextId = NextStackId;
     for (FAnomaliaZPrigimaliaInventoryStack& Stack : Candidate)
     {
-        if (Stack.ItemId != ItemId || Stack.Condition!=100.f || Stack.ContainerId == TEXT("hands") || FindAttachmentRule(Stack.ContainerId) || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
+        if (Stack.ItemId != ItemId || Stack.Condition!=100.f || !FMath::IsNearlyEqual(Stack.TemperatureC,20.f,.001f) || Stack.FrozenFraction>0.f || Stack.ContainerId == TEXT("hands") || FindAttachmentRule(Stack.ContainerId) || IsRecoveryContainer(Stack.ContainerId) || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
         Stack.Count += Added; Remaining -= Added;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
@@ -414,7 +415,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryMergeStacks(int32 TargetStackId,
     TArray<FAnomaliaZPrigimaliaInventoryStack> Candidate = Stacks;
     FAnomaliaZPrigimaliaInventoryStack* Target = Candidate.FindByPredicate([&](const FAnomaliaZPrigimaliaInventoryStack& S) { return S.StackId == TargetStackId; });
     FAnomaliaZPrigimaliaInventoryStack* Source = Candidate.FindByPredicate([&](const FAnomaliaZPrigimaliaInventoryStack& S) { return S.StackId == SourceStackId; });
-    if (!Target || !Source || FindAttachmentRule(Target->ContainerId) || FindAttachmentRule(Source->ContainerId) || Target->ItemId != Source->ItemId || Target->Condition!=Source->Condition || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
+    if (!Target || !Source || FindAttachmentRule(Target->ContainerId) || FindAttachmentRule(Source->ContainerId) || Target->ItemId != Source->ItemId || Target->Condition!=Source->Condition || !FMath::IsNearlyEqual(Target->TemperatureC,Source->TemperatureC,.001f) || !FMath::IsNearlyEqual(Target->FrozenFraction,Source->FrozenFraction,.001f) || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
     if(IsRecoveryContainer(Target->ContainerId) && !IsRecoveryContainer(Source->ContainerId)) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
@@ -463,6 +464,8 @@ TSharedPtr<FJsonObject> UAnomaliaZPrigimaliaInventoryComponent::ExportInventoryO
         Row->SetNumberField(TEXT("y"), Stack.Y);
         Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
         Row->SetNumberField(TEXT("condition"),Stack.Condition);
+        Row->SetNumberField(TEXT("temperatureC"),Stack.TemperatureC);
+        Row->SetNumberField(TEXT("frozenFraction"),Stack.FrozenFraction);
         StackRows.Add(MakeShared<FJsonValueObject>(Row));
     }
     Inventory->SetArrayField(TEXT("stacks"), StackRows);
@@ -627,6 +630,12 @@ bool UAnomaliaZPrigimaliaInventoryComponent::LoadInventoryObject(const TSharedPt
         if(Row->HasField(TEXT("condition"))&&(!Row->TryGetNumberField(TEXT("condition"),Condition)||!FMath::IsFinite(Condition)||Condition<0||Condition>100||(!SupportsItemWear(Stack.ItemId)&&Condition!=100)))
         {OutError=TEXT("Invalid item condition");return false;}
         Stack.Condition=static_cast<float>(Condition);
+        double Temperature=20,Ice=0;
+        if((Row->HasField(TEXT("temperatureC"))&&!Row->TryGetNumberField(TEXT("temperatureC"),Temperature))||
+           (Row->HasField(TEXT("frozenFraction"))&&!Row->TryGetNumberField(TEXT("frozenFraction"),Ice))||
+           !AnomaliaThermal::Valid({Temperature,Ice}))
+        {OutError=TEXT("État thermique de la pile invalide : sauvegarde conservée.");return false;}
+        Stack.TemperatureC=static_cast<float>(Temperature);Stack.FrozenFraction=static_cast<float>(Ice);
         float ItemWeight = 0.f; int32 MaxStack = 0; FIntPoint Size;
         if (SeenStackIds.Contains(Stack.StackId) || !GetItemRules(Stack.ItemId, ItemWeight, MaxStack, Size) || Stack.Count > MaxStack)
         { OutError = TEXT("Duplicate stack or unsupported item in inventory profile"); return false; }
@@ -775,6 +784,11 @@ FAnomaliaZPrigimaliaItemUseRule UAnomaliaZPrigimaliaInventoryComponent::GetUseRu
     FAnomaliaZPrigimaliaItemUseRule Rule;
     if(ItemId==TEXT("food") || ItemId==TEXT("meat") || ItemId==TEXT("cooked_meat") || ItemId==TEXT("cooked_fish"))
     { Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("food")?27.f:34.f; }
+    else if(ItemId==TEXT("raw_meat") || ItemId==TEXT("raw_fish") || ItemId==TEXT("egg"))
+    {Rule.Action=TEXT("eat");Rule.Hunger=ItemId==TEXT("egg")?8.f:12.f;Rule.Effect=TEXT("raw_food");}
+    else if(ItemId==TEXT("milk")){Rule.Action=TEXT("drink");Rule.Hunger=10.f;Rule.Thirst=25.f;}
+    else if(ItemId==TEXT("honey")){Rule.Action=TEXT("eat");Rule.Hunger=25.f;}
+    else if(ItemId==TEXT("vegetable")){Rule.Action=TEXT("eat");Rule.Hunger=12.f;Rule.Thirst=5.f;}
     else if(ItemId==TEXT("berry")) { Rule.Action=TEXT("eat");Rule.Hunger=7.f;Rule.Thirst=3.f; }
     else if(ItemId==TEXT("water")) { Rule.Action=TEXT("drink");Rule.Thirst=38.f; }
     else if(ItemId==TEXT("bandage") || ItemId==TEXT("medkit"))
@@ -801,7 +815,7 @@ FString UAnomaliaZPrigimaliaInventoryComponent::GetUseActionLabel(FName ItemId) 
         Rule.Action==TEXT("purify")?TEXT("Traiter l’eau (jeu)"):TEXT("Soigner / examiner");
 }
 
-bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError)
+bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 ExpectedCount,const FString& ServerId,const FString& PlayerId,FString& OutError,bool bWetHead)
 {
     OutError.Empty();
     auto* Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(GetOwner());
@@ -815,8 +829,17 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     if(!Stack || ExpectedCount<1 || Stack->Count!=ExpectedCount)
     { OutError=TEXT("La pile a changé : sélectionnez de nouveau l’objet.");return false; }
     const FName ItemId=Stack->ItemId;
-    const auto Rule=GetUseRule(ItemId);
-    if(!Rule.IsUsable()) { OutError=TEXT("Cet objet nécessite une autre interaction.");return false; }
+    auto Rule=GetUseRule(ItemId);
+    if((Rule.Action==TEXT("eat")||Rule.Action==TEXT("drink"))&&!CanConsumeStack(StackId))
+    {OutError=Stack->FrozenFraction>.01f||Stack->TemperatureC<0?TEXT("Provisions gelées : réchauffez-les près d’un feu."):TEXT("Provisions trop chaudes : laissez-les refroidir.");return false;}
+    if(bWetHead)
+    {
+        static const TSet<FName> CleanWater={TEXT("water"),TEXT("water_bottle"),TEXT("military_canteen"),TEXT("filter_canteen"),TEXT("drinking_water_carton")};
+        if(!CleanWater.Contains(ItemId)||!Survivor->VitalsComponent||Survivor->VitalsComponent->HeadWetness>=.95f)
+        {OutError=TEXT("Utilisez de l’eau liquide disponible lorsque la tête est sèche.");return false;}
+        Rule.Action=TEXT("cool_head");Rule.Hunger=Rule.Thirst=Rule.Health=0;Rule.Effect.Empty();
+    }
+    if(!Rule.IsUsable()&&!bWetHead) { OutError=TEXT("Cet objet nécessite une autre interaction.");return false; }
     const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
     if(Mode && ((Rule.RestrictedGroup==TEXT("substances") && !Mode->ActiveServerSettings.bAllowRPSubstances) ||
         (Rule.RestrictedGroup==TEXT("tobacco") && !Mode->ActiveServerSettings.bAllowTobacco) ||
@@ -825,6 +848,12 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     if(!Rule.RequiredItem.IsNone() && !Stacks.ContainsByPredicate([&](const auto& S)
         { return S.Count>0 && (S.ItemId==Rule.RequiredItem || (Rule.RequiredItem==TEXT("lighter") && S.ItemId==TEXT("matches"))); }))
     { OutError=TEXT("Matériel nécessaire : ")+GetItemDisplayName(Rule.RequiredItem);return false; }
+    if(Rule.Action==TEXT("purify"))
+    {
+        const auto* Input=Stacks.FindByPredicate([&](const auto& S){return S.ItemId==Rule.RequiredItem&&S.Count>0;});
+        if(!Input||!CanConsumeStack(Input->StackId))
+        {OutError=TEXT("Dégelez d’abord l’eau avant de la purifier.");return false;}
+    }
     auto* Effects=Survivor->ItemEffectsComponent.Get();
     FAnomaliaZPrigimaliaItemEffectsState NextEffects;
     if(!Effects || !Effects->PreviewUse(Rule.Effect,NextEffects))
@@ -834,7 +863,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     const float Food=FMath::Clamp(Survivor->Hunger+Rule.Hunger,0.f,100.f);
     const float Water=FMath::Clamp(Survivor->Thirst+Rule.Thirst,0.f,100.f);
     const float HP=FMath::Clamp(Survivor->Health+Rule.Health,0.f,100.f);
-    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects) && Rule.Action!=TEXT("purify"))
+    if(Food==Survivor->Hunger && Water==Survivor->Thirst && HP==Survivor->Health && !Effects->HasChange(NextEffects) && Rule.Action!=TEXT("purify") && !bWetHead)
     { OutError=TEXT("Aucun besoin à restaurer : l’objet est conservé.");return false; }
 
     const auto Before=Stacks;const int32 BeforeId=NextStackId;
@@ -868,6 +897,8 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     {
         Survival->SetNumberField(TEXT("stamina"),Vitals->Stamina);
         Survival->SetNumberField(TEXT("bodyTemperatureC"),Vitals->BodyTemperatureC);
+        Survival->SetNumberField(TEXT("wetness"),Vitals->Wetness);
+        Survival->SetNumberField(TEXT("headWetness"),bWetHead?1.f:Vitals->HeadWetness);
     }
     Profile->SetObjectField(TEXT("survival"),Survival);
     if(!UAnomaliaZPrigimaliaItemEffectsComponent::WriteState(Survival,NextEffects,OutError)) return false;
@@ -877,6 +908,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     // Publish both sides only after their single combined profile write succeeds.
     Survivor->Hunger=Food;Survivor->Thirst=Water;Survivor->Health=HP;
     Effects->ApplyState(NextEffects);
+    if(bWetHead)Survivor->VitalsComponent->RestoreExposure(Survivor->VitalsComponent->Wetness,1.f);
     NextStackId=AfterId;UseMessage=TEXT("Utilisé : ")+GetItemDisplayName(ItemId);
     if(Rule.Effect==TEXT("diagnostic"))
         UseMessage=FString::Printf(TEXT("Bilan de jeu — sang : %.0f %%, douleur : %.0f %%, infection fictive : %.0f %%"),NextEffects.Blood,NextEffects.Pain,NextEffects.Infection);
@@ -884,7 +916,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::TryUseStack(int32 StackId,int32 Exp
     return true;
 }
 
-bool UAnomaliaZPrigimaliaInventoryComponent::UseFromOwningPlayer(int32 StackId,int32 ExpectedCount)
+bool UAnomaliaZPrigimaliaInventoryComponent::UseFromOwningPlayer(int32 StackId,int32 ExpectedCount,bool bWetHead)
 {
     const auto* Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(GetOwner());
     const auto* Mode=GetWorld()?GetWorld()->GetAuthGameMode<AAnomaliaZPrigimaliaGameMode>():nullptr;
@@ -894,7 +926,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::UseFromOwningPlayer(int32 StackId,i
     if(Now<NextUseRequestTime) return false;
     NextUseRequestTime=Now+.2;
     FString Error;
-    const bool Accepted=TryUseStack(StackId,ExpectedCount,Mode->ServerId,Mode->GetPersistentPlayerId(Survivor->GetController()),Error);
+    const bool Accepted=TryUseStack(StackId,ExpectedCount,Mode->ServerId,Mode->GetPersistentPlayerId(Survivor->GetController()),Error,bWetHead);
     if(!Accepted) { UseMessage=Error;OnInventoryUpdated.Broadcast();GetOwner()->ForceNetUpdate(); }
     return Accepted;
 }
@@ -928,6 +960,33 @@ void UAnomaliaZPrigimaliaInventoryComponent::GetLifetimeReplicatedProps(TArray<F
     DOREPLIFETIME_CONDITION(UAnomaliaZPrigimaliaInventoryComponent, BankMessage, COND_OwnerOnly);
     DOREPLIFETIME_CONDITION(UAnomaliaZPrigimaliaInventoryComponent, UseMessage, COND_OwnerOnly);
 }
+
+bool UAnomaliaZPrigimaliaInventoryComponent::CanConsumeStack(int32 StackId) const
+{
+    const auto* Stack=Stacks.FindByPredicate([&](const auto& S){return S.StackId==StackId;});
+    return Stack&&AnomaliaThermal::Consumable({Stack->TemperatureC,Stack->FrozenFraction});
+}
+void UAnomaliaZPrigimaliaInventoryComponent::AdvanceConsumableTemperature(float AmbientC,float Seconds)
+{
+    if(!GetOwner()||!GetOwner()->HasAuthority()||IsPersistenceLocked()||!FMath::IsFinite(AmbientC)||!FMath::IsFinite(Seconds)||Seconds<=0)return;
+    bool Changed=false;
+    for(auto& Stack:Stacks)
+    {
+        const auto Rule=GetUseRule(Stack.ItemId);if(Rule.Action!=TEXT("eat")&&Rule.Action!=TEXT("drink"))continue;
+        const auto Next=AnomaliaThermal::Advance({Stack.TemperatureC,Stack.FrozenFraction},AmbientC,Seconds,Stack.ContainerId==TEXT("hands")?0:.6);
+        Changed|=!FMath::IsNearlyEqual(Stack.TemperatureC,static_cast<float>(Next.Temperature),.01f)||!FMath::IsNearlyEqual(Stack.FrozenFraction,static_cast<float>(Next.Ice),.001f);
+        Stack.TemperatureC=static_cast<float>(Next.Temperature);Stack.FrozenFraction=static_cast<float>(Next.Ice);
+    }
+    if(Changed){GetOwner()->ForceNetUpdate();OnInventoryUpdated.Broadcast();}
+}
+bool UAnomaliaZPrigimaliaInventoryComponent::RequestWetHead(int32 StackId,int32 ExpectedCount)
+{
+    if(!GetOwner())return false;
+    if(GetOwner()->HasAuthority())return UseFromOwningPlayer(StackId,ExpectedCount,true);
+    ServerRequestWetHead(StackId,ExpectedCount);return true;
+}
+void UAnomaliaZPrigimaliaInventoryComponent::ServerRequestWetHead_Implementation(int32 StackId,int32 ExpectedCount)
+{UseFromOwningPlayer(StackId,ExpectedCount,true);}
 
 void UAnomaliaZPrigimaliaInventoryComponent::SetProfileRecoveryPending(bool Pending)
 {
@@ -1322,3 +1381,4 @@ void UAnomaliaZPrigimaliaInventoryComponent::RefreshAttachmentVisuals()
     TArray<int32> Remove;for(const auto& Pair:AttachmentVisuals)if(!Wanted.Contains(Pair.Key))Remove.Add(Pair.Key);
     for(const int32 Id:Remove){if(auto* Part=AttachmentVisuals.FindRef(Id).Get())Part->DestroyComponent();AttachmentVisuals.Remove(Id);}
 }
+

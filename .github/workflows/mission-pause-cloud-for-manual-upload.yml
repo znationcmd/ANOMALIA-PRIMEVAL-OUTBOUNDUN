@@ -1,0 +1,20 @@
+name: ANOMALIA mission - pause automatic uploads for manual Drive transfer
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-pause-cloud-for-manual-upload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  pause:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Leave manual browser upload running and preserve source data
+        run: |
+          echo "Automatic resource transfer stopped for manual Google Drive upload."
+          echo "No Windows source files, cloud files, Drive client or browser processes modified."

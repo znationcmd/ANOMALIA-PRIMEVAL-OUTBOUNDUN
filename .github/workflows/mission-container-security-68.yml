@@ -1,0 +1,117 @@
+name: ANOMALIA mission - issue 68 original container keys and locks
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-container-security-68.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  preserve_current_extraction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 330
+    steps:
+      - name: Keep archive extraction running and release obsolete cloud copy queue
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const obsolete=42382315797;
+            const old=await github.rest.actions.getWorkflowRun({...context.repo,run_id:obsolete});
+            if(old.data.status!=='completed'){
+              const jobs=await github.paginate(github.rest.actions.listJobsForWorkflowRun,{...context.repo,run_id:obsolete,per_page:100});
+              const active=jobs.filter(j=>j.status!=='completed');
+              if(active.some(j=>!j.name.startsWith('copy (')))throw Error('Unexpected active import work; preserve it');
+              try{await github.rest.actions.cancelWorkflowRun({...context.repo,run_id:obsolete});}catch(e){core.warning(String(e));}
+              await new Promise(r=>setTimeout(r,15000));
+              const check=await github.rest.actions.getWorkflowRun({...context.repo,run_id:obsolete});
+              if(check.data.status!=='completed')await github.request('POST /repos/{owner}/{repo}/actions/runs/{run_id}/force-cancel',{...context.repo,run_id:obsolete});
+            }
+            const deadline=Date.now()+320*60*1000;
+            while(Date.now()<deadline){
+              const {data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id:42383238077});
+              if(data.status==='completed'){
+                core.info('Archive extraction completed: '+data.conclusion+'; continue independent verified key import');return;
+              }
+              core.info('Preserving active all-category extraction; Windows remains available to it');
+              await new Promise(r=>setTimeout(r,30000));
+            }
+            throw Error('Extraction still running; do not interrupt it');
+  import_and_fresh_verify:
+    needs: preserve_current_extraction
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: keys68-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/prepare-container-security-68.py
+            unreal/Content/Python/import_container_security_68.py
+            unreal/SourceAssets/ContainerSecurity68
+          persist-credentials: false
+      - name: Preserve the verified original pack and prepare single meshes with explicit colors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved; do not start another editor'}
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'Actual project unavailable'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory reserve for Unreal'}
+          if((Get-PSDrive D).Free -lt 6GB){throw 'Insufficient D disk reserve'}
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('keys68-'+$env:GITHUB_RUN_ID)
+          $original=Join-Path $repo 'unreal\SourceAssets\ContainerSecurity68\Original.zip'
+          $expected='d5ff88601c149ceddbda1495da7c139468de297611ccde256a0f5659e428350b'
+          if((Get-FileHash -LiteralPath $original -Algorithm SHA256).Hash.ToLower() -ne $expected){throw 'Original pack checksum differs'}
+          $source='D:\ANOMALIA\unreal\SourceAssets\ContainerSecurity68'
+          New-Item -ItemType Directory -Force -Path $source | Out-Null
+          $retained=Join-Path $source 'Original.zip'
+          if(Test-Path -LiteralPath $retained){
+            if((Get-FileHash -LiteralPath $retained -Algorithm SHA256).Hash.ToLower() -ne $expected){throw 'Existing original differs; preserved'}
+          }else{Copy-Item -LiteralPath $original -Destination $retained}
+          $out='D:\ANOMALIA\unreal\Saved\ImportReceipts\ContainerSecurity68\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "AZ68_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $prepared=Join-Path $out 'Prepared'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B (Join-Path $repo 'scripts\ue5\prepare-container-security-68.py') $retained $prepared
+          if($LASTEXITCODE -ne 0){throw 'Original model preparation failed'}
+          "AZ68_MANIFEST=$(Join-Path $prepared 'manifest.json')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Import twelve models into the actual project and inspect existing container assets
+        timeout-minutes: 45
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Continue'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('keys68-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\import_container_security_68.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:AZ68_OUT\import-engine.log" *> (Join-Path $env:AZ68_OUT 'import-process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          $result=Join-Path $env:AZ68_OUT 'import-report.json'
+          if(!(Test-Path -LiteralPath $result)){throw 'No actual import receipt produced'}
+          $r=Get-Content -LiteralPath $result -Raw | ConvertFrom-Json
+          Write-Output ($r | Select-Object mode,mapsSaved,existingAssetsReplaced,runtimeIntegrationAccepted | ConvertTo-Json -Compress)
+          if($code -ne 0 -or @($r.errors).Count -or @($r.models).Count -ne 12){throw 'Twelve saved models not validated; preserve detailed report'}
+          exit 0
+      - name: Reload saved packages in a separate Unreal process
+        timeout-minutes: 45
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $env:AZ68_VERIFY_ONLY='1'
+          $ErrorActionPreference='Continue'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('keys68-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\import_container_security_68.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:AZ68_OUT\verify-engine.log" *> (Join-Path $env:AZ68_OUT 'verify-process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          $r=Get-Content -LiteralPath (Join-Path $env:AZ68_OUT 'fresh-verification.json') -Raw | ConvertFrom-Json
+          if($code -ne 0 -or @($r.errors).Count -or @($r.models).Count -ne 12){throw 'Fresh package reload failed; gameplay acceptance remains false'}
+          Write-Output 'Twelve models verified in fresh editor process; door integration and PIE remain required'
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.AZ68_OUT != ''
+        with:
+          name: issue-68-actual-key-lock-import-results
+          path: ${{ env.AZ68_OUT }}/
+          if-no-files-found: error

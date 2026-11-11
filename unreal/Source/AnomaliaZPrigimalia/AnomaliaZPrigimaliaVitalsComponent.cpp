@@ -4,6 +4,9 @@
 #include "AnomaliaZPrigimaliaInventoryComponent.h"
 #include "AnomaliaZPrigimaliaGameMode.h"
 #include "Engine/World.h"
+#include "Survival/AnomaliaZPrigimaliaWeather.h"
+#include "Survival/AnomaliaZPrigimaliaThermalModel.h"
+#include "Components/SkeletalMeshComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "Net/UnrealNetwork.h"
 
@@ -99,21 +102,42 @@ void UAnomaliaZPrigimaliaVitalsComponent::TickComponent(float DeltaTime, ELevelT
 {
     Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
     AAnomaliaZPrigimaliaSurvivor* Survivor = Cast<AAnomaliaZPrigimaliaSurvivor>(GetOwner());
-    if (!Survivor || DeltaTime <= 0.f) return;
+    if (!Survivor || !FMath::IsFinite(DeltaTime) || DeltaTime <= 0.f || (Survivor->InventoryComponent && Survivor->InventoryComponent->IsPersistenceLocked())) return;
     if (!Survivor->HasAuthority()) { ApplyMovementSpeed(); return; }
 
     // Avoid a huge drain caused by a hitch/resume from Windows sleep.
     const float Step = FMath::Min(DeltaTime, 0.25f);
     const AAnomaliaZPrigimaliaGameMode* Rules = Survivor->GetWorld()
         ? Cast<AAnomaliaZPrigimaliaGameMode>(Survivor->GetWorld()->GetAuthGameMode()) : nullptr;
-    const float Ambient = Rules ? Rules->ActiveServerSettings.AmbientTemperatureC : 20.f;
+    const auto* Weather=AAnomaliaZPrigimaliaWeather::Find(GetWorld());
+    const float Ambient=Weather?Weather->AirTemperatureC:Rules?Rules->ActiveServerSettings.AmbientTemperatureC:20.f;
+    AmbientTemperatureC=Ambient;
+    const float Wind=Weather?Weather->WindSpeedMS:0.f;
+    FHitResult Roof;
+    FCollisionQueryParams Query(SCENE_QUERY_STAT(AnomaliaWeatherRoof),true,Survivor);
+    const FVector Eye=Survivor->GetActorLocation()+FVector(0,0,70);
+    const bool Sheltered=GetWorld()->LineTraceSingleByChannel(Roof,Eye,Eye+FVector(0,0,3000),ECC_Visibility,Query);
+    NearbyHeat=UAnomaliaZPrigimaliaHeatSourceComponent::Sample(GetWorld(),Eye,Survivor);
+    const float Rain=Weather&&!Sheltered?Weather->GetRainExposure():0.f;
+    Wetness=FMath::Clamp(Wetness+(Rain*.01f-.001f-NearbyHeat*.025f)*Step,0.f,1.f);
+    HeadWetness=FMath::Clamp(HeadWetness+(Rain*.012f-.002f-NearbyHeat*.02f-FMath::Max(0.f,Ambient-20)*.0001f)*Step,0.f,1.f);
+    float Insulation=0.f;
+    if(Survivor->JacketMesh&&Survivor->JacketMesh->GetSkeletalMeshAsset())Insulation+=.3f;
+    if(Survivor->PantsMesh&&Survivor->PantsMesh->GetSkeletalMeshAsset())Insulation+=.2f;
+    if(Survivor->HeadgearMesh&&Survivor->HeadgearMesh->GetSkeletalMeshAsset())Insulation+=.1f;
+    if(Survivor->BootsMesh&&Survivor->BootsMesh->GetSkeletalMeshAsset())Insulation+=.1f;
+    ExposureElapsed+=Step;
+    if(ExposureElapsed>=1.f&&Survivor->InventoryComponent)
+    {
+        Survivor->InventoryComponent->AdvanceConsumableTemperature(Ambient+NearbyHeat*65.f,ExposureElapsed);
+        ExposureElapsed=0;
+    }
 
+    if(Ambient>30.f)Survivor->Thirst=FMath::Max(0.f,Survivor->Thirst-(Ambient-30.f)*.002f*Step);
     const float PreviousStamina = Stamina;
     const float PreviousBodyTemperature = BodyTemperatureC;
 
-    // Coarse first-pass physiology: calibrated ambient-to-body equilibrium.
-    // No weather volumes, wetness or insulating clothes yet.
-    const float TargetTemperature = FMath::Clamp(37.f + (Ambient - 20.f) * 0.08f, 30.f, 43.f);
+    const float TargetTemperature=static_cast<float>(AnomaliaThermal::BodyTarget(Ambient,Wind,Wetness,HeadWetness,Sheltered?1:0,NearbyHeat,Insulation));
     BodyTemperatureC = FMath::FInterpConstantTo(BodyTemperatureC, TargetTemperature, Step, 0.02f);
 
     if (Survivor->Health <= 0.f)
@@ -167,6 +191,12 @@ void UAnomaliaZPrigimaliaVitalsComponent::TickComponent(float DeltaTime, ELevelT
     }
 }
 
+void UAnomaliaZPrigimaliaVitalsComponent::RestoreExposure(float SavedWetness,float SavedHeadWetness)
+{
+    if(!GetOwner()||!GetOwner()->HasAuthority()||!FMath::IsFinite(SavedWetness)||!FMath::IsFinite(SavedHeadWetness)||SavedWetness<0||SavedWetness>1||SavedHeadWetness<0||SavedHeadWetness>1)return;
+    Wetness=SavedWetness;HeadWetness=SavedHeadWetness;GetOwner()->ForceNetUpdate();
+}
+
 void UAnomaliaZPrigimaliaVitalsComponent::ApplyMovementSpeed()
 {
     AAnomaliaZPrigimaliaSurvivor* Survivor = Cast<AAnomaliaZPrigimaliaSurvivor>(GetOwner());
@@ -206,8 +236,11 @@ void UAnomaliaZPrigimaliaVitalsComponent::GetLifetimeReplicatedProps(TArray<FLif
 {
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, Stamina);
+    DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, Wetness);
+    DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, HeadWetness);
     DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, BodyTemperatureC);
     DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, bIsSprinting);
     DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, PaceStep);
     DOREPLIFETIME(UAnomaliaZPrigimaliaVitalsComponent, bExhausted);
 }
+

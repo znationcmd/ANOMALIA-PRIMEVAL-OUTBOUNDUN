@@ -1,0 +1,64 @@
+name: ANOMALIA mission - balance verified Unreal cache space
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-balance-unreal-cache-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: false
+jobs:
+  balance:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cache-balance-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/compact-verified-relocated-cache.py
+            scripts/ue5/relocate-inactive-intermediate-cache-to-d.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare recovery receipts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('cache-balance-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Compress only relocated compilation cache and verify every original file checksum
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cache-balance-'+$env:GITHUB_RUN_ID+'\scripts\ue5\compact-verified-relocated-cache.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cache integrity guard stopped compression follow-up'}
+      - name: Relocate inactive Zen data only with full verification and six GiB D reserve
+        env:
+          ANOMALIA_CACHE_KIND: COMMON_ZEN
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cache-balance-'+$env:GITHUB_RUN_ID+'\scripts\ue5\relocate-inactive-intermediate-cache-to-d.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Zen process, capacity or integrity guard preserved original cache'}
+      - name: Measure recovered headroom and read actual existing project module availability
+        if: always()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $volumes=@(Get-PSDrive -Name C,D,H -ErrorAction SilentlyContinue | ForEach-Object {[ordered]@{drive=$_.Name;freeBytes=[long]$_.Free;usedBytes=[long]$_.Used}})
+          Write-Output ('FINAL_GAME_WORKSPACE_SPACE '+($volumes|ConvertTo-Json -Compress))
+          $root='D:\ANOMALIA\unreal'
+          foreach($file in @(Get-ChildItem -LiteralPath $root -Filter '*.uproject' -File -ErrorAction SilentlyContinue)) {
+            $project=Get-Content -LiteralPath $file.FullName -Raw | ConvertFrom-Json
+            $modules=@($project.Modules | ForEach-Object { $module=$_.Name; [ordered]@{name=$module;editorDllPresent=(Test-Path -LiteralPath (Join-Path $root ('Binaries\Win64\UnrealEditor-'+$module+'.dll')))} })
+            Write-Output ('EXISTING_MAIN_PROJECT '+([ordered]@{path=$file.FullName;engineAssociation=$project.EngineAssociation;modules=$modules}|ConvertTo-Json -Depth 5 -Compress))
+          }
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: verified-unreal-cache-balance-receipts
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/*.json
+          if-no-files-found: warn
