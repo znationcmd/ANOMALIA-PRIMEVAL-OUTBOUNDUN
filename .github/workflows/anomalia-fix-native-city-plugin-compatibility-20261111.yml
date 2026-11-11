@@ -1,0 +1,103 @@
+name: ANOMALIA - enable installed City Sample compatibility plugins and verify affected assets
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-fix-native-city-plugin-compatibility-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Back up main project descriptor and enable installed native dependencies
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Active Unreal session; no live configuration changed'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-compat-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('COMPAT_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $names=@('ZoneGraph','ZoneGraphAnnotations','MassGameplay','MassAI','MassCrowd','SmartObjects','WorldConditions')
+          $installed=@{}
+          foreach($p in [IO.Directory]::EnumerateFiles((Join-Path $env:UE_ROOT 'Engine\Plugins'),'*.uplugin',[IO.SearchOption]::AllDirectories)){
+            $name=[IO.Path]::GetFileNameWithoutExtension($p)
+            if($names -contains $name){$installed[$name]=$p}
+          }
+          foreach($name in $names){if(!$installed.ContainsKey($name)){throw ('Required engine plugin unavailable: '+$name)}}
+          $backup=Join-Path $root ('Saved\CompatibilityBackups\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item -LiteralPath $project -Destination (Join-Path $backup 'AnomaliaPrimeval.uproject')
+          $j=[IO.File]::ReadAllText($project)|ConvertFrom-Json
+          foreach($name in $names){
+            $existing=@($j.Plugins|Where-Object {$_.Name -eq $name})
+            if($existing.Count){$existing[0].Enabled=$true}else{$j.Plugins+=@{Name=$name;Enabled=$true}}
+          }
+          $temp=$project+'.compat-'+$env:GITHUB_RUN_ID
+          [IO.File]::WriteAllText($temp,($j|ConvertTo-Json -Depth 30),[Text.UTF8Encoding]::new($false))
+          $verify=[IO.File]::ReadAllText($temp)|ConvertFrom-Json
+          foreach($name in $names){if(!@($verify.Plugins|Where-Object {$_.Name -eq $name -and $_.Enabled}).Count){throw ('Descriptor validation failed: '+$name)}}
+          [IO.File]::Copy($temp,$project,$true)
+          [IO.File]::Delete($temp)
+          Write-Host ('COMPATIBILITY_PLUGINS_ENABLED='+($names -join ','))
+          Write-Host ('PROJECT_DESCRIPTOR_BACKUP='+$backup)
+      - name: Verify serializers and asset registry in native Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal';$out=$env:COMPAT_OUT
+          $env:ANOMALIA_COMPAT_OUT=$out
+          $script=Join-Path $out 'validate.py'
+          @'
+          import unreal,json,os,traceback
+          from pathlib import Path
+          result={"serializerTypesAvailable":False,"registryChecked":False,"assets":[]}
+          try:
+              required=["ZoneShapeComponent","SmartObjectDefinition","MassEntityConfigAsset"]
+              result["types"]={name:hasattr(unreal,name) for name in required}
+              if not all(result["types"].values()):raise RuntimeError("Native dependency class unavailable")
+              result["serializerTypesAvailable"]=True
+              root=Path(unreal.Paths.project_content_dir())
+              relative=[
+                  "__ExternalActors__/Map/Big_City_LVL/0I/PP/AU1QJYCCAZ2B3UKGDOXG3.uasset",
+                  "__ExternalActors__/Map/Big_City_LVL/9Z/0L/7ZCU8PG7SS61NBSNI5YCN.uasset",
+                  "AI/SmartObject/SmartObjectDefinition_WallSigns.uasset",
+                  "AI/Map/MassCrowd.umap"]
+              registry=unreal.AssetRegistryHelpers.get_asset_registry()
+              registry.scan_files_synchronous([str(root/p) for p in relative],True)
+              for rel in relative:
+                  package="/Game/"+str(Path(rel).with_suffix("")).replace("\\","/")
+                  rows=registry.get_assets_by_package_name(package)
+                  result["assets"].append({"package":package,"assetRegistryEntries":len(rows)})
+              asset=unreal.EditorAssetLibrary.load_asset("/Game/AI/SmartObject/SmartObjectDefinition_WallSigns")
+              if not isinstance(asset,unreal.SmartObjectDefinition):raise RuntimeError("Smart Object still cannot load")
+              result["smartObjectLoaded"]=True
+              result["registryChecked"]=True
+          except Exception:
+              result["error"]=traceback.format_exc()
+          finally:
+              Path(os.environ["ANOMALIA_COMPAT_OUT"],"compatibility.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $out 'compatibility.log'
+          $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+$log+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(300000)){$p.Kill();throw 'Native compatibility validation timeout'}
+          $report=Join-Path $out 'compatibility.json'
+          if(!(Test-Path $report)){Get-Content $log -Tail 80;throw 'No native compatibility evidence'}
+          $r=Get-Content $report -Raw|ConvertFrom-Json
+          Get-Content $report -Raw|Write-Host
+          $bad=@(Select-String -Path $log -Pattern 'AU1QJYCCAZ2B3UKGDOXG3.*unknown custom version|7ZCU8PG7SS61NBSNI5YCN.*unknown custom version|SmartObjectDefinition_WallSigns.*unknown custom version|MassCrowd.umap.*unknown custom version')
+          Write-Host ('TARGET_UNKNOWN_CUSTOM_VERSION_WARNINGS='+$bad.Count)
+          if(!$r.serializerTypesAvailable -or !$r.registryChecked -or $bad.Count){Write-Host $r.error;throw 'Affected asset compatibility not fully validated'}
+          Write-Host 'BIG_CITY_ZONEGRAPH_AND_SMART_OBJECT_COMPATIBILITY_VALIDATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-CITY-PLUGIN-COMPATIBILITY
+          path: ${{ env.COMPAT_OUT }}
+          if-no-files-found: warn
