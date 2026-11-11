@@ -1,0 +1,134 @@
+name: ANOMALIA - restore complete authentic City Sample building actors into main SKARVIK
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-restore-complete-main-city-buildings-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Native session open'}
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\CompleteCityBuildingRepair\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('BUILDING_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_COMPLETE_BUILDING_OUT=$out
+          Copy-Item (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') (Join-Path $out 'main-map-before.umap')
+          $script=Join-Path $out 'restore_buildings.py'
+          @'
+          import unreal,json,os,traceback,hashlib,math,gc
+          from pathlib import Path
+          root=Path(unreal.Paths.project_dir())
+          out=Path(os.environ["ANOMALIA_COMPLETE_BUILDING_OUT"])
+          r={"state":"FAILED","buildings":[],"placedActors":0,"sourceMapPreserved":False}
+          source=root/"Content/Map/Big_City_LVL.umap"
+          before=hashlib.sha256(source.read_bytes()).hexdigest()
+          def write():(out/"buildings.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+          try:
+              editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              wp=unreal.WorldPartitionBlueprintLibrary
+              if not editor.load_level("/Game/Map/Big_City_LVL"):raise RuntimeError("Actual City Sample source cannot open")
+              candidates=[]
+              for d in wp.get_actor_descs():
+                  label=str(d.label);b=d.bounds
+                  if not label.startswith("BLDG_N") or "COLL" in label:continue
+                  sx=b.max.x-b.min.x;sy=b.max.y-b.min.y;sz=b.max.z-b.min.z
+                  cx=(b.min.x+b.max.x)/2;cy=(b.min.y+b.max.y)/2
+                  if not (1500<sx<10000 and 1500<sy<10000 and sz>800):continue
+                  if not (2000<b.min.x<15000 and abs(cy)<10000):continue
+                  candidates.append((cx*cx+cy*cy,d))
+              chosen=[d for _,d in sorted(candidates,key=lambda v:v[0])[:3]]
+              if not chosen:raise RuntimeError("No complete building actors within the source street corridor")
+              data=[]
+              for d in chosen:
+                  wp.load_actors([d.guid])
+                  a=next((a for a in actors.get_all_level_actors() if a.get_actor_label()==str(d.label)),None)
+                  if not a:raise RuntimeError("Cannot load source building "+str(d.label))
+                  parts=[]
+                  for c in a.get_components_by_class(unreal.StaticMeshComponent):
+                      mesh=c.get_editor_property("static_mesh")
+                      if not mesh:continue
+                      transforms=([c.get_instance_transform(i,world_space=True) for i in range(c.get_instance_count())]
+                                  if isinstance(c,unreal.InstancedStaticMeshComponent) else [c.get_world_transform()])
+                      materials=[c.get_material(i).get_path_name() if c.get_material(i) else None for i in range(c.get_num_materials())]
+                      for t in transforms:
+                          parts.append({"mesh":mesh.get_path_name(),"transform":t,"materials":materials})
+                  if not parts:raise RuntimeError("Source building has no real render geometry")
+                  if len(parts)>1800:raise RuntimeError("Complete building exceeds bounded safe instance budget")
+                  classpath=a.get_class().get_path_name()
+                  data.append({"label":str(d.label),"class":classpath,"actorTransform":a.get_actor_transform(),"parts":parts})
+                  r["buildings"].append({"sourceLabel":str(d.label),"sourceClass":classpath,"completeComponentInstances":len(parts),"boundsHeightCm":d.bounds.max.z-d.bounds.min.z})
+                  wp.unload_actors([d.guid])
+              if not editor.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Actual main map cannot reopen")
+              existing={str(d.label) for d in wp.get_actor_descs()}
+              height=unreal.AnomaliaWorldImportLibrary.skarvik_final_coastal_height(2000.0,-8000.0)
+              offset=unreal.Vector(200000,800000,height*100)
+              r["terrainAnchorHeightCm"]=height*100
+              for building in data:
+                  base="SKARVIK_COMPLETE_REAL_BUILDING_"+building["label"]
+                  if any(x.startswith(base) for x in existing):raise RuntimeError("Complete source building already installed; no duplicate placement")
+                  cls=unreal.load_class(None,building["class"]) if building["class"].startswith("/Game/") else None
+                  if cls:
+                      t=building["actorTransform"];t.translation=t.translation+offset
+                      a=actors.spawn_actor_from_class(cls,t.translation,t.rotation.rotator())
+                      if not a:raise RuntimeError("Cannot instantiate original building Blueprint")
+                      a.set_actor_transform(t,False,True);a.set_actor_label(base)
+                      a.set_editor_property("is_spatially_loaded",False)
+                      a.tags=[unreal.Name("ANOMALIA_AUTHENTIC_COMPLETE_CITY_BUILDING_REPAIR")]
+                      r["placedActors"]+=1
+                  else:
+                      cache={}
+                      for i,part in enumerate(building["parts"]):
+                          path=part["mesh"]
+                          mesh=cache.get(path)
+                          if mesh is None:
+                              mesh=unreal.load_asset(path);cache[path]=mesh
+                          if not isinstance(mesh,unreal.StaticMesh):raise RuntimeError("Original mesh missing "+path)
+                          t=part["transform"];t.translation=t.translation+offset
+                          a=actors.spawn_actor_from_class(unreal.StaticMeshActor,t.translation,t.rotation.rotator())
+                          a.set_actor_transform(t,False,True)
+                          a.set_actor_label(base+"_"+str(i).zfill(4))
+                          a.set_editor_property("is_spatially_loaded",False)
+                          a.tags=[unreal.Name("ANOMALIA_AUTHENTIC_COMPLETE_CITY_BUILDING_REPAIR")]
+                          c=a.get_component_by_class(unreal.StaticMeshComponent)
+                          c.set_static_mesh(mesh)
+                          for j,path in enumerate(part["materials"]):
+                              if path:
+                                  mat=unreal.load_asset(path)
+                                  if mat:c.set_material(j,mat)
+                          r["placedActors"]+=1
+                  write()
+              if not editor.save_all_dirty_levels():raise RuntimeError("Main-map complete building save failed")
+              if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError("Actor package save failed")
+              r["sourceMapPreserved"]=hashlib.sha256(source.read_bytes()).hexdigest()==before
+              if not r["sourceMapPreserved"]:raise RuntimeError("Protected City Sample source unexpectedly changed")
+              r["state"]="COMPLETE_ORIGINAL_SOURCE_BUILDING_ACTORS_SAVED_IN_MAIN_SKARVIK_REQUIRES_VISUAL_REVIEW"
+          except Exception:r["error"]=traceback.format_exc()
+          finally:
+              write()
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+(Join-Path $out 'buildings.log')+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(720000)){$p.Kill();throw 'Bounded complete building repair timed out'}
+          $r=Get-Content (Join-Path $out 'buildings.json') -Raw|ConvertFrom-Json
+          Get-Content (Join-Path $out 'buildings.json') -Raw|Write-Host
+          if($r.error -or $r.placedActors -lt 1){throw 'Complete original building placement not validated'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-COMPLETE-CITY-BUILDING-REPAIR
+          path: |
+            ${{ env.BUILDING_OUT }}/buildings.json
+            ${{ env.BUILDING_OUT }}/buildings.log
+          if-no-files-found: warn
