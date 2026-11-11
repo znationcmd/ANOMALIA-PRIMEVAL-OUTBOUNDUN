@@ -9,6 +9,7 @@ const fs=require("node:fs");
 const {pathToFileURL}=require("node:url");
 const {createHash}=require("node:crypto");
 const {autoUpdater}=require("electron-updater");
+const {getNativePreviewStatus,publicPreviewStatus,launchNativePreview}=require("./native-skarvik-bridge.cjs");
 
 const GAME_TITLE="ANOMALIA PRIMEVAL OUTBOUNDUN";
 const updateState={phase:'initialisation',currentVersion:app.getVersion(),message:'Préparation des mises à jour du jeu.'};
@@ -54,6 +55,8 @@ function createGameWindow(){
 let multiplayerServer=null;const clientSockets=new Map();
 const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
+ ipcMain.handle('anomalia:skarvik:status',event=>{validSender(event);return publicPreviewStatus(getNativePreviewStatus());});
+ ipcMain.handle('anomalia:skarvik:launch',async event=>{validSender(event);return await launchNativePreview();});
  ipcMain.handle('anomalia:update:status',event=>{validSender(event);return {...updateState};});
  ipcMain.handle('anomalia:update:check',async event=>{
   validSender(event);
