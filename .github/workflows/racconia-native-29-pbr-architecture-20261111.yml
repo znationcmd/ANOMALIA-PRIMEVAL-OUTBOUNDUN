@@ -19,6 +19,30 @@ jobs:
         with:
           persist-credentials: false
           clean: false
+      - name: Normalize only staged project descriptor encoding without changing JSON contents
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Do not edit project descriptor while UE is running'}
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $text=[IO.File]::ReadAllText($project)
+          $parsed=$text|ConvertFrom-Json
+          if(!$parsed.Modules -or !$parsed.EngineAssociation){throw 'Unexpected project descriptor; preserve it'}
+          $before=[IO.File]::ReadAllBytes($project)
+          $backupRoot=Join-Path $root 'Saved\EncodingRepairs'
+          if(!(Test-Path -LiteralPath $backupRoot)){New-Item -ItemType Directory -Path $backupRoot|Out-Null}
+          $backup=Join-Path $backupRoot ('AnomaliaZPrigimalia-before-utf8-'+$env:GITHUB_RUN_ID+'.uproject')
+          [IO.File]::WriteAllBytes($backup,$before)
+          [IO.File]::WriteAllText($project,$text,[Text.UTF8Encoding]::new($false,$true))
+          $after=[IO.File]::ReadAllText($project,[Text.UTF8Encoding]::new($false,$true))
+          if(![string]::Equals($text,$after,[StringComparison]::Ordinal)){throw 'Descriptor text changed unexpectedly'}
+          $null=$after|ConvertFrom-Json
+          $raw=[IO.File]::ReadAllBytes($project)
+          if($raw[0] -eq 255 -or $raw[0] -eq 254){throw 'UTF16 marker still present'}
+          Write-Host 'RACCONIA_STAGED_UPROJECT_UTF8_TEXT_IDENTICAL=true'
       - name: Validate original 29 horror identities, Drive pack, isolated stage and resource limits
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -51,7 +75,7 @@ jobs:
           $ErrorActionPreference='Stop'
           $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
           $dest=Join-Path $root 'SourceAssets\Racconia29PBR_20261111'
-          if(Test-Path -LiteralPath $dest){throw 'PBR import stage already exists, refuse overwrite'}
+          $resumeStage=Test-Path -LiteralPath $dest
           $cloud='H:\Mon Drive\ANOMALIAZ_PRIGIMALIA\RACCONIA_29_BATIMENTS_ARCHITECTURE_PBR_V2_20261111.zip'
           Add-Type -AssemblyName System.IO.Compression.FileSystem
           $z=[IO.Compression.ZipFile]::OpenRead($cloud)
@@ -62,12 +86,34 @@ jobs:
               if($item.FullName -match '(^/|\\|\.\.)' -or $item.Length -gt 6000000){throw 'Unsafe ZIP entry'}
             }
           }finally{$z.Dispose()}
-          [IO.Compression.ZipFile]::ExtractToDirectory($cloud,$dest)
+          if(!$resumeStage){
+            [IO.Compression.ZipFile]::ExtractToDirectory($cloud,$dest)
+          } else {
+            # The interrupted first attempt staged these original bytes before
+            # compilation. Reuse only if every archive entry still matches.
+            $archive=[IO.Compression.ZipFile]::OpenRead($cloud)
+            try{
+              foreach($entry in $archive.Entries){
+                if(!$entry.Name){continue}
+                $existing=Join-Path $dest $entry.FullName.Replace('/','\')
+                if(!(Test-Path -LiteralPath $existing) -or (Get-Item -LiteralPath $existing).Length -ne $entry.Length){throw 'Existing PBR stage differs from source archive'}
+                $stream=$entry.Open()
+                try{$expected=([BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($stream))).Replace('-','')}finally{$stream.Dispose()}
+                if((Get-FileHash -LiteralPath $existing -Algorithm SHA256).Hash -ne $expected){throw 'Existing PBR stage hash mismatch'}
+              }
+            }finally{$archive.Dispose()}
+            Write-Host 'RACCONIA_INTERRUPTED_PBR_STAGE_HASH_VERIFIED_REUSED=true'
+          }
           $cppDst=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
           $cppSrc=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia\World'
           foreach($file in @('AnomaliaZPrigimaliaRacconiaLandscape.h','AnomaliaZPrigimaliaRacconiaLandscape.cpp')){
-            if(Test-Path -LiteralPath (Join-Path $cppDst $file)){throw ('Native class already staged; refuse overwrite: '+$file)}
-            Copy-Item -LiteralPath (Join-Path $cppSrc $file) -Destination (Join-Path $cppDst $file) -ErrorAction Stop
+            $existing=Join-Path $cppDst $file
+            $source=Join-Path $cppSrc $file
+            if(Test-Path -LiteralPath $existing){
+              if((Get-FileHash -LiteralPath $existing -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash){throw ('Existing native helper differs: '+$file)}
+            } else {
+              Copy-Item -LiteralPath $source -Destination $existing -ErrorAction Stop
+            }
           }
           Write-Host 'RACCONIA_ARCHITECTURAL_PBR_29_GLBS_AND_NATIVE_CLASS_STAGED=true'
       - name: Compile new RACCONIA Landscape C++ helper under UE5.8 before map modification
