@@ -1,0 +1,118 @@
+name: ANOMALIA - inspect loaded city geometry and record actual 180 degree player camera
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-main-city-panorama-verify-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Another native session is open'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-native-viewport-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('CAPTURE_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_NATIVE_VIEWPORT_OUT=$out
+          $script=Join-Path $out 'capture.py'
+          @'
+          import unreal,time,json,os,traceback
+          from pathlib import Path
+          out=Path(os.environ["ANOMALIA_NATIVE_VIEWPORT_OUT"])
+          state={"begin":time.monotonic(),"frame":0,"phase":"wait","next":time.monotonic()+45,"frames":[]}
+          report={"state":"RUNNING","map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","source":"Native actual game viewport","visualMode":"normal game lighting","frames":[]}
+          def write():
+              (out/"receipt.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          def tick(delta):
+              try:
+                  now=time.monotonic()
+                  if now-state["begin"]>180:raise RuntimeError("Native screenshot timeout")
+                  if now<state["next"]:return
+                  world=unreal.find_object(None,"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.PRIGIMALIA_SKARVIK_FINAL_v1")
+                  if not world:return
+                  if state["phase"]=="wait":
+                      controller=unreal.GameplayStatics.get_player_controller(world,0)
+                      if not controller:return
+                      report["actualWorldClass"]=world.get_class().get_name()
+                      pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                      report["actualPawn"]=str(pawn)
+                      if pawn:
+                          pos=pawn.get_actor_location()
+                          report["pawnLocation"]=[pos.x,pos.y,pos.z]
+                      report["directionalLights"]=len(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.DirectionalLight))
+                      buildings=[]
+                      for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.StaticMeshActor):
+                          comp=a.get_component_by_class(unreal.StaticMeshComponent)
+                          mesh=comp.get_editor_property("static_mesh") if comp else None
+                          if mesh and "/Building/" in mesh.get_path_name():
+                              origin,extent=a.get_actor_bounds(False)
+                              buildings.append((a,origin,extent,mesh.get_path_name()))
+                      report["actualBuildingMeshActorsLoaded"]=len(buildings)
+                      report["buildingSamples"]=[{"mesh":m,"center":[o.x,o.y,o.z],"extent":[e.x,e.y,e.z]} for a,o,e,m in buildings[:12]]
+                      report["naniteProxyRenderMode"]=unreal.SystemLibrary.get_console_variable_int_value("r.Nanite.ProxyRenderMode")
+                      if buildings and pawn:
+                          target=min(buildings,key=lambda b:(b[1].x-pos.x)**2+(b[1].y-pos.y)**2)[1]
+                          aim=unreal.MathLibrary.find_look_at_rotation(pos,target)
+                          state["baseYaw"]=aim.yaw
+                          state["basePitch"]=max(-20,min(25,aim.pitch))
+                      else:
+                          state["baseYaw"]=0
+                          state["basePitch"]=5
+                      state["phase"]="capture"
+                  path=out/("native_%04d.png"%state["frame"])
+                  if state.get("pending"):
+                      if not path.exists():return
+                      report["frames"].append({"file":path.name,"timeSeconds":now-state["begin"]})
+                      state["frame"]+=1
+                      state["pending"]=False
+                      write()
+                      if state["frame"]>=60:
+                          report["state"]="ACTUAL_RUNTIME_VIEWPORT_FRAMES_CAPTURED"
+                          write()
+                          unreal.unregister_slate_post_tick_callback(state["handler"])
+                          unreal.SystemLibrary.execute_console_command(world,"quit")
+                          return
+                      state["next"]=now+0.125
+                      return
+                  controller=unreal.GameplayStatics.get_player_controller(world,0)
+                  yaw=state["baseYaw"]-60+120*state["frame"]/59
+                  controller.set_control_rotation(unreal.Rotator(state["basePitch"],yaw,0))
+                  command='HighResShot 960x540 filename="'+str(path).replace("\\","/")+'"'
+                  unreal.SystemLibrary.execute_console_command(world,command)
+                  state["pending"]=True
+              except Exception:
+                  report["state"]="FAILED"
+                  report["error"]=traceback.format_exc()
+                  write()
+                  try:unreal.unregister_slate_post_tick_callback(state["handler"])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,"quit")
+                  except:pass
+          state["handler"]=unreal.register_slate_post_tick_callback(tick)
+          write()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $log=Join-Path $out 'game.log'
+          $commands='t.IdleWhenNotForeground 0,r.Nanite.ProxyRenderMode 0,r.ScreenPercentage 60,r.ShadowQuality 0,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,py '+$script.Replace('\','/')
+          $args=@(('"'+$project+'"'),'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=native-video','-game','-RenderOffscreen','-windowed','-ResX=960','-ResY=540','-d3d11','-sm5','-unattended','-nosound','-nosplash',('-abslog="'+$log+'"'),('-ExecCmds="'+$commands+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(240000)){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(10000)){$p.Kill()}}
+          $receipt=Join-Path $out 'receipt.json'
+          if(Test-Path $receipt){Get-Content $receipt -Raw|Write-Host}
+          Get-Content $log -Tail 80|Write-Host
+          $frames=@(Get-ChildItem $out -Filter 'native_*.png')
+          Write-Host ('NATIVE_FRAME_COUNT='+$frames.Count)
+          if($frames.Count -lt 10){throw 'Native viewport did not produce enough actual frames'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-NATIVE-RUNTIME-VIEWPORT-VIDEO
+          path: ${{ env.CAPTURE_OUT }}
+          if-no-files-found: warn
