@@ -2,7 +2,9 @@ name: ANOMALIA - true UE5.8 rendered SKARVIK Big City BMW E39 survivor shepherd 
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: ['.github/workflows/anomalia-real-city-bmw-dog-survivor-pie-pixels-20261111.yml']
+    paths:
+      - '.github/workflows/anomalia-real-city-bmw-dog-survivor-pie-pixels-20261111.yml'
+      - 'unreal/Scripts/capture_anomalia_real_city_e39_survivor_dog_ue5_20261111.py'
   workflow_dispatch:
 permissions: {contents: read}
 concurrency:
