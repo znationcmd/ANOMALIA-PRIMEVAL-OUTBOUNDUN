@@ -8,7 +8,7 @@ name: SKARVIK - fourth final coast village streets keep both previous batches
 on:
   push:
     branches: [feature/skarvik-citysample-sm5-20261031]
-    paths: ['.github/workflows/skarvik-final-build-safe-local-streets-b3.yml']
+    paths: ['.github/workflows/skarvik-final-build-safe-local-streets-b4.yml']
   workflow_dispatch:
 permissions:
   contents: read
@@ -118,7 +118,7 @@ jobs:
           $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH1=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch1\skarvik-final-coastal-native-town-access-build.json'
           $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH2=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch2\skarvik-final-coastal-native-town-access-b2-build.json'
           $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH3=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch3\skarvik-final-coastal-native-town-access-b3-build.json'
-          $env:SKARVIK_FINAL_ACCESS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-build.json'
+          $env:SKARVIK_FINAL_ACCESS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b4-build.json'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_final_safe_town_access_b4.py'
           & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
@@ -140,8 +140,8 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
-          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_BUILD_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-build.json'
-          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-reopen.json'
+          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_BUILD_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b4-build.json'
+          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b4-reopen.json'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_town_access_b4_reopened.py'
           & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
@@ -159,6 +159,6 @@ jobs:
         with:
           name: skarvik-final-native-safe-local-street-batch4-build-and-reopen
           path: |
-            skarvik-final-coastal-native-town-access-b3-build.json
-            skarvik-final-coastal-native-town-access-b3-reopen.json
+            skarvik-final-coastal-native-town-access-b4-build.json
+            skarvik-final-coastal-native-town-access-b4-reopen.json
           if-no-files-found: warn
