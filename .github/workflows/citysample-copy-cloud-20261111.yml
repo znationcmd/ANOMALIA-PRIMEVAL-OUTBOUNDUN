@@ -8,7 +8,7 @@ permissions:
   contents: read
 concurrency:
   group: anomalia-ue5-native-host
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   copy-citysample-source-to-cloud:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
@@ -66,7 +66,7 @@ jobs:
               Wait-CopyHeadroom (8GB+$largest+256MB)
               $copyPass++
               Write-Host ('CITY_SAMPLE_COPY_PASS='+$copyPass)
-              $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/IPG:10','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG+:"'+$log+'"'))
+              $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG+:"'+$log+'"'))
               $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
               $null=$process.Handle
               $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
