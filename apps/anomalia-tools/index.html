@@ -1,0 +1,82 @@
+<!doctype html><html lang="fr"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>ANOMALIA Tools — Creative Development Suite</title></head><body>
+<div class="shell">
+<aside class="sidebar">
+ <div class="brand"><div class="brandBadge">A<span>+</span></div><div><strong>ANOMALIA <em>TOOLS</em></strong><small>CREATIVE DEVELOPMENT SUITE</small></div></div>
+ <div class="version">APPLICATION AUTONOME · 0.1.0</div>
+ <div class="navHeading">PROJET</div>
+ <button data-tab="home" class="nav active"><span>◩</span> Vue d'ensemble</button>
+ <button data-tab="workbench" class="nav"><span>⌘</span> Workbench <small>Code</small></button>
+ <button data-tab="objects" class="nav"><span>⬡</span> Object Builder <small>3D</small></button>
+ <button data-tab="terrain" class="nav"><span>▥</span> Terrain Builder</button>
+ <button data-tab="economy" class="nav"><span>◇</span> Central Economy</button>
+ <button data-tab="textures" class="nav"><span>▨</span> Texture Tools</button>
+ <div class="navHeading">PRODUCTION</div>
+ <button data-tab="addon" class="nav"><span>◈</span> Addon Builder</button>
+ <button data-tab="publisher" class="nav"><span>⬆</span> Publisher</button>
+ <div class="grow"></div>
+ <div class="privacy"><span class="greenDot"></span> Espace de travail privé<small>Aucun fichier partagé entre utilisateurs.</small></div>
+</aside>
+<main>
+ <header class="topbar">
+   <div class="pageIntro"><small>ANOMALIA / MODDING PIPELINE</small><h1 id="pageTitle">Vue d'ensemble</h1></div>
+   <div class="headerActions"><label>PROJET ACTIF</label><select id="activeProject"><option value="">Choisir un projet...</option></select><button id="newProject" class="primary">＋ Nouveau projet</button></div>
+ </header>
+ <div id="notice" role="status" aria-live="polite" hidden></div>
+ <div class="content">
+  <section id="home" class="page">
+   <div class="hero"><div><div class="eyebrow">ANOMALIA TOOLS / WORKSPACE LOCAL</div><h2>Construis les outils.<br><span>Crée ton univers.</span></h2><p>Une suite de développement de mods avec Workbench, ressources 3D, terrains, économie et création de packages.</p><button id="heroCreate" class="primary">Créer mon premier projet →</button></div><div class="heroSymbol">A</div></div>
+   <div class="sectionHeading"><h3>Outils disponibles</h3><span>7 modules autonomes</span></div>
+   <div class="cards" id="moduleCards"></div>
+   <div class="sectionHeading"><h3>Mes projets</h3><span id="projectCount">0 projet</span></div>
+   <div id="projectsList" class="projectList"></div>
+  </section>
+  <section id="workbench" class="page" hidden>
+   <div class="panelTitle"><div><h2>Workbench</h2><p>Éditeur de fichiers source, JSON, XML, INI et configurations pour ton mod.</p></div><button id="newSource" class="button">＋ Nouveau fichier</button></div>
+   <div class="workbench">
+    <div class="fileBrowser"><div class="subheading">FICHIERS DU PROJET</div><div id="filesList"></div></div>
+    <div class="codePanel"><div class="codeBar"><span id="fileTitle">Aucun fichier sélectionné</span><button id="saveFile" class="primary">Enregistrer le fichier</button></div><textarea id="sourceEditor" spellcheck="false" placeholder="Choisis un fichier à modifier..." aria-label="Éditeur de code"></textarea><div class="editorFoot">Fichiers modifiables jusqu'à 2 Mo. Aucun script n'est exécuté depuis l'éditeur.</div></div>
+   </div>
+  </section>
+  <section id="objects" class="page" hidden>
+   <div class="panelTitle"><div><h2>Object Builder</h2><p>Importe et prévisualise des modèles GLB ; conserve les autres formats comme sources à traiter dans Blender/Unreal.</p></div><button id="import3D" class="primary">＋ Importer des fichiers 3D</button></div>
+   <div class="previewGrid"><div class="assetBrowser"><div class="subheading">FICHIERS 3D</div><div id="modelsList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="modelTitle">Aucun objet sélectionné</strong><span>APERÇU 3D · GLB</span></div><div id="modelView" class="viewer"><div id="modelEmpty">Sélectionne un fichier GLB pour l'afficher en 3D.</div></div><p class="viewerFoot">Aperçu visuel uniquement : l'édition des sommets, LOD, os, collisions et matériaux Unreal n'est pas encore disponible.</p></div></div>
+  </section>
+  <section id="terrain" class="page" hidden>
+   <div class="panelTitle"><div><h2>Terrain Builder</h2><p>Génère une vraie heightmap PNG en niveaux de gris, prête à être affinée pour un paysage UE5.</p></div></div>
+   <div class="split">
+    <div class="panel"><h3>Paramètres du terrain</h3><form id="terrainForm" class="fields">
+      <label>Nom du terrain<input id="terrainName" value="AnomaliaTerrain" maxlength="55" required></label>
+      <label>Graine de génération<input id="terrainSeed" type="number" value="5471" min="-99999999" max="99999999" required></label>
+      <label>Résolution<select id="terrainRes"><option>128</option><option selected>256</option><option>512</option><option>1024</option></select></label>
+      <label>Dimension du terrain (m)<input id="terrainScale" type="number" value="2000" min="100" max="64000"></label>
+      <label>Octaves de relief<input id="terrainOctaves" type="number" value="5" min="1" max="8"></label>
+      <button class="primary" type="submit">Générer la heightmap PNG</button>
+    </form></div>
+    <div class="panel terrainPanel"><h3>Résultat / Fichiers terrain</h3><div id="terrainPreview" class="terrainPreview">Les fichiers PNG et JSON apparaîtront dans Content/Terrain du projet.</div><div id="terrainList"></div><p class="caption">La heightmap générée est une base de travail. Elle n'est pas encore un Landscape Unreal prêt à jouer.</p></div>
+   </div>
+  </section>
+  <section id="economy" class="page" hidden>
+   <div class="panelTitle"><div><h2>Central Economy Editor</h2><p>Définis les objets de butin, leurs quantités minimales et maximales et leur probabilité.</p></div><div class="actions"><button id="addLoot" class="button">＋ Ajouter</button><button id="saveEconomy" class="primary">Enregistrer l'économie</button></div></div>
+   <div class="panel"><div class="tableWrapper"><table class="lootTable"><thead><tr><th>ID de l'objet</th><th>Catégorie</th><th>Min</th><th>Max</th><th>Chance (%)</th><th></th></tr></thead><tbody id="lootRows"></tbody></table></div><p class="caption">Format natif ANOMALIA economy.json. Les valeurs ne seront effectives en jeu qu'après raccordement au système de spawn d'ANOMALIA.</p></div>
+  </section>
+  <section id="textures" class="page" hidden>
+   <div class="panelTitle"><div><h2>Texture Tools</h2><p>Inspection de textures PNG/JPEG/WebP, dimensions et aperçu sans connexion Internet.</p></div><button id="importTexture" class="primary">＋ Importer des textures</button></div>
+   <div class="previewGrid"><div class="assetBrowser"><div class="subheading">TEXTURES DISPONIBLES</div><div id="texturesList"></div></div><div class="viewerPanel"><div class="viewerTop"><strong id="textureTitle">Aucune texture</strong><span>APERÇU D'IMAGE</span></div><div class="viewer" id="textureView"><div id="textureEmpty">Choisis une texture pour l'inspecter.</div></div><div id="textureMeta" class="viewerFoot">L'export natif PAA/EDDS nécessite les logiciels officiels et n'est pas simulé ici.</div></div></div>
+  </section>
+  <section id="addon" class="page" hidden>
+   <div class="panelTitle"><div><h2>Addon Builder</h2><p>Crée des archives ZIP de sources avec manifeste SHA-256, sans ajouter d'autres utilisateurs ni effacer les fichiers.</p></div></div>
+   <div class="split"><div class="panel"><h3>Préparer une archive de mod</h3><p class="caption">Tous les fichiers du projet hors dossier Dist sont inclus avec leur empreinte SHA-256. L'archive est créée localement.</p><button id="buildAddon" class="primary fullWidth">Construire l'archive ZIP</button><div id="buildInfo" class="output">Aucune archive construite dans cette session.</div></div><div class="panel"><h3>Chaîne de création</h3><div class="pipeline"><div>1 <b>Sources / Config</b></div><div>2 <b>Ressources / Heightmaps</b></div><div>3 <b>Manifeste SHA-256</b></div><div>4 <b>Archive ZIP</b></div></div><p class="caption">Cela ne génère ni .pbo DayZ ni plugin .pak Unreal compilé : un pipeline SDK Unreal restera nécessaire.</p></div></div>
+  </section>
+  <section id="publisher" class="page" hidden>
+   <div class="panelTitle"><div><h2>Publisher</h2><p>Prépare un package partageable avec des fichiers de ton projet et exporte-le manuellement.</p></div></div>
+   <div class="split"><div class="panel"><h3>Exporter mon mod</h3><p>Enregistre un fichier ZIP sur ton PC, que tu pourras contrôler puis distribuer toi-même.</p><button id="exportMod" class="primary fullWidth">Exporter mon mod en ZIP</button><div id="publishInfo" class="output">Aucune publication en ligne n'est effectuée automatiquement.</div></div><div class="panel"><h3>Sécurité de publication</h3><p class="caption">Les sources restent privées tant que tu ne choisis pas de les partager. Aucun Steam Workshop ni serveur public n'est connecté. Les droits sur les modèles et textures sont à vérifier avant toute diffusion.</p><div class="safeBox">◉ Aucune clé Steam ou Epic demandée. Aucun projet tiers consulté.</div></div></div>
+  </section>
+ </div>
+ <footer><span>ANOMALIA TOOLS 0.1 · LOGICIEL SÉPARÉ DE CMD STUDIO ET ANOMALIA EDITOR</span><span>PROJETS LOCAUX · DONNÉES PRIVÉES</span></footer>
+</main></div>
+<div id="modal" class="modal" hidden><div class="modalCard"><h2>Nouveau projet ANOMALIA</h2><p>Un dossier privé est créé uniquement pour ce compte Windows.</p><form id="createForm"><label>Nom du mod ou projet<input id="newName" maxlength="55" placeholder="Mon Mod ANOMALIA" required></label><label>Description<input id="newDescription" maxlength="260" placeholder="Description (facultative)"></label><div class="actions end"><button type="button" id="cancelModal">Annuler</button><button class="primary" type="submit">Créer mon projet</button></div></form></div></div>
+<script type="module" src="/src/renderer.js"></script>
+</body></html>
