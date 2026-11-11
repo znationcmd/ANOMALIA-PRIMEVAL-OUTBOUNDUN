@@ -9,7 +9,7 @@ permissions:
   contents: read
 concurrency:
   group: anomalia-ue5-native-host
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   import-original-29-horror-sites:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
@@ -147,10 +147,29 @@ jobs:
              throw ('Native 29-site placement failed; do NOT claim complete: '+$r.error)
           }
           Write-Host 'RACCONIA_29_ARCHITECTURAL_SHELLS_SAVED_NATIVE_NOT_FINAL_PHOTOREAL_INTERIORS=true'
+      - name: Reopen and verify saved original 29 site architecture without saving any level
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_PBR_NATIVE_IMPORT_20261111.json'
+          $env:RACCONIA_PBR_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_PBR_REOPEN_20261111.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_racconia_29_architectural_pbr_reopened.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_PBR_REOPEN_REPORT)){throw 'Independent native reopen report missing'}
+          $r=Get-Content -LiteralPath $env:RACCONIA_PBR_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('RACCONIA_NATIVE_REOPEN_STATE='+$r.state)
+          Write-Host ('RACCONIA_NATIVE_REOPEN_SITES='+$r.savedSites)
+          Write-Host ('RACCONIA_NATIVE_REOPEN_PARTS='+$r.savedArchitecturalMeshActors)
+          if($code -ne 0 -or $r.savedSites -ne 29 -or !$r.sourceLevelsUnchanged){throw ('Native persistence failed: '+$r.error)}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: RACCONIA-REAL-29-PBR-BUILDINGS-NATIVE-WORLD-REPORT
-          path: RACCONIA_29_PBR_NATIVE_IMPORT_20261111.json
+          path: |
+            RACCONIA_29_PBR_NATIVE_IMPORT_20261111.json
+            RACCONIA_29_PBR_REOPEN_20261111.json
           retention-days: 30
           if-no-files-found: warn

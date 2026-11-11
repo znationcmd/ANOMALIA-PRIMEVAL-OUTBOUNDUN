@@ -9,6 +9,8 @@ AnomaliaZPrigimaliaRacconiaLandscape compiled successfully and real R16 source.
 """
 from __future__ import annotations
 import csv
+import math
+import struct
 import hashlib
 import json
 import os
@@ -54,6 +56,20 @@ def normalized(t):
     text=unicodedata.normalize('NFKD',t).encode('ascii','ignore').decode('ascii').lower()
     return re.sub('[^a-z0-9]+','',text)
 
+def terrain_surface_cm(raw, x_cm, y_cm):
+    """Bilinear height from the exact north-up raster imported by the C++ helper."""
+    if len(raw) != 1009*1009*2 or not (-800000 <= x_cm <= 800000 and -800000 <= y_cm <= 800000):
+        raise ValueError("Racconia terrain sample outside verified raster")
+    px=(x_cm+800000.0)*1008.0/1600000.0
+    py=(y_cm+800000.0)*1008.0/1600000.0
+    x0,y0=int(px),int(py)
+    x1,y1=min(x0+1,1008),min(y0+1,1008)
+    u,v=px-x0,py-y0
+    value=sum(struct.unpack_from("<H",raw,2*(yy*1009+xx))[0]*wx*wy
+              for xx,wx in ((x0,1-u),(x1,u))
+              for yy,wy in ((y0,1-v),(y1,v)))
+    return (value-32768.0)*2500.0/128.0
+
 try:
     if str(ROOT).replace('\\','/').lower()!=str(STAGE).replace('\\','/').lower():
         raise RuntimeError('Wrong Unreal project root; refuse original D: writes')
@@ -66,7 +82,8 @@ try:
     if not MANIFEST.is_file() or not CSV.is_file() or not RAW.is_file():
         raise RuntimeError('Both real RACCONIA source terrain and PBR artifacts required')
     source_manifest=json.loads((SOURCE_ROOT/'racconia-height-scale-and-sites.json').read_text(encoding='utf-8'))
-    if hashlib.sha256(RAW.read_bytes()).hexdigest()!=source_manifest['correctedRaw16Sha256']:
+    raw_height=RAW.read_bytes()
+    if hashlib.sha256(raw_height).hexdigest()!=source_manifest['correctedRaw16Sha256']:
         raise RuntimeError('Source heightmap SHA256 mismatch')
     if RAW.stat().st_size!=1009*1009*2:
         raise RuntimeError('Invalid RACCONIA real source RAW16')
@@ -115,6 +132,7 @@ try:
         task.save=True
         task.async_=False
         tools.import_asset_tasks([task])
+        task.get_objects()
         asset_paths=list(lib.list_assets(dest,recursive=True,include_folder=False))
         meshes=[]
         for a in asset_paths:
@@ -139,14 +157,23 @@ try:
     importer=unreal.AnomaliaZPrigimaliaRacconiaLandscape
     terrain=importer.create_racconia_verified_landscape()
     if not terrain:raise RuntimeError('Native 1009 original heightmap Landscape import failed')
-    components=terrain.get_components_by_class(unreal.LandscapeComponent)
+    terrain_actors=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
+    components=[c for a in terrain_actors for c in a.get_components_by_class(unreal.LandscapeComponent)]
+    collision=[c for a in terrain_actors for c in a.get_components_by_class(unreal.LandscapeHeightfieldCollisionComponent)]
+    if len(collision)!=64:raise RuntimeError("Expected 64 native terrain collision components")
+    R["nativeLandscapeProxyActors"]=len(terrain_actors)
+    R["nativeLandscapeCollisionComponents"]=len(collision)
+    R["sitePlacementsCm"]={}
+    R["maxOriginalSiteGroundCorrectionCm"]=0.0
     if len(components)!=64:raise RuntimeError('Expected 64 real Landscape components; got '+str(len(components)))
     R['nativeLandscapeComponents']=len(components)
     for rec in records:
         key=rec['id'];site=sites[normalized(rec['name'])]
         x=float(site['X_cm'])
         y=-float(site['Y_cm'])  # model source CSV north positive, UE north negative
-        z=float(site['Z_cm'])
+        z=terrain_surface_cm(raw_height,x,y)
+        R["maxOriginalSiteGroundCorrectionCm"]=max(R["maxOriginalSiteGroundCorrectionCm"],abs(z-float(site["Z_cm"])))
+        R["sitePlacementsCm"][key]=[x,y,z+20.0]
         marker=actors.spawn_actor_from_class(unreal.TargetPoint,unreal.Vector(x,y,z+200.))
         if not marker:raise RuntimeError('Source site marker cannot be spawned: '+key)
         marker.set_actor_label('RACCONIA_ORIGINAL_SITE_'+site['id']+'_'+key)
