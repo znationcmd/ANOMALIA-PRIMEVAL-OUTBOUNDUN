@@ -43,7 +43,7 @@ jobs:
                 $items=@(Get-ChildItem -LiteralPath $base -File -Recurse -ErrorAction SilentlyContinue|
                     Where-Object {$_.Extension -eq '.uasset'}|Select-Object -First 40)
                 $rows+= [ordered]@{root=$content;subpath=$sub;assetCountSample=$items.Count;
-                  namedAssets=@($items|ForEach-Object{[IO.Path]::GetRelativePath($content,$_.FullName)})}
+                  namedAssets=@($items|ForEach-Object{$_.FullName.Substring($content.Length+1)})}
               }
             }
           }
