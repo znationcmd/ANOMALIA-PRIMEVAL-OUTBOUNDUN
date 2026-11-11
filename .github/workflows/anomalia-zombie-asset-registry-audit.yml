@@ -1,0 +1,78 @@
+name: ANOMALIA - inspect ZombieFemale skeleton and animation assets without saving
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-zombie-asset-registry-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect D source and validate the isolated C staging project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\unreal'
+          $folder=Join-Path $source 'Content\ZombieFemale'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $source 'AnomaliaPrimeval.uproject'))){throw 'Original D project missing'}
+          if(!(Test-Path -LiteralPath $folder -PathType Container)){throw 'ZombieFemale source assets missing'}
+          if((Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'C staging marker mismatch'}
+          if(!$env:UE_ROOT){throw 'Installed UE5 missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $files=@(Get-ChildItem -LiteralPath $folder -File -Recurse -ErrorAction Stop)
+          $before=@{}
+          foreach($f in $files){$before[$f.FullName]=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash}
+          $before | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'zombie-assets-before.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_ZOMBIE_SOURCE_FILES='+$files.Count)
+          Write-Host 'ANOMALIA_ZOMBIE_SOURCE_PROTECTED=true'
+      - name: Inspect actual SkeletalMesh Skeleton AnimSequence and AnimBlueprint assets in UE5
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:ANOMALIA_ZOMBIE_ASSET_REPORT=Join-Path $env:GITHUB_WORKSPACE "zombie-asset-registry-$env:GITHUB_RUN_ID.json"
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_zombiefemale_asset_registry_readonly.py'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_ZOMBIE_ASSET_REPORT)){throw 'UE asset registry report missing'}
+          $report=Get-Content -LiteralPath $env:ANOMALIA_ZOMBIE_ASSET_REPORT -Raw | ConvertFrom-Json
+          Write-Host ('ANOMALIA_ZOMBIE_ASSET_STATE='+$report.state)
+          Write-Host ('ANOMALIA_ZOMBIE_ASSET_CLASSES='+($report.countsByClass|ConvertTo-Json -Compress))
+          Write-Host ('ANOMALIA_ZOMBIE_ASSET_COUNT='+@($report.assets).Count)
+          if($report.state -ne 'ZOMBIE_ASSETS_AUDITED_READONLY' -or @($report.assets).Count -lt 1){throw ('UE asset inspection failed: '+$report.error)}
+          if($exit -ne 0){Write-Host ('ANOMALIA_ZOMBIE_EDITOR_EXIT='+$exit)}
+      - name: Verify every original ZombieFemale source package remains byte-identical
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $folder='D:\ANOMALIA\unreal\Content\ZombieFemale'
+          $before=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'zombie-assets-before.json') -Raw | ConvertFrom-Json
+          $changed=@()
+          foreach($entry in $before.PSObject.Properties){
+            if(!(Test-Path -LiteralPath $entry.Name)){ $changed+=($entry.Name+' [missing]'); continue }
+            $actual=(Get-FileHash -LiteralPath $entry.Name -Algorithm SHA256).Hash
+            if($actual -ne $entry.Value){$changed+=($entry.Name+' [hash changed]')}
+          }
+          if($changed.Count){throw ('Original ZombieFemale source changed: '+($changed -join '; '))}
+          Write-Host 'ANOMALIA_ZOMBIE_SOURCE_PACKAGES_UNCHANGED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-zombie-ue5-asset-registry
+          path: |
+            zombie-asset-registry-${{ github.run_id }}.json
+            zombie-assets-before.json
+          if-no-files-found: error
+
+# Re-run the read-only UE asset registry inspection after workflow creation.

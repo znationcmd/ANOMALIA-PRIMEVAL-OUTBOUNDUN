@@ -1,0 +1,56 @@
+name: ANOMALIA - read-only audit of newly added food and survival assets
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-survival-assets-readonly-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory local food drink medical and survival assets without modifying them
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $roots=@('D:\ANOMALIA\FabImports','D:\ANOMALIA\unreal\Content','D:\ANOMALIA\sketchfab')
+          $terms='(?i)food|canned|can_|tin_|ration|bread|meat|fish|fruit|vegetable|apple|potato|tomato|mushroom|drink|water|bottle|wine|beer|soda|milk|juice|medical|medicine|pill|tablet|bandage|medkit|first.?aid|survival|camping|cooking|kitchen|hunger|thirst'
+          $report=[ordered]@{state='READ_ONLY_SURVIVAL_ASSET_INVENTORY';roots=@();candidates=@();receipts=@();noAssetCopied=$true;noProjectModified=$true}
+          foreach($root in $roots){
+            $entry=[ordered]@{path=$root;exists=(Test-Path -LiteralPath $root -PathType Container);filesScanned=0}
+            if($entry.exists){
+              $files=Get-ChildItem -LiteralPath $root -File -Recurse -ErrorAction SilentlyContinue
+              $entry.filesScanned=@($files).Count
+              foreach($f in $files){
+                if($f.Name -match $terms -and $f.Extension -in @('.uasset','.umap','.fbx','.glb','.gltf','.blend','.obj','.png','.jpg','.jpeg','.tga','.json','.zip','.rar','.7z')){
+                  $report.candidates+= [ordered]@{path=$f.FullName;name=$f.Name;bytes=$f.Length;extension=$f.Extension;modifiedUtc=$f.LastWriteTimeUtc.ToString('o')}
+                }
+                if($f.Name -match '(?i)import.?report|download.?receipt|manifest|receipt' -and $f.Extension -eq '.json'){
+                  $report.receipts+= [ordered]@{path=$f.FullName;bytes=$f.Length;modifiedUtc=$f.LastWriteTimeUtc.ToString('o')}
+                }
+              }
+            }
+            $report.roots+= $entry
+          }
+          $report.candidates=@($report.candidates | Sort-Object modifiedUtc -Descending)
+          $report.receipts=@($report.receipts | Sort-Object modifiedUtc -Descending)
+          $out=Join-Path $env:GITHUB_WORKSPACE "anomalia-survival-assets-$env:GITHUB_RUN_ID.json"
+          $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('SURVIVAL_ASSET_CANDIDATES='+$report.candidates.Count)
+          Write-Host ('SURVIVAL_ASSET_RECEIPTS='+$report.receipts.Count)
+          Write-Host ('SURVIVAL_ASSET_REPORT='+$out)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-survival-assets-readonly-audit
+          path: anomalia-survival-assets-${{ github.run_id }}.json
+          if-no-files-found: error

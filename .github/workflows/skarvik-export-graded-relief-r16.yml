@@ -1,0 +1,53 @@
+name: SKARVIK - export true graded 48km heightmap R16 for Unreal Engine
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-export-graded-relief-r16.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-real-graded-48km-r16:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build verified 124-site grade terrain exporter and exact 3025x3025 UE5 R16
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p heightmaps
+          g++ -std=c++17 -O3 -Wall -Wextra -Werror -pedantic \
+            -I unreal/Source/AnomaliaZPrigimalia \
+            scripts/ue5/export-skarvik-graded-r16.cpp -o /tmp/skv-graded-r16
+          /tmp/skv-graded-r16 heightmaps/SKARVIK_48km_124_sites_graded_v2_3025.r16
+          test "$(stat -c%s heightmaps/SKARVIK_48km_124_sites_graded_v2_3025.r16)" -eq 18301250
+          python3 - <<'PY'
+          from pathlib import Path
+          import json
+          info={
+           "name":"SKARVIK graded 48km genuine topography v2",
+           "nativeUE5Heightmap":True,
+           "format":"16-bit unsigned raw little-endian R16",
+           "dimensions":[3025,3025],
+           "sideMeters":48000,
+           "scaleXYcentimetres":4800000/3024,
+           "scaleZ":800,
+           "zeroHeightSample":32768,
+           "gradedOriginalSettlementCenters":124,
+           "citySamplePadKm":[4,4],
+           "original_v1_untouched":True,
+           "buildingMeshesIncluded":False,
+           "worldSavedByThisExport":False,
+           "note":"Contains real source-equivalent terrain with smooth village and city foundations, not an authored world map by itself."
+          }
+          Path("heightmaps/SKARVIK_graded_v2_metadata.json").write_text(json.dumps(info,indent=2),encoding="utf-8")
+          assert Path("heightmaps/SKARVIK_48km_124_sites_graded_v2_3025.r16").stat().st_size==3025*3025*2
+          PY
+          echo 'SKARVIK_GRADED_124_REAL_TERRAIN_PAD_HEIGHTMAP_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK_graded_v2_48km_R16_source_heightmap
+          path: heightmaps/
+          if-no-files-found: error
+          retention-days: 30

@@ -1,0 +1,49 @@
+name: SKARVIK - native PC preflight storage and City Sample [READ ONLY]
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-native-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect Windows storage and project paths without modifying files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Write-Host 'SKARVIK_PREFLIGHT_BEGIN=true'
+          $drives=@([System.IO.DriveInfo]::GetDrives())
+          foreach($d in $drives){
+            if(!$d.IsReady){continue}
+            if(($d.DriveType -ne 'Fixed') -and ($d.DriveType -ne 'Removable')){continue}
+            $free=[math]::Round($d.AvailableFreeSpace/1GB,2)
+            $total=[math]::Round($d.TotalSize/1GB,2)
+            Write-Host ("SKARVIK_DRIVE name={0} type={1} totalGiB={2} freeGiB={3}" -f $d.Name,$d.DriveType,$total,$free)
+          }
+          $roots=@(
+            'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject',
+            'D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject',
+            'D:\ANOMALIA\FabImports\CitySample\CitySample.uproject',
+            'D:\ANOMALIA\FabImports\CitySample\Content\Map\Big_City_LVL.umap',
+            'D:\ANOMALIA\FabImports\CitySample\Content\__ExternalActors__',
+            (Join-Path $env:GITHUB_WORKSPACE 'unreal\AnomaliaZPrigimalia.uproject')
+          )
+          foreach($p in $roots){
+            $exists=Test-Path -LiteralPath $p
+            Write-Host "SKARVIK_PATH exists=$exists path=$p"
+          }
+          Write-Host "SKARVIK_WORKSPACE=$env:GITHUB_WORKSPACE"
+          Write-Host "SKARVIK_UE_ROOT_DEFINED=$([bool]$env:UE_ROOT)"
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)
+          Write-Host "SKARVIK_UNREAL_PROCESS_COUNT=$($active.Count)"
+          foreach($p in @('D:\ANOMALIA\FabImports\CitySample\Content\Map\Big_City_LVL.umap','D:\ANOMALIAZ-PRIGIMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){
+            if(Test-Path -LiteralPath $p -PathType Leaf){
+              $f=Get-Item -LiteralPath $p
+              Write-Host "SKARVIK_LEVEL_FILE_SIZE bytes=$($f.Length) path=$p"
+            }
+          }
+          Write-Host 'SKARVIK_PREFLIGHT_NO_WRITE=true'

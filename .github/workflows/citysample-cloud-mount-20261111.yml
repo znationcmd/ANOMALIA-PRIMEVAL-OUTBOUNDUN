@@ -1,0 +1,32 @@
+name: CITY SAMPLE - verify desktop cloud mount accessibility
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-cloud-mount-20261111.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-cloud-mount:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Inspect virtual drive roots without reading credentials or changing files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($disk in (Get-CimInstance Win32_LogicalDisk)){
+            Write-Host ('CLOUD_MOUNT_DRIVE='+$disk.DeviceID+'|'+$disk.VolumeName+'|'+$disk.DriveType+'|'+$disk.FreeSpace+'|'+$disk.Size)
+            if($disk.VolumeName -match 'Google|Drive' -or $disk.DeviceID -eq 'G:'){
+              $root=$disk.DeviceID+'\'
+              Write-Host ('CLOUD_MOUNT_ACCESSIBLE='+$root+'|'+(Test-Path -LiteralPath $root))
+              if(Test-Path -LiteralPath $root){
+                Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction Continue | ForEach-Object {
+                  Write-Host ('CLOUD_MOUNT_ROOT_FOLDER='+$_.FullName)
+                }
+              }
+            }
+          }
+          Write-Host 'CLOUD_MOUNT_NO_FILES_CHANGED=true'

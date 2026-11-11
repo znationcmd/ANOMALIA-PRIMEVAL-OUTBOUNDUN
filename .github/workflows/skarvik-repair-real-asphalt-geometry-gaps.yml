@@ -1,0 +1,72 @@
+name: SKARVIK - physically repair safe grade-compatible holes in existing asphalt
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-repair-real-asphalt-geometry-gaps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  gaprepair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 70
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Safeguard original D and all 13039 preexisting road mesh actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage'}
+          foreach($file in @(
+           'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+           (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+           (Join-Path $root 'Saved\SkarvikCity\RoadExpansionBatchC3_20261031\graded-pre-expansion.umap'))){
+            if(!(Test-Path -LiteralPath $file)){throw "Protected map or batch backup missing: $file"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\GapFixSmallMeshV1_20261031\graded-before-repair.umap')){throw 'Gap repair was already attempted; no duplicate'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Other UE editor running'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_GAP_REPAIR_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'C disk safety reserve below 18 GiB'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\repair_skarvik_graded_asphalt_gaps_short_native_meshes.py')
+          if($LASTEXITCODE -ne 0){throw 'Gap repair source Python syntax invalid'}
+          Write-Host 'SKARVIK_ROAD_GAP_REPAIR_NATIVE_PREFLIGHT_OK=true'
+      - name: Add only real asphalt mesh sections at accepted 15-percent-grade non-building road gaps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_GAPFIX_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GAPFIX_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-gapfix-short-road-3d-results.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\repair_skarvik_graded_asphalt_gaps_short_native_meshes.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GAPFIX_REPORT)){throw 'No Unreal road gap repair report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_GAPFIX_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_PATCH_ACTORS='+$r.actualNewPatchActors)
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_METRES='+$r.actualNewPatchMetres)
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_ROUTES='+$r.routesWithNewPatches)
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_FULLY_PATCHED_ROUTES='+$r.fullyPatchedAdditionalRoutes)
+          Write-Host ('SKARVIK_NATIVE_GAP_FIX_BASE_TILES_STILL_MISSING='+$r.stillUnrepairedBaseTiles)
+          if($code -ne 0 -or $r.state -ne 'SOME_PREVIOUS_ROAD_GAPS_REPAIRED_WITH_NATIVE_SHORT_ASPHALT_NOT_DRIVEN'){
+            throw ('Native road gap repair incomplete: '+$r.error)
+          }
+          Write-Host 'SKARVIK_REAL_TERRAIN_GRADED_ROAD_HOLES_PARTIALLY_REPAIRED=true'
+          Write-Host 'SKARVIK_WATER_CROSSINGS_AND_SM5_DRIVEABILITY_STILL_REQUIRE_TEST=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-native-road-gap-repair-and-remaining-defects
+          path: skarvik-gapfix-short-road-3d-results.json
+          if-no-files-found: warn

@@ -1,0 +1,34 @@
+name: SKARVIK - shortlist real native residential and commercial meshes
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-print-real-mesh-shortlist.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  shortlist:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Print verified asset package paths only from native UE5 audit
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong stage'}
+          $path=Join-Path $env:GITHUB_WORKSPACE 'skarvik-building-catalog.json'
+          if(!(Test-Path -LiteralPath $path)){throw 'No recent native building catalogue; use read-only scan workflow'}
+          $d=Get-Content -LiteralPath $path -Raw|ConvertFrom-Json
+          if($d.state -ne 'READ_ONLY_STATIC_MESH_CATALOG_READY'){throw 'Catalogue was not validated'}
+          foreach($group in @('building','city','environment','prop','road','anomalia')){
+            $items=@($d.catalogue | Where-Object {$_.group -eq $group})
+            Write-Host "SKARVIK_MESH_SHORTLIST_GROUP=$group COUNT=$($items.Count)"
+            foreach($item in ($items|Select-Object -First 35)){
+              Write-Host "SKARVIK_MESH_CANDIDATE group=$group name=$($item.name) package=$($item.package)"
+            }
+          }
+          Write-Host 'SKARVIK_MESH_SHORTLIST_READONLY_SUCCESS=true'

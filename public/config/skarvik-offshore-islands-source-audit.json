@@ -1,0 +1,816 @@
+{
+  "schemaVersion": 1,
+  "worldId": "archipelago-v2",
+  "worldName": "SKARVIK",
+  "extentKm": [
+    48,
+    48
+  ],
+  "sourceTopography": "unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaArchipelagoHeight.h",
+  "sourceTopographySha": "1a6f43df8b78cb866746ca45e4559cd44fc433e7",
+  "sourceMasterplan": "public/config/skarvik-world-layout-48km.json",
+  "sampling": {
+    "stepMetres": 100,
+    "landCriterion": "CoastDistance(eastMetres,northMetres) > 0",
+    "connectivity": 4,
+    "source": "original archipelago coastline, not current graded-only landscape",
+    "areasApproximate": true
+  },
+  "status": "ORIGINAL_ARCHIPELAGO_SOURCE_ISLAND_AUDIT_NOT_MIGRATED_TO_CURRENT_GRADED_SKARVIK_WORLD",
+  "nativeMapPackageExisting": "/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2",
+  "gradedTerrainNotMatchingOriginalArchipelagoCoastline": true,
+  "nativeIslandSettlementRepositioningPerformed": false,
+  "existingNativeBuildingsProtected": true,
+  "roadsProtected": true,
+  "productionDNotModified": true,
+  "originalArchipelagoSourceHasMainlandPlusDetachedIslands": true,
+  "islandCount": 7,
+  "islands": [
+    {
+      "id": "skarvik-offshore-01",
+      "approxAreaKm2": 37.28,
+      "approxCenterKm": [
+        17.8,
+        -10.1
+      ],
+      "approxBoundsKm": [
+        15.05,
+        -14.35,
+        20.85,
+        -5.55
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "harbor",
+          "name": "PORT ELIAS",
+          "type": "town",
+          "eastKm": 18,
+          "northKm": -13,
+          "approxSignedCoastDistanceMetres": 797.6
+        },
+        {
+          "id": "cap-aube",
+          "name": "CAP-AUBE",
+          "type": "village",
+          "eastKm": 18.59,
+          "northKm": -8.89,
+          "approxSignedCoastDistanceMetres": 1281.9
+        }
+      ],
+      "masterplanSettlementCount": 2,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-02",
+      "approxAreaKm2": 35.38,
+      "approxCenterKm": [
+        15.1,
+        14.2
+      ],
+      "approxBoundsKm": [
+        11.35,
+        10.75,
+        19.05,
+        17.35
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "frostgard",
+          "name": "FROSTGARD",
+          "type": "major-city",
+          "eastKm": 14,
+          "northKm": 15,
+          "approxSignedCoastDistanceMetres": 2176.8
+        },
+        {
+          "id": "nivergard",
+          "name": "NIVERGARD",
+          "type": "town",
+          "eastKm": 16.63,
+          "northKm": 12.62,
+          "approxSignedCoastDistanceMetres": 690.9
+        },
+        {
+          "id": "blanchecrete",
+          "name": "BLANCHECRÊTE",
+          "type": "village",
+          "eastKm": 15.7,
+          "northKm": 11.2,
+          "approxSignedCoastDistanceMetres": 437
+        }
+      ],
+      "masterplanSettlementCount": 3,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-03",
+      "approxAreaKm2": 24.56,
+      "approxCenterKm": [
+        -17,
+        16.8
+      ],
+      "approxBoundsKm": [
+        -20.15,
+        14.05,
+        -13.65,
+        19.35
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "highpass",
+          "name": "COL DES AIGLES",
+          "type": "village",
+          "eastKm": -14,
+          "northKm": 17,
+          "approxSignedCoastDistanceMetres": 343.2
+        },
+        {
+          "id": "varengard",
+          "name": "VARENGARD",
+          "type": "major-city",
+          "eastKm": -17,
+          "northKm": 17,
+          "approxSignedCoastDistanceMetres": 2110.9
+        },
+        {
+          "id": "rochenord",
+          "name": "ROCHENORD",
+          "type": "village",
+          "eastKm": -19.09,
+          "northKm": 18.05,
+          "approxSignedCoastDistanceMetres": 575.2
+        },
+        {
+          "id": "cairn-bas",
+          "name": "CAIRN-BAS",
+          "type": "village",
+          "eastKm": -17.87,
+          "northKm": 19.08,
+          "approxSignedCoastDistanceMetres": 141.7
+        }
+      ],
+      "masterplanSettlementCount": 4,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-04",
+      "approxAreaKm2": 13.38,
+      "approxCenterKm": [
+        -4.99,
+        -18.7
+      ],
+      "approxBoundsKm": [
+        -8.05,
+        -20.15,
+        -1.85,
+        -17.05
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "bois-sud",
+          "name": "BOIS-SUD",
+          "type": "small-town",
+          "eastKm": -3,
+          "northKm": -19,
+          "approxSignedCoastDistanceMetres": 590.8
+        }
+      ],
+      "masterplanSettlementCount": 1,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-05",
+      "approxAreaKm2": 10.83,
+      "approxCenterKm": [
+        6.49,
+        17.8
+      ],
+      "approxBoundsKm": [
+        4.85,
+        15.85,
+        8.35,
+        19.75
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "snowpine",
+          "name": "PIN-NORD",
+          "type": "village",
+          "eastKm": 7,
+          "northKm": 19,
+          "approxSignedCoastDistanceMetres": 356.2
+        }
+      ],
+      "masterplanSettlementCount": 1,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-06",
+      "approxAreaKm2": 10.03,
+      "approxCenterKm": [
+        -18.8,
+        -13.9
+      ],
+      "approxBoundsKm": [
+        -20.35,
+        -16.25,
+        -17.15,
+        -11.85
+      ],
+      "settlementsExistingInMasterplan": [
+        {
+          "id": "dunevoile",
+          "name": "DUNEVOILE",
+          "type": "village",
+          "eastKm": -18.35,
+          "northKm": -14.87,
+          "approxSignedCoastDistanceMetres": 470.6
+        },
+        {
+          "id": "almari",
+          "name": "ALMARI",
+          "type": "village",
+          "eastKm": -18.95,
+          "northKm": -13.47,
+          "approxSignedCoastDistanceMetres": 1362.9
+        },
+        {
+          "id": "elzar",
+          "name": "ELZAR",
+          "type": "village",
+          "eastKm": -19.57,
+          "northKm": -12.71,
+          "approxSignedCoastDistanceMetres": 503.8
+        }
+      ],
+      "masterplanSettlementCount": 3,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    },
+    {
+      "id": "skarvik-offshore-07",
+      "approxAreaKm2": 6.43,
+      "approxCenterKm": [
+        7.61,
+        -19.1
+      ],
+      "approxBoundsKm": [
+        6.05,
+        -20.25,
+        9.35,
+        -17.85
+      ],
+      "settlementsExistingInMasterplan": [],
+      "masterplanSettlementCount": 0,
+      "offshoreBuildingsVerifiedInCurrentGradedWorld": false,
+      "requiresNativeCoastlineAndCollisionMigration": true
+    }
+  ],
+  "mainlandMasterplanSettlementCount": 45,
+  "masterplanCentersOutsideOriginalArchipelagoDryLand": {
+    "count": 66,
+    "settlements": [
+      {
+        "id": "valdoren",
+        "name": "VALDOREN",
+        "type": "major-city",
+        "eastKm": 13,
+        "northKm": 1,
+        "approxSignedCoastDistanceMetres": -93.2
+      },
+      {
+        "id": "oasis",
+        "name": "OASIS DE VAR",
+        "type": "village",
+        "eastKm": -17,
+        "northKm": -13,
+        "approxSignedCoastDistanceMetres": -199.1
+      },
+      {
+        "id": "dunes",
+        "name": "DUNES DE RAV",
+        "type": "village",
+        "eastKm": -12,
+        "northKm": -19,
+        "approxSignedCoastDistanceMetres": -2142
+      },
+      {
+        "id": "birch",
+        "name": "BOIS-BLANC",
+        "type": "village",
+        "eastKm": 5,
+        "northKm": 5,
+        "approxSignedCoastDistanceMetres": -367.7
+      },
+      {
+        "id": "icehaven",
+        "name": "HAVRE-BLANC",
+        "type": "town",
+        "eastKm": 20,
+        "northKm": 12,
+        "approxSignedCoastDistanceMetres": -1610.3
+      },
+      {
+        "id": "southwood",
+        "name": "SAINTE-ORÉE",
+        "type": "village",
+        "eastKm": 3,
+        "northKm": -19,
+        "approxSignedCoastDistanceMetres": -2150.3
+      },
+      {
+        "id": "ravenor",
+        "name": "RAVENOR",
+        "type": "major-city",
+        "eastKm": -19,
+        "northKm": -17,
+        "approxSignedCoastDistanceMetres": -596.9
+      },
+      {
+        "id": "karstheim",
+        "name": "KARSTHEIM",
+        "type": "major-city",
+        "eastKm": -18,
+        "northKm": 4,
+        "approxSignedCoastDistanceMetres": -208
+      },
+      {
+        "id": "nordfjell",
+        "name": "NORDFJELL",
+        "type": "major-city",
+        "eastKm": -1,
+        "northKm": 20,
+        "approxSignedCoastDistanceMetres": -5021.5
+      },
+      {
+        "id": "astermont",
+        "name": "ASTERMONT",
+        "type": "major-city",
+        "eastKm": 19,
+        "northKm": -5,
+        "approxSignedCoastDistanceMetres": -989.3
+      },
+      {
+        "id": "meridia",
+        "name": "MERIDIA",
+        "type": "major-city",
+        "eastKm": 5,
+        "northKm": -21,
+        "approxSignedCoastDistanceMetres": -1263.5
+      },
+      {
+        "id": "brumecrete",
+        "name": "BRUMECRÊTE",
+        "type": "small-town",
+        "eastKm": -22,
+        "northKm": 9,
+        "approxSignedCoastDistanceMetres": -4491.1
+      },
+      {
+        "id": "hiverdal",
+        "name": "HIVERDAL",
+        "type": "small-town",
+        "eastKm": 8,
+        "northKm": 13,
+        "approxSignedCoastDistanceMetres": -2372.1
+      },
+      {
+        "id": "rosephare",
+        "name": "ROSEPHARE",
+        "type": "small-town",
+        "eastKm": 21,
+        "northKm": -14,
+        "approxSignedCoastDistanceMetres": -1478
+      },
+      {
+        "id": "kharvel",
+        "name": "KHARVEL",
+        "type": "town",
+        "eastKm": -15.68,
+        "northKm": -19.35,
+        "approxSignedCoastDistanceMetres": -3649
+      },
+      {
+        "id": "sablecroix",
+        "name": "SABLECROIX",
+        "type": "town",
+        "eastKm": -16.93,
+        "northKm": -14.42,
+        "approxSignedCoastDistanceMetres": -524.1
+      },
+      {
+        "id": "miraze",
+        "name": "MIRAZE",
+        "type": "town",
+        "eastKm": -13.75,
+        "northKm": -16.14,
+        "approxSignedCoastDistanceMetres": -3391.2
+      },
+      {
+        "id": "cimefonte",
+        "name": "CIMEFONTE",
+        "type": "town",
+        "eastKm": -17.25,
+        "northKm": 8.53,
+        "approxSignedCoastDistanceMetres": -209.3
+      },
+      {
+        "id": "valleroche",
+        "name": "VALLEROCHE",
+        "type": "town",
+        "eastKm": -17.73,
+        "northKm": -1.94,
+        "approxSignedCoastDistanceMetres": -2325.8
+      },
+      {
+        "id": "glacelac",
+        "name": "GLACELAC",
+        "type": "town",
+        "eastKm": 8.57,
+        "northKm": 18.09,
+        "approxSignedCoastDistanceMetres": -168.9
+      },
+      {
+        "id": "lysvik",
+        "name": "LYSVIK",
+        "type": "town",
+        "eastKm": 15.76,
+        "northKm": 20.09,
+        "approxSignedCoastDistanceMetres": -3036.7
+      },
+      {
+        "id": "baie-argent",
+        "name": "BAIE-ARGENT",
+        "type": "town",
+        "eastKm": 16.34,
+        "northKm": -2.2,
+        "approxSignedCoastDistanceMetres": -1518.6
+      },
+      {
+        "id": "port-azur",
+        "name": "PORT-AZUR",
+        "type": "town",
+        "eastKm": 20.47,
+        "northKm": -1.68,
+        "approxSignedCoastDistanceMetres": -3807.1
+      },
+      {
+        "id": "merivals",
+        "name": "MÉRIVALS",
+        "type": "town",
+        "eastKm": -4.92,
+        "northKm": -14.61,
+        "approxSignedCoastDistanceMetres": -789.3
+      },
+      {
+        "id": "cendreval",
+        "name": "CENDREVAL",
+        "type": "town",
+        "eastKm": -3.42,
+        "northKm": -16.81,
+        "approxSignedCoastDistanceMetres": -676.9
+      },
+      {
+        "id": "bas-moulin",
+        "name": "BAS-MOULIN",
+        "type": "town",
+        "eastKm": 0.96,
+        "northKm": -18.57,
+        "approxSignedCoastDistanceMetres": -1752.4
+      },
+      {
+        "id": "khemir",
+        "name": "KHEMIR",
+        "type": "village",
+        "eastKm": -9.63,
+        "northKm": -17.73,
+        "approxSignedCoastDistanceMetres": -1330.7
+      },
+      {
+        "id": "sable-froid",
+        "name": "SABLE-FROID",
+        "type": "village",
+        "eastKm": -13.99,
+        "northKm": -19.3,
+        "approxSignedCoastDistanceMetres": -3180.9
+      },
+      {
+        "id": "ergued",
+        "name": "ERGUED",
+        "type": "village",
+        "eastKm": -20.4,
+        "northKm": -8.78,
+        "approxSignedCoastDistanceMetres": -2127.4
+      },
+      {
+        "id": "rocheseche",
+        "name": "ROCHESÈCHE",
+        "type": "village",
+        "eastKm": -19.01,
+        "northKm": -7.34,
+        "approxSignedCoastDistanceMetres": -1746.6
+      },
+      {
+        "id": "qarven",
+        "name": "QARVEN",
+        "type": "village",
+        "eastKm": -9.93,
+        "northKm": -16.86,
+        "approxSignedCoastDistanceMetres": -1841.7
+      },
+      {
+        "id": "tinjar",
+        "name": "TINJAR",
+        "type": "village",
+        "eastKm": -9.72,
+        "northKm": -15.45,
+        "approxSignedCoastDistanceMetres": -2626.7
+      },
+      {
+        "id": "arbelin",
+        "name": "ARBELIN",
+        "type": "village",
+        "eastKm": -18.54,
+        "northKm": -10.37,
+        "approxSignedCoastDistanceMetres": -1159.8
+      },
+      {
+        "id": "brumepierre",
+        "name": "BRUMEPIERRE",
+        "type": "village",
+        "eastKm": -14.34,
+        "northKm": 14.29,
+        "approxSignedCoastDistanceMetres": -731.4
+      },
+      {
+        "id": "vieux-col",
+        "name": "VIEUX-COL",
+        "type": "village",
+        "eastKm": -16.47,
+        "northKm": 21.05,
+        "approxSignedCoastDistanceMetres": -1877.2
+      },
+      {
+        "id": "aiguille-haute",
+        "name": "AIGUILLE-HAUTE",
+        "type": "village",
+        "eastKm": -20.16,
+        "northKm": -1.88,
+        "approxSignedCoastDistanceMetres": -4703.5
+      },
+      {
+        "id": "ravin-dore",
+        "name": "RAVIN-DORÉ",
+        "type": "village",
+        "eastKm": -19.36,
+        "northKm": 12.52,
+        "approxSignedCoastDistanceMetres": -2009.1
+      },
+      {
+        "id": "sombreroch",
+        "name": "SOMBREROCH",
+        "type": "village",
+        "eastKm": -20.72,
+        "northKm": 0.68,
+        "approxSignedCoastDistanceMetres": -4585.1
+      },
+      {
+        "id": "pierrefeu",
+        "name": "PIERREFEU",
+        "type": "village",
+        "eastKm": -21.03,
+        "northKm": -1.8,
+        "approxSignedCoastDistanceMetres": -5505.7
+      },
+      {
+        "id": "granitel",
+        "name": "GRANITEL",
+        "type": "village",
+        "eastKm": -13.64,
+        "northKm": 19.25,
+        "approxSignedCoastDistanceMetres": -1386.9
+      },
+      {
+        "id": "lauzeveil",
+        "name": "LAUZEVEIL",
+        "type": "village",
+        "eastKm": -18.58,
+        "northKm": 20.08,
+        "approxSignedCoastDistanceMetres": -795.3
+      },
+      {
+        "id": "boisdore",
+        "name": "BOISDORÉ",
+        "type": "village",
+        "eastKm": 6.41,
+        "northKm": 4.81,
+        "approxSignedCoastDistanceMetres": -731.8
+      },
+      {
+        "id": "neigerive",
+        "name": "NEIGERIVE",
+        "type": "village",
+        "eastKm": 21.99,
+        "northKm": 12.15,
+        "approxSignedCoastDistanceMetres": -3206.3
+      },
+      {
+        "id": "froidepin",
+        "name": "FROIDEPIN",
+        "type": "village",
+        "eastKm": 12.49,
+        "northKm": 18.88,
+        "approxSignedCoastDistanceMetres": -1665.3
+      },
+      {
+        "id": "osterlac",
+        "name": "OSTERLAC",
+        "type": "village",
+        "eastKm": 20.03,
+        "northKm": 13.88,
+        "approxSignedCoastDistanceMetres": -1186.8
+      },
+      {
+        "id": "fjordin",
+        "name": "FJORDIN",
+        "type": "village",
+        "eastKm": 9.78,
+        "northKm": 12.77,
+        "approxSignedCoastDistanceMetres": -2123.5
+      },
+      {
+        "id": "frostel",
+        "name": "FROSTEL",
+        "type": "village",
+        "eastKm": 18.84,
+        "northKm": 13.43,
+        "approxSignedCoastDistanceMetres": -392.6
+      },
+      {
+        "id": "malphare",
+        "name": "MALPHARE",
+        "type": "village",
+        "eastKm": 16,
+        "northKm": 6.14,
+        "approxSignedCoastDistanceMetres": -2017.6
+      },
+      {
+        "id": "plage-cendre",
+        "name": "PLAGE-CENDRE",
+        "type": "village",
+        "eastKm": 19.31,
+        "northKm": 1.6,
+        "approxSignedCoastDistanceMetres": -2659.3
+      },
+      {
+        "id": "cote-d-orval",
+        "name": "CÔTE-D'ORVAL",
+        "type": "village",
+        "eastKm": 18.41,
+        "northKm": 4.77,
+        "approxSignedCoastDistanceMetres": -2750.7
+      },
+      {
+        "id": "vauclerc",
+        "name": "VAUCLERC",
+        "type": "village",
+        "eastKm": 21.39,
+        "northKm": -2.73,
+        "approxSignedCoastDistanceMetres": -3674.1
+      },
+      {
+        "id": "fonte-mer",
+        "name": "FONTE-MER",
+        "type": "village",
+        "eastKm": 18.53,
+        "northKm": 6.98,
+        "approxSignedCoastDistanceMetres": -4039.8
+      },
+      {
+        "id": "elmarin",
+        "name": "ELMARIN",
+        "type": "village",
+        "eastKm": 14.32,
+        "northKm": -10.13,
+        "approxSignedCoastDistanceMetres": -362.2
+      },
+      {
+        "id": "valest",
+        "name": "VALEST",
+        "type": "village",
+        "eastKm": 15.33,
+        "northKm": 4.24,
+        "approxSignedCoastDistanceMetres": -261
+      },
+      {
+        "id": "auberive",
+        "name": "AUBERIVE",
+        "type": "village",
+        "eastKm": 6.14,
+        "northKm": -16.73,
+        "approxSignedCoastDistanceMetres": -1262.8
+      },
+      {
+        "id": "herbehaute",
+        "name": "HERBEHAUTE",
+        "type": "village",
+        "eastKm": -3.24,
+        "northKm": -21.56,
+        "approxSignedCoastDistanceMetres": -1589.2
+      },
+      {
+        "id": "sauleval",
+        "name": "SAULEVAL",
+        "type": "village",
+        "eastKm": 8.3,
+        "northKm": -17.14,
+        "approxSignedCoastDistanceMetres": -807
+      },
+      {
+        "id": "merilac",
+        "name": "MÉRILAC",
+        "type": "village",
+        "eastKm": -0.14,
+        "northKm": -16.3,
+        "approxSignedCoastDistanceMetres": -1050.4
+      },
+      {
+        "id": "boissain",
+        "name": "BOISSAIN",
+        "type": "village",
+        "eastKm": 6.3,
+        "northKm": -14.82,
+        "approxSignedCoastDistanceMetres": -400.5
+      },
+      {
+        "id": "pont-d-oree",
+        "name": "PONT-D'ORÉE",
+        "type": "village",
+        "eastKm": -4.39,
+        "northKm": -21.72,
+        "approxSignedCoastDistanceMetres": -1744.7
+      },
+      {
+        "id": "grandpre",
+        "name": "GRANDPRÉ",
+        "type": "village",
+        "eastKm": -0.26,
+        "northKm": -20.7,
+        "approxSignedCoastDistanceMetres": -1659.4
+      },
+      {
+        "id": "corne-bois",
+        "name": "CORNE-BOIS",
+        "type": "village",
+        "eastKm": -3.22,
+        "northKm": -20.59,
+        "approxSignedCoastDistanceMetres": -524.1
+      },
+      {
+        "id": "rive-basse",
+        "name": "RIVE-BASSE",
+        "type": "village",
+        "eastKm": -1.02,
+        "northKm": -22.37,
+        "approxSignedCoastDistanceMetres": -2642.8
+      },
+      {
+        "id": "montbrun",
+        "name": "MONTBRUN",
+        "type": "village",
+        "eastKm": -5.49,
+        "northKm": -20.99,
+        "approxSignedCoastDistanceMetres": -1031.1
+      },
+      {
+        "id": "vermont",
+        "name": "VERMONT",
+        "type": "village",
+        "eastKm": 5.14,
+        "northKm": -18.51,
+        "approxSignedCoastDistanceMetres": -767.2
+      },
+      {
+        "id": "bellevigne",
+        "name": "BELLEVIGNE",
+        "type": "village",
+        "eastKm": -1.67,
+        "northKm": -15.82,
+        "approxSignedCoastDistanceMetres": -488.4
+      }
+    ]
+  },
+  "requiredNextSteps": [
+    "preserve full 48km graded-world building and road assets",
+    "create separately versioned island coastline migration, never overwrite existing level",
+    "reconcile original archipelago ocean/land masks with all 125 planned sites",
+    "identify dry building pads and access to island coastline before actual UE5 authoring",
+    "define dock/boat or bridge routes instead of automatically treating water as roads",
+    "validate World Partition external actors, collision and SM5 game play before claiming island villages complete"
+  ]
+}

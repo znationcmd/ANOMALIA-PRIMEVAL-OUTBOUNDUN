@@ -1,0 +1,94 @@
+name: RACCONIA - stage corrected 16km terrain and 29 models on native PC
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - 'sources/racconia/racconia-native-source.zip'
+      - '.github/workflows/racconia-stage-native-source-20261111.yml'
+      - 'unreal/Scripts/import_racconia_models_native.py'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-corrected-sources:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate and stage original corrected sources without overwriting any map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          $zip=Join-Path $env:GITHUB_WORKSPACE 'sources\racconia\racconia-native-source.zip'
+          if((Get-FileHash -LiteralPath $zip -Algorithm SHA256).Hash.ToLower() -ne '82a40dffd6d844eeddaf4249bd04806c10466589799fbe0c261d09bcd0ab5d85'){throw 'Source archive hash mismatch'}
+          $dest=Join-Path $stage 'SourceAssets\Racconia16km_20261111'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $archive=[IO.Compression.ZipFile]::OpenRead($zip)
+          try {
+            if($archive.Entries.Count -ne 32){throw 'Expected terrain, site CSV, metadata and 29 GLBs'}
+            foreach($entry in $archive.Entries){
+              if($entry.FullName -match '(^/|\\|\.\.)' -or $entry.Length -gt 3000000){throw 'Unexpected source entry'}
+            }
+          } finally {$archive.Dispose()}
+          if(!(Test-Path -LiteralPath $dest)){
+            if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 512MB){throw 'Insufficient staging space'}
+            [IO.Compression.ZipFile]::ExtractToDirectory($zip,$dest)
+          }
+          $raw=Join-Path $dest 'RACCONIA_UE5_READY_1009_north_up.r16'
+          $meta=Get-Content -LiteralPath (Join-Path $dest 'racconia-height-scale-and-sites.json') -Raw | ConvertFrom-Json
+          if((Get-Item -LiteralPath $raw).Length -ne (1009*1009*2)){throw 'RAW16 dimensions mismatch'}
+          if((Get-FileHash -LiteralPath $raw -Algorithm SHA256).Hash.ToLower() -ne $meta.correctedRaw16Sha256){throw 'RAW16 content mismatch'}
+          $models=@(Get-ChildItem -LiteralPath (Join-Path $dest 'Models_original_blockouts') -Filter *.glb -File)
+          $sites=@(Import-Csv -LiteralPath (Join-Path $dest 'racconia-29-sites-UE5.csv'))
+          if($models.Count -ne 29 -or $sites.Count -ne 29 -or $meta.unrealLandscape.scaleCm.z -ne 2500){throw 'Racconia model/site/height settings mismatch'}
+          $report=[ordered]@{
+            state='CORRECTED_RACCONIA_SOURCES_STAGED_ON_NATIVE_PC_NOT_IMPORTED'
+            path=$dest
+            sourceArchiveSHA256='82a40dffd6d844eeddaf4249bd04806c10466589799fbe0c261d09bcd0ab5d85'
+            models=$models.Count
+            sites=$sites.Count
+            landscapeScale=$meta.unrealLandscape.scaleCm
+            nativeLevelCreated=$false
+            existingMapsModified=$false
+            PIEValidated=$false
+          }
+          $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_NATIVE_SOURCE_STAGE.json') -Encoding UTF8
+          Write-Host ('RACCONIA_NATIVE_SOURCE_STAGE='+$report.state)
+          Write-Host ('RACCONIA_NATIVE_SOURCE_PATH='+$dest)
+          Write-Host ('RACCONIA_MODELS='+$models.Count)
+          Write-Host ('RACCONIA_SITES='+$sites.Count)
+      - name: Import original blockout GLBs into native assets without opening or modifying maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor is active'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 2GB){throw 'Insufficient disk space for bounded GLB import'}
+          $env:RACCONIA_MODEL_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_NATIVE_MODEL_IMPORT.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\import_racconia_models_native.py'
+          & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_MODEL_REPORT)){throw 'Native GLB import report missing'}
+          $r=Get-Content -LiteralPath $env:RACCONIA_MODEL_REPORT -Raw | ConvertFrom-Json
+          Write-Host ('RACCONIA_NATIVE_IMPORT_STATE='+$r.state)
+          Write-Host ('RACCONIA_NATIVE_SOURCE_MODELS='+$r.sourceCount)
+          Write-Host ('RACCONIA_NATIVE_STATIC_MESHES='+$r.staticMeshCount)
+          if($code -ne 0 -or $r.sourceCount -ne 29 -or !$r.existingMapsUnchanged){throw ('Native import not verified: '+$r.error)}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RACCONIA-NATIVE-PC-SOURCE-STAGE
+          path: |
+            RACCONIA_NATIVE_SOURCE_STAGE.json
+            RACCONIA_NATIVE_MODEL_IMPORT.json
+          if-no-files-found: error

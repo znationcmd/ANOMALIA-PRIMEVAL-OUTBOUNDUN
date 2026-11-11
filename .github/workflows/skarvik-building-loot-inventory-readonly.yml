@@ -1,0 +1,62 @@
+name: SKARVIK - read-only inventory of real building transforms for loot planning
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-building-loot-inventory-readonly.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate isolated stage and ensure no concurrent Unreal editor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted staging project'}
+          foreach($f in @(
+            (Join-Path $root 'AnomaliaZPrigimalia.uproject'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){
+            if(!(Test-Path -LiteralPath $f -PathType Leaf)){throw "Protected project/map missing: $f"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active; read-only audit will not overlap it'}
+          if(!$env:UE_ROOT){throw 'Installed UE_ROOT is required'}
+          Write-Host 'SKARVIK_BUILDING_INVENTORY_STAGE_VALIDATED=true'
+      - name: Open existing final SKARVIK and inventory building transforms without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $out=Join-Path $env:GITHUB_WORKSPACE "skarvik-building-inventory-$env:GITHUB_RUN_ID.json"
+          $env:SKARVIK_BUILDING_INVENTORY_REPORT=$out
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_building_transforms_for_loot.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $nativeExit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $out)){throw 'Building inventory report missing'}
+          $r=Get-Content -LiteralPath $out -Raw | ConvertFrom-Json
+          Write-Host ('SKARVIK_BUILDING_INVENTORY_STATE='+$r.state)
+          Write-Host ('SKARVIK_BUILDING_INVENTORY_COUNTS='+($r.counts|ConvertTo-Json -Compress))
+          Write-Host ('SKARVIK_BUILDING_INVENTORY_RECORDS='+@($r.buildings).Count)
+          Write-Host ('SKARVIK_BUILDING_INVENTORY_MISSING_MESH='+@($r.missingMesh).Count)
+          if($r.state -ne 'READ_ONLY_BUILDING_TRANSFORMS_INVENTORIED' -or @($r.buildings).Count -ne 1754 -or $r.sourcesUnchanged -ne $true -or $r.mapsSaved -ne $false -or $r.lootSpawnActorsCreated -ne 0){throw ('Read-only building inventory failed: '+$r.error)}
+          if($nativeExit -ne 0){Write-Host ('SKARVIK_BUILDING_INVENTORY_EDITOR_EXIT='+$nativeExit)}
+          Write-Host 'SKARVIK_BUILDING_INVENTORY_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-real-building-transforms-readonly
+          path: skarvik-building-inventory-${{ github.run_id }}.json
+          if-no-files-found: error

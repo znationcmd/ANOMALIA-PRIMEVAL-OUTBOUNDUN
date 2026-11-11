@@ -1,0 +1,83 @@
+name: SKARVIK - expand genuine graded asphalt to 20 more connectors
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-expand-native-asphalt-20-routes.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-road-expansion:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect original, verify previous 1039 buildings and 126 paved 3D actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555')){throw 'Untrusted stage'}
+          foreach($f in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+              (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+              (Join-Path $root 'Saved\SkarvikCity\BeforeGradedRoadMeshes\graded-with-houses-no-roads.umap'))){
+            if(!(Test-Path -LiteralPath $f)){throw "Protected native world missing: $f"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\SkarvikCity\RoadExpansion20261031\graded-pre-expansion.umap')){
+            throw 'Batch already attempted; never duplicate actors'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent editor instance active'
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_NATIVE_ASPHALT_EXPANSION_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 19){throw 'Less than 19 GiB free on C'}
+          $plan=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json') -Raw | ConvertFrom-Json
+          if(@($plan.settlements).Count -ne 125 -or @($plan.roads).Count -ne 382){
+            throw 'Approved SKARVIK masterplan changed'
+          }
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\expand_skarvik_native_asphalt_v3.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native road extension Python syntax failed'}
+          Write-Host 'SKARVIK_NATIVE_REAL_ASPHALT_EXPANSION_PREFLIGHT_OK=true'
+      - name: Create real graded asphalt actors with protected settlements and per-route safety report
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\expand_skarvik_native_asphalt_v3.py'
+          $env:SKARVIK_ROAD_EXPANSION_LAYOUT=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_ROAD_EXPANSION_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-real-asphalt-expansion-report.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ROAD_EXPANSION_REPORT)){throw 'Unreal route expansion report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_ROAD_EXPANSION_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_REAL_ASPHALT_EXPANSION_STATE='+$r.state)
+          Write-Host ('SKARVIK_NATIVE_REAL_ASPHALT_EXPANSION_ROUTES='+$r.additionalRouteCount)
+          Write-Host ('SKARVIK_NATIVE_REAL_ASPHALT_EXPANSION_ACTORS='+$r.additionalRoadMeshActors)
+          Write-Host ('SKARVIK_NATIVE_REAL_ASPHALT_EXPANSION_METRES='+$r.newRoadSurfaceMetres)
+          foreach($route in @($r.routes)){
+            Write-Host ('SKARVIK_NATIVE_REAL_ASPHALT_ROUTE='+$route.id+' STATUS='+$route.state+' ACTORS='+$route.realRoadActors)
+          }
+          if($exit -ne 0 -or $r.state -ne 'REAL_ASPHALT_ROAD_EXPANSION_SAVED_ON_GRADED_WORLD_NOT_DRIVEN' -or
+             $r.additionalRouteCount -lt 5 -or $r.additionalRoadMeshActors -lt 100){
+            throw ('Road expansion did not pass: '+$r.error)
+          }
+          Write-Host 'SKARVIK_REAL_GRADED_ASPHALT_EXPANSION_SAVED_IN_EXISTING_48KM_WORLD=true'
+          Write-Host 'SKARVIK_REMAINING_ROADS_BRIDGES_AND_GAMEPLAY_STILL_PENDING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-road-expansion-real-3d-graded-20-candidates
+          path: skarvik-real-asphalt-expansion-report.json
+          if-no-files-found: warn

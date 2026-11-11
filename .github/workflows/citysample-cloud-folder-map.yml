@@ -1,0 +1,45 @@
+name: CITY SAMPLE - controle des 465 repertoires World Partition cloud
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-cloud-folder-map.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-local-directory-shards:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Read only directory names for cloud completeness check
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          $roots=@(
+            'Content\__ExternalActors__\Map\Big_City_LVL',
+            'Content\City',
+            'Content\Map'
+          )
+          $r=[ordered]@{schema='CitySampleCloudShardsV1';noDataModified=$true;source='trusted UE5 Windows stage';roots=@()}
+          foreach($rel in $roots){
+            $path=Join-Path $stage $rel
+            if(!(Test-Path -LiteralPath $path)){throw ('Missing '+$rel)}
+            $dirs=@(Get-ChildItem -LiteralPath $path -Directory -Force | ForEach-Object {$_.Name} | Sort-Object -Unique)
+            $r.roots+=@([ordered]@{relativePath=$rel;firstLevelCount=$dirs.Count;firstLevelNames=$dirs})
+            Write-Host ('CITY_SAMPLE_PC_ROOT_FOLDERS='+$rel+'|'+$dirs.Count)
+          }
+          $r|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_REAL_PC_DIRECTORY_SHARDS.json') -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-PC-DIRECTORY-SHARDS
+          path: CITY_SAMPLE_REAL_PC_DIRECTORY_SHARDS.json
+          retention-days: 30

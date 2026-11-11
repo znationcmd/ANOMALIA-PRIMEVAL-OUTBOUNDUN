@@ -1,0 +1,65 @@
+name: SKARVIK - independently verify seven native islands and 15 3D towns after reload
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-seven-islands-15-towns-after-reload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-native:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Assert new native island World Partition exists and original 48km graded version is unchanged
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong staging marker'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Required previous or newly created native world absent: $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE Editor running'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_seven_native_islands_after_reopen.py')
+          if($LASTEXITCODE -ne 0){throw 'Native independent island verification source invalid'}
+      - name: Reopen seven real native island landscape actors and verify 15 actual settlement cores
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_ISLAND_NATIVE_REOPEN_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-island-migration-v1.json'
+          $env:SKARVIK_ISLAND_NATIVE_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-7-islands-15-localities-reopen-evidence.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_seven_native_islands_after_reopen.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_ISLAND_NATIVE_REOPEN_REPORT)){throw 'Native island independent report missing'}
+          $result=Get-Content -LiteralPath $env:SKARVIK_ISLAND_NATIVE_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_SEVEN_ISLANDS_WP_REOPEN_STATE='+$result.state)
+          Write-Host ('SKARVIK_SEVEN_ISLANDS_WP_REOPEN_COUNT='+$result.islandCount)
+          Write-Host ('SKARVIK_SEVEN_ISLANDS_WP_LOCALITY_COUNT='+$result.localityCount)
+          Write-Host ('SKARVIK_SEVEN_ISLANDS_WP_SAVED_MESH_BUILDINGS='+$result.totalRealBuildingActors)
+          if($exit -ne 0 -or $result.state -ne 'SEVEN_REAL_NATIVE_ISLAND_WP_SECTORS_AND_FIFTEEN_SETTLEMENT_CORES_PERSIST_AFTER_REOPEN'){
+            throw ('Island actor verification failed: '+$result.error)
+          }
+          Write-Host 'SKARVIK_REAL_SEVEN_OFFSHORE_ISLANDS_AND_VILLAGES_PERSIST_IN_SEPARATE_NATIVE_WP=true'
+          Write-Host 'SKARVIK_ORIGINAL_GRADED_MAP_AND_100_REGIONAL_ROADS_STILL_NOT_MIGRATED_TO_NEW_ISLAND_WORLD=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-true-seven-island-world-15-native-villages-reopen-proof
+          path: skarvik-7-islands-15-localities-reopen-evidence.json
+          if-no-files-found: warn

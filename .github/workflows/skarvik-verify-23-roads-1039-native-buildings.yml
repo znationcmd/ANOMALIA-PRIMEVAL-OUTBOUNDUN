@@ -1,0 +1,65 @@
+name: SKARVIK - verify 23 genuine roads and 1039 buildings in one saved native world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-verify-23-roads-1039-native-buildings.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  persistence:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate C staging and protected original D map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          foreach($file in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+           (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+           (Join-Path $root 'Saved\SkarvikCity\RoadExpansion20261031\graded-pre-expansion.umap'))){
+           if(!(Test-Path -LiteralPath $file)){throw "Protected map or backup absent: $file"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal session already running'}
+      - name: Read-only native World Partition reopen and check every saved site and road actor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_graded_23_roads_1039_buildings.py'
+          & $python -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Syntax error in 23-road audit'}
+          $env:SKARVIK_GRADED_REOPEN_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-23-road-and-building-persistence-proof.json'
+          & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT)){throw 'No native World Partition read report'}
+          $data=Get-Content -LiteralPath $env:SKARVIK_GRADED_REOPEN_BUILDING_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_NATIVE_REOPEN_23_ROADS_STATE='+$data.state)
+          Write-Host ('SKARVIK_NATIVE_REOPEN_BUILDINGS='+$data.savedMeshActors)
+          Write-Host ('SKARVIK_NATIVE_REOPEN_ORIGINAL_ROAD_ACTORS='+$data.roadActorDescriptors)
+          Write-Host ('SKARVIK_NATIVE_REOPEN_NEW_ROAD_ACTORS='+$data.expandedRoadActors)
+          Write-Host ('SKARVIK_NATIVE_REOPEN_SITES='+$data.sitesWithSavedMeshActors)
+          if($code -ne 0 -or $data.state -ne 'GRADED_48KM_WORLD_124_SITES_AND_23_NATIVE_ROADS_PERSISTED_NOT_DRIVEN' -or
+            $data.savedMeshActors -ne 1039 -or $data.expandedRoadActors -ne 1668 -or $data.roadActorDescriptors -ne 126){
+            throw ('Unreal 23 native roads did not persist after reload: '+$data.error)
+          }
+          Write-Host 'SKARVIK_ALL_23_ROADS_AND_1039_BUILDINGS_PERSIST_IN_ONE_REAL_UE5_WORLD=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-23-graded-native-roads-plus-1039-houses
+          path: skarvik-23-road-and-building-persistence-proof.json
+          if-no-files-found: warn

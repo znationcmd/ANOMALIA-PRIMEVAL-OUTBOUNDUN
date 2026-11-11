@@ -1,0 +1,62 @@
+name: SKARVIK - survey terrain-safe switchbacks for remaining steep road holes
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-grade-safe-switchback-survey.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  route-survey:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check road repair inputs and do not run while the Unreal project is editing
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong C stage'}
+          foreach($p in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\GapFixSmallMeshV1_20261031\graded-before-repair.umap'))){
+            if(!(Test-Path -LiteralPath $p)){throw "Missing protected map or prior successful road repair $p"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal running'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\survey_skarvik_grade_safe_road_switchbacks.py')
+          if($LASTEXITCODE -ne 0){throw 'Read-only switchback survey Python invalid'}
+          Write-Host 'SKARVIK_GRADE_SAFE_SWITCHBACK_SOURCE_VERIFIED=true'
+      - name: Compute non-floating 15 percent grade switchback candidates for road holes, no map edits
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_SWITCHBACK_MASTERPLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-world-layout-48km.json'
+          $env:SKARVIK_SWITCHBACK_SURVEY_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-switchbacks-road-gap-survey.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\survey_skarvik_grade_safe_road_switchbacks.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_SWITCHBACK_SURVEY_REPORT)){throw 'No native landscape route survey report'}
+          $result=Get-Content -LiteralPath $env:SKARVIK_SWITCHBACK_SURVEY_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_ROAD_SWITCHBACK_ASTAR_STATE='+$result.state)
+          Write-Host ('SKARVIK_ROAD_SWITCHBACK_ASTAR_PROPOSALS='+$result.proposedDetours)
+          Write-Host ('SKARVIK_ROAD_SWITCHBACK_ASTAR_UNRESOLVED_GROUPS='+$result.unresolvedDetourGroups)
+          if($rc -ne 0 -or $result.state -ne 'SKARVIK_GRADE_SAFE_ROAD_SWITCHBACKS_SURVEYED_WITHOUT_MODIFYING_TERRAIN'){
+           throw ('Terrain-safe road reroute survey failed: '+$result.error)
+          }
+          Write-Host 'SKARVIK_SWITCHBACK_ROUTE_PROPOSALS_NOT_YET_NATIVE_ACTORS_OR_DRIVEN=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-grade-safe-road-switchback-proposed-alignments
+          path: skarvik-switchbacks-road-gap-survey.json
+          if-no-files-found: warn

@@ -1,0 +1,78 @@
+name: SKARVIK - audit Big City external actors without loading or editing world
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-bigcity-external-actor-dependency-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Audit CitySample Big City true partition data and selected dependency folders read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $source='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Unexpected stage marker'}
+          if(!(Test-Path -LiteralPath $source)){throw 'Protected original D map absent'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){throw 'CitySample original source map missing'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal process already running'}
+          $paths=@(
+            'Map\Big_City_LVL.umap',
+            '__ExternalActors__\Map\Big_City_LVL',
+            '__ExternalObjects__\Map\Big_City_LVL',
+            'Building',
+            'City',
+            'Road',
+            'Material',
+            'Megascans',
+            'Crowd',
+            'Vehicle'
+          )
+          $entries=@()
+          foreach($relative in $paths){
+            $p=Join-Path (Join-Path $root 'Content') $relative
+            $exists=Test-Path -LiteralPath $p
+            $count=0
+            [long]$bytes=0
+            if($exists){
+              $item=Get-Item -LiteralPath $p
+              if($item.PSIsContainer){
+                foreach($f in (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction Stop)){
+                  $count++
+                  $bytes+=[long]$f.Length
+                }
+              }else{$count=1;$bytes=[long]$item.Length}
+            }
+            $row=[ordered]@{path=$relative;exists=[bool]$exists;fileCount=$count;sizeMiB=[math]::Round($bytes/1MB,2)}
+            $entries+=@($row)
+            Write-Host ('SKARVIK_CITYSAMPLE_DEPENDENCY path={0} exists={1} files={2} MiB={3}' -f $relative,$exists,$count,[math]::Round($bytes/1MB,2))
+          }
+          $ext=@($entries|Where-Object{$_.path -eq '__ExternalActors__\Map\Big_City_LVL'})[0]
+          Write-Host ('SKARVIK_BIGCITY_EXTERNAL_ACTOR_FILES='+$ext.fileCount)
+          $report=[ordered]@{
+            status='READ_ONLY_CITYSAMPLE_EXTERNAL_ACTOR_DEPENDENCY_AUDITED'
+            bigCityExternalActorPackageCount=$ext.fileCount
+            bigCityExternalActorsPresent=($ext.fileCount -gt 0)
+            citySourceLevelInstanceLinked=$false
+            originalDModified=$false
+            mapGraded48KmModified=$false
+            source= $entries
+            note='Do not infer a fully importable nested WP City Sample solely from asset path or file counts; engine level-instance load and SM5 game tests still required.'
+          }
+          $path=Join-Path $env:GITHUB_WORKSPACE 'skarvik-big-city-external-actor-dependencies.json'
+          [IO.File]::WriteAllText($path,($report|ConvertTo-Json -Depth 7),(New-Object System.Text.UTF8Encoding($false)))
+          Write-Host 'SKARVIK_BIGCITY_DISK_DEPENDENCIES_INSPECTED_NO_CHANGES=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-bigcity-readonly-actor-dependency-counts
+          path: skarvik-big-city-external-actor-dependencies.json
+          if-no-files-found: error
+          retention-days: 30

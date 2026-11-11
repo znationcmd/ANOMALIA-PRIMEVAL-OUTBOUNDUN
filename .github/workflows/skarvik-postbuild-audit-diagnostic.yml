@@ -1,0 +1,47 @@
+name: SKARVIK - diagnose native audit failure after successful C++ build
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-postbuild-audit-diagnostic.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Inspect current Unreal logs, module load and last native audit without changes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or ((Get-Content $marker -Raw).Trim() -ne '41188816555')){throw 'Untrusted stage'}
+          foreach($name in @('C','D')){
+            $disk=[IO.DriveInfo]::new($name)
+            Write-Host ("SKARVIK_POSTBUILD_DRIVE={0} FREE_GIB={1:N2}" -f $name,($disk.AvailableFreeSpace/1GB))
+          }
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $desc=Get-Content $project -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_POSTBUILD_MODULES='+(@($desc.Modules|ForEach-Object{$_.Name}) -join ','))
+          Write-Host ('SKARVIK_POSTBUILD_ENABLED_PLUGINS='+(@($desc.Plugins|Where-Object{$_.Enabled}|ForEach-Object{$_.Name}) -join ','))
+          $logs=Join-Path $root 'Saved\Logs'
+          foreach($file in @(Get-ChildItem $logs -File -Filter '*AnomaliaZPrigimalia*.log' -ErrorAction SilentlyContinue|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 2)){
+            Write-Host ("SKARVIK_POSTBUILD_LOG={0} SIZE={1}" -f $file.Name,$file.Length)
+            $match=@(Get-Content -LiteralPath $file.FullName -Tail 3000 | Where-Object{
+              $_ -match 'LogPluginManager: Error|LogModuleManager: Warning|LogModuleManager: Error|LogPython: Error|SKARVIK_CITY_NATIVE_ASSET_PREFLIGHT|SKARVIK_CITY_AUDIT_REPORT|LogEditorPythonExecuter|Fatal error|LoadErrors|LogInit: Error|LogWindows: Error|UnrealEditor-CitySample|WorldAudioDataSystem|Module could not be loaded|Missing.*[Mm]odule|Invalid class'
+            })
+            foreach($line in ($match|Select-Object -Last 45)){Write-Host ("SKARVIK_POSTBUILD_LOG_LINE="+$line)}
+          }
+          foreach($f in @('Saved\SkarvikCity\city-asset-audit.json','Saved\SkarvikCity\city-instance.json')){
+            $p=Join-Path $root $f
+            if(Test-Path $p){Write-Host "SKARVIK_POSTBUILD_REPORT=$f";Get-Content $p -Raw}
+          }
+          foreach($d in @('Content\Crowd','Content\Vehicle','Content\Map\Big_City_LVL.umap','Binaries\Win64\UnrealEditor-CitySample.dll','Binaries\Win64\UnrealEditor-CitySampleAnimGraphRuntime.dll')){
+            Write-Host ("SKARVIK_POSTBUILD_EXISTS={0} VALUE={1}" -f $d,(Test-Path (Join-Path $root $d)))
+          }
+          Write-Host 'SKARVIK_POSTBUILD_READONLY_DIAGNOSTIC_SUCCESS=true'

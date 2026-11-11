@@ -1,0 +1,77 @@
+name: ANOMALIA - complete read-only inventory of UE5 animals weapons vehicles and survival assets
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/anomalia-complete-asset-inventory-readonly.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Inventory existing Unreal and Fab assets without copying or changing project files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $roots=@('D:\ANOMALIA\unreal\Content','D:\ANOMALIA\FabImports','D:\ANOMALIA\sketchfab','D:\ANOMALIA\unreal\SourceAssets')
+          $patterns=[ordered]@{
+            animals='(?i)animal|monkey|ape|chimp|gorilla|lion|wolf|wolfhound|dog|shepherd|cat|bear|deer|boar|fox|rabbit|hare|horse|cow|sheep|goat|pig|bird|eagle|crow|snake|reptile|crocodile|shark|fish|wildlife|pet|companion|fauna'
+            weapons='(?i)weapon|rifle|pistol|shotgun|sniper|smg|ak47|ak.?74|m4a1|knife|bow|crossbow|ammo|magazine|grenade|sword'
+            vehicles='(?i)vehicle|car|truck|van|bus|motorcycle|motorbike|bike|boat|ship|aircraft|plane|helicopter|train|metro|bmw|e39|wheel|engine'
+            food_drink='(?i)food|canned|can_|tin_|ration|bread|meat|fish|fruit|vegetable|apple|potato|tomato|mushroom|drink|water|bottle|wine|beer|soda|milk|juice|hunger|thirst|cooking|kitchen'
+            medical_survival='(?i)medical|medicine|pill|tablet|bandage|medkit|first.?aid|survival|camping|backpack|tent|sleeping.?bag|fireplace|stove|tool|repair|loot'
+            zombie='(?i)zombie|undead|infected|ghoul|walker|crawler|mutant'
+          }
+          $extensions=@('.uasset','.umap','.fbx','.glb','.gltf','.blend','.obj','.abc','.usd','.usdz','.png','.jpg','.jpeg','.tga','.exr','.json','.zip','.rar','.7z')
+          $skip=@('.git','Intermediate','Saved','DerivedDataCache','Binaries','node_modules','Cache','Caches','Temp')
+          $report=[ordered]@{state='READ_ONLY_UE5_ASSET_INVENTORY';roots=@();categories=[ordered]@{};candidateCount=0;truncated=$false;noAssetCopied=$true;noProjectModified=$true}
+          foreach($category in $patterns.Keys){$report.categories[$category]=[System.Collections.Generic.List[object]]::new()}
+          $limit=500000;$scanned=0
+          foreach($root in $roots){
+            $entry=[ordered]@{path=$root;exists=(Test-Path -LiteralPath $root -PathType Container);filesScanned=0}
+            if($entry.exists){
+              $stack=[System.Collections.Generic.Stack[string]]::new();$stack.Push($root)
+              while($stack.Count -gt 0){
+                $dir=$stack.Pop()
+                foreach($f in (Get-ChildItem -LiteralPath $dir -File -ErrorAction SilentlyContinue)){
+                  $scanned++;$entry.filesScanned++
+                  if($scanned -gt $limit){$report.truncated=$true;break}
+                  if($extensions -notcontains $f.Extension.ToLowerInvariant()){continue}
+                  foreach($category in $patterns.Keys){
+                    if($f.Name -match $patterns[$category]){
+                      $report.categories[$category].Add([ordered]@{path=$f.FullName;name=$f.Name;bytes=$f.Length;extension=$f.Extension;modifiedUtc=$f.LastWriteTimeUtc.ToString('o')})
+                    }
+                  }
+                }
+                if($report.truncated){break}
+                foreach($d in (Get-ChildItem -LiteralPath $dir -Directory -ErrorAction SilentlyContinue)){
+                  if($skip -notcontains $d.Name){$stack.Push($d.FullName)}
+                }
+              }
+            }
+            $report.roots+= $entry
+            if($report.truncated){break}
+          }
+          foreach($category in $patterns.Keys){$report.categories[$category]=@($report.categories[$category] | Sort-Object modifiedUtc -Descending)}
+          $report.candidateCount=($report.categories.Values | ForEach-Object { $_.Count } | Measure-Object -Sum).Sum
+          $out=Join-Path $env:GITHUB_WORKSPACE "anomalia-complete-assets-$env:GITHUB_RUN_ID.json"
+          $report | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath $out -Encoding UTF8
+          foreach($category in $patterns.Keys){Write-Host ("ASSET_"+$category.ToUpperInvariant()+"="+$report.categories[$category].Count)}
+          Write-Host ('ASSET_INVENTORY_TOTAL='+$report.candidateCount)
+          Write-Host ('ASSET_INVENTORY_TRUNCATED='+$report.truncated)
+          Write-Host ('ASSET_INVENTORY_REPORT='+$out)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-complete-ue5-asset-inventory
+          path: anomalia-complete-assets-${{ github.run_id }}.json
+          if-no-files-found: error

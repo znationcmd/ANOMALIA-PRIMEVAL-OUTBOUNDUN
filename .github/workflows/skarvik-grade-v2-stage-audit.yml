@@ -1,0 +1,44 @@
+name: SKARVIK - verify native graded terrain V2 build prerequisites on C
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-grade-v2-stage-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Compare native stage to graded source without modifying anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted C stage'}
+          $files=@('World\AnomaliaZPrigimaliaSkarvikGraded.h','World\AnomaliaZPrigimaliaWorldImportLibrary.cpp','World\AnomaliaZPrigimaliaWorldImportLibrary.h')
+          foreach($suffix in $files){
+            $p='Source\AnomaliaZPrigimalia\'+$suffix
+            $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$p)
+            $dst=Join-Path $root $p
+            if(!(Test-Path $src)){throw 'Missing source '+$p}
+            if(Test-Path $dst){
+              $identical=(Get-FileHash $src -Algorithm SHA256).Hash -eq (Get-FileHash $dst -Algorithm SHA256).Hash
+              Write-Host ("SKARVIK_GRADED_SOURCE={0} STAGED=true SAME_SHA={1}" -f $p,$identical)
+              $text=Get-Content $dst -Raw
+              Write-Host ("SKARVIK_GRADED_API_SOURCE={0} HAS_GRADED={1}" -f $p,($text -match 'SkarvikGraded'))
+            } else {Write-Host ("SKARVIK_GRADED_SOURCE={0} STAGED=false" -f $p)}
+          }
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'
+          Write-Host ("SKARVIK_GRADED_NATIVE_WORLD_ALREADY_EXISTS="+(Test-Path $map))
+          Write-Host ("SKARVIK_GRADED_C_FREE_GIB="+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2))
+          Write-Host ("SKARVIK_GRADED_D_ORIGINAL_EXISTS="+(Test-Path 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'))
+          Write-Host 'SKARVIK_GRADED_PREFLIGHT_READONLY_COMPLETE=true'

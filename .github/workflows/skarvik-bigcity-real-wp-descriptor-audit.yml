@@ -1,0 +1,62 @@
+name: SKARVIK - Big City read-only real World Partition descriptor audit
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-bigcity-real-wp-descriptor-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Preflight isolated source maps and no concurrent Unreal sessions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          foreach($f in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'))){
+             if(!(Test-Path -LiteralPath $f)){throw "Protected world missing: $f"}
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal editor found'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_real_wp_actor_descriptors.py')
+          if($LASTEXITCODE -ne 0){throw 'Big City source audit syntax failed'}
+          Write-Host 'SKARVIK_REAL_CITY_DESCRIPTOR_ONLY_PREFLIGHT_OK=true'
+      - name: Inspect original Big City native actor descriptors without external actor loading
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_skarvik_bigcity_real_wp_actor_descriptors.py'
+          $env:SKARVIK_CITYSOURCE_DESC_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-bigcity-real-world-partition-descriptors.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $rc=$LASTEXITCODE
+          if(!(Test-Path $env:SKARVIK_CITYSOURCE_DESC_REPORT)){throw 'Big City source descriptor report missing'}
+          $d=Get-Content -LiteralPath $env:SKARVIK_CITYSOURCE_DESC_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_BIGCITY_REAL_WP_DESCRIPTOR_STATE='+$d.state)
+          Write-Host ('SKARVIK_BIGCITY_REAL_WP_ACTOR_DESCRIPTORS='+$d.descriptorCount)
+          Write-Host ('SKARVIK_BIGCITY_LOADED_ACTORS='+$d.loadedLevelActorCount)
+          if($rc -ne 0 -or $d.state -ne 'BIG_CITY_SOURCE_WP_86K_ACTOR_DESCRIPTOR_METADATA_AUDITED_WITHOUT_STREAMING'){
+           throw ('Big City metadata not verified: '+$d.error)
+          }
+          Write-Host 'SKARVIK_BIGCITY_ACTORS_NOT_COPIED_OR_INSTANCED_YET=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-citysample-real-worldpartition-actor-descriptors
+          path: skarvik-bigcity-real-world-partition-descriptors.json
+          if-no-files-found: warn

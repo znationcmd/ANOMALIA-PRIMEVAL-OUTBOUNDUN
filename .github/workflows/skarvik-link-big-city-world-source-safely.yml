@@ -1,0 +1,67 @@
+name: SKARVIK - link Big City native World source without loading 86k actors
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-link-big-city-world-source-safely.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-bigcity-ref:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Check protected original and Big City source, do not import all actor files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          foreach($name in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Saved\SkarvikCity\RoadExpansion20261031\graded-pre-expansion.umap'))){
+            if(!(Test-Path -LiteralPath $name)){throw "Missing protected map: $name"}
+          }
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\BigCityNativeReferencePilot20261031\before-city-reference.umap')){
+            throw 'Big City reference pilot already attempted; refuse overwrite'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session active'}
+          $disk=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($disk -lt 18){throw 'Insufficient free space C'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\link_skarvik_bigcity_source_as_unloaded_level_instance.py')
+          if($LASTEXITCODE -ne 0){throw 'Native CitySample reference Python syntax failed'}
+          Write-Host ('SKARVIK_BIG_CITY_REFERENCE_PREFLIGHT_C_FREE_GIB='+[math]::Round($disk,2))
+      - name: Save only a LevelInstance world reference in protected graded World Partition
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\link_skarvik_bigcity_source_as_unloaded_level_instance.py'
+          $env:SKARVIK_BIGCITY_REFERENCE_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-big-city-unloaded-reference-report.json'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REPORT)){throw 'Native Big City reference report missing'}
+          $res=Get-Content -LiteralPath $env:SKARVIK_BIGCITY_REFERENCE_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_BIG_CITY_REFERENCE_STATE='+$res.state)
+          Write-Host ('SKARVIK_BIG_CITY_LEVEL_ACTOR_REFERENCE_SAVED='+$res.cityLevelReferenceSaved)
+          if($exit -ne 0 -or $res.state -ne 'BIG_CITY_NATIVE_WORLD_REFERENCE_SAVED_IN_GRADED_SKARVIK_NOT_STREAMED'){
+            throw ('Big City reference not yet saved: '+$res.error)
+          }
+          Write-Host 'SKARVIK_BIG_CITY_SOURCE_LINKED_NATIVE_NOT_VISUALLY_TESTED=true'
+          Write-Host 'SKARVIK_CITY_SAMPLE_FULL_86K_ACTORS_NOT_STREAMED_OR_VALIDATED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-big-city-native-reference-safe-result
+          path: skarvik-big-city-unloaded-reference-report.json
+          if-no-files-found: warn

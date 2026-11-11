@@ -1,0 +1,144 @@
+name: SKARVIK - final 48km native coastline retry2 after preserving original shoreline pads
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-coastal-native-world-v1-retry2.yml', 'tests/native/skarvik_final_coastal_125_pad_terrain.cpp', 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaSkarvikFinalCoast.h']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-terrain-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Prove seven original islands with 125 dry terrain pads and no new ocean infill
+        run: |
+          set -euo pipefail
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -I unreal/Source/AnomaliaZPrigimalia tests/native/skarvik_final_coastal_125_pad_terrain.cpp -o /tmp/skarvik-final-coast-test
+          /tmp/skarvik-final-coast-test | tee skarvik-final-coast-source-test.txt
+          grep -q '^SKARVIK_FINAL_COAST_SOURCE_PAD_COUNT=125$' skarvik-final-coast-source-test.txt
+          grep -q '^SKARVIK_FINAL_COAST_ORIGINAL_UNDERWATER_SHORE_PRESERVED=true$' skarvik-final-coast-source-test.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-final-7-islands-125-site-relief-source-proof
+          path: skarvik-final-coast-source-test.txt
+          if-no-files-found: error
+  native-final-map:
+    needs: source-terrain-proof
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Protect all source 48km Worlds and ensure dedicated final world has not been created
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $m=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $m) -or (Get-Content -LiteralPath $m -Raw).Trim() -ne '41188816555'){throw 'Wrong isolated C staging project'}
+          foreach($src in @('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $src)){throw "Missing protected original $src"}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap')){throw 'Final coastal world already exists; refuse overwrite'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Other Unreal Editor active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_FINAL_COAST_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 18){throw 'Insufficient C staging disk reserve to create another 48km WP landscape'}
+          $plan=Get-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json') -Raw|ConvertFrom-Json
+          if(@($plan.sites).Count -ne 125 -or $plan.wetCentersRequiringRelocation -ne 67){throw 'Untrusted source relocation plan'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_skarvik_final_coastal_48km_v1.py')
+          if($LASTEXITCODE -ne 0){throw 'Native final map creation Python syntax invalid'}
+          Write-Host 'SKARVIK_FINAL_COAST_SAFE_PREFLIGHT_OK=true'
+      - name: Back up UE importer source files and copy new 125 dry-site native coast header into isolated C stage only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $rel='Source\AnomaliaZPrigimalia\World'
+          $dir=Join-Path $root $rel
+          $backup=Join-Path $root 'Saved\SkarvikCity\FinalCoastV1CppBackup_Retry2_20261101'
+          if(Test-Path -LiteralPath $backup){throw 'Final coast C++ backup already exists, no repeated source mutation'}
+          New-Item -Path $backup -ItemType Directory | Out-Null
+          foreach($file in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $existing=Join-Path $dir $file
+            $updated=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$rel+'\'+$file)
+            if(!(Test-Path -LiteralPath $existing) -or !(Test-Path -LiteralPath $updated)){throw "Missing C++ source $file"}
+            Copy-Item -LiteralPath $existing -Destination (Join-Path $backup $file) -ErrorAction Stop
+            Copy-Item -LiteralPath $updated -Destination $existing -Force -ErrorAction Stop
+          }
+          $header=Join-Path $dir 'AnomaliaZPrigimaliaSkarvikFinalCoast.h'
+          if(Test-Path -LiteralPath $header){
+            $installed=Get-Content -LiteralPath $header -Raw
+            if(-not $installed.Contains('{11570.0,-10760.0,125.0,160.0}')){
+              throw 'Existing final coastal header not from known failed staging attempt; refuse replacement'
+            }
+            Copy-Item -LiteralPath $header -Destination (Join-Path $backup 'PreviouslyInstalledFinalCoastHeader.h') -ErrorAction Stop
+            Write-Host 'SKARVIK_FINAL_OLD_COASTAL_HEADER_RECOVERABLE_FROM_RETRY_BACKUP=true'
+          }
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$rel+'\AnomaliaZPrigimaliaSkarvikFinalCoast.h')) -Destination $header -Force
+          Write-Host 'SKARVIK_FINAL_COAST_CPP_SOURCES_BACKED_UP_AND_C_ONLY_UPDATED=true'
+      - name: Compile native original islands plus 125 terrace final coastline in UE5.8
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $uproject='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $uproject -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('Native final island-coast C++ compile failed '+$LASTEXITCODE)}
+          Write-Host 'SKARVIK_FINAL_SEVEN_ISLANDS_COAST_125_SITE_NATIVE_CPP_COMPILED=true'
+      - name: Build only the new final World Partition 48km native Landscape with verified collision
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_NATIVE_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json'
+          $env:SKARVIK_FINAL_NATIVE_RESULT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-seven-islands-125-native-terraces.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\create_skarvik_final_coastal_48km_v1.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -d3d11 -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_NATIVE_RESULT)){throw 'No final native landscape evidence report'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_NATIVE_RESULT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_COAST_NATIVE_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_COAST_NATIVE_COMPONENTS='+$r.nativeLandscapeAndCollisionCount)
+          Write-Host ('SKARVIK_FINAL_COAST_SITE_PADS='+$r.sitePadCount)
+          Write-Host ('SKARVIK_FINAL_COAST_RELOCATIONS='+$r.provisionalDrySiteRelocations)
+          if($code -ne 0 -or $r.state -ne 'SKARVIK_FINAL_48KM_TRUE_SEVEN_ISLAND_COAST_AND_125_DRY_TERRACES_NATIVE_WORLD_SAVED_NOT_MIGRATED'){
+            throw ('Final coast terrain import not completed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_TRUE_SEVEN_ISLAND_RELIEF_AND_125_TERRACES_ACTUALLY_SAVED=true'
+          Write-Host 'SKARVIK_FINAL_OLD_BUILDINGS_AND_ROADS_NOT_YET_MIGRATED=true'
+      - name: Restore importer source from isolated backup if final-world creation failed
+        if: failure()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dir=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
+          $backup=Join-Path $root 'Saved\SkarvikCity\FinalCoastV1CppBackup_Retry2_20261101'
+          foreach($file in @('AnomaliaZPrigimaliaWorldImportLibrary.cpp','AnomaliaZPrigimaliaWorldImportLibrary.h')){
+            $p=Join-Path $backup $file
+            if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination (Join-Path $dir $file) -Force}
+          }
+          $oldHeader=Join-Path $backup 'PreviouslyInstalledFinalCoastHeader.h'
+          if(Test-Path -LiteralPath $oldHeader){
+             Copy-Item -LiteralPath $oldHeader -Destination (Join-Path $dir 'AnomaliaZPrigimaliaSkarvikFinalCoast.h') -Force
+          }
+          Write-Host 'SKARVIK_FINAL_CPP_ORIGINALS_RESTORED_AFTER_FAILED_STAGE=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-v1-48km-seven-islands-native-coast-125-terraces
+          path: skarvik-final-seven-islands-125-native-terraces.json
+          if-no-files-found: warn

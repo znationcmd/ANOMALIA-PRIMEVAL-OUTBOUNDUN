@@ -1,0 +1,65 @@
+name: SKARVIK - audit exact missing City Sample dependencies (READ ONLY)
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-missing-dependencies-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  missing-deps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Inspect missing blueprint packages, original source and required plugins
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\FabImports\CitySample'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or ((Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555')){throw 'Bad stage'}
+          $paths=@(
+           'Content\Gameplay\Framework\BP_CitySampleGameMode_SandboxIntro.uasset',
+           'Content\Gameplay\Framework\BP_nightmode.uasset',
+           'Content\__ExternalActors__\Map\Big_City_LVL\CM\3K\OYENEUOP81Z2AMEB85F4G.uasset',
+           'Content\Building',
+           'Content\Megascans',
+           'Source\CitySample\CitySample.Build.cs',
+           'Source\CitySampleEditor\CitySampleEditor.Build.cs',
+           'Source\CitySampleAnimGraphRuntime\CitySampleAnimGraphRuntime.Build.cs',
+           'Plugins\WorldAudioDataSystem\WorldAudioDataSystem.uplugin',
+           'Plugins\Traffic\Traffic.uplugin',
+           'Plugins\CitySampleMassCrowd\CitySampleMassCrowd.uplugin'
+          )
+          foreach($p in $paths){
+           $a=Join-Path $original $p
+           $b=Join-Path $stage $p
+           Write-Host ("SKARVIK_DEPS path={0} SOURCE={1} STAGE={2}" -f $p,(Test-Path -LiteralPath $a),(Test-Path -LiteralPath $b))
+          }
+          $files=@(
+           (Join-Path $original 'Source\CitySample\CitySample.Build.cs'),
+           (Join-Path $original 'Source\CitySampleEditor\CitySampleEditor.Build.cs'),
+           (Join-Path $original 'Plugins\WorldAudioDataSystem\WorldAudioDataSystem.uplugin')
+          )
+          foreach($f in $files){
+           if(Test-Path -LiteralPath $f){
+            Write-Host ("SKARVIK_DEPS_BUILD_FILE="+$f)
+            Get-Content -LiteralPath $f -TotalCount 125 | ForEach-Object{ Write-Host $_ }
+           }
+          }
+          $size=[long]0;$n=0
+          foreach($sub in @('Gameplay','AI','Input','Character','Lighting','Localization','HDA','Audio','Cinematics','UI')){
+            $p=Join-Path $original ('Content\'+$sub)
+            if(Test-Path -LiteralPath $p){
+             [long]$subbytes=0;$files=0
+             foreach($file in (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction Stop)){$subbytes+=[long]$file.Length;$files++}
+             Write-Host ("SKARVIK_DEPS_EXTRA_CONTENT name={0} files={1} GiB={2:N3}" -f $sub,$files,($subbytes/1GB))
+             $size+=$subbytes;$n+=$files
+            }
+          }
+          Write-Host ("SKARVIK_DEPS_C_FREE_GIB={0:N2}" -f ([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB)
+          Write-Host 'SKARVIK_DEPS_AUDIT_READ_ONLY_COMPLETE=true'

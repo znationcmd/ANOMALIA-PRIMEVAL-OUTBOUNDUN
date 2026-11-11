@@ -1,0 +1,66 @@
+name: SKARVIK - audit prudent des autres caches Windows
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-other-cache-options-readonly-20261110.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-candidates:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Identifier des caches regenerables supplementaires sans supprimer
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker'))){throw 'Stage marker missing'}
+          $paths=@(
+            'C:\Users\utilisateur\AppData\Local\Temp',
+            'C:\Users\utilisateur\AppData\Local\UnrealEngine',
+            'C:\Users\utilisateur\AppData\Local\EpicGamesLauncher\Saved\webcache',
+            'C:\Users\utilisateur\AppData\Local\EpicGamesLauncher\Saved\Logs',
+            'C:\Users\utilisateur\AppData\Local\Microsoft\Windows\INetCache',
+            (Join-Path $stage 'Intermediate'),
+            (Join-Path $stage 'Saved\Logs'),
+            (Join-Path $stage 'Saved\Crashes'),
+            (Join-Path $stage 'Saved\Autosaves'),
+            (Join-Path $stage 'Saved\Backup'),
+            (Join-Path $stage 'DerivedDataCache'),
+            'C:\Users\utilisateur\actions-runner\_work\_temp',
+            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\DerivedDataCache'
+          )
+          $result=@(foreach($path in $paths){
+            $present=Test-Path -LiteralPath $path
+            $bytes=[int64]0;$count=0
+            if($present){
+              Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {
+                $bytes+=$_.Length;$count++
+              }
+            }
+            [ordered]@{
+              path=$path;present=$present;files=$count
+              sizeGiB=[math]::Round($bytes/1GB,3)
+              type=if($path -match 'Autosaves|Backup'){ 'PROTECTED_PROJECT_SAVE' } elseif($path -match 'Intermediate'){ 'REGENERABLE_BUT_COMPILATION_RISK' } elseif($path -match 'Temp|Cache|Logs|Crashes'){ 'MAYBE_REGENERABLE_REVIEW_FIRST' } else {'REVIEW'}
+              deleted=$false
+            }
+          })
+          $report=[ordered]@{state='READ_ONLY_SECONDARY_CANDIDATE_INVENTORY';utc=[DateTime]::UtcNow.ToString('o');freeCGiB=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3);minimumRoadBatchGiB=12;noFilesDeleted=$true;folders=$result}
+          $report | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'SKARVIK_OTHER_CACHE_CANDIDATES_20261110.json') -Encoding UTF8
+          Write-Host ('SKARVIK_C_FREE_AFTER_CACHE_GIB='+$report.freeCGiB)
+          foreach($item in $result){Write-Host ('SKARVIK_CACHE_OPTION='+$item.path+'|'+$item.sizeGiB+'|'+$item.type)}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SKARVIK-OTHER-CACHE-OPTIONS-READONLY
+          path: SKARVIK_OTHER_CACHE_CANDIDATES_20261110.json
+          retention-days: 14
+          if-no-files-found: error

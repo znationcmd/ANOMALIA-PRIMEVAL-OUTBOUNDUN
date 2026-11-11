@@ -1,0 +1,41 @@
+name: SKARVIK - check local City Sample SM5 source without modifying maps
+on:
+  workflow_dispatch:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths:
+      - '.github/workflows/skarvik-citysample-sm5-audit.yml'
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-local-sources:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Inspect City Sample and protected SKARVIK (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:GITHUB_WORKSPACE 'skarvik-citysample-sm5-audit.json'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts/ue5/audit-skarvik-citysample-sm5.ps1') -ReportPath $out
+          if(-not(Test-Path -LiteralPath $out)){throw 'Audit report missing'}
+          $data=Get-Content -LiteralPath $out -Raw|ConvertFrom-Json
+          Write-Host ("CITY_SAMPLE_SKARVIK_AUDIT_STATUS="+$data.status)
+          if($data.status -eq 'READY_FOR_MANUAL_NATIVE_MIGRATION_REVIEW'){
+            Write-Host 'Local files detected; no import or catalog activation performed.'
+          }
+      - name: Save read-only evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: skarvik-citysample-sm5-source-audit
+          if-no-files-found: warn
+          path: skarvik-citysample-sm5-audit.json
