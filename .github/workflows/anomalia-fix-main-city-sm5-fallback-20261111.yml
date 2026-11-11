@@ -1,0 +1,109 @@
+name: ANOMALIA - repair empty SM5 fallback on actual SKARVIK city meshes
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-fix-main-city-sm5-fallback-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Native session open'}
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\CityCompatibility\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_CITY_REPAIR_OUT=$out
+          $script=Join-Path $out 'repair.py'
+          @'
+          import unreal,json,os,traceback,shutil,gc
+          from pathlib import Path
+          root=Path(unreal.Paths.project_dir())
+          out=Path(os.environ["ANOMALIA_CITY_REPAIR_OUT"])
+          r={"map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","state":"FAILED","meshes":[],"repaired":0,"sourceActors":[]}
+          def write():(out/"repair.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+          try:
+              editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              meshes=unreal.get_editor_subsystem(unreal.StaticMeshEditorSubsystem)
+              if not editor.load_level(r["map"]):raise RuntimeError("Main SKARVIK map cannot load")
+              wp=unreal.WorldPartitionBlueprintLibrary
+              desc=[d for d in wp.get_actor_descs() if str(d.label).startswith(("SKARVIK_FINAL_CITYSAMPLE_3D_SOURCE_","SKARVIK_FINAL_REAL_CITYSAMPLE_DISTRICT_"))]
+              r["allCityActorDescriptors"]=len(desc)
+              def distance(d):
+                  b=d.bounds
+                  return ((b.min.x+b.max.x)/2-200000)**2+((b.min.y+b.max.y)/2-800000)**2
+              chosen=sorted(desc,key=distance)[:48]
+              if not chosen:raise RuntimeError("No real city actor descriptors")
+              seen=set()
+              for offset in range(0,len(chosen),8):
+                  batch=chosen[offset:offset+8]
+                  wp.load_actors([d.guid for d in batch])
+                  loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+                  for d in batch:
+                      a=loaded.get(str(d.label))
+                      if not a:continue
+                      r["sourceActors"].append({"label":str(d.label),"loaded":True,"isSpatial":a.get_editor_property("is_spatially_loaded")})
+                      for comp in a.get_components_by_class(unreal.StaticMeshComponent):
+                          mesh=comp.get_editor_property("static_mesh")
+                          if not mesh or mesh.get_path_name() in seen:continue
+                          seen.add(mesh.get_path_name())
+                          ns=meshes.get_nanite_settings(mesh)
+                          verts=meshes.get_number_verts(mesh,0)
+                          item={"path":mesh.get_path_name(),"naniteEnabled":ns.enabled,"fallbackPercentBefore":ns.fallback_percent_triangles,"verticesBefore":verts,"repaired":False}
+                          r["meshes"].append(item)
+                          if ns.enabled and (ns.fallback_percent_triangles<=0.0 or verts<=0):
+                              package=mesh.get_path_name().split(".")[0]
+                              source=root/"Content"/(package.removeprefix("/Game/")+".uasset")
+                              if not source.is_file():raise RuntimeError("Source mesh package missing "+str(source))
+                              relative=source.relative_to(root)
+                              backup=out/"OriginalAssets"/relative
+                              backup.parent.mkdir(parents=True,exist_ok=True)
+                              for f in source.parent.glob(source.stem+".*"):shutil.copy2(f,backup.parent/f.name)
+                              ns.fallback_target=unreal.NaniteFallbackTarget.PERCENT_TRIANGLES
+                              ns.fallback_percent_triangles=0.15
+                              ns.fallback_relative_error=0.0
+                              if hasattr(ns,"generate_fallback") and hasattr(unreal,"NaniteGenerateFallback"):
+                                  values=[x for x in dir(unreal.NaniteGenerateFallback) if x.upper()==x and "ENABLED" in x]
+                                  if values:ns.set_editor_property("generate_fallback",getattr(unreal.NaniteGenerateFallback,values[0]))
+                              meshes.set_nanite_settings(mesh,ns,True)
+                              if not unreal.EditorAssetLibrary.save_loaded_asset(mesh,False):raise RuntimeError("Rebuilt mesh save failed "+package)
+                              item["verticesAfter"]=meshes.get_number_verts(mesh,0)
+                              item["fallbackPercentAfter"]=meshes.get_nanite_settings(mesh).fallback_percent_triangles
+                              item["repaired"]=True
+                              r["repaired"]+=1
+                          write()
+                          if r["repaired"]>=24:break
+                      if r["repaired"]>=24:break
+                  wp.unload_actors([d.guid for d in batch])
+                  gc.collect()
+                  if r["repaired"]>=24:break
+              r["state"]="BOUNDED_CITY_SM5_FALLBACK_REPAIR_SAVED_NEEDS_RUNTIME_VISUAL_REVIEW"
+          except Exception:r["error"]=traceback.format_exc()
+          finally:
+              write()
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosound','-nosplash','-nop4',('-abslog="'+(Join-Path $out 'repair.log')+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(720000)){$p.Kill();throw 'Mesh repair exceeded 12 minutes'}
+          if(!(Test-Path (Join-Path $out 'repair.json'))){throw 'No native repair report'}
+          $r=Get-Content (Join-Path $out 'repair.json') -Raw|ConvertFrom-Json
+          Get-Content (Join-Path $out 'repair.json') -Raw|Write-Host
+          if($r.error){throw 'Native mesh repair error'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-CITY-SM5-MESH-REPAIR
+          path: |
+            ${{ env.REPAIR_OUT }}/repair.json
+            ${{ env.REPAIR_OUT }}/repair.log
+          if-no-files-found: warn
