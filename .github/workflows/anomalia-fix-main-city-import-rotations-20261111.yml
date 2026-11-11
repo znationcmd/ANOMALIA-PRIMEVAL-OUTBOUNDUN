@@ -50,11 +50,27 @@ jobs:
                       comp=a.get_component_by_class(unreal.StaticMeshComponent)
                       mesh=comp.get_editor_property("static_mesh")
                       t=a.get_actor_transform();k=key(mesh.get_path_name(),t.translation,t.scale3d)
-                      original.setdefault(k,[]).append(t.rotation)
+                      original.setdefault(k,[]).append({"rotation":t.rotation,"z":t.translation.z})
                   wp.unload_actors([d.guid for d in batch])
               if not editor.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Main map cannot reopen")
               target=[d for d in wp.get_actor_descs() if str(d.label).startswith("SKARVIK_FINAL_CITYSAMPLE_3D_SOURCE_")]
               r["targetActorCount"]=len(target)
+              delta=None
+              for offset in range(0,min(len(target),120),24):
+                  batch=target[offset:offset+24];wp.load_actors([d.guid for d in batch])
+                  loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+                  for d in batch:
+                      a=loaded.get(str(d.label))
+                      if not a:continue
+                      comp=a.get_component_by_class(unreal.StaticMeshComponent)
+                      mesh=comp.get_editor_property("static_mesh");t=a.get_actor_transform()
+                      options=original.get(key(mesh.get_path_name(),t.translation,t.scale3d),[])
+                      if len(options)==1:
+                          delta=t.translation.z-options[0]["z"];break
+                  wp.unload_actors([d.guid for d in batch])
+                  if delta is not None:break
+              if delta is None:raise RuntimeError("Cannot establish exact source-to-target city elevation delta")
+              r["heightDeltaCm"]=delta
               for offset in range(0,len(target),24):
                   batch=target[offset:offset+24];wp.load_actors([d.guid for d in batch])
                   loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
@@ -64,6 +80,7 @@ jobs:
                       comp=a.get_component_by_class(unreal.StaticMeshComponent)
                       mesh=comp.get_editor_property("static_mesh");t=a.get_actor_transform()
                       options=original.get(key(mesh.get_path_name(),t.translation,t.scale3d),[])
+                      options=[o for o in options if abs(o["z"]+delta-t.translation.z)<0.1]
                       if len(options)!=1:
                           r["unmatched"].append(str(d.label));continue
                       package=str(d.actor_package)
@@ -71,7 +88,7 @@ jobs:
                       if not f.is_file():raise RuntimeError("Actor package backup path missing "+str(f))
                       backup=out/"OriginalActors"/f.relative_to(root)
                       backup.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(f,backup)
-                      q=options[0]
+                      q=options[0]["rotation"]
                       prior=t.rotation.rotator()
                       t.rotation=q
                       a.set_actor_transform(t,False,True)
