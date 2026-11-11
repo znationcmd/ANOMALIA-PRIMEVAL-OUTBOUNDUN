@@ -1,0 +1,245 @@
+name: ANOMALIA - repair missing main-map daylight and record visible actual SKARVIK
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-fix-skarvik-black-render-and-record-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Restore missing daylight in actual main SKARVIK map with source backup
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Another native session is open'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-native-viewport-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('CAPTURE_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_NATIVE_VIEWPORT_OUT=$out
+          $script=Join-Path $out 'capture.py'
+          @'
+          import unreal,time,json,os,traceback
+          from pathlib import Path
+          out=Path(os.environ["ANOMALIA_NATIVE_VIEWPORT_OUT"])
+          state={"begin":time.monotonic(),"frame":0,"phase":"wait","next":time.monotonic()+45,"frames":[]}
+          report={"state":"RUNNING","map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","source":"Native actual game viewport","visualMode":"normal game lighting","frames":[]}
+          def write():
+              (out/"receipt.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          def tick(delta):
+              try:
+                  now=time.monotonic()
+                  if now-state["begin"]>180:raise RuntimeError("Native screenshot timeout")
+                  if now<state["next"]:return
+                  world=unreal.find_object(None,"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.PRIGIMALIA_SKARVIK_FINAL_v1")
+                  if not world:return
+                  if state["phase"]=="wait":
+                      controller=unreal.GameplayStatics.get_player_controller(world,0)
+                      if not controller:return
+                      report["actualWorldClass"]=world.get_class().get_name()
+                      pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                      report["actualPawn"]=str(pawn)
+                      if pawn:
+                          pos=pawn.get_actor_location()
+                          report["pawnLocation"]=[pos.x,pos.y,pos.z]
+                      report["directionalLights"]=len(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.DirectionalLight))
+                      if report["directionalLights"]<1:raise RuntimeError("Reopened native game still has no sunlight")
+                      state["phase"]="capture"
+                  path=out/("native_%04d.png"%state["frame"])
+                  if state.get("pending"):
+                      if not path.exists():return
+                      report["frames"].append({"file":path.name,"timeSeconds":now-state["begin"]})
+                      state["frame"]+=1
+                      state["pending"]=False
+                      write()
+                      if state["frame"]>=60:
+                          report["state"]="ACTUAL_RUNTIME_VIEWPORT_FRAMES_CAPTURED"
+                          write()
+                          unreal.unregister_slate_post_tick_callback(state["handler"])
+                          unreal.SystemLibrary.execute_console_command(world,"quit")
+                          return
+                      state["next"]=now+0.125
+                      return
+                  command='HighResShot 960x540 filename="'+str(path).replace("\\","/")+'"'
+                  unreal.SystemLibrary.execute_console_command(world,command)
+                  state["pending"]=True
+              except Exception:
+                  report["state"]="FAILED"
+                  report["error"]=traceback.format_exc()
+                  write()
+                  try:unreal.unregister_slate_post_tick_callback(state["handler"])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,"quit")
+                  except:pass
+          state["handler"]=unreal.register_slate_post_tick_callback(tick)
+          write()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $log=Join-Path $out 'game.log'
+          $commands='t.IdleWhenNotForeground 0,r.ScreenPercentage 60,r.ShadowQuality 0,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,py '+$script.Replace('\','/')
+          $args=@(('"'+$project+'"'),'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=native-video','-game','-RenderOffscreen','-windowed','-ResX=960','-ResY=540','-d3d11','-sm5','-unattended','-nosound','-nosplash',('-abslog="'+$log+'"'),('-ExecCmds="'+$commands+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(240000)){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(10000)){$p.Kill()}}
+          $receipt=Join-Path $out 'receipt.json'
+          if(Test-Path $receipt){Get-Content $receipt -Raw|Write-Host}
+          Get-Content $log -Tail 80|Write-Host
+          $frames=@(Get-ChildItem $out -Filter 'native_*.png')
+          Write-Host ('NATIVE_FRAME_COUNT='+$frames.Count)
+          if($frames.Count -lt 10){throw 'Native viewport did not produce enough actual frames'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-NATIVE-RUNTIME-VIEWPORT-VIDEO
+          path: ${{ env.CAPTURE_OUT }}
+          if-no-files-found: warn
+}).Count){throw 'Native session open'}
+          $root='D:\ANOMALIA\unreal'
+          $backup=Join-Path $root ('Saved\VisibilityBackups\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          Copy-Item $map (Join-Path $backup 'PRIGIMALIA_SKARVIK_FINAL_v1.umap')
+          $env:ANOMALIA_LIGHT_FIX_REPORT=Join-Path $backup 'daylight-repair.json'
+          $script=Join-Path $backup 'restore_daylight.py'
+          @'
+          import unreal,json,os,traceback
+          from pathlib import Path
+          report={"map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","saved":False,"created":[]}
+          try:
+              editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if not editor.load_level(report["map"]):raise RuntimeError("Main map load failed")
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              loaded=actors.get_all_level_actors()
+              report["directionalLightsBefore"]=len([a for a in loaded if isinstance(a,unreal.DirectionalLight)])
+              existing={a.get_actor_label():a for a in loaded}
+              def ensure(kind,label,location):
+                  if label in existing:return existing[label]
+                  a=actors.spawn_actor_from_class(kind,location)
+                  if a is None:raise RuntimeError("Cannot spawn "+label)
+                  a.set_actor_label(label)
+                  a.tags=[unreal.Name("ANOMALIA_MAIN_MAP_DAYLIGHT_REPAIR_20261111")]
+                  a.set_editor_property("is_spatially_loaded",False)
+                  report["created"].append(label)
+                  return a
+              sun=ensure(unreal.DirectionalLight,"SKARVIK_GLOBAL_DAYLIGHT_SUN",unreal.Vector(200000,800000,100000))
+              sun.set_actor_rotation(unreal.Rotator(-45,-25,0),False)
+              light=sun.get_component_by_class(unreal.DirectionalLightComponent)
+              light.set_mobility(unreal.ComponentMobility.MOVABLE)
+              light.set_intensity(10.0)
+              try:light.set_editor_property("atmosphere_sun_light",True)
+              except Exception as e:report["sunAtmospherePropertyNote"]=str(e)
+              sky=ensure(unreal.SkyLight,"SKARVIK_GLOBAL_DAYLIGHT_SKYLIGHT",unreal.Vector(200000,800000,20000))
+              ambient=sky.get_component_by_class(unreal.SkyLightComponent)
+              ambient.set_mobility(unreal.ComponentMobility.MOVABLE)
+              ambient.set_intensity(1.0)
+              try:ambient.set_editor_property("real_time_capture",True)
+              except Exception as e:report["skyCapturePropertyNote"]=str(e)
+              ensure(unreal.SkyAtmosphere,"SKARVIK_GLOBAL_DAYLIGHT_ATMOSPHERE",unreal.Vector(0,0,0))
+              if not editor.save_all_dirty_levels():raise RuntimeError("Main map save failed")
+              if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError("Light actor packages save failed")
+              report["saved"]=True
+              report["directionalLightsAfter"]=len([a for a in actors.get_all_level_actors() if isinstance(a,unreal.DirectionalLight)])
+          except Exception:
+              report["error"]=traceback.format_exc()
+          finally:
+              Path(os.environ["ANOMALIA_LIGHT_FIX_REPORT"]).write_text(json.dumps(report,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+(Join-Path $backup 'repair.log')+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(300000)){$p.Kill();throw 'Daylight repair timeout'}
+          if(!(Test-Path $env:ANOMALIA_LIGHT_FIX_REPORT)){throw 'No native daylight repair receipt'}
+          $r=Get-Content $env:ANOMALIA_LIGHT_FIX_REPORT -Raw|ConvertFrom-Json
+          Get-Content $env:ANOMALIA_LIGHT_FIX_REPORT -Raw|Write-Host
+          if(!$r.saved -or $r.directionalLightsAfter -lt 1){throw 'Missing daylight not repaired'}
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Another native session is open'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-native-viewport-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('CAPTURE_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_NATIVE_VIEWPORT_OUT=$out
+          $script=Join-Path $out 'capture.py'
+          @'
+          import unreal,time,json,os,traceback
+          from pathlib import Path
+          out=Path(os.environ["ANOMALIA_NATIVE_VIEWPORT_OUT"])
+          state={"begin":time.monotonic(),"frame":0,"phase":"wait","next":time.monotonic()+45,"frames":[]}
+          report={"state":"RUNNING","map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","source":"Native actual game viewport","visualMode":"normal game lighting","frames":[]}
+          def write():
+              (out/"receipt.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          def tick(delta):
+              try:
+                  now=time.monotonic()
+                  if now-state["begin"]>180:raise RuntimeError("Native screenshot timeout")
+                  if now<state["next"]:return
+                  world=unreal.find_object(None,"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.PRIGIMALIA_SKARVIK_FINAL_v1")
+                  if not world:return
+                  if state["phase"]=="wait":
+                      controller=unreal.GameplayStatics.get_player_controller(world,0)
+                      if not controller:return
+                      report["actualWorldClass"]=world.get_class().get_name()
+                      pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                      report["actualPawn"]=str(pawn)
+                      if pawn:
+                          pos=pawn.get_actor_location()
+                          report["pawnLocation"]=[pos.x,pos.y,pos.z]
+                      report["directionalLights"]=len(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.DirectionalLight))
+                      state["phase"]="capture"
+                  path=out/("native_%04d.png"%state["frame"])
+                  if state.get("pending"):
+                      if not path.exists():return
+                      report["frames"].append({"file":path.name,"timeSeconds":now-state["begin"]})
+                      state["frame"]+=1
+                      state["pending"]=False
+                      write()
+                      if state["frame"]>=60:
+                          report["state"]="ACTUAL_RUNTIME_VIEWPORT_FRAMES_CAPTURED"
+                          write()
+                          unreal.unregister_slate_post_tick_callback(state["handler"])
+                          unreal.SystemLibrary.execute_console_command(world,"quit")
+                          return
+                      state["next"]=now+0.125
+                      return
+                  command='HighResShot 960x540 filename="'+str(path).replace("\\","/")+'"'
+                  unreal.SystemLibrary.execute_console_command(world,command)
+                  state["pending"]=True
+              except Exception:
+                  report["state"]="FAILED"
+                  report["error"]=traceback.format_exc()
+                  write()
+                  try:unreal.unregister_slate_post_tick_callback(state["handler"])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,"quit")
+                  except:pass
+          state["handler"]=unreal.register_slate_post_tick_callback(tick)
+          write()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $log=Join-Path $out 'game.log'
+          $commands='t.IdleWhenNotForeground 0,r.ScreenPercentage 60,r.ShadowQuality 0,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,py '+$script.Replace('\','/')
+          $args=@(('"'+$project+'"'),'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=native-video','-game','-RenderOffscreen','-windowed','-ResX=960','-ResY=540','-d3d11','-sm5','-unattended','-nosound','-nosplash',('-abslog="'+$log+'"'),('-ExecCmds="'+$commands+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(240000)){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(10000)){$p.Kill()}}
+          $receipt=Join-Path $out 'receipt.json'
+          if(Test-Path $receipt){Get-Content $receipt -Raw|Write-Host}
+          Get-Content $log -Tail 80|Write-Host
+          $frames=@(Get-ChildItem $out -Filter 'native_*.png')
+          Write-Host ('NATIVE_FRAME_COUNT='+$frames.Count)
+          if($frames.Count -lt 10){throw 'Native viewport did not produce enough actual frames'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-NATIVE-RUNTIME-VIEWPORT-VIDEO
+          path: ${{ env.CAPTURE_OUT }}
+          if-no-files-found: warn
