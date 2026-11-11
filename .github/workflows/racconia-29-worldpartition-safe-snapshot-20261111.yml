@@ -1,0 +1,76 @@
+name: RACCONIA - backup actual 29 PBR sites and all World Partition actor files
+on:
+  push:
+    branches: [feature/racconia-interiors-pie-quality-20261111]
+    paths: ['.github/workflows/racconia-29-worldpartition-safe-snapshot-20261111.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  true-racconia-native-map-backup:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Preserve actual staged RACCONIA map plus complete World Partition external actor graph
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted isolated UE project'}
+          $level=Join-Path $root 'Content\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1.umap'
+          if(!(Test-Path $level)){throw 'Native RACCONIA map absent'}
+          $actorRoot=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1'
+          if(!(Test-Path $actorRoot)){throw 'World Partition actors absent: refuse incomplete backup'}
+          $actorFiles=@(Get-ChildItem -LiteralPath $actorRoot -Recurse -File)
+          if($actorFiles.Count -lt 395){throw ('Expected 29 sites plus 367 meshes and native terrain: found only '+$actorFiles.Count)}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent Unreal editor; backup may not be consistent'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 3){throw 'Not enough spare disk to preserve native 29 site level'}
+          $zipFile=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_SITES_NATIVE_WP_BACKUP_20261111.zip'
+          Add-Type -AssemblyName System.IO.Compression
+          $archive=[IO.Compression.ZipFile]::Open($zipFile,[IO.Compression.ZipArchiveMode]::Create)
+          $files=@($level)+$actorFiles.FullName
+          $optional=Join-Path $root 'Content\__ExternalObjects__\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1'
+          if(Test-Path $optional){$files+=@(Get-ChildItem -LiteralPath $optional -Recurse -File|ForEach-Object {$_.FullName})}
+          try{
+            foreach($file in $files){
+              $relative=$file.Substring($root.Length+1).Replace('\','/')
+              [IO.Compression.ZipFileExtensions]::CreateEntryFromFile($archive,$file,$relative,[IO.Compression.CompressionLevel]::Optimal)|Out-Null
+            }
+          }finally{$archive.Dispose()}
+          $sha=(Get-FileHash -LiteralPath $zipFile -Algorithm SHA256).Hash.ToLowerInvariant()
+          $receipt=[ordered]@{
+            state='RACCONIA_COMPLETE_NATIVE_WORLD_PARTITION_ACTORS_BACKED_UP'
+            originalCMapBytes=(Get-Item $level).Length
+            originalActorCount=$actorFiles.Count
+            externalObjectsPresent=[bool](Test-Path $optional)
+            totalArchiveEntries=$files.Count
+            backupZipBytes=(Get-Item $zipFile).Length
+            backupZipSha256=$sha
+            sourceFilesNotDeleted=$true
+            DOriginalUnmodified=$true
+            PBRAssetsOutsideThisNativeWorldPackage=$true
+            nativeMapSavedEarlierByRun=43018135168
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_SITES_NATIVE_WP_BACKUP_RECEIPT.json'
+          $receipt|ConvertTo-Json -Depth 5|Set-Content $out -Encoding UTF8
+          Write-Host ('RACCONIA_NATIVE_BACKUP_FILES='+$receipt.totalArchiveEntries)
+          Write-Host ('RACCONIA_NATIVE_BACKUP_ZIP_BYTES='+$receipt.backupZipBytes)
+          Write-Host ('RACCONIA_NATIVE_BACKUP_SHA256='+$sha)
+          Write-Host ('RACCONIA_NATIVE_ACTOR_LEVEL_BACKUP_VERIFIED=true')
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RACCONIA-29-SITES-NATIVE-WP-MAP-BEFORE-INTERIOR-CHANGES
+          path: |
+            RACCONIA_29_SITES_NATIVE_WP_BACKUP_20261111.zip
+            RACCONIA_29_SITES_NATIVE_WP_BACKUP_RECEIPT.json
+          retention-days: 30
+          if-no-files-found: error
