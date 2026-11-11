@@ -1,0 +1,45 @@
+name: ANOMALIA - identify exact plugin custom versions behind incompatible Big City actors
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-bigcity-compatibility-inspect-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          Write-Host 'MAIN_PROJECT_DESCRIPTOR'
+          Get-Content (Join-Path $root 'AnomaliaPrimeval.uproject') -Raw|Write-Host
+          foreach($base in @((Join-Path $env:UE_ROOT 'Engine\Plugins'),(Join-Path $root 'Plugins'))){
+            if(!(Test-Path $base)){continue}
+            foreach($p in [IO.Directory]::EnumerateFiles($base,'*.uplugin',[IO.SearchOption]::AllDirectories)){
+              $j=Get-Content $p -Raw|ConvertFrom-Json
+              if($p -match 'Cesium|Mass|PCG|City|Houdini|ZoneGraph|Chaos|AnimToTexture|Dataflow'){
+                Write-Host ('PLUGIN='+$p+';VERSION='+$j.VersionName+';DEFAULT='+$j.EnabledByDefault+';MODULES='+(($j.Modules|ForEach-Object{$_.Name}) -join ','))
+              }
+            }
+          }
+          $targets=@(
+            'Content\__ExternalActors__\Map\Big_City_LVL\0I\PP\AU1QJYCCAZ2B3UKGDOXG3.uasset',
+            'Content\__ExternalActors__\Map\Big_City_LVL\9Z\0L\7ZCU8PG7SS61NBSNI5YCN.uasset',
+            'Content\AI\Map\MassCrowd.umap',
+            'Content\AI\SmartObject\SmartObjectDefinition_WallSigns.uasset')
+          foreach($rel in $targets){
+            $p=Join-Path $root $rel
+            if(Test-Path $p){
+              $s=[IO.File]::OpenRead($p);$b=New-Object byte[] 16384;$n=$s.Read($b,0,$b.Length);$s.Dispose()
+              Write-Host ('ASSET='+$rel+';HEADER256='+[BitConverter]::ToString($b[0..255]))
+              $ascii=[Text.Encoding]::ASCII.GetString($b,0,$n)
+              [regex]::Matches($ascii,'[A-Za-z][A-Za-z0-9_./:]{5,}')|ForEach-Object{$_.Value}|Select-Object -Unique|Select-Object -First 70|ForEach-Object{Write-Host ('ASSET_STRING='+$_)}
+            }
+          }
+          Write-Host 'MAIN_ENGINE_PLUGINS_CONFIG'
+          Get-Content (Join-Path $root 'Config\DefaultEngine.ini')|Select-String 'CustomVersion|Plugin|Cesium|Mass|PCG|ZoneGraph'|ForEach-Object{Write-Host $_}
