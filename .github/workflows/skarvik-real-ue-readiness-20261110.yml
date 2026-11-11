@@ -51,6 +51,17 @@ jobs:
           if($env:UE_ROOT){
             $data.nativeUE58Installed=Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe')
           }
+          $data.diskFreeGiB=@(Get-CimInstance Win32_LogicalDisk | Where-Object DriveType -in @(2,3) | ForEach-Object {
+            [ordered]@{drive=$_.DeviceID;freeGiB=[math]::Round($_.FreeSpace/1GB,2)}
+          })
+          $data.activeUnrealProcesses=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue | Select-Object ProcessName,Id)
+          $data.availableMaps=@(foreach($root in @($stage,$original)) {
+            $maps=Join-Path $root 'Content\Maps'
+            if(Test-Path -LiteralPath $maps){Get-ChildItem -LiteralPath $maps -Filter *.umap -File -Recurse | Select-Object FullName,Length}
+          })
+          foreach($disk in $data.diskFreeGiB){Write-Host ('CURRENT_DISK_FREE_GIB='+$disk.drive+' '+$disk.freeGiB)}
+          Write-Host ('ACTIVE_UNREAL_PROCESSES='+$data.activeUnrealProcesses.Count)
+          foreach($map in $data.availableMaps){Write-Host ('AVAILABLE_NATIVE_MAP='+$map.FullName)}
           $data | ConvertTo-Json -Depth 4 | Set-Content -Path "$env:GITHUB_WORKSPACE\SKARVIK_NATIVE_PC_READINESS_20261110.json" -Encoding UTF8
           Write-Host ('SKARVIK_NATIVE_PC_RUNNER_AVAILABLE=true')
           Write-Host ('SKARVIK_FINAL_WORLD_FILE_EXISTS='+$data.finalExistingLevelExists)
