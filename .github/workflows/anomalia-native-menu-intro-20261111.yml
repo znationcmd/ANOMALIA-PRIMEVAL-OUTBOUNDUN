@@ -1,0 +1,132 @@
+name: ANOMALIA native game menu and original intro
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-native-menu-intro-20261111.yml]
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: Native viewport menu and original intro verification
+        shell: powershell
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $source=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaGameMode.cpp'
+          $build=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaPrimeval.Build.cs'
+          $proj=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $out=Join-Path $root ('Saved\NativeMenuRepair\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force $out|Out-Null
+          ('MENU_OUT='+$out)|Out-File $env:GITHUB_ENV -Encoding utf8 -Append
+          if(!(Test-Path $source) -or !(Test-Path $build) -or !(Test-Path $proj)){throw 'Main project source unavailable'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Close Unreal before modifying C++'}
+          Copy-Item $source (Join-Path $out 'GameMode.backup.cpp')
+          Copy-Item $build (Join-Path $out 'Build.backup.cs')
+          $text=[IO.File]::ReadAllText($source)
+          $marker='ANOMALIA_NATIVE_REAL_MENU_20261111'
+          if(!$text.Contains($marker)){
+          $anchor='        LoadPersistentPlayer(NewPlayer);'
+          if(!$text.Contains($anchor)){throw 'Safe source anchor not found'}
+          $headers=@'
+          #include "Engine/Engine.h"
+          #include "Engine/GameViewportClient.h"
+          #include "Kismet/GameplayStatics.h"
+          #include "Kismet/KismetSystemLibrary.h"
+          #include "Widgets/SOverlay.h"
+          #include "Widgets/Layout/SBorder.h"
+          #include "Widgets/Layout/SBox.h"
+          #include "Widgets/SBoxPanel.h"
+          #include "Widgets/Text/STextBlock.h"
+          #include "Widgets/Input/SButton.h"
+          '@
+          $body=@'
+                  // ANOMALIA_NATIVE_REAL_MENU_20261111: viewport menu in the actual Unreal game.
+                  if (NewPlayer && NewPlayer->IsLocalController() && GEngine && GEngine->GameViewport)
+                  {
+                      TWeakObjectPtr<APlayerController> LocalPlayer(NewPlayer);
+                      TSharedRef<TSharedPtr<SWidget>> Holder = MakeShared<TSharedPtr<SWidget>>();
+                      auto Resume = [LocalPlayer, Holder]()
+                      {
+                          if (GEngine && GEngine->GameViewport && Holder->IsValid())
+                              GEngine->GameViewport->RemoveViewportWidgetContent(Holder->ToSharedRef());
+                          if (APlayerController* P=LocalPlayer.Get())
+                          {
+                              UGameplayStatics::SetGamePaused(P->GetWorld(), false);
+                              P->bShowMouseCursor = false;
+                              FInputModeGameOnly Mode;
+                              P->SetInputMode(Mode);
+                          }
+                      };
+                      TSharedRef<SWidget> Menu =
+                          SNew(SOverlay)
+                          + SOverlay::Slot().HAlign(HAlign_Fill).VAlign(VAlign_Fill)
+                          [ SNew(SBorder).BorderBackgroundColor(FLinearColor(0.015f,0.018f,0.02f,0.96f)) ]
+                          + SOverlay::Slot().HAlign(HAlign_Center).VAlign(VAlign_Center)
+                          [
+                              SNew(SBox).WidthOverride(580.f)
+                              [
+                                  SNew(SBorder).Padding(35.f).BorderBackgroundColor(FLinearColor(0.09f,0.07f,0.03f,1.f))
+                                  [
+                                      SNew(SVerticalBox)
+                                      + SVerticalBox::Slot().AutoHeight().Padding(0,0,0,20)
+                                      [ SNew(STextBlock).Text(FText::FromString(TEXT("ANOMALIA'Z PRIGIMALIA"))) ]
+                                      + SVerticalBox::Slot().AutoHeight().Padding(0,0,0,12)
+                                      [ SNew(SButton).Text(FText::FromString(TEXT("JOUER / CONTINUER"))).OnClicked_Lambda([Resume]() { Resume(); return FReply::Handled(); }) ]
+                                      + SVerticalBox::Slot().AutoHeight().Padding(0,0,0,12)
+                                      [ SNew(SButton).Text(FText::FromString(TEXT("SKARVIK"))).OnClicked_Lambda([LocalPlayer,Resume]() { Resume(); if (APlayerController* P=LocalPlayer.Get()) UGameplayStatics::OpenLevel(P->GetWorld(),FName(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"))); return FReply::Handled(); }) ]
+                                      + SVerticalBox::Slot().AutoHeight().Padding(0,0,0,12)
+                                      [ SNew(SButton).Text(FText::FromString(TEXT("OPTIONS : SM5"))).OnClicked_Lambda([LocalPlayer]() { if (APlayerController* P=LocalPlayer.Get()) if (GEngine) GEngine->Exec(P->GetWorld(),TEXT("r.ScreenPercentage 70")); return FReply::Handled(); }) ]
+                                      + SVerticalBox::Slot().AutoHeight()
+                                      [ SNew(SButton).Text(FText::FromString(TEXT("QUITTER"))).OnClicked_Lambda([LocalPlayer]() { if (APlayerController* P=LocalPlayer.Get()) UKismetSystemLibrary::QuitGame(P->GetWorld(),P,EQuitPreference::Quit,false); return FReply::Handled(); }) ]
+                                  ]
+                              ]
+                          ];
+                      *Holder = Menu;
+                      GEngine->GameViewport->AddViewportWidgetContent(Menu, 100);
+                      NewPlayer->bShowMouseCursor=true;
+                      FInputModeUIOnly Mode;
+                      NewPlayer->SetInputMode(Mode);
+                      UGameplayStatics::SetGamePaused(NewPlayer->GetWorld(),true);
+                  }
+          '@
+          $nl=[Environment]::NewLine
+          [IO.File]::WriteAllText($source, $headers+$nl+$text.Replace($anchor,$anchor+$nl+$body))
+          }
+          $modules=[IO.File]::ReadAllText($build)
+          if($modules -notmatch '"Slate"'){
+          $modules=$modules.Replace('"Engine"', '"Engine", "Slate", "SlateCore"')
+          if($modules -notmatch '"Slate"'){throw 'Slate dependency could not be installed'}
+          [IO.File]::WriteAllText($build,$modules)
+          }
+          $video=Get-ChildItem (Join-Path $root 'Content') -File -Recurse -Filter '*.mp4' -ErrorAction SilentlyContinue|Where-Object{$_.Name -match '(?i)intro|generique|prigimalia|clic.sang'}|Select-Object -First 1
+          $intro='MISSING_ORIGINAL_VIDEO'
+          if($video){
+          $movies=Join-Path $root 'Content\Movies'
+          New-Item -ItemType Directory -Path $movies -Force|Out-Null
+          Copy-Item $video.FullName (Join-Path $movies 'ANOMALIAZ_Intro.mp4') -Force
+          $ini=Join-Path $root 'Config\DefaultGame.ini'
+          if(!(Test-Path $ini)){New-Item -ItemType File $ini -Force|Out-Null}
+          if((Get-Content $ini -Raw) -notmatch 'ANOMALIAZ_Intro'){
+          Add-Content $ini ([Environment]::NewLine+'[/Script/MoviePlayer.MoviePlayerSettings]'+[Environment]::NewLine+'bMoviesAreSkippable=True'+[Environment]::NewLine+'+StartupMovies=ANOMALIAZ_Intro')
+          }
+          $intro='VIDEO_CONFIGURED_FOR_PACKAGED_BUILD'
+          }
+          $tool=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $tool AnomaliaPrimevalEditor Win64 Development ('-Project='+$proj) -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2 2>&1|Tee-Object -FilePath (Join-Path $out 'compile.log')
+          $exit=$LASTEXITCODE
+          @{buildExit=$exit;intro=$intro;nativeMainMenu=($exit -eq 0);packagedBuildUpdated=$false;visualTested=$false}|ConvertTo-Json|Set-Content (Join-Path $out 'result.json')
+          if($exit -ne 0){Copy-Item (Join-Path $out 'GameMode.backup.cpp') $source -Force;Copy-Item (Join-Path $out 'Build.backup.cs') $build -Force;throw 'Compilation failed. C++ restored.'}
+          Get-Content (Join-Path $out 'result.json') -Raw|Write-Host
+      - name: Save validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-NATIVE-MENU-INTRO-REPORT
+          path: ${{ env.MENU_OUT }}
+          if-no-files-found: warn
