@@ -1,0 +1,46 @@
+name: ANOMALIA video - recover native GPU by terminating cancelled RACCONIA PIE process tree only
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-clean-only-orphan-racconia-pie-process-tree-20261111.yml']
+permissions: {contents: read}
+concurrency: {group: isolated-video-orphan-native-recovery, cancel-in-progress: false}
+jobs:
+  recover-cancelled-native-process:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Terminate only exact cancelled RACCONIA -nullrhi command via Windows process tree
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $all=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe')})
+          $old=@($all|Where-Object {
+            $_.Name -eq 'UnrealEditor-Cmd.exe' -and
+            $_.CommandLine -match 'verify_racconia_real_pie_gameplay_20261111\.py' -and
+            $_.CommandLine -match 'ANOMALIAZ_SKARVIK_STAGE_41188816555' -and
+            $_.CommandLine -match '[-]nullrhi'
+          })
+          if($old.Count -gt 1){throw 'Multiple match old PIE sessions; do not stop'}
+          $done=@()
+          foreach($p in $old){
+            & taskkill.exe /PID $p.ProcessId /T /F
+            $taskKillCode=$LASTEXITCODE
+            Start-Sleep -Seconds 8
+            $survivor=Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue
+            $done+= [ordered]@{pid=$p.ProcessId;taskKillExit=$taskKillCode;stillAlive=[bool]$survivor}
+          }
+          $live=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe')})
+          $receipt=[ordered]@{state='CANCELLED_RACCONIA_PROCESS_TREE_RECOVERY_ATTEMPTED'
+            cancelledOriginalRun=43030188980;matched=$old.Count
+            stopped=$done;remainingEditorCount=$live.Count
+            userUnrelatedProcessesNotTargeted=$true;mapsChanged=$false}
+          $receipt|ConvertTo-Json -Depth 5|Set-Content (Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_VIDEO_RACCONIA_ORPHAN_CLEAN.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_VIDEO_OLD_RACCONIA_MATCHES='+$old.Count)
+          Write-Host ('ANOMALIA_VIDEO_REMAINING_EDITOR_COUNT='+$live.Count)
+          if(@($done|Where-Object {$_.stillAlive}).Count){throw 'Cancelled job still running; do not launch another UE capture'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with: {name: EXACT-RACCONIA-ORPHAN-TREE-RESULT, path: ANOMALIA_VIDEO_RACCONIA_ORPHAN_CLEAN.json}
