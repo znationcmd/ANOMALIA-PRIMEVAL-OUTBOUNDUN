@@ -15,6 +15,7 @@ public class AnomaliaZPrigimalia : ModuleRules
         PrivateDependencyModuleNames.Add("PhysicsCore");
         // MoviePlayer renders rotating user-provided loading artwork during map travel.
         PrivateDependencyModuleNames.Add("MoviePlayer");
+        PrivateDependencyModuleNames.Add("MediaAssets");
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
     }
 }
