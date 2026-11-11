@@ -1,0 +1,15 @@
+{
+  "state": "VISUALLY_REVIEWED_PARTIAL_RENDER_TERRAIN_MISSING",
+  "runId": 39566307432,
+  "sourceCommit": "2fe49e08eaa694ee46a0e8055a3039f0edd2055c",
+  "gpuProcessExitCode": 0,
+  "bridgeVisible": true,
+  "landscapeVisible": false,
+  "demoValidated": false,
+  "performanceValidated": false,
+  "artifactId": 12329963421,
+  "artifactSHA256": "58ee3df1369e2e3747ed32c188153635aded599aa1356abd79c6687d8e86356d",
+  "worldArtifactId": 12329748850,
+  "worldArtifactSHA256": "75377919c7766db26833c6c159789cff9cdde5c0843e487220caff2251f9c9ad",
+  "notes": "All five real PNGs inspected. Bridge rendered, but land is missing in all views. Correct camera alignment confirmed by native readback. No replacement/fake imagery. Further Landscape visibility/loading diagnosis required."
+}

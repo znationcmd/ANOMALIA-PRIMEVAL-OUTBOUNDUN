@@ -1,0 +1,18 @@
+{
+  "state": "IMPORTED_NOT_PLAYTESTED",
+  "sourceCommit": "55085294c10904a445529a2918a27b8243bcbb64",
+  "models": [
+    {
+      "nativePresentationBound": true,
+      "vehicleId": "airliner",
+      "objectPath": "/Game/Anomalia/Vehicles/airliner/SM_airliner.SM_airliner",
+      "dimensionsCm": [
+        3768.139404296875,
+        3547.8709716796875,
+        1132.2105102539062
+      ],
+      "materials": 1,
+      "state": "IMPORTED_NOT_PLAYTESTED"
+    }
+  ]
+}

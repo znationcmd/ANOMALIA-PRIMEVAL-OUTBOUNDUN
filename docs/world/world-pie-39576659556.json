@@ -1,0 +1,20 @@
+{
+  "state": "TESTED_IN_EDITOR_HEADLESS",
+  "mode": "Play In Editor",
+  "headless": true,
+  "renderingValidated": false,
+  "multiplayerTested": false,
+  "automationReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39576659556-1\\world-pie-4539f8fd887647d5a965d75550c1928e",
+  "exitCode": 0,
+  "checks": [
+    "load_real_map",
+    "start_PIE",
+    "spawn_native_character",
+    "stand_on_landscape_collision",
+    "walk_on_terrain",
+    "inventory_add_remove",
+    "bridge_streaming_collision",
+    "continuous_roads_and_bridge_crossing_3490m",
+    "all_50_spans_in_sequence"
+  ]
+}

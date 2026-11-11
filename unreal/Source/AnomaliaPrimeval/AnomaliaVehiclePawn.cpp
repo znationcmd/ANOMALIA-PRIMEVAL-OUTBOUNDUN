@@ -1,5 +1,12 @@
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaSurvivor.h"
+#include "Vehicles/AnomaliaTransportMovement.h"
+#include "Vehicles/AnomaliaRailCarriage.h"
+#include "Vehicles/AnomaliaTransportEnvironment.h"
+#include "Components/SplineComponent.h"
+#include "Engine/World.h"
+#include "Engine/StaticMesh.h"
+#include "Misc/PackageName.h"
 #include "GameFramework/Controller.h"
 #include "Camera/CameraComponent.h"
 #include "Components/InputComponent.h"
@@ -30,6 +37,13 @@ AAnomaliaVehiclePawn::AAnomaliaVehiclePawn()
     FollowCamera->bUsePawnControlRotation = false;
     Movement = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("Movement"));
     Movement->UpdatedComponent = Collision;
+    TransportMovement = CreateDefaultSubobject<UAnomaliaTransportMovement>(TEXT("TransportMovement"));
+    TransportMovement->SetUpdatedComponent(Collision);
+    InteriorCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("InteriorCamera"));
+    InteriorCamera->SetupAttachment(Collision);
+    InteriorCamera->SetRelativeLocation(FVector(80.f,0.f,90.f));
+    InteriorCamera->bUsePawnControlRotation = true;
+    InteriorCamera->SetAutoActivate(false);
     AutoPossessPlayer = EAutoReceiveInput::Disabled;
 }
 
@@ -37,6 +51,8 @@ void AAnomaliaVehiclePawn::BeginPlay()
 {
     Super::BeginPlay();
     ApplyDefinition();
+    if(HasAuthority() && IsValid(InitialRailTrack))
+        TransportMovement->AssignTrack(InitialRailTrack,InitialRailDistanceCm);
 }
 
 bool AAnomaliaVehiclePawn::ConfigureVehicle(FName NewVehicleId)
@@ -64,7 +80,44 @@ void AAnomaliaVehiclePawn::ApplyDefinition()
     Movement->MaxSpeed = Definition.MaxSpeedKmh * SpeedMultiplier * (100000.f / 3600.f);
     Movement->Acceleration = FMath::Max(150.f, Movement->MaxSpeed * 0.55f);
     Movement->Deceleration = Movement->Acceleration * 1.4f;
+    TransportMovement->Configure(Definition, SpeedMultiplier);
+    // Only one movement system may move the collision root. Clients receive authoritative actor movement.
+    Movement->SetComponentTickEnabled(HasAuthority() && !TransportMovement->IsTransport());
+    RefreshVehicleVisual();
     OnVehicleConfigured(Definition);
+}
+
+void AAnomaliaVehiclePawn::RefreshVehicleVisual()
+{
+    if(!bPresentationCaptured)
+    {
+        OriginalBodyTransform=Body->GetRelativeTransform();
+        OriginalCameraDistance=CameraBoom->TargetArmLength;
+        bPresentationCaptured=true;
+    }
+    if(AutomaticModel.IsValid() && Body->GetStaticMesh()==AutomaticModel.Get())
+    {
+        Body->SetStaticMesh(nullptr);
+        Body->SetRelativeTransform(OriginalBodyTransform);
+        CameraBoom->TargetArmLength=OriginalCameraDistance;
+    }
+    AutomaticModel.Reset();
+    FAnomaliaVehicleDefinition Definition;
+    if(!UAnomaliaVehicleCatalog::FindVehicleDefinition(VehicleId,Definition)) return;
+    // IDs come from the fixed server-authorized catalogue, never from an arbitrary client path.
+    const FString Id=VehicleId.ToString();
+    const FString Package=TEXT("/Game/Anomalia/Vehicles/")+Id+TEXT("/SM_")+Id;
+    if(!FPackageName::DoesPackageExist(Package)) return; // Keep the Blueprint's own art, if any.
+    UStaticMesh* Mesh=LoadObject<UStaticMesh>(nullptr,*(Package+TEXT(".SM_")+Id));
+    if(!Mesh) return;
+    Body->SetStaticMesh(Mesh);
+    const FRotator Orientation(0,VehicleId==FName(TEXT("airliner"))?180.f:0.f,0);
+    const FBoxSphereBounds Bounds=Mesh->GetBounds();
+    const FVector BottomCenter(Bounds.Origin.X,Bounds.Origin.Y,Bounds.Origin.Z-Bounds.BoxExtent.Z);
+    Body->SetRelativeRotation(Orientation);
+    Body->SetRelativeLocation(-Orientation.RotateVector(BottomCenter)-FVector(0,0,Collision->GetUnscaledSphereRadius()));
+    CameraBoom->TargetArmLength=FMath::Max(OriginalCameraDistance,static_cast<float>(Bounds.BoxExtent.GetMax()*2.5));
+    AutomaticModel=Mesh;
 }
 
 void AAnomaliaVehiclePawn::OnRep_VehicleId()
@@ -107,35 +160,86 @@ void AAnomaliaVehiclePawn::OnRep_Fuel()
     OnFuelChanged(FuelPercent);
 }
 
-void AAnomaliaVehiclePawn::ServerSetControls_Implementation(float Forward, float Steering)
+UPawnMovementComponent* AAnomaliaVehiclePawn::GetMovementComponent() const
 {
-    if (!IsPlayerControlled()) return;
-    ForwardAxis = FMath::Clamp(Forward, -1.f, 1.f);
-    SteeringAxis = FMath::Clamp(Steering, -1.f, 1.f);
+    return TransportMovement && TransportMovement->IsTransport() ?
+        static_cast<UPawnMovementComponent*>(TransportMovement.Get()) : static_cast<UPawnMovementComponent*>(Movement.Get());
+}
+
+void AAnomaliaVehiclePawn::ClearControls()
+{
+    ForwardAxis=SteeringAxis=PitchAxis=RollAxis=VerticalAxis=BrakeAxis=0.f;
+}
+
+void AAnomaliaVehiclePawn::UnPossessed()
+{
+    ClearControls();
+    LastControlReceived=-1;
+    Super::UnPossessed();
+}
+
+void AAnomaliaVehiclePawn::ServerSetControls_Implementation(float Forward,float Steering)
+{
+    ServerSetTransportControls_Implementation(Forward,Steering,0,0,0,0);
+}
+
+void AAnomaliaVehiclePawn::ServerSetTransportControls_Implementation(float Forward,float Steering,float Pitch,float Roll,float Vertical,float Brake)
+{
+    if (!IsPlayerControlled() || !FMath::IsFinite(Forward) || !FMath::IsFinite(Steering) ||
+        !FMath::IsFinite(Pitch) || !FMath::IsFinite(Roll) || !FMath::IsFinite(Vertical) || !FMath::IsFinite(Brake)) return;
+    ForwardAxis=FMath::Clamp(Forward,-1.f,1.f);
+    SteeringAxis=FMath::Clamp(Steering,-1.f,1.f);
+    PitchAxis=FMath::Clamp(Pitch,-1.f,1.f);
+    RollAxis=FMath::Clamp(Roll,-1.f,1.f);
+    VerticalAxis=FMath::Clamp(Vertical,-1.f,1.f);
+    BrakeAxis=FMath::Clamp(Brake,0.f,1.f);
+    LastControlReceived=GetWorld()->GetTimeSeconds();
 }
 
 void AAnomaliaVehiclePawn::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
-    if (!HasAuthority()) return;
-    const FAnomaliaVehicleDefinition Definition = GetVehicleDefinition();
-    if (Definition.Id.IsNone()) return;
-    if (FuelPercent > KINDA_SMALL_NUMBER && FMath::Abs(ForwardAxis) > KINDA_SMALL_NUMBER)
+    if (!FMath::IsFinite(DeltaSeconds) || DeltaSeconds<=0) return;
+    if (IsLocallyControlled() && !HasAuthority())
     {
-        AddMovementInput(GetActorForwardVector(), ForwardAxis);
-        const float OldFuel = FuelPercent;
-        FuelPercent = FMath::Max(0.f, FuelPercent - FMath::Abs(ForwardAxis) * FuelConsumptionPerSecond * DeltaSeconds);
-        if (FMath::FloorToInt(OldFuel) != FMath::FloorToInt(FuelPercent) || FuelPercent <= KINDA_SMALL_NUMBER)
+        ControlSendElapsed+=DeltaSeconds;
+        if(ControlSendElapsed>=0.05f)
         {
-            OnFuelChanged(FuelPercent);
-            ForceNetUpdate();
+            ControlSendElapsed=0;
+            ServerSetTransportControls(ForwardAxis,SteeringAxis,PitchAxis,RollAxis,VerticalAxis,BrakeAxis);
         }
     }
-    const float TurnRate = Definition.Domain == EAnomaliaVehicleDomain::Water ||
-        Definition.Domain == EAnomaliaVehicleDomain::Underwater ? 22.f : 65.f;
-    if (FuelPercent > KINDA_SMALL_NUMBER && FMath::Abs(SteeringAxis) > KINDA_SMALL_NUMBER)
+    if (!HasAuthority()) return;
+    const bool bDriver=IsPlayerControlled();
+    const bool bStale=bDriver && !IsLocallyControlled() && GetWorld()->GetTimeSeconds()-LastControlReceived>1.0;
+    if (!bDriver || bStale) ClearControls();
+    const FAnomaliaVehicleDefinition Definition=GetVehicleDefinition();
+    if (Definition.Id.IsNone()) return;
+    const bool bPowered=bDriver && !bStale && FuelPercent > KINDA_SMALL_NUMBER;
+    if (TransportMovement->IsTransport())
     {
-        AddActorWorldRotation(FRotator(0.f, SteeringAxis * TurnRate * DeltaSeconds, 0.f));
+        AnomaliaTransport::Controls Controls;
+        Controls.Throttle=ForwardAxis; Controls.Yaw=SteeringAxis; Controls.Pitch=PitchAxis;
+        Controls.Roll=RollAxis; Controls.Vertical=VerticalAxis;
+        Controls.Brake=(!bDriver||bStale)?1:BrakeAxis;
+        TransportMovement->Simulate(DeltaSeconds,Controls,bPowered);
+    }
+    else
+    {
+        if(bPowered) AddMovementInput(GetActorForwardVector(),ForwardAxis);
+        if(bPowered && FMath::Abs(SteeringAxis)>KINDA_SMALL_NUMBER)
+            AddActorWorldRotation(FRotator(0,SteeringAxis*65.f*DeltaSeconds,0));
+    }
+    UpdateMetroCoaches();
+    // Aircraft consume fuel while maintaining powered lift, even at neutral forward input.
+    const float Demand=Definition.Domain==EAnomaliaVehicleDomain::Air?
+        FMath::Max(0.2f,FMath::Abs(ForwardAxis)+0.25f*FMath::Abs(VerticalAxis)):FMath::Abs(ForwardAxis);
+    if(bPowered && Demand>KINDA_SMALL_NUMBER)
+    {
+        const float OldFuel=FuelPercent;
+        FuelPercent=FMath::Max(0.f,FuelPercent-Demand*FuelConsumptionPerSecond*FMath::Min(DeltaSeconds,0.25f));
+        if(FMath::FloorToInt(OldFuel)!=FMath::FloorToInt(FuelPercent)||FuelPercent<=KINDA_SMALL_NUMBER)
+        { OnFuelChanged(FuelPercent); ForceNetUpdate(); }
     }
 }
 
@@ -149,6 +253,8 @@ bool AAnomaliaVehiclePawn::EnterVehicle(AController* DriverController, AAnomalia
     if (!HasAuthority() || !IsValid(DriverController) || !IsValid(Survivor) || HasDriver()) return false;
     if (Survivor->GetController() != DriverController || Survivor->Health <= 0.f) return false;
     if (FVector::DistSquared(GetActorLocation(), Survivor->GetActorLocation()) > FMath::Square(450.f)) return false;
+    ClearControls();
+    LastControlReceived=GetWorld()->GetTimeSeconds();
     ParkedSurvivor = Survivor;
     DriverController->Possess(this);
     if (GetController() != DriverController) { ParkedSurvivor.Reset(); return false; }
@@ -179,28 +285,35 @@ void AAnomaliaVehiclePawn::InputExitVehicle()
     else ServerExitVehicle();
 }
 
-void AAnomaliaVehiclePawn::InputForward(float Value)
+void AAnomaliaVehiclePawn::InputForward(float Value) { if(IsLocallyControlled()) ForwardAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,-1.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputSteering(float Value) { if(IsLocallyControlled()) SteeringAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,-1.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputPitch(float Value) { if(IsLocallyControlled()) PitchAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,-1.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputRoll(float Value) { if(IsLocallyControlled()) RollAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,-1.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputVertical(float Value) { if(IsLocallyControlled()) VerticalAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,-1.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputBrake(float Value) { if(IsLocallyControlled()) BrakeAxis=FMath::IsFinite(Value)?FMath::Clamp(Value,0.f,1.f):0; }
+void AAnomaliaVehiclePawn::InputTurn(float Value) { if(IsLocallyControlled()) AddControllerYawInput(Value); }
+void AAnomaliaVehiclePawn::InputLookUp(float Value) { if(IsLocallyControlled()) AddControllerPitchInput(Value); }
+void AAnomaliaVehiclePawn::InputCamera()
 {
-    if (!IsLocallyControlled()) return;
-    ForwardAxis = FMath::Clamp(Value, -1.f, 1.f);
-    if (HasAuthority()) return;
-    ServerSetControls(ForwardAxis, SteeringAxis);
-}
-
-void AAnomaliaVehiclePawn::InputSteering(float Value)
-{
-    if (!IsLocallyControlled()) return;
-    SteeringAxis = FMath::Clamp(Value, -1.f, 1.f);
-    if (HasAuthority()) return;
-    ServerSetControls(ForwardAxis, SteeringAxis);
+    if(!IsLocallyControlled()) return;
+    const bool bInterior=!InteriorCamera->IsActive();
+    FollowCamera->SetActive(!bInterior);
+    InteriorCamera->SetActive(bInterior);
 }
 
 void AAnomaliaVehiclePawn::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
     Super::SetupPlayerInputComponent(PlayerInputComponent);
-    PlayerInputComponent->BindAxis(TEXT("MoveForward"), this, &AAnomaliaVehiclePawn::InputForward);
-    PlayerInputComponent->BindAxis(TEXT("MoveRight"), this, &AAnomaliaVehiclePawn::InputSteering);
-    PlayerInputComponent->BindAction(TEXT("Interact"), IE_Pressed, this, &AAnomaliaVehiclePawn::InputExitVehicle);
+    PlayerInputComponent->BindAxis(TEXT("MoveForward"),this,&AAnomaliaVehiclePawn::InputForward);
+    PlayerInputComponent->BindAxis(TEXT("MoveRight"),this,&AAnomaliaVehiclePawn::InputSteering);
+    PlayerInputComponent->BindAxis(TEXT("VehiclePitch"),this,&AAnomaliaVehiclePawn::InputPitch);
+    PlayerInputComponent->BindAxis(TEXT("VehicleRoll"),this,&AAnomaliaVehiclePawn::InputRoll);
+    PlayerInputComponent->BindAxis(TEXT("VehicleVertical"),this,&AAnomaliaVehiclePawn::InputVertical);
+    PlayerInputComponent->BindAxis(TEXT("VehicleBrake"),this,&AAnomaliaVehiclePawn::InputBrake);
+    PlayerInputComponent->BindAxis(TEXT("Turn"),this,&AAnomaliaVehiclePawn::InputTurn);
+    PlayerInputComponent->BindAxis(TEXT("LookUp"),this,&AAnomaliaVehiclePawn::InputLookUp);
+    PlayerInputComponent->BindAction(TEXT("VehicleCamera"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputCamera);
+    PlayerInputComponent->BindAction(TEXT("Interact"),IE_Pressed,this,&AAnomaliaVehiclePawn::InputExitVehicle);
 }
 
 void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const
@@ -209,4 +322,49 @@ void AAnomaliaVehiclePawn::GetLifetimeReplicatedProps(TArray<FLifetimeProperty>&
     DOREPLIFETIME(AAnomaliaVehiclePawn, VehicleId);
     DOREPLIFETIME(AAnomaliaVehiclePawn, FuelPercent);
     DOREPLIFETIME(AAnomaliaVehiclePawn, SpeedMultiplier);
+}
+
+void AAnomaliaVehiclePawn::EndPlay(const EEndPlayReason::Type Reason)
+{
+    if(HasAuthority()) for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->Destroy();
+    MetroCoaches.Empty();
+    Super::EndPlay(Reason);
+}
+
+void AAnomaliaVehiclePawn::UpdateMetroCoaches()
+{
+    if(!HasAuthority()) return;
+    if(VehicleId!=FName(TEXT("metro")))
+    {
+        for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->Destroy();
+        MetroCoaches.Empty(); return;
+    }
+    AAnomaliaRailTrack* Route=TransportMovement->GetRailTrack();
+    USplineComponent* Track=IsValid(Route)?Route->Track.Get():nullptr;
+    if(!Track || Track->GetSplineLength()<=0)
+    {
+        for(AAnomaliaRailCarriage* Coach : MetroCoaches) if(IsValid(Coach)) Coach->SetActorHiddenInGame(true);
+        return;
+    }
+    // Fixed prototype centre spacing follows the route through curves; no straight parent attachment.
+    while(MetroCoaches.Num()<3)
+    {
+        FActorSpawnParameters Params; Params.Owner=this;
+        Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        auto* Coach=GetWorld()->SpawnActor<AAnomaliaRailCarriage>(AAnomaliaRailCarriage::StaticClass(),GetActorTransform(),Params);
+        if(!Coach) return;
+        Collision->IgnoreActorWhenMoving(Coach,true);
+        MetroCoaches.Add(Coach);
+    }
+    for(int32 Index=0;Index<MetroCoaches.Num();++Index)
+    {
+        auto* Coach=MetroCoaches[Index].Get(); if(!IsValid(Coach)) continue;
+        const double Distance=TransportMovement->GetTrackDistance()-(Index+1)*1850.;
+        const double Length=Track->GetSplineLength();
+        const bool Visible=Track->IsClosedLoop() || (Distance>=0 && Distance<=Length);
+        Coach->SetActorHiddenInGame(!Visible);
+        if(!Visible) continue; // Never pile coaches up at an open route endpoint.
+        const double Wrapped=Track->IsClosedLoop()?FMath::Fmod(FMath::Fmod(Distance,Length)+Length,Length):Distance;
+        Coach->SetActorTransform(Track->GetTransformAtDistanceAlongSpline(Wrapped,ESplineCoordinateSpace::World,false),false,nullptr,ETeleportType::TeleportPhysics);
+    }
 }

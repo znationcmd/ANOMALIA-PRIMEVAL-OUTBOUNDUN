@@ -1,0 +1,501 @@
+{
+  "schemaVersion": 1,
+  "licenseUrl": "https://savage.nps.edu/Savage/license.html",
+  "models": [
+    {
+      "id": "ah64d_apache",
+      "sourceUp": "z",
+      "url": "https://savage.nps.edu/Savage/AircraftHelicopters/AH64dApacheLongbowUnitedStates/AH64DApacheLongbow.x3d",
+      "sha256": "63813ccec673dc72af3db995ce6043053c697e9825e83ee2746472ccb4c113c6",
+      "bytes": 134218,
+      "metadata": [
+        {
+          "content": "AH64DApacheLongbow.x3d",
+          "name": "title"
+        },
+        {
+          "content": "AH-64D Apache Longbow model was originally in Open Flight and was converted to VRML 2, then imported using X3D-Edit.",
+          "name": "description"
+        },
+        {
+          "content": "Jon Ellis",
+          "name": "creator"
+        },
+        {
+          "content": "Erik Johnson",
+          "name": "contributor"
+        },
+        {
+          "content": "13 September 2004",
+          "name": "translated"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/AircraftHelicopters/AH64dApacheLongbowUnitedStates/AH64DApacheLongbow.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "Vrml97ToX3dNist, http://ovrt.nist.gov/v2_x3d.html",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": []
+    },
+    {
+      "id": "mi24_hind",
+      "sourceUp": "y",
+      "url": "https://savage.nps.edu/Savage/AircraftHelicopters/Mi24HindRussia/Mi24.x3d",
+      "sha256": "213c9f849e9f3a5133351f1d1df5a0ae0ac1abc21a5f096f53fe9eb3316fbd8f",
+      "bytes": 693449,
+      "metadata": [
+        {
+          "content": "Mi24.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Soviet Mi-24 Hind Attack Helicopter",
+          "name": "description"
+        },
+        {
+          "content": "Mr. D.",
+          "name": "creator"
+        },
+        {
+          "content": "TODO",
+          "name": "created"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "http://3dr.adlnet.gov/Public/Model.aspx?ContentObjectID=adl:620",
+          "name": "reference"
+        },
+        {
+          "content": "https://en.wikipedia.org/wiki/Mil_Mi-24",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ac/row/mi-24.htm",
+          "name": "reference"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/AircraftHelicopters/Mi24HindRussia/Mi24.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "3DS Max",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": [
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftHelicopters/Mi24HindRussia/Texture/Hind24.png",
+          "key": "11a35a5fd9ee9a3ca2878db642db57ca5e938ae3a10bf081385e8132197a4a7e",
+          "sha256": "b08b0b0e94368699ded2f9f6fe08410456a465da326c2b33df19b71d2e0650a6",
+          "bytes": 944503
+        }
+      ]
+    },
+    {
+      "id": "m1a2_abrams",
+      "sourceUp": "z",
+      "url": "https://savage.nps.edu/Savage/GroundVehicles/M1A2/M1A2.x3d",
+      "sha256": "04b057017dda63a9c00cd8ad068e516d8e51b2bf3f1285f391ef18e157d0ac1a",
+      "bytes": 15401,
+      "metadata": [
+        {
+          "content": "M1A2.x3d",
+          "name": "title"
+        },
+        {
+          "content": "An M1A2 model, untextured, for stand alone viewing.",
+          "name": "description"
+        },
+        {
+          "content": "Michael Martin",
+          "name": "creator"
+        },
+        {
+          "content": "7 September 2004",
+          "name": "created"
+        },
+        {
+          "content": "M1A2 \"main battle tank\" tank",
+          "name": "subject"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/GroundVehicles/M1A2/M1A2.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": []
+    },
+    {
+      "id": "ohio_ssgn",
+      "sourceUp": "y",
+      "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/Ohio.x3d",
+      "sha256": "32814295f4b1d34a9d5cea82bca36ccdb48c83209ddeb05255a33ac1bcace50b",
+      "bytes": 290073,
+      "metadata": [
+        {
+          "content": "Ohio.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Ohio Class SSBN or SSGN",
+          "name": "description"
+        },
+        {
+          "content": "Stephen Matsuba",
+          "name": "creator"
+        },
+        {
+          "content": "22 July 2007",
+          "name": "created"
+        },
+        {
+          "content": "9 November 2015",
+          "name": "modified"
+        },
+        {
+          "content": "https://www.fas.org/nuke/guide/usa/slbm/ssbn-726.htm",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.chinfo.navy.mil/navpalib/cno/n87/usw/issue_6/ssgn.html",
+          "name": "reference"
+        },
+        {
+          "content": "SsgnSecondCareer.pdf",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.chinfo.navy.mil/navpalib/cno/n87/future/ssgn.html",
+          "name": "reference"
+        },
+        {
+          "content": "http://www.ohio.navy.mil/html/conversion.htm",
+          "name": "reference"
+        },
+        {
+          "content": "Ohio Class Guided Missile Submarine (SSGN)",
+          "name": "subject"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/Ohio.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": [
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/brass.jpg",
+          "key": "d7b23f99ab59895f1a3f8599fd066d997361b3a1c768cb022b26f47cbc424a62",
+          "sha256": "0bf57e6e6dd0b24b775bc5a5d04330382bc5596eb65725535ab3e2ba7d185dcd",
+          "bytes": 8387
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_red_black.jpg",
+          "key": "0e61ad0650a12f21f04d47fb66e6314cef65d4fb3c6c2846895ab04bc3063d83",
+          "sha256": "bc8bef55eda049d5384d3d126e0a071fd18c3d5a621fd471d08dd85148c2e248",
+          "bytes": 41061
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_red_black_top.jpg",
+          "key": "9826c4f4ee5f96f4df93bbe640eee3f07155dd2f13feb579ad0ec22e7efe3dc4",
+          "sha256": "264f6c85e1c7eca6b150292ae7353ad05e42c44d60d676f16b9fd2e08eeb5cd0",
+          "bytes": 39869
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_top1.jpg",
+          "key": "27aff755276c55b95247480202cd9450ec7ef8671057a59b2fc4cc514d3e67fb",
+          "sha256": "f0e6a8df88a5f5312891ad7d4768ee7ee40e82e052cd3fc52dae87136d7ed66b",
+          "bytes": 20920
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_MP1.jpg",
+          "key": "b30e304bad1014aaf5fe245a4f2166541234827722faa314f5fb84cd7347dbef",
+          "sha256": "aef71232ebe63f906b5146d7a42961c97e75b52485dcf615cadd664e7f7f62a1",
+          "bytes": 13643
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_MP2.jpg",
+          "key": "069c1e085828abb2d9bf98498c5065544e93704df889277b857ff9f54af945e7",
+          "sha256": "c4522cd662b13c28151101de5ed079d7f2a5b1bd5189ae26641f9462d58b8b18",
+          "bytes": 29554
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_black_hatch.JPG",
+          "key": "5dfd821c98c2886d803a9ee1eb4eb87d01d2fb2ff17c3cf87fef295f1672040f",
+          "sha256": "b7e35cf3ee2a6ba6686e46d647ae7c1a5d4ffb5dc649f89e09d28c2e5b9e2377",
+          "bytes": 8291
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/Submarines/SsgnOhioUnitedStates/OHIO_ovalback.jpg",
+          "key": "6475de80793a881e1af607ddf40c13c701ad11642120eb46c5199a681a3543fa",
+          "sha256": "f336104bf0faba6bd16d79b936e059e8e3ac5e8a9facc8ebb83e3c9863c31e2c",
+          "bytes": 12482
+        }
+      ]
+    },
+    {
+      "id": "arleigh_burke",
+      "sourceUp": "y",
+      "url": "https://savage.nps.edu/Savage/ShipsMilitary/DDGArleighBurkeUnitedStates/ArleighBurkeHighDetail.x3d",
+      "sha256": "d7a857b11b2c201966aeb833518b858cf5e956349c930db96a065c822a76725c",
+      "bytes": 304174,
+      "metadata": [
+        {
+          "content": "ArleighBurkeHighDetail.x3d",
+          "name": "title"
+        },
+        {
+          "content": "An Arleigh Burke (DDG 51) class guided missle destroyer. Intended to be used with a prototype for crew served weapons emplacements, hull numbers, and ISIC/Ship seal incorporation",
+          "name": "description"
+        },
+        {
+          "content": "LT Patrick Sullivan",
+          "name": "creator"
+        },
+        {
+          "content": "23 March 2005",
+          "name": "created"
+        },
+        {
+          "content": "20 October 2019",
+          "name": "modified"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/ShipsMilitary/DDGArleighBurkeUnitedStates/ArleighBurkeHighDetail.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "VizX3D, http://www.vivaty.com/downloads/studio",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": []
+    },
+    {
+      "id": "c130_hercules",
+      "sourceUp": "y",
+      "url": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/C130Hercules.x3d",
+      "sha256": "487bca5f15ab6c52b5978bac798221fd33b809beb882979de08841181cb4443e",
+      "bytes": 29327,
+      "metadata": [
+        {
+          "content": "C130Hercules.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Model of the Hercule C130 aircraft.",
+          "name": "description"
+        },
+        {
+          "content": "Maj. Mounir Sidhom, Tunisian Air Force",
+          "name": "creator"
+        },
+        {
+          "content": "Xeena VRML importer, X3D-Edit 3.1, https://www.web3d.org/x3d/content/README.X3D-Edit.html",
+          "name": "translator"
+        },
+        {
+          "content": "3 September 2004",
+          "name": "created"
+        },
+        {
+          "content": "3 July 2022",
+          "name": "modified"
+        },
+        {
+          "content": "not verified to scale",
+          "name": "warning"
+        },
+        {
+          "content": "Extrusion texture transform incorrect for cabine.png",
+          "name": "warning"
+        },
+        {
+          "content": "https://www.fas.org/man/dod-101/sys/ac/c-130.htm",
+          "name": "reference"
+        },
+        {
+          "content": "http://fr.wikipedia.org/wiki/Lockheed_C-130_Hercules",
+          "name": "reference"
+        },
+        {
+          "content": "http://en.wikipedia.org/wiki/Lockheed_C-130_Hercules",
+          "name": "reference"
+        },
+        {
+          "content": "https://www.lockheedmartin.com/en-us/products/c130.html",
+          "name": "reference"
+        },
+        {
+          "content": "C130 Hercules aircraft",
+          "name": "subject"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/C130Hercules.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "Vrml97ToX3dNist, http://ovrt.nist.gov/v2_x3d.html",
+          "name": "generator"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": [
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/flag.png",
+          "key": "3be0756bb24fc384e9d0b43db14092aa5dd79cdb5c0c78f6acc1154c2bb8d4b8",
+          "sha256": "892fa14443ed1b65754af353a9dd1a4c368a169baa194c753e2df6691630f1ba",
+          "bytes": 10686
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/peinture.png",
+          "key": "ba7bb677023faa5780706956648628dbbfb777b2156ffb4f3b1d364bd43b08cd",
+          "sha256": "f77f72c0d7a97d5657946d27611dba5478dfab97e4dede1d9dfd6367e7aa3b99",
+          "bytes": 2734
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/cabine.png",
+          "key": "aaa80b15ddfa191daea1444e9cd39c6980a9a80032f573b4266c0613c9a5adb4",
+          "sha256": "a0b00aff73c71a79d3b3312e265c4ddf81d4352436aaf2a57a03553886179565",
+          "bytes": 6165
+        },
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftFixedWing/C130HerculesTunisia/helice.png",
+          "key": "13a964405aa0a9fc3f0983a9ed452155675a33eae1f7aff989e1db9e3bf9ead0",
+          "sha256": "1a182339401a876125c4185df89ff414ee8def4450acd91934548cd900d0663b",
+          "bytes": 1121
+        }
+      ]
+    },
+    {
+      "id": "eurofighter_typhoon",
+      "sourceUp": "z",
+      "url": "https://savage.nps.edu/Savage/AircraftFixedWing/EuroFighter/EuroFighter.x3d",
+      "sha256": "a28cdab3e45eaa130402b9eceef332bf69945832880ff2d1885bb1c7e9b6883e",
+      "bytes": 151852,
+      "metadata": [
+        {
+          "content": "EuroFighter.x3d",
+          "name": "title"
+        },
+        {
+          "content": "Model of a Typhoon Eurofighter, Open the dome by touching, Airplane is tilted to the left side. To implement it rotate on the x-axis 90 degrees clockwise",
+          "name": "creator"
+        },
+        {
+          "content": "1 January 2014",
+          "name": "created"
+        },
+        {
+          "content": "28 November 2019",
+          "name": "modified"
+        },
+        {
+          "content": "FIS bases on Kyle Pearson, online url: http://www.rccad.com/Gallery/Vrml/EuroFighter.wrl. Sounds are self created",
+          "name": "reference"
+        },
+        {
+          "content": "Jet, Typhoon, Eurofighter",
+          "name": "subject"
+        },
+        {
+          "content": "https://savage.nps.edu/Savage/AircraftFixedWing/EuroFighter/EuroFighter.x3d",
+          "name": "identifier"
+        },
+        {
+          "content": "X3D-Edit 3.2, https://savage.nps.edu/X3D-Edit",
+          "name": "generator"
+        },
+        {
+          "content": "Vrml97ToX3dNist, http://ovrt.nist.gov/v2_x3d.html",
+          "name": "generator"
+        },
+        {
+          "content": "Sounds/DuringFlight.wav",
+          "name": "Sound"
+        },
+        {
+          "content": "Sounds/FlyBy.wav",
+          "name": "Sound"
+        },
+        {
+          "content": "Sounds/MissileStart.wav",
+          "name": "Sound"
+        },
+        {
+          "content": "Model of a Eurofighter Typhoon, with basic flight sound, Cockpit animation and animated jet-flames, Turn on the x-axis 90 degeeres counter-clockwise.",
+          "name": "description"
+        },
+        {
+          "content": "../../license.html",
+          "name": "license"
+        }
+      ],
+      "media": [
+        {
+          "url": "https://savage.nps.edu/Savage/AircraftFixedWing/EuroFighter/Textures/cockpit.png",
+          "key": "25938bc9ed068c584caf655f1a746131ff17bb5ecd58dbee575f13163859b797",
+          "sha256": "445e4e6b701b94948b23f4cbf9fafedefb3555cbf17a8d47c3aa8ad46bab9b75",
+          "bytes": 852427
+        }
+      ]
+    }
+  ],
+  "coverage": "Seven historic visual reference models. Exact requested variants, manufacturer scale, rigs, interior, physics, damage and multiplayer remain unverified. Not the complete military list."
+}

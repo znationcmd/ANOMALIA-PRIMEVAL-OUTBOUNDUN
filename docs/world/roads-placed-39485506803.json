@@ -1,0 +1,23 @@
+{
+  "state": "PLACED_NOT_PLAYTESTED",
+  "sourceCommit": "6bb306dd6078f09e49b614992c47082b75d4ebbf",
+  "walkTested": false,
+  "renderingValidated": false,
+  "roadCount": 2,
+  "totalLengthMeters": 1000,
+  "widthMeters": 11,
+  "roads": [
+    {
+      "side": "West",
+      "lengthMeters": 500.0,
+      "sourceSha256": "85c7b5cc6b0a125394fa64a4b8a4fc85a147f3d23c9f164f7d7598eedaf3ab4b",
+      "objectPath": "/Game/Anomalia/Infrastructure/Roads/SM_DetroitWest_85c7b5cc6b0a.SM_DetroitWest_85c7b5cc6b0a"
+    },
+    {
+      "side": "East",
+      "lengthMeters": 500.0,
+      "sourceSha256": "e5f60fb4279a96d0787ea0e0a1f4fe932c9152c3674ee4155e1228555cc582c8",
+      "objectPath": "/Game/Anomalia/Infrastructure/Roads/SM_DetroitEast_e5f60fb4279a.SM_DetroitEast_e5f60fb4279a"
+    }
+  ]
+}

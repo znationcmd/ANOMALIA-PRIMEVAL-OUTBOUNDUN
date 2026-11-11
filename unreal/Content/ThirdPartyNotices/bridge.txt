@@ -1,0 +1,7 @@
+ANOMALIA original viaduct model and assembly: CMD / ANOMALIA project.
+Photographic asphalt and concrete albedo scans reused unchanged from the existing JS game.
+Asphalt 02: https://polyhaven.com/a/asphalt_02
+Concrete Wall 001: https://polyhaven.com/a/concrete_wall_001
+Poly Haven texture license: CC0 1.0 / https://polyhaven.com/license
+Full existing asset notices: ASSET_CREDITS.md at repository root.
+No DayZ or ARK model geometry is included.

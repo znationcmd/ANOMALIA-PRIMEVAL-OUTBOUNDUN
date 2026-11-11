@@ -8,6 +8,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
+class UAnomaliaVitalsComponent;
+class AAnomaliaHomesteadStation;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -28,6 +30,9 @@ public:
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
 
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Survival")
+    TObjectPtr<UAnomaliaVitalsComponent> VitalsComponent;
+
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
 
@@ -36,6 +41,19 @@ public:
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Health = 100.f;
+
+    /** 0 = rested, 100 = exhausted; independent of sprint stamina. */
+    UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
+    float Fatigue = 0.f;
+
+    UPROPERTY(ReplicatedUsing=OnRep_Rest, BlueprintReadOnly, Category="ANOMALIA|Rest")
+    bool bSleeping = false;
+
+    UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Rest")
+    void OnRestChanged();
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Rest")
+    void RestoreFatigue(float SavedFatigue);
 
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Survival")
     void OnSurvivalChanged();
@@ -51,6 +69,9 @@ protected:
     UFUNCTION()
     void OnRep_Survival();
 
+    UFUNCTION()
+    void OnRep_Rest();
+
 private:
     void MoveForward(float Value);
     void MoveRight(float Value);
@@ -58,6 +79,14 @@ private:
     void LookUp(float Value);
     void InputInteract();
     void InputInventory();
+    void StartSprint();
+    void StopSprint();
+    void InputRest();
+
+    TWeakObjectPtr<AAnomaliaHomesteadStation> ActiveBed;
+
+    UFUNCTION(Server, Reliable)
+    void ServerRequestRest();
 
     /** Server checks the closest available vehicle; clients cannot choose an arbitrary target. */
     UFUNCTION(Server, Reliable)

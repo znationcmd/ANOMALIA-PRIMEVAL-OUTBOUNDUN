@@ -1,0 +1,217 @@
+{
+  "run": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/39591689495",
+  "sourceCommit": "585704dff9d74162a4a981cadcf544fcea2b89ef",
+  "artifact": {
+    "id": 12341858979,
+    "sha256": "d2bed0bc7b00069e434340af2b4ffe17a7a4cd7aff52a044baec30dde1d0240c"
+  },
+  "installation": {
+    "project": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+    "installedProjectDX11SM5Tested": true,
+    "commit": "585704dff9d74162a4a981cadcf544fcea2b89ef",
+    "installedProjectHeadlessOpenTested": true,
+    "existingServerFilesPreserved": 33,
+    "shortcut": "C:\\Users\\utilisateur\\Desktop\\ANOMALIA - Unreal.lnk",
+    "startupAfterRebootTested": false,
+    "packagedGame": false,
+    "runnerListenerIdsUnchanged": true,
+    "state": "EDITOR_PROJECT_UPDATE_INSTALLED",
+    "startupShortcut": "C:\\Users\\utilisateur\\AppData\\Roaming\\Microsoft\\Windows\\Start Menu\\Programs\\Startup\\ANOMALIA - mises a jour.lnk",
+    "installRoot": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5",
+    "editorLaunchTested": true,
+    "runnerBootstrapExistingSessionTested": true
+  },
+  "copiedProjectNativeProcess": {
+    "state": "COPIED_EDITOR_PROJECT_GPU_VERIFIED",
+    "headless": true,
+    "graphicalLaunchTested": true,
+    "command": [
+      "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+      "-NullRHI",
+      "-unattended",
+      "-nopause",
+      "-nosound",
+      "-ExecutePythonScript=C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\Scripts\\probe_installed_editor.py",
+      "-abslog=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39591689495-1\\pc-editor-open.engine.log"
+    ],
+    "exitCode": 0,
+    "nativeReport": {
+      "state": "COPIED_EDITOR_PROJECT_OPENED_HEADLESS",
+      "headless": true,
+      "graphicalLaunchTested": false,
+      "projectDir": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef",
+      "savedDir": "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\userdata\\Saved",
+      "landscapeComponents": 576,
+      "forcedLayerMerges": 0
+    },
+    "graphicalCommand": [
+      "C:\\Program Files\\Epic Games\\UE_5.8\\Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe",
+      "C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\AnomaliaPrimeval.uproject",
+      "-d3d11",
+      "-sm5",
+      "-RenderOffscreen",
+      "-unattended",
+      "-nopause",
+      "-nosound",
+      "-ResX=1280",
+      "-ResY=720",
+      "-ExecutePythonScript=C:\\Users\\utilisateur\\AppData\\Local\\CMD\\ANOMALIA-UE5\\versions\\585704dff9d74162a4a981cadcf544fcea2b89ef\\Scripts\\capture_real_world.py",
+      "-abslog=C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39591689495-1\\pc-installed-graphics\\editor-render.log"
+    ],
+    "graphicalExitCode": 0,
+    "graphicalReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39591689495-1\\pc-installed-graphics\\visual-report.json"
+  },
+  "build": {
+    "startedUtc": "2026-10-21T11:26:18.670190+00:00",
+    "compilation": "passed",
+    "execution": "not_run",
+    "worldPlayable": "not_verified",
+    "targets": [
+      {
+        "target": "AnomaliaPrimevalEditor",
+        "exitCode": 0,
+        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaPrimevalEditor.log"
+      },
+      {
+        "target": "AnomaliaPrimeval",
+        "exitCode": 0,
+        "log": "unreal\\Saved\\BuildValidation\\run-39591689495-1\\AnomaliaPrimeval.log"
+      }
+    ],
+    "engineRoot": "C:\\Program Files\\Epic Games\\UE_5.8",
+    "engineVersion": {
+      "MajorVersion": 5,
+      "MinorVersion": 8,
+      "PatchVersion": 3,
+      "Changelist": 58210709,
+      "CompatibleChangelist": 55116800,
+      "IsLicenseeVersion": 0,
+      "IsPromotedBuild": 1,
+      "BranchName": "++UE5+Release-5.8"
+    },
+    "nativeTests": "passed",
+    "automationReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39591689495-1\\automation-2934d28cb38448c9aa864c56ddc30b2e",
+    "nativeTestExitCode": 0
+  },
+  "playInEditor": {
+    "state": "TESTED_IN_EDITOR_HEADLESS",
+    "mode": "Play In Editor",
+    "headless": true,
+    "renderingValidated": false,
+    "multiplayerTested": false,
+    "automationReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39591689495-1\\world-pie-3892db597fb249989385baf63445d53e",
+    "exitCode": 0,
+    "checks": [
+      "load_real_map",
+      "start_PIE",
+      "spawn_native_character",
+      "stand_on_landscape_collision",
+      "walk_on_terrain",
+      "inventory_add_remove",
+      "bridge_streaming_collision",
+      "continuous_roads_and_bridge_crossing_3490m",
+      "all_50_spans_in_sequence"
+    ]
+  },
+  "installedGPU": {
+    "state": "REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED",
+    "sourceCommit": "585704dff9d74162a4a981cadcf544fcea2b89ef",
+    "mapPackage": "/Game/Maps/ANOMALIA_Archipelago_v2",
+    "requestedRHI": "D3D11 SM5",
+    "renderPhase": "verify",
+    "screenshots": [
+      {
+        "file": "01_archipelago.png",
+        "sha256": "790864adb85d1c4dac0d061dea0b6d6fb5d156b378d2c1e81f89a890bd8c93b1",
+        "bytes": 819076,
+        "cameraCm": [
+          0,
+          0,
+          3200000
+        ],
+        "targetCm": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "file": "02_snow_mountains.png",
+        "sha256": "3c732a7caea65195e5a1d3043e59a2478b968053171d187a5edf9303888766ed",
+        "bytes": 874998,
+        "cameraCm": [
+          -800000,
+          -1020000,
+          250000
+        ],
+        "targetCm": [
+          -575000,
+          -725000,
+          160000
+        ]
+      },
+      {
+        "file": "03_beach.png",
+        "sha256": "6bfccc07b4e8a61f21dc589b69c4e3ac6496f552c2831b03085545598edceb5f",
+        "bytes": 562027,
+        "cameraCm": [
+          -1690000,
+          1020000,
+          1800
+        ],
+        "targetCm": [
+          -1660000,
+          985000,
+          600
+        ]
+      },
+      {
+        "file": "04_desert.png",
+        "sha256": "9400c17f7f5d2b2bfe042fc03d689798d5672e4831f0fa31173d90bf17dbb2f2",
+        "bytes": 553511,
+        "cameraCm": [
+          1580000,
+          1190000,
+          11000
+        ],
+        "targetCm": [
+          1630000,
+          1230000,
+          4500
+        ]
+      },
+      {
+        "file": "05_detroit_bridge.png",
+        "sha256": "ac4b87de323341088a02bf8434b679408236d1e7f64585d7c63573269512ae73",
+        "bytes": 595027,
+        "cameraCm": [
+          1450000,
+          840000,
+          30000
+        ],
+        "targetCm": [
+          1475000,
+          900000,
+          3200
+        ]
+      }
+    ],
+    "heightBoundsCheck": {
+      "minCm": -44468.75,
+      "maxCm": 176081.25,
+      "flatSentinelComponents": 0
+    }
+  },
+  "manualVisualReview": [
+    "01_archipelago.png",
+    "02_snow_mountains.png",
+    "05_detroit_bridge.png"
+  ],
+  "limits": [
+    "No actual Windows reboot performed; Startup link and existing-session bootstrap were tested.",
+    "Development project opened with installed Unreal Engine; not a packaged game installer.",
+    "No desktop shortcut click test; shortcut creation/readback tested.",
+    "Visual materials remain provisional; no performance or full gameplay completion claim."
+  ]
+}

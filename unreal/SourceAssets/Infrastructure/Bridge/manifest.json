@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "sha256": "333bfbf352aa79d4715dc67161bfd19ef6bf1915c52674356400f89d30cdb2a1",
+  "bytes": 457356,
+  "spanMeters": 50,
+  "widthMeters": 11,
+  "originalGeometry": "CMD / ANOMALIA",
+  "textures": [
+    {
+      "name": "asphalt_02",
+      "license": "CC0-1.0",
+      "source": "https://polyhaven.com/a/asphalt_02"
+    },
+    {
+      "name": "concrete_wall_001",
+      "license": "CC0-1.0",
+      "source": "https://polyhaven.com/a/concrete_wall_001"
+    }
+  ],
+  "notes": "Original structural model; no final art, vehicle drive test or rendered quality claim."
+}

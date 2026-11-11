@@ -4,22 +4,54 @@ on:
   push:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_original_lot1.py'
+      - 'tests/test_ue5_expansion_models.py'
+      - 'tests/test_ue5_settlement_layout.py'
+      - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_visual_camera.py'
+      - 'tests/test_ue5_world_snapshot.py'
+      - 'tests/test_ue58_target_settings.py'
+      - 'tests/test_ue5_native_include_paths.py'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
+      - 'tests/test_ue5_vitals_source.py'
+      - 'tests/test_ue5_homestead_editor.py'
+      - 'tests/test_ue5_first_world_source.py'
+      - 'tests/test_ue5_draft_bootstrap_source.py'
+      - 'tests/test_ue5_playtest_terrain.py'
+      - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
   pull_request:
     paths:
       - 'unreal/**'
+      - 'tests/test_ue5_original_lot1.py'
+      - 'tests/test_ue5_expansion_models.py'
+      - 'tests/test_ue5_settlement_layout.py'
+      - 'tests/native/**'
       - 'scripts/migrate-to-ue5.py'
       - 'tests/test_unreal_port.py'
       - 'tests/test_ue5_build_driver.py'
+      - 'tests/test_ue5_visual_camera.py'
+      - 'tests/test_ue5_world_snapshot.py'
+      - 'tests/test_ue58_target_settings.py'
+      - 'tests/test_ue5_native_include_paths.py'
       - 'tests/test_ue5_config_catalog.py'
       - 'tests/test_ue5_inventory_source.py'
+      - 'tests/test_ue5_vitals_source.py'
+      - 'tests/test_ue5_homestead_editor.py'
+      - 'tests/test_ue5_first_world_source.py'
+      - 'tests/test_ue5_draft_bootstrap_source.py'
+      - 'tests/test_ue5_playtest_terrain.py'
+      - 'tests/test_ue5_integration_contract.py'
       - 'scripts/ue5/**'
+      - 'scripts/vehicle-requirements/**'
+      - 'docs/vehicles/**'
       - '.github/workflows/ue5-source-checks.yml'
 
 jobs:
@@ -31,14 +63,30 @@ jobs:
         run: python -m unittest discover -s tests -p test_unreal_port.py -v
       - name: Test build driver failure reporting (not a native build)
         run: python -m unittest discover -s tests -p test_ue5_build_driver.py -v
+      - name: Prevent UE5.8 shared build settings regression
+        run: python -m unittest discover -s tests -p test_ue58_target_settings.py -v
+      - name: Guard native test include resolution in nested source files
+        run: python -m unittest discover -s tests -p test_ue5_native_include_paths.py -v
       - name: Validate the UE5 configuration status catalog
         run: python -m unittest discover -s tests -p test_ue5_config_catalog.py -v
       - name: Check the server-authoritative UE5 inventory model
         run: python -m unittest discover -s tests -p test_ue5_inventory_source.py -v
+      - name: Check server-authoritative stamina and temperature source
+        run: python -m unittest discover -s tests -p test_ue5_vitals_source.py -v
+      - name: Test safe homestead, farm and offline editor operations
+        run: python -m unittest discover -s tests -p test_ue5_homestead_editor.py -v
+      - name: Verify World Partition bootstrap sources (Unreal Editor required for .umap)
+        run: python -m unittest discover -s tests -p test_ue5_first_world_source.py -v
+      - name: Verify draft landscape bootstrap safeguards
+        run: python -m unittest discover -s tests -p test_ue5_draft_bootstrap_source.py -v
+      - name: Verify integration keeps homestead and world scripts
+        run: python -m unittest discover -s tests -p test_ue5_integration_contract.py -v
       - name: Install terrain source dependency
         run: python -m pip install numpy
       - name: Test deterministic terrain source
         run: python -m unittest discover -s tests -p test_ue5_terrain_source.py -v
+      - name: Validate 48km draft terrain seams and non-destructive generation
+        run: python -m unittest discover -s tests -p test_ue5_playtest_terrain.py -v
       - name: Verify config migration is non-destructive
         run: |
           python scripts/migrate-to-ue5.py
@@ -51,3 +99,29 @@ jobs:
           assert not data['copied'], 'second run should not overwrite or recopy'
           print('Second migration pass is idempotent.')
           PY
+      - name: Compile and execute transport numerical scenarios (not Unreal)
+        run: |
+          g++ -std=c++17 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all tests/native/transport_dynamics.cpp -o /tmp/transport-dynamics
+          /tmp/transport-dynamics
+      - name: Verify real vehicle GLB source and non-destructive preparation
+        run: python -m unittest discover -s tests -p test_ue5_vehicle_models.py -v
+      - name: Measure original archipelago and validate height encoding (not Unreal)
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -pedantic -fsanitize=undefined -fno-sanitize-recover=all -I unreal/Source/AnomaliaPrimeval tests/native/archipelago_height.cpp -o /tmp/archipelago-height
+          /tmp/archipelago-height
+      - name: Verify actual bridge geometry and reused texture bytes
+        run: python -m unittest discover -s tests -p test_ue5_bridge_source.py -v
+      - name: Regress capture camera target alignment (not Unreal rendering)
+        run: python -m unittest discover -s tests -p test_ue5_visual_camera.py -v
+      - name: Verify immutable world snapshots exclude player saves
+        run: python -m unittest discover -s tests -p test_ue5_world_snapshot.py -v
+      - name: Verify all eight original GLB source identities and dimensions
+        run: python -m unittest discover -s tests -p test_ue5_original_lot1.py -v
+      - name: Generate and verify 33 original prototype meshes without third-party dependencies
+        run: python -m unittest discover -s tests -p test_ue5_expansion_models.py -v
+      - name: Verify urban footprints road clearance and exact pool recesses
+        run: python -m unittest discover -s tests -p test_ue5_settlement_layout.py -v
+      - name: Keep every requested military and civilian entry in the complete worklist
+        run: python scripts/vehicle-requirements/audit-requested-vehicles.py --check
+      - name: Verify original metro meshes preserve artist edits
+        run: python -m unittest discover -s tests -p test_ue5_metro.py -v

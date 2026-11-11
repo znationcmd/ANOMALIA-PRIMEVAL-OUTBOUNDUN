@@ -1,0 +1,7 @@
+# Military visual references
+
+The seven separately credited Savage source models represent M1A2, AH-64D, Mi-24, C-130, Eurofighter, Arleigh Burke and Ohio SSGN. They are historic static reference art, not finished current variants or manufacturer-validated dimensions. The C-130 source explicitly warns its scale has not been verified. No public model is renamed to a different requested vehicle.
+
+Use Python 3.12 with the pinned requirements in an isolated environment, then `python scripts/military-assets/prepare.py`. Sources and image bytes must match `docs/vehicles/military-assets-sources.json`. The importer resolves shared coordinate definitions, bakes transforms, triangulates, generates analytic UVs where needed, flips the UV vertical axis, converts declared up axes, approximates original colours as PBR materials and embeds available PNG textures capped at 1024px. It does not execute source scripts. Original sources, authors, warnings, licensing, modifications and missing texture URLs remain in the manifests and credits. No external geometry or undeclared prototype is silently dropped.
+
+Run `scripts/ue5/validate-expansion-models.py --group Military1` using engine Python to import to a separate Unreal reference map and create real GPU screenshots. These assets remain outside the active vehicle spawn catalogue until rigs, scale, front direction, controls, physics, usable seats, collisions and actual gameplay have been verified. The rest of the full military request list remains outstanding.

@@ -1,6 +1,7 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -8,6 +9,10 @@
 #include "TimerManager.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
+#include "Vehicles/AnomaliaTransportMovement.h"
+#include "Vehicles/AnomaliaTransportEnvironment.h"
+#include "EngineUtils.h"
+#include "AnomaliaHomesteadStation.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Dom/JsonObject.h"
@@ -119,6 +124,32 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
         bHasValue = true;
     }
     if (bHasValue) Survivor->RestoreSurvival(static_cast<float>(Food), static_cast<float>(Water), static_cast<float>(HP));
+    // Older profiles have no fatigue key and safely retain the fresh-character default.
+    if (Survival->TryGetNumberField(TEXT("fatigue"), Value) && FMath::IsFinite(Value) &&
+        Value >= 0.0 && Value <= 100.0)
+        Survivor->RestoreFatigue(static_cast<float>(Value));
+
+    // Optional fields: legacy profiles without vitals remain valid and unchanged.
+    if (Survivor->VitalsComponent)
+    {
+        double SavedStamina = Survivor->VitalsComponent->Stamina;
+        double SavedTemperature = Survivor->VitalsComponent->BodyTemperatureC;
+        bool bValidVitals = false;
+        if (Survival->TryGetNumberField(TEXT("stamina"), Value) && FMath::IsFinite(Value) &&
+            Value >= 0.0 && Value <= 100.0)
+        {
+            SavedStamina = Value;
+            bValidVitals = true;
+        }
+        if (Survival->TryGetNumberField(TEXT("bodyTemperatureC"), Value) && FMath::IsFinite(Value) &&
+            Value >= 25.0 && Value <= 45.0)
+        {
+            SavedTemperature = Value;
+            bValidVitals = true;
+        }
+        if (bValidVitals)
+            Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
+    }
 }
 
 void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
@@ -164,6 +195,13 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     Survival->SetNumberField(TEXT("hunger"), FMath::Clamp(Survivor->Hunger, 0.f, 100.f));
     Survival->SetNumberField(TEXT("thirst"), FMath::Clamp(Survivor->Thirst, 0.f, 100.f));
     Survival->SetNumberField(TEXT("health"), FMath::Clamp(Survivor->Health, 0.f, 100.f));
+    Survival->SetNumberField(TEXT("fatigue"), FMath::Clamp(Survivor->Fatigue, 0.f, 100.f));
+    if (Survivor->VitalsComponent)
+    {
+        Survival->SetNumberField(TEXT("stamina"), FMath::Clamp(Survivor->VitalsComponent->Stamina, 0.f, 100.f));
+        Survival->SetNumberField(TEXT("bodyTemperatureC"),
+            FMath::Clamp(Survivor->VitalsComponent->BodyTemperatureC, 25.f, 45.f));
+    }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
 
@@ -210,6 +248,7 @@ void AAnomaliaGameMode::BeginPlay()
     Super::BeginPlay();
     if (HasAuthority())
     {
+        SpawnConfiguredHomestead();
         SpawnConfiguredVehicles();
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }
@@ -271,13 +310,149 @@ void AAnomaliaGameMode::SpawnConfiguredVehicles()
             UE_LOG(LogTemp, Warning, TEXT("ANOMALIA %s: invalid vehicle tuning for %s"), *ServerId, *VehicleName);
             continue;
         }
+        // Transport settings are server-local and validated before creating an actor.
+        double Thrust=0, Stall=3500, Waterline=0, TrackDistance=0;
+        const auto ReadOptionalNumber=[&Row](const TCHAR* Name,double& Value)
+        { return !Row->HasField(Name)||Row->TryGetNumberField(Name,Value); };
+        if(!ReadOptionalNumber(TEXT("thrustAcceleration"),Thrust)||!ReadOptionalNumber(TEXT("stallSpeedCm"),Stall)||
+            !ReadOptionalNumber(TEXT("waterlineOffsetCm"),Waterline)||!ReadOptionalNumber(TEXT("trackDistanceCm"),TrackDistance)) continue;
+        if(!FMath::IsFinite(Thrust)||Thrust<0||Thrust>10000||!FMath::IsFinite(Stall)||Stall<100||Stall>20000||
+            !FMath::IsFinite(Waterline)||Waterline<0||Waterline>1000||!FMath::IsFinite(TrackDistance)||TrackDistance<0) continue;
+        AAnomaliaRailTrack* Route=nullptr;
+        if(Definition.Domain==EAnomaliaVehicleDomain::Rail)
+        {
+            FString RouteName;
+            if(!Row->TryGetStringField(TEXT("routeId"),RouteName)||RouteName.IsEmpty()||RouteName.Len()>128) continue;
+            bool bDuplicate=false;
+            for(TActorIterator<AAnomaliaRailTrack> It(GetWorld());It;++It)
+                if(It->RouteId==FName(*RouteName)) { if(Route) { bDuplicate=true; break; } Route=*It; }
+            if(!Route||bDuplicate) { UE_LOG(LogTemp,Warning,TEXT("ANOMALIA rail route missing or ambiguous: %s"),*RouteName); continue; }
+        }
         AAnomaliaVehiclePawn* Vehicle = SpawnServerVehicle(VehicleId, Transform);
         if (Vehicle)
         {
             if (!Vehicle->ConfigureRuntimeTuning(static_cast<float>(Fuel), static_cast<float>(Consumption),
                 static_cast<float>(SpeedScale))) { Vehicle->Destroy(); continue; }
+            Vehicle->TransportMovement->ThrustAcceleration=Thrust;
+            Vehicle->TransportMovement->StallSpeedCm=Stall;
+            Vehicle->TransportMovement->WaterlineOffsetCm=Waterline;
+            if(Route && !Vehicle->TransportMovement->AssignTrack(Route,TrackDistance))
+            {
+                UE_LOG(LogTemp,Warning,TEXT("ANOMALIA train spawn is not near its rail position"));
+                Vehicle->Destroy(); continue;
+            }
             ++Spawned;
         }
     }
     UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: spawned %d initial vehicles"), *ServerId, Spawned);
+}
+
+
+namespace
+{
+    bool ParseHomesteadKind(const FString& Text, EAnomaliaHomesteadObject& OutKind)
+    {
+        using K = EAnomaliaHomesteadObject;
+        if      (Text == TEXT("bed")) OutKind = K::Bed;
+        else if (Text == TEXT("table")) OutKind = K::Table;
+        else if (Text == TEXT("chair")) OutKind = K::Chair;
+        else if (Text == TEXT("sofa")) OutKind = K::Sofa;
+        else if (Text == TEXT("wardrobe")) OutKind = K::Wardrobe;
+        else if (Text == TEXT("kitchen")) OutKind = K::Kitchen;
+        else if (Text == TEXT("lamp")) OutKind = K::Lamp;
+        else if (Text == TEXT("cow")) OutKind = K::Cow;
+        else if (Text == TEXT("chicken")) OutKind = K::Chicken;
+        else if (Text == TEXT("beehive")) OutKind = K::Beehive;
+        else if (Text == TEXT("doghouse")) OutKind = K::Doghouse;
+        else if (Text == TEXT("barn")) OutKind = K::Barn;
+        else if (Text == TEXT("fence")) OutKind = K::Fence;
+        else if (Text == TEXT("tractor_shed")) OutKind = K::TractorShed;
+        else return false;
+        return true;
+    }
+
+    bool SafePlacementId(const FString& Id)
+    {
+        if (Id.IsEmpty() || Id.Len() > 64) return false;
+        for (const TCHAR C : Id)
+            if (C > 127 || !(FChar::IsAlnum(C) || C == TEXT('-') || C == TEXT('_'))) return false;
+        return true;
+    }
+
+    struct FAnomaliaPlacementToSpawn
+    {
+        EAnomaliaHomesteadObject Kind;
+        FTransform Transform;
+    };
+}
+
+void AAnomaliaGameMode::SpawnConfiguredHomestead()
+{
+    if (!HasAuthority() || !GetWorld()) return;
+    // No global/shared layout fallback: a single server's saved Editor/ world only.
+    const FString File = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Servers"), ServerId,
+        TEXT("Editor"), TEXT("world.json"));
+    if (!IFileManager::Get().FileExists(*File)) return;
+    const int64 Bytes = IFileManager::Get().FileSize(*File);
+    if (Bytes <= 0 || Bytes > 262144) return;
+
+    FString Raw;
+    if (!FFileHelper::LoadFileToString(Raw, *File)) return;
+    TSharedPtr<FJsonObject> Root;
+    const TSharedRef<TJsonReader<>> Reader = TJsonReaderFactory<>::Create(Raw);
+    if (!FJsonSerializer::Deserialize(Reader, Root) || !Root.IsValid()) return;
+
+    FString StoredServer;
+    double Version = 0.0;
+    if (!Root->TryGetStringField(TEXT("serverId"), StoredServer) ||
+        StoredServer != ServerId ||
+        !Root->TryGetNumberField(TEXT("schemaVersion"), Version) || Version != 1.0) return;
+
+    const TArray<TSharedPtr<FJsonValue>>* Rows = nullptr;
+    if (!Root->TryGetArrayField(TEXT("placements"), Rows) || !Rows || Rows->Num() > 256) return;
+    TSet<FString> SeenIds;
+    TArray<FAnomaliaPlacementToSpawn> Validated;
+    Validated.Reserve(Rows->Num());
+
+    // Validate the entire file first: malformed entries produce no partial world updates.
+    for (const TSharedPtr<FJsonValue>& Value : *Rows)
+    {
+        const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+        if (!Row.IsValid() || Row->Values.Num() != 6) return;
+        FString ObjectId, KindName;
+        double X = 0.0, Y = 0.0, Z = 0.0, Yaw = 0.0;
+        if (!Row->TryGetStringField(TEXT("id"), ObjectId) || !SafePlacementId(ObjectId) ||
+            SeenIds.Contains(ObjectId) ||
+            !Row->TryGetStringField(TEXT("type"), KindName) ||
+            !Row->TryGetNumberField(TEXT("x"), X) ||
+            !Row->TryGetNumberField(TEXT("y"), Y) ||
+            !Row->TryGetNumberField(TEXT("z"), Z) ||
+            !Row->TryGetNumberField(TEXT("yaw"), Yaw)) return;
+
+        EAnomaliaHomesteadObject Kind;
+        if (!ParseHomesteadKind(KindName, Kind) ||
+            !FMath::IsFinite(X) || !FMath::IsFinite(Y) ||
+            !FMath::IsFinite(Z) || !FMath::IsFinite(Yaw) ||
+            FMath::Abs(X) > 2400000.0 || FMath::Abs(Y) > 2400000.0 ||
+            FMath::Abs(Z) > 2400000.0 || FMath::Abs(Yaw) > 360.0) return;
+        SeenIds.Add(ObjectId);
+        Validated.Add({Kind, FTransform(FRotator(0.f, static_cast<float>(Yaw), 0.f),
+            FVector(X, Y, Z))});
+    }
+
+    int32 Spawned = 0;
+    for (const FAnomaliaPlacementToSpawn& Placement : Validated)
+    {
+        FActorSpawnParameters Params;
+        Params.SpawnCollisionHandlingOverride =
+            ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButAlwaysSpawn;
+        AAnomaliaHomesteadStation* Station = GetWorld()->SpawnActor<AAnomaliaHomesteadStation>(
+            AAnomaliaHomesteadStation::StaticClass(), Placement.Transform, Params);
+        if (!Station) continue;
+        Station->ObjectType = Placement.Kind;
+        Station->ForceNetUpdate();
+        ++Spawned;
+    }
+    UE_LOG(LogTemp, Log, TEXT("ANOMALIA server %s: %d homestead placeables loaded"),
+        *ServerId, Spawned);
 }

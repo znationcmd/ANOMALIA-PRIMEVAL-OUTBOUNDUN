@@ -1,0 +1,17 @@
+{
+  "state": "TESTED_IN_EDITOR_HEADLESS",
+  "mode": "Play In Editor",
+  "headless": true,
+  "renderingValidated": false,
+  "multiplayerTested": false,
+  "automationReport": "C:\\Users\\utilisateur\\actions-runner\\_work\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\ANOMALIA-PRIMEVAL-OUTBOUNDUN\\unreal\\Saved\\BuildValidation\\run-39480888218-1\\world-pie-e66b4b8ed8ad4aef94a219fb0fd8da7a",
+  "exitCode": 0,
+  "checks": [
+    "load_real_map",
+    "start_PIE",
+    "spawn_native_character",
+    "stand_on_landscape_collision",
+    "walk_on_terrain",
+    "inventory_add_remove"
+  ]
+}
