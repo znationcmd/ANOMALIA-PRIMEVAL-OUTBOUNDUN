@@ -1,0 +1,70 @@
+name: ANOMALIA - install verified missing BMW into real PC project and inspect game packaging
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-install-real-project-assets-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Main project missing'}
+          $active=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$' -and (!$_.CommandLine -or $_.CommandLine -match [regex]::Escape($root))})
+          if($active.Count){throw 'Main project is open; no loaded assets overwritten'}
+          $src=Join-Path $stage 'Content\Anomalia\BMWE39Review_v7'
+          $dst=Join-Path $root 'Content\Anomalia\BMWE39Review_v7'
+          if(!(Test-Path (Join-Path $src 'body\SM_body.uasset'))){throw 'BMW source missing'}
+          $files=@(Get-ChildItem $src -Recurse -File)
+          $needed=0L
+          foreach($f in $files){
+            $rel=$f.FullName.Substring($src.Length).TrimStart('\')
+            $to=Join-Path $dst $rel
+            if(Test-Path $to){
+              if((Get-FileHash $to).Hash -ne (Get-FileHash $f.FullName).Hash){throw ('BMW conflict: '+$rel)}
+            }else{$needed+=$f.Length}
+          }
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt ($needed+2GB)){throw 'Insufficient D space for BMW and headroom'}
+          foreach($f in $files){
+            $rel=$f.FullName.Substring($src.Length).TrimStart('\')
+            $to=Join-Path $dst $rel
+            if(!(Test-Path $to)){
+              New-Item -ItemType Directory -Force -Path (Split-Path $to -Parent)|Out-Null
+              Copy-Item -LiteralPath $f.FullName -Destination $to
+            }
+            if((Get-FileHash $to).Hash -ne (Get-FileHash $f.FullName).Hash){throw ('Copy checksum failed '+$rel)}
+          }
+          Write-Host ('MAIN_PROJECT_BMW_INSTALLED_FILES='+$files.Count+';ADDED_BYTES='+$needed)
+          foreach($rel in @('Content\Survival_Character\Meshes\SK_Survival_Character.uasset','Content\German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset','Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap','Content\Map\Big_City_LVL.umap')){
+            if(!(Test-Path (Join-Path $root $rel))){throw ('Main asset missing '+$rel)}
+            Write-Host ('MAIN_PROJECT_PRESENT='+$rel)
+          }
+          $missing=0L;$changed=0L;$count=0;$changedCount=0
+          $sc=Join-Path $stage 'Content';$dc=Join-Path $root 'Content'
+          foreach($f in Get-ChildItem $sc -Recurse -File){
+            $rel=$f.FullName.Substring($sc.Length).TrimStart('\');$to=Join-Path $dc $rel
+            if(!(Test-Path $to)){$missing+=$f.Length;$count++}
+            elseif((Get-Item $to).Length -ne $f.Length){$changed+=$f.Length;$changedCount++}
+          }
+          Write-Host ('STAGE_TO_MAIN_MISSING_BYTES='+$missing+';MISSING_COUNT='+$count+';DIFFERENT_SIZE_BYTES='+$changed+';DIFFERENT_COUNT='+$changedCount)
+          $manifest=Join-Path $env:LOCALAPPDATA 'CMD\ANOMALIA-Windows\active.json'
+          if(Test-Path $manifest){
+            $a=Get-Content $manifest -Raw|ConvertFrom-Json;$dir=Split-Path $a.executable -Parent
+            Write-Host ('INSTALLED_GAME_DIR='+$dir)
+            Get-ChildItem $dir -Force|ForEach-Object{Write-Host ('GAME_FILE='+$_.Name+';BYTES='+$_.Length)}
+            Get-ChildItem $dir -Recurse -File -Include '*.pak','*.utoc','*.ucas','*.exe'|ForEach-Object{Write-Host ('PACKAGED_FILE='+$_.FullName+';BYTES='+$_.Length)}
+          }
+          foreach($base in @($root,'C:\ANOMALIA-Validation\c40543166274\unreal')){
+            Get-ChildItem (Join-Path $base 'Source') -Recurse -File -Include '*GameMode.cpp','*Character.cpp','*Survivor.cpp' -ErrorAction SilentlyContinue|ForEach-Object{
+              Write-Host ('GAMEPLAY_SOURCE='+$_.FullName)
+              Select-String -Path $_.FullName -Pattern 'BMW|Survival_Character|German_Shepherd|Companion|DefaultPawnClass|ConstructorHelpers'|Select-Object -First 30|ForEach-Object{Write-Host $_.Line}
+            }
+          }
