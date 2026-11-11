@@ -1,0 +1,62 @@
+name: RACCONIA - real UE5 PIE gameplay smoke without touching original maps
+on:
+  push:
+    branches: [feature/racconia-interiors-pie-quality-20261111]
+    paths: ['.github/workflows/racconia-ue5-native-real-pie-smoke-20261111.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-pie-29-site-survival-door-test:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Require true saved 29-site World Partition and source safekeeping
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong real stage marker'}
+          if(!(Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1.umap'))){throw 'Real RACCONIA 29-site map missing'}
+          if(!(Test-Path 'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')){throw 'Protected original unavailable'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal session is active'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('RACCONIA_PIE_FREE_C_GIB='+[math]::Round($free,2))
+          if($free -lt 4){throw 'Unsafe free disk for real native PIE'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_racconia_real_pie_gameplay_20261111.py')
+          if($LASTEXITCODE -ne 0){throw 'Python smoke source invalid'}
+      - name: Run actual transient RACCONIA 16km PIE to verify survival movement and interactive native door fixture
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:RACCONIA_NATIVE_PIE_TEST_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_NATIVE_TRANSIENT_PIE_20261111.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_racconia_real_pie_gameplay_20261111.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_NATIVE_PIE_TEST_REPORT)){throw ('No PIE report. Unreal exit '+$exit)}
+          $r=Get-Content -LiteralPath $env:RACCONIA_NATIVE_PIE_TEST_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('RACCONIA_NATIVE_PIE_STATUS='+$r.state)
+          Write-Host ('RACCONIA_NATIVE_PIE_SURVIVOR_POSSESSED='+$r.playerControllerPossessed)
+          Write-Host ('RACCONIA_NATIVE_PIE_PLAYER_WALKED='+$r.walkingMovementVerified)
+          Write-Host ('RACCONIA_NATIVE_PHOTOREALISM_NOT_CERTIFIED='+(!$r.visualPhotorealismValidated))
+          if($exit -ne 0 -or $r.state -ne 'RACCONIA_NATIVE_TRANSIENT_PIE_SURVIVOR_AND_WORLD_SMOKE_PASSED_NO_VISUAL_CERTIFICATION'){
+            throw ('Real RACCONIA PIE not validated; see report error: '+$r.error)
+          }
+          Write-Host 'RACCONIA_REAL_PIE_NATIVE_SURVIVOR_TEST_PASSED_NOT_ALL_491_INTERIORS=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RACCONIA-NATIVE-PIE-PROOF-NOT-A-VISUAL-RENDER-20261111
+          path: RACCONIA_NATIVE_TRANSIENT_PIE_20261111.json
+          retention-days: 30
+          if-no-files-found: warn
