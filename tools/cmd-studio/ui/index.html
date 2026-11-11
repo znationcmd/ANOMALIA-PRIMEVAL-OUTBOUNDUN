@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' https://cdn.polyhaven.com https://media.sketchfab.com https://*.sketchfab.com data:; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<title>CMD Studio — Game Creator</title>
+<link rel="stylesheet" href="style.css">
+<script src="ui.js" defer></script>
+</head>
+<body>
+<div class="shell">
+  <aside class="sidebar">
+    <div class="brand"><div class="brandIcon">C</div><div><b>CMD <em>STUDIO</em></b><small>GAME CREATOR 0.1</small></div></div>
+    <div class="sidebarLabel">ESPACE DE TRAVAIL</div>
+    <nav id="nav">
+      <button class="navItem active" data-view="dashboard"><span>▦</span> Vue d'ensemble</button>
+      <button class="navItem" data-view="assets"><span>◈</span> Bibliothèque 3D</button>
+      <button class="navItem" data-view="search"><span>⌕</span> Rechercher des modèles</button>
+      <button class="navItem" data-view="projects"><span>◧</span> Mes projets</button>
+      <button class="navItem" data-view="tools"><span>⚙</span> Outils connectés</button>
+    </nav>
+    <div class="spacer"></div>
+    <div class="sidebarLabel">CONFIGURATION</div>
+    <button class="navItem" data-view="settings"><span>⚒</span> Paramètres</button>
+    <div class="sideBottom"><span class="live"></span> Studio local · fichiers privés<div class="mini">Les ressources restent sur ton PC.</div></div>
+  </aside>
+  <main>
+    <header class="topbar">
+      <div><small class="eyebrow">CMD SPHERE / GAME DEVELOPMENT</small><div id="headerTitle" class="headerTitle">Vue d'ensemble</div></div>
+      <div class="topActions"><span id="projectBadge" class="tag">Aucun projet</span><button class="btn primary" id="quickImport">＋ Importer un fichier 3D</button></div>
+    </header>
+    <div id="notice" class="notice" role="status" hidden></div>
+    <div class="mainArea">
+      <section id="dashboard" class="page">
+        <div class="hero"><span class="eyebrow">TON STUDIO DE CRÉATION DE JEUX</span><h1>Imagine. Crée. <strong>Construis ton monde.</strong></h1><p>Un seul espace pour ANOMALIA, Blender, Unreal Engine et les modèles 3D de tes bibliothèques.</p><div class="heroActions"><button class="btn primary" data-go="search">Explorer les ressources 3D →</button><button class="btn" data-go="projects">Choisir un projet</button></div><div class="orb"></div></div>
+        <div class="sectionHead"><h2>Statut de ton atelier</h2><span class="caption">Vérification locale, sans simulation</span></div>
+        <div class="stats">
+          <article class="stat"><div class="statIcon">◈</div><b id="statAssets">0</b><span>Ressources enregistrées</span></article>
+          <article class="stat"><div class="statIcon">▣</div><b id="statProjects">0</b><span>Projets Unreal</span></article>
+          <article class="stat"><div class="statIcon">◉</div><b id="statBlender">—</b><span>Blender local</span></article>
+          <article class="stat"><div class="statIcon">◆</div><b id="statUnreal">—</b><span>Unreal Engine local</span></article>
+        </div>
+        <div class="sectionHead"><h2>Démarrage rapide</h2></div>
+        <div class="two">
+          <article class="panel"><div class="panelGlyph">◈</div><h3>Bibliothèque 3D</h3><p>Importe tes modèles locaux, conserve la provenance et prépare les ressources pour Unreal Engine.</p><button class="linkButton" data-go="assets">Accéder à la bibliothèque →</button></article>
+          <article class="panel"><div class="panelGlyph">⌕</div><h3>Catalogues connectés</h3><p>Recherche Sketchfab et Poly Haven depuis un seul écran. Télécharge les ressources Poly Haven compatibles.</p><button class="linkButton" data-go="search">Ouvrir la recherche →</button></article>
+        </div>
+      </section>
+      <section id="assets" class="page" hidden>
+        <div class="sectionHead"><div><h2>Mes ressources 3D</h2><p class="caption">Vrais fichiers présents dans la bibliothèque locale du studio.</p></div><button class="btn primary" id="assetImport">＋ Ajouter des fichiers</button></div>
+        <div id="assetList" class="assetGrid"></div>
+      </section>
+      <section id="search" class="page" hidden>
+        <div class="sectionHead"><div><h2>Rechercher des ressources</h2><p class="caption">Catalogues publics et licences conservées pour chaque élément.</p></div></div>
+        <form id="searchForm" class="searchBar"><select id="provider"><option value="polyhaven">Poly Haven · CC0</option><option value="sketchfab">Sketchfab · recherche</option></select><input id="query" placeholder="Ex. maison, voiture, forêt, rocher..." maxlength="100" aria-label="Recherche"><button class="btn primary" type="submit">Rechercher</button></form>
+        <div class="hint">Poly Haven : téléchargement direct des formats pris en charge. Sketchfab : ouvre la fiche officielle ; connexion OAuth non activée dans cette version. Powered by Poly Haven.</div>
+        <div id="searchResults" class="assetGrid"><div class="empty">Lance une recherche pour afficher les modèles disponibles.</div></div>
+      </section>
+      <section id="projects" class="page" hidden>
+        <div class="sectionHead"><div><h2>Mes jeux</h2><p class="caption">Ajoute un fichier .uproject sans modifier son contenu.</p></div><button id="chooseProject" class="btn primary">＋ Ajouter un projet Unreal</button></div>
+        <div id="projectList" class="listStack"></div>
+      </section>
+      <section id="tools" class="page" hidden>
+        <div class="sectionHead"><div><h2>Mes logiciels 3D</h2><p class="caption">Applications installées sur ton ordinateur, lancées localement.</p></div></div>
+        <div class="two">
+          <article class="panel tool"><div class="toolTop"><div class="panelGlyph">◉</div><span id="blenderTag" class="tag">Non configuré</span></div><h3>Blender</h3><p>Modélisation, ouverture des fichiers .blend et conversion FBX/OBJ vers GLB.</p><button class="btn" id="launchBlender">Lancer Blender</button></article>
+          <article class="panel tool"><div class="toolTop"><div class="panelGlyph">◆</div><span id="unrealTag" class="tag">Non configuré</span></div><h3>Unreal Engine</h3><p>Ouverture du projet, importation d'assets dans /Game/CMDStudio via Python.</p><button class="btn" id="launchUnreal">Lancer Unreal</button></article>
+        </div>
+        <article class="panel gapTop"><h3>Outils prévus pour les prochaines versions</h3><p>Éditeur de mondes, création de mods, configurations de véhicules pilotables, éditeur économique, pipelines d'animations et assistant CMD NEURIA. Ces modules ne sont pas encore implémentés.</p></article>
+      </section>
+      <section id="settings" class="page" hidden>
+        <div class="sectionHead"><div><h2>Configurer CMD Studio</h2><p class="caption">Sélectionne les véritables exécutables installés sur ton PC.</p></div></div>
+        <div class="panel setting">
+          <label>Blender.exe</label><div class="pathRow"><code id="blenderPath">Non configuré</code><button class="btn" id="chooseBlender">Parcourir</button></div>
+          <div class="separation"></div>
+          <label>UnrealEditor-Cmd.exe (pour l'importation Python)</label><div class="pathRow"><code id="unrealPath">Non configuré</code><button class="btn" id="chooseUnreal">Parcourir</button></div>
+          <div class="separation"></div>
+          <label>Dossier de ressources du studio</label><div class="pathRow"><code id="libraryPath">Chargement...</code></div>
+          <p class="caption">Le plugin « Python Editor Script Plugin » doit être activé dans le projet Unreal. Les conversions et importations nécessitent de véritables fichiers 3D et peuvent prendre du temps.</p>
+        </div>
+      </section>
+    </div>
+    <footer>CMD STUDIO · GAME CREATOR <span>Prototype fonctionnel local · Aucun modèle 3D propriétaire inclus</span></footer>
+  </main>
+</div>
+</body>
+</html>
