@@ -5,6 +5,7 @@
 #include "AnomaliaZPrigimaliaPlayableProbe.h"
 #include "AnomaliaZPrigimaliaVisualReviewProbe.h"
 #include "AnomaliaZPrigimaliaSessionWidget.h"
+#include "AnomaliaZPrigimaliaIntroWidget.h"
 #include "AnomaliaZPrigimaliaLootSubsystem.h"
 #include "AnomaliaZPrigimaliaEconomySubsystem.h"
 #include "Vehicles/AnomaliaZPrigimaliaVehicleSurvival.h"
@@ -530,7 +531,7 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
             {
                 auto* PC=GetWorld()->GetFirstPlayerController();
-                if(PC) { PC->SetControlRotation(FRotator(0,90,0)); UAnomaliaZPrigimaliaSessionWidget::Open(PC,true); }
+                if(PC) { PC->SetControlRotation(FRotator(0,90,0)); if(!UAnomaliaZPrigimaliaIntroWidget::Open(PC)) UAnomaliaZPrigimaliaSessionWidget::Open(PC,true); }
             }));
         GetWorldTimerManager().SetTimer(ProfileRecoveryTimer, this, &AAnomaliaZPrigimaliaGameMode::RetryPendingProfileLoads, 1.f, true);
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaZPrigimaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
