@@ -1,0 +1,100 @@
+name: ANOMALIA - validate main D project assets and actual native game startup
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-validate-main-installed-content-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  validate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Validate native Unreal assets without saving main maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $engine=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64'
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-main-validation-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('VALIDATION_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          if(!(Test-Path $project)){throw 'Real main project missing'}
+          $active=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'})
+          if($active.Count){throw 'An Unreal session is open; validation will not interrupt it'}
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $before=(Get-FileHash $map).Hash
+          $script=Join-Path $out 'validate_assets.py'
+          $env:ANOMALIA_VALIDATE_OUT=$out
+          @'
+          import unreal,json,os,traceback
+          from pathlib import Path
+          result={"assets":[],"assetsLoaded":False,"visualGameplayVerified":False,"packagedGameRebuilt":False}
+          try:
+              paths=[
+                  ("/Game/Anomalia/BMWE39Review_v7/body/SM_body",unreal.StaticMesh),
+                  ("/Game/Survival_Character/Meshes/SK_Survival_Character",unreal.SkeletalMesh),
+                  ("/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01",unreal.SkeletalMesh),
+                  ("/Game/German_Shepherd_3D_Model/Animations/A_type1_Idle_Playing_v01",unreal.AnimSequence),
+                  ("/Game/German_Shepherd_3D_Model/Animations/A_type1_Walk_Loop_v01",unreal.AnimSequence),
+                  ("/Game/German_Shepherd_3D_Model/Animations/A_type1_Run_Loop_v01",unreal.AnimSequence),
+              ]
+              for path,kind in paths:
+                  asset=unreal.EditorAssetLibrary.load_asset(path)
+                  if not isinstance(asset,kind):raise RuntimeError("Asset failed: "+path)
+                  result["assets"].append({"path":path,"class":asset.get_class().get_name()})
+              for path in ["/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","/Game/Map/Big_City_LVL"]:
+                  if not unreal.EditorAssetLibrary.does_asset_exist(path):raise RuntimeError("Map missing: "+path)
+              dog=unreal.EditorAssetLibrary.load_asset(paths[2][0])
+              for path,_ in paths[3:]:
+                  anim=unreal.EditorAssetLibrary.load_asset(path)
+                  if anim.get_editor_property("skeleton") != dog.get_editor_property("skeleton"):raise RuntimeError("Dog skeleton mismatch: "+path)
+              result["assetsLoaded"]=True
+          except Exception:
+              result["error"]=traceback.format_exc()
+          finally:
+              Path(os.environ["ANOMALIA_VALIDATE_OUT"],"assets.json").write_text(json.dumps(result,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content -LiteralPath $script -Encoding utf8
+          $editor=Join-Path $engine 'UnrealEditor-Cmd.exe'
+          $log=Join-Path $out 'asset-load.log'
+          $args=@(('"'+$project+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+$log+'"'))
+          $p=Start-Process -FilePath $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(300000)){$p.Kill();throw 'Asset validation exceeded 5 minutes'}
+          if(!(Test-Path (Join-Path $out 'assets.json'))){Get-Content $log -Tail 60;throw 'No native asset-load report'}
+          $r=Get-Content (Join-Path $out 'assets.json') -Raw|ConvertFrom-Json
+          Write-Host ('ASSETS_NATIVE_LOAD_VALIDATED='+$r.assetsLoaded)
+          if(!$r.assetsLoaded){Write-Host $r.error;throw 'Native asset validation failed'}
+          if((Get-FileHash $map).Hash -ne $before){throw 'Source map unexpectedly changed'}
+          Write-Host 'ORIGINAL_SKARVIK_MAP_PRESERVED=true'
+      - name: Launch actual main game with SM5 and bounded runtime
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=$env:VALIDATION_OUT
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $log=Join-Path $out 'native-game.log'
+          $cvars='r.ScreenPercentage 50,r.ShadowQuality 0,r.ViewDistanceScale 0.5,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,r.MotionBlurQuality 0'
+          $args=@(('"'+$project+'"'),'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=validation-'+$env:GITHUB_RUN_ID,'-game','-windowed','-ResX=960','-ResY=540','-d3d11','-sm5','-nosplash','-nosound','-unattended','-nop4',('-abslog="'+$log+'"'),('-ExecCmds="'+$cvars+'"'))
+          $p=Start-Process -FilePath $editor -ArgumentList $args -PassThru
+          $ended=$p.WaitForExit(150000)
+          $alive=!$ended
+          if($alive){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(15000)){$p.Kill();$p.WaitForExit()}}
+          $text=if(Test-Path $log){Get-Content $log -Raw}else{''}
+          $world=$text -match 'Bringing World .*PRIGIMALIA_SKARVIK_FINAL_v1.*up for play|ANOMALIA.*initializ|Game class is.*AnomaliaGameMode'
+          $fatal=$text -match 'Fatal error:|Ran out of memory|Missing or incompatible modules|Failed to load.*AnomaliaPrimeval|could not be compiled'
+          $receipt=[ordered]@{nativeProcessStarted=$true;processAliveAt150s=$alive;worldStartupEvidence=$world;fatalError=$fatal;visualGameplayVerified=$false;packagedGameRebuilt=$false}
+          $receipt|ConvertTo-Json|Set-Content (Join-Path $out 'runtime.json') -Encoding utf8
+          Write-Host ('NATIVE_RUNTIME_RESULT='+($receipt|ConvertTo-Json -Compress))
+          Get-Content $log -Tail 100|ForEach-Object{Write-Host $_}
+          if($fatal -or !$world){throw 'Native playable startup not validated; inspect actual log'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-PROJECT-NATIVE-VALIDATION
+          path: ${{ env.VALIDATION_OUT }}
+          if-no-files-found: warn
