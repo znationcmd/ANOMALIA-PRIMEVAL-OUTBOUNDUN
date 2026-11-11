@@ -19,7 +19,7 @@ jobs:
           $latest=Get-ChildItem -LiteralPath $logs -Filter '*.log' -File | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 3
           foreach($log in $latest){
             Write-Host ('NATIVE_LOG='+$log.FullName+';MODIFIED='+$log.LastWriteTimeUtc.ToString('o'))
-            Get-Content -LiteralPath $log.FullName -Tail 125 | ForEach-Object{
+            Get-Content -LiteralPath $log.FullName -Tail 350 | ForEach-Object{
               if($_ -match '(?i)capture|screenshot|PIE|python|viewport|fatal|assert|error|invalid|rhi|out.of.memory|graphics|quit|exit|tick|source'){Write-Host ('ENGINE_LOG='+$_)}
             }
           }
@@ -28,6 +28,8 @@ jobs:
           foreach($dir in $reports){
             $count=@(Get-ChildItem -LiteralPath $dir.FullName -Filter '*.png' -File -ErrorAction SilentlyContinue).Count
             Write-Host ('NATIVE_CAPTURE_DIR='+$dir.Name+';PNG='+$count)
+            $receipt=Join-Path $dir.FullName 'ue5-frame-capture-receipt.json'
+            if(Test-Path $receipt){Get-Content $receipt -Raw | Write-Host}
           }
           $crash=Join-Path $root 'Saved\Crashes'
           if(Test-Path $crash){
