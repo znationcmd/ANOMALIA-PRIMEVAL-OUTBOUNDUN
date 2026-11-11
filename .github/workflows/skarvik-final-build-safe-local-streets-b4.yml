@@ -1,0 +1,164 @@
+# 2026-11-11: resume genuine village street authoring after confirmed C: free space above 28GB.
+# 2026-11-11: access-lane candidates exhausted; survey original village-lane segments with road overlap guard.
+name: SKARVIK - fourth final coast village streets keep both previous batches
+# 2026-11-10: re-attempt only on trusted isolated C staging, with existing
+# source/actors/backup and receipt guards. NEVER edits D:/ANOMALIA originals.
+# 2026-11-10: verified 17.529 GiB C: free after safe DerivedDataCache cleanup,
+# GitHub cloud snapshot of FINAL and seven islands preserved before any writes.
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/skarvik-final-build-safe-local-streets-b3.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  author-and-reopen-local-roads:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 125
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-native-true-coast-safe-reused-asphalt-actor-receipt
+          run-id: 41303095469
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-real-old-asphalt
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-native-safe-local-street-batch1-build-and-reopen
+          run-id: 41314512978
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-local-streets-batch1
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-native-safe-local-street-batch2-build-and-reopen
+          run-id: 41314990038
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-local-streets-batch2
+      - uses: actions/download-artifact@v4
+        with:
+          name: skarvik-final-native-safe-local-street-batch3-build-and-reopen
+          run-id: 43006937611
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          github-token: ${{ github.token }}
+          path: receipts/native-local-streets-batch3
+      - name: Check native source, spare disk, previous proof and no concurrent Unreal process
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Native stage marker missing or untrusted'}
+          $files=@(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))
+          foreach($f in $files){if(!(Test-Path -LiteralPath $f)){throw "Missing protected existing native map $f"}}
+          if(Test-Path (Join-Path $root 'Saved\SkarvikCity\FinalNativeCoastTownAccessBatch4_20261101\final-before-access-lanes.umap')){
+            throw 'Local road import already attempted. Refuse duplicate; inspect existing result instead.'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){
+            throw 'Concurrent Unreal process. Refuse unsafe import.'
+          }
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('SKARVIK_FINAL_TOWN_ROAD_STAGE_C_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 12){throw 'Insufficient stage C disk space for further assets'}
+          $receipt=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-real-old-asphalt\skarvik-final-original-safe-asphalt-native-replay.json'
+          if(!(Test-Path -LiteralPath $receipt)){throw 'Earlier independently accepted dry-road migration proof missing'}
+          $previous=Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json
+          if($previous.nativeDryAsphaltSaved -ne 6130 -or $previous.state -ne 'FINAL_SEVEN_ISLAND_NATIVE_ASPHALT_SAFE_SUBSET_SAVED_NOT_YET_CONTINUOUS_OR_DRIVEN'){
+            throw 'Previously saved 6130 original dry roads cannot be trusted'
+          }
+          $batch1=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch1\skarvik-final-coastal-native-town-access-build.json'
+          if(!(Test-Path -LiteralPath $batch1)){throw 'The first completed town-street batch receipt is missing'}
+          $prior=Get-Content -LiteralPath $batch1 -Raw|ConvertFrom-Json
+          if($prior.state -ne 'FINAL_COAST_SAFE_NATIVE_TOWN_ACCESS_BATCH1_SAVED_NOT_FULLY_CONNECTED_OR_DRIVEN' -or $prior.actorsCreated -ne 1674){
+            throw 'Prior 1674 real local street actors not approved'
+          }
+          $batch2=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch2\skarvik-final-coastal-native-town-access-b2-build.json'
+          if(!(Test-Path -LiteralPath $batch2)){throw 'Second built town-street receipt missing'}
+          $prior2=Get-Content -LiteralPath $batch2 -Raw|ConvertFrom-Json
+          if($prior2.state -ne 'FINAL_COAST_SAFE_NATIVE_TOWN_ACCESS_BATCH2_SAVED_NOT_FULLY_CONNECTED_OR_DRIVEN' -or $prior2.actorsCreated -ne 1298){
+            throw 'Previously saved 1298 batch2 town streets cannot be trusted'
+          }
+          $batch3=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch3\skarvik-final-coastal-native-town-access-b3-build.json'
+          $prior3=Get-Content -LiteralPath $batch3 -Raw|ConvertFrom-Json
+          if($prior3.state -ne 'FINAL_COAST_SAFE_NATIVE_TOWN_ACCESS_BATCH3_SAVED_NOT_FULLY_CONNECTED_OR_DRIVEN' -or $prior3.actorsCreated -ne 1100){throw 'Verified batch3 receipt missing'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($script in @(
+           'unreal\Scripts\author_skarvik_final_safe_town_access_b4.py',
+           'unreal\Scripts\verify_skarvik_final_town_access_b4_reopened.py')){
+            & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE $script)
+            if($LASTEXITCODE -ne 0){throw "Python source syntax failure $script"}
+          }
+          & $py -m unittest discover -s (Join-Path $env:GITHUB_WORKSPACE 'tests') -p 'test_skarvik_b4_junction_guard.py' -v
+          if($LASTEXITCODE -ne 0){throw 'Endpoint junction clearance tests failed'}
+          Write-Host 'SKARVIK_FINAL_REAL_LOCAL_ROADS_PREFLIGHT_PASSED=true'
+      - name: Write only fully surveyed native local streets to the final dry island world
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_COAST_SITE_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-final-coastal-migration-125-sites.json'
+          $env:SKARVIK_FINAL_TOWN_ACCESS_PLAN=Join-Path $env:GITHUB_WORKSPACE 'public\config\skarvik-transport-network-v2.json'
+          $env:SKARVIK_FINAL_PREVIOUS_ASPHALT_RECEIPT=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-real-old-asphalt\skarvik-final-original-safe-asphalt-native-replay.json'
+          $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH1=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch1\skarvik-final-coastal-native-town-access-build.json'
+          $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH2=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch2\skarvik-final-coastal-native-town-access-b2-build.json'
+          $env:SKARVIK_FINAL_PREVIOUS_LOCAL_STREET_BATCH3=Join-Path $env:GITHUB_WORKSPACE 'receipts\native-local-streets-batch3\skarvik-final-coastal-native-town-access-b3-build.json'
+          $env:SKARVIK_FINAL_ACCESS_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-build.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\author_skarvik_final_safe_town_access_b4.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_ACCESS_REPORT)){throw 'Native town street construction report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_ACCESS_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NEW_LOCAL_REAL_ROAD_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_NEW_LOCAL_REAL_ROAD_ACTORS='+$r.actorsCreated)
+          Write-Host ('SKARVIK_FINAL_NEW_LOCAL_ROADS_SITES='+$r.sitesWithRealNewAsphalt)
+          Write-Host ('SKARVIK_FINAL_NEW_LOCAL_ROAD_METRES='+$r.pavedMetres)
+          Write-Host ('SKARVIK_FINAL_PROVISIONAL_RELOCATED_SITES_PROTECTED='+$r.skippedRelocationReviewSites)
+          Write-Host ('SKARVIK_FINAL_UNFLAGGED_SHIFTED_SITES_PROTECTED='+@($r.skippedUnflaggedMovedSites).Count)
+          if($code -ne 0 -or $r.state -ne 'FINAL_COAST_SAFE_NATIVE_TOWN_ACCESS_BATCH4_SAVED_NOT_FULLY_CONNECTED_OR_DRIVEN'){
+            throw ('No confirmed native local streets saved, never claim success: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_NATIVE_LOCAL_STREETS_WRITTEN_NOT_DRIVEN=true'
+      - name: Independently reopen native World Partition and validate actual saved 3D roads and buildings
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_BUILD_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-build.json'
+          $env:SKARVIK_FINAL_LOCAL_ROADS_B4_REOPEN_REPORT=Join-Path $env:GITHUB_WORKSPACE 'skarvik-final-coastal-native-town-access-b3-reopen.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\verify_skarvik_final_town_access_b4_reopened.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:SKARVIK_FINAL_LOCAL_ROADS_B4_REOPEN_REPORT)){throw 'Reopen evidence missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_FINAL_LOCAL_ROADS_B4_REOPEN_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('SKARVIK_FINAL_NATIVE_LOCAL_ROAD_REOPEN_STATE='+$r.state)
+          Write-Host ('SKARVIK_FINAL_NATIVE_LOCAL_ROAD_ACTORS_REOPENED='+$r.persistentActorCounts.newTownRoadActors)
+          if($code -ne 0 -or $r.state -ne 'FINAL_SKARVIK_NEW_REAL_LOCAL_ROADS_B4_PERSIST_IN_WORLD_PARTITION_NOT_DRIVEN'){
+            throw ('World Partition real local road re-open failed: '+$r.error)
+          }
+          Write-Host 'SKARVIK_FINAL_NATIVE_LOCAL_ROADS_PERSISTENCE_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-final-native-safe-local-street-batch4-build-and-reopen
+          path: |
+            skarvik-final-coastal-native-town-access-b3-build.json
+            skarvik-final-coastal-native-town-access-b3-reopen.json
+          if-no-files-found: warn
