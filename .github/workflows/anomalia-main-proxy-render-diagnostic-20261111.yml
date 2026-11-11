@@ -1,0 +1,23 @@
+name: ANOMALIA - inspect actual Nanite fallback render settings
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-main-proxy-render-diagnostic-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 3
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($root in @('D:\ANOMALIA\unreal\Config',(Join-Path $env:UE_ROOT 'Engine\Config'))){
+            Get-ChildItem $root -Filter '*.ini' -Recurse -File|Select-String 'Nanite.ProxyRenderMode|Nanite.ProjectEnabled|r.Nanite|WorldPartition|RuntimeSpatialHash|EnableStreaming|IsSpatiallyLoaded'|Select-Object -First 80|ForEach-Object{Write-Host ($_.Path+':'+$_.LineNumber+':'+$_.Line)}
+          }
+          $latest=Get-ChildItem 'D:\ANOMALIA\unreal\Saved\CityCompatibility' -Directory|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1
+          if($latest){Write-Host ('LATEST_CITY_COMPATIBILITY='+$latest.FullName)}
+          Get-ChildItem 'D:\ANOMALIA\unreal\Source' -Recurse -File -Include '*.cpp','*.h'|Select-String 'ProxyRenderMode|SetActorHidden|SetVisibility|is_spatially|Nanite'|Select-Object -First 30|ForEach-Object{Write-Host ($_.Path+':'+$_.Line)}
