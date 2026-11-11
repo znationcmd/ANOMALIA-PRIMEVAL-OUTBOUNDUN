@@ -119,8 +119,28 @@ jobs:
           '@|Set-Content $script -Encoding utf8
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+(Join-Path $out 'buildings.log')+'"'))
-          $p=Start-Process $editor -ArgumentList $args -PassThru
-          if(!$p.WaitForExit(720000)){$p.Kill();throw 'Bounded complete building repair timed out'}
+          $effect=Join-Path $root 'Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
+          $held=Join-Path $out 'TemporarilyHeldIncompatibleVehicleEffect'
+          New-Item -ItemType Directory -Path $held|Out-Null
+          $moved=@()
+          if(Test-Path $effect){
+            foreach($f in Get-ChildItem (Split-Path $effect -Parent) -Filter 'VehicleDamageSystem_Runtime.*' -File){
+              $to=Join-Path $held $f.Name
+              $moved+=@{original=$f.FullName;held=$to;hash=(Get-FileHash $f.FullName).Hash}
+              Move-Item -LiteralPath $f.FullName -Destination $to
+            }
+          }
+          try{
+            $p=Start-Process $editor -ArgumentList $args -PassThru
+            if(!$p.WaitForExit(720000)){$p.Kill();throw 'Bounded complete building repair timed out'}
+          }finally{
+            foreach($f in $moved){
+              if(Test-Path $f.original){throw ('Unexpected effect destination appeared '+$f.original)}
+              Move-Item -LiteralPath $f.held -Destination $f.original
+              if((Get-FileHash $f.original).Hash -ne $f.hash){throw 'Vehicle effect restoration checksum failed'}
+            }
+            Write-Host 'INCOMPATIBLE_VEHICLE_EFFECT_RESTORED=true'
+          }
           $r=Get-Content (Join-Path $out 'buildings.json') -Raw|ConvertFrom-Json
           Get-Content (Join-Path $out 'buildings.json') -Raw|Write-Host
           if($r.error -or $r.placedActors -lt 1){throw 'Complete original building placement not validated'}
