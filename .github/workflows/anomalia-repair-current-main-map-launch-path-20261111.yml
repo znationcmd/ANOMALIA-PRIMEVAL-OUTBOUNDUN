@@ -1,0 +1,161 @@
+name: ANOMALIA - repair current-map game launch path independently of content rebuild
+'on':
+  push:
+    branches:
+    - feature/real-skarvik-bmw-dog-gameplay-capture-20261111
+    paths:
+    - .github/workflows/anomalia-repair-current-main-map-launch-path-20261111.yml
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on:
+    - self-hosted
+    - Windows
+    - X64
+    - anomalia-ue5
+    timeout-minutes: 5
+    steps:
+    - name: Install and verify current main-project map launchers
+      shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+      run: |+
+        $ErrorActionPreference='Stop'
+        $root='D:\ANOMALIA\unreal'
+        $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+        $env:PLAY_REPAIR_OUT=Join-Path $root ('Saved\CurrentLauncherRepair\'+$env:GITHUB_RUN_ID)
+        New-Item -ItemType Directory -Path $env:PLAY_REPAIR_OUT -Force|Out-Null
+        ('PLAY_REPAIR_OUT='+$env:PLAY_REPAIR_OUT)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+        if(!(Test-Path $project)){throw 'Native main project missing'}
+        if(!(Test-Path (Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'))){throw 'Native Unreal runtime missing'}
+        $ErrorActionPreference='Stop'
+        $root='D:\ANOMALIA\unreal'
+        $out=$env:PLAY_REPAIR_OUT
+        if(!$out -or !(Test-Path $out)){throw 'Native repair receipt missing'}
+        $launcherDir=Join-Path $root 'Launcher'
+        New-Item -ItemType Directory -Path $launcherDir -Force|Out-Null
+        $launcher=Join-Path $launcherDir 'Launch-Current-Anomalia.ps1'
+        $catalog=Join-Path $launcherDir 'MainProjectMaps.json'
+        # Only the observed real package names are exposed as launch targets.
+        $names=@(
+         @('skarvik','SKARVIK','PRIGIMALIA_SKARVIK_FINAL_v1'),
+         @('racconia','RACCONIA / VARKOVIA','PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1'),
+         @('drazovia','DRAZOVIA','ANOMALIA_Inhabited_v2'),
+         @('karskov','KARSKOV','PRIGIMALIA_KARSKOV'),
+         @('vorgrad','VORGRAD','PRIGIMALIA_VORGRAD'),
+         @('nemoris','NEMORIS','PRIGIMALIA_NEMORIS'),
+         @('drakheim','DRAKHEIM','PRIGIMALIA_DRAKHEIM'),
+         @('solynacalyra','SOLYNACALYRA','PRIGIMALIA_SOLYNACALYRA'),
+         @('nexavarkhos','NEXAVARKHOS','PRIGIMALIA_NEXAVARKHOS'),
+         @('chernaskaluxria','CHERNASKALUXRIA','PRIGIMALIA_CHERNASKALUXRIA'),
+         @('falc','F.A.L.C','PRIGIMALIA_FALC'),
+         @('kolchiem','KOLCHIEM ORIGINS','PRIGIMALIA_KOLCHIEM_ORIGINS_FULL'),
+         @('roskatvia','ROSKATVIA-B1','PRIGIMALIA_ROSKATVIA_B1'),
+         @('nogokv','NOGOKV-51','PRIGIMALIA_NOGOKV_51'),
+         @('paradisiomania','PARADISIOMANIA','PRIGIMALIA_PARADISIOMANIA'),
+         @('deadroot','DEADROOT','PRIGIMALIA_DEADROOT')
+        )
+        $maps=@()
+        foreach($n in $names){
+          $file=Join-Path $root ('Content\Maps\'+$n[2]+'.umap')
+          $maps+=@{id=$n[0];name=$n[1];package='/Game/Maps/'+$n[2];available=(Test-Path $file);lastWriteUtc=if(Test-Path $file){(Get-Item $file).LastWriteTimeUtc.ToString('o')}else{$null};gameplayFullyVerified=$false}
+        }
+        @{project=(Join-Path $root 'AnomaliaPrimeval.uproject');engineRoot=$env:UE_ROOT;defaultMap='skarvik';maps=$maps}|ConvertTo-Json -Depth 8|Set-Content $catalog -Encoding utf8
+        if(Test-Path $launcher){Copy-Item $launcher (Join-Path $out 'launcher-before.ps1')}
+        @'
+        param([string]$MapId='',[ValidateSet('Game','Editor')][string]$Mode='Game',[switch]$ValidateOnly)
+        $ErrorActionPreference='Stop'
+        try{
+          $c=Get-Content (Join-Path $PSScriptRoot 'MainProjectMaps.json') -Raw|ConvertFrom-Json
+          $project=[IO.Path]::GetFullPath([string]$c.project)
+          if($project -ine 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -or !(Test-Path $project)){throw 'Projet principal introuvable.'}
+          $editor=Join-Path $c.engineRoot 'Engine\Binaries\Win64\UnrealEditor.exe'
+          if(!(Test-Path $editor)){throw 'Unreal Engine 5.8 introuvable.'}
+          function Start-CurrentNativeMap($map,$runMode){
+            if(!$map -or $map.package -notmatch '^/Game/Maps/[A-Za-z0-9_]+$'){throw 'Carte inconnue.'}
+            $file=Join-Path (Split-Path $project -Parent) ('Content\'+$map.package.Substring(6).Replace('/','\')+'.umap')
+            if(!(Test-Path $file)){throw 'Cette carte est absente du projet principal.'}
+            if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Ferme la session Unreal deja ouverte avant de lancer une autre carte.'}
+            $arguments=@(('"'+$project+'"'),($map.package+'?AnomaliaServerId=solo-current-'+$map.id),'-d3d11','-sm5','-nosplash')
+            if($runMode -eq 'Game'){$arguments+=@('-game','-windowed','-ResX=1280','-ResY=720','-ExecCmds="t.IdleWhenNotForeground 0,r.ScreenPercentage 70,r.ShadowQuality 1,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,r.MotionBlurQuality 0"')}
+            Start-Process -FilePath $editor -ArgumentList $arguments -WorkingDirectory (Split-Path $project -Parent)
+          }
+          if($ValidateOnly){
+            $c.maps|ForEach-Object{
+              $file=Join-Path (Split-Path $project -Parent) ('Content\'+$_.package.Substring(6).Replace('/','\')+'.umap')
+              [pscustomobject]@{id=$_.id;package=$_.package;exists=(Test-Path $file)}
+            }|ConvertTo-Json -Depth 5|Write-Output
+            exit 0
+          }
+          if($MapId){Start-CurrentNativeMap ($c.maps|Where-Object{$_.id -eq $MapId}|Select-Object -First 1) $Mode;exit 0}
+          Add-Type -AssemblyName System.Windows.Forms
+          Add-Type -AssemblyName System.Drawing
+          [Windows.Forms.Application]::EnableVisualStyles()
+          $form=New-Object Windows.Forms.Form
+          $form.Text="ANOMALIA'Z PRIGIMALIA";$form.ClientSize=New-Object Drawing.Size(650,490)
+          $form.StartPosition='CenterScreen';$form.BackColor=[Drawing.Color]::FromArgb(20,24,30);$form.ForeColor=[Drawing.Color]::White
+          $title=New-Object Windows.Forms.Label;$title.Text="ANOMALIA'Z PRIGIMALIA";$title.Font=New-Object Drawing.Font('Segoe UI',19,[Drawing.FontStyle]::Bold);$title.SetBounds(24,18,600,42);$form.Controls.Add($title)
+          $subtitle=New-Object Windows.Forms.Label;$subtitle.Text='Cartes du projet principal - versions de travail';$subtitle.SetBounds(26,65,600,26);$form.Controls.Add($subtitle)
+          $list=New-Object Windows.Forms.ListBox;$list.Font=New-Object Drawing.Font('Segoe UI',11);$list.SetBounds(26,104,595,290);$list.BackColor=[Drawing.Color]::FromArgb(30,36,44);$list.ForeColor=[Drawing.Color]::White;$list.BorderStyle='None'
+          foreach($m in $c.maps){
+            $file=Join-Path (Split-Path $project -Parent) ('Content\'+$m.package.Substring(6).Replace('/','\')+'.umap')
+            $suffix=if(Test-Path $file){'  |  '+(Get-Item $file).LastWriteTime.ToString('dd/MM/yyyy HH:mm')}else{'  |  indisponible'}
+            $null=$list.Items.Add($m.name+$suffix)
+          }
+          $list.SelectedIndex=0;$form.Controls.Add($list)
+          $play=New-Object Windows.Forms.Button;$play.Text='Jouer';$play.SetBounds(26,415,285,44);$play.BackColor=[Drawing.Color]::FromArgb(70,120,80);$play.FlatStyle='Flat'
+          $edit=New-Object Windows.Forms.Button;$edit.Text='Ouvrir dans Unreal';$edit.SetBounds(330,415,291,44);$edit.BackColor=[Drawing.Color]::FromArgb(50,62,80);$edit.FlatStyle='Flat'
+          $play.Add_Click({try{Start-CurrentNativeMap $c.maps[$list.SelectedIndex] 'Game';$form.Close()}catch{[Windows.Forms.MessageBox]::Show($_.Exception.Message,"ANOMALIA'Z")|Out-Null}})
+          $edit.Add_Click({try{Start-CurrentNativeMap $c.maps[$list.SelectedIndex] 'Editor';$form.Close()}catch{[Windows.Forms.MessageBox]::Show($_.Exception.Message,"ANOMALIA'Z")|Out-Null}})
+          $form.Controls.Add($play);$form.Controls.Add($edit)
+          $form.AcceptButton=$play
+          $null=$form.ShowDialog()
+        }catch{
+          Add-Type -AssemblyName System.Windows.Forms
+          [Windows.Forms.MessageBox]::Show($_.Exception.Message,"ANOMALIA'Z - lancement")|Out-Null
+          exit 1
+        }
+        '@|Set-Content $launcher -Encoding utf8
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $launcher -ValidateOnly
+        if($LASTEXITCODE -ne 0){throw 'Stable launcher map validation failed'}
+        $shell=New-Object -ComObject WScript.Shell
+        $desktop=[Environment]::GetFolderPath('Desktop')
+        $link=Join-Path $desktop 'ANOMALIAZ - JOUER.lnk'
+        if(Test-Path $link){Copy-Item $link (Join-Path $out 'JOUER-before.lnk')}
+        $s=$shell.CreateShortcut($link)
+        $s.TargetPath=Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+        $s.Arguments='-NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File "'+$launcher+'"'
+        $s.WorkingDirectory=$root;$s.Description='Cartes actuelles du projet principal ANOMALIAZ';$s.Save()
+        $editLink=Join-Path $desktop 'ANOMALIAZ - EDITER LES CARTES (UE5.8).lnk'
+        if(Test-Path $editLink){Copy-Item $editLink (Join-Path $out 'EDITER-before.lnk')}
+        $e=$shell.CreateShortcut($editLink)
+        $e.TargetPath=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+        $e.Arguments='"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'" /Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -d3d11 -sm5'
+        $e.WorkingDirectory=$root;$e.Save()
+        $archived=Join-Path $desktop 'ANOMALIAZ - JOUER - E non fiable - archive.lnk'
+        if(Test-Path $archived){Move-Item $archived (Join-Path $out 'E-old-archive.lnk')}
+        $available=@($maps|Where-Object{$_.available})
+        @{state='MAIN_PROJECT_GAME_AND_EDITOR_SHORTCUTS_UPDATED';gameShortcut=$link;editorShortcut=$editLink;project=$project;availableMapCount=$available.Count;missingMaps=@($maps|Where-Object{!$_.available}|ForEach-Object{$_.name});packagedExeRebuilt=$false}|ConvertTo-Json -Depth 6|Set-Content (Join-Path $out 'launcher-result.json') -Encoding utf8
+        Get-Content (Join-Path $out 'launcher-result.json') -Raw|Write-Host
+
+    - name: Inspect native module and most recent load failure
+      shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+      run: |+
+        $ErrorActionPreference='Stop'
+        $root='D:\ANOMALIA\unreal'
+        Write-Host ('UE_ROOT='+$env:UE_ROOT)
+        Get-ChildItem (Join-Path $root 'Binaries\Win64') -Filter '*Anomalia*' -File|ForEach-Object{Write-Host ('NATIVE_BINARY='+$_.Name+';DATE='+$_.LastWriteTimeUtc.ToString('o')+';BYTES='+$_.Length)}
+        $failed=Join-Path $root 'Saved\PlayableRepair\43090604501'
+        Get-ChildItem $failed -File|ForEach-Object{Write-Host ('FAILED_OUTPUT='+$_.Name+';BYTES='+$_.Length)}
+        $latest=Get-ChildItem (Join-Path $root 'Saved\Logs') -Filter '*.log' -File|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1
+        Write-Host ('LAST_NATIVE_LOG='+$latest.FullName+';DATE='+$latest.LastWriteTimeUtc.ToString('o'))
+        Get-Content $latest.FullName -Tail 100|Write-Host
+
+    - uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: ANOMALIA-CURRENT-MAP-LAUNCHER-REPAIR
+        path: ${{ env.PLAY_REPAIR_OUT }}
+        if-no-files-found: warn
