@@ -1,0 +1,103 @@
+name: ANOMALIA - restore exact source rotations on main SKARVIK city architecture
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-fix-main-city-import-rotations-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Native session open'}
+          $root='D:\ANOMALIA\unreal';$out=Join-Path $root ('Saved\CityRotationRepair\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('ROTATION_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_ROTATION_OUT=$out
+          $script=Join-Path $out 'restore_rotations.py'
+          @'
+          import unreal,os,json,traceback,shutil,hashlib
+          from pathlib import Path
+          root=Path(unreal.Paths.project_dir());out=Path(os.environ["ANOMALIA_ROTATION_OUT"])
+          r={"state":"FAILED","matched":0,"rotationsRestored":0,"unmatched":[],"sourceMapPreserved":False}
+          def write():(out/"rotations.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+          def key(mesh,p,s):return (mesh,round(p.x,1),round(p.y,1),round(s.x,3),round(s.y,3),round(s.z,3))
+          try:
+              editor=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              wp=unreal.WorldPartitionBlueprintLibrary
+              source="/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2"
+              sf=root/"Content/Maps/PRIGIMALIA_SKARVIK_GRADED_v2.umap"
+              before=hashlib.sha256(sf.read_bytes()).hexdigest()
+              if not editor.load_level(source):raise RuntimeError("Original graded city cannot load")
+              prefixes=("SKARVIK_CENTRE_REAL_CITYSAMPLE_MESH_V1_","SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_B2_","SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_C3_","SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_D4_")
+              desc=[d for d in wp.get_actor_descs() if str(d.label).startswith(prefixes)]
+              r["sourceActorCount"]=len(desc)
+              if len(desc)!=720:raise RuntimeError("Expected 720 original city part transforms")
+              original={}
+              for offset in range(0,len(desc),24):
+                  batch=desc[offset:offset+24];wp.load_actors([d.guid for d in batch])
+                  loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+                  for d in batch:
+                      a=loaded.get(str(d.label))
+                      if not a:raise RuntimeError("Original city actor missing "+str(d.label))
+                      comp=a.get_component_by_class(unreal.StaticMeshComponent)
+                      mesh=comp.get_editor_property("static_mesh")
+                      t=a.get_actor_transform();k=key(mesh.get_path_name(),t.translation,t.scale3d)
+                      original.setdefault(k,[]).append(t.rotation)
+                  wp.unload_actors([d.guid for d in batch])
+              if not editor.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Main map cannot reopen")
+              target=[d for d in wp.get_actor_descs() if str(d.label).startswith("SKARVIK_FINAL_CITYSAMPLE_3D_SOURCE_")]
+              r["targetActorCount"]=len(target)
+              for offset in range(0,len(target),24):
+                  batch=target[offset:offset+24];wp.load_actors([d.guid for d in batch])
+                  loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+                  for d in batch:
+                      a=loaded.get(str(d.label))
+                      if not a:raise RuntimeError("Main actor missing "+str(d.label))
+                      comp=a.get_component_by_class(unreal.StaticMeshComponent)
+                      mesh=comp.get_editor_property("static_mesh");t=a.get_actor_transform()
+                      options=original.get(key(mesh.get_path_name(),t.translation,t.scale3d),[])
+                      if len(options)!=1:
+                          r["unmatched"].append(str(d.label));continue
+                      package=str(d.actor_package)
+                      f=root/"Content"/(package.removeprefix("/Game/")+".uasset")
+                      if not f.is_file():raise RuntimeError("Actor package backup path missing "+str(f))
+                      backup=out/"OriginalActors"/f.relative_to(root)
+                      backup.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(f,backup)
+                      q=options[0]
+                      prior=t.rotation.rotator()
+                      t.rotation=q
+                      a.set_actor_transform(t,False,True)
+                      r["matched"]+=1;r["rotationsRestored"]+=1
+                  if not editor.save_current_level():raise RuntimeError("Main actor rotations save failed")
+                  wp.unload_actors([d.guid for d in batch]);write()
+              r["sourceMapPreserved"]=hashlib.sha256(sf.read_bytes()).hexdigest()==before
+              if not r["sourceMapPreserved"]:raise RuntimeError("Source graded map changed")
+              if r["matched"]<600:raise RuntimeError("Too few unambiguous original transforms matched")
+              r["state"]="EXACT_SOURCE_QUATERNIONS_RESTORED_TO_MAIN_CITY_NEEDS_VISUAL_REVIEW"
+          except Exception:r["error"]=traceback.format_exc()
+          finally:
+              write();unreal.SystemLibrary.quit_editor()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $args=@(('"'+(Join-Path $root 'AnomaliaPrimeval.uproject')+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+(Join-Path $out 'rotations.log')+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(540000)){$p.Kill();throw 'Rotation repair exceeded safe run time'}
+          $r=Get-Content (Join-Path $out 'rotations.json') -Raw|ConvertFrom-Json
+          Get-Content (Join-Path $out 'rotations.json') -Raw|Write-Host
+          if($r.error){throw 'Exact source rotation repair not fully validated'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-CITY-ROTATION-REPAIR
+          path: |
+            ${{ env.ROTATION_OUT }}/rotations.json
+            ${{ env.ROTATION_OUT }}/rotations.log
+          if-no-files-found: warn
