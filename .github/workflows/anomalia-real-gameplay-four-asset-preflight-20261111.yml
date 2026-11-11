@@ -7,7 +7,7 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: anomalia-ue5-native-host
+  group: anomalia-ue5-readonly-gameplay-video-source-inspection
   cancel-in-progress: false
 jobs:
   genuine-four-asset-video-preflight:
