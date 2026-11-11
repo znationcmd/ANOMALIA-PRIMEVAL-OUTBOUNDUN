@@ -1,0 +1,42 @@
+name: ANOMALIA - locate real installed PC game before asset integration
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-real-pc-install-preflight-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $shell=New-Object -ComObject WScript.Shell
+          foreach($desktop in @([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('CommonDesktopDirectory'))){
+            Get-ChildItem -LiteralPath $desktop -Filter '*.lnk' -File -ErrorAction SilentlyContinue | Where-Object {$_.Name -match 'ANOMALIA|PRIGIMALIA'} | ForEach-Object{
+              $s=$shell.CreateShortcut($_.FullName)
+              Write-Host ('SHORTCUT='+$_.Name+';TARGET='+$s.TargetPath+';ARGS='+$s.Arguments)
+            }
+          }
+          foreach($product in @('ANOMALIA-UE5','ANOMALIA-Windows','ANOMALIA-Tools')){
+            $p=Join-Path $env:LOCALAPPDATA ('CMD\'+$product+'\active.json')
+            if(Test-Path $p){Write-Host ('ACTIVE_MANIFEST='+$p);Get-Content $p -Raw|Write-Host}
+          }
+          foreach($root in @('D:\ANOMALIA\unreal','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal','C:\ANOMALIA-Validation\c40543166274\unreal')){
+            Write-Host ('PROJECT_ROOT='+$root)
+            Get-ChildItem $root -Filter '*.uproject' -File -ErrorAction SilentlyContinue|ForEach-Object{Write-Host ('UPROJECT='+$_.FullName)}
+            foreach($p in @('Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap','Content\Map\Big_City_LVL.umap','Content\Anomalia\BMWE39Review_v7','Content\Survival_Character','Content\German_Shepherd_3D_Model','Content\Movies','Binaries\Win64')){
+              $f=Join-Path $root $p
+              if(Test-Path $f){$i=Get-Item $f;Write-Host ('PRESENT='+$f+';BYTES='+$i.Length)}
+            }
+            foreach($cfg in @('Config\DefaultEngine.ini','Config\DefaultGame.ini')){
+              $p=Join-Path $root $cfg
+              if(Test-Path $p){Get-Content $p|Select-String 'DefaultMap|DefaultGameMode|DirectoriesToAlwaysCook|Movies|StartupMovies'|ForEach-Object{Write-Host ('CONFIG='+$root+';'+$_)}}
+            }
+          }
+          Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|AnomaliaZPrigimalia).*\.exe$'}|ForEach-Object{Write-Host ('RUNNING='+$_.Name+';PID='+$_.ProcessId+';CMD='+$_.CommandLine)}
+          Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DeviceID -in @('C:','D:')}|ForEach-Object{Write-Host ('DISK='+$_.DeviceID+';FREE='+$_.FreeSpace)}
