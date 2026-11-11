@@ -53,8 +53,8 @@ def main():
     if 'UAnomaliaIntroWidget::Open(PC)' not in g:
         g=g.replace('UAnomaliaSessionWidget::Open(PC,true);','if(!UAnomaliaIntroWidget::Open(PC)) UAnomaliaSessionWidget::Open(PC,true);',1)
     if '"MediaAssets"' not in b:
-        anchor='PrivateDependencyModuleNames.Add("MoviePlayer");'
-        if anchor not in b: raise RuntimeError('Missing native MoviePlayer dependency')
+        anchor='PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;'
+        if anchor not in b: raise RuntimeError('Unexpected native module constructor')
         b=b.replace(anchor,anchor+'\n        PrivateDependencyModuleNames.Add("MediaAssets");',1)
     changes={game:g,widget:w,build:b}
     for ext in ('cpp','h'):
