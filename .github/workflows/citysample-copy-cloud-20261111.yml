@@ -1,0 +1,108 @@
+name: CITY SAMPLE - copy complete 69GB source into connected Google Drive
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-copy-cloud-20261111.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  copy-citysample-source-to-cloud:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 360
+    steps:
+      - name: Copy complete original source without deleting source or existing maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          $dest='H:\Mon Drive\ANOMALIAZ_CITYSAMPLE_SOURCE_20261111'
+          $reportPath=Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_CLOUD_COPY_20261111.json'
+          $log=Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_CLOUD_COPY_20261111.log'
+          $report=[ordered]@{state='PREFLIGHT';source=$source;destination=$dest;cloudFolderId='1dTKVmD1glLXWql4qt0i9Qe0BllCuQqfZ';sourceDeleted=$false;mapsModified=$false;cloudServerUploadVerified=$false}
+          try {
+            if(!(Test-Path -LiteralPath (Join-Path $source 'CitySample.uproject'))){throw 'Original standalone City Sample project not found'}
+            $volume=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'"
+            if(!$volume -or !$volume.VolumeName.StartsWith('znation.cmd@gmail.com')){throw 'H is not the confirmed connected Google Drive account'}
+            # This folder was created through the authenticated Drive connector.
+            # Wait for that same folder; never create a duplicate in a guessed path.
+            $deadline=[DateTime]::UtcNow.AddMinutes(3)
+            while(!(Test-Path -LiteralPath $dest) -and [DateTime]::UtcNow -lt $deadline){Start-Sleep -Seconds 5}
+            if(!(Test-Path -LiteralPath $dest)){throw 'Cloud-created destination has not appeared on this Google Drive mount'}
+            $help=& robocopy.exe /? 2>&1 | Out-String
+            if($help -notmatch '/LFSM'){throw 'Robocopy lacks low-free-space mode; refuse unbounded cloud cache growth'}
+            $files=@(Get-ChildItem -LiteralPath $source -File -Recurse -Force -ErrorAction Stop)
+            $total=[int64]0;$largest=[int64]0
+            foreach($f in $files){$total+=[int64]$f.Length;if($f.Length -gt $largest){$largest=[int64]$f.Length}}
+            if($files.Count -lt 120000 -or $total -lt 60GB -or $total -gt 80GB){throw 'Original source count or size changed unexpectedly'}
+            $freeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            if($freeC -lt (8GB+$largest)){throw 'Not enough cache reserve to safely copy the largest individual source file'}
+            $report.sourceFiles=$files.Count;$report.sourceBytes=$total
+            $report.largestFileBytes=$largest
+            $report.state='COPYING_TO_GOOGLE_DRIVE_DESKTOP_SERVER_SYNC_PENDING'
+            $report|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $reportPath -Encoding UTF8
+            Write-Host ('CITY_SAMPLE_CLOUD_COPY_STARTED=true')
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_FILES='+$files.Count)
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_BYTES='+$total)
+            Write-Host ('CITY_SAMPLE_CLOUD_SOURCE_GIB='+[math]::Round($total/1GB,3))
+            Write-Host ('CITY_SAMPLE_CLOUD_TARGET='+$dest)
+            Write-Host 'CITY_SAMPLE_CLOUD_COPY_NO_SOURCE_DELETION=true'
+            # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
+            # LFSM pauses when destination/cache reaches an 8 GiB reserve.
+            $args=@('"'+$source+'"','"'+$dest+'"','/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/LFSM:8g','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
+            $process=Start-Process -FilePath robocopy.exe -ArgumentList $args -PassThru -NoNewWindow
+            $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
+            while(!$process.HasExited){
+              Start-Sleep -Seconds 30
+              $process.Refresh()
+              $io=Get-CimInstance Win32_Process -Filter ("ProcessId="+$process.Id) -ErrorAction SilentlyContinue
+              if($io){
+                $written=[uint64]$io.WriteTransferCount
+                if($written -ne $lastWrite){$lastChange=[DateTime]::UtcNow;$lastWrite=$written}
+                Write-Host ('CITY_SAMPLE_COPY_IO_BYTES='+$written+';CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))
+              }
+              if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 6GB){
+                Stop-Process -Id $process.Id -Force
+                throw 'Cloud cache reserve reached; copy stopped, originals preserved, resumable destination retained'
+              }
+              if(([DateTime]::UtcNow-$lastChange).TotalMinutes -gt 20){
+                Stop-Process -Id $process.Id -Force
+                throw 'Copy made no I/O progress for 20 minutes; destination may be full or awaiting cloud upload'
+              }
+            }
+            $process.WaitForExit()
+            $report.robocopyExitCode=$process.ExitCode
+            if($process.ExitCode -ge 8){throw ('Robocopy copy failure '+$process.ExitCode)}
+            $destFiles=@(Get-ChildItem -LiteralPath $dest -File -Recurse -Force -ErrorAction Stop)
+            $lookup=@{}
+            foreach($f in $destFiles){$lookup[$f.FullName.Substring($dest.Length).TrimStart('\')]=[int64]$f.Length}
+            foreach($f in $files){
+              $rel=$f.FullName.Substring($source.Length).TrimStart('\')
+              if(!$lookup.ContainsKey($rel) -or $lookup[$rel] -ne $f.Length){throw ('Incomplete desktop copy: '+$rel)}
+            }
+            $report.state='ALL_SOURCE_FILES_COPIED_TO_DRIVE_DESKTOP_SERVER_UPLOAD_NOT_YET_VERIFIED'
+            $report.desktopCopiedFiles=$files.Count
+            $report.desktopCopiedBytes=$total
+            Write-Host ('CITY_SAMPLE_CLOUD_DESKTOP_COPY_COMPLETE_FILES='+$files.Count)
+            Write-Host 'CITY_SAMPLE_SERVER_UPLOAD_VERIFIED=false'
+            Write-Host 'CITY_SAMPLE_ORIGINAL_SOURCE_RETAINED=true'
+          } catch {
+            $report.state='STOPPED_NO_SOURCE_DELETION'
+            $report.error=$_.Exception.Message
+            Write-Host ('CITY_SAMPLE_CLOUD_COPY_BLOCKED='+$report.error)
+            throw
+          } finally {
+            $report|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $reportPath -Encoding UTF8
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: CITY-SAMPLE-CLOUD-COPY-STATUS-20261111
+          path: |
+            CITY_SAMPLE_CLOUD_COPY_20261111.json
+            CITY_SAMPLE_CLOUD_COPY_20261111.log
+          if-no-files-found: warn
+          retention-days: 30
