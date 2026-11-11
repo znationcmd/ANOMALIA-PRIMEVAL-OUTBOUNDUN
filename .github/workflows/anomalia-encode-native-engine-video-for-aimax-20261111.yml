@@ -1,0 +1,90 @@
+name: ANOMALIA - encode genuine UE5 video MP4 for AIMAX from validated native frames
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-encode-native-engine-video-for-aimax-20261111.yml']
+permissions:
+  contents: read
+  actions: read
+jobs:
+  encode-original-unreal-pixels-not-ai:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SOURCE_RUN: '43035221795'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Wait for the original rendered Unreal screenshot artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 160); do
+            id=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN/artifacts" --jq '.artifacts[] | select(.name=="REAL-ANOMALIA-UE5-PIE-REAL-BIGCITY-BMW-SURVIVOR-DOG-VIDEO-FRAMES") | .id' 2>/dev/null | head -1 || true)
+            if [[ "$id" =~ ^[0-9]+$ ]]; then
+              echo "SOURCE_ARTIFACT_ID=$id" >> "$GITHUB_ENV"
+              echo "True UE5 source artifact: $id"
+              exit 0
+            fi
+            conclusion=$(gh api "/repos/$GITHUB_REPOSITORY/actions/runs/$SOURCE_RUN" --jq '.conclusion // ""' 2>/dev/null || true)
+            if [ -n "$conclusion" ] && [ "$conclusion" != "success" ]; then
+              echo "Unreal source run failed. Refusing fabricated video."
+              exit 1
+            fi
+            sleep 8
+          done
+          echo 'Native UE5 source footage not ready'; exit 1
+      - name: Download real engine pixel captures and verify identity and checksums
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir frames
+          gh api "/repos/$GITHUB_REPOSITORY/actions/artifacts/$SOURCE_ARTIFACT_ID/zip" > unreal-frames.zip
+          unzip -q unreal-frames.zip -d frames
+          python3 - <<'PY'
+          from pathlib import Path
+          import json,hashlib
+          root=Path('frames')
+          docs=list(root.rglob('ue5-frame-capture-receipt.json'))
+          assert len(docs)==1, 'Missing original UE5 capture receipt'
+          doc=json.loads(docs[0].read_text(encoding='utf-8-sig'))
+          required=['actualPIEStarted','originalBMWBodyLoaded','realSurvivorMeshLoaded','realGermanShepherdMeshLoaded']
+          assert all(doc.get(key) for key in required)
+          assert doc.get('realCityMeshActorsSelected',0)>=40
+          assert doc.get('totalFramesCaptured')==36
+          assert doc.get('state')=='REAL_UE5_IN_ENGINE_PIE_VIEWPORT_FRAMES_CAPTURED_NOT_DIRECT_24FPS_GAMEPLAY'
+          framehome=docs[0].parent
+          for entry in doc['frames']:
+            f=framehome/entry['file']
+            assert f.stat().st_size==entry['bytes']
+            assert hashlib.sha256(f.read_bytes()).hexdigest()==entry['sha256']
+          assert len(list(root.rglob('ue5_real_*.png')))==36
+          Path('ue5-video-native-source-report.json').write_text(json.dumps({
+            'sourceRun':43035221795,'originalUE5Frames':36,'PIEStarted':True,
+            'realBMWv7':True,'realSurvivor':True,'realGermanShepherd':True,
+            'realCitySourceMeshes':doc['realCityMeshActorsSelected'],
+            'videoType':'UE5 in-engine PIE camera footage; not direct player-controlled 24fps gameplay',
+            'AIImagery':False,'hasMusic':False,'originalMapsModified':False
+          },indent=2),encoding='utf-8')
+          print('ORIGINAL_NATIVE_UNREAL_5_8_PIXELS_VERIFIED=true')
+          PY
+      - name: Encode original UE5 viewport footage as silent 720p H264 MP4
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! command -v ffmpeg >/dev/null; then sudo apt-get update -qq && sudo apt-get install -y ffmpeg; fi
+          cd "$(dirname "$(find frames -name ue5_real_0000.png -print -quit)")"
+          ffmpeg -hide_banner -loglevel error -y -framerate 3 -start_number 0 -i 'ue5_real_%04d.png' -vf 'minterpolate=fps=24:mi_mode=mci:mc_mode=aobmc:me_mode=bidir,scale=1280:720:flags=lanczos,format=yuv420p' -c:v libx264 -crf 17 -preset fast -movflags +faststart -an "$GITHUB_WORKSPACE/ANOMALIAZ_PRIGIMALIA_AIMAX_UE5_Authentique_Preview.mp4"
+          cd "$GITHUB_WORKSPACE"
+          ffprobe -v error -show_entries format=duration,size -of default=noprint_wrappers=1 ANOMALIAZ_PRIGIMALIA_AIMAX_UE5_Authentique_Preview.mp4
+          test "$(stat -c '%s' ANOMALIAZ_PRIGIMALIA_AIMAX_UE5_Authentique_Preview.mp4)" -gt 60000
+          echo 'ORIGINAL_UE5_PREVIEW_MP4_SUCCESS=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AIMAX-ANOMALIAZ-PRIGIMALIA-REAL-UE5-PIE-PREVIEW-MP4
+          path: |
+            ANOMALIAZ_PRIGIMALIA_AIMAX_UE5_Authentique_Preview.mp4
+            ue5-video-native-source-report.json
+          retention-days: 30
+          if-no-files-found: warn
