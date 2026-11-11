@@ -1,0 +1,71 @@
+name: ANOMALIA - inspect isolated real game footage options and GPU tools
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-video-independent-project-feasibility-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-video-independent-readonly-feasibility
+  cancel-in-progress: false
+jobs:
+  independent-project-video-readiness:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Inspect existing actual city projects, E39, German shepherd, and GPU without launching Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $roots=@(
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal',
+            'C:\ANOMALIA-Validation\c40543166274\unreal',
+            'D:\ANOMALIA\unreal',
+            'D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          )
+          $rel=@(
+            'Content\Map\Big_City_LVL.umap',
+            'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap',
+            'Content\Anomalia\BMWE39Review_v7\body\SM_body.uasset',
+            'Content\German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset',
+            'Content\Survival_Character\Meshes\SK_Survival_Character.uasset',
+            'Content\Anomalia\Characters\BP_Anomalia_Survival.uasset'
+          )
+          $locations=@()
+          foreach($root in $roots){
+            $row=[ordered]@{root=$root;exists=Test-Path -LiteralPath $root;files=[ordered]@{}}
+            foreach($file in $rel){$full=Join-Path $root $file;$row.files[$file]=[ordered]@{exists=(Test-Path -LiteralPath $full);sizeBytes=if(Test-Path -LiteralPath $full){(Get-Item -LiteralPath $full).Length}else{0}}}
+            $locations+= $row
+          }
+          $procs=@(Get-CimInstance Win32_Process | Where-Object{$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|AnomaliaZPrigimalia)\.exe$'} |
+            ForEach-Object{[ordered]@{pid=$_.ProcessId;parentPid=$_.ParentProcessId;name=$_.Name;started=$_.CreationDate;command=$_.CommandLine}})
+          $capability=[ordered]@{
+            state='GAME_ENGINE_VIDEO_INDEPENDENT_READONLY_DIAGNOSTIC'
+            locations=$locations
+            activeUnrealProcesses=$procs
+            gpu=@(Get-CimInstance Win32_VideoController | ForEach-Object{[ordered]@{name=$_.Name;driverVersion=$_.DriverVersion;adapterRAM=$_.AdapterRAM}})
+            ffmpegOnPath=[bool](Get-Command ffmpeg -ErrorAction SilentlyContinue)
+            mspaintExists=Test-Path 'C:\Windows\System32\mspaint.exe'
+            pyExists=Test-Path (Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe')
+            ffmpegCandidatePaths=@(
+              'C:\ffmpeg\bin\ffmpeg.exe',
+              'D:\ffmpeg\bin\ffmpeg.exe',
+              'C:\ANOMALIA-Validation\c40543166274\unreal\Binaries\Win64\ffmpeg.exe'
+            )|ForEach-Object{[ordered]@{path=$_;exists=Test-Path -LiteralPath $_}}
+            CFreeGiB=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+            DFreeGiB=if(Test-Path 'D:\'){[math]::Round(([IO.DriveInfo]::new('D')).AvailableFreeSpace/1GB,2)}else{$null}
+            mapsTouched=$false;actualGameplayCaptured=$false
+          }
+          $file=Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_INDEPENDENT_VIDEO_SOURCE_FEASIBILITY.json'
+          $capability|ConvertTo-Json -Depth 9 | Set-Content -LiteralPath $file -Encoding UTF8
+          Write-Host ('VIDEO_AVAILABLE_UE_PROJECTS='+(@($locations|Where-Object{$_.exists}).Count))
+          Write-Host ('VIDEO_ACTIVE_UE_PROCESSES='+$procs.Count)
+          Write-Host ('VIDEO_GPU='+($capability.gpu|ConvertTo-Json -Compress))
+          Write-Host ('VIDEO_C_FREE_GIB='+$capability.CFreeGiB)
+          Write-Host ('VIDEO_D_FREE_GIB='+$capability.DFreeGiB)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-REAL-ENGINE-INDEPENDENT-VIDEO-CAPABILITY
+          path: ANOMALIA_INDEPENDENT_VIDEO_SOURCE_FEASIBILITY.json
+          retention-days: 7
