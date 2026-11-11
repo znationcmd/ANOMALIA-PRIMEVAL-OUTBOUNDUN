@@ -124,7 +124,7 @@ try:
     c.set_material(ix,materials[mp])
     data["copiedCitySamplePartsWithOverrides"]+=1
   q=datum["rotation"];size=datum["scale"]
-  new.set_actor_rotation(unreal.Rotator(q[0],q[1],q[2]),False)
+  new.set_actor_rotation(unreal.Rotator(pitch=q[0],yaw=q[1],roll=q[2]),False)
   new.set_actor_scale3d(unreal.Vector(*size))
   data["copiedOriginalSourceMeshActors"]+=1
  if data["copiedOriginalSourceMeshActors"]!=720:
