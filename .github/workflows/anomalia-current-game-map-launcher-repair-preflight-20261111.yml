@@ -1,0 +1,41 @@
+name: ANOMALIA - inspect actual PC launch targets and current native maps and controls
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-current-game-map-launcher-repair-preflight-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 4
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          foreach($product in @('ANOMALIA-UE5','ANOMALIA-Windows','ANOMALIA-Tools')){
+            $p=Join-Path $env:LOCALAPPDATA ('CMD\'+$product+'\active.json')
+            if(Test-Path $p){Write-Host ('ACTIVE='+$product);Get-Content $p -Raw|Write-Host}
+          }
+          $shell=New-Object -ComObject WScript.Shell
+          foreach($base in @([Environment]::GetFolderPath('Desktop'),[Environment]::GetFolderPath('CommonDesktopDirectory'))){
+            Get-ChildItem $base -Filter '*.lnk' -File|Where-Object{$_.Name -match 'ANOMALIA|PRIGIMALIA'}|ForEach-Object{
+              $s=$shell.CreateShortcut($_.FullName);Write-Host ('SHORTCUT='+$_.Name+';TARGET='+$s.TargetPath+';ARGS='+$s.Arguments)
+            }
+          }
+          foreach($base in @((Join-Path $root 'Content\Maps'),'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps')){
+            Get-ChildItem $base -Filter '*.umap' -File|Sort-Object Name|ForEach-Object{Write-Host ('MAP='+$_.FullName+';DATE='+$_.LastWriteTimeUtc.ToString('o')+';BYTES='+$_.Length)}
+          }
+          foreach($rel in @('Source\AnomaliaPrimeval\AnomaliaSurvivor.cpp','Source\AnomaliaPrimeval\AnomaliaPlayerController.cpp','Source\AnomaliaPrimeval\AnomaliaGameMode.cpp')){
+            $p=Join-Path $root $rel
+            if(Test-Path $p){Write-Host ('SOURCE='+$p);Get-Content $p -TotalCount 170|ForEach-Object{Write-Host $_}}
+          }
+          foreach($rel in @('Config\DefaultEngine.ini','Config\DefaultInput.ini')){
+            $p=Join-Path $root $rel
+            if(Test-Path $p){Write-Host ('CONFIG='+$p);Get-Content $p|Select-String 'Nanite|Shader|RHI|DefaultMap|DefaultGameMode|InputSettings|AxisMappings|ActionMappings'|ForEach-Object{Write-Host $_}}
+          }
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}|ForEach-Object{Write-Host ('RUNNING='+$_.Name+';CMD='+$_.CommandLine)}
+          Get-CimInstance Win32_LogicalDisk|Where-Object {$_.DeviceID -in @('C:','D:','E:')}|ForEach-Object{Write-Host ('FREE='+$_.DeviceID+';BYTES='+$_.FreeSpace)}
