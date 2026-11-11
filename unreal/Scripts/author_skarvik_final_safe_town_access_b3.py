@@ -165,6 +165,36 @@ try:
         margin = 350.0
         return not any(box.min.x - margin <= x <= box.max.x + margin and
                        box.min.y - margin <= y <= box.max.y + margin for box in buildings)
+    # Index actual persisted road bounds. Reject overlap with previous batches
+    # and regional asphalt; a candidate must preserve all existing geometry.
+    road_cells = {}
+    cell_cm = 2500.0
+    road_prefixes = ("SKARVIK_FINAL_DRY_OLD_REAL_ASPHALT_",
+                     "SKARVIK_FINAL_SAFE_TOWN_ACCESS_",
+                     "SKARVIK_FINAL_REGIONAL_")
+    for descriptor in desc:
+        if not str(descriptor.label).startswith(road_prefixes):
+            continue
+        box = descriptor.bounds
+        x0, x1 = math.floor(box.min.x / cell_cm), math.floor(box.max.x / cell_cm)
+        y0, y1 = math.floor(box.min.y / cell_cm), math.floor(box.max.y / cell_cm)
+        if (x1-x0+1)*(y1-y0+1) > 100000:
+            raise RuntimeError("Unreasonable persisted road bounds")
+        for cx in range(x0, x1+1):
+            for cy in range(y0, y1+1):
+                road_cells.setdefault((cx, cy), []).append(box)
+    def road_free(e, n):
+        x, y = e*100000.0, -n*100000.0
+        # Cover the new four metre road width and a small clearance.
+        margin = 230.0
+        for cx in range(math.floor((x-margin)/cell_cm), math.floor((x+margin)/cell_cm)+1):
+            for cy in range(math.floor((y-margin)/cell_cm), math.floor((y+margin)/cell_cm)+1):
+                for box in road_cells.get((cx, cy), []):
+                    if box.min.x-margin <= x <= box.max.x+margin and box.min.y-margin <= y <= box.max.y+margin:
+                        return False
+        return True
+    REPORT["candidateStreetClass"] = "village-lane"
+    REPORT["existingRoadOverlapCheckEnabled"] = True
     approved = []
     total_actors = 0
     # Prioritize original safe sites. Provisional relocation coordinates must be
@@ -188,7 +218,7 @@ try:
             continue
         attempted_for_site = 0
         for lane in layouts[site_id]["localSegments"]:
-            if lane.get("class") != "access-lane" or len(lane.get("pointsKm", [])) != 2:
+            if lane.get("class") != "village-lane" or len(lane.get("pointsKm", [])) != 2:
                 continue
             if lane["id"] in older_lanes:
                 continue
@@ -219,6 +249,9 @@ try:
                     break
                 if not all(building_free(x, y) for x, y in ((ea, na), (em, nm), (eb, nb))):
                     reject = "authentic-persisted-3d-building-intersection"
+                    break
+                if not all(road_free(x, y) for x, y in ((ea, na), (em, nm), (eb, nb))):
+                    reject = "existing-native-asphalt-overlap"
                     break
                 ha, hb, hm = native_height(ea, na), native_height(eb, nb), native_height(em, nm)
                 if min(ha, hb, hm) < 5:
