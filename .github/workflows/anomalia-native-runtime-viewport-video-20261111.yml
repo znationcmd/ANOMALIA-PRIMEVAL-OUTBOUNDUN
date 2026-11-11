@@ -40,7 +40,12 @@ jobs:
                       controller=unreal.GameplayStatics.get_player_controller(world,0)
                       if not controller:return
                       report["actualWorldClass"]=world.get_class().get_name()
-                      report["actualPawn"]=str(controller.get_pawn())
+                      pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                      report["actualPawn"]=str(pawn)
+                      if pawn:
+                          pos=pawn.get_actor_location()
+                          report["pawnLocation"]=[pos.x,pos.y,pos.z]
+                      report["directionalLights"]=len(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.DirectionalLight))
                       state["phase"]="capture"
                   path=out/("native_%04d.png"%state["frame"])
                   if state.get("pending"):
@@ -65,6 +70,8 @@ jobs:
                   report["error"]=traceback.format_exc()
                   write()
                   try:unreal.unregister_slate_post_tick_callback(state["handler"])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,"quit")
                   except:pass
           state["handler"]=unreal.register_slate_post_tick_callback(tick)
           write()
