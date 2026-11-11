@@ -17,7 +17,7 @@ export function mountWorkForge({openMods,onPlay}={}){
   const shell=document.createElement("section");
   shell.id="workforgeRoot";shell.className="wf-root hidden";shell.setAttribute("role","dialog");
   shell.setAttribute("aria-modal","true");shell.setAttribute("aria-label","WorkForge — Mods et créations");
-  shell.innerHTML=\`
+  shell.innerHTML=`
     <div class="wf-top"><div class="wf-logo">Ⓐ <span>ANOMALIA’Z <small>PRIGIMALIA</small></span></div>
       <strong class="wf-heading">⚙ WORKFORGE <small>MODS & CRÉATIONS</small></strong>
       <label class="wf-search"><span class="sr-only">Recherche</span><input id="wfSearch" placeholder="Rechercher un mod ou une création…"></label>
@@ -54,7 +54,7 @@ export function mountWorkForge({openMods,onPlay}={}){
         <div class="wf-panel"><h3>CRÉATIONS</h3><p>Importez des mappings réalisés avec les outils ANOMALIA’Z.</p><button id="wfImport" class="wf-primary">Importer un mapping JSON</button></div>
         <div class="wf-panel"><h3>COMPATIBILITÉ</h3><p>Le moteur vérifie les identifiants, versions et emplacements des objets avant l'installation.</p></div>
       </aside>
-    </div>\`;
+    </div>`;
   document.body.append(shell);
   const $=id=>shell.querySelector("#"+id);
   let category="Tous les mods";
@@ -70,7 +70,7 @@ export function mountWorkForge({openMods,onPlay}={}){
     CATEGORIES.forEach((cat,i)=>{
       const button=document.createElement("button");
       button.type="button";button.className="wf-category"+(cat===category?" active":"");
-      button.innerHTML=\`<span>\${ICONS[i]}</span><b>\${escapeText(cat)}</b>\`;
+      button.innerHTML=`<span>${ICONS[i]}</span><b>${escapeText(cat)}</b>`;
       button.onclick=()=>{category=cat;render();};
       $("wfCategories").append(button);
     });
@@ -91,9 +91,9 @@ export function mountWorkForge({openMods,onPlay}={}){
     }
     filtered.forEach(mod=>{
       const card=document.createElement("article");card.className="wf-card";
-      card.innerHTML=\`<div class="wf-card-art">◇</div><div class="wf-card-body">
-      <h4>\${escapeText(mod.name)}</h4><p>\${escapeText(mod.id)} · v\${escapeText(mod.version)}</p>
-      <div class="wf-card-status">\${mod.enabled?"● ACTIVÉ":"○ DÉSACTIVÉ"} · MAPPING LOCAL</div></div>\`;
+      card.innerHTML=`<div class="wf-card-art">◇</div><div class="wf-card-body">
+      <h4>${escapeText(mod.name)}</h4><p>${escapeText(mod.id)} · v${escapeText(mod.version)}</p>
+      <div class="wf-card-status">${mod.enabled?"● ACTIVÉ":"○ DÉSACTIVÉ"} · MAPPING LOCAL</div></div>`;
       const btn=document.createElement("button");btn.textContent=mod.enabled?"Désactiver":"Activer";btn.className="wf-primary";
       btn.onclick=()=>{const next=readMods().map(m=>m.id===mod.id?{...m,enabled:!m.enabled}:m);try{localStorage.setItem(KEY,JSON.stringify(next));window.dispatchEvent(new Event("anomalia-workforge-change"));render();}catch{btn.textContent="Stockage indisponible";btn.disabled=true;}};
       card.append(btn);$("wfCards").append(card);
