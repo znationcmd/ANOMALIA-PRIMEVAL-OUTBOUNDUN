@@ -1,0 +1,119 @@
+name: RACCONIA - guarded native UE5 PBR 29-site stage (not a finished game)
+on:
+  push:
+    branches:
+      - feature/racconia-29-pbr-exteriors-20261111
+    paths:
+      - .github/workflows/racconia-native-pbr-29-stage-20261111.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-architecture-stage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 105
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify isolated original staging area and save C drive safety
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent UE Editor: refuse'}
+          foreach($p in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $root 'SourceAssets\Racconia16km_20261111\RACCONIA_UE5_READY_1009_north_up.r16'))){
+            if(!(Test-Path -LiteralPath $p)){throw ('Real user source missing: '+$p)}
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1.umap')){
+            throw 'RACCONIA map exists; no overwrite'
+          }
+          if(Test-Path -LiteralPath (Join-Path $root 'SourceAssets\Racconia29PBR_20261111')){
+            throw 'RACCONIA native architectural source already staged; do not repeat'
+          }
+          $free=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+          Write-Host ('RACCONIA_PBR_C_FREE_GIB='+$free)
+          if($free -lt 12){throw 'Insufficient C space to compile UE5 + import PBR meshes safely; nothing modified'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: RACCONIA-29-UNIQUE-HORROR-ARCHITECTURE-PBR-GLB-V2
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          run-id: 43008260344
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/RACCONIA_29_ARCH_PBR_V2
+      - name: Verify artifact manifest and stage sources without replacing assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $from=Join-Path $env:RUNNER_TEMP 'RACCONIA_29_ARCH_PBR_V2'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dest=Join-Path $root 'SourceAssets\Racconia29PBR_20261111'
+          if(Test-Path -LiteralPath $dest){throw 'Architectural source already present, cannot replace'}
+          $manifest=Get-Content -LiteralPath (Join-Path $from 'RACCONIA_29_PBR_ARCHITECTURE_MANIFEST.json') -Raw|ConvertFrom-Json
+          $models=@(Get-ChildItem -LiteralPath (Join-Path $from 'GLB_PBR_EXTERIORS_V1') -Filter '*.glb' -File)
+          if($manifest.modelsGenerated -ne 29 -or $models.Count -ne 29){throw 'Not the approved 29-source horror set'}
+          foreach($model in $manifest.models){
+            $f=Join-Path (Join-Path $from 'GLB_PBR_EXTERIORS_V1') $model.file
+            if(!(Test-Path -LiteralPath $f) -or (Get-FileHash -LiteralPath $f -Algorithm SHA256).Hash.ToLower() -ne $model.sha256){
+              throw ('PBR source corrupted: '+$model.id)
+            }
+          }
+          Copy-Item -LiteralPath $from -Destination $dest -Recurse
+          Write-Host 'RACCONIA_PBR_29_GLB_ARTIFACT_STAGED_AND_SHA_VERIFIED=true'
+      - name: Stage and compile only new RACCONIA terrain class in isolated UE5 project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $rel='Source\AnomaliaZPrigimalia\World'
+          $from=Join-Path $env:GITHUB_WORKSPACE ('unreal\'+$rel)
+          $dest=Join-Path $root $rel
+          foreach($file in @('AnomaliaZPrigimaliaRacconiaLandscape.h','AnomaliaZPrigimaliaRacconiaLandscape.cpp')){
+            $target=Join-Path $dest $file
+            if(Test-Path -LiteralPath $target){throw ('Refuse overwrite: '+$target)}
+            Copy-Item -LiteralPath (Join-Path $from $file) -Destination $target
+          }
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('RACCONIA UE5 native architecture compile failed '+$LASTEXITCODE)}
+          Write-Host 'RACCONIA_NEW_1009_LANDSCAPE_NATIVE_CLASS_COMPILED=true'
+      - name: Create only the new 29-horror-site World Partition map and verify real PBR actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_PBR_UE_NATIVE_REPORT_20261111.json'
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_racconia_29_architectural_pbr_native.py'
+          & $py -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'RACCONIA Unreal Python script syntax invalid'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT)){throw 'No RACCONIA native result'}
+          $r=Get-Content -LiteralPath $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('RACCONIA_NATIVE_PBR_STATE='+$r.state)
+          Write-Host ('RACCONIA_NATIVE_29_SITE_ANCHORS='+$r.originalSiteAnchorsSaved)
+          Write-Host ('RACCONIA_NATIVE_29_SITE_MESH_PARTS='+$r.nativePBRBuildingPartsPlaced)
+          if($exit -ne 0 -or !$r.nativeMapSaved -or $r.originalSiteAnchorsSaved -ne 29){
+            throw ('RACCONIA 29-site native map not finished: '+$r.error)
+          }
+          Write-Host 'RACCONIA_PBR_ARCHITECTURE_STAGE_UE5_SAVED_NOT_FINAL_GAMEPLAY=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RACCONIA-NATIVE-PBR-29-ARCHITECTURE-IMPORT-REPORT
+          path: RACCONIA_29_PBR_UE_NATIVE_REPORT_20261111.json
+          retention-days: 30
+          if-no-files-found: warn
