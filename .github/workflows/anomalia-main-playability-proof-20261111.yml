@@ -1,0 +1,130 @@
+name: ANOMALIA - verify actual main pawn mesh movement dog daylight and current SKARVIK viewport
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-main-playability-proof-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  capture:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Another native session is open'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-native-viewport-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('CAPTURE_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:ANOMALIA_NATIVE_VIEWPORT_OUT=$out
+          $script=Join-Path $out 'capture.py'
+          @'
+          import unreal,time,json,os,traceback
+          from pathlib import Path
+          out=Path(os.environ["ANOMALIA_NATIVE_VIEWPORT_OUT"])
+          state={"begin":time.monotonic(),"frame":0,"phase":"wait","next":time.monotonic()+45,"frames":[]}
+          report={"state":"RUNNING","map":"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","source":"Native actual game viewport","visualMode":"normal game lighting","frames":[]}
+          def write():
+              (out/"receipt.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          def tick(delta):
+              try:
+                  now=time.monotonic()
+                  if now-state["begin"]>180:raise RuntimeError("Native screenshot timeout")
+                  if now<state["next"]:return
+                  world=unreal.find_object(None,"/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.PRIGIMALIA_SKARVIK_FINAL_v1")
+                  if not world:return
+                  if state["phase"]=="wait":
+                      controller=unreal.GameplayStatics.get_player_controller(world,0)
+                      if not controller:return
+                      report["actualWorldClass"]=world.get_class().get_name()
+                      pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                      report["actualPawn"]=str(pawn)
+                      if pawn:
+                          pos=pawn.get_actor_location()
+                          report["pawnLocation"]=[pos.x,pos.y,pos.z]
+                      if not pawn:raise RuntimeError("No actual player pawn")
+                      state["pawn"]=pawn
+                      report["meshComponents"]=[]
+                      for comp in pawn.get_components_by_class(unreal.SkeletalMeshComponent):
+                          report["meshComponents"].append({"component":comp.get_name(),"mesh":str(comp.get_editor_property("skeletal_mesh_asset")),"visible":comp.is_visible()})
+                      report["dogActors"]=[a.get_name() for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.Actor) if "DogCompanion" in a.get_class().get_name()]
+                      controller.set_ignore_move_input(False)
+                      controller.set_ignore_look_input(False)
+                      unreal.WidgetBlueprintLibrary.set_input_mode_game_only(controller)
+                      state["moveStart"]=now
+                      state["initialPos"]=pawn.get_actor_location()
+                      report["directionalLights"]=len(unreal.GameplayStatics.get_all_actors_of_class(world,unreal.DirectionalLight))
+                      state["controller"]=controller
+                      report["cityActorsLoaded"]=[]
+                      for a in unreal.GameplayStatics.get_all_actors_of_class(world,unreal.StaticMeshActor):
+                          label=a.get_actor_label()
+                          if "CITYSAMPLE" not in label and "COMPLETE_REAL_BUILDING" not in label:continue
+                          comp=a.get_component_by_class(unreal.StaticMeshComponent)
+                          mesh=comp.get_editor_property("static_mesh") if comp else None
+                          report["cityActorsLoaded"].append({"label":label,"mesh":str(mesh),"visible":comp.is_visible() if comp else False,"location":str(a.get_actor_location())})
+                      report["runtimeCityActorCount"]=len(report["cityActorsLoaded"])
+                      state["phase"]="capture"
+                  if state["phase"]=="capture" and now-state["moveStart"]<3.0:
+                      state["pawn"].add_movement_input(unreal.Vector(x=1.0,y=0.0,z=0.0),0.7,True)
+                      return
+                  if "movementDistanceCm" not in report:
+                      end=state["pawn"].get_actor_location()
+                      start=state["initialPos"]
+                      report["movementDistanceCm"]=((end.x-start.x)**2+(end.y-start.y)**2)**0.5
+                      report["movementEnd"]=[end.x,end.y,end.z]
+                  path=out/("native_%04d.png"%state["frame"])
+                  if state.get("pending"):
+                      if not path.exists():return
+                      report["frames"].append({"file":path.name,"timeSeconds":now-state["begin"]})
+                      state["frame"]+=1
+                      state["pending"]=False
+                      write()
+                      if state["frame"]>=60:
+                          report["state"]="ACTUAL_RUNTIME_VIEWPORT_FRAMES_CAPTURED"
+                          write()
+                          unreal.unregister_slate_post_tick_callback(state["handler"])
+                          unreal.SystemLibrary.execute_console_command(world,"quit")
+                          return
+                      state["next"]=now+0.125
+                      return
+                  state["controller"].set_control_rotation(unreal.Rotator(pitch=-8.0,yaw=state["frame"]*3.0,roll=0.0))
+                  command='HighResShot 960x540 filename="'+str(path).replace("\\","/")+'"'
+                  unreal.SystemLibrary.execute_console_command(world,command)
+                  state["pending"]=True
+              except Exception:
+                  report["state"]="FAILED"
+                  report["error"]=traceback.format_exc()
+                  write()
+                  try:unreal.unregister_slate_post_tick_callback(state["handler"])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,"quit")
+                  except:pass
+          state["handler"]=unreal.register_slate_post_tick_callback(tick)
+          write()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $log=Join-Path $out 'game.log'
+          $commands='t.IdleWhenNotForeground 0,r.ScreenPercentage 60,r.ShadowQuality 0,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,py '+$script.Replace('\','/')
+          $args=@(('"'+$project+'"'),'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=main-playproof-20261111','-game','-RenderOffscreen','-windowed','-ResX=960','-ResY=540','-d3d11','-sm5','-unattended','-nosound','-nosplash',('-abslog="'+$log+'"'),('-ExecCmds="'+$commands+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          if(!$p.WaitForExit(240000)){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(10000)){$p.Kill()}}
+          $receipt=Join-Path $out 'receipt.json'
+          if(Test-Path $receipt){Get-Content $receipt -Raw|Write-Host}
+          Get-Content $log -Tail 80|Write-Host
+          $frames=@(Get-ChildItem $out -Filter 'native_*.png')
+          Write-Host ('NATIVE_FRAME_COUNT='+$frames.Count)
+          if($frames.Count -lt 10){throw 'Native viewport did not produce enough actual frames'}
+          $result=Get-Content $receipt -Raw|ConvertFrom-Json
+          if($result.state -eq 'FAILED'){throw $result.error}
+          if($result.movementDistanceCm -lt 50){throw 'Actual pawn failed native movement verification'}
+          if(!@($result.meshComponents|Where-Object {$_.visible -and $_.mesh -notmatch 'None'}).Count){throw 'Actual player mesh is still missing'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-PLAYABILITY-PROOF
+          path: ${{ env.CAPTURE_OUT }}
+          if-no-files-found: warn
