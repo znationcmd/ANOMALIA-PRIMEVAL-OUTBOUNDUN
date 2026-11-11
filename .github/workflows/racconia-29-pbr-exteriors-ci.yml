@@ -1,0 +1,64 @@
+name: RACCONIA - build 29 unique horror architecture PBR exteriors
+on:
+  push:
+    branches:
+      - feature/racconia-29-pbr-exteriors-20261111
+    paths:
+      - scripts/ue5/worldgen/racconia_29_pbr_exteriors.py
+      - sources/racconia/racconia-29-original-horror-identities.json
+      - .github/workflows/racconia-29-pbr-exteriors-ci.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-architectural-glb:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install GLTF and physically based material build dependencies
+        run: python -m pip install --quiet "numpy>=1.25,<3" "Pillow>=10,<13" "trimesh>=4.5,<5"
+      - name: Compile and build all 29 distinct site-specific GLB architectural shells
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile scripts/ue5/worldgen/racconia_29_pbr_exteriors.py
+          python scripts/ue5/worldgen/racconia_29_pbr_exteriors.py \
+            --source sources/racconia/racconia-native-source.zip \
+            --catalog sources/racconia/racconia-29-original-horror-identities.json \
+            --output "${RUNNER_TEMP}/RACCONIA_29_UNIQUE_ARCHITECTURE_PBR"
+      - name: Verify all 29 GLB models have genuine geometry and PBR textures
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json,io,hashlib
+          from pathlib import Path
+          import trimesh
+          p=Path(__import__('os').environ['RUNNER_TEMP'])/'RACCONIA_29_UNIQUE_ARCHITECTURE_PBR'
+          doc=json.loads((p/'RACCONIA_29_PBR_ARCHITECTURE_MANIFEST.json').read_text())
+          assert doc['modelsGenerated']==29 and doc['approvedOriginalSiteCount']==29
+          assert len(set(r['id'] for r in doc['models']))==29
+          assert all(r['newTriangles']>=1000 for r in doc['models'])
+          assert all(r['newTexturedMaterialGroups']>=6 for r in doc['models'])
+          assert all(not r['photorealismVisuallyCertified'] and not r['nativeUE5Imported'] for r in doc['models'])
+          for rec in doc['models']:
+              b=(p/'GLB_PBR_EXTERIORS_V1'/rec['file']).read_bytes()
+              assert hashlib.sha256(b).hexdigest()==rec['sha256']
+              scene=trimesh.load(io.BytesIO(b),file_type='glb',force='scene')
+              faces=sum(len(g.faces) for g in scene.geometry.values())
+              assert faces==rec['newTriangles']
+              assert sum(bool(getattr(getattr(g.visual,'material',None),'baseColorTexture',None)) for g in scene.geometry.values())>=6
+          print('RACCONIA_ALL_29_UNIQUE_HORROR_PBR_GLB_ASSETS_VERIFIED=true')
+          print('RACCONIA_TOTAL_NEW_TRIANGLES='+str(sum(r['newTriangles'] for r in doc['models'])))
+          print('RACCONIA_NATIVE_UNREAL_29_ASSETS_IMPORTED=false')
+          print('RACCONIA_491_ROOM_INTERIORS_FINISHED=false')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RACCONIA-29-UNIQUE-HORROR-ARCHITECTURE-PBR-GLB-V2
+          path: ${{ runner.temp }}/RACCONIA_29_UNIQUE_ARCHITECTURE_PBR
+          if-no-files-found: error
+          retention-days: 30
