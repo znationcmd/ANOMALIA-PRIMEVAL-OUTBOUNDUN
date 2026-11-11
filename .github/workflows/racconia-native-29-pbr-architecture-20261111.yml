@@ -1,0 +1,110 @@
+name: RACCONIA - native 29 original horror architecture PBR integration
+on:
+  push:
+    branches: [feature/racconia-ue5-landscape-29-site-markers-20261111]
+    paths:
+      - '.github/workflows/racconia-native-29-pbr-architecture-20261111.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  import-original-29-horror-sites:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 115
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Validate original 29 horror identities, Drive pack, isolated stage and resource limits
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted Unreal project'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'UE editor already running'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 12GB){throw 'Less than 12 GiB C: free. No native asset writes permitted.'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'SourceAssets\Racconia16km_20261111\RACCONIA_UE5_READY_1009_north_up.r16'))){throw 'Verified RACCONIA original 1009 R16 source not staged'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1.umap')){throw 'RACCONIA level exists already, never overwrite'}
+          if(Test-Path -LiteralPath (Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1')){throw 'Existing RACCONIA World Partition actors, refuse duplicate'}
+          foreach($native in @(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $root 'Content\Map\Big_City_LVL.umap'))){
+            if(!(Test-Path -LiteralPath $native)){throw ('Protected source missing: '+$native)}
+          }
+          $cloud='H:\Mon Drive\ANOMALIAZ_PRIGIMALIA\RACCONIA_29_BATIMENTS_ARCHITECTURE_PBR_V2_20261111.zip'
+          $drive=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'"
+          if(!$drive -or !$drive.VolumeName.StartsWith('znation.cmd@gmail.com')){throw 'Expected connected Google Drive H: missing; no guessing cloud source'}
+          if(!(Test-Path -LiteralPath $cloud)){throw '29-source PBR ZIP not yet synchronized into Drive Desktop H:'}
+          if((Get-Item -LiteralPath $cloud).Length -ne 48218333){throw 'Source 29-building PBR archive size mismatch'}
+          $sha=(Get-FileHash -LiteralPath $cloud -Algorithm SHA256).Hash.ToLower()
+          if($sha -ne 'fb84f3992bf9f42042a4ab3df63af2b591bf5130a9d67aaaf9d9fad640f14ad1'){throw 'PBR 29-source SHA mismatch'}
+          Write-Host 'RACCONIA_29_ORIGINAL_HORROR_PBR_CLOUD_PACK_VERIFIED=true'
+      - name: Stage 29 architecture GLBs and independent verified terrain helper
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dest=Join-Path $root 'SourceAssets\Racconia29PBR_20261111'
+          if(Test-Path -LiteralPath $dest){throw 'PBR import stage already exists, refuse overwrite'}
+          $cloud='H:\Mon Drive\ANOMALIAZ_PRIGIMALIA\RACCONIA_29_BATIMENTS_ARCHITECTURE_PBR_V2_20261111.zip'
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $z=[IO.Compression.ZipFile]::OpenRead($cloud)
+          try{
+            $glb=@($z.Entries|Where-Object{$_.FullName -like 'GLB_PBR_EXTERIORS_V1/*.glb'})
+            if($glb.Count -ne 29){throw ('Expected 29 actual architecture GLBs, got '+$glb.Count)}
+            foreach($item in $z.Entries){
+              if($item.FullName -match '(^/|\\|\.\.)' -or $item.Length -gt 6000000){throw 'Unsafe ZIP entry'}
+            }
+          }finally{$z.Dispose()}
+          [IO.Compression.ZipFile]::ExtractToDirectory($cloud,$dest)
+          $cppDst=Join-Path $root 'Source\AnomaliaZPrigimalia\World'
+          $cppSrc=Join-Path $env:GITHUB_WORKSPACE 'unreal\Source\AnomaliaZPrigimalia\World'
+          foreach($file in @('AnomaliaZPrigimaliaRacconiaLandscape.h','AnomaliaZPrigimaliaRacconiaLandscape.cpp')){
+            if(Test-Path -LiteralPath (Join-Path $cppDst $file)){throw ('Native class already staged; refuse overwrite: '+$file)}
+            Copy-Item -LiteralPath (Join-Path $cppSrc $file) -Destination (Join-Path $cppDst $file) -ErrorAction Stop
+          }
+          Write-Host 'RACCONIA_ARCHITECTURAL_PBR_29_GLBS_AND_NATIVE_CLASS_STAGED=true'
+      - name: Compile new RACCONIA Landscape C++ helper under UE5.8 before map modification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 8GB){throw 'Insufficient disk headroom for native compilation; no level writes'}
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaZPrigimaliaEditor Win64 Development (Join-Path $root 'AnomaliaZPrigimalia.uproject') -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw ('UE5 native C++ compile failed: '+$LASTEXITCODE)}
+          Write-Host 'RACCONIA_NATIVE_LANDSCAPE_CPP_COMPILATION_PASSED=true'
+      - name: Build a NEW 16km RACCONIA with 29 distinct horror PBR assemblies
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB){throw 'Insufficient remaining disk space for new UE5 map'}
+          $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_PBR_NATIVE_IMPORT_20261111.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\build_racconia_29_architectural_pbr_native.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT)){throw 'No truthful native import receipt'}
+          $r=Get-Content -LiteralPath $env:RACCONIA_29_PBR_NATIVE_IMPORT_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('RACCONIA_PBR_NATIVE_REPORT='+$r.state)
+          Write-Host ('RACCONIA_29_ARCH_SITES_PLACED='+$r.originalSiteAnchorsSaved)
+          Write-Host ('RACCONIA_29_ARCH_PBR_MESH_ACTORS='+$r.nativePBRBuildingPartsPlaced)
+          Write-Host ('RACCONIA_29_ARCH_LANDSCAPE_COMPONENTS='+$r.nativeLandscapeComponents)
+          if($code -ne 0 -or !$r.nativeMapSaved -or $r.originalSiteAnchorsSaved -ne 29 -or $r.nativeLandscapeComponents -ne 64){
+             throw ('Native 29-site placement failed; do NOT claim complete: '+$r.error)
+          }
+          Write-Host 'RACCONIA_29_ARCHITECTURAL_SHELLS_SAVED_NATIVE_NOT_FINAL_PHOTOREAL_INTERIORS=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RACCONIA-REAL-29-PBR-BUILDINGS-NATIVE-WORLD-REPORT
+          path: RACCONIA_29_PBR_NATIVE_IMPORT_20261111.json
+          retention-days: 30
+          if-no-files-found: warn
