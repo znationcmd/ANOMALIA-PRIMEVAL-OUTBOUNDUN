@@ -1,0 +1,66 @@
+name: ANOMALIA - locate actual original BMW E39 and survivor on native PC for gameplay MP4
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-find-original-bmw-character-source-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: real-gameplay-locate-sources-readonly
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Find real source assets without touching game maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $staged='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $roots=@('D:\ANOMALIA\unreal','D:\ANOMALIAZ-PRIGIMALIA\unreal','C:\ANOMALIA-Validation',
+                   'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal')
+          $rows=@()
+          foreach($root in $roots){
+            if(!(Test-Path -LiteralPath $root)){continue}
+            $contentRoots=@()
+            $direct=Join-Path $root 'Content'
+            if(Test-Path $direct){$contentRoots+=@($direct)}
+            if($root -like '*ANOMALIA-Validation'){
+              $projectDirs=@(Get-ChildItem -LiteralPath $root -Directory -ErrorAction SilentlyContinue | Select-Object -First 100)
+              foreach($p in $projectDirs){$candidate=Join-Path $p.FullName 'unreal\Content';if(Test-Path $candidate){$contentRoots+=@($candidate)}}
+            }
+            foreach($content in $contentRoots){
+              $subroots=@('Anomalia\BMWE39Review_v1','Anomalia\BMWE39Review_v5','Anomalia\BMWE39Review_v6',
+                          'Anomalia\BMWE39Review_v7','Survival_Character\Meshes','Anomalia\Characters',
+                          'German_Shepherd_3D_Model\Models','Vehicles','BMW')
+              foreach($sub in $subroots){
+                $base=Join-Path $content $sub
+                if(!(Test-Path -LiteralPath $base)){continue}
+                $items=@(Get-ChildItem -LiteralPath $base -File -Recurse -ErrorAction SilentlyContinue|
+                    Where-Object {$_.Extension -eq '.uasset'}|Select-Object -First 40)
+                $rows+= [ordered]@{root=$content;subpath=$sub;assetCountSample=$items.Count;
+                  namedAssets=@($items|ForEach-Object{[IO.Path]::GetRelativePath($content,$_.FullName)})}
+              }
+            }
+          }
+          $tools=[ordered]@{}
+          foreach($p in @('C:\Program Files\ffmpeg\bin\ffmpeg.exe','C:\ffmpeg\bin\ffmpeg.exe',
+               'D:\ANOMALIA\FabImports','D:\ANOMALIA\sketchfab','C:\ANOMALIA-Validation')){
+            $tools[$p]=Test-Path -LiteralPath $p
+          }
+          $report=[ordered]@{state='ORIGINAL_BMW_AND_CHARACTER_ASSET_READONLY_SEARCH';
+            assetRoots=$rows;pathAvailability=$tools;sourceFilesNotModified=$true;
+            realGameplayMP4Captured=$false;scannedWithoutSourceDelete=$true}
+          $out=Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_GAMEPLAY_SOURCES.json'
+          $report|ConvertTo-Json -Depth 7 | Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('REAL_BMW_SURVIVOR_ASSET_DIRECTORY_MATCHES='+$rows.Count)
+          $rows|ForEach-Object{Write-Host ('ASSETDIR='+$_.root+'\'+$_.subpath+';SAMPLE='+$_.assetCountSample)}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIA-REAL-GAMEPLAY-ORIGINAL-BMW-CHARACTER-ASSETS
+          path: ANOMALIA_REAL_GAMEPLAY_SOURCES.json
+          if-no-files-found: error
