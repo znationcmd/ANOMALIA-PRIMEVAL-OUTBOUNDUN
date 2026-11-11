@@ -68,9 +68,22 @@ jobs:
                   data.append({"label":str(d.label),"class":classpath,"actorTransform":a.get_actor_transform(),"parts":parts})
                   r["buildings"].append({"sourceLabel":str(d.label),"sourceClass":classpath,"completeComponentInstances":len(parts),"boundsHeightCm":d.bounds.max.z-d.bounds.min.z})
                   wp.unload_actors([d.guid])
+              def pack(t):
+                  q=t.rotation.rotator();p=t.translation;s=t.scale3d
+                  return {"location":[p.x,p.y,p.z],"rotation":[q.pitch,q.yaw,q.roll],"scale":[s.x,s.y,s.z]}
+              serial=[{"label":b["label"],"class":b["class"],"actorTransform":pack(b["actorTransform"]),"parts":[{"mesh":p["mesh"],"materials":p["materials"],"transform":pack(p["transform"])} for p in b["parts"]]} for b in data]
+              cache=root/"Saved/CitySourceCache"
+              cache.mkdir(parents=True,exist_ok=True)
+              (cache/"complete-buildings-20261111.json").write_text(json.dumps(serial),encoding="utf-8")
               if not editor.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Actual main map cannot reopen")
               existing={str(d.label) for d in wp.get_actor_descs()}
-              height=unreal.AnomaliaWorldImportLibrary.skarvik_final_coastal_height(2000.0,-8000.0)
+              starts=[d for d in wp.get_actor_descs() if "BIG_CITY_PLAYER_START" in str(d.label)]
+              if starts:wp.load_actors([d.guid for d in starts])
+              positions=[a.get_actor_location() for a in actors.get_all_level_actors() if isinstance(a,unreal.PlayerStart)]
+              if not positions:raise RuntimeError("Cannot derive actual city terrain anchor from saved PlayerStart")
+              start=min(positions,key=lambda p:(p.x-200000)**2+(p.y-800000)**2)
+              height=(start.z-180.0)/100.0
+              r["heightSource"]="Actual saved BIG_CITY PlayerStart minus authored 180 cm clearance"
               offset=unreal.Vector(200000,800000,height*100)
               r["terrainAnchorHeightCm"]=height*100
               for building in data:
@@ -107,8 +120,7 @@ jobs:
                                   if mat:c.set_material(j,mat)
                           r["placedActors"]+=1
                   write()
-              if not editor.save_all_dirty_levels():raise RuntimeError("Main-map complete building save failed")
-              if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):raise RuntimeError("Actor package save failed")
+              if not editor.save_current_level():raise RuntimeError("Main-map complete building save failed")
               r["sourceMapPreserved"]=hashlib.sha256(source.read_bytes()).hexdigest()==before
               if not r["sourceMapPreserved"]:raise RuntimeError("Protected City Sample source unexpectedly changed")
               r["state"]="COMPLETE_ORIGINAL_SOURCE_BUILDING_ACTORS_SAVED_IN_MAIN_SKARVIK_REQUIRES_VISUAL_REVIEW"
