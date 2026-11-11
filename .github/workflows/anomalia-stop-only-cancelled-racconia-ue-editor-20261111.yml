@@ -29,9 +29,18 @@ jobs:
           if($matching.Count -gt 1){throw 'More than one cancelled RACCONIA editor process; manual investigation needed'}
           $stopped=@()
           foreach($p in $matching){
-            Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
-            Start-Sleep -Seconds 2
-            if(Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue){throw 'Process not stopped'}
+            Write-Host ('KILL_ONLY_CANCELLED_RACCONIA_PID='+$p.ProcessId)
+            & "$env:WINDIR\System32\taskkill.exe" /F /T /PID $p.ProcessId
+            Write-Host ('TASKKILL_EXIT='+$LASTEXITCODE)
+            Start-Sleep -Seconds 10
+            $remainder=Get-CimInstance Win32_Process -Filter ("ProcessId="+$p.ProcessId) -ErrorAction SilentlyContinue
+            if($remainder){
+              Write-Host ('STILL_PRESENT_PROCESS_NAME='+$remainder.Name)
+              $result=Invoke-CimMethod -InputObject $remainder -MethodName Terminate -Arguments @{Reason=0} -ErrorAction SilentlyContinue
+              Write-Host ('WMI_TERMINATE_RESULT='+($result|ConvertTo-Json -Compress))
+              Start-Sleep -Seconds 6
+              if(Get-CimInstance Win32_Process -Filter ("ProcessId="+$p.ProcessId) -ErrorAction SilentlyContinue){throw 'Cancelled RACCONIA process is still active; no unrelated editor terminated'}
+            }
             $stopped+= $p.ProcessId
           }
           $left=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -in @('UnrealEditor-Cmd.exe','UnrealEditor.exe')})
