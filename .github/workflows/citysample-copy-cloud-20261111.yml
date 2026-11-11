@@ -52,8 +52,8 @@ jobs:
             Write-Host 'CITY_SAMPLE_CLOUD_COPY_NO_SOURCE_DELETION=true'
             # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
             # LFSM pauses when destination/cache reaches an 8 GiB reserve.
-            $args=@('"'+$source+'"','"'+$dest+'"','/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/LFSM:8g','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
-            $process=Start-Process -FilePath robocopy.exe -ArgumentList $args -PassThru -NoNewWindow
+            $copyArgs=@('"'+$source+'"','"'+$dest+'"','/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/LFSM:8g','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
+            $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
             $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
             while(!$process.HasExited){
               Start-Sleep -Seconds 30
