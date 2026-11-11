@@ -1,0 +1,37 @@
+name: ANOMALIA WorkForge Windows app build
+on:
+  push:
+    branches:
+      - feature/real-skarvik-bmw-dog-gameplay-capture-20261111
+    paths:
+      - src/workforge.js
+      - src/start-menu.js
+      - src/style.css
+      - .github/workflows/workforge-windows-app.yml
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  windows-app:
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - name: Install verified dependencies
+        run: npm ci
+      - name: Run project tests
+        run: npm test
+      - name: Build in-game browser and desktop UI
+        run: npm run build
+      - name: Package Windows application
+        run: npm run package:windows
+      - name: Upload actual Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIAZ-WORKFORGE-WINDOWS-TEST-BUILD
+          path: release/windows/*.exe
+          if-no-files-found: error
