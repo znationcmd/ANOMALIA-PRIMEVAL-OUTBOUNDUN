@@ -1,0 +1,141 @@
+name: ANOMALIA - install approved intro and native menu on current main game
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-current-native-intro-menu-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-and-verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: Back up and stage current native intro, menu and direct game launcher
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Main game or editor is in use'}
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\NativeIntroMenuRepair\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('INTRO_MENU_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $bundle=Join-Path $out 'source-bundle'
+          New-Item -ItemType Directory -Path $bundle -Force|Out-Null
+          $base='https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/3980edb902ae8a68b97714645e0f4f6a681a0e0d/'
+          $files=@{
+            'repair.py'='tools/repair_current_main_menu_intro.py'
+            'AnomaliaZPrigimaliaIntroWidget.cpp'='unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaIntroWidget.cpp'
+            'AnomaliaZPrigimaliaIntroWidget.h'='unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaIntroWidget.h'
+            'install_prigimalia_intro.py'='unreal/Scripts/install_prigimalia_intro.py'
+          }
+          foreach($name in $files.Keys){Invoke-WebRequest -UseBasicParsing -Uri ($base+$files[$name]) -OutFile (Join-Path $bundle $name)}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $bundle 'repair.py') --root $root --bundle $bundle --report (Join-Path $out 'installation.json')
+          if($LASTEXITCODE -ne 0){throw 'Native source preparation failed; read retained diagnostics'}
+      - name: Build current native module and import original title voice
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaPrimevalEditor Win64 Development ("-Project="+$project) -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2 2>&1 | Tee-Object -FilePath (Join-Path $env:INTRO_MENU_OUT 'native-build.log')
+          if($LASTEXITCODE -ne 0){throw 'Native menu and intro module compilation failed'}
+          $r=Get-Content (Join-Path $env:INTRO_MENU_OUT 'installation.json') -Raw|ConvertFrom-Json
+          if(@($r.missingMedia).Count){throw ('Approved intro media missing on PC: '+($r.missingMedia -join ', '))}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $root 'Scripts\install_current_main_intro.py'
+          $arguments=@(('"'+$project+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-unattended','-nop4','-nullrhi','-nosplash',('-abslog="'+(Join-Path $env:INTRO_MENU_OUT 'voice-import.log')+'"'))
+          $p=Start-Process $editor -ArgumentList $arguments -PassThru
+          if(!$p.WaitForExit(180000)){$p.Kill();throw 'Original voice import timeout'}
+          if($p.ExitCode -ne 0){throw 'Native original voice import failed'}
+          $voice=Join-Path $root 'Content\Anomalia\Branding\SW_IntroTitle_Original_v5.uasset'
+          if(!(Test-Path $voice)){throw 'Original title SoundWave asset missing'}
+      - name: Verify actual intro, native menu and return to gameplay on SKARVIK
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=$env:INTRO_MENU_OUT
+          $env:ANOMALIA_INTRO_MENU_PROOF=$out
+          $script=Join-Path $out 'native-proof.py'
+          @'
+          import unreal,os,time,json,traceback
+          from pathlib import Path
+          out=Path(os.environ['ANOMALIA_INTRO_MENU_PROOF'])
+          s={'start':time.monotonic(),'phase':'intro','next':time.monotonic()+10}
+          r={'state':'RUNNING','map':'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1','introVerified':False,'nativeMenuVerified':False,'packagedGameUpdated':False}
+          def write(): (out/'runtime-proof.json').write_text(json.dumps(r,indent=2),encoding='utf-8')
+          def widgets(world,name):
+              cls=unreal.load_class(None,'/Script/AnomaliaPrimeval.'+name)
+              return [w for w in unreal.WidgetBlueprintLibrary.get_all_widgets_of_class(world,cls,False) if w.is_in_viewport()] if cls else []
+          def shot(world,name):
+              unreal.SystemLibrary.execute_console_command(world,'Shot SHOWUI filename="'+str(out/name).replace('\\','/')+'"')
+          def tick(dt):
+              try:
+                  now=time.monotonic()
+                  if now<s['next']:return
+                  if now-s['start']>120:raise RuntimeError('Native intro/menu verification timed out')
+                  world=unreal.find_object(None,'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1.PRIGIMALIA_SKARVIK_FINAL_v1')
+                  if not world:return
+                  pc=unreal.GameplayStatics.get_player_controller(world,0)
+                  pawn=unreal.GameplayStatics.get_player_pawn(world,0)
+                  if not pc or not pawn:return
+                  if s['phase']=='intro':
+                      intro=widgets(world,'AnomaliaIntroWidget')
+                      if len(intro)!=1:raise RuntimeError('Approved intro widget is absent in actual current game')
+                      player=intro[0].get_editor_property('video_player')
+                      r['introPlaying']=bool(player and player.is_playing())
+                      r['introMovieUrl']=player.get_url() if player else None
+                      r['introVerified']=r['introPlaying'] and 'INTRO_JEU_24s_MUSIQUE.mp4' in (r['introMovieUrl'] or '')
+                      shot(world,'actual-intro.png');write()
+                      intro[0].call_method('OnContinueClicked')
+                      s['phase']='menu';s['next']=now+8;return
+                  if s['phase']=='menu':
+                      menu=widgets(world,'AnomaliaSessionWidget')
+                      if len(menu)!=1:raise RuntimeError('Native menu did not open after approved intro transition')
+                      r['nativeMenuVerified']=True
+                      shot(world,'actual-main-menu.png');write()
+                      s['menu']=menu[0];s['phase']='resume';s['next']=now+2;return
+                  if s['phase']=='resume':
+                      s['menu'].call_method('ResumeLocalSession')
+                      r['resumedWithoutMenu']=not bool(widgets(world,'AnomaliaSessionWidget'))
+                      r['gameUnpaused']=not unreal.GameplayStatics.is_game_paused(world)
+                      s['position']=pawn.get_actor_location();s['moveStart']=now
+                      s['phase']='move';s['next']=now;return
+                  if s['phase']=='move':
+                      if now-s['moveStart']<3:
+                          pawn.add_movement_input(unreal.Vector(x=1,y=0,z=0),0.7,True);return
+                      begin=s['position'];end=pawn.get_actor_location()
+                      r['movementCm']=((end.x-begin.x)**2+(end.y-begin.y)**2)**0.5
+                      shot(world,'actual-game-after-menu.png')
+                      r['state']='NATIVE_INTRO_MENU_GAMEPLAY_VERIFIED' if r['introVerified'] and r['nativeMenuVerified'] and r['resumedWithoutMenu'] and r['gameUnpaused'] and r['movementCm']>50 else 'FAILED'
+                      write();s['phase']='quit';s['next']=now+2;return
+                  unreal.unregister_slate_post_tick_callback(s['handler'])
+                  unreal.SystemLibrary.execute_console_command(world,'quit')
+              except Exception:
+                  r['state']='FAILED';r['error']=traceback.format_exc();write()
+                  try:unreal.unregister_slate_post_tick_callback(s['handler'])
+                  except:pass
+                  try:unreal.SystemLibrary.execute_console_command(world,'quit')
+                  except:pass
+          s['handler']=unreal.register_slate_post_tick_callback(tick)
+          write()
+          '@|Set-Content $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $commands='t.IdleWhenNotForeground 0,r.ScreenPercentage 60,r.ShadowQuality 0,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,py '+$script.Replace('\','/')
+          $arguments=@('"D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject"','/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=intro-menu-proof','-game','-RenderOffscreen','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosplash',('-abslog="'+(Join-Path $out 'actual-game.log')+'"'),('-ExecCmds="'+$commands+'"'))
+          $p=Start-Process $editor -ArgumentList $arguments -PassThru
+          if(!$p.WaitForExit(180000)){$p.Kill();throw 'Native intro/menu/gameplay process timeout'}
+          $receipt=Join-Path $out 'runtime-proof.json'
+          if(!(Test-Path $receipt)){throw 'No native runtime report'}
+          $r=Get-Content $receipt -Raw|ConvertFrom-Json
+          Get-Content $receipt -Raw|Write-Host
+          if($r.state -ne 'NATIVE_INTRO_MENU_GAMEPLAY_VERIFIED'){throw 'Actual intro/menu/gameplay verification did not pass'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-CURRENT-NATIVE-INTRO-MENU-REPAIR
+          path: ${{ env.INTRO_MENU_OUT }}
+          if-no-files-found: warn
