@@ -33,6 +33,9 @@ jobs:
         New-Item -ItemType Directory -Path $out -Force|Out-Null
         ('PLAY_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
         $env:ANOMALIA_PLAY_REPAIR_OUT=$out
+        $prebuild=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+        & $prebuild AnomaliaPrimevalEditor Win64 Development ("-Project="+$project) -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2 2>&1 | Tee-Object -FilePath (Join-Path $out 'prebuild.log')
+        if($LASTEXITCODE -ne 0){throw 'Existing native editor module did not build'}
         $prepare=Join-Path $out 'prepare.py'
         @'
         import unreal,json,os,traceback,shutil
@@ -96,9 +99,11 @@ jobs:
             unreal.SystemLibrary.quit_editor()
         '@|Set-Content $prepare -Encoding utf8
         $editorCmd=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-        $args=@(('"'+$project+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$prepare+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4',('-abslog="'+(Join-Path $out 'prepare.log')+'"'))
-        $p=Start-Process $editorCmd -ArgumentList $args -PassThru
+        $editorArguments=@(('"'+$project+'"'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$prepare+'"'),'-nullrhi','-unattended','-nosplash','-nosound','-nop4','-d3d11','-sm5','-stdout','-FullStdOutLogOutput',('-abslog="'+(Join-Path $out 'prepare.log')+'"'))
+        $p=Start-Process $editorCmd -ArgumentList $editorArguments -PassThru -RedirectStandardOutput (Join-Path $out 'editor-stdout.log') -RedirectStandardError (Join-Path $out 'editor-stderr.log')
         if(!$p.WaitForExit(300000)){$p.Kill();throw 'Native visual preparation timeout'}
+        Write-Host ('PREPARE_NATIVE_EXIT='+$p.ExitCode)
+        if(!(Test-Path (Join-Path $out 'prepare.json'))){foreach($n in @('editor-stdout.log','editor-stderr.log','prepare.log')){$f=Join-Path $out $n;if(Test-Path $f){Get-Content $f -Tail 100|Write-Host}};throw 'Native preparation produced no receipt'}
         $r=Get-Content (Join-Path $out 'prepare.json') -Raw|ConvertFrom-Json
         Get-Content (Join-Path $out 'prepare.json') -Raw|Write-Host
         if($r.state -ne 'MAIN_GAME_VISUAL_INPUT_REPAIR_PREPARED'){throw 'Native preparation did not pass'}
