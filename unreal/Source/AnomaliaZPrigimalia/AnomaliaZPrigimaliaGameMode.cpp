@@ -525,7 +525,8 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVisualReview="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaZPrigimaliaVisualReviewProbe>();
 #endif
-        if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && !ServerId.StartsWith(TEXT("playable-smoke-")))
+        if(GetNetMode()==NM_Standalone && !ServerId.StartsWith(TEXT("playable-smoke-")) &&
+            !FParse::Param(FCommandLine::Get(),TEXT("AnomaliaSkipMainMenu")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
             {
                 auto* PC=GetWorld()->GetFirstPlayerController();
