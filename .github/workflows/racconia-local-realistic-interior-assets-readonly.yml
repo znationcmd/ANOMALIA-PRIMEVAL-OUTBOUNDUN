@@ -1,0 +1,75 @@
+name: RACCONIA - discover original Sketchfab Fab interior models without modification
+on:
+  push:
+    branches: [feature/racconia-interiors-pie-quality-20261111]
+    paths: ['.github/workflows/racconia-local-realistic-interior-assets-readonly.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  readonly-local-mesh-catalog:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          clean: false
+      - name: Inventory candidate real original architectural interiors on D without editing models
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $original='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $original)){throw 'Original D native map missing'}
+          $folders=@('D:\ANOMALIA\sketchfab','D:\ANOMALIA\FabImports','D:\ANOMALIA\unreal\Content\Anomalia')
+          $filters='(?i)interior|door|porte|window|fenetre|hospital|medical|lab|clinic|manor|mansion|mansion|police|castle|furniture|chair|desk|shelf|cabinet|sofa|bed|locker|light|lamp|kitchen|bathroom|stairs|escalier|props|residential|house|chateau|room|hall'
+          $ext=@('.glb','.gltf','.fbx','.obj','.uasset','.blend','.usd','.usdz')
+          $info=@()
+          foreach($folder in $folders){
+            if(!(Test-Path -LiteralPath $folder)){continue}
+            $files=Get-ChildItem -LiteralPath $folder -File -Recurse -ErrorAction SilentlyContinue |
+              Where-Object {$ext -contains $_.Extension.ToLowerInvariant()}
+            foreach($f in $files){
+              $interesting=($f.FullName -match $filters)
+              if(!$interesting){continue}
+              $info+= [ordered]@{
+                path=$f.FullName
+                sizeBytes=[int64]$f.Length
+                extension=$f.Extension.ToLowerInvariant()
+                modifiedUtc=$f.LastWriteTimeUtc.ToString('o')
+                actual3DModelLocated=$true
+                contentAndLicenseNotReviewed=$true
+                PBRMaterialsVerified=$false
+                interiorWalkthroughVerified=$false
+              }
+              if($info.Count -ge 800){break}
+            }
+            if($info.Count -ge 800){break}
+          }
+          $info=@($info | Sort-Object -Property sizeBytes -Descending)
+          $report=[ordered]@{
+            state='READONLY_REALISTIC_MODEL_CANDIDATES_NOT_APPROVED_FOR_PRODUCTION'
+            foundCandidates=$info.Count
+            locationsChecked=$folders
+            originalDUnmodified=$true
+            levelsChanged=$false
+            sourceFilesTransferred=$false
+            notAutomaticProofOfPhotorealism=$true
+            models=$info
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_LOCAL_INTERIOR_MODEL_INVENTORY.json'
+          $report|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $out -Encoding utf8
+          Write-Host ('RACCONIA_NATIVE_INTERIOR_MODEL_CANDIDATES='+$info.Count)
+          $info|Select-Object -First 20 | ForEach-Object{
+            Write-Host ('RACCONIA_CANDIDATE='+$_.path+';BYTES='+$_.sizeBytes)
+          }
+          Write-Host 'RACCONIA_INTERIORS_NOT_YET_PHOTOREAL_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        with:
+          name: RACCONIA-SKETCHFAB-FAB-REAL-INTERIOR-MODEL-CANDIDATES
+          path: RACCONIA_LOCAL_INTERIOR_MODEL_INVENTORY.json
+          retention-days: 20
+          if-no-files-found: error
