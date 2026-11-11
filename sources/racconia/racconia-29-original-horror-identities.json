@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "source": "Horror_Catalog_29.json original user-supplied 491 rooms",
+  "sites": [
+    {
+      "id": "VARKOV",
+      "name": "MANOIR VARKOV",
+      "geometry": "SM_VARKOV_Blockout_Interior.glb",
+      "room_count": 63
+    },
+    {
+      "id": "SPD",
+      "name": "SKARVIK POLICE DEPARTMENT (S.P.D.)",
+      "geometry": "SM_SPD_Blockout_Interior.glb",
+      "room_count": 65
+    },
+    {
+      "id": "VEYRHOLM",
+      "name": "Institut médical Veyrholm",
+      "geometry": "SM_VEYRHOLM_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "RAVENFALL",
+      "name": "Hôtel Ravenfall",
+      "geometry": "SM_RAVENFALL_BLOCKOUT.glb",
+      "room_count": 11
+    },
+    {
+      "id": "SAINT_VEYR",
+      "name": "Orphelinat Saint-Veyr",
+      "geometry": "SM_SAINT_VEYR_BLOCKOUT.glb",
+      "room_count": 10
+    },
+    {
+      "id": "HELIX",
+      "name": "Complexe scientifique HELIX",
+      "geometry": "SM_HELIX_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "SECTEUR_ZERO",
+      "name": "Secteur zéro de SKARVIK",
+      "geometry": "SM_SECTEUR_ZERO_BLOCKOUT.glb",
+      "room_count": 16
+    },
+    {
+      "id": "NEREIDE",
+      "name": "Paquebot Néréide",
+      "geometry": "SM_NEREIDE_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "VALTERIA",
+      "name": "Cité maritime de Valtéria",
+      "geometry": "SM_VALTERIA_BLOCKOUT.glb",
+      "room_count": 18
+    },
+    {
+      "id": "LEVIATHAN",
+      "name": "Épave du Léviathan",
+      "geometry": "SM_LEVIATHAN_BLOCKOUT.glb",
+      "room_count": 11
+    },
+    {
+      "id": "KARSEN",
+      "name": "Pénitencier de Karsen",
+      "geometry": "SM_KARSEN_BLOCKOUT.glb",
+      "room_count": 15
+    },
+    {
+      "id": "NOCTIS",
+      "name": "Tour Noctis",
+      "geometry": "SM_NOCTIS_BLOCKOUT.glb",
+      "room_count": 10
+    },
+    {
+      "id": "VALDRIS",
+      "name": "Forteresse de Valdris",
+      "geometry": "SM_VALDRIS_BLOCKOUT.glb",
+      "room_count": 16
+    },
+    {
+      "id": "NEXUS",
+      "name": "Laboratoire souterrain NEXUS",
+      "geometry": "SM_NEXUS_BLOCKOUT.glb",
+      "room_count": 16
+    },
+    {
+      "id": "BLACKWOOD",
+      "name": "Domaine Blackwood",
+      "geometry": "SM_BLACKWOOD_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "DRAKOV",
+      "name": "Château de Drakov",
+      "geometry": "SM_DRAKOV_BLOCKOUT.glb",
+      "room_count": 16
+    },
+    {
+      "id": "BIG_CITY_CONTAMINE",
+      "name": "Quartier contaminé de Big City",
+      "geometry": "SM_BIG_CITY_CONTAMINE_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "EXPRESS_NOCTURNE",
+      "name": "Express Nocturne",
+      "geometry": "SM_EXPRESS_NOCTURNE_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "ACADEMIE_VARKOV",
+      "name": "Académie de Varkov",
+      "geometry": "SM_ACADEMIE_VARKOV_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "MOROZOV",
+      "name": "Station d’épuration Morozov",
+      "geometry": "SM_MOROZOV_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "RAVENSKA",
+      "name": "Village de Ravenska",
+      "geometry": "SM_RAVENSKA_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "SANCTUAIRE_VALDRIS",
+      "name": "Sanctuaire de Valdris",
+      "geometry": "SM_SANCTUAIRE_VALDRIS_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "KROVAK",
+      "name": "Île militaire de Krovak",
+      "geometry": "SM_KROVAK_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "KARZHAN",
+      "name": "District de Karzhan",
+      "geometry": "SM_KARZHAN_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "ZARNOV",
+      "name": "Marais de Zarnov",
+      "geometry": "SM_ZARNOV_BLOCKOUT.glb",
+      "room_count": 13
+    },
+    {
+      "id": "OMEGA",
+      "name": "Centre biologique OMEGA",
+      "geometry": "SM_OMEGA_BLOCKOUT.glb",
+      "room_count": 13
+    },
+    {
+      "id": "SAINT_MORVAN",
+      "name": "Cathédrale Saint-Morvan",
+      "geometry": "SM_SAINT_MORVAN_BLOCKOUT.glb",
+      "room_count": 14
+    },
+    {
+      "id": "VOLSKAYA",
+      "name": "District de Volskaya",
+      "geometry": "SM_VOLSKAYA_BLOCKOUT.glb",
+      "room_count": 12
+    },
+    {
+      "id": "LIANSKAR",
+      "name": "Métropole de Lianskar",
+      "geometry": "SM_LIANSKAR_BLOCKOUT.glb",
+      "room_count": 14
+    }
+  ]
+}
