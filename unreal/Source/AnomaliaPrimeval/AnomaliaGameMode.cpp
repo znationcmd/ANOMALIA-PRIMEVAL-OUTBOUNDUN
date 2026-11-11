@@ -1,6 +1,7 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
+#include "AnomaliaVitalsComponent.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -119,6 +120,28 @@ void AAnomaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController
         bHasValue = true;
     }
     if (bHasValue) Survivor->RestoreSurvival(static_cast<float>(Food), static_cast<float>(Water), static_cast<float>(HP));
+
+    // Optional fields: legacy profiles without vitals remain valid and unchanged.
+    if (Survivor->VitalsComponent)
+    {
+        double SavedStamina = Survivor->VitalsComponent->Stamina;
+        double SavedTemperature = Survivor->VitalsComponent->BodyTemperatureC;
+        bool bValidVitals = false;
+        if (Survival->TryGetNumberField(TEXT("stamina"), Value) && FMath::IsFinite(Value) &&
+            Value >= 0.0 && Value <= 100.0)
+        {
+            SavedStamina = Value;
+            bValidVitals = true;
+        }
+        if (Survival->TryGetNumberField(TEXT("bodyTemperatureC"), Value) && FMath::IsFinite(Value) &&
+            Value >= 25.0 && Value <= 45.0)
+        {
+            SavedTemperature = Value;
+            bValidVitals = true;
+        }
+        if (bValidVitals)
+            Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
+    }
 }
 
 void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
@@ -164,6 +187,12 @@ void AAnomaliaGameMode::SavePersistentPlayer(AController* Controller)
     Survival->SetNumberField(TEXT("hunger"), FMath::Clamp(Survivor->Hunger, 0.f, 100.f));
     Survival->SetNumberField(TEXT("thirst"), FMath::Clamp(Survivor->Thirst, 0.f, 100.f));
     Survival->SetNumberField(TEXT("health"), FMath::Clamp(Survivor->Health, 0.f, 100.f));
+    if (Survivor->VitalsComponent)
+    {
+        Survival->SetNumberField(TEXT("stamina"), FMath::Clamp(Survivor->VitalsComponent->Stamina, 0.f, 100.f));
+        Survival->SetNumberField(TEXT("bodyTemperatureC"),
+            FMath::Clamp(Survivor->VitalsComponent->BodyTemperatureC, 25.f, 45.f));
+    }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
 
