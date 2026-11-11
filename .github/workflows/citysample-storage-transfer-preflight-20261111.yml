@@ -23,6 +23,8 @@ jobs:
           $ErrorActionPreference='Stop'
           $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
           $paths=@(
+            'D:\ANOMALIA\FabImports\CitySample',
+            'C:\Users\utilisateur\AppData\Local\Google\DriveFS',
             'D:\ANOMALIA\CitySample_5.8',
             'C:\CitySample_5.8',
             'D:\CitySample_5.8',
