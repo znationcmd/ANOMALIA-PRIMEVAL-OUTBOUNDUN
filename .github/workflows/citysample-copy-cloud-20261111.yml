@@ -14,55 +14,89 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 360
     steps:
-      - name: Locate gigabytes of reclaimable cache and inactive version snapshots
+      - name: Reclaim large Epic download cache while preserving installed projects
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $locations=@(
-            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\Zen\Data',
-            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\Zen\Data\cache',
-            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\Zen\Data\cooked',
-            'C:\Users\utilisateur\AppData\Local\Temp',
-            'C:\Users\utilisateur\AppData\Local\D3DSCache',
-            'C:\ProgramData\Epic\EpicGamesLauncher\VaultCache',
-            'C:\Program Files (x86)\Epic Games\Launcher\VaultCache',
-            'D:\ANOMALIA\FabImports\CitySample\.vs',
-            'D:\ANOMALIA\FabImports\CitySample\Intermediate',
-            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate'
+          $vault='C:\ProgramData\Epic\EpicGamesLauncher\VaultCache'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker')) -or (Get-Content -LiteralPath (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted project stage'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Editor or game active; do not clean caches during editing'}
+          $protected=@(
+            'D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap',
+            (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),
+            (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_GRADED_v2.umap'),
+            (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_ISLANDS_v1.umap'),
+            (Join-Path $stage 'Content\Map\Big_City_LVL.umap')
           )
-          function Measure-StoragePath([string]$path){
-            $total=[int64]0;$count=0;$present=Test-Path -LiteralPath $path
-            if($present){
-              Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction SilentlyContinue | ForEach-Object {$total+=[int64]$_.Length;$count++}
+          $mapHashes=@{}
+          foreach($map in $protected){
+            if(!(Test-Path -LiteralPath $map)){throw ('Protected map missing '+$map)}
+            $mapHashes[$map]=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
+          }
+          $report=[ordered]@{state='CHECKING';beforeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace;cache=$vault;removedCacheBytes=[int64]0;removedCacheFiles=0;mapsUnchanged=$false;gameAssetsDeleted=0}
+          if(!(Test-Path -LiteralPath $vault)){throw 'Expected Epic download cache missing'}
+          $meta=Get-Item -LiteralPath $vault -Force
+          if(!$meta.PSIsContainer -or ($meta.Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Vault root is not a plain cache directory'}
+          # Do not follow junctions while checking that no installed project
+          # depends directly on the Vault download cache.
+          $roots=@(
+            (Join-Path $stage 'Content'),(Join-Path $stage 'Plugins'),
+            'D:\ANOMALIA\unreal\Content','D:\ANOMALIA\unreal\Plugins',
+            'D:\ANOMALIA\FabImports\CitySample\Content','D:\ANOMALIA\FabImports\CitySample\Plugins'
+          )
+          $stack=New-Object 'System.Collections.Generic.Stack[string]'
+          foreach($root in $roots){if(Test-Path -LiteralPath $root){$stack.Push($root)}}
+          while($stack.Count){
+            $dir=$stack.Pop()
+            $dirInfo=Get-Item -LiteralPath $dir -Force
+            if($dirInfo.Attributes -band [IO.FileAttributes]::ReparsePoint){throw ('Unexpected linked project root '+$dir)}
+            foreach($item in (Get-ChildItem -LiteralPath $dir -Force -ErrorAction Stop)){
+              if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){
+                $targets=@($item.Target)
+                if(!$targets.Count){throw 'Unresolved project link; preserve cache'}
+                foreach($target in $targets){
+                  $targetText=[string]$target
+                  if($targetText -match '(?i)VaultCache'){throw ('Installed project references cache '+$item.FullName)}
+                }
+                continue
+              }
+              if($item.PSIsContainer){$stack.Push($item.FullName)}
             }
-            Write-Host ('STORAGE_GIB='+$path+'|'+[math]::Round($total/1GB,3)+'|'+$count)
-            return [ordered]@{path=$path;present=$present;bytes=$total;files=$count}
           }
-          $measured=@(foreach($location in $locations){Measure-StoragePath $location})
-          $zenRoot='C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\Zen\Data'
-          $zenTop=@()
-          if(Test-Path -LiteralPath $zenRoot){
-            $zenTop=@(Get-ChildItem -LiteralPath $zenRoot -Force | Select-Object Name,PSIsContainer,Length)
+          if(@(Get-ChildItem -LiteralPath $vault -Recurse -Force -Attributes ReparsePoint -ErrorAction Stop).Count){throw 'Linked items inside Vault cache; preserve'}
+          $launchers=@(Get-Process -Name EpicGamesLauncher -ErrorAction SilentlyContinue)
+          foreach($launcher in $launchers){
+            $null=$launcher.CloseMainWindow()
+            if(!$launcher.WaitForExit(5000)){Stop-Process -Id $launcher.Id -Force}
           }
-          $products=@()
-          foreach($name in @('ANOMALIA-UE5','ANOMALIA-Windows','ANOMALIA-Tools')){
-            $base=Join-Path (Join-Path $env:LOCALAPPDATA 'CMD') $name
-            $activePath=Join-Path $base 'active.json'
-            if(!(Test-Path -LiteralPath $activePath)){continue}
-            $active=Get-Content -LiteralPath $activePath -Raw|ConvertFrom-Json
-            $versions=@()
-            $versionRoot=Join-Path $base 'versions'
-            if(Test-Path -LiteralPath $versionRoot){
-              $versions=@(foreach($folder in (Get-ChildItem -LiteralPath $versionRoot -Directory -Force)){Measure-StoragePath $folder.FullName})
-            }
-            $products+=,[ordered]@{product=$name;active=$active;versions=$versions}
+          $files=@(Get-ChildItem -LiteralPath $vault -File -Recurse -Force -ErrorAction Stop)
+          $manifest=@(foreach($file in $files){[ordered]@{path=$file.FullName.Substring($vault.Length).TrimStart('\');bytes=[int64]$file.Length}})
+          $receiptRoot='D:\ANOMALIA\StorageReceipts'
+          if(!(Test-Path -LiteralPath $receiptRoot)){New-Item -ItemType Directory -Path $receiptRoot|Out-Null}
+          $manifest|ConvertTo-Json -Depth 3|Set-Content -LiteralPath (Join-Path $receiptRoot 'Epic_VaultCache_Removed_Downloads_20261111.json') -Encoding UTF8
+          foreach($file in $files){
+            $bytes=[int64]$file.Length
+            Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop
+            $report.removedCacheBytes+=$bytes;$report.removedCacheFiles++
           }
-          $report=[ordered]@{measured=$measured;zenTop=$zenTop;products=$products;currentCFreeBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;currentDFreeBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace;deleted=0}
-          $report|ConvertTo-Json -Depth 12|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'GIGABYTE_RECLAIM_SURVEY_20261111.json') -Encoding UTF8
+          if(@(Get-ChildItem -LiteralPath $vault -File -Recurse -Force -ErrorAction Stop).Count){throw 'Cache not fully cleared'}
+          foreach($map in $protected){
+            if((Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash -ne $mapHashes[$map]){throw ('Protected map changed '+$map)}
+          }
+          $report.mapsUnchanged=$true
+          $report.afterC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          $report.actualCBytesRecovered=$report.afterC-$report.beforeC
+          $report.state='EPIC_DOWNLOAD_CACHE_REMOVED_PROJECTS_PRESERVED'
+          $report|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'GIGABYTES_ACTUALLY_FREED_20261111.json') -Encoding UTF8
+          Write-Host ('CACHE_FILES_REMOVED='+$report.removedCacheFiles)
+          Write-Host ('ACTUAL_C_GB_FREED='+[math]::Round($report.actualCBytesRecovered/1e9,3))
+          Write-Host ('CURRENT_C_FREE_GB='+[math]::Round($report.afterC/1e9,3))
+          Write-Host 'PROTECTED_NATIVE_MAPS_CHECKSUM_UNCHANGED=true'
       - uses: actions/upload-artifact@v4
         with:
-          name: GIGABYTE-RECLAIM-SURVEY-20261111
-          path: GIGABYTE_RECLAIM_SURVEY_20261111.json
+          name: GIGABYTES-ACTUALLY-FREED-20261111
+          path: GIGABYTES_ACTUALLY_FREED_20261111.json
           if-no-files-found: error
       - name: Free verified archive duplicate and regenerable Unreal caches
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
