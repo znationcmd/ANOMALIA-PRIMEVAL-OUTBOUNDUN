@@ -36,6 +36,7 @@ jobs:
           if($free -lt 3){throw 'Not enough spare disk to preserve native 29 site level'}
           $zipFile=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_29_SITES_NATIVE_WP_BACKUP_20261111.zip'
           Add-Type -AssemblyName System.IO.Compression
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
           $archive=[IO.Compression.ZipFile]::Open($zipFile,[IO.Compression.ZipArchiveMode]::Create)
           $files=@($level)+$actorFiles.FullName
           $optional=Join-Path $root 'Content\__ExternalObjects__\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1'
