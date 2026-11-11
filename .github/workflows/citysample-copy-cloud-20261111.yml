@@ -37,7 +37,16 @@ jobs:
             foreach($f in $files){$total+=[int64]$f.Length;if($f.Length -gt $largest){$largest=[int64]$f.Length}}
             if($files.Count -lt 120000 -or $total -lt 60GB -or $total -gt 80GB){throw 'Original source count or size changed unexpectedly'}
             $freeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
-            if($freeC -lt (8GB+$largest)){throw 'Not enough cache reserve to safely copy the largest individual source file'}
+            function Wait-CopyHeadroom([int64]$requiredBytes){
+              $waitLimit=[DateTime]::UtcNow.AddMinutes(45)
+              while(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt $requiredBytes){
+                if(!(Get-Process GoogleDriveFS -ErrorAction SilentlyContinue)){throw 'Google Drive desktop is not running'}
+                Write-Host ('CITY_SAMPLE_WAITING_FOR_CLOUD_UPLOAD_CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))
+                if([DateTime]::UtcNow -gt $waitLimit){throw 'Cache headroom did not recover in 45 minutes; originals and resumable destination retained'}
+                Start-Sleep -Seconds 30
+              }
+            }
+            Wait-CopyHeadroom (8GB+$largest+256MB)
             $report.sourceFiles=$files.Count;$report.sourceBytes=$total
             $report.largestFileBytes=$largest
             $report.state='COPYING_TO_GOOGLE_DRIVE_DESKTOP_SERVER_SYNC_PENDING'
@@ -51,35 +60,46 @@ jobs:
             # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
             # Google Drive cannot answer LFSM volume queries. Independently monitor
             # physical C: cache space every second and retain an 8 GiB reserve.
-            $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/IPG:2','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
-            $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
-            $null=$process.Handle
-            $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
-            $copyTick=0
-            while(!$process.HasExited){
-              Start-Sleep -Seconds 1
-              $copyTick++
-              $process.Refresh()
-              $io=Get-CimInstance Win32_Process -Filter ("ProcessId="+$process.Id) -ErrorAction SilentlyContinue
-              if($io){
-                $written=[uint64]$io.WriteTransferCount
-                if($written -ne $lastWrite){$lastChange=[DateTime]::UtcNow;$lastWrite=$written}
-                if($copyTick % 30 -eq 0){Write-Host ('CITY_SAMPLE_COPY_IO_BYTES='+$written+';CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))}
+            $copyFinished=$false
+            $copyPass=0
+            while(!$copyFinished){
+              Wait-CopyHeadroom (8GB+$largest+256MB)
+              $copyPass++
+              Write-Host ('CITY_SAMPLE_COPY_PASS='+$copyPass)
+              $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/IPG:10','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG+:"'+$log+'"'))
+              $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
+              $null=$process.Handle
+              $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
+              $copyTick=0;$pausedForCache=$false
+              while(!$process.HasExited){
+                Start-Sleep -Seconds 1
+                $copyTick++
+                $process.Refresh()
+                $io=Get-CimInstance Win32_Process -Filter ("ProcessId="+$process.Id) -ErrorAction SilentlyContinue
+                if($io){
+                  $written=[uint64]$io.WriteTransferCount
+                  if($written -ne $lastWrite){$lastChange=[DateTime]::UtcNow;$lastWrite=$written}
+                  if($copyTick % 30 -eq 0){Write-Host ('CITY_SAMPLE_COPY_IO_BYTES='+$written+';CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))}
+                }
+                if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 8GB){
+                  Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                  $pausedForCache=$true
+                  Write-Host 'CITY_SAMPLE_COPY_PAUSED_FOR_CLOUD_CACHE_WILL_RESUME=true'
+                  break
+                }
+                if(([DateTime]::UtcNow-$lastChange).TotalMinutes -gt 20){
+                  Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
+                  throw 'Copy made no I/O progress for 20 minutes; destination may be full or awaiting cloud upload'
+                }
               }
-              if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 8GB){
-                Stop-Process -Id $process.Id -Force
-                throw 'Cloud cache reserve reached; copy stopped, originals preserved, resumable destination retained'
-              }
-              if(([DateTime]::UtcNow-$lastChange).TotalMinutes -gt 20){
-                Stop-Process -Id $process.Id -Force
-                throw 'Copy made no I/O progress for 20 minutes; destination may be full or awaiting cloud upload'
-              }
+              $process.WaitForExit()
+              if($pausedForCache){continue}
+              Write-Host ('CITY_SAMPLE_ROBOCOPY_EXIT_CODE='+$process.ExitCode)
+              if($null -eq $process.ExitCode){throw 'Robocopy exit status unavailable; inspect transfer log'}
+              $report.robocopyExitCode=$process.ExitCode
+              if($process.ExitCode -ge 8){throw ('Robocopy copy failure '+$process.ExitCode)}
+              $copyFinished=$true
             }
-            $process.WaitForExit()
-            Write-Host ('CITY_SAMPLE_ROBOCOPY_EXIT_CODE='+$process.ExitCode)
-            if($null -eq $process.ExitCode){throw 'Robocopy exit status unavailable; inspect transfer log'}
-            $report.robocopyExitCode=$process.ExitCode
-            if($process.ExitCode -ge 8){throw ('Robocopy copy failure '+$process.ExitCode)}
             $destFiles=@(Get-ChildItem -LiteralPath $dest -File -Recurse -Force -ErrorAction Stop)
             $lookup=@{}
             foreach($f in $destFiles){$lookup[$f.FullName.Substring($dest.Length).TrimStart('\')]=[int64]$f.Length}
