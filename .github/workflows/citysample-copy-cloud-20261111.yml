@@ -14,6 +14,87 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 360
     steps:
+      - name: Free verified archive duplicate and regenerable Unreal caches
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Untrusted native stage'}
+          $receiptPath=Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_SPACE_FREED_20261111.json'
+          $receipt=[ordered]@{
+            utc=[DateTime]::UtcNow.ToString('o')
+            beforeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            beforeD=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+            removedVerifiedArchives=@()
+            removedRegenerableCaches=@()
+            mapsDeleted=0
+          }
+          $sourceZip='D:\ANOMALIA\FabImports\CitySample\CitySample_HoudiniFiles.zip'
+          $cloudZip='H:\Mon Drive\ANOMALIAZ_CITYSAMPLE_SOURCE_20261111\CitySample_HoudiniFiles.zip'
+          $drive=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='H:'"
+          if(!$drive -or !$drive.VolumeName.StartsWith('znation.cmd@gmail.com')){throw 'Cloud account mismatch'}
+          # Authenticated Drive API already confirms this exact committed cloud
+          # object in this unique folder, size 585442560 bytes, one revision.
+          if(Test-Path -LiteralPath $sourceZip){
+            if(!(Test-Path -LiteralPath $cloudZip)){throw 'Verified archive missing from cloud mount'}
+            foreach($file in @($sourceZip,$cloudZip)){
+              $item=Get-Item -LiteralPath $file
+              if($item.Length -ne 585442560){throw 'Archive byte length changed'}
+            }
+            $originalHash=(Get-FileHash -LiteralPath $sourceZip -Algorithm SHA256).Hash
+            $cloudHash=(Get-FileHash -LiteralPath $cloudZip -Algorithm SHA256).Hash
+            if($originalHash -ne $cloudHash){throw 'Archive content differs; keep original'}
+            $record=[ordered]@{
+              source=$sourceZip
+              cloudFileId='1Iyxh1u_YAPypNCJbq4Ie5gEPwrRUHDmF'
+              cloudFolderId='1dTKVmD1glLXWql4qt0i9Qe0BllCuQqfZ'
+              bytes=585442560
+              sha256=$originalHash
+              cloudServerObjectPresencePreviouslyVerified=$true
+              sourceAndCloudMountContentIdentical=$true
+            }
+            # Keep a receipt before removing only the verified standalone ZIP.
+            $auditFolder='D:\ANOMALIA\StorageReceipts'
+            if(!(Test-Path -LiteralPath $auditFolder)){New-Item -ItemType Directory -Path $auditFolder|Out-Null}
+            $record|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $auditFolder 'CitySample_HoudiniFiles_VERIFIED_CLOUD_20261111.json') -Encoding UTF8
+            Remove-Item -LiteralPath $sourceZip -Force
+            if(Test-Path -LiteralPath $sourceZip){throw 'Verified duplicate could not be removed'}
+            $receipt.removedVerifiedArchives+=,$record
+            Write-Host 'CITY_SAMPLE_VERIFIED_ARCHIVE_REMOVED_BYTES=585442560'
+          }
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count -eq 0){
+            foreach($cache in @(
+              'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\DerivedDataCache',
+              (Join-Path $stage 'DerivedDataCache')
+            )){
+              if(!(Test-Path -LiteralPath $cache)){continue}
+              $root=Get-Item -LiteralPath $cache -Force
+              if(!$root.PSIsContainer -or ($root.Attributes -band [IO.FileAttributes]::ReparsePoint)){throw 'Unsafe cache root'}
+              if(@(Get-ChildItem -LiteralPath $cache -Recurse -Force -Attributes ReparsePoint -ErrorAction Stop).Count){throw 'Reparse point found inside cache'}
+              $removed=[int64]0
+              foreach($file in @(Get-ChildItem -LiteralPath $cache -File -Recurse -Force -ErrorAction Stop)){
+                $length=$file.Length
+                try{Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop;$removed+=[int64]$length}catch{Write-Host 'CACHE_FILE_IN_USE_SKIPPED=true'}
+              }
+              $receipt.removedRegenerableCaches+=,[ordered]@{path=$cache;removedBytes=$removed}
+              Write-Host ('REGENERABLE_CACHE_REMOVED_BYTES='+$removed)
+            }
+          } else {Write-Host 'CACHE_CLEAN_SKIPPED_EDITOR_ACTIVE=true'}
+          $receipt.afterC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          $receipt.afterD=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          $receipt.recoveredCBytes=$receipt.afterC-$receipt.beforeC
+          $receipt.recoveredDBytes=$receipt.afterD-$receipt.beforeD
+          $receipt|ConvertTo-Json -Depth 6|Set-Content -LiteralPath $receiptPath -Encoding UTF8
+          Write-Host ('ACTUAL_RECOVERED_C_GIB='+[math]::Round($receipt.recoveredCBytes/1GB,3))
+          Write-Host ('ACTUAL_RECOVERED_D_GIB='+[math]::Round($receipt.recoveredDBytes/1GB,3))
+          Write-Host ('CURRENT_FREE_C_GIB='+[math]::Round($receipt.afterC/1GB,3))
+          Write-Host ('CURRENT_FREE_D_GIB='+[math]::Round($receipt.afterD/1GB,3))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-SPACE-FREED-20261111
+          path: CITY_SAMPLE_SPACE_FREED_20261111.json
+          if-no-files-found: error
       - name: Copy complete original source without deleting source or existing maps
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
