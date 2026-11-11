@@ -1,0 +1,62 @@
+name: RACCONIA - native material and interactive interior asset audit
+on:
+  push:
+    branches: [feature/racconia-interiors-pie-quality-20261111]
+    paths: ['.github/workflows/racconia-29-interiors-native-audit-20261111.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-interior-asset-readonly-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Validate original isolated UE5.8 stage and unchanged saved RACCONIA
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $root '.skarvik-ci-stage-marker'
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Wrong native stage'}
+          if(!(Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1.umap'))){throw 'Real RACCONIA map not yet saved'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Concurrent editor; refuse read-only scan'}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          Write-Host ('RACCONIA_STAGE_FREE_GIB='+[math]::Round($free,2))
+          if($free -lt 3){throw 'Less than 3GiB free: avoid temporary Unreal loads'}
+          $py=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -m py_compile (Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_racconia_real_interior_assets_and_pbr_20261111.py')
+          if($LASTEXITCODE -ne 0){throw 'Python validation failed'}
+      - name: Measure real saved 29 PBR shell materials and existing realistic door-furniture meshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $env:RACCONIA_INTERIOR_PBR_READONLY_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_NATIVE_INTERIORS_PBR_READONLY_20261111.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\audit_racconia_real_interior_assets_and_pbr_20261111.py'
+          & $editor (Join-Path $root 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nosplash -nosound -nopause
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_INTERIOR_PBR_READONLY_REPORT)){throw 'No native truthful audit report'}
+          $r=Get-Content $env:RACCONIA_INTERIOR_PBR_READONLY_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('RACCONIA_INTERIOR_AUDIT_STATUS='+$r.state)
+          Write-Host ('RACCONIA_REAL_PBR_SOURCE_ACTORS='+$r.sourceActorCount)
+          Write-Host ('RACCONIA_ORIGINAL_29_ARCH_LOCATIONS='+$r.sourceSiteCount)
+          Write-Host ('RACCONIA_INTERIOR_ASSET_GROUPS='+($r.candidateMeshCountsByFunction|ConvertTo-Json -Compress))
+          if($code -ne 0 -or $r.state -ne 'RACCONIA_PBR_SOURCES_AND_EXISTING_INTERIOR_ASSETS_READONLY_SURVEY_COMPLETE'){
+            throw ('Native scene audit not validated: '+$r.error)
+          }
+          Write-Host 'RACCONIA_NATIVE_SCENE_AUDIT_PASSED_NOT_AN_IN_GAME_RENDER_VALIDATION=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: RACCONIA-REAL-NATIVE-INTERIOR-ASSETS-AND-PBR-MATERIAL-READONLY
+          path: RACCONIA_NATIVE_INTERIORS_PBR_READONLY_20261111.json
+          retention-days: 30
+          if-no-files-found: warn
