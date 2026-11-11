@@ -1,0 +1,38 @@
+name: ANOMALIA - inspect native GPU footage recording failure without changing game
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-video-gpu-capture-failure-diagnostic.yml']
+permissions: {contents: read}
+jobs:
+  last-gpu-runtime-diagnostic:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Print actual native UE5 render log tail and capture files, no writes to project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $logs=Join-Path $root 'Saved\Logs'
+          if(!(Test-Path $logs)){throw 'Unreal real native logs missing'}
+          $latest=Get-ChildItem -LiteralPath $logs -Filter '*.log' -File | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 3
+          foreach($log in $latest){
+            Write-Host ('NATIVE_LOG='+$log.FullName+';MODIFIED='+$log.LastWriteTimeUtc.ToString('o'))
+            Get-Content -LiteralPath $log.FullName -Tail 125 | ForEach-Object{
+              if($_ -match '(?i)capture|screenshot|PIE|python|viewport|fatal|assert|error|invalid|rhi|out.of.memory|graphics|quit|exit|tick|source'){Write-Host ('ENGINE_LOG='+$_)}
+            }
+          }
+          $workspace='C:\Users\utilisateur\actions-runner\_work\ANOMALIA-PRIMEVAL-OUTBOUNDUN\ANOMALIA-PRIMEVAL-OUTBOUNDUN'
+          $reports=@(Get-ChildItem -LiteralPath $workspace -Directory -Filter 'ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES_*' -ErrorAction SilentlyContinue)
+          foreach($dir in $reports){
+            $count=@(Get-ChildItem -LiteralPath $dir.FullName -Filter '*.png' -File -ErrorAction SilentlyContinue).Count
+            Write-Host ('NATIVE_CAPTURE_DIR='+$dir.Name+';PNG='+$count)
+          }
+          $crash=Join-Path $root 'Saved\Crashes'
+          if(Test-Path $crash){
+            Get-ChildItem -LiteralPath $crash -Directory|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 2|ForEach-Object{
+              Write-Host ('NATIVE_UE_CRASH_DIR='+$_.FullName)
+            }
+          }
+          Write-Host ('SOURCE_MAPS_PRESERVED='+([bool](Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))))
