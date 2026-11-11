@@ -1,0 +1,98 @@
+name: ANOMALIA - record actual main SKARVIK game window during native test
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-record-real-main-map-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  record:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 9
+    steps:
+      - name: Run true main-map game and capture its visible client pixels with timestamps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$'}).Count){throw 'Another Unreal session is running'}
+          $out=Join-Path $env:RUNNER_TEMP ('anomalia-real-map-video-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out|Out-Null
+          ('RECORDING_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $mapFile=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap';$before=(Get-FileHash $mapFile).Hash
+          Add-Type -AssemblyName System.Drawing
+          Add-Type @'
+          using System;
+          using System.Runtime.InteropServices;
+          public static class AnomaliaCaptureNative {
+              [StructLayout(LayoutKind.Sequential)] public struct RECT {public int Left,Top,Right,Bottom;}
+              [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
+              [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
+              [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+              [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
+              [StructLayout(LayoutKind.Sequential)] public struct POINT {public int X,Y;}
+          }
+          '@
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $log=Join-Path $out 'game-test.log'
+          $cvars='r.ScreenPercentage 60,r.ShadowQuality 0,r.ViewDistanceScale 0.6,r.DynamicGlobalIlluminationMethod 0,r.ReflectionMethod 0,r.MotionBlurQuality 0'
+          $args=@(('"'+$project+'"'),('/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=video-test-'+$env:GITHUB_RUN_ID),'-game','-windowed','-ResX=960','-ResY=540','-WinX=20','-WinY=20','-d3d11','-sm5','-nosplash','-nosound','-unattended','-nop4',('-abslog="'+$log+'"'),('-ExecCmds="'+$cvars+'"'))
+          $p=Start-Process $editor -ArgumentList $args -PassThru
+          $receipt=[ordered]@{source='Actual visible SKARVIK main-project native game window';project=$project;map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1';mapModified=$false;syntheticFrames=$false;playerInputsVerified=$false;frames=@()}
+          try{
+            $watch=[Diagnostics.Stopwatch]::StartNew();$ready=$false
+            while($watch.Elapsed.TotalSeconds -lt 180){
+              $p.Refresh()
+              if($p.HasExited){throw 'Native game exited before capture'}
+              if(Test-Path $log){
+                $tail=Get-Content $log -Tail 60|Out-String
+                if($tail -match 'Fatal error:|Ran out of memory'){throw 'Native runtime fatal error'}
+                if($tail -match 'Engine is initialized|Total time:|Texture pool size now'){if($p.MainWindowHandle -ne [IntPtr]::Zero){$ready=$true;break}}
+              }
+              Start-Sleep -Milliseconds 2000
+            }
+            if(!$ready){throw 'Actual game window not ready within 180 seconds'}
+            Start-Sleep -Seconds 12
+            $p.Refresh();$h=$p.MainWindowHandle
+            if($h -eq [IntPtr]::Zero -or ![AnomaliaCaptureNative]::IsWindowVisible($h)){throw 'No visible native game window'}
+            $rect=New-Object AnomaliaCaptureNative+RECT
+            [AnomaliaCaptureNative]::GetClientRect($h,[ref]$rect)|Out-Null
+            $w=$rect.Right-$rect.Left;$height=$rect.Bottom-$rect.Top
+            if($w -lt 400 -or $height -lt 200){throw 'Native game viewport too small'}
+            $receipt.width=$w;$receipt.height=$height
+            $capture=[Diagnostics.Stopwatch]::StartNew()
+            for($i=0;$i -lt 120;$i++){
+              if($p.HasExited){throw 'Game stopped during recording'}
+              $bitmap=New-Object Drawing.Bitmap($w,$height)
+              $g=[Drawing.Graphics]::FromImage($bitmap)
+              $dc=$g.GetHdc()
+              try{$ok=[AnomaliaCaptureNative]::PrintWindow($h,$dc,3)}finally{$g.ReleaseHdc($dc)}
+              $g.Dispose()
+              if(!$ok){$bitmap.Dispose();throw 'Native window capture was rejected'}
+              $name=('frame_{0:D4}.png' -f $i)
+              $bitmap.Save((Join-Path $out $name),[Drawing.Imaging.ImageFormat]::Png)
+              $bitmap.Dispose()
+              $receipt.frames+=@{file=$name;timeSeconds=$capture.Elapsed.TotalSeconds}
+              $wait=[int]((($i+1)/8.0-$capture.Elapsed.TotalSeconds)*1000)
+              if($wait -gt 0){Start-Sleep -Milliseconds $wait}
+            }
+            $receipt.durationSeconds=$capture.Elapsed.TotalSeconds
+            $receipt.averageFramesPerSecond=120/$receipt.durationSeconds
+            $receipt.state='REAL_MAIN_MAP_WINDOW_PIXELS_RECORDED_NEEDS_VISUAL_REVIEW'
+          }catch{$receipt.state='FAILED';$receipt.error=$_.Exception.Message;throw}
+          finally{
+            if(!$p.HasExited){$p.CloseMainWindow()|Out-Null;if(!$p.WaitForExit(15000)){$p.Kill()}}
+            $receipt.mapModified=((Get-FileHash $mapFile).Hash -ne $before)
+            $receipt|ConvertTo-Json -Depth 8|Set-Content (Join-Path $out 'recording.json') -Encoding utf8
+            Write-Host ('RECORDING_STATE='+$receipt.state+';FRAMES='+$receipt.frames.Count)
+          }
+          if($receipt.mapModified){throw 'Main map unexpectedly modified'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-REAL-SKARVIK-MAIN-MAP-VIDEO-SOURCE
+          path: ${{ env.RECORDING_OUT }}
+          compression-level: 1
+          if-no-files-found: warn
