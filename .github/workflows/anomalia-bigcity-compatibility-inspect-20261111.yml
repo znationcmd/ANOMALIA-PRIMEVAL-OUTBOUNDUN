@@ -21,7 +21,8 @@ jobs:
           foreach($base in @((Join-Path $env:UE_ROOT 'Engine\Plugins'),(Join-Path $root 'Plugins'))){
             if(!(Test-Path $base)){continue}
             foreach($p in [IO.Directory]::EnumerateFiles($base,'*.uplugin',[IO.SearchOption]::AllDirectories)){
-              $j=Get-Content $p -Raw|ConvertFrom-Json
+              if($p -notmatch 'Cesium|Mass|PCG|City|Houdini|ZoneGraph|Chaos|AnimToTexture|Dataflow'){continue}
+              try{$j=([regex]::Replace((Get-Content $p -Raw),',\s*([}\]])','$1'))|ConvertFrom-Json}catch{Write-Host ('UNPARSED_PLUGIN='+$p);continue}
               if($p -match 'Cesium|Mass|PCG|City|Houdini|ZoneGraph|Chaos|AnimToTexture|Dataflow'){
                 Write-Host ('PLUGIN='+$p+';VERSION='+$j.VersionName+';DEFAULT='+$j.EnabledByDefault+';MODULES='+(($j.Modules|ForEach-Object{$_.Name}) -join ','))
               }
