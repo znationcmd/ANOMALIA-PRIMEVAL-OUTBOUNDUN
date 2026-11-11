@@ -164,9 +164,33 @@ try:
     origin=unreal.Vector(200000.,800000.,0.)
     city=sorted(city,key=lambda d:(d.bounds.min.x+d.bounds.max.x-origin.x*2)**2+
                                    (d.bounds.min.y+d.bounds.max.y-origin.y*2)**2)
-    selection=city[:100]
+    selection=city[:48]
     unreal.WorldPartitionBlueprintLibrary.load_actors([d.guid for d in selection])
     R["realCityMeshActorsSelected"]=len(selection)
+    # Keep only the actual selected city geometry in a new capture map.
+    # PIE on the 48 km source world exceeded Windows commit memory.
+    actor_sub=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+    selected_labels={str(d.label) for d in selection}
+    pieces=[]
+    for actor in actor_sub.get_all_level_actors():
+        if actor.get_actor_label() not in selected_labels:continue
+        for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+            mesh=comp.get_editor_property("static_mesh")
+            if mesh is None:continue
+            pieces.append((mesh,comp.get_world_transform(),[comp.get_material(i) for i in range(comp.get_num_materials())]))
+    require(len(pieces)>=20,"Actual city geometry not loaded")
+    require(editor.new_level("/Game/Anomalia/Capture/NativeFilm_"+str(int(time.time()))),"Cannot create isolated capture map")
+    import gc
+    gc.collect()
+    if hasattr(unreal.SystemLibrary,"collect_garbage"):unreal.SystemLibrary.collect_garbage()
+    for mesh,transform,materials in pieces:
+        obj=actor_sub.spawn_actor_from_class(unreal.StaticMeshActor,transform.translation,transform.rotation.rotator())
+        obj.set_actor_transform(transform,False,True)
+        comp=obj.get_component_by_class(unreal.StaticMeshComponent)
+        comp.set_static_mesh(mesh)
+        for i,mat in enumerate(materials):
+            if mat:comp.set_material(i,mat)
+    R["captureScene"]="Isolated district built from actual SKARVIK city meshes; source world unloaded to avoid OOM"
     center=unreal.Vector(200000.,800000.,0.)
     near=selection[0].bounds
     center.x=(near.min.x+near.max.x)/2
@@ -184,6 +208,15 @@ try:
     require(car is not None,"Could not place authentic BMW body")
     require(car.get_component_by_class(unreal.StaticMeshComponent).set_static_mesh(carmesh),
             "Authentic BMW StaticMesh assignment failed")
+    for asset_path in unreal.EditorAssetLibrary.list_assets("/Game/Anomalia/BMWE39Review_v7",recursive=True,include_folder=False):
+        if "/body/SM_body" in asset_path:continue
+        asset=unreal.EditorAssetLibrary.load_asset(asset_path)
+        if not isinstance(asset,unreal.StaticMesh):continue
+        part=actors.spawn_actor_from_class(unreal.StaticMeshActor,center)
+        part.get_component_by_class(unreal.StaticMeshComponent).set_static_mesh(asset)
+    light=actors.spawn_actor_from_class(unreal.DirectionalLight,center+unreal.Vector(0,0,3000),unreal.Rotator(-45,-30,0))
+    sky=actors.spawn_actor_from_class(unreal.SkyLight,center+unreal.Vector(0,0,2000))
+    actors.spawn_actor_from_class(unreal.SkyAtmosphere,center)
     car.set_actor_label("ANOMALIA_VIDEO_REAL_BMW_E39_V7")
     car.tags=[unreal.Name("AUTHENTIC_ANOMALIA_VIDEO_BMW")]
     survivor=actors.spawn_actor_from_class(unreal.AnomaliaZPrigimaliaSurvivor,
