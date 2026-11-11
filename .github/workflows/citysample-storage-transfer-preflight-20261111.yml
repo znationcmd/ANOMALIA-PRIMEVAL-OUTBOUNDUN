@@ -1,0 +1,68 @@
+name: CITY SAMPLE - locate actual storage and transfer tools without changing files
+on:
+  push:
+    branches: [feature/skarvik-citysample-sm5-20261031]
+    paths: ['.github/workflows/citysample-storage-transfer-preflight-20261111.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  transfer-preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Locate standalone copies and measure relevant project folders
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $paths=@(
+            'D:\ANOMALIA\CitySample_5.8',
+            'C:\CitySample_5.8',
+            'D:\CitySample_5.8',
+            'C:\Users\utilisateur\Documents\Unreal Projects\CitySample',
+            'C:\Users\utilisateur\Documents\Unreal Projects\CitySample_5.8'
+          )
+          foreach($root in @('C:\','D:\','C:\Users\utilisateur\Downloads','C:\Users\utilisateur\Desktop','C:\Users\utilisateur\Documents\Unreal Projects')){
+            if(Test-Path -LiteralPath $root){
+              $paths+=@(Get-ChildItem -LiteralPath $root -Directory -Force -ErrorAction SilentlyContinue | Where-Object Name -match 'City.?Sample' | ForEach-Object FullName)
+            }
+          }
+          foreach($project in @($stage,'D:\ANOMALIA\unreal')){
+            foreach($part in @('Content\City','Content\Map','Content\__ExternalActors__\Map\Big_City_LVL','Content\__ExternalObjects__\Map\Big_City_LVL')){
+              $paths+=Join-Path $project $part
+            }
+          }
+          $records=@(foreach($path in @($paths|Select-Object -Unique)){
+            $bytes=[int64]0;$count=0
+            $present=Test-Path -LiteralPath $path
+            if($present){
+              Get-ChildItem -LiteralPath $path -File -Recurse -Force -ErrorAction Stop | ForEach-Object {$bytes+=[int64]$_.Length;$count++}
+            }
+            $row=[ordered]@{path=$path;present=$present;files=$count;bytes=$bytes;GiB=[math]::Round($bytes/1GB,3)}
+            Write-Host ('CITY_SAMPLE_STORAGE='+$path+'|'+$present+'|'+$count+'|'+$row.GiB+' GiB')
+            $row
+          })
+          $r=[ordered]@{
+            state='TRANSFER_PREFLIGHT_ONLY_NO_DELETE'
+            utc=[DateTime]::UtcNow.ToString('o')
+            locations=$records
+            rcloneInstalled=[bool](Get-Command rclone -ErrorAction SilentlyContinue)
+            googleDriveDesktopActive=[bool](Get-Process GoogleDriveFS -ErrorAction SilentlyContinue)
+            drives=@(Get-CimInstance Win32_LogicalDisk | ForEach-Object {[ordered]@{drive=$_.DeviceID;freeGiB=[math]::Round($_.FreeSpace/1GB,2);totalGiB=[math]::Round($_.Size/1GB,2);type=$_.DriveType}})
+            removedFiles=0
+          }
+          $r|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'CITY_SAMPLE_TRANSFER_PREFLIGHT.json') -Encoding UTF8
+          Write-Host ('CITY_SAMPLE_RCLONE_AVAILABLE='+$r.rcloneInstalled)
+          Write-Host ('CITY_SAMPLE_DRIVE_DESKTOP_ACTIVE='+$r.googleDriveDesktopActive)
+      - uses: actions/upload-artifact@v4
+        with:
+          name: CITY-SAMPLE-TRANSFER-PREFLIGHT
+          path: CITY_SAMPLE_TRANSFER_PREFLIGHT.json
+          if-no-files-found: error
