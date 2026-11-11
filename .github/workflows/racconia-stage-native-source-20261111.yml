@@ -5,6 +5,7 @@ on:
     paths:
       - 'sources/racconia/racconia-native-source.zip'
       - '.github/workflows/racconia-stage-native-source-20261111.yml'
+      - 'unreal/Scripts/import_racconia_models_native.py'
   workflow_dispatch:
 permissions:
   contents: read
@@ -14,7 +15,7 @@ concurrency:
 jobs:
   stage-corrected-sources:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 12
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
         with:
@@ -65,8 +66,29 @@ jobs:
           Write-Host ('RACCONIA_NATIVE_SOURCE_PATH='+$dest)
           Write-Host ('RACCONIA_MODELS='+$models.Count)
           Write-Host ('RACCONIA_SITES='+$sites.Count)
+      - name: Import original blockout GLBs into native assets without opening or modifying maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Another Unreal editor is active'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 2GB){throw 'Insufficient disk space for bounded GLB import'}
+          $env:RACCONIA_MODEL_REPORT=Join-Path $env:GITHUB_WORKSPACE 'RACCONIA_NATIVE_MODEL_IMPORT.json'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\import_racconia_models_native.py'
+          & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -nullrhi -unattended -nopause -nosound
+          $code=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:RACCONIA_MODEL_REPORT)){throw 'Native GLB import report missing'}
+          $r=Get-Content -LiteralPath $env:RACCONIA_MODEL_REPORT -Raw | ConvertFrom-Json
+          Write-Host ('RACCONIA_NATIVE_IMPORT_STATE='+$r.state)
+          Write-Host ('RACCONIA_NATIVE_SOURCE_MODELS='+$r.sourceCount)
+          Write-Host ('RACCONIA_NATIVE_STATIC_MESHES='+$r.staticMeshCount)
+          if($code -ne 0 -or $r.sourceCount -ne 29 -or !$r.existingMapsUnchanged){throw ('Native import not verified: '+$r.error)}
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: RACCONIA-NATIVE-PC-SOURCE-STAGE
-          path: RACCONIA_NATIVE_SOURCE_STAGE.json
+          path: |
+            RACCONIA_NATIVE_SOURCE_STAGE.json
+            RACCONIA_NATIVE_MODEL_IMPORT.json
           if-no-files-found: error
