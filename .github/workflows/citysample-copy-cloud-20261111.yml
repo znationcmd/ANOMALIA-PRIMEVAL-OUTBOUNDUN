@@ -52,8 +52,9 @@ jobs:
             Write-Host 'CITY_SAMPLE_CLOUD_COPY_NO_SOURCE_DELETION=true'
             # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
             # LFSM pauses when destination/cache reaches an 8 GiB reserve.
-            $copyArgs=@('"'+$source+'"','"'+$dest+'"','/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/LFSM:8g','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
+            $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/LFSM:8589934592','/NFL','/NDL','/NP',('/LOG:"'+$log+'"'))
             $process=Start-Process -FilePath robocopy.exe -ArgumentList $copyArgs -PassThru -NoNewWindow
+            $null=$process.Handle
             $lastWrite=[uint64]0;$lastChange=[DateTime]::UtcNow
             while(!$process.HasExited){
               Start-Sleep -Seconds 30
@@ -74,6 +75,8 @@ jobs:
               }
             }
             $process.WaitForExit()
+            Write-Host ('CITY_SAMPLE_ROBOCOPY_EXIT_CODE='+$process.ExitCode)
+            if($null -eq $process.ExitCode){throw 'Robocopy exit status unavailable; inspect transfer log'}
             $report.robocopyExitCode=$process.ExitCode
             if($process.ExitCode -ge 8){throw ('Robocopy copy failure '+$process.ExitCode)}
             $destFiles=@(Get-ChildItem -LiteralPath $dest -File -Recurse -Force -ErrorAction Stop)
@@ -90,6 +93,7 @@ jobs:
             Write-Host 'CITY_SAMPLE_SERVER_UPLOAD_VERIFIED=false'
             Write-Host 'CITY_SAMPLE_ORIGINAL_SOURCE_RETAINED=true'
           } catch {
+            if(Test-Path -LiteralPath $log){Get-Content -LiteralPath $log -Tail 45 | Write-Host}
             $report.state='STOPPED_NO_SOURCE_DELETION'
             $report.error=$_.Exception.Message
             Write-Host ('CITY_SAMPLE_CLOUD_COPY_BLOCKED='+$report.error)
