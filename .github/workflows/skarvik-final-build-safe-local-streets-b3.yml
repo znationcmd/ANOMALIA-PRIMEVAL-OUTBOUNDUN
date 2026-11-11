@@ -1,3 +1,4 @@
+# 2026-11-11: resume genuine village street authoring after confirmed C: free space above 28GB.
 # 2026-11-11: access-lane candidates exhausted; survey original village-lane segments with road overlap guard.
 name: SKARVIK - third final coast village streets keep both previous batches
 # 2026-11-10: re-attempt only on trusted isolated C staging, with existing
@@ -14,7 +15,7 @@ permissions:
   actions: read
 concurrency:
   group: anomalia-ue5-native-host
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   author-and-reopen-local-roads:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
