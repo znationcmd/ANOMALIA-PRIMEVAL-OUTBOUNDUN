@@ -96,7 +96,7 @@ void UAnomaliaZPrigimaliaSessionWidget::NativeConstruct()
     if(MenuArtwork) MenuArtwork->SetVisibility(ESlateVisibility::Collapsed);
     if(NavigationFrame) NavigationFrame->SetVisibility(ESlateVisibility::Visible);
     auto* PC=GetOwningPlayer();
-    if(bMainMenu && PC && GetWorld() && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
+    if(bMainMenu && PC && GetWorld() && Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn()))
     {
         // Frame the ACTUAL restored survivor in the ACTUAL world, at the
         // last saved location. Never teleport or replace player appearance.
