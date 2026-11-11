@@ -50,10 +50,11 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
-          $out=Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES'
+          $out=Join-Path $env:GITHUB_WORKSPACE ('ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES_'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $out){throw 'Refuse overwrite an existing film capture'}
           New-Item -ItemType Directory -Path $out | Out-Null
           $env:ANOMALIA_AUTHENTIC_GAMEPLAY_FRAMES=$out
+          ('VIDEO_CAPTURE_DIR='+$out) | Out-File -FilePath $env:GITHUB_ENV -Append -Encoding utf8
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\capture_anomalia_real_city_e39_survivor_dog_ue5_20261111.py'
           & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -d3d11 -sm5 -RenderOffscreen -unattended -nosplash -nosound -nopause -ResX=960 -ResY=540
@@ -73,6 +74,6 @@ jobs:
         if: always()
         with:
           name: REAL-ANOMALIA-UE5-PIE-REAL-BIGCITY-BMW-SURVIVOR-DOG-VIDEO-FRAMES
-          path: ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES/
+          path: ${{ env.VIDEO_CAPTURE_DIR }}
           retention-days: 15
           if-no-files-found: warn
