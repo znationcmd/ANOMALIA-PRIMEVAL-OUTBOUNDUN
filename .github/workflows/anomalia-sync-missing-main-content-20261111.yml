@@ -1,0 +1,55 @@
+name: ANOMALIA - synchronize missing real city and gameplay assets into main project
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-sync-missing-main-content-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  sync:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal';$stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if(!(Test-Path (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Wrong main project'}
+          if((Get-Content (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong source stage'}
+          $active=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|Anomalia).*\.exe$' -and (!$_.CommandLine -or $_.CommandLine -match [regex]::Escape($root))})
+          if($active.Count){throw 'Main project active'}
+          $sc=Join-Path $stage 'Content';$dc=Join-Path $root 'Content'
+          $dest=New-Object 'System.Collections.Generic.Dictionary[string,long]' ([StringComparer]::OrdinalIgnoreCase)
+          foreach($p in [IO.Directory]::EnumerateFiles($dc,'*',[IO.SearchOption]::AllDirectories)){
+            $f=[IO.FileInfo]::new($p);$dest[$p.Substring($dc.Length).TrimStart('\')]=$f.Length
+          }
+          $missing=New-Object 'System.Collections.Generic.List[System.IO.FileInfo]'
+          $bytes=0L
+          foreach($p in [IO.Directory]::EnumerateFiles($sc,'*',[IO.SearchOption]::AllDirectories)){
+            $rel=$p.Substring($sc.Length).TrimStart('\')
+            if($rel.StartsWith('Anomalia\Capture\',[StringComparison]::OrdinalIgnoreCase)){continue}
+            $f=[IO.FileInfo]::new($p)
+            if(!$dest.ContainsKey($rel)){$missing.Add($f);$bytes+=$f.Length}
+            elseif($dest[$rel] -ne $f.Length){Write-Host ('DIFFERENT_EXISTING='+$rel+';SOURCE_BYTES='+$f.Length+';MAIN_BYTES='+$dest[$rel])}
+          }
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt ($bytes+2GB)){throw 'Insufficient free D storage'}
+          $count=0
+          foreach($f in $missing){
+            $rel=$f.FullName.Substring($sc.Length).TrimStart('\');$to=Join-Path $dc $rel
+            [IO.Directory]::CreateDirectory([IO.Path]::GetDirectoryName($to))|Out-Null
+            [IO.File]::Copy($f.FullName,$to,$false)
+            if((Get-FileHash -LiteralPath $to).Hash -ne (Get-FileHash -LiteralPath $f.FullName).Hash){throw ('Checksum mismatch '+$rel)}
+            $count++
+          }
+          Write-Host ('VERIFIED_MAIN_CONTENT_INSTALLED='+$count+';BYTES='+$bytes)
+          foreach($rel in @('AnomaliaPrimeval.uproject','Config\DefaultEngine.ini')){
+            Write-Host ('REAL_PROJECT_FILE='+$rel)
+          }
+          foreach($rel in @('Source\AnomaliaPrimeval\AnomaliaGameMode.cpp','Source\AnomaliaPrimeval\AnomaliaSurvivor.cpp','Source\AnomaliaPrimeval\AnomaliaDogCompanion.cpp','Config\DefaultGame.ini')){
+            $p=Join-Path $root $rel
+            if(Test-Path $p){Write-Host ('SOURCE_FILE='+$rel);Get-Content $p|Select-String 'BMWE39|Survival_Character|German_Shepherd|BodyClass|PawnClass|BodyMesh|Dog|DirectoriesToAlwaysCook' -Context 2,2|Select-Object -First 25|ForEach-Object{Write-Host $_}}
+          }
+          Get-ChildItem (Join-Path $root 'Binaries\Win64') -Filter '*.exe' -File|ForEach-Object{Write-Host ('MAIN_NATIVE_EXE='+$_.FullName+';BYTES='+$_.Length)}
+          Write-Host 'PACKAGED_INSTALLED_EXE_REBUILT=false'
