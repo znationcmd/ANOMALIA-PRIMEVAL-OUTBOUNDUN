@@ -94,7 +94,14 @@ def tick(delta):
             require(found is not None,"Transient capture camera not copied to game world")
             controller=unreal.GameplayStatics.get_player_controller(game,0)
             require(controller is not None,"Player controller not started in PIE")
-            controller.set_view_target(found)
+            # UE5 Python exposes APlayerController::SetViewTargetWithBlend,
+            # not every engine wrapper exposes the non-Blueprint SetViewTarget.
+            if hasattr(controller,"set_view_target_with_blend"):
+                controller.set_view_target_with_blend(found,0.0)
+                R["nativeCameraAttachedToPlayerController"]=True
+            else:
+                R["nativeCameraAttachedToPlayerController"]=False
+                unreal.log_warning("Native camera blend method unavailable; using actual UE editor PIE viewport")
             S["cameraPIE"]=found
             S["phase"]="CAPTURE"
             S["next"]=time.monotonic()+8
