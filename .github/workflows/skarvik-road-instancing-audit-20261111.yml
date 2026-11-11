@@ -9,6 +9,7 @@ on:
       - 'scripts/ue5/worldgen/plan_road_instancing.py'
       - 'tests/test_road_instancing.py'
       - '.github/workflows/skarvik-road-instancing-audit-20261111.yml'
+  workflow_dispatch:
   pull_request:
     paths:
       - 'unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaRoadCluster.*'
@@ -33,6 +34,7 @@ jobs:
           python -m py_compile scripts/ue5/worldgen/plan_road_instancing.py
           python -m py_compile unreal/Scripts/audit_skarvik_instanced_road_candidates_20261111.py
   native-ue5-readonly-survey:
+    if: github.event_name == 'workflow_dispatch'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 25
     concurrency:
