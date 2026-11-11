@@ -1,0 +1,76 @@
+name: ANOMALIA - true UE5.8 rendered SKARVIK Big City BMW E39 survivor shepherd frames for video
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-real-city-bmw-dog-survivor-pie-pixels-20261111.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  real-engine-source-footage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Require real staged BMW, body, GSD, Big City and native Unreal render
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content (Join-Path $root '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Untrusted UE5 stage'}
+          $assets=@(
+            'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap',
+            'Content\Map\Big_City_LVL.umap',
+            'Content\Anomalia\BMWE39Review_v7\body\SM_body.uasset',
+            'Content\Survival_Character\Meshes\SK_Survival_Character.uasset',
+            'Content\German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset',
+            'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          )
+          foreach($item in $assets){
+            $p=Join-Path $root $item
+            if(!(Test-Path -LiteralPath $p)){throw ('Actual required UE5 source missing: '+$item)}
+            Write-Host ('TRUE_REAL_GAME_ASSET='+$item)
+          }
+          $active=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|AnomaliaZPrigimalia)\.exe$'})
+          if($active.Count){throw ('Unreal editor already running. Do not invade active session; processes='+($active|ForEach-Object{$_.ProcessId+' '+$_.CommandLine}|Out-String))}
+          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB
+          if($free -lt 6){throw 'Insufficient GPU capture storage headroom'}
+          Write-Host ('REAL_CAPTURE_C_FREE_GIB='+[math]::Round($free,2))
+          $pysrc=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\capture_anomalia_real_city_e39_survivor_dog_ue5_20261111.py'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $pysrc
+          if($LASTEXITCODE -ne 0){throw 'Invalid real UE5 capture script'}
+      - name: Capture genuine Unreal Engine 5.8 GPU viewport frames in actual PIE
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $out=Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES'
+          if(Test-Path -LiteralPath $out){throw 'Refuse overwrite an existing film capture'}
+          New-Item -ItemType Directory -Path $out | Out-Null
+          $env:ANOMALIA_AUTHENTIC_GAMEPLAY_FRAMES=$out
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'unreal\Scripts\capture_anomalia_real_city_e39_survivor_dog_ue5_20261111.py'
+          & $editor (Join-Path $stage 'AnomaliaZPrigimalia.uproject') "-ExecutePythonScript=$script" -d3d11 -sm5 -RenderOffscreen -unattended -nosplash -nosound -nopause -ResX=960 -ResY=540
+          $code=$LASTEXITCODE
+          $receipt=Join-Path $out 'ue5-frame-capture-receipt.json'
+          if(!(Test-Path -LiteralPath $receipt)){throw ('No actual Unreal screenshot evidence; exit code '+$code)}
+          $r=Get-Content -LiteralPath $receipt -Raw | ConvertFrom-Json
+          Write-Host ('ANOMALIA_REAL_UE5_FRAMES_STATUS='+$r.state)
+          Write-Host ('ANOMALIA_REAL_UE5_FRAMES_COUNT='+$r.totalFramesCaptured)
+          Write-Host ('ANOMALIA_ACTUAL_CITY_MESHES_LOADED='+$r.realCityMeshActorsSelected)
+          Write-Host ('ANOMALIA_ACTUAL_PIE_LAUNCHED='+$r.actualPIEStarted)
+          if($code -ne 0 -or $r.state -ne 'REAL_UE5_IN_ENGINE_PIE_VIEWPORT_FRAMES_CAPTURED_NOT_DIRECT_24FPS_GAMEPLAY' -or $r.totalFramesCaptured -ne 36){
+            throw ('Real UE5 frames incomplete: '+$r.error)
+          }
+          Write-Host 'REAL_UE5_AUTHENTIC_RENDERED_PIXELS_READY_FOR_MP4_ENCODING=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: REAL-ANOMALIA-UE5-PIE-REAL-BIGCITY-BMW-SURVIVOR-DOG-VIDEO-FRAMES
+          path: ANOMALIA_REAL_UE5_CITY_BMW_DOG_SURVIVOR_FRAMES/
+          retention-days: 15
+          if-no-files-found: warn
