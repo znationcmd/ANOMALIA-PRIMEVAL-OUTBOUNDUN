@@ -127,7 +127,7 @@ jobs:
                 Start-Sleep -Seconds 30
               }
             }
-            Wait-CopyHeadroom (8GB+$largest+256MB)
+            Wait-CopyHeadroom (3GB+$largest+256MB)
             $report.sourceFiles=$files.Count;$report.sourceBytes=$total
             $report.largestFileBytes=$largest
             $report.state='COPYING_TO_GOOGLE_DRIVE_DESKTOP_SERVER_SYNC_PENDING'
@@ -140,11 +140,11 @@ jobs:
             Write-Host 'CITY_SAMPLE_CLOUD_COPY_NO_SOURCE_DELETION=true'
             # Whole directory, resumable; no MOVE, MIR or PURGE. Single-threaded
             # Google Drive cannot answer LFSM volume queries. Independently monitor
-            # physical C: cache space every second and retain an 8 GiB reserve.
+            # physical C: cache space every second and retain an 3 GiB reserve.
             $copyFinished=$false
             $copyPass=0
             while(!$copyFinished){
-              Wait-CopyHeadroom (8GB+$largest+256MB)
+              Wait-CopyHeadroom (3GB+$largest+256MB)
               $copyPass++
               Write-Host ('CITY_SAMPLE_COPY_PASS='+$copyPass)
               $copyArgs=@(('"'+$source+'"'),('"'+$dest+'"'),'/E','/COPY:DAT','/DCOPY:DAT','/Z','/XJ','/R:2','/W:5','/NFL','/NDL','/NP',('/LOG+:"'+$log+'"'))
@@ -162,7 +162,7 @@ jobs:
                   if($written -ne $lastWrite){$lastChange=[DateTime]::UtcNow;$lastWrite=$written}
                   if($copyTick % 30 -eq 0){Write-Host ('CITY_SAMPLE_COPY_IO_BYTES='+$written+';CACHE_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,3))}
                 }
-                if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 8GB){
+                if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 3GB){
                   Stop-Process -Id $process.Id -Force -ErrorAction SilentlyContinue
                   $pausedForCache=$true
                   Write-Host 'CITY_SAMPLE_COPY_PAUSED_FOR_CLOUD_CACHE_WILL_RESUME=true'
