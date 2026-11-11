@@ -1,0 +1,46 @@
+name: Video prioritaire - stopper uniquement le processus PIE RACCONIA deja annule
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-stop-only-cancelled-racconia-ue-editor-20261111.yml']
+permissions: {contents: read}
+concurrency:
+  group: real-gameplay-exclusive-orphan-recovery
+  cancel-in-progress: false
+jobs:
+  inspect-and-stop-cancelled-racconia-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Stop only obsolete RACCONIA -ExecutePythonScript job, never a user's editor
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $wanted='verify_racconia_real_pie_gameplay_20261111.py'
+          $all=@(Get-CimInstance Win32_Process|Where-Object {($_.Name -eq 'UnrealEditor-Cmd.exe' -or $_.Name -eq 'UnrealEditor.exe')})
+          $matching=@($all|Where-Object {
+            $_.Name -eq 'UnrealEditor-Cmd.exe' -and
+            $_.CommandLine -like ('*'+$wanted+'*') -and
+            $_.CommandLine -like '*C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\AnomaliaZPrigimalia.uproject*' -and
+            $_.CommandLine -like '*-nullrhi*'
+          })
+          if($matching.Count -gt 1){throw 'More than one cancelled RACCONIA editor process; manual investigation needed'}
+          $stopped=@()
+          foreach($p in $matching){
+            Stop-Process -Id $p.ProcessId -Force -ErrorAction Stop
+            Start-Sleep -Seconds 2
+            if(Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue){throw 'Process not stopped'}
+            $stopped+= $p.ProcessId
+          }
+          $left=@(Get-CimInstance Win32_Process|Where-Object {$_.Name -in @('UnrealEditor-Cmd.exe','UnrealEditor.exe')})
+          $r=[ordered]@{state='CANCELLED_RACCONIA_COMMAND_ONLY_INSPECTED'
+            stoppedVerifiedCancelledRacconiaPids=$stopped
+            remainingEditors=@($left|ForEach-Object{[ordered]@{pid=$_.ProcessId;name=$_.Name;commandline=$_.CommandLine}})
+            mapsDeleted=$false;manualUnrealWindowsStopped=$false;assetsModified=$false}
+          $r|ConvertTo-Json -Depth 6|Set-Content (Join-Path $env:GITHUB_WORKSPACE 'CANCELLED_RACCONIA_EDITOR_RECOVERY.json') -Encoding UTF8
+          Write-Host ('SPECIFIC_CANCELLED_RACCONIA_UNREAL_PROCESSES_STOPPED='+$stopped.Count)
+          Write-Host ('OTHER_UNREAL_EDITOR_PROCESSES_REMAINING='+$left.Count)
+      - uses: actions/upload-artifact@v4
+        with: {name: STOP-ONLY-CANCELLED-RACCONIA-PROCESS, path: CANCELLED_RACCONIA_EDITOR_RECOVERY.json}
