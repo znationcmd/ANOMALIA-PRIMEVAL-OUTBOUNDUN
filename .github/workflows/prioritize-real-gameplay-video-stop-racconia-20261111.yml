@@ -1,0 +1,25 @@
+name: Priorite video ANOMALIA - interrompre session RACCONIA sans modifier les cartes
+on:
+  push:
+    branches:
+      - feature/real-skarvik-bmw-dog-gameplay-capture-20261111
+    paths:
+      - .github/workflows/prioritize-real-gameplay-video-stop-racconia-20261111.yml
+permissions:
+  contents: read
+# RACCONIA gameplay smoke is currently the sole running job in this
+# repository-wide Unreal host concurrency group. The user explicitly
+# requested that it stop so genuine gameplay video can take priority.
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: true
+jobs:
+  relinquish-racconia-run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Explicit video-first interruption (no map deletion or writes)
+        run: |
+          echo 'USER_PRIORITY=REAL_CITY_BMW_E39_SURVIVOR_GERMAN_SHEPHERD_MP4'
+          echo 'RACCONIA_TEMPORARY_PIE_RUN_CANCELLATION_REQUESTED=true'
+          echo 'NO_SAVED_MAPS_OR_ASSETS_MODIFIED=true'
