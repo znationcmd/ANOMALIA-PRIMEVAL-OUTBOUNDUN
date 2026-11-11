@@ -31,6 +31,7 @@ jobs:
               [DllImport("user32.dll")] public static extern bool GetClientRect(IntPtr h, out RECT r);
               [DllImport("user32.dll")] public static extern bool ClientToScreen(IntPtr h, ref POINT p);
               [DllImport("user32.dll")] public static extern bool IsWindowVisible(IntPtr h);
+              [DllImport("user32.dll")] public static extern IntPtr GetForegroundWindow();
               [DllImport("user32.dll")] public static extern bool PrintWindow(IntPtr h, IntPtr dc, uint flags);
               [StructLayout(LayoutKind.Sequential)] public struct POINT {public int X,Y;}
           }
@@ -54,7 +55,7 @@ jobs:
               Start-Sleep -Milliseconds 2000
             }
             if(!$ready){throw 'Actual game window not ready within 180 seconds'}
-            Start-Sleep -Seconds 12
+            Start-Sleep -Seconds 90
             $p.Refresh();$h=$p.MainWindowHandle
             if($h -eq [IntPtr]::Zero -or ![AnomaliaCaptureNative]::IsWindowVisible($h)){throw 'No visible native game window'}
             $rect=New-Object AnomaliaCaptureNative+RECT
@@ -67,8 +68,11 @@ jobs:
               if($p.HasExited){throw 'Game stopped during recording'}
               $bitmap=New-Object Drawing.Bitmap($w,$height)
               $g=[Drawing.Graphics]::FromImage($bitmap)
-              $dc=$g.GetHdc()
-              try{$ok=[AnomaliaCaptureNative]::PrintWindow($h,$dc,3)}finally{$g.ReleaseHdc($dc)}
+              if([AnomaliaCaptureNative]::GetForegroundWindow() -ne $h){throw 'Game window is obscured; refuse recording unrelated desktop content'}
+              $origin=New-Object AnomaliaCaptureNative+POINT
+              [AnomaliaCaptureNative]::ClientToScreen($h,[ref]$origin)|Out-Null
+              $g.CopyFromScreen($origin.X,$origin.Y,0,0,$bitmap.Size)
+              $ok=$true
               $g.Dispose()
               if(!$ok){$bitmap.Dispose();throw 'Native window capture was rejected'}
               $name=('frame_{0:D4}.png' -f $i)
