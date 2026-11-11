@@ -1,0 +1,37 @@
+name: ANOMALIA - inspect current main native rebuild progress and retained preparation logs
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-main-rebuild-diagnostic-20261111.yml']
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 3
+    steps:
+      - shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $env:RUNNER_TEMP ('main-rebuild-diagnostic-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('DIAGNOSTIC_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $repair=Join-Path $root 'Saved\PlayableRepair\43091376609'
+          foreach($name in @('prebuild.log','editor-stdout.log','editor-stderr.log','prepare.log','prepare.json')){
+            $path=Join-Path $repair $name
+            if(Test-Path $path){
+              Copy-Item $path (Join-Path $out $name)
+              Write-Host ('REPORT_FILE='+$name)
+              Get-Content $path -Tail 100|Write-Host
+            }
+          }
+          Get-Process -ErrorAction SilentlyContinue|Where-Object{$_.ProcessName -match 'Unreal|^cl$|^link$|^dotnet$|ShaderCompile'}|Select-Object ProcessName,Id,CPU,WorkingSet64|ConvertTo-Json|Write-Host
+          $cpp=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaGameMode.cpp'
+          Write-Host ('BODY_PATCH_PRESENT='+[IO.File]::ReadAllText($cpp).Contains('ANOMALIA_MAIN_PLAYER_VISIBLE_FALLBACK'))
+          Get-Item (Join-Path $root 'Binaries\Win64\UnrealEditor-AnomaliaPrimeval.dll')|Select-Object LastWriteTimeUtc,Length|ConvertTo-Json|Write-Host
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ANOMALIA-MAIN-REBUILD-DIAGNOSTIC
+          path: ${{ env.DIAGNOSTIC_OUT }}
+          if-no-files-found: warn
