@@ -1,0 +1,77 @@
+name: ANOMALIA - verify real city BMW E39 survivor and German shepherd for genuine gameplay video
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: ['.github/workflows/anomalia-real-gameplay-four-asset-preflight-20261111.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  genuine-four-asset-video-preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 7
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify actual 4 owned Unreal assets and available capture executables
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Expected actual isolated ANOMALIA stage unavailable'}
+          $map=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $module=Join-Path $stage 'Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          $content=Join-Path $stage 'Content'
+          $paths=[ordered]@{
+            actualCityMap=$map
+            actualNativeSurvivorModule=$module
+            GermanShepherdSkeletalMesh=(Join-Path $content 'German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset')
+            BMWReviewV1Body=(Join-Path $content 'Anomalia\BMWE39Review_v1\body\SM_body.uasset')
+            BMWReviewV5Body=(Join-Path $content 'Anomalia\BMWE39Review_v5\body\SM_body.uasset')
+            ModularSurvivorBody=(Join-Path $content 'Survival_Character\Meshes\Modular_Parts\SK_Survival_Character_Body.uasset')
+          }
+          $observed=[ordered]@{}
+          foreach($entry in $paths.GetEnumerator()){$observed[$entry.Key]=[ordered]@{exists=Test-Path -LiteralPath $entry.Value;path=$entry.Value}}
+          $bmwRoot=Join-Path $content 'Anomalia'
+          $bmwDirs=@()
+          if(Test-Path $bmwRoot){$bmwDirs=@(Get-ChildItem $bmwRoot -Directory -ErrorAction SilentlyContinue|Where-Object{$_.Name -match 'BMW|E39'}|ForEach-Object{$_.FullName})}
+          $survivor=(Join-Path $content 'Survival_Character')
+          $survivorFiles=if(Test-Path $survivor){@(Get-ChildItem -LiteralPath $survivor -Filter '*Body*.uasset' -Recurse -ErrorAction SilentlyContinue|Select-Object -First 10 -ExpandProperty FullName)}else{@()}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $ffmpeg=Get-Command ffmpeg -ErrorAction SilentlyContinue
+          $snapshot=[ordered]@{
+            state='REAL_FOUR_ASSET_VIDEO_CAPTURE_PREFLIGHT_READONLY'
+            project=$stage
+            expected=$observed
+            nativeSurvivorMeshCandidates=$survivorFiles
+            availableBMWAssetDirectories=$bmwDirs
+            actualEditorExists=Test-Path $editor
+            ffmpegExe=if($ffmpeg){$ffmpeg.Source}else{$null}
+            currentDiskFreeGiB=[math]::Round(([IO.DriveInfo]::new('C')).AvailableFreeSpace/1GB,2)
+            processConflict=@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count
+            originalWorldModified=$false
+            screenshotsCreated=0
+            actualVideoProduced=$false
+            marketingOrAIGeneratedClipsExcluded=$true
+          }
+          $out=Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_FOUR_ASSET_REAL_GAMEPLAY_PREFLIGHT.json'
+          $snapshot|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIA_ACTUAL_REAL_CITY_MAP='+$observed.actualCityMap.exists)
+          Write-Host ('ANOMALIA_ACTUAL_GERMAN_SHEPHERD='+$observed.GermanShepherdSkeletalMesh.exists)
+          Write-Host ('ANOMALIA_ACTUAL_BMW_E39_REVIEW_V1='+$observed.BMWReviewV1Body.exists)
+          Write-Host ('ANOMALIA_ACTUAL_BMW_E39_REVIEW_V5='+$observed.BMWReviewV5Body.exists)
+          Write-Host ('ANOMALIA_ACTUAL_EDITOR='+$snapshot.actualEditorExists)
+          Write-Host ('ANOMALIA_CAPTURE_FFMPEG='+[bool]$ffmpeg)
+          Write-Host ('ANOMALIA_REAL_VIDEO_READY='+($observed.actualCityMap.exists -and $observed.GermanShepherdSkeletalMesh.exists -and ($observed.BMWReviewV1Body.exists -or $observed.BMWReviewV5Body.exists) -and $snapshot.actualEditorExists))
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: REAL-GAMEPLAY-VIDEO-FOUR-ASSET-READINESS
+          path: ANOMALIA_FOUR_ASSET_REAL_GAMEPLAY_PREFLIGHT.json
+          if-no-files-found: warn
