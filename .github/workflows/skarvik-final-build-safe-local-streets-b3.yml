@@ -5,7 +5,7 @@ name: SKARVIK - third final coast village streets keep both previous batches
 # GitHub cloud snapshot of FINAL and seven islands preserved before any writes.
 on:
   push:
-    branches: [feature/skarvik-citysample-sm5-20261031]
+    branches: [feature/skarvik-citysample-sm5-20261031, feature/skarvik-real-native-alpha-20261101]
     paths: ['.github/workflows/skarvik-final-build-safe-local-streets-b3.yml']
   workflow_dispatch:
 permissions:

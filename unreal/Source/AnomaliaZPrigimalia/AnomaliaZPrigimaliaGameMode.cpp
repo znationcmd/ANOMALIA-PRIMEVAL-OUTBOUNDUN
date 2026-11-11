@@ -2,6 +2,11 @@
 #include "ReactiveWorld/AnomaliaZPrigimaliaWorldStateSubsystem.h"
 #include "AnomaliaZPrigimaliaItemEffectsComponent.h"
 #include "AnomaliaZPrigimaliaSurvivor.h"
+#include "AnomaliaZPrigimaliaDogCompanion.h"
+#include "Misc/PackageName.h"
+#include "CollisionQueryParams.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/StaticMesh.h"
 #include "AnomaliaZPrigimaliaPlayableProbe.h"
 #include "AnomaliaZPrigimaliaVisualReviewProbe.h"
 #include "AnomaliaZPrigimaliaSessionWidget.h"
@@ -41,6 +46,12 @@ AAnomaliaZPrigimaliaGameMode::AAnomaliaZPrigimaliaGameMode()
 void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
 {
     Super::InitGame(MapName, Options, ErrorMessage);
+    // In-world solo travel is different from a fresh launch. Persist this
+    // intent in this new GameMode instance before HandleStartingNewPlayer.
+    bStartStandaloneGameplayAfterTravel =
+        UGameplayStatics::ParseOption(Options,TEXT("AnomaliaZSoloStart"))==TEXT("1");
+    if(bStartStandaloneGameplayAfterTravel)
+        UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_GAMEPLAY_REQUESTED: %s"), *MapName);
     // URL option: ?AnomaliaZPrigimaliaServerId=rp-corse. Each ID gets an isolated Saved/Servers folder.
     const FString RequestedId = UGameplayStatics::ParseOption(Options, TEXT("AnomaliaZPrigimaliaServerId"));
     if (!RequestedId.IsEmpty())
@@ -54,7 +65,9 @@ void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FStrin
         else UE_LOG(LogTemp, Warning, TEXT("ANOMALIA: invalid server ID rejected"));
     }
     if (RequestedId.IsEmpty() && GetNetMode() == NM_Standalone)
-        ServerId = MapName.EndsWith(TEXT("ANOMALIA_Playable_v1")) ? TEXT("solo-playable-v1") : TEXT("solo-local");
+        ServerId = MapName.EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) ?
+            TEXT("skarvik-alpha-v1") :
+            MapName.EndsWith(TEXT("ANOMALIA_Playable_v1")) ? TEXT("solo-playable-v1") : TEXT("solo-local");
 #if WITH_DEV_AUTOMATION_TESTS && WITH_EDITOR
     // A process-only test scope prevents automated PIE from touching a real local profile.
     // This is not a client URL option and is restricted to this review map while automation runs.
@@ -249,7 +262,127 @@ void AAnomaliaZPrigimaliaGameMode::HandleStartingNewPlayer_Implementation(APlaye
     GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, NewPlayer]()
     {
         LoadPersistentPlayer(NewPlayer);
+        // World BeginPlay may occur before the player controller is ready.
+        // Open the real UE5 menu only on the actual local SKARVIK player.
+        if(IsValid(NewPlayer) && NewPlayer->IsLocalController() &&
+           GetNetMode()==NM_Standalone && GetWorld() &&
+           GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) &&
+           ServerId.StartsWith(TEXT("skarvik-")) && !bStartStandaloneGameplayAfterTravel)
+            UAnomaliaZPrigimaliaSessionWidget::Open(NewPlayer,true);
+        else if(IsValid(NewPlayer) && NewPlayer->IsLocalController() && bStartStandaloneGameplayAfterTravel)
+            UE_LOG(LogTemp, Log, TEXT("ANOMALIAZ_SOLO_TRAVEL_STARTUP_MENU_SKIPPED"));
     }));
+    // Only the real native SKARVIK alpha creates a locally owned companion
+    // and driveable test car. Never manufacture invisible actor placeholders.
+    if(GetNetMode()==NM_Standalone && GetWorld() &&
+       GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) &&
+       ServerId.StartsWith(TEXT("skarvik-")))
+    {
+        TWeakObjectPtr<APlayerController> WeakPlayer=NewPlayer;
+        FTimerHandle CompanionDelay;
+        GetWorldTimerManager().SetTimer(CompanionDelay,
+            FTimerDelegate::CreateWeakLambda(this,[this,WeakPlayer]()
+            {
+                if(WeakPlayer.IsValid()) TrySpawnSkarvikAlphaCompanions(WeakPlayer.Get());
+            }),2.0f,false);
+    }
+}
+
+void AAnomaliaZPrigimaliaGameMode::TrySpawnSkarvikAlphaCompanions(APlayerController* PC)
+{
+    if(!HasAuthority() || !PC || !GetWorld() || GetNetMode()!=NM_Standalone ||
+       !GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1")) ||
+       !ServerId.StartsWith(TEXT("skarvik-")))return;
+    auto* Survivor=Cast<AAnomaliaZPrigimaliaSurvivor>(PC->GetPawn());
+    if(!Survivor) {UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_NO_POSSESSED_SURVIVOR"));return;}
+
+    // Terrain/road must actually collide at the player's current location.
+    // If World Partition hasn't streamed in, omit spawn rather than create
+    // a dog or vehicle that drops through the world.
+    const FVector Origin=Survivor->GetActorLocation();
+    auto GroundAt=[this](const FVector& Requested,FVector& Out)->bool
+    {
+        FHitResult Hit;
+        FCollisionQueryParams Params(SCENE_QUERY_STAT(SkarvikAlphaGround),false);
+        if(!GetWorld()->LineTraceSingleByChannel(Hit,Requested+FVector(0,0,450),
+            Requested-FVector(0,0,1250),ECC_Visibility,Params))return false;
+        if(Hit.ImpactNormal.Z < .72f)return false;
+        Out=Hit.ImpactPoint+FVector(0,0,65);
+        return true;
+    };
+    FVector DogLocation;
+    if(FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Idle_Playing_v01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Walk_Loop_v01")) &&
+       FPackageName::DoesPackageExist(TEXT("/Game/German_Shepherd_3D_Model/Animations/A_type1_Run_Loop_v01")) &&
+       GroundAt(Origin+Survivor->GetActorRightVector()*190.f,DogLocation))
+    {
+        bool bAlreadyHasDog=false;
+        for(TActorIterator<AAnomaliaZPrigimaliaDogCompanion> It(GetWorld());It;++It)
+            if(It->SurvivorOwner==Survivor){bAlreadyHasDog=true;break;}
+        if(!bAlreadyHasDog)
+        {
+            FActorSpawnParameters Params;
+            Params.SpawnCollisionHandlingOverride=ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding;
+            auto* Dog=GetWorld()->SpawnActor<AAnomaliaZPrigimaliaDogCompanion>(
+                AAnomaliaZPrigimaliaDogCompanion::StaticClass(),
+                DogLocation,Survivor->GetActorRotation(),Params);
+            if(Dog && Dog->GetMesh() && Dog->GetMesh()->GetSkeletalMeshAsset() &&
+               Dog->AssignSurvivor(Survivor))
+            {
+                Dog->RequestCommand(EAnomaliaZPrigimaliaDogCommand::Follow);
+                UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_REAL_GERMAN_SHEPHERD_SPAWNED"));
+            }
+            else if(Dog)Dog->Destroy();
+        }
+    }
+    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_DOG_NOT_SPAWNED_MISSING_REAL_ASSETS_OR_GROUND"));
+
+    // Bind the genuine user-owned BMW E39 asset, not the invisible generic
+    // car pawn. The default vehicle controller already owns enter/exit,
+    // steering, camera and fuel logic; this does not assert Chaos physics.
+    const TCHAR* GenuineModels[]={
+        TEXT("/Game/Anomalia/NamedVehicles1/bmw_e39/SM_bmw_e39.SM_bmw_e39"),
+        TEXT("/Game/Anomalia/NamedVehicles2/bmw_e39/SM_bmw_e39.SM_bmw_e39")
+    };
+    UStaticMesh* GenuineE39=nullptr;
+    for(const TCHAR* ModelPath:GenuineModels)
+    {
+        GenuineE39=LoadObject<UStaticMesh>(nullptr,ModelPath,nullptr,LOAD_NoWarn);
+        if(GenuineE39)break;
+    }
+    FVector CarLocation;
+    if(GenuineE39 && GroundAt(Origin+Survivor->GetActorForwardVector()*520.f,CarLocation))
+    {
+        CarLocation.Z+=105.f;
+        bool bAlreadyHasCar=false;
+        for(TActorIterator<AAnomaliaZPrigimaliaVehiclePawn> It(GetWorld());It;++It)
+        {
+            if(It->VehicleId==FName(TEXT("car")) &&
+               FVector::DistSquared(It->GetActorLocation(),CarLocation)<FMath::Square(1700.f))
+            { bAlreadyHasCar=true;break; }
+        }
+        if(!bAlreadyHasCar)
+        {
+            auto* Vehicle=SpawnServerVehicle(FName(TEXT("car")),
+                FTransform(Survivor->GetActorRotation(),CarLocation));
+            if(Vehicle)
+            {
+                Vehicle->PresentationMeshOverride=GenuineE39;
+                Vehicle->ConfigureVehicle(FName(TEXT("car")));
+                if(Vehicle->Body && Vehicle->Body->GetStaticMesh()==GenuineE39)
+                {
+                    UE_LOG(LogTemp,Display,TEXT("SKARVIK_ALPHA_REAL_BMW_E39_CAR_MESH_AND_VEHICLE_PAWN_READY"));
+                }
+                else
+                {
+                    Vehicle->Destroy();
+                    UE_LOG(LogTemp,Error,TEXT("SKARVIK_ALPHA_E39_BINDING_FAILED"));
+                }
+            }
+        }
+    }
+    else UE_LOG(LogTemp,Warning,TEXT("SKARVIK_ALPHA_E39_NOT_SPAWNED_MISSING_GENUINE_MESH_OR_GROUND"));
 }
 
 void AAnomaliaZPrigimaliaGameMode::LoadPersistentPlayer(APlayerController* PlayerController)
@@ -525,7 +658,16 @@ void AAnomaliaZPrigimaliaGameMode::BeginPlay()
             FParse::Value(FCommandLine::Get(),TEXT("AnomaliaZPrigimaliaVisualReview="),ProbeFile) && !ProbeFile.IsEmpty())
             GetWorld()->SpawnActor<AAnomaliaZPrigimaliaVisualReviewProbe>();
 #endif
-        if(GetNetMode()==NM_Standalone && GetWorld()->GetMapName().EndsWith(TEXT("ANOMALIA_Playable_v1")) && !ServerId.StartsWith(TEXT("playable-smoke-")))
+        // The native SKARVIK alpha must open the SAME real runtime menu as the
+        // existing playable map, not a blank editor standalone viewport.
+        // Dedicated servers and automated probes keep their own behavior.
+        const FString NativeLevelName=GetWorld()->GetMapName();
+        const bool bSkarvikAlphaMap=NativeLevelName.EndsWith(TEXT("PRIGIMALIA_SKARVIK_FINAL_v1"));
+        // The SKARVIK menu starts only AFTER a real local PlayerController
+        // is present (HandleStartingNewPlayer), not in world BeginPlay.
+        const bool bPlayableMenuMap=NativeLevelName.EndsWith(TEXT("ANOMALIA_Playable_v1"));
+        if(GetNetMode()==NM_Standalone && bPlayableMenuMap && !bStartStandaloneGameplayAfterTravel &&
+           !ServerId.StartsWith(TEXT("playable-smoke-")) && !ServerId.StartsWith(TEXT("visual-smoke-")))
             GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this,[this]()
             {
                 auto* PC=GetWorld()->GetFirstPlayerController();

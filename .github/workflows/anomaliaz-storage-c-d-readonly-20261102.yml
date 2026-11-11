@@ -1,0 +1,42 @@
+name: ANOMALIAZ - diagnostic SSD C D Drive H avant reprise
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-storage-c-d-readonly-20261102.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  readonly-storage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Check real SSD free space and safely identify disposable build caches (NO DELETIONS)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Write-Host 'ANOMALIAZ_DIAGNOSTIC_READ_ONLY=true'
+          foreach($drive in @('C','D','H')){
+            try{
+              $d=[IO.DriveInfo]::new($drive)
+              Write-Host ('ANOMALIAZ_DRIVE_'+$drive+'_FREE_GIB='+[math]::Round($d.AvailableFreeSpace/1GB,2))
+              Write-Host ('ANOMALIAZ_DRIVE_'+$drive+'_SIZE_GIB='+[math]::Round($d.TotalSize/1GB,2))
+            }catch{Write-Host ('ANOMALIAZ_DRIVE_'+$drive+'_ERROR='+$_.Exception.Message)}
+          }
+          Write-Host ('ANOMALIAZ_CLOUD_MARKER='+[bool](Test-Path -LiteralPath 'H:\Mon Drive\ANOMALIAZ\03_Rapports_Sauvegardes\AUTORISATION_SAUVEGARDE_2TO_ANOMALIAZ_20261102'))
+          Write-Host ('ANOMALIAZ_UNREAL_RUNNING='+[bool](Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia -ErrorAction SilentlyContinue))
+          $paths=@(
+            'D:\ANOMALIA\FabImports\CitySample\DerivedDataCache',
+            'D:\ANOMALIA\FabImports\CitySample\Intermediate',
+            'D:\ANOMALIA\FabImports\CitySample\Saved',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Saved'
+          )
+          foreach($path in $paths){
+            if(!(Test-Path -LiteralPath $path -PathType Container)){continue}
+            [long]$bytes=0;[long]$count=0
+            Get-ChildItem -LiteralPath $path -Recurse -File -Force -ErrorAction SilentlyContinue | ForEach-Object {if(!(($_.Attributes -band [IO.FileAttributes]::ReparsePoint))){$bytes += $_.Length;$count++}}
+            Write-Host ('ANOMALIAZ_CACHE_CANDIDATE='+$path+' FILES='+$count+' GIB='+[math]::Round($bytes/1GB,2))
+          }
+          Write-Host 'ANOMALIAZ_DIAGNOSTIC_COMPLETE_NO_FILES_CHANGED=true'

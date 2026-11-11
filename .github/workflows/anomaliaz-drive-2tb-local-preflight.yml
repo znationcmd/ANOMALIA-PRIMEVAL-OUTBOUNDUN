@@ -1,0 +1,53 @@
+name: ANOMALIAZ - 2TB Drive H preflight and safe source size audit
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-drive-2tb-local-preflight.yml']
+  workflow_dispatch:
+permissions: {contents: read}
+jobs:
+  audit-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Confirm 2TB Drive H mapping and measure native projects without changing data
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Write-Host 'ANOMALIAZ_2TB_AUDIT_READ_ONLY=TRUE'
+          foreach($letter in @('C','D','E','G','H')){
+            $drv=Get-CimInstance Win32_LogicalDisk -Filter ("DeviceID='"+$letter+":'") -ErrorAction SilentlyContinue
+            if($drv){
+              Write-Host ('DRIVE '+$letter+' type='+$drv.DriveType+' filesystem='+$drv.FileSystem+' free_GiB='+[math]::Round($drv.FreeSpace/1GB,2)+' capacity_GiB='+[math]::Round($drv.Size/1GB,2))
+            }
+          }
+          foreach($p in @('H:\','H:\Mon Drive','H:\Mon Drive\ANOMALIAZ','H:\Mon Drive\ANOMALIAZ\01_Cartes_UE5','H:\Mon Drive\ANOMALIAZ\02_Modeles_3D','H:\Mon Drive\ANOMALIAZ\03_Rapports_Sauvegardes')){
+            $exists=Test-Path -LiteralPath $p -PathType Container
+            Write-Host ('CLOUD_PATH_EXISTS '+$p+' '+$exists)
+          }
+          $sources=@(
+            'D:\ANOMALIA\unreal\Content\Maps',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\Maps',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalActors__',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content\__ExternalObjects__',
+            'D:\ANOMALIA\FabImports\CitySample',
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\sketchfab',
+            'D:\ANOMALIA\unreal\Content'
+          )
+          foreach($p in $sources){
+            $exists=Test-Path -LiteralPath $p -PathType Container
+            Write-Host ('SOURCE_EXISTS '+$p+' '+$exists)
+            if(!$exists){continue}
+            $root=Get-Item -LiteralPath $p -Force
+            if($root.Attributes -band [IO.FileAttributes]::ReparsePoint){ Write-Host ('SOURCE_IS_REPARSE_POINT '+$p);continue}
+            [long]$size=0;[long]$count=0;[long]$large=0
+            foreach($f in (Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction SilentlyContinue)){
+              if($f.Attributes -band [IO.FileAttributes]::ReparsePoint){continue}
+              $size += [long]$f.Length
+              $count++
+              if($f.Length -gt 2GB){$large++}
+            }
+            Write-Host ('SOURCE_SUMMARY '+$p+' files='+$count+' size_GiB='+[math]::Round($size/1GB,2)+' above_2GiB='+$large)
+          }
+          Write-Host 'ANOMALIAZ_2TB_PREFLIGHT_FINISHED=TRUE'

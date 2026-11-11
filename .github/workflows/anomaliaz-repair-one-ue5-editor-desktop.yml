@@ -1,0 +1,41 @@
+name: ANOMALIAZ - verified single 14-map Unreal Editor desktop access, archive obsolete links
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-repair-one-ue5-editor-desktop.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  single-editor-shortcut:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Remove obsolete launch links from desktop by safely archiving, use actual SKARVIK UE5 editor and game brand
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\repair-anomaliaz-14-native-map-desktop-editor.ps1'
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-correct-desktop-editor.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Desktop correct editor was not verified; inspect report'}
+          $result=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($result.state -ne 'ONE_CORRECT_UE5_EDITOR_WITH_14_REAL_MAPS_OLD_LINKS_ARCHIVED_NO_FAKE_PUBLIC_BETA'){
+            throw 'Main native editor desktop receipt not valid'
+          }
+          Write-Host 'ANOMALIAZ_REAL_EDITOR_FOR_ALL_IMPORTED_MAPS_SHORTCUT_CREATED=true'
+          Write-Host 'ANOMALIAZ_OLD_WRONG_LINKS_ARCHIVED_NOT_DELETED=true'
+          Write-Host 'ANOMALIAZ_PUBLIC_GAME_BETA_STILL_REQUIRES_PACKAGING_TESTS=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-one-editor-desktop-link-originals-preserved
+          path: ${{ runner.temp }}/anomaliaz-correct-desktop-editor.json
+          if-no-files-found: warn

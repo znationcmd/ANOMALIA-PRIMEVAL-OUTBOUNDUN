@@ -1,0 +1,114 @@
+name: ANOMALIAZ - move 196 GiB main D original into one central folder (metadata-only)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-complete-d-central-project-move.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  organize-physical-master:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Finalize single real D ANOMALIAZ workspace with same-volume rename and old-path junction
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $base='D:\ANOMALIAZ'
+          $old='D:\ANOMALIA'
+          $new=Join-Path $base '01_Projet_Principal'
+          $expected='ANOMALIAZ_SAFE_CONSOLIDATION_V1_20261101'
+          $marker=Join-Path $base '.anomaliaz-one-workspace-marker'
+          $report=[ordered]@{
+            state='PREFLIGHT'
+            masterMovedIntoCentral=$false
+            originalDPathRemainsCompatible=$false
+            sourceFilesCopiedOrDeleted=$false
+            originalSKARVIK_C_AssetsChanged=$false
+            freeDBefore=[math]::Round(([IO.DriveInfo]::new('D')).AvailableFreeSpace/1GB,3)
+            freeDAfter=0
+            error=$null
+          }
+          try{
+            if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne $expected){
+              throw 'Untrusted central workspace'
+            }
+            if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval,UnrealBuildTool,ShaderCompileWorker,MSBuild -ErrorAction SilentlyContinue).Count){
+              throw 'UE5 busy: no move of active master'
+            }
+            $project='unreal\AnomaliaPrimeval.uproject'
+            $city='FabImports\CitySample\CitySample.uproject'
+            if(!(Test-Path -LiteralPath (Join-Path $old $project))){
+              throw 'Original D master Unreal project not accessible'
+            }
+            if(!(Test-Path -LiteralPath (Join-Path $old $city))){
+              throw 'Original FabImports City Sample not accessible'
+            }
+            if(!(Test-Path -LiteralPath (Join-Path $old 'sketchfab'))){throw 'Original sketchfab root missing'}
+            $oldItem=Get-Item -LiteralPath $old -Force
+            if(($oldItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+              if(!(Test-Path -LiteralPath (Join-Path $new $project))){throw 'Existing D master junction points to missing content'}
+              $report.masterMovedIntoCentral=$true
+              $report.originalDPathRemainsCompatible=$true
+              $report.state='ALREADY_CENTRALIZED_WITH_COMPATIBLE_JUNCTION'
+            }else{
+              $alias=Get-Item -LiteralPath $new -Force -ErrorAction Stop
+              if(($alias.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0){throw 'Central master alias is a real folder: refuse overwrite'}
+              $targets=@($alias.Target)
+              if($targets.Count -eq 0 -or ($targets -join ';') -notmatch '(?i)^D:\\ANOMALIA\\?$'){
+                throw ('Central master alias does not refer to original D:\ANOMALIA: '+($targets -join ';'))
+              }
+              $deletedAlias=$false
+              try{
+                & cmd.exe /c ('rmdir "'+$new+'"') | Out-Null
+                if($LASTEXITCODE -ne 0 -or (Test-Path -LiteralPath $new)){throw 'Could not remove only existing central junction'}
+                $deletedAlias=$true
+                # Same NTFS D: directory rename. NO file copy and NO deletion.
+                Move-Item -LiteralPath $old -Destination $new -ErrorAction Stop
+                if(!(Test-Path -LiteralPath (Join-Path $new $project))){throw 'Moved UE master not found'}
+                if(!(Test-Path -LiteralPath (Join-Path $new $city))){throw 'Moved FabImports City Sample not found'}
+                if(!(Test-Path -LiteralPath (Join-Path $new 'sketchfab'))){throw 'Moved sketchfab files not found'}
+                New-Item -ItemType Junction -Path $old -Target $new -ErrorAction Stop|Out-Null
+                if(!(Test-Path -LiteralPath (Join-Path $old $project)) -or
+                   (((Get-Item -LiteralPath $old -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0)){
+                  throw 'Original D path compatibility junction failed verification'
+                }
+                $report.masterMovedIntoCentral=$true
+                $report.originalDPathRemainsCompatible=$true
+                $report.state='MAIN_196_GB_PROJECT_PHYSICALLY_CENTRALIZED_WITH_D_ORIGINAL_COMPATIBLE'
+              }catch{
+                # Preserve data where it is; restore alias when possible, never delete.
+                if(!(Test-Path -LiteralPath $old) -and (Test-Path -LiteralPath (Join-Path $new $project))){
+                  try{New-Item -ItemType Junction -Path $old -Target $new -ErrorAction Stop|Out-Null}catch{}
+                }
+                if($deletedAlias -and !(Test-Path -LiteralPath $new) -and (Test-Path -LiteralPath $old)){
+                  try{New-Item -ItemType Junction -Path $new -Target $old -ErrorAction Stop|Out-Null}catch{}
+                }
+                throw
+              }
+            }
+          }catch{
+            $report.state='MOVED_OR_BLOCKED_REVIEW_REQUIRED'
+            $report.error=$_.Exception.Message
+          }finally{
+            $report.freeDAfter=[math]::Round(([IO.DriveInfo]::new('D')).AvailableFreeSpace/1GB,3)
+            $path=Join-Path $env:RUNNER_TEMP 'anomaliaz-one-physical-project-report.json'
+            ($report|ConvertTo-Json -Depth 6)|Set-Content -LiteralPath $path -Encoding UTF8
+            Write-Host ('ANOMALIAZ_REAL_ONE_PHYSICAL_D_MASTER='+$report.state)
+            Write-Host ('ANOMALIAZ_RELOCATED_BY_NTFS_RENAME='+$report.masterMovedIntoCentral)
+            Write-Host ('ANOMALIAZ_OLD_D_PATH_REMAINS_AVAILABLE='+$report.originalDPathRemainsCompatible)
+            Write-Host 'ANOMALIAZ_D_MASTER_ASSETS_NOT_DELETED=true'
+            Write-Host ('ANOMALIAZ_D_FREE_BEFORE_GIB='+$report.freeDBefore)
+            Write-Host ('ANOMALIAZ_D_FREE_AFTER_GIB='+$report.freeDAfter)
+            if($report.error){Write-Host ('ANOMALIAZ_MIGRATION_BLOCKED='+$report.error);throw $report.error}
+          }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-one-physical-D-project-folder-report
+          path: ${{ runner.temp }}/anomaliaz-one-physical-project-report.json
+          if-no-files-found: warn

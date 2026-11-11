@@ -1,0 +1,61 @@
+# Verified 2026-11-01 read-only map preflight: 14/14 real .umaps, only 0.208 GiB external actors to merge.
+name: ANOMALIAZ - import genuine 9 existing UE5 maps into original 7-island SKARVIK project
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-import-14-real-native-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  # Reserved merge queue: unrelated GUI/editor workflows must not cancel map import.
+  # Windows has one self-hosted anomalia-ue5 runner; script also checks active UE processes.
+  group: anomaliaz-import-original-14-map-queue
+  cancel-in-progress: false
+jobs:
+  import-real-native-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Audit and import nine original World Partition maps with actors into existing five map project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\import-nine-authentic-maps-into-skarvik-native.ps1'
+          $report=Join-Path $env:RUNNER_TEMP 'anomaliaz-existing-14-maps-import.json'
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Native map import aborted with rollback; see report'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'FOURTEEN_GENUINE_UMAP_PACKAGES_STAGED_IN_SINGLE_REAL_UE5_PROJECT_FALC_MISSING'){throw 'Not all 14 native worlds staged'}
+          if(@($r.worlds).Count -ne 9 -or @($r.worlds|Where-Object {$_.state -notlike '*HASH_VERIFIED*'}).Count){
+            throw 'Import receipt missing nine verified original native map packages'
+          }
+          Write-Host 'ANOMALIAZ_FOURTEEN_NATIVE_MAP_PACKAGES_IN_ONE_PROJECT=true'
+          Write-Host 'ANOMALIAZ_FALC_26_5KM_ORIGINAL_HEIGHTMAP_SOURCE_MISSING=true'
+          Write-Host ('ANOMALIAZ_STAGE_REAL_MAPS_IMPORT_C_FREE_GIB='+$r.cFreeGiBAfter)
+      - name: Replace old incorrect UE desktop links with ONE verified native 14-map Editor launcher
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\repair-anomaliaz-14-native-map-desktop-editor.ps1'
+          $report=Join-Path $env:GITHUB_WORKSPACE 'anomaliaz-14-map-desktop-shortcut.json'
+          if(!(Test-Path -LiteralPath $script)){throw 'Safe desktop repair script missing'}
+          & $script -ReportPath $report
+          if($LASTEXITCODE -ne 0){throw 'Desktop shortcut repair not verified; original maps remain imported and old links preserved'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'ONE_CORRECT_UE5_EDITOR_WITH_14_REAL_MAPS_OLD_LINKS_ARCHIVED_NO_FAKE_PUBLIC_BETA'){
+            throw 'New native 14-map editor shortcut has not been verified'
+          }
+          Write-Host 'ANOMALIAZ_SINGLE_REAL_14_MAP_EDITOR_DESKTOP_SHORTCUT_VERIFIED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-14-authentic-maps-in-one-unreal-native-world-project
+          path: |
+            ${{ runner.temp }}/anomaliaz-existing-14-maps-import.json
+            anomaliaz-14-map-desktop-shortcut.json
+          if-no-files-found: warn

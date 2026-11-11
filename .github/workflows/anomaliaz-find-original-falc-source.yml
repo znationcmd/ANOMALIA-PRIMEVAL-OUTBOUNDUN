@@ -1,0 +1,56 @@
+name: ANOMALIAZ - find original FALC ZIP and 2017 RAW16 on Windows (read only)
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-find-original-falc-source.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomaliaz-falc-source-discovery
+  cancel-in-progress: false
+jobs:
+  locate-falc-original:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Locate original exact FALC topography zip and RAW16 in safe likely folders
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $names=@('FALC_CARTE_10_REFERENCE_ET_HEIGHTMAP_26_5KM.zip','FALC_26_5KM_MASTER_2017.r16','FALC_REFERENCE_ORIGINALE.jpeg','FALC_x00_y00.r16')
+          $dirs=New-Object 'System.Collections.Generic.List[string]'
+          foreach($p in @('D:\ANOMALIAZ','D:\ANOMALIA','D:\Downloads','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555','C:\Users\Public\Downloads',
+              (Join-Path $env:USERPROFILE 'Downloads'),
+              (Join-Path $env:USERPROFILE 'Desktop'),
+              (Join-Path $env:USERPROFILE 'Documents'))){
+            if(Test-Path -LiteralPath $p -PathType Container){$dirs.Add($p)}
+          }
+          foreach($user in (Get-ChildItem 'C:\Users' -Directory -ErrorAction SilentlyContinue)){
+            foreach($sub in @('Downloads','Desktop','OneDrive\Downloads','OneDrive\Desktop')){
+              $p=Join-Path $user.FullName $sub
+              if((Test-Path -LiteralPath $p -PathType Container) -and (!$dirs.Contains($p))){$dirs.Add($p)}
+            }
+          }
+          $found=@();$visited=New-Object 'System.Collections.Generic.HashSet[string]'
+          foreach($dir in $dirs){
+            # Refuse junction recursion; only actual original files count.
+            if((([IO.File]::GetAttributes($dir)) -band [IO.FileAttributes]::ReparsePoint) -ne 0){continue}
+            foreach($file in (Get-ChildItem -LiteralPath $dir -File -Recurse -ErrorAction SilentlyContinue|
+                Where-Object {$names -contains $_.Name})){
+              if($visited.Add($file.FullName)){
+                $found+=([ordered]@{path=$file.FullName;name=$file.Name;bytes=$file.Length;sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash})
+                Write-Host ('ANOMALIAZ_FALC_ORIGINAL_SOURCE_FOUND='+$file.FullName+' SIZE='+$file.Length)
+              }
+            }
+          }
+          $out=Join-Path $env:RUNNER_TEMP 'anomaliaz-falc-original-found-on-windows.json'
+          [ordered]@{state='FALC_ORIGINAL_READONLY_DISK_SEARCH';files=$found;names=$names;directoryRootsChecked=$dirs;sourceModified=$false}|ConvertTo-Json -Depth 7 | Set-Content $out -Encoding UTF8
+          Write-Host ('ANOMALIAZ_ORIGINAL_FALC_SOURCE_COUNT='+$found.Count)
+          Write-Host 'ANOMALIAZ_FALC_SOURCE_LOOKUP_READ_ONLY=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-falc-original-windows-source-search
+          path: ${{ runner.temp }}/anomaliaz-falc-original-found-on-windows.json
+          if-no-files-found: warn

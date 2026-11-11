@@ -1,0 +1,31 @@
+name: ANOMALIAZ - unblock full continuous 2TB backup
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-unblock-continuous-backup.yml']
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+jobs:
+  cancel-only-obsolete-batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel old small-batch run so queued full transfer can start
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          old_run=41447463257
+          status=$(gh api "repos/$repo/actions/runs/$old_run" --jq '.status')
+          echo "Old backup job status: $status"
+          if [ "$status" = "in_progress" ] || [ "$status" = "queued" ] || [ "$status" = "pending" ]; then
+            gh api -X POST "repos/$repo/actions/runs/$old_run/cancel"
+            echo "Cancel request sent only for obsolete batch $old_run"
+          else
+            echo "Old run already finished; no cancellation needed"
+          fi
+          echo "Queued full continuous backup: https://github.com/$repo/actions/runs/41449956148"

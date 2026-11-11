@@ -1,0 +1,79 @@
+name: ANOMALIAZ - measure authentic remaining maps and locate original FALC resources safely
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/anomaliaz-15-map-source-size-and-falc-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit-content:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Check nine genuine migration worlds, WP actor packages, C capacity, locate FALC without modifying originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $source='D:\ANOMALIAZ\02_Projet_Migration\unreal'
+          if((Get-Content (Join-Path $stage '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555'){throw 'Wrong real seven-island stage'}
+          if(!(Test-Path (Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Real SKARVIK final world missing'}
+          $names=@('ANOMALIA_Inhabited_v2','PRIGIMALIA_KARSKOV','PRIGIMALIA_VORGRAD','PRIGIMALIA_NEMORIS','PRIGIMALIA_DRAKHEIM','PRIGIMALIA_SOLYNACALYRA','PRIGIMALIA_NEXAVARKHOS','PRIGIMALIA_CHERNASKALUXRIA','PRIGIMALIA_KOLCHIEM_ORIGINS')
+          function Probe([string]$path){
+            if(!(Test-Path -LiteralPath $path)){return [ordered]@{exists=$false;files=0;bytes=0;isLink=$false}}
+            $file=Get-Item -LiteralPath $path -Force
+            if(($file.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+              return [ordered]@{exists=$true;files=0;bytes=0;isLink=$true}
+            }
+            if(!$file.PSIsContainer){return [ordered]@{exists=$true;files=1;bytes=$file.Length;isLink=$false}}
+            [long]$bytes=0; $count=0
+            foreach($f in (Get-ChildItem -LiteralPath $path -File -Recurse -ErrorAction Stop)){$count++;$bytes+=[long]$f.Length}
+            return [ordered]@{exists=$true;files=$count;bytes=$bytes;isLink=$false}
+          }
+          $entry=@()
+          foreach($name in $names){
+            $f=Join-Path $source ('Content\Maps\'+$name+'.umap')
+            $oldDir=Join-Path $source ('Content\__ExternalActors__\Maps\'+$name)
+            $oldObj=Join-Path $source ('Content\__ExternalObjects__\Maps\'+$name)
+            $new=Join-Path $stage ('Content\Maps\'+$name+'.umap')
+            $map=Probe $f;$actors=Probe $oldDir;$objs=Probe $oldObj
+            $entry+=([ordered]@{world=$name;sourceMap=$map;externalActors=$actors;externalObjects=$objs;alreadyStaged=(Test-Path $new)})
+            Write-Host ('ANOMALIAZ_UE5_WORLD_SOURCE='+$name+' map='+$map.exists+' externalActors='+$actors.files+' externalMiB='+([math]::Round($actors.bytes/1MB,1))+' alreadyStage='+(Test-Path $new))
+          }
+          $candidateFalcPaths=@()
+          $scan=@(
+            (Join-Path $stage 'Content\Maps'),
+            (Join-Path $stage 'SourceAssets'),
+            'D:\ANOMALIAZ\01_Projet_Principal\unreal\Content\Maps',
+            'D:\ANOMALIAZ\01_Projet_Principal\unreal\SourceAssets',
+            (Join-Path $source 'Content\Maps'),
+            (Join-Path $source 'SourceAssets'),
+            (Join-Path $source 'Saved')
+          )
+          foreach($folder in $scan){
+            if(!(Test-Path -LiteralPath $folder -PathType Container)){continue}
+            foreach($file in (Get-ChildItem -LiteralPath $folder -Recurse -File -ErrorAction SilentlyContinue)){
+              if($file.Name -match '(?i)F[._-]?A[._-]?L[._-]?C|FALC'){
+                $candidateFalcPaths+=([ordered]@{sourceRoot=$folder;name=$file.Name;relativePath=$file.FullName.Substring($folder.Length).TrimStart([char]'\');bytes=$file.Length})
+                if($candidateFalcPaths.Count -ge 40){break}
+              }
+            }
+          }
+          $c=[IO.DriveInfo]::new('C');$d=[IO.DriveInfo]::new('D')
+          $report=[ordered]@{state='REAL_EXISTING_15_MAP_SOURCE_PROBE_READONLY';worlds=$entry;falcCandidateFiles=$candidateFalcPaths;CFreeGiB=[math]::Round($c.AvailableFreeSpace/1GB,2);DFreeGiB=[math]::Round($d.AvailableFreeSpace/1GB,2);deletedOrCopiedFiles=$false}
+          $out=Join-Path $env:RUNNER_TEMP 'anomaliaz-15-map-native-sources-falc.json'
+          ($report|ConvertTo-Json -Depth 8)|Set-Content -LiteralPath $out -Encoding UTF8
+          Write-Host ('ANOMALIAZ_FALC_CANDIDATE_FILES_FOUND='+$candidateFalcPaths.Count)
+          foreach($item in $candidateFalcPaths){Write-Host ('ANOMALIAZ_FALC_REAL_FILE='+$item.name+' in '+$item.sourceRoot)}
+          Write-Host ('ANOMALIAZ_CURRENT_C_FREE_GIB='+$report.CFreeGiB)
+          Write-Host 'ANOMALIAZ_SOURCE_ASSETS_PRESERVED=true'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomaliaz-nine-existing-native-worlds-and-falc-source-evidence
+          path: ${{ runner.temp }}/anomaliaz-15-map-native-sources-falc.json
+          if-no-files-found: warn

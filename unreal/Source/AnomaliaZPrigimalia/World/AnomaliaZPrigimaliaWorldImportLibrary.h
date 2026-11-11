@@ -47,6 +47,12 @@ public:
  static AActor* CreateNamedWorldLandscape(const FString& MapIdentifier);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double NamedWorldHeight(const FString& MapIdentifier,double EastMeters,double NorthMeters);
+ /** Import the USER'S ORIGINAL F.A.L.C 26.5km / 2017x2017 RAW16 into its own
+     NEW World Partition landscape. Editor-only; exact source and project path are
+     guarded in both this C++ implementation and the Python authoring script.
+     Never modifies SKARVIK or any of the 14 existing UE worlds. */
+ UFUNCTION(BlueprintCallable, Category="ANOMALIA|World")
+ static AActor* CreateFalcRaw16Landscape(const FString& OriginalRaw16Path);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")
  static double InhabitedArchipelagoHeight(double EastMeters, double NorthMeters);
  UFUNCTION(BlueprintPure, Category="ANOMALIA|World")

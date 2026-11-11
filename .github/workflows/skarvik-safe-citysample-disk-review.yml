@@ -1,0 +1,91 @@
+name: ANOMALIAZ - audit storage and City Sample dependencies BEFORE deleting anything
+on:
+  push:
+    branches: [feature/skarvik-real-native-alpha-20261101]
+    paths: ['.github/workflows/skarvik-safe-citysample-disk-review.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Read-only City Sample originals, staged dependency copy and Windows cache sizes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $marker=Join-Path $stage '.skarvik-ci-stage-marker'
+          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Original stage marker absent'}
+          $original='D:\ANOMALIA\FabImports\CitySample'
+          $src=Join-Path $original 'Content'
+          $dst=Join-Path $stage 'Content'
+          function Measure-SafeDir([string]$folder){
+            if(!(Test-Path -LiteralPath $folder -PathType Container)){return [ordered]@{exists=$false;files=0;GiB=0;isJunction=$false}}
+            $attr=[IO.File]::GetAttributes($folder)
+            if(($attr -band [IO.FileAttributes]::ReparsePoint) -ne 0){
+              return [ordered]@{exists=$true;files=0;GiB=$null;isJunction=$true}
+            }
+            [long]$bytes=0;$count=0
+            foreach($file in (Get-ChildItem -LiteralPath $folder -File -Recurse -Force -ErrorAction Stop)){
+              $bytes+=[long]$file.Length;$count++
+            }
+            return [ordered]@{exists=$true;files=$count;GiB=[math]::Round($bytes/1GB,3);isJunction=$false}
+          }
+          $city=[ordered]@{}
+          foreach($name in @('Building','City','Environment','Lighting','Map','Material','Road','Textures','Crowd','Vehicle','__ExternalActors__')){
+            $orig=Join-Path $src $name
+            $copy=Join-Path $dst $name
+            $city[$name]=[ordered]@{original=(Measure-SafeDir $orig);staged=(Measure-SafeDir $copy)}
+          }
+          $safeCaches=[ordered]@{}
+          $local=$env:LOCALAPPDATA
+          foreach($item in @(
+            @{id='UnrealEngine_Common_DerivedDataCache';path=(Join-Path $local 'UnrealEngine\Common\DerivedDataCache')},
+            @{id='UnrealEngine_5_8_DerivedDataCache';path=(Join-Path $local 'UnrealEngine\5.8\DerivedDataCache')},
+            @{id='UnrealEngine_5_8_Saved';path=(Join-Path $local 'UnrealEngine\5.8\Saved')},
+            @{id='CMD_Anomalia_Old_Versions_READ_ONLY';path=(Join-Path $local 'CMD\ANOMALIA-UE5\versions')},
+            @{id='CitySample_Saved_DerivedDataCache';path=(Join-Path $original 'Saved\DerivedDataCache')}
+          )){
+            $safeCaches[$item.id]=Measure-SafeDir $item.path
+          }
+          $disk=@()
+          foreach($letter in @('C','D','E','F','G')){
+            try{
+              $drive=[IO.DriveInfo]::new($letter)
+              if($drive.IsReady){
+                $disk+=([ordered]@{letter=$letter;totalGiB=[math]::Round($drive.TotalSize/1GB,2);freeGiB=[math]::Round($drive.AvailableFreeSpace/1GB,2);filesystem=$drive.DriveFormat})
+              }
+            }catch{}
+          }
+          $r=[ordered]@{
+            state='CITY_SAMPLE_STORAGE_READ_ONLY_NO_DELETION'
+            originalCitySampleExists=(Test-Path (Join-Path $original 'CitySample.uproject'))
+            citySampleOriginalProject=$original
+            nativeFinalSkarvikExists=(Test-Path (Join-Path $dst 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))
+            citySampleFolders=$city
+            cacheAndVersionSizes=$safeCaches
+            disks=$disk
+            deletedNothing=$true
+            proofOfSafeDeletion=$false
+            canDeleteWholeCitySampleProjectNow=$false
+          }
+          $output=Join-Path $env:GITHUB_WORKSPACE 'citysample-disk-review.json'
+          $r|ConvertTo-Json -Depth 8|Set-Content -LiteralPath $output -Encoding UTF8
+          Write-Host ('ANOMALIA_CITYSAMPLE_DISK_READONLY='+$r.state)
+          Write-Host ('ANOMALIA_CITYSAMPLE_ORIGINAL_PROJECT_PRESENT='+$r.originalCitySampleExists)
+          Write-Host ('ANOMALIA_FINAL_SKARVIK_STAGE_PRESENT='+$r.nativeFinalSkarvikExists)
+          foreach($name in $city.Keys){
+            $q=$city[$name]
+            Write-Host ('ANOMALIA_CITYSAMPLE_FOLDER='+$name+' sourceGiB='+$q.original.GiB+' stageGiB='+$q.staged.GiB+' sourceFiles='+$q.original.files+' stageFiles='+$q.staged.files+' stageJunction='+$q.staged.isJunction)
+          }
+          foreach($name in $safeCaches.Keys){Write-Host ('ANOMALIA_DISK_CACHE='+$name+' GiB='+$safeCaches[$name].GiB)}
+          foreach($q in $disk){Write-Host ('ANOMALIA_DISK_VOLUME='+$q.letter+' FREE_GIB='+$q.freeGiB+' TOTAL_GIB='+$q.totalGiB)}
+          Write-Host 'ANOMALIA_CITYSAMPLE_SAFE_TO_DELETE_WHOLE_PROJECT=false'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: citysample-readonly-disk-review
+          path: citysample-disk-review.json
+          if-no-files-found: warn
