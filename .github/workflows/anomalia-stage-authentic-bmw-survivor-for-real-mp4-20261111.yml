@@ -18,93 +18,22 @@ jobs:
         with:
           clean: false
           persist-credentials: false
-      - name: Copy original BMW v7 and player skeletal meshes into isolated project - no overwrites
+      - name: Verify source and stage only missing hash-checked BMW and survivor assets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           $root='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
           $content=Join-Path $root 'Content'
           $marker=Join-Path $root '.skarvik-ci-stage-marker'
-          if(!(Test-Path $marker) -or (Get-Content $marker -Raw).Trim() -ne '41188816555'){throw 'Incorrect isolated stage'}
-          if(!(Test-Path -LiteralPath (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Source SKARVIK map missing'}
-          $active=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue|Where-Object{$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|AnomaliaZPrigimalia)\\.exe
-          $orig=@(
-            [ordered]@{
-              source='C:\ANOMALIA-Validation\c40543166274\unreal\Content\Anomalia\BMWE39Review_v7'
-              target=(Join-Path $content 'Anomalia\BMWE39Review_v7')
-              mustHave='body\SM_body.uasset'
-            },
-            [ordered]@{
-              source='D:\ANOMALIA\unreal\Content\Survival_Character'
-              target=(Join-Path $content 'Survival_Character')
-              mustHave='Meshes\SK_Survival_Character.uasset'
-            }
-          )
-          $report=@()
-          $total=0L
-          foreach($x in $orig){
-            if(!(Test-Path -LiteralPath (Join-Path $x.source $x.mustHave))){throw ('Required authentic source absent: '+$x.source)}
-            if(Test-Path -LiteralPath $x.target){Write-Host ('Destination exists: verify each file rather than overwrite '+$x.target)}
-            $items=@(Get-ChildItem -LiteralPath $x.source -Recurse -File)
-            if(!$items.Count){throw 'Empty source'}
-            $size=($items|Measure-Object -Property Length -Sum).Sum
-            $total+=[long]$size
-            $report+= [ordered]@{source=$x.source;target=$x.target;files=$items.Count;bytes=$size;sha256OfAnchor=(Get-FileHash -LiteralPath (Join-Path $x.source $x.mustHave) -Algorithm SHA256).Hash.ToLowerInvariant();anchor=$x.mustHave}
-          }
-          $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace
-          if($free -lt ($total + 5GB)){throw ('Not enough reserved C storage: need size='+$total+' plus 8 GiB')}
-          $before=@{
-            Skarvik=(Get-FileHash (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') -Algorithm SHA256).Hash
-            City=(Get-FileHash (Join-Path $content 'Map\Big_City_LVL.umap') -Algorithm SHA256).Hash
-          }
-          foreach($x in $report){
-            $sourceRoot=$x.source
-            $targetRoot=$x.target
-            $items=@(Get-ChildItem -LiteralPath $sourceRoot -Recurse -File)
-            foreach($asset in $items){
-              $rel=$asset.FullName.Substring($sourceRoot.Length).TrimStart('\\')
-              $destination=Join-Path $targetRoot $rel
-              $parent=Split-Path -Parent $destination
-              if(!(Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Path $parent -Force|Out-Null}
-              if(Test-Path -LiteralPath $destination){
-                if((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $asset.FullName -Algorithm SHA256).Hash){
-                  throw ('Unrelated existing asset conflicts, refuse overwrite: '+$destination)
-                }
-              }else{
-                Copy-Item -LiteralPath $asset.FullName -Destination $destination -ErrorAction Stop
-              }
-              if((Get-FileHash -LiteralPath $destination -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $asset.FullName -Algorithm SHA256).Hash){
-                throw ('Staged file failed checksum '+$destination)
-              }
-            }
-            $targetItems=@(Get-ChildItem -LiteralPath $targetRoot -Recurse -File)
-            if($targetItems.Count -lt $x.files){throw ('Staged asset file count incomplete: '+$targetRoot)}
-            if((Get-FileHash -LiteralPath (Join-Path $targetRoot $x.anchor) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $x.sha256OfAnchor){throw ('Original anchor checksum mismatch: '+$targetRoot)}
-          }
-
-          if((Get-FileHash (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') -Algorithm SHA256).Hash -ne $before.Skarvik){throw 'Map changed unexpectedly'}
-          if((Get-FileHash (Join-Path $content 'Map\Big_City_LVL.umap') -Algorithm SHA256).Hash -ne $before.City){throw 'City Sample source changed'}
-          $r=[ordered]@{state='REAL_BMW_V7_AND_REAL_SURVIVAL_MODELS_STAGED_IN_ISOLATED_PROJECT'
-            sources=$report;originalsNotDeleted=$true;originalSKARVIKMapUnmodified=$true;
-            bigCityMapUnmodified=$true;actualVideoCaptured=$false;otherFilesOverwritten=$false}
-          $r|ConvertTo-Json -Depth 6|Set-Content (Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_GAMEPLAY_ASSET_STAGE.json') -Encoding UTF8
-          Write-Host 'ANOMALIA_TRUE_BMW_E39_STAGED=true'
-          Write-Host 'ANOMALIA_TRUE_SURVIVAL_CHARACTER_STAGED=true'
-          Write-Host 'ANOMALIA_ORIGINAL_SKARVIK_CITY_NOT_MODIFIED=true'
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: ANOMALIA-REAL-BMW-SURVIVOR-ASSET-STAGE
-          path: ANOMALIA_REAL_GAMEPLAY_ASSET_STAGE.json
-          if-no-files-found: warn
-})
+          if(!(Test-Path -LiteralPath $marker) -or (Get-Content -LiteralPath $marker -Raw).Trim() -ne '41188816555'){throw 'Incorrect isolated stage'}
+          if(!(Test-Path -LiteralPath (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'))){throw 'Original SKARVIK map missing'}
+          $active=@(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue | Where-Object {$_.Name -match '^(UnrealEditor|UnrealEditor-Cmd|AnomaliaZPrigimalia)\.exe$'})
           foreach($proc in $active){
             Write-Host ('ACTIVE_UE_PROCESS='+$proc.ProcessId+';COMMAND='+$proc.CommandLine)
             if(!$proc.CommandLine -or $proc.CommandLine -match [regex]::Escape($root)){
-              throw 'The target UE stage is currently open; refuse to modify assets in use'
+              throw 'The isolated stage UE process is currently open; refuse to modify loaded assets'
             }
           }
-          Write-Host 'ANOMALIA_OTHER_UE_PROCESS_UNTOUCHED=true'
           $orig=@(
             [ordered]@{
               source='C:\ANOMALIA-Validation\c40543166274\unreal\Content\Anomalia\BMWE39Review_v7'
@@ -120,37 +49,44 @@ jobs:
           $report=@()
           $total=0L
           foreach($x in $orig){
-            if(!(Test-Path -LiteralPath (Join-Path $x.source $x.mustHave))){throw ('Required authentic source absent: '+$x.source)}
-            if(Test-Path -LiteralPath $x.target){throw ('Destination already exists, refuse changing it: '+$x.target)}
+            if(!(Test-Path -LiteralPath (Join-Path $x.source $x.mustHave))){throw ('Real source absent: '+$x.source)}
             $items=@(Get-ChildItem -LiteralPath $x.source -Recurse -File)
-            if(!$items.Count){throw 'Empty source'}
-            $size=($items|Measure-Object -Property Length -Sum).Sum
+            if(!$items.Count){throw 'Source empty'}
+            $size=($items | Measure-Object -Property Length -Sum).Sum
             $total+=[long]$size
             $report+= [ordered]@{source=$x.source;target=$x.target;files=$items.Count;bytes=$size;sha256OfAnchor=(Get-FileHash -LiteralPath (Join-Path $x.source $x.mustHave) -Algorithm SHA256).Hash.ToLowerInvariant();anchor=$x.mustHave}
           }
           $free=([IO.DriveInfo]::new('C')).AvailableFreeSpace
-          if($free -lt ($total + 8GB)){throw ('Not enough reserved C storage: need size='+$total+' plus 8 GiB')}
+          if($free -lt ($total + 5GB)){throw ('Insufficient C: space '+$total+' needed plus 5 GiB headroom')}
           $before=@{
             Skarvik=(Get-FileHash (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') -Algorithm SHA256).Hash
             City=(Get-FileHash (Join-Path $content 'Map\Big_City_LVL.umap') -Algorithm SHA256).Hash
           }
           foreach($x in $report){
-            New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($x.target)) -Force|Out-Null
-            Copy-Item -LiteralPath $x.source -Destination $x.target -Recurse -Force:$false -ErrorAction Stop
-            $targetItems=@(Get-ChildItem -LiteralPath $x.target -Recurse -File)
-            $targetSize=($targetItems|Measure-Object -Property Length -Sum).Sum
-            if($targetItems.Count -ne $x.files -or [long]$targetSize -ne [long]$x.bytes){throw ('Staged size or file count mismatch: '+$x.target)}
-            if((Get-FileHash -LiteralPath (Join-Path $x.target $x.anchor) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $x.sha256OfAnchor){throw ('Original asset checksum mismatch: '+$x.target)}
+            $src=$x.source
+            $dst=$x.target
+            foreach($asset in @(Get-ChildItem -LiteralPath $src -Recurse -File)){
+              $relative=$asset.FullName.Substring($src.Length).TrimStart('\')
+              $destFile=Join-Path $dst $relative
+              $parent=Split-Path -Parent $destFile
+              if(!(Test-Path -LiteralPath $parent)){New-Item -ItemType Directory -Path $parent -Force | Out-Null}
+              $hash=(Get-FileHash -LiteralPath $asset.FullName -Algorithm SHA256).Hash
+              if(Test-Path -LiteralPath $destFile){
+                if((Get-FileHash -LiteralPath $destFile -Algorithm SHA256).Hash -ne $hash){
+                  throw ('Conflicting destination; never overwrite: '+$destFile)
+                }
+              }else{
+                Copy-Item -LiteralPath $asset.FullName -Destination $destFile -ErrorAction Stop
+              }
+              if((Get-FileHash -LiteralPath $destFile -Algorithm SHA256).Hash -ne $hash){throw ('Bad copy: '+$destFile)}
+            }
+            if((Get-FileHash -LiteralPath (Join-Path $dst $x.anchor) -Algorithm SHA256).Hash.ToLowerInvariant() -ne $x.sha256OfAnchor){throw ('Anchor mismatch: '+$dst)}
           }
-          if((Get-FileHash (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') -Algorithm SHA256).Hash -ne $before.Skarvik){throw 'Map changed unexpectedly'}
-          if((Get-FileHash (Join-Path $content 'Map\Big_City_LVL.umap') -Algorithm SHA256).Hash -ne $before.City){throw 'City Sample source changed'}
-          $r=[ordered]@{state='REAL_BMW_V7_AND_REAL_SURVIVAL_MODELS_STAGED_IN_ISOLATED_PROJECT'
-            sources=$report;originalsNotDeleted=$true;originalSKARVIKMapUnmodified=$true;
-            bigCityMapUnmodified=$true;actualVideoCaptured=$false;otherFilesOverwritten=$false}
-          $r|ConvertTo-Json -Depth 6|Set-Content (Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_GAMEPLAY_ASSET_STAGE.json') -Encoding UTF8
-          Write-Host 'ANOMALIA_TRUE_BMW_E39_STAGED=true'
-          Write-Host 'ANOMALIA_TRUE_SURVIVAL_CHARACTER_STAGED=true'
-          Write-Host 'ANOMALIA_ORIGINAL_SKARVIK_CITY_NOT_MODIFIED=true'
+          if((Get-FileHash (Join-Path $content 'Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap') -Algorithm SHA256).Hash -ne $before.Skarvik){throw 'Map changed'}
+          if((Get-FileHash (Join-Path $content 'Map\Big_City_LVL.umap') -Algorithm SHA256).Hash -ne $before.City){throw 'City changed'}
+          $receipt=[ordered]@{state='BMW_V7_SURVIVOR_REAL_ASSETS_STAGED_FOR_CAPTURE';sources=$report;originalsNotDeleted=$true;originalMapsUnmodified=$true;actualVideoCaptured=$false}
+          $receipt|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'ANOMALIA_REAL_GAMEPLAY_ASSET_STAGE.json') -Encoding UTF8
+          Write-Host 'ANOMALIA_REAL_BMW_V7_AND_SURVIVOR_SOURCE_STAGED=true'
       - uses: actions/upload-artifact@v4
         if: always()
         with:
