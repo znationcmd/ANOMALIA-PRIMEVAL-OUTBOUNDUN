@@ -45,26 +45,47 @@ jobs:
             'D:\ANOMALIA\unreal\Content','D:\ANOMALIA\unreal\Plugins',
             'D:\ANOMALIA\FabImports\CitySample\Content','D:\ANOMALIA\FabImports\CitySample\Plugins'
           )
-          $stack=New-Object 'System.Collections.Generic.Stack[string]'
-          foreach($root in $roots){if(Test-Path -LiteralPath $root){$stack.Push($root)}}
-          while($stack.Count){
-            $dir=$stack.Pop()
-            $dirInfo=Get-Item -LiteralPath $dir -Force
-            if($dirInfo.Attributes -band [IO.FileAttributes]::ReparsePoint){throw ('Unexpected linked project root '+$dir)}
-            foreach($item in (Get-ChildItem -LiteralPath $dir -Force -ErrorAction Stop)){
-              if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){
-                $targets=@($item.Target)
-                if(!$targets.Count){throw 'Unresolved project link; preserve cache'}
-                foreach($target in $targets){
-                  $targetText=[string]$target
-                  if($targetText -match '(?i)VaultCache'){throw ('Installed project references cache '+$item.FullName)}
+          $progressPath='H:\Mon Drive\ANOMALIAZ_CITYSAMPLE_SOURCE_20261111\SPACE_CLEANUP_STATUS_20261111.json'
+          function Publish-CleanupProgress([string]$phase,[int64]$removed,[int]$count){
+            $p=[ordered]@{phase=$phase;removedCacheBytes=$removed;removedCacheFiles=$count;cFreeBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;utc=[DateTime]::UtcNow.ToString('o');mapsDeleted=0}
+            $p|ConvertTo-Json -Depth 3|Set-Content -LiteralPath $progressPath -Encoding UTF8
+          }
+          Publish-CleanupProgress 'CHECKING_PROJECT_CACHE_LINKS' 0 0
+          Add-Type -TypeDefinition @'
+          using System;
+          using System.IO;
+          using System.Collections.Generic;
+          public static class AnomaliaCacheWalk {
+            public static string[] Links(string root) {
+              var links=new List<string>();
+              if(!Directory.Exists(root))return links.ToArray();
+              var pending=new Stack<DirectoryInfo>();
+              pending.Push(new DirectoryInfo(root));
+              while(pending.Count>0) {
+                var dir=pending.Pop();
+                if((dir.Attributes&FileAttributes.ReparsePoint)!=0){links.Add(dir.FullName);continue;}
+                foreach(var item in dir.EnumerateFileSystemInfos()) {
+                  if((item.Attributes&FileAttributes.ReparsePoint)!=0){links.Add(item.FullName);continue;}
+                  var child=item as DirectoryInfo;
+                  if(child!=null)pending.Push(child);
                 }
-                continue
               }
-              if($item.PSIsContainer){$stack.Push($item.FullName)}
+              return links.ToArray();
             }
           }
-          if(@(Get-ChildItem -LiteralPath $vault -Recurse -Force -Attributes ReparsePoint -ErrorAction Stop).Count){throw 'Linked items inside Vault cache; preserve'}
+          '@
+          foreach($root in $roots){
+            foreach($link in [AnomaliaCacheWalk]::Links($root)){
+              $item=Get-Item -LiteralPath $link -Force
+              $targets=@($item.Target)
+              if(!$targets.Count){throw 'Unresolved project link; preserve cache'}
+              foreach($target in $targets){
+                if(([string]$target) -match '(?i)VaultCache'){throw ('Installed project references cache '+$link)}
+              }
+            }
+          }
+          if([AnomaliaCacheWalk]::Links($vault).Count){throw 'Linked items inside Vault cache; preserve'}
+          Publish-CleanupProgress 'DELETING_REGENERABLE_EPIC_DOWNLOAD_CACHE' 0 0
           $launchers=@(Get-Process -Name EpicGamesLauncher -ErrorAction SilentlyContinue)
           foreach($launcher in $launchers){
             $null=$launcher.CloseMainWindow()
@@ -77,8 +98,10 @@ jobs:
           $manifest|ConvertTo-Json -Depth 3|Set-Content -LiteralPath (Join-Path $receiptRoot 'Epic_VaultCache_Removed_Downloads_20261111.json') -Encoding UTF8
           foreach($file in $files){
             $bytes=[int64]$file.Length
-            Remove-Item -LiteralPath $file.FullName -Force -ErrorAction Stop
+            if($file.IsReadOnly){$file.IsReadOnly=$false}
+            $file.Delete()
             $report.removedCacheBytes+=$bytes;$report.removedCacheFiles++
+            if($report.removedCacheFiles % 500 -eq 0){Publish-CleanupProgress 'DELETING_REGENERABLE_EPIC_DOWNLOAD_CACHE' $report.removedCacheBytes $report.removedCacheFiles}
           }
           if(@(Get-ChildItem -LiteralPath $vault -File -Recurse -Force -ErrorAction Stop).Count){throw 'Cache not fully cleared'}
           foreach($map in $protected){
@@ -88,6 +111,7 @@ jobs:
           $report.afterC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
           $report.actualCBytesRecovered=$report.afterC-$report.beforeC
           $report.state='EPIC_DOWNLOAD_CACHE_REMOVED_PROJECTS_PRESERVED'
+          Publish-CleanupProgress $report.state $report.removedCacheBytes $report.removedCacheFiles
           $report|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'GIGABYTES_ACTUALLY_FREED_20261111.json') -Encoding UTF8
           Write-Host ('CACHE_FILES_REMOVED='+$report.removedCacheFiles)
           Write-Host ('ACTUAL_C_GB_FREED='+[math]::Round($report.actualCBytesRecovered/1e9,3))
