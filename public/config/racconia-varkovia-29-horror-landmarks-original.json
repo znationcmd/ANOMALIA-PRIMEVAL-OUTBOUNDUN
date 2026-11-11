@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "world": "RACCONIA-VARKOVIA",
+  "source": "Data/RacconiaVarkovia_Map.json plus Data/Horror_Catalog_29.json in user original ZIP",
+  "intent": "29 unique survival-horror landmarks, not generic SKARVIK housing",
+  "architectureTarget": "detailed original photorealistic PBR horror architecture",
+  "blockoutsAreFinal": false,
+  "autoReplaceWithGenericResidential": false,
+  "requireUniqueFinalArchitectureForEachSite": true,
+  "levelCreated": false,
+  "photorealismVerified": false,
+  "sites": [
+    {
+      "id": "AZS_01",
+      "horrorId": "BIG_CITY_CONTAMINE",
+      "name": "Quartier contaminé de Big City",
+      "sourceReferenceModel": "SM_BIG_CITY_CONTAMINE_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_02",
+      "horrorId": "SPD",
+      "name": "Skarvik Police Department (S.P.D.)",
+      "sourceReferenceModel": "SM_SPD_Blockout_Interior.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_03",
+      "horrorId": "RAVENFALL",
+      "name": "Hôtel Ravenfall",
+      "sourceReferenceModel": "SM_RAVENFALL_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_04",
+      "horrorId": "SAINT_VEYR",
+      "name": "Orphelinat Saint-Veyr",
+      "sourceReferenceModel": "SM_SAINT_VEYR_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_05",
+      "horrorId": "VEYRHOLM",
+      "name": "Institut médical Veyrholm",
+      "sourceReferenceModel": "SM_VEYRHOLM_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_06",
+      "horrorId": "SECTEUR_ZERO",
+      "name": "Secteur zéro de SKARVIK",
+      "sourceReferenceModel": "SM_SECTEUR_ZERO_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_07",
+      "horrorId": "SAINT_MORVAN",
+      "name": "Cathédrale Saint-Morvan",
+      "sourceReferenceModel": "SM_SAINT_MORVAN_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_08",
+      "horrorId": "VARKOV",
+      "name": "Manoir Varkov",
+      "sourceReferenceModel": "SM_VARKOV_Blockout_Interior.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_09",
+      "horrorId": "VALDRIS",
+      "name": "Forteresse de Valdris",
+      "sourceReferenceModel": "SM_VALDRIS_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_10",
+      "horrorId": "DRAKOV",
+      "name": "Château de Drakov",
+      "sourceReferenceModel": "SM_DRAKOV_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_11",
+      "horrorId": "NEXUS",
+      "name": "Laboratoire souterrain NEXUS",
+      "sourceReferenceModel": "SM_NEXUS_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_12",
+      "horrorId": "HELIX",
+      "name": "Complexe scientifique HELIX",
+      "sourceReferenceModel": "SM_HELIX_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_13",
+      "horrorId": "ACADEMIE_VARKOV",
+      "name": "Académie de Varkov",
+      "sourceReferenceModel": "SM_ACADEMIE_VARKOV_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_14",
+      "horrorId": "SANCTUAIRE_VALDRIS",
+      "name": "Sanctuaire de Valdris",
+      "sourceReferenceModel": "SM_SANCTUAIRE_VALDRIS_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_15",
+      "horrorId": "BLACKWOOD",
+      "name": "Domaine Blackwood",
+      "sourceReferenceModel": "SM_BLACKWOOD_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_16",
+      "horrorId": "ZARNOV",
+      "name": "Marais de Zarnov",
+      "sourceReferenceModel": "SM_ZARNOV_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_17",
+      "horrorId": "RAVENSKA",
+      "name": "Village de Ravenska",
+      "sourceReferenceModel": "SM_RAVENSKA_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_18",
+      "horrorId": "MOROZOV",
+      "name": "Station d’épuration Morozov",
+      "sourceReferenceModel": "SM_MOROZOV_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_19",
+      "horrorId": "KARZHAN",
+      "name": "District de Karzhan",
+      "sourceReferenceModel": "SM_KARZHAN_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_20",
+      "horrorId": "VALTERIA",
+      "name": "Cité maritime de Valtéria",
+      "sourceReferenceModel": "SM_VALTERIA_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_21",
+      "horrorId": "NEREIDE",
+      "name": "Paquebot Néréide",
+      "sourceReferenceModel": "SM_NEREIDE_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_22",
+      "horrorId": "LEVIATHAN",
+      "name": "Épave du Léviathan",
+      "sourceReferenceModel": "SM_LEVIATHAN_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_23",
+      "horrorId": "OMEGA",
+      "name": "Centre biologique OMEGA",
+      "sourceReferenceModel": "SM_OMEGA_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_24",
+      "horrorId": "LIANSKAR",
+      "name": "Métropole de Lianskar",
+      "sourceReferenceModel": "SM_LIANSKAR_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_25",
+      "horrorId": "KARSEN",
+      "name": "Pénitencier de Karsen",
+      "sourceReferenceModel": "SM_KARSEN_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_26",
+      "horrorId": "NOCTIS",
+      "name": "Tour Noctis",
+      "sourceReferenceModel": "SM_NOCTIS_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_27",
+      "horrorId": "KROVAK",
+      "name": "Île militaire de Krovak",
+      "sourceReferenceModel": "SM_KROVAK_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_28",
+      "horrorId": "VOLSKAYA",
+      "name": "District de Volskaya",
+      "sourceReferenceModel": "SM_VOLSKAYA_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    },
+    {
+      "id": "AZS_29",
+      "horrorId": "EXPRESS_NOCTURNE",
+      "name": "Express Nocturne",
+      "sourceReferenceModel": "SM_EXPRESS_NOCTURNE_BLOCKOUT.glb",
+      "sourceModelStatus": "BLOCKOUT_REFERENCE_ONLY",
+      "nativeRealisticArchitectureStatus": "NOT_VERIFIED",
+      "replaceByGenericHouse": false
+    }
+  ]
+}
