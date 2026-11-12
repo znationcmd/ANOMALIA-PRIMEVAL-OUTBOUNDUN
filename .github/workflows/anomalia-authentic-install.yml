@@ -94,7 +94,7 @@ jobs:
           New-Item -ItemType Directory -Path $cook -Force|Out-Null
           $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
           $project='D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'
-          $args=@('/d','/s','/c',('""'+$uat+'" BuildCookRun -project="'+$project+'" -noP4 -platform=Win64 -clientconfig=Development -cook -iterate -map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -CookOutputDir="'+$cook+'" -stage -stagingdirectory="'+$stage+'" -pak -package -nodebuginfo -unattended -utf8output"'))
+          $args=@('/d','/s','/c',('""'+$uat+'" BuildCookRun -project="'+$project+'" -noP4 -platform=Win64 -clientconfig=Development -cook -iterate -map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -CookOutputDir="'+$cook+'" -stage -stagingdirectory="'+$stage+'" -pak -compressed -package -nodebuginfo -unattended -utf8output"'))
           $p=Start-Process -FilePath $env:ComSpec -ArgumentList $args -PassThru -RedirectStandardOutput (Join-Path $env:AUTHENTIC_OUT 'standalone-package.log') -RedirectStandardError (Join-Path $env:AUTHENTIC_OUT 'standalone-package.stderr.log')
           $started=Get-Date
           while(-not $p.WaitForExit(3000)){
