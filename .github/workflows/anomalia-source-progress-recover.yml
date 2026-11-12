@@ -1,0 +1,60 @@
+name: Recover owned source extraction and inspect real progress
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-source-progress-recover.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: true}
+jobs:
+  recovery:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Inspect and recover only this task's source extraction
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -like 'UnrealEditor*' -or $_.Name -like 'AnomaliaPrimeval*' -or $_.Name -like 'ShaderCompile*'}|Select-Object Name,ProcessId,ExecutablePath,CommandLine,WorkingSetSize,KernelModeTime,UserModeTime|ConvertTo-Json|Set-Content (Join-Path $out 'processes-before.json')
+          $owned=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -eq 'UnrealEditor-Cmd.exe' -and $_.CommandLine -like '*43277880597*' -and $_.CommandLine -like '*export_original_block.py*'})
+          foreach($process in $owned){
+            $p=Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue
+            if($p -and -not $p.HasExited){
+              $p.Kill()
+              if(-not $p.WaitForExit(15000)){throw 'Owned source extraction has not exited'}
+            }
+          }
+          $receipt=Join-Path $root 'Saved\SceneRepair\43277880597\held-effect-receipt.json'
+          if(Test-Path -LiteralPath $receipt){
+            foreach($file in @(Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json)){
+              if(-not(Test-Path -LiteralPath $file.source)){
+                if((Get-FileHash -LiteralPath $file.held).Hash -ne $file.hash){throw 'Held effect hash mismatch'}
+                Copy-Item -LiteralPath $file.held -Destination $file.source
+              }
+              if((Get-FileHash -LiteralPath $file.source).Hash -ne $file.hash){throw 'Restored effect hash mismatch'}
+            }
+          }
+          foreach($run in @('43277880597','43270446874')){
+            $previous=Join-Path $root ('Saved\SceneRepair\'+$run)
+            foreach($name in @('original-city-block.json','ground-assets.json','car-mesh-settings.json','car-material-settings.json','audit.log','held-effect-receipt.json','storage.json')){
+              $f=Join-Path $previous $name
+              if(Test-Path -LiteralPath $f){Copy-Item -LiteralPath $f -Destination (Join-Path $out ($run+'-'+$name))}
+            }
+          }
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\measure_storage.py')
+          if($LASTEXITCODE -ne 0){throw 'Storage measurement failed'}
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -like 'UnrealEditor*' -or $_.Name -like 'AnomaliaPrimeval*'}|Select-Object Name,ProcessId,ExecutablePath,CommandLine,WorkingSetSize|ConvertTo-Json|Set-Content (Join-Path $out 'processes-after.json')
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && env.SCENE_REPAIR_OUT != '' }}
+        with:
+          name: SOURCE-EXTRACTION-RECOVERY-AND-STORAGE
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
