@@ -81,6 +81,73 @@ jobs:
           $project='D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject'
           & $editor $project /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'native-source.log'))
           Get-Content -LiteralPath (Join-Path $env:AUTHENTIC_OUT 'native-source.json')
+      - name: Measure exact real-map dependencies and retain source interfaces
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=$env:AUTHENTIC_OUT
+          $source='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          foreach($name in @('AnomaliaGameMode.h','AnomaliaSessionWidget.h','AnomaliaSurvivor.h')){
+            $p=Join-Path $source ('Source\AnomaliaPrimeval\'+$name)
+            if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination $out}
+          }
+          foreach($project in @((Join-Path $source 'AnomaliaPrimeval.uproject'),'D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject')){
+            if(Test-Path -LiteralPath $project){Write-Host ('PROJECT_DESCRIPTOR='+$project);Get-Content -LiteralPath $project}
+          }
+          $validation='C:\ANOMALIA-Validation\c40543166274\unreal'
+          Get-ChildItem -LiteralPath (Join-Path $validation 'Saved') -Recurse -File -Filter 'template-source.json' -ErrorAction SilentlyContinue|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 2|ForEach-Object{Write-Host ('RIG_SOURCE_REPORT='+$_.FullName);Get-Content -LiteralPath $_.FullName}
+          $manifest=Join-Path $validation 'SourceAssets\BMWE39Review_v7\manifest.json'
+          if(Test-Path -LiteralPath $manifest){Copy-Item -LiteralPath $manifest -Destination (Join-Path $out 'bmw-manifest.json')}
+          $script=Join-Path $out 'dependencies.py'
+          @'
+          import unreal,json,os,traceback,collections
+          from pathlib import Path
+          out=Path(os.environ["AUTHENTIC_OUT"])
+          source=Path(unreal.Paths.project_dir()).resolve()/"Content"
+          target=Path(r"D:\ANOMALIAZ\02_Projet_Migration\unreal\Content")
+          report={"state":"FAILED"}
+          try:
+              registry=unreal.AssetRegistryHelpers.get_asset_registry()
+              registry.wait_for_completion()
+              options=unreal.AssetRegistryDependencyOptions(include_soft_package_references=True,include_hard_package_references=True)
+              queue=collections.deque(["/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","/Game/Map/Big_City_LVL","/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01"])
+              for folder in ["German_Shepherd_3D_Model/Animations","Anomalia/BMWE39Review_v7","Vehicles/OffroadCar"]:
+                  base=source/folder
+                  if base.is_dir():
+                      queue.extend("/Game/"+str(p.relative_to(source).with_suffix("")).replace("\\","/") for p in base.rglob("*.uasset"))
+              seen=set(); scripts=set(); files=[]; missing_bytes=0; missing=[]; differing=[]
+              while queue:
+                  package=queue.popleft()
+                  if package in seen:continue
+                  seen.add(package)
+                  if package.startswith("/Script/"):scripts.add(package);continue
+                  if not package.startswith("/Game/"):continue
+                  relative=package[len("/Game/"):]
+                  base=source/relative
+                  world=base.with_suffix(".umap")
+                  if world.is_file():
+                      for prefix in ["__ExternalActors__","__ExternalObjects__"]:
+                          external=source/prefix/relative
+                          if external.is_dir():
+                              queue.extend("/Game/"+str(p.relative_to(source).with_suffix("")).replace("\\","/") for p in external.rglob("*.uasset"))
+                  for suffix in [".uasset",".umap",".uexp",".ubulk"]:
+                      p=base.with_suffix(suffix)
+                      if p.is_file():
+                          rel=p.relative_to(source);dest=target/rel;size=p.stat().st_size
+                          exists=dest.is_file();same_size=exists and dest.stat().st_size==size
+                          files.append({"relative":str(rel).replace("\\","/"),"bytes":size,"destinationExists":exists,"sameSize":same_size})
+                          if not exists:missing_bytes+=size;missing.append(str(rel))
+                          elif not same_size:differing.append(str(rel))
+                  queue.extend(str(x) for x in (registry.get_dependencies(unreal.Name(package),options) or []))
+              (out/"dependency-files.json").write_text(json.dumps(files),encoding="utf-8")
+              report.update(state="AUTHENTIC_DEPENDENCY_PLAN_READY",packages=len(seen),files=len(files),missingFiles=len(missing),missingBytes=missing_bytes,differingSizeFiles=differing[:50],scriptModules=sorted(scripts),missingSample=missing[:40])
+          except Exception:report["error"]=traceback.format_exc()
+          finally:
+              (out/"dependency-summary.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content -LiteralPath $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $source 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'dependency-plan.log'))
+          Get-Content -LiteralPath (Join-Path $out 'dependency-summary.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
