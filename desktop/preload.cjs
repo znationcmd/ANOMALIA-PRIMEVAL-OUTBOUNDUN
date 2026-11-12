@@ -9,6 +9,7 @@ contextBridge.exposeInMainWorld('anomaliaTransport',Object.freeze({
 }));
 
 contextBridge.exposeInMainWorld('anomaliaUnreal',Object.freeze({
+ launchGame:()=>ipcRenderer.invoke('anomalia:native-game'),
  listMaps:()=>ipcRenderer.invoke('anomalia:unreal-maps'),
  openMap:packageName=>ipcRenderer.invoke('anomalia:unreal-open-map',packageName)
 }));

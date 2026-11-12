@@ -4,6 +4,10 @@ on:
     branches:
       - feature/real-skarvik-bmw-dog-gameplay-capture-20261111
     paths:
+      - desktop/**
+      - package.json
+      - package-lock.json
+      - tests/native-game-launch.test.mjs
       - scripts/workforge-runtime-smoke.mjs
       - src/workforge.js
       - src/start-menu.js

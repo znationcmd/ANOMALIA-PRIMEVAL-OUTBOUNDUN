@@ -36,11 +36,18 @@ try {
   await launch.click();
   await page.locator('#wfPlay').click();
   await panel.waitFor({state:'hidden'});
-  await page.locator('#startScreen').waitFor({state:'hidden'});
   assert.equal(await page.locator('#workforgeHudBtn').count(),0);
-  assert.equal(await launch.isVisible(),false);
-  report.checks.push('play_closes_workforge_and_no_gameplay_entry');
-  await page.screenshot({path:resolve(output,'gameplay-without-workforge.png')});
+  if(process.env.WORKFORGE_EXE){
+    await page.waitForFunction(()=>document.getElementById('nativeGameStatus')?.textContent.includes('installation'));
+    assert.equal(await page.locator('#startScreen').isVisible(),true);
+    assert.equal(await page.locator('#hud').isVisible(),false);
+    report.checks.push('windows_play_requires_real_standalone_game_without_browser_fallback');
+    await page.screenshot({path:resolve(output,'standalone-game-required.png')});
+  }else{
+    await page.locator('#startScreen').waitFor({state:'hidden'});
+    assert.equal(await launch.isVisible(),false);
+    report.checks.push('browser_demo_play_closes_workforge');
+  }
   report.state='PASSED';
 }catch(error){report.error=error.stack;throw error;}
 finally{

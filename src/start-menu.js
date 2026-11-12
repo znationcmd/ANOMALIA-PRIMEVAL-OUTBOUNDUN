@@ -42,7 +42,23 @@ export function createStartMenu({state,renderer,start,network,onMenu,openEditor,
  $('workforgeBtn').onclick=()=>workforge.show();
  // WorkForge belongs to the start menu only; never display a button during gameplay.
  const remember=()=>{state.playerName=$('survivorName').value.trim()||'Survivant';localStorage.setItem('anomalia-player-name',state.playerName);};
- let disposePreview=survivorPreview($('menuSurvivor'),state);const play=(skipLock=false)=>{remember();disposePreview?.();disposePreview=null;start(!skipLock);};
+ let disposePreview=survivorPreview($('menuSurvivor'),state);
+ const nativeStatus=document.createElement('p');nativeStatus.id='nativeGameStatus';nativeStatus.setAttribute('role','status');screen.querySelector('.menu-console').append(nativeStatus);
+ if(window.anomaliaUnreal?.launchGame){
+  for(const id of ['newGameBtn','startEditorBtn','multiBtn','worldSettingsBtn'])$(id).hidden=true;
+  $('menuQuality').closest('label').hidden=true;
+ }
+ const play=async(skipLock=false)=>{
+  remember();
+  if(window.anomaliaUnreal?.launchGame){
+   if(busy)return;busy=true;nativeStatus.textContent='Lancement de SKARVIK…';
+   try{const result=await window.anomaliaUnreal.launchGame();if(!result?.launched)throw Error('Launch failed');disposePreview?.();disposePreview=null;nativeStatus.textContent='Le jeu SKARVIK est ouvert.';}
+   catch{nativeStatus.textContent='Impossible de démarrer SKARVIK. Vérifie l’installation du vrai jeu.';}
+   finally{busy=false;}
+   return;
+  }
+  disposePreview?.();disposePreview=null;start(!skipLock);
+ };
  $('newGameBtn').onclick=()=>newGame?.();
  $('startEditorBtn').onclick=()=>{network.disconnect();window.anomaliaServer?.selectProfile?.(null);play(true);openEditor?.();};
  $('startBtn').onclick=()=>{network.disconnect();window.anomaliaServer?.selectProfile?.(null);play();};

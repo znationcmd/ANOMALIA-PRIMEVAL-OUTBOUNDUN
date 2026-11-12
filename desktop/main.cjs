@@ -45,6 +45,13 @@ let multiplayerServer=null;const clientSockets=new Map();
 const validSender=event=>{const url=new URL(event.senderFrame.url);if(url.protocol!=='anomalia:'||url.host!=='game')throw Error('Forbidden');};
 app.whenReady().then(()=>{
  const unrealProject=require('./unreal-project.cjs');
+ const nativeGame=require('./native-game.cjs');
+ ipcMain.handle('anomalia:native-game',async event=>{
+  validSender(event);
+  const result=await nativeGame.launchNativeGame();
+  BrowserWindow.fromWebContents(event.sender)?.minimize();
+  return result;
+ });
  ipcMain.handle('anomalia:unreal-maps',event=>{validSender(event);return unrealProject.listMaps();});
  ipcMain.handle('anomalia:unreal-open-map',(event,packageName)=>{validSender(event);return unrealProject.openInUnreal(packageName);});
  ipcMain.handle('anomalia:connect',async(event,token,address)=>{
