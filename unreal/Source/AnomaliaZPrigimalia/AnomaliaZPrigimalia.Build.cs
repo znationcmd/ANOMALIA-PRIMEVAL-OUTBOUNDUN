@@ -16,6 +16,8 @@ public class AnomaliaZPrigimalia : ModuleRules
         // MoviePlayer renders rotating user-provided loading artwork during map travel.
         PrivateDependencyModuleNames.Add("MoviePlayer");
         PrivateDependencyModuleNames.Add("MediaAssets");
+        // MediaSoundComponent inherits USynthComponent from AudioMixer.
+        PrivateDependencyModuleNames.Add("AudioMixer");
         if (Target.bBuildEditor) PrivateDependencyModuleNames.AddRange(new string[] { "UnrealEd", "Landscape" });
     }
 }

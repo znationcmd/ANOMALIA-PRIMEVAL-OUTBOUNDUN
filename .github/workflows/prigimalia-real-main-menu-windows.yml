@@ -73,6 +73,15 @@ jobs:
             (Get-Item -LiteralPath $dst -Force).LastWriteTimeUtc=[DateTime]::UtcNow
             if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath $src).Hash){throw ('Menu source staging mismatch '+$name)}
           }
+          $rules=Join-Path $root 'Source\AnomaliaZPrigimalia\AnomaliaZPrigimalia.Build.cs'
+          Copy-Item -LiteralPath $rules -Destination (Join-Path $backup 'AnomaliaZPrigimalia.Build.cs') -ErrorAction Stop
+          $rulesText=[IO.File]::ReadAllText($rules)
+          if($rulesText -notmatch '"AudioMixer"'){
+            $anchor='PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;'
+            if(-not $rulesText.Contains($anchor)){throw 'Cannot safely add native media audio dependency'}
+            $rulesText=$rulesText.Replace($anchor,$anchor+[Environment]::NewLine+'        PrivateDependencyModuleNames.Add("AudioMixer");')
+            [IO.File]::WriteAllText($rules,$rulesText,[Text.UTF8Encoding]::new($false))
+          }
           (Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha')
           Write-Host 'PRIGIMALIA_REAL_MAIN_MENU_SOURCES_STAGED=true'
       - name: Check real survivor mannequin assets and include them in the new game's cook
