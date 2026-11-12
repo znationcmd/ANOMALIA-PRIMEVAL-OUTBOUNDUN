@@ -70,6 +70,18 @@ try:
         if not restored:
             raise RuntimeError('Original physics carrier failed to load: '+asset_path)
         car.set_editor_property(field,restored)
+
+    rig_mesh = car.get_editor_property('road_mesh')
+    if not rig_mesh.get_editor_property('physics_asset'):
+        original_physics = unreal.load_asset('/Game/Vehicles/OffroadCar/SKM_Offroad_PhysicsAsset')
+        if not original_physics:
+            raise RuntimeError('Installed original vehicle physics asset is missing')
+        shutil.copy2(root/'Content/Vehicles/OffroadCar/SKM_Offroad.uasset',out/'SKM_Offroad.before.uasset')
+        rig_mesh.set_editor_property('physics_asset',original_physics)
+        if not unreal.EditorAssetLibrary.save_loaded_asset(rig_mesh):
+            raise RuntimeError('Restored skeletal vehicle physics reference did not save')
+    report['restoredCarrierPhysicsAsset'] = path(rig_mesh.get_editor_property('physics_asset'))
+    rig_mesh = None
     restored = None
     candidates = []
     rig_assets = []
@@ -208,6 +220,11 @@ try:
     car.get_editor_property('survival_systems').set_editor_property('battery_access_panel', unreal.Name('trunk'))
     car.set_actor_location(unreal.Vector(parking.x, parking.y, parking.z+100), False, True)
     car.set_actor_rotation(unreal.Rotator(), False)
+
+    chassis = car.get_editor_property('chassis')
+    chassis.set_skeletal_mesh_asset(car.get_editor_property('road_mesh'))
+    report['rigDiagnostics'] = {'roadMesh':path(car.get_editor_property('road_mesh')), 'animation':path(car.get_editor_property('road_animation')), 'panelDefinitions':len(panels), 'panelCapacity':len(car.get_editor_property('additional_panels')), 'boneIndices':{str(b):chassis.get_bone_index(b) for b in car.get_editor_property('wheel_bones')}, 'valid':car.has_valid_road_rig()}
+    chassis = None
     if not car.has_valid_road_rig():
         raise RuntimeError('Original native E39 rig rejected in the true world')
     if not editor.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True):
