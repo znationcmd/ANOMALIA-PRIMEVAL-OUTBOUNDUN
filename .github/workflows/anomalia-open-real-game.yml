@@ -21,13 +21,20 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $headers=@{Authorization=('Bearer '+$env:GH_TOKEN);Accept='application/vnd.github+json'}
-          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43226147989'
+          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43233312360'
           if($run.conclusion -ne 'success'){throw 'The actual SKARVIK game has not passed native standalone tests'}
           $manifest='D:\ANOMALIAZ\Jeu\installation.json'
           $record=Get-Content -LiteralPath $manifest -Raw|ConvertFrom-Json
-          if($record.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED' -or $record.sourceRun -ne '43226147989' -or -not $record.standalonePackagedExe){throw 'Verified real standalone installation missing'}
+          if($record.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED' -or $record.sourceRun -ne '43233312360' -or -not $record.standalonePackagedExe){throw 'Verified real standalone installation missing'}
           if($record.map -ne '/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1' -or [IO.Path]::GetFileName($record.exe) -match 'UnrealEditor'){throw 'Only actual SKARVIK standalone game is permitted'}
           if((Get-FileHash -LiteralPath $record.exe).Hash -ne $record.sha256){throw 'Standalone executable hash mismatch'}
+          @'
+          BMW E39 original model: Black Snow
+          Source: https://sketchfab.com/3d-models/none-531a5a93da5d493d9918eb36f011c20d
+          License: Creative Commons Attribution 4.0 (CC BY 4.0)
+          Modified for ANOMALIA: vehicle body partitions, opening panels, wheels and native physics integration.
+          '@|Set-Content -LiteralPath (Join-Path $record.packageRoot 'Credits_BMW_E39.txt') -Encoding utf8
+
       - name: Check genuine gameplay image visibility and leave the actual game open
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -62,7 +69,7 @@ jobs:
           Start-Sleep -Seconds 15
           $running=@(Get-Process 'AnomaliaPrimeval*' -ErrorAction SilentlyContinue|Where-Object{$_.Path -and $_.Path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)})
           if(-not $running.Count){throw 'The real standalone game did not remain running'}
-          @{state='REAL_GAME_OPEN_FOR_USER';exe=$record.exe;map=$record.map;processIds=@($running.Id);nativeTestRun=43226147989}|ConvertTo-Json|Set-Content (Join-Path $out 'opened-for-user.json')
+          @{state='REAL_GAME_OPEN_FOR_USER';exe=$record.exe;map=$record.map;processIds=@($running.Id);nativeTestRun=43233312360}|ConvertTo-Json|Set-Content (Join-Path $out 'opened-for-user.json')
           Get-Content (Join-Path $out 'opened-for-user.json')
       - uses: actions/upload-artifact@v4
         if: always()
