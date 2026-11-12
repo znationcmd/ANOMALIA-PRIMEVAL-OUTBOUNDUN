@@ -1,4 +1,4 @@
-name: Final native WorkForge validation and asset diagnosis
+name: Final native WorkForge installation and packaged test
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
@@ -10,27 +10,73 @@ concurrency:
 jobs:
   verify:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 20
+    timeout-minutes: 90
     defaults:
       run:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
     steps:
-      - name: Locate installed character assets and template content
+      - name: Prepare final evidence and owned character binding
         run: |
           $ErrorActionPreference='Stop'
-          $out=Join-Path 'D:\ANOMALIAZ\02_Projet_Migration\unreal\Saved\WorkForgeFinal' $env:GITHUB_RUN_ID
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Native editor/game/build already in use'}
+          $root='D:\ANOMALIAZ\02_Projet_Migration\unreal'
+          $out=Join-Path $root ('Saved\WorkForgeFinal\'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           ('WF_FINAL_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          $roots=@('D:\ANOMALIAZ\01_Projet_Principal\unreal\Content','D:\ANOMALIAZ\02_Projet_Migration\unreal\Content',(Join-Path $env:UE_ROOT 'Templates'))
-          $assets=@(foreach($root in $roots){if(Test-Path -LiteralPath $root){Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.uasset'|Where-Object{$_.Name -match '^(SKM?_(Manny|Quinn|Mannequin))'}|Select-Object FullName,Length}})
-          $packs=@(Get-ChildItem -LiteralPath (Join-Path $env:UE_ROOT 'FeaturePacks') -File -Filter '*.upack' -ErrorAction SilentlyContinue|Select-Object FullName,Length)
-          @{assets=$assets;featurePacks=$packs}|ConvertTo-Json -Depth 5|Set-Content (Join-Path $out 'asset-locations.json')
-          Get-Content (Join-Path $out 'asset-locations.json')
+          $script=Join-Path $out 'bind-installed-body.py'
+          @'
+          import unreal, json
+          from pathlib import Path
+          project=Path(unreal.Paths.project_dir()).resolve()
+          expected=Path(r"D:\ANOMALIAZ\02_Projet_Migration\unreal").resolve()
+          if project!=expected: raise RuntimeError("Unexpected native project")
+          source="/Game/Survival_Character/Demo/Characters/Mannequins/Meshes/SKM_Manny"
+          target="/Game/Characters/Mannequins/Meshes/SKM_Manny"
+          api=unreal.EditorAssetLibrary
+          unreal.AssetRegistryHelpers.get_asset_registry().wait_for_completion()
+          body=unreal.load_asset(source)
+          if not isinstance(body,unreal.SkeletalMesh): raise RuntimeError("Installed owned body failed to load: "+source)
+          created=not api.does_asset_exist(target)
+          result=api.duplicate_asset(source,target) if created else unreal.load_asset(target)
+          if not isinstance(result,unreal.SkeletalMesh): raise RuntimeError("Native body binding failed")
+          if not result.get_editor_property("skeleton"): raise RuntimeError("Body has no skeleton")
+          if not api.save_loaded_asset(result,only_if_is_dirty=False): raise RuntimeError("Body save failed")
+          report={"source":source,"target":target,"created":created,"skeleton":result.get_editor_property("skeleton").get_path_name()}
+          (project/"Saved"/"workforge-body-binding.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
+          unreal.log("WORKFORGE_BODY_BINDING="+json.dumps(report))
+          '@|Set-Content -LiteralPath $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
+          & $editor $project "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'body-import.log'))
+          if($LASTEXITCODE -ne 0){throw 'Installed body could not be bound'}
+          $bodyReport=Join-Path $root 'Saved\workforge-body-binding.json'
+          if(-not(Test-Path -LiteralPath $bodyReport)){throw 'Body binding report missing'}
+          Copy-Item -LiteralPath $bodyReport -Destination $out
+          Get-Content -LiteralPath $bodyReport
+          $ini=Join-Path $root 'Config\DefaultGame.ini'
+          $line='+DirectoriesToAlwaysCook=(Path="/Game/Characters/Mannequins/Meshes")'
+          $text=[IO.File]::ReadAllText($ini)
+          if(-not $text.Contains($line)){
+            Copy-Item -LiteralPath $ini -Destination (Join-Path $out 'DefaultGame.before.ini')
+            [IO.File]::AppendAllText($ini,[Environment]::NewLine+'[/Script/UnrealEd.ProjectPackagingSettings]'+[Environment]::NewLine+$line+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
+          }
+      - name: Update cooked game with actual installed character asset
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\02_Projet_Migration'
+          $project=Join-Path $root 'unreal\AnomaliaZPrigimalia.uproject'
+          $archive=Join-Path $root ('PackagedWindows\WorkForgeFinal-'+$env:GITHUB_RUN_ID)
+          if(Test-Path -LiteralPath $archive){throw 'Archive already exists'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -cook -iterate -stage -pak -package -archive "-archivedirectory=$archive" -unattended -utf8output
+          if($LASTEXITCODE -ne 0){throw 'Final native packaging failed'}
+          $exe=Join-Path $archive 'Windows\AnomaliaZPrigimalia.exe'
+          if(-not(Test-Path -LiteralPath $exe)){throw 'Final native executable missing'}
+          ('WF_FINAL_EXE='+$exe)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
       - name: Test actual packaged menu with valid isolated probe profile
         run: |
           $ErrorActionPreference='Stop'
-          $exe='D:\ANOMALIAZ\02_Projet_Migration\PackagedWindows\WorkForgeMenu-43166532094\Windows\AnomaliaZPrigimalia.exe'
-          if(-not(Test-Path -LiteralPath $exe)){throw 'Previously compiled packaged game missing'}
+          $exe=$env:WF_FINAL_EXE
           $report=Join-Path $env:WF_FINAL_OUT 'menu.json'
           $log=Join-Path $env:WF_FINAL_OUT 'menu.log'
           $arguments=@('/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-workforge-final','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaMenuOnly',("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
@@ -40,6 +86,28 @@ jobs:
           Get-Content -LiteralPath $report
           $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
           if($r.state -ne 'PACKAGED_GAME_SMOKE_PASSED'){throw ('Runtime test failed: '+$r.error)}
+          foreach($check in @('real_right_aligned_3d_main_menu_visible_without_old_poster','working_start_server_browser_workforge_and_separate_pause')){
+            if(@($r.checks) -notcontains $check){throw ('Missing native menu check '+$check)}
+          }
+          $image=Join-Path $env:WF_FINAL_OUT 'menu-actual-main-menu.png'
+          if(-not(Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 15000){throw 'Actual native menu screenshot missing'}
+      - name: Install shortcut only after packaged runtime success
+        run: |
+          $ErrorActionPreference='Stop'
+          $desktop='C:\Users\utilisateur\Desktop'
+          if(-not(Test-Path -LiteralPath $desktop)){$desktop=[Environment]::GetFolderPath('Desktop')}
+          $link=Join-Path $desktop "ANOMALIA'Z PRIGIMALIA - JEU UNREAL WORKFORGE.lnk"
+          if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $env:WF_FINAL_OUT 'previous-shortcut.lnk')}
+          $shell=New-Object -ComObject WScript.Shell
+          $shortcut=$shell.CreateShortcut($link)
+          $shortcut.TargetPath=$env:WF_FINAL_EXE
+          $shortcut.WorkingDirectory=Split-Path $env:WF_FINAL_EXE -Parent
+          $shortcut.Arguments='/Game/Maps/ANOMALIA_Playable_v1 -d3d11 -sm5'
+          $shortcut.IconLocation=$env:WF_FINAL_EXE+',0'
+          $shortcut.Save()
+          if($shell.CreateShortcut($link).TargetPath -ne $env:WF_FINAL_EXE){throw 'Native game shortcut mismatch'}
+          @{state='NATIVE_GAME_INSTALLED_AND_RUNTIME_VERIFIED';exe=$env:WF_FINAL_EXE;shortcut=$link;sha256=(Get-FileHash -LiteralPath $env:WF_FINAL_EXE).Hash}|ConvertTo-Json|Set-Content (Join-Path $env:WF_FINAL_OUT 'installation.json')
+          Get-Content (Join-Path $env:WF_FINAL_OUT 'installation.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
