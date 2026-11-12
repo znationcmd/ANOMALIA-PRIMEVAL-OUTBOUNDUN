@@ -2,7 +2,7 @@ name: Compile genuine E39 cameras engine bay and original city batching
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: [.github/workflows/anomalia-scene-native-compile.yml]
+    paths: [.github/workflows/anomalia-scene-native-compile.yml, scripts/ue5/scene-repair/prepare_car_art.py]
 permissions: {contents: read}
 concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
 jobs:
@@ -33,6 +33,8 @@ jobs:
           $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
           & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_native.py')
           if($LASTEXITCODE -ne 0){throw 'Source preparation failed'}
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_car_art.py')
+          if($LASTEXITCODE -ne 0){throw 'New E39 source art preparation failed'}
       - name: Compile native Editor support and real standalone target
         run: |
           $ErrorActionPreference='Stop'
@@ -45,8 +47,6 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
-          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_car_art.py')
-          if($LASTEXITCODE -ne 0){throw 'New E39 source art preparation failed'}
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\import_car_art.py'
           $p=Start-Process -FilePath $editor -ArgumentList @('D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject','/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $env:SCENE_REPAIR_OUT 'import.log')+'"')) -PassThru
