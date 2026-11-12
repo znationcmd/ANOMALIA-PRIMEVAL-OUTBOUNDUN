@@ -3,12 +3,12 @@ import hashlib,json,os,shutil,gzip
 from pathlib import Path
 root=Path(r'D:\ANOMALIAZ\01_Projet_Principal\unreal');out=Path(os.environ['SCENE_REPAIR_OUT']);here=Path(__file__).parent
 r={'state':'FAILED','source':[]}
-for stem,folder in [('AnomaliaChaosRoadVehicle','Vehicles'),('AnomaliaCityBlock','World')]:
+for stem,folder in [('AnomaliaChaosRoadVehicle','Vehicles'),('AnomaliaCityBlock','World'),('AnomaliaAuthenticGameProbe','')]:
  for suffix in ['.h','.cpp']:
   rel=Path('Source/AnomaliaPrimeval')/folder/(stem+suffix);p=root/rel
   if p.exists():
    dest=out/'SourceBackup'/rel;dest.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(p,dest)
-   if stem=='AnomaliaChaosRoadVehicle':
+   if stem!='AnomaliaCityBlock':
     expected=json.loads((here/'source-base-hashes.json').read_text())[stem+suffix]
     current=hashlib.sha256(p.read_bytes().replace(b'\r\n',b'\n')).hexdigest()
     target=hashlib.sha256((here/(stem+suffix)).read_bytes()).hexdigest()

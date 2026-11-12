@@ -1,4 +1,6 @@
 {
   "AnomaliaChaosRoadVehicle.h": "bd4736122fa67c79551f3c7a2aba64fa79bdf128fd910c83122ed5abe1b95dbf",
-  "AnomaliaChaosRoadVehicle.cpp": "59313d9c357ebc35f13d8afa8862598e62032df9d2a86756d7a4ef2d39c0b3a2"
+  "AnomaliaChaosRoadVehicle.cpp": "59313d9c357ebc35f13d8afa8862598e62032df9d2a86756d7a4ef2d39c0b3a2",
+  "AnomaliaAuthenticGameProbe.h": "575fcff0f12369efc4377b187fadf6d30bdc7eb6963c9a6b2daff34320bf0a84",
+  "AnomaliaAuthenticGameProbe.cpp": "346e2b98aa73f14c45deddb66238733fc949ba32509321ff1e29f05b09623e66"
 }

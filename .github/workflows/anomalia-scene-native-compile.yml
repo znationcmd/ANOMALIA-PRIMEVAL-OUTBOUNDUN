@@ -38,6 +38,19 @@ jobs:
             & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'.log'))
             if($LASTEXITCODE -ne 0){throw ('Native compilation failed '+$target)}
           }
+      - name: Prepare new E39 lining paint glass and chassis engine geometry
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_car_art.py')
+          if($LASTEXITCODE -ne 0){throw 'New E39 source art preparation failed'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\import_car_art.py'
+          $p=Start-Process -FilePath $editor -ArgumentList @('D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject','/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $env:SCENE_REPAIR_OUT 'import.log')+'"')) -PassThru
+          $handle=$p.Handle
+          if(-not $p.WaitForExit(600000)){& taskkill.exe /PID $p.Id /F /T|Out-Null;throw 'Car mesh import timed out'}
+          $report=Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'car-art-import.json') -Raw|ConvertFrom-Json
+          if($report.state -ne 'CORRECTED_E39_AND_ENGINE_IMPORTED_NOT_YET_INSTALLED'){throw ('Art import failed '+$report.error)}
       - uses: actions/upload-artifact@v4
         if: ${{ always() && env.SCENE_REPAIR_OUT != '' }}
         with:
