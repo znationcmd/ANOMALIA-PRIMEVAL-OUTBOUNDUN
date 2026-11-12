@@ -55,6 +55,25 @@ try:
     if len(cars) != 1:
         raise RuntimeError('Expected one previously authored E39 native physics actor')
     car = cars[0]
+    # Restore broken review-world soft references from the installed vehicle kit.
+    # The visible body remains the real E39; this is its skeletal physics carrier.
+    rig_assets = registry.get_assets_by_path('/Game/Vehicles/OffroadCar', recursive=True)
+    report['installedPhysicsKitAssets'] = [str(a.package_name) for a in rig_assets]
+    for field, expected, generated in [('road_mesh','SKM_Offroad',False),('road_animation','Offroad_AnimBP',True)]:
+        if car.get_editor_property(field):
+            continue
+        candidates = [a for a in rig_assets if str(a.asset_name)==expected]
+        if len(candidates)!=1:
+            raise RuntimeError('Cannot resolve installed original physics carrier '+expected)
+        asset_path = str(candidates[0].package_name)+'.'+expected+('_C' if generated else '')
+        restored = unreal.load_class(None,asset_path) if generated else unreal.load_asset(asset_path)
+        if not restored:
+            raise RuntimeError('Original physics carrier failed to load: '+asset_path)
+        car.set_editor_property(field,restored)
+    restored = None
+    candidates = []
+    rig_assets = []
+
     asset_fields = ['road_mesh', 'road_animation', 'road_body_mesh', 'road_wheel_mesh', 'road_glass_mesh', 'driver_door_mesh']
     recipe = {name: path(car.get_editor_property(name)) for name in asset_fields}
     if not recipe['road_body_mesh'].startswith('/Game/Anomalia/BMWE39Review_v7/'):
