@@ -40,12 +40,7 @@ export function createStartMenu({state,renderer,start,network,onMenu,openEditor,
  const show=t=>{tab=t;$('menuHome').hidden=t!=='home';$('menuMulti').hidden=t!=='multi';$('menuSettings').hidden=t!=='settings';$('menuMods').hidden=t!=='mods';$('menuTools').hidden=t!=='tools';$('menuWorldSettings').hidden=t!=='world-settings';};$('multiBtn').onclick=()=>show('multi');$('settingsBtn').onclick=()=>show('settings');$('worldSettingsBtn').onclick=()=>show('world-settings');$('modsBtn').onclick=()=>show('mods');$('toolsBtn').onclick=()=>show('tools');for(const b of screen.querySelectorAll('.menu-back'))b.onclick=()=>show('home');
  const workforge=mountWorkForge({openMods:()=>{screen.classList.remove('hidden');show('mods');},onPlay:()=>{screen.classList.remove('hidden');show('home');}});
  $('workforgeBtn').onclick=()=>workforge.show();
- // Available in the running game and in the installed Electron application.
- const hud=document.getElementById('hud');
- if(hud && !document.getElementById('workforgeHudBtn')){
-   const button=document.createElement('button');button.id='workforgeHudBtn';button.textContent='⚒ WORKFORGE';button.type='button';button.title='Ouvrir WorkForge';
-   button.onclick=()=>workforge.show();hud.append(button);
- }
+ // WorkForge belongs to the start menu only; never display a button during gameplay.
  const remember=()=>{state.playerName=$('survivorName').value.trim()||'Survivant';localStorage.setItem('anomalia-player-name',state.playerName);};
  let disposePreview=survivorPreview($('menuSurvivor'),state);const play=(skipLock=false)=>{remember();disposePreview?.();disposePreview=null;start(!skipLock);};
  $('newGameBtn').onclick=()=>newGame?.();
