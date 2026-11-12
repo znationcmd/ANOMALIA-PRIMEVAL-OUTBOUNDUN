@@ -32,7 +32,12 @@ jobs:
             Copy-Item -LiteralPath $heldPrevious -Destination $recovered
           }
           if((Get-FileHash -LiteralPath $recovered).Hash -ne $expected){throw 'Traffic source effect has unexpected changes'}
-          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Source editor or build is active'}
+          for($attempt=0;$attempt -lt 10;$attempt++){
+            $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe')})
+            if(-not $active.Count){break}
+            Start-Sleep -Seconds 2
+          }
+          if($active.Count){$active|Select-Object Name,ProcessId,ParentProcessId,ExecutablePath,CommandLine|ConvertTo-Json -Depth 4;throw 'Source editor or build is active'}
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
           $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
           New-Item -ItemType Directory -Path $out -Force|Out-Null
@@ -69,7 +74,7 @@ jobs:
           $report|Select-Object state,error,instances,groundFloorInstances,meshCategories,roadMeshes|ConvertTo-Json -Depth 8
           if($report.state -ne 'ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS'){throw 'Source scene audit failed'}
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: ${{ always() && env.SCENE_REPAIR_OUT != '' }}
         with:
           name: ORIGINAL-CITY-BLOCK-AND-CAR-MESH-SETTINGS
           path: ${{ env.SCENE_REPAIR_OUT }}/*
