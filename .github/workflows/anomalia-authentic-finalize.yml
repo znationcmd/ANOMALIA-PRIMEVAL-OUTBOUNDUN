@@ -1,0 +1,91 @@
+name: Test and install the successfully packaged genuine SKARVIK game
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-authentic-finalize.yml]
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  finalize:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - name: Validate existing successful UAT package without repeating cook
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIAZ\01_Projet_Principal\unreal\Saved\AuthenticInstall\43226147989'
+          $tail=(Get-Content -LiteralPath (Join-Path $out 'standalone-package.log') -Tail 60)-join [Environment]::NewLine
+          if($tail -notmatch 'BUILD SUCCESSFUL' -or $tail -notmatch 'AutomationTool exiting with ExitCode=0 \(Success\)'){throw 'The existing standalone package did not complete successfully'}
+          $authored=Get-Content -LiteralPath (Join-Path $out 'authored-world.json') -Raw|ConvertFrom-Json
+          if($authored.state -ne 'AUTHENTIC_E39_SAVED_IN_TRUE_SKARVIK_NOT_YET_PLAYTESTED' -or $authored.map -ne '/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'){throw 'The original real-world integration did not pass'}
+          $package='D:\ANOMALIAZ\Jeu\Versions\SKARVIK-43226147989\Windows'
+          $exe=Join-Path $package 'AnomaliaPrimeval.exe'
+          if(-not(Test-Path -LiteralPath $exe)){throw 'Actual standalone executable missing'}
+          $paks=Join-Path $package 'AnomaliaPrimeval\Content\Paks'
+          $data=@(Get-ChildItem -LiteralPath $paks -File|Where-Object{$_.Extension -in @('.pak','.ucas','.utoc')})
+          if(-not $data.Count -or ($data|Measure-Object Length -Sum).Sum -lt 1MB){throw 'Actual cooked game data missing'}
+          ('AUTHENTIC_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          ('AUTHENTIC_GAME_EXE='+$exe)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          ('AUTHENTIC_GAME_ROOT='+$package)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          @{state='EXISTING_STANDALONE_PACKAGE_VALIDATED';buildRun=43226147989;exe=$exe;cookedBytes=($data|Measure-Object Length -Sum).Sum}|ConvertTo-Json
+      - name: Test only the real standalone executable on the real SKARVIK world
+        run: |
+          $ErrorActionPreference='Stop'
+          $report=Join-Path $env:AUTHENTIC_OUT 'actual-gameplay.json'
+          $log=Join-Path $env:AUTHENTIC_OUT 'actual-gameplay.log'
+          foreach($name in @('actual-gameplay.json','actual-gameplay-main-menu.png','actual-gameplay-workforge.png','actual-gameplay-gameplay.png')){
+            $previous=Join-Path $env:AUTHENTIC_OUT $name
+            if(Test-Path -LiteralPath $previous){Move-Item -LiteralPath $previous -Destination ($previous+'.before-'+$env:GITHUB_RUN_ID)}
+          }
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=authentic-smoke-'+$env:GITHUB_RUN_ID
+          $args=@($map,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause',('-AnomaliaAuthenticProbe="'+$report+'"'),('-abslog="'+$log+'"'))
+          $p=Start-Process -FilePath $env:AUTHENTIC_GAME_EXE -ArgumentList $args -PassThru
+          if(-not $p.WaitForExit(300000)){& taskkill.exe /PID $p.Id /T /F|Out-Null;throw 'Actual standalone SKARVIK gameplay timed out'}
+          if(-not(Test-Path -LiteralPath $report)){throw 'Standalone actual-world report missing'}
+          Get-Content -LiteralPath $report
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED'){throw ('Actual standalone gameplay failed: '+$r.error)}
+          foreach($name in @('actual-gameplay-main-menu.png','actual-gameplay-workforge.png','actual-gameplay-gameplay.png')){
+            $image=Join-Path $env:AUTHENTIC_OUT $name
+            if(-not(Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 15000){throw ('Actual engine image missing '+$name)}
+          }
+      - name: Install real game shortcuts and verified standalone launch manifest
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe=$env:AUTHENTIC_GAME_EXE
+          if([IO.Path]::GetFileName($exe) -match 'UnrealEditor'){throw 'Editor executable is prohibited as game launcher'}
+          $desktop='C:\Users\utilisateur\Desktop'
+          $shell=New-Object -ComObject WScript.Shell
+          foreach($name in @("ANOMALIA'Z PRIGIMALIA - JEU UNREAL WORKFORGE.lnk","ANOMALIA'Z PRIGIMALIA - VRAI JEU SKARVIK.lnk")){
+            $link=Join-Path $desktop $name
+            if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $env:AUTHENTIC_OUT ($name+'.before'))}
+            $s=$shell.CreateShortcut($link);$s.TargetPath=$exe
+            $s.Arguments='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -d3d11 -sm5'
+            $s.WorkingDirectory=$env:AUTHENTIC_GAME_ROOT;$s.IconLocation=$exe+',0'
+            $s.Description='Vrai jeu autonome SKARVIK - City Sample, BMW E39, Survival Character et berger allemand'
+            $s.Save()
+            if($shell.CreateShortcut($link).TargetPath -ne $exe){throw 'Standalone shortcut mismatch'}
+          }
+          $record=@{state='AUTHENTIC_GAMEPLAY_VERIFIED';exe=$exe;map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1';packageRoot=$env:AUTHENTIC_GAME_ROOT;standalonePackagedExe=$true;sourceRun=$env:GITHUB_RUN_ID;sha256=(Get-FileHash -LiteralPath $exe).Hash}
+          $text=$record|ConvertTo-Json
+          $text|Set-Content (Join-Path $env:AUTHENTIC_OUT 'installation.json')
+          $manifest='D:\ANOMALIAZ\Jeu\installation.json'
+          if(Test-Path -LiteralPath $manifest){Copy-Item -LiteralPath $manifest -Destination (Join-Path $env:AUTHENTIC_OUT 'previous-installation.json')}
+          $text|Set-Content ($manifest+'.new')
+          Move-Item -LiteralPath ($manifest+'.new') -Destination $manifest -Force
+          Get-Content -LiteralPath $manifest
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AUTHENTIC-STANDALONE-SKARVIK-FINAL-RUNTIME
+          path: |
+            D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/43226147989/*.json
+            D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/43226147989/actual-gameplay.log
+            D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/43226147989/*.png
+          if-no-files-found: warn
