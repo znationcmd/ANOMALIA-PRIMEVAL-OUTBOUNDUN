@@ -1,0 +1,89 @@
+name: Inspect authentic SKARVIK city car survivor and dog installation sources
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-authentic-install.yml]
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  authentic-install:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - name: Inspect exact source maps and authentic asset anchors
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path 'D:\ANOMALIAZ' ('AuthenticInstallAudit\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('AUTHENTIC_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $roots=@('D:\ANOMALIAZ\01_Projet_Principal\unreal','D:\ANOMALIAZ\02_Projet_Migration\unreal','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal','C:\ANOMALIA-Validation\c40543166274\unreal')
+          $names=@('Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap','Map\Big_City_LVL.umap','Maps\ANOMALIA_E39DriveReview_v1.umap','Survival_Character\Meshes\SK_Survival_Character.uasset','German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset','German_Shepherd_3D_Model\Animations\A_type1_Walk_Loop_v01.uasset','Anomalia\BMWE39Review_v7\body\SM_body.uasset')
+          $rows=@(foreach($root in $roots){
+            foreach($name in $names){
+              $p=Join-Path (Join-Path $root 'Content') $name
+              if(Test-Path -LiteralPath $p){$f=Get-Item -LiteralPath $p -Force;[ordered]@{root=$root;asset=$name;bytes=$f.Length;modifiedUtc=$f.LastWriteTimeUtc.ToString('o');sha256=(Get-FileHash -LiteralPath $p).Hash}}
+            }
+            $external=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1'
+            if(Test-Path -LiteralPath $external){
+              $files=@(Get-ChildItem -LiteralPath $external -Recurse -File)
+              [ordered]@{root=$root;externalActors=$files.Count;latestModifiedUtc=($files|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1).LastWriteTimeUtc.ToString('o')}
+            }
+          })
+          $rows|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $out 'sources.json')
+          Get-Content -LiteralPath (Join-Path $out 'sources.json')
+          $content='D:\ANOMALIAZ\02_Projet_Migration\unreal\Content'
+          foreach($folder in @('Anomalia','AnomaliaZPrigimalia')){
+            $p=Join-Path $content $folder
+            if(Test-Path -LiteralPath $p){Get-ChildItem -LiteralPath $p -Directory|Where-Object{$_.Name -match 'BMW|Road|Chaos|Dog|Character'}|Select-Object FullName|ConvertTo-Json|Write-Host}
+          }
+          Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Write-Host
+      - name: Inspect migration true world and skeleton assets without edits
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Unreal session in use'}
+          $script=Join-Path $env:AUTHENTIC_OUT 'inspect.py'
+          @'
+          import unreal,json,os,traceback
+          from pathlib import Path
+          r={"state":"FAILED","assets":{}}
+          try:
+              api=unreal.EditorAssetLibrary
+              registry=unreal.AssetRegistryHelpers.get_asset_registry()
+              registry.wait_for_completion()
+              paths=["/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01","/Game/Anomalia/BMWE39Review_v7/body/SM_body"]
+              for p in paths:
+                  a=unreal.load_asset(p)
+                  r["assets"][p]={"exists":bool(a),"class":a.get_class().get_name() if a else None}
+                  if isinstance(a,unreal.SkeletalMesh):
+                      sk=a.get_editor_property("skeleton")
+                      r["assets"][p]["skeleton"]=sk.get_path_name() if sk else None
+              for folder in ["/Game/Survival_Character","/Game/Anomalia/BMWE39Review_v7","/Game/German_Shepherd_3D_Model"]:
+                  r.setdefault("assetLists",{})[folder]=[str(x) for x in api.list_assets(folder,True,False) if any(t in str(x).lower() for t in ["idle","abp","animbp","body","wheel","door","walk","run"])]
+              if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Real SKARVIK map not available in migration project")
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
+              descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+              r["worldPartitionDescriptors"]=len(descs)
+              r["cityLabels"]=[str(d.label) for d in descs if any(t in str(d.label).upper() for t in ["CITY","BUILDING","VILLAGE"])][:100]
+              r["playerStarts"]=[{"name":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z]} for a in actors if isinstance(a,unreal.PlayerStart)]
+              r["loadedNativeActors"]=[{"label":a.get_actor_label(),"class":a.get_class().get_name()} for a in actors if "Anomalia" in a.get_class().get_name()][:60]
+              r["state"]="AUTHENTIC_SOURCE_INSPECTION_COMPLETE"
+          except Exception:r["error"]=traceback.format_exc()
+          finally:
+              Path(os.environ["AUTHENTIC_OUT"],"native-source.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+              unreal.SystemLibrary.quit_editor()
+          '@|Set-Content -LiteralPath $script -Encoding utf8
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project='D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject'
+          & $editor $project /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'native-source.log'))
+          Get-Content -LiteralPath (Join-Path $env:AUTHENTIC_OUT 'native-source.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: AUTHENTIC-GAME-INSTALLATION-EVIDENCE
+          path: D:/ANOMALIAZ/AuthenticInstallAudit/*/
+          if-no-files-found: warn
