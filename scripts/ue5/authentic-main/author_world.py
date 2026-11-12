@@ -221,10 +221,13 @@ try:
     car.set_actor_location(unreal.Vector(parking.x, parking.y, parking.z+100), False, True)
     car.set_actor_rotation(unreal.Rotator(), False)
 
-    chassis = car.get_editor_property('chassis')
-    chassis.set_skeletal_mesh_asset(car.get_editor_property('road_mesh'))
-    report['rigDiagnostics'] = {'roadMesh':path(car.get_editor_property('road_mesh')), 'animation':path(car.get_editor_property('road_animation')), 'panelDefinitions':len(panels), 'panelCapacity':len(car.get_editor_property('additional_panels')), 'boneIndices':{str(b):chassis.get_bone_index(b) for b in car.get_editor_property('wheel_bones')}, 'valid':car.has_valid_road_rig()}
-    chassis = None
+    try:
+        chassis = car.get_editor_property('chassis')
+        chassis.set_skeletal_mesh_asset(car.get_editor_property('road_mesh'))
+        report['rigDiagnostics'] = {'roadMesh':path(car.get_editor_property('road_mesh')), 'animation':path(car.get_editor_property('road_animation')), 'panelDefinitions':len(panels), 'panelCapacity':len(car.get_editor_property('additional_panels')), 'boneIndices':{str(b):chassis.get_bone_index(b) for b in car.get_editor_property('wheel_bones')}, 'valid':car.has_valid_road_rig()}
+        chassis = None
+    except Exception as diagnostic_error:
+        report['rigDiagnosticsError'] = str(diagnostic_error)
     if not car.has_valid_road_rig():
         raise RuntimeError('Original native E39 rig rejected in the true world')
     if not editor.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, True):
