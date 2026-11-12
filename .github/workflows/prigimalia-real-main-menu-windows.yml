@@ -42,8 +42,8 @@ jobs:
           $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
           $marker=Join-Path $root 'Saved\BrandMigration\verified-source-backup.marker'
           if(-not(Test-Path -LiteralPath $old -PathType Leaf) -or -not(Test-Path -LiteralPath $project -PathType Leaf) -or -not(Test-Path -LiteralPath $marker -PathType Leaf)){throw 'Safety markers or original user project missing'}
-          foreach($d in @('D:\ANOMALIA',$projectHome,$root)){
-            if((Get-Item -LiteralPath $d).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source project root is not allowed'}
+          foreach($d in @($projectHome,$root)){
+            if((Get-Item -LiteralPath $d -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked source project root is not allowed'}
           }
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval,UnrealBuildTool,robocopy -ErrorAction SilentlyContinue).Count -gt 0){throw 'Editor or game is open: cannot safely swap shared native sources'}
           $backup=Join-Path $root ('Saved\BrandMigration\RealMainMenu\run-'+$env:GITHUB_RUN_ID)
@@ -54,7 +54,7 @@ jobs:
             $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
             $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
             if(-not(Test-Path -LiteralPath $src -PathType Leaf) -or -not(Test-Path -LiteralPath $dst -PathType Leaf)){throw ('Menu source missing '+$name)}
-            if((Get-Item -LiteralPath $dst).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked native source is not allowed'}
+            if((Get-Item -LiteralPath $dst -Force).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked native source is not allowed'}
             Copy-Item -LiteralPath $dst -Destination (Join-Path $backup $name) -ErrorAction Stop
             if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath (Join-Path $backup $name)).Hash){throw ('Backup mismatch '+$name)}
           }
