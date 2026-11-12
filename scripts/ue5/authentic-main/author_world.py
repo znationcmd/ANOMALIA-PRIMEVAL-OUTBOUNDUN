@@ -98,6 +98,15 @@ try:
     start = min(starts, key=lambda a: (a.get_actor_location().x-200000)**2+(a.get_actor_location().y-800000)**2)
     p = start.get_actor_location()
     report['originalStart'] = {'label': start.get_actor_label(), 'position': vector(p)}
+    # Load actual nearby ground, roads and landscape cells as runtime would.
+    region = unreal.Box(min=unreal.Vector(p.x-5000,p.y-5000,p.z-50000), max=unreal.Vector(p.x+5000,p.y+5000,p.z+50000))
+    nearby = unreal.WorldPartitionBlueprintLibrary.get_intersecting_actor_descs(region) or []
+    runtime_nearby = [d for d in nearby if not d.actor_is_editor_only]
+    report['nearbyRuntimeDescriptors'] = [{'label':str(d.label),'class':str(d.native_class),'min':vector(d.bounds.min),'max':vector(d.bounds.max)} for d in runtime_nearby]
+    unreal.WorldPartitionBlueprintLibrary.load_actors([d.guid for d in runtime_nearby])
+    loaded = actors.get_all_level_actors()
+    report['groundTraceDiagnostics'] = []
+
     city = []
     for a in loaded:
         for c in a.get_components_by_class(unreal.StaticMeshComponent):
@@ -110,11 +119,13 @@ try:
     report['cityMeshSample'] = city[:30]
 
     def trace(x, y):
-        hit = unreal.SystemLibrary.line_trace_single(world, unreal.Vector(x, y, p.z+1000), unreal.Vector(x, y, p.z-3000), unreal.TraceTypeQuery.ECC_VISIBILITY, True, [], unreal.DrawDebugTrace.NONE)
+        hit = unreal.SystemLibrary.line_trace_single(world, unreal.Vector(x, y, p.z+500), unreal.Vector(x, y, p.z-10000), unreal.TraceTypeQuery.ECC_VISIBILITY, True, [], unreal.DrawDebugTrace.NONE)
         if hit is None or not hit.to_tuple()[0]:
             return None
         point = hit.to_tuple()[5]
-        if abs(point.z-(p.z-180)) > 500:
+        normal = hit.to_tuple()[6]
+        report['groundTraceDiagnostics'].append({'x':x,'y':y,'point':vector(point),'normal':vector(normal)})
+        if normal.z < .8 or abs(point.z-p.z) > 10000:
             return None
         return point
 
