@@ -23,7 +23,15 @@ jobs:
           $ErrorActionPreference='Stop'
           # Only terminate the exact read-only extraction process started by our timed-out job.
           $owned=@(Get-CimInstance Win32_Process|Where-Object{$_.ProcessId -eq 14608 -and $_.Name -eq 'UnrealEditor-Cmd.exe' -and $_.CommandLine.Contains('43270446874') -and $_.CommandLine.Contains('export_original_block.py')})
-          foreach($process in $owned){& taskkill.exe /PID $process.ProcessId /T /F|Out-Null}
+          foreach($process in $owned){
+            $native=Get-Process -Id $process.ProcessId -ErrorAction SilentlyContinue
+            if($native){
+              try{$native.Kill();$native.WaitForExit(15000)|Out-Null}catch{Write-Warning $_}
+              $native.Refresh()
+              [pscustomobject]@{OwnedExtractionPid=$process.ProcessId;HasExited=$native.HasExited}|ConvertTo-Json
+              if(-not $native.HasExited){throw 'Owned extraction has not stopped'}
+            }
+          }
           $recovered='D:\ANOMALIAZ\01_Projet_Principal\unreal\Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
           $heldPrevious='D:\ANOMALIAZ\01_Projet_Principal\unreal\Saved\SceneRepair\43270446874\HeldIncompatibleTrafficEffect\VehicleDamageSystem_Runtime.uasset'
           $expected='6958C967A29C644C51B8C30D76308AB9A80C87FA716BEC7ED7ABB1766E96D6BF'
@@ -32,12 +40,15 @@ jobs:
             Copy-Item -LiteralPath $heldPrevious -Destination $recovered
           }
           if((Get-FileHash -LiteralPath $recovered).Hash -ne $expected){throw 'Traffic source effect has unexpected changes'}
-          for($attempt=0;$attempt -lt 10;$attempt++){
-            $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe')})
-            if(-not $active.Count){break}
-            Start-Sleep -Seconds 2
-          }
-          if($active.Count){$active|Select-Object Name,ProcessId,ParentProcessId,ExecutablePath,CommandLine|ConvertTo-Json -Depth 4;throw 'Source editor or build is active'}
+          # An unrelated project editor must not block or be stopped by this source task.
+          $active=@(Get-CimInstance Win32_Process|Where-Object{
+            $_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and
+            $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'
+          }|Where-Object{
+            $native=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue
+            $native -and -not $native.HasExited
+          })
+          if($active.Count){$active|Select-Object Name,ProcessId,CommandLine|ConvertTo-Json;throw 'Principal source editor or build is active'}
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
           $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
           New-Item -ItemType Directory -Path $out -Force|Out-Null
