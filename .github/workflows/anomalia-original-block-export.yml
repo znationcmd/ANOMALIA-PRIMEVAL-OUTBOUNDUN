@@ -11,7 +11,7 @@ concurrency:
 jobs:
   audit:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 20
+    timeout-minutes: 35
     defaults:
       run:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -21,6 +21,17 @@ jobs:
       - name: Inspect real source scene without changing installed game or source assets
         run: |
           $ErrorActionPreference='Stop'
+          # Only terminate the exact read-only extraction process started by our timed-out job.
+          $owned=@(Get-CimInstance Win32_Process|Where-Object{$_.ProcessId -eq 14608 -and $_.Name -eq 'UnrealEditor-Cmd.exe' -and $_.CommandLine.Contains('43270446874') -and $_.CommandLine.Contains('export_original_block.py')})
+          foreach($process in $owned){& taskkill.exe /PID $process.ProcessId /T /F|Out-Null}
+          $recovered='D:\ANOMALIAZ\01_Projet_Principal\unreal\Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
+          $heldPrevious='D:\ANOMALIAZ\01_Projet_Principal\unreal\Saved\SceneRepair\43270446874\HeldIncompatibleTrafficEffect\VehicleDamageSystem_Runtime.uasset'
+          $expected='6958C967A29C644C51B8C30D76308AB9A80C87FA716BEC7ED7ABB1766E96D6BF'
+          if(-not(Test-Path -LiteralPath $recovered)){
+            if((Get-FileHash -LiteralPath $heldPrevious).Hash -ne $expected){throw 'Held effect identity mismatch'}
+            Copy-Item -LiteralPath $heldPrevious -Destination $recovered
+          }
+          if((Get-FileHash -LiteralPath $recovered).Hash -ne $expected){throw 'Traffic source effect has unexpected changes'}
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Source editor or build is active'}
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
           $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
@@ -43,6 +54,7 @@ jobs:
             $moved+=@{source=$file.FullName;held=$destination;hash=(Get-FileHash -LiteralPath $file.FullName).Hash}
             Move-Item -LiteralPath $file.FullName -Destination $destination
           }
+          $moved|ConvertTo-Json|Set-Content (Join-Path $out 'held-effect-receipt.json')
           try {
           & $editor (Join-Path $root 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'audit.log'))
           } finally {

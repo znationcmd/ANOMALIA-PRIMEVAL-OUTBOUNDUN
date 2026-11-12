@@ -21,6 +21,10 @@ try:
   material_rows[material.get_path_name()]={'parent':material.get_editor_property('parent').get_path_name(),'scalars':[{'name':str(v.get_editor_property('parameter_info').get_editor_property('name')),'value':v.get_editor_property('parameter_value')} for v in material.get_editor_property('scalar_parameter_values')]}
  (out/'car-material-settings.json').write_text(json.dumps(material_rows,indent=2),encoding='utf-8')
  material=None
+ assets=reg.get_all_assets()
+ ground=[{'package':str(a.package_name),'class':str(a.asset_class_path.asset_name)} for a in assets if ('forest_ground_04' in str(a.package_name).lower() or str(a.package_name).startswith('/Game/Advanced_Auto_Material/') or str(a.package_name).startswith('/Game/Anomalia/Inhabited_v2/Ground/'))]
+ (out/'ground-assets.json').write_text(json.dumps(ground,indent=2),encoding='utf-8')
+ assets=[]
 
  mesh=None;settings=None;ns=None;ad=None;gc.collect()
  if not editor.load_level('/Game/Map/Big_City_LVL'):raise RuntimeError('Original City Sample world did not open')
@@ -29,7 +33,9 @@ try:
  desc=[d for d in desc if not d.actor_is_editor_only]
  r['descriptors']=[{'label':str(d.label),'class':str(d.native_class)} for d in desc]
  banned=('crowd','masstraffic','vehicle','camera','worldpartition')
- desc=[d for d in desc if not any(s in (str(d.native_class)+' '+str(d.label)).lower() for s in banned)]
+ desc=[d for d in desc if str(d.label).startswith(('BLDG_','GROUND_C_','GROUND_NC_','GROUND_COLLISION_'))]
+ desc.sort(key=lambda d:(0 if str(d.label).startswith('GROUND_') else 1, str(d.label)))
+ r['selectedArchitecturalDescriptors']=[str(d.label) for d in desc]
  count=0
  for first in range(0,len(desc),12):
   batch=desc[first:first+12];wp.load_actors([d.guid for d in batch]);loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
@@ -51,14 +57,14 @@ try:
      bounds=mesh.get_bounding_box();row['localMin']=vec(bounds.min);row['localMax']=vec(bounds.max)
     for t in transforms:
      p=t.translation
-     if not (-5000<=p.x<=19000 and -15000<=p.y<=7000):continue
+     # Keep whole source actors. Clipping individual instances cuts buildings apart.
      row['instances'].append(trans(t));n+=1;count+=1
    r['actors'].append({'label':a.get_actor_label(),'class':a.get_class().get_path_name(),'instances':n,'root':trans(a.get_actor_transform())})
   loaded={};a=None;c=None;mesh=None;transforms=[];t=None
   wp.unload_actors([d.guid for d in batch]);gc.collect()
   if first%48==0:unreal.SystemLibrary.collect_garbage()
   (out/'original-city-block.json').write_text(json.dumps(r),encoding='utf-8')
-  if count>40000:raise RuntimeError('Original block exceeds safe instance budget')
+  if count>80000:raise RuntimeError('Original block exceeds safe instance budget')
  r['batches']=list(r['batches'].values());r['instances']=count
  r['meshCategories']=dict(collections.Counter(x['mesh'].split('/')[2] for x in r['batches'] if x['mesh'].startswith('/Game/')))
  r['groundFloorInstances']=sum(len(x['instances']) for x in r['batches'] if '_L1_' in x['mesh'] or 'Ground' in x['mesh'] or 'ground' in x['mesh'])
