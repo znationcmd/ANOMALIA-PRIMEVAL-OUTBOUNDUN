@@ -1,0 +1,42 @@
+name: Diagnose missing project drive without changing any disk
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-drive-readonly-diagnose.yml]
+permissions: {contents: read}
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - name: Read available volumes and storage removal events
+        run: |
+          $ErrorActionPreference='Continue'
+          $out=[IO.Path]::Combine($env:RUNNER_TEMP,('ANOMALIA-drive-'+$env:GITHUB_RUN_ID))
+          [IO.Directory]::CreateDirectory($out)|Out-Null
+          ('DRIVE_REPORT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          [pscustomobject]@{Machine=$env:COMPUTERNAME;Runner=$env:RUNNER_NAME;Time=(Get-Date).ToString('o')}|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'host.json'))
+          Get-PSDrive -PSProvider FileSystem|Select-Object Name,Root,Free,Used,DisplayRoot|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'drives.json'))
+          Get-Volume|Select-Object DriveLetter,FileSystemLabel,FileSystem,HealthStatus,OperationalStatus,Size,SizeRemaining,Path|ConvertTo-Json -Depth 4|Set-Content ([IO.Path]::Combine($out,'volumes.json'))
+          Get-Disk|Select-Object Number,FriendlyName,BusType,OperationalStatus,HealthStatus,IsOffline,IsReadOnly,Size|ConvertTo-Json -Depth 4|Set-Content ([IO.Path]::Combine($out,'disks.json'))
+          $candidates=@()
+          foreach($drive in @(Get-PSDrive -PSProvider FileSystem)){
+            foreach($suffix in @('ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject','ANOMALIA\AnomaliaPrimeval.uproject','ANOMALIAZ\Jeu\installation.json')){
+              $p=[IO.Path]::Combine($drive.Root,$suffix)
+              if(Test-Path -LiteralPath $p){$candidates+=[pscustomobject]@{Path=$p;Bytes=(Get-Item -LiteralPath $p).Length}}
+            }
+          }
+          $candidates|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'project-candidates.json'))
+          Get-WinEvent -FilterHashtable @{LogName='System';Id=7,11,51,129,153,157;StartTime=(Get-Date).AddHours(-2)} -MaxEvents 25 -ErrorAction SilentlyContinue|Select-Object TimeCreated,Id,ProviderName,Message|ConvertTo-Json -Depth 4|Set-Content ([IO.Path]::Combine($out,'storage-events.json'))
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -like 'UnrealEditor*' -or $_.Name -like 'AnomaliaPrimeval*'}|Select-Object Name,ProcessId,ExecutablePath,CommandLine,WorkingSetSize|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'game-processes.json'))
+          Get-Content ([IO.Path]::Combine($out,'host.json'))
+          Get-Content ([IO.Path]::Combine($out,'drives.json'))
+          Get-Content ([IO.Path]::Combine($out,'disks.json'))
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && env.DRIVE_REPORT != '' }}
+        with:
+          name: ANOMALIA-DRIVE-READONLY-DIAGNOSIS
+          path: ${{ env.DRIVE_REPORT }}/*

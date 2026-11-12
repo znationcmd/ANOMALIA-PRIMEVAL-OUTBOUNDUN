@@ -39,7 +39,7 @@ try:
  if len(cars)!=1 or len(starts)!=1:raise RuntimeError('Expected one native E39 and original authored start')
  car=cars[0];start=starts[0];original_start=start.get_actor_location()
  def trace(x,y,z):
-  h=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+400),unreal.Vector(x,y,z-2000),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[],unreal.DrawDebugTrace.NONE)
+  h=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+400),unreal.Vector(x,y,z-2000),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[car,start],unreal.DrawDebugTrace.NONE)
   if h and h.to_tuple()[0] and h.to_tuple()[6].z>.85:return h.to_tuple()[5]
   return None
  terrain=trace(200100,800000,original_start.z)
