@@ -66,3 +66,9 @@ jobs:
           name: ANOMALIAZ-WORKFORGE-WINDOWS-TEST-BUILD
           path: release/windows/*.exe
           if-no-files-found: error
+      - name: Upload tested standalone Windows application
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIAZ-WORKFORGE-STANDALONE
+          path: release/windows/win-unpacked/
+          if-no-files-found: error
