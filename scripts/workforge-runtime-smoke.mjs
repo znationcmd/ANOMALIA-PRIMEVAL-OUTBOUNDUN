@@ -40,6 +40,8 @@ try {
   if(process.env.WORKFORGE_EXE){
     await page.waitForFunction(()=>document.getElementById('nativeGameStatus')?.textContent.includes('installation'));
     assert.equal(await page.locator('#startScreen').isVisible(),true);
+    assert.equal(await page.locator('#menuSurvivor').isVisible(),false);
+    assert.equal(await page.locator('#modsBtn').isVisible(),false);
     assert.equal(await page.locator('#hud').isVisible(),false);
     report.checks.push('windows_play_requires_real_standalone_game_without_browser_fallback');
     await page.screenshot({path:resolve(output,'standalone-game-required.png')});

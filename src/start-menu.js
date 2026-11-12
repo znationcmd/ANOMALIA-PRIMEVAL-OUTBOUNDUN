@@ -42,10 +42,12 @@ export function createStartMenu({state,renderer,start,network,onMenu,openEditor,
  $('workforgeBtn').onclick=()=>workforge.show();
  // WorkForge belongs to the start menu only; never display a button during gameplay.
  const remember=()=>{state.playerName=$('survivorName').value.trim()||'Survivant';localStorage.setItem('anomalia-player-name',state.playerName);};
- let disposePreview=survivorPreview($('menuSurvivor'),state);
- const nativeStatus=document.createElement('p');nativeStatus.id='nativeGameStatus';nativeStatus.setAttribute('role','status');screen.querySelector('.menu-console').append(nativeStatus);
+ let disposePreview=window.anomaliaUnreal?.launchGame?null:survivorPreview($('menuSurvivor'),state);
+ const nativeStatus=document.createElement('p');nativeStatus.id='nativeGameStatus';nativeStatus.setAttribute('role','status');screen.querySelector('.menu-console').prepend(nativeStatus);
  if(window.anomaliaUnreal?.launchGame){
-  for(const id of ['newGameBtn','startEditorBtn','multiBtn','worldSettingsBtn'])$(id).hidden=true;
+  renderer.domElement.hidden=true;screen.style.background='radial-gradient(ellipse at 28% 40%,#203337,#080f12 75%)';
+  $('menuSurvivor').hidden=true;
+  for(const id of ['newGameBtn','startEditorBtn','multiBtn','worldSettingsBtn','modsBtn'])$(id).hidden=true;
   $('menuQuality').closest('label').hidden=true;
  }
  const play=async(skipLock=false)=>{
