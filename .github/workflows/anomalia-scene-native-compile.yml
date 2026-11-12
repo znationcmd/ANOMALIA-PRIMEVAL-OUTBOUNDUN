@@ -26,6 +26,9 @@ jobs:
           ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
           $env:SCENE_REPAIR_OUT=$out
           Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'storage-before.json')
+          if(-not(Test-Path -LiteralPath ($root+'\AnomaliaPrimeval.uproject'))){throw 'Principal project disk is unavailable'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\measure_storage.py')
           if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 1GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 4GB){throw 'Insufficient free space for native compilation'}
           $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
           & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_native.py')
