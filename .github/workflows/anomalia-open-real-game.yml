@@ -1,0 +1,68 @@
+name: Verify real gameplay images and open the installed standalone game
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-open-real-game.yml]
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  open-real-game:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Verify the actual standalone game passed its native gameplay checks
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $ErrorActionPreference='Stop'
+          $headers=@{Authorization=('Bearer '+$env:GH_TOKEN);Accept='application/vnd.github+json'}
+          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43226147989'
+          if($run.conclusion -ne 'success'){throw 'The actual SKARVIK game has not passed native standalone tests'}
+          $manifest='D:\ANOMALIAZ\Jeu\installation.json'
+          $record=Get-Content -LiteralPath $manifest -Raw|ConvertFrom-Json
+          if($record.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED' -or $record.sourceRun -ne '43226147989' -or -not $record.standalonePackagedExe){throw 'Verified real standalone installation missing'}
+          if($record.map -ne '/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1' -or [IO.Path]::GetFileName($record.exe) -match 'UnrealEditor'){throw 'Only actual SKARVIK standalone game is permitted'}
+          if((Get-FileHash -LiteralPath $record.exe).Hash -ne $record.sha256){throw 'Standalone executable hash mismatch'}
+      - name: Check genuine gameplay image visibility and leave the actual game open
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIAZ\01_Projet_Principal\unreal\Saved\AuthenticInstall\43226147989'
+          Add-Type -AssemblyName System.Drawing
+          $bitmap=New-Object System.Drawing.Bitmap((Join-Path $out 'actual-gameplay-gameplay.png'))
+          try {
+            if($bitmap.Width -lt 640 -or $bitmap.Height -lt 360){throw 'Actual game image dimensions are insufficient'}
+            $sum=0.;$squared=0.;$count=0
+            for($x=[int]($bitmap.Width*.25);$x -lt $bitmap.Width*.75;$x+=12){
+              for($y=[int]($bitmap.Height*.2);$y -lt $bitmap.Height*.8;$y+=12){
+                $pixel=$bitmap.GetPixel($x,$y);$v=.2126*$pixel.R+.7152*$pixel.G+.0722*$pixel.B
+                $sum+=$v;$squared+=$v*$v;$count++
+              }
+            }
+            $mean=$sum/$count;$deviation=[Math]::Sqrt([Math]::Max(0,$squared/$count-$mean*$mean))
+            $visibility=@{state='ACTUAL_GAMEPLAY_IMAGE_CHECK';meanLuminance=$mean;deviation=$deviation;samples=$count}
+            $visibility|ConvertTo-Json|Set-Content (Join-Path $out 'gameplay-image-visibility.json')
+            if($mean -lt 8 -or $deviation -lt 3){throw 'Actual gameplay image is black or lacks scene detail'}
+          } finally {$bitmap.Dispose()}
+          $record=Get-Content -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Raw|ConvertFrom-Json
+          $root=$record.packageRoot.TrimEnd('\')+'\'
+          $running=@(Get-Process 'AnomaliaPrimeval*' -ErrorAction SilentlyContinue|Where-Object{$_.Path -and $_.Path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)})
+          if(-not $running.Count){Start-Process -FilePath $record.exe -ArgumentList @($record.map,'-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720') -WorkingDirectory $record.packageRoot|Out-Null}
+          Start-Sleep -Seconds 15
+          $running=@(Get-Process 'AnomaliaPrimeval*' -ErrorAction SilentlyContinue|Where-Object{$_.Path -and $_.Path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)})
+          if(-not $running.Count){throw 'The real standalone game did not remain running'}
+          @{state='REAL_GAME_OPEN_FOR_USER';exe=$record.exe;map=$record.map;processIds=@($running.Id);nativeTestRun=43226147989}|ConvertTo-Json|Set-Content (Join-Path $out 'opened-for-user.json')
+          Get-Content (Join-Path $out 'opened-for-user.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: REAL-SKARVIK-VISIBILITY-AND-USER-LAUNCH
+          path: |
+            D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/43226147989/gameplay-image-visibility.json
+            D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/43226147989/opened-for-user.json
+          if-no-files-found: warn
