@@ -38,7 +38,7 @@ export function createStartMenu({state,renderer,start,network,onMenu,openEditor,
  $('menuLanguage').value=lang;$('menuLanguage').onchange=()=>{lang=$('menuLanguage').value;localStorage.setItem('anomalia-language',lang);translate();};
  const quality=localStorage.getItem('anomalia-quality')||'1.5';$('menuQuality').value=quality;const applyQuality=()=>{renderer.setPixelRatio(Math.min(devicePixelRatio,Number($('menuQuality').value)));renderer.setSize(innerWidth,innerHeight);localStorage.setItem('anomalia-quality',$('menuQuality').value);};$('menuQuality').onchange=applyQuality;applyQuality();
  const show=t=>{tab=t;$('menuHome').hidden=t!=='home';$('menuMulti').hidden=t!=='multi';$('menuSettings').hidden=t!=='settings';$('menuMods').hidden=t!=='mods';$('menuTools').hidden=t!=='tools';$('menuWorldSettings').hidden=t!=='world-settings';};$('multiBtn').onclick=()=>show('multi');$('settingsBtn').onclick=()=>show('settings');$('worldSettingsBtn').onclick=()=>show('world-settings');$('modsBtn').onclick=()=>show('mods');$('toolsBtn').onclick=()=>show('tools');for(const b of screen.querySelectorAll('.menu-back'))b.onclick=()=>show('home');
- const workforge=mountWorkForge({openMods:()=>{screen.classList.remove('hidden');show('mods');},onPlay:()=>{screen.classList.remove('hidden');show('home');}});
+ const workforge=mountWorkForge({openMods:()=>{screen.classList.remove('hidden');show('mods');},onPlay:()=>{screen.querySelector('#startBtn')?.click();}});
  $('workforgeBtn').onclick=()=>workforge.show();
  // WorkForge belongs to the start menu only; never display a button during gameplay.
  const remember=()=>{state.playerName=$('survivorName').value.trim()||'Survivant';localStorage.setItem('anomalia-player-name',state.playerName);};
