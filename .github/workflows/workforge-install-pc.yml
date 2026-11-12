@@ -20,20 +20,20 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           $headers=@{Authorization=('Bearer '+$env:GH_TOKEN);Accept='application/vnd.github+json'}
-          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43220907461'
-          if($run.conclusion -ne 'success' -or $run.head_sha -ne '6850199e8bf5d6198e7eddcfa1dd83a3f65a73b1'){throw 'Source did not pass installed runtime tests'}
+          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43222845990'
+          if($run.conclusion -ne 'success' -or $run.head_sha -ne 'c6c1b10e7a63829e1dc8d11d74093036425e5c2d'){throw 'Source did not pass installed runtime tests'}
       - uses: actions/download-artifact@v4
         with:
           name: ANOMALIAZ-WORKFORGE-STANDALONE
-          run-id: 43220907461
+          run-id: 43222845990
           github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/workforge-standalone-6850199e
+          path: ${{ runner.temp }}/workforge-standalone-c6c1b10e
       - name: Install standalone app without administrator privileges
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $source=Join-Path $env:RUNNER_TEMP 'workforge-standalone-6850199e'
-          $destination='D:\ANOMALIAZ\Applications\WorkForge-6850199e'
+          $source=Join-Path $env:RUNNER_TEMP 'workforge-standalone-c6c1b10e'
+          $destination='D:\ANOMALIAZ\Applications\WorkForge-c6c1b10e'
           if(Test-Path -LiteralPath $destination){throw 'Installation destination already exists'}
           $evidence=Join-Path 'D:\ANOMALIAZ\Applications' ('WorkForgeInstall-'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $evidence -Force|Out-Null
@@ -68,7 +68,7 @@ jobs:
           $shortcut.Description='Application PC ANOMALIA Z PRIGIMALIA - WorkForge au menu principal'
           $shortcut.Save()
           if($shell.CreateShortcut($link).TargetPath -ne $exe[0].FullName){throw 'Shortcut target mismatch'}
-          @{state='INSTALLED_FROM_RUNTIME_TESTED_BUILD';sourceRun=43220907461;sourceCommit='6850199e8bf5d6198e7eddcfa1dd83a3f65a73b1';exe=$exe[0].FullName;shortcut=$link;verifiedFiles=$files.Count;sha256=(Get-FileHash -LiteralPath $exe[0].FullName).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $evidence 'installation.json')
+          @{state='INSTALLED_FROM_RUNTIME_TESTED_BUILD';sourceRun=43222845990;sourceCommit='c6c1b10e7a63829e1dc8d11d74093036425e5c2d';exe=$exe[0].FullName;shortcut=$link;verifiedFiles=$files.Count;sha256=(Get-FileHash -LiteralPath $exe[0].FullName).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $evidence 'installation.json')
           Get-Content -LiteralPath (Join-Path $evidence 'installation.json')
       - uses: actions/upload-artifact@v4
         if: always()
