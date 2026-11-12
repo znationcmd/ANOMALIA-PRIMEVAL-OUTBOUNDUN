@@ -21,6 +21,14 @@ jobs:
           ref: feature/real-skarvik-bmw-dog-gameplay-capture-20261111
           persist-credentials: false
           clean: false
+      - name: Inspect actual project junctions and module locations
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          foreach($path in @('D:\ANOMALIA','D:\ANOMALIAZ','D:\ANOMALIAZ-PRIGIMALIA','D:\ANOMALIAZ-PRIGIMALIA\unreal','D:\ANOMALIAZ-PRIGIMALIA\unreal\Source')){
+            $item=Get-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
+            if($item){$item|Select-Object FullName,Attributes,LinkType,Target|ConvertTo-Json -Compress|Write-Host}
+          }
+          Get-ChildItem -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Source' -Force -ErrorAction SilentlyContinue|Select-Object Name,Attributes,Target|ConvertTo-Json -Compress|Write-Host
       - name: Verify native visual layout and functional source contracts
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
