@@ -24,6 +24,20 @@ def path(a):
 try:
     if root != Path(r'D:\ANOMALIAZ\01_Projet_Principal\unreal').resolve():
         raise RuntimeError('Unexpected authoritative native project')
+    # These genuine models are loaded by native gameplay at runtime, so package
+    # them explicitly even when their assets are not placed as editor actors.
+    config = root/'Config/DefaultGame.ini'
+    previous_config = config.read_text(encoding='utf-8-sig')
+    config_backup = out/'DefaultGame.ini.before'
+    if not config_backup.exists():
+        shutil.copy2(config, config_backup)
+    section = '/Script/UnrealEd.ProjectPackagingSettings'
+    cooked_dirs = ['/Game/Survival_Character', '/Game/German_Shepherd_3D_Model']
+    lines = ['+DirectoriesToAlwaysCook=(Path="'+item+'")' for item in cooked_dirs]
+    missing = [line for line in lines if line not in previous_config]
+    if missing:
+        config.write_text(previous_config+'\n['+section+']\n'+'\n'.join(missing)+'\n', encoding='utf-8')
+    report['runtimeModelCookDirectories'] = cooked_dirs
     registry = unreal.AssetRegistryHelpers.get_asset_registry()
     registry.wait_for_completion()
     editor = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
