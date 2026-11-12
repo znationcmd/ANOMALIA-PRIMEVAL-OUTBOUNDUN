@@ -64,6 +64,7 @@ jobs:
           $mapHash=(Get-FileHash -LiteralPath $sourceMap).Hash
           $held=Join-Path $out 'HeldIncompatibleTrafficEffect'
           New-Item -ItemType Directory -Path $held -Force|Out-Null
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\CitySourceCache\original-city-block-repair-v1.json')){throw 'A complete source block already exists; preserve it'}
           $moved=@()
           foreach($file in @(Get-ChildItem -LiteralPath (Split-Path $effect -Parent) -Filter 'VehicleDamageSystem_Runtime.*' -File)){
             $destination=Join-Path $held $file.Name
@@ -71,7 +72,6 @@ jobs:
             Move-Item -LiteralPath $file.FullName -Destination $destination
           }
           $moved|ConvertTo-Json|Set-Content (Join-Path $out 'held-effect-receipt.json')
-          if(Test-Path -LiteralPath (Join-Path $root 'Saved\CitySourceCache\original-city-block-repair-v1.json')){throw 'A complete source block already exists; preserve it'}
           try {
           $p=Start-Process -FilePath $editor -ArgumentList @((Join-Path $root 'AnomaliaPrimeval.uproject'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $out 'audit.log')+'"')) -PassThru
           $handle=$p.Handle

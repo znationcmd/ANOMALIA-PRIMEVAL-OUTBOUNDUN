@@ -38,13 +38,13 @@ try:
  loaded=actors.get_all_level_actors();cars=[a for a in loaded if a.actor_has_tag('ANOMALIA_AUTHENTIC_E39')];starts=[a for a in loaded if a.actor_has_tag('ANOMALIA_AUTHENTIC_START')]
  if len(cars)!=1 or len(starts)!=1:raise RuntimeError('Expected one native E39 and original authored start')
  car=cars[0];start=starts[0];original_start=start.get_actor_location()
- def trace(x,y,z):
+ def trace(x,y,z,expected=None):
   h=unreal.SystemLibrary.line_trace_single(world,unreal.Vector(x,y,z+400),unreal.Vector(x,y,z-2000),unreal.TraceTypeQuery.ECC_VISIBILITY,True,[car,start],unreal.DrawDebugTrace.NONE)
-  if h and h.to_tuple()[0] and h.to_tuple()[6].z>.85:return h.to_tuple()[5]
+  if h and h.to_tuple()[0] and h.to_tuple()[6].z>.85 and (expected is None or h.to_tuple()[9]==expected):return h.to_tuple()[5]
   return None
  terrain=trace(200100,800000,original_start.z)
  if not terrain:raise RuntimeError('Actual terrain surface not found')
- offset=unreal.Vector(200000,800000,terrain.z)
+ offset=unreal.Vector(200000,800000,terrain.z+2)
  batches=[];seen_meshes={};road_choices=[]
  for row in data['batches']:
   mesh=unreal.load_asset(row['mesh'])
@@ -90,9 +90,9 @@ try:
  car.set_editor_property('additional_panel_definitions',definitions)
  parking=None
  for _,point,tr in sorted(road_choices,key=lambda x:x[0]):
-  q=point+offset;surface=trace(q.x,q.y,q.z+200)
+  q=point+offset;surface=trace(q.x,q.y,q.z+200,block)
   if not surface or abs(surface.z-q.z)>80:continue
-  floors=[trace(q.x+x,q.y+y,surface.z) for x,y in [(150,-76),(150,75),(-131,-76),(-131,75)]]
+  floors=[trace(q.x+x,q.y+y,surface.z,block) for x,y in [(150,-76),(150,75),(-131,-76),(-131,75)]]
   if all(floors) and max(f.z for f in floors)-min(f.z for f in floors)<20:parking=surface;break
  if parking is None:raise RuntimeError('Actual street could not support all four wheels')
  car.set_actor_location(parking+unreal.Vector(0,0,100),False,True);car.set_actor_rotation(unreal.Rotator(),False)
