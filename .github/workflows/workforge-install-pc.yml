@@ -52,28 +52,7 @@ jobs:
           if(Test-Path -LiteralPath $updateConfig){
             Copy-Item -LiteralPath $updateConfig -Destination (Join-Path $evidence 'app-update-before.yml')
             $config=[IO.File]::ReadAllText($updateConfig)
-            if($config -match '(?m)^channel:'){$config=[regex]::Replace($config,'(?m)^channel:.*
-          if(-not(Test-Path -LiteralPath $desktop)){$desktop=[Environment]::GetFolderPath('Desktop')}
-          if(-not(Test-Path -LiteralPath $desktop)){throw 'User desktop not found'}
-          $link=Join-Path $desktop "ANOMALIA'Z PRIGIMALIA - APPLICATION PC.lnk"
-          if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $evidence 'previous-shortcut.lnk')}
-          $shell=New-Object -ComObject WScript.Shell
-          $shortcut=$shell.CreateShortcut($link)
-          $shortcut.TargetPath=$exe[0].FullName
-          $shortcut.WorkingDirectory=$destination
-          $shortcut.IconLocation=$exe[0].FullName+',0'
-          $shortcut.Description='Application PC ANOMALIA Z PRIGIMALIA - WorkForge au menu principal'
-          $shortcut.Save()
-          if($shell.CreateShortcut($link).TargetPath -ne $exe[0].FullName){throw 'Shortcut target mismatch'}
-          @{state='INSTALLED_FROM_RUNTIME_TESTED_BUILD';sourceRun=43166158144;sourceCommit='8e12d51ef78e78d4f340d3228d763d9f027ad985';exe=$exe[0].FullName;shortcut=$link;verifiedFiles=$files.Count;updateChannel='workforge';sha256=(Get-FileHash -LiteralPath $exe[0].FullName).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $evidence 'installation.json')
-          Get-Content -LiteralPath (Join-Path $evidence 'installation.json')
-      - uses: actions/upload-artifact@v4
-        if: always()
-        with:
-          name: WORKFORGE-PC-INSTALLATION
-          path: D:/ANOMALIAZ/Applications/WorkForgeInstall-*/installation.json
-          if-no-files-found: warn
-,'channel: workforge')}else{$config+=[Environment]::NewLine+'channel: workforge'+[Environment]::NewLine}
+            if($config -match '(?m)^channel:'){$config=[regex]::Replace($config,'(?m)^channel:.*$','channel: workforge')}else{$config+=[Environment]::NewLine+'channel: workforge'+[Environment]::NewLine}
             [IO.File]::WriteAllText($updateConfig,$config,[Text.UTF8Encoding]::new($false))
           }
           $desktop='C:\Users\utilisateur\Desktop'
