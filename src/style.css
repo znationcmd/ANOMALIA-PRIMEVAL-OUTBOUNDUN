@@ -139,7 +139,6 @@
 .wf-side{display:flex;flex-direction:column;gap:12px}.wf-panel{padding:15px;border-radius:8px;border:1px solid #52453f;background:linear-gradient(#131a1e,#0a0e13)}
 .wf-panel h3{color:#f8c99f;font-size:14px}.wf-panel p{color:#bcc1c4;line-height:1.5}.wf-panel div{display:flex;justify-content:space-between;gap:8px;padding:10px 0;border-bottom:1px solid #313037}.wf-panel strong{color:#ffb66f;text-align:right}.wf-panel .wf-primary{width:100%;margin-top:17px}
 #wfClose{padding:7px 13px;background:#1e242a;border-color:#6c3835}
-#workforgeHudBtn{position:absolute;right:16px;top:62px;z-index:10;background:linear-gradient(#c43a22,#571510);border:1px solid #fa7b37;color:white;font-size:11px;letter-spacing:.06em}
 .sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0)}
 @media(max-width:1100px){.wf-body{grid-template-columns:140px minmax(0,1fr)}.wf-side{grid-column:2;display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}.wf-panel:last-child{display:none}.wf-heading{font-size:22px}}
 @media(max-width:680px){.wf-top{flex-wrap:wrap}.wf-search{order:4;max-width:none;flex-basis:100%}.wf-body{display:block;padding:7px}.wf-nav{flex-direction:row;overflow-x:auto;margin-bottom:9px}.wf-nav button{white-space:nowrap}.wf-nav-note{display:none}.wf-categories{grid-template-columns:repeat(9,100px)}.wf-side{display:block}.wf-panel{margin-top:10px}.wf-logo{font-size:16px}.wf-logo span{font-size:13px}}
