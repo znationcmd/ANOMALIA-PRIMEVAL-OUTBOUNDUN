@@ -19,7 +19,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
-          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          $out=[IO.Path]::Combine($env:RUNNER_TEMP,('ANOMALIA-recovery-'+$env:GITHUB_RUN_ID))
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $env:SCENE_REPAIR_OUT=$out
           ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
@@ -32,16 +32,31 @@ jobs:
               if(-not $p.WaitForExit(15000)){throw 'Owned source extraction has not exited'}
             }
           }
-          $receipt=Join-Path $root 'Saved\SceneRepair\43277880597\held-effect-receipt.json'
-          if(Test-Path -LiteralPath $receipt){
-            foreach($file in @(Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json)){
+          $availability=@()
+          for($sample=0;$sample -lt 5;$sample++){
+            $exists=Test-Path -LiteralPath ($root+'\AnomaliaPrimeval.uproject')
+            $availability+=[pscustomobject]@{Time=(Get-Date).ToString('o');PrincipalSourceAvailable=$exists}
+            Start-Sleep -Seconds 1
+          }
+          $availability|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'drive-availability.json')) -Encoding utf8
+          $availability|ConvertTo-Json
+          $restored=@()
+          foreach($run in @('43277880597','43270446874')){
+            $receipt=$root+'\Saved\SceneRepair\'+$run+'\held-effect-receipt.json'
+            $fallback=$root+'\Saved\SceneRepair\'+$run+'\HeldIncompatibleTrafficEffect\VehicleDamageSystem_Runtime.uasset'
+            $files=@()
+            if(Test-Path -LiteralPath $receipt){$files=@(Get-Content -LiteralPath $receipt -Raw|ConvertFrom-Json)}
+            elseif(Test-Path -LiteralPath $fallback){$files=@([pscustomobject]@{source=$root+'\Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset';held=$fallback;hash='6958C967A29C644C51B8C30D76308AB9A80C87FA716BEC7ED7ABB1766E96D6BF'})}
+            foreach($file in $files){
               if(-not(Test-Path -LiteralPath $file.source)){
                 if((Get-FileHash -LiteralPath $file.held).Hash -ne $file.hash){throw 'Held effect hash mismatch'}
                 Copy-Item -LiteralPath $file.held -Destination $file.source
               }
               if((Get-FileHash -LiteralPath $file.source).Hash -ne $file.hash){throw 'Restored effect hash mismatch'}
+              $restored+=[pscustomobject]@{Source=$file.source;VerifiedHash=$file.hash}
             }
           }
+          $restored|ConvertTo-Json|Set-Content ([IO.Path]::Combine($out,'restored-source-effect.json')) -Encoding utf8
           foreach($run in @('43277880597','43270446874')){
             $previous=Join-Path $root ('Saved\SceneRepair\'+$run)
             foreach($name in @('original-city-block.json','ground-assets.json','car-mesh-settings.json','car-material-settings.json','audit.log','held-effect-receipt.json','storage.json')){
