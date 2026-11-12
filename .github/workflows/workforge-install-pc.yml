@@ -14,39 +14,54 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 30
     steps:
-      - name: Verify successful installer source run
+      - name: Verify successful standalone source run
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           $headers=@{Authorization=('Bearer '+$env:GH_TOKEN);Accept='application/vnd.github+json'}
-          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43164456189'
-          if($run.conclusion -ne 'success' -or $run.head_sha -ne 'fbd9eb5135033e498e41cac9b55e2d8260162fda'){throw 'Installer source did not pass installed runtime tests'}
+          $run=Invoke-RestMethod -Headers $headers -Uri 'https://api.github.com/repos/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/43166158144'
+          if($run.conclusion -ne 'success' -or $run.head_sha -ne '8e12d51ef78e78d4f340d3228d763d9f027ad985'){throw 'Source did not pass installed runtime tests'}
       - uses: actions/download-artifact@v4
         with:
-          name: ANOMALIAZ-WORKFORGE-WINDOWS-TEST-BUILD
-          run-id: 43164456189
+          name: ANOMALIAZ-WORKFORGE-STANDALONE
+          run-id: 43166158144
           github-token: ${{ github.token }}
-          path: ${{ runner.temp }}/workforge-tested-installer
-      - name: Install tested application on the user PC
+          path: ${{ runner.temp }}/workforge-standalone-8e12d51e
+      - name: Install standalone app without administrator privileges
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $setups=@(Get-ChildItem -LiteralPath (Join-Path $env:RUNNER_TEMP 'workforge-tested-installer') -Filter '*.exe')
-          if($setups.Count -ne 1){throw 'Expected one tested installer'}
-          $destination='D:\ANOMALIAZ\Applications\WorkForge-fbd9eb51'
+          $source=Join-Path $env:RUNNER_TEMP 'workforge-standalone-8e12d51e'
+          $destination='D:\ANOMALIAZ\Applications\WorkForge-8e12d51e'
           if(Test-Path -LiteralPath $destination){throw 'Installation destination already exists'}
           $evidence=Join-Path 'D:\ANOMALIAZ\Applications' ('WorkForgeInstall-'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $evidence -Force|Out-Null
-          $desktop='C:\Users\utilisateur\Desktop'
-          if(Test-Path -LiteralPath $desktop){Get-ChildItem -LiteralPath $desktop -Filter '*PRIGIMALIA*.lnk'|Copy-Item -Destination $evidence}
-          $process=Start-Process -FilePath $setups[0].FullName -ArgumentList @('/S',('/D='+$destination)) -PassThru
-          if(-not $process.WaitForExit(180000)){throw 'Installer timeout; inspect the installer process before retrying'}
-          if($process.ExitCode -ne 0){throw ('Installer failed '+$process.ExitCode)}
+          New-Item -ItemType Directory -Path $destination|Out-Null
+          Get-ChildItem -LiteralPath $source -Force|Copy-Item -Destination $destination -Recurse -Force
+          $files=@(Get-ChildItem -LiteralPath $source -Recurse -File)
+          foreach($file in $files){
+            $relative=$file.FullName.Substring($source.Length).TrimStart('\')
+            $installed=Join-Path $destination $relative
+            if(-not(Test-Path -LiteralPath $installed) -or (Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath $installed).Hash){throw ('Installed file mismatch '+$relative)}
+          }
           $exe=@(Get-ChildItem -LiteralPath $destination -Filter '*.exe'|Where-Object{$_.Name -notmatch 'Uninstall'})
           if($exe.Count -ne 1){throw 'Installed executable missing or ambiguous'}
           if(-not(Test-Path -LiteralPath (Join-Path $destination 'resources\app.asar'))){throw 'Installed app resources missing'}
-          @{state='INSTALLED_FROM_RUNTIME_TESTED_BUILD';sourceRun=43164456189;sourceCommit='fbd9eb5135033e498e41cac9b55e2d8260162fda';exe=$exe[0].FullName;sha256=(Get-FileHash -LiteralPath $exe[0].FullName).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $evidence 'installation.json')
+          $desktop='C:\Users\utilisateur\Desktop'
+          if(-not(Test-Path -LiteralPath $desktop)){$desktop=[Environment]::GetFolderPath('Desktop')}
+          if(-not(Test-Path -LiteralPath $desktop)){throw 'User desktop not found'}
+          $link=Join-Path $desktop "ANOMALIA'Z PRIGIMALIA - APPLICATION PC.lnk"
+          if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $evidence 'previous-shortcut.lnk')}
+          $shell=New-Object -ComObject WScript.Shell
+          $shortcut=$shell.CreateShortcut($link)
+          $shortcut.TargetPath=$exe[0].FullName
+          $shortcut.WorkingDirectory=$destination
+          $shortcut.IconLocation=$exe[0].FullName+',0'
+          $shortcut.Description='Application PC ANOMALIA Z PRIGIMALIA - WorkForge au menu principal'
+          $shortcut.Save()
+          if($shell.CreateShortcut($link).TargetPath -ne $exe[0].FullName){throw 'Shortcut target mismatch'}
+          @{state='INSTALLED_FROM_RUNTIME_TESTED_BUILD';sourceRun=43166158144;sourceCommit='8e12d51ef78e78d4f340d3228d763d9f027ad985';exe=$exe[0].FullName;shortcut=$link;verifiedFiles=$files.Count;sha256=(Get-FileHash -LiteralPath $exe[0].FullName).Hash}|ConvertTo-Json|Set-Content -LiteralPath (Join-Path $evidence 'installation.json')
           Get-Content -LiteralPath (Join-Path $evidence 'installation.json')
       - uses: actions/upload-artifact@v4
         if: always()
