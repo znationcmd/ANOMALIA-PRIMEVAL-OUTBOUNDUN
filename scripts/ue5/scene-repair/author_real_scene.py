@@ -13,7 +13,7 @@ def transform(row):
  t=unreal.Transform();t.translation=unreal.Vector(*row['translation']);t.rotation=unreal.Quat(*row['quaternion']);t.scale3d=unreal.Vector(*row['scale']);return t
 try:
  if root!=Path(r'D:\ANOMALIAZ\01_Projet_Principal\unreal').resolve():raise RuntimeError('Unexpected principal source')
- source=root/'Saved/SceneRepair/43277880597/original-city-block.json';data=json.loads(source.read_text(encoding='utf-8-sig'))
+ source=root/'Saved/CitySourceCache/original-city-block-repair-v1.json';data=json.loads(source.read_text(encoding='utf-8-sig'))
  if data.get('state')!='ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS' or data.get('missing'):raise RuntimeError('Complete original-source architectural extraction is required')
  if data['instances']<1000 or data['groundFloorInstances']<100 or not data['roadMeshes']:raise RuntimeError('Source lacks ground floors or roads')
  if not any('_L1_' in b['mesh'] and b['visible'] for b in data['batches']):raise RuntimeError('Original visible ground-floor geometry missing')
@@ -63,7 +63,7 @@ try:
   if row['visible'] and '/Road/' in row['mesh'] and 'SM_ROAD_' in row['mesh'] and 'sidewalk' not in row['mesh'].lower():
    for t in row['instances']:
     center=unreal.Vector(*[(a+b)/2 for a,b in zip(row['localMin'],row['localMax'])]);tr=transform(t);point=unreal.MathLibrary.transform_location(tr,center)
-    if abs(point.z)<150 and -2000<point.x<16000 and -12000<point.y<4000:road_choices.append((point.x**2+point.y**2,point,tr))
+    if abs(point.z)<150 and -2000<point.x<16000 and -12000<point.y<4000:road_choices.append(((point.x-10647.790039)**2+(point.y+6281.198242)**2,point,tr))
  if not road_choices:raise RuntimeError('No original street surface available for a real spawn')
  existing=[a for a in loaded if a.actor_has_tag('ANOMALIA_ORIGINAL_CITY_BLOCK_V1')]
  if existing:raise RuntimeError('A source city block already exists; inspect it before replacing it')

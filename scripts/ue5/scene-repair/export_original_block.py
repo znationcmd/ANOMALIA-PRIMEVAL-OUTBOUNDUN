@@ -1,6 +1,7 @@
-import unreal,json,os,traceback,gc,collections
+import unreal,json,os,traceback,gc,collections,re
 from pathlib import Path
 out=Path(os.environ['SCENE_REPAIR_OUT']);r={'state':'FAILED','actors':[],'batches':{},'missing':[],'roadSamples':[]}
+def guidkey(g):return tuple(int(g.get_editor_property(k)) & 0xffffffff for k in ['a','b','c','d'])
 def vec(v):return [float(v.x),float(v.y),float(v.z)]
 def trans(t):
  q=t.rotation
@@ -34,13 +35,20 @@ try:
  r['descriptors']=[{'label':str(d.label),'class':str(d.native_class)} for d in desc]
  banned=('crowd','masstraffic','vehicle','camera','worldpartition')
  desc=[d for d in desc if str(d.label).startswith(('BLDG_','GROUND_C_','GROUND_NC_','GROUND_COLLISION_'))]
- desc.sort(key=lambda d:(0 if str(d.label).startswith('GROUND_') else 1, str(d.label)))
+ # Capture three contiguous original lots with every structural level and
+ # their authored streets, rather than unrelated million-triangle props.
+ desc=[d for d in desc if str(d.label).startswith('GROUND_') or re.search(r'(?:^|_)N46500[012](?:_|$)',str(d.label))]
+ unique={}
+ for d in desc:unique.setdefault(guidkey(d.guid),d)
+ desc=list(unique.values())
+ desc.sort(key=lambda d:(0 if str(d.label).startswith('BLDG_N') else 1 if str(d.label).startswith('BLDG_L1_') else 2 if str(d.label).startswith('BLDG_ROOFGEO') else 3, str(d.label)))
+ r['scope']='Three complete original lots N465000/N465001/N465002 and surrounding authored streets; not the whole 48km map'
  r['selectedArchitecturalDescriptors']=[str(d.label) for d in desc]
  count=0
- for first in range(0,len(desc),12):
-  batch=desc[first:first+12];wp.load_actors([d.guid for d in batch]);loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+ for first in range(0,len(desc),3):
+  batch=desc[first:first+3];wp.load_actors([d.guid for d in batch]);loaded={guidkey(a.get_editor_property('actor_guid')):a for a in actors.get_all_level_actors()}
   for d in batch:
-   a=loaded.get(str(d.label))
+   a=loaded.get(guidkey(d.guid))
    if not a:r['missing'].append(str(d.label));continue
    n=0
    for c in a.get_components_by_class(unreal.StaticMeshComponent):
@@ -59,7 +67,7 @@ try:
      p=t.translation
      # Keep whole source actors. Clipping individual instances cuts buildings apart.
      row['instances'].append(trans(t));n+=1;count+=1
-   r['actors'].append({'label':a.get_actor_label(),'class':a.get_class().get_path_name(),'instances':n,'root':trans(a.get_actor_transform())})
+   r['actors'].append({'label':a.get_actor_label(),'sourceGuid':list(guidkey(d.guid)),'class':a.get_class().get_path_name(),'instances':n,'root':trans(a.get_actor_transform())})
   loaded={};a=None;c=None;mesh=None;transforms=[];t=None
   wp.unload_actors([d.guid for d in batch]);gc.collect()
   if first%48==0:unreal.SystemLibrary.collect_garbage()
@@ -69,7 +77,9 @@ try:
  r['meshCategories']=dict(collections.Counter(x['mesh'].split('/')[2] for x in r['batches'] if x['mesh'].startswith('/Game/')))
  r['groundFloorInstances']=sum(len(x['instances']) for x in r['batches'] if '_L1_' in x['mesh'] or 'Ground' in x['mesh'] or 'ground' in x['mesh'])
  r['roadMeshes']=[{'mesh':x['mesh'],'instances':len(x['instances']),'zMin':min(t['translation'][2] for t in x['instances']),'zMax':max(t['translation'][2] for t in x['instances'])} for x in r['batches'] if x['instances'] and any(s in x['mesh'].lower() for s in ['road','sidewalk','street','curb'])]
+ if r['missing']:raise RuntimeError('An original architectural actor could not be loaded')
  r['state']='ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS'
+ cache=Path(unreal.Paths.project_dir())/'Saved/CitySourceCache/original-city-block-repair-v1.json';cache.parent.mkdir(parents=True,exist_ok=True);cache.write_text(json.dumps(r),encoding='utf-8')
 except Exception:r['error']=traceback.format_exc()
 finally:
  (out/'original-city-block.json').write_text(json.dumps(r),encoding='utf-8');unreal.SystemLibrary.quit_editor()

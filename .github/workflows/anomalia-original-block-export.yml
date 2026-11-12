@@ -11,7 +11,7 @@ concurrency:
 jobs:
   audit:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 35
+    timeout-minutes: 20
     defaults:
       run:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -50,7 +50,7 @@ jobs:
           })
           if($active.Count){$active|Select-Object Name,ProcessId,CommandLine|ConvertTo-Json;throw 'Principal source editor or build is active'}
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
-          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          $out=[IO.Path]::Combine($env:RUNNER_TEMP,('ANOMALIA-source-'+$env:GITHUB_RUN_ID))
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $env:SCENE_REPAIR_OUT=$out
           ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
@@ -71,8 +71,18 @@ jobs:
             Move-Item -LiteralPath $file.FullName -Destination $destination
           }
           $moved|ConvertTo-Json|Set-Content (Join-Path $out 'held-effect-receipt.json')
+          if(Test-Path -LiteralPath (Join-Path $root 'Saved\CitySourceCache\original-city-block-repair-v1.json')){throw 'A complete source block already exists; preserve it'}
           try {
-          & $editor (Join-Path $root 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'audit.log'))
+          $p=Start-Process -FilePath $editor -ArgumentList @((Join-Path $root 'AnomaliaPrimeval.uproject'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $out 'audit.log')+'"')) -PassThru
+          $handle=$p.Handle
+          $started=Get-Date
+          while(-not $p.WaitForExit(3000)){
+            if(-not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject')) -or ((Get-Date)-$started).TotalMinutes -gt 14){
+              & taskkill.exe /PID $p.Id /T /F|Out-Null
+              $p.WaitForExit(15000)|Out-Null
+              throw 'Source inspection stopped: disk unavailable or extraction time budget reached'
+            }
+          }
           } finally {
             foreach($file in $moved){
               if(Test-Path -LiteralPath $file.source){throw 'Unexpected replacement of held traffic effect'}
