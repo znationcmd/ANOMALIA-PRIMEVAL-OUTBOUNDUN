@@ -1,4 +1,4 @@
-name: Inspect authentic SKARVIK city car survivor and dog installation sources
+name: Inspect authoritative real-game source interfaces and available storage
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
@@ -10,147 +10,67 @@ concurrency:
 jobs:
   authentic-install:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 20
+    timeout-minutes: 15
     defaults:
       run:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
     steps:
-      - name: Inspect exact source maps and authentic asset anchors
+      - name: Retain actual native source interfaces and physical storage information
         run: |
           $ErrorActionPreference='Stop'
-          $out=Join-Path 'D:\ANOMALIAZ' ('AuthenticInstallAudit\'+$env:GITHUB_RUN_ID)
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=Join-Path $root ('Saved\AuthenticInstall\'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           ('AUTHENTIC_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          $roots=@('D:\ANOMALIAZ\01_Projet_Principal\unreal','D:\ANOMALIAZ\02_Projet_Migration\unreal','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal','C:\ANOMALIA-Validation\c40543166274\unreal')
-          $names=@('Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap','Map\Big_City_LVL.umap','Maps\ANOMALIA_E39DriveReview_v1.umap','Survival_Character\Meshes\SK_Survival_Character.uasset','German_Shepherd_3D_Model\Models\SK_GermanShepherd_01.uasset','German_Shepherd_3D_Model\Animations\A_type1_Walk_Loop_v01.uasset','Anomalia\BMWE39Review_v7\body\SM_body.uasset')
-          $rows=@(foreach($root in $roots){
-            foreach($name in $names){
-              $p=Join-Path (Join-Path $root 'Content') $name
-              if(Test-Path -LiteralPath $p){$f=Get-Item -LiteralPath $p -Force;[ordered]@{root=$root;asset=$name;bytes=$f.Length;modifiedUtc=$f.LastWriteTimeUtc.ToString('o');sha256=(Get-FileHash -LiteralPath $p).Hash}}
-            }
-            $external=Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1'
-            if(Test-Path -LiteralPath $external){
-              $files=@(Get-ChildItem -LiteralPath $external -Recurse -File)
-              [ordered]@{root=$root;externalActors=$files.Count;latestModifiedUtc=($files|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 1).LastWriteTimeUtc.ToString('o')}
-            }
-          })
-          $rows|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $out 'sources.json')
-          Get-Content -LiteralPath (Join-Path $out 'sources.json')
-          $content='D:\ANOMALIAZ\02_Projet_Migration\unreal\Content'
-          foreach($folder in @('Anomalia','AnomaliaZPrigimalia')){
-            $p=Join-Path $content $folder
-            if(Test-Path -LiteralPath $p){Get-ChildItem -LiteralPath $p -Directory|Where-Object{$_.Name -match 'BMW|Road|Chaos|Dog|Character'}|Select-Object FullName|ConvertTo-Json|Write-Host}
+          $names=@('AnomaliaGameMode.cpp','AnomaliaGameMode.h','AnomaliaSessionWidget.cpp','AnomaliaSessionWidget.h','AnomaliaSurvivor.cpp','AnomaliaDogCompanion.h','AnomaliaVehiclePawn.h','Vehicles\AnomaliaChaosRoadVehicle.h','AnomaliaPrimeval.Build.cs')
+          foreach($name in $names){
+            $p=Join-Path $root ('Source\AnomaliaPrimeval\'+$name)
+            if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination (Join-Path $out ($name.Replace('\','_')))}
           }
-          Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Write-Host
-      - name: Inspect migration true world and skeleton assets without edits
+          Get-PSDrive -PSProvider FileSystem|Select-Object Name,Root,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'volumes.json')
+          Get-Content (Join-Path $out 'volumes.json')
+          foreach($p in @('Source\CitySample\CitySample.Build.cs','Source\CitySampleAnimGraphRuntime\CitySampleAnimGraphRuntime.Build.cs','Source\CitySampleEditor\CitySampleEditor.Build.cs')){
+            if(Test-Path -LiteralPath (Join-Path $root $p)){Write-Host ('CITY_MODULE_PRESENT='+$p)}
+          }
+      - name: Inspect authoritative city spawn and true vehicle rig asset locations
         run: |
           $ErrorActionPreference='Stop'
-          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaZPrigimalia,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Unreal session in use'}
-          $script=Join-Path $env:AUTHENTIC_OUT 'inspect.py'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'User native session is active'}
+          $script=Join-Path $env:AUTHENTIC_OUT 'inspect-real.py'
           @'
           import unreal,json,os,traceback
           from pathlib import Path
-          r={"state":"FAILED","assets":{}}
+          r={"state":"FAILED","realAssets":{}}
           try:
-              api=unreal.EditorAssetLibrary
               registry=unreal.AssetRegistryHelpers.get_asset_registry()
               registry.wait_for_completion()
-              paths=["/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01","/Game/Anomalia/BMWE39Review_v7/body/SM_body"]
-              for p in paths:
-                  a=unreal.load_asset(p)
-                  r["assets"][p]={"exists":bool(a),"class":a.get_class().get_name() if a else None}
-                  if isinstance(a,unreal.SkeletalMesh):
-                      sk=a.get_editor_property("skeleton")
-                      r["assets"][p]["skeleton"]=sk.get_path_name() if sk else None
-              for folder in ["/Game/Survival_Character","/Game/Anomalia/BMWE39Review_v7","/Game/German_Shepherd_3D_Model"]:
-                  r.setdefault("assetLists",{})[folder]=[str(x) for x in api.list_assets(folder,True,False) if any(t in str(x).lower() for t in ["idle","abp","animbp","body","wheel","door","walk","run"])]
-              if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Real SKARVIK map not available in migration project")
-              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
+              for p in ["/Game/Vehicles/OffroadCar/SKM_Offroad","/Game/Vehicles/OffroadCar/Offroad_AnimBP","/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01","/Game/Anomalia/BMWE39Review_v7/body/SM_body"]:
+                  a=unreal.load_asset(p);r["realAssets"][p]={"loaded":bool(a),"class":a.get_class().get_name() if a else None}
+              world=unreal.EditorAssetLibrary.load_asset("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1")
+              if not isinstance(world,unreal.World):raise RuntimeError("Authentic world package missing")
+              if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Authentic world failed to open")
+              ew=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+              r["worldPackage"]=ew.get_path_name()
+              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
               descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
-              r["worldPartitionDescriptors"]=len(descs)
-              r["cityLabels"]=[str(d.label) for d in descs if any(t in str(d.label).upper() for t in ["CITY","BUILDING","VILLAGE"])][:100]
-              r["playerStarts"]=[{"name":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z]} for a in actors if isinstance(a,unreal.PlayerStart)]
-              r["loadedNativeActors"]=[{"label":a.get_actor_label(),"class":a.get_class().get_name()} for a in actors if "Anomalia" in a.get_class().get_name()][:60]
-              r["state"]="AUTHENTIC_SOURCE_INSPECTION_COMPLETE"
+              r["descriptors"]=len(descs)
+              chosen=[d.guid for d in descs if "PLAYER_START" in str(d.label).upper() or str(d.label).startswith("SKARVIK_COMPLETE_REAL_BUILDING_")]
+              if chosen:unreal.WorldPartitionBlueprintLibrary.load_actors(chosen)
+              loaded=actors.get_all_level_actors()
+              r["playerStarts"]=[{"label":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z]} for a in loaded if isinstance(a,unreal.PlayerStart)]
+              r["cityActors"]=[{"label":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z],"meshes":[c.get_editor_property("static_mesh").get_path_name() for c in a.get_components_by_class(unreal.StaticMeshComponent) if c.get_editor_property("static_mesh")]} for a in loaded if "CITY" in a.get_actor_label().upper() or a.get_actor_label().startswith("SKARVIK_COMPLETE_REAL_BUILDING_")][:50]
+              r["state"]="AUTHORITATIVE_REAL_GAME_ASSETS_READ"
           except Exception:r["error"]=traceback.format_exc()
           finally:
-              Path(os.environ["AUTHENTIC_OUT"],"native-source.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
+              Path(os.environ["AUTHENTIC_OUT"],"real-world-source.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
               unreal.SystemLibrary.quit_editor()
           '@|Set-Content -LiteralPath $script -Encoding utf8
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-          $project='D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject'
-          & $editor $project /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'native-source.log'))
-          Get-Content -LiteralPath (Join-Path $env:AUTHENTIC_OUT 'native-source.json')
-      - name: Measure exact real-map dependencies and retain source interfaces
-        run: |
-          $ErrorActionPreference='Stop'
-          $out=$env:AUTHENTIC_OUT
-          $source='D:\ANOMALIAZ\01_Projet_Principal\unreal'
-          foreach($name in @('AnomaliaGameMode.h','AnomaliaSessionWidget.h','AnomaliaSurvivor.h')){
-            $p=Join-Path $source ('Source\AnomaliaPrimeval\'+$name)
-            if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination $out}
-          }
-          foreach($project in @((Join-Path $source 'AnomaliaPrimeval.uproject'),'D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject')){
-            if(Test-Path -LiteralPath $project){Write-Host ('PROJECT_DESCRIPTOR='+$project);Get-Content -LiteralPath $project}
-          }
-          $validation='C:\ANOMALIA-Validation\c40543166274\unreal'
-          Get-ChildItem -LiteralPath (Join-Path $validation 'Saved') -Recurse -File -Filter 'template-source.json' -ErrorAction SilentlyContinue|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 2|ForEach-Object{Write-Host ('RIG_SOURCE_REPORT='+$_.FullName);Get-Content -LiteralPath $_.FullName}
-          $manifest=Join-Path $validation 'SourceAssets\BMWE39Review_v7\manifest.json'
-          if(Test-Path -LiteralPath $manifest){Copy-Item -LiteralPath $manifest -Destination (Join-Path $out 'bmw-manifest.json')}
-          $script=Join-Path $out 'dependencies.py'
-          @'
-          import unreal,json,os,traceback,collections
-          from pathlib import Path
-          out=Path(os.environ["AUTHENTIC_OUT"])
-          source=Path(unreal.Paths.project_dir()).resolve()/"Content"
-          target=Path(r"D:\ANOMALIAZ\02_Projet_Migration\unreal\Content")
-          report={"state":"FAILED"}
-          try:
-              registry=unreal.AssetRegistryHelpers.get_asset_registry()
-              registry.wait_for_completion()
-              options=unreal.AssetRegistryDependencyOptions(include_soft_package_references=True,include_hard_package_references=True)
-              queue=collections.deque(["/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1","/Game/Map/Big_City_LVL","/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01"])
-              for folder in ["German_Shepherd_3D_Model/Animations","Anomalia/BMWE39Review_v7","Vehicles/OffroadCar"]:
-                  base=source/folder
-                  if base.is_dir():
-                      queue.extend("/Game/"+str(p.relative_to(source).with_suffix("")).replace("\\","/") for p in base.rglob("*.uasset"))
-              seen=set(); scripts=set(); files=[]; missing_bytes=0; missing=[]; differing=[]
-              while queue:
-                  package=queue.popleft()
-                  if package in seen:continue
-                  seen.add(package)
-                  if package.startswith("/Script/"):scripts.add(package);continue
-                  if not package.startswith("/Game/"):continue
-                  relative=package[len("/Game/"):]
-                  base=source/relative
-                  world=base.with_suffix(".umap")
-                  if world.is_file():
-                      for prefix in ["__ExternalActors__","__ExternalObjects__"]:
-                          external=source/prefix/relative
-                          if external.is_dir():
-                              queue.extend("/Game/"+str(p.relative_to(source).with_suffix("")).replace("\\","/") for p in external.rglob("*.uasset"))
-                  for suffix in [".uasset",".umap",".uexp",".ubulk"]:
-                      p=base.with_suffix(suffix)
-                      if p.is_file():
-                          rel=p.relative_to(source);dest=target/rel;size=p.stat().st_size
-                          exists=dest.is_file();same_size=exists and dest.stat().st_size==size
-                          files.append({"relative":str(rel).replace("\\","/"),"bytes":size,"destinationExists":exists,"sameSize":same_size})
-                          if not exists:missing_bytes+=size;missing.append(str(rel))
-                          elif not same_size:differing.append(str(rel))
-                  queue.extend(str(x) for x in (registry.get_dependencies(unreal.Name(package),options) or []))
-              (out/"dependency-files.json").write_text(json.dumps(files),encoding="utf-8")
-              report.update(state="AUTHENTIC_DEPENDENCY_PLAN_READY",packages=len(seen),files=len(files),missingFiles=len(missing),missingBytes=missing_bytes,differingSizeFiles=differing[:50],scriptModules=sorted(scripts),missingSample=missing[:40])
-          except Exception:report["error"]=traceback.format_exc()
-          finally:
-              (out/"dependency-summary.json").write_text(json.dumps(report,indent=2),encoding="utf-8")
-              unreal.SystemLibrary.quit_editor()
-          '@|Set-Content -LiteralPath $script -Encoding utf8
-          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-          & $editor (Join-Path $source 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'dependency-plan.log'))
-          Get-Content -LiteralPath (Join-Path $out 'dependency-summary.json')
+          & $editor 'D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'inspect-real.log'))
+          Get-Content -LiteralPath (Join-Path $env:AUTHENTIC_OUT 'real-world-source.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: AUTHENTIC-GAME-INSTALLATION-EVIDENCE
-          path: D:/ANOMALIAZ/AuthenticInstallAudit/*/
+          name: AUTHORITATIVE-AUTHENTIC-GAME-SOURCE
+          path: D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/*/
           if-no-files-found: warn
