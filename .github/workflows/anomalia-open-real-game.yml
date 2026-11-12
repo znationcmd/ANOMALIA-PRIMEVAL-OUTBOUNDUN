@@ -52,7 +52,13 @@ jobs:
           $record=Get-Content -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Raw|ConvertFrom-Json
           $root=$record.packageRoot.TrimEnd('\')+'\'
           $running=@(Get-Process 'AnomaliaPrimeval*' -ErrorAction SilentlyContinue|Where-Object{$_.Path -and $_.Path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)})
-          if(-not $running.Count){Start-Process -FilePath $record.exe -ArgumentList @($record.map,'-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720') -WorkingDirectory $record.packageRoot|Out-Null}
+          if(-not $running.Count){
+            $tracking=$env:RUNNER_TRACKING_ID
+            try {
+              $env:RUNNER_TRACKING_ID=''
+              Start-Process -FilePath $record.exe -ArgumentList @($record.map,'-d3d11','-sm5','-windowed','-ResX=1280','-ResY=720') -WorkingDirectory $record.packageRoot|Out-Null
+            } finally {$env:RUNNER_TRACKING_ID=$tracking}
+          }
           Start-Sleep -Seconds 15
           $running=@(Get-Process 'AnomaliaPrimeval*' -ErrorAction SilentlyContinue|Where-Object{$_.Path -and $_.Path.StartsWith($root,[StringComparison]::OrdinalIgnoreCase)})
           if(-not $running.Count){throw 'The real standalone game did not remain running'}
