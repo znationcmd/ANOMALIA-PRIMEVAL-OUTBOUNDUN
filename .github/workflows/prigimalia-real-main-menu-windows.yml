@@ -24,11 +24,11 @@ jobs:
       - name: Inspect actual project junctions and module locations
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
-          foreach($path in @('D:\ANOMALIA','D:\ANOMALIAZ','D:\ANOMALIAZ-PRIGIMALIA','D:\ANOMALIAZ-PRIGIMALIA\unreal','D:\ANOMALIAZ-PRIGIMALIA\unreal\Source')){
+          foreach($path in @('D:\ANOMALIA','D:\ANOMALIAZ','D:\ANOMALIAZ\02_Projet_Migration','D:\ANOMALIAZ\02_Projet_Migration\unreal','D:\ANOMALIAZ\02_Projet_Migration\unreal\Source')){
             $item=Get-Item -LiteralPath $path -Force -ErrorAction SilentlyContinue
             if($item){$item|Select-Object FullName,Attributes,LinkType,Target|ConvertTo-Json -Compress|Write-Host}
           }
-          Get-ChildItem -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Source' -Force -ErrorAction SilentlyContinue|Select-Object Name,Attributes,Target|ConvertTo-Json -Compress|Write-Host
+          Get-ChildItem -LiteralPath 'D:\ANOMALIAZ\02_Projet_Migration\unreal\Source' -Force -ErrorAction SilentlyContinue|Select-Object Name,Attributes,Target|ConvertTo-Json -Compress|Write-Host
       - name: Verify native visual layout and functional source contracts
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
@@ -44,7 +44,7 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $projectHome='D:\ANOMALIAZ-PRIGIMALIA'
+          $projectHome='D:\ANOMALIAZ\02_Projet_Migration'
           $root=Join-Path $projectHome 'unreal'
           $old='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $project=Join-Path $root 'AnomaliaZPrigimalia.uproject'
@@ -78,7 +78,7 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $root='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $root='D:\ANOMALIAZ\02_Projet_Migration\unreal'
           $assetFolder=Join-Path $root 'Content\Characters\Mannequins\Meshes'
           $candidates=@('SKM_Manny.uasset','SKM_Quinn.uasset')
           $found=@($candidates|Where-Object{Test-Path -LiteralPath (Join-Path $assetFolder $_) -PathType Leaf})
@@ -106,7 +106,7 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
+          $project='D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject'
           $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
           foreach($target in @('AnomaliaZPrigimaliaEditor','AnomaliaZPrigimalia')){
             & $build $target 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
@@ -117,8 +117,8 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
-          $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
-          $archive=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows' ('WorkForgeMenu-'+$env:GITHUB_RUN_ID)
+          $project='D:\ANOMALIAZ\02_Projet_Migration\unreal\AnomaliaZPrigimalia.uproject'
+          $archive=Join-Path 'D:\ANOMALIAZ\02_Projet_Migration\PackagedWindows' ('WorkForgeMenu-'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $archive){throw 'Review build path already exists'}
           $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
           & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
@@ -135,7 +135,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $exe=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'new-main-menu-exe.txt') -Raw).Trim()
-          $folder=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\unreal\Saved\BrandMigration' ('RealMainMenu\run-'+$env:GITHUB_RUN_ID)
+          $folder=Join-Path 'D:\ANOMALIAZ\02_Projet_Migration\unreal\Saved\BrandMigration' ('RealMainMenu\run-'+$env:GITHUB_RUN_ID)
           New-Item -Path $folder -ItemType Directory -Force|Out-Null
           $report=Join-Path $folder 'real-main-menu.json'
           $log=Join-Path $folder 'real-main-menu.log'
@@ -187,7 +187,7 @@ jobs:
           $old='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $sha=(Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha') -Raw).Trim()
           if((Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash -ne $sha){throw 'Original project changed'}
-          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Previous Windows build vanished'}
+          if(-not(Test-Path -LiteralPath 'D:\ANOMALIAZ\02_Projet_Migration\PackagedWindows\NativeValidated\Windows\AnomaliaZPrigimalia.exe')){throw 'Previous Windows build vanished'}
           Write-Host 'PRIGIMALIA_EXISTING_GAME_AND_SAVES_PRESERVED=true'
       - name: Upload the true in-game screenshot, runtime checks and logs
         if: always()
@@ -196,6 +196,6 @@ jobs:
           name: PRIGIMALIA-REAL-3D-Main-Menu-Screenshot-and-Checks
           if-no-files-found: warn
           path: |
-            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.png
-            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.json
-            D:/ANOMALIAZ-PRIGIMALIA/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.log
+            D:/ANOMALIAZ/02_Projet_Migration/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.png
+            D:/ANOMALIAZ/02_Projet_Migration/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.json
+            D:/ANOMALIAZ/02_Projet_Migration/unreal/Saved/BrandMigration/RealMainMenu/run-*/*.log
