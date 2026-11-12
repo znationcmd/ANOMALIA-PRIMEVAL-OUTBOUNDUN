@@ -1,9 +1,6 @@
 name: PRIGIMALIA - Install and test native main-menu WorkForge
 # Rerun after correcting the ANOMALIA' escaped brand assertion in native UI contracts.
 on:
-  push:
-    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: [.github/workflows/prigimalia-real-main-menu-windows.yml]
   workflow_dispatch:
 permissions:
   contents: read
@@ -149,7 +146,7 @@ jobs:
           New-Item -Path $folder -ItemType Directory -Force|Out-Null
           $report=Join-Path $folder 'real-main-menu.json'
           $log=Join-Path $folder 'real-main-menu.log'
-          $map='/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=menu-only-validation'
+          $map='/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-menu-only-validation'
           $args=@($map,'-windowed','-ResX=1366','-ResY=768','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaMenuOnly',("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
           $process=Start-Process -FilePath $exe -ArgumentList $args -PassThru
           try{
