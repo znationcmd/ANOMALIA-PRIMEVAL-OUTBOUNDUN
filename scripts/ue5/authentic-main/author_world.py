@@ -81,6 +81,23 @@ try:
         if not unreal.EditorAssetLibrary.save_loaded_asset(rig_mesh):
             raise RuntimeError('Restored skeletal vehicle physics reference did not save')
     report['restoredCarrierPhysicsAsset'] = path(rig_mesh.get_editor_property('physics_asset'))
+    carrier_component = car.get_editor_property('chassis')
+    carrier_component.set_skeletal_mesh_asset(rig_mesh)
+    carrier_bones = [str(carrier_component.get_bone_name(i)) for i in range(carrier_component.get_num_bones())]
+    report['installedCarrierBones'] = carrier_bones
+    if any(carrier_component.get_bone_index(b)<0 for b in car.get_editor_property('wheel_bones')):
+        aliases = [('wheelfl','wheelfrontleft','frontleftwheel'),('wheelfr','wheelfrontright','frontrightwheel'),('wheelbl','wheelrl','wheelbackleft','wheelrearleft','rearleftwheel'),('wheelbr','wheelrr','wheelbackright','wheelrearright','rearrightwheel')]
+        resolved_bones = []
+        for suffixes in aliases:
+            matches = [b for b in carrier_bones if ''.join(c.lower() for c in b if c.isalnum()).endswith(suffixes)]
+            if len(matches)!=1:
+                raise RuntimeError('Installed wheel skeleton mapping is ambiguous: '+str(matches)+' in '+str(carrier_bones))
+            resolved_bones.append(unreal.Name(matches[0]))
+        if len(set(str(b) for b in resolved_bones))!=4:
+            raise RuntimeError('Original wheel skeleton mapping is not unique')
+        car.set_editor_property('wheel_bones',resolved_bones)
+    carrier_component = None
+
     rig_mesh = None
     restored = None
     candidates = []
