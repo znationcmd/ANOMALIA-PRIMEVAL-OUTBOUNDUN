@@ -96,6 +96,8 @@ jobs:
           $project='D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'
           $args=@('/d','/s','/c',('""'+$uat+'" BuildCookRun -project="'+$project+'" -noP4 -platform=Win64 -clientconfig=Development -cook -iterate -map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -CookOutputDir="'+$cook+'" -stage -stagingdirectory="'+$stage+'" -pak -compressed -package -nodebuginfo -unattended -utf8output"'))
           $p=Start-Process -FilePath $env:ComSpec -ArgumentList $args -PassThru -RedirectStandardOutput (Join-Path $env:AUTHENTIC_OUT 'standalone-package.log') -RedirectStandardError (Join-Path $env:AUTHENTIC_OUT 'standalone-package.stderr.log')
+          # Retain the process handle before waiting so Windows PowerShell preserves ExitCode.
+          $processHandle=$p.Handle
           $started=Get-Date
           while(-not $p.WaitForExit(3000)){
             foreach($drive in @('C','D')){
@@ -106,7 +108,15 @@ jobs:
             }
             if(((Get-Date)-$started).TotalMinutes -gt 100){& taskkill.exe /PID $p.Id /T /F|Out-Null;throw 'Standalone packaging time budget exceeded'}
           }
-          if($p.ExitCode -ne 0){Get-Content (Join-Path $env:AUTHENTIC_OUT 'standalone-package.log') -Tail 120;throw ('Standalone packaging failed '+$p.ExitCode)}
+          $p.WaitForExit()
+          $p.Refresh()
+          $exitCode=$p.ExitCode
+          $packageTail=(Get-Content (Join-Path $env:AUTHENTIC_OUT 'standalone-package.log') -Tail 60)-join [Environment]::NewLine
+          $loggedSuccess=$packageTail -match 'BUILD SUCCESSFUL' -and $packageTail -match 'AutomationTool exiting with ExitCode=0 \(Success\)'
+          if(($null -ne $exitCode -and $exitCode -ne 0) -or -not $loggedSuccess){
+            Get-Content (Join-Path $env:AUTHENTIC_OUT 'standalone-package.log') -Tail 120
+            throw ('Standalone packaging failed '+$exitCode)
+          }
           $exe=Join-Path $stage 'Windows\AnomaliaPrimeval.exe'
           if(-not(Test-Path -LiteralPath $exe)){$exe=Join-Path $stage 'AnomaliaPrimeval.exe'}
           if(-not(Test-Path -LiteralPath $exe)){throw 'Real standalone executable missing'}
