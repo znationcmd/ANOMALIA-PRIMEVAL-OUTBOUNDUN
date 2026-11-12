@@ -1,0 +1,8 @@
+{
+  "asset": "ANOMALIA E39 original inline-six engine bay",
+  "geometry": "Original project modelling, not OEM CAD",
+  "sha256": "8b2165936af7e08f96f6ec148f5c4429a90ed30354c95b661f68b07fb56edcfa",
+  "bytes": 1518968,
+  "sourceCoordinateSystem": "car chassis centimetres after glTF import",
+  "parts": 191
+}

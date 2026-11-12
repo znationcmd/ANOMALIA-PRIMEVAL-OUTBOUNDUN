@@ -1,0 +1,45 @@
+name: Compile genuine E39 cameras engine bay and original city batching
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-scene-native-compile.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  native:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Prepare verified principal source and preserve backups
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'}|Where-Object{$p=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue;$p -and -not $p.HasExited})
+          if($active.Count){throw 'Principal source is busy'}
+          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $env:SCENE_REPAIR_OUT=$out
+          Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'storage-before.json')
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 1GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 4GB){throw 'Insufficient free space for native compilation'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_native.py')
+          if($LASTEXITCODE -ne 0){throw 'Source preparation failed'}
+      - name: Compile native Editor support and real standalone target
+        run: |
+          $ErrorActionPreference='Stop'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaPrimevalEditor','AnomaliaPrimeval')){
+            & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'.log'))
+            if($LASTEXITCODE -ne 0){throw ('Native compilation failed '+$target)}
+          }
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && env.SCENE_REPAIR_OUT != '' }}
+        with:
+          name: SCENE-NATIVE-COMPILE
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
