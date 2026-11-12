@@ -1,0 +1,44 @@
+name: Export original City Sample block and inspect car mesh normals
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-original-block-export.yml, scripts/ue5/scene-repair/export_original_block.py]
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Inspect real source scene without changing installed game or source assets
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Source editor or build is active'}
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -like 'AnomaliaPrimeval*'}|Select-Object Name,ExecutablePath,CommandLine|ConvertTo-Json|Set-Content (Join-Path $out 'running-game.json')
+          Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'storage.json')
+          Copy-Item -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Destination (Join-Path $out 'installed-game.json')
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\export_original_block.py'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor (Join-Path $root 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'audit.log'))
+          $report=Get-Content (Join-Path $out 'original-city-block.json') -Raw|ConvertFrom-Json
+          $report|Select-Object state,error,instances,groundFloorInstances,meshCategories,roadMeshes|ConvertTo-Json -Depth 8
+          if($report.state -ne 'ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS'){throw 'Source scene audit failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ORIGINAL-CITY-BLOCK-AND-CAR-MESH-SETTINGS
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
+          if-no-files-found: warn
