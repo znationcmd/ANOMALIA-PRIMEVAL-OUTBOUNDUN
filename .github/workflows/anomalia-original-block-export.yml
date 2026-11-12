@@ -32,7 +32,27 @@ jobs:
           Copy-Item -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Destination (Join-Path $out 'installed-game.json')
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\export_original_block.py'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $effect=Join-Path $root 'Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
+          $sourceMap=Join-Path $root 'Content\Map\Big_City_LVL.umap'
+          $mapHash=(Get-FileHash -LiteralPath $sourceMap).Hash
+          $held=Join-Path $out 'HeldIncompatibleTrafficEffect'
+          New-Item -ItemType Directory -Path $held -Force|Out-Null
+          $moved=@()
+          foreach($file in @(Get-ChildItem -LiteralPath (Split-Path $effect -Parent) -Filter 'VehicleDamageSystem_Runtime.*' -File)){
+            $destination=Join-Path $held $file.Name
+            $moved+=@{source=$file.FullName;held=$destination;hash=(Get-FileHash -LiteralPath $file.FullName).Hash}
+            Move-Item -LiteralPath $file.FullName -Destination $destination
+          }
+          try {
           & $editor (Join-Path $root 'AnomaliaPrimeval.uproject') /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $out 'audit.log'))
+          } finally {
+            foreach($file in $moved){
+              if(Test-Path -LiteralPath $file.source){throw 'Unexpected replacement of held traffic effect'}
+              Move-Item -LiteralPath $file.held -Destination $file.source
+              if((Get-FileHash -LiteralPath $file.source).Hash -ne $file.hash){throw 'Traffic effect hash mismatch'}
+            }
+            if((Get-FileHash -LiteralPath $sourceMap).Hash -ne $mapHash){throw 'Protected original city map changed'}
+          }
           $report=Get-Content (Join-Path $out 'original-city-block.json') -Raw|ConvertFrom-Json
           $report|Select-Object state,error,instances,groundFloorInstances,meshCategories,roadMeshes|ConvertTo-Json -Depth 8
           if($report.state -ne 'ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS'){throw 'Source scene audit failed'}

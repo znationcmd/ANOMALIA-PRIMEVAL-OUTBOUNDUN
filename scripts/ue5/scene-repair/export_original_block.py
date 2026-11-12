@@ -14,6 +14,14 @@ try:
   mesh=unreal.load_asset(str(ad.package_name));settings=meshes.get_lod_build_settings(mesh,0);ns=meshes.get_nanite_settings(mesh)
   car.append({'path':mesh.get_path_name(),'verts':meshes.get_number_verts(mesh,0),'nanite':ns.enabled,'fallbackPercent':ns.fallback_percent_triangles,'fallbackError':ns.fallback_relative_error,'settings':{k:str(settings.get_editor_property(k)) for k in ['recompute_normals','recompute_tangents','compute_weighted_normals','use_high_precision_tangent_basis','build_scale3d']}})
  (out/'car-mesh-settings.json').write_text(json.dumps(car,indent=2),encoding='utf-8')
+ material_rows={}
+ for ad in reg.get_assets_by_path('/Game/Anomalia/BMWE39Review_v7',recursive=True):
+  if str(ad.asset_class_path.asset_name)!='MaterialInstanceConstant':continue
+  material=unreal.load_asset(str(ad.package_name))
+  material_rows[material.get_path_name()]={'parent':material.get_editor_property('parent').get_path_name(),'scalars':[{'name':str(v.get_editor_property('parameter_info').get_editor_property('name')),'value':v.get_editor_property('parameter_value')} for v in material.get_editor_property('scalar_parameter_values')]}
+ (out/'car-material-settings.json').write_text(json.dumps(material_rows,indent=2),encoding='utf-8')
+ material=None
+
  mesh=None;settings=None;ns=None;ad=None;gc.collect()
  if not editor.load_level('/Game/Map/Big_City_LVL'):raise RuntimeError('Original City Sample world did not open')
  box=unreal.Box(min=unreal.Vector(-4000,-14000,-50000),max=unreal.Vector(18000,6000,100000))
