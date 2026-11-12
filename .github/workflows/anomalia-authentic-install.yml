@@ -1,8 +1,10 @@
-name: Inspect authoritative real-game source interfaces and available storage
+name: Install and verify authentic SKARVIK city E39 character and shepherd
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: [.github/workflows/anomalia-authentic-install.yml]
+    paths:
+      - .github/workflows/anomalia-authentic-install.yml
+      - scripts/ue5/authentic-main/**
 permissions: {contents: read}
 concurrency:
   group: anomalia-ue5-native-host
@@ -10,67 +12,87 @@ concurrency:
 jobs:
   authentic-install:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 15
+    timeout-minutes: 90
     defaults:
       run:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
     steps:
-      - name: Retain actual native source interfaces and physical storage information
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Back up authoritative native sources and prepare authentic-game integration
         run: |
           $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'User native editor/game/build is active'}
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 2GB){throw 'Less than 2 GiB native-build reserve on D'}
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
           $out=Join-Path $root ('Saved\AuthenticInstall\'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:AUTHENTIC_OUT=$out
           ('AUTHENTIC_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
-          $names=@('AnomaliaGameMode.cpp','AnomaliaGameMode.h','AnomaliaSessionWidget.cpp','AnomaliaSessionWidget.h','AnomaliaSurvivor.cpp','AnomaliaDogCompanion.h','AnomaliaVehiclePawn.h','Vehicles\AnomaliaChaosRoadVehicle.h','AnomaliaPrimeval.Build.cs')
-          foreach($name in $names){
-            $p=Join-Path $root ('Source\AnomaliaPrimeval\'+$name)
-            if(Test-Path -LiteralPath $p){Copy-Item -LiteralPath $p -Destination (Join-Path $out ($name.Replace('\','_')))}
-          }
-          Get-PSDrive -PSProvider FileSystem|Select-Object Name,Root,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'volumes.json')
-          Get-Content (Join-Path $out 'volumes.json')
-          foreach($p in @('Source\CitySample\CitySample.Build.cs','Source\CitySampleAnimGraphRuntime\CitySampleAnimGraphRuntime.Build.cs','Source\CitySampleEditor\CitySampleEditor.Build.cs')){
-            if(Test-Path -LiteralPath (Join-Path $root $p)){Write-Host ('CITY_MODULE_PRESENT='+$p)}
-          }
-      - name: Inspect authoritative city spawn and true vehicle rig asset locations
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\authentic-main\prepare_source.py'
+          & $python $script --root $root --output $out
+          if($LASTEXITCODE -ne 0){throw 'Native integration preparation failed'}
+      - name: Compile the real principal Unreal project
         run: |
           $ErrorActionPreference='Stop'
-          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'User native session is active'}
-          $script=Join-Path $env:AUTHENTIC_OUT 'inspect-real.py'
-          @'
-          import unreal,json,os,traceback
-          from pathlib import Path
-          r={"state":"FAILED","realAssets":{}}
-          try:
-              registry=unreal.AssetRegistryHelpers.get_asset_registry()
-              registry.wait_for_completion()
-              for p in ["/Game/Vehicles/OffroadCar/SKM_Offroad","/Game/Vehicles/OffroadCar/Offroad_AnimBP","/Game/Survival_Character/Meshes/SK_Survival_Character","/Game/German_Shepherd_3D_Model/Models/SK_GermanShepherd_01","/Game/Anomalia/BMWE39Review_v7/body/SM_body"]:
-                  a=unreal.load_asset(p);r["realAssets"][p]={"loaded":bool(a),"class":a.get_class().get_name() if a else None}
-              world=unreal.EditorAssetLibrary.load_asset("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1")
-              if not isinstance(world,unreal.World):raise RuntimeError("Authentic world package missing")
-              if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level("/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"):raise RuntimeError("Authentic world failed to open")
-              ew=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-              r["worldPackage"]=ew.get_path_name()
-              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-              descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
-              r["descriptors"]=len(descs)
-              chosen=[d.guid for d in descs if "PLAYER_START" in str(d.label).upper() or str(d.label).startswith("SKARVIK_COMPLETE_REAL_BUILDING_")]
-              if chosen:unreal.WorldPartitionBlueprintLibrary.load_actors(chosen)
-              loaded=actors.get_all_level_actors()
-              r["playerStarts"]=[{"label":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z]} for a in loaded if isinstance(a,unreal.PlayerStart)]
-              r["cityActors"]=[{"label":a.get_actor_label(),"position":[a.get_actor_location().x,a.get_actor_location().y,a.get_actor_location().z],"meshes":[c.get_editor_property("static_mesh").get_path_name() for c in a.get_components_by_class(unreal.StaticMeshComponent) if c.get_editor_property("static_mesh")]} for a in loaded if "CITY" in a.get_actor_label().upper() or a.get_actor_label().startswith("SKARVIK_COMPLETE_REAL_BUILDING_")][:50]
-              r["state"]="AUTHORITATIVE_REAL_GAME_ASSETS_READ"
-          except Exception:r["error"]=traceback.format_exc()
-          finally:
-              Path(os.environ["AUTHENTIC_OUT"],"real-world-source.json").write_text(json.dumps(r,indent=2),encoding="utf-8")
-              unreal.SystemLibrary.quit_editor()
-          '@|Set-Content -LiteralPath $script -Encoding utf8
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaPrimevalEditor Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+          if($LASTEXITCODE -ne 0){throw 'Authoritative native project failed to compile'}
+      - name: Place the existing complete physical BMW in the actual City Sample world
+        run: |
+          $ErrorActionPreference='Stop'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-          & $editor 'D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'inspect-real.log'))
-          Get-Content -LiteralPath (Join-Path $env:AUTHENTIC_OUT 'real-world-source.json')
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\authentic-main\author_world.py'
+          & $editor 'D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' /Engine/Maps/Entry "-ExecutePythonScript=$script" -NullRHI -unattended -nopause -nosound ("-abslog="+(Join-Path $env:AUTHENTIC_OUT 'author-world.log'))
+          $report=Join-Path $env:AUTHENTIC_OUT 'authored-world.json'
+          if(-not(Test-Path -LiteralPath $report)){throw 'Actual-world authoring produced no report'}
+          Get-Content -LiteralPath $report
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'AUTHENTIC_E39_SAVED_IN_TRUE_SKARVIK_NOT_YET_PLAYTESTED'){throw ('Actual-world preparation failed: '+$r.error)}
+      - name: Verify actual player input, dog following, native BMW driving and true city
+        run: |
+          $ErrorActionPreference='Stop'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $report=Join-Path $env:AUTHENTIC_OUT 'actual-gameplay.json'
+          $log=Join-Path $env:AUTHENTIC_OUT 'actual-gameplay.log'
+          $project='D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=authentic-smoke-'+$env:GITHUB_RUN_ID
+          $args=@(('"'+$project+'"'),$map,'-game','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-RenderOffscreen','-unattended','-nosound','-nopause',('-AnomaliaAuthenticProbe="'+$report+'"'),('-abslog="'+$log+'"'))
+          $p=Start-Process -FilePath $editor -ArgumentList $args -PassThru
+          if(-not $p.WaitForExit(300000)){throw 'Actual SKARVIK gameplay verification timed out'}
+          if(-not(Test-Path -LiteralPath $report)){throw 'No actual SKARVIK gameplay report'}
+          Get-Content -LiteralPath $report
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED'){throw ('Actual gameplay failed: '+$r.error)}
+          foreach($name in @('actual-gameplay-main-menu.png','actual-gameplay-workforge.png','actual-gameplay-gameplay.png')){
+            $image=Join-Path $env:AUTHENTIC_OUT $name
+            if(-not(Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 15000){throw ('Real engine screenshot missing '+$name)}
+          }
+      - name: Point game shortcut to the verified actual authoritative world
+        run: |
+          $ErrorActionPreference='Stop'
+          $desktop='C:\Users\utilisateur\Desktop'
+          $exe=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor.exe'
+          $project='D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+          $shell=New-Object -ComObject WScript.Shell
+          foreach($name in @("ANOMALIA'Z PRIGIMALIA - JEU UNREAL WORKFORGE.lnk","ANOMALIA'Z PRIGIMALIA - VRAI JEU SKARVIK.lnk")){
+            $link=Join-Path $desktop $name
+            if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $env:AUTHENTIC_OUT ($name+'.before'))}
+            $s=$shell.CreateShortcut($link)
+            $s.TargetPath=$exe
+            $s.Arguments=('"'+$project+'" '+$map+' -game -d3d11 -sm5 -windowed -ResX=1280 -ResY=720')
+            $s.WorkingDirectory=Split-Path $project -Parent
+            $s.Description='Vrai projet principal SKARVIK - City Sample, personnage Survival, BMW E39 et berger allemand'
+            $s.Save()
+            if($shell.CreateShortcut($link).Arguments -ne $s.Arguments){throw 'Actual game shortcut mismatch'}
+          }
+          @{state='AUTHENTIC_MAIN_PROJECT_GAME_MODE_VERIFIED_AND_INSTALLED';project=$project;map=$map;engineExe=$exe;standalonePackagedExe=$false}|ConvertTo-Json|Set-Content (Join-Path $env:AUTHENTIC_OUT 'installation.json')
+          Get-Content (Join-Path $env:AUTHENTIC_OUT 'installation.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: AUTHORITATIVE-AUTHENTIC-GAME-SOURCE
+          name: AUTHENTIC-SKARVIK-GAMEPLAY-AND-INSTALLATION
           path: D:/ANOMALIAZ/01_Projet_Principal/unreal/Saved/AuthenticInstall/*/
           if-no-files-found: warn
