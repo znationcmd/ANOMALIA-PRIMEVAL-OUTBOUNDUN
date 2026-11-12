@@ -1,0 +1,40 @@
+name: Read scene extraction progress and actual cockpit source
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-scene-repair-preflight.yml]
+permissions: {contents: read}
+jobs:
+  read-progress:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read current extraction without interfering with the user's game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=Join-Path (Join-Path $root 'Saved\SceneRepair') $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('PREFLIGHT_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          Get-CimInstance Win32_Process|Where-Object{$_.Name -like 'UnrealEditor*'}|Select-Object ProcessId,Name,ExecutablePath,CommandLine,WorkingSetSize,KernelModeTime,UserModeTime|ConvertTo-Json|Set-Content (Join-Path $out 'source-processes.json')
+          foreach($rel in @('Source\AnomaliaPrimeval\AnomaliaVehiclePawn.cpp','Source\AnomaliaPrimeval\AnomaliaVehiclePawn.h','Source\AnomaliaPrimeval\AnomaliaSessionWidget.cpp','Source\AnomaliaPrimeval\Vehicles\AnomaliaVehiclePanelComponent.h','Config\DefaultEngine.ini','Config\DefaultInput.ini')){
+            $source=Join-Path $root $rel
+            if(Test-Path -LiteralPath $source){Copy-Item -LiteralPath $source -Destination (Join-Path $out $rel.Replace('\','_'))}
+          }
+          foreach($run in @('43270446874','43271263751')){
+            $source=Join-Path $root ('Saved\SceneRepair\'+$run)
+            foreach($name in @('original-city-block.json','car-material-settings.json','audit.log')){
+              $f=Join-Path $source $name
+              if(Test-Path -LiteralPath $f){Copy-Item -LiteralPath $f -Destination (Join-Path $out ($run+'-'+$name))}
+            }
+          }
+          Get-ChildItem -LiteralPath (Join-Path $root 'Content') -Recurse -File -Filter '*engine*.uasset'|Select-Object FullName,Length|ConvertTo-Json|Set-Content (Join-Path $out 'existing-engine-models.json')
+          Get-ChildItem -LiteralPath (Join-Path $root 'Content') -Recurse -Directory -Filter '*ground*'|Select-Object FullName|ConvertTo-Json|Set-Content (Join-Path $out 'existing-ground-folders.json')
+          Get-PSDrive C,D|Select-Object Name,Free,Used|ConvertTo-Json|Set-Content (Join-Path $out 'storage.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ACTUAL-COCKPIT-AND-EXTRACTION-PROGRESS
+          path: ${{ env.PREFLIGHT_OUT }}/*
+          if-no-files-found: warn
