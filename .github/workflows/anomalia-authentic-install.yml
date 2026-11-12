@@ -22,7 +22,13 @@ jobs:
       - name: Remove only previously measured reproducible validation build caches
         run: |
           $ErrorActionPreference='Stop'
-          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'Native session or build is active'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue).Count){throw 'A source editor or native build is active'}
+          # Installed standalone versions read their own cooked files, so the user
+          # can keep playing while a separate source checkout and new version build.
+          $games=@(Get-Process -Name @('AnomaliaPrimeval*','AnomaliaZPrigimalia*') -ErrorAction SilentlyContinue)
+          $unsafe=@($games|Where-Object{-not $_.Path -or -not $_.Path.StartsWith('D:\ANOMALIAZ\Jeu\Versions\',[StringComparison]::OrdinalIgnoreCase)})
+          if($unsafe.Count){throw 'A game is using a source or unverified installation directory'}
+
           $out=Join-Path 'D:\ANOMALIAZ\01_Projet_Principal\unreal\Saved\AuthenticInstall' $env:GITHUB_RUN_ID
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $env:AUTHENTIC_OUT=$out
