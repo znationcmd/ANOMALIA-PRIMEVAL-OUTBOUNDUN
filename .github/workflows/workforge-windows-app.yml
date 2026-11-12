@@ -27,6 +27,15 @@ jobs:
         run: npm test
       - name: Build in-game browser and desktop UI
         run: npm run build
+      - name: Prepare original app icon
+        shell: pwsh
+        run: |
+          python -m pip install --disable-pip-version-check Pillow
+          python scripts/prepare-windows-icon.py
+      - name: Verify menu integration source
+        run: |
+          node --check src/workforge.js
+          node --check src/start-menu.js
       - name: Package Windows application
         run: npm run package:windows
       - name: Upload actual Windows installer
