@@ -44,7 +44,11 @@ try:
     if path.startswith(('/Game/Vehicle/','/Game/Crowd/','/Engine/Editor')):continue
     transforms=([c.get_instance_transform(i,world_space=True) for i in range(c.get_instance_count())] if isinstance(c,unreal.InstancedStaticMeshComponent) else [c.get_world_transform()])
     mats=[c.get_material(i).get_path_name() if c.get_material(i) else None for i in range(c.get_num_materials())]
-    key=json.dumps([path,mats]);row=r['batches'].setdefault(key,{'mesh':path,'materials':mats,'instances':[]})
+    visible=bool(c.get_editor_property('visible')) and not bool(c.get_editor_property('hidden_in_game')) and not bool(a.get_editor_property('hidden'))
+    collision=c.get_collision_enabled()!=unreal.CollisionEnabled.NO_COLLISION and a.get_actor_enable_collision()
+    key=json.dumps([path,mats,visible,collision]);row=r['batches'].setdefault(key,{'mesh':path,'materials':mats,'visible':visible,'collision':collision,'instances':[]})
+    if 'localMin' not in row:
+     bounds=mesh.get_bounding_box();row['localMin']=vec(bounds.min);row['localMax']=vec(bounds.max)
     for t in transforms:
      p=t.translation
      if not (-5000<=p.x<=19000 and -15000<=p.y<=7000):continue
