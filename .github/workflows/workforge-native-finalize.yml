@@ -1,0 +1,48 @@
+name: Final native WorkForge validation and asset diagnosis
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/workforge-native-finalize.yml]
+permissions: {contents: read}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - name: Locate installed character assets and template content
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path 'D:\ANOMALIAZ\02_Projet_Migration\unreal\Saved\WorkForgeFinal' $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('WF_FINAL_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $roots=@('D:\ANOMALIAZ\01_Projet_Principal\unreal\Content','D:\ANOMALIAZ\02_Projet_Migration\unreal\Content',(Join-Path $env:UE_ROOT 'Templates'))
+          $assets=@(foreach($root in $roots){if(Test-Path -LiteralPath $root){Get-ChildItem -LiteralPath $root -Recurse -File -Filter '*.uasset'|Where-Object{$_.Name -match '^(SKM?_(Manny|Quinn|Mannequin))'}|Select-Object FullName,Length}})
+          $packs=@(Get-ChildItem -LiteralPath (Join-Path $env:UE_ROOT 'FeaturePacks') -File -Filter '*.upack' -ErrorAction SilentlyContinue|Select-Object FullName,Length)
+          @{assets=$assets;featurePacks=$packs}|ConvertTo-Json -Depth 5|Set-Content (Join-Path $out 'asset-locations.json')
+          Get-Content (Join-Path $out 'asset-locations.json')
+      - name: Test actual packaged menu with valid isolated probe profile
+        run: |
+          $ErrorActionPreference='Stop'
+          $exe='D:\ANOMALIAZ\02_Projet_Migration\PackagedWindows\WorkForgeMenu-43166532094\Windows\AnomaliaZPrigimalia.exe'
+          if(-not(Test-Path -LiteralPath $exe)){throw 'Previously compiled packaged game missing'}
+          $report=Join-Path $env:WF_FINAL_OUT 'menu.json'
+          $log=Join-Path $env:WF_FINAL_OUT 'menu.log'
+          $arguments=@('/Game/Maps/ANOMALIA_Playable_v1?AnomaliaZPrigimaliaServerId=playable-smoke-workforge-final','-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nosound','-nopause','-AnomaliaZPrigimaliaMenuOnly',("-AnomaliaZPrigimaliaPlayableProbe=$report"),("-abslog=$log"))
+          $process=Start-Process -FilePath $exe -ArgumentList $arguments -PassThru
+          if(-not $process.WaitForExit(150000)){throw 'Packaged native menu probe timed out'}
+          if(-not(Test-Path -LiteralPath $report)){throw 'Native runtime report missing'}
+          Get-Content -LiteralPath $report
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'PACKAGED_GAME_SMOKE_PASSED'){throw ('Runtime test failed: '+$r.error)}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: WORKFORGE-NATIVE-FINAL-EVIDENCE
+          path: D:/ANOMALIAZ/02_Projet_Migration/unreal/Saved/WorkForgeFinal/*/
+          if-no-files-found: warn
