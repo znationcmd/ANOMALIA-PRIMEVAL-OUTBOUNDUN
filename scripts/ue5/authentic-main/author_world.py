@@ -88,7 +88,7 @@ try:
     descs = unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
     if len(descs) < 1000:
         raise RuntimeError('Actual SKARVIK actor population is missing')
-    chosen = [d.guid for d in descs if 'PLAYER_START' in str(d.label).upper() or str(d.label).startswith('SKARVIK_COMPLETE_REAL_BUILDING_')]
+    chosen = [d.guid for d in descs if 'PLAYERSTART' in str(d.label).upper().replace('_', '').replace(' ', '') or str(d.label).startswith('SKARVIK_COMPLETE_REAL_BUILDING_')]
     if chosen:
         unreal.WorldPartitionBlueprintLibrary.load_actors(chosen)
     loaded = actors.get_all_level_actors()
