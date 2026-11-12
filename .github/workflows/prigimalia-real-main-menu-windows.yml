@@ -70,6 +70,7 @@ jobs:
             $src=Join-Path $env:GITHUB_WORKSPACE ('unreal\Source\AnomaliaZPrigimalia\'+$name)
             $dst=Join-Path $root ('Source\AnomaliaZPrigimalia\'+$name)
             Copy-Item -LiteralPath $src -Destination $dst -Force
+            (Get-Item -LiteralPath $dst -Force).LastWriteTimeUtc=[DateTime]::UtcNow
             if((Get-FileHash -LiteralPath $dst).Hash -ne (Get-FileHash -LiteralPath $src).Hash){throw ('Menu source staging mismatch '+$name)}
           }
           (Get-FileHash -LiteralPath $old -Algorithm SHA256).Hash|Set-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'real-menu-original.sha')
