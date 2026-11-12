@@ -98,11 +98,21 @@ def main():
     original = {name: (module/name).read_text(encoding='utf-8-sig') for name in ['AnomaliaGameMode.cpp', 'AnomaliaGameMode.h', 'AnomaliaSessionWidget.cpp']}
     cpp, header = patch_game_mode(original['AnomaliaGameMode.cpp'], original['AnomaliaGameMode.h'])
     changes = {'AnomaliaGameMode.cpp': cpp, 'AnomaliaGameMode.h': header, 'AnomaliaSessionWidget.cpp': patch_menu(original['AnomaliaSessionWidget.cpp'])}
+    # Preserve all existing probe logic, correcting Unreal's required first include.
+    road_probe = module/'Vehicles/AnomaliaChaosRoadProbe.cpp'
+    if road_probe.exists():
+        old = road_probe.read_text(encoding='utf-8-sig')
+        import re
+        own_include = re.search(r'^#include "(?:Vehicles/)?AnomaliaChaosRoadProbe\.h"[^\n]*\n', old, re.M)
+        if not own_include:
+            raise RuntimeError('Original road probe own header include missing')
+        fixed = own_include.group(0) + old[:own_include.start()] + old[own_include.end():]
+        changes['Vehicles/AnomaliaChaosRoadProbe.cpp'] = fixed
     args.output.mkdir(parents=True, exist_ok=True)
     receipt = {'files': []}
     for name, text in changes.items():
         target = module/name
-        backup = args.output/(name+'.before')
+        backup = args.output/(name.replace('/', '_')+'.before')
         if not backup.exists():
             shutil.copy2(target, backup)
         before = hashlib.sha256(target.read_bytes()).hexdigest()

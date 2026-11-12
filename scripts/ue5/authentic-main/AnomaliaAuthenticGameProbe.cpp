@@ -43,7 +43,7 @@ void AAnomaliaAuthenticGameProbe::Finish(const FString& Error)
     R->SetNumberField(TEXT("playerMovementCm"),Walked);R->SetNumberField(TEXT("dogMovementCm"),DogWalked);R->SetNumberField(TEXT("bmwMovementCm"),Driven);
     if(Survivor.IsValid()&&Survivor->GetMesh()->GetSkeletalMeshAsset())R->SetStringField(TEXT("playerMesh"),Survivor->GetMesh()->GetSkeletalMeshAsset()->GetPathName());
     TArray<TSharedPtr<FJsonValue>> Rows;for(const auto& C:Checks)Rows.Add(MakeShared<FJsonValueString>(C));R->SetArrayField(TEXT("checks"),Rows);
-    FString Json;FJsonSerializer::Serialize(R.ToSharedRef(),TJsonWriterFactory<>::Create(&Json));
+    FString Json;FJsonSerializer::Serialize(R,TJsonWriterFactory<>::Create(&Json));
     IFileManager::Get().MakeDirectory(*FPaths::GetPath(File),true);FFileHelper::SaveStringToFile(Json,*File);
     SetActorTickEnabled(false);FGenericPlatformMisc::RequestExit(false);
 }
