@@ -1,8 +1,8 @@
-name: PRIGIMALIA - Build REAL right-aligned 3D main menu and verify screenshot
+name: PRIGIMALIA - Install and test native main-menu WorkForge
 # Rerun after correcting the ANOMALIA' escaped brand assertion in native UI contracts.
 on:
   push:
-    branches: [rebrand/full-anomaliaz-prigimalia-20261029]
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
     paths: [.github/workflows/prigimalia-real-main-menu-windows.yml]
   workflow_dispatch:
 permissions:
@@ -12,13 +12,13 @@ concurrency:
   cancel-in-progress: false
 jobs:
   real-menu:
-    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/rebrand/full-anomaliaz-prigimalia-20261029'
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/feature/real-skarvik-bmw-dog-gameplay-capture-20261111'
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: rebrand/full-anomaliaz-prigimalia-20261029
+          ref: feature/real-skarvik-bmw-dog-gameplay-capture-20261111
           persist-credentials: false
           clean: false
       - name: Verify native visual layout and functional source contracts
@@ -110,7 +110,7 @@ jobs:
         run: |
           $ErrorActionPreference='Stop'
           $project='D:\ANOMALIAZ-PRIGIMALIA\unreal\AnomaliaZPrigimalia.uproject'
-          $archive=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows' ('RealMainMenuReview-'+$env:GITHUB_RUN_ID)
+          $archive=Join-Path 'D:\ANOMALIAZ-PRIGIMALIA\PackagedWindows' ('WorkForgeMenu-'+$env:GITHUB_RUN_ID)
           if(Test-Path -LiteralPath $archive){throw 'Review build path already exists'}
           $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
           & $uat 'BuildCookRun' "-project=$project" '-noP4' '-platform=Win64' '-clientconfig=Development' '-cook' '-stage' '-pak' '-package' '-archive' "-archivedirectory=$archive" '-unattended' '-utf8output'
@@ -158,14 +158,14 @@ jobs:
           }
           if(-not(Test-Path -LiteralPath $desktop -PathType Container)){throw 'User desktop unavailable; package is preserved on D'}
           if((Get-Item -LiteralPath $desktop).Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Linked Desktop location refused'}
-          $link=Join-Path $desktop ("ANOMALIA'Z PRIGIMALIA - NOUVEAU MENU (VERSION TEST).lnk")
-          if(Test-Path -LiteralPath $link){throw 'Do not replace existing new menu shortcut'}
+          $link=Join-Path $desktop ("ANOMALIA'Z PRIGIMALIA - WORKFORGE.lnk")
+          if(Test-Path -LiteralPath $link){Copy-Item -LiteralPath $link -Destination (Join-Path $env:RUNNER_TEMP ('WorkForge-shortcut-before-'+$env:GITHUB_RUN_ID+'.lnk')) -ErrorAction Stop}
           $shell=New-Object -ComObject WScript.Shell
           $shortcut=$shell.CreateShortcut($link)
           $shortcut.TargetPath=$exe
           $shortcut.WorkingDirectory=$work
           $shortcut.IconLocation=$exe+',0'
-          $shortcut.Description="Vrai menu 3D ANOMALIA'Z - version test validée, sans remplacer le jeu original"
+          $shortcut.Description="ANOMALIA'Z PRIGIMALIA - WorkForge au menu principal, version Windows validée"
           $shortcut.Save()
           if(-not(Test-Path -LiteralPath $link -PathType Leaf)){throw 'New shortcut could not be written'}
           $verify=$shell.CreateShortcut($link)

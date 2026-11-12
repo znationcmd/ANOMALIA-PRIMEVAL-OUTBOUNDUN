@@ -4,6 +4,7 @@ on:
     branches:
       - feature/real-skarvik-bmw-dog-gameplay-capture-20261111
     paths:
+      - scripts/workforge-runtime-smoke.mjs
       - src/workforge.js
       - src/start-menu.js
       - src/style.css
@@ -38,6 +39,27 @@ jobs:
           node --check src/start-menu.js
       - name: Package Windows application
         run: npm run package:windows
+      - name: Install and test actual Windows application
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $setup = @(Get-ChildItem release/windows/*Setup*.exe)
+          if ($setup.Count -ne 1) { throw 'Expected exactly one NSIS installer' }
+          $destination = Join-Path $env:RUNNER_TEMP ('AnomaliaWorkForge-' + $env:GITHUB_RUN_ID)
+          $process = Start-Process -FilePath $setup[0].FullName -ArgumentList @('/S', ('/D=' + $destination)) -PassThru -Wait
+          if ($process.ExitCode -ne 0) { throw 'Installer failed' }
+          $exe = @(Get-ChildItem -LiteralPath $destination -Filter '*.exe' | Where-Object { $_.Name -notmatch 'Uninstall' })
+          if ($exe.Count -ne 1) { throw 'Installed app executable missing or ambiguous' }
+          $env:WORKFORGE_EXE = $exe[0].FullName
+          node scripts/workforge-runtime-smoke.mjs
+          if ($LASTEXITCODE -ne 0) { throw 'Installed WorkForge interaction failed' }
+      - name: Upload installed application runtime evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ANOMALIAZ-WORKFORGE-INSTALLED-RUNTIME
+          path: test-results/workforge/
+          if-no-files-found: warn
       - name: Upload actual Windows installer
         uses: actions/upload-artifact@v4
         with:
