@@ -34,6 +34,16 @@ jobs:
             [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern IntPtr CreateFile(string p,uint a,uint s,IntPtr sec,uint c,uint flags,IntPtr template);
             [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern uint GetFinalPathNameByHandle(IntPtr h,StringBuilder b,uint n,uint flags);
             [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool DeleteFile(string p);
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool RemoveDirectory(string p);
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern bool SetFileAttributes(string p,uint attributes);
+            public static void DeleteCachedFile(string p) {
+              var full=@"\\?\"+p; SetFileAttributes(full,0x80);
+              if(!DeleteFile(full)){var e=Marshal.GetLastWin32Error();if(e!=2&&e!=3)throw new Exception("Cache file deletion failed "+e+": "+p);}
+            }
+            public static void DeleteCachedDirectory(string p) {
+              if(!RemoveDirectory(@"\\?\"+p)){var e=Marshal.GetLastWin32Error();if(e!=2&&e!=3)throw new Exception("Cache directory deletion failed "+e+": "+p);}
+            }
             public static string Final(string p) {
               var h=CreateFile(p,0,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
               if(h==new IntPtr(-1))throw new Exception("Cannot resolve "+p);
@@ -67,8 +77,8 @@ jobs:
           $plans|ForEach-Object{[pscustomobject]@{path=$_.path;resolvedPath=$_.resolvedPath;bytes=$_.bytes;files=$_.files.Count}}|ConvertTo-Json|Set-Content (Join-Path $out 'verified-cache-deletion-plan.json') -Encoding UTF8
           $deleted=0L
           foreach($plan in $plans){
-            foreach($file in $plan.files){Remove-Item -LiteralPath $file -Force}
-            foreach($dir in @($plan.dirs|Sort-Object Length -Descending)){[IO.Directory]::Delete($dir,$false)}
+            foreach($file in $plan.files){[VerifiedCachePath]::DeleteCachedFile($file)}
+            foreach($dir in @($plan.dirs|Sort-Object Length -Descending)){[VerifiedCachePath]::DeleteCachedDirectory($dir)}
             $deleted+=$plan.bytes
           }
           foreach($file in $protected){if((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $before[$file]){throw 'Protected game or source identity changed'}}
