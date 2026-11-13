@@ -1,0 +1,83 @@
+name: Import verified E39 engine bay into principal project
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-import-engine-bay-only.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  engine:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Verify and import engine into principal project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          if(-not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Principal project unavailable'}
+          $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'})
+          if($active.Count){throw 'Principal project is busy; processes preserved'}
+          $out=Join-Path $env:RUNNER_TEMP ('engine-only-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          $env:ANOMALIA_ENGINE_ONLY='1'
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $assets=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\assets'
+          $manifest=Get-Content -LiteralPath (Join-Path $assets 'engine-bay-manifest.json') -Raw|ConvertFrom-Json
+          $temporary=Join-Path $out 'engine_bay.glb'
+          $input=[IO.File]::OpenRead((Join-Path $assets 'engine_bay.glb.gz'))
+          try{
+            $gzip=New-Object IO.Compression.GZipStream($input,[IO.Compression.CompressionMode]::Decompress)
+            try{$output=[IO.File]::Create($temporary);try{$gzip.CopyTo($output)}finally{$output.Dispose()}}finally{$gzip.Dispose()}
+          }finally{$input.Dispose()}
+          if((Get-FileHash -LiteralPath $temporary -Algorithm SHA256).Hash -ne $manifest.sha256){throw 'Engine checksum mismatch'}
+          $bytes=[IO.File]::ReadAllBytes($temporary)
+          if([BitConverter]::ToUInt32($bytes,0) -ne 0x46546C67 -or [BitConverter]::ToUInt32($bytes,4) -ne 2 -or [BitConverter]::ToUInt32($bytes,8) -ne $bytes.Length){throw 'Invalid GLB header'}
+          $target=Join-Path $root 'SourceAssets\E39EngineBay_v1'
+          New-Item -ItemType Directory -Path $target -Force|Out-Null
+          $engine=Join-Path $target 'engine_bay.glb'
+          if(Test-Path -LiteralPath $engine){
+            if((Get-FileHash -LiteralPath $engine -Algorithm SHA256).Hash -ne $manifest.sha256){throw 'Modified engine source preserved'}
+          }else{Copy-Item -LiteralPath $temporary -Destination $engine}
+          $manifestTarget=Join-Path $target 'manifest.json'
+          if(Test-Path -LiteralPath $manifestTarget){
+            $existing=Get-Content -LiteralPath $manifestTarget -Raw|ConvertFrom-Json
+            if($existing.sha256 -ne $manifest.sha256){throw 'Modified engine manifest preserved'}
+          }else{Copy-Item -LiteralPath (Join-Path $assets 'engine-bay-manifest.json') -Destination $manifestTarget}
+          $effect=Join-Path $root 'Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
+          $held=Join-Path $out 'VehicleDamageSystem_Runtime.uasset'
+          $expected='6958C967A29C644C51B8C30D76308AB9A80C87FA716BEC7ED7ABB1766E96D6BF'
+          $moved=$false
+          $process=$null
+          try{
+            if(Test-Path -LiteralPath $effect){
+              if((Get-FileHash -LiteralPath $effect).Hash -ne $expected){throw 'Traffic effect changed; preserve source'}
+              Move-Item -LiteralPath $effect -Destination $held
+              $moved=$true
+            }
+            $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+            $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\import_car_art.py'
+            $process=Start-Process -FilePath $editor -ArgumentList @((Join-Path $root 'AnomaliaPrimeval.uproject'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $out 'engine-import.log')+'"')) -PassThru
+            $handle=$process.Handle
+            if(-not $process.WaitForExit(480000)){$process.Kill();$process.WaitForExit(15000)|Out-Null;throw 'Engine import timed out'}
+            if($process.ExitCode -ne 0){throw ('Unreal import exited '+$process.ExitCode)}
+          }finally{
+            if($process -and -not $process.HasExited){$process.Kill();$process.WaitForExit(15000)|Out-Null}
+            if($moved){
+              if(Test-Path -LiteralPath $effect){throw 'Unexpected replacement of held effect'}
+              Move-Item -LiteralPath $held -Destination $effect
+              if((Get-FileHash -LiteralPath $effect).Hash -ne $expected){throw 'Effect restoration mismatch'}
+            }
+          }
+          $report=Get-Content -LiteralPath (Join-Path $out 'car-art-import.json') -Raw|ConvertFrom-Json
+          $report|ConvertTo-Json -Depth 8
+          if($report.state -ne 'ENGINE_BAY_IMPORTED_NOT_YET_INSTALLED'){throw ('Engine import failed '+$report.error)}
+          if(@($report.parts).Count -ne 1 -or $report.parts[0].triangles -le 0){throw 'Engine mesh empty'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: E39-ENGINE-BAY-IMPORT
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
