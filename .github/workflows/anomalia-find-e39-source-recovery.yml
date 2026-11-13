@@ -21,7 +21,7 @@ jobs:
           $queue=New-Object 'System.Collections.Generic.Queue[string]'
           foreach($root in $roots){if(Test-Path -LiteralPath $root){$queue.Enqueue($root)}}
           $seen=New-Object 'System.Collections.Generic.HashSet[string]'
-          $matches=New-Object 'System.Collections.Generic.List[object]'
+          $sourceFiles=New-Object 'System.Collections.Generic.List[object]'
           $archives=New-Object 'System.Collections.Generic.List[object]'
           $started=Get-Date
           $dirs=0
@@ -39,7 +39,7 @@ jobs:
                 $row=[ordered]@{path=$entry.FullName;bytes=$entry.Length}
                 if($entry.Name -eq 'body.glb' -or $entry.Name -eq 'hood.glb'){$row.sha256=(Get-FileHash -LiteralPath $entry.FullName -Algorithm SHA256).Hash}
                 if($entry.Name -eq 'manifest.json'){$row.manifest=Get-Content -LiteralPath $entry.FullName -Raw}
-                $matches.Add($row)
+                $sourceFiles.Add($row)
               } elseif($entry.Extension -eq '.zip' -and $entry.Name -match '(?i)e39|bmw|source|model|backup|sauvegarde'){
                 try{
                   $zip=[IO.Compression.ZipFile]::OpenRead($entry.FullName)
@@ -50,10 +50,10 @@ jobs:
               }
             }
           }
-          $report=[ordered]@{state='READ_ONLY_SOURCE_SEARCH_COMPLETE';directories=$dirs;pendingDirectories=$queue.Count;roots=$roots;files=$matches.ToArray();archives=$archives.ToArray();sourceFilesModified=$false}
+          $report=[ordered]@{state='READ_ONLY_SOURCE_SEARCH_COMPLETE';directories=$dirs;pendingDirectories=$queue.Count;roots=$roots;files=$sourceFiles.ToArray();archives=$archives.ToArray();sourceFilesModified=$false}
           $report|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $out 'source-search.json') -Encoding UTF8
-          Write-Host ('SEARCHED_DIRECTORIES='+$dirs+';MATCHES='+$matches.Count+';ARCHIVES='+$archives.Count+';PENDING='+$queue.Count)
-          foreach($row in $matches){Write-Host ('SOURCE='+$row.path)}
+          Write-Host ('SEARCHED_DIRECTORIES='+$dirs+';MATCHES='+$sourceFiles.Count+';ARCHIVES='+$archives.Count+';PENDING='+$queue.Count)
+          foreach($row in $sourceFiles){Write-Host ('SOURCE='+$row.path)}
           foreach($row in $archives){Write-Host ('ARCHIVE='+$row.path)}
       - uses: actions/upload-artifact@v4
         if: always()
