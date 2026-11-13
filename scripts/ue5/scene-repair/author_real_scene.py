@@ -81,13 +81,21 @@ try:
  for a in proxies:a.set_editor_property('landscape_material',ground)
  if not proxies:raise RuntimeError('Actual landscape proxies not loaded')
  r['terrain']={'material':ground.get_path_name(),'loadedProxies':len(proxies),'heightmapModified':False}
- # Keep the actual native E39, its physical rig and its interaction identities.
- manifest=json.loads((root/'SourceAssets/BMWE39RoadPresentation_v8/manifest.json').read_text());parts={p['id']:unreal.load_asset(p['objectPath']) for p in manifest['models']}
- if any(a is None for a in parts.values()):raise RuntimeError('Corrected car parts are missing')
- car.set_editor_property('road_body_mesh',parts['body']);car.set_editor_property('driver_door_mesh',parts['door_driver']);car.set_editor_property('road_wheel_mesh',parts['wheel_fl']);car.set_editor_property('road_wheel_meshes',[parts[n] for n in ['wheel_fl','wheel_fr','wheel_rl','wheel_rr']]);car.set_editor_property('engine_bay_mesh',unreal.load_asset('/Game/Anomalia/E39EngineBay_v1/SM_engine_bay'));car.set_editor_property('use_authored_road_cameras',True)
- definitions=car.get_editor_property('additional_panel_definitions')
- for d in definitions:d.set_editor_property('mesh',parts[str(d.get_editor_property('panel_id'))])
- car.set_editor_property('additional_panel_definitions',definitions)
+ # Use source-verified corrected parts when recovered; city restoration remains independent.
+ corrected=root/'SourceAssets/BMWE39RoadPresentation_v8/manifest.json'
+ upgraded=False
+ if corrected.exists():
+  manifest=json.loads(corrected.read_text(encoding='utf-8-sig'));parts={p['id']:unreal.load_asset(p['objectPath']) for p in manifest['models']}
+  if all(parts.values()) and all(unreal.EditorAssetLibrary.get_metadata_tag(parts[p['id']],'AnomaliaSceneRepairSourceSha')==p['sha256'] for p in manifest['models']):
+   car.set_editor_property('road_body_mesh',parts['body']);car.set_editor_property('driver_door_mesh',parts['door_driver']);car.set_editor_property('road_wheel_mesh',parts['wheel_fl']);car.set_editor_property('road_wheel_meshes',[parts[n] for n in ['wheel_fl','wheel_fr','wheel_rl','wheel_rr']])
+   definitions=car.get_editor_property('additional_panel_definitions')
+   for definition in definitions:definition.set_editor_property('mesh',parts[str(definition.get_editor_property('panel_id'))])
+   car.set_editor_property('additional_panel_definitions',definitions);upgraded=True
+ if not car.get_editor_property('road_body_mesh') or not car.has_valid_road_rig():raise RuntimeError('Original car rig unavailable; preserve world')
+ engine=unreal.load_asset('/Game/Anomalia/E39M5S62_v1/SM_engine_bay') if unreal.EditorAssetLibrary.does_asset_exist('/Game/Anomalia/E39M5S62_v1/SM_engine_bay') else None
+ if engine:car.set_editor_property('engine_bay_mesh',engine)
+ car.set_editor_property('use_authored_road_cameras',True)
+ r['vehicleArt']={'body':car.get_editor_property('road_body_mesh').get_path_name(),'correctedHoodSourceRecoveryStillRequired':not upgraded,'m5EngineAvailable':engine is not None}
  parking=None
  for _,point,tr in sorted(road_choices,key=lambda x:x[0]):
   q=point+offset;surface=trace(q.x,q.y,q.z+200,block)
@@ -104,3 +112,4 @@ try:
  r.update(state='REAL_SKARVIK_SCENE_SAVED_NOT_YET_NATIVE_VISUALLY_ACCEPTED',originalSourceMap='/Game/Map/Big_City_LVL',carPosition=v(car.get_actor_location()),startPosition=v(start.get_actor_location()),cityOffset=v(offset),instances=block.get_original_instance_count())
 except Exception:r['error']=traceback.format_exc()
 finally:(out/'authored-real-scene.json').write_text(json.dumps(r,indent=2),encoding='utf-8');unreal.SystemLibrary.quit_editor()
+

@@ -3,6 +3,9 @@
 #include "AnomaliaDogCompanion.h"
 #include "AnomaliaSessionWidget.h"
 #include "Vehicles/AnomaliaChaosRoadVehicle.h"
+#include "Vehicles/AnomaliaM5PresentationComponent.h"
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
 #include "Vehicles/AnomaliaVehicleSurvival.h"
 #include "Vehicles/AnomaliaVehiclePanelComponent.h"
 #include "World/AnomaliaCityBlock.h"
@@ -160,6 +163,11 @@ void AAnomaliaAuthenticGameProbe::Tick(float Dt)
         if(Now<Next)return;
         if(!Car->FollowCamera->IsActive()||Car->InteriorCamera->IsActive()||Car->CameraBoom->GetRelativeLocation().Z<100)
         {Finish(TEXT("Exterior driver camera is not above the chassis"));return;}
+        auto* M5=Car->FindComponentByClass<UAnomaliaM5PresentationComponent>();
+        TArray<UAudioComponent*> Audio;Car->GetComponents<UAudioComponent>(Audio);int32 RecordedLoops=0;
+        for(auto* A:Audio)if(A && A->Sound && A->Sound->GetPathName().StartsWith(TEXT("/Game/Anomalia/E39M5S62Audio_v1/")) && A->IsPlaying())++RecordedLoops;
+        if(!M5 || M5->EngineRPM<800.f || RecordedLoops!=2){Finish(TEXT("Recorded M5 idle/load loops did not start with actual ignition"));return;}
+        Checks.Add(TEXT("recorded_m5_idle_and_load_play_on_actual_ignition"));
         Screenshot(TEXT("-driver-exterior.png"));Phase=31;Next=Now+2;return;
     }
     if(Phase==31)
@@ -185,6 +193,9 @@ void AAnomaliaAuthenticGameProbe::Tick(float Dt)
         Car->SetDriverControlsOnServer(PC,.35f,0,0);if(Now<Next)return;
         Driven=FVector::Dist2D(Before,Car->GetActorLocation());
         if(Driven<50){Finish(TEXT("E39 did not physically move under real driver controls"));return;}
+        auto* M5=Car->FindComponentByClass<UAnomaliaM5PresentationComponent>();
+        if(!M5 || M5->EngineRPM<=850.f || M5->EngineLoad<=.05f){Finish(TEXT("M5 audio telemetry did not follow real engine RPM and throttle"));return;}
+        Checks.Add(TEXT("recorded_m5_audio_tracks_physical_rpm_and_throttle"));
         Checks.Add(TEXT("real_e39_entry_engine_and_physical_driving"));Phase=5;Next=Now+5;return;
     }
     if(Phase==5)
@@ -204,6 +215,10 @@ void AAnomaliaAuthenticGameProbe::Tick(float Dt)
     if(Phase==6)
     {
         if(Now<Next)return;
+        TArray<UAudioComponent*> Audio;Car->GetComponents<UAudioComponent>(Audio);
+        for(auto* A:Audio)if(A && A->Sound && A->Sound->GetPathName().StartsWith(TEXT("/Game/Anomalia/E39M5S62Audio_v1/")) && A->IsPlaying())
+        {Finish(TEXT("Recorded engine audio did not stop after actual ignition off"));return;}
+        Checks.Add(TEXT("recorded_m5_audio_stops_when_engine_is_off"));
         bool Open=false;for(const auto& Reference:Car->AdditionalPanels)if(auto* Panel=Reference.Get();Panel&&Panel->PanelId==TEXT("hood"))Open=FMath::Abs(Panel->AngleDegrees)>50.f&&!Panel->bObstructed;
         if(!Open){Finish(TEXT("Bonnet did not physically open far enough to expose the engine"));return;}
         const FTransform T=Car->GetActorTransform();
@@ -237,3 +252,4 @@ void AAnomaliaAuthenticGameProbe::Tick(float Dt)
     if(Phase==12&&Now>=Next)Finish();
 #endif
 }
+

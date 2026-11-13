@@ -1,0 +1,178 @@
+name: Restore original car and City Sample streets, package and test actual SKARVIK
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-recover-real-car-city.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  candidate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 210
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Prepare recovery workspace and preserve running work
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          if(-not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Principal project disk unavailable'}
+          $out=Join-Path 'C:\ANOMALIA-Repair\Runs' $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'})
+          if($active.Count){throw 'Principal project is busy; existing processes preserved'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 3GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 4GB){throw 'Insufficient recovery reserve'}
+      - name: Rebuild the eleven original licensed BMW parts from their pinned source
+        run: |
+          $ErrorActionPreference='Stop'
+          $scratch=Join-Path $env:SCENE_REPAIR_OUT 'OriginalCarRecovery'
+          foreach($folder in @('scripts\vehicle-assets','docs\vehicles','docs\art','unreal\Saved\BMWE39Source')){New-Item -ItemType Directory -Path (Join-Path $scratch $folder) -Force|Out-Null}
+          foreach($name in @('prepare-bmw-e39.mjs','prepare-bmw-e39-panels.mjs','prepare-bmw-e39-all-panels.mjs','audit-bmw-e39-cargo.mjs','panel-shell.mjs','mesh-islands.mjs','panel-geometry.mjs','validate.mjs','package.json','package-lock.json')){
+            Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE ('scripts\vehicle-assets\'+$name)) -Destination (Join-Path $scratch ('scripts\vehicle-assets\'+$name))
+          }
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'docs\vehicles\named-assets-sources.json') -Destination (Join-Path $scratch 'docs\vehicles\named-assets-sources.json')
+          Copy-Item -LiteralPath (Join-Path $env:GITHUB_WORKSPACE 'docs\art\bmw-e39-accepted-v5-parts.json') -Destination (Join-Path $scratch 'docs\art\bmw-e39-accepted-v5-parts.json')
+          $registry=Get-Content (Join-Path $scratch 'docs\vehicles\named-assets-sources.json') -Raw|ConvertFrom-Json
+          $model=@($registry.models|Where-Object{$_.id -eq 'bmw_e39'})[0]
+          if($model.license -ne 'CC-BY-4.0' -or $model.sourceSHA256 -ne '984a9daab49b5a31c45bbc284c657fa5898a010f2201c003358cb6b6f411751d'){throw 'Pinned car source license or identity changed'}
+          $download=Join-Path $scratch 'unreal\Saved\BMWE39Source\bmw-e39.glb'
+          Invoke-WebRequest -Uri $model.downloadUrl -OutFile $download -UseBasicParsing
+          if((Get-FileHash -LiteralPath $download).Hash -ne $model.sourceSHA256 -or (Get-Item $download).Length -ne $model.sourceBytes){throw 'Original car download integrity mismatch'}
+          Push-Location (Join-Path $scratch 'scripts\vehicle-assets')
+          try{& npm.cmd ci --ignore-scripts --no-audit --no-fund;if($LASTEXITCODE -ne 0){throw 'Locked original car dependencies failed'}}finally{Pop-Location}
+          Push-Location $scratch
+          try{
+            foreach($name in @('prepare-bmw-e39.mjs','prepare-bmw-e39-panels.mjs','prepare-bmw-e39-all-panels.mjs')){
+              & node.exe ('scripts\vehicle-assets\'+$name)
+              if($LASTEXITCODE -ne 0){throw ('Original car generation failed '+$name)}
+            }
+            & node.exe 'scripts\vehicle-assets\validate.mjs' 'unreal\SourceAssets\BMWE39Review_v7'
+            if($LASTEXITCODE -ne 0){throw 'Regenerated original car format validation failed'}
+          }finally{Pop-Location}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\restore_car_parts.py') $scratch
+          if($LASTEXITCODE -ne 0){throw 'Original car restoration refused'}
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\prepare_car_art.py')
+          if($LASTEXITCODE -ne 0){throw 'Corrected original bonnet preparation failed'}
+      - name: Import corrected original body, opening bonnet and panels
+        run: |
+          $env:ANOMALIA_ENGINE_ONLY='0'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\run_principal_editor.ps1') -Script (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\import_car_art.py') -LogName 'original-body-import' -Seconds 1200
+          $report=Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'car-art-import.json') -Raw|ConvertFrom-Json
+          if($report.state -ne 'CORRECTED_E39_AND_ENGINE_IMPORTED_NOT_YET_INSTALLED'){throw ('Original body import failed '+$report.error)}
+      - name: Resume complete original City Sample streets and architecture with per-actor checkpoints
+        run: |
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\run_principal_editor.ps1') -Script (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\export_city_resume.py') -LogName 'original-city-resume' -Seconds 2700
+          $report=Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'original-city-block.json') -Raw|ConvertFrom-Json
+          if($report.state -ne 'ORIGINAL_CITY_BLOCK_EXPORTED_WITH_AUTHORED_TRANSFORMS'){throw ('Original city recovery incomplete '+$report.error)}
+      - name: Back up and author the actual SKARVIK with original complete street architecture
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=$env:SCENE_REPAIR_OUT
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'}|Where-Object{$p=Get-Process -Id $_.ProcessId -ErrorAction SilentlyContinue;$p -and -not $p.HasExited})
+          if($active.Count){throw 'Principal source is active'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\measure_storage.py')
+          if($LASTEXITCODE -ne 0){throw 'Storage preflight failed'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 7GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 6GB){throw 'Free space below measured candidate-build reserve'}
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\run_principal_editor.ps1') -Script (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\scene-repair\author_real_scene.py') -LogName 'author-real-scene' -Seconds 1800
+          $r=Get-Content (Join-Path $out 'authored-real-scene.json') -Raw|ConvertFrom-Json
+          if($r.state -ne 'REAL_SKARVIK_SCENE_SAVED_NOT_YET_NATIVE_VISUALLY_ACCEPTED'){throw ('Actual scene authoring failed '+$r.error)}
+      - name: Compile strict actual-game probe including recorded audio checks
+        run: |
+          $ErrorActionPreference='Stop'
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\prepare_probe.py')
+          if($LASTEXITCODE -ne 0){throw 'Native game probe source changed; preserve it'}
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaPrimevalEditor','AnomaliaPrimeval')){
+            & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'-strict-probe.log'))
+            if($LASTEXITCODE -ne 0){throw ('Strict native probe build failed '+$target)}
+          }
+      - name: Package actual SKARVIK as a standalone Windows game with disk monitoring
+        run: |
+          $ErrorActionPreference='Stop'
+          $stage=Join-Path 'D:\ANOMALIAZ\Jeu\Versions' ('SKARVIK-SCENE-'+$env:GITHUB_RUN_ID)
+          $cook='C:\ANOMALIAZ_AuthenticBuild\Cooked\Windows'
+          if(Test-Path -LiteralPath $stage){throw 'Standalone version path already exists'}
+          New-Item -ItemType Directory -Path $stage -Force|Out-Null
+          New-Item -ItemType Directory -Path $cook -Force|Out-Null
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          $project='D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject'
+          $args=@('/d','/s','/c',('""'+$uat+'" BuildCookRun -project="'+$project+'" -noP4 -platform=Win64 -clientconfig=Development -cook -iterate -map=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1 -CookOutputDir="'+$cook+'" -stage -stagingdirectory="'+$stage+'" -pak -compressed -package -nodebuginfo -unattended -utf8output"'))
+          $p=Start-Process -FilePath $env:ComSpec -ArgumentList $args -PassThru -RedirectStandardOutput (Join-Path $env:SCENE_REPAIR_OUT 'standalone-package.log') -RedirectStandardError (Join-Path $env:SCENE_REPAIR_OUT 'standalone-package.stderr.log')
+          # Retain the process handle before waiting so Windows PowerShell preserves ExitCode.
+          $processHandle=$p.Handle
+          $started=Get-Date
+          while(-not $p.WaitForExit(3000)){
+            foreach($drive in @('C','D')){
+              if(([IO.DriveInfo]::new($drive)).AvailableFreeSpace -lt 2GB){
+                & taskkill.exe /PID $p.Id /T /F|Out-Null
+                throw ('Standalone cook stopped before exhausting '+$drive+': storage')
+              }
+            }
+            if(((Get-Date)-$started).TotalMinutes -gt 100){& taskkill.exe /PID $p.Id /T /F|Out-Null;throw 'Standalone packaging time budget exceeded'}
+          }
+          $p.WaitForExit()
+          $p.Refresh()
+          $exitCode=$p.ExitCode
+          $packageTail=(Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'standalone-package.log') -Tail 60)-join [Environment]::NewLine
+          $loggedSuccess=$packageTail -match 'BUILD SUCCESSFUL' -and $packageTail -match 'AutomationTool exiting with ExitCode=0 \(Success\)'
+          if(($null -ne $exitCode -and $exitCode -ne 0) -or -not $loggedSuccess){
+            Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'standalone-package.log') -Tail 120
+            throw ('Standalone packaging failed '+$exitCode)
+          }
+          $exe=Join-Path $stage 'Windows\AnomaliaPrimeval.exe'
+          if(-not(Test-Path -LiteralPath $exe)){$exe=Join-Path $stage 'AnomaliaPrimeval.exe'}
+          if(-not(Test-Path -LiteralPath $exe)){throw 'Real standalone executable missing'}
+          $package=Split-Path $exe -Parent
+          $pakRoot=Join-Path $package 'AnomaliaPrimeval\Content\Paks'
+          if(-not(Test-Path -LiteralPath $pakRoot)){throw 'Standalone cooked game data missing'}
+          ('AUTHENTIC_GAME_EXE='+$exe)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          ('AUTHENTIC_GAME_ROOT='+$package)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          @'
+          BMW E39 original model: Black Snow
+          Source: https://sketchfab.com/3d-models/none-531a5a93da5d493d9918eb36f011c20d
+          License: Creative Commons Attribution 4.0 (CC BY 4.0)
+          Modified for ANOMALIA: vehicle body partitions, opening panels, wheels and native physics integration.
+          '@|Set-Content -LiteralPath (Join-Path $package 'Credits_BMW_E39.txt') -Encoding utf8
+      - name: Test only the real standalone executable on the real SKARVIK world
+        run: |
+          $ErrorActionPreference='Stop'
+          $report=Join-Path $env:SCENE_REPAIR_OUT 'actual-gameplay.json'
+          $log=Join-Path $env:SCENE_REPAIR_OUT 'actual-gameplay.log'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1?AnomaliaServerId=authentic-smoke-'+$env:GITHUB_RUN_ID
+          $args=@($map,'-windowed','-ResX=1280','-ResY=720','-d3d11','-sm5','-unattended','-nopause',('-AnomaliaAuthenticProbe="'+$report+'"'),('-abslog="'+$log+'"'))
+          $p=Start-Process -FilePath $env:AUTHENTIC_GAME_EXE -ArgumentList $args -PassThru
+          if(-not $p.WaitForExit(300000)){& taskkill.exe /PID $p.Id /T /F|Out-Null;throw 'Actual standalone SKARVIK gameplay timed out'}
+          if(-not(Test-Path -LiteralPath $report)){throw 'Standalone actual-world report missing'}
+          Get-Content -LiteralPath $report
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          if($r.state -ne 'AUTHENTIC_GAMEPLAY_VERIFIED'){throw ('Actual standalone gameplay failed: '+$r.error)}
+          foreach($name in @('actual-gameplay-main-menu.png','actual-gameplay-workforge.png','actual-gameplay-gameplay.png','actual-gameplay-driver-exterior.png','actual-gameplay-driver-cockpit.png','actual-gameplay-engine-bay.png','actual-gameplay-street-ground-floors.png','actual-gameplay-street-reverse.png')){
+            $image=Join-Path $env:SCENE_REPAIR_OUT $name
+            if(-not(Test-Path -LiteralPath $image) -or (Get-Item -LiteralPath $image).Length -lt 15000){throw ('Actual engine image missing '+$name)}
+          }
+      - name: Record candidate requiring actual image review before replacing the installed game
+        run: |
+          $ErrorActionPreference='Stop'
+          [pscustomobject]@{state='CANDIDATE_REQUIRES_ACTUAL_IMAGE_REVIEW';gameExe=$env:AUTHENTIC_GAME_EXE;gameRoot=$env:AUTHENTIC_GAME_ROOT;sourceRun=$env:GITHUB_RUN_ID;map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1';sourceCommit=$env:GITHUB_SHA}|ConvertTo-Json|Set-Content (Join-Path $env:SCENE_REPAIR_OUT 'candidate.json') -Encoding utf8
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() && env.SCENE_REPAIR_OUT != '' }}
+        with:
+          name: REAL-SKARVIK-SCENE-CANDIDATE
+          path: |
+            ${{ env.SCENE_REPAIR_OUT }}/*.json
+            ${{ env.SCENE_REPAIR_OUT }}/*.png
+            ${{ env.SCENE_REPAIR_OUT }}/*.log
+          if-no-files-found: warn
+
