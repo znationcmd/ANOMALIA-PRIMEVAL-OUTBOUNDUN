@@ -11,7 +11,7 @@ for stem,folder in [('AnomaliaChaosRoadVehicle','Vehicles'),('AnomaliaCityBlock'
    if stem!='AnomaliaCityBlock':
     expected=json.loads((here/'source-base-hashes.json').read_text())[stem+suffix]
     current=hashlib.sha256(p.read_bytes().replace(b'\r\n',b'\n')).hexdigest()
-    target=hashlib.sha256((here/(stem+suffix)).read_bytes()).hexdigest()
+    target=hashlib.sha256((here/(stem+suffix)).read_bytes().replace(b'\r\n',b'\n')).hexdigest()
     if current not in [expected,target]:raise RuntimeError('Principal source changed since audit: '+str(p))
   p.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(here/(stem+suffix),p);r['source'].append(str(rel))
 asset=root/'SourceAssets/E39EngineBay_v1';asset.mkdir(parents=True,exist_ok=True)
