@@ -1,0 +1,63 @@
+name: Locate recoverable original E39 source files
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-find-e39-source-recovery.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  locate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Search known project copies without modifying source files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('e39-source-search-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('SOURCE_SEARCH_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $roots=@('D:\ANOMALIAZ','D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA','C:\ANOMALIA-Validation','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555')
+          $queue=New-Object 'System.Collections.Generic.Queue[string]'
+          foreach($root in $roots){if(Test-Path -LiteralPath $root){$queue.Enqueue($root)}}
+          $seen=New-Object 'System.Collections.Generic.HashSet[string]'
+          $matches=New-Object 'System.Collections.Generic.List[object]'
+          $archives=New-Object 'System.Collections.Generic.List[object]'
+          $started=Get-Date
+          $dirs=0
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          while($queue.Count -gt 0 -and ((Get-Date)-$started).TotalSeconds -lt 180){
+            $dir=$queue.Dequeue()
+            if(-not $seen.Add($dir.ToLowerInvariant())){continue}
+            $dirs++
+            foreach($entry in @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue)){
+              if($entry.PSIsContainer){
+                if($entry.Name -in @('.git','node_modules','Content','Intermediate','Binaries','DerivedDataCache','Cooked','StagedBuilds','Windows')){continue}
+                if($entry.Attributes -band [IO.FileAttributes]::ReparsePoint){continue}
+                $queue.Enqueue($entry.FullName)
+              } elseif($entry.Name -in @('body.glb','hood.glb') -or ($entry.Name -eq 'manifest.json' -and $dir -match 'BMWE39Review_v7')){
+                $row=[ordered]@{path=$entry.FullName;bytes=$entry.Length}
+                if($entry.Name -eq 'body.glb' -or $entry.Name -eq 'hood.glb'){$row.sha256=(Get-FileHash -LiteralPath $entry.FullName -Algorithm SHA256).Hash}
+                if($entry.Name -eq 'manifest.json'){$row.manifest=Get-Content -LiteralPath $entry.FullName -Raw}
+                $matches.Add($row)
+              } elseif($entry.Extension -eq '.zip' -and $entry.Name -match '(?i)e39|bmw|source|model|backup|sauvegarde'){
+                try{
+                  $zip=[IO.Compression.ZipFile]::OpenRead($entry.FullName)
+                  try{$names=@($zip.Entries|Where-Object{$_.FullName -match '(?i)(^|/)(body|hood)\.glb$|BMWE39Review_v7' }|ForEach-Object{$_.FullName})}
+                  finally{$zip.Dispose()}
+                  if($names.Count){$archives.Add([ordered]@{path=$entry.FullName;bytes=$entry.Length;entries=$names})}
+                }catch{$archives.Add([ordered]@{path=$entry.FullName;error=$_.Exception.Message})}
+              }
+            }
+          }
+          $report=[ordered]@{state='READ_ONLY_SOURCE_SEARCH_COMPLETE';directories=$dirs;pendingDirectories=$queue.Count;roots=$roots;files=$matches.ToArray();archives=$archives.ToArray();sourceFilesModified=$false}
+          $report|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $out 'source-search.json') -Encoding UTF8
+          Write-Host ('SEARCHED_DIRECTORIES='+$dirs+';MATCHES='+$matches.Count+';ARCHIVES='+$archives.Count+';PENDING='+$queue.Count)
+          foreach($row in $matches){Write-Host ('SOURCE='+$row.path)}
+          foreach($row in $archives){Write-Host ('ARCHIVE='+$row.path)}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: E39-SOURCE-RECOVERY-SEARCH
+          path: ${{ env.SOURCE_SEARCH_OUT }}/source-search.json
+          if-no-files-found: error
