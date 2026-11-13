@@ -20,6 +20,8 @@ jobs:
           $ErrorActionPreference='Stop'
           $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
           if(-not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Principal project disk unavailable'}
+          $ready=Get-Content -LiteralPath 'C:\ANOMALIA-Repair\m5-native-ready.json' -Raw|ConvertFrom-Json
+          if($ready.state -ne 'M5_NATIVE_TARGETS_BUILT_AND_ASSETS_IMPORTED'){throw 'M5 standalone target or recorded assets are not ready; preserve current game'}
           $out=Join-Path 'C:\ANOMALIA-Repair\Runs' $env:GITHUB_RUN_ID
           New-Item -ItemType Directory -Path $out -Force|Out-Null
           $env:SCENE_REPAIR_OUT=$out
@@ -95,7 +97,7 @@ jobs:
           if($LASTEXITCODE -ne 0){throw 'Native game probe source changed; preserve it'}
           $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
           foreach($target in @('AnomaliaPrimevalEditor','AnomaliaPrimeval')){
-            & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'-strict-probe.log'))
+            & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -NoUBA -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'-strict-probe.log'))
             if($LASTEXITCODE -ne 0){throw ('Strict native probe build failed '+$target)}
           }
       - name: Package actual SKARVIK as a standalone Windows game with disk monitoring
