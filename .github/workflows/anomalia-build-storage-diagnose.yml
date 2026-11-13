@@ -1,0 +1,96 @@
+name: Inspect native build bottleneck and recoverable generated disk usage
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-build-storage-diagnose.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Inspect disks, memory and known generated build directories without deleting files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path 'C:\ANOMALIA-Repair\Diagnostics' $env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          ('DIAG_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $processes=@(Get-CimInstance Win32_Process|Where-Object{
+            $_.Name -match '^(UnrealEditor.*|UnrealBuildTool|Uba.*|cl|link|ShaderCompileWorker)\.exe$' -or
+            ($_.Name -eq 'dotnet.exe' -and $_.CommandLine -match 'UnrealBuildTool|ANOMALIA')
+          }|Select-Object Name,ProcessId,ParentProcessId,CreationDate,ExecutablePath,CommandLine,WorkingSetSize)
+          $os=Get-CimInstance Win32_OperatingSystem
+          $disks=@(Get-CimInstance Win32_LogicalDisk|Where-Object{$_.DriveType -in @(2,3)}|Select-Object DeviceID,VolumeName,Size,FreeSpace)
+          $pagefiles=@(Get-CimInstance Win32_PageFileUsage|Select-Object Name,AllocatedBaseSize,CurrentUsage,PeakUsage)
+          $top=@(Get-Process|Sort-Object WorkingSet64 -Descending|Select-Object -First 12 Name,Id,WorkingSet64,PrivateMemorySize64,CPU)
+          $installed=Get-Content -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Raw|ConvertFrom-Json
+          $base=[ordered]@{disks=$disks;memory=[ordered]@{freePhysicalKB=$os.FreePhysicalMemory;totalPhysicalKB=$os.TotalVisibleMemorySize;freeVirtualKB=$os.FreeVirtualMemory};pagefiles=$pagefiles;processes=$processes;largestProcesses=$top;installedGame=$installed;filesDeleted=$false}
+          $base|ConvertTo-Json -Depth 10|Set-Content (Join-Path $out 'machine.json') -Encoding UTF8
+          $disks|ConvertTo-Json
+          Add-Type @'
+          using System; using System.Text; using System.Runtime.InteropServices;
+          public static class NativeBuildPath {
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern IntPtr CreateFile(string p,uint a,uint s,IntPtr sec,uint c,uint flags,IntPtr template);
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern uint GetFinalPathNameByHandle(IntPtr h,StringBuilder b,uint n,uint flags);
+            [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+            public static string Final(string p) {
+              var h=CreateFile(p,0,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
+              if(h==new IntPtr(-1)) throw new Exception("Cannot resolve directory: "+p);
+              try { var b=new StringBuilder(32768); if(GetFinalPathNameByHandle(h,b,32768,0)==0)throw new Exception("Final path unavailable"); var r=b.ToString(); return r.StartsWith(@"\\?\")?r.Substring(4):r; } finally {CloseHandle(h);}
+            }
+          }
+          '@
+          $principal=[NativeBuildPath]::Final($root).TrimEnd('\')
+          $candidates=New-Object 'System.Collections.Generic.List[object]'
+          foreach($p in @(
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Saved\Cooked',
+            'C:\ANOMALIAZ_AuthenticBuild\Cooked\Windows',
+            'C:\Users\utilisateur\actions-runner\_work\ANOMALIA-PRIMEVAL-OUTBOUNDUN\ANOMALIA-PRIMEVAL-OUTBOUNDUN\unreal\Intermediate',
+            'D:\ANOMALIAZ\01_Projet_Principal\unreal\Intermediate'
+          )){if(Test-Path -LiteralPath $p){$candidates.Add([pscustomobject]@{path=$p;kind='generated-build-cache'})}}
+          foreach($validation in @('D:\ANOMALIAZ\03_Validation','C:\ANOMALIA-Validation')){
+            if(Test-Path -LiteralPath $validation){
+              foreach($project in @(Get-ChildItem -LiteralPath $validation -Directory -ErrorAction SilentlyContinue|Select-Object -First 80)){
+                foreach($relative in @('unreal\Intermediate','unreal\Saved\Cooked')){
+                  $p=Join-Path $project.FullName $relative
+                  if(Test-Path -LiteralPath $p){$candidates.Add([pscustomobject]@{path=$p;kind='historical-validation-generated-cache'})}
+                }
+              }
+            }
+          }
+          foreach($versions in @('D:\ANOMALIAZ\Jeu\Versions','C:\Users\utilisateur\AppData\Local\CMD\ANOMALIA-UE5\versions')){
+            if(Test-Path -LiteralPath $versions){foreach($v in @(Get-ChildItem -LiteralPath $versions -Directory|Select-Object -First 40)){$candidates.Add([pscustomobject]@{path=$v.FullName;kind='packaged-version-readonly'})}}
+          }
+          $seen=New-Object 'System.Collections.Generic.HashSet[string]'
+          $rows=New-Object 'System.Collections.Generic.List[object]'
+          $started=Get-Date
+          foreach($candidate in $candidates){
+            if(((Get-Date)-$started).TotalSeconds -gt 180){break}
+            try{
+              $final=[NativeBuildPath]::Final($candidate.path)
+              if(-not $seen.Add($final.ToLowerInvariant())){continue}
+              $bytes=0L;$files=0;$largest=New-Object 'System.Collections.Generic.List[object]'
+              $queue=New-Object 'System.Collections.Generic.Queue[string]';$queue.Enqueue($candidate.path)
+              while($queue.Count -gt 0 -and ((Get-Date)-$started).TotalSeconds -lt 180){
+                $dir=$queue.Dequeue()
+                foreach($entry in @(Get-ChildItem -LiteralPath $dir -Force -ErrorAction SilentlyContinue)){
+                  if($entry.PSIsContainer){if(-not($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)){$queue.Enqueue($entry.FullName)}}
+                  else{$bytes+=$entry.Length;$files++;if($entry.Length -gt 100MB){$largest.Add([pscustomobject]@{path=$entry.FullName;bytes=$entry.Length})}}
+                }
+              }
+              $row=[ordered]@{path=$candidate.path;resolvedPath=$final;kind=$candidate.kind;bytes=$bytes;files=$files;complete=($queue.Count -eq 0);principalProtected=$final.StartsWith($principal,[StringComparison]::OrdinalIgnoreCase);largest=@($largest|Sort-Object bytes -Descending|Select-Object -First 8)}
+              $rows.Add($row)
+              $rows.ToArray()|ConvertTo-Json -Depth 9|Set-Content (Join-Path $out 'generated-storage.json') -Encoding UTF8
+              Write-Host ('MEASURED='+$final+';BYTES='+$bytes+';PRINCIPAL='+$row.principalProtected+';COMPLETE='+$row.complete)
+            }catch{$rows.Add([ordered]@{path=$candidate.path;error=$_.Exception.Message})}
+          }
+          $rows.ToArray()|ConvertTo-Json -Depth 9|Set-Content (Join-Path $out 'generated-storage.json') -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: NATIVE-BUILD-DISK-MEMORY-DIAGNOSIS
+          path: ${{ env.DIAG_OUT }}/*.json
