@@ -2,7 +2,7 @@ name: Compile genuine E39 cameras engine bay and original city batching
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: [.github/workflows/anomalia-scene-native-compile.yml, scripts/ue5/scene-repair/prepare_car_art.py]
+    paths: [.github/workflows/anomalia-scene-native-compile.yml, scripts/ue5/scene-repair/prepare_car_art.py, scripts/ue5/scene-repair/prepare_native.py]
 permissions: {contents: read}
 concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
 jobs:
