@@ -1,0 +1,102 @@
+name: Reclaim verified obsolete build caches and resume M5 standalone locally
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-reclaim-and-resume-m5.yml]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  resume:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Delete only the two measured obsolete Intermediate trees after canonical-path validation
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path 'C:\ANOMALIA-Repair\Runs' ('m5-resume-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $active=@(Get-CimInstance Win32_Process|Where-Object{
+            $_.Name -match '^(UnrealEditor.*|UnrealBuildTool|Uba.*|cl|link)\.exe$' -or
+            ($_.Name -eq 'dotnet.exe' -and $_.CommandLine -match 'UnrealBuildTool')
+          })
+          if($active.Count){throw 'Compiler/editor process active; preserve all caches'}
+          Add-Type @'
+          using System; using System.Text; using System.Runtime.InteropServices;
+          public static class VerifiedCachePath {
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern IntPtr CreateFile(string p,uint a,uint s,IntPtr sec,uint c,uint flags,IntPtr template);
+            [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] static extern uint GetFinalPathNameByHandle(IntPtr h,StringBuilder b,uint n,uint flags);
+            [DllImport("kernel32.dll")] static extern bool CloseHandle(IntPtr h);
+            public static string Final(string p) {
+              var h=CreateFile(p,0,7,IntPtr.Zero,3,0x02000000,IntPtr.Zero);
+              if(h==new IntPtr(-1))throw new Exception("Cannot resolve "+p);
+              try {var b=new StringBuilder(32768);if(GetFinalPathNameByHandle(h,b,32768,0)==0)throw new Exception("Cannot resolve final path");var r=b.ToString();return r.StartsWith(@"\\?\")?r.Substring(4):r;}finally{CloseHandle(h);}
+            }
+          }
+          '@
+          $principal=[VerifiedCachePath]::Final($root).TrimEnd('\')
+          $installation=Get-Content -LiteralPath 'D:\ANOMALIAZ\Jeu\installation.json' -Raw|ConvertFrom-Json
+          $protected=@((Join-Path $root 'AnomaliaPrimeval.uproject'),(Join-Path $root 'Content\Map\Big_City_LVL.umap'),(Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'),[string]$installation.exe)
+          $before=@{}
+          foreach($file in $protected){$before[$file]=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash}
+          $freeBefore=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          $targets=@('C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate','C:\Users\utilisateur\actions-runner\_work\ANOMALIA-PRIMEVAL-OUTBOUNDUN\ANOMALIA-PRIMEVAL-OUTBOUNDUN\unreal\Intermediate')
+          $plans=@()
+          foreach($path in $targets){
+            if(-not(Test-Path -LiteralPath $path)){continue}
+            $final=[VerifiedCachePath]::Final($path).TrimEnd('\')
+            if($final -ne $path.TrimEnd('\') -or $final.StartsWith($principal,[StringComparison]::OrdinalIgnoreCase)){throw 'Cache alias or principal project detected; preserve it'}
+            $queue=New-Object 'System.Collections.Generic.Queue[string]'
+            $queue.Enqueue($path);$files=New-Object 'System.Collections.Generic.List[string]';$dirs=New-Object 'System.Collections.Generic.List[string]';$bytes=0L
+            while($queue.Count -gt 0){
+              $dir=$queue.Dequeue();$dirs.Add($dir)
+              foreach($entry in @(Get-ChildItem -LiteralPath $dir -Force)){
+                if($entry.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Nested link in obsolete cache; preserve tree'}
+                if($entry.PSIsContainer){$queue.Enqueue($entry.FullName)}else{$files.Add($entry.FullName);$bytes+=$entry.Length}
+              }
+            }
+            $plans+=@{path=$path;resolvedPath=$final;files=$files.ToArray();dirs=$dirs.ToArray();bytes=$bytes}
+          }
+          $plans|ForEach-Object{[pscustomobject]@{path=$_.path;resolvedPath=$_.resolvedPath;bytes=$_.bytes;files=$_.files.Count}}|ConvertTo-Json|Set-Content (Join-Path $out 'verified-cache-deletion-plan.json') -Encoding UTF8
+          $deleted=0L
+          foreach($plan in $plans){
+            foreach($file in $plan.files){Remove-Item -LiteralPath $file -Force}
+            foreach($dir in @($plan.dirs|Sort-Object Length -Descending)){[IO.Directory]::Delete($dir,$false)}
+            $deleted+=$plan.bytes
+          }
+          foreach($file in $protected){if((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash -ne $before[$file]){throw 'Protected game or source identity changed'}}
+          $freeAfter=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          $result=[ordered]@{state='VERIFIED_OLD_BUILD_CACHES_REMOVED';deletedGeneratedBytes=$deleted;freeCBefore=$freeBefore;freeCAfter=$freeAfter;freeD=([IO.DriveInfo]::new('D')).AvailableFreeSpace;principalIntermediatePreserved=$true;protectedHashes=$before}
+          $result|ConvertTo-Json -Depth 7|Tee-Object -FilePath (Join-Path $out 'cache-recovery-result.json')
+          if($freeAfter -lt 6GB){throw 'Disk reserve still insufficient after verified cache cleanup'}
+      - name: Resume only the unfinished standalone target without UBA
+        run: |
+          $ErrorActionPreference='Stop'
+          $os=Get-CimInstance Win32_OperatingSystem
+          $parallel=1
+          if($os.FreePhysicalMemory -gt 9*1024*1024 -and -not(Get-Process -Name DayZ_x64 -ErrorAction SilentlyContinue)){$parallel=2}
+          Write-Host ('NATIVE_LOCAL_PARALLEL_ACTIONS='+$parallel)
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          & $build AnomaliaPrimeval Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -NoUBA ('-MaxParallelActions='+$parallel) 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT 'standalone-resume.log')
+          if($LASTEXITCODE -ne 0){throw 'Standalone M5 native compilation failed'}
+      - name: Import the compiled V8 model and genuine M5 recordings
+        run: |
+          $ErrorActionPreference='Stop'
+          & (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\city-recovery\run_principal_editor.ps1') -Script (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\m5-integration\import_m5.py') -LogName 'm5-import-resumed' -Seconds 1200
+          $report=Get-Content (Join-Path $env:SCENE_REPAIR_OUT 'm5-import.json') -Raw|ConvertFrom-Json
+          $report|ConvertTo-Json -Depth 8
+          if($report.state -ne 'M5_V8_AND_RECORDED_AUDIO_IMPORTED_NOT_YET_PACKAGED'){throw ('M5 import failed '+$report.error)}
+          $receipt=Join-Path 'C:\ANOMALIA-Repair' 'm5-native-ready.json'
+          [pscustomobject]@{state='M5_NATIVE_TARGETS_BUILT_AND_ASSETS_IMPORTED';sourceRun=$env:GITHUB_RUN_ID;editorBuildRun=43412001671;installed=$false}|ConvertTo-Json|Set-Content -LiteralPath $receipt -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: VERIFIED-CACHE-RECOVERY-AND-M5-RESUME
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
