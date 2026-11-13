@@ -2,7 +2,7 @@ name: Restore original car and City Sample streets, package and test actual SKAR
 on:
   push:
     branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
-    paths: [.github/workflows/anomalia-recover-real-car-city.yml]
+    paths: [.github/workflows/anomalia-recover-real-car-city.yml, scripts/ue5/city-recovery/**]
 permissions: {contents: read}
 concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
 jobs:

@@ -32,6 +32,25 @@ try:
  all_descriptors=wp.get_actor_descs() or []
  settlement=[{'label':str(d.label),'guid':key(d.guid),'class':str(d.native_class)} for d in all_descriptors if any(s in str(d.label).lower() for s in ['city','village','town','settlement','house','building','skarvik_final'])]
  write_json(out/'actual-skarvik-architecture-before.json',{'map':'/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1','descriptors':len(all_descriptors),'architecturalDescriptors':settlement,'note':'Read-only inventory; source map not saved or changed.'})
+ # Inspect actual village meshes rather than equating a layout entry with a built town.
+ try:
+  prefixes=('SKARVIK_FINAL_NATIVE_GRADED_ORIGINAL_MESH_','SKARVIK_FINAL_NATIVE_ISLAND_ORIGINAL_MESH_')
+  houses=[d for d in all_descriptors if str(d.label).startswith(prefixes)]
+  sampled=houses[::max(1,len(houses)//40)][:48];models={};sample_rows=[]
+  for offset in range(0,len(sampled),4):
+   group=sampled[offset:offset+4];wp.load_actors([d.guid for d in group]);wanted={key(d.guid) for d in group}
+   for actor in actors.get_all_level_actors():
+    if key(actor.get_editor_property('actor_guid')) not in wanted:continue
+    for component in actor.get_components_by_class(unreal.StaticMeshComponent):
+     mesh=component.get_editor_property('static_mesh')
+     if not mesh:continue
+     package=mesh.get_path_name()
+     if package not in models:
+      bounds=mesh.get_bounds();models[package]={'path':package,'trianglesLOD0':mesh.get_num_triangles(0),'dimensionsCm':[2*bounds.box_extent.x,2*bounds.box_extent.y,2*bounds.box_extent.z],'materials':[component.get_material(i).get_path_name() if component.get_material(i) else None for i in range(component.get_num_materials())],'engineBasicShape':package.startswith('/Engine/BasicShapes/')}
+     sample_rows.append({'actor':actor.get_actor_label(),'mesh':package,'positionCm':vec(actor.get_actor_location())})
+   actor=None;component=None;mesh=None;wp.unload_actors([d.guid for d in group]);gc.collect();unreal.SystemLibrary.collect_garbage()
+  write_json(out/'actual-village-mesh-samples.json',{'nativeHouseDescriptors':len(houses),'sampledDescriptors':len(sampled),'models':list(models.values()),'actors':sample_rows,'fullVillageQualityVerified':False,'note':'Actual saved actors and meshes only. Triangle counts and asset names do not establish visual quality, interiors, collisions or complete villages.'})
+ except Exception:write_json(out/'actual-village-mesh-samples.json',{'state':'SAMPLE_INCOMPLETE','error':traceback.format_exc(),'fullVillageQualityVerified':False})
  progress('opening_original_city',resumedActors=len(actors_saved))
  if not editor.load_level('/Game/Map/Big_City_LVL'):raise RuntimeError('Original City Sample world cannot open')
  box=unreal.Box(min=unreal.Vector(-4000,-14000,-50000),max=unreal.Vector(18000,6000,100000))
