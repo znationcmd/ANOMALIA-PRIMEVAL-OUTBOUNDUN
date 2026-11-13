@@ -1,4 +1,5 @@
 #include "AnomaliaChaosRoadVehicle.h"
+#include "AnomaliaM5PresentationComponent.h"
 #include "AnomaliaVehicleSurvival.h"
 #include "../AnomaliaInventoryComponent.h"
 #include "../AnomaliaSurvivor.h"
@@ -52,6 +53,7 @@ UAnomaliaRoadRearWheel::UAnomaliaRoadRearWheel()
 
 AAnomaliaChaosRoadVehicle::AAnomaliaChaosRoadVehicle()
 {
+    CreateDefaultSubobject<UAnomaliaM5PresentationComponent>(TEXT("M5Presentation"));
     SurvivalSystems=CreateDefaultSubobject<UAnomaliaVehicleSurvivalComponent>(TEXT("VehicleSurvival"));
     CargoInventory=CreateDefaultSubobject<UAnomaliaInventoryComponent>(TEXT("VehicleCargo"));
     CargoInventory->Compartments.Reset();FAnomaliaInventoryCompartment CargoBox;
@@ -569,3 +571,4 @@ void AAnomaliaChaosRoadVehicle::UpdateCargoPhysicalMass()
     Chassis->SetMassOverrideInKg(RootBone,TotalMass,true);
     LastCargoMassKg=CargoMass;
 }
+

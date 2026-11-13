@@ -1,0 +1,78 @@
+name: Build M5 S62 presentation with genuine recorded exhaust audio
+on:
+  push:
+    branches: [feature/real-skarvik-bmw-dog-gameplay-capture-20261111]
+    paths: [.github/workflows/anomalia-m5-v8-recorded-audio.yml, scripts/ue5/m5-integration/**]
+permissions: {contents: read}
+concurrency: {group: anomalia-ue5-native-host, cancel-in-progress: false}
+jobs:
+  m5:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    defaults:
+      run:
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+    steps:
+      - uses: actions/checkout@v4
+        with: {clean: false, persist-credentials: false}
+      - name: Verify source identity and prepare V8 and licensed recordings
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $out=Join-Path $env:RUNNER_TEMP ('m5-audio-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:SCENE_REPAIR_OUT=$out
+          ('SCENE_REPAIR_OUT='+$out)|Out-File $env:GITHUB_ENV -Append -Encoding utf8
+          if(-not(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Principal project unavailable'}
+          $active=@(Get-CimInstance Win32_Process|Where-Object{$_.Name -in @('UnrealEditor.exe','UnrealEditor-Cmd.exe','UnrealBuildTool.exe') -and $_.CommandLine -like '*D:\ANOMALIAZ\01_Projet_Principal\unreal*'})
+          if($active.Count){throw 'Principal project busy; existing processes preserved'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 2GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 4GB){throw 'Insufficient native build reserve'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python (Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\m5-integration\prepare_m5.py')
+          if($LASTEXITCODE -ne 0){throw 'M5 source verification failed'}
+      - name: Compile principal Editor and standalone Windows game
+        run: |
+          $ErrorActionPreference='Stop'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          foreach($target in @('AnomaliaPrimevalEditor','AnomaliaPrimeval')){
+            & $build $target Win64 Development '-Project=D:\ANOMALIAZ\01_Projet_Principal\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=1 2>&1|Tee-Object -FilePath (Join-Path $env:SCENE_REPAIR_OUT ($target+'.log'))
+            if($LASTEXITCODE -ne 0){throw ('M5 native build failed '+$target)}
+          }
+      - name: Import V8 and recorded idle and load loops
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $effect=Join-Path $root 'Content\Effect\Vehicle\Niagara\VehicleDamageSystem_Runtime.uasset'
+          $held=Join-Path $env:SCENE_REPAIR_OUT 'VehicleDamageSystem_Runtime.uasset'
+          $expected='6958C967A29C644C51B8C30D76308AB9A80C87FA716BEC7ED7ABB1766E96D6BF'
+          $moved=$false
+          $process=$null
+          try{
+            if(Test-Path -LiteralPath $effect){
+              if((Get-FileHash -LiteralPath $effect).Hash -ne $expected){throw 'Traffic effect changed; preserve source'}
+              Move-Item -LiteralPath $effect -Destination $held
+              $moved=$true
+            }
+            $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+            $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\ue5\m5-integration\import_m5.py'
+            $process=Start-Process -FilePath $editor -ArgumentList @((Join-Path $root 'AnomaliaPrimeval.uproject'),'/Engine/Maps/Entry',('-ExecutePythonScript="'+$script+'"'),'-NullRHI','-unattended','-nopause','-nosound',('-abslog="'+(Join-Path $env:SCENE_REPAIR_OUT 'm5-import.log')+'"')) -PassThru
+            $handle=$process.Handle
+            if(-not $process.WaitForExit(600000)){$process.Kill();$process.WaitForExit(15000)|Out-Null;throw 'M5 import timed out'}
+            if($process.ExitCode -ne 0){throw ('M5 import exited '+$process.ExitCode)}
+          }finally{
+            if($process -and -not $process.HasExited){$process.Kill();$process.WaitForExit(15000)|Out-Null}
+            if($moved){
+              if(Test-Path -LiteralPath $effect){throw 'Unexpected effect replacement'}
+              Move-Item -LiteralPath $held -Destination $effect
+              if((Get-FileHash -LiteralPath $effect).Hash -ne $expected){throw 'Effect restoration mismatch'}
+            }
+          }
+          $report=Get-Content -LiteralPath (Join-Path $env:SCENE_REPAIR_OUT 'm5-import.json') -Raw|ConvertFrom-Json
+          $report|ConvertTo-Json -Depth 8
+          if($report.state -ne 'M5_V8_AND_RECORDED_AUDIO_IMPORTED_NOT_YET_PACKAGED'){throw ('M5 import failed '+$report.error)}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: M5-V8-RECORDED-AUDIO-BUILD
+          path: ${{ env.SCENE_REPAIR_OUT }}/*
+

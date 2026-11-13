@@ -1,0 +1,37 @@
+{
+  "source": "https://commons.wikimedia.org/wiki/File:BMW_M5_E39_-_engine_and_exhaust_sound_(YouTube_Qc3mPzkAnuc).opus",
+  "originalVideo": "https://www.youtube.com/watch?v=Qc3mPzkAnuc",
+  "author": "AfricaAuddyTech",
+  "license": "CC BY 3.0",
+  "licenseURL": "https://creativecommons.org/licenses/by/3.0/",
+  "recording": "Actual BMW E39 M5 engine and exhaust recording, as identified by its publisher",
+  "changes": "Mono conversion, wind high-pass at 35 Hz, excerpts, 120 ms seam overlap and peak normalization. Playback pitch and layer gains follow simulated RPM. Reference RPM values are playback tuning, not measured source engine telemetry. No fabricated high-RPM recording or independently recorded starter sound is claimed.",
+  "sounds": [
+    {
+      "id": "idle",
+      "file": "m5_idle.wav",
+      "sha256": "5461d3a997d9fa36afbc7495cab148aab09078eb0e64c84be481b53b8cbc2c36",
+      "referenceRPM": 800,
+      "sourceSegmentSeconds": [
+        17.2,
+        19.2
+      ],
+      "durationSeconds": 1.88,
+      "sampleRate": 48000,
+      "loop": true
+    },
+    {
+      "id": "load",
+      "file": "m5_load.wav",
+      "sha256": "819ed078ac837f8dc33ed06bfd04e58b7cc815f151d3f562b9f06bbc358c1960",
+      "referenceRPM": 2100,
+      "sourceSegmentSeconds": [
+        34.3,
+        35.3
+      ],
+      "durationSeconds": 0.88,
+      "sampleRate": 48000,
+      "loop": true
+    }
+  ]
+}

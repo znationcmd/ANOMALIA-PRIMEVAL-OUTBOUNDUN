@@ -1,0 +1,8 @@
+{
+  "asset": "ANOMALIA E39 M5 original S62-inspired V8 engine bay",
+  "geometry": "Original project modelling, not OEM CAD",
+  "sha256": "61046473b9e80b772ebf03b99998b0387856d8ab910cabaae385980aa6a47039",
+  "bytes": 1299076,
+  "sourceCoordinateSystem": "car chassis centimetres after glTF import",
+  "parts": 166
+}
