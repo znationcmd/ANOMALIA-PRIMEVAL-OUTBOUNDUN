@@ -1,5 +1,5 @@
 /** The ANOMALIA Editor project/world catalogue, NOT a UE5 .umap loader.
- * Source of truth: the two approved WorldGen registries (20 + 3 entries).
+ * Source of truth: the two approved WorldGen registries (20 + 4 entries).
  * Existing local Three.js editorObjects remain associated with the loaded demo
  * scene; selecting a catalogue world NEVER silently edits or switches it.
  */
@@ -11,6 +11,7 @@ export const EDITOR_WORLD_CATALOG=Object.freeze(rows.map(w=>Object.freeze({
   id:w.id, name:w.name, widthKm:w.widthKm??null, heightKm:w.heightKm??null,
   areaKm2:w.areaKm2, registryPhase:w.phase||w.status||'planned',
   sourceAvailable:w.id==='skjaeroyaas' ? 'RAW16 staging + UE5 script' :
+    w.id==='valhalla-extinction' ? '4033x4033 RAW16 source + UE5 World Partition staging script (non jouable)' :
     w.id==='racconia-varkovia'||w.id==='unknown-horror-x'?'Source kit' : null,
   playableLevelVerified:false
 })));
