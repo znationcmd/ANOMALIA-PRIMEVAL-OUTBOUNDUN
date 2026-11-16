@@ -42,9 +42,11 @@
       "widthKm": 24,
       "heightKm": 24,
       "areaKm2": 576,
-      "seed": "ANOMALIA-VALHALLA-EXTINCTION-2026",
+      "seed": 24682424,
       "biomeTheme": "pure Viking Norse / undead Draugr dressed in Viking-era clothing",
-      "status": "2017x2017-R16-source-generated; no native .umap or playable UE5 map"
+      "status": "Verified 4033x4033 PNG16/R16 source archive, 28 settlements, 555 architecture placements, 374 Draugr anchors; no .umap",
+      "sourcePackage": "ANOMALIAZ_VALHALLA_EXTINCTION_24x24_UE58_SOURCE.zip",
+      "sourceManifest": "config/worldgen/valhalla-extinction-source-manifest.json"
     }
   ],
   "combinedAreaKm2": 26441.18
