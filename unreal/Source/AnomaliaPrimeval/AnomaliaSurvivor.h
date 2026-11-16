@@ -9,6 +9,7 @@ class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
 class AAnomaliaRefrigerator;
+class AAnomaliaPowerGenerator;
 class UAnomaliaRefrigeratorWidget;
 
 UCLASS()
@@ -42,6 +43,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
     void CloseFridgeInterface();
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestSetFridgeOn(AAnomaliaRefrigerator* Fridge, bool bOn);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Power")
+    void RequestSetGeneratorRunning(AAnomaliaPowerGenerator* Generator, bool bOn);
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -80,6 +87,12 @@ private:
 
     UFUNCTION(Server, Reliable)
     void ServerWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetFridgeOn(AAnomaliaRefrigerator* Fridge, bool bOn);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetGeneratorRunning(AAnomaliaPowerGenerator* Generator, bool bOn);
 
     /** Server checks the closest available vehicle; clients cannot choose an arbitrary target. */
     UFUNCTION(Server, Reliable)
