@@ -1,0 +1,12 @@
+{
+  "notes": "Replace null with TRUE licensed /Game mesh and BP paths from installed ANOMALIA Unreal project; no fake placeholders.",
+  "longhouse": null,
+  "rune_shrine": null,
+  "timber_palisade": null,
+  "drakkar": null,
+  "draugr-thrall": null,
+  "draugr-huskarl": null,
+  "draugr-berserker": null,
+  "draugr-shieldmaiden": null,
+  "draugr-seidr": null
+}
