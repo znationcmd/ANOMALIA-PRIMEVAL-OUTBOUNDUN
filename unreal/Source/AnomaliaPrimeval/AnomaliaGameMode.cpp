@@ -10,6 +10,8 @@
 #include "AnomaliaVehicleCatalog.h"
 #include "AnomaliaPowerGenerator.h"
 #include "AnomaliaRefrigerator.h"
+#include "AnomaliaBatteryCharger.h"
+#include "AnomaliaWorkLight.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Dom/JsonObject.h"
@@ -24,6 +26,8 @@ AAnomaliaGameMode::AAnomaliaGameMode()
     DefaultPawnClass = AAnomaliaSurvivor::StaticClass();
     GeneratorClass = AAnomaliaPowerGenerator::StaticClass();
     RefrigeratorClass = AAnomaliaRefrigerator::StaticClass();
+    BatteryChargerClass = AAnomaliaBatteryCharger::StaticClass();
+    WorkLightClass = AAnomaliaWorkLight::StaticClass();
 }
 
 void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -388,6 +392,67 @@ void AAnomaliaGameMode::SpawnConfiguredAppliances()
             ++SpawnedFridges;
         }
     }
-    UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: spawned %d generators and %d fridges from appliances.json"),
-        *ServerId, Generators.Num(), SpawnedFridges);
+    int32 SpawnedChargers = 0;
+    TSet<FString> UsedChargerIds;
+    const TArray<TSharedPtr<FJsonValue>>* ChargerRows = nullptr;
+    if (Root->TryGetArrayField(TEXT("batteryChargers"), ChargerRows) && ChargerRows)
+    {
+        for (const TSharedPtr<FJsonValue>& Value : *ChargerRows)
+        {
+            if (SpawnedChargers >= 64) break;
+            const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+            FString Id, GeneratorId;
+            FTransform Placement;
+            double Rate = 25.f;
+            bool bOn = true;
+            if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) ||
+                !ValidId(Id) || UsedChargerIds.Contains(Id) || !TransformFromRow(Row, Placement)) continue;
+            Row->TryGetStringField(TEXT("generatorId"), GeneratorId);
+            Row->TryGetNumberField(TEXT("chargePercentPerHour"), Rate);
+            Row->TryGetBoolField(TEXT("switchedOn"), bOn);
+            if (!FMath::IsFinite(Rate) || Rate < 1 || Rate > 100) continue;
+            UsedChargerIds.Add(Id);
+            UClass* Class = BatteryChargerClass ? BatteryChargerClass.Get() : AAnomaliaBatteryCharger::StaticClass();
+            AAnomaliaBatteryCharger* Charger = GetWorld()->SpawnActorDeferred<AAnomaliaBatteryCharger>(
+                Class, Placement, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
+            if (!Charger) continue;
+            Charger->PersistentId = Id;
+            Charger->PowerGenerator = Generators.FindRef(GeneratorId);
+            Charger->ChargePercentPerHour = static_cast<float>(Rate);
+            Charger->bSwitchedOn = bOn;
+            UGameplayStatics::FinishSpawningActor(Charger, Placement);
+            ++SpawnedChargers;
+        }
+    }
+
+    int32 SpawnedLights = 0;
+    TSet<FString> UsedLightIds;
+    const TArray<TSharedPtr<FJsonValue>>* LightRows = nullptr;
+    if (Root->TryGetArrayField(TEXT("workLights"), LightRows) && LightRows)
+    {
+        for (const TSharedPtr<FJsonValue>& Value : *LightRows)
+        {
+            if (SpawnedLights >= 128) break;
+            const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+            FString Id, GeneratorId;
+            FTransform Placement;
+            bool bOn = true;
+            if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) ||
+                !ValidId(Id) || UsedLightIds.Contains(Id) || !TransformFromRow(Row, Placement)) continue;
+            Row->TryGetStringField(TEXT("generatorId"), GeneratorId);
+            Row->TryGetBoolField(TEXT("switchedOn"), bOn);
+            UsedLightIds.Add(Id);
+            UClass* Class = WorkLightClass ? WorkLightClass.Get() : AAnomaliaWorkLight::StaticClass();
+            AAnomaliaWorkLight* Light = GetWorld()->SpawnActorDeferred<AAnomaliaWorkLight>(
+                Class, Placement, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
+            if (!Light) continue;
+            Light->PersistentId = Id;
+            Light->PowerGenerator = Generators.FindRef(GeneratorId);
+            Light->bSwitchedOn = bOn;
+            UGameplayStatics::FinishSpawningActor(Light, Placement);
+            ++SpawnedLights;
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: appliances spawned: generators %d, fridges %d, chargers %d, work lights %d"),
+        *ServerId, Generators.Num(), SpawnedFridges, SpawnedChargers, SpawnedLights);
 }
