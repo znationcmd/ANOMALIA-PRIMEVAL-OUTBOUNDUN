@@ -88,7 +88,7 @@
       "heightKm": 24,
       "landFraction": 0.735897664,
       "seed": "24682424",
-      "density": null,
+      "density": 0.55,
       "sourcePackage": "ANOMALIAZ_VALHALLA_EXTINCTION_24x24_UE58_SOURCE.zip",
       "sourceStatus": "4033x4033-R16-source-verified-in-user-Google-Drive-no-native-level",
       "protectedSites": 0,
