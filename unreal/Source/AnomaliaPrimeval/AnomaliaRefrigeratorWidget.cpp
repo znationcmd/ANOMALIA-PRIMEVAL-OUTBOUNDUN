@@ -1,5 +1,6 @@
 #include "AnomaliaRefrigeratorWidget.h"
 #include "AnomaliaRefrigerator.h"
+#include "AnomaliaPowerGenerator.h"
 #include "AnomaliaSurvivor.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaFoodPreservation.h"
@@ -48,6 +49,20 @@ void UAnomaliaRefrigeratorWidget::NativeConstruct()
 
     PowerStatus = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
     Container->AddChildToVerticalBox(PowerStatus)->SetPadding(FMargin(14.f, 4.f));
+
+    UButton* FridgeSwitch = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+    FridgeSwitchLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+    FridgeSwitch->SetContent(FridgeSwitchLabel);
+    FridgeSwitch->OnClicked.AddDynamic(this, &UAnomaliaRefrigeratorWidget::ToggleFridgeRequested);
+    Container->AddChildToVerticalBox(FridgeSwitch)->SetPadding(FMargin(14.f, 4.f));
+    if (IsValid(Fridge) && IsValid(Fridge->PowerGenerator))
+    {
+        UButton* GeneratorSwitch = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+        GeneratorSwitchLabel = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+        GeneratorSwitch->SetContent(GeneratorSwitchLabel);
+        GeneratorSwitch->OnClicked.AddDynamic(this, &UAnomaliaRefrigeratorWidget::ToggleGeneratorRequested);
+        Container->AddChildToVerticalBox(GeneratorSwitch)->SetPadding(FMargin(14.f, 4.f));
+    }
 
     UButton* Close = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
     UTextBlock* CloseText = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
@@ -98,6 +113,9 @@ void UAnomaliaRefrigeratorWidget::NativeTick(const FGeometry& MyGeometry, float 
 void UAnomaliaRefrigeratorWidget::UpdateStatus()
 {
     if (!PowerStatus || !IsValid(Fridge)) return;
+    if (FridgeSwitchLabel) FridgeSwitchLabel->SetText(FText::FromString(Fridge->bSwitchedOn ? TEXT("ETEINDRE LE FRIGO") : TEXT("ALLUMER LE FRIGO")));
+    if (GeneratorSwitchLabel && IsValid(Fridge->PowerGenerator))
+        GeneratorSwitchLabel->SetText(FText::FromString(Fridge->PowerGenerator->bRunning ? TEXT("ARRETER LE GENERATEUR (a moins de 3 m)") : TEXT("DEMARRER LE GENERATEUR (a moins de 3 m)")));
     const FString Status = Fridge->bCoolingActive ? TEXT("REFROIDISSEMENT ACTIF") :
         Fridge->bSwitchedOn ? TEXT("AUCUNE ALIMENTATION ELECTRIQUE") : TEXT("APPAREIL ETEINT");
     PowerStatus->SetText(FText::FromString(FString::Printf(
@@ -172,6 +190,17 @@ void UAnomaliaRefrigeratorWidget::PerformTransfer(FName ItemId, bool bDeposit)
     if (!IsValid(Player) || !IsValid(Fridge)) return;
     if (bDeposit) Player->RequestDepositToFridge(Fridge, ItemId, 1);
     else Player->RequestWithdrawFromFridge(Fridge, ItemId, 1);
+}
+
+void UAnomaliaRefrigeratorWidget::ToggleFridgeRequested()
+{
+    if (IsValid(Player) && IsValid(Fridge)) Player->RequestSetFridgeOn(Fridge, !Fridge->bSwitchedOn);
+}
+
+void UAnomaliaRefrigeratorWidget::ToggleGeneratorRequested()
+{
+    if (IsValid(Player) && IsValid(Fridge) && IsValid(Fridge->PowerGenerator))
+        Player->RequestSetGeneratorRunning(Fridge->PowerGenerator, !Fridge->PowerGenerator->bRunning);
 }
 
 void UAnomaliaRefrigeratorWidget::CloseRequested()
