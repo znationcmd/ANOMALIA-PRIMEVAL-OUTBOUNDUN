@@ -22,5 +22,28 @@
       "ambientC": 22,
       "switchedOn": true
     }
+  ],
+  "batteryChargers": [
+    {
+      "id": "charger_farm_01",
+      "x": 1950,
+      "y": 200,
+      "z": 100,
+      "yaw": 0,
+      "generatorId": "generator_farm_01",
+      "chargePercentPerHour": 25,
+      "switchedOn": true
+    }
+  ],
+  "workLights": [
+    {
+      "id": "worklight_farm_01",
+      "x": 2100,
+      "y": 250,
+      "z": 100,
+      "yaw": 45,
+      "generatorId": "generator_farm_01",
+      "switchedOn": true
+    }
   ]
 }
