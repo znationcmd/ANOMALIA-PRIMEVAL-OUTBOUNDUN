@@ -35,6 +35,10 @@ struct FAnomaliaInventoryStack
     /** 1 = fresh; 0 = spoiled. Survives item movement, splitting and profile saves. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Food")
     float Freshness01 = 1.f;
+
+    /** Charge in a portable battery item (0 = empty, 1 = full). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power")
+    float BatteryCharge01 = 1.f;
 };
 
 USTRUCT(BlueprintType)
@@ -85,12 +89,18 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Food")
     bool TryAddItemWithFreshness(FName ItemId, int32 Count, float Freshness01);
 
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power")
+    bool TryAddItemWithState(FName ItemId, int32 Count, float Freshness01, float BatteryCharge01);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryRemoveItem(FName ItemId, int32 Count);
 
     /** Removes requested units, reporting the actual weighted freshness, without resetting spoilage. */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Food")
     bool TryRemoveItemWithFreshness(FName ItemId, int32 Count, float& OutFreshness01);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power")
+    bool TryRemoveItemWithState(FName ItemId, int32 Count, float& OutFreshness01, float& OutBatteryCharge01);
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
     static bool IsSupportedItem(FName ItemId);
