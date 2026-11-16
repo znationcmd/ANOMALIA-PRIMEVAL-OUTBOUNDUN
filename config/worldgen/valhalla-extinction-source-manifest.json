@@ -1,0 +1,35 @@
+{
+  "project": "ANOMALIAZ PRIGIMALIA",
+  "map": "VALHALLA EXTINCTION",
+  "size_km": [
+    24,
+    24
+  ],
+  "landscape_resolution": [
+    4033,
+    4033
+  ],
+  "xy_scale_cm": 595.2380952,
+  "z_scale_cm": 500,
+  "seed": 24682424,
+  "sea_level_m": 0,
+  "terrain_height_min_m": -230.0,
+  "terrain_height_max_m": 1022.39,
+  "settlements": 28,
+  "architecture_placements": 555,
+  "draugr_spawns": 374,
+  "road_links": 67,
+  "mesh_tiles": 36,
+  "world_partition_level": "not_generated",
+  "gameplay_installed": false,
+  "assets_final_viking": false,
+  "archiveFileName": "ANOMALIAZ_VALHALLA_EXTINCTION_24x24_UE58_SOURCE.zip",
+  "archiveSha256": "5525a74c6b1174f47db9e205bea25dd2666604a04d7430e616f0cce57a09acea",
+  "cloudFolder": "ANOMALIAZ_PRIGIMALIA/VALHALLA_EXTINCTION",
+  "verifiedZipCRC": true,
+  "png16MatchesR16Bytes": true,
+  "landFractionFromR16": 0.735897664,
+  "worldPartitionLevel": "not_generated",
+  "nativeUEMapCompiled": false,
+  "playableBuildTested": false
+}

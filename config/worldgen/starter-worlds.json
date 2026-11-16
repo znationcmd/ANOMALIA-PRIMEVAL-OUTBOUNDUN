@@ -80,6 +80,19 @@
       "sourceStatus": "original-R16-generator",
       "protectedSites": null,
       "terrainPolicy": "original fictional Norway inspired terrain; never replace another map"
+    },
+    {
+      "worldId": "valhalla-extinction",
+      "name": "VALHALLA EXTINCTION",
+      "widthKm": 24,
+      "heightKm": 24,
+      "landFraction": 0.735897664,
+      "seed": "24682424",
+      "density": 0.55,
+      "sourcePackage": "ANOMALIAZ_VALHALLA_EXTINCTION_24x24_UE58_SOURCE.zip",
+      "sourceStatus": "4033x4033-R16-source-verified-in-user-Google-Drive-no-native-level",
+      "protectedSites": 0,
+      "terrainPolicy": "Original 24x24km Viking high-resolution source; preserve all other worlds; no modern assets; no mixing with separate 2017 draft"
     }
   ]
 }

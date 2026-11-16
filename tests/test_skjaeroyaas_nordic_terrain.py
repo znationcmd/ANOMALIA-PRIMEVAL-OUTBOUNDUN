@@ -22,15 +22,16 @@ def tile_data(base: Path, x: int, y: int, n: int) -> bytes:
 
 
 class NorwegianWorldTests(unittest.TestCase):
-    def test_registry_preserves_20_plus_three(self):
+    def test_registry_preserves_20_plus_four(self):
         core = json.loads((ROOT / "config/worldgen/worlds.json").read_text(encoding="utf-8"))
         more = json.loads((ROOT / "config/worldgen/expansion-worlds.json").read_text(encoding="utf-8"))
         self.assertEqual(len(core["worlds"]), 20)
-        self.assertEqual(len(more["worlds"]), 3)
+        self.assertEqual(len(more["worlds"]), 4)
         self.assertEqual({m["name"] for m in more["worlds"]},
-                         {"UNKNOWN HORROR X", "KÖNIGSBRÜCK", "SKJÆRØYÅS"})
-        self.assertAlmostEqual(sum(m["areaKm2"] for m in core["worlds"] + more["worlds"]), 25865.18)
-        self.assertEqual(more["worlds"][-1]["areaKm2"], 225)
+                         {"UNKNOWN HORROR X", "KÖNIGSBRÜCK", "SKJÆRØYÅS", "VALHALLA EXTINCTION"})
+        self.assertAlmostEqual(sum(m["areaKm2"] for m in core["worlds"] + more["worlds"]), 26441.18)
+        self.assertEqual(next(m for m in more["worlds"] if m["id"] == "skjaeroyaas")["areaKm2"], 225)
+        self.assertEqual(next(m for m in more["worlds"] if m["id"] == "valhalla-extinction")["areaKm2"], 576)
         profiles = json.loads((ROOT / "config/worldgen/starter-worlds.json").read_text(encoding="utf-8"))
         self.assertIn("skjaeroyaas", [p["worldId"] for p in profiles["profiles"]])
 

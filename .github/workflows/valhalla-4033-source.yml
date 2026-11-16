@@ -1,0 +1,26 @@
+name: VALHALLA EXTINCTION 4033 source and safe stage checks
+on:
+  push:
+    paths:
+      - 'config/worldgen/valhalla-*'
+      - 'config/worldgen/expansion-worlds.json'
+      - 'unreal/EditorPython/stage_valhalla_extinction_4033.py'
+      - 'tests/test_valhalla_4033_source_manifest.py'
+      - '.github/workflows/valhalla-4033-source.yml'
+  pull_request:
+    paths:
+      - 'config/worldgen/valhalla-*'
+      - 'config/worldgen/expansion-worlds.json'
+      - 'unreal/EditorPython/stage_valhalla_extinction_4033.py'
+      - 'tests/test_valhalla_4033_source_manifest.py'
+      - '.github/workflows/valhalla-4033-source.yml'
+jobs:
+  validate-source-metadata:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m py_compile unreal/EditorPython/stage_valhalla_extinction_4033.py
+      - run: python -m unittest discover -s tests -p 'test_valhalla_4033_source_manifest.py' -v
