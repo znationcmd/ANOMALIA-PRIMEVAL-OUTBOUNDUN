@@ -6,6 +6,7 @@
 #include "AnomaliaSurvivor.h"
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
+#include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Misc/DateTime.h"
