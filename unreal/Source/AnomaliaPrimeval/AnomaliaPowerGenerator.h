@@ -21,6 +21,9 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power")
     TObjectPtr<UStaticMeshComponent> VisualMesh;
 
+    UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category="ANOMALIA|Power|Persistence")
+    FString PersistentId;
+
     UPROPERTY(Replicated, BlueprintReadOnly, Category="ANOMALIA|Power")
     bool bRunning = false;
 
@@ -44,5 +47,16 @@ public:
     bool IsSupplyingActor(const AActor* Target) const;
 
     virtual void Tick(float DeltaSeconds) override;
+
+protected:
+    virtual void BeginPlay() override;
+    virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+private:
+    bool bPersistenceEnabled = false;
+    float SaveElapsedSeconds = 0.f;
+    bool GetSavePath(FString& OutFile) const;
+    bool LoadServerState();
+    bool SaveServerState() const;
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
 };
