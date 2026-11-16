@@ -40,6 +40,12 @@ public:
     UFUNCTION()
     void CloseRequested();
 
+    UFUNCTION()
+    void ToggleFridgeRequested();
+
+    UFUNCTION()
+    void ToggleGeneratorRequested();
+
 private:
     friend class UAnomaliaFridgeActionRelay;
 
@@ -57,6 +63,12 @@ private:
 
     UPROPERTY()
     TObjectPtr<UTextBlock> PowerStatus;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> FridgeSwitchLabel;
+
+    UPROPERTY()
+    TObjectPtr<UTextBlock> GeneratorSwitchLabel;
 
     UPROPERTY()
     TArray<TObjectPtr<UAnomaliaFridgeActionRelay>> Relays;
