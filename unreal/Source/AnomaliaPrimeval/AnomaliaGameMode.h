@@ -7,6 +7,8 @@
 class AAnomaliaVehiclePawn;
 class AAnomaliaPowerGenerator;
 class AAnomaliaRefrigerator;
+class AAnomaliaBatteryCharger;
+class AAnomaliaWorkLight;
 class AController;
 class APlayerController;
 
@@ -30,6 +32,12 @@ public:
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Appliances")
     TSubclassOf<AAnomaliaRefrigerator> RefrigeratorClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Appliances")
+    TSubclassOf<AAnomaliaBatteryCharger> BatteryChargerClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Appliances")
+    TSubclassOf<AAnomaliaWorkLight> WorkLightClass;
 
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Server")
     FString GetActiveServerMode() const { return ActiveServerSettings.Mode; }
