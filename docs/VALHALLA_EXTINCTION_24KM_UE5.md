@@ -1,57 +1,34 @@
-# ANOMALIA’Z PRIGIMALIA — VALHALLA EXTINCTION
+# VALHALLA EXTINCTION — ANOMALIA’Z PRIGIMALIA, source UE5.8 haute résolution
 
-**Nouvelle carte distincte : 24 × 24 km = 576 km².**
-**Univers : exclusivement viking / horreur nordique.**
-**Statut vérifié : données de relief réelles RAW16 + implantation de 12 lieux + 168 positions de Draugr. Aucune carte .umap native ni zombie jouable n'a été produit ou lancé sur le PC.**
+Carte utilisateur **24 × 24 km = 576 km²**, thème **100 % viking** avec **zombies Draugr vêtus de tenues vikings** (pas de bâtiments, véhicules, armes ni vêtements modernes).
 
-## Ce que contient ce kit
+## Source principale dans Google Drive
 
-- `VALHALLA_EXTINCTION_2017x2017.r16` : vraie heightmap 16 bits, 2017 × 2017, couvrant 24 km de côté.
-- `tiles/height_x*_y*.r16` : 16 tuiles 505 × 505, bords vérifiés et continus.
-- `valhalla-layout.json` : 12 lieux vikings, 8 sanctuaires runiques, 168 candidats d'apparition des morts-vivants.
-- `valhalla-placements.csv` : positions en centimètres pour les futurs acteurs UE5.
-- `terrain-manifest.json` : dimensions, SHA-256, import Landscape, limites connues.
-- `generate_valhalla_extinction.py` : générateur de relief déterministe (Python 3 + numpy).
-- `stage_valhalla_extinction_world.py` : création sécurisée d'un niveau World Partition dans une copie de projet UE5.8, et placement des vrais assets par chemin d'asset **uniquement lorsque ceux-ci existent**.
-- `valhalla-assets.template.json` : chemins à relier aux vrais bâtiments, drakkars et Blueprints de zombies du projet ANOMALIA.
+Dossier : `ANOMALIAZ_PRIGIMALIA/VALHALLA_EXTINCTION`.
+Archive **`ANOMALIAZ_VALHALLA_EXTINCTION_24x24_UE58_SOURCE.zip`** (source existante du projet, vérifiée sans modification) :
+- Relief RAW16 et PNG 16 bits **4033 × 4033** exactement, fichiers terrain bit-à-bit identiques.
+- Masques PNG de six biomes, 36 maillages GLB de terrain proxy ; **ces tuiles proxy ne sont pas le terrain Landscape final**.
+- 28 lieux vikings, 555 placements prévus d'architecture viking, 374 ancres Draugr, 67 routes candidates.
+- Catalogues tenues en laine et fourrure, cottes de mailles, casques sans cornes, haches, épées, boucliers, lances ; zombies en tenue viking uniquement.
+- SHA256 de l'archive : `5525a74c6b1174f47db9e205bea25dd2666604a04d7430e616f0cce57a09acea`.
 
-## Direction artistique et gameplay à construire
+**Aucun vrai bâtiment ou personnage zombie 3D sous licence n'est livré dans l'archive**. Les références `/Game/ValhallaExtinction/...` sont des références attendues, non des fichiers `.uasset` réellement présents.
 
-Viking pur, VIIIe-XIe siècles, dark fantasy : maisons longues, halls du jarl, palissades et fortins en bois, temples (hof) et pierres runiques, tertres funéraires, forges, cabanes de pêche, drakkars et ports ; forêts de conifères et bouleaux, marais, vallées glaciaires, montagnes enneigées, fjords et archipels. Sentiers de terre et chemins de bois seulement. **Aucun bâtiment moderne, aucune route bitumée, voiture, arme à feu, vêtement moderne ou casque à cornes**.
+## Vrai niveau Unreal — étapes
 
-Zombies **uniquement habillés à la viking** : Draugr thrall (tunique en lin et laine), Huskarl (cotte de mailles, casque de fer sans cornes), Berserker (peaux de bête, hache), Shieldmaiden (robe de laine, gilet de cuir, bouclier), Seidr (robe rituelle). Les modèles 3D, squelettes, vêtements, animations, AI Controllers, Behavior Trees, NavMesh, loot et combat sont **à relier/construire dans le jeu réel** : le kit fournit les définitions et les emplacements, pas un simulacre d'IA.
+1. Sauvegarder le projet local **D:\\ANOMALIA** et préparer une copie de travail. Les autres cartes doivent rester intactes.
+2. Télécharger et extraire l'archive sur le PC. Activer le plugin **Python Editor Script Plugin** d'Unreal Engine 5.8.
+3. Copier `unreal/EditorPython/stage_valhalla_extinction_4033.py` dans un endroit accessible à la console Python UE. Exécuter `create_level(zip)` d'abord en mode diagnostic ; puis `create_level(zip, confirm_create=True)` **sur la copie du vrai projet**, pour créer `/Game/Maps/VALHALLA_EXTINCTION` avec 28 marqueurs de villages et 374 marqueurs Draugr. **Cela ne crée pas encore le terrain**.
+4. Dans ce nouveau niveau uniquement, **Landscape > Import from File**, choisir `Terrain/VALHALLA_EXTINCTION_4033x4033_R16.png` (ou `.r16`). Résolution : **4033 × 4033**, 32 × 32 composants, 63 quads/section, 2 × 2 sections/composant, X et Y **595,238095 cm**, Z **500 cm**. Centrer le relief sur (0,0). Vérifier **Flip Y** : le raster source a sa première ligne au sud et les coordonnées des lieux ont Y positif vers le nord.
+5. Construire le matériau Landscape avec les masques PNG `BiomeLayers/` ; définir la mer à Z = 0, plages, neige, taïga, routes et collisions. Avant de placer les bâtiments, vérifier l'alignement 3D entre coordonnées et véritable terrain.
+6. Dans le fichier `config/worldgen/valhalla-4033-assets.template.json`, renseigner avec de **vrais** chemins `/Game/...` déjà importés pour les **16 types de bâtiment** et **8 Blueprints de Draugr**. Les Draugr doivent avoir leur SkeletalMesh animé, tenues vikings, IA, comportement, navigation et loot.
+7. `place_licensed_content(zip, bindings, confirm_place=True)` peut alors placer les meshes et classes **si et seulement si** le vrai Landscape existe et tous les assets sont trouvés. Contrôler les échelles, pentes, collisions, positions d'eau, navigation et HLOD.
+8. Enfin, tester la carte dans **Play In Editor**, lancer une partie Windows compilée et valider le système de sélection de carte du vrai jeu. **Aucun de ces tests n'a pu être exécuté depuis les outils cloud.**
 
-## Import dans Unreal Engine 5.8
+## État exact
 
-1. Créer une **copie de sauvegarde** du vrai projet ANOMALIA ; ne pas écraser SKARVIK, RACCONIA ni un autre niveau.
-2. Activer **Python Editor Script Plugin**. Depuis la console Python d'UE5.8, inclure le dossier contenant `stage_valhalla_extinction_world.py`, puis appeler :
+- **Vérifié** : intégrité ZIP, résolution RAW16 et PNG16, 28 villes, 555 emplacements, 374 Draugr, 36 proxies, 6 masques, taille 24 × 24 km d'après les paramètres d'import.
+- **Pas fait** : `.umap` créé sur le PC, Landscape importé dans le projet, `.uasset` des vrais bâtiments et personnages, IA/vêtements réels, routes splines, gameplay, build jouable. Ne pas déclarer la carte terminée.
+- Le prototype de génération **2017 × 2017** issu d'une autre approche ne doit **pas** être mélangé avec cette source 4033 : les hauteurs, côtes et coordonnées sont différentes.
 
-   ```python
-   import sys
-   sys.path.insert(0, r'C:\VALHALLA_EXTINCTION_24x24_SOURCE')
-   import stage_valhalla_extinction_world as valhalla
-   print(valhalla.create_level(r'C:\VALHALLA_EXTINCTION_24x24_SOURCE\valhalla-layout.json'))  # vérification sans écriture
-   print(valhalla.create_level(r'C:\VALHALLA_EXTINCTION_24x24_SOURCE\valhalla-layout.json', confirm_create=True))
-   ```
-
-   Le niveau indépendant est créé sous `/Game/Maps/VALHALLA_EXTINCTION_24KM` avec des **TargetPoints de repérage**, pas des bâtiments réels.
-3. Dans **Landscape > Import from File**, importer `VALHALLA_EXTINCTION_2017x2017.r16` dans **ce nouveau niveau seulement**. Paramètres :
-
-   - 2017 × 2017 points = **16 × 16 composants**, 63 quads par section, 2 × 2 sections par composant.
-   - X = Y = **1190.476190476 cm**, Z = **800 cm**. Ces valeurs correspondent à exactement 24 × 24 km, relief compris environ -340 m à +1850 m.
-   - Position du bord supérieur gauche recommandée **(-1 200 000, -1 200 000, 0) cm**, mais l'acteur Landscape utilise parfois une origine différente : **aligner visuellement les marqueurs avant toute construction**.
-   - Vérifier la case **Flip Y** selon le sens Nord→Sud ; vérifier collisions, accès au rivage, streaming, et la densité de vertex (~11,9 m entre points).
-4. Importer les véritables assets 3D vikings et remplir `valhalla-assets.template.json` avec leurs **vrais** chemins `/Game/...`, en le renommant `valhalla-assets.json`. Aucun asset n'est inventé ou installé depuis Internet par le script.
-5. Après validation du Landscape et des assets, appeler `place_real_assets(layout, bindings, confirm_place=True)` dans le nouveau niveau. Un appel sans `confirm_place=True` est un diagnostic de chemins uniquement. Les positions des bâtiments doivent être ajustées à la pente et aux dimensions réelles de chaque mesh.
-6. Connecter les 5 Blueprints de zombies aux vrais vêtements vikings et aux AI/AnimBP/BT. Ajouter loot/crafting Viking, chemins/splines, navigation, eau, météo, éclairage et tester **PIE puis build Windows**.
-
-## Ce qui n'est PAS fait
-
-- Le projet Unreal local `D:\ANOMALIA` n'est pas accessible ici. Aucun fichier `.umap`, `.uasset`, build Windows ou installation sur le PC n'a été réalisée.
-- Aucun bâtiment, drakkar ou personnage Viking 3D sous licence n'est dans le kit. Les points de spawn ne suffisent pas pour une IA fonctionnelle.
-- Aucune compilation Unreal, contrôle visuel dans le jeu, sauvegarde du jeu existant, ou test de connexion multijoueur n'a eu lieu.
-
-## Références Unreal
-
-- Landscape 2017 x 2017 validé par Epic : https://dev.epicgames.com/documentation/unreal-engine/landscape-technical-guide-in-unreal-engine
-- Import R16 et World Partition : https://dev.epicgames.com/documentation/unreal-engine/importing-and-exporting-landscape-heightmaps-in-unreal-engine
+Docs Epic : https://dev.epicgames.com/documentation/unreal-engine/landscape-technical-guide-in-unreal-engine et https://dev.epicgames.com/documentation/unreal-engine/importing-and-exporting-landscape-heightmaps-in-unreal-engine .
