@@ -5,7 +5,7 @@ $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
 
 $Repository = 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN'
-$Revision = '79d5a295007e5ed0173ce79a2dcd4ad804a7c22f'
+$Revision = 'a6e8e3c4ceb977dad7dfc3d2e94f317674659535'
 $BaseRevision = 'c30bca107b3ee502e0c4c58a842a29f681275e1d'
 $Module = 'AnomaliaPrimeval'
 
