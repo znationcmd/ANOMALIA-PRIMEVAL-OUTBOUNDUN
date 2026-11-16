@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "baseCatalog": "config/worldgen/worlds.json",
   "baseMaps": 20,
-  "note": "Additional user-approved maps, not proof of native UE5 world creation. 20 original maps are left unchanged.",
+  "note": "Additional user-approved maps; 20 original maps unchanged. No entry is proof of a built native UE5 world.",
   "worlds": [
     {
       "order": 21,
@@ -34,7 +34,18 @@
       "seed": "ANOMALIA-2026-SKJAEROYAAS",
       "biomeTheme": "Norwegian coastal survival / fjords",
       "status": "R16-source-generator-developed; no .umap"
+    },
+    {
+      "order": 24,
+      "id": "valhalla-extinction",
+      "name": "VALHALLA EXTINCTION",
+      "widthKm": 24,
+      "heightKm": 24,
+      "areaKm2": 576,
+      "seed": "ANOMALIA-VALHALLA-EXTINCTION-2026",
+      "biomeTheme": "pure Viking Norse / undead Draugr dressed in Viking-era clothing",
+      "status": "2017x2017-R16-source-generated; no native .umap or playable UE5 map"
     }
   ],
-  "combinedAreaKm2": 25865.18
+  "combinedAreaKm2": 26441.18
 }
