@@ -8,6 +8,8 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
+class AAnomaliaRefrigerator;
+class UAnomaliaRefrigeratorWidget;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -27,6 +29,19 @@ public:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaRefrigeratorWidget> FridgeWidget;
+
+    /** UI calls on the locally owned pawn; server validates reach and available items. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestDepositToFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void CloseFridgeInterface();
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -58,6 +73,13 @@ private:
     void LookUp(float Value);
     void InputInteract();
     void InputInventory();
+    void OpenFridgeInterface(AAnomaliaRefrigerator* Fridge);
+
+    UFUNCTION(Server, Reliable)
+    void ServerDepositToFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(Server, Reliable)
+    void ServerWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
 
     /** Server checks the closest available vehicle; clients cannot choose an arbitrary target. */
     UFUNCTION(Server, Reliable)
