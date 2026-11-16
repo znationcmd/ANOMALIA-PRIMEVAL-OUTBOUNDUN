@@ -4,6 +4,7 @@
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaInventoryWidget.h"
 #include "AnomaliaRefrigerator.h"
+#include "AnomaliaPowerGenerator.h"
 #include "AnomaliaRefrigeratorWidget.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
@@ -201,6 +202,34 @@ void AAnomaliaSurvivor::ServerDepositToFridge_Implementation(AAnomaliaRefrigerat
 void AAnomaliaSurvivor::ServerWithdrawFromFridge_Implementation(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count)
 {
     if (IsValid(Fridge)) Fridge->WithdrawOnServer(this, ItemId, Count);
+}
+
+void AAnomaliaSurvivor::RequestSetFridgeOn(AAnomaliaRefrigerator* Fridge, bool bOn)
+{
+    if (!IsLocallyControlled() || !IsValid(Fridge)) return;
+    if (HasAuthority()) ServerSetFridgeOn_Implementation(Fridge, bOn);
+    else ServerSetFridgeOn(Fridge, bOn);
+}
+
+void AAnomaliaSurvivor::RequestSetGeneratorRunning(AAnomaliaPowerGenerator* Generator, bool bOn)
+{
+    if (!IsLocallyControlled() || !IsValid(Generator)) return;
+    if (HasAuthority()) ServerSetGeneratorRunning_Implementation(Generator, bOn);
+    else ServerSetGeneratorRunning(Generator, bOn);
+}
+
+void AAnomaliaSurvivor::ServerSetFridgeOn_Implementation(AAnomaliaRefrigerator* Fridge, bool bOn)
+{
+    if (Health <= 0.f || !IsValid(Fridge) || Fridge->GetWorld() != GetWorld() ||
+        FVector::DistSquared(Fridge->GetActorLocation(), GetActorLocation()) > FMath::Square(300.f)) return;
+    Fridge->SetSwitchedOnServer(bOn);
+}
+
+void AAnomaliaSurvivor::ServerSetGeneratorRunning_Implementation(AAnomaliaPowerGenerator* Generator, bool bOn)
+{
+    if (Health <= 0.f || !IsValid(Generator) || Generator->GetWorld() != GetWorld() ||
+        FVector::DistSquared(Generator->GetActorLocation(), GetActorLocation()) > FMath::Square(300.f)) return;
+    Generator->SetRunningOnServer(bOn);
 }
 
 void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
