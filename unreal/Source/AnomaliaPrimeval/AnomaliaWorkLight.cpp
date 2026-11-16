@@ -4,6 +4,7 @@
 #include "Components/SceneComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/SpotLightComponent.h"
+#include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
