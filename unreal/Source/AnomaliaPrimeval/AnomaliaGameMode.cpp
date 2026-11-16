@@ -8,6 +8,8 @@
 #include "TimerManager.h"
 #include "AnomaliaVehiclePawn.h"
 #include "AnomaliaVehicleCatalog.h"
+#include "AnomaliaPowerGenerator.h"
+#include "AnomaliaRefrigerator.h"
 #include "Engine/World.h"
 #include "Kismet/GameplayStatics.h"
 #include "Dom/JsonObject.h"
@@ -20,6 +22,8 @@
 AAnomaliaGameMode::AAnomaliaGameMode()
 {
     DefaultPawnClass = AAnomaliaSurvivor::StaticClass();
+    GeneratorClass = AAnomaliaPowerGenerator::StaticClass();
+    RefrigeratorClass = AAnomaliaRefrigerator::StaticClass();
 }
 
 void AAnomaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -211,6 +215,7 @@ void AAnomaliaGameMode::BeginPlay()
     if (HasAuthority())
     {
         SpawnConfiguredVehicles();
+        SpawnConfiguredAppliances();
         GetWorldTimerManager().SetTimer(ProfileSaveTimer, this, &AAnomaliaGameMode::SaveAllPlayerProfiles, 120.f, true);
     }
 }
@@ -280,4 +285,109 @@ void AAnomaliaGameMode::SpawnConfiguredVehicles()
         }
     }
     UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: spawned %d initial vehicles"), *ServerId, Spawned);
+}
+
+
+void AAnomaliaGameMode::SpawnConfiguredAppliances()
+{
+    if (!HasAuthority() || !GetWorld()) return;
+    // Optional, map-specific configuration. No file is auto-created or overwritten.
+    const FString File = FPaths::Combine(FPaths::ProjectSavedDir(), TEXT("Servers"), ServerId, TEXT("appliances.json"));
+    if (!IFileManager::Get().FileExists(*File)) return;
+    const int64 Bytes = IFileManager::Get().FileSize(*File);
+    if (Bytes < 0 || Bytes > 262144) { UE_LOG(LogTemp, Warning, TEXT("ANOMALIA appliances.json: invalid size")); return; }
+    FString Raw;
+    if (!FFileHelper::LoadFileToString(Raw, *File)) return;
+    TSharedPtr<FJsonObject> Root;
+    if (!FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(Raw), Root) || !Root.IsValid())
+    { UE_LOG(LogTemp, Warning, TEXT("ANOMALIA appliances.json: invalid JSON")); return; }
+
+    auto ValidId = [](const FString& Id) -> bool
+    {
+        if (Id.IsEmpty() || Id.Len() > 64) return false;
+        for (TCHAR C : Id)
+            if (C > 127 || !(FChar::IsAlnum(C) || C == TEXT('_') || C == TEXT('-'))) return false;
+        return true;
+    };
+    auto TransformFromRow = [](const TSharedPtr<FJsonObject>& Row, FTransform& OutTransform) -> bool
+    {
+        if (!Row.IsValid()) return false;
+        double X=0, Y=0, Z=0, Yaw=0;
+        if (!Row->TryGetNumberField(TEXT("x"), X) || !Row->TryGetNumberField(TEXT("y"), Y) ||
+            !Row->TryGetNumberField(TEXT("z"), Z)) return false;
+        Row->TryGetNumberField(TEXT("yaw"), Yaw);
+        if (!FMath::IsFinite(X) || !FMath::IsFinite(Y) || !FMath::IsFinite(Z) || !FMath::IsFinite(Yaw) ||
+            FMath::Abs(X) > 2400000 || FMath::Abs(Y) > 2400000 || FMath::Abs(Z) > 2400000) return false;
+        OutTransform = FTransform(FRotator(0.f, static_cast<float>(Yaw), 0.f), FVector(X, Y, Z));
+        return true;
+    };
+
+    TMap<FString, AAnomaliaPowerGenerator*> Generators;
+    TSet<FString> UsedGeneratorIds;
+    const TArray<TSharedPtr<FJsonValue>>* GeneratorRows = nullptr;
+    if (Root->TryGetArrayField(TEXT("generators"), GeneratorRows) && GeneratorRows)
+    {
+        for (const TSharedPtr<FJsonValue>& Value : *GeneratorRows)
+        {
+            if (Generators.Num() >= 32) break;
+            const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+            FString Id;
+            FTransform Placement;
+            double Fuel = 10;
+            bool bRun = false;
+            if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) ||
+                !ValidId(Id) || UsedGeneratorIds.Contains(Id) || !TransformFromRow(Row, Placement)) continue;
+            Row->TryGetNumberField(TEXT("fuelLitres"), Fuel);
+            Row->TryGetBoolField(TEXT("running"), bRun);
+            if (!FMath::IsFinite(Fuel) || Fuel < 0 || Fuel > 30) continue;
+            UsedGeneratorIds.Add(Id);
+            UClass* Class = GeneratorClass ? GeneratorClass.Get() : AAnomaliaPowerGenerator::StaticClass();
+            AAnomaliaPowerGenerator* Generator = GetWorld()->SpawnActorDeferred<AAnomaliaPowerGenerator>(
+                Class, Placement, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
+            if (!Generator) continue;
+            Generator->PersistentId = Id;
+            Generator->FuelLitres = static_cast<float>(Fuel);
+            Generator->bRunning = bRun && Fuel > 0;
+            UGameplayStatics::FinishSpawningActor(Generator, Placement);
+            Generators.Add(Id, Generator);
+        }
+    }
+
+    TSet<FString> UsedFridgeIds;
+    const TArray<TSharedPtr<FJsonValue>>* FridgeRows = nullptr;
+    int32 SpawnedFridges = 0;
+    if (Root->TryGetArrayField(TEXT("refrigerators"), FridgeRows) && FridgeRows)
+    {
+        for (const TSharedPtr<FJsonValue>& Value : *FridgeRows)
+        {
+            if (SpawnedFridges >= 128) break;
+            const TSharedPtr<FJsonObject> Row = Value.IsValid() ? Value->AsObject() : nullptr;
+            FString Id, GeneratorId;
+            FTransform Placement;
+            double Target = 4, Ambient = 22;
+            bool bOn = true;
+            if (!Row.IsValid() || !Row->TryGetStringField(TEXT("id"), Id) ||
+                !ValidId(Id) || UsedFridgeIds.Contains(Id) || !TransformFromRow(Row, Placement)) continue;
+            Row->TryGetStringField(TEXT("generatorId"), GeneratorId);
+            Row->TryGetNumberField(TEXT("targetC"), Target);
+            Row->TryGetNumberField(TEXT("ambientC"), Ambient);
+            Row->TryGetBoolField(TEXT("switchedOn"), bOn);
+            if (!FMath::IsFinite(Target) || Target < 0 || Target > 12 ||
+                !FMath::IsFinite(Ambient) || Ambient < -15 || Ambient > 45) continue;
+            UsedFridgeIds.Add(Id);
+            UClass* Class = RefrigeratorClass ? RefrigeratorClass.Get() : AAnomaliaRefrigerator::StaticClass();
+            AAnomaliaRefrigerator* Fridge = GetWorld()->SpawnActorDeferred<AAnomaliaRefrigerator>(
+                Class, Placement, nullptr, nullptr, ESpawnActorCollisionHandlingMethod::AdjustIfPossibleButDontSpawnIfColliding);
+            if (!Fridge) continue;
+            Fridge->PersistentId = Id;
+            Fridge->PowerGenerator = Generators.FindRef(GeneratorId);
+            Fridge->SetPointC = static_cast<float>(Target);
+            Fridge->AmbientTemperatureC = static_cast<float>(Ambient);
+            Fridge->bSwitchedOn = bOn;
+            UGameplayStatics::FinishSpawningActor(Fridge, Placement);
+            ++SpawnedFridges;
+        }
+    }
+    UE_LOG(LogTemp, Log, TEXT("ANOMALIA %s: spawned %d generators and %d fridges from appliances.json"),
+        *ServerId, Generators.Num(), SpawnedFridges);
 }
