@@ -156,7 +156,7 @@ bool AAnomaliaRefrigerator::LoadServerState()
             !Row->TryGetNumberField(TEXT("count"), Count) ||
             !Row->TryGetNumberField(TEXT("freshness01"), Freshness) ||
             !FMath::IsFinite(Count) || Count < 1 || Count > 40 ||
-            Count != FMath::FloorToDouble(Count) ||
+            Count != static_cast<double>(FMath::RoundToInt(Count)) ||
             !FMath::IsFinite(Freshness) || Freshness < 0 || Freshness > 1) return false;
         const FName ItemId(*Id);
         if (!CanStore(ItemId) || Seen.Contains(ItemId)) return false;
