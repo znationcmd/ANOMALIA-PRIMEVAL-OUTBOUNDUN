@@ -9,7 +9,7 @@ echo refuse les conflits avec les versions locales et tente de compiler dans UE5
 echo Aucun jeu installe ou sauvegarde de joueurs ne sera supprime.
 echo.
 set "INSTALL_SCRIPT=%TEMP%\Install-Anomalia-Electricite.ps1"
-powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/02604e2fd4c53958adbf5c305d5fbacd0eecc10a/scripts/ue5/Install-Anomalia-Electricite.ps1' -OutFile '%INSTALL_SCRIPT%'"
+powershell.exe -NoProfile -Command "$ErrorActionPreference='Stop'; Invoke-WebRequest -UseBasicParsing -Uri 'https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/6f3dc5d48186c24147474fefcab0369574ea9a97/scripts/ue5/Install-Anomalia-Electricite.ps1' -OutFile '%INSTALL_SCRIPT%'"
 if errorlevel 1 (
   echo ERREUR DE TELECHARGEMENT. Rien n'a ete modifie.
   pause
