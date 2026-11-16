@@ -6,6 +6,7 @@
 
 class USceneComponent;
 class UStaticMeshComponent;
+class AAnomaliaSurvivor;
 
 /** Place a Blueprint child with an actual generator mesh. No generic client fuel/ownership RPC is exposed. */
 UCLASS(Blueprintable)
@@ -36,6 +37,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power", meta=(ClampMin="100", ClampMax="5000"))
     float MaxCableDistanceCm = 1500.f;
 
+    /** Carried as one physical world actor; never duplicated into the player inventory. */
+    UPROPERTY(ReplicatedUsing=OnRep_Carrier, BlueprintReadOnly, Category="ANOMALIA|Power|Portable")
+    TObjectPtr<AAnomaliaSurvivor> Carrier;
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power|Portable")
+    bool TryPickupOnServer(AAnomaliaSurvivor* Player);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power|Portable")
+    bool TryPlaceOnServer(AAnomaliaSurvivor* Player);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power")
     bool SetRunningOnServer(bool bStart);
 
@@ -51,6 +62,9 @@ public:
 protected:
     virtual void BeginPlay() override;
     virtual void EndPlay(const EEndPlayReason::Type EndPlayReason) override;
+
+    UFUNCTION()
+    void OnRep_Carrier();
 
 private:
     bool bPersistenceEnabled = false;
