@@ -21,7 +21,7 @@ class ElectricalAppliancesSourceTests(unittest.TestCase):
                      "AnomaliaBatteryCharger", "AnomaliaWorkLight"):
             h, cpp = source(name + ".h"), source(name + ".cpp")
             self.assertIn("UCLASS(Blueprintable)", h, name)
-            self.assertIn("SetIsReplicatedByDefault", h + cpp if name == "AnomaliaInventoryComponent" else "SetIsReplicatedByDefault")
+            self.assertIn("bReplicates = true", cpp, name)
             self.assertIn("HasAuthority()", cpp, name)
             self.assertIn("GetLifetimeReplicatedProps", cpp, name)
         light = source("AnomaliaWorkLight.cpp")
