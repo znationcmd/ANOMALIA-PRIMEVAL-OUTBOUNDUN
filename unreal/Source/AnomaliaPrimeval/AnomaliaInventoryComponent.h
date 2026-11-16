@@ -31,6 +31,14 @@ struct FAnomaliaInventoryStack
 
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     bool bRotated = false;
+
+    /** 1 = fresh; 0 = spoiled. Survives item movement, splitting and profile saves. */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Food")
+    float Freshness01 = 1.f;
+
+    /** Charge in a portable battery item (0 = empty, 1 = full). */
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power")
+    float BatteryCharge01 = 1.f;
 };
 
 USTRUCT(BlueprintType)
@@ -78,8 +86,24 @@ public:
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryAddItem(FName ItemId, int32 Count);
 
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Food")
+    bool TryAddItemWithFreshness(FName ItemId, int32 Count, float Freshness01);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power")
+    bool TryAddItemWithState(FName ItemId, int32 Count, float Freshness01, float BatteryCharge01);
+
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryRemoveItem(FName ItemId, int32 Count);
+
+    /** Removes requested units, reporting the actual weighted freshness, without resetting spoilage. */
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Food")
+    bool TryRemoveItemWithFreshness(FName ItemId, int32 Count, float& OutFreshness01);
+
+    UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Power")
+    bool TryRemoveItemWithState(FName ItemId, int32 Count, float& OutFreshness01, float& OutBatteryCharge01);
+
+    UFUNCTION(BlueprintPure, Category="ANOMALIA|Inventory")
+    static bool IsSupportedItem(FName ItemId);
 
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Inventory")
     bool TryMoveStack(int32 StackId, FName ContainerId, int32 X, int32 Y, bool bRotate);
@@ -111,6 +135,7 @@ public:
     void OnInventoryChanged();
 
     virtual void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+    virtual void TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction) override;
 
 protected:
     UFUNCTION()
@@ -130,6 +155,7 @@ protected:
 
 private:
     int32 NextStackId = 1;
+    float FoodAgingAccumulatedSeconds = 0.f;
     static bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize);
     bool CanPlace(const TArray<FAnomaliaInventoryStack>& Candidate, const FAnomaliaInventoryStack& Stack,
         FName ContainerId, int32 X, int32 Y, bool bRotate) const;

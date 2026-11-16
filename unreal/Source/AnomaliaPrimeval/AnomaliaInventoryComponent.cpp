@@ -1,5 +1,6 @@
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaConfigLibrary.h"
+#include "AnomaliaFoodPreservation.h"
 #include "Dom/JsonObject.h"
 #include "GameFramework/Actor.h"
 #include "Serialization/JsonReader.h"
@@ -10,6 +11,8 @@
 UAnomaliaInventoryComponent::UAnomaliaInventoryComponent()
 {
     SetIsReplicatedByDefault(true);
+    PrimaryComponentTick.bCanEverTick = true;
+    PrimaryComponentTick.TickInterval = 30.f;
     FAnomaliaInventoryCompartment Pockets;
     Pockets.Id = TEXT("pockets");
     Pockets.Width = 6;
@@ -26,7 +29,7 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
         {TEXT("kibble_basic"), .3f}, {TEXT("kibble_simple"), .3f}, {TEXT("kibble_regular"), .3f},
         {TEXT("kibble_superior"), .3f}, {TEXT("kibble_exceptional"), .3f}, {TEXT("kibble_extraordinary"), .3f},
         {TEXT("honey"), .3f}, {TEXT("rare_flower"), .05f}, {TEXT("sap"), .1f}, {TEXT("vegetable"), .2f},
-        {TEXT("water"), .8f}, {TEXT("food"), .45f}, {TEXT("bandage"), .15f},
+        {TEXT("water"), .8f}, {TEXT("food"), .45f}, {TEXT("car_battery"), 8.f}, {TEXT("gasoline_canister"), 5.f}, {TEXT("bandage"), .15f},
         {TEXT("wood"), .65f}, {TEXT("stone"), 1.5f}, {TEXT("berry"), .08f},
         {TEXT("rifle_ammo"), .035f}, {TEXT("ammo"), .025f}, {TEXT("pistol"), 1.2f},
         {TEXT("rifle"), 4.5f}, {TEXT("fishing_rod"), 1.2f}, {TEXT("medicine"), .2f},
@@ -44,7 +47,8 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
     OutWeightKg = *Weight;
     OutSize = FIntPoint(1, 1);
     OutMaxStack = 20;
-    if (ItemId == TEXT("rifle") || ItemId == TEXT("pistol") || ItemId == TEXT("saddle") ||
+    if (ItemId == TEXT("car_battery") || ItemId == TEXT("gasoline_canister") ||
+        ItemId == TEXT("rifle") || ItemId == TEXT("pistol") || ItemId == TEXT("saddle") ||
         ItemId == TEXT("fishing_rod") || ItemId == TEXT("headlamp") || ItemId == TEXT("medkit") ||
         ItemId == TEXT("jacket") || ItemId == TEXT("coat") || ItemId == TEXT("shirt") || ItemId == TEXT("pants") ||
         ItemId == TEXT("jeans") || ItemId == TEXT("boots") || ItemId == TEXT("helmet") ||
@@ -61,6 +65,14 @@ bool UAnomaliaInventoryComponent::GetItemRules(FName ItemId, float& OutWeightKg,
         ItemId == TEXT("honey") || ItemId == TEXT("rare_flower") || ItemId == TEXT("sap") || ItemId == TEXT("vegetable") ||
         ItemId == TEXT("hide") || ItemId == TEXT("feather") || ItemId == TEXT("fiber")) OutMaxStack = 50;
     return true;
+}
+
+bool UAnomaliaInventoryComponent::IsSupportedItem(FName ItemId)
+{
+    float Weight = 0.f;
+    int32 MaxStack = 0;
+    FIntPoint Size;
+    return GetItemRules(ItemId, Weight, MaxStack, Size);
 }
 
 float UAnomaliaInventoryComponent::GetCurrentWeightKg() const
@@ -140,6 +152,18 @@ void UAnomaliaInventoryComponent::Commit(TArray<FAnomaliaInventoryStack>&& Candi
 
 bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 {
+    return TryAddItemWithFreshness(ItemId, Count, 1.f);
+}
+
+bool UAnomaliaInventoryComponent::TryAddItemWithFreshness(FName ItemId, int32 Count, float Freshness01)
+{
+    return TryAddItemWithState(ItemId, Count, Freshness01, 1.f);
+}
+
+bool UAnomaliaInventoryComponent::TryAddItemWithState(FName ItemId, int32 Count, float Freshness01, float BatteryCharge01)
+{
+    if (!FMath::IsFinite(Freshness01) || Freshness01 < 0.f || Freshness01 > 1.f ||
+        !FMath::IsFinite(BatteryCharge01) || BatteryCharge01 < 0.f || BatteryCharge01 > 1.f) return false;
     if (!GetOwner() || !GetOwner()->HasAuthority() || Count < 1) return false;
     float ItemWeight = 0.f;
     int32 MaxStack = 0;
@@ -152,7 +176,10 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
     {
         if (Stack.ItemId != ItemId || Stack.ContainerId == TEXT("hands") || Stack.Count >= MaxStack) continue;
         const int32 Added = FMath::Min(Remaining, MaxStack - Stack.Count);
+        const int32 OldCount = Stack.Count;
         Stack.Count += Added; Remaining -= Added;
+        Stack.Freshness01 = (Stack.Freshness01 * OldCount + Freshness01 * Added) / Stack.Count;
+        Stack.BatteryCharge01 = (Stack.BatteryCharge01 * OldCount + BatteryCharge01 * Added) / Stack.Count;
         if (Remaining == 0) { Commit(MoveTemp(Candidate)); return true; }
     }
     while (Remaining > 0)
@@ -162,6 +189,8 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
         NewStack.StackId = CandidateNextId++;
         NewStack.ItemId = ItemId;
         NewStack.Count = FMath::Min(Remaining, MaxStack);
+        NewStack.Freshness01 = Freshness01;
+        NewStack.BatteryCharge01 = BatteryCharge01;
         if (!FindPlacement(Candidate, NewStack)) return false;
         Candidate.Add(NewStack);
         Remaining -= NewStack.Count;
@@ -173,6 +202,21 @@ bool UAnomaliaInventoryComponent::TryAddItem(FName ItemId, int32 Count)
 
 bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
 {
+    float IgnoredFreshness = 1.f;
+    return TryRemoveItemWithFreshness(ItemId, Count, IgnoredFreshness);
+}
+
+bool UAnomaliaInventoryComponent::TryRemoveItemWithFreshness(FName ItemId, int32 Count, float& OutFreshness01)
+{
+    float IgnoredBatteryCharge = 1.f;
+    return TryRemoveItemWithState(ItemId, Count, OutFreshness01, IgnoredBatteryCharge);
+}
+
+bool UAnomaliaInventoryComponent::TryRemoveItemWithState(FName ItemId, int32 Count,
+    float& OutFreshness01, float& OutBatteryCharge01)
+{
+    OutFreshness01 = 1.f;
+    OutBatteryCharge01 = 1.f;
     if (!GetOwner() || !GetOwner()->HasAuthority() || ItemId.IsNone() || Count < 1) return false;
     int32 Available = 0;
     for (const FAnomaliaInventoryStack& Stack : Stacks)
@@ -180,15 +224,21 @@ bool UAnomaliaInventoryComponent::TryRemoveItem(FName ItemId, int32 Count)
     if (Available < Count) return false;
     TArray<FAnomaliaInventoryStack> Candidate = Stacks;
     int32 Remaining = Count;
+    float FreshnessTotal = 0.f;
+    float BatteryTotal = 0.f;
     for (int32 Index = Candidate.Num() - 1; Index >= 0 && Remaining > 0; --Index)
     {
         FAnomaliaInventoryStack& Stack = Candidate[Index];
         if (Stack.ItemId != ItemId) continue;
         const int32 Removed = FMath::Min(Remaining, Stack.Count);
+        FreshnessTotal += Stack.Freshness01 * Removed;
+        BatteryTotal += Stack.BatteryCharge01 * Removed;
         Stack.Count -= Removed;
         Remaining -= Removed;
     }
     Candidate.RemoveAll([](const FAnomaliaInventoryStack& Stack) { return Stack.Count <= 0; });
+    OutFreshness01 = FMath::Clamp(FreshnessTotal / Count, 0.f, 1.f);
+    OutBatteryCharge01 = FMath::Clamp(BatteryTotal / Count, 0.f, 1.f);
     Commit(MoveTemp(Candidate));
     return true;
 }
@@ -232,6 +282,8 @@ bool UAnomaliaInventoryComponent::TryMergeStacks(int32 TargetStackId, int32 Sour
     if (!Target || !Source || Target->ItemId != Source->ItemId || Target->ContainerId == TEXT("hands") || Source->ContainerId == TEXT("hands")) return false;
     float Weight = 0.f; int32 MaxStack = 0; FIntPoint Size;
     if (!GetItemRules(Target->ItemId, Weight, MaxStack, Size) || Target->Count + Source->Count > MaxStack) return false;
+    Target->Freshness01 = (Target->Freshness01 * Target->Count + Source->Freshness01 * Source->Count) / (Target->Count + Source->Count);
+    Target->BatteryCharge01 = (Target->BatteryCharge01 * Target->Count + Source->BatteryCharge01 * Source->Count) / (Target->Count + Source->Count);
     Target->Count += Source->Count;
     Candidate.RemoveAll([&](const FAnomaliaInventoryStack& S) { return S.StackId == SourceStackId; });
     Commit(MoveTemp(Candidate));
@@ -285,6 +337,8 @@ bool UAnomaliaInventoryComponent::SaveInventoryToPlayerProfile(const FString& Se
         Row->SetNumberField(TEXT("x"), Stack.X);
         Row->SetNumberField(TEXT("y"), Stack.Y);
         Row->SetBoolField(TEXT("rotated"), Stack.bRotated);
+        Row->SetNumberField(TEXT("freshness01"), Stack.Freshness01);
+        Row->SetNumberField(TEXT("batteryCharge01"), Stack.BatteryCharge01);
         StackRows.Add(MakeShared<FJsonValueObject>(Row));
     }
     Inventory->SetArrayField(TEXT("stacks"), StackRows);
@@ -365,6 +419,15 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         double StackId = 0.0, Count = 0.0, X = 0.0, Y = 0.0;
         FString ItemText, ContainerText;
         bool bRotated = false;
+        double Freshness = 1.0; // Legacy player saves did not carry this field.
+        double BatteryCharge = 1.0; // Legacy player saves default to a charged battery.
+        const bool bHasFreshness = Row->HasField(TEXT("freshness01"));
+        if (Row->HasField(TEXT("batteryCharge01")) &&
+            (!Row->TryGetNumberField(TEXT("batteryCharge01"), BatteryCharge) ||
+            !FMath::IsFinite(BatteryCharge) || BatteryCharge < 0.0 || BatteryCharge > 1.0))
+        { OutError = TEXT("Invalid battery charge in player profile"); return false; }
+        if (bHasFreshness && (!Row->TryGetNumberField(TEXT("freshness01"), Freshness) || !FMath::IsFinite(Freshness) || Freshness < 0.0 || Freshness > 1.0))
+        { OutError = TEXT("Invalid food freshness in player profile"); return false; }
         if (!Row->TryGetNumberField(TEXT("stackId"), StackId) || !Row->TryGetNumberField(TEXT("count"), Count) ||
             !Row->TryGetNumberField(TEXT("x"), X) || !Row->TryGetNumberField(TEXT("y"), Y) ||
             !Row->TryGetStringField(TEXT("itemId"), ItemText) || !Row->TryGetStringField(TEXT("containerId"), ContainerText) ||
@@ -379,6 +442,8 @@ bool UAnomaliaInventoryComponent::LoadInventoryFromPlayerProfile(const FString& 
         FAnomaliaInventoryStack Stack;
         Stack.StackId = FMath::RoundToInt(StackId); Stack.Count = FMath::RoundToInt(Count); Stack.X = FMath::RoundToInt(X); Stack.Y = FMath::RoundToInt(Y);
         Stack.ItemId = FName(*ItemText); Stack.ContainerId = FName(*ContainerText); Stack.bRotated = bRotated;
+        Stack.Freshness01 = static_cast<float>(Freshness);
+        Stack.BatteryCharge01 = static_cast<float>(BatteryCharge);
         float ItemWeight = 0.f; int32 MaxStack = 0; FIntPoint Size;
         if (SeenStackIds.Contains(Stack.StackId) || !GetItemRules(Stack.ItemId, ItemWeight, MaxStack, Size) || Stack.Count > MaxStack)
         { OutError = TEXT("Duplicate stack or unsupported item in inventory profile"); return false; }
@@ -444,6 +509,33 @@ void UAnomaliaInventoryComponent::ServerRequestSplitStack_Implementation(int32 S
 void UAnomaliaInventoryComponent::ServerRequestMergeStacks_Implementation(int32 TargetStackId, int32 SourceStackId)
 {
     TryMergeStacks(TargetStackId, SourceStackId);
+}
+
+void UAnomaliaInventoryComponent::TickComponent(float DeltaTime, ELevelTick TickType, FActorComponentTickFunction* ThisTickFunction)
+{
+    Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
+    if (!GetOwner() || !GetOwner()->HasAuthority() || DeltaTime <= 0.f) return;
+    // The inventory belongs to a player or an ordinary container. Refrigerators age their own contents at their own temperature.
+    FoodAgingAccumulatedSeconds += DeltaTime;
+    if (FoodAgingAccumulatedSeconds < 30.f) return;
+    const float Hours = FoodAgingAccumulatedSeconds / 3600.f;
+    FoodAgingAccumulatedSeconds = 0.f;
+    bool bChanged = false;
+    for (FAnomaliaInventoryStack& Stack : Stacks)
+    {
+        const float NewFreshness = AnomaliaFoodPreservation::Advance(Stack.ItemId, Stack.Freshness01, Hours, 22.f);
+        if (NewFreshness < Stack.Freshness01)
+        {
+            Stack.Freshness01 = NewFreshness;
+            bChanged = true;
+        }
+    }
+    if (bChanged)
+    {
+        GetOwner()->ForceNetUpdate();
+        OnInventoryChanged();
+        OnInventoryUpdated.Broadcast();
+    }
 }
 
 void UAnomaliaInventoryComponent::OnRep_Stacks() { OnInventoryChanged(); OnInventoryUpdated.Broadcast(); }

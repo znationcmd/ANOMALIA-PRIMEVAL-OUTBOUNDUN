@@ -8,6 +8,12 @@ class USpringArmComponent;
 class UCameraComponent;
 class UAnomaliaInventoryComponent;
 class UAnomaliaInventoryWidget;
+class AAnomaliaRefrigerator;
+class AAnomaliaPowerGenerator;
+class UAnomaliaRefrigeratorWidget;
+class AAnomaliaBatteryCharger;
+class AAnomaliaWorkLight;
+class UAnomaliaPowerUtilityWidget;
 
 UCLASS()
 class ANOMALIAPRIMEVAL_API AAnomaliaSurvivor : public ACharacter
@@ -27,6 +33,52 @@ public:
 
     UPROPERTY(Transient)
     TObjectPtr<UAnomaliaInventoryWidget> InventoryWidget;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaRefrigeratorWidget> FridgeWidget;
+
+    UPROPERTY(Transient)
+    TObjectPtr<UAnomaliaPowerUtilityWidget> PowerUtilityWidget;
+
+    /** UI calls on the locally owned pawn; server validates reach and available items. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestDepositToFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void CloseFridgeInterface();
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Fridge")
+    void RequestSetFridgeOn(AAnomaliaRefrigerator* Fridge, bool bOn);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Power")
+    void RequestSetGeneratorRunning(AAnomaliaPowerGenerator* Generator, bool bOn);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestSetChargerOn(AAnomaliaBatteryCharger* Charger, bool bOn);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestInsertBattery(AAnomaliaBatteryCharger* Charger);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestRemoveBattery(AAnomaliaBatteryCharger* Charger);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestSetWorkLightOn(AAnomaliaWorkLight* Light, bool bOn);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestRefuelGenerator(AAnomaliaPowerGenerator* Generator);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestPickupGenerator(AAnomaliaPowerGenerator* Generator);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void RequestPlaceGenerator(AAnomaliaPowerGenerator* Generator);
+
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Electricity")
+    void ClosePowerUtilityInterface();
 
     UPROPERTY(ReplicatedUsing=OnRep_Survival, BlueprintReadOnly, Category="ANOMALIA|Survival")
     float Hunger = 100.f;
@@ -58,6 +110,41 @@ private:
     void LookUp(float Value);
     void InputInteract();
     void InputInventory();
+    void OpenFridgeInterface(AAnomaliaRefrigerator* Fridge);
+    void OpenPowerUtilityInterface(AActor* Device);
+
+    UFUNCTION(Server, Reliable)
+    void ServerDepositToFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(Server, Reliable)
+    void ServerWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetFridgeOn(AAnomaliaRefrigerator* Fridge, bool bOn);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetGeneratorRunning(AAnomaliaPowerGenerator* Generator, bool bOn);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetChargerOn(AAnomaliaBatteryCharger* Charger, bool bOn);
+
+    UFUNCTION(Server, Reliable)
+    void ServerInsertBattery(AAnomaliaBatteryCharger* Charger);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRemoveBattery(AAnomaliaBatteryCharger* Charger);
+
+    UFUNCTION(Server, Reliable)
+    void ServerSetWorkLightOn(AAnomaliaWorkLight* Light, bool bOn);
+
+    UFUNCTION(Server, Reliable)
+    void ServerRefuelGenerator(AAnomaliaPowerGenerator* Generator);
+
+    UFUNCTION(Server, Reliable)
+    void ServerPickupGenerator(AAnomaliaPowerGenerator* Generator);
+
+    UFUNCTION(Server, Reliable)
+    void ServerPlaceGenerator(AAnomaliaPowerGenerator* Generator);
 
     /** Server checks the closest available vehicle; clients cannot choose an arbitrary target. */
     UFUNCTION(Server, Reliable)

@@ -1,0 +1,49 @@
+{
+  "generators": [
+    {
+      "id": "generator_farm_01",
+      "x": 1500,
+      "y": 200,
+      "z": 100,
+      "yaw": 0,
+      "fuelLitres": 10,
+      "running": true
+    }
+  ],
+  "refrigerators": [
+    {
+      "id": "fridge_farm_01",
+      "x": 1800,
+      "y": 200,
+      "z": 100,
+      "yaw": 90,
+      "generatorId": "generator_farm_01",
+      "targetC": 4,
+      "ambientC": 22,
+      "switchedOn": true
+    }
+  ],
+  "batteryChargers": [
+    {
+      "id": "charger_farm_01",
+      "x": 1950,
+      "y": 200,
+      "z": 100,
+      "yaw": 0,
+      "generatorId": "generator_farm_01",
+      "chargePercentPerHour": 25,
+      "switchedOn": true
+    }
+  ],
+  "workLights": [
+    {
+      "id": "worklight_farm_01",
+      "x": 2100,
+      "y": 250,
+      "z": 100,
+      "yaw": 45,
+      "generatorId": "generator_farm_01",
+      "switchedOn": true
+    }
+  ]
+}
