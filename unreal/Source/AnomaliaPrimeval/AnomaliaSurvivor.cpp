@@ -3,6 +3,8 @@
 #include "AnomaliaGameMode.h"
 #include "AnomaliaInventoryComponent.h"
 #include "AnomaliaInventoryWidget.h"
+#include "AnomaliaRefrigerator.h"
+#include "AnomaliaRefrigeratorWidget.h"
 #include "EngineUtils.h"
 #include "Engine/World.h"
 #include "GameFramework/Controller.h"
@@ -85,6 +87,7 @@ void AAnomaliaSurvivor::SetupPlayerInputComponent(UInputComponent* Input)
 void AAnomaliaSurvivor::InputInventory()
 {
     if (!IsLocallyControlled() || !InventoryComponent) return;
+    if (FridgeWidget) { CloseFridgeInterface(); return; }
     APlayerController* PC = Cast<APlayerController>(Controller);
     if (!PC) return;
     if (InventoryWidget && InventoryWidget->IsInViewport())
@@ -132,8 +135,72 @@ void AAnomaliaSurvivor::LookUp(float Value) { AddControllerPitchInput(Value); }
 void AAnomaliaSurvivor::InputInteract()
 {
     if (!IsLocallyControlled()) return;
+    if (FridgeWidget) { CloseFridgeInterface(); return; }
+    AAnomaliaRefrigerator* NearestFridge = nullptr;
+    float BestDistanceSq = FMath::Square(300.f);
+    if (GetWorld())
+        for (TActorIterator<AAnomaliaRefrigerator> It(GetWorld()); It; ++It)
+        {
+            const float Dist = FVector::DistSquared(It->GetActorLocation(), GetActorLocation());
+            if (Dist <= BestDistanceSq) { BestDistanceSq = Dist; NearestFridge = *It; }
+        }
+    if (NearestFridge) { OpenFridgeInterface(NearestFridge); return; }
     if (HasAuthority()) ServerTryEnterVehicle_Implementation();
     else ServerTryEnterVehicle();
+}
+
+void AAnomaliaSurvivor::OpenFridgeInterface(AAnomaliaRefrigerator* Fridge)
+{
+    if (!IsLocallyControlled() || !IsValid(Fridge) || !Controller) return;
+    APlayerController* PC = Cast<APlayerController>(Controller);
+    if (!PC) return;
+    if (InventoryWidget && InventoryWidget->IsInViewport()) { InventoryWidget->RemoveFromParent(); InventoryWidget = nullptr; }
+    FridgeWidget = CreateWidget<UAnomaliaRefrigeratorWidget>(PC, UAnomaliaRefrigeratorWidget::StaticClass());
+    if (!FridgeWidget) return;
+    FridgeWidget->InitializeForFridge(this, Fridge);
+    FridgeWidget->AddToViewport(90);
+    FInputModeGameAndUI InputMode;
+    InputMode.SetWidgetToFocus(FridgeWidget->TakeWidget());
+    InputMode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+    PC->SetInputMode(InputMode);
+    PC->bShowMouseCursor = true;
+    PC->SetIgnoreMoveInput(true);
+    PC->SetIgnoreLookInput(true);
+}
+
+void AAnomaliaSurvivor::CloseFridgeInterface()
+{
+    if (FridgeWidget) { FridgeWidget->RemoveFromParent(); FridgeWidget = nullptr; }
+    APlayerController* PC = Cast<APlayerController>(Controller);
+    if (!PC || !IsLocallyControlled()) return;
+    PC->SetInputMode(FInputModeGameOnly());
+    PC->bShowMouseCursor = false;
+    PC->SetIgnoreMoveInput(false);
+    PC->SetIgnoreLookInput(false);
+}
+
+void AAnomaliaSurvivor::RequestDepositToFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count)
+{
+    if (!IsLocallyControlled() || !IsValid(Fridge)) return;
+    if (HasAuthority()) Fridge->DepositOnServer(this, ItemId, Count);
+    else ServerDepositToFridge(Fridge, ItemId, Count);
+}
+
+void AAnomaliaSurvivor::RequestWithdrawFromFridge(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count)
+{
+    if (!IsLocallyControlled() || !IsValid(Fridge)) return;
+    if (HasAuthority()) Fridge->WithdrawOnServer(this, ItemId, Count);
+    else ServerWithdrawFromFridge(Fridge, ItemId, Count);
+}
+
+void AAnomaliaSurvivor::ServerDepositToFridge_Implementation(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count)
+{
+    if (IsValid(Fridge)) Fridge->DepositOnServer(this, ItemId, Count);
+}
+
+void AAnomaliaSurvivor::ServerWithdrawFromFridge_Implementation(AAnomaliaRefrigerator* Fridge, FName ItemId, int32 Count)
+{
+    if (IsValid(Fridge)) Fridge->WithdrawOnServer(this, ItemId, Count);
 }
 
 void AAnomaliaSurvivor::ServerTryEnterVehicle_Implementation()
