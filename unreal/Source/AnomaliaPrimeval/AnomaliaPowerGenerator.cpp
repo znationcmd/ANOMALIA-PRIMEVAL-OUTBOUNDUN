@@ -1,5 +1,8 @@
 #include "AnomaliaPowerGenerator.h"
 #include "AnomaliaGameMode.h"
+#include "AnomaliaSurvivor.h"
+#include "Components/PrimitiveComponent.h"
+#include "Engine/World.h"
 #include "Dom/JsonObject.h"
 #include "HAL/FileManager.h"
 #include "Misc/FileHelper.h"
@@ -14,16 +17,56 @@
 AAnomaliaPowerGenerator::AAnomaliaPowerGenerator()
 {
     bReplicates = true;
+    SetReplicateMovement(true);
     PrimaryActorTick.bCanEverTick = true;
     SceneRoot = CreateDefaultSubobject<USceneComponent>(TEXT("SceneRoot"));
     RootComponent = SceneRoot;
     VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
     VisualMesh->SetupAttachment(SceneRoot);
+    VisualMesh->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+}
+
+bool AAnomaliaPowerGenerator::TryPickupOnServer(AAnomaliaSurvivor* Player)
+{
+    if (!HasAuthority() || !IsValid(Player) || Player->Health <= 0.f ||
+        IsValid(Carrier) || bRunning || Player->GetWorld() != GetWorld() ||
+        FVector::DistSquared(Player->GetActorLocation(), GetActorLocation()) > FMath::Square(300.f)) return false;
+    Carrier = Player;
+    SetActorEnableCollision(false);
+    AttachToComponent(Player->GetRootComponent(), FAttachmentTransformRules::KeepWorldTransform);
+    SetActorRelativeLocation(FVector(45.f, 65.f, 60.f));
+    ForceNetUpdate();
+    return true;
+}
+
+bool AAnomaliaPowerGenerator::TryPlaceOnServer(AAnomaliaSurvivor* Player)
+{
+    if (!HasAuthority() || !IsValid(Player) || Carrier != Player || !GetWorld()) return false;
+    const FVector Ahead = Player->GetActorLocation() + Player->GetActorForwardVector() * 160.f;
+    FHitResult Ground;
+    FCollisionQueryParams Params(SCENE_QUERY_STAT(PortableGeneratorGround), false, Player);
+    Params.AddIgnoredActor(this);
+    if (!GetWorld()->LineTraceSingleByChannel(Ground, Ahead + FVector(0, 0, 160.f),
+            Ahead - FVector(0, 0, 300.f), ECC_Visibility, Params) ||
+        !Ground.ImpactNormal.Equals(FVector::UpVector, .35f)) return false;
+    DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    const FVector Location = Ground.ImpactPoint + FVector(0, 0, 35.f);
+    Carrier = nullptr;
+    SetActorLocation(Location, false);
+    SetActorRotation(FRotator(0.f, Player->GetActorRotation().Yaw, 0.f));
+    SetActorEnableCollision(true);
+    ForceNetUpdate();
+    return true;
+}
+
+void AAnomaliaPowerGenerator::OnRep_Carrier()
+{
+    SetActorEnableCollision(!IsValid(Carrier));
 }
 
 bool AAnomaliaPowerGenerator::SetRunningOnServer(bool bStart)
 {
-    if (!HasAuthority() || (bStart && FuelLitres <= 0.f)) return false;
+    if (!HasAuthority() || (bStart && (FuelLitres <= 0.f || IsValid(Carrier)))) return false;
     bRunning = bStart;
     ForceNetUpdate();
     return true;
@@ -40,7 +83,7 @@ bool AAnomaliaPowerGenerator::RefuelOnServer(float Litres)
 bool AAnomaliaPowerGenerator::IsSupplyingActor(const AActor* Target) const
 {
     return IsValid(Target) && Target->GetWorld() == GetWorld() &&
-        bRunning && FuelLitres > 0.f &&
+        !IsValid(Carrier) && bRunning && FuelLitres > 0.f &&
         FVector::DistSquared(Target->GetActorLocation(), GetActorLocation()) <= FMath::Square(MaxCableDistanceCm);
 }
 
@@ -48,6 +91,13 @@ void AAnomaliaPowerGenerator::Tick(float DeltaSeconds)
 {
     Super::Tick(DeltaSeconds);
     if (!HasAuthority() || !FMath::IsFinite(DeltaSeconds) || DeltaSeconds <= 0.f) return;
+    if (IsValid(Carrier) && (Carrier->Health <= 0.f || !IsValid(Carrier->GetController())))
+    {
+        DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+        Carrier = nullptr;
+        SetActorEnableCollision(true);
+        ForceNetUpdate();
+    }
     if (bRunning)
     {
         FuelLitres = FMath::Max(0.f, FuelLitres - DeltaSeconds * LitresPerHour / 3600.f);
@@ -96,6 +146,21 @@ bool AAnomaliaPowerGenerator::LoadServerState()
     if (!Root->TryGetNumberField(TEXT("schemaVersion"), Schema) || Schema != 1 ||
         !Root->TryGetNumberField(TEXT("fuelLitres"), Fuel) || !FMath::IsFinite(Fuel) || Fuel < 0 || Fuel > 30 ||
         !Root->TryGetBoolField(TEXT("running"), bWasRunning)) return false;
+    // Legacy save compatibility. Newer saves also store final ground location.
+    const TSharedPtr<FJsonObject>* PositionPtr = nullptr;
+    if (Root->TryGetObjectField(TEXT("position"), PositionPtr))
+    {
+        if (!PositionPtr || !PositionPtr->IsValid()) return false;
+        double X=0, Y=0, Z=0, Yaw=0;
+        if (!(*PositionPtr)->TryGetNumberField(TEXT("x"), X) ||
+            !(*PositionPtr)->TryGetNumberField(TEXT("y"), Y) ||
+            !(*PositionPtr)->TryGetNumberField(TEXT("z"), Z) ||
+            !(*PositionPtr)->TryGetNumberField(TEXT("yaw"), Yaw) ||
+            !FMath::IsFinite(X) || !FMath::IsFinite(Y) ||
+            !FMath::IsFinite(Z) || !FMath::IsFinite(Yaw) ||
+            FMath::Abs(X) > 2400000 || FMath::Abs(Y) > 2400000 || FMath::Abs(Z) > 2400000) return false;
+        SetActorLocationAndRotation(FVector(X, Y, Z), FRotator(0.f, static_cast<float>(Yaw), 0.f));
+    }
     FuelLitres = static_cast<float>(Fuel);
     bRunning = bWasRunning && FuelLitres > 0.f;
     ForceNetUpdate();
@@ -110,6 +175,16 @@ bool AAnomaliaPowerGenerator::SaveServerState() const
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetNumberField(TEXT("fuelLitres"), FuelLitres);
     Root->SetBoolField(TEXT("running"), bRunning);
+    if (!IsValid(Carrier))
+    {
+        TSharedRef<FJsonObject> Position = MakeShared<FJsonObject>();
+        const FVector P = GetActorLocation();
+        Position->SetNumberField(TEXT("x"), P.X);
+        Position->SetNumberField(TEXT("y"), P.Y);
+        Position->SetNumberField(TEXT("z"), P.Z);
+        Position->SetNumberField(TEXT("yaw"), GetActorRotation().Yaw);
+        Root->SetObjectField(TEXT("position"), Position);
+    }
     FString Text;
     if (!FJsonSerializer::Serialize(Root, TJsonWriterFactory<>::Create(&Text))) return false;
     if (!IFileManager::Get().MakeDirectory(*FPaths::GetPath(File), true)) return false;
@@ -144,4 +219,5 @@ void AAnomaliaPowerGenerator::GetLifetimeReplicatedProps(TArray<FLifetimePropert
     Super::GetLifetimeReplicatedProps(OutLifetimeProps);
     DOREPLIFETIME(AAnomaliaPowerGenerator, bRunning);
     DOREPLIFETIME(AAnomaliaPowerGenerator, FuelLitres);
+    DOREPLIFETIME(AAnomaliaPowerGenerator, Carrier);
 }
