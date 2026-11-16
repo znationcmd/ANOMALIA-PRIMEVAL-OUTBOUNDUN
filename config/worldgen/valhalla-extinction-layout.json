@@ -1,0 +1,2207 @@
+{
+  "schemaVersion": 1,
+  "worldId": "valhalla-extinction",
+  "name": "VALHALLA EXTINCTION",
+  "seed": "ANOMALIA-VALHALLA-EXTINCTION-2026",
+  "dimensionsKm": [
+    24,
+    24
+  ],
+  "areaKm2": 576,
+  "theme": "Viking era Nordic dark fantasy + Viking-clothed undead",
+  "historicalStyle": "Norse 8th-11th century; no horned helmets, modern roads, vehicles, guns, contemporary clothing or architecture",
+  "villages": [
+    {
+      "id": "valhallborg",
+      "name": "Valhallborg",
+      "kind": "jarl-fortress",
+      "xMeters": -2500,
+      "yMeters": -850,
+      "zMeters": 391.57,
+      "xCm": -250000,
+      "yCm": -85000,
+      "zCm": 39457,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "timber_palisade",
+        "watchtower",
+        "runestone",
+        "smithy"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "ravnhavn",
+      "name": "Ravnhavn",
+      "kind": "longship-harbour",
+      "xMeters": -10000,
+      "yMeters": -5400,
+      "zMeters": 48.19,
+      "xCm": -1000000,
+      "yCm": -540000,
+      "zCm": 5119,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "boat_shed",
+        "drakkar",
+        "timber_pier"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "frostvik",
+      "name": "Frostvik",
+      "kind": "fishing-village",
+      "xMeters": -7000,
+      "yMeters": 8750,
+      "zMeters": 61.12,
+      "xCm": -700000,
+      "yCm": 875000,
+      "zCm": 6412,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "boat_shed",
+        "drakkar",
+        "timber_pier"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "draugheim",
+      "name": "Draugheim",
+      "kind": "undead-ruins",
+      "xMeters": 2100,
+      "yMeters": 7500,
+      "zMeters": 466.14,
+      "xCm": 210000,
+      "yCm": 750000,
+      "zCm": 46914,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "rune_shrine",
+        "burial_mound"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "skjoldgard",
+      "name": "Skjoldgard",
+      "kind": "shield-wall-fort",
+      "xMeters": 5600,
+      "yMeters": 1100,
+      "zMeters": 516.64,
+      "xCm": 560000,
+      "yCm": 110000,
+      "zCm": 51964,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "timber_palisade",
+        "watchtower",
+        "runestone",
+        "smithy"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "blodfjord",
+      "name": "Blodfjord",
+      "kind": "blood-fjord-harbour",
+      "xMeters": -10200,
+      "yMeters": 3550,
+      "zMeters": 130.21,
+      "xCm": -1020000,
+      "yCm": 355000,
+      "zCm": 13321,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "boat_shed",
+        "drakkar",
+        "timber_pier"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "ulvheim",
+      "name": "Ulvheim",
+      "kind": "hunter-village",
+      "xMeters": 3450,
+      "yMeters": -5050,
+      "zMeters": 510.95,
+      "xCm": 345000,
+      "yCm": -505000,
+      "zCm": 51395,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "smithy",
+        "fenced_hut"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "runestein",
+      "name": "Runestein",
+      "kind": "rune-sanctuary",
+      "xMeters": -900,
+      "yMeters": -6700,
+      "zMeters": 340.33,
+      "xCm": -90000,
+      "yCm": -670000,
+      "zCm": 34333,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "rune_shrine",
+        "burial_mound"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "jernvik",
+      "name": "Jernvik",
+      "kind": "smith-village",
+      "xMeters": -5000,
+      "yMeters": -6650,
+      "zMeters": 486.33,
+      "xCm": -500000,
+      "yCm": -665000,
+      "zCm": 48933,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "smithy",
+        "fenced_hut"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "helgrind",
+      "name": "Helgrind",
+      "kind": "burial-mounds",
+      "xMeters": 6700,
+      "yMeters": 50,
+      "zMeters": 276.87,
+      "xCm": 670000,
+      "yCm": 5000,
+      "zCm": 27987,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "rune_shrine",
+        "burial_mound"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "nattravn",
+      "name": "Nattravn",
+      "kind": "forest-village",
+      "xMeters": 1050,
+      "yMeters": 4450,
+      "zMeters": 236.05,
+      "xCm": 105000,
+      "yCm": 445000,
+      "zCm": 23905,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "smithy",
+        "fenced_hut"
+      ],
+      "zombieFaction": "draugr-vikings"
+    },
+    {
+      "id": "isfjord",
+      "name": "Isfjord",
+      "kind": "ice-coast-outpost",
+      "xMeters": -8500,
+      "yMeters": 8150,
+      "zMeters": 68.35,
+      "xCm": -850000,
+      "yCm": 815000,
+      "zCm": 7135,
+      "has3DMeshes": false,
+      "hasVikingZombieActors": false,
+      "buildingRequirements": [
+        "longhouse",
+        "boat_shed",
+        "drakkar",
+        "timber_pier"
+      ],
+      "zombieFaction": "draugr-vikings"
+    }
+  ],
+  "runeShrines": [
+    {
+      "id": "shrine-01",
+      "name": "Odin shrine 1",
+      "xMeters": -2194.29,
+      "yMeters": -755.43,
+      "zMeters": 389.02,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-02",
+      "name": "Odin shrine 2",
+      "xMeters": -10289.3,
+      "yMeters": -5263.24,
+      "zMeters": 40.61,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-03",
+      "name": "Odin shrine 3",
+      "xMeters": -6879.05,
+      "yMeters": 8453.74,
+      "zMeters": 103.0,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-04",
+      "name": "Odin shrine 4",
+      "xMeters": 2210.92,
+      "yMeters": 7800.16,
+      "zMeters": 396.74,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-05",
+      "name": "Odin shrine 5",
+      "xMeters": 5315.46,
+      "yMeters": 953.59,
+      "zMeters": 517.76,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-06",
+      "name": "Odin shrine 6",
+      "xMeters": -9891.29,
+      "yMeters": 3465.77,
+      "zMeters": 144.22,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-07",
+      "name": "Odin shrine 7",
+      "xMeters": 3279.25,
+      "yMeters": -4779.36,
+      "zMeters": 535.7,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    },
+    {
+      "id": "shrine-08",
+      "name": "Odin shrine 8",
+      "xMeters": -956.9,
+      "yMeters": -7014.9,
+      "zMeters": 352.18,
+      "requirements": [
+        "rune_monolith",
+        "altar",
+        "torch",
+        "grave_stones"
+      ],
+      "status": "marker-only"
+    }
+  ],
+  "draugrSpawnCandidates": [
+    {
+      "id": "draugr-0001",
+      "villageId": "valhallborg",
+      "archetype": "draugr-thrall",
+      "xMeters": -2170.0,
+      "yMeters": -850.0,
+      "zMeters": 415.79,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0002",
+      "villageId": "valhallborg",
+      "archetype": "draugr-huskarl",
+      "xMeters": -2969.7,
+      "yMeters": -1280.29,
+      "zMeters": 360.65,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0003",
+      "villageId": "valhallborg",
+      "archetype": "draugr-berserker",
+      "xMeters": -2417.47,
+      "yMeters": 90.39,
+      "zMeters": 275.8,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0004",
+      "villageId": "valhallborg",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -1738.84,
+      "yMeters": -1842.79,
+      "zMeters": 572.63,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0005",
+      "villageId": "valhallborg",
+      "archetype": "draugr-seidr",
+      "xMeters": -4034.18,
+      "yMeters": -578.62,
+      "zMeters": 309.38,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0006",
+      "villageId": "valhallborg",
+      "archetype": "draugr-thrall",
+      "xMeters": -2040.15,
+      "yMeters": -557.48,
+      "zMeters": 333.0,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0007",
+      "villageId": "valhallborg",
+      "archetype": "draugr-huskarl",
+      "xMeters": -2721.18,
+      "yMeters": -1672.79,
+      "zMeters": 389.81,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0008",
+      "villageId": "valhallborg",
+      "archetype": "draugr-berserker",
+      "xMeters": -3034.19,
+      "yMeters": 178.55,
+      "zMeters": 362.72,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0009",
+      "villageId": "valhallborg",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -1122.95,
+      "yMeters": -1352.89,
+      "zMeters": 527.54,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0010",
+      "villageId": "valhallborg",
+      "archetype": "draugr-seidr",
+      "xMeters": -2918.73,
+      "yMeters": -1022.85,
+      "zMeters": 336.3,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0011",
+      "villageId": "valhallborg",
+      "archetype": "draugr-thrall",
+      "xMeters": -2177.88,
+      "yMeters": -161.64,
+      "zMeters": 316.88,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0012",
+      "villageId": "valhallborg",
+      "archetype": "draugr-huskarl",
+      "xMeters": -2180.66,
+      "yMeters": -1868.09,
+      "zMeters": 499.51,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0013",
+      "villageId": "valhallborg",
+      "archetype": "draugr-berserker",
+      "xMeters": -3688.8,
+      "yMeters": -161.07,
+      "zMeters": 310.59,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0014",
+      "villageId": "valhallborg",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -2147.42,
+      "yMeters": -772.49,
+      "zMeters": 394.11,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0015",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-thrall",
+      "xMeters": -9670.0,
+      "yMeters": -5400.0,
+      "zMeters": 67.54,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0016",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-huskarl",
+      "xMeters": -8994.62,
+      "yMeters": -5628.42,
+      "zMeters": 120.25,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0017",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-berserker",
+      "xMeters": -9917.47,
+      "yMeters": -4459.61,
+      "zMeters": 143.48,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0018",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-seidr",
+      "xMeters": -9238.84,
+      "yMeters": -6392.79,
+      "zMeters": 39.0,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0019",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-thrall",
+      "xMeters": -9736.14,
+      "yMeters": -5974.28,
+      "zMeters": 29.98,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0020",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-huskarl",
+      "xMeters": -9540.15,
+      "yMeters": -5107.48,
+      "zMeters": 109.32,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0021",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-berserker",
+      "xMeters": -9228.98,
+      "yMeters": -6111.29,
+      "zMeters": 53.49,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0022",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -10534.19,
+      "yMeters": -4371.45,
+      "zMeters": 75.3,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0023",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-seidr",
+      "xMeters": -8622.95,
+      "yMeters": -5902.89,
+      "zMeters": 120.15,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0024",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-thrall",
+      "xMeters": -9288.54,
+      "yMeters": -5859.6,
+      "zMeters": 70.1,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0025",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-huskarl",
+      "xMeters": -9677.88,
+      "yMeters": -4711.64,
+      "zMeters": 122.38,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0026",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-berserker",
+      "xMeters": -9680.66,
+      "yMeters": -6418.09,
+      "zMeters": 29.56,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0027",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -9406.41,
+      "yMeters": -5652.35,
+      "zMeters": 67.99,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0028",
+      "villageId": "ravnhavn",
+      "archetype": "draugr-seidr",
+      "xMeters": -9647.42,
+      "yMeters": -5322.49,
+      "zMeters": 78.15,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0029",
+      "villageId": "frostvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -6670.0,
+      "yMeters": 8750.0,
+      "zMeters": 73.71,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0030",
+      "villageId": "frostvik",
+      "archetype": "draugr-berserker",
+      "xMeters": -7469.7,
+      "yMeters": 8319.71,
+      "zMeters": 96.7,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0031",
+      "villageId": "frostvik",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -8162.32,
+      "yMeters": 8087.24,
+      "zMeters": 105.95,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0032",
+      "villageId": "frostvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -6238.84,
+      "yMeters": 7757.21,
+      "zMeters": 388.29,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0033",
+      "villageId": "frostvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -7265.88,
+      "yMeters": 8405.71,
+      "zMeters": 88.91,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0034",
+      "villageId": "frostvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -6540.15,
+      "yMeters": 9042.52,
+      "zMeters": 47.34,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0035",
+      "villageId": "frostvik",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -7221.18,
+      "yMeters": 7927.21,
+      "zMeters": 191.42,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0036",
+      "villageId": "frostvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -7725.42,
+      "yMeters": 7376.84,
+      "zMeters": 280.37,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0037",
+      "villageId": "frostvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -5622.95,
+      "yMeters": 8247.11,
+      "zMeters": 283.98,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0038",
+      "villageId": "frostvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -7418.73,
+      "yMeters": 8577.15,
+      "zMeters": 66.05,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0039",
+      "villageId": "frostvik",
+      "archetype": "draugr-berserker",
+      "xMeters": -8137.74,
+      "yMeters": 8556.95,
+      "zMeters": 39.86,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0040",
+      "villageId": "frostvik",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -6680.66,
+      "yMeters": 7731.91,
+      "zMeters": 303.2,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0041",
+      "villageId": "frostvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -8328.48,
+      "yMeters": 7911.44,
+      "zMeters": 110.97,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0042",
+      "villageId": "frostvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -6647.42,
+      "yMeters": 8827.51,
+      "zMeters": 65.45,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0043",
+      "villageId": "draugheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 2430.0,
+      "yMeters": 7500.0,
+      "zMeters": 417.09,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0044",
+      "villageId": "draugheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 1630.3,
+      "yMeters": 7069.71,
+      "zMeters": 582.22,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0045",
+      "villageId": "draugheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 2182.53,
+      "yMeters": 8440.39,
+      "zMeters": 361.53,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0046",
+      "villageId": "draugheim",
+      "archetype": "draugr-thrall",
+      "xMeters": 2861.16,
+      "yMeters": 6507.21,
+      "zMeters": 390.58,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0047",
+      "villageId": "draugheim",
+      "archetype": "draugr-huskarl",
+      "xMeters": 565.82,
+      "yMeters": 7771.38,
+      "zMeters": 717.75,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0048",
+      "villageId": "draugheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 2559.85,
+      "yMeters": 7792.52,
+      "zMeters": 388.27,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0049",
+      "villageId": "draugheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 1878.82,
+      "yMeters": 6677.21,
+      "zMeters": 475.12,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0050",
+      "villageId": "draugheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 1565.81,
+      "yMeters": 8528.55,
+      "zMeters": 352.78,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0051",
+      "villageId": "draugheim",
+      "archetype": "draugr-thrall",
+      "xMeters": 3477.05,
+      "yMeters": 6997.11,
+      "zMeters": 478.93,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0052",
+      "villageId": "draugheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 1681.27,
+      "yMeters": 7327.15,
+      "zMeters": 576.22,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0053",
+      "villageId": "draugheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 2422.12,
+      "yMeters": 8188.36,
+      "zMeters": 380.28,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0054",
+      "villageId": "draugheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 2419.34,
+      "yMeters": 6481.91,
+      "zMeters": 440.02,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0055",
+      "villageId": "draugheim",
+      "archetype": "draugr-thrall",
+      "xMeters": 911.2,
+      "yMeters": 8188.93,
+      "zMeters": 574.9,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0056",
+      "villageId": "draugheim",
+      "archetype": "draugr-huskarl",
+      "xMeters": 2452.58,
+      "yMeters": 7577.51,
+      "zMeters": 411.38,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0057",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 5930.0,
+      "yMeters": 1100.0,
+      "zMeters": 533.07,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0058",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-seidr",
+      "xMeters": 5130.3,
+      "yMeters": 669.71,
+      "zMeters": 508.18,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0059",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-thrall",
+      "xMeters": 5682.53,
+      "yMeters": 2040.39,
+      "zMeters": 846.5,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0060",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-huskarl",
+      "xMeters": 6361.16,
+      "yMeters": 107.21,
+      "zMeters": 341.34,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0061",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-berserker",
+      "xMeters": 4065.82,
+      "yMeters": 1371.38,
+      "zMeters": 468.31,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0062",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 6059.85,
+      "yMeters": 1392.52,
+      "zMeters": 610.43,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0063",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-seidr",
+      "xMeters": 5378.82,
+      "yMeters": 277.21,
+      "zMeters": 445.8,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0064",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-thrall",
+      "xMeters": 5065.81,      "yMeters": 2128.55,
+      "zMeters": 824.36,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0065",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-huskarl",
+      "xMeters": 6977.05,
+      "yMeters": 597.11,
+      "zMeters": 319.55,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0066",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-berserker",
+      "xMeters": 5181.27,
+      "yMeters": 927.15,
+      "zMeters": 518.21,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0067",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 5922.12,
+      "yMeters": 1788.36,
+      "zMeters": 778.55,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0068",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-seidr",
+      "xMeters": 5919.34,
+      "yMeters": 81.91,
+      "zMeters": 439.17,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0069",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-huskarl",
+      "xMeters": 4411.2,
+      "yMeters": 1788.93,
+      "zMeters": 677.5,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0070",
+      "villageId": "skjoldgard",
+      "archetype": "draugr-berserker",
+      "xMeters": 5952.58,
+      "yMeters": 1177.51,
+      "zMeters": 550.64,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0071",
+      "villageId": "blodfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -9870.0,
+      "yMeters": 3550.0,
+      "zMeters": 156.59,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0072",
+      "villageId": "blodfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -9403.35,
+      "yMeters": 4484.53,
+      "zMeters": 139.53,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0073",
+      "villageId": "blodfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -10117.47,
+      "yMeters": 4490.39,
+      "zMeters": 112.16,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0074",
+      "villageId": "blodfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -8773.26,
+      "yMeters": 3797.22,
+      "zMeters": 264.49,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0075",
+      "villageId": "blodfjord",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -9372.11,
+      "yMeters": 3507.05,
+      "zMeters": 225.62,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0076",
+      "villageId": "blodfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -9740.15,
+      "yMeters": 3842.52,
+      "zMeters": 167.73,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0077",
+      "villageId": "blodfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -9026.64,
+      "yMeters": 3969.22,
+      "zMeters": 195.75,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0078",
+      "villageId": "blodfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -10734.19,
+      "yMeters": 4578.55,
+      "zMeters": 53.23,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0079",
+      "villageId": "blodfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -9946.27,
+      "yMeters": 3780.81,
+      "zMeters": 156.13,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0080",
+      "villageId": "blodfjord",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -10618.73,
+      "yMeters": 3377.15,
+      "zMeters": 118.32,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0081",
+      "villageId": "blodfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -9877.88,
+      "yMeters": 4238.36,
+      "zMeters": 136.58,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0082",
+      "villageId": "blodfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -9302.98,
+      "yMeters": 4703.2,
+      "zMeters": 143.16,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0083",
+      "villageId": "blodfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -9548.63,
+      "yMeters": 4083.56,
+      "zMeters": 165.2,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0084",
+      "villageId": "blodfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -9847.42,
+      "yMeters": 3627.51,
+      "zMeters": 158.56,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0085",
+      "villageId": "ulvheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 3780.0,
+      "yMeters": -5050.0,
+      "zMeters": 610.45,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0086",
+      "villageId": "ulvheim",
+      "archetype": "draugr-huskarl",
+      "xMeters": 2980.3,
+      "yMeters": -5480.29,
+      "zMeters": 420.95,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0087",
+      "villageId": "ulvheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 3532.53,
+      "yMeters": -4109.61,
+      "zMeters": 674.29,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0088",
+      "villageId": "ulvheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 4211.16,
+      "yMeters": -6042.79,
+      "zMeters": 603.7,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0089",
+      "villageId": "ulvheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 1915.82,
+      "yMeters": -4778.62,
+      "zMeters": 417.69,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0090",
+      "villageId": "ulvheim",
+      "archetype": "draugr-thrall",
+      "xMeters": 3909.85,
+      "yMeters": -4757.48,
+      "zMeters": 707.64,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0091",
+      "villageId": "ulvheim",
+      "archetype": "draugr-huskarl",
+      "xMeters": 3228.82,
+      "yMeters": -5872.79,
+      "zMeters": 409.38,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0092",
+      "villageId": "ulvheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 2915.81,
+      "yMeters": -4021.45,
+      "zMeters": 564.03,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0093",
+      "villageId": "ulvheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 3703.73,
+      "yMeters": -4819.19,
+      "zMeters": 615.41,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0094",
+      "villageId": "ulvheim",
+      "archetype": "draugr-seidr",
+      "xMeters": 3031.27,
+      "yMeters": -5222.85,
+      "zMeters": 453.95,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0095",
+      "villageId": "ulvheim",
+      "archetype": "draugr-thrall",
+      "xMeters": 3772.12,
+      "yMeters": -4361.64,
+      "zMeters": 745.62,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0096",
+      "villageId": "ulvheim",
+      "archetype": "draugr-huskarl",
+      "xMeters": 3769.34,
+      "yMeters": -6068.09,
+      "zMeters": 523.23,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0097",
+      "villageId": "ulvheim",
+      "archetype": "draugr-berserker",
+      "xMeters": 2261.2,
+      "yMeters": -4361.07,
+      "zMeters": 526.4,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0098",
+      "villageId": "ulvheim",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 3802.58,
+      "yMeters": -4972.49,
+      "zMeters": 625.93,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0099",
+      "villageId": "runestein",
+      "archetype": "draugr-thrall",
+      "xMeters": -570.0,
+      "yMeters": -6700.0,
+      "zMeters": 292.35,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0100",
+      "villageId": "runestein",
+      "archetype": "draugr-huskarl",
+      "xMeters": -1369.7,
+      "yMeters": -7130.29,
+      "zMeters": 354.63,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0101",
+      "villageId": "runestein",
+      "archetype": "draugr-berserker",
+      "xMeters": -817.47,
+      "yMeters": -5759.61,
+      "zMeters": 366.2,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0102",
+      "villageId": "runestein",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -138.84,
+      "yMeters": -7692.79,
+      "zMeters": 245.49,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0103",
+      "villageId": "runestein",
+      "archetype": "draugr-thrall",
+      "xMeters": -2434.18,
+      "yMeters": -6428.62,
+      "zMeters": 611.05,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0104",
+      "villageId": "runestein",
+      "archetype": "draugr-huskarl",
+      "xMeters": -440.15,
+      "yMeters": -6407.48,
+      "zMeters": 279.78,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0105",
+      "villageId": "runestein",
+      "archetype": "draugr-berserker",
+      "xMeters": -1121.18,
+      "yMeters": -7522.79,
+      "zMeters": 271.07,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0106",
+      "villageId": "runestein",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -1434.19,
+      "yMeters": -5671.45,
+      "zMeters": 547.66,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0107",
+      "villageId": "runestein",
+      "archetype": "draugr-seidr",
+      "xMeters": 477.05,
+      "yMeters": -7202.89,
+      "zMeters": 262.59,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0108",
+      "villageId": "runestein",
+      "archetype": "draugr-thrall",
+      "xMeters": -1318.73,
+      "yMeters": -6872.85,
+      "zMeters": 381.89,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0109",
+      "villageId": "runestein",
+      "archetype": "draugr-huskarl",
+      "xMeters": -577.88,
+      "yMeters": -6011.64,
+      "zMeters": 353.78,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0110",
+      "villageId": "runestein",
+      "archetype": "draugr-berserker",
+      "xMeters": -580.66,
+      "yMeters": -7718.09,
+      "zMeters": 266.18,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0111",
+      "villageId": "runestein",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -2088.8,
+      "yMeters": -6011.07,
+      "zMeters": 639.38,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0112",
+      "villageId": "runestein",
+      "archetype": "draugr-seidr",
+      "xMeters": -547.42,
+      "yMeters": -6622.49,
+      "zMeters": 284.33,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0113",
+      "villageId": "jernvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -5412.24,
+      "yMeters": -6054.82,
+      "zMeters": 550.06,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0114",
+      "villageId": "jernvik",
+      "archetype": "draugr-berserker",
+      "xMeters": -5469.7,
+      "yMeters": -7080.29,
+      "zMeters": 261.93,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0115",
+      "villageId": "jernvik",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -5960.58,
+      "yMeters": -6034.23,
+      "zMeters": 399.17,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0116",
+      "villageId": "jernvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -3573.26,
+      "yMeters": -6402.78,
+      "zMeters": 831.38,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0117",
+      "villageId": "jernvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -6534.18,
+      "yMeters": -6378.62,
+      "zMeters": 274.7,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0118",
+      "villageId": "jernvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -5865.43,
+      "yMeters": -6285.65,
+      "zMeters": 377.84,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0119",
+      "villageId": "jernvik",
+      "archetype": "draugr-berserker",
+      "xMeters": -5221.18,
+      "yMeters": -7472.79,
+      "zMeters": 209.5,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0120",
+      "villageId": "jernvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -5534.19,
+      "yMeters": -5621.45,
+      "zMeters": 617.08,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0121",
+      "villageId": "jernvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -5718.11,
+      "yMeters": -6484.2,
+      "zMeters": 363.96,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0122",
+      "villageId": "jernvik",
+      "archetype": "draugr-huskarl",
+      "xMeters": -5418.73,
+      "yMeters": -6822.85,
+      "zMeters": 319.98,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0123",
+      "villageId": "jernvik",
+      "archetype": "draugr-berserker",
+      "xMeters": -5579.61,
+      "yMeters": -5888.49,
+      "zMeters": 535.31,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0124",
+      "villageId": "jernvik",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -4680.66,
+      "yMeters": -7668.09,
+      "zMeters": 269.54,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0125",
+      "villageId": "jernvik",
+      "archetype": "draugr-seidr",
+      "xMeters": -6188.8,
+      "yMeters": -5961.07,
+      "zMeters": 378.28,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0126",
+      "villageId": "jernvik",
+      "archetype": "draugr-thrall",
+      "xMeters": -5553.13,
+      "yMeters": -6136.12,
+      "zMeters": 491.01,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0127",
+      "villageId": "helgrind",
+      "archetype": "draugr-berserker",
+      "xMeters": 7030.0,
+      "yMeters": 50.0,
+      "zMeters": 270.56,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0128",
+      "villageId": "helgrind",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 6230.3,
+      "yMeters": -380.29,
+      "zMeters": 414.91,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0129",
+      "villageId": "helgrind",
+      "archetype": "draugr-seidr",
+      "xMeters": 6782.53,
+      "yMeters": 990.39,
+      "zMeters": 394.58,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0130",
+      "villageId": "helgrind",
+      "archetype": "draugr-thrall",
+      "xMeters": 7461.16,
+      "yMeters": -942.79,
+      "zMeters": 252.95,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0131",
+      "villageId": "helgrind",
+      "archetype": "draugr-huskarl",
+      "xMeters": 5165.82,
+      "yMeters": 321.38,
+      "zMeters": 444.19,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0132",
+      "villageId": "helgrind",
+      "archetype": "draugr-berserker",
+      "xMeters": 7159.85,
+      "yMeters": 342.52,
+      "zMeters": 260.62,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0133",
+      "villageId": "helgrind",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 6478.82,
+      "yMeters": -772.79,
+      "zMeters": 408.33,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0134",
+      "villageId": "helgrind",
+      "archetype": "draugr-seidr",
+      "xMeters": 6165.81,
+      "yMeters": 1078.55,
+      "zMeters": 535.59,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0135",
+      "villageId": "helgrind",
+      "archetype": "draugr-thrall",
+      "xMeters": 8077.05,
+      "yMeters": -452.89,
+      "zMeters": 171.87,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0136",
+      "villageId": "helgrind",
+      "archetype": "draugr-huskarl",
+      "xMeters": 6281.27,
+      "yMeters": -122.85,
+      "zMeters": 359.44,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0137",
+      "villageId": "helgrind",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 7022.12,
+      "yMeters": 738.36,
+      "zMeters": 331.05,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0138",
+      "villageId": "helgrind",
+      "archetype": "draugr-seidr",
+      "xMeters": 7019.34,
+      "yMeters": -968.09,
+      "zMeters": 379.84,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0139",
+      "villageId": "helgrind",
+      "archetype": "draugr-thrall",
+      "xMeters": 5511.2,
+      "yMeters": 738.93,
+      "zMeters": 506.87,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0140",
+      "villageId": "helgrind",
+      "archetype": "draugr-huskarl",
+      "xMeters": 7052.58,
+      "yMeters": 127.51,
+      "zMeters": 268.52,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0141",
+      "villageId": "nattravn",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 1380.0,
+      "yMeters": 4450.0,
+      "zMeters": 289.77,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0142",
+      "villageId": "nattravn",
+      "archetype": "draugr-seidr",
+      "xMeters": 580.3,
+      "yMeters": 4019.71,
+      "zMeters": 283.22,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0143",
+      "villageId": "nattravn",
+      "archetype": "draugr-thrall",
+      "xMeters": 1132.53,
+      "yMeters": 5390.39,
+      "zMeters": 349.4,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0144",
+      "villageId": "nattravn",
+      "archetype": "draugr-huskarl",
+      "xMeters": 1811.16,
+      "yMeters": 3457.21,
+      "zMeters": 277.7,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0145",
+      "villageId": "nattravn",
+      "archetype": "draugr-berserker",
+      "xMeters": 784.12,
+      "yMeters": 4105.71,
+      "zMeters": 290.01,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0146",
+      "villageId": "nattravn",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 1509.85,
+      "yMeters": 4742.52,
+      "zMeters": 326.54,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0147",
+      "villageId": "nattravn",
+      "archetype": "draugr-seidr",
+      "xMeters": 828.82,
+      "yMeters": 3627.21,
+      "zMeters": 237.03,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0148",
+      "villageId": "nattravn",
+      "archetype": "draugr-thrall",
+      "xMeters": 324.58,
+      "yMeters": 3076.84,
+      "zMeters": 217.93,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0149",
+      "villageId": "nattravn",
+      "archetype": "draugr-huskarl",
+      "xMeters": 2427.05,
+      "yMeters": 3947.11,
+      "zMeters": 486.94,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0150",
+      "villageId": "nattravn",
+      "archetype": "draugr-berserker",
+      "xMeters": 631.27,
+      "yMeters": 4277.15,
+      "zMeters": 272.01,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0151",
+      "villageId": "nattravn",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": 1372.12,
+      "yMeters": 5138.36,
+      "zMeters": 383.74,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0152",
+      "villageId": "nattravn",
+      "archetype": "draugr-seidr",
+      "xMeters": 1369.34,
+      "yMeters": 3431.91,
+      "zMeters": 285.86,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0153",
+      "villageId": "nattravn",
+      "archetype": "draugr-thrall",
+      "xMeters": -278.48,
+      "yMeters": 3611.44,
+      "zMeters": 260.46,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0154",
+      "villageId": "nattravn",
+      "archetype": "draugr-berserker",
+      "xMeters": 1402.58,
+      "yMeters": 4527.51,
+      "zMeters": 296.5,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0155",
+      "villageId": "isfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -8170.0,
+      "yMeters": 8150.0,
+      "zMeters": 97.63,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0156",
+      "villageId": "isfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -8969.7,
+      "yMeters": 7719.71,
+      "zMeters": 83.91,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0157",
+      "villageId": "isfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -9662.32,
+      "yMeters": 7487.24,
+      "zMeters": 36.62,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0158",
+      "villageId": "isfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -7738.84,
+      "yMeters": 7157.21,
+      "zMeters": 330.64,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0159",
+      "villageId": "isfjord",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -8765.88,
+      "yMeters": 7805.71,
+      "zMeters": 87.8,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0160",
+      "villageId": "isfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -8040.15,
+      "yMeters": 8442.52,
+      "zMeters": 63.84,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0161",
+      "villageId": "isfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -8721.18,
+      "yMeters": 7327.21,
+      "zMeters": 168.34,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0162",
+      "villageId": "isfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -9225.42,
+      "yMeters": 6776.84,
+      "zMeters": 127.05,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0163",
+      "villageId": "isfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -7122.95,
+      "yMeters": 7647.11,
+      "zMeters": 276.24,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0164",
+      "villageId": "isfjord",
+      "archetype": "draugr-shieldmaiden",
+      "xMeters": -8918.73,      "yMeters": 7977.15,
+      "zMeters": 54.72,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0165",
+      "villageId": "isfjord",
+      "archetype": "draugr-seidr",
+      "xMeters": -8917.84,
+      "yMeters": 6865.24,
+      "zMeters": 184.14,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0166",
+      "villageId": "isfjord",
+      "archetype": "draugr-thrall",
+      "xMeters": -8180.66,
+      "yMeters": 7131.91,
+      "zMeters": 253.9,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0167",
+      "villageId": "isfjord",
+      "archetype": "draugr-huskarl",
+      "xMeters": -8463.96,
+      "yMeters": 7703.45,
+      "zMeters": 123.96,
+      "difficulty": "normal",
+      "status": "spawn-point-only-no-AI"
+    },
+    {
+      "id": "draugr-0168",
+      "villageId": "isfjord",
+      "archetype": "draugr-berserker",
+      "xMeters": -8147.42,
+      "yMeters": 8227.51,
+      "zMeters": 89.07,
+      "difficulty": "elite",
+      "status": "spawn-point-only-no-AI"
+    }
+  ],
+  "zombieArchetypes": [
+    {
+      "id": "draugr-thrall",
+      "name": "Draugr Thrall",
+      "weight": 45,
+      "clothing": [
+        "linen_tunic",
+        "wool_trousers",
+        "leather_boots",
+        "torn_cloak"
+      ],
+      "weapon": "rusty_axe"
+    },
+    {
+      "id": "draugr-huskarl",
+      "name": "Draugr Huskarl",
+      "weight": 20,
+      "clothing": [
+        "mail_hauberk",
+        "wool_tunic",
+        "iron_helmet_no_horns",
+        "fur_cloak"
+      ],
+      "weapon": "viking_sword"
+    },
+    {
+      "id": "draugr-berserker",
+      "name": "Draugr Berserker",
+      "weight": 12,
+      "clothing": [
+        "bear_fur",
+        "leather_belt",
+        "wool_trousers"
+      ],
+      "weapon": "two_handed_axe"
+    },
+    {
+      "id": "draugr-shieldmaiden",
+      "name": "Draugr Shieldmaiden",
+      "weight": 13,
+      "clothing": [
+        "wool_dress",
+        "leather_vest",
+        "fur_shawl",
+        "leather_boots"
+      ],
+      "weapon": "round_shield_and_spear"
+    },
+    {
+      "id": "draugr-seidr",
+      "name": "Draugr Seidr",
+      "weight": 10,
+      "clothing": [
+        "ritual_wool_robe",
+        "hood",
+        "bone_necklace",
+        "leather_boots"
+      ],
+      "weapon": "ritual_staff"
+    }
+  ],
+  "biomes": [
+    "deep_fjord",
+    "rocky_coast",
+    "pine_birch_forest",
+    "peat_marsh",
+    "mountain_tundra",
+    "snow_peak",
+    "glacial_valley"
+  ],
+  "routeCandidates": [
+    {
+      "from": "valhallborg",
+      "to": "ravnhavn",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "valhallborg",
+      "to": "frostvik",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "frostvik",
+      "to": "draugheim",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "draugheim",
+      "to": "skjoldgard",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "frostvik",
+      "to": "blodfjord",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "skjoldgard",
+      "to": "ulvheim",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "ulvheim",
+      "to": "runestein",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "runestein",
+      "to": "jernvik",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "skjoldgard",
+      "to": "helgrind",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "draugheim",
+      "to": "nattravn",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    },
+    {
+      "from": "frostvik",
+      "to": "isfjord",
+      "type": "dirt-path-or-fjord-passage",
+      "status": "needs-spline-and-navigation-validation"
+    }
+  ],
+  "requiredAssetTypes": [
+    "longhouse",
+    "timber_palisade",
+    "watchtower",
+    "runestone",
+    "smithy",
+    "boat_shed",
+    "drakkar",
+    "timber_pier",
+    "rune_shrine",
+    "burial_mound",
+    "fenced_hut",
+    "rune_monolith",
+    "altar",
+    "torch",
+    "grave_stones",
+    "viking_zombie_skeletal_mesh",
+    "viking_zombie_anim_bp",
+    "viking_clothing_assets",
+    "viking_weapons"
+  ],
+  "gameplayReady": false,
+  "actorsPlacedInUE5": false,
+  "sourceOnly": true
+}
