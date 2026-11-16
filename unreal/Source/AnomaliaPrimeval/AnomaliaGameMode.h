@@ -5,6 +5,8 @@
 #include "AnomaliaGameMode.generated.h"
 
 class AAnomaliaVehiclePawn;
+class AAnomaliaPowerGenerator;
+class AAnomaliaRefrigerator;
 class AController;
 class APlayerController;
 
@@ -22,6 +24,13 @@ public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Server")
     FAnomaliaServerSettings ActiveServerSettings;
 
+    /** Optional Blueprint subclasses holding the real imported 3D meshes. */
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Appliances")
+    TSubclassOf<AAnomaliaPowerGenerator> GeneratorClass;
+
+    UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category="ANOMALIA|Appliances")
+    TSubclassOf<AAnomaliaRefrigerator> RefrigeratorClass;
+
     UFUNCTION(BlueprintPure, Category="ANOMALIA|Server")
     FString GetActiveServerMode() const { return ActiveServerSettings.Mode; }
 
@@ -30,6 +39,7 @@ protected:
     virtual void BeginPlay() override;
     virtual void HandleStartingNewPlayer_Implementation(APlayerController* NewPlayer) override;
     void SpawnConfiguredVehicles();
+    void SpawnConfiguredAppliances();
     void LoadPersistentPlayer(APlayerController* PlayerController);
     void SavePersistentPlayer(AController* Controller);
     void SaveAllPlayerProfiles();
