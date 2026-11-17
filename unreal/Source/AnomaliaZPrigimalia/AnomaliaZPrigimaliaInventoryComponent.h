@@ -2,6 +2,7 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "TimerManager.h"
 #include "AnomaliaZPrigimaliaEconomySubsystem.h"
 #include "AnomaliaZPrigimaliaInventoryComponent.generated.h"
 
@@ -10,6 +11,7 @@ struct FAnomaliaZPrigimaliaItemUseRule;
 class FJsonObject;
 class UAnomaliaZPrigimaliaSharedStorageSubsystem;
 class AAnomaliaZPrigimaliaLootPickup;
+class AAnomaliaZPrigimaliaWaterSource;
 class UStaticMeshComponent;
 
 /** Server-owned compatibility table. Attachments are single physical stacks, never extra cargo cells. */
@@ -148,6 +150,20 @@ public:
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Crafting")
     bool RequestCraftRecipe(FName RecipeId);
 
+    /** An authored nearby water source determines potable or untreated quality. */
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Survival|Kitchen")
+    bool RequestFillContainer(int32 StackId, int32 ExpectedCount);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Survival|Kitchen")
+    bool RequestTreatWater(int32 StackId, int32 ExpectedCount);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Survival|Kitchen")
+    bool RequestBoilPot(int32 StackId, int32 ExpectedCount);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Survival|Kitchen")
+    bool RequestCookFood(int32 UtensilStackId, int32 FoodStackId, int32 ExpectedFoodCount);
+
+    static bool IsFillableContainer(FName ItemId);
+    static bool IsKitchenUtensil(FName ItemId);
+    static FName CookedFoodFor(FName ItemId);
+
     /** Derived from physical banknote stacks on the server, not a second cash ledger. */
     UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Bank")
     int64 CashBalanceCents=0;
@@ -266,6 +282,10 @@ protected:
 
     UFUNCTION(Server,Reliable)
     void ServerRequestCraftRecipe(FName RecipeId);
+    UFUNCTION(Server,Reliable) void ServerRequestFillContainer(int32 StackId,int32 ExpectedCount);
+    UFUNCTION(Server,Reliable) void ServerRequestTreatWater(int32 StackId,int32 ExpectedCount);
+    UFUNCTION(Server,Reliable) void ServerRequestBoilPot(int32 StackId,int32 ExpectedCount);
+    UFUNCTION(Server,Reliable) void ServerRequestCookFood(int32 UtensilStackId,int32 FoodStackId,int32 ExpectedFoodCount);
     UFUNCTION(Server,Reliable)
     void ServerRequestStowStackIn(int32 StackId,FName ContainerId);
     UFUNCTION(Server,Reliable)
@@ -290,6 +310,25 @@ private:
     FVector LastWearLocation=FVector::ZeroVector;
     bool bHasWearLocation=false;
     bool CraftFromOwningPlayer(FName RecipeId);
+    enum class EKitchenOperation : uint8 { Fill, Treat, Boil, Cook };
+    bool RunKitchenOnServer(EKitchenOperation Action,int32 UtensilStackId,int32 ExpectedCount,int32 FoodStackId=0);
+    bool CommitKitchenExchange(int32 PrimaryId,int32 ExpectedPrimary,FName PrimaryOutput,
+                               int32 SecondaryId,int32 ExpectedSecondary,FName SecondaryOutput,
+                               FName ExtraConsumed,FString& OutError);
+    bool HasLiveKitchenFire() const;
+    AAnomaliaZPrigimaliaWaterSource* FindNearbyWaterSource() const;
+    void FinishKitchenCooking();
+    void CheckKitchenFire();
+    void ReportKitchenResult(const FString& Message);
+    double NextKitchenRequestTime=0;
+    FTimerHandle KitchenCookTimer;
+    FTimerHandle KitchenCheckTimer;
+    bool bKitchenPending=false;
+    bool bKitchenBoiling=false;
+    int32 PendingUtensilId=0;
+    int32 PendingUtensilCount=0;
+    int32 PendingFoodId=0;
+    int32 PendingFoodCount=0;
     bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaZPrigimaliaItemUseRule GetUseRule(FName ItemId) const;
     bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount,bool bWetHead=false);
