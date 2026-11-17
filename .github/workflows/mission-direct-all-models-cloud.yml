@@ -93,6 +93,6 @@ jobs:
           path: ${{ env.CLOUD_TRANSFER_OUT }}/direct-transfer-summary.json
           if-no-files-found: warn
 
-# Resume after read-only confirmation that D and the actual game project are accessible again.
+# Resume requested on 2026-11-17 after successful read-only preflight 44152940004: Google Drive FS active, original City Sample and actual SKARVIK present. Source originals stay intact.
 
 # Apply bounded Drive cache backpressure so automatic batches keep waiting for upload drainage.
