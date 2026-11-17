@@ -19,6 +19,13 @@ jobs:
         with:
           path: kitchen-isolated-${{ github.run_id }}
           persist-credentials: false
+          sparse-checkout: |
+            unreal/AnomaliaZPrigimalia.uproject
+            unreal/Source
+            unreal/Config
+            unreal/Build
+            public/config
+          sparse-checkout-cone-mode: false
       - name: Compile only an isolated checkout, never D:\ANOMALIA
         shell: powershell
         run: |
@@ -48,5 +55,5 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: anomalia-kitchen-native-compile-results
-          path: ${{ env.KITCHEN_NATIVE_REPORT }}/
+          path: ${{ runner.temp }}/kitchen-native-${{ github.run_id }}/
           if-no-files-found: warn
