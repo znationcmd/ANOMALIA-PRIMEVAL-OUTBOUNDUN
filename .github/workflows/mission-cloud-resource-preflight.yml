@@ -33,7 +33,18 @@ jobs:
               }
             }
           }
-          $result=[ordered]@{readOnly=$true;driveClientProcesses=$client;disks=$disks;existingCloudModelFolders=$found;cloudFolderId='1KD66RKBTk9AFJMXhivhEHPcBqh1qiS9t';cloudQuotaVerifiedByApi=$false;sourceFilesDeleted=0}
+          $cityRoot='D:\ANOMALIA\FabImports\CitySample'
+          $mainMap='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $progress=@()
+          foreach($p in @('D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\summary.json','D:\ANOMALIA\unreal\Saved\CloudTransfer\20261105\summary.json')) {
+            if(Test-Path -LiteralPath $p -PathType Leaf) {
+              try {
+                $s=Get-Content -LiteralPath $p -Raw | ConvertFrom-Json
+                $progress+= [ordered]@{path=$p;state=$s.state;reportedAtUTC=$s.reportedAtUTC;cloudFolderId=$s.cloudFolderId;remoteServerVerificationPending=$s.remoteServerVerificationPending;totalLogicalBytesWritten=$s.totalLogicalBytesWritten;newBytesWrittenToDriveClient=$s.newBytesWrittenToDriveClient;newFilesWrittenToDriveClient=$s.newFilesWrittenToDriveClient;errors=$s.errors.Count}
+              } catch { $progress+= [ordered]@{path=$p;error=$_.Exception.Message} }
+            }
+          }
+          $result=[ordered]@{readOnly=$true;driveClientProcesses=$client;disks=$disks;existingCloudModelFolders=$found;cloudFolderId='1KD66RKBTk9AFJMXhivhEHPcBqh1qiS9t';cloudQuotaVerifiedByApi=$false;sourceFilesDeleted=0;citySampleSourceExists=(Test-Path -LiteralPath $cityRoot -PathType Container);citySampleProjectExists=(Test-Path -LiteralPath (Join-Path $cityRoot 'CitySample.uproject') -PathType Leaf);actualMainSkarvikExists=(Test-Path -LiteralPath $mainMap -PathType Leaf);transferCheckpointSummaries=$progress}
           $result | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $out 'cloud-resource-preflight.json') -Encoding UTF8
           Write-Output ('CLOUD_PREFLIGHT '+($result | ConvertTo-Json -Depth 7 -Compress))
       - uses: actions/upload-artifact@v4
