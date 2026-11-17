@@ -84,6 +84,11 @@ bool UAnomaliaZPrigimaliaInventoryComponent::HasLiveKitchenFire() const
             GetWorld(),GetOwner()->GetActorLocation()+FVector(0,0,50),GetOwner())>0.05f;
 }
 
+void UAnomaliaZPrigimaliaInventoryComponent::OnRep_UseMessage()
+{
+    OnInventoryUpdated.Broadcast();
+}
+
 void UAnomaliaZPrigimaliaInventoryComponent::ReportKitchenResult(const FString& Message)
 {
     UseMessage=Message;
