@@ -247,7 +247,7 @@ public:
     /** Trusted server entry point. Persists the consumed unit and resulting vitals in one profile write. */
     bool TryUseStack(int32 StackId, int32 ExpectedCount, const FString& ServerId, const FString& PlayerId, FString& OutError,bool bWetHead=false);
 
-    UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Inventory")
+    UPROPERTY(ReplicatedUsing=OnRep_UseMessage, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     FString UseMessage;
 
     UFUNCTION(BlueprintImplementableEvent, Category="ANOMALIA|Inventory")
@@ -261,6 +261,7 @@ protected:
 
     UFUNCTION()
     void OnRep_Compartments();
+    UFUNCTION() void OnRep_UseMessage();
 
     UFUNCTION(Server, Reliable)
     void ServerBankOperation(EAnomaliaZPrigimaliaBankAction Action, FName NoteId, const FString& RecipientId, int64 AmountCents, int64 Sequence);
