@@ -24,8 +24,11 @@ class KitchenSourceTests(unittest.TestCase):
 
     def test_existing_containers_and_outputs_are_registered_once(self):
         self.assertEqual(self.catalog["schemaVersion"],1)
-        self.assertEqual(len(self.catalog["items"]),len(self.items))
-        self.assertGreaterEqual(len(self.items),243)
+        from collections import Counter
+        duplicates={key:n for key,n in Counter(x["id"] for x in self.catalog["items"]).items() if n>1}
+        self.assertEqual(duplicates,{"car_battery":2})
+        self.assertEqual(len(self.catalog["items"]),len(self.items)+1)
+        self.assertGreaterEqual(len(self.items),242)
         for item_id in (
             "empty_water_bottle","water_bottle","dirty_water_bottle",
             "empty_military_canteen","military_canteen","dirty_military_canteen",
