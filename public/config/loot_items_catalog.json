@@ -6,7 +6,8 @@
     "IDs are ANOMALIA identifiers, not claims of native DayZ compatibility",
     "Tier 1 essentials stay obtainable in accessible civilian buildings",
     "Weapon, medicine and vehicle part behavior needs Unreal implementations",
-    "Liquids stored in fuel cans require contamination and cleaning rules"
+    "Liquids stored in fuel cans require contamination and cleaning rules",
+    "Kitchen v1: world-authoritative water filling, purification, boiling and utensil cooking live in UE5 native inventory; these result-only items are never naturally spawned."
   ],
   "items": [
     {
@@ -3830,6 +3831,149 @@
         "thirst": 30,
         "effect": "raw_food",
         "returnItem": "empty_water_bottle"
+      }
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "dirty_military_canteen",
+      "displayName": "Gourde militaire — eau non traitée",
+      "weightKg": 1,
+      "category": "drinks",
+      "inventoryWidth": 1,
+      "inventoryHeight": 3,
+      "use": {
+        "action": "drink",
+        "thirst": 30,
+        "effect": "raw_food",
+        "returnItem": "empty_military_canteen"
+      }
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "dirty_filter_canteen",
+      "displayName": "Gourde filtrante — eau non traitée",
+      "weightKg": 1,
+      "category": "drinks",
+      "inventoryWidth": 1,
+      "inventoryHeight": 3,
+      "use": {
+        "action": "drink",
+        "thirst": 30,
+        "effect": "raw_food",
+        "returnItem": "empty_filter_canteen"
+      }
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "cooking_pot_water",
+      "displayName": "Marmite — eau potable (1 L)",
+      "weightKg": 2.5,
+      "category": "cooking",
+      "inventoryWidth": 2,
+      "inventoryHeight": 3
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "dirty_cooking_pot_water",
+      "displayName": "Marmite — eau non traitée (1 L)",
+      "weightKg": 2.5,
+      "category": "cooking",
+      "inventoryWidth": 2,
+      "inventoryHeight": 3
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "cooked_egg",
+      "displayName": "Œuf cuit à la poêle",
+      "weightKg": 0.2,
+      "category": "fresh_food",
+      "inventoryWidth": 1,
+      "inventoryHeight": 1,
+      "use": {
+        "action": "eat",
+        "hunger": 18
+      }
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "cooked_potato",
+      "displayName": "Pomme de terre cuite",
+      "weightKg": 0.2,
+      "category": "fresh_food",
+      "inventoryWidth": 1,
+      "inventoryHeight": 1,
+      "use": {
+        "action": "eat",
+        "hunger": 20
+      }
+    },
+    {
+      "minTier": 1,
+      "maxTier": 5,
+      "nominal": 0,
+      "min": 0,
+      "lifetimeSeconds": 3600,
+      "restockSeconds": 600,
+      "quantity": 1,
+      "enabled": false,
+      "maxStack": 1,
+      "id": "cooked_vegetable",
+      "displayName": "Légumes cuits",
+      "weightKg": 0.2,
+      "category": "fresh_food",
+      "inventoryWidth": 1,
+      "inventoryHeight": 1,
+      "use": {
+        "action": "eat",
+        "hunger": 15
       }
     }
   ],
