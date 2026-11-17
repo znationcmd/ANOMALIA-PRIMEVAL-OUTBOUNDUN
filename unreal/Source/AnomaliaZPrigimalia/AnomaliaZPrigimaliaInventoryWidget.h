@@ -43,7 +43,11 @@ enum class EAnomaliaZPrigimaliaInventoryAction : uint8
     StowInContainer,
     CollectNearby,
     DogCommand,
-    WetHead
+    WetHead,
+    FillWater,
+    TreatWater,
+    BoilPot,
+    CookFood
 };
 
 UCLASS()
