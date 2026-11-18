@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "20 independent ANOMALIA’Z map identities. Catalogue presence is not proof of native world creation, fully built environments, or playability.",
+  "description": "21 independent ANOMALIA’Z map identities. Catalogue presence is not proof of native world creation, finished environments, or playability.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -459,9 +459,44 @@
       "environmentalHazardsImplemented": false,
       "completeBuildingsValidated": false,
       "originalOtherMapsUntouched": true
+    },
+    {
+      "id": "morodenachtmerr-v1",
+      "displayName": "MORØDENACHTMERR",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR",
+      "widthKm": 10,
+      "heightKm": 10,
+      "areaKm2": 100,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-source-prepared-level-generation-not-yet-verified",
+      "saveNamespace": "morodenachtmerr-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "displaySubtitle": "The Forgotten Countryside",
+      "terrainBiome": "haunted-rural-survival-rolling-farmland-dark-conifer-forests-bogs-misty-river",
+      "gameMode": "RURAL_HORROR_SURVIVAL_DESIGN",
+      "features": [
+        "one rural market town and seven isolated hamlets, no big city",
+        "fields, barns, orchards, narrow country lanes and abandoned farmhouses",
+        "dark pine forests, marshes, rolling hills, ravines and stream",
+        "abandoned chapel, disused sawmill, railway halt and underground bunker",
+        "dense fog, overgrowth, eerie atmosphere; no artificial placeholder buildings"
+      ],
+      "targetLocalities": 8,
+      "settlementPlacementStatus": "design-anchors-only-native-settlement-placement-pending",
+      "heightmapResolution": 1009,
+      "expectedLandscapeComponents": 64,
+      "ruralLayoutPath": "public/config/morodenachtmerr-world-layout-10km.json",
+      "nativeTerrainEvidence": null,
+      "gameplayAndCollisionPlaytested": false,
+      "realFarmBuildingsPlaced": false,
+      "completeBuildingInteriorsValidated": false,
+      "originalOtherMapsUntouched": true
     }
   ],
-  "mapCount": 20,
+  "mapCount": 21,
   "catalogAudit": {
     "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
