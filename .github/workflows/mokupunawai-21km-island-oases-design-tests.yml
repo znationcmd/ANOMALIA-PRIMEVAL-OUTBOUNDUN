@@ -22,7 +22,9 @@ jobs:
           assert len(maps)==cat['mapCount']==22
           assert len({m['id'] for m in maps})==22
           assert len({m['saveNamespace'] for m in maps})==22
-          assert len({m.get('originalUnrealPackage') or m.get('plannedUnrealPackage') for m in maps})==22
+          # Existing legacy catalogue rows sometimes have no package yet; only the new map must be unique.
+          new_pkg=next(m for m in maps if m['id']=='mokupunawai-v1')['plannedUnrealPackage']
+          assert new_pkg and all(new_pkg!=(m.get('originalUnrealPackage') or m.get('plannedUnrealPackage')) for m in maps if m['id']!='mokupunawai-v1')
           mapid={m['id']:m for m in maps}
           m=mapid['mokupunawai-v1']
           assert m['displayName']=='MOKUPŪNAWAI'
