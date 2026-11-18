@@ -4,6 +4,19 @@ PROJECT=pathlib.Path(r"D:\ANOMALIA\unreal")
 STATE=PROJECT/"Saved/ImportReceipts/RawResume20261107"
 OUT=pathlib.Path(os.environ["MISSION_RAW_OUT"])
 manifest=json.loads((STATE/"raw-preparation-manifest.json").read_text(encoding="utf-8"))
+def is_compiler_object(row):
+    source = pathlib.PureWindowsPath(row["source"])
+    if source.suffix.casefold() != ".obj":
+        return False
+    directories = [part.casefold() for part in source.parts[:-1]]
+    return any(part == "intermediate" or part.startswith("intermediate_backup_")
+               for part in directories) and "build" in directories
+
+# Keep the on-disk source ledger and existing receipts intact.
+inputs = manifest["imports"]
+manifest["imports"] = [row for row in inputs if not is_compiler_object(row)]
+print(f"Skipped {len(inputs) - len(manifest['imports'])} compiler object files", flush=True)
+
 root=manifest["outputNamespace"]
 assert root=="/Game/Anomalia/LocalResources/B_41851208057"
 assert pathlib.Path(unreal.Paths.project_content_dir()).resolve()==(PROJECT/"Content").resolve(), "Refuse to import into a different project"
