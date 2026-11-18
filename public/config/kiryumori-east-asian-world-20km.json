@@ -1,0 +1,214 @@
+{
+  "schemaVersion": 1,
+  "mapId": "kiryumori-v1",
+  "displayName": "KIRYŪMORI",
+  "unrealId": "KIRYUMORI",
+  "unrealPackage": "/Game/Maps/PRIGIMALIA_KIRYUMORI",
+  "namingNote": "Nom fictif d'inspiration est-asiatique, non présenté comme une traduction officielle.",
+  "dimensionsStatus": "provisional-user-did-not-specify",
+  "sizeMetres": {
+    "eastWest": 20000,
+    "northSouth": 20000
+  },
+  "areaKm2": 400,
+  "originalSeed": "ANOMALIA-KIRYUMORI-2026",
+  "style": "survival in misty East Asian mountains with distinct Japanese-, Chinese-, and Korean-inspired architectural districts",
+  "worldPartitionRequired": true,
+  "terrainHeightResolution": 2017,
+  "expectedLandscapeComponents": 256,
+  "biomes": [
+    "bamboo forest",
+    "cedar and conifer mountains",
+    "misty river valleys",
+    "terraced rice paddies",
+    "rocky coastal inlets",
+    "autumn maple woods",
+    "monsoon footpaths"
+  ],
+  "settlements": [
+    {
+      "id": "shirokawa",
+      "name": "Shirokawa",
+      "type": "major-city",
+      "east": -1700,
+      "north": 650,
+      "architecture": "dense fictional East Asian city with old timber neighborhoods, inner courtyards, and modern outskirts"
+    },
+    {
+      "id": "yumehara",
+      "name": "Yumehara",
+      "type": "town",
+      "east": 4200,
+      "north": 3900,
+      "architecture": "Japanese-inspired tiled wooden machiya-like streets, shops and homes"
+    },
+    {
+      "id": "hanyue",
+      "name": "Hanyue",
+      "type": "town",
+      "east": -5400,
+      "north": 4100,
+      "architecture": "Chinese-inspired courtyard housing, stone bridges and traditional market lanes"
+    },
+    {
+      "id": "seoran",
+      "name": "Seoran",
+      "type": "town",
+      "east": 3700,
+      "north": -4100,
+      "architecture": "Korean-inspired hillside hanok-style blocks and timber alleys"
+    },
+    {
+      "id": "kirisato",
+      "name": "Kirisato",
+      "type": "village",
+      "east": -5400,
+      "north": -3200,
+      "architecture": "mountain farming village with timber houses"
+    },
+    {
+      "id": "akimine",
+      "name": "Akimine",
+      "type": "village",
+      "east": -650,
+      "north": 6100,
+      "architecture": "mountain hamlet and autumn maple forests"
+    },
+    {
+      "id": "morisawa",
+      "name": "Morisawa",
+      "type": "village",
+      "east": 5900,
+      "north": 6000,
+      "architecture": "cedar forest houses and riverside footbridges"
+    },
+    {
+      "id": "qingmu",
+      "name": "Qingmu",
+      "type": "village",
+      "east": -7300,
+      "north": 1700,
+      "architecture": "terraced rice valley and stone courtyard houses"
+    },
+    {
+      "id": "ryusato",
+      "name": "Ryusato",
+      "type": "village",
+      "east": -1800,
+      "north": -6500,
+      "architecture": "old mill village on a rural creek"
+    },
+    {
+      "id": "yeonhwa",
+      "name": "Yeonhwa",
+      "type": "village",
+      "east": 6900,
+      "north": 200,
+      "architecture": "tile-roofed homes near vegetable terraces"
+    },
+    {
+      "id": "matsukuro",
+      "name": "Matsukuro",
+      "type": "village",
+      "east": 6000,
+      "north": -7200,
+      "architecture": "windy ridge timber farmhouses"
+    },
+    {
+      "id": "lanshi",
+      "name": "Lanshi",
+      "type": "village",
+      "east": -7100,
+      "north": -7000,
+      "architecture": "bamboo groves and fishing village"
+    },
+    {
+      "id": "noran",
+      "name": "Noran",
+      "type": "village",
+      "east": 1000,
+      "north": -7300,
+      "architecture": "small valley market and mountain trail"
+    },
+    {
+      "id": "tsukano",
+      "name": "Tsukano",
+      "type": "village",
+      "east": -1200,
+      "north": 8050,
+      "architecture": "remote mountain tea settlement"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "stone-gate",
+      "name": "Ancienne porte des montagnes",
+      "east": -2500,
+      "north": 5100
+    },
+    {
+      "id": "bamboo-temple",
+      "name": "Pavillons forestiers",
+      "east": 5300,
+      "north": 6600
+    },
+    {
+      "id": "rice-terraces",
+      "name": "Grandes rizières en terrasses",
+      "east": -6800,
+      "north": 3100
+    },
+    {
+      "id": "red-bridge",
+      "name": "Pont de la vallée brumeuse",
+      "east": 700,
+      "north": -1400
+    },
+    {
+      "id": "tea-gardens",
+      "name": "Plantations de thé",
+      "east": 6100,
+      "north": -2800
+    },
+    {
+      "id": "mountain-tunnel",
+      "name": "Tunnel ferroviaire désaffecté",
+      "east": 2400,
+      "north": 7600
+    }
+  ],
+  "hydrologyDesign": {
+    "mainRiversPlanned": 2,
+    "streamsPlanned": 5,
+    "lakesPlanned": 2,
+    "actualWaterActorPlacement": false
+  },
+  "architectureTargets": {
+    "true3DExteriors": true,
+    "accessibleInteriorsRequired": true,
+    "functionalDoors": true,
+    "staircasesAndUpperFloors": true,
+    "correctCollisions": true,
+    "interiorFurnishings": true,
+    "materialsAndModelsNeedImport": true,
+    "allRealMeshesVerified": false
+  },
+  "mapSystemsPlanned": {
+    "roads": true,
+    "bridges": true,
+    "railway": true,
+    "foliage": true,
+    "loot": true,
+    "wildlife": true,
+    "weather": true,
+    "npc": true
+  },
+  "developmentState": {
+    "catalogRegistered": false,
+    "nativeHeightfieldSource": false,
+    "worldPartitionMapSaved": false,
+    "settlementMeshesPlaced": false,
+    "playtested": false
+  },
+  "protectExistingMaps": true
+}
