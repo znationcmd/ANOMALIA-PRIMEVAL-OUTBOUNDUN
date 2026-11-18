@@ -1,0 +1,79 @@
+name: ANOMALIA - download genuine CC0 Korean Indian tropical full-scale houses and stage original D
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-download-authentic-cc0-cultural-houses-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  download-and-verify-authentic-house-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download exactly 4 complete scale house GLBs from licensed public CC0 library
+        run: |
+          python3 -m py_compile scripts/ue5/download_original_cc0_regional_houses_glb.py
+          python3 scripts/ue5/download_original_cc0_regional_houses_glb.py --out /tmp/anomalia-cc0-regional-real-houses
+          python3 - <<'PY'
+          import json,pathlib,hashlib
+          root=pathlib.Path('/tmp/anomalia-cc0-regional-real-houses')
+          m=json.loads((root/'INNERSCENE_CC0_HOUSE_PROVENANCE.json').read_text())
+          assert m['license']=='CC0 1.0' and m['modelCount']==4
+          for item in m['models']:
+            p=root/(item['key']+'.glb')
+            assert p.is_file() and len(p.read_bytes())==item['bytes']
+            assert hashlib.sha256(p.read_bytes()).hexdigest()==item['sha256']
+          print('ANOMALIA_FOUR_AUTHORIZED_CC0_HOUSE_GLBS_VERIFIED=TRUE')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-authentic-cc0-indian-korean-tropical-architecture-glb
+          path: /tmp/anomalia-cc0-regional-real-houses/
+          retention-days: 30
+          compression-level: 2
+  stage-on-D:
+    needs: download-and-verify-authentic-house-sources
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: anomalia-authentic-cc0-indian-korean-tropical-architecture-glb
+          path: ${{ runner.temp }}/anomalia-regional-glb-${{ github.run_id }}
+      - name: Copy only verified original CC0 house GLB sources into D original SourceAssets without overwrites
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject') -PathType Leaf)){throw 'Original Unreal project unavailable'}
+          $download=Join-Path $env:RUNNER_TEMP ('anomalia-regional-glb-'+$env:GITHUB_RUN_ID)
+          $manifestPath=Join-Path $download 'INNERSCENE_CC0_HOUSE_PROVENANCE.json'
+          $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8|ConvertFrom-Json
+          if($manifest.license -ne 'CC0 1.0' -or @($manifest.models).Count -ne 4){throw 'Four verified original house assets required'}
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 9GB){throw 'D disk safety reserve too low'}
+          $dest=Join-Path $root 'SourceAssets\RegionalArchitecture\Innerscene_CC0_20261118'
+          New-Item -ItemType Directory -Path $dest -Force|Out-Null
+          $new=0;$same=0
+          foreach($model in @($manifest.models)){
+            $name=[string]$model.key+'.glb'
+            $src=Join-Path $download $name
+            $target=Join-Path $dest $name
+            if(!(Test-Path -LiteralPath $src -PathType Leaf)){throw ('Official source GLB missing '+$name)}
+            if((Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash.ToLowerInvariant() -ne $model.sha256){throw 'GLB content checksum invalid'}
+            if(Test-Path -LiteralPath $target -PathType Leaf){
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -ne $model.sha256){throw 'Existing original house source differs, refuse overwrite'}
+              $same++
+            }else{
+              Copy-Item -LiteralPath $src -Destination $target -ErrorAction Stop
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -ne $model.sha256){throw 'Copied GLB SHA256 mismatch'}
+              $new++
+            }
+          }
+          $targetProvenance=Join-Path $dest 'INNERSCENE_CC0_HOUSE_PROVENANCE.json'
+          if(Test-Path -LiteralPath $targetProvenance -PathType Leaf){
+            if((Get-FileHash $targetProvenance -Algorithm SHA256).Hash -ne (Get-FileHash $manifestPath -Algorithm SHA256).Hash){throw 'Existing provenance differs, preserve'}
+          }else{Copy-Item -LiteralPath $manifestPath -Destination $targetProvenance}
+          Write-Host ('ANOMALIA_CC0_REAL_HOUSES_SOURCE_INSTALLED_D '+([ordered]@{models=4;newGLB=$new;existingIdentical=$same;
+            originalAssetsOverwritten=0;sourceDir=$dest;nativeUnrealAssetsImported=0;license='CC0'}|ConvertTo-Json -Compress))
