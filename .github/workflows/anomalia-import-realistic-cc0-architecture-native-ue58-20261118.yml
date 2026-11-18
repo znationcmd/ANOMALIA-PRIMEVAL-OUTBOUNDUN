@@ -1,0 +1,97 @@
+name: ANOMALIA - import real photorealistic CC0 buildings into original UE5.8 Content
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-import-realistic-cc0-architecture-native-ue58-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-original-D-import-cc0-architecture
+  cancel-in-progress: false
+jobs:
+  ue-native-import:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 160
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: realistic-architecture-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/import_cc0_architecture_real_fbx_native.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify original game and source assets available, avoid other editor/compilation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $main=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $main -PathType Leaf) -or !(Test-Path -LiteralPath $project -PathType Leaf)){
+            throw 'Original ANOMALIA UE5 project unavailable'
+          }
+          $source=Join-Path $root 'SourceAssets\RegionalArchitecture\PolyHaven_CC0_20261118'
+          $manifest=Join-Path $source 'CC0_SOURCE_PROVENANCE.json'
+          if(!(Test-Path -LiteralPath $manifest -PathType Leaf)){
+            throw 'Official CC0 model source packs have not been staged on D yet; do not import placeholders'
+          }
+          $data=Get-Content -LiteralPath $manifest -Raw -Encoding UTF8|ConvertFrom-Json
+          if($data.license -ne 'CC0 1.0' -or @($data.models).Count -ne 5){
+            throw 'Architectural source license or model count not verified'
+          }
+          $all=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap' | ForEach-Object {
+            [pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}
+          })
+          $out=Join-Path $root ('Saved\RegionalArchitecture\CC0NativeImport\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_CC0_IMPORT_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $all|Export-Csv -LiteralPath (Join-Path $out 'protected-original-maps.csv') -Encoding UTF8 -NoTypeInformation
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 9GB){
+            throw 'Not enough safety reserve for native FBX import'
+          }
+          $busy=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $other=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessId -ne 26284})
+          if($busy.Count -or $other.Count){throw 'Other Unreal editor active; original content not modified'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('realistic-architecture-'+$env:GITHUB_RUN_ID+'\unreal\Scripts\import_cc0_architecture_real_fbx_native.py')
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -B -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'UE5 importer Python source has syntax error'}
+          "ANOMALIA_CC0_IMPORT_SCRIPT=$script"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          Write-Host ('ANOMALIA_CC0_REAL_UNREAL_IMPORT_PRECHECK '+([ordered]@{verifiedCC0Models=$data.models.Count;protectedOriginalMaps=$all.Count;sourceLocation=$source}|ConvertTo-Json -Compress))
+      - name: Import each verified genuine FBX in new regional /Game/ folder, never overwrite old 3D models
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:ANOMALIA_CC0_UNREAL_IMPORT_REPORT=Join-Path $env:ANOMALIA_CC0_IMPORT_OUT 'real-cc0-unreal-staticmesh-import.json'
+          $log=Join-Path $env:ANOMALIA_CC0_IMPORT_OUT 'real-cc0-unreal-staticmesh-import.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_CC0_IMPORT_SCRIPT" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_CC0_UNREAL_IMPORT_REPORT -PathType Leaf)){
+            Get-Content -LiteralPath $log -Tail 40 -ErrorAction SilentlyContinue | ForEach-Object {Write-Host ('UE_LOG '+$_)}
+            throw 'Unreal native importer did not emit result'
+          }
+          $receipt=Get-Content -LiteralPath $env:ANOMALIA_CC0_UNREAL_IMPORT_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_CC0_REAL_NATIVE_STATIC_MESH_IMPORT '+($receipt|ConvertTo-Json -Depth 8 -Compress))
+          if($receipt.state -ne 'LICENSED_REAL_ARCHITECTURAL_MESHES_IMPORTED_NOT_FULL_REGIONAL_HOUSES' -or @($receipt.importedNativeAssets).Count -ne 5){
+            throw ('Not all real FBX module packages imported: '+$receipt.error)
+          }
+      - name: Verify all protected .umap hashes remain unchanged
+        if: always() && env.ANOMALIA_CC0_IMPORT_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $csv=Join-Path $env:ANOMALIA_CC0_IMPORT_OUT 'protected-original-maps.csv'
+          if(!(Test-Path -LiteralPath $csv -PathType Leaf)){exit 0}
+          $old=@(Import-Csv -LiteralPath $csv -Encoding UTF8)
+          $bad=@()
+          foreach($m in $old){
+            if(!(Test-Path -LiteralPath $m.path -PathType Leaf) -or (Get-FileHash -LiteralPath $m.path -Algorithm SHA256).Hash -ne $m.sha256){$bad+=$m.path}
+          }
+          Write-Host ('ANOMALIA_CC0_ARCHITECTURE_PROTECTED_GAME_MAPS '+([ordered]@{originalMapFiles=$old.Count;originalMapsChanged=$bad.Count;changedPaths=$bad}|ConvertTo-Json -Depth 4 -Compress))
+          if($bad.Count){throw 'Original game map unexpectedly changed during CC0 asset import'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_CC0_IMPORT_OUT != ''
+        with:
+          name: anomalia-original-UE58-realistic-cc0-architecture-import-report
+          path: ${{ env.ANOMALIA_CC0_IMPORT_OUT }}/*.json
+          if-no-files-found: warn
