@@ -47,7 +47,7 @@ jobs:
           $catalog=Join-Path $repo 'public\config\anomalia-map-catalog.json'
           $planpy=Join-Path $repo 'scripts\world_auto_construct\plan_all_30.py'
           $script=Join-Path $repo 'unreal\Scripts\autoconstruct_30_native_city_road_phase1.py'
-          $master=Join-Path $root 'Saved\AutoConstruct30\MasterPlans\ANOMALIA_AUTO30_MASTER_V1.json'
+          $master=Join-Path $out 'ANOMALIA_AUTO30_MASTER_THEMES.json'
           $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
           foreach($p in @($catalog,$planpy,$script)){if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Missing UE5 automatic authoring sources'}}
           & $py -B -m py_compile $script
