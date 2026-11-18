@@ -1,0 +1,48 @@
+name: ANOMALIA - diagnose Windows runner and clear obsolete cloud job
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-cloud-runner-diagnostic-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Check queued jobs and runner availability
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          API="https://api.github.com/repos/${GITHUB_REPOSITORY}"
+          HEAD=( -H "Authorization: Bearer ${GH_TOKEN}" -H 'Accept: application/vnd.github+json' )
+          python3 - <<'PY'
+          print('CLOUD_RUNNER_DIAGNOSTIC_BEGIN')
+          PY
+          runner_http=$(curl -sS -o /tmp/runner.json -w '%{http_code}' "${HEAD[@]}" "${API}/actions/runners" || true)
+          echo "RUNNERS_HTTP=${runner_http}"
+          if [ "${runner_http}" = 200 ]; then
+            python3 - <<'PY'
+          import json
+          data=json.load(open('/tmp/runner.json'))
+          for r in data.get('runners',[]):
+              print('RUNNER_DIAGNOSTIC',json.dumps({'name':r.get('name'),'status':r.get('status'),'busy':r.get('busy'),'labels':[x['name'] for x in r.get('labels',[])]}))
+          PY
+          else
+            echo 'RUNNER_STATUS_NOT_AUTHORIZED_OR_UNAVAILABLE'
+          fi
+          for old in 44153202317 44257783434; do
+            curl -sS --fail-with-body "${HEAD[@]}" "${API}/actions/runs/${old}" | python3 -c 'import json,sys; j=json.load(sys.stdin); print("LEGACY_RUN",j["id"],j["status"],j.get("conclusion"))'
+          done
+          status=$(curl -sS --fail-with-body "${HEAD[@]}" "${API}/actions/runs/44153202317" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')
+          if [ "$status" != completed ]; then
+            http=$(curl -sS -o /tmp/force.json -w '%{http_code}' -X POST "${HEAD[@]}" "${API}/actions/runs/44153202317/force-cancel" || true)
+            echo "OLD_BULK_FORCE_CANCEL_HTTP=${http}"
+          fi
+          curl -sS --fail-with-body "${HEAD[@]}" "${API}/actions/runs/44261517024" | python3 -c 'import json,sys;j=json.load(sys.stdin);print("CITYSAMPLE_ONLY_RUN",j["id"],j["status"],j.get("conclusion"))'
+          echo 'No local files touched'
