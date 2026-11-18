@@ -1,0 +1,41 @@
+name: ANOMALIA - lossless compress raw FBX/OBJ/BLEND in VaultCache
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-ntfs-vaultcache-raw-fbx-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-vaultcache-ntfs-compression
+  cancel-in-progress: false
+jobs:
+  compress:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: vault-raw-compression-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/ntfs_compact_vaultcache_source_models_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Compress up to 2 GiB original raw FBX/OBJ losslessly with SHA256 integrity and 5 GiB reserve
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('vault-raw-compaction-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "VAULT_COMPACT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:VAULT_COMPACT_OUT=$out
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('vault-raw-compression-'+$env:GITHUB_RUN_ID+'\scripts\ue5\ntfs_compact_vaultcache_source_models_20261118.py')
+          if(!(Test-Path -LiteralPath $script) -or !(Test-Path -LiteralPath $py)){throw 'Required source compactor unavailable'}
+          & $py -B $script
+          if($LASTEXITCODE -ne 0){throw 'Lossless source compression did not complete'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vaultcache-raw-model-lossless-compression-receipt
+          path: ${{ runner.temp }}/vault-raw-compaction-${{ github.run_id }}/vaultcache-raw-model-ntfs-summary.json
+          if-no-files-found: warn
