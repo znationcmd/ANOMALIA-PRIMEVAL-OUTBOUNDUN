@@ -46,7 +46,7 @@ AActor* UAnomaliaZPrigimaliaElevenWorldLibrary::CreateNamedWorldLandscape(const 
  const double HalfWidth=double(Width)/2.,HalfHeight=double(Height)/2.;
  TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
  for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X)
-  Samples[Y*Size+X]=Encode(Height(Kind,-HalfWidth+double(Width)*X/(Size-1),HalfHeight-double(Height)*Y/(Size-1)));
+  Samples[Y*Size+X]=Encode(AnomaliaZPrigimaliaElevenWorlds::Height(Kind,-HalfWidth+double(Width)*X/(Size-1),HalfHeight-double(Height)*Y/(Size-1)));
  ALandscape* Land=World->SpawnActor<ALandscape>();
  if(!Land)return nullptr;
  Land->SetActorLabel(TEXT("PRIGIMALIA_")+Id+TEXT("_Landscape"));
