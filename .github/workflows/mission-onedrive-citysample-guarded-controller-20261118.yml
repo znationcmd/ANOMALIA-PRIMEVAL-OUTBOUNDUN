@@ -1,0 +1,46 @@
+name: ANOMALIA - City Sample guarded OneDrive multi-batch backup
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-onedrive-citysample-guarded-controller-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-onedrive-citysample-only
+  cancel-in-progress: false
+jobs:
+  safe-multi-batch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: citysample-controller-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/onedrive_citysample_safe_batch_20261118.py
+            scripts/ue5/onedrive_citysample_batch_controller_20261118.ps1
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Stage City Sample in guarded OneDrive batches, wait for online-only status; never delete originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('onedrive-controller-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CITYSAMPLE_ONEDRIVE_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CITYSAMPLE_ONEDRIVE_OUT=$out
+          $root=Join-Path $env:GITHUB_WORKSPACE ('citysample-controller-'+$env:GITHUB_RUN_ID+'\scripts\ue5')
+          $pyScript=Join-Path $root 'onedrive_citysample_safe_batch_20261118.py'
+          $controller=Join-Path $root 'onedrive_citysample_batch_controller_20261118.ps1'
+          $python='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (!(Test-Path -LiteralPath $python -PathType Leaf) -or !(Test-Path -LiteralPath $controller -PathType Leaf) -or !(Test-Path -LiteralPath $pyScript -PathType Leaf)) {throw 'Required backup scripts/UE Python missing'}
+          & $controller -Python $python -CopyScript $pyScript
+          if (!$?){throw 'OneDrive controller failed; all original files preserved'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedrive-citysample-multibatch-client-receipts
+          path: ${{ runner.temp }}/onedrive-controller-${{ github.run_id }}/
+          if-no-files-found: warn
