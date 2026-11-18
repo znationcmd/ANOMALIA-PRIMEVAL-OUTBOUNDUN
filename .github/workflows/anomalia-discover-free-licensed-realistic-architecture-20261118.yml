@@ -1,0 +1,42 @@
+name: ANOMALIA - discover legitimate public CC0 architectural 3D from Poly Haven
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-discover-free-licensed-realistic-architecture-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  source-catalog-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Query official Poly Haven API for free CC0 photorealistic buildings without downloading unknown files
+        run: |
+          python3 - <<'PY'
+          import urllib.request,json,ssl
+          def get(url):
+            req=urllib.request.Request(url,headers={'User-Agent':'ANOMALIA-Prigimalia-Free-CC0-Asset-Audit/1.0'})
+            with urllib.request.urlopen(req,timeout=28) as r:
+              return json.loads(r.read(9000000))
+          catalog=get('https://api.polyhaven.com/assets?t=models')
+          assert isinstance(catalog,dict) and len(catalog)>250
+          terms=('house','hut','cabin','building','apartment','facade','wall','temple','shrine','wood','roof','village','cottage','market','desert','snow','igloo','shelter','pavilion','hacienda','chalet','castle')
+          found=[]
+          for key,value in catalog.items():
+            title=str(value.get('name',''))
+            category=' '.join(value.get('categories',[]) or [])
+            tags=' '.join(value.get('tags',[]) or [])
+            match=' '.join([key,title,category,tags]).lower()
+            if any(t in match for t in terms):
+              found.append({'id':key,'name':title,'categories':value.get('categories',[]),'tags':value.get('tags',[])[:12]})
+          print('ANOMALIA_POLYHAVEN_CC0_MODEL_CATALOG='+str(len(catalog)))
+          print('ANOMALIA_POLYHAVEN_ARCHITECTURE_CANDIDATES='+json.dumps(found[:65],ensure_ascii=False))
+          if not found: raise RuntimeError('Official API returned no architecture candidates')
+          sample=get('https://api.polyhaven.com/files/modular_urban_apartments_facade')
+          filetypes=list(sample)
+          print('ANOMALIA_POLYHAVEN_EXAMPLE_DOWNLOAD_FILE_TYPES='+json.dumps(filetypes[:25]))
+          for k,v in sample.items():
+            if k.lower() in ('fbx','gltf','glb','blend','obj'):
+              print('ANOMALIA_POLYHAVEN_EXAMPLE_FILE_INFO '+k+' '+json.dumps(str(v)[:1500]))
+          PY
