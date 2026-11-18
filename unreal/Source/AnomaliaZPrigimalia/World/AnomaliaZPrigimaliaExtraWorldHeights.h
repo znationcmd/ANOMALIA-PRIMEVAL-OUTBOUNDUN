@@ -45,6 +45,24 @@ inline double Gaussian(double x,double y,double cx,double cy,double rx,double ry
  const double dx=(x-cx)/rx,dy=(y-cy)/ry;
  return std::exp(-(dx*dx+dy*dy));
 }
+// Shared analytic course used to grade the countryside's ONE main river.
+// The matching World Partition water-spline design is in the 10 km layout JSON.
+inline double MorodenachtmerrRiverEast(double north)
+{
+ return -480.+570.*std::sin(north/1280.)+190.*std::sin(north/460.);
+}
+inline double MorodenachtmerrRiverSurface(double north)
+{
+ return 139.+.007*north;
+}
+inline double MorodenachtmerrSegmentDistance(double east,double north,
+ double ax,double ay,double bx,double by)
+{
+ const double vx=bx-ax,vy=by-ay,den=vx*vx+vy*vy;
+ if(den<1.e-9)return std::hypot(east-ax,north-ay);
+ const double t=Clamp(((east-ax)*vx+(north-ay)*vy)/den,0.,1.);
+ return std::hypot(east-(ax+t*vx),north-(ay+t*vy));
+}
 inline double Height(EWorld world,double east,double north)
 {
  const int side=SideMeters(world);
@@ -101,21 +119,61 @@ inline double Height(EWorld world,double east,double north)
   return wild*(1.-.84*metropolis)+cityGrade*(.84*metropolis);
  }
  if(world==EWorld::Morodenachtmerr){
-  // Independent 10x10 km haunted RURAL landscape: dark conifer hills, remote
-  // agricultural valleys, marshy stream, farm fields and shallow quarry.
-  // Actual farm buildings/roads/trees require separate real actor placement.
+  // Single 10-km north-to-south MAIN river with a continuous carved bed;
+  // three lake basins and four smaller tributaries in a rural terrain.
+  // Real water surfaces, boats, fish and gameplay still need UE Water actors.
   const double westRidge=270.*Gaussian(east,north,-3900.,1700.,1250.,2800.)*(.7+.3*std::abs(r));
   const double northWoods=230.*Gaussian(east,north,1700.,3500.,2800.,1800.)*(.65+.35*std::abs(n));
   const double southHills=175.*Gaussian(east,north,3200.,-3400.,2100.,1550.);
   const double fields=18.*std::sin(east/1050.)*std::cos(north/1450.);
-  const double stream=east-(820.*std::sin(north/1300.)-750.);
-  const double watercourse=68.*std::exp(-(stream*stream)/(240.*240.));
-  const double marsh=38.*Gaussian(east,north,-850.,-2850.,1280.,900.);
+  const double marsh=30.*Gaussian(east,north,-850.,-2850.,1280.,900.);
   const double quarry=65.*Gaussian(east,north,3700.,1800.,720.,600.);
-  const double hamlet=Gaussian(east,north,-1050.,450.,1020.,940.);
-  const double natural=125.+58.*n+20.*r+fields+westRidge+northWoods+southHills-watercourse-marsh-quarry;
-  const double townGrade=131.+5.*ValueNoise(east,north,1000.,4829)-.15*watercourse;
-  return natural*(1.-.78*hamlet)+townGrade*(.78*hamlet);
+  const double hamlet=Gaussian(east,north,-2700.,-1000.,550.,580.);
+  const double natural=159.+.007*north+58.*n+20.*r+fields+
+    westRidge+northWoods+southHills-marsh-quarry;
+  const double townGrade=153.+.007*north+5.*ValueNoise(east,north,1000.,4829);
+  double terrain=natural*(1.-.72*hamlet)+townGrade*(.72*hamlet);
+
+  // The only main watercourse: its analytic centre remains within the world
+  // from N=+5000 metres to N=-5000 metres. Mean channel width 150-210 m.
+  const double riverEast=MorodenachtmerrRiverEast(north);
+  const double riverDistance=std::abs(east-riverEast);
+  const double riverMask=Smooth((235.-riverDistance)/165.);
+  const double riverBed=MorodenachtmerrRiverSurface(north)-4.0;
+  terrain=terrain*(1.-riverMask)+riverBed*riverMask;
+
+  // Three connected water bodies. Lake edges blend into the countryside;
+  // the lake-water plan in the layout JSON gives exact future actor levels.
+  const double lakes[3][5]={
+    {-2650.,2100.,560.,410.,163.},
+    {2550.,3050.,480.,340.,173.},
+    {2350.,-1850.,590.,460.,137.}
+  };
+  for(const auto& lake:lakes){
+    const double dx=(east-lake[0])/lake[2],dy=(north-lake[1])/lake[3];
+    const double ellipse=std::sqrt(dx*dx+dy*dy);
+    const double mask=Smooth((1.18-ellipse)/.42);
+    const double lakeBed=lake[4]-4.5;
+    terrain=terrain*(1.-mask)+lakeBed*mask;
+  }
+
+  // Four tributaries, using winding independent segments that meet the trunk.
+  // They are deliberately narrower than the single main river.
+  const double tributaries[4][5][2]={
+    {{-4550.,3980.},{-2650.,2100.},{-1600.,1750.},{-700.,1100.},{MorodenachtmerrRiverEast(650.),650.}},
+    {{4300.,4100.},{2550.,3050.},{1750.,2500.},{900.,1850.},{MorodenachtmerrRiverEast(1200.),1200.}},
+    {{4400.,-550.},{2350.,-1850.},{1500.,-2450.},{600.,-2850.},{MorodenachtmerrRiverEast(-3350.),-3350.}},
+    {{-4450.,-3050.},{-3150.,-3650.},{-2200.,-3850.},{-1450.,-4300.},{MorodenachtmerrRiverEast(-4600.),-4600.}}
+  };
+  double tributaryDistance=1.e9;
+  for(const auto& creek:tributaries)
+    for(int i=0;i<4;++i)
+      tributaryDistance=std::min(tributaryDistance,
+        MorodenachtmerrSegmentDistance(east,north,creek[i][0],creek[i][1],creek[i+1][0],creek[i+1][1]));
+  const double creekMask=Smooth((52.-tributaryDistance)/35.);
+  const double creekBed=MorodenachtmerrRiverSurface(north)-1.6;
+  terrain=terrain*(1.-creekMask)+std::min(terrain,creekBed)*creekMask;
+  return terrain;
  }
  if(world==EWorld::Karskov){
   // LIVONIA-like original geography: continuous wooded country, rolling meadows,
