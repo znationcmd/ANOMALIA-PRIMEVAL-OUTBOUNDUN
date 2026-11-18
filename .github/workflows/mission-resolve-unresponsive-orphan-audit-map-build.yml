@@ -1,0 +1,50 @@
+name: ANOMALIA - recover single unresponsive orphan audit via targeted taskkill
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-resolve-unresponsive-orphan-audit-map-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  resolve:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Revalidate abandoned unattended UE audit identity and target it only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $targetPID=26284
+          $p=Get-CimInstance Win32_Process -Filter ("ProcessId="+$targetPID) -ErrorAction SilentlyContinue
+          if(!$p){Write-Host 'ANOMALIA_ORPHAN_AUDIT_ALREADY_EXITED=TRUE';exit 0}
+          $cmd=[string]$p.CommandLine
+          $old=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalHours
+          $parent=Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue
+          $other=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $otherHeadless=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne $targetPID})
+          $safe=($p.Name -eq 'UnrealEditor-Cmd.exe' -and $old -gt 6 -and !$parent -and !$other.Count -and !$otherHeadless.Count -and
+            $cmd.Contains('audit.py') -and $cmd.Contains('AnomaliaPrimeval.uproject') -and $cmd.Contains('-unattended') -and $cmd.Contains('ExecutePythonScript') -and
+            ($cmd.Contains('-nullrhi') -or $cmd.Contains('-NullRHI')))
+          if(!$safe){Write-Host 'ANOMALIA_NO_TARGET_STOP_ALL_SAFETY_CONDITIONS_NOT_MET';exit 0}
+          $maps=@('D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap','D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Inhabited_v2.umap')
+          $hashes=@{}
+          foreach($m in $maps){if(!(Test-Path -LiteralPath $m)){throw 'Protected game map unavailable'};$hashes[$m]=(Get-FileHash -LiteralPath $m -Algorithm SHA256).Hash}
+          $before=Get-CimInstance Win32_Process -Filter ("ProcessId="+$targetPID)
+          Start-Sleep -Seconds 15
+          $after=Get-CimInstance Win32_Process -Filter ("ProcessId="+$targetPID) -ErrorAction SilentlyContinue
+          if(!$after){Write-Host 'ANOMALIA_ORPHAN_EXITED_DURING_SECOND_CHECK';exit 0}
+          $wrote=[long]$after.WriteTransferCount-[long]$before.WriteTransferCount
+          $read=[long]$after.ReadTransferCount-[long]$before.ReadTransferCount
+          $changed=@(Get-ChildItem -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps' -File -Filter '*.umap' | Where-Object {$_.LastWriteTimeUtc -gt (Get-Date).ToUniversalTime().AddMinutes(-45)})
+          if($wrote -ne 0 -or $read -ne 0 -or $changed.Count){Write-Host 'ANOMALIA_ORPHAN_RECOVERY_CANCELLED_NEW_ACTIVITY_DETECTED';exit 0}
+          Write-Host ('ANOMALIA_CONFIRMED_INACTIVE_MAP_AUDIT_TO_TERMINATE='+$targetPID)
+          & "$env:WINDIR\System32\taskkill.exe" /F /PID $targetPID
+          Write-Host ('ANOMALIA_TARGET_TASKKILL_EXITCODE='+$LASTEXITCODE)
+          Start-Sleep -Seconds 16
+          $still=Get-CimInstance Win32_Process -Filter ("ProcessId="+$targetPID) -ErrorAction SilentlyContinue
+          foreach($m in $maps){
+            if((Get-FileHash -LiteralPath $m -Algorithm SHA256).Hash -ne $hashes[$m]){throw 'Original game map hash changed'}
+          }
+          Write-Host ('ANOMALIA_TARGET_AUDIT_EXITED='+(!$still).ToString())
+          Write-Host 'ANOMALIA_PROTECTED_MAIN_MAP_HASHES_PRESERVED=TRUE'
