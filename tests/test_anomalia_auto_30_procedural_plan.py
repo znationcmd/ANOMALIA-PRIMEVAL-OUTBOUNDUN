@@ -34,5 +34,19 @@ assert next(m for m in a["maps"] if m["id"]=="archipelago-v2")["requestedLocalit
 assert next(m for m in a["maps"] if m["id"]=="deadroot-v1")["requestedLocalities"]==0
 assert next(m for m in a["maps"] if m["id"]=="falc-v1")["worldSizeMeters"]==[32000.,22000.]
 assert next(m for m in a["maps"] if m["id"]=="nasdaras-v1")["worldSizeMeters"]==[18000.,26000.]
+maps_by_id = {world["id"]: world for world in a["maps"]}
+expected_regional_palettes = {
+    "moscovie-v1": "urban",
+    "corsivia-v1": "mediterranean",
+    "mokupunawai-v1": "tropical",
+    "kiryumori-v1": "temperate",
+    "aranyapura-v1": "tropical",
+    "nasdaras-v1": "arid",
+    "yudinavia-v1": "nordic",
+}
+for world_id, expected_palette in expected_regional_palettes.items():
+    world = maps_by_id[world_id]
+    assert world["biomeConstructionPalette"] == expected_palette, world_id
+    assert not world["architectureThemeVerified"], world_id
 print("ANOMALIA_30_AUTO_BUILDER_MASTER_PLAN_TESTS_PASS localities={} links={}".format(
     a["plannedLocalitiesTotal"],a["plannedRegionalLinksTotal"]))
