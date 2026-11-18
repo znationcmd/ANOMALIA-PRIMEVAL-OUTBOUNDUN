@@ -1,0 +1,223 @@
+{
+  "schemaVersion": 1,
+  "mapId": "aranyapura-v1",
+  "displayName": "ARANYAPURA",
+  "unrealId": "ARANYAPURA",
+  "unrealPackage": "/Game/Maps/PRIGIMALIA_ARANYAPURA",
+  "namingNote": "Nom de fiction à consonance indienne, inspiré de racines sanskrites; pas une ville réelle ni une traduction attestée.",
+  "dimensionsStatus": "provisional-user-did-not-specify",
+  "sizeMetres": {
+    "eastWest": 20000,
+    "northSouth": 20000
+  },
+  "areaKm2": 400,
+  "originalSeed": "ANOMALIA-ARANYAPURA-2026",
+  "style": "survival in fictional India-inspired region with sandstone towns, fertile villages, jungle and monsoon valleys",
+  "worldPartitionRequired": true,
+  "terrainHeightResolution": 2017,
+  "expectedLandscapeComponents": 256,
+  "biomes": [
+    "dense monsoon jungle",
+    "dry thorn woodland",
+    "farm and mustard fields",
+    "plateau dry scrub",
+    "river floodplain",
+    "rocky red hills",
+    "palm and banyan shade"
+  ],
+  "settlements": [
+    {
+      "id": "aranyapur",
+      "name": "Aranyapur",
+      "type": "major-city",
+      "east": 500,
+      "north": 200,
+      "architecture": "busy Indian-inspired mixed sandstone city, bazaars, dense apartments and full courtyard homes"
+    },
+    {
+      "id": "rajkhera",
+      "name": "Rajkhera",
+      "type": "town",
+      "east": -4700,
+      "north": 3900,
+      "architecture": "Rajasthani-inspired sandstone haveli streets with balconies, arches and inner courtyards"
+    },
+    {
+      "id": "devanagar",
+      "name": "Devanagar",
+      "type": "town",
+      "east": 4700,
+      "north": 4400,
+      "architecture": "North Indian-style colorful market and residential neighborhoods"
+    },
+    {
+      "id": "vanyapur",
+      "name": "Vanyapur",
+      "type": "town",
+      "east": 5600,
+      "north": -3900,
+      "architecture": "lush southern-inspired settlement with distinct timber-veranda homes"
+    },
+    {
+      "id": "peepalgaon",
+      "name": "Peepalgaon",
+      "type": "village",
+      "east": -6500,
+      "north": -500,
+      "architecture": "mud brick rural houses, banyan tree plaza"
+    },
+    {
+      "id": "sundarkhet",
+      "name": "Sundarkhet",
+      "type": "village",
+      "east": -2800,
+      "north": -5300,
+      "architecture": "farmhouses and terraced agricultural paths"
+    },
+    {
+      "id": "chandpur",
+      "name": "Chandpur",
+      "type": "village",
+      "east": 1500,
+      "north": -6500,
+      "architecture": "small brick homes, village market, handpump courtyard"
+    },
+    {
+      "id": "kailgram",
+      "name": "Kailgram",
+      "type": "village",
+      "east": -6500,
+      "north": 6200,
+      "architecture": "stone houses in hill foothills"
+    },
+    {
+      "id": "mahavan",
+      "name": "Mahavan",
+      "type": "village",
+      "east": 7300,
+      "north": 1300,
+      "architecture": "jungle edge bamboo and earthen homes"
+    },
+    {
+      "id": "lalgarh",
+      "name": "Lalgarh",
+      "type": "village",
+      "east": -7300,
+      "north": -6700,
+      "architecture": "dry stone village and small fort outpost"
+    },
+    {
+      "id": "nilgaon",
+      "name": "Nilgaon",
+      "type": "village",
+      "east": 3300,
+      "north": 7200,
+      "architecture": "irrigated farming village with low brick houses"
+    },
+    {
+      "id": "taranpur",
+      "name": "Taranpur",
+      "type": "village",
+      "east": -1000,
+      "north": 7800,
+      "architecture": "railway halt, workshops and family houses"
+    },
+    {
+      "id": "kalpana",
+      "name": "Kalpana",
+      "type": "village",
+      "east": 7800,
+      "north": -5900,
+      "architecture": "tropical orchard village with veranda houses"
+    },
+    {
+      "id": "sitalpur",
+      "name": "Sitalpur",
+      "type": "village",
+      "east": -7500,
+      "north": 1200,
+      "architecture": "stepwell and village mud-brick lanes"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "stepwell",
+      "name": "Grand puits à degrés",
+      "east": -5500,
+      "north": 3900,
+      "design": "carved stone stepwell with real stairs and collision"
+    },
+    {
+      "id": "hill-fort",
+      "name": "Fort de la colline rouge",
+      "east": -6100,
+      "north": -6200,
+      "design": "original sandstone fort with explorable interior"
+    },
+    {
+      "id": "monsoon-bridge",
+      "name": "Grand pont de la mousson",
+      "east": 1500,
+      "north": 1800,
+      "design": "stone bridge over planned seasonal river"
+    },
+    {
+      "id": "rail-junction",
+      "name": "Gare de marchandises",
+      "east": -700,
+      "north": 6800,
+      "design": "railway station and workshops"
+    },
+    {
+      "id": "forest-ruins",
+      "name": "Ruines de la jungle",
+      "east": 7200,
+      "north": 6100,
+      "design": "fictional old masonry structures"
+    },
+    {
+      "id": "bazaar",
+      "name": "Grand bazar d'Aranyapur",
+      "east": 650,
+      "north": 450,
+      "design": "market lanes, shop interiors and covered stalls"
+    }
+  ],
+  "hydrologyDesign": {
+    "mainRiversPlanned": 1,
+    "irrigationCanalsPlanned": 3,
+    "reservoirsPlanned": 2,
+    "monsoonFloodingPlanned": true,
+    "actualWaterActorPlacement": false
+  },
+  "architectureTargets": {
+    "true3DExteriors": true,
+    "accessibleInteriorsRequired": true,
+    "functionalDoors": true,
+    "multiStoreyHouses": true,
+    "rooftopAccess": true,
+    "workingStairways": true,
+    "correctCollisions": true,
+    "marketInteriors": true,
+    "materialsAndModelsNeedImport": true,
+    "allRealMeshesVerified": false
+  },
+  "mapSystemsPlanned": {
+    "roadNetwork": true,
+    "railway": true,
+    "bridges": true,
+    "farms": true,
+    "jungleFoliage": true,
+    "loot": true,
+    "wildlife": true,
+    "monsoonWeather": true
+  },
+  "developmentState": {
+    "catalogRegistered": false,
+    "nativeHeightfieldSource": false,
+    "worldPartitionMapSaved": false,
+    "settlementMeshesPlaced": false,
+    "playtested": false
+  },
+  "protectExistingMaps": true
+}
