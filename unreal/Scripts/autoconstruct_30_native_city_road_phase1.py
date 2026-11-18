@@ -8,6 +8,7 @@ world; no clearing, deleting, reimporting or resculpting original land.
 One bounded batch per invocation; repeat until every planned locality is done.
 """
 import hashlib,json,math,os,shutil,traceback
+from collections import defaultdict
 from pathlib import Path
 import unreal
 
@@ -114,7 +115,42 @@ def saved_actor_labels(actors):
         for d in wp.get_actor_descs() or []:labels.add(str(d.label))
     except Exception:pass
     return labels
+# Persistent World Partition actors can be unloaded in the editor: protecting
+# only the loaded scene would overwrite existing SKARVIK/other towns. Build a
+# small spatial occupancy index from original saved actor descriptor bounds.
+OBSTACLE_GRID=defaultdict(list)
+OBSTACLE_CELL_METRES=240.
+def index_persistent_obstacles():
+    counted=0
+    try: descriptions=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+    except Exception:return 0
+    for d in descriptions:
+        try:
+            cls=str(d.native_class).lower()
+            if "landscape" in cls or "worldsettings" in cls:continue
+            b=d.bounds
+            minx,maxx=float(b.min.x)/100.,float(b.max.x)/100.
+            minn,maxn=-float(b.max.y)/100.,-float(b.min.y)/100.
+            if not all(math.isfinite(v) for v in (minx,maxx,minn,maxn)):continue
+            if minx>maxx or minn>maxn or maxx-minx>380 or maxn-minn>380:continue
+            i0,j0=math.floor(minx/OBSTACLE_CELL_METRES),math.floor(minn/OBSTACLE_CELL_METRES)
+            i1,j1=math.floor(maxx/OBSTACLE_CELL_METRES),math.floor(maxn/OBSTACLE_CELL_METRES)
+            for i in range(i0,i1+1):
+                for j in range(j0,j1+1):OBSTACLE_GRID[(i,j)].append((minx,minn,maxx,maxn))
+            counted+=1
+        except Exception:continue
+    return counted
+def overlaps_original_saved_actor(ex,ny,radius):
+    ci,cj=math.floor(ex/OBSTACLE_CELL_METRES),math.floor(ny/OBSTACLE_CELL_METRES)
+    reach=max(1,math.ceil(radius/OBSTACLE_CELL_METRES))
+    for i in range(ci-reach,ci+reach+1):
+        for j in range(cj-reach,cj+reach+1):
+            for x0,y0,x1,y1 in OBSTACLE_GRID.get((i,j),()):
+                if x0-radius<=ex<=x1+radius and y0-radius<=ny<=y1+radius:
+                    return True
+    return False
 def looks_occupied(actors,ex,ny,radius=20.):
+    if overlaps_original_saved_actor(ex,ny,radius):return True
     for a in actors:
         if isinstance(a,unreal.LandscapeProxy):continue
         if isinstance(a,(unreal.DirectionalLight,unreal.SkyLight,unreal.SkyAtmosphere)):continue
@@ -188,6 +224,7 @@ try:
     report["realTerrainCollisionVerified"]=True
     h=sampler_for_map(ID,world)
     existingLabels=saved_actor_labels(actors)
+    report["persistentOriginalActorObstaclesIndexed"]=index_persistent_obstacles()
     generatedLabels={x for x in existingLabels if x.startswith(PREFIX+ID.replace("-","_")+"_")}
     if mapdata.get("requestedLocalities")==0:
         report["state"]="SPECIAL_GAME_MODE_PRESERVED_NO_CIVILIAN_TOWNS"
