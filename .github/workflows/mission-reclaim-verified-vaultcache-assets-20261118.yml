@@ -1,4 +1,4 @@
-name: ANOMALIA - reclaim 3 GiB verified VaultCache duplicate assets safely
+name: ANOMALIA - reclaim 12 GiB verified VaultCache duplicate assets safely
 on:
   push:
     branches: [mission/finalisation-20261104]
@@ -12,7 +12,7 @@ concurrency:
 jobs:
   reclaim:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 65
+    timeout-minutes: 180
     steps:
       - uses: actions/checkout@v4
         with:
@@ -20,7 +20,7 @@ jobs:
           sparse-checkout: scripts/ue5/reclaim_exact_vaultcache_duplicates_20261118.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      - name: Recover at most 3 GiB of SHA256 identical independent VaultCache duplicates and keep original game assets
+      - name: Recover up to 12 GiB of SHA256 identical independent VaultCache duplicates and keep original game assets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
