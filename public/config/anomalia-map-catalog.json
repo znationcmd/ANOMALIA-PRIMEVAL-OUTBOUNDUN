@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "25 independent ANOMALIA’Z map identities. Catalogue and terrain formulas do not establish that the corresponding Unreal map, buildings, interiors, or gameplay have been generated and verified.",
+  "description": "30 independent ANOMALIA'Z PRIGIMALIA maps according to user master list: SKARVIK and DRAZOVIA are the two principal maps, 28 further maps are planned or in development. Catalog entries do not certify an installed Unreal .umap or a playable world. Existing UE packages untouched.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -13,7 +13,9 @@
       "validation": "native-PIE-limited",
       "saveNamespace": "archipelago-v2",
       "targetLocalities": 125,
-      "settlementPlacementStatus": "125-location-source-plan-native-placement-incomplete"
+      "settlementPlacementStatus": "125-location-source-plan-native-placement-incomplete",
+      "catalogueClass": "principal",
+      "areaKm2": 2304
     },
     {
       "id": "inhabited-v2",
@@ -26,7 +28,9 @@
       "validation": "authored-editor-not-full-gameplay-tested",
       "saveNamespace": "inhabited-v2",
       "targetLocalities": 70,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "principal",
+      "areaKm2": 2304
     },
     {
       "id": "karskov-v1",
@@ -41,7 +45,9 @@
       "terrainBiome": "cold-fjords-taiga",
       "expectedLandscapeComponents": 576,
       "targetLocalities": 45,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 900
     },
     {
       "id": "vorgrad-v1",
@@ -60,7 +66,9 @@
       "localityNamingFile": "config/anomalia-locality-names.json",
       "localityLanguages": [
         "ar"
-      ]
+      ],
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 900
     },
     {
       "id": "nemoris-v1",
@@ -75,7 +83,9 @@
       "terrainBiome": "ancient-forest-wetlands",
       "expectedLandscapeComponents": 256,
       "targetLocalities": 15,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 400
     },
     {
       "id": "drakheim-v1",
@@ -90,7 +100,9 @@
       "terrainBiome": "volcanic-ash-highlands",
       "expectedLandscapeComponents": 256,
       "targetLocalities": 10,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 400
     },
     {
       "id": "solynacalyra-v1",
@@ -105,7 +117,9 @@
       "packageDiscoveryPending": true,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 225
     },
     {
       "id": "nexavarkhos-v1",
@@ -120,7 +134,9 @@
       "packageDiscoveryPending": true,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 100
     },
     {
       "id": "chernaskaluxria-v1",
@@ -139,7 +155,14 @@
       "nativeWorldOpenedAndPlaytested": false,
       "actualTerrainTilesVerified": false,
       "targetLocalities": 190,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 10000,
+      "areaBreakdownKm2": {
+        "land": 6750,
+        "water": 3250,
+        "total": 10000
+      }
     },
     {
       "id": "falc-v1",
@@ -154,7 +177,9 @@
       "packageDiscoveryPending": true,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 704
     },
     {
       "id": "kolchiem-origins-v1",
@@ -169,7 +194,9 @@
       "packageDiscoveryPending": true,
       "sourceMapPreserved": true,
       "targetLocalities": null,
-      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending"
+      "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 2304
     },
     {
       "id": "roskatvia-b1-v1",
@@ -200,7 +227,9 @@
       "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
       "multiplayerReady": false,
       "actualVegetationAndWaterPopulated": false,
-      "gameplayAndCollisionPlaytested": false
+      "gameplayAndCollisionPlaytested": false,
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 163.84
     },
     {
       "id": "nogokv-51-v1",
@@ -232,7 +261,9 @@
       "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
       "multiplayerReady": false,
       "actualVegetationAndWaterPopulated": false,
-      "gameplayAndCollisionPlaytested": false
+      "gameplayAndCollisionPlaytested": false,
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 234.09
     },
     {
       "id": "paradisiomania-v1",
@@ -264,7 +295,9 @@
       "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
       "multiplayerReady": false,
       "actualVegetationAndWaterPopulated": false,
-      "gameplayAndCollisionPlaytested": false
+      "gameplayAndCollisionPlaytested": false,
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 100
     },
     {
       "id": "deadroot-v1",
@@ -292,7 +325,9 @@
       "nativeTerrainEvidence": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/41226401802",
       "multiplayerReady": false,
       "actualVegetationAndWaterPopulated": false,
-      "gameplayAndCollisionPlaytested": false
+      "gameplayAndCollisionPlaytested": false,
+      "catalogueClass": "future-planned-or-in-development",
+      "areaKm2": 64
     },
     {
       "id": "yudinavia-v1",
@@ -325,7 +360,8 @@
       "gameplayAndCollisionPlaytested": false,
       "multiplayerReady": false,
       "targetLocalities": null,
-      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending",
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "moscovie-v1",
@@ -358,7 +394,8 @@
       "gameplayAndCollisionPlaytested": false,
       "multiplayerReady": false,
       "targetLocalities": null,
-      "settlementPlacementStatus": "terrain-and-settlement-design-pending"
+      "settlementPlacementStatus": "terrain-and-settlement-design-pending",
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "corsivia-v1",
@@ -396,7 +433,8 @@
       "localityNamingFile": "config/anomalia-locality-names.json",
       "localityLanguages": [
         "co"
-      ]
+      ],
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "bot-sever-v1",
@@ -421,7 +459,8 @@
       ],
       "southernGeorgianAreaFraction": 0.15,
       "targetLocalities": null,
-      "settlementPlacementStatus": "naming-plan-native-placement-pending"
+      "settlementPlacementStatus": "naming-plan-native-placement-pending",
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "apocalyptic-outbreak-v1",
@@ -458,7 +497,8 @@
       "gameplayAndCollisionPlaytested": false,
       "environmentalHazardsImplemented": false,
       "completeBuildingsValidated": false,
-      "originalOtherMapsUntouched": true
+      "originalOtherMapsUntouched": true,
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "morodenachtmerr-v1",
@@ -503,7 +543,8 @@
         "layoutFile": "public/config/morodenachtmerr-world-layout-10km.json",
         "nativeTerrainBasinsInGitHubSource": true,
         "unrealWaterSurfacePlaced": false
-      }
+      },
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "mokupunawai-v1",
@@ -537,7 +578,8 @@
       "waterBodiesAndCavesBuilt": false,
       "playtested": false,
       "completeBuildingsValidated": false,
-      "originalOtherMapsUntouched": true
+      "originalOtherMapsUntouched": true,
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "id": "nasdaras-v1",
@@ -581,7 +623,8 @@
       "repairableWellGameplayImplemented": false,
       "fullTunnelNetworkBuilt": false,
       "gameplayAndCollisionPlaytested": false,
-      "originalOtherMapsUntouched": true
+      "originalOtherMapsUntouched": true,
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "widthKm": 20,
@@ -608,7 +651,8 @@
       "cityCountPlanned": 1,
       "townsCountPlanned": 3,
       "villagesCountPlanned": 10,
-      "layoutPath": "public/config/kiryumori-east-asian-world-20km.json"
+      "layoutPath": "public/config/kiryumori-east-asian-world-20km.json",
+      "catalogueClass": "future-planned-or-in-development"
     },
     {
       "widthKm": 20,
@@ -635,10 +679,106 @@
       "cityCountPlanned": 1,
       "townsCountPlanned": 3,
       "villagesCountPlanned": 10,
-      "layoutPath": "public/config/aranyapura-indian-world-20km.json"
+      "layoutPath": "public/config/aranyapura-indian-world-20km.json",
+      "catalogueClass": "future-planned-or-in-development"
+    },
+    {
+      "id": "racconia-varkovia-v1",
+      "displayName": "RACCONIA-VARKOVIA",
+      "areaKm2": 256,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_RACCONIA_VARKOVIA",
+      "targetLocalities": null,
+      "validation": "user-declared-future-map-not-yet-verified-in-original-Unreal-project",
+      "originalUnrealPackage": null,
+      "widthKm": null,
+      "heightKm": null,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "saveNamespace": "racconia-varkovia-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "settlementPlacementStatus": "not-yet-validated",
+      "catalogueClass": "future-planned-or-in-development"
+    },
+    {
+      "id": "unknown-horror-x-v1",
+      "displayName": "UNKNOWN HORROR X",
+      "areaKm2": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_UNKNOWN_HORROR_X",
+      "targetLocalities": null,
+      "validation": "user-declared-future-map-size-and-native-installation-not-yet-verified",
+      "originalUnrealPackage": null,
+      "widthKm": null,
+      "heightKm": null,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "saveNamespace": "unknown-horror-x-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "settlementPlacementStatus": "not-yet-validated",
+      "catalogueClass": "future-planned-or-in-development"
+    },
+    {
+      "id": "konigsbruck-v1",
+      "displayName": "KÖNIGSBRÜCK",
+      "widthKm": 30,
+      "heightKm": 30,
+      "areaKm2": 900,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_KONIGSBRUCK",
+      "targetLocalities": null,
+      "validation": "user-declared-future-map-not-yet-verified-in-original-Unreal-project",
+      "originalUnrealPackage": null,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "saveNamespace": "konigsbruck-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "settlementPlacementStatus": "not-yet-validated",
+      "catalogueClass": "future-planned-or-in-development"
+    },
+    {
+      "id": "skjaeroyas-v1",
+      "displayName": "SKJÆRØYÅS",
+      "widthKm": 15,
+      "heightKm": 15,
+      "areaKm2": 225,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_SKJAEROYAS",
+      "targetLocalities": null,
+      "validation": "user-declared-future-map-not-yet-verified-in-original-Unreal-project",
+      "originalUnrealPackage": null,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "saveNamespace": "skjaeroyas-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "settlementPlacementStatus": "not-yet-validated",
+      "catalogueClass": "future-planned-or-in-development"
+    },
+    {
+      "id": "valhalla-extinction-v1",
+      "displayName": "VALHALLA EXTINCTION",
+      "areaKm2": 576,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_VALHALLA_EXTINCTION",
+      "targetLocalities": null,
+      "validation": "user-declared-future-map-not-yet-verified-in-original-Unreal-project",
+      "originalUnrealPackage": null,
+      "widthKm": null,
+      "heightKm": null,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "saveNamespace": "valhalla-extinction-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "gameplayAndCollisionPlaytested": false,
+      "settlementPlacementStatus": "not-yet-validated",
+      "catalogueClass": "future-planned-or-in-development"
     }
   ],
-  "mapCount": 25,
+  "mapCount": 30,
   "catalogAudit": {
     "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
