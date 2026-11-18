@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "21 independent ANOMALIA’Z map identities. Catalogue presence is not proof of native world creation, finished environments, or playability.",
+  "description": "23 independent ANOMALIA’Z map identities. Catalogue presence and terrain source formulas are not proof of native world creation, completed settlements, tunnels, or playable gameplay.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -538,9 +538,53 @@
       "playtested": false,
       "completeBuildingsValidated": false,
       "originalOtherMapsUntouched": true
+    },
+    {
+      "id": "nasdaras-v1",
+      "displayName": "NASDARAS",
+      "displaySubtitle": "Le désert des puits oubliés",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_NASDARAS",
+      "widthKm": 18,
+      "heightKm": 26,
+      "areaKm2": 468,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "native-dry-desert-heightfield-in-GitHub-source-UE5-level-not-generated",
+      "saveNamespace": "nasdaras-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "terrainBiome": "African-inspired-green-Sahel-savanna-scrub-vegetation-arid-dunes-rocky-massifs-Arabic-villages-and-cities",
+      "gameMode": "DESERT_SURVIVAL_PVE_PVPVE_DESIGN",
+      "features": [
+        "arid desert interspersed with African-inspired acacia greenery and dry grasslands",
+        "nomad camps, Sahelian earthen rural villages, two Arabic-style towns and markets",
+        "zero visible surface water: no rivers, lakes, wet oases, pools or ocean",
+        "ten sealed abandoned wells requiring repair to unlock a physically climbable descent",
+        "14 underground tunnel connections linking the ten well entrances, planned to be continuous and explorable",
+        "repair materials, ventilation and lighting requirements, persistent server repair status",
+        "dry wadis, windy dunes, eroded rocky massifs, desert roads and camps"
+      ],
+      "waterPolicy": {
+        "surfaceWaterBodies": 0,
+        "dryRiverBeds": true,
+        "wellAsDryVerticalAccess": true
+      },
+      "wellsPlanned": 10,
+      "connectedTunnelSegmentsPlanned": 14,
+      "undergroundTraversalStatus": "network-design-only-physical-meshes-ladders-and-repair-interactions-not-placed",
+      "layoutPath": "public/config/nasdaras-468km-desert-wells-underground.json",
+      "targetLocalities": 9,
+      "settlementPlacementStatus": "design-only-real-building-and-camp-assets-not-placed",
+      "actualWaterBodiesPlaced": false,
+      "realBunkerAndWellMeshesPlaced": false,
+      "repairableWellGameplayImplemented": false,
+      "fullTunnelNetworkBuilt": false,
+      "gameplayAndCollisionPlaytested": false,
+      "originalOtherMapsUntouched": true
     }
   ],
-  "mapCount": 22,
+  "mapCount": 23,
   "catalogAudit": {
     "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
