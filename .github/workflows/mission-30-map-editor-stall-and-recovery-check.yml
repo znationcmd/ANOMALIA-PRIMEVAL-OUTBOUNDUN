@@ -1,0 +1,64 @@
+name: ANOMALIA - diagnose current Unreal blocker and native map creation readiness
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-30-map-editor-stall-and-recovery-check.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Inspect exact headless process workload and game file changes, never terminate
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $before=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          $snapshots=@()
+          foreach($p in $before){
+            $pr=Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue
+            $s=[string]$p.CommandLine
+            $script=''
+            if($s -match '-ExecutePythonScript=[^\\\s"]*.*?([^\\\s"]+\.py)'){$script=$Matches[1]}
+            $snapshots+=[ordered]@{
+              pid=$p.ProcessId
+              ageMinutes=[math]::Round(((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalMinutes,2)
+              parentAlive=[bool](Get-CimInstance Win32_Process -Filter ("ProcessId="+$p.ParentProcessId) -ErrorAction SilentlyContinue)
+              parentName=(Get-CimInstance Win32_Process -Filter ("ProcessId="+$p.ParentProcessId) -ErrorAction SilentlyContinue).Name
+              headless=$s.Contains('-unattended')
+              pythonScript=$script
+              ueProject=$s.Contains('AnomaliaPrimeval.uproject')
+              nullRHI=($s.Contains('-nullrhi') -or $s.Contains('-NullRHI'))
+              executable=[string]$p.ExecutablePath
+              cpuInitial=if($pr){[double]$pr.CPU}else{0}
+              writeInitial=[long]$p.WriteTransferCount
+              readInitial=[long]$p.ReadTransferCount
+            }
+          }
+          Start-Sleep -Seconds 20
+          $results=@()
+          foreach($one in $snapshots){
+            $p=Get-CimInstance Win32_Process -Filter ("ProcessId="+$one.pid) -ErrorAction SilentlyContinue
+            $pr=Get-Process -Id $one.pid -ErrorAction SilentlyContinue
+            $results+=[ordered]@{
+              pid=$one.pid
+              ageMinutes=$one.ageMinutes
+              parentAlive=$one.parentAlive
+              parentName=$one.parentName
+              headless=$one.headless
+              script=$one.pythonScript
+              projectIsOriginal=$one.ueProject
+              nullRHI=$one.nullRHI
+              cpuDeltaSeconds=if($pr){[math]::Round([double]$pr.CPU-$one.cpuInitial,3)}else{$null}
+              writesDeltaBytes=if($p){[long]$p.WriteTransferCount-$one.writeInitial}else{$null}
+              readsDeltaBytes=if($p){[long]$p.ReadTransferCount-$one.readInitial}else{$null}
+              stillRunning=([bool]$p)
+            }
+          }
+          $root='D:\ANOMALIA\unreal'
+          $maps=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap' | Where-Object {$_.LastWriteTimeUtc -ge (Get-Date).ToUniversalTime().AddHours(-2)} | ForEach-Object {$_.Name})
+          $logs=@(Get-ChildItem -LiteralPath (Join-Path $root 'Saved\Logs') -File -Filter '*.log' -ErrorAction SilentlyContinue|Sort-Object LastWriteTimeUtc -Descending|Select-Object -First 6|ForEach-Object {[ordered]@{name=$_.Name;ageMin=[math]::Round(((Get-Date).ToUniversalTime()-$_.LastWriteTimeUtc).TotalMinutes,2);bytes=$_.Length}})
+          $created=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap' | Where-Object {$_.Name -match 'APOCALYPTIC_OUTBREAK|MOROEDENACHTMERR|MOKUPUNAWAI|NASDARAS|KIRYUMORI|ARANYAPURA|FALC|UNKNOWN_HORROR_X|KONIGSBRUCK|SKJAEROYAS|VALHALLA_EXTINCTION'} | ForEach-Object {$_.Name})
+          Write-Host ('ANOMALIA_EDITOR_RECOVERY_READONLY '+([ordered]@{processes=$results;recentMapFiles=$maps;recentUELogs=$logs;newMapPackagesAlreadyPresent=$created;freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace;processesStopped=0}|ConvertTo-Json -Depth 7 -Compress))
