@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "description": "19 independent ANOMALIA’Z map identities: 15 prior entries preserved and four additional user-requested world designs. Catalogue presence is not proof of native creation, import or playability.",
+  "description": "20 independent ANOMALIA’Z map identities. Catalogue presence is not proof of native world creation, fully built environments, or playability.",
   "maps": [
     {
       "id": "archipelago-v2",
@@ -422,9 +422,46 @@
       "southernGeorgianAreaFraction": 0.15,
       "targetLocalities": null,
       "settlementPlacementStatus": "naming-plan-native-placement-pending"
+    },
+    {
+      "id": "apocalyptic-outbreak-v1",
+      "displayName": "APOCALYPTIC OUTBREAK",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_APOCALYPTIC_OUTBREAK",
+      "widthKm": 15,
+      "heightKm": 15,
+      "areaKm2": 225,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "source-implemented-native-world-generation-pending",
+      "saveNamespace": "apocalyptic-outbreak-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "terrainBiome": "post-apocalyptic-scorched-hills-ruined-metropolis-industrial-wasteland-contaminated-river",
+      "gameMode": "SURVIVAL_PVE_PVPVE_DESIGN",
+      "features": [
+        "single abandoned metropolis with enterable interiors to build",
+        "three ruined satellite towns and eight abandoned villages",
+        "burned forest belts and evacuation highway",
+        "quarantine hospital and military checkpoint",
+        "industrial chemical complex and polluted river",
+        "crater badlands",
+        "derailed railway, bridges and tunnel",
+        "survival bunkers and underground utility passages"
+      ],
+      "targetLocalities": 12,
+      "settlementPlacementStatus": "planned-native-placement-and-interiors-not-validated",
+      "heightmapResolution": 1009,
+      "expectedLandscapeComponents": 64,
+      "apocalypticLayoutPath": "public/config/apocalyptic-outbreak-world-layout-15km.json",
+      "nativeTerrainEvidence": null,
+      "gameplayAndCollisionPlaytested": false,
+      "environmentalHazardsImplemented": false,
+      "completeBuildingsValidated": false,
+      "originalOtherMapsUntouched": true
     }
   ],
-  "mapCount": 19,
+  "mapCount": 20,
   "catalogAudit": {
     "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
