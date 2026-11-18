@@ -1,0 +1,54 @@
+name: ANOMALIA - validate KIRYUMORI and ARANYAPURA new worlds
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/validate-last-two-east-asian-indian-worlds.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  native-heightfields-and-catalog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and validate two independent 20x20 km native landscapes
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I . tests/native/kiryumori_aranyapura_worlds_20km.cpp -o /tmp/new-asian-worlds
+          /tmp/new-asian-worlds
+      - name: Verify 25 independent map registrations and two detailed settlement plans
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cat=json.loads(Path('public/config/anomalia-map-catalog.json').read_text(encoding='utf-8'))
+          assert len(cat['maps'])==cat['mapCount']==25
+          ids=[m['id'] for m in cat['maps']]
+          assert len(ids)==len(set(ids))
+          maps={m['id']:m for m in cat['maps']}
+          expected=[('kiryumori-v1','KIRYŪMORI','KIRYUMORI','public/config/kiryumori-east-asian-world-20km.json'),
+                    ('aranyapura-v1','ARANYAPURA','ARANYAPURA','public/config/aranyapura-indian-world-20km.json')]
+          for ident,name,native,path in expected:
+            m=maps[ident]
+            cfg=json.loads(Path(path).read_text(encoding='utf-8'))
+            assert m['displayName']==cfg['displayName']==name
+            assert m['plannedUnrealPackage']==cfg['unrealPackage']=='/Game/Maps/PRIGIMALIA_'+native
+            assert m['widthKm']==m['heightKm']==20 and m['areaKm2']==400
+            assert cfg['sizeMetres']=={'eastWest':20000,'northSouth':20000}
+            assert len(cfg['settlements'])==14 and len(cfg['landmarks'])==6
+            assert sum(s['type']=='major-city' for s in cfg['settlements'])==1
+            assert sum(s['type']=='town' for s in cfg['settlements'])==3
+            assert sum(s['type']=='village' for s in cfg['settlements'])==10
+            sites=cfg['settlements']+cfg['landmarks']
+            assert len({s['id'] for s in sites})==len(sites)
+            assert all(abs(s['east'])<10000 and abs(s['north'])<10000 for s in sites)
+            assert cfg['architectureTargets']['accessibleInteriorsRequired']
+            assert not cfg['developmentState']['worldPartitionMapSaved']
+            assert not cfg['developmentState']['settlementMeshesPlaced']
+            assert not m['serverSelectable'] and not m['nativeWorldCreated']
+          assert (maps['nasdaras-v1']['widthKm'],maps['nasdaras-v1']['heightKm'])==(18,26)
+          assert (maps['morodenachtmerr-v1']['widthKm'],maps['morodenachtmerr-v1']['heightKm'])==(10,10)
+          assert (maps['mokupunawai-v1']['widthKm'],maps['mokupunawai-v1']['heightKm'])==(21,21)
+          assert (maps['apocalyptic-outbreak-v1']['widthKm'],maps['apocalyptic-outbreak-v1']['heightKm'])==(15,15)
+          print('KIRYUMORI_ARANYAPURA_25_MAPS_14_SETTLEMENTS_EACH_AND_INTERIORS_DESIGNED_VALID=1')
+          PY
