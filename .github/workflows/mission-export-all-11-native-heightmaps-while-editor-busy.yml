@@ -1,0 +1,74 @@
+name: ANOMALIA - generate and stage all 11 exact UE5 RAW16 terrains safely
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-export-all-11-native-heightmaps-while-editor-busy.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  export-native-terrain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile pure C++ landscape sampler
+        run: |
+          g++ -std=c++17 -O3 -Wall -Wextra -pedantic -I . tools/native/export_eleven_unreal_heightmaps.cpp -o /tmp/export-11-unreal-raw
+          /tmp/export-11-unreal-raw /tmp/new-eleven-heightmaps
+          find /tmp/new-eleven-heightmaps -name '*_R16.raw' -type f | wc -l | grep -x 11
+          ( cd /tmp/new-eleven-heightmaps && sha256sum -- *_R16.raw > SHA256SUMS.txt )
+          du -sh /tmp/new-eleven-heightmaps
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-11-new-raw16-terrain-files
+          path: /tmp/new-eleven-heightmaps/
+          compression-level: 2
+          retention-days: 30
+  stage-to-original-PC:
+    needs: export-native-terrain
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: anomalia-11-new-raw16-terrain-files
+          path: ${{ runner.temp }}/anomalia-new-terrain-download-${{ github.run_id }}
+      - name: Validate every RAW16 SHA and copy only to Saved import folder, never overriding .umap
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $main=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf) -or !(Test-Path -LiteralPath $main -PathType Leaf)){throw 'Original UE project or map missing'}
+          $incoming=Join-Path $env:RUNNER_TEMP ('anomalia-new-terrain-download-'+$env:GITHUB_RUN_ID)
+          $originals=@(Get-ChildItem -LiteralPath $incoming -File -Filter '*_R16.raw')
+          $metadata=@(Get-ChildItem -LiteralPath $incoming -File -Filter '*_R16.json')
+          if($originals.Count -ne 11 -or $metadata.Count -ne 11){throw 'Expected 11 terrain files and 11 metadata files'}
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 8GB){throw 'Insufficient D drive safety reserve'}
+          $destination=Join-Path $root 'Saved\AllThirtyMapGeneration\HeightfieldImports'
+          New-Item -ItemType Directory -Path $destination -Force|Out-Null
+          $receipt=@()
+          foreach($p in $originals){
+            $meta=Get-Content -LiteralPath (Join-Path $incoming ($p.BaseName+'.json')) -Encoding UTF8 -Raw|ConvertFrom-Json
+            if($meta.nativeUnrealMapAlreadySaved -ne $false){throw 'Incorrect terrain creation status'}
+            $expectedSize=[long]$meta.resolution*[long]$meta.resolution*2
+            if($p.Length -ne $expectedSize){throw 'RAW16 size differs from expected'}
+            $hash=(Get-FileHash -LiteralPath $p.FullName -Algorithm SHA256).Hash
+            $target=Join-Path $destination $p.Name
+            if(Test-Path -LiteralPath $target -PathType Leaf){
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $hash){throw 'Existing terrain differs; refusing overwrite'}
+              $state='EXISTING_IDENTICAL_PRESERVED'
+            }else{
+              Copy-Item -LiteralPath $p.FullName -Destination $target -ErrorAction Stop
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $hash){throw 'Copied terrain hash mismatch'}
+              $state='NEW_RAW16_STAGED'
+            }
+            $receipt+=[ordered]@{id=$meta.id;file=$target;bytes=$p.Length;sha256=$hash;state=$state;umapCreated=$false}
+            Write-Host "ANOMALIA_RAW16_ON_D=$($meta.id) STATE=$state"
+          }
+          $summary=[ordered]@{state='ALL_11_SOURCE_TERRAINS_STAGED_FOR_UNREAL_IMPORT';files=$receipt;count=$receipt.Count;
+            originalMapsOverwritten=0;nativeUmapFilesCreated=0;editorProcessNotTerminated=$true;destination=$destination}
+          $summary|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $destination ('11-raw16-import-receipt-'+$env:GITHUB_RUN_ID+'.json')) -Encoding UTF8
+          Write-Host ('ANOMALIA_11_RAW16_STAGING_SUMMARY '+($summary|ConvertTo-Json -Depth 8 -Compress))
