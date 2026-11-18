@@ -7,11 +7,11 @@ SRC = pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample")
 ONE = os.environ.get("OneDriveConsumer","")
 OUT = pathlib.Path(os.environ["CITYSAMPLE_ONEDRIVE_OUT"])
 CAP_BYTES = 1536 * 1024 * 1024
-MAX_SINGLE = 512 * 1024 * 1024
+MAX_SINGLE = 1536 * 1024 * 1024
 MIN_FREE_C = 4 * 1024 * 1024 * 1024
 MIN_FREE_D = 2 * 1024 * 1024 * 1024
 MAX_FILES = 2000
-MAX_CANDIDATES_EXAMINED = 10000
+MAX_CANDIDATES_EXAMINED = 150000
 EXCLUDE = {".git", "intermediate", "saved", "deriveddatacache", ".vs"}
 def iso():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def hash_file(p):
@@ -62,6 +62,10 @@ if state["localFreeDBefore"]<MIN_FREE_D:
     abort("SKIPPED_INSUFFICIENT_D_RESERVE");raise SystemExit(0)
 # Size-bounded inventory. Preserve all non-target files and avoid reparse points.
 candidates=[]
+source_files=0
+source_bytes=0
+large_files=0
+large_bytes=0
 for base,dirs,names in os.walk(SRC,followlinks=False):
     dirs[:]=[d for d in dirs if d.casefold() not in EXCLUDE and not (pathlib.Path(base)/d).is_symlink()]
     for name in names:
@@ -69,11 +73,21 @@ for base,dirs,names in os.walk(SRC,followlinks=False):
         try:
             if p.is_symlink():continue
             st=p.stat()
-            if stat.S_ISREG(st.st_mode) and 0<st.st_size<=MAX_SINGLE:
-                candidates.append((p.relative_to(SRC),st.st_size))
+            if stat.S_ISREG(st.st_mode):
+                source_files+=1
+                source_bytes+=st.st_size
+                if st.st_size>MAX_SINGLE:
+                    large_files+=1
+                    large_bytes+=st.st_size
+                elif st.st_size>0:
+                    candidates.append((p.relative_to(SRC),st.st_size))
         except OSError:continue
 candidates.sort(key=lambda row:(-row[1],str(row[0]).casefold()))
 state["eligibleCandidateCount"]=len(candidates)
+state["sourceFilesScanned"]=source_files
+state["sourceBytesScanned"]=source_bytes
+state["oversizeFilesNotHandled"]=large_files
+state["oversizeBytesNotHandled"]=large_bytes
 record()
 state["state"]="COPYING_BOUNDED_PILOT"
 for candidate_index,(relative,size) in enumerate(candidates):
