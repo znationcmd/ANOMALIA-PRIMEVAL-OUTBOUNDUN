@@ -1,4 +1,4 @@
-"""Create ONE missing Unreal World Partition .umap with a real native landscape.
+r"""Create ONE missing Unreal World Partition .umap with a real native landscape.
 
 Runs only in the original D:\ANOMALIA\unreal UE 5.8 editor, never overwrites
 a .umap, never edits another world, never substitutes placeholders for houses.
