@@ -504,9 +504,43 @@
         "nativeTerrainBasinsInGitHubSource": true,
         "unrealWaterSurfacePlaced": false
       }
+    },
+    {
+      "id": "mokupunawai-v1",
+      "displayName": "MOKUPŪNAWAI",
+      "displaySubtitle": "Archipel des sources",
+      "originalUnrealPackage": null,
+      "plannedUnrealPackage": "/Game/Maps/PRIGIMALIA_MOKUPUNAWAI",
+      "widthKm": 21,
+      "heightKm": 21,
+      "areaKm2": 441,
+      "independentWorld": true,
+      "serverSelectable": false,
+      "validation": "approved-inspired-design-catalog-only-native-terrain-not-generated",
+      "saveNamespace": "mokupunawai-v1",
+      "sourceMapPreserved": true,
+      "nativeWorldCreated": false,
+      "terrainBiome": "hawaiian-inspired-volcanic-island-rainforest-turquoise-lagoons-black-sand-beaches-dry-plateau-with-oases",
+      "features": [
+        "large central volcanic island, three outlying islets",
+        "six freshwater oasis pools and springs in dry lava valleys",
+        "wet tropical jungle, waterfalls, streams and misty mountains",
+        "black-sand beaches, coral lagoons, reef shallows and sea caves",
+        "five villages, small harbors, coconut groves and mountain paths"
+      ],
+      "oasesCountPlanned": 6,
+      "coastalLagoonsCountPlanned": 3,
+      "layoutPath": "public/config/mokupunawai-island-oases-layout-21km.json",
+      "targetLocalities": 5,
+      "settlementPlacementStatus": "planned-only",
+      "nativeWorldPackageCreated": false,
+      "waterBodiesAndCavesBuilt": false,
+      "playtested": false,
+      "completeBuildingsValidated": false,
+      "originalOtherMapsUntouched": true
     }
   ],
-  "mapCount": 21,
+  "mapCount": 22,
   "catalogAudit": {
     "confirmedNamedMaps": 19,
     "verifiedSourcePackages": 6,
