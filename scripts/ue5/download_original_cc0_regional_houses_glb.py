@@ -36,7 +36,7 @@ def load(url,limit):
     request=urllib.request.Request(url,headers=HEADERS)
     with urllib.request.urlopen(request,timeout=65) as r:
         if r.url!=url and urllib.parse.urlparse(r.url).hostname!=HOST:
-            raise RuntimeError("Redirect not from official CC0 host")
+            raise RuntimeError("Official download redirected to host "+str(urllib.parse.urlparse(r.url).hostname))
         h=hashlib.sha256();chunks=[];total=0
         while True:
             b=r.read(1024*1024)
