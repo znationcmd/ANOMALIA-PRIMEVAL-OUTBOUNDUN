@@ -1,0 +1,38 @@
+name: ANOMALIA - identify available 2 TB cloud client (read only)
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-detect-onedrive-cloud-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  detect-cloud:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Diagnose OneDrive and other local cloud clients without accessing credentials
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $clientNames=@('OneDrive','pCloud','GoogleDriveFS','Dropbox','MEGAsync','Icedrive','OneCloud')
+          foreach($name in $clientNames) {
+            $p=@(Get-Process -Name $name -ErrorAction SilentlyContinue)
+            Write-Host ('CLOUD_CLIENT '+$name+' processes='+$p.Count)
+          }
+          foreach($name in @('OneDrive','OneDriveConsumer','OneDriveCommercial')) {
+            $p=[Environment]::GetEnvironmentVariable($name)
+            $isAvailable=($p -and (Test-Path -LiteralPath $p -PathType Container))
+            Write-Host ('ONEDRIVE_ENV '+$name+' folderExists='+[bool]$isAvailable)
+          }
+          foreach($root in @('HKCU:\Software\Microsoft\OneDrive\Accounts\Personal','HKCU:\Software\Microsoft\OneDrive\Accounts\Business1')) {
+            $entry=Get-ItemProperty -Path $root -ErrorAction SilentlyContinue
+            $rootExists=[bool]$entry
+            $folderExists=$false
+            if($entry -and $entry.UserFolder){$folderExists=Test-Path -LiteralPath $entry.UserFolder -PathType Container}
+            Write-Host ('ONEDRIVE_ACCOUNT accountConfigured='+$rootExists+' userFolderExists='+$folderExists)
+          }
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          Write-Host ('CITY_SAMPLE_SOURCE_EXISTS='+(Test-Path -LiteralPath (Join-Path $source 'CitySample.uproject') -PathType Leaf))
+          Write-Host ('CITY_SAMPLE_ONEDRIVE_DIAG_COMPLETE sourceFilesDeleted=0 sourceFilesModified=0')
