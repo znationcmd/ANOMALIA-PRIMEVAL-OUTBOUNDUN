@@ -20,6 +20,8 @@ EWorld ResolveRequested(const FString& Id) {
  if(Id==TEXT("APOCALYPTIC_OUTBREAK"))return EWorld::ApocalypticOutbreak;
  if(Id==TEXT("MOROEDENACHTMERR"))return EWorld::Morodenachtmerr;
  if(Id==TEXT("NASDARAS"))return EWorld::Nasdaras;
+ if(Id==TEXT("KIRYUMORI"))return EWorld::Kiryumori;
+ if(Id==TEXT("ARANYAPURA"))return EWorld::Aranyapura;
  return EWorld::Invalid;
 }
 }
