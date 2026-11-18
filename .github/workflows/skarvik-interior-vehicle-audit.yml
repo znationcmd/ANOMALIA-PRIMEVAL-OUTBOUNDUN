@@ -1,0 +1,94 @@
+name: SKARVIK - inspect main map and reusable interior and vehicle assets
+on:
+  push:
+    branches: [work/skarvik-interiors-vehicles-20261118]
+    paths: ['.github/workflows/skarvik-interior-vehicle-audit.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - name: Open the existing SKARVIK map without saving
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map = Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          foreach ($file in @($project, $map)) {
+            if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Missing main project file: $file" }
+          }
+          if (Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue) { throw 'An Unreal session is already active on this PC' }
+          $engine = $env:UE_ROOT
+          if (!$engine) { $engine = 'C:\Program Files\Epic Games\UE_5.8' }
+          $editor = Join-Path $engine 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $out = Join-Path $env:RUNNER_TEMP ("skarvik-interior-audit-" + $env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          "SKARVIK_AUDIT_OUT=$out" >> $env:GITHUB_ENV
+          $env:SKARVIK_AUDIT_OUT = $out
+          $script = Join-Path $out 'audit.py'
+          @'
+          import collections
+          import json
+          import os
+          import re
+          from pathlib import Path
+          import unreal
+
+          out = Path(os.environ["SKARVIK_AUDIT_OUT"])
+          map_path = "/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          if not levels.load_level(map_path):
+              raise RuntimeError(f"Unable to open {map_path}")
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+          if world.get_path_name().split(".")[0] != map_path:
+              raise RuntimeError(f"Unexpected editor world: {world.get_path_name()}")
+          tokens = re.compile(r"interior|stair|door|floor|ceiling|furniture|hospital|police|warehouse|garage|dirt.?bike|motocross|motorcycle|scooter|snowmobile|jet.?ski|semi.?truck|trailer|formula|f1[_-]|kart|(?:^|_)quad(?:_|$)", re.I)
+          registry = unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          candidates = collections.defaultdict(list)
+          for asset in registry.get_assets_by_path("/Game", recursive=True):
+              if str(asset.asset_class_path.asset_name) not in {"StaticMesh", "SkeletalMesh", "Blueprint"}:
+                  continue
+              match = tokens.search(str(asset.asset_name))
+              if match:
+                  candidates[match.group().lower()].append(str(asset.package_name))
+          building = re.compile(r"building|house|villa|hospital|police|garage|apartment|warehouse|interior|stair|door", re.I)
+          placed = []
+          counts = collections.Counter()
+          for actor in actors.get_all_level_actors():
+              label = actor.get_actor_label()
+              counts[actor.get_class().get_name()] += 1
+              if not building.search(label):
+                  continue
+              location = actor.get_actor_location()
+              meshes = []
+              for component in actor.get_components_by_class(unreal.StaticMeshComponent):
+                  mesh = component.get_editor_property("static_mesh")
+                  if mesh:
+                      meshes.append({"asset": mesh.get_path_name(), "collision": str(component.get_collision_enabled())})
+              placed.append({"actor": label, "location_cm": [location.x, location.y, location.z], "meshes": meshes})
+          result = {"map": world.get_path_name(), "loaded_actor_classes": counts,
+                    "loaded_building_candidates": placed, "reusable_asset_candidates": candidates}
+          (out / "audit.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+          unreal.log(f"SKARVIK_LOADED_BUILDING_CANDIDATES={len(placed)}")
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          $before = (Get-FileHash -LiteralPath $map).Hash
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nop4 -nosplash -nosound "-abslog=$out\editor.log"
+          $code = $LASTEXITCODE
+          if ((Get-FileHash -LiteralPath $map).Hash -ne $before) { throw 'SKARVIK map hash changed during the audit' }
+          if ($code -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'audit.json'))) { throw "Unreal audit failed (exit $code)" }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-interior-vehicle-audit
+          path: |
+            ${{ env.SKARVIK_AUDIT_OUT }}/audit.json
+            ${{ env.SKARVIK_AUDIT_OUT }}/editor.log
+          if-no-files-found: ignore
