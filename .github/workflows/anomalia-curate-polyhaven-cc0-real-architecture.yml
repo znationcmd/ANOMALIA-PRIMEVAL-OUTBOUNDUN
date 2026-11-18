@@ -1,0 +1,40 @@
+name: ANOMALIA - choose truly realistic free Poly Haven architecture for regional build
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-curate-polyhaven-cc0-real-architecture.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Enumerate 3D model architecture only, and sizes of real FBX + 1k textures
+        run: |
+          python3 - <<'PY'
+          import json,urllib.request
+          def api(url):
+            with urllib.request.urlopen(urllib.request.Request(url,headers={'User-Agent':'Anomalia-CC0-Asset-Importer'}),timeout=30) as r:
+              return json.load(r)
+          all=api('https://api.polyhaven.com/assets?t=models')
+          found=[(name,meta) for name,meta in all.items() if 'architecture' in ' '.join(meta.get('categories',[])).lower()
+                 or any(t in name.lower() for t in ('hut','house','cabin','facade','fort','stable','building','shack'))]
+          print('ANOMALIA_REAL_CC0_ARCHITECTURE_CATALOG_COUNT='+str(len(found)))
+          for name,data in found:
+            out={'id':name,'name':data.get('name'),'categories':data.get('categories'),'tags':data.get('tags',[])[:9]}
+            try:
+              files=api('https://api.polyhaven.com/files/'+name)
+              fbx=files.get('fbx',{})
+              d={}
+              for level in ('1k','2k','4k'):
+                fmt=fbx.get(level,{}).get('fbx')
+                if not fmt: continue
+                includes=fmt.get('include',{})
+                size=fmt.get('size',0)+sum(v.get('size',0) for v in includes.values())
+                d[level]={'bytes':size,'downloadCount':len(includes)+1,'hasUrl':bool(fmt.get('url'))}
+              out['fbx']=d
+            except Exception as e:out['error']=str(e)
+            print('ANOMALIA_CC0_ARCHITECTURE_ITEM '+json.dumps(out))
+          PY
