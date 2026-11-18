@@ -24,9 +24,6 @@ jobs:
           foreach ($file in @($project,$map,$source)) {
             if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required file missing: $file" }
           }
-          if (Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue) {
-            throw 'Another Unreal session is active'
-          }
           $engine=$env:UE_ROOT
           if (!$engine) { $engine='C:\Program Files\Epic Games\UE_5.8' }
           $editor=Join-Path $engine 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
@@ -45,6 +42,19 @@ jobs:
             }
           }
           ConvertTo-Json -InputObject $index | Set-Content -LiteralPath (Join-Path $out 'partition-packages.json') -Encoding utf8
+          $unrealNames=@('UnrealEditor.exe','UnrealEditor-Cmd.exe','AnomaliaPrimeval.exe','AnomaliaZPrigimalia.exe')
+          $sessions=@(Get-CimInstance Win32_Process | Where-Object { $_.Name -in $unrealNames })
+          foreach ($session in $sessions) {
+            Write-Host ("Unreal process: {0}, pid {1}, session {2}" -f $session.Name,$session.ProcessId,$session.SessionId)
+            if ($session.Name -eq 'UnrealEditor-Cmd.exe' -and $session.CommandLine -match '(?i)skarvik-interior-audit-44304787170[\\/]audit\.py') {
+              Write-Host 'Stopping the editor left by the timed-out read-only audit'
+              Stop-Process -Id $session.ProcessId
+              Wait-Process -Id $session.ProcessId -Timeout 20 -ErrorAction SilentlyContinue
+            }
+          }
+          if (Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue) {
+            throw 'An independent Unreal or game session is active'
+          }
           $script=Join-Path $out 'import_scooter.py'
           @'
           import json
@@ -97,7 +107,7 @@ jobs:
           if ($code -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'scooter.json'))) { throw "Scooter import failed (exit $code)" }
           Get-Content -LiteralPath (Join-Path $out 'scooter.json')
       - uses: actions/upload-artifact@v4
-        if: always()
+        if: always() && env.SKARVIK_IMPORT_OUT != ''
         with:
           name: skarvik-scooter-import
           path: ${{ env.SKARVIK_IMPORT_OUT }}
