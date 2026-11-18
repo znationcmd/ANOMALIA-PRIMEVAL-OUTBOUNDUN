@@ -73,7 +73,7 @@ def main():
         page="https://"+HOST+"/tools/library/3d-parts/"+slug
         text,_,type_page=load(page,3*1024*1024)
         html=text.decode("utf-8","replace")
-        if "CC0" not in html or "Download GLB" not in html:
+        if "CC0" not in html or ("/api/library/"+slug+"/download") not in html:
             raise RuntimeError("Public CC0 and direct downloadable GLB unavailable "+slug)
         direct="https://"+HOST+"/api/library/"+slug+"/download"
         payload,hash_,ctype=load(direct,25*1024*1024)
