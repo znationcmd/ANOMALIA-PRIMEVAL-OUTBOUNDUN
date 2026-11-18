@@ -144,6 +144,7 @@ inline double Height(EWorld world,double east,double north)
 
   // Three connected water bodies. Lake edges blend into the countryside;
   // the lake-water plan in the layout JSON gives exact future actor levels.
+  double protectedLakeInterior=0.;
   const double lakes[3][5]={
     {-2650.,2100.,560.,410.,163.},
     {2550.,3050.,480.,340.,173.},
@@ -153,6 +154,7 @@ inline double Height(EWorld world,double east,double north)
     const double dx=(east-lake[0])/lake[2],dy=(north-lake[1])/lake[3];
     const double ellipse=std::sqrt(dx*dx+dy*dy);
     const double mask=Smooth((1.18-ellipse)/.42);
+    protectedLakeInterior=std::max(protectedLakeInterior,Smooth((1.07-ellipse)/.20));
     const double lakeBed=lake[4]-4.5;
     terrain=terrain*(1.-mask)+lakeBed*mask;
   }
@@ -170,7 +172,7 @@ inline double Height(EWorld world,double east,double north)
     for(int i=0;i<4;++i)
       tributaryDistance=std::min(tributaryDistance,
         MorodenachtmerrSegmentDistance(east,north,creek[i][0],creek[i][1],creek[i+1][0],creek[i+1][1]));
-  const double creekMask=Smooth((52.-tributaryDistance)/35.);
+  const double creekMask=Smooth((52.-tributaryDistance)/35.)*(1.-protectedLakeInterior);
   const double creekBed=MorodenachtmerrRiverSurface(north)-1.6;
   terrain=terrain*(1.-creekMask)+std::min(terrain,creekBed)*creekMask;
   return terrain;
