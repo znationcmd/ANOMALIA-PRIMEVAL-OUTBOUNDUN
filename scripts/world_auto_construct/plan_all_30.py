@@ -80,8 +80,19 @@ def density(map_spec):
     if count is not None: return int(count)
     area=float(map_spec.get("areaKm2") or 150)
     return max(2,min(48,int(math.sqrt(area)*1.15)))
+# Regional profiles override broad climate words found in mixed-biome maps.
+REGIONAL_PALETTES = {
+    "moscovie-v1": "urban",
+    "corsivia-v1": "mediterranean",
+    "mokupunawai-v1": "tropical",
+    "kiryumori-v1": "temperate",
+    "aranyapura-v1": "tropical",
+}
+
 def biome(map_spec):
-    s=(str(map_spec.get("terrainBiome") or "")+" "+str(map_spec.get("geographicIntent") or "")+" "+str(map_spec.get("displayName") or "")).lower()
+    if map_spec["id"] in REGIONAL_PALETTES:
+        return REGIONAL_PALETTES[map_spec["id"]]
+    s = str(map_spec.get("terrainBiome") or "").lower()
     if any(t in s for t in ARID_TERMS):return "arid"
     if any(t in s for t in COLD_TERMS):return "nordic"
     if any(t in s for t in TROPICAL_TERMS):return "tropical"
@@ -91,12 +102,17 @@ def class_sequence(count,kind):
     if count<=0:return []
     city_count = (0 if count<8 else max(1,round(count*.055)))
     town_count = (0 if count<5 else max(1,round(count*.22)))
+    if kind=="urban":
+        city_count=max(1,round(count*.25))
+        town_count=min(count-city_count,max(0,round(count*.55)))
     if kind=="nordic":city_count=min(city_count,max(0,count//18))
     if kind=="arid":town_count=min(town_count,max(1,count//8))
     while city_count+town_count>count:town_count-=1
     return ["city"]*city_count+["town"]*town_count+["village"]*(count-city_count-town_count)
 def classify_assets(typ,env):
     choices=list(ARCHETYPES[typ])
+    if env=="urban" and typ=="town": choices=["apartment"]+choices
+    if env=="mediterranean" and typ=="village": choices=["coastal","townhouse","barn","garage"]
     if env=="nordic": choices=[x for x in choices if x not in ("coastal","apartment")] + ["wood","barn"]
     if env=="arid": choices=[x for x in choices if x!="wood"]+["coastal","townhouse"]
     if env=="ruins":choices=[x for x in choices if x not in ("hospital","fire")]+["garage","townhouse"]
@@ -202,6 +218,8 @@ def make_plan(spec,sampler=None):
         "worldPackage":spec.get("originalUnrealPackage") or spec.get("plannedUnrealPackage"),
         "worldSizeMeters":[round(width,1),round(height,1)],
         "biomeConstructionPalette":environment,
+        "terrainTheme":spec.get("terrainBiome"),
+        "architectureThemeVerified":False,
         "seed":seed,"requestedLocalities":density(spec),"proposedLocalities":len(sites),
         "unplacedBecauseNoDryGround":unplaced,"minimumSiteSpacingMeters":round(spacing,1),
         "sites":sites,"regionalRoadGraph":roads,
