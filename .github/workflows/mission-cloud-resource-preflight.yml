@@ -44,7 +44,17 @@ jobs:
               } catch { $progress+= [ordered]@{path=$p;error=$_.Exception.Message} }
             }
           }
-          $result=[ordered]@{readOnly=$true;driveClientProcesses=$client;disks=$disks;existingCloudModelFolders=$found;cloudFolderId='1KD66RKBTk9AFJMXhivhEHPcBqh1qiS9t';cloudQuotaVerifiedByApi=$false;sourceFilesDeleted=0;citySampleSourceExists=(Test-Path -LiteralPath $cityRoot -PathType Container);citySampleProjectExists=(Test-Path -LiteralPath (Join-Path $cityRoot 'CitySample.uproject') -PathType Leaf);actualMainSkarvikExists=(Test-Path -LiteralPath $mainMap -PathType Leaf);transferCheckpointSummaries=$progress}
+          $reserveDrives=@()
+          foreach($driveName in @('C','D','H')) {
+            try {
+              $drv=[IO.DriveInfo]::new($driveName)
+              $reserveDrives+=[ordered]@{drive=$driveName;freeBytes=$drv.AvailableFreeSpace;freeGiB=[math]::Round($drv.AvailableFreeSpace/1GB,2);has2GiBReserve=($drv.AvailableFreeSpace -ge 2GB)}
+            } catch { $reserveDrives+=[ordered]@{drive=$driveName;error=$_.Exception.Message} }
+          }
+          $cityMirror='H:\Mon Drive\ANOMALIAZ\02_Modeles_3D\City Sample - Unreal Engine\CitySample'
+          Write-Host ('CITY_SAMPLE_DRIVE_RESERVES '+($reserveDrives|ConvertTo-Json -Depth 4 -Compress))
+          Write-Host ('CITY_SAMPLE_CLOUD_MIRROR_EXISTS='+(Test-Path -LiteralPath $cityMirror -PathType Container))
+          $result=[ordered]@{readOnly=$true;driveClientProcesses=$client;disks=$disks;existingCloudModelFolders=$found;cloudFolderId='1KD66RKBTk9AFJMXhivhEHPcBqh1qiS9t';cloudQuotaVerifiedByApi=$false;sourceFilesDeleted=0;citySampleDriveReserves=$reserveDrives;citySampleCloudMirrorExists=(Test-Path -LiteralPath $cityMirror -PathType Container);citySampleSourceExists=(Test-Path -LiteralPath $cityRoot -PathType Container);citySampleProjectExists=(Test-Path -LiteralPath (Join-Path $cityRoot 'CitySample.uproject') -PathType Leaf);actualMainSkarvikExists=(Test-Path -LiteralPath $mainMap -PathType Leaf);transferCheckpointSummaries=$progress}
           $result | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $out 'cloud-resource-preflight.json') -Encoding UTF8
           Write-Output ('CLOUD_PREFLIGHT '+($result | ConvertTo-Json -Depth 7 -Compress))
       - uses: actions/upload-artifact@v4
