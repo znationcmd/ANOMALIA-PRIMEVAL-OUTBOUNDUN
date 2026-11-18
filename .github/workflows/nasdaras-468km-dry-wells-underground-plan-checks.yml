@@ -1,0 +1,67 @@
+name: ANOMALIA - NASDARAS 468km2 dry desert and connected wells validation
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/nasdaras-468km-dry-wells-underground-plan-checks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-native-and-network:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test unique 18x26km NASDARAS dry-land terrain with 10 well pads
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I . tests/native/nasdaras_dry_well_terrain_468km.cpp -o /tmp/nasdaras-dry-wells
+          /tmp/nasdaras-dry-wells
+      - name: Validate all tunnel endpoints and traversable connectivity in graph, no surface water
+        run: |
+          python - <<'PY'
+          from collections import deque
+          from pathlib import Path
+          import json,math
+          p=json.loads(Path('public/config/nasdaras-468km-desert-wells-underground.json').read_text())
+          cat=json.loads(Path('public/config/anomalia-map-catalog.json').read_text())
+          assert cat['mapCount']==len(cat['maps'])==23
+          maps={m['id']:m for m in cat['maps']}
+          m=maps['nasdaras-v1']
+          assert m['displayName']=='NASDARAS'
+          assert m['widthKm']*m['heightKm']==m['areaKm2']==468
+          assert m['widthKm']==18 and m['heightKm']==26
+          assert maps['mokupunawai-v1']['widthKm']==21 and maps['morodenachtmerr-v1']['widthKm']==10
+          assert maps['apocalyptic-outbreak-v1']['widthKm']==15
+          assert p['areaKm2']==468 and p['sizeMetres']=={'eastWest':18000,'northSouth':26000}
+          water=p['waterPolicy']
+          for key in ('rivers','lakes','oasesWithVisibleWater','ponds','waterfalls','swimmableWater','waterBodyActorsAllowed'):
+            assert water[key]==0,(key,water[key])
+          assert water['surfaceWaterAllowed'] is False
+          assert water['wellsAreDryUndergroundAccesses'] is True
+          net=p['underground']
+          wells=net['wells']; links=net['links']
+          assert len(wells)==net['wellCount']==10
+          assert len(links)==net['tunnelConnectionCount']==14
+          ids={w['id'] for w in wells}
+          assert len(ids)==len(wells)
+          xy={w['id']:w['coordinatesMeters'] for w in wells}
+          assert all(-8500<w['coordinatesMeters']['east']<8500 and -12500<w['coordinatesMeters']['north']<12500 for w in wells)
+          assert all(w['repairRequired'] and w['surfaceWaterVisible'] is False for w in wells)
+          g={x:set() for x in ids};pairs=set()
+          for x in links:
+            a,b=x['from'],x['to']
+            assert a in ids and b in ids and a!=b
+            assert tuple(sorted((a,b))) not in pairs
+            pairs.add(tuple(sorted((a,b))))
+            d=math.dist((xy[a]['east'],xy[a]['north']),(xy[b]['east'],xy[b]['north']))
+            assert 1000<d<8500,(a,b,d)
+            g[a].add(b);g[b].add(a)
+            assert x['passage']=='physical-continuous-traversable-corridor'
+            assert x['minClearHeightMeters']>=2.5
+          seen={next(iter(ids))};q=deque(seen)
+          while q:
+            for node in g[q.popleft()]-seen:
+              seen.add(node);q.append(node)
+          assert seen==ids,(ids-seen)
+          print('NASDARAS_468KM2_DRY_LAND_10_REPAIR_WELLS_14_CONNECTED_TUNNELS_DESIGN_VALID=1')
+          PY
