@@ -171,19 +171,22 @@
     {
       "id": "falc-v1",
       "displayName": "F.A.L.C",
-      "originalUnrealPackage": null,
+      "originalUnrealPackage": "/Game/Maps/PRIGIMALIA_FALC",
       "widthKm": null,
       "heightKm": null,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "map-name-known-native-world-and-package-verification-pending",
+      "validation": "native-umap-saved-with-landscape-and-collision-20261118-not-playtested",
       "saveNamespace": "falc-v1",
-      "packageDiscoveryPending": true,
+      "packageDiscoveryPending": false,
       "sourceMapPreserved": true,
       "targetLocalities": null,
       "settlementPlacementStatus": "proposed-count-native-terrain-and-settlements-pending",
       "catalogueClass": "future-planned-or-in-development",
-      "areaKm2": 704
+      "areaKm2": 704,
+      "nativePackageFileObserved": true,
+      "nativeWorldCreated": true,
+      "worldPartitionVerifiedByNativeCreation": true
     },
     {
       "id": "kolchiem-origins-v1",
