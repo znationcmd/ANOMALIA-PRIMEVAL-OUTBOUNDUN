@@ -7,7 +7,7 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, ApocalypticOutbreak, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, ApocalypticOutbreak, Morodenachtmerr, Invalid };
 
 inline int SideMeters(EWorld world)
 {
@@ -15,7 +15,7 @@ inline int SideMeters(EWorld world)
         (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 :
         world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
         world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 :
-        world==EWorld::ApocalypticOutbreak ? 15000 : 0;
+        world==EWorld::ApocalypticOutbreak ? 15000 : world==EWorld::Morodenachtmerr ? 10000 : 0;
 }
 inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : (side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
@@ -99,6 +99,23 @@ inline double Height(EWorld world,double east,double north)
   const double wild=133.+95.*n+35.*r+ashHills+burntRidge-industrialBasin-riverCut-craterBowl+craterRim-highwayCut;
   const double cityGrade=119.+14.*ValueNoise(east,north,1300.,2993)-.17*riverCut;
   return wild*(1.-.84*metropolis)+cityGrade*(.84*metropolis);
+ }
+ if(world==EWorld::Morodenachtmerr){
+  // Independent 10x10 km haunted RURAL landscape: dark conifer hills, remote
+  // agricultural valleys, marshy stream, farm fields and shallow quarry.
+  // Actual farm buildings/roads/trees require separate real actor placement.
+  const double westRidge=270.*Gaussian(east,north,-3900.,1700.,1250.,2800.)*(.7+.3*std::abs(r));
+  const double northWoods=230.*Gaussian(east,north,1700.,3500.,2800.,1800.)*(.65+.35*std::abs(n));
+  const double southHills=175.*Gaussian(east,north,3200.,-3400.,2100.,1550.);
+  const double fields=18.*std::sin(east/1050.)*std::cos(north/1450.);
+  const double stream=east-(820.*std::sin(north/1300.)-750.);
+  const double watercourse=68.*std::exp(-(stream*stream)/(240.*240.));
+  const double marsh=38.*Gaussian(east,north,-850.,-2850.,1280.,900.);
+  const double quarry=65.*Gaussian(east,north,3700.,1800.,720.,600.);
+  const double hamlet=Gaussian(east,north,-1050.,450.,1020.,940.);
+  const double natural=125.+58.*n+20.*r+fields+westRidge+northWoods+southHills-watercourse-marsh-quarry;
+  const double townGrade=131.+5.*ValueNoise(east,north,1000.,4829)-.15*watercourse;
+  return natural*(1.-.78*hamlet)+townGrade*(.78*hamlet);
  }
  if(world==EWorld::Karskov){
   // LIVONIA-like original geography: continuous wooded country, rolling meadows,
