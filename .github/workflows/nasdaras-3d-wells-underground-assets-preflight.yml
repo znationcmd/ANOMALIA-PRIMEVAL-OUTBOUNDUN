@@ -24,7 +24,7 @@ jobs:
             'D:\ANOMALIA\FabImports',
             'D:\ANOMALIA\sketchfab'
           )
-          $matches=@()
+          $assetRows=@()
           $errorCount=0
           $timeLimit=(Get-Date).ToUniversalTime().AddMinutes(9)
           foreach($dir in $dirs){
@@ -32,8 +32,8 @@ jobs:
             Get-ChildItem -LiteralPath $dir -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
               if((Get-Date).ToUniversalTime() -ge $timeLimit){return}
               if($_.Name -match $names -and $_.Extension -in @('.uasset','.umap','.fbx','.glb','.gltf','.obj','.blend','.zip','.7z')) {
-                if($matches.Count -lt 95){
-                  $matches+=([ordered]@{relative=$_.FullName.Substring([Math]::Min($_.FullName.Length,$dir.Length)).TrimStart('\');root=$dir;bytes=$_.Length;extension=$_.Extension})
+                if($assetRows.Count -lt 95){
+                  $assetRows+=([ordered]@{relative=$_.FullName.Substring([Math]::Min($_.FullName.Length,$dir.Length)).TrimStart('\');root=$dir;bytes=$_.Length;extension=$_.Extension})
                 }
               }
             }
@@ -54,7 +54,7 @@ jobs:
             activeUnrealProcesses=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue|ForEach-Object{$_.Name})
             freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace
             freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace
-            candidateNames=$matches
+            candidateNames=$assetRows
           }
           Write-Host ('NASDARAS_ASSET_PREFLIGHT '+($state|ConvertTo-Json -Depth 5 -Compress))
           Write-Host 'NASDARAS_FILES_DELETED=0'
