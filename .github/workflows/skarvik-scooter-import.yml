@@ -11,7 +11,7 @@ concurrency:
 jobs:
   import-scooter:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 22
+    timeout-minutes: 9
     steps:
       - name: Import the existing scooter FBX into the main project
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -46,8 +46,8 @@ jobs:
           $sessions=@(Get-CimInstance Win32_Process | Where-Object { $_.Name -in $unrealNames })
           foreach ($session in $sessions) {
             Write-Host ("Unreal process: {0}, pid {1}, session {2}" -f $session.Name,$session.ProcessId,$session.SessionId)
-            if ($session.Name -eq 'UnrealEditor-Cmd.exe' -and $session.CommandLine -match '(?i)skarvik-interior-audit-44304787170[\\/]audit\.py') {
-              Write-Host 'Stopping the editor left by the timed-out read-only audit'
+            if ($session.Name -eq 'UnrealEditor-Cmd.exe' -and $session.CommandLine -match '(?i)(?:skarvik-interior-audit-44304787170[\\/]audit|skarvik-scooter-44331112776[\\/]import_scooter)\.py') {
+              Write-Host 'Stopping the editor left by a previous timed-out task'
               Stop-Process -Id $session.ProcessId
               Wait-Process -Id $session.ProcessId -Timeout 20 -ErrorAction SilentlyContinue
             }
@@ -102,7 +102,7 @@ jobs:
                     "size_cm": size_cm, "material_slots": len(mesh.get_editor_property("static_materials"))}
           (output / "scooter.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
           '@ | Set-Content -LiteralPath $script -Encoding utf8
-          & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -nop4 -nosplash -nosound "-abslog=$out\editor.log"
+          & $editor $project '-run=pythonscript' "-script=$script" -NoAssetRegistryCache -SkipAssetScan -nullrhi -unattended -nop4 -nosplash -nosound "-abslog=$out\editor.log"
           $code=$LASTEXITCODE
           if ((Get-FileHash -LiteralPath $map).Hash -ne $mapHash) { throw 'SKARVIK map hash changed' }
           if ($code -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'scooter.json'))) { throw "Scooter import failed (exit $code)" }
