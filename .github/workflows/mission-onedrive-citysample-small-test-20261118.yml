@@ -1,0 +1,40 @@
+name: ANOMALIA - OneDrive City Sample tiny safe upload test
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-onedrive-citysample-small-test-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  one-small-file:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Stage CitySample.uproject (under 1 MB) in personal OneDrive, keep originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src='D:\ANOMALIA\FabImports\CitySample\CitySample.uproject'
+          if (!(Test-Path -LiteralPath $src -PathType Leaf)) {throw 'City Sample original not found'}
+          $root=$env:OneDriveConsumer
+          if (!$root -or !(Test-Path -LiteralPath $root -PathType Container)) {throw 'OneDrive consumer not connected'}
+          $size=(Get-Item -LiteralPath $src).Length
+          if ($size -gt 1MB) {throw 'Safety abort: file too big for tiny test'}
+          $free=[IO.DriveInfo]::new([IO.Path]::GetPathRoot($root)).AvailableFreeSpace
+          if ($free -lt (1GB+$size)) {throw 'Safety abort: OneDrive local root has less than 1 GB reserve'}
+          $dstDir=Join-Path $root 'ANOMALIAZ_PRIGIMALIA\Backups\CitySample'
+          $dst=Join-Path $dstDir 'CitySample.uproject'
+          New-Item -ItemType Directory -Path $dstDir -Force | Out-Null
+          if (!(Test-Path -LiteralPath $dst -PathType Leaf)) {
+            Copy-Item -LiteralPath $src -Destination $dst -ErrorAction Stop
+            Write-Host 'ONEDRIVE_CLIENT_TEST_FILE_NEW=True'
+          } else {Write-Host 'ONEDRIVE_CLIENT_TEST_FILE_ALREADY_PRESENT=True'}
+          $srcSHA=(Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash
+          $dstSHA=(Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash
+          if($srcSHA -ne $dstSHA){throw 'Destination exists but its contents differ; not overwritten'}
+          Write-Host ('ONEDRIVE_CLIENT_LOCAL_COPY_HASH_OK=True bytes='+$size)
+          Write-Host ('ONEDRIVE_ITEM_ATTRIBUTES='+(Get-Item -LiteralPath $dst).Attributes)
+          Write-Host 'ONEDRIVE_SERVER_UPLOAD_VERIFIED=False'
+          Write-Host 'SOURCE_FILES_DELETED=0'
