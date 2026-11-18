@@ -1,0 +1,36 @@
+name: ANOMALIA - check official public CC0 real regional house direct GLB files
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-discover-cc0-real-houses-direct-glb.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Inspect public page HTML for direct official downloadable GLB, licensing and source format
+        run: |
+          python3 - <<'PY'
+          import urllib.request,re,html,json
+          pages={
+           'korean_hanok':'https://www.innerscene.com/tools/library/3d-parts/hanok-house-l-shaped-with-courtyard-and-stone-wall-4267797e',
+           'indian_3bhk':'https://www.innerscene.com/tools/library/3d-parts/3bhk-house-on-a-60-x-120-ft-plot-3d-model-163b8736',
+           'tropical_bungalow':'https://www.innerscene.com/tools/library/3d-parts/bungalow-house-85d40048',
+           'country_house':'https://www.innerscene.com/tools/library/3d-parts/two-storey-farmhouse-with-wraparound-porch-and-metal-roof-e7674089'
+          }
+          for name,url in pages.items():
+           try:
+            req=urllib.request.Request(url,headers={'User-Agent':'Mozilla/5.0'})
+            with urllib.request.urlopen(req,timeout=20) as r:txt=r.read(2500000).decode('utf-8','replace')
+            matches=re.findall(r'["\x27]([^"\x27]*(?:\.glb|download[/?][^"\x27 ]*|/api/[^"\x27 ]*|cdn[^"\x27 ]*\.(?:glb|gltf))[^"\x27]*)["\x27]',txt,re.I)
+            rows=[]
+            for m in matches:
+             v=html.unescape(m)
+             if len(v)<400 and v not in rows:rows.append(v)
+            print('ANOMALIA_REAL_CC0_HOUSE_HTML '+json.dumps({'name':name,'bytes':len(txt),'containsCC0':('CC0' in txt),'urlHits':rows[:30]},ensure_ascii=False))
+           except Exception as e:
+            print('ANOMALIA_REAL_CC0_HOUSE_PAGE_ERROR '+json.dumps({'name':name,'error':str(e)}))
+          PY
