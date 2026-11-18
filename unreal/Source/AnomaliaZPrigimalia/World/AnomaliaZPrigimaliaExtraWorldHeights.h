@@ -7,14 +7,15 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, ApocalypticOutbreak, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
         (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 :
         world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
-        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 : 0;
+        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 :
+        world==EWorld::ApocalypticOutbreak ? 15000 : 0;
 }
 inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : (side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
@@ -78,6 +79,26 @@ inline double Height(EWorld world,double east,double north)
   const double river=north-(1100.+450.*std::sin(east/1100.));
   const double valley=150.*std::exp(-river*river/(300.*300.));
   return island*std::max(15.,70.+spine+85.*n-valley)-110.*(1.-island);
+ }
+ if(world==EWorld::ApocalypticOutbreak){
+  // 15 km x 15 km original post-outbreak landmass: river scar, industrial
+  // basin, burned hills, an abandoned central metropolis, and blast craters.
+  // These are terrain features, not proof of buildings, radiation gameplay,
+  // ruins, or surviving NPC population already placed in Unreal.
+  const double metropolis=Gaussian(east,north,-450.,850.,2450.,2250.);
+  const double ashHills=390.*Gaussian(east,north,-5100.,4200.,2400.,3600.)*(.72+.28*std::abs(r));
+  const double burntRidge=270.*Gaussian(east,north,4100.,-4500.,3100.,1850.)*(.76+.24*std::abs(n));
+  const double industrialBasin=90.*Gaussian(east,north,3200.,1100.,1400.,1600.);
+  const double riverEast=600.*std::sin(north/1500.)+310.*std::sin(north/610.)+1650.;
+  const double riverDist=east-riverEast;
+  const double riverCut=75.*std::exp(-(riverDist*riverDist)/(380.*380.));
+  const double craterDist=std::hypot(east+3600.,north+2500.);
+  const double craterBowl=94.*Gaussian(east,north,-3600.,-2500.,620.,610.);
+  const double craterRim=32.*std::exp(-std::pow((craterDist-850.)/230.,2.));
+  const double highwayCut=12.*Gaussian(east,north,0.,-1700.,5400.,360.);
+  const double wild=133.+95.*n+35.*r+ashHills+burntRidge-industrialBasin-riverCut-craterBowl+craterRim-highwayCut;
+  const double cityGrade=119.+14.*ValueNoise(east,north,1300.,2993)-.17*riverCut;
+  return wild*(1.-.84*metropolis)+cityGrade*(.84*metropolis);
  }
  if(world==EWorld::Karskov){
   // LIVONIA-like original geography: continuous wooded country, rolling meadows,
