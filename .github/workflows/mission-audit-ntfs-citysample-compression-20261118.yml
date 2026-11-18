@@ -1,0 +1,27 @@
+name: ANOMALIA - audit lossless NTFS compression opportunities City Sample
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-ntfs-citysample-compression-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read-only inspect largest CitySample source files, compression status, and active UE processes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $city='D:\ANOMALIA\FabImports\CitySample'
+          $main='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if (!(Test-Path -LiteralPath $main -PathType Leaf) -or !(Test-Path -LiteralPath (Join-Path $city 'CitySample.uproject') -PathType Leaf)){throw 'Original sources missing'}
+          $procs=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue | Select-Object Name,Id)
+          $files=@(Get-ChildItem -LiteralPath (Join-Path $city 'Content') -Recurse -File -ErrorAction SilentlyContinue | Where-Object { $_.Length -ge 50MB -and $_.Attributes -notmatch 'ReparsePoint' })
+          $largest=@($files | Sort-Object Length -Descending | Select-Object -First 30 | ForEach-Object {[ordered]@{relative=$_.FullName.Substring($city.Length).TrimStart('\');logicalBytes=$_.Length;ageDays=[math]::Round(((Get-Date).ToUniversalTime()-$_.LastWriteTimeUtc).TotalDays,1);compressed=($_.Attributes.ToString().Contains('Compressed'));linkCount=1}})
+          $groups=@($files|Group-Object Extension|ForEach-Object{[ordered]@{extension=$_.Name;fileCount=$_.Count;logicalBytes=($_.Group|Measure-Object -Property Length -Sum).Sum}}|Sort-Object -Property logicalBytes -Descending)
+          $driveFree=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          $report=[ordered]@{readOnly=$true;activeUnrealProcesses=$procs;sourceFilesOver50MB=$files.Count;largestFiles=$largest;extensionGroups=$groups;freeDBytes=$driveFree;mainMapPresent=$true;citySamplePresent=$true}
+          Write-Host ('CITYSAMPLE_NTFS_COMPRESSION_AUDIT '+($report|ConvertTo-Json -Depth 7 -Compress))
