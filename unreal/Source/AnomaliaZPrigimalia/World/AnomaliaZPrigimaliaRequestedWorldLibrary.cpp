@@ -19,6 +19,7 @@ EWorld ResolveRequested(const FString& Id) {
  if(Id==TEXT("BOT_SEVER"))return EWorld::BotSever;
  if(Id==TEXT("APOCALYPTIC_OUTBREAK"))return EWorld::ApocalypticOutbreak;
  if(Id==TEXT("MOROEDENACHTMERR"))return EWorld::Morodenachtmerr;
+ if(Id==TEXT("NASDARAS"))return EWorld::Nasdaras;
  return EWorld::Invalid;
 }
 }
@@ -29,21 +30,21 @@ AActor* UAnomaliaZPrigimaliaRequestedWorldLibrary::CreateNamedWorldLandscape(con
 #if WITH_EDITOR
  using namespace AnomaliaZPrigimaliaExtraWorlds;
  const EWorld Kind=ResolveRequested(Id);
- const int32 Side=SideMeters(Kind),Size=Resolution(Kind);
- if(Side<=0||Size<=1)return nullptr;
+ const int32 Width=WidthMeters(Kind),Height=HeightMeters(Kind),Size=Resolution(Kind);
+ if(Width<=0||Height<=0||Size<=1)return nullptr;
  UWorld* World=GEditor?GEditor->GetEditorWorldContext().World():nullptr;
  if(!World||World->GetPackage()->GetName()!=TEXT("/Game/Maps/PRIGIMALIA_")+Id)return nullptr;
  for(TActorIterator<ALandscapeProxy> It(World);It;++It)return nullptr;
- const double Half=double(Side)/2.;
+ const double HalfWidth=double(Width)/2.,HalfHeight=double(Height)/2.;
  TArray<uint16> Samples;Samples.SetNumUninitialized(Size*Size);
  for(int32 Y=0;Y<Size;++Y)for(int32 X=0;X<Size;++X)
-  Samples[Y*Size+X]=Encode(Height(Kind,-Half+double(Side)*X/(Size-1),Half-double(Side)*Y/(Size-1)));
+  Samples[Y*Size+X]=Encode(Height(Kind,-HalfWidth+double(Width)*X/(Size-1),HalfHeight-double(Height)*Y/(Size-1)));
  ALandscape* Land=World->SpawnActor<ALandscape>();
  if(!Land)return nullptr;
  Land->SetActorLabel(TEXT("PRIGIMALIA_")+Id+TEXT("_Landscape"));
- Land->SetActorLocation(FVector(-Half*100.,-Half*100.,0.));
- const double Scale=double(Side)*100./(Size-1);
- Land->SetActorScale3D(FVector(Scale,Scale,800.));
+ Land->SetActorLocation(FVector(-HalfWidth*100.,-HalfHeight*100.,0.));
+ const double ScaleX=double(Width)*100./(Size-1),ScaleY=double(Height)*100./(Size-1);
+ Land->SetActorScale3D(FVector(ScaleX,ScaleY,800.));
  TMap<FGuid,TArray<uint16>> Heights;Heights.Add(FGuid(),MoveTemp(Samples));
  TMap<FGuid,TArray<FLandscapeImportLayerInfo>> Layers;Layers.Add(FGuid(),TArray<FLandscapeImportLayerInfo>());
  Land->Import(FGuid::NewGuid(),0,0,Size-1,Size-1,2,63,Heights,nullptr,Layers,
