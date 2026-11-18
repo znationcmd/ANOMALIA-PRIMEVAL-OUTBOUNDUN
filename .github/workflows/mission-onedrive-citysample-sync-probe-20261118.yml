@@ -25,7 +25,13 @@ jobs:
             'Content\Megascans\Surfaces\Concrete_Painted_00\pbugi_4K_Albedo.uasset',
             'Content\Prop\Kit_NewsBooth_A\Texture\T_NewsBooth_A_01_AOMRD2.uasset',
             'Content\Prop\Kit_Border_C\Texture\T_BorderC_Stone_N.uasset',
-            'Content\Vehicle\vehCar_vehicle06\Texture\T_vehCar_vehicle06_N.uasset'
+            'Content\Vehicle\vehCar_vehicle06\Texture\T_vehCar_vehicle06_N.uasset',
+            'Content\Building\CH\G\Kit_Bldg_CHG_L1_A\Mesh\SM_BLDG_CHG_L01_A_Entrance_01_N1.uasset',
+            'Content\__ExternalActors__\Map\Big_City_LVL\29\F3\ITR0X9WTZS1MO1P9ZRI4T.uasset',
+            'Content\Building\SF\J\Kit_Bldg_SFJ_L1_A\Mesh\SM_BLDG_SFJ_L1_A1_Entrance_01_N1.uasset',
+            'Content\Building\NY\G\Kit_Bldg_NYG_L1_A\Mesh\SM_BLDG_NYG_L01_A_Entrance_01_N1.uasset',
+            'Content\Megascans\Surfaces\Cast_In_Situ_Concrete_Wall_vcfice0\Coarse_Road_2x2_M_01\se0oeima_8K_Normal.uasset',
+            'Content\__ExternalActors__\Map\Big_City_LVL\2S\X7\CGPTNGS9FR7HGLCC9S62V.uasset'
           )
           $records=@()
           foreach($rel in $rels){
