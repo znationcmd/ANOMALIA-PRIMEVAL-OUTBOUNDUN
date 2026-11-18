@@ -8,8 +8,8 @@ on:
 permissions:
   contents: read
 concurrency:
-  group: anomalia-full-resource-cloud-transfer
-  cancel-in-progress: true
+  group: anomalia-citysample-targeted-only
+  cancel-in-progress: false
 jobs:
   citysample-only:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
