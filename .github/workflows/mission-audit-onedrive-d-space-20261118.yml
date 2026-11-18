@@ -1,0 +1,38 @@
+name: ANOMALIA - audit OneDrive sync and D space allocation without changes
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-onedrive-d-space-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: d-usage-audit-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/audit_onedrive_and_d_physical_usage_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Audit current OneDrive sync state and breakdown of D project files without modifying anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('d-usage-audit-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "D_ONEDRIVE_AUDIT_DIR=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:D_ONEDRIVE_AUDIT_DIR=$out
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('d-usage-audit-'+$env:GITHUB_RUN_ID+'\scripts\ue5\audit_onedrive_and_d_physical_usage_20261118.py')
+          if (!(Test-Path -LiteralPath $py -PathType Leaf) -or !(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Read-only script or Python missing'}
+          & $py -B $script
+          if ($LASTEXITCODE -ne 0){throw 'Read-only audit failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: d-usage-and-onedrive-status
+          path: ${{ runner.temp }}/d-usage-audit-${{ github.run_id }}/onedrive-and-d-usage-audit.json
+          if-no-files-found: warn
