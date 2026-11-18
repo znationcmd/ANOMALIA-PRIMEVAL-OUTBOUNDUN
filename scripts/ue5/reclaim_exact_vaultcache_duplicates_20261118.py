@@ -10,11 +10,11 @@ GAME=pathlib.Path(r"D:\ANOMALIA\unreal\Content")
 PROJECT=pathlib.Path(r"D:\ANOMALIA\unreal")
 SAMPLE=pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample\CitySample.uproject")
 OUT=pathlib.Path(os.environ["VAULT_RECLAIM_OUT"])
-MAX_BYTES=3*1024**3
-MAX_FILES=65
-MIN_SIZE=16*1024**2
+MAX_BYTES=12*1024**3
+MAX_FILES=650
+MIN_SIZE=8*1024**2
 MIN_D_FREE=5*1024**3
-MAX_SECONDS=40*60
+MAX_SECONDS=120*60
 def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def sha256(p):
  h=hashlib.sha256()
@@ -78,6 +78,8 @@ report["state"]="VERIFYING_AND_RELEASING"
 started=time.monotonic()
 with journal.open("x",encoding="utf-8") as j:
  for src,peer,size in candidates:
+  if report["filesRemovedFromVaultCache"]%25==0 and active_engine():
+   report["state"]="PAUSED_UNREAL_STARTED";break
   if report["bytesOfVerifiedCacheRemoved"]+size>MAX_BYTES:continue
   if report["filesRemovedFromVaultCache"]>=MAX_FILES or time.monotonic()-started>MAX_SECONDS:
    report["state"]="PARTIAL_LIMIT_STOP";break
