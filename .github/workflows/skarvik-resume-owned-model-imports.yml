@@ -1,0 +1,63 @@
+name: ANOMALIA - resume all owned model imports
+on:
+  push:
+    branches: [work/skarvik-interiors-vehicles-20261118]
+    paths: ['.github/workflows/skarvik-resume-owned-model-imports.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  import-owned:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 70
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: resume-all-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: unreal/Content/Python/resume_owned_model_imports.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Resume durable all-category source manifest in the actual project
+        timeout-minutes: 65
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue | Where-Object { -not $_.HasExited }).Count){throw 'Existing Unreal session preserved'}
+          $state='D:\ANOMALIA\unreal\Saved\ImportReceipts\RawResume20261107'
+          foreach($name in @('raw-preparation-manifest.json','raw-import-report.json')){
+            if(!(Test-Path -LiteralPath (Join-Path $state $name))){throw 'Durable import ledger missing; do not repeat accepted sources'}
+          }
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured memory'}
+          $out=Join-Path $state ('AllModels-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}')
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "MODEL_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:MISSION_RAW_OUT=$out
+          $env:IMPORT_MAX_SOURCES='250'
+          $env:IMPORT_BATCH='${{ matrix.batch }}'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('resume-all-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\unreal\Content\Python\resume_owned_model_imports.py')
+          $ErrorActionPreference='Continue'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\engine.log" *> (Join-Path $out 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          $r=Get-Content -LiteralPath (Join-Path $out 'import-batch-summary.json') -Raw | ConvertFrom-Json
+          Write-Output ("NATIVE_EXIT="+$code)
+          Write-Output ($r | ConvertTo-Json -Depth 8 -Compress)
+          if($code -ne 0 -and $r.newSources -eq 0){throw 'No new accepted source before editor failure; retain receipts'}
+          if($r.remainingSources -eq 0){Write-Output 'Existing model ledger exhausted; gameplay validation is separate.'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MODEL_OUT != ''
+        with:
+          name: all-model-import-batch-${{ matrix.batch }}
+          path: |
+            ${{ env.MODEL_OUT }}/import-batch-summary.json
+            ${{ env.MODEL_OUT }}/engine.log
+            ${{ env.MODEL_OUT }}/process.log
+          if-no-files-found: warn
+
+# Resume requested after user closed applications, 2026-11-08; keep accepted-source ledger.
