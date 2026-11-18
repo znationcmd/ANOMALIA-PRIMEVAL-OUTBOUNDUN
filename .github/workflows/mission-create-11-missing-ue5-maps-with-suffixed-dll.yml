@@ -1,4 +1,4 @@
-name: ANOMALIA - create all 11 missing real UE maps using successful suffixed UE5.8 DLL
+name: ANOMALIA - create all 11 missing real UE maps using successful suffixed UE5.8 DLL (Python import fixed)
 on:
   push:
     branches: [mission/finalisation-20261104]
