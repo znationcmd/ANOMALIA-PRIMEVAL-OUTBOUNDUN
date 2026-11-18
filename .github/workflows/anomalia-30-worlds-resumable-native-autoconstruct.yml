@@ -142,7 +142,9 @@ jobs:
           }
           $bad=@()
           foreach($m in $old){
-            $pkg='/Game/'+([string]$m.path).Split('Content\')[1].Replace('\','/').Replace('.umap','')
+            $prefix='D:\ANOMALIA\unreal\Content\'
+            if(!([string]$m.path).StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){$bad+=$m.path;continue}
+            $pkg='/Game/'+([string]$m.path).Substring($prefix.Length).Replace('\','/').Replace('.umap','')
             if($pkg -in $allowed){continue}
             if(!(Test-Path -LiteralPath $m.path -PathType Leaf) -or (Get-FileHash -LiteralPath $m.path -Algorithm SHA256).Hash -ne $m.sha256){$bad+=$m.path}
           }
