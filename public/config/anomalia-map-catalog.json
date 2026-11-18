@@ -470,19 +470,20 @@
       "areaKm2": 100,
       "independentWorld": true,
       "serverSelectable": false,
-      "validation": "native-source-prepared-level-generation-not-yet-verified",
+      "validation": "native-terrain-and-river-basin-source-implemented-UE5-world-creation-and-visible-water-not-yet-verified",
       "saveNamespace": "morodenachtmerr-v1",
       "sourceMapPreserved": true,
       "nativeWorldCreated": false,
       "displaySubtitle": "The Forgotten Countryside",
-      "terrainBiome": "haunted-rural-survival-rolling-farmland-dark-conifer-forests-bogs-misty-river",
+      "terrainBiome": "haunted-rural-survival-rolling-farmland-dark-conifer-forests-three-lakes-one-10km-trunk-river-and-four-creeks",
       "gameMode": "RURAL_HORROR_SURVIVAL_DESIGN",
       "features": [
-        "one rural market town and seven isolated hamlets, no big city",
-        "fields, barns, orchards, narrow country lanes and abandoned farmhouses",
-        "dark pine forests, marshes, rolling hills, ravines and stream",
-        "abandoned chapel, disused sawmill, railway halt and underground bunker",
-        "dense fog, overgrowth, eerie atmosphere; no artificial placeholder buildings"
+        "one small rural market town and seven isolated hamlets; no large city",
+        "one continuous winding main river from the northern map edge to the southern map edge",
+        "three connected lakes: Lac des Brumes, Lac des Cendres, Lac Noir",
+        "four narrow streams feeding the main river",
+        "dark pine woods, farms, fields, abandoned mills, bogs and country lanes",
+        "underground bunker and isolated rural chapels; all rural buildings require real meshes and accessible interiors"
       ],
       "targetLocalities": 8,
       "settlementPlacementStatus": "design-anchors-only-native-settlement-placement-pending",
@@ -493,7 +494,16 @@
       "gameplayAndCollisionPlaytested": false,
       "realFarmBuildingsPlaced": false,
       "completeBuildingInteriorsValidated": false,
-      "originalOtherMapsUntouched": true
+      "originalOtherMapsUntouched": true,
+      "waterPlan": {
+        "mainRiverCount": 1,
+        "mainRiverTraversesEntireMap": true,
+        "lakesCount": 3,
+        "tributariesCount": 4,
+        "layoutFile": "public/config/morodenachtmerr-world-layout-10km.json",
+        "nativeTerrainBasinsInGitHubSource": true,
+        "unrealWaterSurfacePlaced": false
+      }
     }
   ],
   "mapCount": 21,
