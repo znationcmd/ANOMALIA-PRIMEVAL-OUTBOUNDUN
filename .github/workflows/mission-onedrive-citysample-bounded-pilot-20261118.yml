@@ -31,8 +31,9 @@ jobs:
           $env:CITYSAMPLE_ONEDRIVE_OUT=$out
           $script=Join-Path $env:GITHUB_WORKSPACE ('onedrive-citysample-'+$env:GITHUB_RUN_ID+'\scripts\ue5\onedrive_citysample_safe_batch_20261118.py')
           if (!(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Safe OneDrive transfer script missing'}
-          $python=Get-Command python -ErrorAction Stop
-          & $python.Source -B $script
+          $python='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (!(Test-Path -LiteralPath $python -PathType Leaf)) {throw 'Unreal Engine 5.8 Python interpreter missing'}
+          & $python -B $script
           if ($LASTEXITCODE -ne 0){throw 'OneDrive safe pilot failed. Originals untouched.'}
       - uses: actions/upload-artifact@v4
         if: always()
