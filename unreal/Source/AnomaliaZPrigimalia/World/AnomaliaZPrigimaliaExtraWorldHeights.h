@@ -7,7 +7,7 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, ApocalypticOutbreak, Morodenachtmerr, Nasdaras, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, ApocalypticOutbreak, Morodenachtmerr, Nasdaras, Kiryumori, Aranyapura, Invalid };
 
 inline int SideMeters(EWorld world)
 {
@@ -16,7 +16,8 @@ inline int SideMeters(EWorld world)
         world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
         world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 :
         world==EWorld::ApocalypticOutbreak ? 15000 : world==EWorld::Morodenachtmerr ? 10000 :
-        world==EWorld::Nasdaras ? 26000 : 0;
+        world==EWorld::Nasdaras ? 26000 :
+        (world==EWorld::Kiryumori || world==EWorld::Aranyapura) ? 20000 : 0;
 }
 inline int WidthMeters(EWorld world) { return world==EWorld::Nasdaras ? 18000 : SideMeters(world); }
 inline int HeightMeters(EWorld world) { return world==EWorld::Nasdaras ? 26000 : SideMeters(world); }
@@ -236,6 +237,47 @@ inline double Height(EWorld world,double east,double north)
    terrain=terrain*(1.-grade)+well[2]*grade;
   }
   return terrain;
+ }
+
+ if(world==EWorld::Kiryumori){
+  // Original 20x20 km East Asian-inspired forest valleys, ridge lines,
+  // bamboo slopes, rice terraces, tea hills, and rural village plateaux.
+  // These are terrain-only; full 3D settlements require authored Unreal assets.
+  const double mistRidge=760.*Gaussian(east,north,-6400.,6100.,2800.,4300.)
+    *(.72+.28*std::abs(n));
+  const double cedarMassif=830.*Gaussian(east,north,5600.,5100.,3100.,3900.)
+    *(.74+.26*std::abs(r));
+  const double southernCliffs=520.*Gaussian(east,north,6200.,-6200.,3500.,2600.)
+    *(.72+.28*std::abs(n));
+  const double terracedHills=235.*Gaussian(east,north,-6000.,-3000.,3200.,2800.);
+  const double riverNorth=north-(650.*std::sin(east/2600.)+
+    240.*std::sin(east/710.));
+  const double riverValley=85.*std::exp(-std::pow(riverNorth/410.,2.));
+  const double mainTown=Gaussian(east,north,-1700.,650.,1950.,1580.);
+  const double townGrade=108.+16.*ValueNoise(east,north,2200.,3929);
+  const double wild=134.+92.*n+36.*r+mistRidge+cedarMassif+
+    southernCliffs+terracedHills-riverValley;
+  return wild*(1.-.90*mainTown)+townGrade*(.90*mainTown);
+ }
+ if(world==EWorld::Aranyapura){
+  // Original 20x20 km India-inspired geography: sandstone plateaux,
+  // red eroded hills, agricultural valleys, monsoon jungle and floodplain.
+  // Cultural architecture and gameplay need real unique actors.
+  const double westSandstone=440.*Gaussian(east,north,-6900.,3300.,3200.,4000.)
+    *(.72+.28*std::abs(r));
+  const double easternJungle=480.*Gaussian(east,north,6800.,4600.,3600.,3900.)
+    *(.75+.25*std::abs(n));
+  const double southDryHills=380.*Gaussian(east,north,-4500.,-6700.,3200.,2700.);
+  const double monsoonRiver=east-
+    (-520.+980.*std::sin(north/2900.)+250.*std::sin(north/750.));
+  const double monsoonChannel=72.*std::exp(-std::pow(monsoonRiver/420.,2.));
+  const double floodplain=52.*std::exp(-std::pow(monsoonRiver/1600.,2.));
+  const double dryField=18.*std::sin(east/1650.)*std::cos(north/1850.);
+  const double coreCity=Gaussian(east,north,500.,200.,2000.,1900.);
+  const double cityGrade=155.+9.*ValueNoise(east,north,1350.,4421);
+  const double wilderness=187.+72.*n+28.*r+westSandstone+
+    easternJungle+southDryHills+dryField-monsoonChannel-floodplain;
+  return wilderness*(1.-.88*coreCity)+cityGrade*(.88*coreCity);
  }
  if(world==EWorld::Karskov){
   // LIVONIA-like original geography: continuous wooded country, rolling meadows,
