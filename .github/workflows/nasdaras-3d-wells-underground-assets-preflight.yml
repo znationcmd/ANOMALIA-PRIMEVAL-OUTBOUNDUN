@@ -1,0 +1,60 @@
+name: ANOMALIA - NASDARAS well, tunnel and bunker asset availability preflight
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/nasdaras-3d-wells-underground-assets-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read-only check actual UE project, source, editor, and named underground mesh assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $p=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Original UE project absent'}
+          $names='(?i)(well|puits|tunnel|bunker|shaft|ladder|hatch|cave|mine_|mineshaft|underground|corridor|stairs|cavern|water_well|arab|camp|desert)'
+          $dirs=@(
+            (Join-Path $root 'Content'),
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\sketchfab'
+          )
+          $matches=@()
+          $errorCount=0
+          $timeLimit=(Get-Date).ToUniversalTime().AddMinutes(9)
+          foreach($dir in $dirs){
+            if(!(Test-Path -LiteralPath $dir -PathType Container)){continue}
+            Get-ChildItem -LiteralPath $dir -File -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
+              if((Get-Date).ToUniversalTime() -ge $timeLimit){return}
+              if($_.Name -match $names -and $_.Extension -in @('.uasset','.umap','.fbx','.glb','.gltf','.obj','.blend','.zip','.7z')) {
+                if($matches.Count -lt 95){
+                  $matches+=([ordered]@{relative=$_.FullName.Substring([Math]::Min($_.FullName.Length,$dir.Length)).TrimStart('\');root=$dir;bytes=$_.Length;extension=$_.Extension})
+                }
+              }
+            }
+          }
+          $module=(Get-Content $p -Raw|ConvertFrom-Json).Modules[0].Name
+          $src=Join-Path $root ('Source\'+$module+'\World')
+          $header=Join-Path $src ($module+'RequestedWorldHeights.h')
+          $cpp=Join-Path $src ($module+'RequestedWorldLibrary.cpp')
+          $code=if(Test-Path -LiteralPath $header){Get-Content -LiteralPath $header -Raw}else{''}
+          $resolver=if(Test-Path -LiteralPath $cpp){Get-Content -LiteralPath $cpp -Raw}else{''}
+          $state=[ordered]@{
+            readOnly=$true;module=$module;originalProjectPresent=$true
+            nasdarasHeightInInstalledModule=$code.Contains('EWorld::Nasdaras')
+            nasdarasDryTerrainHelperInInstalledModule=$code.Contains('NasdarasDryTerrainHeight')
+            nasdarasResolverInInstalledModule=$resolver.Contains('TEXT("NASDARAS")')
+            nasdarasUMAPExists=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_NASDARAS.umap'))
+            nativeEditorExists=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe')
+            activeUnrealProcesses=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue|ForEach-Object{$_.Name})
+            freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+            candidateNames=$matches
+          }
+          Write-Host ('NASDARAS_ASSET_PREFLIGHT '+($state|ConvertTo-Json -Depth 5 -Compress))
+          Write-Host 'NASDARAS_FILES_DELETED=0'
