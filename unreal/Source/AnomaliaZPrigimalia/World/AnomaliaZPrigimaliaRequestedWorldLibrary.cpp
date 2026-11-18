@@ -17,6 +17,7 @@ EWorld ResolveRequested(const FString& Id) {
  if(Id==TEXT("MOSCOVIE"))return EWorld::Moscovie;
  if(Id==TEXT("CORSIVIA"))return EWorld::Corsivia;
  if(Id==TEXT("BOT_SEVER"))return EWorld::BotSever;
+ if(Id==TEXT("APOCALYPTIC_OUTBREAK"))return EWorld::ApocalypticOutbreak;
  return EWorld::Invalid;
 }
 }
