@@ -6,12 +6,12 @@ import os, pathlib, hashlib, shutil, subprocess, uuid, json, datetime, time, sta
 SRC = pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample")
 ONE = os.environ.get("OneDriveConsumer","")
 OUT = pathlib.Path(os.environ["CITYSAMPLE_ONEDRIVE_OUT"])
-CAP_BYTES = 96 * 1024 * 1024
-MAX_SINGLE = 20 * 1024 * 1024
-MIN_FREE_C = 1536 * 1024 * 1024
+CAP_BYTES = 1536 * 1024 * 1024
+MAX_SINGLE = 512 * 1024 * 1024
+MIN_FREE_C = 4 * 1024 * 1024 * 1024
 MIN_FREE_D = 2 * 1024 * 1024 * 1024
-MAX_FILES = 50
-MAX_CANDIDATES_EXAMINED = 300
+MAX_FILES = 2000
+MAX_CANDIDATES_EXAMINED = 10000
 EXCLUDE = {".git", "intermediate", "saved", "deriveddatacache", ".vs"}
 def iso():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def hash_file(p):
