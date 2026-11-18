@@ -1,0 +1,42 @@
+name: ANOMALIA - City Sample only to existing Google Drive mirror
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-citysample-targeted-cloud-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  citysample-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 240
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: citysample-targeted-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/citysample_drive_targeted_copy_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Transfer original City Sample files to existing Drive Desktop mirror, without deleting originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $out = Join-Path $env:RUNNER_TEMP ('citysample-targeted-' + $env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CITYSAMPLE_REPORT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CITYSAMPLE_REPORT_OUT = $out
+          $script = Join-Path $env:GITHUB_WORKSPACE ('citysample-targeted-' + $env:GITHUB_RUN_ID + '\scripts\ue5\citysample_drive_targeted_copy_20261118.py')
+          $python = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (!(Test-Path -LiteralPath $python) -or !(Test-Path -LiteralPath $script)) { throw 'Python UE5.8 or targeted transfer script unavailable' }
+          & $python -B $script
+          if ($LASTEXITCODE -ne 0) { throw 'Targeted City Sample copy stopped; originals preserved' }
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: citysample-targeted-client-copy-receipt
+          path: ${{ runner.temp }}/citysample-targeted-${{ github.run_id }}/citysample-cloud-targeted-summary.json
+          if-no-files-found: warn
