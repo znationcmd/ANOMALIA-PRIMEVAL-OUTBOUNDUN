@@ -27,6 +27,25 @@ jobs:
             public/config/anomalia-map-catalog.json
           sparse-checkout-cone-mode: false
           persist-credentials: false
+      - name: Wait for running original Unreal session to finish without killing it
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $deadline=(Get-Date).ToUniversalTime().AddHours(2)
+          $lastReported=(Get-Date).ToUniversalTime().AddHours(-1)
+          while((Get-Date).ToUniversalTime() -lt $deadline){
+            $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+            if($active.Count -eq 0){
+              Write-Host 'ANOMALIA_UNREAL_EDITOR_NOW_IDLE=TRUE'
+              exit 0
+            }
+            if(((Get-Date).ToUniversalTime()-$lastReported).TotalMinutes -gt 5){
+              Write-Host ('ANOMALIA_WAITING_TO_PRESERVE_ACTIVE_UNREAL_WORK processes='+($active.Name -join ','))
+              $lastReported=(Get-Date).ToUniversalTime()
+            }
+            Start-Sleep -Seconds 60
+          }
+          Write-Host 'ANOMALIA_UNREAL_EDITOR_STILL_BUSY_AFTER_WAIT_NO_FORCED_TERMINATION=TRUE'
       - name: Check actual game and preserve hashes of every original .umap
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
