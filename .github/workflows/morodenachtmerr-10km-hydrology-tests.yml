@@ -1,0 +1,54 @@
+name: ANOMALIA - MORØDENACHTMERR 10 km countryside hydrology tests
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/morodenachtmerr-10km-hydrology-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile native countryside landscape and test one main river and three lakes
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I . tests/native/morodenachtmerr_rivers_lakes_10km.cpp -o /tmp/morodenachtmerr-hydrology
+          /tmp/morodenachtmerr-hydrology
+      - name: Verify map catalog separation and full river centreline plus creek joins
+        run: |
+          python - <<'PY'
+          import json, math, pathlib
+          cat=json.loads(pathlib.Path("public/config/anomalia-map-catalog.json").read_text())
+          entries={m["id"]:m for m in cat["maps"]}
+          mo=entries["morodenachtmerr-v1"]
+          apo=entries["apocalyptic-outbreak-v1"]
+          assert len(cat["maps"])==cat["mapCount"]==21
+          assert mo["displayName"]=="MORØDENACHTMERR"
+          assert (mo["widthKm"],mo["heightKm"],mo["areaKm2"])==(10,10,100)
+          assert (apo["widthKm"],apo["heightKm"],apo["areaKm2"])==(15,15,225)
+          assert mo["saveNamespace"]!=apo["saveNamespace"]
+          assert mo["plannedUnrealPackage"]!=apo["plannedUnrealPackage"]
+          cfg=json.loads(pathlib.Path("public/config/morodenachtmerr-world-layout-10km.json").read_text())
+          assert cfg["sizeMetres"]=={"eastWest":10000,"northSouth":10000}
+          w=cfg["water"]
+          assert w["expectedMainRiverCount"]==1 and w["expectedLakesCount"]==3 and w["expectedTributariesCount"]==4
+          main=w["mainRiver"]
+          points=main["centrelinePointsMetres"]
+          assert len(points)==41
+          assert points[0]["north"]==5000 and points[-1]["north"]==-5000
+          assert all(abs(p["east"])<5000 for p in points)
+          center=lambda n:-480+570*math.sin(n/1280)+190*math.sin(n/460)
+          assert all(abs(p["east"]-center(p["north"]))<.01 for p in points)
+          assert len(w["lakes"])==3 and len(w["tributaries"])==4
+          mouths=[650,1200,-3350,-4600]
+          for t,n in zip(w["tributaries"],mouths):
+            assert len(t["points"])==5
+            mx,my=t["points"][-1]
+            assert my==n and abs(mx-center(n))<.01
+            assert t["widthMetres"]<main["averageWidthMetres"]
+          for lake in w["lakes"]:
+            assert -5000<lake["east"]<5000 and -5000<lake["north"]<5000
+          print("MORODENACHTMERR_LAYOUT_FULL_LENGTH_RIVER_3_LAKES_4_TRIBUTARIES_VALID=1")
+          PY
