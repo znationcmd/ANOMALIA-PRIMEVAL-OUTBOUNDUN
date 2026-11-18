@@ -1,0 +1,104 @@
+name: SKARVIK - import owned scooter and index real map packages
+on:
+  push:
+    branches: [work/skarvik-interiors-vehicles-20261118]
+    paths: ['.github/workflows/skarvik-scooter-import.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  import-scooter:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 22
+    steps:
+      - name: Import the existing scooter FBX into the main project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $source=Join-Path $root 'SourceAssets\AllExtracted\b88bd15e2a8745fbbc3f\Scooter_BMW_125_blue_Mod_le_12.fbx'
+          foreach ($file in @($project,$map,$source)) {
+            if (!(Test-Path -LiteralPath $file -PathType Leaf)) { throw "Required file missing: $file" }
+          }
+          if (Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue) {
+            throw 'Another Unreal session is active'
+          }
+          $engine=$env:UE_ROOT
+          if (!$engine) { $engine='C:\Program Files\Epic Games\UE_5.8' }
+          $editor=Join-Path $engine 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $out=Join-Path $env:RUNNER_TEMP "skarvik-scooter-$env:GITHUB_RUN_ID"
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          "SKARVIK_IMPORT_OUT=$out" >> $env:GITHUB_ENV
+          $env:SKARVIK_IMPORT_OUT=$out
+          $env:SKARVIK_SCOOTER_FBX=$source
+          $mapHash=(Get-FileHash -LiteralPath $map).Hash
+          $index=@()
+          foreach ($relative in @('Content\__ExternalActors__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1','Content\__ExternalObjects__\Maps\PRIGIMALIA_SKARVIK_FINAL_v1')) {
+            $path=Join-Path $root $relative
+            if (Test-Path -LiteralPath $path) {
+              $files=@(Get-ChildItem -LiteralPath $path -Recurse -File -Filter '*.uasset')
+              $index+=@{ path=$relative; packages=$files.Count; emptyPackages=@($files | Where-Object Length -eq 0).Count }
+            }
+          }
+          ConvertTo-Json -InputObject $index | Set-Content -LiteralPath (Join-Path $out 'partition-packages.json') -Encoding utf8
+          $script=Join-Path $out 'import_scooter.py'
+          @'
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          output = Path(os.environ["SKARVIK_IMPORT_OUT"])
+          source = os.environ["SKARVIK_SCOOTER_FBX"]
+          destination = "/Game/Anomalia/Vehicles/scooter"
+          mesh_path = destination + "/SM_scooter"
+          library = unreal.EditorAssetLibrary
+          existing = library.does_asset_exist(mesh_path)
+          if not existing:
+              if library.does_directory_exist(destination) and library.list_assets(destination, recursive=True):
+                  raise RuntimeError(f"Import destination already contains assets: {destination}")
+              options = unreal.FbxImportUI()
+              options.set_editor_property("automated_import_should_detect_type", False)
+              options.set_editor_property("mesh_type_to_import", unreal.FBXImportType.FBXIT_STATIC_MESH)
+              options.set_editor_property("import_mesh", True)
+              options.set_editor_property("import_as_skeletal", False)
+              options.set_editor_property("import_materials", True)
+              options.set_editor_property("import_textures", True)
+              options.static_mesh_import_data.set_editor_property("combine_meshes", True)
+              task = unreal.AssetImportTask()
+              task.filename = source
+              task.destination_path = destination
+              task.destination_name = "SM_scooter"
+              task.automated = True
+              task.replace_existing = False
+              task.save = False
+              task.options = options
+              unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+          mesh = library.load_asset(mesh_path)
+          if not isinstance(mesh, unreal.StaticMesh) or mesh.get_num_lods() < 1:
+              raise RuntimeError(f"Scooter static mesh is missing or empty: {mesh_path}")
+          bounds = mesh.get_bounds().box_extent
+          size_cm = [2 * bounds.x, 2 * bounds.y, 2 * bounds.z]
+          if min(size_cm) <= 0:
+              raise RuntimeError(f"Invalid scooter dimensions: {size_cm}")
+          if not existing and not library.save_directory(destination, only_if_is_dirty=False, recursive=True):
+              raise RuntimeError("Saving imported scooter and its dependencies failed")
+          report = {"asset": mesh.get_path_name(), "reused_existing_asset": existing,
+                    "size_cm": size_cm, "material_slots": len(mesh.get_editor_property("static_materials"))}
+          (output / "scooter.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -nop4 -nosplash -nosound "-abslog=$out\editor.log"
+          $code=$LASTEXITCODE
+          if ((Get-FileHash -LiteralPath $map).Hash -ne $mapHash) { throw 'SKARVIK map hash changed' }
+          if ($code -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'scooter.json'))) { throw "Scooter import failed (exit $code)" }
+          Get-Content -LiteralPath (Join-Path $out 'scooter.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-scooter-import
+          path: ${{ env.SKARVIK_IMPORT_OUT }}
+          if-no-files-found: ignore
