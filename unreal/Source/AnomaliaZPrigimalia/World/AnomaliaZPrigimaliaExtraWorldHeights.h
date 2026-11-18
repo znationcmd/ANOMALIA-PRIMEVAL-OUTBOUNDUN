@@ -66,6 +66,36 @@ inline double MorodenachtmerrSegmentDistance(double east,double north,
  const double t=Clamp(((east-ax)*vx+(north-ay)*vy)/den,0.,1.);
  return std::hypot(east-(ax+t*vx),north-(ay+t*vy));
 }
+// NASDARAS is a fully dry fictional Sahel/desert map. Even its eroded wadis
+// have NO water meshes/surfaces, and there are NO lakes or wet oasis basins.
+// These native heights are only the terrain, not actual underground tunnels.
+inline double NasdarasDryTerrainHeight(double east,double north)
+{
+ const double n=Fractal(east,north,100+int(EWorld::Nasdaras)*97);
+ const double r=Fractal(east+2311.,north-1427.,510+int(EWorld::Nasdaras)*71);
+ const double northEscarpment=690.*Gaussian(east,north,-6200.,10000.,3100.,6100.)
+                                *(.68+.32*std::abs(r));
+ const double westHighlands=500.*Gaussian(east,north,-7500.,1600.,2500.,5700.)
+                               *(.7+.3*std::abs(n));
+ const double eastMassif=730.*Gaussian(east,north,6100.,2200.,2600.,5400.)
+                            *(.65+.35*std::abs(r));
+ const double drySouth=Smooth((-north-2400.)/5500.);
+ const double duneWaves=110.*drySouth*std::pow(std::sin(east/530.+north/920.),2.)
+                       +42.*drySouth*std::pow(std::sin(east/170.-north/350.),2.);
+ const double scrubSavanna=26.*std::sin(east/1760.)*std::cos(north/2280.);
+ const double base=220.+120.*n+50.*r+scrubSavanna+northEscarpment+
+                   westHighlands+eastMassif+duneWaves;
+ // Dry erosion channels, NEVER water: visual dry wadis only.
+ const double wadiEast=-840.+1400.*std::sin(north/3300.)
+                       +540.*std::sin(north/1160.);
+ const double channel=145.*std::exp(-std::pow((east-wadiEast)/390.,2.));
+ const double valley=54.*std::exp(-std::pow((east-wadiEast)/1550.,2.));
+ const double sideWadi1=north-(3800.+1300.*std::sin(east/1800.));
+ const double sideWadi2=north-(-5600.+980.*std::sin((east+1200.)/1350.));
+ const double branches=68.*std::exp(-std::pow(sideWadi1/340.,2.))+
+                       59.*std::exp(-std::pow(sideWadi2/300.,2.));
+ return base-channel-valley-branches;
+}
 inline double Height(EWorld world,double east,double north)
 {
  const int width=WidthMeters(world), height=HeightMeters(world);
@@ -181,52 +211,29 @@ inline double Height(EWorld world,double east,double north)
   return terrain;
  }
  if(world==EWorld::Nasdaras){
-  // 18 x 26 km Sahel-inspired fictional landscape, independent from all maps:
-  // northern green escarpment, acacia savannah, desert dunes, oasis basins,
-  // dry wadis, palm groves and rocky desert massif. These are terrain shapes:
-  // real water, foliage, roads and buildings still require authored UE actors.
-  const double northEscarpment=690.*Gaussian(east,north,-6200.,10000.,3100.,6100.)
-                                *(.68+.32*std::abs(r));
-  const double westHighlands=500.*Gaussian(east,north,-7500.,1600.,2500.,5700.)
-                               *(.7+.3*std::abs(n));
-  const double eastMassif=730.*Gaussian(east,north,6100.,2200.,2600.,5400.)
-                            *(.65+.35*std::abs(r));
-  const double drySouth=Smooth((-north-2400.)/5500.);
-  const double duneWaves=110.*drySouth*std::pow(std::sin(east/530.+north/920.),2.)
-                        +42.*drySouth*std::pow(std::sin(east/170.-north/350.),2.);
-  const double scrubSavanna=26.*std::sin(east/1760.)*std::cos(north/2280.);
-  const double base=220.+120.*n+50.*r+scrubSavanna+northEscarpment+
-                    westHighlands+eastMassif+duneWaves;
-  // The broad seasonal Wadi Al-Nasdar valley links the green north to the
-  // central savannah, with smaller eroded branches and planted floodplains.
-  const double wadiEast=-840.+1400.*std::sin(north/3300.)+
-                         540.*std::sin(north/1160.);
-  const double riverDistance=std::abs(east-wadiEast);
-  const double channel=145.*std::exp(-std::pow(riverDistance/390.,2.));
-  const double valley=54.*std::exp(-std::pow(riverDistance/1550.,2.));
-  const double sideWadi1=north-(3800.+1300.*std::sin(east/1800.));
-  const double sideWadi2=north-(-5600.+980.*std::sin((east+1200.)/1350.));
-  const double branches=68.*std::exp(-std::pow(sideWadi1/340.,2.))+
-                        59.*std::exp(-std::pow(sideWadi2/300.,2.));
-  double terrain=base-channel-valley-branches;
-  // Sealed topographic basins; water surfaces and vegetation are NOT created
-  // by this native height formula, they must be placed on the saved level.
-  const double springs[8][5]={
-   {-4800.,6000.,900.,620.,168.},
-   {1300.,8700.,720.,580.,202.},
-   {-6000.,-1600.,760.,710.,174.},
-   {3300.,3000.,800.,560.,192.},
-   {5600.,-5200.,1050.,820.,199.},
-   {-2200.,-8000.,960.,680.,147.},
-   {1700.,-10800.,740.,560.,163.},
-   {-7200.,-10500.,660.,540.,155.}
+  // 18 km E-W x 26 km N-S = 468 km2. Dry desert, northern green savanna,
+  // isolated camps, Arabic-style towns, rocky mountains and dry wadis.
+  // Explicitly NO lakes, open oasis pools or surface water anywhere.
+  // Ten small ground pads prepare future 3D repairable well entrances.
+  // Native landscape heightfields cannot contain tunnels/overhangs.
+  static const double wells[10][3]={
+   {-5100.,8700.,NasdarasDryTerrainHeight(-5100.,8700.)},
+   {1500.,8400.,NasdarasDryTerrainHeight(1500.,8400.)},
+   {-5600.,3300.,NasdarasDryTerrainHeight(-5600.,3300.)},
+   {-700.,3300.,NasdarasDryTerrainHeight(-700.,3300.)},
+   {4800.,2900.,NasdarasDryTerrainHeight(4800.,2900.)},
+   {-5700.,-2900.,NasdarasDryTerrainHeight(-5700.,-2900.)},
+   {-200.,-2300.,NasdarasDryTerrainHeight(-200.,-2300.)},
+   {4500.,-3200.,NasdarasDryTerrainHeight(4500.,-3200.)},
+   {-3800.,-9000.,NasdarasDryTerrainHeight(-3800.,-9000.)},
+   {2800.,-9200.,NasdarasDryTerrainHeight(2800.,-9200.)}
   };
-  for(const auto& spring:springs){
-   const double d=std::hypot((east-spring[0])/spring[2],
-                             (north-spring[1])/spring[3]);
-   const double blend=Smooth((1.35-d)/.65);
-   const double basinFloor=spring[4]-4.5;
-   terrain=terrain*(1.-blend)+basinFloor*blend;
+  double terrain=NasdarasDryTerrainHeight(east,north);
+  for(const auto& well:wells){
+   const double radius=125.;
+   const double d=std::hypot(east-well[0],north-well[1]);
+   const double grade=Smooth((radius-d)/85.);
+   terrain=terrain*(1.-grade)+well[2]*grade;
   }
   return terrain;
  }
