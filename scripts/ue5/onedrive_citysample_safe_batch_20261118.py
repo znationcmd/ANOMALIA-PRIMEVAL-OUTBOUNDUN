@@ -11,6 +11,7 @@ MAX_SINGLE = 20 * 1024 * 1024
 MIN_FREE_C = 1536 * 1024 * 1024
 MIN_FREE_D = 2 * 1024 * 1024 * 1024
 MAX_FILES = 50
+MAX_CANDIDATES_EXAMINED = 300
 EXCLUDE = {".git", "intermediate", "saved", "deriveddatacache", ".vs"}
 def iso():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def hash_file(p):
@@ -75,7 +76,8 @@ candidates.sort(key=lambda row:(-row[1],str(row[0]).casefold()))
 state["eligibleCandidateCount"]=len(candidates)
 record()
 state["state"]="COPYING_BOUNDED_PILOT"
-for relative,size in candidates:
+for candidate_index,(relative,size) in enumerate(candidates):
+    if candidate_index>=MAX_CANDIDATES_EXAMINED:break
     if state["copiedFiles"]>=MAX_FILES or state["copiedBytes"]>=CAP_BYTES:break
     if size>CAP_BYTES-state["copiedBytes"]:continue
     if shutil.disk_usage(ONE).free<MIN_FREE_C+size:
@@ -85,9 +87,8 @@ for relative,size in candidates:
     temp=None
     try:
         if dest.exists():
-            if dest.stat().st_size==size and hash_file(src)==hash_file(dest):
-                state["existingLocalMatches"]+=1
-            else:state["conflictsUntouched"]+=1
+            # Do not open cloud placeholders: reading them may re-download huge files to C:.
+            state["conflictsUntouched"]+=1
             continue
         before=src.stat()
         dest.parent.mkdir(parents=True,exist_ok=True)
