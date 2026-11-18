@@ -56,10 +56,15 @@ jobs:
           for asset in registry.get_assets_by_path("/Game", recursive=True):
               if str(asset.asset_class_path.asset_name) not in {"StaticMesh", "SkeletalMesh", "Blueprint"}:
                   continue
-              match = tokens.search(str(asset.asset_name))
+              match = tokens.search(str(asset.package_name))
               if match:
                   candidates[match.group().lower()].append(str(asset.package_name))
           building = re.compile(r"building|house|villa|hospital|police|garage|apartment|warehouse|interior|stair|door", re.I)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          descriptors = [entry for entry in partition.get_actor_descs() if building.search(str(entry.label))]
+          restored = [entry for entry in descriptors if str(entry.label).startswith("SKARVIK_COMPLETE_REAL_BUILDING_")]
+          if restored:
+              partition.load_actors([entry.guid for entry in restored[:12]])
           placed = []
           counts = collections.Counter()
           for actor in actors.get_all_level_actors():
@@ -75,7 +80,8 @@ jobs:
                       meshes.append({"asset": mesh.get_path_name(), "collision": str(component.get_collision_enabled())})
               placed.append({"actor": label, "location_cm": [location.x, location.y, location.z], "meshes": meshes})
           result = {"map": world.get_path_name(), "loaded_actor_classes": counts,
-                    "loaded_building_candidates": placed, "reusable_asset_candidates": candidates}
+                    "partition_building_labels": [str(entry.label) for entry in descriptors],
+                    "restored_partition_actor_count": len(restored), "loaded_building_candidates": placed, "reusable_asset_candidates": candidates}
           (out / "audit.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
           unreal.log(f"SKARVIK_LOADED_BUILDING_CANDIDATES={len(placed)}")
           '@ | Set-Content -LiteralPath $script -Encoding utf8
