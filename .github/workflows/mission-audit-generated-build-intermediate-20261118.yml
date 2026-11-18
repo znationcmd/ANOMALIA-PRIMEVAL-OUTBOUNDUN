@@ -1,0 +1,33 @@
+name: ANOMALIA - inspect generated Intermediate build storage safely
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-audit-generated-build-intermediate-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Inspect extensions and folder sizes of D Unreal Intermediate (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal\Intermediate'
+          $one='D:\ANOMALIA\FabImports\CitySample\Intermediate'
+          $processes=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker -ErrorAction SilentlyContinue | Select-Object Name,Id)
+          Write-Host ('UNREAL_ACTIVE_PROCESS_COUNT='+$processes.Count)
+          foreach($path in @($root,$one)) {
+            if(!(Test-Path -LiteralPath $path -PathType Container)) { Write-Host "INTERMEDIATE_NOT_PRESENT=$path";continue }
+            $files=@(Get-ChildItem -LiteralPath $path -Recurse -File -ErrorAction Stop | Where-Object {($_.Attributes -band [IO.FileAttributes]::ReparsePoint) -eq 0})
+            $group=@($files | Group-Object Extension | ForEach-Object {[ordered]@{ext=$_.Name;bytes=($_.Group | Measure-Object -Property Length -Sum).Sum;files=$_.Count}} | Sort-Object -Property bytes -Descending | Select-Object -First 25)
+            $top=@($files | Sort-Object Length -Descending | Select-Object -First 20 | ForEach-Object {[ordered]@{relative=$_.FullName.Substring($path.Length).TrimStart('\');bytes=$_.Length;ageDays=[math]::Round(((Get-Date).ToUniversalTime()-$_.LastWriteTimeUtc).TotalDays,2)}})
+            $subfolders=@($files | Group-Object {($_.FullName.Substring($path.Length).TrimStart('\') -split '\\')[0]} | ForEach-Object {[ordered]@{folder=$_.Name;bytes=($_.Group | Measure-Object -Property Length -Sum).Sum;files=$_.Count}} | Sort-Object -Property bytes -Descending | Select-Object -First 15)
+            Write-Host ('INTERMEDIATE_DETAIL '+([ordered]@{root=$path;totalBytes=($files|Measure-Object -Property Length -Sum).Sum;totalFiles=$files.Count;extensions=$group;folders=$subfolders;largest=$top}|ConvertTo-Json -Depth 6 -Compress))
+          }
+          $drives=@(Get-PSDrive C,D | ForEach-Object {[ordered]@{drive=$_.Name;freeBytes=[long]$_.Free}})
+          Write-Host ('INTERMEDIATE_DISK_FREE '+($drives|ConvertTo-Json -Compress))
+          Write-Host 'AUDIT_READ_ONLY_NO_FILES_DELETED'
