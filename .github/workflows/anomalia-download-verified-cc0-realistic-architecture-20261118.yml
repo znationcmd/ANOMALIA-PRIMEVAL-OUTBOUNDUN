@@ -1,0 +1,88 @@
+name: ANOMALIA - download genuine realistic CC0 architecture and stage on original D drive
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-download-verified-cc0-realistic-architecture-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  download-licensed-models:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - name: Download FBX and 1K textures direct from official Poly Haven CC0 API
+        run: |
+          python3 -m py_compile scripts/ue5/download_verified_cc0_regional_architecture.py
+          python3 scripts/ue5/download_verified_cc0_regional_architecture.py --output /tmp/anomalia-regional-cc0-sources
+          python3 - <<'PY'
+          import json,pathlib,hashlib
+          root=pathlib.Path('/tmp/anomalia-regional-cc0-sources')
+          manifest=json.loads((root/'CC0_SOURCE_PROVENANCE.json').read_text())
+          assert manifest['license']=='CC0 1.0' and manifest['polyhavenAssetCount']==5
+          for model in manifest['models']:
+              for entry in model['files']:
+                  data=(root/entry['relativePath']).read_bytes()
+                  assert len(data)==entry['bytes'] and hashlib.md5(data).hexdigest()==entry['md5']
+          print('ANOMALIA_CC0_LICENSED_ARCHITECTURE_PACKS_FULLY_VERIFIED=5')
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-verified-photorealistic-cc0-regional-architecture
+          path: /tmp/anomalia-regional-cc0-sources/
+          retention-days: 30
+          compression-level: 2
+  stage-original-unreal-sourceassets:
+    needs: download-licensed-models
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: anomalia-verified-photorealistic-cc0-regional-architecture
+          path: ${{ runner.temp }}/anomalia-cc0-arch-${{ github.run_id }}
+      - name: Stage only brand-new genuine license-verified model sources on D without replacing game assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject') -PathType Leaf)){throw 'Original project unavailable'}
+          $incoming=Join-Path $env:RUNNER_TEMP ('anomalia-cc0-arch-'+$env:GITHUB_RUN_ID)
+          $manifestPath=Join-Path $incoming 'CC0_SOURCE_PROVENANCE.json'
+          if(!(Test-Path -LiteralPath $manifestPath -PathType Leaf)){throw 'Official CC0 provenance missing'}
+          $manifest=Get-Content -LiteralPath $manifestPath -Raw -Encoding UTF8|ConvertFrom-Json
+          if($manifest.license -ne 'CC0 1.0' -or @($manifest.models).Count -ne 5){throw 'Unverified license or unexpected model count'}
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 9GB){throw 'D disk safety reserve too low'}
+          $dest=Join-Path $root 'SourceAssets\RegionalArchitecture\PolyHaven_CC0_20261118'
+          New-Item -ItemType Directory -Path $dest -Force|Out-Null
+          $saved=0;$preserved=0;$errors=@()
+          foreach($model in @($manifest.models)){
+            foreach($asset in @($model.files)){
+              $relative=([string]$asset.relativePath).Replace('/','\')
+              $s=Join-Path $incoming $relative
+              $d=Join-Path $dest $relative
+              if(!(Test-Path -LiteralPath $s -PathType Leaf)){throw ('Expected model source absent: '+$relative)}
+              if((Get-Item -LiteralPath $s).Length -ne $asset.bytes){throw 'Source byte size differs'}
+              $md5=(Get-FileHash -LiteralPath $s -Algorithm MD5).Hash.ToLowerInvariant()
+              if($md5 -ne $asset.md5){throw 'Source model hash differs from official CDN'}
+              if(Test-Path -LiteralPath $d -PathType Leaf){
+                if((Get-FileHash -LiteralPath $d -Algorithm MD5).Hash.ToLowerInvariant() -ne $md5){throw ('Existing user asset differs; refuse overwrite: '+$relative)}
+                $preserved++
+              }else{
+                New-Item -ItemType Directory -Path (Split-Path -Parent $d) -Force|Out-Null
+                Copy-Item -LiteralPath $s -Destination $d -ErrorAction Stop
+                if((Get-FileHash -LiteralPath $d -Algorithm MD5).Hash.ToLowerInvariant() -ne $md5){throw 'Copied model hash mismatch'}
+                $saved++
+              }
+            }
+          }
+          $target=Join-Path $dest 'CC0_SOURCE_PROVENANCE.json'
+          if(Test-Path -LiteralPath $target -PathType Leaf){
+            if((Get-FileHash $target -Algorithm SHA256).Hash -ne (Get-FileHash $manifestPath -Algorithm SHA256).Hash){throw 'Existing provenance receipt differs; preserve it'}
+          }else{Copy-Item -LiteralPath $manifestPath -Destination $target}
+          $receipt=[ordered]@{result='REAL_CC0_FBXS_AND_TEXTURES_STAGED_ON_D';models=$manifest.models.Count;
+            verifiedFileCount=$saved+$preserved;newFiles=$saved;existingSameFiles=$preserved;
+            originalAssetsOverwritten=0;sourceFolder=$dest;
+            importedToUnrealContent=$false;actualNativeStaticMeshesConfirmed=0}
+          Write-Host ('ANOMALIA_CC0_ORIGINAL_D_STAGING '+($receipt|ConvertTo-Json -Depth 4 -Compress))
