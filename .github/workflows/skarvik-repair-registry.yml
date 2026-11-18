@@ -1,0 +1,60 @@
+name: SKARVIK - repair dangling Unreal asset registry references
+on:
+  push:
+    branches: [work/skarvik-interiors-vehicles-20261118]
+    paths: ['.github/workflows/skarvik-repair-registry.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  repair:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Find matching registry binaries or preserve and move dangling references
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = 'D:\ANOMALIA\unreal\Intermediate'
+          $cache = Join-Path $root 'CachedAssetRegistry'
+          if (!(Test-Path -LiteralPath $cache -PathType Container)) { throw 'Project registry cache directory is unavailable' }
+          $active = @(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue | Where-Object { -not $_.HasExited })
+          if ($active.Count) { throw 'Unreal Editor is running. Registry cache left untouched.' }
+
+          $expected = [ordered]@{
+            'CachedAssetRegistry_0.ref' = 'CachedAssetRegistry_0_9B0F810A4D93F36A37A787B989CB3855.bin'
+            'CachedAssetRegistry_1.ref' = 'CachedAssetRegistry_1_9A9E57B74D90691A4B81688AC4D036EF.bin'
+          }
+          $backup = Join-Path $root "SkarvikRegistryRecovery\$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          foreach ($refName in $expected.Keys) {
+            $name = $expected[$refName]
+            $ref = Join-Path $cache $refName
+            $binary = Join-Path $cache $name
+            if (Test-Path -LiteralPath $binary -PathType Leaf) {
+              if ((Get-Item -LiteralPath $binary).Length -eq 0) { throw "Unexpected empty cache binary: $name" }
+              Write-Host "Cache binary is already present: $name"
+              continue
+            }
+            $copies = @(Get-ChildItem -LiteralPath $root -Filter $name -File -Recurse | Where-Object Length -gt 0)
+            if ($copies.Count) {
+              $hashes = @($copies | Get-FileHash | Select-Object -ExpandProperty Hash -Unique)
+              if ($hashes.Count -ne 1) { throw "Conflicting copies of $name" }
+              [IO.File]::Copy($copies[0].FullName, $binary, $false)
+              if ((Get-FileHash -LiteralPath $binary).Hash -ne $hashes[0]) { throw "Copy verification failed: $name" }
+              Write-Host "Restored and verified: $name"
+              continue
+            }
+            if (!(Test-Path -LiteralPath $ref -PathType Leaf)) {
+              Write-Host "Absent binary has no reference to repair: $name"
+              continue
+            }
+            $bytes = [IO.File]::ReadAllBytes($ref)
+            $matches = @([Text.Encoding]::UTF8.GetString($bytes), [Text.Encoding]::Unicode.GetString($bytes), [Text.Encoding]::Unicode.GetString($bytes, 1, $bytes.Length - 1)) |
+              Where-Object { $_.Contains($name) }
+            if (!$matches) { throw "Reference changed or format is unknown: $refName" }
+            New-Item -ItemType Directory -Force -Path $backup | Out-Null
+            [IO.File]::Move($ref, (Join-Path $backup $refName))
+            Write-Host "Backed up stale reference $refName. Unreal can regenerate the shard on a normal launch."
+          }
