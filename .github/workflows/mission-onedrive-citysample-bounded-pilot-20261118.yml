@@ -21,7 +21,7 @@ jobs:
           sparse-checkout: scripts/ue5/onedrive_citysample_safe_batch_20261118.py
           sparse-checkout-cone-mode: false
           persist-credentials: false
-      - name: Copy at most 96 MiB from original City Sample into OneDrive Files On-Demand; NEVER delete originals
+      - name: Copy at most 1.5 GiB from original City Sample into OneDrive Files On-Demand; preserve originals
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
