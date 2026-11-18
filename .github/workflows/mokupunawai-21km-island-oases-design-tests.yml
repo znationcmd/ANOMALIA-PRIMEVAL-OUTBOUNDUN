@@ -1,0 +1,43 @@
+name: ANOMALIA - validate MOKUPŪNAWAI 21 km island oasis map design
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mokupunawai-21km-island-oases-design-tests.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify independent 21x21km map, six springs, island boundaries and previous map preservation
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cat=json.loads(Path('public/config/anomalia-map-catalog.json').read_text(encoding='utf-8'))
+          maps=cat['maps']
+          assert len(maps)==cat['mapCount']==22
+          assert len({m['id'] for m in maps})==22
+          assert len({m['saveNamespace'] for m in maps})==22
+          assert len({m.get('originalUnrealPackage') or m.get('plannedUnrealPackage') for m in maps})==22
+          mapid={m['id']:m for m in maps}
+          m=mapid['mokupunawai-v1']
+          assert m['displayName']=='MOKUPŪNAWAI'
+          assert (m['widthKm'],m['heightKm'],m['areaKm2'])==(21,21,441)
+          assert not m['serverSelectable'] and not m['nativeWorldCreated']
+          for identifier,dimensions in [('morodenachtmerr-v1',(10,10)),('apocalyptic-outbreak-v1',(15,15))]:
+            assert (mapid[identifier]['widthKm'],mapid[identifier]['heightKm'])==dimensions
+          cfg=json.loads(Path('public/config/mokupunawai-island-oases-layout-21km.json').read_text(encoding='utf-8'))
+          assert cfg['sizeMetres']=={'eastWest':21000,'northSouth':21000}
+          assert cfg['areaKm2']==441 and cfg['mapId']==m['id']
+          assert len(cfg['oases'])==6 and len(cfg['topology']['offshoreIslets'])==3
+          assert len(cfg['settlements'])==5 and len(cfg['landmarks'])==5
+          all_sites=cfg['oases']+cfg['topology']['offshoreIslets']+cfg['settlements']+cfg['landmarks']
+          assert len({s['id'] for s in all_sites})==len(all_sites)
+          assert all(-10500<s['east']<10500 and -10500<s['north']<10500 for s in all_sites)
+          assert cfg['waterways']['freshwaterOasisCount']==6
+          print('MOKUPUNAWAI_21x21KM_441KM2_6_OASIS_3_ISLETS_DESIGN_VALID=1')
+          PY
