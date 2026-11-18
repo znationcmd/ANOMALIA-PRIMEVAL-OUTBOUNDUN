@@ -1,0 +1,30 @@
+name: ANOMALIA - inspect installed native WorldImport source and editor lock
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/apocalyptic-outbreak-source-discovery-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  discover:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 6
+    steps:
+      - name: Inspect only file names and terrain methods of active Unreal module
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $module='AnomaliaPrimeval'
+          $folder=Join-Path $root ('Source\'+$module+'\World')
+          $rows=@(Get-ChildItem -LiteralPath $folder -File -ErrorAction SilentlyContinue|Select-Object -ExpandProperty Name)
+          $methods=@()
+          foreach($p in @(Get-ChildItem -LiteralPath $folder -File -Filter '*World*' -ErrorAction SilentlyContinue)) {
+            if($p.Extension -notin @('.cpp','.h')){continue}
+            $txt=Get-Content -LiteralPath $p.FullName -Raw
+            $matches=@([regex]::Matches($txt,'CreateNamedWorldLandscape|NamedWorldHeight|ExtraWorldHeights|ResolveNamedWorld|CreateNewFourLandscape')|ForEach-Object{$_.Value})
+            if($matches.Count){$methods+=[ordered]@{file=$p.Name;methodTokens=($matches|Sort-Object -Unique)}}
+          }
+          $processes=@(Get-CimInstance Win32_Process -Filter "Name = 'UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Select-Object ProcessId,CreationDate,@{n='Executable';e={$_.ExecutablePath}})
+          Write-Host ('APOCALYPTIC_NATIVE_SOURCE_DISCOVERY '+([ordered]@{worldFolderExists=(Test-Path -LiteralPath $folder);worldSourceFiles=$rows;methodLocations=$methods;editorProcessCount=$processes.Count;editorProcesses=$processes}|ConvertTo-Json -Depth 6 -Compress))
