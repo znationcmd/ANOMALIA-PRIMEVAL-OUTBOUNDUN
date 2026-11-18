@@ -35,7 +35,7 @@ def load(url,limit):
         raise RuntimeError("Official house source host mismatch")
     request=urllib.request.Request(url,headers=HEADERS)
     with urllib.request.urlopen(request,timeout=65) as r:
-        if r.url!=url and urllib.parse.urlparse(r.url).hostname!=HOST:
+        if r.url!=url and urllib.parse.urlparse(r.url).hostname not in (HOST,"files.innerscene.com"):
             raise RuntimeError("Official download redirected to host "+str(urllib.parse.urlparse(r.url).hostname))
         h=hashlib.sha256();chunks=[];total=0
         while True:
