@@ -1,4 +1,4 @@
-name: Generate requested ANOMALIA maps on Windows
+name: ANOMALIA — generate 13 requested Unreal levels
 on:
   push:
     branches: [feature/requested-native-map-generation]
