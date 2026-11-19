@@ -151,14 +151,14 @@ faces.extend([tuple(range(n-1,-1,-1)),tuple(range((len(samples)-1)*n,len(samples
 mesh("T1N sculpted van shell",verts,faces,paint,True)
 
 # Thin fitted surfaces for glazing, panel shut lines and model-specific lamps.
-wind=[(1.397,-.760,2.144),(1.397,.760,2.144),(1.850,.792,1.365),(1.850,-.792,1.365)]
+wind=[(1.462,-.760,2.144),(1.462,.760,2.144),(1.876,.792,1.365),(1.876,-.792,1.365)]
 for name, corners, m in [
     ("Windscreen black seal",[(x+.018,y*1.035,z) for x,y,z in wind],iron),
     ("Tinted laminated windscreen",[(x+.031,y,z) for x,y,z in wind],glass)]:
     mesh(name,corners,[(0,1,2,3)],m)
 for side in [-1,1]:
     y=side*.968
-    verts=[(.56,y,2.063),(1.35,y,2.057),(1.70,side*.934,1.40),(.56,y,1.40)]
+    verts=[(.56,side*.974,2.063),(1.35,side*.974,2.057),(1.70,side*.974,1.40),(.56,side*.974,1.40)]
     mesh("Side door window",verts,[(0,1,2,3)],glass)
     for a,b in [((.47,y,.70),(.47,y,2.118)),((.49,y,2.118),(1.33,y,2.118)),
                 ((.47,y,.70),(1.08,y,.70))]:
@@ -190,7 +190,7 @@ for i in range(28):
     cylinder("Grille badge ring",(2.529,.077*cos(a),1.04+.077*sin(a)),
              (2.529,.077*cos(b),1.04+.077*sin(b)),.005,silver,8)
 for side in [-1,1]:
-    cylinder("Windscreen wiper",(1.843,side*.29,1.436),(1.796,side*.60,1.517),.011,black,12)
+    cylinder("Windscreen wiper",(1.883,side*.29,1.436),(1.840,side*.60,1.517),.011,black,12)
 box("Rear moulded bumper",(-2.367,0,.622),(.252,1.775,.174),iron,.051)
 cylinder("Rear centre doors seam",(-2.401,0,.738),(-2.401,0,2.12),.007,iron,12)
 box("Rear door pull",(-2.433,.103,1.135),(.049,.161,.060),black,.020)
