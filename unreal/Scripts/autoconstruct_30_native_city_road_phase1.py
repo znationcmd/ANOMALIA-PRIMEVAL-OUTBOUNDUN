@@ -32,25 +32,6 @@ ASSETS={
  "fire":"/Game/Anomalia/Buildings/Expansion1/SM_fire_station"
 }
 ROAD="/Game/Road/Kit_City_Road/SM_ROAD_19_10_0_0_road"
-ORIGINAL_NATIVE_ID={
- "apocalyptic-outbreak-v1":"APOCALYPTIC_OUTBREAK",
- "morodenachtmerr-v1":"MOROEDENACHTMERR",
- "mokupunawai-v1":"MOKUPUNAWAI",
- "nasdaras-v1":"NASDARAS",
- "kiryumori-v1":"KIRYUMORI",
- "aranyapura-v1":"ARANYAPURA",
- "falc-v1":"FALC",
- "unknown-horror-x-v1":"UNKNOWN_HORROR_X",
- "konigsbruck-v1":"KONIGSBRUCK",
- "skjaeroyas-v1":"SKJAEROYAS",
- "valhalla-extinction-v1":"VALHALLA_EXTINCTION",
-}
-ORIGINAL_EXTRA_NATIVE={
- "karskov-v1":"KARSKOV","vorgrad-v1":"VORGRAD",
- "nemoris-v1":"NEMORIS","drakheim-v1":"DRAKHEIM",
- "yudinavia-v1":"YUDINAVIA","moscovie-v1":"MOSCOVIE",
- "corsivia-v1":"CORSIVIA","bot-sever-v1":"BOT_SEVER",
-}
 report={"state":"FAILED","mapId":ID,"sourceWorldModified":False,
         "existingRoadsDeleted":0,"existingBuildingsDeleted":0,
         "realBuildingsCreated":0,"realRoadMeshActorsCreated":0,
@@ -61,32 +42,18 @@ report={"state":"FAILED","mapId":ID,"sourceWorldModified":False,
         "realTerrainCollisionVerified":False,"originalTerrainResculpted":False,
         "all30Completed":False}
 def ground_from_world(world, east, north):
-    start=unreal.Vector(east*100.,-north*100.,500000.)
-    finish=unreal.Vector(east*100.,-north*100.,-200000.)
-    hit=unreal.SystemLibrary.line_trace_single(world,start,finish,
-        unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,True,[],unreal.DrawDebugTrace.NONE,True)
-    if not isinstance(hit,tuple) or not hit[0]:return None
-    obj=hit[1]
-    try:return float(obj.location.z)/100.
-    except Exception:
+    start = unreal.Vector(east * 100., -north * 100., 500000.)
+    finish = unreal.Vector(east * 100., -north * 100., -200000.)
+    hit = unreal.SystemLibrary.line_trace_single(
+        world, start, finish, unreal.TraceTypeQuery.ECC_VISIBILITY, True, [],
+        unreal.DrawDebugTrace.NONE, True)
+    if hit is None:
         return None
-def sampler_for_map(map_id,world):
-    if map_id in ORIGINAL_NATIVE_ID:
-        lib=getattr(unreal,"AnomaliaPrimevalElevenWorldLibrary",None)
-        if lib and hasattr(lib,"named_world_height"):
-            ident=ORIGINAL_NATIVE_ID[map_id]
-            return lambda e,n:float(lib.named_world_height(ident,float(e),float(n)))
-    native=getattr(unreal,"AnomaliaPrimevalWorldImportLibrary",None)
-    if native:
-        if map_id=="archipelago-v2" and hasattr(native,"archipelago_height"):
-            return lambda e,n:float(native.archipelago_height(float(e),float(n)))
-        if map_id=="inhabited-v2" and hasattr(native,"inhabited_archipelago_height"):
-            return lambda e,n:float(native.inhabited_archipelago_height(float(e),float(n)))
-        if map_id in ORIGINAL_EXTRA_NATIVE and hasattr(native,"named_world_height"):
-            ident=ORIGINAL_EXTRA_NATIVE[map_id]
-            return lambda e,n:float(native.named_world_height(ident,float(e),float(n)))
-    # No made-up flat-world fallback: actual collision is the only permitted sample.
-    return lambda e,n:ground_from_world(world,e,n)
+    values = hit.to_tuple()
+    if not values[0] or not isinstance(values[9], unreal.LandscapeProxy):
+        return None
+    return float(values[4].z) / 100.
+
 def digest_file(path):
     h=hashlib.sha256()
     with open(path,"rb") as f:
@@ -239,7 +206,7 @@ try:
     if not terrainComponents or not terrainCollisions:
         raise RuntimeError("Native Landscape terrain/collision not loaded after loading saved terrain tiles")
     report["realTerrainCollisionVerified"]=True
-    h=sampler_for_map(ID,world)
+    h=lambda east,north:ground_from_world(world,east,north)
     existingLabels=saved_actor_labels(actors)
     report["persistentOriginalActorObstaclesIndexed"]=index_persistent_obstacles()
     generatedLabels={x for x in existingLabels if x.startswith(PREFIX+ID.replace("-","_")+"_")}
@@ -255,13 +222,14 @@ try:
             if len(targetSites)>=MAX_SITES:break
             # Test all terrain and existing actors BEFORE modifying the world.
             candidate=None
-            for radial in (0.,170.,340.,520.,760.,1050.):
-                for angle in range(0,360,30):
+            for radial in (0.,170.,340.,520.,760.,1050.,1500.,2200.,3200.):
+                for angle in ((0,) if radial == 0. else range(0,360,30)):
                     e=s["eastMeters"]+radial*math.cos(math.radians(angle))
                     n=s["northMeters"]+radial*math.sin(math.radians(angle))
                     if abs(e)>mapdata["worldSizeMeters"][0]*.47 or abs(n)>mapdata["worldSizeMeters"][1]*.47:continue
                     if not grade_ok(h,e,n,20.):continue
                     if looks_occupied(loaded,e,n,135.):continue
+                    if any(math.hypot(e-prior_e,n-prior_n)<350. for _,(prior_e,prior_n) in targetSites):continue
                     candidate=(e,n);break
                 if candidate:break
             if candidate:
@@ -273,7 +241,7 @@ try:
         else:
             # Back up exact original .umap before any actor is created. Original
             # existing actor data is never deleted/overwritten.
-            backup=OUT.parent/"pre-autoconstruction-original-map.umap"
+            backup=OUT.parent/"backups"/ID/"pre-autoconstruction-original-map.umap"
             backup.parent.mkdir(parents=True,exist_ok=True)
             srcSha=digest_file(filename)
             if backup.exists():
