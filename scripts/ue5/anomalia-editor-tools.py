@@ -180,13 +180,27 @@ def main() -> None:
     rm = sub.add_parser("remove")
     rm.add_argument("id")
     sub.add_parser("list")
+    maps = sub.add_parser("maps")
+    maps.add_argument("--catalog", type=Path, default=Path(__file__).resolve().parents[2] / "public/config/anomalia-map-catalog.json")
+    maps.add_argument("--project-root", type=Path, default=Path("unreal"))
     new = sub.add_parser("new-mod")
     new.add_argument("id")
     new.add_argument("--mods-root", type=Path, default=Path("mods"))
     lint = sub.add_parser("lint-mod")
     lint.add_argument("folder", type=Path)
     args = p.parse_args()
-    if args.action == "new-mod":
+    if args.action == "maps":
+        catalog = json.loads(args.catalog.read_text(encoding="utf-8"))
+        rows = []
+        for row in catalog["maps"]:
+            package = row.get("originalUnrealPackage") or row.get("plannedUnrealPackage")
+            installed = bool(package and package.startswith("/Game/Maps/") and
+                (args.project_root / "Content" / (package[6:] + ".umap")).is_file())
+            rows.append({"id": row["id"], "name": row["displayName"], "package": package,
+                         "widthKm": row["widthKm"], "heightKm": row["heightKm"],
+                         "installed": installed, "gameplayVerified": False})
+        print(json.dumps(rows, ensure_ascii=False, indent=2))
+    elif args.action == "new-mod":
         print(mod_template(args.mods_root, args.id))
     elif args.action == "lint-mod":
         print(json.dumps(lint_mod(args.folder), indent=2))

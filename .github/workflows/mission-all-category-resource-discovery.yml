@@ -1,0 +1,50 @@
+name: ANOMALIA mission - discover all game resource categories on C and D
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-all-category-resource-discovery.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-all-category-resource-discovery
+  cancel-in-progress: false
+jobs:
+  discover:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 48
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: all-resources-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/discover-uncovered-all-category-resources.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare supplemental inventory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('all-resource-categories-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "ALL_RESOURCE_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.ALL_RESOURCE_OUT }}/prior/
+      - name: Discover uncovered game sources, reusing previous content inventories
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('all-resources-'+$env:GITHUB_RUN_ID+'\scripts\ue5\discover-uncovered-all-category-resources.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Supplemental inventory failed; source files preserved'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ALL_RESOURCE_OUT != ''
+        with:
+          name: all-C-D-game-resource-categories
+          path: |
+            ${{ env.ALL_RESOURCE_OUT }}/all-resource-discovery-summary.json
+            ${{ env.ALL_RESOURCE_OUT }}/new-source-files.jsonl
+          if-no-files-found: error

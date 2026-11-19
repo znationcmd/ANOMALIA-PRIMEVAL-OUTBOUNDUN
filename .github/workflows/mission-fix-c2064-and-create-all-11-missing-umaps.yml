@@ -1,0 +1,169 @@
+name: ANOMALIA - fix C2064 then compile and generate 11 missing real UE5 worlds
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-fix-c2064-and-create-all-11-missing-umaps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-real-ue5-eleven-native-worlds
+  cancel-in-progress: false
+jobs:
+  compile-and-create-only-absent:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 300
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: anomalia-11-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/create_anomalia_missing_native_world_20261118.py
+            public/config/anomalia-11-missing-native-world-batch.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Guard original maps and apply only the single confirmed C2064 correction
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $run=Join-Path $root ('Saved\AllThirtyMapGeneration\FixC2064\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $run -Force | Out-Null
+          "ANOMALIA_FIX_RUN=$run"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $env:ANOMALIA_FIX_RUN=$run
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $originalMap=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf) -or !(Test-Path -LiteralPath $originalMap -PathType Leaf)){throw 'Cannot find original project / protected world'}
+          $base=Join-Path $root 'Source\AnomaliaPrimeval\World'
+          $cpp=Join-Path $base 'AnomaliaPrimevalElevenWorldLibrary.cpp'
+          $h=Join-Path $base 'AnomaliaPrimevalElevenWorldLibrary.h'
+          $heights=Join-Path $base 'AnomaliaPrimevalElevenWorldHeights.h'
+          foreach($src in @($cpp,$h,$heights)){if(!(Test-Path -LiteralPath $src -PathType Leaf)){throw 'Original add-on source missing: '+$src}}
+          $active=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $headless=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0 -or $headless.Count -gt 1){throw 'Another Unreal editor or compiler running; refuse unsafe changes'}
+          if($headless.Count -eq 1){
+            $p=$headless[0]
+            $age=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalHours
+            $parent=Get-CimInstance Win32_Process -Filter ("ProcessId="+$p.ParentProcessId) -ErrorAction SilentlyContinue
+            $cmd=[string]$p.CommandLine
+            if($p.ProcessId -ne 26284 -or $parent -or $age -lt 6 -or !$cmd.Contains('audit.py') -or !$cmd.Contains('AnomaliaPrimeval.uproject') -or !$cmd.Contains('-unattended')){
+              throw 'Unexpected Unreal process; preserve active work'
+            }
+            Write-Host 'ANOMALIA_ONLY_STALE_ORPHAN_AUDIT_DETECTED_NOT_TERMINATED'
+          }
+          $freeC=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+          $freeD=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          if($freeC -lt 8GB -or $freeD -lt 14GB){throw 'Not enough free disk reserve to safely compile maps'}
+          $protected=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -Filter '*.umap' -File|ForEach-Object {[pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $protected|Export-Csv -LiteralPath (Join-Path $run 'all-preexisting-umap-hashes.csv') -NoTypeInformation -Encoding UTF8
+          $oldSha='2AA09FC67DBAB15F53AFCAE4E9007A07196555F35205EFC3E7AEBA104B6290FF'
+          $originalLine='Samples[Y*Size+X]=Encode(Height(Kind,-HalfWidth+double(Width)*X/(Size-1),HalfHeight-double(Height)*Y/(Size-1)));'
+          $correctLine='Samples[Y*Size+X]=Encode(AnomaliaPrimevalElevenWorlds::Height(Kind,-HalfWidth+double(Width)*X/(Size-1),HalfHeight-double(Height)*Y/(Size-1)));'
+          $data=[IO.File]::ReadAllText($cpp)
+          $count=([regex]::Matches($data,[regex]::Escape($originalLine))).Count
+          $correctCount=([regex]::Matches($data,[regex]::Escape($correctLine))).Count
+          if($count -eq 1 -and $correctCount -eq 0){
+            if((Get-FileHash -LiteralPath $cpp -Algorithm SHA256).Hash -ne $oldSha){throw 'Original C++ contents changed since diagnosis. Refuse patch'}
+            Copy-Item -LiteralPath $cpp -Destination (Join-Path $run 'AnomaliaPrimevalElevenWorldLibrary.before-C2064.cpp') -ErrorAction Stop
+            $changed=$data.Replace($originalLine,$correctLine)
+            $enc=New-Object System.Text.UTF8Encoding($false)
+            [IO.File]::WriteAllText($cpp,$changed,$enc)
+            Write-Host 'ANOMALIA_C2064_HEIGHT_FUNCTION_SHADOW_CORRECTED=TRUE'
+          }elseif($count -eq 0 -and $correctCount -eq 1){
+            Write-Host 'ANOMALIA_C2064_CORRECTION_ALREADY_APPLIED=TRUE'
+          }else{throw 'Unexpected number of C2064 call sites; do not modify C++'}
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('anomalia-11-'+$env:GITHUB_RUN_ID)
+          $manifest=Join-Path $repo 'public\config\anomalia-11-missing-native-world-batch.json'
+          $script=Join-Path $repo 'unreal\Scripts\create_anomalia_missing_native_world_20261118.py'
+          if(!(Test-Path -LiteralPath $manifest -PathType Leaf) -or !(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Authoring files unavailable'}
+          $batch=Get-Content -LiteralPath $manifest -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($batch.missingMaps).Count -ne 11){throw 'Must have exactly 11 allowlisted missing maps'}
+          "ANOMALIA_ELEVEN_MAP_MANIFEST=$manifest"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_AUTHORING_SCRIPT=$script"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          Write-Host ('ANOMALIA_FIX_SOURCE_PREPARED '+([ordered]@{mapFileHashesProtected=$protected.Count;missingWorlds=11;cppFile=$cpp;freeCBytes=$freeC;freeDBytes=$freeD}|ConvertTo-Json -Compress))
+      - name: Compile corrected Unreal 5.8 add-on and existing game with original settings
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $build='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path -LiteralPath $build -PathType Leaf)){throw 'Original UE5.8 Build.bat missing'}
+          $log=Join-Path $env:ANOMALIA_FIX_RUN 'native-build-after-c2064-fix.log'
+          & $build AnomaliaPrimevalEditor Win64 Development 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2 *> $log
+          $rc=$LASTEXITCODE
+          Write-Host ('ANOMALIA_NATIVE_REBUILD_EXIT_CODE='+$rc)
+          $all=Get-Content -LiteralPath $log -ErrorAction SilentlyContinue
+          $errs=@($all|Where-Object {$_ -match 'error C[0-9]+|error LNK[0-9]+|fatal error|Build failed|Result: Failed'}|Select-Object -First 35)
+          $errs|ForEach-Object {Write-Host ('ANOMALIA_NATIVE_COMPILE_DIAGNOSTIC '+$_)}
+          if($rc -ne 0){throw 'Corrected UE compilation still failed; original worlds unchanged'}
+          'COMPILED'|Set-Content -LiteralPath (Join-Path $env:ANOMALIA_FIX_RUN 'compiled.marker')
+          Write-Host 'ANOMALIA_ELEVEN_WORLD_NATIVE_DLL_COMPILED=TRUE'
+      - name: Create absent native .umap in original UE5 project, one world per editor session
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(!(Test-Path -LiteralPath (Join-Path $env:ANOMALIA_FIX_RUN 'compiled.marker') -PathType Leaf)){throw 'No successful compiled add-on'}
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $meta=Get-Content -LiteralPath $env:ANOMALIA_ELEVEN_MAP_MANIFEST -Encoding UTF8 -Raw|ConvertFrom-Json
+          $created=@();$preserved=@();$failed=@()
+          foreach($m in @($meta.missingMaps)){
+            $id=$m.nativeId
+            $map='D:\ANOMALIA\unreal\Content\Maps\PRIGIMALIA_'+$id+'.umap'
+            $external='D:\ANOMALIA\unreal\Content\__ExternalActors__\Maps\PRIGIMALIA_'+$id
+            $objects='D:\ANOMALIA\unreal\Content\__ExternalObjects__\Maps\PRIGIMALIA_'+$id
+            if(Test-Path -LiteralPath $map -PathType Leaf){$preserved+=$id;Write-Host "ANOMALIA_PRESERVED_EXISTING_MAP=$id";continue}
+            if((Test-Path -LiteralPath $external) -or (Test-Path -LiteralPath $objects)){
+              $failed+=($id+':EXTERNAL_WORLD_DATA_EXISTS');break
+            }
+            if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 10GB){
+              $failed+=($id+':DISK_RESERVE');break
+            }
+            $other=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+            $headless=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+            if($other.Count -or $headless.Count){$failed+=($id+':CONCURRENT_EDITOR');break}
+            $env:ANOMALIA_NEW_NATIVE_MAP_ID=$id
+            $env:ANOMALIA_NATIVE_MAP_REPORT=Join-Path $env:ANOMALIA_FIX_RUN ('created-world-'+$id+'.json')
+            $log=Join-Path $env:ANOMALIA_FIX_RUN ('created-world-'+$id+'.log')
+            Write-Host "ANOMALIA_START_REAL_UE_MAP=$id"
+            & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_AUTHORING_SCRIPT" -unattended -nopause -nosound -nullrhi "-abslog=$log"
+            $rc=$LASTEXITCODE
+            $rec=$null
+            if(Test-Path -LiteralPath $env:ANOMALIA_NATIVE_MAP_REPORT -PathType Leaf){
+              $rec=Get-Content -LiteralPath $env:ANOMALIA_NATIVE_MAP_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+              if($rec.actualLandscapeSaved -and (Test-Path -LiteralPath $map -PathType Leaf) -and $rec.landscapeComponents -eq $rec.collisionComponents){
+                $created+=$id;Write-Host "ANOMALIA_REAL_WORLD_SAVED=$id COMPONENTS=$($rec.landscapeComponents)";continue
+              }
+              Write-Host "ANOMALIA_WORLD_CREATION_ERROR=$id REASON=$($rec.error)"
+            }
+            $errors=@(Get-Content -LiteralPath $log -Tail 80 -ErrorAction SilentlyContinue|Where-Object {$_ -match 'Error:|Exception|Traceback|Failed|not found'}|Select-Object -First 15)
+            $errors|ForEach-Object {Write-Host ('ANOMALIA_WORLD_EDITOR_DIAGNOSTIC '+$_)}
+            $failed+=($id+':UE_EXIT_'+$rc)
+            Write-Host "ANOMALIA_STOP_AFTER_FIRST_WORLD_CREATION_ERROR=$id"
+            break
+          }
+          $summary=[ordered]@{target=11;created=$created;existingPreserved=$preserved;failed=$failed;
+            createdCount=$created.Count;completed=($created.Count+$preserved.Count -eq 11);
+            citiesAndVillagesBuilt=$false;realInteriorsCreated=$false;
+            gamesPlaytested=$false;oldMapsOverwritten=0}
+          $summary|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $env:ANOMALIA_FIX_RUN 'native-map-creation-summary.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_ELEVEN_NEW_WORLDS_RESULT '+($summary|ConvertTo-Json -Depth 5 -Compress))
+          if($failed.Count){throw 'Native map import blocked; inspect first missing map log'}
+      - name: Verify every preexisting original .umap unchanged by the entire procedure
+        if: always() && env.ANOMALIA_FIX_RUN != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $path=Join-Path $env:ANOMALIA_FIX_RUN 'all-preexisting-umap-hashes.csv'
+          if(!(Test-Path -LiteralPath $path -PathType Leaf)){exit 0}
+          $list=@(Import-Csv -LiteralPath $path -Encoding UTF8)
+          $bad=@()
+          foreach($one in $list){
+            if(!(Test-Path -LiteralPath $one.path -PathType Leaf) -or (Get-FileHash -LiteralPath $one.path -Algorithm SHA256).Hash -ne $one.sha256){$bad+=$one.path}
+          }
+          Write-Host ('ANOMALIA_30_WORLD_PROTECTION '+([ordered]@{originalUmaps=$list.Count;changedExistingCount=$bad.Count;changed=$bad}|ConvertTo-Json -Depth 3 -Compress))
+          if($bad.Count){throw 'Some original .umap changed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_FIX_RUN != ''
+        with:
+          name: anomalia-30-real-ue5-c2064-fixed-and-native-map-creation
+          path: ${{ env.ANOMALIA_FIX_RUN }}/*.json
+          if-no-files-found: warn

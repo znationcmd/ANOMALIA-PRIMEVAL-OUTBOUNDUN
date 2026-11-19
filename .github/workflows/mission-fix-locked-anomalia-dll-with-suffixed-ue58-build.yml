@@ -1,0 +1,96 @@
+name: ANOMALIA - compile corrected 11-map UE module with DLL suffix to bypass locked original
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-fix-locked-anomalia-dll-with-suffixed-ue58-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-real-ue-module-suffixed-build
+  cancel-in-progress: false
+jobs:
+  build-and-verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Check corrected C++ and protect original module binary, manifest and all 75 maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AllThirtyMapGeneration\ModuleSuffixBuild\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_SUFFIX_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $cpp=Join-Path $root 'Source\AnomaliaPrimeval\World\AnomaliaPrimevalElevenWorldLibrary.cpp'
+          $dll=Join-Path $root 'Binaries\Win64\UnrealEditor-AnomaliaPrimeval.dll'
+          $modules=Join-Path $root 'Binaries\Win64\UnrealEditor.modules'
+          if(!(Test-Path -LiteralPath $cpp -PathType Leaf) -or !(Test-Path -LiteralPath $dll -PathType Leaf)){throw 'Original UE module or C++ source absent'}
+          $source=Get-Content -LiteralPath $cpp -Raw
+          if(!$source.Contains('AnomaliaPrimevalElevenWorlds::Height(Kind,-HalfWidth')){throw 'C2064 source fix missing'}
+          $active=@(Get-Process -Name UnrealEditor,AnomaliaPrimeval,UnrealBuildTool,ShaderCompileWorker -ErrorAction SilentlyContinue)
+          $headless=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          if($active.Count -gt 0 -or $headless.Count -gt 1){throw 'Another interactive UE or C++ compilation is active'}
+          if($headless.Count -eq 1){
+            $p=$headless[0]
+            $parent=Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue
+            if($p.ProcessId -ne 26284 -or $parent -or !([string]$p.CommandLine).Contains('audit.py')){throw 'Unverified active Unreal process; refuse build'}
+          }
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 7GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 12GB){throw 'Low disk reserve'}
+          $oldMaps=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap'|ForEach-Object {[pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $oldMaps|Export-Csv -LiteralPath (Join-Path $out 'protected-maps.csv') -Encoding UTF8 -NoTypeInformation
+          $moduleOriginalHash=(Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash
+          $mhash=if(Test-Path -LiteralPath $modules -PathType Leaf){(Get-FileHash -LiteralPath $modules -Algorithm SHA256).Hash}else{''}
+          ([ordered]@{originalModuleHash=$moduleOriginalHash;originalModulesManifestHash=$mhash;originalMapCount=$oldMaps.Count}|
+            ConvertTo-Json -Depth 4)|Set-Content -LiteralPath (Join-Path $out 'before.json') -Encoding UTF8
+          if(Test-Path -LiteralPath $modules -PathType Leaf){Copy-Item -LiteralPath $modules -Destination (Join-Path $out 'UnrealEditor.modules.before') -ErrorAction Stop}
+          $suffix=([int64]$env:GITHUB_RUN_ID%80000)+10000
+          $candidate=Join-Path $root ('Binaries\Win64\UnrealEditor-AnomaliaPrimeval-'+$suffix+'.dll')
+          if(Test-Path -LiteralPath $candidate){throw 'Suffix already exists; no overwrite'}
+          "ANOMALIA_SUFFIX=$suffix"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          Write-Host ('ANOMALIA_PREPARED_UNIQUE_DLL_SUFFIX '+([ordered]@{suffix=$suffix;originalMaps=$oldMaps.Count;originalModuleHash=$moduleOriginalHash}|ConvertTo-Json -Compress))
+      - name: Compile hot-reload suffixed module without trying to overwrite locked original DLL
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $build='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path -LiteralPath $build -PathType Leaf)){throw 'Original UE5.8 build not found'}
+          $opt='-ModuleWithSuffix=AnomaliaPrimeval,'+$env:ANOMALIA_SUFFIX
+          $log=Join-Path $env:ANOMALIA_SUFFIX_OUT 'suffix-native-build.log'
+          & $build $opt AnomaliaPrimevalEditor Win64 Development 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -WaitMutex -MaxParallelActions=2 *> $log
+          $rc=$LASTEXITCODE
+          $errors=@(Get-Content -LiteralPath $log -ErrorAction SilentlyContinue|Where-Object {$_ -match 'error C\d+|error LNK\d+|fatal error|Result: Failed|Result: Succeeded' }|Select-Object -First 30)
+          $errors|ForEach-Object {Write-Host ('ANOMALIA_SUFFIX_BUILD_DIAGNOSTIC '+$_)}
+          Write-Host ('ANOMALIA_SUFFIX_BUILD_EXIT='+$rc)
+          if($rc -ne 0){throw 'Suffixed native UE5.8 compile failed'}
+          Write-Host 'ANOMALIA_SUFFIXED_11_WORLD_MODULE_COMPILED=TRUE'
+      - name: Report exact UnrealEditor.modules mapping and verify original DLL and 75 maps untouched
+        if: always() && env.ANOMALIA_SUFFIX_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $dll=Join-Path $root 'Binaries\Win64\UnrealEditor-AnomaliaPrimeval.dll'
+          $mod=Join-Path $root 'Binaries\Win64\UnrealEditor.modules'
+          $before=Get-Content -LiteralPath (Join-Path $env:ANOMALIA_SUFFIX_OUT 'before.json') -Raw|ConvertFrom-Json
+          $hash=(Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash
+          $old=@(Import-Csv -LiteralPath (Join-Path $env:ANOMALIA_SUFFIX_OUT 'protected-maps.csv') -Encoding UTF8)
+          $modified=@()
+          foreach($entry in $old){
+            if(!(Test-Path -LiteralPath $entry.path -PathType Leaf) -or (Get-FileHash -LiteralPath $entry.path -Algorithm SHA256).Hash -ne $entry.sha256){$modified+=$entry.path}
+          }
+          $mapping=''
+          if(Test-Path -LiteralPath $mod -PathType Leaf){
+            $json=Get-Content -LiteralPath $mod -Encoding UTF8 -Raw|ConvertFrom-Json
+            $mapping=$json.Modules.AnomaliaPrimeval
+          }
+          $suffixFile=Join-Path $root ('Binaries\Win64\UnrealEditor-AnomaliaPrimeval-'+$env:ANOMALIA_SUFFIX+'.dll')
+          $report=[ordered]@{originalDllHashUnchanged=($hash -eq $before.originalModuleHash);
+            originalMapFiles=$old.Count;originalMapModifiedCount=$modified.Count;changedOriginalMapPaths=$modified;
+            suffixDllExists=(Test-Path -LiteralPath $suffixFile -PathType Leaf);
+            suffixDllPath=$suffixFile;manifestModuleMapping=$mapping;
+            mappingReferencesSuffix=([string]$mapping).Contains($env:ANOMALIA_SUFFIX);
+            newUmapPackagesWritten=0}
+          $report|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $env:ANOMALIA_SUFFIX_OUT 'suffix-build-result.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_HOTRELOAD_SUFFIX_RESULT '+($report|ConvertTo-Json -Depth 4 -Compress))
+          if(!$report.originalDllHashUnchanged -or $modified.Count){throw 'Original module DLL or map was modified unexpectedly'}

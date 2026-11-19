@@ -1,0 +1,67 @@
+name: ANOMALIA 30 maps - audit authentic city building and asphalt models for automatic construction
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-procedural-settlements-assets-audit-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 9
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: map30-construct-audit-${{ github.run_id }}
+          sparse-checkout: |
+            public/config/anomalia-map-catalog.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inspect existing world assets and source mesh files read only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $cat=Join-Path $env:GITHUB_WORKSPACE ('map30-construct-audit-'+$env:GITHUB_RUN_ID+'\public\config\anomalia-map-catalog.json')
+          if(!(Test-Path -LiteralPath $cat -PathType Leaf)){throw '30-map catalogue unavailable'}
+          if(!(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Real project unavailable'}
+          $catalogue=Get-Content -LiteralPath $cat -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($catalogue.maps).Count -ne 30){throw 'Expected exactly 30 original map names'}
+          $maps=@()
+          foreach($m in $catalogue.maps){
+            $package=[string]$m.originalUnrealPackage
+            if(!$package -and $m.plannedUnrealPackage){$package=[string]$m.plannedUnrealPackage}
+            $rel=$package.Replace('/Game/','Content\').Replace('/','\')
+            $p=Join-Path $root ($rel+'.umap')
+            $mapFile=Get-Item -LiteralPath $p -ErrorAction SilentlyContinue
+            $maps+=[ordered]@{id=$m.id;name=$m.displayName;package=$package;mapExists=([bool]$mapFile);bytes=if($mapFile){$mapFile.Length}else{0};
+              targetSites=if($m.targetLocalities){$m.targetLocalities}else{0};areaKm2=$m.areaKm2}
+          }
+          $assetKeys=@(
+          'Road/Kit_City_Road/SM_ROAD_19_10_0_0_road',
+          'Road/Kit_City_Road/SM_ROAD_19_5_0_0_road',
+          'Anomalia/InteractiveRealismReview_v1/wood_house_enterable/SM_wood_house_enterable',
+          'Anomalia/Buildings/Lot1/SM_coastal_house_v1',
+          'Anomalia/Buildings/Lot1/SM_garage_v1',
+          'Anomalia/Buildings/Lot1/SM_hlm_8floors_v1',
+          'Anomalia/Buildings/Expansion1/SM_residence_4floors',
+          'Anomalia/Buildings/Expansion1/SM_townhouse',
+          'Anomalia/Buildings/Expansion1/SM_hospital',
+          'Anomalia/Buildings/Expansion1/SM_police_station',
+          'Anomalia/Buildings/Expansion1/SM_farm_barn',
+          'Anomalia/Buildings/Expansion1/SM_fire_station'
+          )
+          $assets=@()
+          foreach($key in $assetKeys){
+            $a=Join-Path (Join-Path $root 'Content') ($key.Replace('/','\')+'.uasset')
+            $f=Get-Item -LiteralPath $a -ErrorAction SilentlyContinue
+            $assets+=[ordered]@{key=$key;exists=([bool]$f);bytes=if($f){$f.Length}else{0}}
+          }
+          $active=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue | ForEach-Object {[ordered]@{pid=$_.ProcessId;hasAuditScript=([string]$_.CommandLine).Contains('audit.py');parentId=$_.ParentProcessId}})
+          $result=[ordered]@{state='READ_ONLY_ORIGINAL_30_MAP_ASSET_AUDIT';maps=$maps;assets=$assets;
+            availableMapCount=@($maps|Where-Object {$_.mapExists}).Count;
+            existingBuildingAndRoadAssetCount=@($assets|Where-Object {$_.exists}).Count;
+            headlessEditor=$active;originalFilesModified=0;freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;
+            freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace}
+          Write-Host ('ANOMALIA_ALL30_AUTOCONSTRUCTION_AUDIT '+($result|ConvertTo-Json -Depth 7 -Compress))

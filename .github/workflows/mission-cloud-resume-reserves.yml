@@ -1,0 +1,22 @@
+name: ANOMALIA mission - check transfer resume reserves
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-cloud-resume-reserves.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read current free space and existing transfer checkpoint
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $disks=@(Get-CimInstance Win32_LogicalDisk | Where-Object {$_.DeviceID -in @('C:','D:','H:')} | Select-Object DeviceID,FreeSpace,Size)
+          $summaryPath='D:\ANOMALIA\unreal\Saved\CloudTransfer\20261105\summary.json'
+          $checkpoint=if(Test-Path -LiteralPath $summaryPath){Get-Content -LiteralPath $summaryPath -Raw | ConvertFrom-Json}else{$null}
+          $result=[ordered]@{disks=$disks;driveClientActive=[bool]@(Get-Process -Name GoogleDriveFS -ErrorAction SilentlyContinue).Count;lastState=$checkpoint.state;filesWritten=$checkpoint.newFilesWrittenToDriveClient;bytesWritten=$checkpoint.newBytesWrittenToDriveClient;counts=$checkpoint.counts;filesDeleted=0}
+          Write-Output ('RESUME_RESERVES '+($result | ConvertTo-Json -Depth 5 -Compress))

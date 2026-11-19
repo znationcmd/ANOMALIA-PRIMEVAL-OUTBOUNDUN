@@ -1,0 +1,34 @@
+name: ANOMALIA - stop blocking owned model import for map priority
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-stop-blocking-model-import.yml']
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+jobs:
+  release_owned_import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const owner=context.repo.owner,repo=context.repo.repo,run_id=42469646312;
+            const run=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+            if(run.status==='completed'){core.info('Owned model campaign already stopped');return;}
+            const jobs=await github.paginate(github.rest.actions.listJobsForWorkflowRun,{owner,repo,run_id,per_page:100});
+            if(jobs.some(j=>j.status==='in_progress'&&!j.name.startsWith('remaining (')))throw Error('Unexpected non-import job active; preserve it');
+            await github.rest.actions.cancelWorkflowRun({owner,repo,run_id});
+            const deadline=Date.now()+5*60*1000;
+            while(Date.now()<deadline){
+              const r=(await github.rest.actions.getWorkflowRun({owner,repo,run_id})).data;
+              if(r.status==='completed'){
+                await core.summary.addHeading('Blocking model import stopped')
+                  .addRaw('User requested immediate release for map work. Only owned import run 42469646312 was cancelled. No source archive, accepted receipt, map or existing asset was deleted. Outputs from its interrupted source remain partial and must be revalidated before acceptance. Existing map jobs remain queued; this is not evidence of map completion.').write();
+                return;
+              }
+              await new Promise(resolve=>setTimeout(resolve,10000));
+            }
+            core.setFailed('Standard cancellation did not finish; no force kill or file removal performed.');

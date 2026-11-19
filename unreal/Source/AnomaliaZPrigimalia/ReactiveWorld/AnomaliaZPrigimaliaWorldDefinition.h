@@ -25,6 +25,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TArray<TSoftObjectPtr<UStaticMesh>> RepairStages;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) TSoftObjectPtr<UStaticMesh> RepairedMesh;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float RepairSeconds = 10;
+    /** Optional required inventory fuse. None preserves existing generator definitions. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power") FName RequiredFuseItem;
+    /** True for player base generators; false for fixed city/village electrical networks. */
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="ANOMALIA|Power") bool bRequiresFuel = true;
     UPROPERTY(EditAnywhere, BlueprintReadOnly) FName FuelItem = TEXT("gasoline");
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float FuelSecondsPerItem = 300;
     UPROPERTY(EditAnywhere, BlueprintReadOnly, meta=(ClampMin="0")) float OutputWatts = 1000;
@@ -54,6 +58,8 @@ struct FAnomaliaZPrigimaliaMechanismState
     UPROPERTY(BlueprintReadOnly) TArray<FAnomaliaZPrigimaliaMaterialDeposit> Deposited;
     UPROPERTY(BlueprintReadOnly) double RepairEndsUtc = 0;
     UPROPERTY(BlueprintReadOnly) double FuelSeconds = 0;
+    /** Installed component identity persists with the generator and replicates in mechanism state. */
+    UPROPERTY(BlueprintReadOnly) FName InstalledFuseItem;
     UPROPERTY(BlueprintReadOnly) bool bSwitchedOn = false;
     UPROPERTY(BlueprintReadOnly) bool bUnlocked = false;
     UPROPERTY(BlueprintReadOnly) double PortalEndsUtc = 0;

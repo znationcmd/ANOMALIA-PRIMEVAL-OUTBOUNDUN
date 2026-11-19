@@ -1,0 +1,115 @@
+name: ANOMALIA mission - restore existing missing SKARVIK packages
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-skarvik-restore-existing-packages.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  restore:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-existing-skarvik-transfer-plan
+          run-id: 41810570770
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ runner.temp }}/prior-skarvik-graph/
+      - name: Restore only absent exact package paths from existing installed resources
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('skarvik-restore-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_RESTORE_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath "$stage\.skarvik-ci-stage-marker" -Raw).Trim() -ne '41188816555'){throw 'Untrusted stage'}
+          $graph=Get-Content -LiteralPath (Join-Path $env:RUNNER_TEMP 'prior-skarvik-graph\skarvik-dependency-transfer-plan.json') -Raw | ConvertFrom-Json
+          $map=Join-Path $stage 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          $mapBefore=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
+          if($mapBefore.ToLowerInvariant() -ne $graph.sourceMapSHA256After){throw 'Map changed since dependency graph'}
+          $sources=@('D:\ANOMALIA\unreal\Content','D:\ANOMALIA\FabImports\CitySample\Content','D:\ANOMALIA\FabImports\DerelictCorridorMegascans\Content')
+          $queue=New-Object 'System.Collections.Generic.Queue[object]'
+          $queue.Enqueue(@{path='D:\ANOMALIA\FabImports\CitySample';depth=0})
+          $inspected=@();$configRules=@()
+          while($queue.Count){
+            $candidate=$queue.Dequeue()
+            if($inspected.Count -ge 256){throw 'Bounded CitySample root search exceeded'}
+            if(!(Test-Path -LiteralPath $candidate.path -PathType Container)){continue}
+            $inspected+=$candidate.path
+            $content=Join-Path $candidate.path 'Content'
+            if(Test-Path -LiteralPath $content -PathType Container){$sources+=$content}
+            foreach($name in @('DefaultGame.ini','DefaultEngine.ini')){
+              $config=Join-Path $candidate.path ('Config\'+$name)
+              if(Test-Path -LiteralPath $config -PathType Leaf){
+                $configRules+=@{path=$config;lines=@(Get-Content -LiteralPath $config | Where-Object {$_ -match 'PrimaryAssetTypesToScan.*GameFeatureData'})}
+              }
+            }
+            if($candidate.depth -lt 3){
+              foreach($dir in @(Get-ChildItem -LiteralPath $candidate.path -Directory)){
+                if($dir.Name -notin @('Content','Plugins','Source','Intermediate','Saved','DerivedDataCache','.git')){
+                  $queue.Enqueue(@{path=$dir.FullName;depth=($candidate.depth+1)})
+                }
+              }
+            }
+          }
+          $sources=@($sources | Select-Object -Unique | Where-Object {Test-Path -LiteralPath $_ -PathType Container})
+          [ordered]@{roots=$sources;inspected=$inspected;existingGameFeatureRules=$configRules} | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $out 'existing-source-roots-and-rules.json') -Encoding UTF8
+          $plan=@();$unresolved=@();$ambiguous=@()
+          foreach($row in $graph.files){
+            if($row.status -ne 'SOURCE_PACKAGE_FILE_MISSING'){continue}
+            $relative=$row.package.Substring(6).Replace('/','\')+'.uasset'
+            $target=Join-Path "$stage\Content" $relative
+            if(Test-Path -LiteralPath $target){continue}
+            $candidates=@()
+            foreach($root in $sources){
+              $path=Join-Path $root $relative
+              if(Test-Path -LiteralPath $path -PathType Leaf){$candidates+=@{path=$path;sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}}
+            }
+            if(!$candidates.Count){$unresolved+=$row.package;continue}
+            if(@($candidates.sha256 | Select-Object -Unique).Count -ne 1){$ambiguous+=$row.package;continue}
+            $source=$candidates[0].path
+            foreach($extension in @('.uasset','.uexp','.ubulk','.uptnl')){
+              $from=[IO.Path]::ChangeExtension($source,$extension)
+              $to=[IO.Path]::ChangeExtension($target,$extension)
+              if(Test-Path -LiteralPath $from -PathType Leaf){
+                if(Test-Path -LiteralPath $to){throw 'Unexpected existing sidecar; preserve it'}
+                $plan+=@{source=$from;target=$to;bytes=(Get-Item -LiteralPath $from).Length;sha256=(Get-FileHash -LiteralPath $from -Algorithm SHA256).Hash;package=$row.package}
+              }
+            }
+          }
+          [int64]$bytes=0
+          foreach($entry in $plan){$bytes += [int64]$entry.bytes}
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          if($bytes -gt 2GB -or $disk.FreeSpace -lt (4GB+$bytes)){throw 'Bounded restoration exceeds reserve'}
+          $receipt=[ordered]@{graphRun=41810570770;mapSHA256Before=$mapBefore;bytesPlanned=$bytes;unresolved=$unresolved;ambiguous=$ambiguous;files=@();mainDProjectModified=$false;mapsSaved=0}
+          $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'restoration-receipt.json') -Encoding UTF8
+          foreach($entry in $plan){
+            if((Get-FileHash -LiteralPath $entry.source -Algorithm SHA256).Hash -ne $entry.sha256){throw 'Original resource changed'}
+            New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($entry.target)) -Force | Out-Null
+            $fromStream=[IO.File]::OpenRead($entry.source)
+            try{
+              $toStream=[IO.File]::Open($entry.target,[IO.FileMode]::CreateNew,[IO.FileAccess]::Write)
+              try{$fromStream.CopyTo($toStream)}finally{$toStream.Dispose()}
+            }finally{$fromStream.Dispose()}
+            if((Get-FileHash -LiteralPath $entry.target -Algorithm SHA256).Hash -ne $entry.sha256){throw 'Restored copy hash mismatch; preserve for diagnosis'}
+            if((Get-FileHash -LiteralPath $entry.source -Algorithm SHA256).Hash -ne $entry.sha256){throw 'Original resource differs after copy'}
+            $receipt.files+=$entry
+            $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'restoration-receipt.json') -Encoding UTF8
+          }
+          $receipt.mapSHA256After=(Get-FileHash -LiteralPath $map -Algorithm SHA256).Hash
+          if($receipt.mapSHA256After -ne $mapBefore){throw 'Map changed during package restoration'}
+          $receipt | ConvertTo-Json -Depth 8 | Set-Content -LiteralPath (Join-Path $out 'restoration-receipt.json') -Encoding UTF8
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RESTORE_OUT != ''
+        with:
+          name: mission-skarvik-existing-package-restoration
+          path: ${{ env.MISSION_RESTORE_OUT }}/
+          if-no-files-found: error

@@ -1,0 +1,139 @@
+name: ANOMALIA 30 - authentic World Partition road & village auto-builder pilot
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-real-native-road-village-pilot-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-30-authentic-original-wp-construction
+  cancel-in-progress: false
+jobs:
+  python-check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Python source checks and all 30 plan tests
+        run: |
+          python3 -m py_compile unreal/Scripts/autoconstruct_30_native_city_road_phase1.py
+          python3 -m py_compile unreal/Scripts/verify_autoconstruct_30_saved_native_actors.py
+          python3 scripts/world_auto_construct/plan_all_30.py --catalog public/config/anomalia-map-catalog.json --out /tmp/anomalia-30-pilot-plan.json
+          python3 tests/test_anomalia_auto_30_procedural_plan.py
+  build-one-safe-world:
+    needs: python-check
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: auto30-native-${{ github.run_id }}
+          sparse-checkout: |
+            public/config/anomalia-map-catalog.json
+            scripts/world_auto_construct/plan_all_30.py
+            unreal/Scripts/autoconstruct_30_native_city_road_phase1.py
+            unreal/Scripts/verify_autoconstruct_30_saved_native_actors.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Protect original D game, create deterministic 30-map masterplan and capture all .umap hashes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AutoConstruct30\NativeRuns\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          "AUTO30_RUN=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $game=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $main=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path $game -PathType Leaf) -or !(Test-Path $main -PathType Leaf)){throw 'Original main project or map missing'}
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('auto30-native-'+$env:GITHUB_RUN_ID)
+          $planpy=Join-Path $repo 'scripts\world_auto_construct\plan_all_30.py'
+          $catalog=Join-Path $repo 'public\config\anomalia-map-catalog.json'
+          $author=Join-Path $repo 'unreal\Scripts\autoconstruct_30_native_city_road_phase1.py'
+          $verify=Join-Path $repo 'unreal\Scripts\verify_autoconstruct_30_saved_native_actors.py'
+          $master=Join-Path $out 'ANOMALIA_AUTO30_MASTER_THEMES.json'
+          "ANOMALIA_AUTOBUILD_MASTER_PLAN=$master"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_AUTO30_EDITOR_SCRIPT=$author"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_AUTO30_VERIFY_SCRIPT=$verify"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($p in @($planpy,$catalog,$author,$verify)){if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Required original build source missing'}}
+          foreach($p in @($planpy,$author,$verify)){
+            & $py -B -m py_compile $p
+            if($LASTEXITCODE -ne 0){throw ('Source Python syntax invalid: '+$p)}
+          }
+          New-Item -ItemType Directory -Path (Split-Path -Parent $master) -Force|Out-Null
+          & $py -B $planpy --catalog $catalog --out $master
+          if($LASTEXITCODE -ne 0){throw 'Automatic masterplan generation refused'}
+          $doc=Get-Content -LiteralPath $master -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($doc.maps).Count -ne 30 -or @($doc.maps|Where-Object {$_.id -eq 'morodenachtmerr-v1'}).Count -ne 1){throw 'Exact 30 map masterplan not found'}
+          $maps=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap'|ForEach-Object {[pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $maps|Export-Csv -LiteralPath (Join-Path $out 'all-original-level-hashes.csv') -NoTypeInformation -Encoding UTF8
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 11GB -or ([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB){throw 'Not enough free disk reserve'}
+          $active=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($active.Count){throw 'Original Unreal editor or native compile already running'}
+          $other=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+          if($other.Count){throw 'Another editor commandlet already running, refuse to collide'}
+          Write-Host ('ANOMALIA_AUTO30_NATIVE_PILOT_PREPARED '+([ordered]@{protectedUmaps=$maps.Count;mapsRegistered=30;localitiesPlanned=$doc.plannedLocalitiesTotal;regionalLinksPlanned=$doc.plannedRegionalLinksTotal}|ConvertTo-Json -Compress))
+      - name: Place original real village/city mesh assets and 3D asphalt only where Landscape collision is valid
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:ANOMALIA_AUTOBUILD_MAP_ID='morodenachtmerr-v1'
+          $env:ANOMALIA_AUTOBUILD_SITE_LIMIT='2'
+          $env:ANOMALIA_AUTOBUILD_ACTOR_LIMIT='150'
+          $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT=Join-Path $env:AUTO30_RUN 'native-morodenachtmerr-build.json'
+          $log=Join-Path $env:AUTO30_RUN 'native-morodenachtmerr-unreal.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_AUTO30_EDITOR_SCRIPT" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          $rc=$LASTEXITCODE
+          Write-Host ('ANOMALIA_AUTO30_UE5_NATIVE_AUTHOR_EXIT='+$rc)
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -PathType Leaf)){
+            Get-Content -LiteralPath $log -Tail 35 -ErrorAction SilentlyContinue|ForEach-Object {Write-Host ('UE_LOG '+$_)}
+            throw 'Unreal author did not write a native build report'
+          }
+          $r=Get-Content -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_AUTO30_FIRST_NATIVE_TOWN_ROADS '+($r|ConvertTo-Json -Depth 7 -Compress))
+          if($r.state -ne 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED'){
+            throw ('Native 3D city/road creation not validated: '+$r.error)
+          }
+          if($r.realBuildingsCreated -lt 1 -or $r.realRoadMeshActorsCreated -lt 1){
+            throw 'Native author did not save real roads and real buildings'
+          }
+          "AUTO30_FIRST_MAP_SAVED=true"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+      - name: Reopen native World Partition to verify generated road and building actors persisted
+        if: env.AUTO30_FIRST_MAP_SAVED == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $env:ANOMALIA_AUTO30_WORLD_PACKAGE='/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR'
+          $env:ANOMALIA_AUTO30_MAP_ID='morodenachtmerr-v1'
+          $env:ANOMALIA_AUTO30_NATIVE_RELOAD_REPORT=Join-Path $env:AUTO30_RUN 'native-morodenachtmerr-reload.json'
+          $log=Join-Path $env:AUTO30_RUN 'native-morodenachtmerr-reopen.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_AUTO30_VERIFY_SCRIPT" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_AUTO30_NATIVE_RELOAD_REPORT -PathType Leaf)){throw 'No native actor reload report'}
+          $r=Get-Content -LiteralPath $env:ANOMALIA_AUTO30_NATIVE_RELOAD_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_AUTO30_NATIVE_WP_REOPEN '+($r|ConvertTo-Json -Depth 5 -Compress))
+          if($r.state -ne 'REAL_PROCEDURAL_ROADS_AND_BUILDINGS_PERSISTED_NATIVE_WP_NOT_PLAYTESTED'){
+            throw ('Native actors not verified after reopening: '+$r.error)
+          }
+      - name: Verify original 29 other worlds were not modified and the target had a backup
+        if: always() && env.AUTO30_RUN != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $original=Join-Path $env:AUTO30_RUN 'all-original-level-hashes.csv'
+          if(!(Test-Path -LiteralPath $original -PathType Leaf)){exit 0}
+          $rows=@(Import-Csv -LiteralPath $original -Encoding UTF8)
+          $target='D:\ANOMALIA\unreal\Content\Maps\PRIGIMALIA_MOROEDENACHTMERR.umap'
+          $bad=@()
+          foreach($m in $rows){
+            if($m.path -eq $target){continue}
+            if(!(Test-Path -LiteralPath $m.path -PathType Leaf) -or (Get-FileHash -LiteralPath $m.path -Algorithm SHA256).Hash -ne $m.sha256){$bad+=$m.path}
+          }
+          Write-Host ('ANOMALIA_AUTO30_OTHER_ORIGINAL_WORLDS_INTEGRITY '+([ordered]@{protectedOriginals=$rows.Count;otherMapsChanged=$bad.Count;changedPaths=$bad}|ConvertTo-Json -Depth 4 -Compress))
+          if($bad.Count){throw 'One or more original other maps changed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.AUTO30_RUN != ''
+        with:
+          name: anomalia-auto30-native-authentic-road-village-pilot-reports
+          path: ${{ env.AUTO30_RUN }}/*.json
+          if-no-files-found: warn

@@ -1,0 +1,18 @@
+name: ANOMALIA - integrated vehicle art and targeted circuit import source checks
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/Vehicles/**'
+      - 'unreal/Content/Python/resume_owned_model_imports.py'
+      - 'tests/native/integrated_vehicle_art_layout.cpp'
+      - '.github/workflows/mission-integrated-vehicle-source-checks.yml'
+permissions:
+  contents: read
+jobs:
+  portable_checks:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: g++ -std=c++17 -Wall -Wextra -pedantic -I. tests/native/integrated_vehicle_art_layout.cpp -o /tmp/vehicle-layout && /tmp/vehicle-layout
+      - run: python -m py_compile unreal/Content/Python/resume_owned_model_imports.py

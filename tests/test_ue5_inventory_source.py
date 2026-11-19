@@ -51,7 +51,7 @@ class UE5InventorySourceTests(unittest.TestCase):
         weight_table = SOURCE.split("static const TMap<FName, float> Weights = {", 1)[1].split("\n    };", 1)[0]
         ue_ids = set(re.findall(r'TEXT\("([a-zA-Z_][a-zA-Z_0-9]*)"\)', weight_table))
         # Explicit native-only inventory items; preserve exact legacy IDs and weights below.
-        native_only = {"milk", "tactical_belt", "medical_pouch", "handcuffs", "pistol_holster",
+        native_only = {"milk", "tactical_belt", "medical_pouch", "vest_rear_pouch", "handcuffs", "pistol_holster",
                        "knife_sheath", "handheld_radio", "frag_grenade", "smoke_grenade"}
         self.assertEqual(ue_ids - native_only, legacy_ids)
         self.assertTrue(native_only.issubset(ue_ids))

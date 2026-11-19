@@ -1,0 +1,53 @@
+name: ANOMALIA - preflight existing 30 .umap and C++ module on real Windows project
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-all-30-native-real-map-preflight-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read-only source, project and unknown package audit
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if (!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'Original UE project missing'}
+          $module=(Get-Content $project -Raw|ConvertFrom-Json).Modules[0].Name
+          $base=Join-Path $root ('Source\'+$module+'\World')
+          $heights=Join-Path $base ($module+'ExtraWorldHeights.h')
+          $cpp=Join-Path $base ($module+'RequestedWorldLibrary.cpp')
+          $h=if(Test-Path -LiteralPath $heights){Get-Content $heights -Raw}else{''}
+          $c=if(Test-Path -LiteralPath $cpp){Get-Content $cpp -Raw}else{''}
+          $files=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content') -Recurse -File -Filter '*.umap' -ErrorAction SilentlyContinue | ForEach-Object {$_.FullName.Substring($root.Length+1)})
+          $otherRoot='D:\ANOMALIAZ-PRIGIMALIA\unreal\Content'
+          $stageMatches=if(Test-Path $otherRoot){@(Get-ChildItem -LiteralPath $otherRoot -Recurse -File -Filter '*.umap' -ErrorAction SilentlyContinue | Where-Object {$_.Name -match '(FALC|SOLYN|NEXA|KOLCH|RACCON|HORROR|VALHALLA|KONIG|SKJAER|MOKUP|MORO|NASDAR|APOCALYPTIC)'}|Select-Object -ExpandProperty Name)}else{@()}
+          $processes=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue | ForEach-Object {$_.Name})
+          $result=[ordered]@{
+            readOnly=$true
+            module=$module
+            projectExists=$true
+            mainMapPresent=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'))
+            worldSourceFiles=@(Get-ChildItem -LiteralPath $base -File -ErrorAction SilentlyContinue|Select-Object -ExpandProperty Name)
+            extraHeightsExists=(Test-Path -LiteralPath $heights)
+            extraHeightsByteLength=$h.Length
+            newMapIdsInInstalledHeight=@('ApocalypticOutbreak','Morodenachtmerr','Nasdaras','Kiryumori','Aranyapura')|ForEach-Object{[ordered]@{id=$_;exists=$h.Contains('EWorld::'+$_)}}
+            requestedResolverExists=(Test-Path -LiteralPath $cpp)
+            installedResolverIds=@('APOCALYPTIC_OUTBREAK','MOROEDENACHTMERR','NASDARAS','KIRYUMORI','ARANYAPURA')|ForEach-Object{[ordered]@{id=$_;exists=$c.Contains('TEXT("'+$_+'")')}}
+            nativeEditorDllExists=(Test-Path -LiteralPath (Join-Path $root ('Binaries\Win64\UnrealEditor-'+$module+'.dll')))
+            editorExeExists=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe')
+            buildBatchExists=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat')
+            mapFilesCount=$files.Count
+            mapFiles=$files
+            stageRelevantFiles=$stageMatches
+            activeProcessNames=$processes
+            freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          }
+          Write-Host ('THIRTY_UE5_FULL_PREFLIGHT '+($result|ConvertTo-Json -Depth 8 -Compress))
+          Write-Host 'READ_ONLY_PRECHECK_NO_FILE_CHANGES=true'

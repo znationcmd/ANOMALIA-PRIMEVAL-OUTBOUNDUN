@@ -1,0 +1,77 @@
+name: ANOMALIA - guarded compile of 11 new world module without opening editor
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-compile-11-world-addon-despite-orphaned-headless-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 50
+    steps:
+      - name: Validate only orphan audit exists and snapshot all original level hashes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AllThirtyMapGeneration\CompileOnly\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          "ANOMALIA_COMPILE_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'Original UE project not found'}
+          $extra=Join-Path $root 'Source\AnomaliaPrimeval\World'
+          foreach($n in @('AnomaliaPrimevalElevenWorldHeights.h','AnomaliaPrimevalElevenWorldLibrary.h','AnomaliaPrimevalElevenWorldLibrary.cpp')){
+            if(!(Test-Path -LiteralPath (Join-Path $extra $n) -PathType Leaf)){throw 'New map addon source not installed: '+$n}
+          }
+          $interactive=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $headless=@(Get-CimInstance Win32_Process -Filter "Name = 'UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          if($interactive.Count){throw 'Active real editor/compiler exists; do not compile'}
+          if($headless.Count -gt 1){throw 'More than one headless UE process exists'}
+          if($headless.Count -eq 1){
+            $p=$headless[0]
+            $age=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalHours
+            $cmd=[string]$p.CommandLine
+            $parent=Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue
+            if($p.ProcessId -ne 26284 -or $age -lt 6 -or $parent -or !$cmd.Contains('audit.py') -or !$cmd.Contains('-unattended') -or !$cmd.Contains('AnomaliaPrimeval.uproject')){
+              throw 'A non-verified UE session is open; preserve it'
+            }
+            Write-Host 'ANOMALIA_VERIFIED_ONLY_OLD_ORPHANED_AUDIT_ACTIVE=TRUE'
+          }
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 8GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 16GB){
+            throw 'Low storage reserve; protect existing project'
+          }
+          $files=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap')
+          $samples=@()
+          foreach($f in $files){$samples+=[pscustomobject]@{path=$f.FullName;sha256=(Get-FileHash -LiteralPath $f.FullName -Algorithm SHA256).Hash}}
+          $samples|Export-Csv -LiteralPath (Join-Path $out 'protected-original-map-sha256.csv') -NoTypeInformation -Encoding UTF8
+          Write-Host ('ANOMALIA_COMPILE_ONLY_PREFLIGHT '+([ordered]@{originalMapsProtected=$samples.Count;editorInteractive=0;orphanAuditCount=$headless.Count;freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace;freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace}|ConvertTo-Json -Compress))
+      - name: Attempt Unreal C++ build, no editor process or map package creation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $build='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path -LiteralPath $build -PathType Leaf)){throw 'UE5.8 compiler unavailable'}
+          $out=Join-Path $env:ANOMALIA_COMPILE_OUT 'native-build.log'
+          Write-Host 'ANOMALIA_ADDON_11_NATIVE_BUILD_ATTEMPTED=TRUE'
+          & $build AnomaliaPrimevalEditor Win64 Development 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2 *> $out
+          $rc=$LASTEXITCODE
+          $tail=@(Get-Content -LiteralPath $out -Tail 35 -ErrorAction SilentlyContinue)
+          Write-Host ('ANOMALIA_ADDON_NATIVE_COMPILER_EXIT='+$rc)
+          $tail|ForEach-Object {Write-Host ('UE_COMPILER_LOG '+$_)}
+          if($rc -ne 0){throw 'Unreal C++ build unsuccessful (no .umap modified)'}
+          Write-Host 'ANOMALIA_ELEVEN_WORLD_UE5_MODULE_COMPILED=TRUE'
+      - name: Verify original map SHA256 after compiler attempt
+        if: always() && env.ANOMALIA_COMPILE_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $csv=Join-Path $env:ANOMALIA_COMPILE_OUT 'protected-original-map-sha256.csv'
+          if(!(Test-Path -LiteralPath $csv)){exit 0}
+          $all=@(Import-Csv -LiteralPath $csv -Encoding UTF8)
+          $bad=@()
+          foreach($v in $all){
+            if(!(Test-Path -LiteralPath $v.path -PathType Leaf) -or (Get-FileHash -LiteralPath $v.path -Algorithm SHA256).Hash -ne $v.sha256){$bad+=$v.path}
+          }
+          Write-Host ('ANOMALIA_ADDON_BUILD_ORIGINAL_MAP_INTEGRITY '+([ordered]@{protectedMapCount=$all.Count;modifiedMapCount=$bad.Count;changedPaths=$bad}|ConvertTo-Json -Compress))
+          if($bad.Count){throw 'Some original maps unexpectedly changed'}

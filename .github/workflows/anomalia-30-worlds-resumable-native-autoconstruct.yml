@@ -1,0 +1,197 @@
+name: ANOMALIA 30 - autonomous resumable authentic villages cities and asphalt on all maps
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-worlds-resumable-native-autoconstruct.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-30-authentic-original-wp-construction
+  cancel-in-progress: false
+jobs:
+  run-all-30-after-verified-pilot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 330
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: auto30-native-full-${{ github.run_id }}
+          sparse-checkout: |
+            public/config/anomalia-map-catalog.json
+            scripts/world_auto_construct/plan_all_30.py
+            unreal/Scripts/autoconstruct_30_native_city_road_phase1.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Require verified first Unreal pilot and preserve all original map checksums
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AutoConstruct30\BatchAll30\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_AUTO30_BATCH_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $pilot='D:\ANOMALIA\unreal\Saved\AutoConstruct30\NativeRuns\44463132253\native-morodenachtmerr-reload.json'
+          if(!(Test-Path -LiteralPath $pilot -PathType Leaf)){
+            Write-Host 'ANOMALIA_ALL30_AUTOBUILD_NOT_STARTED_WAITING_FOR_NATIVE_PILOT_VERIFICATION'
+            throw 'Pilot has not produced verified native road/building persistence; all 30 maps remain protected'
+          }
+          $p=Get-Content -LiteralPath $pilot -Raw -Encoding UTF8|ConvertFrom-Json
+          if($p.state -ne 'REAL_PROCEDURAL_ROADS_AND_BUILDINGS_PERSISTED_NATIVE_WP_NOT_PLAYTESTED'){
+            Write-Host ('ANOMALIA_ALL30_AUTOBUILD_BLOCKED_PILOT='+$p.state)
+            throw 'Pilot has not verified physical UE5 road/building actors after reopen'
+          }
+          $files=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap'|ForEach-Object {[pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $files|Export-Csv -LiteralPath (Join-Path $out 'all-before-world-map-hashes.csv') -NoTypeInformation -Encoding UTF8
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('auto30-native-full-'+$env:GITHUB_RUN_ID)
+          $catalog=Join-Path $repo 'public\config\anomalia-map-catalog.json'
+          $planpy=Join-Path $repo 'scripts\world_auto_construct\plan_all_30.py'
+          $script=Join-Path $repo 'unreal\Scripts\autoconstruct_30_native_city_road_phase1.py'
+          $master=Join-Path $out 'ANOMALIA_AUTO30_MASTER_THEMES.json'
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          foreach($p in @($catalog,$planpy,$script)){if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Missing UE5 automatic authoring sources'}}
+          & $py -B -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Original editor procedural authoring script syntax error'}
+          $kolchiemFull=Join-Path $root 'Content\Maps\PRIGIMALIA_KOLCHIEM_ORIGINS_FULL.umap'
+          if(Test-Path -LiteralPath $kolchiemFull -PathType Leaf){
+            # The settlement configuration identifies this as the retained historical terrain.
+            $catalogData=Get-Content -LiteralPath $catalog -Raw -Encoding UTF8 | ConvertFrom-Json
+            $world=@($catalogData.maps | Where-Object {$_.id -eq 'kolchiem-origins-v1'})
+            if($world.Count -ne 1){throw 'KOLCHIEM ORIGINS catalog entry is missing or duplicated'}
+            $world[0].originalUnrealPackage='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL'
+            $catalog=Join-Path $out 'catalog-with-recovered-kolchiem.json'
+            [IO.File]::WriteAllText($catalog,($catalogData | ConvertTo-Json -Depth 90),[Text.UTF8Encoding]::new($false))
+            Write-Host 'KOLCHIEM_ORIGINS: using the documented recovered FULL package; native collision checks still apply'
+          }else{
+            Write-Host 'KOLCHIEM_ORIGINS: documented recovered FULL package is absent on D'
+          }
+          & $py -B $planpy --catalog $catalog --out $master
+          if($LASTEXITCODE -ne 0){throw 'Cannot confirm the deterministic all-30 masterplan'}
+          $doc=Get-Content -LiteralPath $master -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($doc.maps).Count -ne 30){throw 'Native plans do not contain all 30 maps'}
+          $interactive=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($interactive.Count){throw 'Game editor already active; preserve the user session'}
+          $extra=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+          if($extra.Count){throw 'Another Unreal commandlet is active; never run concurrently'}
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 7GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 13GB){throw 'Not enough safety storage for batch world construction'}
+          "ANOMALIA_AUTO30_MASTER_PLAN=$master"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_AUTO30_AUTHOR_SCRIPT=$script"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_AUTO30_FULL_SAFE_TO_RUN=true"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          Write-Host ('ANOMALIA_AUTO30_WORLD_BATCH_READY '+([ordered]@{registeredMaps=30;sourceMapsProtected=$files.Count;proposedLocalities=$doc.plannedLocalitiesTotal;proposedRoutes=$doc.plannedRegionalLinksTotal;pilotValidated=$true}|ConvertTo-Json -Compress))
+      - name: Autonomous bounded real building and local asphalt native authoring on every allowed map
+        if: env.ANOMALIA_AUTO30_FULL_SAFE_TO_RUN == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $doc=Get-Content -LiteralPath $env:ANOMALIA_AUTO30_MASTER_PLAN -Raw -Encoding UTF8|ConvertFrom-Json
+          $env:ANOMALIA_AUTOBUILD_MASTER_PLAN=$env:ANOMALIA_AUTO30_MASTER_PLAN
+          $env:ANOMALIA_AUTOBUILD_SITE_LIMIT='2'
+          $env:ANOMALIA_AUTOBUILD_ACTOR_LIMIT='110'
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $constructed=@()
+          $blocked=@()
+          $preserved=@()
+          $reviewed=@()
+          $houses=0
+          $roadMeshes=0
+          $priorOut='D:\ANOMALIA\unreal\Saved\AutoConstruct30\BatchAll30\44472150511'
+          foreach($m in @($doc.maps)){
+            $id=[string]$m.id
+            if($m.requestedLocalities -eq 0){
+              $reviewed+=$id
+              $preserved+=([ordered]@{id=$id;reason='ARENA_SPECIAL_MODE_NO_CIVILIAN_SETTLEMENTS'})
+              continue
+            }
+            $priorPath=Join-Path $priorOut ('auto-'+$id+'.json')
+            if(Test-Path -LiteralPath $priorPath -PathType Leaf){
+              $prior=Get-Content -LiteralPath $priorPath -Raw -Encoding UTF8 | ConvertFrom-Json
+              if($prior.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED' -and
+                  $prior.mapId -eq $id -and $prior.savedWorldPackage -eq $m.worldPackage -and
+                  $prior.realBuildingsCreated -gt 0 -and $prior.realRoadMeshActorsCreated -gt 0){
+                $reviewed+=$id
+                $houses+=[int]$prior.realBuildingsCreated
+                $roadMeshes+=[int]$prior.realRoadMeshActorsCreated
+                $constructed+=([ordered]@{id=$id;citiesOrVillagesStarted=$prior.localitiesConstructed;houses=$prior.realBuildingsCreated;roadMeshes=$prior.realRoadMeshActorsCreated;metres=$prior.roadMetresCovered;previouslySaved=$true})
+                continue
+              }
+            }
+            if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 10GB){
+              $blocked+=([ordered]@{id=$id;reason='SAFETY_DISK_RESERVE'});break
+            }
+            $busy=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+            $cmds=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+            if($busy.Count -or $cmds.Count){
+              $blocked+=([ordered]@{id=$id;reason='EXTERNAL_EDITOR_OR_BUILD_ACTIVE'});break
+            }
+            $reviewed+=$id
+            $env:ANOMALIA_AUTOBUILD_MAP_ID=$id
+            $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT ('auto-'+$id+'.json')
+            $log=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT ('auto-'+$id+'.log')
+            Write-Host ('ANOMALIA_AUTO30_START_ORIGINAL_WORLD='+$id)
+            & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_AUTO30_AUTHOR_SCRIPT" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+            $exit=$LASTEXITCODE
+            if(!(Test-Path -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -PathType Leaf)){
+              $blocked+=([ordered]@{id=$id;reason='NO_NATIVE_WORLD_REPORT';exit=$exit});continue
+            }
+            $result=Get-Content -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+            if($result.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED' -and $result.realBuildingsCreated -gt 0 -and $result.realRoadMeshActorsCreated -gt 0){
+              $houses+=[int]$result.realBuildingsCreated
+              $roadMeshes+=[int]$result.realRoadMeshActorsCreated
+              $constructed+=([ordered]@{id=$id;citiesOrVillagesStarted=$result.localitiesConstructed;houses=$result.realBuildingsCreated;roadMeshes=$result.realRoadMeshActorsCreated;metres=$result.roadMetresCovered})
+              Write-Host ('ANOMALIA_AUTO30_SAVED_PARTIAL_REAL_CITY_AND_ROADS='+$id+' HOUSES='+$result.realBuildingsCreated+' ASPHALT_MESHES='+$result.realRoadMeshActorsCreated)
+            }elseif($result.state -eq 'EXISTING_AUTOCONSTRUCTION_BATCHES_PRESERVED'){
+              $preserved+=([ordered]@{id=$id;reason=$result.state})
+            }else{
+              $blocked+=([ordered]@{id=$id;reason=$(if($result.error){$result.error}else{$result.state});state=$result.state;exit=$exit})
+              Write-Host ('ANOMALIA_AUTO30_WORLD_BLOCKED='+$id+' REASON='+$result.error)
+            }
+          }
+          $unvisited=@($doc.maps | Where-Object {$_.id -notin $reviewed} | ForEach-Object {$_.id})
+          $summary=[ordered]@{state='BOUNDED_AUTONOMOUS_ORIGINAL_WORLD_PASS_REPORTED';
+            reviewedCount=$reviewed.Count;unvisitedMaps=$unvisited;
+            targetMaps=30;startedNativeMaps=$constructed;nativeMapsStartedCount=$constructed.Count;
+            physicallyPlacedBuildings=$houses;
+            physicallyPlacedRoadMeshes=$roadMeshes;
+            skippedSpecialModesOrAlreadyPresent=$preserved;blockedMaps=$blocked;
+            blockedCount=$blocked.Count;allThirtyCitiesComplete=$false;allRegionalRoadsComplete=$false;
+            allInteriorsPlaytested=$false;existingBuildingsDeleted=0;existingRoadsDeleted=0}
+          $summary|ConvertTo-Json -Depth 8|Set-Content -LiteralPath (Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT 'all30-native-first-pass-summary.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_AUTO30_ALL_WORLD_BATCH_RESULT '+($summary|ConvertTo-Json -Depth 8 -Compress))
+      - name: Verify all original maps outside this pass stayed byte-identical
+        if: always() && env.ANOMALIA_AUTO30_BATCH_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $csv=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT 'all-before-world-map-hashes.csv'
+          if(!(Test-Path -LiteralPath $csv -PathType Leaf)){exit 0}
+          $old=@(Import-Csv -LiteralPath $csv -Encoding UTF8)
+          $receipts=@(Get-ChildItem -LiteralPath $env:ANOMALIA_AUTO30_BATCH_OUT -Filter 'auto-*.json' -File -ErrorAction SilentlyContinue)
+          $allowed=@()
+          foreach($f in $receipts){
+            $r=Get-Content -LiteralPath $f.FullName -Encoding UTF8 -Raw|ConvertFrom-Json
+            if($r.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED'){$allowed+=[string]$r.savedWorldPackage}
+          }
+          $bad=@()
+          foreach($m in $old){
+            $prefix='D:\ANOMALIA\unreal\Content\'
+            if(!([string]$m.path).StartsWith($prefix,[StringComparison]::OrdinalIgnoreCase)){$bad+=$m.path;continue}
+            $pkg='/Game/'+([string]$m.path).Substring($prefix.Length).Replace('\','/').Replace('.umap','')
+            if($pkg -in $allowed){continue}
+            if(!(Test-Path -LiteralPath $m.path -PathType Leaf) -or (Get-FileHash -LiteralPath $m.path -Algorithm SHA256).Hash -ne $m.sha256){$bad+=$m.path}
+          }
+          Write-Host ('ANOMALIA_AUTO30_ALL_OTHER_ORIGINAL_WORLDS_SHA256 '+([ordered]@{initialOriginalMaps=$old.Count;targetWorldsAllowedToSave=$allowed.Count;unexpectedChanges=$bad.Count;changed=$bad}|ConvertTo-Json -Depth 5 -Compress))
+          if($bad.Count){throw 'Unapproved native world was changed by automatic batch'}
+      - name: Report incomplete coverage as an unsuccessful generation
+        if: env.ANOMALIA_AUTO30_FULL_SAFE_TO_RUN == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $path=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT 'all30-native-first-pass-summary.json'
+          $r=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
+          if($r.reviewedCount -ne $r.targetMaps -or $r.blockedCount -gt 0){
+            throw ("Incomplete first pass: {0}/{1} maps reviewed, {2} blocked" -f $r.reviewedCount,$r.targetMaps,$r.blockedCount)
+          }
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_AUTO30_BATCH_OUT != ''
+        with:
+          name: anomalia-auto30-original-native-all-worlds-batch-receipts
+          path: ${{ env.ANOMALIA_AUTO30_BATCH_OUT }}/*.json
+          if-no-files-found: warn

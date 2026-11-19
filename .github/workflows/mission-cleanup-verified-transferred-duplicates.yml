@@ -1,0 +1,53 @@
+name: ANOMALIA mission - verified cleanup after City Sample transfer
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-cleanup-verified-transferred-duplicates.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: false
+jobs:
+  cleanup:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: verified-cleanup-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/reference-server-verified-cloud-archives.py
+            scripts/ue5/verified-cloud-archive-offload-20261105.json
+            scripts/ue5/cleanup-exact-duplicate-cold-archives.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare durable cleanup reports
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('verified-resource-cleanup-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Offload independently server-verified cold C and D archives only
+        env:
+          CLOUD_OFFLOAD_INCLUDE_D: '1'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('verified-cleanup-'+$env:GITHUB_RUN_ID+'\scripts\ue5\reference-server-verified-cloud-archives.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cloud verification guard stopped cleanup'}
+      - name: Release exact duplicate cold archives while retaining a verified local original
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('verified-cleanup-'+$env:GITHUB_RUN_ID+'\scripts\ue5\cleanup-exact-duplicate-cold-archives.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Duplicate safety guard stopped cleanup'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: verified-resource-cleanup-receipts
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/*.json*
+          if-no-files-found: error

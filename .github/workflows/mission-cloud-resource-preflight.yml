@@ -1,0 +1,65 @@
+name: ANOMALIA mission - inspect cloud archive readiness
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-cloud-resource-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-cloud-resource-readiness
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect Google Drive mount, existing model folder and local reserves
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('cloud-resource-preflight-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "CLOUD_PREFLIGHT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $disks=@(Get-CimInstance Win32_LogicalDisk | Select-Object DeviceID,VolumeName,FileSystem,Size,FreeSpace,DriveType)
+          $client=@(Get-Process -Name GoogleDriveFS -ErrorAction SilentlyContinue | Select-Object Id,ProcessName)
+          $found=@()
+          foreach($disk in $disks) {
+            foreach($relative in @('Mon Drive\ANOMALIAZ\02_Modeles_3D','My Drive\ANOMALIAZ\02_Modeles_3D','ANOMALIAZ\02_Modeles_3D')) {
+              $path=Join-Path ($disk.DeviceID+'\') $relative
+              if(Test-Path -LiteralPath $path -PathType Container) {
+                $items=@(Get-ChildItem -LiteralPath $path -ErrorAction SilentlyContinue | Select-Object Name,PSIsContainer,Length,Attributes)
+                $found+=[ordered]@{path=$path;drive=$disk.DeviceID;items=$items}
+              }
+            }
+          }
+          $cityRoot='D:\ANOMALIA\FabImports\CitySample'
+          $mainMap='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $progress=@()
+          foreach($p in @('D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\summary.json','D:\ANOMALIA\unreal\Saved\CloudTransfer\20261105\summary.json')) {
+            if(Test-Path -LiteralPath $p -PathType Leaf) {
+              try {
+                $s=Get-Content -LiteralPath $p -Raw | ConvertFrom-Json
+                $progress+= [ordered]@{path=$p;state=$s.state;reportedAtUTC=$s.reportedAtUTC;cloudFolderId=$s.cloudFolderId;remoteServerVerificationPending=$s.remoteServerVerificationPending;totalLogicalBytesWritten=$s.totalLogicalBytesWritten;newBytesWrittenToDriveClient=$s.newBytesWrittenToDriveClient;newFilesWrittenToDriveClient=$s.newFilesWrittenToDriveClient;errors=$s.errors.Count}
+              } catch { $progress+= [ordered]@{path=$p;error=$_.Exception.Message} }
+            }
+          }
+          $reserveDrives=@()
+          foreach($driveName in @('C','D','H')) {
+            try {
+              $drv=[IO.DriveInfo]::new($driveName)
+              $reserveDrives+=[ordered]@{drive=$driveName;freeBytes=$drv.AvailableFreeSpace;freeGiB=[math]::Round($drv.AvailableFreeSpace/1GB,2);has2GiBReserve=($drv.AvailableFreeSpace -ge 2GB)}
+            } catch { $reserveDrives+=[ordered]@{drive=$driveName;error=$_.Exception.Message} }
+          }
+          $cityMirror='H:\Mon Drive\ANOMALIAZ\02_Modeles_3D\City Sample - Unreal Engine\CitySample'
+          Write-Host ('CITY_SAMPLE_DRIVE_RESERVES '+($reserveDrives|ConvertTo-Json -Depth 4 -Compress))
+          Write-Host ('CITY_SAMPLE_CLOUD_MIRROR_EXISTS='+(Test-Path -LiteralPath $cityMirror -PathType Container))
+          $result=[ordered]@{readOnly=$true;driveClientProcesses=$client;disks=$disks;existingCloudModelFolders=$found;cloudFolderId='1KD66RKBTk9AFJMXhivhEHPcBqh1qiS9t';cloudQuotaVerifiedByApi=$false;sourceFilesDeleted=0;citySampleDriveReserves=$reserveDrives;citySampleCloudMirrorExists=(Test-Path -LiteralPath $cityMirror -PathType Container);citySampleSourceExists=(Test-Path -LiteralPath $cityRoot -PathType Container);citySampleProjectExists=(Test-Path -LiteralPath (Join-Path $cityRoot 'CitySample.uproject') -PathType Leaf);actualMainSkarvikExists=(Test-Path -LiteralPath $mainMap -PathType Leaf);transferCheckpointSummaries=$progress}
+          $result | ConvertTo-Json -Depth 7 | Set-Content -LiteralPath (Join-Path $out 'cloud-resource-preflight.json') -Encoding UTF8
+          Write-Output ('CLOUD_PREFLIGHT '+($result | ConvertTo-Json -Depth 7 -Compress))
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_PREFLIGHT_OUT != ''
+        with:
+          name: cloud-resource-preflight
+          path: ${{ env.CLOUD_PREFLIGHT_OUT }}/
+          if-no-files-found: error

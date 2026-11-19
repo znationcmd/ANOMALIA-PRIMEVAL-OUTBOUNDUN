@@ -1,0 +1,70 @@
+name: ANOMALIA mission - inspect new CMD files and folders on C
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-inspect-new-C-CMD-files.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-read-only-new-cmd-files
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read C root and CMD application metadata without running files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('new-C-CMD-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "CMD_INSPECTION_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          function Describe($item) {
+            [ordered]@{path=$item.FullName;directory=[bool]$item.PSIsContainer;bytes=if($item.PSIsContainer){$null}else{$item.Length};createdUTC=$item.CreationTimeUtc.ToString('o');modifiedUTC=$item.LastWriteTimeUtc.ToString('o');linkType=[string]$item.LinkType;target=@($item.Target | ForEach-Object {[string]$_})}
+          }
+          $rootItems=@(Get-ChildItem -LiteralPath 'C:\' -ErrorAction Stop)
+          $locations=New-Object 'System.Collections.Generic.List[string]'
+          $locations.Add('C:\CMD')
+          foreach($entry in $rootItems) {
+            if($entry.PSIsContainer -and $entry.Name -match 'cmd'){$locations.Add($entry.FullName)}
+          }
+          foreach($profile in @(Get-ChildItem -LiteralPath 'C:\Users' -Directory -ErrorAction SilentlyContinue)) {
+            $locations.Add((Join-Path $profile.FullName 'AppData\Local\CMD'))
+            foreach($leaf in @('Desktop','Downloads','Documents')) {
+              $folder=Join-Path $profile.FullName $leaf
+              foreach($entry in @(Get-ChildItem -LiteralPath $folder -ErrorAction SilentlyContinue)) {
+                if($entry.Name -match 'cmd') {
+                  if($entry.PSIsContainer){$locations.Add($entry.FullName)}
+                }
+              }
+            }
+          }
+          $details=@()
+          foreach($location in @($locations | Sort-Object -Unique)) {
+            if(!(Test-Path -LiteralPath $location -PathType Container)){continue}
+            $items=@(Get-ChildItem -LiteralPath $location -ErrorAction SilentlyContinue)
+            $children=@()
+            foreach($entry in $items) {
+              if($entry.PSIsContainer -and !($entry.Attributes -band [IO.FileAttributes]::ReparsePoint)) {
+                $children+=@(Get-ChildItem -LiteralPath $entry.FullName -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 50 | ForEach-Object {Describe $_})
+              }
+            }
+            $details+=[ordered]@{location=$location;items=@($items | ForEach-Object {Describe $_});recentChildren=$children}
+          }
+          $cmdFiles=@()
+          foreach($folder in @('C:\')+@(Get-ChildItem -LiteralPath 'C:\Users' -Directory -ErrorAction SilentlyContinue | ForEach-Object {Join-Path $_.FullName 'Downloads';Join-Path $_.FullName 'Desktop'})) {
+            $cmdFiles+=@(Get-ChildItem -LiteralPath $folder -File -Filter '*.cmd' -ErrorAction SilentlyContinue | ForEach-Object {Describe $_})
+          }
+          $result=[ordered]@{readOnly=$true;filesExecuted=0;rootC=@($rootItems | ForEach-Object {Describe $_});cmdLocations=$details;commandFiles=$cmdFiles}
+          $result | ConvertTo-Json -Depth 9 | Set-Content -LiteralPath (Join-Path $out 'new-C-CMD-files.json') -Encoding UTF8
+          foreach($row in $result.rootC){Write-Output ('C_ROOT '+($row | ConvertTo-Json -Compress))}
+          foreach($row in $details){Write-Output ('CMD_LOCATION '+($row | ConvertTo-Json -Depth 9 -Compress))}
+          foreach($row in $cmdFiles){Write-Output ('CMD_FILE '+($row | ConvertTo-Json -Compress))}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CMD_INSPECTION_OUT != ''
+        with:
+          name: new-C-CMD-files-read-only
+          path: ${{ env.CMD_INSPECTION_OUT }}/
+          if-no-files-found: error

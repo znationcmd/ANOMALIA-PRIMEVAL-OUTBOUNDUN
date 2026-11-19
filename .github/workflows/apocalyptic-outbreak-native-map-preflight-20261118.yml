@@ -1,0 +1,41 @@
+name: ANOMALIA - Apocalyptic Outbreak 15 km native map preflight (read only)
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/apocalyptic-outbreak-native-map-preflight-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Check project, terrain source, package collision, disk, and editor availability without modifying files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'Original UE project unavailable'}
+          $meta=Get-Content -LiteralPath $project -Raw | ConvertFrom-Json
+          $module=@($meta.Modules)[0].Name
+          $src=Join-Path $root ('Source\'+$module+'\World')
+          $res=[ordered]@{
+            readOnly=$true
+            project=$project
+            module=$module
+            mainMapExists=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'))
+            newMapFileExists=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_APOCALYPTIC_OUTBREAK.umap'))
+            newExternalActorsExists=(Test-Path -LiteralPath (Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_APOCALYPTIC_OUTBREAK'))
+            worldImportSourceExists=(Test-Path -LiteralPath (Join-Path $src ($module+'WorldImportLibrary.cpp')))
+            terrainHeaderExists=(Test-Path -LiteralPath (Join-Path $src ($module+'ExtraWorldHeights.h')))
+            nativeEditorBinaryExists=(Test-Path -LiteralPath (Join-Path $root ('Binaries\Win64\UnrealEditor-'+$module+'.dll')))
+            editorExecutableExists=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe')
+            buildScriptExists=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat')
+            activeEditorProcesses=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue | ForEach-Object {$_.Name})
+            freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          }
+          Write-Host ('APOCALYPTIC_OUTBREAK_PREFLIGHT '+($res|ConvertTo-Json -Depth 5 -Compress))
+          Write-Host 'NO_FILES_MODIFIED'

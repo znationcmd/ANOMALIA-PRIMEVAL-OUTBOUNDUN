@@ -1,0 +1,39 @@
+name: ANOMALIA mission - recover C space with verified cache relocation
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-recover-c-cache-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: false
+jobs:
+  recover:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cache-recovery-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/relocate-inactive-intermediate-cache-to-d.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Copy and fully verify inactive generated cache before preserving C path as junction
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('c-space-recovery-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CLOUD_TRANSFER_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cache-recovery-'+$env:GITHUB_RUN_ID+'\scripts\ue5\relocate-inactive-intermediate-cache-to-d.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cache verification or process guard stopped recovery; review preserved source'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: c-space-recovery-receipts
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/c-space-recovery-summary.json
+          if-no-files-found: warn

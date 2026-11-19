@@ -1,0 +1,131 @@
+name: ANOMALIA - guarded import 11 missing true .umap after native UE compilation
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-import-11-ready-heightfields-after-ue58-compile.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-30-map-real-import-no-original-overwrite
+  cancel-in-progress: false
+jobs:
+  import-new-levels:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: all30-native-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/create_anomalia_missing_native_world_20261118.py
+            public/config/anomalia-11-missing-native-world-batch.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify original project, just-compiled addon, exact orphan identity, and hashes of all original maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AllThirtyMapGeneration\NativeImport\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          "ANOMALIA_NATIVE_IMPORT_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $main=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf) -or !(Test-Path -LiteralPath $main -PathType Leaf)){throw 'Original game or SKARVIK world missing'}
+          $source=Join-Path $root 'Source\AnomaliaPrimeval\World\AnomaliaPrimevalElevenWorldLibrary.cpp'
+          $dll=Join-Path $root 'Binaries\Win64\UnrealEditor-AnomaliaPrimeval.dll'
+          $compile=Join-Path $root 'Saved\AllThirtyMapGeneration\CompileOnly\44378684738\native-build.log'
+          $built=($source -and (Test-Path -LiteralPath $source -PathType Leaf) -and (Test-Path -LiteralPath $dll -PathType Leaf) -and (Test-Path -LiteralPath $compile -PathType Leaf))
+          if(!$built){Write-Host 'ANOMALIA_IMPORT_BLOCKED_COMPILED_MODULE_NOT_VERIFIED';exit 0}
+          $log=Get-Content -LiteralPath $compile -Tail 160 -ErrorAction SilentlyContinue
+          $compiled=([bool](@($log|Where-Object {$_ -match 'Build succeeded|Build up to date|Target is up to date'}).Count)) -and
+            ((Get-Item -LiteralPath $dll).LastWriteTimeUtc -ge (Get-Item -LiteralPath $source).LastWriteTimeUtc)
+          if(!$compiled){Write-Host 'ANOMALIA_IMPORT_BLOCKED_NATIVE_COMPILATION_NOT_CONFIRMED';exit 0}
+          $other=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($other.Count){Write-Host 'ANOMALIA_IMPORT_BLOCKED_ANOTHER_EDITOR_OR_COMPILER_RUNNING';exit 0}
+          $headless=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          if($headless.Count -gt 1){Write-Host 'ANOMALIA_IMPORT_BLOCKED_OTHER_EDITOR';exit 0}
+          if($headless.Count -eq 1){
+            $p=$headless[0]
+            $parent=Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue
+            $old=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalHours -gt 6
+            $cmd=[string]$p.CommandLine
+            if($p.ProcessId -ne 26284 -or !$old -or $parent -or !$cmd.Contains('audit.py') -or !$cmd.Contains('-unattended') -or !$cmd.Contains('AnomaliaPrimeval.uproject')){
+              Write-Host 'ANOMALIA_IMPORT_BLOCKED_UNEXPECTED_EDITOR';exit 0
+            }
+            $w=[long]$p.WriteTransferCount
+            $r=[long]$p.ReadTransferCount
+            Start-Sleep -Seconds 12
+            $p2=Get-CimInstance Win32_Process -Filter "ProcessId=26284" -ErrorAction SilentlyContinue
+            if($p2 -and (([long]$p2.WriteTransferCount -ne $w) -or ([long]$p2.ReadTransferCount -ne $r))){
+              Write-Host 'ANOMALIA_IMPORT_BLOCKED_ORPHAN_AUDIT_RESUMED_FILE_ACCESS';exit 0
+            }
+          }
+          if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 7GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 15GB){throw 'Disk safety reserve insufficient'}
+          $existing=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap' | ForEach-Object {[pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $existing|Export-Csv -LiteralPath (Join-Path $out 'existing-original-umaps.csv') -NoTypeInformation -Encoding UTF8
+          $repo=Join-Path $env:GITHUB_WORKSPACE ('all30-native-'+$env:GITHUB_RUN_ID)
+          $manifest=Join-Path $repo 'public\config\anomalia-11-missing-native-world-batch.json'
+          "ANOMALIA_ELEVEN_MAP_MANIFEST=$manifest"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          Write-Host ('ANOMALIA_ELEVEN_UMAP_IMPORT_SAFE_TO_TRY '+([ordered]@{originalFilesProtected=$existing.Count;compiledAddonVerified=$true;onlyPossibleHeadlessProcessIsOldNoIOAudit=$true;freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace}|ConvertTo-Json -Compress))
+          'READY'|Set-Content -LiteralPath (Join-Path $out 'preflight-ready.marker')
+      - name: Author original 11 new UE World Partition maps one at a time without overwriting any old map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(!(Test-Path -LiteralPath (Join-Path $env:ANOMALIA_NATIVE_IMPORT_OUT 'preflight-ready.marker') -PathType Leaf)){
+            Write-Host 'ANOMALIA_NATIVE_IMPORT_SKIPPED_NO_COMPILED_ADDON';exit 0
+          }
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('all30-native-'+$env:GITHUB_RUN_ID+'\unreal\Scripts\create_anomalia_missing_native_world_20261118.py')
+          $meta=Get-Content -LiteralPath $env:ANOMALIA_ELEVEN_MAP_MANIFEST -Encoding UTF8 -Raw|ConvertFrom-Json
+          $created=@();$already=@();$failed=@()
+          foreach($m in @($meta.missingMaps)){
+            $id=$m.nativeId
+            $expected='D:\ANOMALIA\unreal\Content\Maps\PRIGIMALIA_'+$id+'.umap'
+            $external='D:\ANOMALIA\unreal\Content\__ExternalActors__\Maps\PRIGIMALIA_'+$id
+            if(Test-Path -LiteralPath $expected -PathType Leaf){$already+=$id;Write-Host "ANOMALIA_PREEXISTING_MAP_UNMODIFIED=$id";continue}
+            if(Test-Path -LiteralPath $external){$failed+=($id+':PARTIAL_WORLD_PRESENT_PRESERVED');break}
+            $others=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+            if($others.Count){$failed+=($id+':OTHER_EDITOR_ACTIVE');break}
+            if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 10GB){$failed+=($id+':DISK_SAFETY_RESERVE');break}
+            $env:ANOMALIA_NEW_NATIVE_MAP_ID=$id
+            $env:ANOMALIA_NATIVE_MAP_REPORT=Join-Path $env:ANOMALIA_NATIVE_IMPORT_OUT ('world-'+$id+'.json')
+            $log=Join-Path $env:ANOMALIA_NATIVE_IMPORT_OUT ('world-'+$id+'.log')
+            Write-Host "ANOMALIA_WORLD_CREATION_ATTEMPT=$id"
+            & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$script" -unattended -nopause -nosound -nullrhi "-abslog=$log"
+            $exit=$LASTEXITCODE
+            if(Test-Path -LiteralPath $env:ANOMALIA_NATIVE_MAP_REPORT){
+              $rec=Get-Content -LiteralPath $env:ANOMALIA_NATIVE_MAP_REPORT -Encoding UTF8 -Raw|ConvertFrom-Json
+              if($rec.actualLandscapeSaved -and (Test-Path -LiteralPath $expected -PathType Leaf) -and $rec.landscapeComponents -eq $rec.collisionComponents){
+                $created+=$id;Write-Host "ANOMALIA_REAL_UMAP_CREATED=$id COMPONENTS=$($rec.landscapeComponents)";continue
+              }
+              Write-Host "ANOMALIA_UMAP_NOT_SAVED=$id REASON=$($rec.error)"
+            }
+            $failed+=($id+':UE_EXIT_'+$exit)
+            if($failed.Count){Write-Host 'ANOMALIA_STOP_AFTER_FIRST_UNREAL_WORLD_FAILURE_FOR_SAFETY';break}
+          }
+          $summary=[ordered]@{requested=11;created=$created;createdCount=$created.Count;alreadyExisting=$already;failures=$failed;completed=($created.Count+$already.Count -eq 11);actualBuildingsAndInteriorsBuilt=$false;userMapsOverwritten=0}
+          $summary|ConvertTo-Json -Depth 5|Set-Content -LiteralPath (Join-Path $env:ANOMALIA_NATIVE_IMPORT_OUT 'summary.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_NATIVE_11_WORLD_IMPORT_SUMMARY '+($summary|ConvertTo-Json -Compress))
+          if($failed.Count){throw ('Native Unreal failed to generate one world; review report/log: '+($failed -join ','))}
+      - name: Verify every original .umap still has the same SHA256
+        if: always() && env.ANOMALIA_NATIVE_IMPORT_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $p=Join-Path $env:ANOMALIA_NATIVE_IMPORT_OUT 'existing-original-umaps.csv'
+          if(!(Test-Path -LiteralPath $p)){exit 0}
+          $originals=@(Import-Csv -LiteralPath $p -Encoding UTF8)
+          $changed=@()
+          foreach($f in $originals){
+            if(!(Test-Path -LiteralPath $f.path -PathType Leaf) -or (Get-FileHash -LiteralPath $f.path -Algorithm SHA256).Hash -ne $f.sha256){$changed+=$f.path}
+          }
+          Write-Host ('ANOMALIA_ORIGINAL_WORLD_SHA256_INTEGRITY '+([ordered]@{mapFiles=$originals.Count;changedCount=$changed.Count;changed=$changed}|ConvertTo-Json -Depth 4 -Compress))
+          if($changed.Count){throw 'Original user map changed unexpectedly'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_NATIVE_IMPORT_OUT != ''
+        with:
+          name: anomalia-11-true-umap-native-import-receipts
+          path: ${{ env.ANOMALIA_NATIVE_IMPORT_OUT }}/*.json
+          if-no-files-found: warn

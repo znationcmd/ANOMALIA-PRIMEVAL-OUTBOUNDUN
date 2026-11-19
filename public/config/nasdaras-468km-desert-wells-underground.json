@@ -1,0 +1,667 @@
+{
+  "schemaVersion": 1,
+  "mapId": "nasdaras-v1",
+  "displayName": "NASDARAS",
+  "nativeWorldId": "NASDARAS",
+  "unrealPackage": "/Game/Maps/PRIGIMALIA_NASDARAS",
+  "areaKm2": 468,
+  "sizeMetres": {
+    "eastWest": 18000,
+    "northSouth": 26000
+  },
+  "layoutOrientation": "18 km east–west by 26 km north–south",
+  "theme": "arid African-inspired Sahel and Arabic towns with vegetated belts; no natural surface water",
+  "seed": "NASDARAS-2026",
+  "worldPartitionRequired": true,
+  "climateAndBiomes": [
+    {
+      "id": "eroded-massif",
+      "name": "Massifs rocheux et canyons",
+      "portion": "east",
+      "biomes": [
+        "basalt-cliffs",
+        "stony-desert",
+        "dry-ravines"
+      ]
+    },
+    {
+      "id": "green-sahel",
+      "name": "Savane boisée africaine",
+      "portion": "north",
+      "biomes": [
+        "acacia-groves",
+        "dry-grasslands",
+        "bushes",
+        "scattered-trees"
+      ]
+    },
+    {
+      "id": "trade-belt",
+      "name": "Steppe habitée",
+      "portion": "centre",
+      "biomes": [
+        "scrub",
+        "agricultural-fields",
+        "dusty-palm-gardens",
+        "stone-plains"
+      ]
+    },
+    {
+      "id": "southern-dunes",
+      "name": "Erg désertique",
+      "portion": "south",
+      "biomes": [
+        "sand-dunes",
+        "scattered-hardy-palms",
+        "rocky-outcrops"
+      ]
+    },
+    {
+      "id": "western-plateau",
+      "name": "Plateaux et vallées sèches",
+      "portion": "west",
+      "biomes": [
+        "savanna-shrubs",
+        "rock-fields",
+        "wadis-dry"
+      ]
+    }
+  ],
+  "waterPolicy": {
+    "surfaceWaterAllowed": false,
+    "rivers": 0,
+    "lakes": 0,
+    "oasesWithVisibleWater": 0,
+    "ponds": 0,
+    "waterfalls": 0,
+    "swimmableWater": 0,
+    "waterBodyActorsAllowed": 0,
+    "wellsAsSurfaceWaterBodies": false,
+    "dryRiverBedsAllowed": true,
+    "wellsAreDryUndergroundAccesses": true,
+    "noWaterTextureOrBlueSurfaceInWellShafts": true,
+    "waterSourcingGameplay": "not-implemented; do not imply that the dry access wells supply drinking water"
+  },
+  "settlements": [
+    {
+      "id": "qasr-al-raml",
+      "name": "Qasr al-Raml",
+      "kind": "arabic-style-city",
+      "east": 1600,
+      "north": 8800,
+      "design": "large walled desert city, bazaars, full accessible homes, towers and alleys"
+    },
+    {
+      "id": "al-qamar",
+      "name": "Al-Qamar",
+      "kind": "arabic-style-city",
+      "east": 4700,
+      "north": 2600,
+      "design": "dense stone city, medina, rooftops and shaded courtyards"
+    },
+    {
+      "id": "al-harra",
+      "name": "Al-Harra",
+      "kind": "arabic-style-village",
+      "east": 4500,
+      "north": -3100,
+      "design": "adobe houses, narrow streets, outpost ruins"
+    },
+    {
+      "id": "tazir",
+      "name": "Tazir",
+      "kind": "arabic-style-village",
+      "east": -5700,
+      "north": 3200,
+      "design": "small desert market, repair yard"
+    },
+    {
+      "id": "dakkar",
+      "name": "Dakkar",
+      "kind": "african-inspired-village",
+      "east": 2800,
+      "north": -9300,
+      "design": "sahelian earthen village, grain stores, livestock pens"
+    },
+    {
+      "id": "acacia-camp",
+      "name": "Camp des Acacias",
+      "kind": "african-inspired-camp",
+      "east": -5300,
+      "north": 8750,
+      "design": "several small family camps, savanna shade and tents"
+    },
+    {
+      "id": "nomad-relay",
+      "name": "Relais des nomades",
+      "kind": "nomadic-camp",
+      "east": -1100,
+      "north": 3600,
+      "design": "trader tents, livestock and repair supplies"
+    },
+    {
+      "id": "west-dunes",
+      "name": "Camp des Dunes",
+      "kind": "nomadic-camp",
+      "east": -5950,
+      "north": -2800,
+      "design": "temporary shelters and lookout posts"
+    },
+    {
+      "id": "south-camp",
+      "name": "Camp du Sirocco",
+      "kind": "african-inspired-camp",
+      "east": -4050,
+      "north": -9200,
+      "design": "rocky oasis-like verdure without open water, basic survival shelter"
+    }
+  ],
+  "underground": {
+    "mechanicInspiration": "repairable descent wells and interconnected tunnels, original implementation; not a copy of any DayZ NASDAS asset or level",
+    "wells": [
+      {
+        "id": "well-acacia",
+        "name": "Puits des Acacias",
+        "coordinatesMeters": {
+          "east": -5100,
+          "north": 8700
+        },
+        "sector": "acacia-camp",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-acacia"
+      },
+      {
+        "id": "well-qasr",
+        "name": "Puits de Qasr",
+        "coordinatesMeters": {
+          "east": 1500,
+          "north": 8400
+        },
+        "sector": "qasr-al-raml",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-qasr"
+      },
+      {
+        "id": "well-tazir",
+        "name": "Puits de Tazir",
+        "coordinatesMeters": {
+          "east": -5600,
+          "north": 3300
+        },
+        "sector": "tazir",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-tazir"
+      },
+      {
+        "id": "well-relay",
+        "name": "Puits du Relais",
+        "coordinatesMeters": {
+          "east": -700,
+          "north": 3300
+        },
+        "sector": "nomad-relay",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-relay"
+      },
+      {
+        "id": "well-qamar",
+        "name": "Puits d'Al-Qamar",
+        "coordinatesMeters": {
+          "east": 4800,
+          "north": 2900
+        },
+        "sector": "al-qamar",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-qamar"
+      },
+      {
+        "id": "well-dunes",
+        "name": "Puits des Dunes",
+        "coordinatesMeters": {
+          "east": -5700,
+          "north": -2900
+        },
+        "sector": "west-dunes",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-dunes"
+      },
+      {
+        "id": "well-sable",
+        "name": "Puits du Sable",
+        "coordinatesMeters": {
+          "east": -200,
+          "north": -2300
+        },
+        "sector": "middle-scrub",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-sable"
+      },
+      {
+        "id": "well-harra",
+        "name": "Puits d'Al-Harra",
+        "coordinatesMeters": {
+          "east": 4500,
+          "north": -3200
+        },
+        "sector": "al-harra",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-harra"
+      },
+      {
+        "id": "well-sirocco",
+        "name": "Puits du Sirocco",
+        "coordinatesMeters": {
+          "east": -3800,
+          "north": -9000
+        },
+        "sector": "south-camp",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-sirocco"
+      },
+      {
+        "id": "well-dakkar",
+        "name": "Puits de Dakkar",
+        "coordinatesMeters": {
+          "east": 2800,
+          "north": -9200
+        },
+        "sector": "dakkar",
+        "repairRequired": true,
+        "initialState": "collapsed-and-sealed",
+        "surfaceWaterVisible": false,
+        "undergroundDescent": "physical-shaft-with-ladder-and-hatch",
+        "repairStages": [
+          "remove-rubble",
+          "install-metal-rungs",
+          "fit-hatch-winch",
+          "restore-ventilation"
+        ],
+        "repairMaterialsPlanned": [
+          "metal-parts",
+          "rope",
+          "electrical-kit",
+          "mechanical-parts"
+        ],
+        "repairPersistsOnServer": true,
+        "tunnelHubId": "hub-dakkar"
+      }
+    ],
+    "links": [
+      {
+        "id": "tunnel-01",
+        "from": "well-acacia",
+        "to": "well-qasr",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-02",
+        "from": "well-acacia",
+        "to": "well-tazir",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-03",
+        "from": "well-qasr",
+        "to": "well-relay",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-04",
+        "from": "well-tazir",
+        "to": "well-relay",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-05",
+        "from": "well-relay",
+        "to": "well-qamar",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-06",
+        "from": "well-tazir",
+        "to": "well-dunes",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-07",
+        "from": "well-relay",
+        "to": "well-sable",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-08",
+        "from": "well-qamar",
+        "to": "well-harra",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-09",
+        "from": "well-dunes",
+        "to": "well-sable",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-10",
+        "from": "well-sable",
+        "to": "well-harra",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-11",
+        "from": "well-dunes",
+        "to": "well-sirocco",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-12",
+        "from": "well-sable",
+        "to": "well-dakkar",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-13",
+        "from": "well-harra",
+        "to": "well-dakkar",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      },
+      {
+        "id": "tunnel-14",
+        "from": "well-sirocco",
+        "to": "well-dakkar",
+        "passage": "physical-continuous-traversable-corridor",
+        "widthMeters": 3.2,
+        "minClearHeightMeters": 2.7,
+        "maximumRampGradePercent": 8,
+        "minimumOverburdenMeters": 12,
+        "requiresRepairAtEntry": true,
+        "streamedWorldPartitionSections": true,
+        "lighting": "emergency-flickering-installation-planned"
+      }
+    ],
+    "wellCount": 10,
+    "tunnelConnectionCount": 14,
+    "entranceRules": {
+      "allWellsInitiallyClosed": true,
+      "physicalLadderDescent": true,
+      "oneUserMustRepairBeforeOpening": true,
+      "persistentRepairState": true,
+      "resetOnWipeOnlyByConfig": true,
+      "serverAuthorityRequired": true,
+      "playerMustStayInWorldNoFakeTeleport": true,
+      "visibleShaftCollisionAndClimbSystemRequired": true
+    },
+    "tunnelRequirements": {
+      "continuousLevelGeometry": true,
+      "collisionEnabled": true,
+      "ceilingMinHeightMeters": 2.7,
+      "sidePassageMaxSegmentMeters": 300,
+      "minimumTerrainRoofCoverMeters": 12,
+      "proceduralSplineWallMeshes": true,
+      "lowLightAndEmergencyLighting": true,
+      "ventilationBranches": true,
+      "deadEndsAndSideRooms": true,
+      "worldPartitionStreaming": true,
+      "navmeshAndPlayerMovementValidated": false
+    },
+    "gameplayDependencies": {
+      "inventoryRepairConsumptionConnected": false,
+      "authoritativeServerRepairStateImplemented": false,
+      "wellAnimationsAndLaddersImported": false,
+      "undergroundTunnelMeshesPlaced": false,
+      "tunnelsWalkable": false,
+      "entranceHatchesFunctional": false,
+      "saveRestoreTested": false
+    }
+  },
+  "roads": {
+    "type": "dirt tracks, caravans, rocky passes, desert highways",
+    "designStatus": "planned-unbuilt"
+  },
+  "status": {
+    "catalogueRegistered": false,
+    "nativeTerrainSourcePresentInRepository": true,
+    "rectangularTerrainSupportedInRepoLibrary": true,
+    "originalMapUmapSaved": false,
+    "realBuildingsAndCampsPlaced": false,
+    "wells3DPlaced": false,
+    "tunnels3DPlaced": false,
+    "gameplayAndUndergroundTraversalTested": false
+  },
+  "protectExistingMaps": true
+}

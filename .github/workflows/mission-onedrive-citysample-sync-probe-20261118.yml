@@ -1,0 +1,53 @@
+name: ANOMALIA - inspect OneDrive City Sample sync and local disk
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-onedrive-citysample-sync-probe-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  probe:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Inspect OneDrive file attributes and remaining C disk space without changing files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=$env:OneDriveConsumer
+          if(!$root -or !(Test-Path -LiteralPath $root -PathType Container)){throw 'OneDrive personal root unavailable'}
+          $dst=Join-Path $root 'ANOMALIAZ_PRIGIMALIA\Backups\CitySample'
+          $rels=@(
+            'CitySample.uproject',
+            'Content\Prop\CITY\Kit_Billboard\Mesh\SM_Billboard_D01_N1.uasset',
+            'Content\Megascans\Surfaces\Concrete_Painted_00\pbugi_4K_Albedo.uasset',
+            'Content\Prop\Kit_NewsBooth_A\Texture\T_NewsBooth_A_01_AOMRD2.uasset',
+            'Content\Prop\Kit_Border_C\Texture\T_BorderC_Stone_N.uasset',
+            'Content\Vehicle\vehCar_vehicle06\Texture\T_vehCar_vehicle06_N.uasset',
+            'Content\Building\CH\G\Kit_Bldg_CHG_L1_A\Mesh\SM_BLDG_CHG_L01_A_Entrance_01_N1.uasset',
+            'Content\__ExternalActors__\Map\Big_City_LVL\29\F3\ITR0X9WTZS1MO1P9ZRI4T.uasset',
+            'Content\Building\SF\J\Kit_Bldg_SFJ_L1_A\Mesh\SM_BLDG_SFJ_L1_A1_Entrance_01_N1.uasset',
+            'Content\Building\NY\G\Kit_Bldg_NYG_L1_A\Mesh\SM_BLDG_NYG_L01_A_Entrance_01_N1.uasset',
+            'Content\Megascans\Surfaces\Cast_In_Situ_Concrete_Wall_vcfice0\Coarse_Road_2x2_M_01\se0oeima_8K_Normal.uasset',
+            'Content\__ExternalActors__\Map\Big_City_LVL\2S\X7\CGPTNGS9FR7HGLCC9S62V.uasset'
+          )
+          $records=@()
+          foreach($rel in $rels){
+            $p=Join-Path $dst $rel
+            $exists=Test-Path -LiteralPath $p -PathType Leaf
+            $attributes=''
+            $size=0
+            if($exists){
+              $item=Get-Item -LiteralPath $p -Force
+              $attributes=$item.Attributes.ToString()
+              $size=$item.Length
+            }
+            $records+=[ordered]@{file=$rel;exists=$exists;length=$size;attributes=$attributes}
+          }
+          $processes=@(Get-Process -Name OneDrive -ErrorAction SilentlyContinue)
+          $free=[IO.DriveInfo]::new([IO.Path]::GetPathRoot($root)).AvailableFreeSpace
+          $result=[ordered]@{readOnly=$true;oneDriveProcessCount=$processes.Count;freeCBytes=$free;files=$records;verifiedThroughMicrosoftCloudAPI=$false}
+          Write-Host ('ONEDRIVE_CITY_SAMPLE_SYNC_PROBE '+($result|ConvertTo-Json -Compress -Depth 5))
+          Write-Host 'NO_SOURCE_OR_CLOUD_FILE_MODIFIED'

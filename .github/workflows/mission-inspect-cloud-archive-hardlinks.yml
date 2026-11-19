@@ -1,0 +1,23 @@
+name: ANOMALIA mission - inspect verified archive hardlink paths
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-inspect-cloud-archive-hardlinks.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read hardlink aliases without changing archive or Drive cache data
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          foreach($name in @('carrier-truck-renault-premium-dxi-440.zip','abandoned-soviet-btr-80.zip','helmet-for-arma-3.zip','heels.zip')) {
+            $path=Join-Path 'C:\sketchfab' $name
+            $item=Get-Item -LiteralPath $path
+            $aliases=@(& fsutil.exe hardlink list $path)
+            Write-Output ('VERIFIED_ARCHIVE_ALIASES '+([ordered]@{source=$path;linkType=[string]$item.LinkType;aliases=@($aliases | ForEach-Object {[string]$_})} | ConvertTo-Json -Compress))
+          }

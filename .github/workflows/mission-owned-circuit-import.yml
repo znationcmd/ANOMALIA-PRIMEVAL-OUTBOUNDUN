@@ -1,0 +1,67 @@
+name: ANOMALIA - import owned circuit sources after main map and game identity checks
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-owned-circuit-import.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+jobs:
+  wait_for_existing_checks:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const deadline=Date.now()+110*60*1000;
+            const run_ids=[42497548825,42497975102];
+            while(Date.now()<deadline){
+              const states=await Promise.all(run_ids.map(async run_id=>(await github.rest.actions.getWorkflowRun({...context.repo,run_id})).data));
+              if(states.every(r=>r.status==='completed')){
+                for(const r of states)core.info('Existing check '+r.id+' concluded '+r.conclusion);
+                return;
+              }
+              await new Promise(resolve=>setTimeout(resolve,30000));
+            }
+            throw Error('Main-map or identity task still active; do not start another Unreal session');
+  import_owned_circuits:
+    needs: wait_for_existing_checks
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 65
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: owned-circuit-sources
+          sparse-checkout: |
+            scripts/ue5/run-owned-model-import-with-watchdog.py
+            unreal/Content/Python/resume_owned_model_imports.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Import only matching owned sources and reuse prior accepted source hashes
+        timeout-minutes: 58
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $out='D:\ANOMALIA\unreal\Saved\CircuitIntegration\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CIRCUIT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:MISSION_RAW_OUT=$out
+          $env:IMPORT_SOURCE_NAMES='shanghai,circuit,racetrack,race-track,karting,drift,motocross,moto-cross'
+          $env:IMPORT_MAX_SOURCES='6'
+          $env:IMPORT_BATCH='circuits'
+          $repo=Join-Path $env:GITHUB_WORKSPACE 'owned-circuit-sources'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B (Join-Path $repo 'scripts/ue5/run-owned-model-import-with-watchdog.py') (Join-Path $repo 'unreal/Content/Python/resume_owned_model_imports.py')
+          if($LASTEXITCODE -ne 0){throw 'Circuit source import failed; originals and diagnostics retained'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CIRCUIT_OUT != ''
+        with:
+          name: owned-circuit-import-receipts-not-driving-acceptance
+          path: |
+            ${{ env.CIRCUIT_OUT }}/import-batch-summary.json
+            ${{ env.CIRCUIT_OUT }}/owned-import-process.json
+            ${{ env.CIRCUIT_OUT }}/active-source.json
+            ${{ env.CIRCUIT_OUT }}/*.log
+          if-no-files-found: warn

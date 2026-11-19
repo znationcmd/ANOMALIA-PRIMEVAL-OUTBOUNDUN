@@ -1,0 +1,61 @@
+name: ANOMALIA mission - existing loot inventory and persistence PIE
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-loot-pie.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  loot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Prepare existing hash-pinned loot test scripts on the compiled copy
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='C:\ANOMALIA_MISSION_41801391717'
+          $out=Join-Path $env:RUNNER_TEMP ('loot-regression-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_LOOT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($disk.FreeSpace -lt 4GB -or $os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured reserve for isolated loot PIE'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $dll=Join-Path $root 'unreal\Binaries\Win64\UnrealEditor-AnomaliaZPrigimalia.dll'
+          if((Get-FileHash -LiteralPath $dll -Algorithm SHA256).Hash -ne 'DF7375C5E3CE70B003C2FF54DF9B76CAE6658F613FD79AAE207A78D839D450A2'){throw 'Compiled Editor identity changed'}
+          $scripts=@(
+            @{path='scripts/ue5/run-loot-playtest.py';commit='fad3e1ddc43944415cdd06c492df900519ee1aee';blob='5ea2bf3a606f0e571aff121ec677232546fe2e23'},
+            @{path='unreal/Scripts/create_loot_review.py';commit='e2f901d8d9857b0fe899dbe515dedf40bcec9d76';blob='93d593ea85ab1de2ff55385ec0415d7c6f95432a'}
+          )
+          foreach($entry in $scripts){
+            $target=Join-Path $root $entry.path
+            if(Test-Path -LiteralPath $target){Copy-Item -LiteralPath $target -Destination (Join-Path $out ([IO.Path]::GetFileName($target)+'.before'))}
+            New-Item -ItemType Directory -Path (Split-Path $target -Parent) -Force | Out-Null
+            $download=Join-Path $out ([IO.Path]::GetFileName($target)+'.download')
+            Invoke-WebRequest -UseBasicParsing -Uri ('https://raw.githubusercontent.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/'+$entry.commit+'/'+$entry.path) -OutFile $download
+            if((& git hash-object -- $download).Trim() -ne $entry.blob){throw 'Existing test script identity mismatch'}
+            Copy-Item -LiteralPath $download -Destination $target
+          }
+          [ordered]@{nativeSourceBase='0360ec9cd8106097de8c8ba80c53f85349269d88';nativeDependencyPatch='f0f5144c137e1da1f8dc0a5568dd8de9c29db093';embeddedCachedStamp='0360ec9cd8106097de8c8ba80c53f85349269d88';testScripts=$scripts;installedProjectModified=$false;newMapIsIsolatedTestOnly=$true} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath (Join-Path $out 'provenance.json') -Encoding UTF8
+      - name: Run actual existing Interact inventory UMG bank and profile recovery test
+        timeout-minutes: 12
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Set-Location -LiteralPath 'C:\ANOMALIA_MISSION_41801391717'
+          $env:GITHUB_SHA='f0f5144c137e1da1f8dc0a5568dd8de9c29db093'
+          $engine='C:\Program Files\Epic Games\UE_5.8'
+          $python=Join-Path $engine 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python scripts\ue5\run-loot-playtest.py --engine-root $engine --output $env:MISSION_LOOT_OUT
+          if($LASTEXITCODE -ne 0){throw 'Actual isolated loot/UI/persistence PIE failed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_LOOT_OUT != ''
+        with:
+          name: mission-loot-inventory-pie
+          path: ${{ env.MISSION_LOOT_OUT }}/
+          if-no-files-found: error

@@ -1,0 +1,36 @@
+name: ANOMALIA - identify UnrealEditor Cmd blocker safely (no termination)
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-identify-ue5-editor-blocker-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Check process owner/start age and type without exposing command arguments or closing anything
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $rows=@()
+          $procs=@(Get-CimInstance Win32_Process -Filter "Name = 'UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          foreach($p in $procs){
+            $parent=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$p.ParentProcessId) -ErrorAction SilentlyContinue
+            $runtime=[math]::Round(((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalMinutes,1)
+            $cmd=[string]$p.CommandLine
+            $rows+=[ordered]@{
+              pid=$p.ProcessId
+              ageMinutes=$runtime
+              parentPid=$p.ParentProcessId
+              parentProcessName=if($parent){$parent.Name}else{'PARENT_NOT_FOUND'}
+              isOurMainGameProject=$cmd.Contains('AnomaliaPrimeval.uproject')
+              isUnrealPythonRun=($cmd.Contains('ExecutePythonScript') -or $cmd.Contains('ExecutePythonScript='))
+              isUnattended=$cmd.Contains('-unattended')
+              workingSetMiB=[math]::Round(([double]$p.WorkingSetSize)/1MB,1)
+              pathIsUE58=([string]$p.ExecutablePath).Contains('UE_5.8')
+            }
+          }
+          Write-Host ('UNREAL_EDITOR_BLOCKER_READONLY '+([ordered]@{processes=$rows;count=$rows.Count;checkedAtUTC=(Get-Date).ToUniversalTime().ToString('o');noneTerminated=$true}|ConvertTo-Json -Depth 6 -Compress))

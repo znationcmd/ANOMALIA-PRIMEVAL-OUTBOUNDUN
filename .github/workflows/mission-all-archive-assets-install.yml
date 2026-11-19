@@ -1,0 +1,123 @@
+name: ANOMALIA mission - extract and install all owned archive assets
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-all-archive-assets-install.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  portable_decoder:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Prepare a verified official portable archive decoder without installing software on Windows
+        shell: python
+        run: |
+          import pathlib,urllib.request,json,hashlib,subprocess,shutil
+          base=pathlib.Path("decoder-build");base.mkdir()
+          request=urllib.request.Request("https://api.github.com/repos/ip7z/7zip/releases/tags/26.06",headers={"User-Agent":"ANOMALIA-resource-extraction"})
+          release=json.load(urllib.request.urlopen(request,timeout=60))
+          asset=next(a for a in release["assets"] if a["name"]=="7z2606-x64.exe")
+          expected=asset.get("digest","")
+          if not expected.startswith("sha256:"):raise RuntimeError("Official release checksum missing; do not execute an unverified decoder")
+          data=urllib.request.urlopen(asset["browser_download_url"],timeout=120).read()
+          if hashlib.sha256(data).hexdigest()!=expected.split(":",1)[1]:raise RuntimeError("Official decoder installer checksum differs")
+          installer=base/"official-installer.exe";installer.write_bytes(data)
+          decoder=shutil.which("7z") or shutil.which("7zz")
+          if not decoder:raise RuntimeError("Hosted unpacker unavailable; ZIP processing remains independent")
+          expanded=base/"expanded"
+          subprocess.run([decoder,"x",str(installer),"-o"+str(expanded),"-y"],check=True)
+          target=pathlib.Path("portable-decoder");target.mkdir()
+          for name in ["7z.exe","7z.dll","License.txt"]:
+              source=next(expanded.rglob(name),None)
+              if source is None:raise RuntimeError("Official portable decoder component missing: "+name)
+              shutil.copy2(source,target/name)
+          manifest={"source":asset["browser_download_url"],"release":"26.06","officialInstallerSHA256":expected,"files":{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in target.iterdir()}}
+          (target/"tool-manifest.json").write_text(json.dumps(manifest,indent=2))
+          print(json.dumps(manifest,indent=2))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: official-portable-archive-decoder
+          path: portable-decoder/
+          if-no-files-found: error
+  extract_and_native_packages:
+    needs: portable_decoder
+    if: ${{ !cancelled() }}
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: all-archives-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5
+            unreal/Content/Python/verify_actual_project_registered_resources.py
+          persist-credentials: false
+      - name: Prepare persistent extraction results and resource reserve
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIA\unreal\Saved\ImportReceipts\AllResources20261107\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "MISSION_ALL_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $decoder=Join-Path $env:RUNNER_TEMP ('portable-decoder-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $decoder | Out-Null
+          "DECODER_DIRECTORY=$decoder" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        if: needs.portable_decoder.result == 'success'
+        with:
+          name: official-portable-archive-decoder
+          path: ${{ env.DECODER_DIRECTORY }}
+      - name: Validate the decoder or use an existing installed one
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $manifest=Join-Path $env:DECODER_DIRECTORY 'tool-manifest.json'
+          if(Test-Path -LiteralPath $manifest){
+            $data=Get-Content -LiteralPath $manifest -Raw | ConvertFrom-Json
+            foreach($property in $data.files.PSObject.Properties){
+              $file=Join-Path $env:DECODER_DIRECTORY $property.Name
+              if((Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash.ToLower() -ne $property.Value){throw 'Archive decoder component checksum differs'}
+            }
+            "ANOMALIA_7ZIP=$(Join-Path $env:DECODER_DIRECTORY '7z.exe')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          }else{
+            $candidates=@('C:\Program Files\7-Zip\7z.exe','C:\Program Files (x86)\7-Zip\7z.exe')
+            $tool=$candidates | Where-Object {Test-Path -LiteralPath $_} | Select-Object -First 1
+            if($tool){"ANOMALIA_7ZIP=$tool" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append}
+            else{Write-Warning 'RAR/7z decoder unavailable; continue ZIP and record every unsupported archive'}
+          }
+      - name: Extract every supported resource category and prepare real native Content roots
+        timeout-minutes: 175
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Another editor is active; preserve current import session'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('all-archives-'+$env:GITHUB_RUN_ID+'\scripts\ue5\extract-all-owned-game-assets.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Extraction stopped with originals and durable receipts preserved'}
+      - name: Install newly prepared native packages without replacing existing maps or assets
+        timeout-minutes: 110
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $input=Join-Path $env:MISSION_ALL_OUT 'native-input'
+          if(!(Test-Path -LiteralPath (Join-Path $input 'bulk-import-summary.json'))){Write-Output 'No native package roots prepared; raw sources remain in the import queue';exit 0}
+          $bulk=Join-Path $env:MISSION_ALL_OUT 'native-integration'
+          New-Item -ItemType Directory -Force -Path $bulk | Out-Null
+          Copy-Item -LiteralPath $input -Destination (Join-Path $bulk 'input') -Recurse
+          $env:MISSION_BULK_OUT=$bulk
+          $script=Join-Path $env:GITHUB_WORKSPACE ('all-archives-'+$env:GITHUB_RUN_ID+'\scripts\ue5\integrate-existing-local-packages.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Native package reconciliation stopped; originals and conflicts are retained'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_ALL_OUT != ''
+        with:
+          name: all-category-archive-extraction-and-native-install-results
+          path: |
+            ${{ env.MISSION_ALL_OUT }}/all-asset-extraction-summary.json
+            ${{ env.MISSION_ALL_OUT }}/native-input/
+            ${{ env.MISSION_ALL_OUT }}/native-integration/bulk-integration-summary.json
+            ${{ env.MISSION_ALL_OUT }}/native-integration/package-actions.jsonl
+          if-no-files-found: warn

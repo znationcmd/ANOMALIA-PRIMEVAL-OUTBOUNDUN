@@ -1,0 +1,39 @@
+name: ANOMALIA mission - reclaim verified independent City Sample cache duplicates
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-citysample-independent-duplicates.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify_and_reclaim:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: city-duplicates-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/remove-only-verified-independent-citysample-cache-duplicates.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify each unused City Sample cache file against an independent retained D copy
+        timeout-minutes: 80
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Active editor preserved; do not clean linked resources'}
+          $out='D:\ANOMALIA\unreal\Saved\CleanupReceipts\CitySampleIndependentDuplicates\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CITY_DUPLICATE_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CITY_DUPLICATE_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('city-duplicates-'+$env:GITHUB_RUN_ID+'\scripts\ue5\remove-only-verified-independent-citysample-cache-duplicates.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Independent-copy guard stopped removal; original D retained'}
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CITY_DUPLICATE_OUT != ''
+        with:
+          name: verified-citysample-independent-duplicate-removals
+          path: ${{ env.CITY_DUPLICATE_OUT }}/
+          if-no-files-found: warn

@@ -1,0 +1,119 @@
+name: ANOMALIA - build and install six original Praga V3S models
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-praga-v3s.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  model:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y blender python3-numpy
+          blender -b -t 3 --python-use-system-env --python-exit-code 1 --python scripts/vehicle-assets/build_praga_v3s.py -- "$RUNNER_TEMP/praga"
+          test "$(find "$RUNNER_TEMP/praga" -name '*.glb' -type f | wc -l)" -eq 6
+      - uses: actions/upload-artifact@v4
+        with:
+          name: original-praga-v3s-six-variants
+          path: ${{ runner.temp }}/praga/*.glb
+          if-no-files-found: error
+  install:
+    needs: model
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: original-praga-v3s-six-variants
+          path: ${{ runner.temp }}/praga-${{ github.run_id }}/models
+      - name: Import original models and verify the six saved Unreal packages
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'Original Unreal project missing'}
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue | Where-Object { -not $_.HasExited })
+          if($busy.Count){throw 'Another Unreal session is active'}
+          $env:PRAGA_OUT=Join-Path $env:RUNNER_TEMP ('praga-'+$env:GITHUB_RUN_ID)
+          "PRAGA_OUT=$env:PRAGA_OUT"|Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $script=Join-Path $env:PRAGA_OUT 'import.py'
+          @'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError(f"Wrong project: {root}")
+          output = Path(os.environ["PRAGA_OUT"])
+          library = unreal.EditorAssetLibrary
+          tools = unreal.AssetToolsHelpers.get_asset_tools()
+          variants = ("Vert_Fonce", "Bleu", "Beige", "Blanc", "Rouge_Fonce", "Gris")
+          report = []
+          for variant in variants:
+              source = output / "models" / f"Praga_V3S_{variant}.glb"
+              sha = hashlib.sha256(source.read_bytes()).hexdigest()
+              destination = f"/Game/Anomalia/Vehicles/PragaV3S/{variant}"
+              mesh_path = destination + f"/SM_Praga_V3S_{variant}"
+              existing = library.does_asset_exist(mesh_path)
+              if existing:
+                  mesh = library.load_asset(mesh_path)
+                  if library.get_metadata_tag(mesh, "AnomaliaSourceSHA256") != sha:
+                      raise RuntimeError(f"Destination contains a different asset: {mesh_path}")
+              else:
+                  staging = destination + "/Source_" + sha[:12]
+                  task = unreal.AssetImportTask()
+                  task.filename = str(source)
+                  task.destination_path = staging
+                  task.automated = True
+                  task.replace_existing = False
+                  task.save = True
+                  task.async_ = False
+                  tools.import_asset_tasks([task])
+                  meshes = [obj for obj in task.get_objects() if isinstance(obj, unreal.StaticMesh)]
+                  if len(meshes) != 1:
+                      raise RuntimeError(f"Expected one vehicle mesh, got {len(meshes)}: {variant}")
+                  mesh = library.duplicate_asset(meshes[0].get_path_name(), mesh_path)
+                  if not mesh:
+                      raise RuntimeError(f"Could not create vehicle mesh: {variant}")
+                  library.set_metadata_tag(mesh, "AnomaliaSourceSHA256", sha)
+              slots = mesh.get_editor_property("static_materials")
+              names = {str(slot.material_interface.get_name()) for slot in slots if slot.material_interface}
+              if not any("LightBeigeCanvas" in name for name in names) or not any("BodyPaint" in name for name in names):
+                  raise RuntimeError(f"Independent canvas or paint material missing: {variant} ({names})")
+              bounds = mesh.get_bounds().box_extent
+              dimensions = [2 * bounds.x, 2 * bounds.y, 2 * bounds.z]
+              if not 630 <= max(dimensions) <= 740:
+                  raise RuntimeError(f"Wrong truck scale in cm: {dimensions}")
+              if not library.save_loaded_asset(mesh, only_if_is_dirty=False):
+                  raise RuntimeError(f"Could not save vehicle: {variant}")
+              relative = mesh_path.removeprefix("/Game/")
+              if not (root / "Content" / (relative + ".uasset")).is_file():
+                  raise RuntimeError(f"No saved package for {variant}")
+              report.append({"variant": variant, "asset": mesh.get_path_name(), "dimensionsCm": dimensions})
+          (output / "installed.json").write_text(json.dumps(report, indent=2), encoding="utf-8")
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$env:PRAGA_OUT\editor.log"
+          if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $env:PRAGA_OUT 'installed.json') -PathType Leaf)){
+            throw 'Unreal did not confirm all six installed meshes'
+          }
+          Get-Content -LiteralPath (Join-Path $env:PRAGA_OUT 'installed.json')
+      - uses: actions/upload-artifact@v4
+        if: always() && env.PRAGA_OUT != ''
+        with:
+          name: praga-v3s-unreal-install-report
+          path: |
+            ${{ env.PRAGA_OUT }}/installed.json
+            ${{ env.PRAGA_OUT }}/editor.log

@@ -1,0 +1,69 @@
+name: ANOMALIA - inspect Indian Arab Hawaiian Russian Norwegian German Asian original 3D assets
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-regional-architecture-existing-assets-audit-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  survey-original-D:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Read-only scan of actual downloaded house and winter/desert model names
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA'
+          $game=Join-Path $root 'unreal\AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $game -PathType Leaf)){throw 'Original UE project not present'}
+          $categories=[ordered]@{
+            indian='india|indian|haveli|mandir|rajasthan|kerala|mahal|sandalwood|jodhpur|jaipur'
+            arabian='arab|sahel|sahara|desert|kasbah|riad|medina|souk|mosque|mudbrick|mud.brick|bedouin|nomad|adobe'
+            hawaiian='hawai|polynes|tiki|tropical|bungalow|beach.hut|palm.hut'
+            russian='russia|russian|slavic|soviet|dacha|izba|kremlin|moscow|siberia'
+            norwegian='norway|norwegian|norse|nordic|scandinav|viking|fjord|longhouse|hytte|stavkirke'
+            german='german|bavaria|deutsch|fachwerk|half.timber|alpine.house|medieval'
+            east_asian='japan|japanese|china|chinese|korea|korean|pagoda|hanok|ryokan|machiya|shrine|torii'
+            snow='snow|winter|arctic|tundra|ice.house|ski.chalet|mountain.cabin|igloo|chalet'
+          }
+          $extensions=@('.uasset','.glb','.gltf','.fbx','.obj','.blend','.usd','.usda','.zip','.7z','.rar')
+          $roots=@(
+            'D:\ANOMALIA\unreal\Content',
+            'D:\ANOMALIA\unreal\SourceAssets',
+            'D:\ANOMALIA\sketchfab',
+            'D:\ANOMALIA\FabImports',
+            'D:\ANOMALIA\imports',
+            'D:\ANOMALIA\3D',
+            'D:\ANOMALIA\assets',
+            'D:\ANOMALIAZ-PRIGIMALIA\unreal\Content',
+            'C:\ANOMALIA\sketchfab'
+          )
+          $summary=@()
+          $all=@()
+          foreach($dir in $roots){
+            if(!(Test-Path -LiteralPath $dir -PathType Container)){
+              $summary+=([ordered]@{root=$dir;present=$false;modelFiles=0;matches=0});continue
+            }
+            $count=0;$matched=0
+            Get-ChildItem -LiteralPath $dir -Recurse -File -ErrorAction SilentlyContinue | ForEach-Object {
+              if($_.Extension.ToLowerInvariant() -notin $extensions){return}
+              $count++
+              foreach($k in $categories.Keys){
+                $relative=$_.FullName.Substring($dir.Length)
+                if($relative -match $categories[$k]){
+                  $matched++
+                  if($all.Count -lt 140){
+                    $all+=([ordered]@{category=$k;relative=$relative;root=$dir;bytes=$_.Length;nativeUnrealAsset=($_.Extension -eq '.uasset')})
+                  }
+                  break
+                }
+              }
+            }
+            $summary+=([ordered]@{root=$dir;present=$true;modelFiles=$count;matches=$matched})
+          }
+          $result=[ordered]@{state='READ_ONLY_ARCHITECTURE_SCAN';roots=$summary;categoryMatches=$all;
+            preservedOriginalUEFiles=$true;downloadedNewFiles=0;unrealImportedNewModels=0;
+            searchTerms=[array]$categories.Keys}
+          Write-Host ('ANOMALIA_REAL_REGIONAL_ARCHITECTURE_INVENTORY '+($result|ConvertTo-Json -Depth 8 -Compress))

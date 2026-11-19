@@ -86,7 +86,7 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
         report["automationReport"] = str(export)
         save()
         command = [str(editor), str(project), "-unattended", "-nopause", "-nosound", "-NullRHI",
-                   "-ExecCmds=Automation RunTests Anomalia.Native.; Quit",
+                   "-ExecCmds=Automation RunTests AnomaliaZPrigimalia.Native.; Quit",
                    f"-ReportExportPath={export}", f"-abslog={export / 'editor.log'}"]
         try:
             with (export / "process.log").open("w", encoding="utf-8") as log:
@@ -94,10 +94,10 @@ def validate(engine: Path, output: Path, run_tests: bool = False, require_loot_t
             report["nativeTestExitCode"] = result.returncode
             data = json.loads((export / "index.json").read_text(encoding="utf-8-sig"))
             rows = data.get("tests", [])
-            expected = {"Anomalia.Native.VehicleCatalog", "Anomalia.Native.ProfileIsolation", "Anomalia.Native.TransportDynamics"}
-            expected.update({"Anomalia.Native.POIResourceExclusivity", "Anomalia.Native.ReactiveWorldPersistenceAndPower", "Anomalia.Native.DoorLeafAuthorityAndCollision", "Anomalia.Native.CrewEntryAndSafeExitGeometry", "Anomalia.Native.ChaosRoadConfiguration"})
+            expected = {"AnomaliaZPrigimalia.Native.VehicleCatalog", "AnomaliaZPrigimalia.Native.ProfileIsolation", "AnomaliaZPrigimalia.Native.TransportDynamics"}
+            expected.update({"AnomaliaZPrigimalia.Native.POIResourceExclusivity", "AnomaliaZPrigimalia.Native.ReactiveWorldPersistenceAndPower", "AnomaliaZPrigimalia.Native.DoorLeafAuthorityAndCollision", "AnomaliaZPrigimalia.Native.CrewEntryAndSafeExitGeometry", "AnomaliaZPrigimalia.Native.ChaosRoadConfiguration"})
             if require_loot_tests:
-                expected.update({"Anomalia.Native.LootCatalog", "Anomalia.Native.LootTransactions", "Anomalia.Native.LootJournalRecovery", "Anomalia.Native.RPBankTransactions", "Anomalia.Native.ItemConsumption", "Anomalia.Native.ItemEffects", "Anomalia.Native.StorageGrids", "Anomalia.Native.InventoryLayoutMigration", "Anomalia.Native.VehicleKeyPartsCargoAndRecovery"})
+                expected.update({"AnomaliaZPrigimalia.Native.LootCatalog", "AnomaliaZPrigimalia.Native.LootTransactions", "AnomaliaZPrigimalia.Native.LootJournalRecovery", "AnomaliaZPrigimalia.Native.RPBankTransactions", "AnomaliaZPrigimalia.Native.ItemConsumption", "AnomaliaZPrigimalia.Native.ItemEffects", "AnomaliaZPrigimalia.Native.StorageGrids", "AnomaliaZPrigimalia.Native.InventoryLayoutMigration", "AnomaliaZPrigimalia.Native.VehicleKeyPartsCargoAndRecovery"})
             passed = {row.get("fullTestPath") for row in rows if row.get("state") == "Success"}
             if result.returncode != 0 or not expected.issubset(passed) or any(row.get("state") != "Success" for row in rows):
                 raise ValueError("Missing, incomplete or failed native tests")

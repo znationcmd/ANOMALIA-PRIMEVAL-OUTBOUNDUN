@@ -59,6 +59,8 @@ struct FAnomaliaZPrigimaliaInventoryStack
     /** Per physical stack; wear changes require a single item to avoid mixed-condition piles. */
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Condition")
     float Condition = 100.f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Temperature") float TemperatureC=20.f;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category="ANOMALIA|Temperature") float FrozenFraction=0.f;
 };
 
 USTRUCT(BlueprintType)
@@ -130,6 +132,8 @@ public:
     /** Server resolves the registered pickup and checks range, visibility and durable transfer. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestCollectNearby(AAnomaliaZPrigimaliaLootPickup* Pickup);
+    void AdvanceConsumableTemperature(float AmbientC,float Seconds);
+    bool CanConsumeStack(int32 StackId) const;
     bool SupportsItemWear(FName ItemId) const;
     /** Trusted gameplay hooks only; clients cannot request arbitrary wear or repair. */
     UFUNCTION(BlueprintCallable, BlueprintAuthorityOnly, Category="ANOMALIA|Condition")
@@ -223,8 +227,9 @@ public:
     /** Client supplies only the selected stack and its displayed count, never effects or profile identity. */
     UFUNCTION(BlueprintCallable, Category="ANOMALIA|Inventory")
     bool RequestUseStack(int32 StackId, int32 ExpectedCount);
+    UFUNCTION(BlueprintCallable, Category="ANOMALIA|Weather") bool RequestWetHead(int32 StackId,int32 ExpectedCount);
     /** Trusted server entry point. Persists the consumed unit and resulting vitals in one profile write. */
-    bool TryUseStack(int32 StackId, int32 ExpectedCount, const FString& ServerId, const FString& PlayerId, FString& OutError);
+    bool TryUseStack(int32 StackId, int32 ExpectedCount, const FString& ServerId, const FString& PlayerId, FString& OutError,bool bWetHead=false);
 
     UPROPERTY(ReplicatedUsing=OnRep_Stacks, BlueprintReadOnly, Category="ANOMALIA|Inventory")
     FString UseMessage;
@@ -266,6 +271,8 @@ protected:
     UFUNCTION(Server,Reliable)
     void ServerRequestCollectNearby(AAnomaliaZPrigimaliaLootPickup* Pickup);
 
+protected:
+    UFUNCTION(Server,Reliable) void ServerRequestWetHead(int32 StackId,int32 ExpectedCount);
 private:
     friend class UAnomaliaZPrigimaliaWorldStateSubsystem;
     friend class UAnomaliaZPrigimaliaLootSubsystem;
@@ -285,7 +292,7 @@ private:
     bool CraftFromOwningPlayer(FName RecipeId);
     bool StowStackInOnServer(int32 StackId,FName ContainerId);
     FAnomaliaZPrigimaliaItemUseRule GetUseRule(FName ItemId) const;
-    bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount);
+    bool UseFromOwningPlayer(int32 StackId, int32 ExpectedCount,bool bWetHead=false);
     bool bSuppressNotifications = false;
     int32 NextStackId = 1;
     bool GetItemRules(FName ItemId, float& OutWeightKg, int32& OutMaxStack, FIntPoint& OutSize) const;
@@ -297,6 +304,7 @@ private:
     UPROPERTY(Transient) TMap<int32,TObjectPtr<UStaticMeshComponent>> AttachmentVisuals;
     void Commit(TArray<FAnomaliaZPrigimaliaInventoryStack>&& Candidate);
 };
+
 
 
 

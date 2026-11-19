@@ -1,0 +1,37 @@
+{
+  "verification": "Downloaded from Google Drive server and SHA-256 checked independently of the Windows cache",
+  "archives": [
+    {
+      "source": "C:\\sketchfab\\carrier-truck-renault-premium-dxi-440.zip",
+      "cloudPath": "H:\\Mon Drive\\ANOMALIAZ\\02_Modeles_3D\\Sketchfab\\carrier-truck-renault-premium-dxi-440.zip",
+      "bytes": 260677681,
+      "sha256": "a1dce7ce7946999c4c8a73bb1874d4e70ba50e7953ac33f2d934131a5ae63da6",
+      "driveFileId": "13h4Bq_wEnk1cRgvVKxDUARazrJstbrUi",
+      "remoteServerSHA256Verified": true
+    },
+    {
+      "source": "C:\\sketchfab\\abandoned-soviet-btr-80.zip",
+      "cloudPath": "H:\\Mon Drive\\ANOMALIAZ\\02_Modeles_3D\\Sketchfab\\abandoned-soviet-btr-80.zip",
+      "bytes": 260459453,
+      "sha256": "4a9fe0506a5c2c7d1560cb13fc9eec8d5d2a92effb0fe1a1988270de5c585c27",
+      "driveFileId": "1AEawavQ6fThnyPTi5Tzv0INs-7lJ7yhC",
+      "remoteServerSHA256Verified": true
+    },
+    {
+      "source": "C:\\sketchfab\\helmet-for-arma-3.zip",
+      "cloudPath": "H:\\Mon Drive\\ANOMALIAZ\\02_Modeles_3D\\Sketchfab\\helmet-for-arma-3.zip",
+      "bytes": 214192270,
+      "sha256": "7a796b70f52e60142b4b96de91cc970452510527ba09fc24094b4905f18291f2",
+      "driveFileId": "15TZ49VpfcWJ_VQBJq4BdiEQeHOQd6doK",
+      "remoteServerSHA256Verified": true
+    },
+    {
+      "source": "C:\\sketchfab\\heels.zip",
+      "cloudPath": "H:\\Mon Drive\\ANOMALIAZ\\02_Modeles_3D\\Sketchfab\\heels.zip",
+      "bytes": 213117961,
+      "sha256": "828445abab0ede9ccd79f9f51ffada0ab2954bb25d644215fb2eba94c9d45edc",
+      "driveFileId": "1-TUuZX2aDhVvt1REj2N4TppC9WURYw9v",
+      "remoteServerSHA256Verified": true
+    }
+  ]
+}

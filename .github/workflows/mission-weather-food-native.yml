@@ -1,0 +1,145 @@
+name: ANOMALIA mission - validate weather food and actual vehicle assets
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-weather-food-native.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  pause_old_upload:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Pause only the previous checkpointed upload run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -eu
+          run=42377395231
+          status=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
+          if [ "$status" != completed ]; then
+            gh api --method POST "repos/$GH_REPO/actions/runs/$run/cancel" || true
+            sleep 15
+            status=$(gh api "repos/$GH_REPO/actions/runs/$run" --jq .status)
+            if [ "$status" != completed ]; then gh api --method POST "repos/$GH_REPO/actions/runs/$run/force-cancel"; fi
+          fi
+  audit_main_sources:
+    needs: pause_old_upload
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: weather-audit-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/validate-weather-existing-projects.py
+            unreal/Source
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 98e00bf15e2607c0a72b979f58e53fcea1c8d2f3
+          path: weather-baseline-audit-${{ github.run_id }}
+          sparse-checkout: unreal/Source
+          persist-credentials: false
+      - name: Read exact actual D source differences before any deployment
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $new=Join-Path $env:GITHUB_WORKSPACE ('weather-audit-'+$env:GITHUB_RUN_ID)
+          $base=Join-Path $env:GITHUB_WORKSPACE ('weather-baseline-audit-'+$env:GITHUB_RUN_ID)
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B (Join-Path $new 'scripts\ue5\validate-weather-existing-projects.py') $new $base --audit-only
+          if($LASTEXITCODE -ne 0){throw 'Actual source audit failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-main-weather-source-compatibility
+          path: D:/ANOMALIA/unreal/Saved/WeatherValidation/${{ github.run_id }}/weather-validation-report.json
+          if-no-files-found: warn
+  native_validation:
+    needs: audit_main_sources
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: weather-native-${{ github.run_id }}
+          sparse-checkout: |
+            scripts
+            public/config
+            unreal/Source
+            unreal/Config
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          ref: 98e00bf15e2607c0a72b979f58e53fcea1c8d2f3
+          path: weather-baseline-native-${{ github.run_id }}
+          sparse-checkout: unreal/Source
+          persist-credentials: false
+      - name: Compile and run native regressions then guard actual D installation
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $new=Join-Path $env:GITHUB_WORKSPACE ('weather-native-'+$env:GITHUB_RUN_ID)
+          $base=Join-Path $env:GITHUB_WORKSPACE ('weather-baseline-native-'+$env:GITHUB_RUN_ID)
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B (Join-Path $new 'scripts\ue5\validate-weather-existing-projects.py') $new $base
+          if($LASTEXITCODE -ne 0){throw 'Native weather validation failed; main installation remains preserved or is restored'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-weather-and-food-results
+          path: |
+            D:/ANOMALIA/unreal/Saved/WeatherValidation/${{ github.run_id }}/weather-validation-report.json
+            D:/ANOMALIA/unreal/Saved/WeatherValidation/${{ github.run_id }}/validation-process.log
+            D:/ANOMALIA/unreal/Saved/WeatherValidation/${{ github.run_id }}/validated-source/
+            D:/ANOMALIA/unreal/Saved/WeatherValidation/${{ github.run_id }}/*.log
+          if-no-files-found: warn
+  actual_vehicle_assets:
+    needs: native_validation
+    if: ${{ !cancelled() }}
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: fleet-review-${{ github.run_id }}
+          sparse-checkout: unreal/Content/Python/inspect_fleet_and_stage_paint_variants.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inspect actual vehicle rigs collisions and paint before claiming driving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out='D:\ANOMALIA\unreal\Saved\VehicleReview\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          $env:VEHICLE_REPAIR_OUT=$out
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured fleet-review memory reserve'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('fleet-review-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\inspect_fleet_and_stage_paint_variants.py')
+          $ErrorActionPreference='Continue'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$out\engine.log" *> "$out\process.log"
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          if($code -ne 0){throw 'Actual fleet inspection reports errors; preserve diagnostics'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: actual-vehicle-inspection-results
+          path: D:/ANOMALIA/unreal/Saved/VehicleReview/${{ github.run_id }}/
+          if-no-files-found: warn
+  resume_model_imports:
+    needs: actual_vehicle_assets
+    if: ${{ !cancelled() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Resume corrected existing extraction and model import pipeline
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh api --method POST "repos/$GH_REPO/actions/workflows/mission-resume-owned-3d-imports.yml/dispatches" -f ref=mission/finalisation-20261104

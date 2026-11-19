@@ -1,0 +1,54 @@
+name: ANOMALIA - compress City Sample source assets losslessly pilot
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-ntfs-citysample-source-pilot-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-citysample-ntfs-lossless-compression
+  cancel-in-progress: false
+jobs:
+  compress-source-pilot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - name: NTFS compress just two large original City Sample uassets, SHA256 verify every file, preserve game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\FabImports\CitySample\Content'
+          $protected=@('D:\ANOMALIA\FabImports\CitySample\CitySample.uproject','D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap')
+          foreach($p in $protected){if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Protected project or map missing; no compression attempted'}}
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($active.Count){throw 'Unreal is running; original source compression blocked'}
+          $files=@(
+            (Join-Path $root 'Building\Texture\Brick\T_Brick_PackedB.uasset'),
+            (Join-Path $root 'Building\CH\G\Kit_Bldg_CHG_L1_A\Mesh\SM_BLDG_CHG_L01_A_Entrance_01_N1.uasset')
+          )
+          $results=@()
+          $freeBefore=[IO.DriveInfo]::new('D').AvailableFreeSpace
+          if($freeBefore -lt 6GB){throw 'Less than 6 GiB D free; keep originals unchanged'}
+          foreach($file in $files){
+            if(!(Test-Path -LiteralPath $file -PathType Leaf)){throw 'Pilot asset missing'}
+            $item=Get-Item -LiteralPath $file -Force
+            if($item.Attributes -band [IO.FileAttributes]::ReparsePoint){throw 'Source is reparse point, unsafe to modify'}
+            if($item.Length -lt 100MB -or $item.Length -gt 2GB){throw 'Unexpected City Sample asset size'}
+            if($item.Attributes -band [IO.FileAttributes]::Compressed){Write-Host 'CITY_SAMPLE_FILE_ALREADY_COMPRESSED';continue}
+            $hash=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+            $mtime=$item.LastWriteTimeUtc
+            $before=[IO.DriveInfo]::new('D').AvailableFreeSpace
+            & "$env:SystemRoot\System32\compact.exe" /C /I /F /Q $file
+            if($LASTEXITCODE -ne 0){throw 'NTFS compression failed - preserve sources'}
+            $afterItem=Get-Item -LiteralPath $file -Force
+            $newHash=(Get-FileHash -LiteralPath $file -Algorithm SHA256).Hash
+            if($newHash -ne $hash -or $afterItem.Length -ne $item.Length){throw 'Integrity verification failure: asset not safe'}
+            $after=[IO.DriveInfo]::new('D').AvailableFreeSpace
+            $row=[ordered]@{path=$file;logicalBytes=$item.Length;sha256Unchanged=$true;lastWriteTimeUnchanged=($mtime -eq $afterItem.LastWriteTimeUtc);isNtfsCompressed=[bool]($afterItem.Attributes -band [IO.FileAttributes]::Compressed);freeDBefore=$before;freeDAfter=$after;bytesRecovered=($after-$before)}
+            $results+=$row
+            Write-Host ('CITY_SAMPLE_LOSSLESS_NTFS_PILOT_FILE '+($row|ConvertTo-Json -Compress))
+          }
+          $freeAfter=[IO.DriveInfo]::new('D').AvailableFreeSpace
+          Write-Host ('CITY_SAMPLE_LOSSLESS_NTFS_PILOT_TOTAL '+([ordered]@{files=$results.Count;freeDBefore=$freeBefore;freeDAfter=$freeAfter;actualBytesRecovered=$freeAfter-$freeBefore;originalAssetsDeleted=0;projectMainMapPreserved=$true;localCitySamplePreserved=$true;verifiedRemoteOneDriveBackup=$false}|ConvertTo-Json -Compress))

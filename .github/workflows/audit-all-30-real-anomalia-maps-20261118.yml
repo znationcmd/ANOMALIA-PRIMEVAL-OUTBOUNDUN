@@ -1,0 +1,79 @@
+name: ANOMALIA - verify all 30 maps in original Windows Unreal project
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/audit-all-30-real-anomalia-maps-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  verify-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: thirty-map-readonly-${{ github.run_id }}
+          sparse-checkout: public/config/anomalia-map-catalog.json
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Enumerate actual .umap files for all 30 map entries without editing any asset
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $p=Join-Path $env:GITHUB_WORKSPACE ('thirty-map-readonly-'+$env:GITHUB_RUN_ID+'\public\config\anomalia-map-catalog.json')
+          if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Original catalogue checkout unavailable'}
+          $cat=Get-Content -LiteralPath $p -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($cat.maps).Count -ne 30){throw 'Master catalogue no longer contains 30 maps'}
+          $root='D:\ANOMALIA\unreal'
+          $staged='D:\ANOMALIAZ-PRIGIMALIA\unreal'
+          $mainProject=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $hasMain=Test-Path -LiteralPath $mainProject -PathType Leaf
+          $details=@()
+          foreach($m in @($cat.maps)){
+            $pkg=$m.originalUnrealPackage
+            if(!$pkg){$pkg=$m.plannedUnrealPackage}
+            $relative=$null
+            if($pkg -and $pkg.StartsWith('/Game/')){
+              $relative=($pkg.Substring(6) -replace '/', '\')+'.umap'
+            }
+            $original=$null
+            $staging=$null
+            if($relative){
+              $original=Join-Path (Join-Path $root 'Content') $relative
+              $staging=Join-Path (Join-Path $staged 'Content') $relative
+            }
+            $originalExists=[bool]($original -and (Test-Path -LiteralPath $original -PathType Leaf))
+            $stagingExists=[bool]($staging -and (Test-Path -LiteralPath $staging -PathType Leaf))
+            $size=0
+            if($originalExists){$size=(Get-Item -LiteralPath $original).Length}
+            $state=if(!$pkg){'PACKAGE_UNREGISTERED'}elseif($originalExists){'ORIGINAL_D_UMAP_PRESENT_UNTESTED'}elseif($stagingExists){'ONLY_STAGING_COPY_FOUND_NOT_INSTALLED_IN_ORIGINAL'}else{'ORIGINAL_D_UMAP_NOT_FOUND'}
+            $details+=([ordered]@{
+              name=$m.displayName
+              package=$pkg
+              state=$state
+              originalDFileExists=$originalExists
+              originalDSizeBytes=[long]$size
+              stagedAlternativePresent=$stagingExists
+              gameplayVerified=$false
+            })
+          }
+          $present=@($details | Where-Object {$_.originalDFileExists}).Count
+          $onlyStaging=@($details | Where-Object {$_.state -eq 'ONLY_STAGING_COPY_FOUND_NOT_INSTALLED_IN_ORIGINAL'}).Count
+          $notFound=@($details | Where-Object {$_.state -eq 'ORIGINAL_D_UMAP_NOT_FOUND'}).Count
+          $unregistered=@($details | Where-Object {$_.state -eq 'PACKAGE_UNREGISTERED'}).Count
+          $state=[ordered]@{
+            readOnly=$true
+            projectOriginal=$root
+            mainProjectFileExists=$hasMain
+            totalInMasterCatalogue=@($cat.maps).Count
+            originalDUMAPFilesPresent=$present
+            stagingOnly=$onlyStaging
+            notFoundInOriginal=$notFound
+            missingRegisteredPackage=$unregistered
+            independentWorldsPlaytestedByAudit=0
+            mapResults=$details
+            filesCreatedDeletedOrChanged=0
+          }
+          Write-Host ('ANOMALIA_REAL_30_MAPS_AUDIT '+($state|ConvertTo-Json -Depth 7 -Compress))

@@ -1,0 +1,28 @@
+name: ANOMALIA - inspect exact installed native terrain patch anchors
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/apocalyptic-outbreak-read-native-terrain-shape-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read only the installed terrain source headers and method anchors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $root='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval\World'
+          $h=Join-Path $root 'AnomaliaPrimevalRequestedWorldHeights.h'
+          $cpp=Join-Path $root 'AnomaliaPrimevalRequestedWorldLibrary.cpp'
+          $htxt=Get-Content -LiteralPath $h -Raw
+          $cptxt=Get-Content -LiteralPath $cpp -Raw
+          $hl=@($htxt -split "\r?\n")
+          $cl=@($cptxt -split "\r?\n")
+          $keyLines=@()
+          foreach($i in 0..($hl.Count-1)){if($hl[$i] -match 'enum class|SideMeters|Resolution|Height\(|Encode\(|Corsivia|BotSever|namespace|Invalid|Karskov'){ $keyLines+=($i.ToString()+':'+$hl[$i])}}
+          $cppLines=@()
+          foreach($i in 0..($cl.Count-1)){if($cl[$i] -match 'ResolveRequested|BOT_SEVER|CORSIVIA|CreateNamedWorldLandscape|NamedWorldHeight|AnomaliaPrimevalRequestedWorldHeights|include'){ $cppLines+=($i.ToString()+':'+$cl[$i])}}
+          Write-Host ('APOCALYPTIC_INSTALLED_TERRAIN_HEADERS '+([ordered]@{headerLength=$htxt.Length;headerHash=(Get-FileHash -LiteralPath $h -Algorithm SHA256).Hash;headerFirstLines=@($hl|Select-Object -First 24);headerRelevantLines=$keyLines;cppLength=$cptxt.Length;cppHash=(Get-FileHash -LiteralPath $cpp -Algorithm SHA256).Hash;cppFirstLines=@($cl|Select-Object -First 22);cppRelevantLines=$cppLines}|ConvertTo-Json -Depth 8 -Compress))

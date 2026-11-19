@@ -1,0 +1,35 @@
+name: ANOMALIA - extract exact native UE5.8 errors blocking 11 maps
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-diagnose-native-ue58-11map-compiler-errors.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Read C++ compiler errors plus surrounding lines without editing game files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $path='D:\ANOMALIA\unreal\Saved\AllThirtyMapGeneration\CompileOnly\44378684738\native-build.log'
+          if(!(Test-Path -LiteralPath $path -PathType Leaf)){throw 'Original compiler log missing'}
+          $lines=Get-Content -LiteralPath $path -Encoding UTF8
+          $found=@()
+          for($i=0;$i -lt $lines.Count;$i++){
+            if($lines[$i] -match '(?i)(\berror\s+(C[0-9]+|LNK[0-9]+|MSB[0-9]+)|: error:|fatal error|OtherCompilationError|AnomaliaPrimevalElevenWorld|ElevenWorldLibrary|error.*generated)'){
+              $start=[Math]::Max(0,$i-2)
+              $end=[Math]::Min($lines.Count-1,$i+2)
+              $found+=([ordered]@{line=$i+1;context=($lines[$start..$end] -join [char]10)})
+              if($found.Count -ge 75){break}
+            }
+          }
+          $nativeFiles=@()
+          foreach($n in @('AnomaliaPrimevalElevenWorldHeights.h','AnomaliaPrimevalElevenWorldLibrary.h','AnomaliaPrimevalElevenWorldLibrary.cpp')){
+            $p=Join-Path 'D:\ANOMALIA\unreal\Source\AnomaliaPrimeval\World' $n
+            $nativeFiles+=([ordered]@{name=$n;exists=(Test-Path -LiteralPath $p);sha=if(Test-Path -LiteralPath $p){(Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash}else{''}})
+          }
+          Write-Host ('ANOMALIA_ELEVEN_UE58_COMPILER_DIAGNOSIS '+([ordered]@{logLines=$lines.Count;matches=$found;nativeFiles=$nativeFiles;logFile=$path;readOnly=$true}|ConvertTo-Json -Depth 6 -Compress))

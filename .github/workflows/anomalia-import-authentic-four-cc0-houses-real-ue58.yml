@@ -1,0 +1,123 @@
+name: ANOMALIA - stage and native-import four actual Indian Korean tropical CC0 house GLBs
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-import-authentic-four-cc0-houses-real-ue58.yml']
+  workflow_dispatch:
+permissions:
+  actions: read
+  contents: read
+concurrency:
+  group: anomalia-original-D-realistic-inhouse-native-import
+  cancel-in-progress: false
+jobs:
+  stage-and-ue-import:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 135
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: four-authentic-houses-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/import_original_cc0_regional_glb_houses_native.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - uses: actions/download-artifact@v4
+        with:
+          name: anomalia-authentic-cc0-indian-korean-tropical-architecture-glb
+          repository: znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN
+          run-id: 44410962753
+          github-token: ${{ github.token }}
+          path: ${{ runner.temp }}/real-cc0-houses-download-${{ github.run_id }}
+      - name: Verify original 4 GLBs, license and original map SHA256 before copying into SourceAssets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root 'AnomaliaPrimeval.uproject') -PathType Leaf) -or
+             !(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap') -PathType Leaf)){
+            throw 'Original project or main map missing'
+          }
+          $out=Join-Path $root ('Saved\RegionalArchitecture\InnersceneNativeImport\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_4HOUSE_IMPORT_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $download=Join-Path $env:RUNNER_TEMP ('real-cc0-houses-download-'+$env:GITHUB_RUN_ID)
+          $manifest=Join-Path $download 'INNERSCENE_CC0_HOUSE_PROVENANCE.json'
+          if(!(Test-Path -LiteralPath $manifest -PathType Leaf)){throw 'Four original CC0 house artifact not present'}
+          $data=Get-Content -LiteralPath $manifest -Encoding UTF8 -Raw|ConvertFrom-Json
+          if($data.license -ne 'CC0 1.0' -or @($data.models).Count -ne 4){throw 'CC0 licensing or house count not verified'}
+          $original=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap'|ForEach-Object{
+            [pscustomobject]@{path=$_.FullName;sha256=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $original|Export-Csv -LiteralPath (Join-Path $out 'protected-original-umaps.csv') -NoTypeInformation -Encoding UTF8
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 9GB -or ([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB){
+            throw 'Disk safety reserve insufficient'
+          }
+          $dest=Join-Path $root 'SourceAssets\RegionalArchitecture\Innerscene_CC0_20261118'
+          New-Item -ItemType Directory -Force -Path $dest|Out-Null
+          $new=0;$existing=0
+          foreach($asset in @($data.models)){
+            $name=[string]$asset.key+'.glb'
+            $source=Join-Path $download $name
+            $target=Join-Path $dest $name
+            if(!(Test-Path -LiteralPath $source -PathType Leaf)){throw ('Missing original 3D GLB '+$name)}
+            $hash=(Get-FileHash -LiteralPath $source -Algorithm SHA256).Hash.ToLowerInvariant()
+            if($hash -ne $asset.sha256 -or (Get-Item -LiteralPath $source).Length -ne $asset.bytes){throw 'Real 3D original source checksum mismatch'}
+            if(Test-Path -LiteralPath $target -PathType Leaf){
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -ne $hash){throw 'Existing user house source differs; never overwrite'}
+              $existing++
+            }else{
+              Copy-Item -LiteralPath $source -Destination $target -ErrorAction Stop
+              if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash.ToLowerInvariant() -ne $hash){throw 'Copied GLB checksum mismatch'}
+              $new++
+            }
+          }
+          $provenanceTarget=Join-Path $dest 'INNERSCENE_CC0_HOUSE_PROVENANCE.json'
+          if(!(Test-Path -LiteralPath $provenanceTarget -PathType Leaf)){
+            Copy-Item -LiteralPath $manifest -Destination $provenanceTarget -ErrorAction Stop
+          }elseif((Get-FileHash -LiteralPath $provenanceTarget -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $manifest -Algorithm SHA256).Hash){
+            throw 'Original license manifest exists but differs'
+          }
+          Write-Host ('ANOMALIA_FOUR_LICENSED_HOUSES_STAGED_ON_ORIGINAL_D '+([ordered]@{models=4;newGLBs=$new;existingSame=$existing;directory=$dest;oldUmapsProtected=$original.Count}|ConvertTo-Json -Compress))
+          $script=Join-Path $env:GITHUB_WORKSPACE ('four-authentic-houses-'+$env:GITHUB_RUN_ID+'\unreal\Scripts\import_original_cc0_regional_glb_houses_native.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native original GLB import script invalid'}
+          "ANOMALIA_4HOUSE_EDITOR_SCRIPT=$script"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+      - name: Import four verified original 3D house GLBs into dedicated Unreal Content namespace without overwriting
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $busy=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $other=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue|Where-Object {$_.ProcessId -ne 26284})
+          if($busy.Count -or $other.Count){throw 'A second active Unreal session prevents safe import'}
+          $env:ANOMALIA_REGIONAL_HOUSE_UNREAL_REPORT=Join-Path $env:ANOMALIA_4HOUSE_IMPORT_OUT 'native-real-house-ue5-import.json'
+          $log=Join-Path $env:ANOMALIA_4HOUSE_IMPORT_OUT 'native-real-house-ue5-import.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_4HOUSE_EDITOR_SCRIPT" -nullrhi -unattended -nopause -nosound "-abslog=$log"
+          $rc=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_REGIONAL_HOUSE_UNREAL_REPORT -PathType Leaf)){
+            Get-Content -LiteralPath $log -Tail 40 -ErrorAction SilentlyContinue|ForEach-Object {Write-Host ('UE_LOG '+$_)}
+            throw 'UE5 real GLB import produced no report'
+          }
+          $receipt=Get-Content -LiteralPath $env:ANOMALIA_REGIONAL_HOUSE_UNREAL_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_FOUR_REAL_HOUSES_NATIVE_UNREAL_IMPORT '+($receipt|ConvertTo-Json -Depth 6 -Compress))
+          if($receipt.state -ne 'FOUR_REGIONAL_SOURCE_HOUSES_IMPORTED_NATIVE_UNREAL_UNPLAYTESTED' -or $receipt.housesImported.Count -ne 4){
+            throw ('Native Unreal real 3D import incomplete: '+$receipt.error)
+          }
+      - name: Verify protected original game maps unchanged by SHA256
+        if: always() && env.ANOMALIA_4HOUSE_IMPORT_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $csv=Join-Path $env:ANOMALIA_4HOUSE_IMPORT_OUT 'protected-original-umaps.csv'
+          if(!(Test-Path -LiteralPath $csv -PathType Leaf)){exit 0}
+          $orig=@(Import-Csv -LiteralPath $csv -Encoding UTF8)
+          $bad=@()
+          foreach($r in $orig){
+            if(!(Test-Path -LiteralPath $r.path -PathType Leaf) -or (Get-FileHash -LiteralPath $r.path -Algorithm SHA256).Hash -ne $r.sha256){$bad+=$r.path}
+          }
+          Write-Host ('ANOMALIA_IMPORTED_HOUSES_PROTECTED_MAPS '+([ordered]@{originalMapCount=$orig.Count;changedOriginalMaps=$bad.Count;changed=$bad}|ConvertTo-Json -Depth 4 -Compress))
+          if($bad.Count){throw 'An original user world was unexpectedly modified'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_4HOUSE_IMPORT_OUT != ''
+        with:
+          name: anomalia-four-licensed-real-cultural-houses-native-import-report
+          path: ${{ env.ANOMALIA_4HOUSE_IMPORT_OUT }}/*.json
+          if-no-files-found: warn

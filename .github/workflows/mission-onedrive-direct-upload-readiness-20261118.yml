@@ -1,0 +1,39 @@
+name: ANOMALIA - OneDrive direct upload readiness (read only)
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-onedrive-direct-upload-readiness-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect-upload-method:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Identify existing direct-to-OneDrive cloud upload tooling without reading passwords or tokens
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root=$env:OneDriveConsumer
+          $isRoot=[bool]($root -and (Test-Path -LiteralPath $root -PathType Container))
+          $drive=if($root){[IO.Path]::GetPathRoot($root)}else{''}
+          Write-Host ('ONEDRIVE_ROOT_EXISTS='+$isRoot)
+          Write-Host ('ONEDRIVE_ROOT_DRIVE='+$drive)
+          foreach($exe in @('rclone','azcopy','onedrive','python','py')) {
+            $cmd=Get-Command $exe -ErrorAction SilentlyContinue
+            Write-Host ('ONECLOUD_TOOL '+$exe+' installed='+[bool]$cmd)
+          }
+          $rclone=Get-Command rclone -ErrorAction SilentlyContinue
+          if($rclone){
+            $remotes=(& $rclone.Source listremotes 2>$null)
+            foreach($r in $remotes){
+              $remoteName=$r.TrimEnd(':')
+              Write-Host ('RCLONE_REMOTE_AVAILABLE '+$remoteName)
+            }
+            if(!$remotes){Write-Host 'RCLONE_REMOTE_AVAILABLE none'}
+          }
+          $src='D:\ANOMALIA\FabImports\CitySample\CitySample.uproject'
+          Write-Host ('CITY_SAMPLE_SOURCE_PRESENT='+(Test-Path -LiteralPath $src -PathType Leaf))
+          Write-Host 'NO_FILES_COPIED_NO_CREDENTIALS_ACCESSED'

@@ -1,0 +1,38 @@
+name: ANOMALIA - inspect City Sample hardlinks and VaultCache before any offload
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-citysample-hardlinks-vaultcache-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: hardlink-audit-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/audit_citysample_hardlinks_vaultcache_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inventory physical hardlinks and 37 GB VaultCache metadata without changes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('hardlink-audit-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "HARDLINK_AUDIT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:HARDLINK_AUDIT_OUT=$out
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('hardlink-audit-'+$env:GITHUB_RUN_ID+'\scripts\ue5\audit_citysample_hardlinks_vaultcache_20261118.py')
+          if(!(Test-Path -LiteralPath $py) -or !(Test-Path -LiteralPath $script)){throw 'Read-only auditing tools missing'}
+          & $py -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only inventory failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: citysample-physical-hardlinks-vaultcache
+          path: ${{ runner.temp }}/hardlink-audit-${{ github.run_id }}/citysample-hardlinks-and-vault-audit.json
+          if-no-files-found: warn

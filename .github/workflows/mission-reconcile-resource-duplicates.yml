@@ -1,0 +1,55 @@
+name: ANOMALIA mission - reconcile verified raw resource duplicates
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-reconcile-resource-duplicates.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-owned-raw-resource-dedup
+  cancel-in-progress: false
+jobs:
+  reconcile:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: resource-dedup-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/reconcile-owned-raw-resource-duplicates.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare duplicate verification receipts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('resource-dedup-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "DUPLICATE_REPORT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.DUPLICATE_REPORT_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.DUPLICATE_REPORT_OUT }}/inventory/
+      - name: Verify identical raw files and reconcile only owned recovery copies
+        timeout-minutes: 28
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('resource-dedup-'+$env:GITHUB_RUN_ID+'\scripts\ue5\reconcile-owned-raw-resource-duplicates.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Review reconciliation receipt; original resource files and Unreal packages retained'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.DUPLICATE_REPORT_OUT != ''
+        with:
+          name: verified-raw-resource-duplicate-reconciliation
+          path: ${{ env.DUPLICATE_REPORT_OUT }}/duplicate-reconciliation.json
+          if-no-files-found: error

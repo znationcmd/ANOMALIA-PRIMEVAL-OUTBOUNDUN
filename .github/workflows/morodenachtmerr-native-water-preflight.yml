@@ -1,0 +1,41 @@
+name: ANOMALIA - MORØDENACHTMERR 10km real Unreal water preflight
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/morodenachtmerr-native-water-preflight.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Audit native project, water plugin and safe map creation conditions (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project -PathType Leaf)){throw 'Original game project unavailable'}
+          $data=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          $plugins=@($data.Plugins)
+          $waterPlugin=@($plugins|Where-Object {$_.Name -eq 'Water'}|ForEach-Object {[ordered]@{Name=$_.Name;Enabled=$_.Enabled}})
+          $header=Join-Path $root 'Source\AnomaliaPrimeval\World\AnomaliaPrimevalRequestedWorldHeights.h'
+          $library=Join-Path $root 'Source\AnomaliaPrimeval\World\AnomaliaPrimevalRequestedWorldLibrary.cpp'
+          $processes=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue|ForEach-Object {$_.Name})
+          $report=[ordered]@{
+            readOnly=$true
+            activeUnrealProcesses=$processes
+            citySampleOriginalPreserved=(Test-Path -LiteralPath 'D:\ANOMALIA\FabImports\CitySample\CitySample.uproject')
+            skarvikMapPresent=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'))
+            morodenachtmerrMapAlreadyExists=(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\PRIGIMALIA_MOROEDENACHTMERR.umap'))
+            morodenachtmerrExternalActorDataExists=(Test-Path -LiteralPath (Join-Path $root 'Content\__ExternalActors__\Maps\PRIGIMALIA_MOROEDENACHTMERR'))
+            waterPluginConfiguration=$waterPlugin
+            waterPluginInstalled=(Test-Path -LiteralPath 'C:\Program Files\Epic Games\UE_5.8\Engine\Plugins\Experimental\Water\Water.uplugin')
+            terrainSourceSHA256=if(Test-Path -LiteralPath $header){(Get-FileHash -LiteralPath $header -Algorithm SHA256).Hash}else{''}
+            requestedLibrarySHA256=if(Test-Path -LiteralPath $library){(Get-FileHash -LiteralPath $library -Algorithm SHA256).Hash}else{''}
+            freeCBytes=([IO.DriveInfo]::new('C')).AvailableFreeSpace
+            freeDBytes=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          }
+          Write-Host ('MORODENACHTMERR_NATIVE_PREFLIGHT '+($report|ConvertTo-Json -Depth 5 -Compress))

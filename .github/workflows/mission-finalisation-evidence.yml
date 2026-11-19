@@ -1,0 +1,75 @@
+name: ANOMALIA mission - targeted existing project evidence
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  evidence:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Inspect actual project without checkout or modification
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA'
+          $project=Join-Path $root 'unreal'
+          $out=Join-Path $env:RUNNER_TEMP ('mission-evidence-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -ErrorAction Stop | Out-Null
+          $report=[ordered]@{schema=1;utc=[DateTime]::UtcNow.ToString('o');project=$project;readOnly=$true;priorMapInventoryRun=41794604995;processes=@();git=@{};projectDescriptor=$null;roots=@();candidates=@();errors=@();validation='FILES_ONLY_NOT_EDITOR_OR_PIE'}
+          $report.processes=@(Get-Process -ErrorAction Stop | Where-Object {$_.ProcessName -match 'Unreal|ShaderCompile|UnrealBuild|Robocopy|EpicGames|MSBuild'} | Select-Object ProcessName,Id,CPU)
+          if(!(Test-Path -LiteralPath (Join-Path $project 'AnomaliaPrimeval.uproject'))){throw 'Requested real project descriptor missing'}
+          $report.projectDescriptor=Get-Content -LiteralPath (Join-Path $project 'AnomaliaPrimeval.uproject') -Raw | ConvertFrom-Json
+          $git=Get-Command git -ErrorAction Stop
+          foreach($entry in @(@('head','rev-parse','HEAD'),@('branch','branch','--show-current'),@('status','status','--porcelain=v1','--untracked-files=no'))){
+            $name=$entry[0]
+            $args=@('-C',$root)+$entry[1..($entry.Length-1)]
+            $ErrorActionPreference='Continue'
+            $value=& $git.Source @args 2>&1
+            $nativeExit=$LASTEXITCODE
+            $ErrorActionPreference='Stop'
+            $report.git[$name]=@{exitCode=$nativeExit;output=@($value | ForEach-Object {"$_"})}
+          }
+          $groups=[ordered]@{
+            companions='(?i)german.?shepherd|dog|monkey.?b3'
+            wildlife='(?i)wolf|wolves|lion|fox|deer|stag|bird|eagle|chicken|horse|dinosaur|raptor|tyranno|tricerat'
+            circuit='(?i)formula|race.?track|racetrack|circuit|paddock|pit.?lane|silverstone|monza|spa.?franc'
+            vehicles='(?i)bmw|e39|snowmobile|snow.?mobile|scooter|motorcycle|truck|formula'
+            animation='(?i)anim.?blueprint|blend.?space|montage|locomotion|vault|ladder|reload|crouch'
+            license='(?i)licen[sc]e|attribution|receipt'
+          }
+          foreach($folder in @('unreal\Content','FabImports','sketchfab')){
+            $path=Join-Path $root $folder
+            $entry=[ordered]@{path=$path;exists=(Test-Path -LiteralPath $path -PathType Container);filesScanned=0}
+            if($entry.exists){
+              $scanErrors=@()
+              Get-ChildItem -LiteralPath $path -Recurse -File -ErrorAction SilentlyContinue -ErrorVariable +scanErrors | ForEach-Object {
+                $entry.filesScanned++
+                $file=$_
+                if($file.Extension -match '(?i)^\.(uasset|fbx|glb|gltf|obj|blend|zip|json|txt|md)$'){
+                  foreach($key in $groups.Keys){
+                    if($file.Name -match $groups[$key]){
+                      $report.candidates+= [ordered]@{group=$key;path=$file.FullName;bytes=$file.Length;modifiedUtc=$file.LastWriteTimeUtc.ToString('o')}
+                    }
+                  }
+                }
+              }
+              $report.errors+=@($scanErrors | ForEach-Object {$_.ToString()})
+            }
+            $report.roots+=$entry
+          }
+          $report | ConvertTo-Json -Depth 14 | Set-Content -LiteralPath (Join-Path $out 'evidence.json') -Encoding UTF8
+          foreach($key in $groups.Keys){Write-Host ($key+'='+@($report.candidates | Where-Object {$_.group -eq $key}).Count)}
+          Write-Host ('ACTIVE_RELEVANT_PROCESSES='+$report.processes.Count)
+          Write-Host ('SCAN_ERRORS='+$report.errors.Count)
+          Write-Host ('EVIDENCE_DIRECTORY='+$out)
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: mission-finalisation-evidence
+          path: ${{ runner.temp }}/mission-evidence-${{ github.run_id }}/
+          if-no-files-found: error

@@ -1,0 +1,49 @@
+name: ANOMALIA - stage only 11-map C++ addon safely on original D project
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-stage-11-native-world-addon-original-d-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  add-only-stage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 14
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: safe-native-11-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaElevenWorldHeights.h
+            unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaElevenWorldLibrary.h
+            unreal/Source/AnomaliaZPrigimalia/World/AnomaliaZPrigimaliaElevenWorldLibrary.cpp
+            scripts/ue5/install_eleven_new_map_addon_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Add only three new native world C++ source files, leave active UE session entirely untouched
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          if(!(Test-Path -LiteralPath (Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap') -PathType Leaf)){throw 'Main world absent'}
+          $free=[IO.DriveInfo]::new('D')
+          if($free.AvailableFreeSpace -lt 15GB){throw 'D disk reserve too low for guarded work'}
+          $dir=Join-Path $root ('Saved\AllThirtyMapGeneration\Staging\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $dir -Force|Out-Null
+          "ELEVEN_MAP_OUT=$dir" | Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $env:ELEVEN_MAP_OUT=$dir
+          $s=Join-Path $env:GITHUB_WORKSPACE ('safe-native-11-'+$env:GITHUB_RUN_ID+'\scripts\ue5\install_eleven_new_map_addon_20261118.py')
+          $python='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if(!(Test-Path -LiteralPath $python) -or !(Test-Path -LiteralPath $s)){throw 'Unreal Python or safe source installer unavailable'}
+          & $python -B $s
+          if($LASTEXITCODE -ne 0){throw 'Add-only script refused: existing files remain unchanged'}
+          Write-Host 'ANOMALIA_11_NEW_WORLD_CPP_FILES_INSTALLED_ADDONLY=TRUE'
+          Write-Host 'ANOMALIA_EXISTING_MAPS_TOUCHED=FALSE'
+          Write-Host 'ANOMALIA_NATIVE_EDITOR_REBUILD_NOT_ATTEMPTED_WHILE_OLD_EDITOR_ACTIVE=TRUE'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-11-native-addon-addonly-stage-manifest
+          path: ${{ env.ELEVEN_MAP_OUT }}/addon-install-manifest.json
+          if-no-files-found: warn

@@ -1,0 +1,76 @@
+name: ANOMALIA - recover strictly verified orphaned UE audit process to free map authoring
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-recover-orphaned-unreal-audit-before-world-build.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  recover-only-unattended-orphan-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Verify original project, old orphan process identity, six-hour age and no map writes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $auditProcessId=26284
+          $root='D:\ANOMALIA\unreal'
+          $original=@('ANOMALIA_Archipelago_v2.umap','ANOMALIA_Inhabited_v2.umap')
+          $hashes=@()
+          foreach($file in $original){
+            $p=Join-Path (Join-Path $root 'Content\Maps') $file
+            if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw ('Protected original missing: '+$file)}
+            $hashes+=([ordered]@{path=$p;hash=(Get-FileHash -LiteralPath $p -Algorithm SHA256).Hash})
+          }
+          $p=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$auditProcessId) -ErrorAction SilentlyContinue
+          if(!$p){Write-Host 'ORPHAN_AUDIT_ALREADY_GONE_NO_STOP_NEEDED';exit 0}
+          if($p.Name -ne 'UnrealEditor-Cmd.exe'){throw 'Target PID has changed identity; never stop'}
+          $cmd=[string]$p.CommandLine
+          $age=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalMinutes
+          $parent=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$p.ParentProcessId) -ErrorAction SilentlyContinue
+          $interactive=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $otherHeadless=@(Get-CimInstance Win32_Process -Filter "Name = 'UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessId -ne $auditProcessId})
+          $mapWrites=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap' | Where-Object {$_.LastWriteTimeUtc -gt (Get-Date).ToUniversalTime().AddMinutes(-50)})
+          $safe=($age -ge 360 -and !$parent -and $interactive.Count -eq 0 -and $otherHeadless.Count -eq 0 -and $mapWrites.Count -eq 0 -and
+            $cmd.Contains('AnomaliaPrimeval.uproject') -and $cmd.Contains('audit.py') -and $cmd.Contains('ExecutePythonScript') -and
+            $cmd.Contains('-unattended') -and ($cmd.Contains('-nullrhi') -or $cmd.Contains('-NullRHI')) -and
+            ([string]$p.ExecutablePath).Contains('UE_5.8'))
+          $report=[ordered]@{targetPID=$auditProcessId;ageMinutes=[math]::Round($age,1);parentAlive=[bool]$parent;
+            otherInteractiveEditorCount=$interactive.Count;otherHeadlessCount=$otherHeadless.Count;recentChangedMapCount=$mapWrites.Count;
+            strictlyIdentifiedOldHeadlessAudit=$safe;action='NO_ACTION_UNTIL_SECOND_CHECK'}
+          Write-Host ('ANOMALIA_ORPHAN_AUDIT_RECOVERY_PRECHECK '+($report|ConvertTo-Json -Compress))
+          if(!$safe){Write-Host 'ANOMALIA_ORPHAN_AUDIT_NOT_SAFE_TO_TERMINATE';exit 0}
+          $initialCPU=(Get-Process -Id $auditProcessId).CPU
+          $initialRead=[long]$p.ReadTransferCount
+          $initialWrite=[long]$p.WriteTransferCount
+          Start-Sleep -Seconds 24
+          $p2=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$auditProcessId) -ErrorAction SilentlyContinue
+          if(!$p2){Write-Host 'ANOMALIA_ORPHAN_AUDIT_EXITED_NATURALLY';exit 0}
+          $cpuDelta=(Get-Process -Id $auditProcessId).CPU-$initialCPU
+          $readDelta=[long]$p2.ReadTransferCount-$initialRead
+          $writeDelta=[long]$p2.WriteTransferCount-$initialWrite
+          $again=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          $parent2=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$p2.ParentProcessId) -ErrorAction SilentlyContinue
+          $safeSecond=($again.Count -eq 0 -and !$parent2 -and $p2.Name -eq 'UnrealEditor-Cmd.exe' -and
+            $writeDelta -eq 0 -and $readDelta -eq 0 -and $cpuDelta -ge 8 -and
+            @((Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)).Count -eq 1)
+          Write-Host ('ANOMALIA_ORPHAN_AUDIT_SECOND_CHECK '+([ordered]@{safe=$safeSecond;cpuDeltaSec=$cpuDelta;readDeltaBytes=$readDelta;writeDeltaBytes=$writeDelta}|ConvertTo-Json -Compress))
+          if(!$safeSecond){Write-Host 'ANOMALIA_ORPHAN_AUDIT_KEPT_RUNNING_FAILED_SECOND_CHECK';exit 0}
+          $gp=Get-Process -Id $auditProcessId -ErrorAction Stop
+          $graceful=$gp.CloseMainWindow()
+          Write-Host ('ANOMALIA_ORPHAN_AUDIT_GRACEFUL_WINDOW_SIGNAL='+$graceful)
+          Start-Sleep -Seconds 5
+          if(Get-Process -Id $auditProcessId -ErrorAction SilentlyContinue){
+            # Only one fully verified orphaned *audit*, unattended/headless,
+            # has shown hours of CPU churn with zero IO. No interactive editor.
+            Stop-Process -Id $auditProcessId -Force -ErrorAction Stop
+            Start-Sleep -Seconds 3
+          }
+          if(Get-Process -Id $auditProcessId -ErrorAction SilentlyContinue){throw 'Old audit process did not exit'}
+          foreach($h in $hashes){
+            if((Get-FileHash -LiteralPath $h.path -Algorithm SHA256).Hash -ne $h.hash){throw 'Protected original map hash changed after audit recovery'}
+          }
+          Write-Host 'ANOMALIA_ONLY_VERIFIED_6H_ORPHAN_AUDIT_TERMINATED=TRUE'
+          Write-Host 'ANOMALIA_MAIN_MAPS_SHA256_UNCHANGED=TRUE'

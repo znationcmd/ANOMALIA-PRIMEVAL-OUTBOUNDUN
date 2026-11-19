@@ -1,0 +1,37 @@
+name: ANOMALIA - audit duplicate VaultCache assets vs native game
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-vaultcache-peer-hashes-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check-matches:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: vault-peer-audit-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/audit_vaultcache_exact_peer_candidates_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Check same-path, same-size, different inode, SHA256 sampled VaultCache duplicate assets (read-only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('vault-peer-audit-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "VAULT_MATCH_AUDIT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:VAULT_MATCH_AUDIT_OUT=$out
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('vault-peer-audit-'+$env:GITHUB_RUN_ID+'\scripts\ue5\audit_vaultcache_exact_peer_candidates_20261118.py')
+          & $py -B $script
+          if($LASTEXITCODE -ne 0){throw 'VaultCache read-only duplicate check failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vaultcache-readonly-matches-sha256
+          path: ${{ runner.temp }}/vault-peer-audit-${{ github.run_id }}/vaultcache-peer-audit.json
+          if-no-files-found: warn

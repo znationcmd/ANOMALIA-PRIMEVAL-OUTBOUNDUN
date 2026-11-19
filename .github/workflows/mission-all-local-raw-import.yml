@@ -1,0 +1,94 @@
+name: ANOMALIA mission - import remaining local raw models and animations
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-all-local-raw-import.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+jobs:
+  wait-for-real-project-verification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 100
+    steps:
+      - name: Wait for the actual D resource verification without occupying the Windows import runner
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const deadline=Date.now()+95*60*1000;
+            while(Date.now()<deadline){
+              const {data}=await github.rest.actions.getWorkflowRun({...context.repo,run_id:41848085150});
+              if(data.status==='completed'){
+                if(data.conclusion!=='success')throw Error('Actual D project verification failed; preserve inputs and correct it before raw imports');
+                core.info('Actual project resource verification succeeded');return;
+              }
+              core.info('Waiting for actual D project verification, run 41848085150');
+              await new Promise(resolve=>setTimeout(resolve,30000));
+            }
+            throw Error('Actual project verification has not completed within the gate budget');
+  import:
+    needs: wait-for-real-project-verification
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 150
+    concurrency:
+      group: anomalia-ue5-native-host
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: raw-import-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/prepare-all-local-raw-imports.py
+            unreal/Content/Python/import_verified_local_models_and_animations.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare persistent-safe raw import outputs
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('raw-import-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_RAW_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "MISSION_RAW_MANIFEST=$(Join-Path $out 'raw-preparation-manifest.json')" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.MISSION_RAW_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-actual-D-registered-resources
+          run-id: 41848085150
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.MISSION_RAW_OUT }}/registered/
+      - name: Prepare all available sources and archives without rewriting originals
+        timeout-minutes: 35
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('raw-import-'+$env:GITHUB_RUN_ID+'\scripts\ue5\prepare-all-local-raw-imports.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Raw source preparation failed; preserve inputs'}
+      - name: Import verified models and source-family animations into the real D project
+        timeout-minutes: 110
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $os=Get-CimInstance Win32_OperatingSystem
+          if($os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured reserve for Unreal imports'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('raw-import-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\import_verified_local_models_and_animations.py')
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $ErrorActionPreference='Continue'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:MISSION_RAW_OUT\engine.log" *> (Join-Path $env:MISSION_RAW_OUT 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          if($code -ne 0){throw 'Some raw imports require correction; preserve per-source results and continue independent sources in the next batch'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_RAW_OUT != ''
+        with:
+          name: mission-actual-D-raw-resource-import
+          path: ${{ env.MISSION_RAW_OUT }}/
+          if-no-files-found: error

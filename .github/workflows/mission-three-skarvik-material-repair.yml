@@ -1,0 +1,61 @@
+name: ANOMALIA mission - restore three named CitySample material bindings
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-three-skarvik-material-repair.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: material-slots-${{ github.run_id }}
+          sparse-checkout: unreal/Content/Python/repair_three_skarvik_named_kit_materials.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare bounded material recovery with original mesh backups
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('material-slots-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "MISSION_MATERIAL_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $os=Get-CimInstance Win32_OperatingSystem
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='C:'"
+          [ordered]@{CFreeBytes=$disk.FreeSpace;freeRAMBytes=$os.FreePhysicalMemory*1KB;freeVirtualBytes=$os.FreeVirtualMemory*1KB;priorMaterialInspectionRun=41839300043;numericBoundsAndCompilationBarrier=$true;maxMeshes=3;mapsLoadedOrSaved=0} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'preflight.json') -Encoding UTF8
+          if($disk.FreeSpace -lt 3GB -or $os.FreePhysicalMemory*1KB -lt 4GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient measured reserve'}
+      - uses: actions/download-artifact@v4
+        with:
+          name: mission-existing-skarvik-actual-material-slots
+          run-id: 41839300043
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.MISSION_MATERIAL_OUT }}/input/
+      - name: Restore exact existing kit materials and save only the three backed-up mesh bindings
+        timeout-minutes: 12
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Another Unreal process is active'}
+          $stage='C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if((Get-Content -LiteralPath "$stage\.skarvik-ci-stage-marker" -Raw).Trim() -ne '41188816555'){throw 'Untrusted existing stage'}
+          $script=Join-Path $env:GITHUB_WORKSPACE ('material-slots-'+$env:GITHUB_RUN_ID+'\unreal\Content\Python\repair_three_skarvik_named_kit_materials.py')
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $ErrorActionPreference='Continue'
+          & $editor "$stage\AnomaliaZPrigimalia.uproject" -run=pythonscript "-script=$script" -unattended -nopause -nosound -NullRHI "-abslog=$env:MISSION_MATERIAL_OUT\engine.log" *> (Join-Path $env:MISSION_MATERIAL_OUT 'process.log')
+          $code=$LASTEXITCODE
+          $ErrorActionPreference='Stop'
+          if($code -ne 0){throw 'Three-mesh material repair reported native errors; preserve backups and receipts'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.MISSION_MATERIAL_OUT != ''
+        with:
+          name: mission-three-skarvik-material-repair
+          path: ${{ env.MISSION_MATERIAL_OUT }}/
+          if-no-files-found: error

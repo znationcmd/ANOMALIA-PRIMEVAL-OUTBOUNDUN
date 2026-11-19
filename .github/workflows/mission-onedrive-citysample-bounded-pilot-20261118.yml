@@ -1,0 +1,43 @@
+name: ANOMALIA - City Sample safe bounded OneDrive batch
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-onedrive-citysample-bounded-pilot-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-onedrive-citysample-only
+  cancel-in-progress: false
+jobs:
+  stage-small-batch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: onedrive-citysample-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/onedrive_citysample_safe_batch_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Copy at most 1.5 GiB from original City Sample into OneDrive Files On-Demand; preserve originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('onedrive-citysample-' + $env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CITYSAMPLE_ONEDRIVE_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:CITYSAMPLE_ONEDRIVE_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('onedrive-citysample-'+$env:GITHUB_RUN_ID+'\scripts\ue5\onedrive_citysample_safe_batch_20261118.py')
+          if (!(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Safe OneDrive transfer script missing'}
+          $python='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (!(Test-Path -LiteralPath $python -PathType Leaf)) {throw 'Unreal Engine 5.8 Python interpreter missing'}
+          & $python -B $script
+          if ($LASTEXITCODE -ne 0){throw 'OneDrive safe pilot failed. Originals untouched.'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: onedrive-citysample-safe-client-batch-receipt
+          path: ${{ runner.temp }}/onedrive-citysample-${{ github.run_id }}/onedrive-batch-summary.json
+          if-no-files-found: warn

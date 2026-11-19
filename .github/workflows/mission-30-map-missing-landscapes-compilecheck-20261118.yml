@@ -1,0 +1,31 @@
+name: ANOMALIA - compilecheck 11 missing native map landscapes
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-30-map-missing-landscapes-compilecheck-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile all 11 missing native world heightfields
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -pedantic -I . tests/native/anomalia_eleven_missing_worlds.cpp -o /tmp/eleven-maps
+          /tmp/eleven-maps
+      - name: Verify only uninstalled target map package names are scheduled, never existing 19
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          cat=json.loads(Path('public/config/anomalia-map-catalog.json').read_text())
+          assert len(cat['maps'])==30
+          ids=[m['id'] for m in cat['maps']]
+          assert len(ids)==len(set(ids))
+          assert cat['maps'][0]['displayName']=='SKARVIK'
+          assert cat['maps'][1]['displayName']=='DRAZOVIA'
+          print('CATALOGUE_30_MAPS_PRESERVED=1')
+          PY

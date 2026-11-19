@@ -9,7 +9,11 @@
 #include "AnomaliaZPrigimaliaEconomySubsystem.h"
 #include "Vehicles/AnomaliaZPrigimaliaVehicleSurvival.h"
 #include "AnomaliaZPrigimaliaInventoryComponent.h"
+#include "Animation/AnimBlueprintGeneratedClass.h"
+#include "Components/SkeletalMeshComponent.h"
+#include "Engine/SkeletalMesh.h"
 #include "AnomaliaZPrigimaliaVitalsComponent.h"
+#include "Survival/AnomaliaZPrigimaliaWeather.h"
 #include "GameFramework/Controller.h"
 #include "GameFramework/PlayerController.h"
 #include "GameFramework/PlayerState.h"
@@ -36,6 +40,24 @@
 AAnomaliaZPrigimaliaGameMode::AAnomaliaZPrigimaliaGameMode()
 {
     DefaultPawnClass = AAnomaliaZPrigimaliaSurvivor::StaticClass();
+    // Prefer the installed, already audited playable profile. Do not rewrite
+    // its Blueprint or invent body/clothing assets when the pack is absent.
+    UClass* Profile = LoadClass<AAnomaliaZPrigimaliaSurvivor>(nullptr,
+        TEXT("/Game/Anomalia/Characters/BP_Anomalia_Survival.BP_Anomalia_Survival_C"));
+    if (Profile)
+    {
+        const auto* Defaults = Profile->GetDefaultObject<AAnomaliaZPrigimaliaSurvivor>();
+        auto* Mesh = Defaults ? Defaults->GetMesh() : nullptr;
+        const auto* Body = Mesh ? Mesh->GetSkeletalMeshAsset() : nullptr;
+        const auto* Animation = Mesh ? Cast<UAnimBlueprintGeneratedClass>(Mesh->GetAnimClass()) : nullptr;
+        if (Body && Body->GetSkeleton() && Animation && Animation->TargetSkeleton == Body->GetSkeleton())
+        {
+            DefaultPawnClass = Profile;
+            UE_LOG(LogTemp, Display, TEXT("ANOMALIA_DEFAULT_PLAYABLE_PROFILE=%s"), *Profile->GetPathName());
+        }
+        else
+            UE_LOG(LogTemp, Warning, TEXT("ANOMALIA_DEFAULT_PROFILE_NOT_READY: installed Survival profile lacks a compatible animated body"));
+    }
 }
 
 void AAnomaliaZPrigimaliaGameMode::InitGame(const FString& MapName, const FString& Options, FString& ErrorMessage)
@@ -346,6 +368,10 @@ void AAnomaliaZPrigimaliaGameMode::LoadPersistentPlayer(APlayerController* Playe
         }
         if (bValidVitals)
             Survivor->VitalsComponent->RestoreVitals(static_cast<float>(SavedStamina), static_cast<float>(SavedTemperature));
+        double Wetness=0,HeadWetness=0;
+        if(Survival->HasField(TEXT("wetness")))Survival->TryGetNumberField(TEXT("wetness"),Wetness);
+        if(Survival->HasField(TEXT("headWetness")))Survival->TryGetNumberField(TEXT("headWetness"),HeadWetness);
+        Survivor->VitalsComponent->RestoreExposure(static_cast<float>(Wetness),static_cast<float>(HeadWetness));
     }
     if(Survivor->ItemEffectsComponent)
     {
@@ -429,6 +455,8 @@ bool AAnomaliaZPrigimaliaGameMode::SavePersistentPlayer(AController* Controller)
         Survival->SetNumberField(TEXT("stamina"), FMath::Clamp(Survivor->VitalsComponent->Stamina, 0.f, 100.f));
         Survival->SetNumberField(TEXT("bodyTemperatureC"),
             FMath::Clamp(Survivor->VitalsComponent->BodyTemperatureC, 25.f, 45.f));
+        Survival->SetNumberField(TEXT("wetness"),Survivor->VitalsComponent->Wetness);
+        Survival->SetNumberField(TEXT("headWetness"),Survivor->VitalsComponent->HeadWetness);
     }
     Root->SetNumberField(TEXT("schemaVersion"), 1);
     Root->SetObjectField(TEXT("survival"), Survival);
@@ -508,6 +536,7 @@ AAnomaliaZPrigimaliaVehiclePawn* AAnomaliaZPrigimaliaGameMode::SpawnServerVehicl
 
 void AAnomaliaZPrigimaliaGameMode::BeginPlay()
 {
+    if(HasAuthority()&&!AAnomaliaZPrigimaliaWeather::Find(GetWorld()))GetWorld()->SpawnActor<AAnomaliaZPrigimaliaWeather>();
     Super::BeginPlay();
     if (HasAuthority())
     {
@@ -755,3 +784,4 @@ void AAnomaliaZPrigimaliaGameMode::RetryPendingProfileLoads()
             LoadPersistentPlayer(Controller);
     }
 }
+

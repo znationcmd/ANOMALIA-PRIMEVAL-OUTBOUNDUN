@@ -39,12 +39,45 @@ bool FAnomaliaZPrigimaliaReactiveWorldTest::RunTest(const FString& Parameters)
     TestFalse(TEXT("Proximity alone does not supply a lamp"),Lamp->bPowered);
     Generator->ConnectedNodeIds.Add(Relay->StableId);Relay->ConnectedNodeIds.Add(Lamp->StableId);
     Store->RefreshActors();TestTrue(TEXT("Explicit cable path supplies real device"),Lamp->bPowered);
+    Generator->Definition->RequiredFuseItem=TEXT("test_city_fuse");
+    Store->RefreshActors();TestFalse(TEXT("Fuel alone cannot bypass a required city fuse"),Lamp->bPowered);
+    Fuel.InstalledFuseItem=TEXT("wrong_fuse");
+    Store->RefreshActors();TestFalse(TEXT("Wrong installed fuse cannot power the network"),Lamp->bPowered);
+    Fuel.InstalledFuseItem=Generator->Definition->RequiredFuseItem;
+    Store->RefreshActors();TestTrue(TEXT("Correct installed fuse powers connected city devices"),Lamp->bPowered);
+    Fuel.InstalledFuseItem=NAME_None;
+    Store->RefreshActors();TestFalse(TEXT("Missing fuse cuts power despite remaining fuel"),Lamp->bPowered);
+    const double FuelBeforeFuseMissing=Fuel.FuelSeconds;
+    Store->Tick(1.1f);
+    TestEqual(TEXT("Disabled generator does not burn fuel without its fuse"),Fuel.FuelSeconds,FuelBeforeFuseMissing);
+    Fuel.InstalledFuseItem=Generator->Definition->RequiredFuseItem;
+    Store->RefreshActors();
     Lamp->Definition->DemandWatts=1001;Store->RefreshActors();
     TestTrue(TEXT("Overload detected"),Lamp->bOverloaded);TestFalse(TEXT("Overload cuts device power"),Lamp->bPowered);
     Lamp->Definition->DemandWatts=100;Store->Unregister(Relay);
     TestFalse(TEXT("Unloaded relay disconnects consumers"),Lamp->bPowered);
     TestTrue(TEXT("Relay restored after cell reload"),Store->Register(Relay));TestTrue(TEXT("Reload restores cable path"),Lamp->bPowered);
     Fuel.FuelSeconds=0;Store->RefreshActors();TestFalse(TEXT("Empty generator cannot supply devices"),Lamp->bPowered);
+    // Independent fixed village network: fuse required, no fuel item or fuel balance.
+    auto* VillageSupply=Make(TEXT("village-supply"),EAnomaliaZPrigimaliaWorldMechanism::Generator,10000);
+    auto* VillageLamp=Make(TEXT("village-lamp"),EAnomaliaZPrigimaliaWorldMechanism::Consumer,10200);
+    VillageSupply->Definition->bRequiresFuel=false;
+    VillageSupply->Definition->RequiredFuseItem=TEXT("test_city_fuse");
+    VillageSupply->ConnectedNodeIds.Add(VillageLamp->StableId);
+    auto& VillageState=Store->States.FindChecked(VillageSupply->StableId);
+    VillageState.bSwitchedOn=true;VillageState.FuelSeconds=0;
+    Store->RefreshActors();
+    TestFalse(TEXT("Fixed village network still requires a fuse"),VillageLamp->bPowered);
+    VillageState.InstalledFuseItem=TEXT("test_city_fuse");
+    Store->RefreshActors();
+    TestTrue(TEXT("Village fuse restores power with zero fuel"),VillageLamp->bPowered);
+    TestFalse(TEXT("Village supply does not power disconnected player network"),Lamp->bPowered);
+    Store->Tick(1.1f);
+    TestTrue(TEXT("Fixed network stays powered without fuel consumption"),VillageLamp->bPowered);
+    TestEqual(TEXT("Fixed source does not create or consume a fuel balance"),VillageState.FuelSeconds,0.);
+    VillageState.bSwitchedOn=false;Store->RefreshActors();
+    TestFalse(TEXT("Fixed network switch still cuts power"),VillageLamp->bPowered);
+    VillageState.bSwitchedOn=true;Store->RefreshActors();
     auto* Bridge=Make(TEXT("bridge"),EAnomaliaZPrigimaliaWorldMechanism::Repair,400);
     auto& Repair=Store->States.FindChecked(Bridge->StableId);
     Repair.AddDeposited(TEXT("scrap"),100);Repair.AddDeposited(TEXT("wood"),50);
@@ -65,6 +98,9 @@ bool FAnomaliaZPrigimaliaReactiveWorldTest::RunTest(const FString& Parameters)
         TestTrue(TEXT("Repaired state restored"),Loaded->Repair==EAnomaliaZPrigimaliaRepairState::Repaired);
         TestEqual(TEXT("Consumed materials not reset"),Loaded->GetDeposited(TEXT("wood")),50);
     }
+    const auto* LoadedGenerator=Restart->FindState(TEXT("generator"));
+    if(TestNotNull(TEXT("Generator state restored"),LoadedGenerator))
+        TestEqual(TEXT("Installed fuse identity survives restart"),LoadedGenerator->InstalledFuseItem,FName(TEXT("test_city_fuse")));
     TestTrue(TEXT("Event deadline survives restart"),Restart->IsEventActive(TEXT("electromagnetic_storm")));
     auto* PIE=NewObject<UAnomaliaZPrigimaliaWorldStateSubsystem>(World);
     TestTrue(TEXT("PIE instance number does not change map persistence identity"),PIE->Configure(Server,TEXT("UEDPIE_7_test-map"),Error));

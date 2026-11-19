@@ -1,0 +1,65 @@
+name: ANOMALIA - automatic road city village masterplans on all 30 worlds
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-auto-construct-master-plan-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compile-plans:
+    runs-on: ubuntu-latest
+    timeout-minutes: 18
+    steps:
+      - uses: actions/checkout@v4
+      - name: Test all original 30 biomes and deterministic locality/road graph
+        run: |
+          python3 tests/test_anomalia_auto_30_procedural_plan.py
+          python3 scripts/world_auto_construct/plan_all_30.py --catalog public/config/anomalia-map-catalog.json --out /tmp/anomalia-auto30-master.json
+          python3 - <<'PY'
+          import json, pathlib
+          p=pathlib.Path('/tmp/anomalia-auto30-master.json')
+          a=json.loads(p.read_text())
+          assert len(a['maps'])==30 and a['savedBuildingActors']==a['savedRoadActors']==0
+          print('ANOMALIA_AUTO30_PLAN_READY',a['plannedLocalitiesTotal'],a['plannedRegionalLinksTotal'])
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-30-worlds-procedural-town-road-plans
+          path: /tmp/anomalia-auto30-master.json
+          retention-days: 30
+  stage-plans-in-original-game:
+    needs: compile-plans
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: anomalia-30-worlds-procedural-town-road-plans
+          path: ${{ runner.temp }}/anomalia-30-plans-${{ github.run_id }}
+      - name: Stage deterministic 30-map road, city and village plans without altering .umap or assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $main=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if(!(Test-Path -LiteralPath $main -PathType Leaf)){throw 'Original SKARVIK game file missing'}
+          $incoming=Join-Path $env:RUNNER_TEMP ('anomalia-30-plans-'+$env:GITHUB_RUN_ID+'\anomalia-auto30-master.json')
+          if(!(Test-Path -LiteralPath $incoming -PathType Leaf)){throw 'Procedural 30-world plan download failed'}
+          $plan=Get-Content -LiteralPath $incoming -Raw -Encoding UTF8|ConvertFrom-Json
+          if(@($plan.maps).Count -ne 30 -or $plan.levelCount -ne 30 -or !$plan.nativeWorldSourcePreserved){throw 'Invalid 30-world plan'}
+          $destination=Join-Path $root 'Saved\AutoConstruct30\MasterPlans'
+          New-Item -ItemType Directory -Path $destination -Force|Out-Null
+          $target=Join-Path $destination 'ANOMALIA_AUTO30_MASTER_V1.json'
+          $srcHash=(Get-FileHash -LiteralPath $incoming -Algorithm SHA256).Hash
+          if(Test-Path -LiteralPath $target -PathType Leaf){
+            if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $srcHash){throw 'Existing original masterplan differs; not overwriting'}
+            $state='EXISTING_SAME_PLAN_PRESERVED'
+          }else{
+            Copy-Item -LiteralPath $incoming -Destination $target -ErrorAction Stop
+            $state='NEW_MASTER_PLAN_STAGED'
+          }
+          if((Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash -ne $srcHash){throw 'Saved masterplan SHA256 differs'}
+          Write-Host ('ANOMALIA_ALL30_AUTOPLAN_ON_ORIGINAL_D '+([ordered]@{
+            state=$state;mapCount=30;localitiesPlanned=$plan.plannedLocalitiesTotal;regionalRoadsPlanned=$plan.plannedRegionalLinksTotal;
+            createdUnrealLevelActors=0;allOldMapsPreserved=$true;path=$target}|ConvertTo-Json -Depth 5 -Compress))

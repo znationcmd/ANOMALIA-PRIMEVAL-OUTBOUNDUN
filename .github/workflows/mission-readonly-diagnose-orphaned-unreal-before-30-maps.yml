@@ -1,0 +1,55 @@
+name: ANOMALIA - read only check if orphan UE editor is idle before map authoring
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-readonly-diagnose-orphaned-unreal-before-30-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  diagnose:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Compare CPU/write counters and recent map writes; never kill or modify any process
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $before=@(Get-CimInstance Win32_Process -Filter "Name = 'UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          $snapshot=@{}
+          foreach($p in $before){
+            $gp=Get-Process -Id $p.ProcessId -ErrorAction SilentlyContinue
+            $snapshot[$p.ProcessId]=[ordered]@{
+              pid=$p.ProcessId
+              parentPID=$p.ParentProcessId
+              parentAlive=([bool](Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue))
+              ageMinutes=[math]::Round(((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalMinutes,1)
+              unattended=([string]$p.CommandLine).Contains('-unattended')
+              python=([string]$p.CommandLine).Contains('ExecutePythonScript')
+              gameProject=([string]$p.CommandLine).Contains('AnomaliaPrimeval.uproject')
+              CPUSeconds=if($gp){[double]$gp.CPU}else{0.}
+              writesBytes=[long]$p.WriteTransferCount
+              readsBytes=[long]$p.ReadTransferCount
+            }
+          }
+          Start-Sleep -Seconds 22
+          $out=@()
+          foreach($id in @($snapshot.Keys)){
+            $b=$snapshot[$id]
+            $now=Get-CimInstance Win32_Process -Filter ("ProcessId = "+$id) -ErrorAction SilentlyContinue
+            $gp=Get-Process -Id $id -ErrorAction SilentlyContinue
+            $out+=[ordered]@{
+              pid=$id
+              orphan=$b.parentAlive -eq $false
+              ageMinutes=$b.ageMinutes
+              unattended=$b.unattended
+              python=$b.python
+              gameProject=$b.gameProject
+              cpuDeltaSec=if($gp){[math]::Round([double]$gp.CPU-$b.CPUSeconds,3)}else{$null}
+              writeDeltaBytes=if($now){[long]$now.WriteTransferCount-$b.writesBytes}else{$null}
+              readDeltaBytes=if($now){[long]$now.ReadTransferCount-$b.readsBytes}else{$null}
+              stillAlive=[bool]$now
+            }
+          }
+          $recentMaps=@(Get-ChildItem -LiteralPath 'D:\ANOMALIA\unreal\Content\Maps' -File -Filter '*.umap' -ErrorAction SilentlyContinue|Where-Object {$_.LastWriteTimeUtc -ge (Get-Date).ToUniversalTime().AddMinutes(-20)}|Select-Object -ExpandProperty Name)
+          Write-Host ('UE_ORPHAN_MAP_SAFETY_DIAGNOSIS '+([ordered]@{checkedUTC=(Get-Date).ToUniversalTime().ToString('o');observations=$out;recentUmaps=$recentMaps;noProcessTerminated=$true}|ConvertTo-Json -Depth 6 -Compress))

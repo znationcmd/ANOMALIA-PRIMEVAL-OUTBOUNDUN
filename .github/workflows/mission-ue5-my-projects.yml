@@ -1,0 +1,39 @@
+name: ANOMALIA mission - read UE5 My Projects locations
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-ue5-my-projects.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-read-only-ue-project-list
+  cancel-in-progress: false
+jobs:
+  locate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: ue-project-list-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/read-unreal-remembered-projects.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Read remembered project locations without editing launcher or Unreal configuration
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('ue-project-list-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "UE_PROJECT_LIST_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:UE_PROJECT_LIST_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('ue-project-list-'+$env:GITHUB_RUN_ID+'\scripts\ue5\read-unreal-remembered-projects.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only project location check failed'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.UE_PROJECT_LIST_OUT != ''
+        with:
+          name: unreal-my-projects-remembered-locations
+          path: ${{ env.UE_PROJECT_LIST_OUT }}/
+          if-no-files-found: error

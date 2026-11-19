@@ -1,0 +1,43 @@
+name: ANOMALIA mission - check actual free space for game development
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-check-free-space-for-game.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Measure available space and pending Drive cache clues without modifying resources
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $volumes=@(Get-PSDrive -Name C,D,H -ErrorAction SilentlyContinue | ForEach-Object { [ordered]@{drive=$_.Name;freeBytes=[long]$_.Free;usedBytes=[long]$_.Used} })
+          Write-Output ('ACTUAL_SPACE '+($volumes|ConvertTo-Json -Compress))
+          $processes=@(Get-Process -Name GoogleDriveFS,UnrealEditor,UnrealEditor-Cmd,ShaderCompileWorker -ErrorAction SilentlyContinue | Select-Object Name,Id)
+          Write-Output ('ACTIVE_RESOURCE_PROCESSES '+($processes|ConvertTo-Json -Compress))
+          $checkpoint='D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\summary.json'
+          if(Test-Path -LiteralPath $checkpoint) {
+            $data=Get-Content -LiteralPath $checkpoint -Raw | ConvertFrom-Json
+            Write-Output ('DIRECT_COPY_CHECKPOINT '+($data|ConvertTo-Json -Depth 8 -Compress))
+          }
+          $logRoot=Join-Path $env:LOCALAPPDATA 'Google\DriveFS\Logs'
+          $logCounts=[ordered]@{diskFull=0;cloudQuotaExceeded=0;uploadFailures=0;authenticationClues=0;filesRead=0}
+          if(Test-Path -LiteralPath $logRoot) {
+            $logs=@(Get-ChildItem -LiteralPath $logRoot -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 3)
+            foreach($log in $logs) {
+              $lines=@(Get-Content -LiteralPath $log.FullName -Tail 1000 -ErrorAction SilentlyContinue)
+              $logCounts.filesRead++
+              $logCounts.diskFull+=@($lines | Where-Object {$_ -match '(?i)ERROR_DISK_FULL|not enough.*disk|no space left|insufficient.*disk|disk.*is full'}).Count
+              $logCounts.cloudQuotaExceeded+=@($lines | Where-Object {$_ -match '(?i)storageQuotaExceeded|storage quota exceeded|cloud.*quota.*exceeded'}).Count
+              $logCounts.uploadFailures+=@($lines | Where-Object {$_ -match '(?i)upload.*(failed|failure|error)|failed.*upload'}).Count
+              $logCounts.authenticationClues+=@($lines | Where-Object {$_ -match '(?i)invalid_grant|UNAUTHENTICATED'}).Count
+            }
+          }
+          Write-Output ('DRIVE_ERROR_CATEGORY_COUNTS '+($logCounts|ConvertTo-Json -Compress))

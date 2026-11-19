@@ -1,0 +1,270 @@
+{
+  "schemaVersion": 1,
+  "mapId": "apocalyptic-outbreak-v1",
+  "displayName": "APOCALYPTIC OUTBREAK",
+  "unrealPackage": "/Game/Maps/PRIGIMALIA_APOCALYPTIC_OUTBREAK",
+  "sizeMetres": {
+    "eastWest": 15000,
+    "northSouth": 15000
+  },
+  "areaKm2": 225,
+  "generatorSeed": "ANOMALIA-APOCALYPTIC-OUTBREAK-2026",
+  "worldPartitionRequired": true,
+  "terrainHeightResolution": 1009,
+  "expectedLandscapeComponents": 64,
+  "style": {
+    "genre": "post-outbreak survival horror",
+    "timeSinceCollapseYears": 12,
+    "weatherTargets": [
+      "acidic storm atmosphere (visual design only)",
+      "low smoky fog",
+      "burned forest",
+      "rain",
+      "cold gray sunrise"
+    ],
+    "colors": [
+      "soot",
+      "rust",
+      "overgrown moss",
+      "concrete gray",
+      "warning amber"
+    ],
+    "noVisiblePlaceholderBuildings": true
+  },
+  "coordinates": "Metres east/north from map center. These are design anchors, not proof of placed assets.",
+  "settlements": [
+    {
+      "id": "ashfall",
+      "name": "ASHFALL CITY",
+      "kind": "major-city",
+      "east": -450,
+      "north": 850,
+      "radiusMetres": 1350,
+      "design": "ruined city center, crushed skyline, subway, accessible apartment interiors"
+    },
+    {
+      "id": "rustgate",
+      "name": "RUSTGATE",
+      "kind": "town",
+      "east": 4100,
+      "north": 1850,
+      "radiusMetres": 550,
+      "design": "abandoned factories, industrial rail crossings"
+    },
+    {
+      "id": "dreadford",
+      "name": "DREADFORD",
+      "kind": "town",
+      "east": -3850,
+      "north": 1500,
+      "radiusMetres": 550,
+      "design": "damaged suburban market and housing blocks"
+    },
+    {
+      "id": "blackhaven",
+      "name": "BLACKHAVEN",
+      "kind": "town",
+      "east": 500,
+      "north": 5600,
+      "radiusMetres": 560,
+      "design": "hilltop town and blocked evacuation route"
+    },
+    {
+      "id": "cinder-row",
+      "name": "CINDER ROW",
+      "kind": "village",
+      "east": -2500,
+      "north": -3400,
+      "radiusMetres": 250,
+      "design": "burned farm village"
+    },
+    {
+      "id": "dustmill",
+      "name": "DUSTMILL",
+      "kind": "village",
+      "east": 2200,
+      "north": -4200,
+      "radiusMetres": 220,
+      "design": "abandoned lumber mill"
+    },
+    {
+      "id": "sable-farm",
+      "name": "SABLE FARM",
+      "kind": "village",
+      "east": -5200,
+      "north": -2400,
+      "radiusMetres": 240,
+      "design": "radioactive scarecrow fields, boarded farmhouses"
+    },
+    {
+      "id": "thornwood",
+      "name": "THORNWOOD",
+      "kind": "village",
+      "east": -5600,
+      "north": 4500,
+      "radiusMetres": 230,
+      "design": "forest retreat burned and overgrown"
+    },
+    {
+      "id": "last-hope",
+      "name": "LAST HOPE",
+      "kind": "village",
+      "east": 4750,
+      "north": -4500,
+      "radiusMetres": 300,
+      "design": "collapsed survivor settlement"
+    },
+    {
+      "id": "bridgepoint",
+      "name": "BRIDGEPOINT",
+      "kind": "village",
+      "east": 2100,
+      "north": 3000,
+      "radiusMetres": 240,
+      "design": "washed-out bridge outpost"
+    },
+    {
+      "id": "hollow-pines",
+      "name": "HOLLOW PINES",
+      "kind": "village",
+      "east": 5700,
+      "north": 4600,
+      "radiusMetres": 230,
+      "design": "remote houses and forest tracks"
+    },
+    {
+      "id": "redfield",
+      "name": "REDFIELD",
+      "kind": "village",
+      "east": -1350,
+      "north": 6100,
+      "radiusMetres": 250,
+      "design": "abandoned orchard and veterinary station"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "quarantine-hospital",
+      "name": "Quarantine Hospital",
+      "east": 350,
+      "north": 1700,
+      "design": "accessible interior wards, containment barriers"
+    },
+    {
+      "id": "chemical-plant",
+      "name": "RUSTGATE Chemical Plant",
+      "east": 3450,
+      "north": 900,
+      "design": "tanks, pipes, spill zones, underground utility passages"
+    },
+    {
+      "id": "echo-checkpoint",
+      "name": "Outpost ECHO",
+      "east": 500,
+      "north": -5650,
+      "design": "military checkpoint, armory, protected bunker entrance"
+    },
+    {
+      "id": "derailed-train",
+      "name": "Derailed Evacuation Train",
+      "east": -1700,
+      "north": 3300,
+      "design": "abandoned train wreck and baggage loot"
+    },
+    {
+      "id": "contaminated-reservoir",
+      "name": "Blackwater Reservoir",
+      "east": -4800,
+      "north": 5250,
+      "design": "floodgate, power facility, dark water"
+    },
+    {
+      "id": "impact-crater",
+      "name": "Southwest Impact Crater",
+      "east": -3600,
+      "north": -2500,
+      "design": "depression with collapsed asphalt and scattered debris"
+    },
+    {
+      "id": "subway-tunnel",
+      "name": "Ashfall Underground",
+      "east": -380,
+      "north": 430,
+      "design": "accessible metro stations, service tunnels, locked rooms"
+    }
+  ],
+  "roads": [
+    [
+      "ashfall",
+      "dreadford"
+    ],
+    [
+      "ashfall",
+      "rustgate"
+    ],
+    [
+      "ashfall",
+      "blackhaven"
+    ],
+    [
+      "ashfall",
+      "bridgepoint"
+    ],
+    [
+      "dreadford",
+      "thornwood"
+    ],
+    [
+      "dreadford",
+      "sable-farm"
+    ],
+    [
+      "rustgate",
+      "hollow-pines"
+    ],
+    [
+      "rustgate",
+      "last-hope"
+    ],
+    [
+      "blackhaven",
+      "redfield"
+    ],
+    [
+      "blackhaven",
+      "bridgepoint"
+    ],
+    [
+      "ashfall",
+      "cinder-row"
+    ],
+    [
+      "cinder-row",
+      "dustmill"
+    ],
+    [
+      "dustmill",
+      "last-hope"
+    ]
+  ],
+  "environmentSystemsPlanned": {
+    "loot": true,
+    "abandonedVehicles": true,
+    "zombieOrInfectedSpawns": true,
+    "weather": true,
+    "radiationZones": true,
+    "dayNightCycle": true,
+    "bunkers": true,
+    "usableBuildingInteriors": true
+  },
+  "implementationState": {
+    "terrainFormulaInSource": true,
+    "unrealMapSaved": false,
+    "buildingsPlaced": false,
+    "realInteriorsVerified": false,
+    "roadsPlaced": false,
+    "lootConnected": false,
+    "infectedGameplayConnected": false,
+    "gamePlaytested": false
+  }
+}

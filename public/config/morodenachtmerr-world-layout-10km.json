@@ -1,0 +1,553 @@
+{
+  "schemaVersion": 1,
+  "mapId": "morodenachtmerr-v1",
+  "displayName": "MORØDENACHTMERR",
+  "unrealPackage": "/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR",
+  "sizeMetres": {
+    "eastWest": 10000,
+    "northSouth": 10000
+  },
+  "areaKm2": 100,
+  "terrainType": "haunted countryside, scattered farms, fields, dark forests, bogs and haunted rural villages",
+  "style": "Nordic-Russian-German-Albanian rural horror",
+  "seed": "MOROEDENACHTMERR-ANOMALIA-2026",
+  "worldPartitionRequired": true,
+  "terrainHeightResolution": 1009,
+  "expectedLandscapeComponents": 64,
+  "oneContinuousMainRiver": true,
+  "water": {
+    "designStatus": "native terrain river/lake basins implemented in C++; actual Unreal WaterBody actors, spline meshing, hydraulics and visual playtest not yet verified",
+    "mainRiver": {
+      "id": "riviere-moroden",
+      "name": "Rivière Morøden",
+      "crossesEntireMap": true,
+      "flowDirection": "north to south",
+      "mouthEdge": "south at north=-5000 m",
+      "sourceEdge": "north at north=+5000 m",
+      "averageWidthMetres": 180,
+      "minWidthMetres": 150,
+      "maxWidthMetres": 210,
+      "centrelineEastFunction": "-480 + 570*sin(north/1280) + 190*sin(north/460)",
+      "surfaceElevationMetresFunction": "139 + 0.007*north",
+      "riverbedBelowSurfaceMetres": 4,
+      "centrelinePointsMetres": [
+        {
+          "east": -1063.1,
+          "north": 5000,
+          "surfaceMeters": 174,
+          "widthMeters": 180
+        },
+        {
+          "east": -936.26,
+          "north": 4750,
+          "surfaceMeters": 172.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -754.81,
+          "north": 4500,
+          "surfaceMeters": 170.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -546.26,
+          "north": 4250,
+          "surfaceMeters": 168.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -343.96,
+          "north": 4000,
+          "surfaceMeters": 167,
+          "widthMeters": 180
+        },
+        {
+          "east": -178.5,
+          "north": 3750,
+          "surfaceMeters": 165.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -69.94,
+          "north": 3500,
+          "surfaceMeters": 163.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -23.07,
+          "north": 3250,
+          "surfaceMeters": 161.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -27.07,
+          "north": 3000,
+          "surfaceMeters": 160,
+          "widthMeters": 180
+        },
+        {
+          "east": -59.52,
+          "north": 2750,
+          "surfaceMeters": 158.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -93.7,
+          "north": 2500,
+          "surfaceMeters": 156.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -106.91,
+          "north": 2250,
+          "surfaceMeters": 154.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -87.53,
+          "north": 2000,
+          "surfaceMeters": 153,
+          "widthMeters": 180
+        },
+        {
+          "east": -38.68,
+          "north": 1750,
+          "surfaceMeters": 151.25,
+          "widthMeters": 180
+        },
+        {
+          "east": 22.63,
+          "north": 1500,
+          "surfaceMeters": 149.5,
+          "widthMeters": 180
+        },
+        {
+          "east": 70.49,
+          "north": 1250,
+          "surfaceMeters": 147.75,
+          "widthMeters": 180
+        },
+        {
+          "east": 77.85,
+          "north": 1000,
+          "surfaceMeters": 146,
+          "widthMeters": 180
+        },
+        {
+          "east": 24.86,
+          "north": 750,
+          "surfaceMeters": 144.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -94.77,
+          "north": 500,
+          "surfaceMeters": 142.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -271.13,
+          "north": 250,
+          "surfaceMeters": 140.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -480,
+          "north": 0,
+          "surfaceMeters": 139,
+          "widthMeters": 180
+        },
+        {
+          "east": -688.87,
+          "north": -250,
+          "surfaceMeters": 137.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -865.23,
+          "north": -500,
+          "surfaceMeters": 135.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -984.86,
+          "north": -750,
+          "surfaceMeters": 133.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -1037.85,
+          "north": -1000,
+          "surfaceMeters": 132,
+          "widthMeters": 180
+        },
+        {
+          "east": -1030.49,
+          "north": -1250,
+          "surfaceMeters": 130.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -982.63,
+          "north": -1500,
+          "surfaceMeters": 128.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -921.32,
+          "north": -1750,
+          "surfaceMeters": 126.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -872.47,
+          "north": -2000,
+          "surfaceMeters": 125,
+          "widthMeters": 180
+        },
+        {
+          "east": -853.09,
+          "north": -2250,
+          "surfaceMeters": 123.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -866.3,
+          "north": -2500,
+          "surfaceMeters": 121.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -900.48,
+          "north": -2750,
+          "surfaceMeters": 119.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -932.93,
+          "north": -3000,
+          "surfaceMeters": 118,
+          "widthMeters": 180
+        },
+        {
+          "east": -936.93,
+          "north": -3250,
+          "surfaceMeters": 116.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -890.06,
+          "north": -3500,
+          "surfaceMeters": 114.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -781.5,
+          "north": -3750,
+          "surfaceMeters": 112.75,
+          "widthMeters": 180
+        },
+        {
+          "east": -616.04,
+          "north": -4000,
+          "surfaceMeters": 111,
+          "widthMeters": 180
+        },
+        {
+          "east": -413.74,
+          "north": -4250,
+          "surfaceMeters": 109.25,
+          "widthMeters": 180
+        },
+        {
+          "east": -205.19,
+          "north": -4500,
+          "surfaceMeters": 107.5,
+          "widthMeters": 180
+        },
+        {
+          "east": -23.74,
+          "north": -4750,
+          "surfaceMeters": 105.75,
+          "widthMeters": 180
+        },
+        {
+          "east": 103.1,
+          "north": -5000,
+          "surfaceMeters": 104,
+          "widthMeters": 180
+        }
+      ]
+    },
+    "lakes": [
+      {
+        "id": "lac-des-brumes",
+        "name": "Lac des Brumes",
+        "east": -2650,
+        "north": 2100,
+        "radiusEastMeters": 560,
+        "radiusNorthMeters": 410,
+        "surfaceMeters": 163,
+        "averageDepthMetres": 4.5,
+        "outflowTo": "rivière Morøden"
+      },
+      {
+        "id": "lac-des-cendres",
+        "name": "Lac des Cendres",
+        "east": 2550,
+        "north": 3050,
+        "radiusEastMeters": 480,
+        "radiusNorthMeters": 340,
+        "surfaceMeters": 173,
+        "averageDepthMetres": 4.5,
+        "outflowTo": "rivière Morøden"
+      },
+      {
+        "id": "lac-noir",
+        "name": "Lac Noir",
+        "east": 2350,
+        "north": -1850,
+        "radiusEastMeters": 590,
+        "radiusNorthMeters": 460,
+        "surfaceMeters": 137,
+        "averageDepthMetres": 4.5,
+        "outflowTo": "rivière Morøden"
+      }
+    ],
+    "tributaries": [
+      {
+        "id": "ruisseau-des-brumes",
+        "name": "Ruisseau des Brumes",
+        "widthMetres": 22,
+        "sourceLakeId": "lac-des-brumes",
+        "points": [
+          [
+            -4550,
+            3980
+          ],
+          [
+            -2650,
+            2100
+          ],
+          [
+            -1600,
+            1750
+          ],
+          [
+            -700,
+            1100
+          ],
+          [
+            -15.19,
+            650
+          ]
+        ]
+      },
+      {
+        "id": "ruisseau-des-cendres",
+        "name": "Ruisseau des Cendres",
+        "widthMetres": 18,
+        "sourceLakeId": "lac-des-cendres",
+        "points": [
+          [
+            4300,
+            4100
+          ],
+          [
+            2550,
+            3050
+          ],
+          [
+            1750,
+            2500
+          ],
+          [
+            900,
+            1850
+          ],
+          [
+            75.99,
+            1200
+          ]
+        ]
+      },
+      {
+        "id": "ruisseau-du-lac-noir",
+        "name": "Ruisseau du Lac Noir",
+        "widthMetres": 26,
+        "sourceLakeId": "lac-noir",
+        "points": [
+          [
+            4400,
+            -550
+          ],
+          [
+            2350,
+            -1850
+          ],
+          [
+            1500,
+            -2450
+          ],
+          [
+            600,
+            -2850
+          ],
+          [
+            -925.22,
+            -3350
+          ]
+        ]
+      },
+      {
+        "id": "ruisseau-du-sud",
+        "name": "Ruisseau du Sud",
+        "widthMetres": 18,
+        "points": [
+          [
+            -4450,
+            -3050
+          ],
+          [
+            -3150,
+            -3650
+          ],
+          [
+            -2200,
+            -3850
+          ],
+          [
+            -1450,
+            -4300
+          ],
+          [
+            -127.6,
+            -4600
+          ]
+        ]
+      }
+    ],
+    "expectedMainRiverCount": 1,
+    "expectedLakesCount": 3,
+    "expectedTributariesCount": 4,
+    "waterSurfacePlacedInUnreal": false,
+    "landscapeRiverBasinsInCxxSource": true,
+    "landscapeStreamsInCxxSource": true,
+    "swimmingBoatsFishingWorking": false
+  },
+  "settlements": [
+    {
+      "id": "moroden",
+      "name": "MORØDEN",
+      "type": "small-rural-town",
+      "east": -2700,
+      "north": -1000,
+      "design": "ancienne place du village, maisons paysannes visitables, station-service isolée"
+    },
+    {
+      "id": "dunkelhof",
+      "name": "DUNKELHOF",
+      "type": "hamlet",
+      "east": -3500,
+      "north": 1500,
+      "design": "fermes abandonnées et chemins en terre"
+    },
+    {
+      "id": "skogheim",
+      "name": "SKOGHEIM",
+      "type": "hamlet",
+      "east": 3300,
+      "north": 4100,
+      "design": "scierie et forêt sombre"
+    },
+    {
+      "id": "vargsmork",
+      "name": "VARGSMØRK",
+      "type": "hamlet",
+      "east": -900,
+      "north": 3650,
+      "design": "cabanes de chasse à proximité de la grande rivière"
+    },
+    {
+      "id": "nachtfeld",
+      "name": "NACHTFELD",
+      "type": "hamlet",
+      "east": -3600,
+      "north": -2900,
+      "design": "champs en friche et bâtiments agricoles"
+    },
+    {
+      "id": "smertovo",
+      "name": "SMERTOVO",
+      "type": "hamlet",
+      "east": 1100,
+      "north": -850,
+      "design": "vieux pont, auberge et commerces barricadés"
+    },
+    {
+      "id": "kaldmyr",
+      "name": "KALDMYR",
+      "type": "hamlet",
+      "east": 3100,
+      "north": 500,
+      "design": "maraîchages et marécages"
+    },
+    {
+      "id": "tmerrina",
+      "name": "TMERRINA",
+      "type": "hamlet",
+      "east": 3150,
+      "north": -3750,
+      "design": "élevage et ferme isolée"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "old-chapel",
+      "name": "Chapelle abandonnée",
+      "east": -3400,
+      "north": 1750
+    },
+    {
+      "id": "river-bridge",
+      "name": "Pont de la Morøden",
+      "east": -480,
+      "north": 0
+    },
+    {
+      "id": "dam",
+      "name": "Ancienne écluse",
+      "east": -20.39,
+      "north": 3200
+    },
+    {
+      "id": "forest-bunker",
+      "name": "Bunker sous la forêt",
+      "east": 2600,
+      "north": 4250
+    },
+    {
+      "id": "abandoned-mill",
+      "name": "Moulin abandonné",
+      "east": -1157.55,
+      "north": -2400
+    }
+  ],
+  "roadDesign": {
+    "type": "narrow rural roads and tractor trails; footbridges and one road bridge must not obstruct river",
+    "visualBridgesNotYetPlaced": true
+  },
+  "implementationState": {
+    "nativeHeightFormulaCommitted": true,
+    "actualUmapSaved": false,
+    "landscapeWaterBodiesBuilt": false,
+    "completeRuralBuildingsPlaced": false,
+    "zombiesConnected": false,
+    "treesAndGrassPlaced": false,
+    "testedInPackagedGame": false
+  },
+  "protectExistingMaps": [
+    "/Game/Maps/PRIGIMALIA_APOCALYPTIC_OUTBREAK",
+    "/Game/Maps/ANOMALIA_Archipelago_v2"
+  ]
+}

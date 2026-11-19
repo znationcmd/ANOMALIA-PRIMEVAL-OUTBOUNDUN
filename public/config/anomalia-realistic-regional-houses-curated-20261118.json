@@ -1,0 +1,135 @@
+{
+  "schemaVersion": 1,
+  "project": "ANOMALIA’Z PRIGIMALIA",
+  "intent": "Realistic regionally appropriate 3D house and climate architecture assets, not generic placeholders",
+  "currentAuthoringStatus": "catalogued-external-auth-downloads-pending",
+  "strictRules": {
+    "neverOverwriteOriginalAssets": true,
+    "commercialUseOnly": true,
+    "requireSourceLicense": true,
+    "doNotBypassDownloadLogin": true,
+    "neverClaimSourceIsNativeUassetUntilUnrealImportVerified": true,
+    "authenticRegionSpecificArchitectureRequired": true
+  },
+  "maps": [
+    {
+      "map": "ARANYAPURA",
+      "style": "indian",
+      "asset": "Indian House",
+      "url": "https://sketchfab.com/3d-models/indian-house-ca3abf657ca34a839dd7b00d24220627",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "realistic_house",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Realistic residential facade, windows, balconies; no proven navigable interior"
+    },
+    {
+      "map": "NASDARAS",
+      "style": "arabic-sahel-desert",
+      "asset": "Arabic house 6",
+      "url": "https://sketchfab.com/3d-models/arabic-house-6-f7e01dfac3e746e698d62c84fd9a546d",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "house",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Arabic architecture; physical source import pending"
+    },
+    {
+      "map": "MOKUPŪNAWAI",
+      "style": "hawaiian-tropical",
+      "asset": "Stilt House",
+      "url": "https://grab3d.com/models/buildings/stilt-house/",
+      "license": "CC0",
+      "commercial": true,
+      "modelKind": "stylized_house",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "notPhotorealistic": true,
+      "reason": "Tropical stilt architecture but stylized, not equivalent to user's requested realism; do not auto-place as finished"
+    },
+    {
+      "map": "MOSCOVIE / БОТ СЕВЕР",
+      "style": "russian",
+      "asset": "Modular Russian panel house",
+      "url": "https://sketchfab.com/3d-models/modular-russian-panel-house-7bef9b27b4c54a03b64e2f395fef3d7f",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "2k-pbr-realistic-modular-building",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Realistic residential Russian panel house, official licensed download requires authorization"
+    },
+    {
+      "map": "YUDINAVIA / SKJÆRØYÅS",
+      "style": "norwegian-nordic",
+      "asset": "Medieval Viking House",
+      "url": "https://sketchfab.com/3d-models/medieval-viking-house-1a720687cb1f4747ade741508cd505bc",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "4k-pbr-fbx-building",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Traditional nordic medieval building with PBR 4K textures"
+    },
+    {
+      "map": "KÖNIGSBRÜCK",
+      "style": "german",
+      "asset": "Medieval Half Timbered House",
+      "url": "https://sketchfab.com/3d-models/medieval-half-timbered-house-55df021409ac4fd28e908932e7574624",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "fully-textured-fachwerk",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Authentic visual timber framing; interior access unverified"
+    },
+    {
+      "map": "KIRYŪMORI",
+      "style": "japanese",
+      "asset": "Traditional Japanese House",
+      "url": "https://sketchfab.com/3d-models/traditional-japanese-house-d34058bd335344cf84aa2ffae91d4004",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "high-poly-textured-house",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "815k triangles, high poly; needs LODs/performance audit before mass placement"
+    },
+    {
+      "map": "KIRYŪMORI",
+      "style": "korean",
+      "asset": "Traditional Hanok House L shaped",
+      "url": "https://www.innerscene.com/tools/library/3d-parts/hanok-house-l-shaped-with-courtyard-and-stone-wall-4267797e",
+      "license": "CC0",
+      "commercial": true,
+      "modelKind": "real-scale-original-glb-hanok",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Hanok with courtyard; appearance photorealism and UE import not verified"
+    },
+    {
+      "map": "SKJÆRØYÅS / БОТ СЕВЕР",
+      "style": "snow-winter",
+      "asset": "Winter House photogrammetry",
+      "url": "https://sketchfab.com/3d-models/winter-house-05e24d513635445380813a3ce15206db",
+      "license": "CC BY",
+      "commercial": true,
+      "modelKind": "144k-photogrammetry-house",
+      "verifiedModelPage": true,
+      "actualBytesDownloaded": false,
+      "reason": "Winter chalet scan, good for photo-real snow villages; requires legitimate authorized download"
+    }
+  ],
+  "alreadyDownloadedCC0PBRSourcePacks": [
+    "modular_urban_apartments_facade",
+    "modular_factory_facade",
+    "modular_fort_01",
+    "chinese_cabinet",
+    "carved_wooden_elephant"
+  ],
+  "downloadWorkflow": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/44408419221",
+  "nativeImportWorkflow": "https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/44408781198",
+  "note": "The five verified Poly Haven CC0 PBR sets are genuine meshes but not complete culture-specific houses. Sketchfab pages listed here are externally selected candidates, not downloaded or installed."
+}

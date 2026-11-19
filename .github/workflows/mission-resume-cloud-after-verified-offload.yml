@@ -1,0 +1,85 @@
+name: ANOMALIA mission - City Sample first cloud transfer
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-resume-cloud-after-verified-offload.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  resume:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: cloud-resume-${{ github.run_id }}
+          sparse-checkout: |
+            scripts/ue5/release-inactive-legacy-ddc-for-cloud.py
+            scripts/ue5/reference-server-verified-cloud-archives.py
+            scripts/ue5/verified-cloud-archive-offload-20261105.json
+            scripts/ue5/transfer-all-inventoried-resources-to-cloud.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare persistent cloud resume receipts
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('verified-cloud-resume-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - name: Release old regenerable legacy UDD cache with editor-off guards
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cloud-resume-'+$env:GITHUB_RUN_ID+'\scripts\ue5\release-inactive-legacy-ddc-for-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Cache safety guard stopped cleanup; sources preserved'}
+      - name: Retain server-verified cold archives online and measure released C space
+        id: offload
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cloud-resume-'+$env:GITHUB_RUN_ID+'\scripts\ue5\reference-server-verified-cloud-archives.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Verified archive offload failed; review preserved source and cloud references'}
+          $result=Get-Content -LiteralPath (Join-Path $env:CLOUD_TRANSFER_OUT 'verified-archive-offload.json') -Raw | ConvertFrom-Json
+          "ready=$(([bool]$result.resumeReserveAvailable).ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        if: steps.offload.outputs.ready == 'true'
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        if: steps.offload.outputs.ready == 'true'
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
+      - name: Transfer City Sample first and publish live cloud progress
+        if: steps.offload.outputs.ready == 'true'
+        timeout-minutes: 300
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('cloud-resume-'+$env:GITHUB_RUN_ID+'\scripts\ue5\transfer-all-inventoried-resources-to-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Transfer paused; preserve journal and original native project resources'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: verified-cloud-offload-and-resume-receipts
+          path: |
+            ${{ env.CLOUD_TRANSFER_OUT }}/legacy-ddc-cleanup*.json*
+            ${{ env.CLOUD_TRANSFER_OUT }}/verified-archive-offload.json
+            ${{ env.CLOUD_TRANSFER_OUT }}/cloud-transfer-summary.json
+            ${{ env.CLOUD_TRANSFER_OUT }}/resource-transfers.jsonl
+          if-no-files-found: error
+
+# Resume remaining City Sample resources from verified journal on 2026-11-06.

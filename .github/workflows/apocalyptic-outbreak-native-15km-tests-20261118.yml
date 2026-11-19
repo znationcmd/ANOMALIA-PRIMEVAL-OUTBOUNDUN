@@ -1,0 +1,43 @@
+name: ANOMALIA - validate Apocalyptic Outbreak native 15 km terrain math and catalogue
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/apocalyptic-outbreak-native-15km-tests-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile/test exact native 15km terrain maths
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -I . tests/native/apocalyptic_outbreak_terrain_15km.cpp -o /tmp/apocalyptic-native-map
+          /tmp/apocalyptic-native-map
+      - name: Verify no previous maps changed and all planned POIs are within map
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          c=json.loads(Path('public/config/anomalia-map-catalog.json').read_text())
+          m=[r for r in c['maps'] if r['id']=='apocalyptic-outbreak-v1']
+          assert len(m)==1
+          v=m[0]
+          assert v['widthKm']==v['heightKm']==15 and v['areaKm2']==225
+          assert v['serverSelectable'] is False and v['nativeWorldCreated'] is False
+          assert len(c['maps'])==c['mapCount']
+          layout=json.loads(Path('public/config/apocalyptic-outbreak-world-layout-15km.json').read_text())
+          assert len(layout['settlements'])==12 and len(layout['landmarks'])==7
+          assert sum(x['kind']=='major-city' for x in layout['settlements'])==1
+          assert sum(x['kind']=='town' for x in layout['settlements'])==3
+          assert sum(x['kind']=='village' for x in layout['settlements'])==8
+          sites=layout['settlements']+layout['landmarks']
+          assert len({x['id'] for x in sites})==len(sites)
+          assert all(abs(x['east'])<=7100 and abs(x['north'])<=7100 for x in sites)
+          known={x['id'] for x in layout['settlements']}
+          assert all(a in known and b in known for a,b in layout['roads'])
+          print('APOCALYPTIC_OUTBREAK_PLANNED_15x15km_225KM2_VALID=1')
+          PY

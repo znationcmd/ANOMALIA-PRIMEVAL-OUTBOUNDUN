@@ -1,0 +1,225 @@
+{
+  "schemaVersion": 1,
+  "mapId": "mokupunawai-v1",
+  "displayName": "MOKUPŪNAWAI",
+  "subtitle": "Les oasis de l'archipel volcanique",
+  "namingNote": "Nom inventé d'inspiration hawaïenne : moku (île) + pūnāwai (source d'eau), sans prétention à une traduction traditionnelle validée.",
+  "nativeUnrealPackage": "/Game/Maps/PRIGIMALIA_MOKUPUNAWAI",
+  "sizeMetres": {
+    "eastWest": 21000,
+    "northSouth": 21000
+  },
+  "areaKm2": 441,
+  "seed": "MOKUPUNAWAI-2026",
+  "worldPartitionRequired": true,
+  "topology": {
+    "type": "single-major-volcanic-island-with-three-offshore-islets",
+    "mainIslandApproxCentre": {
+      "east": 0,
+      "north": 0
+    },
+    "designZones": [
+      {
+        "id": "windward-jungle",
+        "biome": "rainforest-waterfalls-rivers",
+        "region": "northeast"
+      },
+      {
+        "id": "leeward-drylands",
+        "biome": "sunbaked-volcanic-drylands-oases",
+        "region": "southwest"
+      },
+      {
+        "id": "volcanic-highlands",
+        "biome": "lava-plateau-crater-steep-cliffs",
+        "region": "central"
+      },
+      {
+        "id": "coral-coast",
+        "biome": "white-sand-beaches-lagoons-coral-reefs",
+        "region": "southeast"
+      },
+      {
+        "id": "black-sand-coast",
+        "biome": "black-sand-shores-sea-caves",
+        "region": "northwest"
+      }
+    ],
+    "offshoreIslets": [
+      {
+        "id": "moku-iki",
+        "east": 7900,
+        "north": 6900,
+        "role": "forest islet and abandoned observatory"
+      },
+      {
+        "id": "kai-ala",
+        "east": -8100,
+        "north": -6900,
+        "role": "coral atoll and shipwrecks"
+      },
+      {
+        "id": "pali-uli",
+        "east": 8600,
+        "north": -7500,
+        "role": "rocky offshore refuge"
+      }
+    ]
+  },
+  "oases": [
+    {
+      "id": "wai-ola",
+      "name": "Wai Ola",
+      "east": -4600,
+      "north": -3200,
+      "type": "freshwater spring",
+      "radiusMetres": 250
+    },
+    {
+      "id": "puna-malu",
+      "name": "Puna Malu",
+      "east": -1700,
+      "north": -5100,
+      "type": "palm spring lagoon",
+      "radiusMetres": 360
+    },
+    {
+      "id": "wai-pohaku",
+      "name": "Wai Pōhaku",
+      "east": 2700,
+      "north": -2400,
+      "type": "freshwater volcanic basin",
+      "radiusMetres": 240
+    },
+    {
+      "id": "puna-lani",
+      "name": "Puna Lani",
+      "east": 4900,
+      "north": -4500,
+      "type": "hidden waterfall pool",
+      "radiusMetres": 290
+    },
+    {
+      "id": "wai-huna",
+      "name": "Wai Huna",
+      "east": -3700,
+      "north": 800,
+      "type": "spring inside lava ravine",
+      "radiusMetres": 190
+    },
+    {
+      "id": "puna-kapu",
+      "name": "Puna Kapu",
+      "east": 1300,
+      "north": 3200,
+      "type": "misty mountain spring",
+      "radiusMetres": 210
+    }
+  ],
+  "settlements": [
+    {
+      "id": "kahakai",
+      "name": "Kahakai",
+      "east": 4500,
+      "north": -6100,
+      "design": "small coastal fishing town with harbor"
+    },
+    {
+      "id": "pali-kula",
+      "name": "Pali Kula",
+      "east": -5100,
+      "north": 1900,
+      "design": "plantation village and jungle farms"
+    },
+    {
+      "id": "awa-lani",
+      "name": "Awa Lani",
+      "east": 6100,
+      "north": 1500,
+      "design": "tropical beach village"
+    },
+    {
+      "id": "puu-malu",
+      "name": "Puʻu Malu",
+      "east": -2500,
+      "north": -3500,
+      "design": "dryland settlement and oasis trail"
+    },
+    {
+      "id": "moku-lae",
+      "name": "Moku Lae",
+      "east": 1400,
+      "north": 5600,
+      "design": "mountain village at forest edge"
+    }
+  ],
+  "landmarks": [
+    {
+      "id": "caldera",
+      "name": "Ancien cratère",
+      "east": 0,
+      "north": 800,
+      "design": "volcanic basin and lava tunnels"
+    },
+    {
+      "id": "falls",
+      "name": "Cascades d'Awa",
+      "east": 3500,
+      "north": 3400,
+      "design": "waterfalls and swimming pool"
+    },
+    {
+      "id": "temple",
+      "name": "Ruines de la falaise",
+      "east": -6900,
+      "north": 3600,
+      "design": "ancient fictional ruins"
+    },
+    {
+      "id": "bunker",
+      "name": "Bunker sous les laves",
+      "east": 1800,
+      "north": -500,
+      "design": "research bunker accessible via lava cave"
+    },
+    {
+      "id": "airstrip",
+      "name": "Ancienne piste d'atterrissage",
+      "east": -5200,
+      "north": -3000,
+      "design": "abandoned rural airstrip"
+    }
+  ],
+  "waterways": {
+    "freshwaterOasisCount": 6,
+    "coastalLagoonsPlanned": 3,
+    "waterfallSystemsPlanned": 2,
+    "riversPlanned": 3,
+    "waterBodiesImplementedInUnreal": false
+  },
+  "intendedGameplay": [
+    "jungle survival",
+    "boat and jet-ski navigation",
+    "cliff hiking",
+    "volcanic cave exploration",
+    "underwater reefs",
+    "oasis-based freshwater survival"
+  ],
+  "implementationStatus": {
+    "catalogRegistered": false,
+    "nativeHeightSourceImplemented": false,
+    "nativeWorldUmapSaved": false,
+    "actualWaterBodiesPlaced": false,
+    "volcanoCavesBuilt": false,
+    "settlementsPopulated": false,
+    "playableCharactersAndVehiclesTested": false
+  },
+  "safeguarding": {
+    "independentFrom": [
+      "apocalyptic-outbreak-v1",
+      "morodenachtmerr-v1",
+      "skarvik"
+    ],
+    "preserveExistingMaps": true
+  }
+}

@@ -1,0 +1,15 @@
+# Weather and provisions — 7 November 2026
+
+Source change: 06a2008db0371211d7ea0d62becdfd2adc0635ac. Native validation run: https://github.com/znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN/actions/runs/42379630246
+
+Implemented in source: authoritative storm state and automatic climate-dependent cycles; dense colored storm fog; wind/rain exposure; clothing mesh insulation; wetness and head wetness; fuel-limited line-of-sight heat sources; incremental item freezing and thawing with latent heat; consumption rejection for frozen/scalding provisions; thermal stack persistence, compatible legacy defaults and merge protection; inventory temperature display and transactional head-wetting action that consumes water and returns its configured empty container.
+
+Verified locally: all 26 catalogue food entries already have positive eat rules; the two standard-library test cases pass, including 12 portable C++ thermal scenarios. Two Unreal automation cases cover the thermal model and frozen inventory persistence/consumption. Their native execution is pending; local tests do not establish engine compilation or playability.
+
+Deployment: compile the existing preserved C validation project first. Inspect the actual D module and compare every changed main source against its exact pre-change baseline. Any difference preserves the whole main source deployment. Originals and binaries are backed up before a matching deployment, with rollback on failed main compilation. Original maps and assets are not replaced.
+
+Acceptance still required: native Editor/Game build and Unreal test results; actual D source compatibility; PIE consumption, network/persistence checks and controller UI; licensed campfire/heater component binding, player ignition/refuelling and fire presentation; regional climate assignment within SKARVIK; actual rain/snow/dust particles, wind/rain audio and indoor exclusion; measured visibility at ground and mountain elevations; actual performance. The fog implementation alone is not acceptance of a complete sandstorm/blizzard/rainstorm. Stored items currently exchange heat while their owning survivor is active; offline and world-pickup thermal simulation remain separate work.
+
+Vehicles: prior actual fleet review failed its memory-reserve preflight. A new actual-project rig/collision/paint review is queued independently in the validation workflow. No new drivable vehicle or complete fleet repair is asserted. F1 cars, BMW E39, trucks, motorcycles, snowmobiles, scooters, boats, hovercraft, aircraft, helicopters and tanks each require their actual geometry, appropriate movement implementation and driving/flight/float tests. The source-only thermal tests do not validate any of those vehicles.
+
+Import continuation: pilot run 42377395231 failed before importing because project_file_path was not exposed by Unreal Python. Commit 98e00bf15e2607c0a72b979f58e53fcea1c8d2f3 uses the already supported actual content-directory guard. The validation workflow resumes the corrected original-model pipeline after native and fleet work; successful original assets and all archives remain preserved.

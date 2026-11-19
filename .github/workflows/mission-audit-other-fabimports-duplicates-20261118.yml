@@ -1,0 +1,40 @@
+name: ANOMALIA - audit independent duplicates in other FabImports packs
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-audit-other-fabimports-duplicates-20261118.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-verified-vaultcache-safe-reclaim
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: other-fabimports-audit-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/audit_other_fabimports_independent_copies_20261118.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Read-only audit matching assets in other FabImports packs, preserving all originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=Join-Path $env:RUNNER_TEMP ('other-fabimports-audit-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "FABIMPORT_AUDIT_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:FABIMPORT_AUDIT_OUT=$out
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('other-fabimports-audit-'+$env:GITHUB_RUN_ID+'\scripts\ue5\audit_other_fabimports_independent_copies_20261118.py')
+          & $py -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only other-packs duplicate scan failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: other-fabimports-duplicate-audit
+          path: ${{ runner.temp }}/other-fabimports-audit-${{ github.run_id }}/fabimports-excluding-vault-citysample-audit.json
+          if-no-files-found: warn

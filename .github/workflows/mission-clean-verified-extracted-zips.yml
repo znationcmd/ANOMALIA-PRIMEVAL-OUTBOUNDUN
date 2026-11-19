@@ -1,0 +1,39 @@
+name: ANOMALIA mission - remove only completely verified extracted ZIPs
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-clean-verified-extracted-zips.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  cleanup:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: zip-cleanup-${{ github.run_id }}
+          sparse-checkout: scripts/ue5/remove-only-completely-verified-extracted-zips.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Verify every original ZIP member against its retained extraction before removal
+        timeout-minutes: 50
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd -ErrorAction SilentlyContinue).Count){throw 'Active editor preserved; defer cleanup'}
+          $out='D:\ANOMALIA\unreal\Saved\CleanupReceipts\VerifiedExtractedZIPs\'+$env:GITHUB_RUN_ID
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "ZIP_CLEANUP_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $env:ZIP_CLEANUP_OUT=$out
+          $script=Join-Path $env:GITHUB_WORKSPACE ('zip-cleanup-'+$env:GITHUB_RUN_ID+'\scripts\ue5\remove-only-completely-verified-extracted-zips.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'ZIP verification stopped; unverified archives retained'}
+          exit 0
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ZIP_CLEANUP_OUT != ''
+        with:
+          name: verified-extracted-zip-removal-receipts
+          path: ${{ env.ZIP_CLEANUP_OUT }}/verified-zip-cleanup.json
+          if-no-files-found: warn

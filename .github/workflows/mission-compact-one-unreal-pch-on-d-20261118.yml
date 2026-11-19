@@ -1,0 +1,43 @@
+name: ANOMALIA - lossless compress one generated PCH without deleting build data
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-compact-one-unreal-pch-on-d-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  compact-one:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: NTFS compress one build PCH and verify SHA256 unchanged, preserve maps and originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $target='D:\ANOMALIA\unreal\Intermediate\Build\Win64\x64\AnomaliaPrimeval\Development\Engine\SharedPCH.Engine.Project.ValApi.ValExpApi.Cpp20.InclOrderUnreal5_6.h.pch'
+          $main='D:\ANOMALIA\unreal\Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $city='D:\ANOMALIA\FabImports\CitySample\CitySample.uproject'
+          if (!(Test-Path -LiteralPath $main -PathType Leaf) -or !(Test-Path -LiteralPath $city -PathType Leaf)){throw 'Protected game sources missing, abort'}
+          if (!(Test-Path -LiteralPath $target -PathType Leaf)){throw 'Expected PCH not found'}
+          $p=Get-Item -LiteralPath $target -Force
+          if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) {throw 'PCH is reparse point; do not touch'}
+          if ($p.Length -lt 1GB -or $p.Length -gt 4GB){throw 'Unexpected PCH file size; abort'}
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if ($active.Count -ne 0){throw 'Game/engine running, compression prohibited'}
+          $beforeD=[IO.DriveInfo]::new('D').AvailableFreeSpace
+          if ($beforeD -lt 5GB){throw 'Not enough reserve for safe NTFS compression'}
+          $beforeHash=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+          $beforeTime=$p.LastWriteTimeUtc
+          Write-Host ('NTFS_PCH_BEFORE '+([ordered]@{logicalBytes=$p.Length;freeDBytes=$beforeD;sha256=$beforeHash}|ConvertTo-Json -Compress))
+          & "$env:SystemRoot\System32\compact.exe" /C /I /F /Q $target
+          $code=$LASTEXITCODE
+          Write-Host ('NTFS_COMPACT_EXIT_CODE='+$code)
+          $again=Get-Item -LiteralPath $target -Force
+          $afterHash=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+          if ($afterHash -ne $beforeHash -or $again.Length -ne $p.Length) {throw 'Integrity mismatch after compression; original source remains preserved'}
+          $afterD=[IO.DriveInfo]::new('D').AvailableFreeSpace
+          $result=[ordered]@{integrityVerified=$true;originalPCHPreserved=$true;originalGameModelsDeleted=0;mapsModified=0;saveFilesModified=0;compactExitCode=$code;beforeFreeDBytes=$beforeD;afterFreeDBytes=$afterD;actualDBytesRecovered=($afterD-$beforeD);fileAttributes=$again.Attributes.ToString();lastWriteTimeUnchanged=($again.LastWriteTimeUtc -eq $beforeTime)}
+          Write-Host ('NTFS_PCH_COMPRESSION_RESULT '+($result|ConvertTo-Json -Compress))
+          if($code -ne 0){throw 'NTFS compression not available; file integrity still verified'}

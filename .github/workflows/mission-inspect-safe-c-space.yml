@@ -1,0 +1,158 @@
+name: ANOMALIA mission - recover large generated Unreal caches
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/mission-inspect-safe-c-space.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: anomalia-full-resource-cloud-transfer
+  cancel-in-progress: true
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Measure then release large generated compiler and City Sample DDC caches
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|zenserver|ZenServer|UnrealBuildTool|ShaderCompileWorker)$'} | Select-Object Name,Id | ConvertTo-Json -Compress | Write-Output
+          $code=@'
+          import os,pathlib,json,stat,shutil,collections,time,subprocess
+          roots=[
+           pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/DerivedDataCache",
+           pathlib.Path(os.environ["LOCALAPPDATA"])/"UnrealEngine/Common/Zen/Data",
+           pathlib.Path(r"C:\ProgramData\Epic\Zen\Data"),
+           pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\DerivedDataCache"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_41801391717\unreal\DerivedDataCache"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_ARCHIVE_m41798670858"),
+           pathlib.Path(r"C:\ANOMALIA_MISSION_41801391717\unreal\Intermediate\Build"),
+           pathlib.Path(r"C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\unreal\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample\Intermediate\Build"),
+           pathlib.Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data\Intermediate\Build"),
+           pathlib.Path(r"D:\ANOMALIA\FabImports\CitySample\DerivedDataCache"),
+           pathlib.Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data\DerivedDataCache")
+          ]
+          for root in roots:
+           if not root.exists():continue
+           st=root.lstat()
+           if getattr(st,"st_file_attributes",0)&0x400:print("RECOVERY_CANDIDATE "+json.dumps({"path":str(root),"reparse":True}));continue
+           total=unique=count=links=0;exts=collections.Counter();largest=[];reparse=[]
+           for base,dirs,names in os.walk(root,followlinks=False):
+            clean=[]
+            for name in dirs:
+             p=pathlib.Path(base)/name
+             if getattr(p.lstat(),"st_file_attributes",0)&0x400:reparse.append(str(p))
+             else:clean.append(name)
+            dirs[:]=clean
+            for name in names:
+             p=pathlib.Path(base)/name
+             try:
+              s=p.lstat()
+              if not stat.S_ISREG(s.st_mode) or getattr(s,"st_file_attributes",0)&0x400:reparse.append(str(p));continue
+              total+=s.st_size;count+=1;exts[p.suffix.lower()]+=s.st_size
+              if s.st_nlink==1:unique+=s.st_size
+              else:links+=1
+              largest.append((s.st_size,str(p)))
+             except OSError:pass
+           print("RECOVERY_CANDIDATE "+json.dumps({"path":str(root),"bytes":total,"unsharedBytes":unique,"files":count,"sharedFiles":links,"reparseCount":len(reparse),"extensionsByBytes":exts.most_common(8),"largest":sorted(largest,reverse=True)[:5]}),flush=True)
+          print("ACTUAL_SPACE "+json.dumps({drive:shutil.disk_usage(drive+":/").free for drive in ["C","D"]}),flush=True)
+
+          # Remove only old unshared generated precompiled headers from known build caches.
+          check=subprocess.run(["powershell","-NoProfile","-Command","@(Get-Process | Where-Object {$_.ProcessName -match '^(UnrealEditor|UnrealEditor-Cmd|UnrealBuildTool|ShaderCompileWorker|zenserver|ZenServer|cl|link)$'}).Count"],capture_output=True,text=True,check=True)
+          if check.stdout.strip()!="0":raise RuntimeError("Compilation/editor active; cache cleanup preserved all files")
+          before={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
+          ledger=pathlib.Path(os.environ["LOCALAPPDATA"])/"ANOMALIAZ/CleanupReceipts"
+          ledger.mkdir(parents=True,exist_ok=True)
+          journal=ledger/("generated-pch-"+os.environ["GITHUB_RUN_ID"]+".jsonl")
+          removed=[];errors=[];cutoff=time.time()-86400
+          for root in roots:
+           build_cache=root.name.lower()=="build" and root.parent.name.lower()=="intermediate"
+           city_ddc=root.name.lower()=="deriveddatacache" and "citysample" in str(root).lower()
+           if not (build_cache or city_ddc) or not root.exists():continue
+           if getattr(root.lstat(),"st_file_attributes",0)&0x400:continue
+           for base,dirs,names in os.walk(root,followlinks=False):
+            dirs[:]=[n for n in dirs if not getattr((pathlib.Path(base)/n).lstat(),"st_file_attributes",0)&0x400]
+            for name in names:
+             pch=build_cache and name.endswith(".pch") and name.startswith(("SharedPCH.","PCH."))
+             ddp=city_ddc and name.lower() in {"compressed.ddp","ddc.ddp","boot.ddp"}
+             if not (pch or ddp):continue
+             p=pathlib.Path(base)/name
+             try:
+              s=p.lstat()
+              if not stat.S_ISREG(s.st_mode) or s.st_nlink!=1 or s.st_mtime>cutoff or getattr(s,"st_file_attributes",0)&0x400:continue
+              entry={"path":str(p),"bytes":s.st_size,"mtime_ns":s.st_mtime_ns,"kind":"regenerable-citysample-ddc-pack" if ddp else "regenerable-precompiled-header"}
+              with journal.open("a",encoding="utf-8") as out:
+               out.write(json.dumps(dict(entry,state="planned"))+"\n");out.flush();os.fsync(out.fileno())
+              now=p.lstat()
+              if (now.st_ino,now.st_size,now.st_mtime_ns,now.st_nlink)!=(s.st_ino,s.st_size,s.st_mtime_ns,1):raise RuntimeError("File changed; preserved")
+              p.unlink()
+              removed.append(entry)
+              with journal.open("a",encoding="utf-8") as out:
+               out.write(json.dumps(dict(entry,state="removed"))+"\n");out.flush();os.fsync(out.fileno())
+             except Exception as exc:errors.append({"path":str(p),"error":str(exc)})
+          after={d:shutil.disk_usage(d+":/").free for d in ["C","D"]}
+          print("REAL_CLEANUP_RESULT "+json.dumps({"removed":removed,"errors":errors,"freeBefore":before,"freeAfter":after,"measuredFreeDelta":{d:after[d]-before[d] for d in before},"receipt":str(journal),"gameAssetsRemoved":0,"savesRemoved":0}),flush=True)
+          '@
+          $script=Join-Path $env:RUNNER_TEMP ('safe-c-space-'+$env:GITHUB_RUN_ID+'.py')
+          [IO.File]::WriteAllText($script,$code,(New-Object Text.UTF8Encoding($false)))
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Read-only cache inventory failed'}
+  copy:
+    needs: inspect
+    if: always()
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 320
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        batch: [1, 2, 3, 4, 5, 6, 7, 8]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: direct-models-${{ github.run_id }}-${{ matrix.batch }}
+          sparse-checkout: scripts/ue5/direct-copy-all-game-models-to-cloud.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Prepare direct-copy checkpoint and reports
+        id: plan
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $out=Join-Path $env:RUNNER_TEMP ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}')
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          "CLOUD_TRANSFER_OUT=$out" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $missing=!(Test-Path -LiteralPath 'D:\ANOMALIA\unreal\Saved\CloudTransfer\Direct20261106\direct-source-plan.jsonl')
+          "needed=$($missing.ToString().ToLower())" | Out-File -FilePath $env:GITHUB_OUTPUT -Encoding utf8 -Append
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: mission-all-existing-local-resource-plan
+          run-id: 41842801517
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/plan/
+      - uses: actions/download-artifact@v4
+        if: steps.plan.outputs.needed == 'true'
+        with:
+          name: all-C-D-game-resource-categories
+          run-id: 41974129695
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/inventory/
+      - name: Benchmark and accelerate City Sample and remaining resource copies
+        timeout-minutes: 300
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('direct-models-'+$env:GITHUB_RUN_ID+'-${{ matrix.batch }}\scripts\ue5\direct-copy-all-game-models-to-cloud.py')
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe' -B $script
+          if($LASTEXITCODE -ne 0){throw 'Direct copy stopped; originals preserved and next batch can resume'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.CLOUD_TRANSFER_OUT != ''
+        with:
+          name: direct-models-cloud-receipts-${{ matrix.batch }}
+          path: ${{ env.CLOUD_TRANSFER_OUT }}/direct-transfer-summary.json
+          if-no-files-found: warn

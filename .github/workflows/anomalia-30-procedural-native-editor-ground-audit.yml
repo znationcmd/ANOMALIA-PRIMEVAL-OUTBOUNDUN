@@ -1,0 +1,83 @@
+name: ANOMALIA 30 maps - read-only UE5 native terrain sampling pilot before auto-build
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-procedural-native-editor-ground-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 110
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: map30-native-editor-audit-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/audit_anomalia_30_autobuild_editor_capabilities.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Confirm original game, no interactive editor, file integrity, scripts compiled
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('map30-native-editor-audit-'+$env:GITHUB_RUN_ID+'\unreal\Scripts\audit_anomalia_30_autobuild_editor_capabilities.py')
+          $out=Join-Path $root ('Saved\AutoConstruct30\NativePreflight\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_NATIVE_AUDIT_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          "ANOMALIA_NATIVE_AUDIT_SCRIPT=$script"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          if(!(Test-Path -LiteralPath $script -PathType Leaf)){throw 'Source Python audit missing'}
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $py -B -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Editor read-only audit script syntax invalid'}
+          $active=@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue)
+          if($active.Count){throw 'Another interactive Unreal session or build active'}
+          $cmds=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue)
+          foreach($p in $cmds){
+            $age=((Get-Date).ToUniversalTime()-$p.CreationDate.ToUniversalTime()).TotalHours
+            $parent=Get-Process -Id $p.ParentProcessId -ErrorAction SilentlyContinue
+            if($p.ProcessId -ne 26284 -or $age -lt 6 -or $parent -or !([string]$p.CommandLine).Contains('audit.py')){
+              throw 'Unexpected active commandlet; do not launch concurrent editor'
+            }
+          }
+          $maps=@(Get-ChildItem -LiteralPath (Join-Path $root 'Content\Maps') -File -Filter '*.umap'|ForEach-Object {[pscustomobject]@{path=$_.FullName;sha=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash}})
+          $maps|Export-Csv -LiteralPath (Join-Path $out 'protected.csv') -NoTypeInformation -Encoding UTF8
+          Write-Host ('ANOMALIA_NATIVE_PRE_BUILD_MAPS_PROTECTED='+$maps.Count)
+      - name: Examine one new native .umap, verify real road mesh and landscape tracing (no save)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $out=$env:ANOMALIA_NATIVE_AUDIT_OUT
+          $env:ANOMALIA_30_AUTOBUILD_AUDIT_REPORT=Join-Path $out 'native-asset-ground-audit.json'
+          $env:ANOMALIA_30_AUTOBUILD_AUDIT_PACKAGE='/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR'
+          $log=Join-Path $out 'unreal-readonly-ground-audit.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$env:ANOMALIA_NATIVE_AUDIT_SCRIPT" -nullrhi -unattended -nosound -nopause "-abslog=$log"
+          $exit=$LASTEXITCODE
+          Write-Host ('ANOMALIA_EDITOR_READONLY_PROBE_EXIT='+$exit)
+          $p=$env:ANOMALIA_30_AUTOBUILD_AUDIT_REPORT
+          if(!(Test-Path -LiteralPath $p -PathType Leaf)){
+            Get-Content -LiteralPath $log -Tail 30 -ErrorAction SilentlyContinue|ForEach-Object {Write-Host ('UE_LOG '+$_)}
+            throw 'Unreal did not produce a native survey'
+          }
+          $r=Get-Content -LiteralPath $p -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_NATIVE_EDITOR_GROUND_AUDIT '+($r|ConvertTo-Json -Depth 8 -Compress))
+          if($r.state -ne 'NATIVE_EDITOR_READ_ONLY_CAPABILITY_AUDIT_OK'){throw ('Native editor survey blocked: '+$r.error)}
+      - name: Verify original .umap hashes unchanged
+        if: always() && env.ANOMALIA_NATIVE_AUDIT_OUT != ''
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $list=Join-Path $env:ANOMALIA_NATIVE_AUDIT_OUT 'protected.csv'
+          if(!(Test-Path -LiteralPath $list)){exit 0}
+          $old=@(Import-Csv -LiteralPath $list -Encoding UTF8)
+          $bad=@()
+          foreach($m in $old){if(!(Test-Path $m.path -PathType Leaf) -or (Get-FileHash -LiteralPath $m.path -Algorithm SHA256).Hash -ne $m.sha){$bad+=$m.path}}
+          Write-Host ('ANOMALIA_NATIVE_30_PREP_MAPS_CHANGED='+$bad.Count)
+          if($bad.Count){throw 'Unintended changes detected in original .umap'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_NATIVE_AUDIT_OUT != ''
+        with:
+          name: anomalia-thirty-native-editor-geometry-pilot
+          path: ${{ env.ANOMALIA_NATIVE_AUDIT_OUT }}/*.json
+          if-no-files-found: warn

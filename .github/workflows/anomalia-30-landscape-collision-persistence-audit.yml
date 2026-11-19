@@ -1,0 +1,50 @@
+name: ANOMALIA - verify real reopened World Partition terrain collision before auto-populating 30 maps
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/anomalia-30-landscape-collision-persistence-audit.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 80
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: terrain-audit-${{ github.run_id }}
+          sparse-checkout: |
+            unreal/Scripts/audit_autobuild_landscape_component_persistence.py
+          sparse-checkout-cone-mode: false
+          persist-credentials: false
+      - name: Inspect native collision persistence only in the original Unreal project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AutoConstruct30\TerrainAudit\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $out|Out-Null
+          "ANOMALIA_TERRAIN_AUDIT_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
+          $py='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE ('terrain-audit-'+$env:GITHUB_RUN_ID+'\unreal\Scripts\audit_autobuild_landscape_component_persistence.py')
+          & $py -B -m py_compile $script
+          if($LASTEXITCODE -ne 0){throw 'Native terrain inspector script syntax invalid'}
+          if(@(Get-Process -Name UnrealEditor,UnrealBuildTool,ShaderCompileWorker,AnomaliaPrimeval -ErrorAction SilentlyContinue).Count){throw 'Interactive editor/compilation already active'}
+          $others=@(Get-CimInstance Win32_Process -Filter "Name='UnrealEditor-Cmd.exe'" -ErrorAction SilentlyContinue | Where-Object {$_.ProcessId -ne 26284})
+          if($others.Count){throw 'An additional UE editor commandlet is running; refuse concurrent load'}
+          $env:ANOMALIA_WORLD_TERRAIN_COMPONENT_REPORT=Join-Path $out 'terrain-collision-after-reopen.json'
+          $env:ANOMALIA_WORLD_TERRAIN_PACKAGE='/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR'
+          $log=Join-Path $out 'native-terrain-audit-editor.log'
+          & 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe' 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$script" -nullrhi -unattended -nosound -nopause "-abslog=$log"
+          $exit=$LASTEXITCODE
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_WORLD_TERRAIN_COMPONENT_REPORT -PathType Leaf)){throw 'UE5 terrain inspection did not save report'}
+          $r=Get-Content -LiteralPath $env:ANOMALIA_WORLD_TERRAIN_COMPONENT_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Host ('ANOMALIA_AUTO30_NATIVE_LANDSCAPE_PERSISTENCE '+($r|ConvertTo-Json -Depth 8 -Compress))
+          if($r.status -ne 'READ_ONLY_LANDSCAPE_COMPONENTS_AUDITED'){throw ('Native terrain audit could not finish: '+$r.error)}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.ANOMALIA_TERRAIN_AUDIT_OUT != ''
+        with:
+          name: anomalia-auto30-real-terrain-component-audit
+          path: ${{ env.ANOMALIA_TERRAIN_AUDIT_OUT }}/*.json
+          if-no-files-found: warn

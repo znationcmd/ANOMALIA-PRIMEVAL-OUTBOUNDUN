@@ -1,0 +1,28 @@
+name: ANOMALIA - stop superseded bulk cloud transfer
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - '.github/workflows/mission-stop-obsolete-cloud-transfer-20261118.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+  actions: write
+jobs:
+  stop-legacy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Cancel superseded multi-category copy to prioritize City Sample
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          repo="${GITHUB_REPOSITORY}"
+          old_run=44153202317
+          status=$(curl -sS --fail-with-body -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${repo}/actions/runs/${old_run}" | python3 -c 'import json,sys;print(json.load(sys.stdin)["status"])')
+          echo "OLD_BULK_RUN_STATUS=${status}"
+          if [ "${status}" = "completed" ]; then exit 0; fi
+          curl -sS --fail-with-body -X POST -H "Authorization: Bearer ${GH_TOKEN}" -H "Accept: application/vnd.github+json" "https://api.github.com/repos/${repo}/actions/runs/${old_run}/cancel"
+          echo 'CANCELLATION_REQUEST_SUBMITTED; no source or cloud files modified'
