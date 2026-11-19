@@ -210,17 +210,34 @@ try:
     world=editor.get_editor_world()
     if not world or world.get_outermost().get_name()!=mapdata["worldPackage"]:
         raise RuntimeError("Unexpected editor world after load")
-    loaded=actors.get_all_level_actors()
-    landscapes=[a for a in loaded if isinstance(a,unreal.LandscapeProxy)]
-    report["landscapeCount"]=len(landscapes)
-    terrainComponents=0;terrainCollisions=0
-    for land in landscapes:
-        terrainComponents+=len(land.get_components_by_class(unreal.LandscapeComponent))
-        terrainCollisions+=len(land.get_components_by_class(unreal.LandscapeHeightfieldCollisionComponent))
-    report["landscapeComponents"]=terrainComponents
-    report["landscapeCollisionComponents"]=terrainCollisions
+    def loaded_terrain():
+        loaded_actors = actors.get_all_level_actors()
+        proxies = [actor for actor in loaded_actors if isinstance(actor, unreal.LandscapeProxy)]
+        components = sum(len(proxy.get_components_by_class(unreal.LandscapeComponent)) for proxy in proxies)
+        collisions = sum(len(proxy.get_components_by_class(unreal.LandscapeHeightfieldCollisionComponent))
+                         for proxy in proxies)
+        return loaded_actors, proxies, components, collisions
+
+    loaded, landscapes, terrainComponents, terrainCollisions = loaded_terrain()
     if not terrainComponents or not terrainCollisions:
-        raise RuntimeError("Native Landscape terrain/collision not loaded after reopen; refuse floating roads/buildings")
+        partition = unreal.WorldPartitionBlueprintLibrary
+        descriptors = partition.get_actor_descs() or []
+        loaded_labels = {actor.get_actor_label() for actor in landscapes}
+        streaming_guids = [
+            descriptor.guid for descriptor in descriptors
+            if str(descriptor.label).startswith("LandscapeStreamingProxy")
+            and str(descriptor.label) not in loaded_labels
+        ]
+        report["landscapeStreamingProxiesRequested"] = len(streaming_guids)
+        if streaming_guids:
+            partition.load_actors(streaming_guids)
+            loaded, landscapes, terrainComponents, terrainCollisions = loaded_terrain()
+
+    report["landscapeCount"] = len(landscapes)
+    report["landscapeComponents"] = terrainComponents
+    report["landscapeCollisionComponents"] = terrainCollisions
+    if not terrainComponents or not terrainCollisions:
+        raise RuntimeError("Native Landscape terrain/collision not loaded after loading saved terrain tiles")
     report["realTerrainCollisionVerified"]=True
     h=sampler_for_map(ID,world)
     existingLabels=saved_actor_labels(actors)
