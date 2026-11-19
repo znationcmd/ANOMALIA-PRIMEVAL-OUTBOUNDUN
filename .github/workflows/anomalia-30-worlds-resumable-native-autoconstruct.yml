@@ -31,7 +31,7 @@ jobs:
           $out=Join-Path $root ('Saved\AutoConstruct30\BatchAll30\'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Force -Path $out|Out-Null
           "ANOMALIA_AUTO30_BATCH_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
-          $pilot='D:\ANOMALIA\unreal\Saved\AutoConstruct30\NativeRuns\44406451698\native-morodenachtmerr-reload.json'
+          $pilot='D:\ANOMALIA\unreal\Saved\AutoConstruct30\NativeRuns\44463132253\native-morodenachtmerr-reload.json'
           if(!(Test-Path -LiteralPath $pilot -PathType Leaf)){
             Write-Host 'ANOMALIA_ALL30_AUTOBUILD_NOT_STARTED_WAITING_FOR_NATIVE_PILOT_VERIFICATION'
             throw 'Pilot has not produced verified native road/building persistence; all 30 maps remain protected'
