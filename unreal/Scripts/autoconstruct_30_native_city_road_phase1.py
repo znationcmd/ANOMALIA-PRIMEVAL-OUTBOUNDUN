@@ -72,6 +72,21 @@ def grade_ok(sampler,e,n,footprint=14.):
         if max([val]+points)-min([val]+points)>2.4:return None
         return val,max([val]+points)
     except Exception:return None
+def building_ground_level(sampler, east, north, bounds):
+    """Keep the building within 25 cm of the terrain at the sampled footprint."""
+    centre_east = east + float(bounds.origin.x) / 100.
+    centre_north = north - float(bounds.origin.y) / 100.
+    half_east = float(bounds.box_extent.x) / 100.
+    half_north = float(bounds.box_extent.y) / 100.
+    points = [(0., 0.), (-half_east, -half_north), (-half_east, half_north),
+              (half_east, -half_north), (half_east, half_north)]
+    heights = [sampler(centre_east + dx, centre_north + dy) for dx, dy in points]
+    if any(height is None or not math.isfinite(height) or not 5. <= height <= 1900.
+           for height in heights):
+        return None
+    highest = max(heights)
+    return highest if highest - min(heights) <= .23 else None
+
 def saved_actor_labels(actors):
     labels=set()
     for a in actors.get_all_level_actors():
@@ -268,9 +283,8 @@ try:
                     dn=(1 if row%2 else -1)*(65.+(row//2)*s["plotSpacingMeters"])
                     x,y=e0+de,n0+dn
                     footprint=max(10.,float(b.box_extent.x)/100.,float(b.box_extent.y)/100.)
-                    g=grade_ok(h,x,y,footprint)
-                    if not g or looks_occupied(loaded,x,y,footprint+8.):continue
-                    z,high=g
+                    high=building_ground_level(h,x,y,b)
+                    if high is None or looks_occupied(loaded,x,y,footprint+8.):continue
                     bottom=float(b.origin.z-b.box_extent.z)
                     pos=unreal.Vector(x*100.,-y*100.,high*100.-bottom+2.)
                     label=prefix+"BUILDING_"+str(j).zfill(3)
