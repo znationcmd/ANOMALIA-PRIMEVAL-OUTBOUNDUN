@@ -79,12 +79,28 @@ jobs:
           $blocked=@()
           $preserved=@()
           $reviewed=@()
+          $houses=0
+          $roadMeshes=0
+          $priorOut='D:\ANOMALIA\unreal\Saved\AutoConstruct30\BatchAll30\44472150511'
           foreach($m in @($doc.maps)){
             $id=[string]$m.id
             if($m.requestedLocalities -eq 0){
               $reviewed+=$id
               $preserved+=([ordered]@{id=$id;reason='ARENA_SPECIAL_MODE_NO_CIVILIAN_SETTLEMENTS'})
               continue
+            }
+            $priorPath=Join-Path $priorOut ('auto-'+$id+'.json')
+            if(Test-Path -LiteralPath $priorPath -PathType Leaf){
+              $prior=Get-Content -LiteralPath $priorPath -Raw -Encoding UTF8 | ConvertFrom-Json
+              if($prior.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED' -and
+                  $prior.mapId -eq $id -and $prior.savedWorldPackage -eq $m.worldPackage -and
+                  $prior.realBuildingsCreated -gt 0 -and $prior.realRoadMeshActorsCreated -gt 0){
+                $reviewed+=$id
+                $houses+=[int]$prior.realBuildingsCreated
+                $roadMeshes+=[int]$prior.realRoadMeshActorsCreated
+                $constructed+=([ordered]@{id=$id;citiesOrVillagesStarted=$prior.localitiesConstructed;houses=$prior.realBuildingsCreated;roadMeshes=$prior.realRoadMeshActorsCreated;metres=$prior.roadMetresCovered;previouslySaved=$true})
+                continue
+              }
             }
             if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 10GB){
               $blocked+=([ordered]@{id=$id;reason='SAFETY_DISK_RESERVE'});break
@@ -106,6 +122,8 @@ jobs:
             }
             $result=Get-Content -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
             if($result.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED' -and $result.realBuildingsCreated -gt 0 -and $result.realRoadMeshActorsCreated -gt 0){
+              $houses+=[int]$result.realBuildingsCreated
+              $roadMeshes+=[int]$result.realRoadMeshActorsCreated
               $constructed+=([ordered]@{id=$id;citiesOrVillagesStarted=$result.localitiesConstructed;houses=$result.realBuildingsCreated;roadMeshes=$result.realRoadMeshActorsCreated;metres=$result.roadMetresCovered})
               Write-Host ('ANOMALIA_AUTO30_SAVED_PARTIAL_REAL_CITY_AND_ROADS='+$id+' HOUSES='+$result.realBuildingsCreated+' ASPHALT_MESHES='+$result.realRoadMeshActorsCreated)
             }elseif($result.state -eq 'EXISTING_AUTOCONSTRUCTION_BATCHES_PRESERVED'){
@@ -119,8 +137,8 @@ jobs:
           $summary=[ordered]@{state='BOUNDED_AUTONOMOUS_ORIGINAL_WORLD_PASS_REPORTED';
             reviewedCount=$reviewed.Count;unvisitedMaps=$unvisited;
             targetMaps=30;startedNativeMaps=$constructed;nativeMapsStartedCount=$constructed.Count;
-            physicallyPlacedBuildings=[int](@($constructed|Measure-Object -Property houses -Sum)[0].Sum);
-            physicallyPlacedRoadMeshes=[int](@($constructed|Measure-Object -Property roadMeshes -Sum)[0].Sum);
+            physicallyPlacedBuildings=$houses;
+            physicallyPlacedRoadMeshes=$roadMeshes;
             skippedSpecialModesOrAlreadyPresent=$preserved;blockedMaps=$blocked;
             blockedCount=$blocked.Count;allThirtyCitiesComplete=$false;allRegionalRoadsComplete=$false;
             allInteriorsPlaytested=$false;existingBuildingsDeleted=0;existingRoadsDeleted=0}
