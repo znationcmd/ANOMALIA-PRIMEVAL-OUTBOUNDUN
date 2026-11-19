@@ -438,6 +438,56 @@ void UAnomaliaZPrigimaliaInventoryWidget::AddStackRow(const FAnomaliaZPrigimalia
         }
     }
 
+
+    // Kitchen controls are wired to authoritative UE server RPCs, not a fake local
+    // inventory preview. A nearby water marker or genuine burning heat source is
+    // required by the server even if a client forces the button.
+    if(UAnomaliaZPrigimaliaInventoryComponent::IsFillableContainer(Stack.ItemId) ||
+       Stack.ItemId==TEXT("dirty_water_bottle") ||
+       Stack.ItemId==TEXT("dirty_military_canteen") ||
+       Stack.ItemId==TEXT("dirty_filter_canteen") ||
+       Stack.ItemId==TEXT("dirty_cooking_pot_water") ||
+       UAnomaliaZPrigimaliaInventoryComponent::IsKitchenUtensil(Stack.ItemId))
+    {
+        auto* Kitchen=WidgetTree->ConstructWidget<UWrapBox>(UWrapBox::StaticClass());
+        Kitchen->SetExplicitWrapSize(true);
+        Kitchen->SetWrapSize(UWidgetLayoutLibrary::GetViewportSize(this).X/
+                            FMath::Max(.1f,UWidgetLayoutLibrary::GetViewportScale(this))*.78f);
+        DetailsList->AddChildToVerticalBox(Kitchen)->SetPadding(FMargin(10,6));
+        auto AddKitchen=[&](const FString& Caption,EAnomaliaZPrigimaliaInventoryAction Action,
+                            int32 ExtraId=0,int32 IngredientCount=0)
+        {
+            auto* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+            auto* Text=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+            Text->SetText(FText::FromString(Caption));Text->SetAutoWrapText(true);
+            Button->SetContent(Text);StyleButton(Button);
+            Button->SetIsEnabled(!Inventory->IsPersistenceLocked());
+            Kitchen->AddChildToWrapBox(Button)->SetPadding(FMargin(4));
+            BindAction(Button,Action,Stack.StackId,
+                       IngredientCount>0?IngredientCount:Stack.Count,ExtraId);
+        };
+        if(UAnomaliaZPrigimaliaInventoryComponent::IsFillableContainer(Stack.ItemId))
+            AddKitchen(TEXT("Remplir d'eau"),EAnomaliaZPrigimaliaInventoryAction::FillWater);
+        if(Stack.ItemId==TEXT("dirty_water_bottle")||
+           Stack.ItemId==TEXT("dirty_military_canteen")||
+           Stack.ItemId==TEXT("dirty_filter_canteen"))
+            AddKitchen(TEXT("Purifier (1 pastille)"),EAnomaliaZPrigimaliaInventoryAction::TreatWater);
+        if(Stack.ItemId==TEXT("dirty_cooking_pot_water"))
+            AddKitchen(TEXT("Faire bouillir (20 s)"),EAnomaliaZPrigimaliaInventoryAction::BoilPot);
+        if(UAnomaliaZPrigimaliaInventoryComponent::IsKitchenUtensil(Stack.ItemId) && Stack.Count==1)
+        {
+            int32 Shown=0;
+            for(const auto& Food:Inventory->Stacks)
+            {
+                if(Food.StackId==Stack.StackId || Inventory->IsRecoveryContainer(Food.ContainerId) ||
+                   UAnomaliaZPrigimaliaInventoryComponent::CookedFoodFor(Food.ItemId).IsNone())continue;
+                AddKitchen(TEXT("Cuire : ")+Inventory->GetItemDisplayName(Food.ItemId),
+                           EAnomaliaZPrigimaliaInventoryAction::CookFood,Food.StackId,Food.Count);
+                if(++Shown>=8)break;
+            }
+        }
+    }
+
     if (Inventory && Inventory->bBankingAvailable && Stack.ItemId.ToString().StartsWith(TEXT("eur_note_")))
     {
         UButton* Deposit = WidgetTree->ConstructWidget<UButton>(UButton::StaticClass(), MakeUniqueObjectName(WidgetTree, UButton::StaticClass(), FName(*FString::Printf(TEXT("BankDeposit_%d_action"), Stack.StackId))));
@@ -585,6 +635,14 @@ void UAnomaliaZPrigimaliaInventoryWidget::PerformAction(EAnomaliaZPrigimaliaInve
         case EAnomaliaZPrigimaliaInventoryAction::Merge:
             Inventory->RequestMergeStacks(StackId, OtherStackId);
             break;
+        case EAnomaliaZPrigimaliaInventoryAction::FillWater:
+            Inventory->RequestFillContainer(StackId,Count);FocusFirstAction();break;
+        case EAnomaliaZPrigimaliaInventoryAction::TreatWater:
+            Inventory->RequestTreatWater(StackId,Count);FocusFirstAction();break;
+        case EAnomaliaZPrigimaliaInventoryAction::BoilPot:
+            Inventory->RequestBoilPot(StackId,Count);FocusFirstAction();break;
+        case EAnomaliaZPrigimaliaInventoryAction::CookFood:
+            Inventory->RequestCookFood(StackId,OtherStackId,Count);FocusFirstAction();break;
         case EAnomaliaZPrigimaliaInventoryAction::WetHead:
             Inventory->RequestWetHead(StackId,Count);FocusFirstAction();break;
         case EAnomaliaZPrigimaliaInventoryAction::Use:

@@ -1,0 +1,47 @@
+name: ANOMALIA Native Kitchen — source contracts (safe)
+on:
+  pull_request:
+    branches: [mission/finalisation-20261104]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/Survival/AnomaliaZPrigimaliaWaterSource.*'
+      - 'unreal/Source/AnomaliaZPrigimalia/Survival/AnomaliaZPrigimaliaKitchenActions.cpp'
+      - 'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaInventoryComponent.*'
+      - 'unreal/Source/AnomaliaZPrigimalia/AnomaliaZPrigimaliaInventoryWidget.*'
+      - 'unreal/Source/AnomaliaZPrigimalia/Tests/AnomaliaZPrigimaliaKitchenTests.cpp'
+      - 'public/config/loot_items_catalog.json'
+      - 'tests/test_ue5_kitchen_source.py'
+      - '.github/workflows/ue5-kitchen-source.yml'
+  push:
+    branches: [feature/ue5-water-cooking-containers-20261117]
+    paths:
+      - 'unreal/Source/AnomaliaZPrigimalia/**'
+      - 'public/config/loot_items_catalog.json'
+      - 'tests/test_ue5_kitchen_source.py'
+      - '.github/workflows/ue5-kitchen-source.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-source-only:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Validate safe server recipes and native UMG bindings (not UE compilation)
+        run: |
+          python -m unittest discover -s tests -p 'test_ue5_kitchen_source.py' -v
+          python -m unittest discover -s tests -p 'test_ue5_food_and_thermal.py' -v
+      - name: Ensure cook results cannot spawn as normal loot
+        run: |
+          python - <<'PY'
+          import json
+          x=json.load(open('public/config/loot_items_catalog.json',encoding='utf-8'))
+          items={z['id']:z for z in x['items']}
+          for name in ('dirty_military_canteen','dirty_filter_canteen','cooking_pot_water','dirty_cooking_pot_water','cooked_egg','cooked_potato','cooked_vegetable'):
+              assert name in items
+              assert items[name]['enabled'] is False and items[name]['nominal']==0
+          print('PASS: new container and cooked-food output definitions only')
+          PY

@@ -37,7 +37,7 @@ bool FAnomaliaZPrigimaliaLootCatalogTest::RunTest(const FString& Parameters)
     if (!TestNotNull(TEXT("Isolated world"), World)) return false;
     auto* Loot = World->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>();
     if (!TestNotNull(TEXT("Native loot subsystem"), Loot)) { World->DestroyWorld(false); return false; }
-    TestEqual(TEXT("Existing catalogue plus RP foods, medical, substance and tobacco definitions"), Loot->GetCatalogSize(), 314);
+    TestEqual(TEXT("Existing catalogue plus RP foods, medical, substance and tobacco definitions"), Loot->GetCatalogSize(), 321);
     const auto* Battery = Loot->FindItem(TEXT("car_battery"));
     TestTrue(TEXT("Existing battery retains both source categories without duplication"), Battery &&
         Battery->Categories.Contains(TEXT("power_lighting")) && Battery->Categories.Contains(TEXT("vehicle_engine_parts")));

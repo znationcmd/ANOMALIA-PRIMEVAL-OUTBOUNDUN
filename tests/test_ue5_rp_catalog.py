@@ -9,7 +9,11 @@ class RPCatalogTests(unittest.TestCase):
         original = json.loads((ROOT/'public/config/loot_items_catalog.json').read_text())['items']
         extra = json.loads((ROOT/'public/config/rp_items_catalog.json').read_text())['items']
         empty = {'empty_water_bottle', 'empty_military_canteen', 'empty_filter_canteen', 'dirty_water_bottle'}
-        self.assertEqual(len([row for row in original if row['id'] not in empty]),232)
+        self.assertEqual(len([row for row in original if row['id'] not in empty]),239)
+        kitchen={'dirty_military_canteen','dirty_filter_canteen','cooking_pot_water',
+                 'dirty_cooking_pot_water','cooked_egg','cooked_potato','cooked_vegetable'}
+        self.assertEqual({row['id'] for row in original if row['id'] in kitchen},kitchen)
+        self.assertTrue(all(not row['enabled'] and row['nominal']==0 for row in original if row['id'] in kitchen))
         self.assertEqual({row['id'] for row in original if row['id'] in empty},empty)
         self.assertEqual(len(extra),79)
         # Existing battery appears under lighting and engine parts; native loader merges
@@ -19,7 +23,7 @@ class RPCatalogTests(unittest.TestCase):
         self.assertEqual(duplicates,{'car_battery':2})
         self.assertFalse({row['id'].lower() for row in original} & {row['id'].lower() for row in extra})
         ids = [row['id'].lower() for row in original+extra]
-        self.assertEqual(len(set(ids)),314)
+        self.assertEqual(len(set(ids)),321)
         for row in extra:
             self.assertGreater(row['weightKg'],0)
             self.assertGreaterEqual(row['maxStack'],row['quantity'])

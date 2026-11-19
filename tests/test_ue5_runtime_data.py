@@ -28,7 +28,7 @@ class RuntimeDataTests(unittest.TestCase):
             self.assertEqual(module.stage(root), 5)
             self.assertEqual(module.stage(root), 5)
             staged = root / 'unreal/Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
-            self.assertEqual(len(json.loads(staged.read_text())['items']), 236)
+            self.assertEqual(len(json.loads(staged.read_text())['items']), 243)
             self.assertEqual(server.read_text(), 'user configuration remains untouched')
             self.assertEqual(staged.read_bytes(), (root / 'public/config/loot_items_catalog.json').read_bytes())
 
@@ -72,7 +72,7 @@ class RuntimeDataTests(unittest.TestCase):
             (project / 'AnomaliaZPrigimalia.uproject').write_text('{}')
             self.assertEqual(module.stage(root, project_dir=project), 5)
             staged = project / 'Content/AnomaliaZPrigimalia/Data/loot_items_catalog.json'
-            self.assertEqual(len(json.loads(staged.read_text())['items']), 236)
+            self.assertEqual(len(json.loads(staged.read_text())['items']), 243)
             self.assertTrue((project / 'Content/AnomaliaZPrigimalia/Data/stage-manifest.json').is_file())
 
 

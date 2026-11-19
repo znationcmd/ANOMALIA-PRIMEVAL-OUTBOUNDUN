@@ -1,0 +1,59 @@
+name: ANOMALIA Kitchen UE5.8 Windows compile (isolated checkout)
+on:
+  push:
+    branches: [feature/ue5-water-cooking-containers-20261117]
+    paths:
+      - '.github/workflows/ue5-kitchen-native-build.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  compile-only:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: kitchen-isolated-${{ github.run_id }}
+          persist-credentials: false
+          sparse-checkout: |
+            unreal/AnomaliaZPrigimalia.uproject
+            unreal/Source
+            unreal/Config
+            unreal/Build
+            public/config
+          sparse-checkout-cone-mode: false
+      - name: Compile only an isolated checkout, never D:\ANOMALIA
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $src=Join-Path $env:GITHUB_WORKSPACE ('kitchen-isolated-'+$env:GITHUB_RUN_ID)
+          $project=Join-Path $src 'unreal\AnomaliaZPrigimalia.uproject'
+          $builder='C:\Program Files\Epic Games\UE_5.8\Engine\Build\BatchFiles\Build.bat'
+          $report=Join-Path $env:RUNNER_TEMP ('kitchen-native-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Force -Path $report | Out-Null
+          "KITCHEN_NATIVE_REPORT=$report" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if(!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $builder)){throw 'UE5.8 or the isolated project is unavailable; original game untouched'}
+          $actual=(Resolve-Path -LiteralPath $src).Path
+          $original='D:\ANOMALIA'
+          if($actual.StartsWith($original,[System.StringComparison]::OrdinalIgnoreCase)){throw 'Unsafe: checkout is within the original game directory'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal is currently in use; aborting safely'}
+          $drive=[System.IO.Path]::GetPathRoot($actual).TrimEnd('\')
+          $disk=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$drive'"
+          $os=Get-CimInstance Win32_OperatingSystem
+          [ordered]@{isolatedCheckout=$actual;originalUntouched=$true;drive=$drive;driveFree=$disk.FreeSpace;memoryFreeKiB=$os.FreePhysicalMemory;virtualFreeKiB=$os.FreeVirtualMemory} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'preflight.json') -Encoding UTF8
+          if($disk.FreeSpace -lt 15GB -or $os.FreePhysicalMemory*1KB -lt 6GB -or $os.FreeVirtualMemory*1KB -lt 8GB){throw 'Insufficient resources to safely compile in isolated checkout'}
+          $logs=Join-Path $report 'unreal-compile.log'
+          & $builder 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2' *> $logs
+          if($LASTEXITCODE -ne 0){Get-Content -LiteralPath $logs -Tail 100;throw 'Native UE5.8 compile failed; original game untouched'}
+          [ordered]@{result='UE5_NATIVE_EDITOR_COMPILE_PASSED';sourceBranch=$env:GITHUB_REF_NAME;originalUntouched=$true;playableGameTested=$false} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $report 'result.json') -Encoding UTF8
+      - name: Upload diagnostics even if preflight/build fails
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-kitchen-native-compile-results
+          path: ${{ runner.temp }}/kitchen-native-${{ github.run_id }}/
+          if-no-files-found: warn
