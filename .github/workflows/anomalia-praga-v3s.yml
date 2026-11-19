@@ -11,14 +11,14 @@ concurrency:
   cancel-in-progress: false
 jobs:
   model:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - run: |
           sudo apt-get update -qq
-          sudo apt-get install -y blender
-          blender -b -t 3 --python-exit-code 1 --python scripts/vehicle-assets/build_praga_v3s.py -- "$RUNNER_TEMP/praga"
+          sudo apt-get install -y blender python3-numpy
+          blender -b -t 3 --python-use-system-env --python-exit-code 1 --python scripts/vehicle-assets/build_praga_v3s.py -- "$RUNNER_TEMP/praga"
           test "$(find "$RUNNER_TEMP/praga" -name '*.glb' -type f | wc -l)" -eq 6
       - uses: actions/upload-artifact@v4
         with:
