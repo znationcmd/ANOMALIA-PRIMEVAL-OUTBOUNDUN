@@ -26,7 +26,10 @@ if current!=new and hashlib.sha256(current.encode()).hexdigest() not in ('8244ae
 cpp=target/'World'/(prefix+'WorldImportLibrary.cpp')
 text=cpp.read_text(encoding='utf-8-sig')
 anchor='  if(MapIdentifier==TEXT("DRAKHEIM"))return EWorld::Drakheim;'
-for ident,kind in [('YUDINAVIA','Yudinavia'),('MOSCOVIE','Moscovie'),('CORSIVIA','Corsivia'),('BOT_SEVER','BotSever')]:
+for ident,kind in [('YUDINAVIA','Yudinavia'),('MOSCOVIE','Moscovie'),('CORSIVIA','Corsivia'),('BOT_SEVER','BotSever'),
+ ('CLEOSPHINIL_X','CleosphinilX'),('AETHORION','Aethorion'),('SALVERIA','Salveria'),
+ ('WARRAKULL','Warrakull'),('DIJKENHAVEN','Dijkenhaven'),('LAGUNERIA','Laguneria'),('KUNTARAY','Kuntaray'),
+ ('VELUNDA','Velunda'),('KARVERRA','Karverra'),('NOKTERA','Noktera'),('COFFIN_CREEK','LastCountyCanyon'),('ZNIECZULENIE','Znieczulenie')]:
  if ('EWorld::'+kind) not in text:
   if text.count(anchor)!=1:raise RuntimeError('Installed terrain resolver differs')
   text=text.replace(anchor,anchor+'\n  if(MapIdentifier==TEXT("'+ident+'"))return EWorld::'+kind+';')
@@ -35,6 +38,20 @@ old='const int32 Expected=(Size==3025?576:256);'
 updated='const int32 Expected=((Size-1)/126)*((Size-1)/126);'
 if old in text:text=text.replace(old,updated)
 elif updated not in text:raise RuntimeError('Installed component validator differs')
+# Patch only the named landscape function and preserve other installed generators.
+start=text.index('::CreateNamedWorldLandscape(')
+end=text.index('\n}',start)+2
+body=text[start:end]
+if 'HalfNorthSouth' not in body:
+ for old,new_token in (
+  ('const double Half=double(Side)/2.;','const double Half=double(Side)/2.;\n const double NorthSouth=NorthSouthMeters(Kind), HalfNorthSouth=NorthSouth/2.;'),
+  ('Half-double(Side)*Y/(Size-1)','HalfNorthSouth-NorthSouth*Y/(Size-1)'),
+  ('-Half*100.,-Half*100.,0.','-Half*100.,-HalfNorthSouth*100.,0.'),
+  ('CmPerSample,CmPerSample,800.','CmPerSample,NorthSouth*100./(Size-1),800.'),
+ ):
+  if body.count(old)!=1:raise RuntimeError('Installed named landscape differs; preserve local work')
+  body=body.replace(old,new_token,1)
+ text=text[:start]+body+text[end:]
 browser=target/(prefix+'ServerBrowserLibrary.cpp')
 browsertext=browser.read_text(encoding='utf-8-sig')
 anchor='{TEXT("deadroot-v1"), TEXT("DEADROOT"), TEXT("/Game/Maps/PRIGIMALIA_DEADROOT")}'

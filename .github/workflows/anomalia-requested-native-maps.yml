@@ -1,0 +1,33 @@
+name: Generate requested ANOMALIA maps on Windows
+on:
+  push:
+    branches: [feature/requested-native-map-generation]
+    paths: ['.github/workflows/anomalia-requested-native-maps.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  generate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Compile and generate the requested native levels
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ((Get-PSDrive C).Free -lt 16GB -or (Get-PSDrive D).Free -lt 12GB) {
+            throw 'Insufficient disk reserve for native generation'
+          }
+          & .\scripts\ue5\create-ten-requested-maps.ps1 -Project 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -EngineRoot 'C:\Program Files\Epic Games\UE_5.8'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: requested-native-map-receipts
+          path: D:/ANOMALIA/unreal/Saved/RequestedTenMaps/*.json
+          if-no-files-found: warn

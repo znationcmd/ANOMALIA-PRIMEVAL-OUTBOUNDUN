@@ -7,16 +7,36 @@
 // Coordinates and elevations are metres. Pure code; testable outside Unreal.
 namespace AnomaliaZPrigimaliaExtraWorlds
 {
-enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, Invalid };
+enum class EWorld : std::uint8_t { Karskov, Vorgrad, Nemoris, Drakheim, Yudinavia, Moscovie, Corsivia, BotSever, CleosphinilX, Aethorion, Salveria, Warrakull, Dijkenhaven, Laguneria, Kuntaray, Velunda, Karverra, Noktera, LastCountyCanyon, Znieczulenie, Invalid };
 
 inline int SideMeters(EWorld world)
 {
  return (world==EWorld::Karskov || world==EWorld::Vorgrad) ? 30000 :
         (world==EWorld::Nemoris || world==EWorld::Drakheim) ? 20000 :
         world==EWorld::Yudinavia ? 12500 : world==EWorld::Moscovie ? 10000 :
-        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 : 0;
+        world==EWorld::Corsivia ? 15000 : world==EWorld::BotSever ? 50000 :
+        world==EWorld::CleosphinilX ? 14000 :
+        world==EWorld::Aethorion ? 12000 :
+        world==EWorld::Salveria ? 18000 :
+        world==EWorld::Warrakull ? 24000 :
+        world==EWorld::Dijkenhaven ? 16000 :
+        world==EWorld::Laguneria ? 10000 :
+        world==EWorld::Kuntaray ? 18000 : world==EWorld::Velunda ? 16000 :
+        world==EWorld::Karverra ? 20000 : world==EWorld::Noktera ? 10000 : (world==EWorld::LastCountyCanyon || world==EWorld::Znieczulenie) ? 18000 : 0;
 }
-inline int Resolution(EWorld world) { const int side=SideMeters(world); return side==30000 ? 3025 : (side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
+inline int NorthSouthMeters(EWorld world)
+{
+ if(world==EWorld::Salveria)return 16000;
+ if(world==EWorld::Warrakull)return 20000;
+ if(world==EWorld::Dijkenhaven)return 14000;
+ if(world==EWorld::Kuntaray)return 14000;
+ if(world==EWorld::Karverra)return 16000;
+ if(world==EWorld::Noktera)return 9400;
+ if(world==EWorld::LastCountyCanyon)return 14000;
+ if(world==EWorld::Znieczulenie)return 16000;
+ return SideMeters(world);
+}
+inline int Resolution(EWorld world) { if(world>=EWorld::Aethorion && world<=EWorld::Znieczulenie)return 2017; const int side=SideMeters(world); return side==30000 ? 3025 : (side==14000 || side==20000 || side==50000) ? 2017 : side>0 ? 1009 : 0; }
 inline double Clamp(double n,double lo,double hi) { return std::max(lo,std::min(hi,n)); }
 inline double Smooth(double v) { v=Clamp(v,0.,1.); return v*v*(3.-2.*v); }
 inline double Hash(int x,int y,int seed)
@@ -48,9 +68,101 @@ inline double Height(EWorld world,double east,double north)
 {
  const int side=SideMeters(world);
  if(side==0 || !std::isfinite(east) || !std::isfinite(north) ||
-    std::abs(east)>side/2. || std::abs(north)>side/2.)return -400.;
+    std::abs(east)>side/2. || std::abs(north)>NorthSouthMeters(world)/2.)return -400.;
  const double n=Fractal(east,north,100+int(world)*97);
  const double r=Fractal(east+2311.,north-1427.,510+int(world)*71);
+ if(world==EWorld::Znieczulenie){
+  const double river=std::abs(east-950.*std::sin(north/2050.));
+  const double foothills=Smooth((river-400.)/2650.);
+  const double ridge=195.*Gaussian(east,north,4900.,-3000.,2300.,4100.);
+  return 24.+18.*Smooth((river-80.)/260.)+foothills*(65.+54.*n+ridge);
+ }
+ if(world==EWorld::LastCountyCanyon){
+  const double creek=std::abs(north-1050.*std::sin(east/1900.)-400.*std::sin(east/640.));
+  const double rim=145.*Smooth((creek-135.)/920.);
+  const double mesas=120.*Smooth((r-.08)/.48)*Smooth((creek-740.)/1400.);
+  return 32.+17.*n+rim+mesas;
+ }
+ if(world==EWorld::Velunda){
+  const double trunk=east-720.*std::sin(north/1350.);
+  const double branch=std::abs(trunk)-Smooth((north+2000.)/6600.)*3100.;
+  const double channel=std::min(std::abs(trunk),std::abs(branch));
+  return -4.+(12.+4.*n)*Smooth((channel-95.)/410.);
+ }
+ if(world==EWorld::Karverra){
+  const double gorge=std::abs(north-1450.*std::sin(east/2150.));
+  const double terraces=80.*Smooth((gorge-180.)/520.)+
+                        185.*Smooth((gorge-1400.-780.*r)/630.);
+  return 42.+terraces+20.*n;
+ }
+ if(world==EWorld::Noktera){
+  // Surface above the planned underground levels.
+  return 70.+26.*n+34.*Gaussian(east,north,1800.,-1000.,2100.,2800.);
+ }
+ if(world==EWorld::Aethorion){
+  const double pillars=std::pow(Smooth((ValueNoise(east,north,880.,874)-.22)/.52),2.);
+  return 48.+26.*n+310.*pillars*Gaussian(east,north,300.,350.,3300.,4500.);
+ }
+ if(world==EWorld::Salveria){
+  const double bowl=std::hypot(east/7400.,north/6250.);
+  const double rim=Smooth((bowl-.72)/.48);
+  const double islands=32.*Gaussian(east,north,-1500.,1000.,750.,410.)+
+                       40.*Gaussian(east,north,2750.,-1250.,480.,900.);
+  return 10.+.4*n+rim*(65.+30.*n)+islands;
+ }
+ if(world==EWorld::Warrakull){
+  const double escarpment=185.*Smooth((east-4600.+1000.*r)/3900.);
+  const double basin=48.*Gaussian(east,north,-3300.,-1000.,4900.,6300.);
+  return 94.+55.*n+escarpment-basin;
+ }
+ if(world==EWorld::Dijkenhaven){
+  const double channel=std::abs(east-(1800.+370.*std::sin(north/1400.)));
+  const double dike=6.*std::exp(-std::pow((channel-310.)/85.,2.));
+  return -3.+(5.5+1.3*n)*Smooth((channel-100.)/170.)+dike;
+ }
+ if(world==EWorld::Laguneria){
+  const double islands=std::max({
+   Gaussian(east,north,-1700.,850.,1550.,1050.),
+   Gaussian(east,north,600.,1900.,830.,1250.),
+   Gaussian(east,north,2300.,-900.,1100.,1550.)
+  });
+  const double canal=std::abs(north-(820.+380.*std::sin(east/1300.)));
+  return -5.+18.*Smooth((islands-.25)/.49)*Smooth((canal-36.)/100.);
+ }
+ if(world==EWorld::Kuntaray){
+  const double valley=std::abs(east-950.*std::sin(north/1550.));
+  const double rise=Smooth((valley-120.)/3400.);
+  return 49.+rise*(570.+220.*n)+35.*r;
+ }
+ if(world==EWorld::CleosphinilX){
+  // Water occupies the terrain below zero metres. The Nil flows north–south
+  // and opens into an eastern basin containing three separate islands.
+  const double riverCenter=620.*std::sin(north/1750.)+220.*std::sin(north/730.);
+  const double riverDistance=std::abs(east-riverCenter);
+  const double riverHalfWidth=210.+55.*std::cos(north/1120.);
+  const double riverShore=riverDistance-riverHalfWidth;
+  const double basinRadius=std::hypot((east-2450.)/3695.,(north-250.)/5100.);
+  const double basinShore=(basinRadius-1.)*3695.;
+  const double islandShore=std::min({
+    std::hypot(east-2450.,north-1950.)-620.,
+    std::hypot(east-1100.,north+1000.)-570.,
+    std::hypot(east-3900.,north+1000.)-690.
+  });
+  const double oasisShore=std::min({
+    std::hypot(east+3700.,north+2100.)-240.,
+    std::hypot(east+4600.,north-2600.)-190.,
+    std::hypot(east+2100.,north-4100.)-155.
+  });
+  const double shore=std::min({riverShore,std::max(basinShore,-islandShore),oasisShore});
+  if(shore<=0.)return std::max(-26.,shore*.045);
+  const double dunePhase=(east+0.36*north)/185.+1.5*r;
+  const double dunes=48.*std::pow(0.5+0.5*std::sin(dunePhase),2.)*
+    Smooth((-east-900.)/2400.);
+  const double plateau=165.*Smooth((east-1850.+420.*r)/1150.)*
+    (0.78+0.22*std::sin(north/1350.));
+  const double dryRelief=30.+18.*n+dunes+plateau;
+  return 22.*Smooth(shore/250.)+dryRelief*Smooth(shore/1000.);
+ }
  // Original draft landforms, not surveyed Moscow/Corsica/Scandinavia data.
  if(world==EWorld::BotSever){
   // Original continental draft; southern naming boundary is exactly -17500 m.
