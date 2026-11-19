@@ -52,6 +52,19 @@ jobs:
           foreach($p in @($catalog,$planpy,$script)){if(!(Test-Path -LiteralPath $p -PathType Leaf)){throw 'Missing UE5 automatic authoring sources'}}
           & $py -B -m py_compile $script
           if($LASTEXITCODE -ne 0){throw 'Original editor procedural authoring script syntax error'}
+          $kolchiemFull=Join-Path $root 'Content\Maps\PRIGIMALIA_KOLCHIEM_ORIGINS_FULL.umap'
+          if(Test-Path -LiteralPath $kolchiemFull -PathType Leaf){
+            # The settlement configuration identifies this as the retained historical terrain.
+            $catalogData=Get-Content -LiteralPath $catalog -Raw -Encoding UTF8 | ConvertFrom-Json
+            $world=@($catalogData.maps | Where-Object {$_.id -eq 'kolchiem-origins-v1'})
+            if($world.Count -ne 1){throw 'KOLCHIEM ORIGINS catalog entry is missing or duplicated'}
+            $world[0].originalUnrealPackage='/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS_FULL'
+            $catalog=Join-Path $out 'catalog-with-recovered-kolchiem.json'
+            [IO.File]::WriteAllText($catalog,($catalogData | ConvertTo-Json -Depth 90),[Text.UTF8Encoding]::new($false))
+            Write-Host 'KOLCHIEM_ORIGINS: using the documented recovered FULL package; native collision checks still apply'
+          }else{
+            Write-Host 'KOLCHIEM_ORIGINS: documented recovered FULL package is absent on D'
+          }
           & $py -B $planpy --catalog $catalog --out $master
           if($LASTEXITCODE -ne 0){throw 'Cannot confirm the deterministic all-30 masterplan'}
           $doc=Get-Content -LiteralPath $master -Raw -Encoding UTF8|ConvertFrom-Json
