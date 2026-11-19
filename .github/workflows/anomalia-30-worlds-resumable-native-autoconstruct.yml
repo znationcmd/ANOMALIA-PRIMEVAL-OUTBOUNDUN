@@ -78,16 +78,13 @@ jobs:
           $constructed=@()
           $blocked=@()
           $preserved=@()
-          $changedAllowlist=@()
+          $reviewed=@()
           foreach($m in @($doc.maps)){
             $id=[string]$m.id
             if($m.requestedLocalities -eq 0){
+              $reviewed+=$id
               $preserved+=([ordered]@{id=$id;reason='ARENA_SPECIAL_MODE_NO_CIVILIAN_SETTLEMENTS'})
               continue
-            }
-            if($blocked.Count -ge 5){
-              Write-Host 'ANOMALIA_AUTOCONSTRUCT_BATCH_STOP_SAFETY_FIVE_BLOCKS'
-              break
             }
             if(([IO.DriveInfo]::new('C')).AvailableFreeSpace -lt 5GB -or ([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 10GB){
               $blocked+=([ordered]@{id=$id;reason='SAFETY_DISK_RESERVE'});break
@@ -97,6 +94,7 @@ jobs:
             if($busy.Count -or $cmds.Count){
               $blocked+=([ordered]@{id=$id;reason='EXTERNAL_EDITOR_OR_BUILD_ACTIVE'});break
             }
+            $reviewed+=$id
             $env:ANOMALIA_AUTOBUILD_MAP_ID=$id
             $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT ('auto-'+$id+'.json')
             $log=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT ('auto-'+$id+'.log')
@@ -109,19 +107,20 @@ jobs:
             $result=Get-Content -LiteralPath $env:ANOMALIA_AUTOBUILD_NATIVE_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
             if($result.state -eq 'PARTIAL_NATIVE_REAL_ASSETS_SAVED_UNPLAYTESTED' -and $result.realBuildingsCreated -gt 0 -and $result.realRoadMeshActorsCreated -gt 0){
               $constructed+=([ordered]@{id=$id;citiesOrVillagesStarted=$result.localitiesConstructed;houses=$result.realBuildingsCreated;roadMeshes=$result.realRoadMeshActorsCreated;metres=$result.roadMetresCovered})
-              $changedAllowlist+=($m.worldPackage -replace '^/Game/','Content\' -replace '/', '\')+'.umap'
               Write-Host ('ANOMALIA_AUTO30_SAVED_PARTIAL_REAL_CITY_AND_ROADS='+$id+' HOUSES='+$result.realBuildingsCreated+' ASPHALT_MESHES='+$result.realRoadMeshActorsCreated)
             }elseif($result.state -eq 'EXISTING_AUTOCONSTRUCTION_BATCHES_PRESERVED'){
               $preserved+=([ordered]@{id=$id;reason=$result.state})
             }else{
-              $blocked+=([ordered]@{id=$id;reason=$result.error;state=$result.state;exit=$exit})
+              $blocked+=([ordered]@{id=$id;reason=$(if($result.error){$result.error}else{$result.state});state=$result.state;exit=$exit})
               Write-Host ('ANOMALIA_AUTO30_WORLD_BLOCKED='+$id+' REASON='+$result.error)
             }
           }
+          $unvisited=@($doc.maps | Where-Object {$_.id -notin $reviewed} | ForEach-Object {$_.id})
           $summary=[ordered]@{state='BOUNDED_AUTONOMOUS_ORIGINAL_WORLD_PASS_REPORTED';
+            reviewedCount=$reviewed.Count;unvisitedMaps=$unvisited;
             targetMaps=30;startedNativeMaps=$constructed;nativeMapsStartedCount=$constructed.Count;
-            physicallyPlacedBuildings=(@($constructed|Measure-Object -Property houses -Sum)[0].Sum);
-            physicallyPlacedRoadMeshes=(@($constructed|Measure-Object -Property roadMeshes -Sum)[0].Sum);
+            physicallyPlacedBuildings=[int](@($constructed|Measure-Object -Property houses -Sum)[0].Sum);
+            physicallyPlacedRoadMeshes=[int](@($constructed|Measure-Object -Property roadMeshes -Sum)[0].Sum);
             skippedSpecialModesOrAlreadyPresent=$preserved;blockedMaps=$blocked;
             blockedCount=$blocked.Count;allThirtyCitiesComplete=$false;allRegionalRoadsComplete=$false;
             allInteriorsPlaytested=$false;existingBuildingsDeleted=0;existingRoadsDeleted=0}
@@ -150,6 +149,15 @@ jobs:
           }
           Write-Host ('ANOMALIA_AUTO30_ALL_OTHER_ORIGINAL_WORLDS_SHA256 '+([ordered]@{initialOriginalMaps=$old.Count;targetWorldsAllowedToSave=$allowed.Count;unexpectedChanges=$bad.Count;changed=$bad}|ConvertTo-Json -Depth 5 -Compress))
           if($bad.Count){throw 'Unapproved native world was changed by automatic batch'}
+      - name: Report incomplete coverage as an unsuccessful generation
+        if: env.ANOMALIA_AUTO30_FULL_SAFE_TO_RUN == 'true'
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $path=Join-Path $env:ANOMALIA_AUTO30_BATCH_OUT 'all30-native-first-pass-summary.json'
+          $r=Get-Content -LiteralPath $path -Raw -Encoding UTF8 | ConvertFrom-Json
+          if($r.reviewedCount -ne $r.targetMaps -or $r.blockedCount -gt 0){
+            throw ("Incomplete first pass: {0}/{1} maps reviewed, {2} blocked" -f $r.reviewedCount,$r.targetMaps,$r.blockedCount)
+          }
       - uses: actions/upload-artifact@v4
         if: always() && env.ANOMALIA_AUTO30_BATCH_OUT != ''
         with:
