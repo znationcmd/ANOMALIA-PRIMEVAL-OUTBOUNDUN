@@ -1,4 +1,4 @@
-name: ANOMALIA — generate 13 requested Unreal levels
+name: ANOMALIA — generate levels and import Orbital Terminus modules
 on:
   push:
     branches: [feature/requested-native-map-generation]

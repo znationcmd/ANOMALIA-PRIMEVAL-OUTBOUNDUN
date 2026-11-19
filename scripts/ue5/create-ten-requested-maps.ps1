@@ -45,6 +45,11 @@ foreach ($id in @('CLEOSPHINIL_X','VELUNDA','KARVERRA','NOKTERA','AETHORION','SA
         }
     }
     if (Test-Path -LiteralPath $mapPath) { throw "Existing map requires review: $mapPath" }
+    if ($id -eq 'ORBITALE_TERMINUS') {
+        $importer = Join-Path $repo 'unreal\Scripts\import_orbitale_terminus_modules.py'
+        & $editor $Project "-ExecutePythonScript=$importer" -unattended -nopause -nosound -NullRHI "-abslog=$reportDir\orbital-import.log"
+        if ($LASTEXITCODE -ne 0) { throw "Station model import failed. See $reportDir." }
+    }
     $env:PRIGIMALIA_THREE_MAP = $id
     $env:PRIGIMALIA_THREE_REPORT = $report
     & $editor $Project "-ExecutePythonScript=$author" -unattended -nopause -nosound -NullRHI "-abslog=$reportDir\$id.log"

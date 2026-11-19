@@ -1046,6 +1046,13 @@
       "validation": "design-planned-native-world-not-created",
       "nativeWorldCreated": false,
       "terrainBiome": "futuristic-orbital-station-metropolis",
+      "stationAssetSource": {
+        "name": "Quaternius Modular Sci-Fi Megakit (édition gratuite)",
+        "url": "https://quaternius.com/packs/modularscifimegakit.html",
+        "license": "CC0-1.0",
+        "formats": ["glTF", "FBX", "OBJ"],
+        "integration": "source-identified-import-and-layout-pending"
+      },
       "features": [
         "Mégapole à plusieurs niveaux dans une station orbitale",
         "Quartiers résidentiels, parcs sous dôme et métro circulaire",
