@@ -227,13 +227,20 @@ variants={
 }
 # Join by material to avoid hundreds of Static Mesh imports while retaining slots.
 bpy.ops.object.select_all(action="DESELECT")
-for obj in tuple(bpy.context.scene.objects):
-    if obj.type!="MESH":continue
-    bpy.context.view_layer.objects.active=obj
-    for modifier in tuple(obj.modifiers):
-        bpy.ops.object.modifier_apply(modifier=modifier.name)
+sources = tuple(obj for obj in bpy.context.scene.objects if obj.type == "MESH")
+depsgraph = bpy.context.evaluated_depsgraph_get()
+baked = []
+for obj in sources:
+    evaluated = obj.evaluated_get(depsgraph)
+    data = bpy.data.meshes.new_from_object(evaluated, depsgraph=depsgraph)
+    data.transform(obj.matrix_world)
+    baked.append(bpy.data.objects.new(obj.name + "_baked", data))
+for obj in sources:
+    bpy.data.objects.remove(obj, do_unlink=True)
+for obj in baked:
+    bpy.context.collection.objects.link(obj)
     obj.select_set(True)
-bpy.context.view_layer.objects.active=next(iter(bpy.context.selected_objects))
+bpy.context.view_layer.objects.active=baked[0]
 bpy.ops.object.join()
 bpy.context.object.name="Praga_V3S_6x6"
 bpy.ops.object.origin_set(type="ORIGIN_CURSOR")
