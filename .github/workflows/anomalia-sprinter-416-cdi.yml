@@ -8,12 +8,12 @@ permissions:
   contents: read
 jobs:
   model:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
       - run: |
-          sudo apt-get update -qq
+          sudo apt-get -o Acquire::Retries=1 -o Acquire::http::Timeout=20 update -qq
           sudo apt-get install -y blender python3-numpy
           blender -b -t 3 --python-use-system-env --python-exit-code 1 --python scripts/vehicle-assets/build_sprinter_416_cdi.py -- "$RUNNER_TEMP/sprinter"
           test "$(find "$RUNNER_TEMP/sprinter" -name '*.glb' -type f | wc -l)" -eq 1
