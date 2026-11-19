@@ -25,6 +25,51 @@ jobs:
             throw 'Insufficient disk reserve for native generation'
           }
           & .\scripts\ue5\create-ten-requested-maps.ps1 -Project 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' -EngineRoot 'C:\Program Files\Epic Games\UE_5.8'
+      - name: Copy verified map packages into personal OneDrive
+        if: always() && !cancelled()
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $project = 'D:\ANOMALIA\unreal'
+          $reports = Join-Path $project 'Saved\RequestedTenMaps'
+          $ids = @('CLEOSPHINIL_X','VELUNDA','KARVERRA','NOKTERA','AETHORION','SALVERIA','WARRAKULL','DIJKENHAVEN','LAGUNERIA','KUNTARAY','COFFIN_CREEK','ZNIECZULENIE','ORBITALE_TERMINUS')
+          $saved = @(foreach ($id in $ids) {
+            $report = Join-Path $reports "$id.json"
+            $name = "PRIGIMALIA_$id"
+            $relative = "Content\Maps\$name.umap"
+            if (!(Test-Path -LiteralPath $report -PathType Leaf) -or !(Test-Path -LiteralPath (Join-Path $project $relative) -PathType Leaf)) { continue }
+            $receipt = Get-Content -LiteralPath $report -Raw | ConvertFrom-Json
+            if (($receipt.actualLandscapeSaved -or $receipt.actualStationSaved) -and $receipt.mapPackage -eq "/Game/Maps/$name") {
+              [pscustomobject]@{Id=$id; Name=$name; Relative=$relative}
+            }
+          })
+          if (!$saved.Count) { Write-Host 'No verified map packages to copy.'; exit 0 }
+          $root = $env:OneDriveConsumer
+          if (!$root -or !(Test-Path -LiteralPath $root -PathType Container)) { throw 'Personal OneDrive root unavailable' }
+          $destination = Join-Path $root "ANOMALIAZ_PRIGIMALIA\UnrealMaps\$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+          if (Test-Path -LiteralPath $destination) { throw 'Backup destination already exists' }
+          New-Item -ItemType Directory -Path $destination | Out-Null
+          function Copy-VerifiedFile($source, $target) {
+            New-Item -ItemType Directory -Path (Split-Path -Parent $target) -Force | Out-Null
+            Copy-Item -LiteralPath $source -Destination $target
+            if ((Get-FileHash -LiteralPath $source).Hash -ne (Get-FileHash -LiteralPath $target).Hash) {
+              throw "Backup contents differ: $target"
+            }
+          }
+          foreach ($map in $saved) {
+            Copy-VerifiedFile (Join-Path $project $map.Relative) (Join-Path $destination $map.Relative)
+            $directories = @("Content\__ExternalActors__\Maps\$($map.Name)", "Content\__ExternalObjects__\Maps\$($map.Name)")
+            if ($map.Id -eq 'ORBITALE_TERMINUS') { $directories += 'Content\Anomalia\OrbitaleTerminus17' }
+            foreach ($relative in $directories) {
+              $folder = Join-Path $project $relative
+              if (!(Test-Path -LiteralPath $folder -PathType Container)) { continue }
+              foreach ($file in Get-ChildItem -LiteralPath $folder -File -Recurse) {
+                $path = $file.FullName.Substring($project.Length + 1)
+                Copy-VerifiedFile $file.FullName (Join-Path $destination $path)
+              }
+            }
+          }
+          @{state='LOCAL_ONEDRIVE_COPY_VERIFIED_SYNC_UNCONFIRMED'; maps=@($saved.Id)} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $reports 'onedrive-backup.json') -Encoding UTF8
       - uses: actions/upload-artifact@v4
         if: always()
         with:
