@@ -41,7 +41,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::GetItemRules(FName ItemId, float& O
     { OutWeightKg=.03f;OutMaxStack=1;OutSize=FIntPoint(1,1);return true; }
     static const TMap<FName, float> Weights = {
         // Storage parity with the additive JS resource catalogue; crafting is separate.
-        {TEXT("tactical_belt"), .3f}, {TEXT("medical_pouch"), .25f},
+        {TEXT("tactical_belt"), .3f}, {TEXT("medical_pouch"), .25f}, {TEXT("vest_rear_pouch"), .45f},
         {TEXT("handheld_radio"), .3f}, {TEXT("frag_grenade"), .4f}, {TEXT("smoke_grenade"), .45f},
         {TEXT("handcuffs"), .35f}, {TEXT("pistol_holster"), .2f}, {TEXT("knife_sheath"), .1f},
         {TEXT("thatch"), 0.12f},
@@ -122,6 +122,7 @@ bool UAnomaliaZPrigimaliaInventoryComponent::GetItemRules(FName ItemId, float& O
         ItemId == TEXT("jeans") || ItemId == TEXT("boots") || ItemId == TEXT("helmet") ||
         ItemId == TEXT("backpack") || ItemId == TEXT("bag") || ItemId == TEXT("vest")) OutMaxStack = 1;
     if(ItemId==TEXT("handheld_radio")||ItemId==TEXT("frag_grenade")||ItemId==TEXT("smoke_grenade")||ItemId==TEXT("tactical_belt")||ItemId==TEXT("medical_pouch")||ItemId==TEXT("handcuffs")||ItemId==TEXT("pistol_holster")||ItemId==TEXT("knife_sheath")) {OutMaxStack=1;OutSize={2,2};}
+    if (ItemId == TEXT("vest_rear_pouch")) { OutMaxStack = 1; OutSize = {3, 2}; }
     if (ItemId == TEXT("wood")) OutSize = FIntPoint(1, 3);
     else if (ItemId == TEXT("rifle") || ItemId == TEXT("fishing_rod")) OutSize = FIntPoint(2, 5);
     else if (ItemId == TEXT("saddle")) OutSize = FIntPoint(3, 3);
@@ -197,6 +198,13 @@ bool UAnomaliaZPrigimaliaInventoryComponent::IsRecoveryContainer(FName Container
     return Box && Box->bRecoveryOnly;
 }
 
+static FName CargoAttachmentItem(const FAnomaliaZPrigimaliaAttachmentRule* Rule)
+{
+    if (!Rule) return NAME_None;
+    if (Rule->Id == TEXT("mount_vest_rear_pouch")) return TEXT("vest_rear_pouch");
+    return Rule->Items.Contains(TEXT("medical_pouch")) ? FName(TEXT("medical_pouch")) : NAME_None;
+}
+
 bool UAnomaliaZPrigimaliaInventoryComponent::CanPlace(const TArray<FAnomaliaZPrigimaliaInventoryStack>& Candidate,
     const FAnomaliaZPrigimaliaInventoryStack& Stack, FName ContainerId, int32 X, int32 Y, bool bRotate) const
 {
@@ -219,7 +227,9 @@ bool UAnomaliaZPrigimaliaInventoryComponent::CanPlace(const TArray<FAnomaliaZPri
     if(BoxName.StartsWith(TEXT("mount_"))&&BoxName.EndsWith(TEXT("_cargo")))
     {
         const FName Parent(*BoxName.LeftChop(6));
-        const bool Equipped=AttachmentAvailable(Candidate,Parent)&&Candidate.ContainsByPredicate([&](const auto& S){return S.ContainerId==Parent&&S.ItemId==TEXT("medical_pouch")&&S.Count==1;});
+        const FName CargoItem = CargoAttachmentItem(FindAttachmentRule(Parent));
+        const bool Equipped = !CargoItem.IsNone() && AttachmentAvailable(Candidate, Parent) &&
+            Candidate.ContainsByPredicate([&](const auto& S){return S.ContainerId==Parent&&S.ItemId==CargoItem&&S.Count==1;});
         if(!Equipped&&!(Box->bRecoveryOnly&&Stack.ContainerId==ContainerId))return false;
     }
     if (bRotate) Swap(Size.X, Size.Y);
@@ -593,9 +603,9 @@ bool UAnomaliaZPrigimaliaInventoryComponent::LoadInventoryObject(const TSharedPt
         if(IdText.StartsWith(TEXT("mount_")))
         {
             const auto* Rule=FindAttachmentRule(Id);
-            const bool Medical=IdText.EndsWith(TEXT("_cargo")) && FindAttachmentRule(FName(*IdText.LeftChop(6))) &&
-                FindAttachmentRule(FName(*IdText.LeftChop(6)))->Items.Contains(TEXT("medical_pouch"));
-            if((Rule&&(Box.Width!=16||Box.Height!=16))||(!Rule&&(!Medical||Box.Width!=4||Box.Height!=3)))
+            const bool HasAttachmentCargo = IdText.EndsWith(TEXT("_cargo")) &&
+                !CargoAttachmentItem(FindAttachmentRule(FName(*IdText.LeftChop(6)))).IsNone();
+            if((Rule&&(Box.Width!=16||Box.Height!=16))||(!Rule&&(!HasAttachmentCargo||Box.Width!=4||Box.Height!=3)))
             {OutError=TEXT("Invalid reserved attachment storage");return false;}
         }
         LoadedCompartments.Add(Box);
@@ -802,7 +812,7 @@ FString UAnomaliaZPrigimaliaInventoryComponent::GetItemDisplayName(FName ItemId)
     const auto* Loot=GetWorld()?GetWorld()->GetSubsystem<UAnomaliaZPrigimaliaLootSubsystem>():nullptr;
     const auto* Item=Loot?Loot->FindItem(ItemId):nullptr;
     if(Item)return Item->DisplayName;
-    static const TMap<FName,FString> Labels={{TEXT("tactical_belt"),TEXT("Ceinture tactique")},{TEXT("medical_pouch"),TEXT("Sacoche médicale")},{TEXT("handcuffs"),TEXT("Menottes")},{TEXT("pistol_holster"),TEXT("Holster")},{TEXT("knife_sheath"),TEXT("Fourreau")},{TEXT("handheld_radio"),TEXT("Radio")},{TEXT("frag_grenade"),TEXT("Grenade")},{TEXT("smoke_grenade"),TEXT("Fumigène")},{TEXT("cloth"),TEXT("Tissu")},{TEXT("fiber"),TEXT("Fibres")},{TEXT("wood"),TEXT("Bois")},{TEXT("stone"),TEXT("Pierre")},{TEXT("bandage"),TEXT("Pansement")},{TEXT("saddle"),TEXT("Selle")}};
+    static const TMap<FName,FString> Labels={{TEXT("tactical_belt"),TEXT("Ceinture tactique")},{TEXT("medical_pouch"),TEXT("Sacoche médicale")},{TEXT("vest_rear_pouch"),TEXT("Sacoche arrière")},{TEXT("handcuffs"),TEXT("Menottes")},{TEXT("pistol_holster"),TEXT("Holster")},{TEXT("knife_sheath"),TEXT("Fourreau")},{TEXT("handheld_radio"),TEXT("Radio")},{TEXT("frag_grenade"),TEXT("Grenade")},{TEXT("smoke_grenade"),TEXT("Fumigène")},{TEXT("cloth"),TEXT("Tissu")},{TEXT("fiber"),TEXT("Fibres")},{TEXT("wood"),TEXT("Bois")},{TEXT("stone"),TEXT("Pierre")},{TEXT("bandage"),TEXT("Pansement")},{TEXT("saddle"),TEXT("Selle")}};
     const auto* Label=Labels.Find(ItemId);return Label?*Label:ItemId.ToString();
 }
 
@@ -1261,6 +1271,7 @@ const TArray<FAnomaliaZPrigimaliaAttachmentRule>& UAnomaliaZPrigimaliaInventoryC
         {TEXT("mount_back_medical"),TEXT("worn_back"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
         {TEXT("mount_back_radio"),TEXT("worn_back"),TEXT("Radio"),{TEXT("handheld_radio")}},
         {TEXT("mount_back_light"),TEXT("worn_back"),TEXT("Bâton lumineux"),{TEXT("chemlight")}},
+        {TEXT("mount_vest_rear_pouch"),TEXT("worn_vest"),TEXT("Sacoche arrière"),{TEXT("vest_rear_pouch")}},
         {TEXT("mount_vest_medical"),TEXT("worn_vest"),TEXT("Sacoche médicale"),{TEXT("medical_pouch")}},
         {TEXT("mount_vest_mag_left"),TEXT("worn_vest"),TEXT("Chargeur gauche"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
         {TEXT("mount_vest_mag_right"),TEXT("worn_vest"),TEXT("Chargeur droit"),{TEXT("stanag_magazine"),TEXT("ak_magazine")}},
@@ -1314,9 +1325,10 @@ void UAnomaliaZPrigimaliaInventoryComponent::SynchronizeAttachmentStorage()
     for(const auto& Rule:GetAttachmentRules())
     {
         Sync(Rule.Id,16,16,AttachmentAvailable(Stacks,Rule.Id));
-        if(Rule.Items.Contains(TEXT("medical_pouch")))
+        const FName CargoItem = CargoAttachmentItem(&Rule);
+        if (!CargoItem.IsNone())
         {
-            const bool Equipped=AttachmentAvailable(Stacks,Rule.Id)&&Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Rule.Id&&S.ItemId==TEXT("medical_pouch")&&S.Count==1;});
+            const bool Equipped=AttachmentAvailable(Stacks,Rule.Id)&&Stacks.ContainsByPredicate([&](const auto& S){return S.ContainerId==Rule.Id&&S.ItemId==CargoItem&&S.Count==1;});
             Sync(FName(*(Rule.Id.ToString()+TEXT("_cargo"))),4,3,Equipped);
         }
     }
