@@ -52,7 +52,7 @@ jobs:
           $catalog=Join-Path $repo 'public\config\anomalia-map-catalog.json'
           $author=Join-Path $repo 'unreal\Scripts\autoconstruct_30_native_city_road_phase1.py'
           $verify=Join-Path $repo 'unreal\Scripts\verify_autoconstruct_30_saved_native_actors.py'
-          $master=Join-Path $root 'Saved\AutoConstruct30\MasterPlans\ANOMALIA_AUTO30_MASTER_V1.json'
+          $master=Join-Path $out 'ANOMALIA_AUTO30_MASTER_THEMES.json'
           "ANOMALIA_AUTOBUILD_MASTER_PLAN=$master"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
           "ANOMALIA_AUTO30_EDITOR_SCRIPT=$author"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
           "ANOMALIA_AUTO30_VERIFY_SCRIPT=$verify"|Out-File -FilePath $env:GITHUB_ENV -Encoding UTF8 -Append
