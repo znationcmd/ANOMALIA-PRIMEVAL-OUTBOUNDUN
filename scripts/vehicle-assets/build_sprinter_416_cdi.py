@@ -155,11 +155,11 @@ wind=[(1.397,-.760,2.144),(1.397,.760,2.144),(1.850,.792,1.365),(1.850,-.792,1.3
 for name, corners, m in [
     ("Windscreen black seal",[(x+.018,y*1.035,z) for x,y,z in wind],iron),
     ("Tinted laminated windscreen",[(x+.031,y,z) for x,y,z in wind],glass)]:
-    panel=mesh(name,corners,[(0,1,2,3),(3,2,1,0)],m)
+    mesh(name,corners,[(0,1,2,3)],m)
 for side in [-1,1]:
     y=side*.968
     verts=[(.56,y,2.063),(1.35,y,2.057),(1.70,side*.934,1.40),(.56,y,1.40)]
-    mesh("Side door window",verts,[(0,1,2,3),(3,2,1,0)],glass)
+    mesh("Side door window",verts,[(0,1,2,3)],glass)
     for a,b in [((.47,y,.70),(.47,y,2.118)),((.49,y,2.118),(1.33,y,2.118)),
                 ((.47,y,.70),(1.08,y,.70))]:
         cylinder("Front door shut line",a,b,.008,iron,10)
