@@ -1,0 +1,128 @@
+name: ANOMALIA - verify generated SKARVIK building foundations and 3D imports
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/skarvik-building-ground-verify.yml']
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-30-authentic-original-wp-construction
+  cancel-in-progress: false
+jobs:
+  verify:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Count the current project imports
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $out=Join-Path $root ('Saved\AutoConstruct30\BuildingGroundAudit\'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force | Out-Null
+          "GROUND_AUDIT_OUT=$out" | Out-File $env:GITHUB_ENV -Encoding UTF8 -Append
+          $state=Join-Path $root 'Saved\ImportReceipts\RawResume20261107'
+          $manifest=Get-Content -LiteralPath (Join-Path $state 'raw-preparation-manifest.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          $r=Get-Content -LiteralPath (Join-Path $state 'raw-import-report.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          $accepted=@{}; $failed=@{}
+          foreach($row in $r.sources){
+            if($row.state -in @('IMPORTED_SAVED_RELOADED_NOT_GAMEPLAY_ACCEPTED','RESUMED_IMPORTED_SAVED_RELOADED_NOT_GAMEPLAY_ACCEPTED')){
+              $accepted[$row.sha256]=$true
+            }
+          }
+          foreach($row in $r.errors){if($row.sha256){$failed[$row.sha256]=$true}}
+          $ok=0; $errorCount=0; $pending=0; $compiler=0
+          foreach($row in $manifest.imports){
+            if($row.source -match '(?i)[\\/](?:Intermediate|Intermediate_backup_[^\\/]+)[\\/]Build[\\/].+\.obj$'){$compiler++;continue}
+            if($accepted.ContainsKey($row.sha256)){$ok++}
+            elseif($failed.ContainsKey($row.sha256)){$errorCount++}
+            else{$pending++}
+          }
+          $receipt=[ordered]@{savedAndReloaded=$ok;failed=$errorCount;pending=$pending;excludedCompilerObjects=$compiler}
+          $receipt | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $out 'imports.json') -Encoding UTF8
+          Write-Host ('ANOMALIA_IMPORT_LEDGER '+($receipt | ConvertTo-Json -Compress))
+      - name: Measure building base clearance after reopening the original SKARVIK package
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $before=(Get-FileHash -LiteralPath $map).Hash
+          $active=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue | Where-Object { -not $_.HasExited })
+          if($active.Count){throw 'Existing editor or game session is active'}
+          $out=$env:GROUND_AUDIT_OUT
+          $script=Join-Path $out 'building-ground-audit.py'
+          @'
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          package = "/Game/Maps/ANOMALIA_Archipelago_v2"
+          level = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          actor_api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          if not level.load_level(package):
+              raise RuntimeError(f"Unable to reopen {package}")
+          world = editor.get_editor_world()
+          if world.get_outermost().get_name() != package:
+              raise RuntimeError("Unexpected reopened world")
+          partition = unreal.WorldPartitionBlueprintLibrary
+          descriptors = partition.get_actor_descs() or []
+          building_prefix = "ANOMALIA_AUTO30_V1_archipelago_v2_"
+          buildings = [entry for entry in descriptors if str(entry.label).startswith(building_prefix)
+                       and "_BUILDING_" in str(entry.label)]
+          terrain = [entry for entry in descriptors if str(entry.label).startswith("LandscapeStreamingProxy")]
+          partition.load_actors([entry.guid for entry in terrain + buildings])
+          loaded = {actor.get_actor_label(): actor for actor in actor_api.get_all_level_actors()}
+          rows = []
+          for entry in buildings:
+              label = str(entry.label)
+              actor = loaded.get(label)
+              if actor is None:
+                  rows.append({"actor": label, "state": "actor_not_loaded"})
+                  continue
+              component = actor.get_component_by_class(unreal.StaticMeshComponent)
+              mesh = component.get_editor_property("static_mesh") if component else None
+              if mesh is None:
+                  rows.append({"actor": label, "state": "mesh_missing"})
+                  continue
+              origin, extent = actor.get_actor_bounds(False)
+              bottom = origin.z - extent.z
+              gaps = []
+              for x, y in [(0, 0), (-1, -1), (-1, 1), (1, -1), (1, 1)]:
+                  east = origin.x + x * extent.x * .8
+                  south = origin.y + y * extent.y * .8
+                  hit = unreal.SystemLibrary.line_trace_single(
+                      world, unreal.Vector(east, south, bottom + 700),
+                      unreal.Vector(east, south, bottom - 1000), unreal.TraceTypeQuery.ECC_VISIBILITY,
+                      True, [actor], unreal.DrawDebugTrace.NONE, True)
+                  values = hit.to_tuple() if hit is not None else None
+                  gaps.append(round(bottom - values[4].z, 1)
+                              if values and values[0] and isinstance(values[9], unreal.LandscapeProxy)
+                              else None)
+              state = "terrain_contact_unverified" if None in gaps else (
+                  "review_clearance" if any(gap > 25 or gap < -25 for gap in gaps) else "bounds_within_25cm")
+              rows.append({"actor": label, "mesh": mesh.get_path_name(), "state": state, "baseClearancesCm": gaps})
+          report = {"map": package, "savedBuildingDescriptors": len(buildings),
+                    "interiorsPlaytested": False, "buildings": rows}
+          if not buildings:
+              raise RuntimeError("No saved generated buildings found on the reopened map")
+          (Path(os.environ["GROUND_AUDIT_OUT"]) / "buildings.json").write_text(
+              json.dumps(report, indent=2), encoding="utf-8")
+          print("ANOMALIA_GROUND_AUDIT " + json.dumps({
+              state: sum(row["state"] == state for row in rows) for state in set(row["state"] for row in rows)}))
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          & $editor $project "-ExecutePythonScript=$script" -nullrhi -unattended -nop4 -nosound "-abslog=$out\editor.log"
+          if((Get-FileHash -LiteralPath $map).Hash -ne $before){throw 'Map changed during read-only test'}
+          if(!(Test-Path -LiteralPath (Join-Path $out 'buildings.json'))){throw 'Unreal did not write a building verification report'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.GROUND_AUDIT_OUT != ''
+        with:
+          name: skarvik-building-ground-and-imports
+          path: |
+            ${{ env.GROUND_AUDIT_OUT }}/*.json
+            ${{ env.GROUND_AUDIT_OUT }}/editor.log
