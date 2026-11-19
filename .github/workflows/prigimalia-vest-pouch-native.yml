@@ -1,0 +1,63 @@
+name: ANOMALIA’Z PRIGIMALIA - gilet et sacoche, vérification native
+on:
+  push:
+    branches: [mission/finalisation-20261104]
+    paths: ['.github/workflows/prigimalia-vest-pouch-native.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+
+jobs:
+  compile:
+    if: github.repository == 'znationcmd/ANOMALIA-PRIMEVAL-OUTBOUNDUN' && github.ref == 'refs/heads/mission/finalisation-20261104'
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 100
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Verify this is not the original project working directory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $workspace=[IO.Path]::GetFullPath($env:GITHUB_WORKSPACE).TrimEnd('\\')
+          if ($workspace -ieq 'D:\ANOMALIA') { throw 'Refusing to compile in original working directory' }
+          if ($workspace.StartsWith('D:\ANOMALIA\\',[StringComparison]::OrdinalIgnoreCase)) { throw 'Refusing to compile inside original working directory' }
+          $project=Join-Path $workspace 'unreal/AnomaliaZPrigimalia.uproject'
+          if(-not (Test-Path -LiteralPath $project)){throw 'New .uproject missing'}
+          if(-not (Test-Path -LiteralPath (Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'))){throw 'Unreal Build.bat missing'}
+          Write-Host 'ISOLATED_NATIVE_BUILD_SOURCE=true'
+      - name: Compile renamed UE5 Editor target without editing the original project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $bat=Join-Path $env:UE_ROOT 'Engine/Build/BatchFiles/Build.bat'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
+          & $bat 'AnomaliaZPrigimaliaEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2'
+          if ($LASTEXITCODE -ne 0) { throw "Native UE 5.8 C++ compilation failed with exit code $LASTEXITCODE" }
+          Write-Host 'ANOMALIAZ_PRIGIMALIA_NATIVE_CPP_COMPILATION=true'
+      - name: Exercise attachment, storage and detachment in Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $project=Join-Path $env:GITHUB_WORKSPACE 'unreal/AnomaliaZPrigimalia.uproject'
+          $editor=Join-Path $env:UE_ROOT 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
+          $out=Join-Path $env:RUNNER_TEMP ('vest-pouch-'+$env:GITHUB_RUN_ID+'-'+$env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $out | Out-Null
+          "VEST_TEST_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          & $editor $project -unattended -nopause -nosound -NullRHI '-ExecCmds=Automation RunTests AnomaliaZPrigimalia.Native.EquipmentAttachments' '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$out" "-abslog=$out\editor.log"
+          if($LASTEXITCODE -ne 0){throw 'Unreal attachment tests failed'}
+          $report=Get-Content -LiteralPath (Join-Path $out 'index.json') -Raw -Encoding UTF8 | ConvertFrom-Json
+          $test=@($report.tests | Where-Object {$_.fullTestPath -eq 'AnomaliaZPrigimalia.Native.EquipmentAttachments' -and $_.state -eq 'Success'})
+          if($test.Count -ne 1){throw 'No passing rear pouch attachment test reported'}
+      - uses: actions/upload-artifact@v4
+        if: always() && env.VEST_TEST_OUT != ''
+        with:
+          name: native-vest-rear-pouch-test
+          path: ${{ env.VEST_TEST_OUT }}
