@@ -14,7 +14,7 @@ jobs:
     timeout-minutes: 30
     steps:
       - name: Protect running sessions and import the house mesh
-        shell: powershell -NoProfile -File {0}
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:COMPUTERNAME -ine 'ANOMALIA-PC') { throw 'Expected ANOMALIA-PC' }
