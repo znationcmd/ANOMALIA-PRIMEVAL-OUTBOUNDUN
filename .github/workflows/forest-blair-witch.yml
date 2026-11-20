@@ -1,0 +1,181 @@
+name: Create Forest Blair Witch
+on:
+  push:
+    branches: [ops/forest-blair-witch]
+    paths: [.github/workflows/forest-blair-witch.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: forest-blair-witch
+  cancel-in-progress: false
+jobs:
+  create-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Create the 100 square kilometre forest and abandoned logging village blockout in the native UE project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $project = 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'UE project or editor unavailable' }
+          $work = Join-Path $env:RUNNER_TEMP ('forest-blair-witch-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:FOREST_BLAIR_WITCH_WORK = $work
+          $code = @'
+          import math
+          import os
+          import random
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["FOREST_BLAIR_WITCH_WORK"])
+          name = "PRIGIMALIA_FOREST_BLAIR_WITCH"
+          package = "/Game/Maps/" + name
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError("Unexpected Unreal project")
+          content = root / "Content"
+          umap = content / "Maps" / (name + ".umap")
+          paths = [umap, content / "__ExternalActors__" / "Maps" / name,
+                   content / "__ExternalObjects__" / "Maps" / name, content / "ForestBlairWitch"]
+          if any(path.exists() for path in paths):
+              raise RuntimeError("Existing map or partial Forest Blair Witch data preserved")
+
+          # Export the valley and its ridges as one triangulated mesh.
+          terrain_file = work / "SM_ForestBlairWitch_Terrain.obj"
+          grid = 129
+          with terrain_file.open("w", encoding="ascii") as obj:
+              obj.write("o SM_ForestBlairWitch_Terrain\ns 1\n")
+              for row in range(grid):
+                  y = -5000 + row * 10000 / (grid - 1)
+                  for col in range(grid):
+                      x = -5000 + col * 10000 / (grid - 1)
+                      ridge = 200 * (1 - math.exp(-(x / 2450) ** 2))
+                      hills = 47 * math.sin(x / 720) * math.cos(y / 950)
+                      rise = min(1, max(0, (math.hypot(x,y) - 700) / 1600))
+                      keep_hill = 24 * max(0, min(1, (y - 95) / 170))
+                      height = 85 + keep_hill + rise * (ridge + hills)
+                      obj.write(f"v {100*x:.3f} {100*y:.3f} {100*height:.3f}\n")
+              for row in range(grid):
+                  for col in range(grid):
+                      obj.write(f"vt {col/(grid-1):.8f} {row/(grid-1):.8f}\n")
+              for row in range(grid-1):
+                  for col in range(grid-1):
+                      a = row*grid+col+1
+                      b = a+grid
+                      obj.write(f"f {a}/{a} {a+1}/{a+1} {b}/{b}\nf {a+1}/{a+1} {b+1}/{b+1} {b}/{b}\n")
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          if not levels.new_level(package, is_partitioned_world=True):
+              raise RuntimeError("Unable to create World Partition map")
+          if worlds.get_editor_world().get_path_name().split(".")[0] != package:
+              raise RuntimeError("Unexpected active map")
+          options = unreal.FbxImportUI()
+          options.set_editor_property("automated_import_should_detect_type", False)
+          options.set_editor_property("mesh_type_to_import", unreal.FBXImportType.FBXIT_STATIC_MESH)
+          options.set_editor_property("import_materials", False)
+          options.set_editor_property("import_textures", False)
+          options.get_editor_property("static_mesh_import_data").set_editor_property("auto_generate_collision", False)
+          task = unreal.AssetImportTask()
+          for key, value in dict(filename=str(terrain_file), destination_path="/Game/ForestBlairWitch",
+                                 automated=True, replace_existing=False, options=options, save=False).items():
+              task.set_editor_property(key, value)
+          unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+          meshes = [unreal.load_asset(path) for path in task.get_editor_property("imported_object_paths")]
+          meshes = [mesh for mesh in meshes if isinstance(mesh, unreal.StaticMesh)]
+          if len(meshes) != 1:
+              raise RuntimeError("Expected one terrain mesh")
+          terrain = meshes[0]
+          size = terrain.get_bounding_box()
+          for extent in (size.max.x - size.min.x, size.max.y - size.min.y):
+              if abs(extent - 1000000) > 25:
+                  raise RuntimeError(f"Unexpected horizontal terrain extent in cm: {extent}")
+          terrain.get_editor_property("body_setup").set_editor_property(
+              "collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+          if not unreal.EditorAssetLibrary.save_loaded_asset(terrain, only_if_is_dirty=False):
+              raise RuntimeError("Could not save terrain asset")
+
+          cube = unreal.load_asset("/Engine/BasicShapes/Cube")
+          if not cube:
+              raise RuntimeError("Engine cube unavailable")
+          def place(kind, label, x, y, z):
+              actor = actors.spawn_actor_from_class(kind, unreal.Vector(x*100, y*100, z*100))
+              if not actor:
+                  raise RuntimeError("Could not place " + label)
+              actor.set_actor_label(label)
+              return actor
+
+          def mesh_actor(label, mesh, x, y, z, scale):
+              actor = place(unreal.StaticMeshActor, label, x, y, z)
+              component = actor.static_mesh_component
+              component.set_static_mesh(mesh)
+              component.set_collision_profile_name("BlockAll")
+              actor.set_actor_scale3d(unreal.Vector(*scale))
+              return actor
+
+          def block(label, x, y, z, width, length, height):
+              mesh_actor(label, cube, x, y, z, (width,length,height))
+
+          mesh_actor("Forest Blair Witch terrain", terrain, 0, 0, 0, (1,1,1))
+          place(unreal.PlayerStart, "South road", 0,-320,87)
+          sun = place(unreal.DirectionalLight, "Sun", 0,0,300)
+          sun.set_actor_rotation(unreal.Rotator(pitch=-29,yaw=-42,roll=0), False)
+          place(unreal.SkyAtmosphere, "Sky atmosphere", 0,0,0)
+          place(unreal.SkyLight, "Sky light", 0,0,30)
+          place(unreal.ExponentialHeightFog, "Valley fog", 0,0,2)
+          def building(label, x, y, z, width, depth, height):
+              block(label + " floor", x,y,z+0.2,width,depth,0.4)
+              block(label + " roof", x,y,z+height,width,depth,0.4)
+              block(label + " rear wall", x,y+depth/2,z+height/2,width,0.45,height)
+              for sign in (-1, 1):
+                  block(label + " side wall", x+sign*width/2,y,z+height/2,0.45,depth,height)
+                  block(label + " entrance wall", x+sign*(width/4+0.75),y-depth/2,z+height/2,width/2-1.5,0.45,height)
+
+          building("Forestry office", 0,120,85,20,16,5)
+          for index in range(8):
+              x = -44 if index%2 else 44
+              y = -160 + (index//2)*51
+              building(f"Abandoned logging cabin {index + 1}", x,y,85,12,9,4)
+          building("Watchtower shelter", 0,420,109,10,10,4)
+          for x in (-3.5, 3.5):
+              for y in (416.5,423.5):
+                  block("Watchtower timber support",x,y,117,0.8,0.8,16)
+          block("Watchtower platform",0,420,125,10,10,0.45)
+          block("Watchtower canopy",0,420,129,11,11,0.45)
+          cone = unreal.load_asset("/Engine/BasicShapes/Cone")
+          cylinder = unreal.load_asset("/Engine/BasicShapes/Cylinder")
+          if not cone or not cylinder:
+              raise RuntimeError("Engine forest blockout meshes unavailable")
+          rng = random.Random(81029)
+          for row in range(18):
+              for col in range(22):
+                  x = (col-10.5)*21 + rng.uniform(-7,7)
+                  y = (row-8.5)*19 + rng.uniform(-6,6) - 22
+                  if abs(x) < 70 or abs(math.hypot(x,y+40)-170) < 14:
+                      continue
+                  h = rng.uniform(8,16)
+                  z = 85 + 24 * max(0, min(1, (y - 95) / 170))
+                  mesh_actor("Forest trunk",cylinder,x,y,z+h*0.20,(0.65,0.65,h*0.4))
+                  crown = mesh_actor("Forest crown",cone,x,y,z+h*0.64,(h*0.4,h*0.4,h*0.74))
+                  crown.static_mesh_component.set_collision_profile_name("NoCollision")
+          if not levels.save_current_level():
+              raise RuntimeError("Could not save Forest Blair Witch")
+          if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, False):
+              raise RuntimeError("Could not save World Partition packages")
+          if not umap.is_file() or umap.stat().st_size < 1024:
+              raise RuntimeError("Missing native map on disk")
+          (work / "created.txt").write_text(f"{package} | 10000 m x 10000 m | {umap.stat().st_size} bytes", encoding="utf-8")
+          '@
+          $script = Join-Path $work 'create_forest.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) {
+            throw 'Existing Unreal session preserved'
+          }
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $marker = Join-Path $work 'created.txt'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $marker)) { throw 'No completed Forest Blair Witch map receipt' }
+          Write-Output ('FOREST_BLAIR_WITCH_MAP_CREATED ' + (Get-Content -LiteralPath $marker -Raw))
