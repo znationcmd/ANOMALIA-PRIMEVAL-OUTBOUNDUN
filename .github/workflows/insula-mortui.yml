@@ -1,0 +1,170 @@
+name: Create Insula Mortui
+on:
+  push:
+    branches: [ops/insula-mortui]
+    paths: [.github/workflows/insula-mortui.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: insula-mortui
+  cancel-in-progress: false
+jobs:
+  create-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Create the 144 square kilometre island and abbey blockout in the native UE project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $project = 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'UE project or editor unavailable' }
+          $work = Join-Path $env:RUNNER_TEMP ('insula-mortui-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:INSULA_MORTUI_WORK = $work
+          $code = @'
+          import math
+          import os
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["INSULA_MORTUI_WORK"])
+          name = "PRIGIMALIA_INSULA_MORTUI"
+          package = "/Game/Maps/" + name
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError("Unexpected Unreal project")
+          content = root / "Content"
+          umap = content / "Maps" / (name + ".umap")
+          paths = [umap, content / "__ExternalActors__" / "Maps" / name,
+                   content / "__ExternalObjects__" / "Maps" / name, content / "InsulaMortui"]
+          if any(path.exists() for path in paths):
+              raise RuntimeError("Existing map or partial Insula Mortui data preserved")
+
+          # Export the island and seabed as one triangulated mesh.
+          terrain_file = work / "SM_InsulaMortui_Terrain.obj"
+          grid = 129
+          with terrain_file.open("w", encoding="ascii") as obj:
+              obj.write("o SM_InsulaMortui_Terrain\ns 1\n")
+              for row in range(grid):
+                  y = -6000 + row * 12000 / (grid - 1)
+                  for col in range(grid):
+                      x = -6000 + col * 12000 / (grid - 1)
+                      radius = math.hypot(x * 1.10, y * 0.91)
+                      coast = 3000 + 260 * math.sin(y / 670) + 160 * math.cos(x / 430)
+                      cliffs = max(0, min(1, (coast - radius) / 420))
+                      eroded = 95 + 48 * math.sin(x / 560) * math.cos(y / 830)
+                      inland = -35 + cliffs * (eroded + 95)
+                      plateau = max(0, min(1, (radius - 500) / 450))
+                      height = 150 * (1 - plateau) + inland * plateau
+                      obj.write(f"v {100*x:.3f} {100*y:.3f} {100*height:.3f}\n")
+              for row in range(grid):
+                  for col in range(grid):
+                      obj.write(f"vt {col/(grid-1):.8f} {row/(grid-1):.8f}\n")
+              for row in range(grid-1):
+                  for col in range(grid-1):
+                      a = row*grid+col+1
+                      b = a+grid
+                      obj.write(f"f {a}/{a} {a+1}/{a+1} {b}/{b}\nf {a+1}/{a+1} {b+1}/{b+1} {b}/{b}\n")
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          if not levels.new_level(package, is_partitioned_world=True):
+              raise RuntimeError("Unable to create World Partition map")
+          if worlds.get_editor_world().get_path_name().split(".")[0] != package:
+              raise RuntimeError("Unexpected active map")
+          options = unreal.FbxImportUI()
+          options.set_editor_property("automated_import_should_detect_type", False)
+          options.set_editor_property("mesh_type_to_import", unreal.FBXImportType.FBXIT_STATIC_MESH)
+          options.set_editor_property("import_materials", False)
+          options.set_editor_property("import_textures", False)
+          options.get_editor_property("static_mesh_import_data").set_editor_property("auto_generate_collision", False)
+          task = unreal.AssetImportTask()
+          for key, value in dict(filename=str(terrain_file), destination_path="/Game/InsulaMortui",
+                                 automated=True, replace_existing=False, options=options, save=False).items():
+              task.set_editor_property(key, value)
+          unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+          meshes = [unreal.load_asset(path) for path in task.get_editor_property("imported_object_paths")]
+          meshes = [mesh for mesh in meshes if isinstance(mesh, unreal.StaticMesh)]
+          if len(meshes) != 1:
+              raise RuntimeError("Expected one terrain mesh")
+          terrain = meshes[0]
+          size = terrain.get_bounding_box()
+          for extent in (size.max.x - size.min.x, size.max.y - size.min.y):
+              if abs(extent - 1200000) > 25:
+                  raise RuntimeError(f"Unexpected horizontal terrain extent in cm: {extent}")
+          terrain.get_editor_property("body_setup").set_editor_property(
+              "collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+          if not unreal.EditorAssetLibrary.save_loaded_asset(terrain, only_if_is_dirty=False):
+              raise RuntimeError("Could not save terrain asset")
+
+          cube = unreal.load_asset("/Engine/BasicShapes/Cube")
+          if not cube:
+              raise RuntimeError("Engine cube unavailable")
+          def place(kind, label, x, y, z):
+              actor = actors.spawn_actor_from_class(kind, unreal.Vector(x*100, y*100, z*100))
+              if not actor:
+                  raise RuntimeError("Could not place " + label)
+              actor.set_actor_label(label)
+              return actor
+
+          def mesh_actor(label, mesh, x, y, z, scale):
+              actor = place(unreal.StaticMeshActor, label, x, y, z)
+              component = actor.static_mesh_component
+              component.set_static_mesh(mesh)
+              component.set_collision_profile_name("BlockAll")
+              actor.set_actor_scale3d(unreal.Vector(*scale))
+              return actor
+
+          def block(label, x, y, z, width, length, height):
+              mesh_actor(label, cube, x, y, z, (width,length,height))
+
+          mesh_actor("Insula Mortui terrain", terrain, 0, 0, 0, (1,1,1))
+          place(unreal.PlayerStart, "South village approach", 0,-320,152)
+          plane = unreal.load_asset("/Engine/BasicShapes/Plane")
+          if not plane:
+              raise RuntimeError("Engine plane unavailable")
+          sea = mesh_actor("Sea level", plane, 0,0,0, (12000,12000,1))
+          sea.static_mesh_component.set_collision_profile_name("NoCollision")
+          sun = place(unreal.DirectionalLight, "Sun", 0,0,300)
+          sun.set_actor_rotation(unreal.Rotator(pitch=-29,yaw=-42,roll=0), False)
+          place(unreal.SkyAtmosphere, "Sky atmosphere", 0,0,0)
+          place(unreal.SkyLight, "Sky light", 0,0,30)
+          place(unreal.ExponentialHeightFog, "Valley fog", 0,0,2)
+          def building(label, x, y, z, width, depth, height):
+              block(label + " floor", x,y,z+0.2,width,depth,0.4)
+              block(label + " roof", x,y,z+height,width,depth,0.4)
+              block(label + " rear wall", x,y+depth/2,z+height/2,width,0.45,height)
+              for sign in (-1, 1):
+                  block(label + " side wall", x+sign*width/2,y,z+height/2,0.45,depth,height)
+                  block(label + " entrance wall", x+sign*(width/4+0.75),y-depth/2,z+height/2,width/2-1.5,0.45,height)
+
+          building("Abbey nave", 0,195,150,38,58,11)
+          building("Abbey gatehouse", 0,131,150,21,11,7)
+          building("Abbey crypt chambers", 34,188,150,21,27,4)
+          for sign in (-1, 1):
+              block("Abbey side rampart",sign*59,189,153,2,122,6)
+              block("Abbey gate rampart",sign*35,128,153,49,2,6)
+              block("Abbey rear rampart",sign*30,250,153,60,2,6)
+              for house in range(6):
+                  building(("West" if sign < 0 else "East") + f" village house {house + 1}",
+                           sign*(200 + house%2*24), -230 + house//2*28, 150, 12, 9, 4)
+          if not levels.save_current_level():
+              raise RuntimeError("Could not save Insula Mortui")
+          if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, False):
+              raise RuntimeError("Could not save World Partition packages")
+          if not umap.is_file() or umap.stat().st_size < 1024:
+              raise RuntimeError("Missing native map on disk")
+          (work / "created.txt").write_text(f"{package} | 12000 m x 12000 m | {umap.stat().st_size} bytes", encoding="utf-8")
+          '@
+          $script = Join-Path $work 'create_insula.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) {
+            throw 'Existing Unreal session preserved'
+          }
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $marker = Join-Path $work 'created.txt'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $marker)) { throw 'No completed Insula Mortui map receipt' }
+          Write-Output ('INSULA_MORTUI_MAP_CREATED ' + (Get-Content -LiteralPath $marker -Raw))
