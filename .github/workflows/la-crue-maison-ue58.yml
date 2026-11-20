@@ -17,7 +17,7 @@ jobs:
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
-          if ($env:COMPUTERNAME -ine 'ANOMALIA-PC') { throw 'Expected ANOMALIA-PC' }
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Expected ANOMALIA-PC' }
           $project = 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
           $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           if (!(Test-Path -LiteralPath $project -PathType Leaf) -or !(Test-Path -LiteralPath $editor -PathType Leaf)) {
