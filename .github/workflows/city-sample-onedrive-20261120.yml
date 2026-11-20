@@ -1,0 +1,45 @@
+name: City Sample to OneDrive
+on:
+  push:
+    branches: [ops/city-sample-onedrive-20261120]
+    paths: [.github/workflows/city-sample-onedrive-20261120.yml]
+permissions: {}
+concurrency:
+  group: anomalia-city-sample-onedrive
+  cancel-in-progress: false
+jobs:
+  copy:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 350
+    steps:
+      - name: Copy the City Sample directories
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:COMPUTERNAME -ine 'ANOMALIA-PC') { throw 'Expected ANOMALIA-PC.' }
+          $personal = (Get-ItemProperty 'HKCU:\Software\Microsoft\OneDrive\Accounts\Personal' -ErrorAction SilentlyContinue).UserFolder
+          $root = @($env:OneDriveConsumer, $personal | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Container) } | Select-Object -Unique)
+          if ($root.Count -ne 1) { throw 'A unique personal OneDrive folder is not available under the runner account.' }
+          $destination = Join-Path $root[0] 'ANOMALIAZ\City Sample Backup'
+          $sources = [ordered]@{
+            'Epic VaultCache\CitySample_5.8' = 'C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8'
+            'FabImports\CitySample' = 'D:\ANOMALIA\FabImports\CitySample'
+          }
+          $copiedRoots = 0
+          foreach ($entry in $sources.GetEnumerator()) {
+            $source = $entry.Value
+            if (!(Test-Path -LiteralPath $source -PathType Container)) {
+              Write-Warning "Source absent: $source"
+              continue
+            }
+            $target = Join-Path $destination $entry.Key
+            & robocopy.exe $source $target /E /Z /XJ /SL /R:2 /W:10 /BYTES /NP /NFL /NDL
+            $copyExit = $LASTEXITCODE
+            if ($copyExit -ge 8) { throw "Robocopy failed with exit code $copyExit for $source" }
+            & robocopy.exe $source $target /L /E /XJ /SL /XX /R:0 /W:0 /BYTES /NP /NFL /NDL
+            if ($LASTEXITCODE -ne 0) { throw "Local verification found differences for $source (exit $LASTEXITCODE)." }
+            $copiedRoots++
+          }
+          if (!$copiedRoots) { throw 'No known City Sample source directory was found.' }
+          Write-Output "Local OneDrive copy checked for $copiedRoots source directories. Remote sync verification is pending."
+          exit 0
