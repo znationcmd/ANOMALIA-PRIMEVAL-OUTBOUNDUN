@@ -1,0 +1,152 @@
+name: Create Quantum Survivor Site 0
+on:
+  push:
+    branches: [ops/quantum-site-0]
+    paths: [.github/workflows/quantum-survivor-site-0.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: quantum-survivor-site-0
+  cancel-in-progress: false
+jobs:
+  create-world:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Create the 8 km world and quarantine blockout in the native UE project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $project = 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'UE project or editor unavailable' }
+          $work = Join-Path $env:RUNNER_TEMP ('quantum-site-0-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:QUANTUM_SITE_WORK = $work
+          $code = @'
+          import math
+          import os
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["QUANTUM_SITE_WORK"])
+          name = "PRIGIMALIA_QUANTUM_SURVIVOR_SITE_0"
+          package = "/Game/Maps/" + name
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError("Unexpected Unreal project")
+          content = root / "Content"
+          umap = content / "Maps" / (name + ".umap")
+          paths = [umap, content / "__ExternalActors__" / "Maps" / name,
+                   content / "__ExternalObjects__" / "Maps" / name, content / "QuantumSite0"]
+          if any(path.exists() for path in paths):
+              raise RuntimeError("Existing map or partial Quantum Site data preserved")
+
+          # Import one indexed OBJ in centimetres. The central valley includes a flat camp pad.
+          terrain_file = work / "SM_QuantumSite0_Terrain.obj"
+          grid = 129
+          with terrain_file.open("w", encoding="ascii") as obj:
+              obj.write("o SM_QuantumSite0_Terrain\ns 1\n")
+              for row in range(grid):
+                  y = -4000 + row * 8000 / (grid - 1)
+                  for col in range(grid):
+                      x = -4000 + col * 8000 / (grid - 1)
+                      rise = min(1, max(0, (math.hypot(x,y) - 350) / 1500))
+                      height = rise ** 2 * (125 + 77 * math.sin(x / 690) * math.cos(y / 880) + 31 * math.sin((x + y) / 340))
+                      obj.write(f"v {100*x:.3f} {100*height:.3f} {100*y:.3f}\n")
+              for row in range(grid-1):
+                  for col in range(grid-1):
+                      a = row*grid+col+1
+                      b = a+grid
+                      obj.write(f"f {a} {b} {a+1}\nf {a+1} {b} {b+1}\n")
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          if not levels.new_level(package, is_partitioned_world=True):
+              raise RuntimeError("Unable to create World Partition map")
+          if worlds.get_editor_world().get_path_name().split(".")[0] != package:
+              raise RuntimeError("Unexpected active map")
+          options = unreal.FbxImportUI()
+          options.set_editor_property("automated_import_should_detect_type", False)
+          options.set_editor_property("mesh_type_to_import", unreal.FBXImportType.FBXIT_STATIC_MESH)
+          options.set_editor_property("import_materials", False)
+          options.set_editor_property("import_textures", False)
+          options.get_editor_property("static_mesh_import_data").set_editor_property("auto_generate_collision", False)
+          task = unreal.AssetImportTask()
+          for key, value in dict(filename=str(terrain_file), destination_path="/Game/QuantumSite0",
+                                 automated=True, replace_existing=False, options=options, save=False).items():
+              task.set_editor_property(key, value)
+          unreal.AssetToolsHelpers.get_asset_tools().import_asset_tasks([task])
+          meshes = [unreal.load_asset(path) for path in task.get_editor_property("imported_object_paths")]
+          meshes = [mesh for mesh in meshes if isinstance(mesh, unreal.StaticMesh)]
+          if len(meshes) != 1:
+              raise RuntimeError("Expected one terrain mesh")
+          terrain = meshes[0]
+          size = terrain.get_bounding_box()
+          for extent in (size.max.x - size.min.x, size.max.y - size.min.y):
+              if abs(extent - 800000) > 25:
+                  raise RuntimeError(f"Unexpected horizontal terrain extent in cm: {extent}")
+          terrain.get_editor_property("body_setup").set_editor_property(
+              "collision_trace_flag", unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+          if not unreal.EditorAssetLibrary.save_loaded_asset(terrain, only_if_is_dirty=False):
+              raise RuntimeError("Could not save terrain asset")
+
+          cube = unreal.load_asset("/Engine/BasicShapes/Cube")
+          if not cube:
+              raise RuntimeError("Engine cube unavailable")
+          def place(kind, label, x, y, z):
+              actor = actors.spawn_actor_from_class(kind, unreal.Vector(x*100, y*100, z*100))
+              if not actor:
+                  raise RuntimeError("Could not place " + label)
+              actor.set_actor_label(label)
+              return actor
+
+          def mesh_actor(label, mesh, x, y, z, scale):
+              actor = place(unreal.StaticMeshActor, label, x, y, z)
+              component = actor.static_mesh_component
+              component.set_static_mesh(mesh)
+              component.set_collision_profile_name("BlockAll")
+              actor.set_actor_scale3d(unreal.Vector(*scale))
+              return actor
+
+          def block(label, x, y, z, width, length, height):
+              mesh_actor(label, cube, x, y, z, (width,length,height))
+
+          mesh_actor("Quantum Site 0 terrain", terrain, 0, 0, 0, (1,1,1))
+          place(unreal.PlayerStart, "Approach to Site 0", 0,-115,2)
+          sun = place(unreal.DirectionalLight, "Sun", 0,0,300)
+          sun.set_actor_rotation(unreal.Rotator(pitch=-29,yaw=-42,roll=0), False)
+          place(unreal.SkyAtmosphere, "Sky atmosphere", 0,0,0)
+          place(unreal.SkyLight, "Sky light", 0,0,30)
+          place(unreal.ExponentialHeightFog, "Valley fog", 0,0,2)
+          for sign in (-1,1):
+              block("Perimeter side",sign*78,0,2,0.45,150,4)
+              block("Checkpoint wall",sign*42,-75,2,72,0.45,4)
+          block("Rear perimeter",0,75,2,156,0.45,4)
+          for label,x,y,w,d in (("Survivor shelter",-42,-12,28,20),
+                                 ("Isolation ward",42,-12,28,20),
+                                 ("Quantum research annex",0,42,46,24)):
+              block(label+" floor",x,y,0.2,w,d,0.4)
+              block(label+" roof",x,y,4.4,w,d,0.35)
+              block(label+" rear wall",x,y+d/2,2.3,w,0.3,4)
+              for sign in (-1,1):
+                  block(label+" side",x+sign*w/2,y,2.3,0.3,d,4)
+                  block(label+" entrance wing",x+sign*(w/4+0.75),y-d/2,2.3,w/2-1.5,0.3,4)
+          if not levels.save_current_level():
+              raise RuntimeError("Could not save Quantum Site 0")
+          if not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, False):
+              raise RuntimeError("Could not save World Partition packages")
+          if not umap.is_file() or umap.stat().st_size < 1024:
+              raise RuntimeError("Missing native map on disk")
+          (work / "created.txt").write_text(f"{package} | 8000 m x 8000 m | {umap.stat().st_size} bytes", encoding="utf-8")
+          '@
+          $script = Join-Path $work 'create_quantum.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) {
+            throw 'Existing Unreal session preserved'
+          }
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $marker = Join-Path $work 'created.txt'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $marker)) { throw 'No completed Quantum Site 0 map receipt' }
+          Write-Output ('QUANTUM_MAP_CREATED ' + (Get-Content -LiteralPath $marker -Raw))
