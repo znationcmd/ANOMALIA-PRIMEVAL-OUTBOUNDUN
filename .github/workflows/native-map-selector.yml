@@ -119,10 +119,9 @@ jobs:
           module = next(item["Name"] for item in project["Modules"] if item["Type"] == "Runtime")
           source = root / "Source" / module
           prefix = "Anomalia" if module == "AnomaliaPrimeval" else module
-          library = source / (prefix + "ServerBrowserLibrary.cpp")
           widget = source / (prefix + "SessionWidget.cpp")
-          catalog = library.read_text(encoding="utf-8-sig")
           ui = widget.read_text(encoding="utf-8-sig")
+
           def quote(value):
               return 'TEXT("' + value.replace("\\", "\\\\").replace('"', '\\"') + '")'
 
@@ -130,37 +129,75 @@ jobs:
               "        {" + ", ".join(quote(row[k]) for k in ("id","name","path")) + "}"
               for row in maps
           ) + "\n    "
-          catalog, changed = re.subn(r"(static const FWorld Worlds\[\]\s*=\s*\{)[\s\S]*?(\};)",
-                                    lambda match: match[1] + package_rows + match[2], catalog, count=1)
-          if changed != 1:
-              raise RuntimeError("Native map table was not found")
-          sig = f"void U{prefix}SessionWidget::ResumeLocalSession()\n{{\n"
-          if ui.count(sig) != 1 or "MapFilterSelect" not in ui:
-              raise RuntimeError("Native solo callback or map selector unavailable")
-          native = f'''    if (bMainMenu && MapFilterSelect && GetWorld() && GetWorld()->GetNetMode() == NM_Standalone)
+          table = (
+              '#include "Components/ComboBoxString.h"\n'
+              '#include "Components/PanelWidget.h"\n'
+              '#include "Misc/PackageName.h"\n'
+              '#include "Engine/World.h"\n\n'
+              'namespace\n{\n'
+              '    struct FAnomaliaSoloWorld { const TCHAR* Id; const TCHAR* Name; const TCHAR* Package; };\n'
+              '    const FAnomaliaSoloWorld AnomaliaSoloWorlds[] = {' + package_rows + '};\n'
+              '}\n'
+          )
+          if "const FAnomaliaSoloWorld AnomaliaSoloWorlds[]" in ui:
+              raise RuntimeError("A native selector is already installed")
+          includes = list(re.finditer(r"^#include[^\n]*\n", ui, re.M))
+          if not includes:
+              raise RuntimeError("Session widget include block not found")
+          pos = includes[-1].end()
+          ui = ui[:pos] + table + ui[pos:]
+          binding = re.compile(r"(?m)^([^\n]*->OnClicked\.AddDynamic\(this,\s*&U" + re.escape(prefix)
+                               + r"SessionWidget::Play\);[^\n]*\n)")
+          matches = list(binding.finditer(ui))
+          if len(matches) != 1:
+              raise RuntimeError("The main menu Play binding could not be located uniquely")
+          button = re.search(r"(\w+)->OnClicked", matches[0][0])[1]
+          widget_addition = f'''    if (bMainMenu && {button} && {button}->GetParent())
               {{
-                  const FString Selected = MapFilterSelect->GetSelectedOption();
-                  for (const auto& Choice : U{prefix}ServerBrowserLibrary::GetWorldChoices())
+                  auto* MapChoice = WidgetTree->ConstructWidget<UComboBoxString>(
+                      UComboBoxString::StaticClass(), TEXT("AnomaliaNativeSoloMap"));
+                  MapChoice->AddOption(TEXT("Continuer sur la carte actuelle"));
+                  for (const FAnomaliaSoloWorld& World : AnomaliaSoloWorlds)
                   {{
-                      if (Choice.DisplayName != Selected || !Choice.bNativePackageFound)
+                      if (FPackageName::DoesPackageExist(World.Package))
                       {{
-                          continue;
+                          MapChoice->AddOption(World.Name);
                       }}
-                      if (GetWorld()->GetOutermost()->GetName() != Choice.WorldPackage)
+                  }}
+                  MapChoice->SetSelectedIndex(0);
+                  {button}->GetParent()->AddChild(MapChoice);
+              }}
+          '''
+          ui = binding.sub(lambda match: match[1] + widget_addition, ui, count=1)
+          sig = f"void U{prefix}SessionWidget::Play()\n{{\n"
+          if ui.count(sig) != 1:
+              raise RuntimeError("Native Play callback unavailable")
+          native = f'''    if (bMainMenu && GetWorld() && GetWorld()->GetNetMode() == NM_Standalone)
+              {{
+                  const auto* MapChoice = Cast<UComboBoxString>(GetWidgetFromName(TEXT("AnomaliaNativeSoloMap")));
+                  if (MapChoice && MapChoice->GetSelectedIndex() > 0)
+                  {{
+                      const FString Selected = MapChoice->GetSelectedOption();
+                      for (const FAnomaliaSoloWorld& World : AnomaliaSoloWorlds)
                       {{
-                          FinishIntro();
-                          UGameplayStatics::SetGamePaused(this, false);
-                          const FString Options = TEXT("{prefix}ServerId=solo-") + Choice.MapId;
-                          UGameplayStatics::OpenLevel(this, FName(*Choice.WorldPackage), true, Options);
-                          return;
+                          if (Selected != World.Name || !FPackageName::DoesPackageExist(World.Package))
+                          {{
+                              continue;
+                          }}
+                          if (GetWorld()->GetOutermost()->GetName() != World.Package)
+                          {{
+                              FinishIntro();
+                              UGameplayStatics::SetGamePaused(this, false);
+                              const FString Options = FString(TEXT("{prefix}ServerId=solo-")) + World.Id;
+                              UGameplayStatics::OpenLevel(this, FName(World.Package), true, Options);
+                              return;
+                          }}
+                          break;
                       }}
-                      break;
                   }}
               }}
           '''
-          if "const FString Selected = MapFilterSelect->GetSelectedOption();" not in ui:
-              ui = ui.replace(sig, sig + native, 1)
-          ui = ui.replace('TEXT("CONTINUER EN SOLO")','TEXT("JOUER EN SOLO")')
+          ui = ui.replace(sig, sig + native, 1)
 
           config_path = root / "Config" / "DefaultGame.ini"
           config = config_path.read_text(encoding="utf-8-sig")
@@ -179,11 +216,19 @@ jobs:
           hook = "\n# ANOMALIA world menu\nimport anomalia_map_menu\nanomalia_map_menu.startup()\n"
           if hook not in init_source:
               init_source += hook
-          for path, body in ((library,catalog),(widget,ui),(config_path,config),
+          for path, body in ((widget,ui),(config_path,config),
                              (editor/"anomalia_map_menu.py",(work/"editor-menu.py").read_text(encoding="utf-8")),
                              (editor/"anomalia_native_maps.json",json.dumps(maps,ensure_ascii=False)),
                              (init,init_source)):
               write(path, body)
+          test_files = list(source.rglob("*WorldPlayTests.cpp"))
+          if len(test_files) == 1:
+              test = test_files[0]
+              test_source = test.read_text(encoding="utf-8-sig")
+              before = "Probe->Deadline=FPlatformTime::Seconds()+420;"
+              if test_source.count(before) == 1:
+                  write(test, test_source.replace(before, "Probe->Deadline=FPlatformTime::Seconds()+1500;"))
+                  print("NATIVE_BRIDGE_TEST_DEADLINE 1500")
           (work/"module.txt").write_text(module,encoding="utf-8")
           print("NATIVE_MAP_SELECTOR_STAGED " + json.dumps({"count":len(maps),"module":module}))
           '@
