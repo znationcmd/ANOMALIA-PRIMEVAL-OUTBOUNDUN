@@ -1,0 +1,82 @@
+name: Trace existing SKARVIK road and trail geometry
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-road-network-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Read real route meshes and spline control points
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $receipt = Join-Path $root 'Saved\SkarvikCity\TransferFromC\44896115982-1'
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikCity\PlacementOnD\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:SKARVIK_CITY_SOURCE = $receipt
+          $env:SKARVIK_CITY_PLACEMENT = $work
+          $code = @'
+          import json
+          import re
+          import os
+          from collections import Counter
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_CITY_PLACEMENT"])
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          if not levels.load_level("/Game/Maps/ANOMALIA_Archipelago_v2"):
+              raise RuntimeError("Unable to open live SKARVIK")
+          descriptors = partition.get_actor_descs() or []
+          roads = []
+          counts = Counter()
+          pattern = re.compile("road|route|track|trail|chemin|asphalt|street|spline|path|bridge|pont", re.I)
+          selected = [d for d in descriptors if "Landscape" not in str(d.native_class.get_name())]
+          for start in range(0,len(selected),40):
+              batch = selected[start:start+40]
+              ids = [d.guid for d in batch]
+              partition.load_actors(ids)
+              by_label = {a.get_actor_label():a for a in actors.get_all_level_actors()}
+              for d in batch:
+                  label = str(d.label)
+                  actor = by_label.get(label)
+                  if actor is None:
+                      continue
+                  mesh = actor.static_mesh_component.get_editor_property("static_mesh") if isinstance(actor,unreal.StaticMeshActor) else None
+                  asset = mesh.get_path_name() if mesh else ""
+                  splines = actor.get_components_by_class(unreal.SplineComponent)
+                  if not splines and not pattern.search(label+" "+asset):
+                      continue
+                  counts[re.sub(r"[0-9]+","N",label)] += 1
+                  p = actor.get_actor_location()
+                  r = actor.get_actor_rotation()
+                  scale = actor.get_actor_scale3d()
+                  roads.append(dict(label=label,asset=asset,xyZ=[p.x,p.y,p.z],yaw=r.yaw,
+                                    scale=[scale.x,scale.y,scale.z],
+                                    splinePoints=[s.get_number_of_spline_points() for s in splines]))
+              del by_label
+              partition.unload_actors(ids)
+          report = dict(descriptors=len(descriptors),roadActors=len(roads),groups=counts.most_common(),samples=roads[:25])
+          (work/"fit.json").write_text(json.dumps(report),encoding="utf-8")
+          (work/"roads.json").write_text(json.dumps(roads),encoding="utf-8")
+          unreal.log("SKARVIK_ROAD_NETWORK " + json.dumps(report))
+          '@
+          $script = Join-Path $work 'place.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'fit.json'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $report)) { throw 'No terrain measurement receipt' }
+          Write-Output ('SKARVIK_CITY_FIT_RECEIPT ' + (Get-Content -LiteralPath $report -Raw -Encoding UTF8))
