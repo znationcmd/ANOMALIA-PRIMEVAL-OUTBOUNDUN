@@ -1,0 +1,133 @@
+name: ANOMALIA native map and city audit
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/native-map-availability-audit.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: native-map-availability-audit
+  cancel-in-progress: false
+jobs:
+  native-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - name: Open actual maps and inspect city meshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'Missing original project or UE 5.8' }
+          $work = Join-Path $root ('Saved\NativeMapAudit\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:NATIVE_MAP_AUDIT = $work
+          $catalog = @'
+          [{"id":"archipelago-v2","name":"SKARVIK","path":"/Game/Maps/ANOMALIA_Archipelago_v2"},{"id":"inhabited-v2","name":"DRAZOVIA","path":"/Game/Maps/ANOMALIA_Inhabited_v2"},{"id":"karskov-v1","name":"KARSKOV","path":"/Game/Maps/PRIGIMALIA_KARSKOV"},{"id":"vorgrad-v1","name":"VORGRAD","path":"/Game/Maps/PRIGIMALIA_VORGRAD"},{"id":"nemoris-v1","name":"NEMORIS","path":"/Game/Maps/PRIGIMALIA_NEMORIS"},{"id":"drakheim-v1","name":"DRAKHEIM","path":"/Game/Maps/PRIGIMALIA_DRAKHEIM"},{"id":"solynacalyra-v1","name":"SOLYNACALYRA","path":"/Game/Maps/PRIGIMALIA_SOLYNACALYRA"},{"id":"nexavarkhos-v1","name":"NEXAVARKHOS","path":"/Game/Maps/PRIGIMALIA_NEXAVARKHOS"},{"id":"chernaskaluxria-v1","name":"CHERNASKALUXRIA","path":"/Game/Maps/PRIGIMALIA_CHERNASKALUXRIA"},{"id":"falc-v1","name":"F.A.L.C","path":"/Game/Maps/PRIGIMALIA_FALC"},{"id":"kolchiem-origins-v1","name":"KOLCHIEM ORIGINS","path":"/Game/Maps/PRIGIMALIA_KOLCHIEM_ORIGINS"},{"id":"roskatvia-b1-v1","name":"ROSКАТVIA-B1","path":"/Game/Maps/PRIGIMALIA_ROSKATVIA_B1"},{"id":"nogokv-51-v1","name":"НОГОКВ-51","path":"/Game/Maps/PRIGIMALIA_NOGOKV_51"},{"id":"paradisiomania-v1","name":"PARADISIOMANIA","path":"/Game/Maps/PRIGIMALIA_PARADISIOMANIA"},{"id":"deadroot-v1","name":"DEADROOT","path":"/Game/Maps/PRIGIMALIA_DEADROOT"},{"id":"yudinavia-v1","name":"YUDINAVIA","path":"/Game/Maps/PRIGIMALIA_YUDINAVIA"},{"id":"moscovie-v1","name":"MOSCOVIE","path":"/Game/Maps/PRIGIMALIA_MOSCOVIE"},{"id":"corsivia-v1","name":"CORSIVIA","path":"/Game/Maps/PRIGIMALIA_CORSIVIA"},{"id":"bot-sever-v1","name":"БОТ СЕВЕР","path":"/Game/Maps/PRIGIMALIA_BOT_SEVER"},{"id":"apocalyptic-outbreak-v1","name":"APOCALYPTIC OUTBREAK","path":"/Game/Maps/PRIGIMALIA_APOCALYPTIC_OUTBREAK"},{"id":"morodenachtmerr-v1","name":"MORØDENACHTMERR","path":"/Game/Maps/PRIGIMALIA_MOROEDENACHTMERR"},{"id":"mokupunawai-v1","name":"MOKUPŪNAWAI","path":"/Game/Maps/PRIGIMALIA_MOKUPUNAWAI"},{"id":"nasdaras-v1","name":"NASDARAS","path":"/Game/Maps/PRIGIMALIA_NASDARAS"},{"id":"kiryumori-v1","name":"KIRYŪMORI","path":"/Game/Maps/PRIGIMALIA_KIRYUMORI"},{"id":"aranyapura-v1","name":"ARANYAPURA","path":"/Game/Maps/PRIGIMALIA_ARANYAPURA"},{"id":"racconia-varkovia-v1","name":"RACCONIA-VARKOVIA","path":"/Game/Maps/PRIGIMALIA_RACCONIA_VARKOVIA_16KM_v1"},{"id":"unknown-horror-x-v1","name":"UNKNOWN HORROR X","path":"/Game/Maps/PRIGIMALIA_UNKNOWN_HORROR_X"},{"id":"konigsbruck-v1","name":"KÖNIGSBRÜCK","path":"/Game/Maps/PRIGIMALIA_KONIGSBRUCK"},{"id":"skjaeroyas-v1","name":"SKJÆRØYÅS","path":"/Game/Maps/PRIGIMALIA_SKJAEROYAS"},{"id":"valhalla-extinction-v1","name":"VALHALLA EXTINCTION","path":"/Game/Maps/PRIGIMALIA_VALHALLA_EXTINCTION"},{"id":"the_last_of_quantum","name":"THE LAST OF QUANTUM","path":"/Game/Maps/PRIGIMALIA_THE_LAST_OF_QUANTUM"},{"id":"insula_mortui","name":"INSULA MORTUI","path":"/Game/Maps/PRIGIMALIA_INSULA_MORTUI"},{"id":"kingdom_blood_elixir","name":"KINGDOM BLOOD ELIXIR","path":"/Game/Maps/PRIGIMALIA_KINGDOM_BLOOD_ELIXIR"},{"id":"anarchy_cesium_137_iode_131","name":"ANARCHY CÉSIUM-137 & IODE-131","path":"/Game/Maps/PRIGIMALIA_ANARCHY_CESIUM_137_IODE_131"},{"id":"forest_blair_witch","name":"FOREST BLAIR WITCH","path":"/Game/Maps/PRIGIMALIA_FOREST_BLAIR_WITCH"},{"id":"survivor_quarantine_site_0","name":"SURVIVOR QUARANTINE SITE 0","path":"/Game/Maps/PRIGIMALIA_SURVIVOR_QUARANTINE_SITE_0"}]
+          '@
+          [IO.File]::WriteAllText((Join-Path $work 'catalog.json'),$catalog,[Text.UTF8Encoding]::new($false))
+          $dist = @('D:\ANOMALIA','D:\ANOMALIAZ-PRIGIMALIA','C:\ANOMALIAZ_SKARVIK_STAGE_41188816555')
+          foreach ($d in $dist) {
+            if (Test-Path -LiteralPath (Join-Path $d 'unreal')) {
+              $unrealRoot = Join-Path $d 'unreal'
+              $profiles = @(Get-ChildItem -LiteralPath $unrealRoot -Filter '*.uproject' -File | ForEach-Object {
+                $data = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+                [ordered]@{ file=$_.Name; modules=@($data.Modules | ForEach-Object Name) }
+              })
+              $source = Join-Path $unrealRoot 'Source'
+              $menu = @(Get-ChildItem -LiteralPath $source -File -Recurse -Include '*ServerBrowserLibrary.cpp','*SessionWidget.cpp','*MainMenu*','*.Target.cs' -ErrorAction SilentlyContinue | ForEach-Object {$_.FullName.Substring($unrealRoot.Length+1)})
+              Write-Output ('NATIVE_PROJECT_LAYOUT ' + ([ordered]@{ candidate=$d; projects=$profiles; menuFiles=$menu } | ConvertTo-Json -Compress -Depth 6))
+            }
+          }
+          $code = @'
+          import json
+          import os
+          import re
+          from pathlib import Path
+          import unreal
+
+          output = Path(os.environ["NATIVE_MAP_AUDIT"])
+          catalog = json.loads((output / "catalog.json").read_text(encoding="utf-8"))
+          project = Path(unreal.Paths.project_dir()).resolve()
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actor_api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          world_api = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          city = re.compile("city|village|house|district|town|building|block|cabin|maison|real 3d", re.I)
+          city_mesh = re.compile("citysample|/buildings/|/regionalarchitecture/|house|townhouse|appartment|apartment", re.I)
+          rows = []
+
+          def saved_report():
+              temp = output / "report.tmp"
+              temp.write_text(json.dumps(rows, ensure_ascii=False), encoding="utf-8")
+              temp.replace(output / "report.json")
+
+          def inspect_map(spec):
+              package = spec["path"]
+              row = dict(spec, saved=False, opened=False)
+              if not package:
+                  return row
+              file = project / "Content" / (package.removeprefix("/Game/") + ".umap")
+              row["saved"] = file.is_file()
+              if not row["saved"]:
+                  return row
+              if not levels.load_level(package):
+                  row["error"] = "Editor load failed"
+                  return row
+              actual = world_api.get_editor_world().get_path_name().split(".")[0]
+              row["opened"] = actual == package
+              if not row["opened"]:
+                  row["error"] = "Unexpected world: " + actual
+                  return row
+              descs = partition.get_actor_descs() or []
+              matching = [d for d in descs if city.search(str(getattr(d, "actor_label", "")))]
+              if matching:
+                  partition.load_actors([d.guid for d in matching[:80]])
+              elif descs:
+                  x = 70000
+                  box = unreal.Box(min=unreal.Vector(-x,-x,-50000), max=unreal.Vector(x,x,150000))
+                  sample = partition.get_intersecting_actor_descs(box) or []
+                  partition.load_actors([d.guid for d in sample[:80]])
+              row.update(descriptors=len(descs), cityLabels=len(matching), realBuildingActors=0,
+                         primitiveActors=0, sampledStaticMeshes=0, sampleMeshPaths=[])
+              for actor in actor_api.get_all_level_actors():
+                  if not isinstance(actor, unreal.StaticMeshActor):
+                      continue
+                  mesh = actor.static_mesh_component.get_editor_property("static_mesh")
+                  if not mesh:
+                      continue
+                  path = mesh.get_path_name()
+                  row["sampledStaticMeshes"] += 1
+                  if path.startswith("/Engine/BasicShapes/"):
+                      row["primitiveActors"] += 1
+                  elif city_mesh.search(path):
+                      row["realBuildingActors"] += 1
+                      if path not in row["sampleMeshPaths"] and len(row["sampleMeshPaths"]) < 5:
+                          row["sampleMeshPaths"].append(path)
+              return row
+
+          for spec in catalog:
+              try:
+                  row = inspect_map(spec)
+              except Exception as exc:
+                  row = dict(spec, error=str(exc))
+              rows.append(row)
+              saved_report()
+              unreal.log("NATIVE_MAP_ROW " + json.dumps(row, ensure_ascii=False))
+          (output / "complete.txt").write_text(str(len(rows)), encoding="ascii")
+          '@
+          $script = Join-Path $work 'inspect.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $log = Join-Path $work 'editor.log'
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' "-abslog=$log"
+          $exitCode = $LASTEXITCODE
+          $report = Join-Path $work 'report.json'
+          if (Test-Path -LiteralPath $report) { Write-Output ('NATIVE_MAP_AUDIT_REPORT ' + (Get-Content -LiteralPath $report -Raw -Encoding UTF8)) }
+          if (!(Test-Path -LiteralPath (Join-Path $work 'complete.txt')) -or $exitCode -ne 0) {
+            if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 80 }
+            throw "Native audit did not finish (exit $exitCode)"
+          }
