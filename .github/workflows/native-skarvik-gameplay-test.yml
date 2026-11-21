@@ -11,7 +11,7 @@ concurrency:
 jobs:
   test:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 25
+    timeout-minutes: 35
     steps:
       - name: Run the original map's native Play In Editor test
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
@@ -28,6 +28,9 @@ jobs:
             $match = [regex]::Match((Get-Content -LiteralPath $source.FullName -Raw -Encoding UTF8),'"([A-Za-z0-9.]+\.World\.ArchipelagoPIE)"')
             if ($match.Success) { $match.Groups[1].Value }
           })
+          if (!($sources | Select-String -SimpleMatch 'Probe->Deadline=FPlatformTime::Seconds()+1500;' -Quiet)) {
+            throw 'The updated full-distance bridge test is not installed yet'
+          }
           $names = @($names | Select-Object -Unique)
           if ($names.Count -ne 1) { throw 'The original project does not expose one exact native SKARVIK gameplay test' }
           $test = $names[0]
