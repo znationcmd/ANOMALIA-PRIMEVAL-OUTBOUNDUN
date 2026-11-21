@@ -61,7 +61,7 @@ jobs:
           lib = unreal.EditorAssetLibrary
           base = "/Game/Anomalia/Infrastructure/SkarvikUrbanV2"
           pipeline = unreal.InterchangeGenericAssetsPipeline()
-          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes",True)
+          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes_behavior",unreal.InterchangeCombineStaticMeshesBehavior.ALL)
           pipeline.get_editor_property("common_meshes_properties").set_editor_property("bake_meshes",True)
           manager = unreal.InterchangeManager.get_interchange_manager_scripted()
           expected = {"GasStation": (4400,4550,900), "Garage": (1580,1138,618),
