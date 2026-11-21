@@ -30,7 +30,16 @@ jobs:
           $ktx = Get-Command ktx.exe -ErrorAction SilentlyContinue
           if (!$ktx) {
             $seven = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
-            if (!(Test-Path -LiteralPath $seven)) { throw 'KTX decoder and archive extractor are unavailable on the runner' }
+            if (!(Test-Path -LiteralPath $seven)) {
+              $archiveMsi = Join-Path $work '7zip.msi'
+              $archiveDir = Join-Path $work '7zip-tools'
+              Invoke-WebRequest -Uri 'https://github.com/ip7z/7zip/releases/download/26.06/7z2606-x64.msi' -OutFile $archiveMsi -UseBasicParsing -TimeoutSec 60
+              $extract = Start-Process msiexec.exe -ArgumentList ('/a "' + $archiveMsi + '" /qn TARGETDIR="' + $archiveDir + '"') -PassThru -Wait
+              if ($extract.ExitCode -ne 0) { throw '7-Zip administrative extraction failed' }
+              $sevenFile = Get-ChildItem -LiteralPath $archiveDir -Filter '7z.exe' -File -Recurse | Select-Object -First 1
+              if (!$sevenFile) { throw 'Portable archive extractor could not be found' }
+              $seven = $sevenFile.FullName
+            }
             $decoder = Join-Path $work 'KTX-Software-4.4.2.exe'
             Invoke-WebRequest -Uri 'https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe' -OutFile $decoder -UseBasicParsing -TimeoutSec 60
             if ((Get-FileHash -LiteralPath $decoder -Algorithm SHA256).Hash -ine '1f323b0fec19794f5e6c0425a61d4b1da396872a10be862d105f4f4b2d2957fe') { throw 'Unexpected KTX release checksum' }
@@ -45,7 +54,50 @@ jobs:
             WreckCar = 'https://tevy.dev/models/wrecked-sedan/v1/lod0.glb'
             WreckTruck = 'https://tevy.dev/models/wrecked-pickup/v1/lod0.glb'
             WreckHeavyTruck = 'https://tevy.dev/models/burnt-truck-cab/v1/lod0.glb'
+            WreckMotorcycle = 'https://files.innerscene.com/library/road-motorcycle-f2519759/9dbc8024e2821e098070/motorcycle-original.glb'
           }
+          $wreckBike = @'
+          import json, math, re, struct, sys
+          from pathlib import Path
+
+          source, target = map(Path,sys.argv[1:])
+          data = source.read_bytes()
+          size, tag = struct.unpack_from("<I4s",data,12)
+          if tag != b"JSON":
+              raise ValueError("Missing glTF JSON")
+          model = json.loads(data[20:20+size])
+          nodes = model["nodes"]
+          removable = re.compile(r"light|indicator|mirror|fender|mudguard|license|number.?plate",re.I)
+          removed = set()
+          for index,node in enumerate(nodes):
+              mesh = model["meshes"][node["mesh"]] if "mesh" in node else {}
+              if removable.search(node.get("name","")+" "+mesh.get("name","")):
+                  removed.add(index)
+          if not removed or len(removed)>=len(nodes)-1:
+              raise ValueError("Model has no independently identifiable damaged fittings")
+          for node in nodes:
+              if "children" in node:
+                  node["children"] = [i for i in node["children"] if i not in removed]
+          paint = re.compile("paint|tank|fairing|body",re.I)
+          for mat in model.get("materials",[]):
+              if paint.search(mat.get("name","")):
+                  pbr = mat.setdefault("pbrMetallicRoughness",{})
+                  pbr.update(baseColorFactor=[0.24,0.13,0.08,1],roughnessFactor=0.94,metallicFactor=0.28)
+          for scene in model["scenes"]:
+              children = [i for i in scene["nodes"] if i not in removed]
+              a = math.radians(80)/2
+              scene["nodes"] = [len(nodes)]
+              nodes.append({"name":"Fallen_stripped_motorcycle","rotation":[0,0,math.sin(a),math.cos(a)],"children":children})
+          block = json.dumps(model,separators=(",",":")).encode("utf-8")
+          block += b" " * (-len(block)%4)
+          tail = data[20+size:]
+          target.write_bytes(struct.pack("<4sII",b"glTF",2,20+len(block)+len(tail))+
+                             struct.pack("<I4s",len(block),b"JSON")+block+tail)
+          print("SKARVIK_STRIPPED_MOTORCYCLE removed fittings:",len(removed))
+          '@
+          $bikeScript = Join-Path $work 'strip_motorcycle.py'
+          [IO.File]::WriteAllText($bikeScript,$wreckBike,[Text.UTF8Encoding]::new($false))
+          $enginePython = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
           $downloaded = [ordered]@{}
           foreach ($key in $models.Keys) {
             try {
@@ -58,10 +110,15 @@ jobs:
               } finally { $file.Dispose() }
               $png = Join-Path $work ($key + '.png.glb')
               $decoded = Join-Path $work ($key + '.glb')
-              & $npm.Source --yes '@gltf-transform/cli@4.5.1' ktxdecompress $path $png
-              if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $png)) { throw 'KTX2 conversion failed' }
-              & $npm.Source --yes '@gltf-transform/cli@4.5.1' optimize $png $decoded --compress false --texture-compress false --simplify false
-              if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $decoded)) { throw 'Uncompressed glTF conversion failed' }
+              if ($key -eq 'WreckMotorcycle') {
+                & $enginePython $bikeScript $path $decoded
+                if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $decoded)) { throw 'Motorcycle damage geometry could not be generated' }
+              } else {
+                & $npm.Source --yes '@gltf-transform/cli@4.5.1' ktxdecompress $path $png
+                if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $png)) { throw 'KTX2 conversion failed' }
+                & $npm.Source --yes '@gltf-transform/cli@4.5.1' optimize $png $decoded --compress false --texture-compress false --simplify false
+                if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $decoded)) { throw 'Uncompressed glTF conversion failed' }
+              }
               $downloaded[$key] = [ordered]@{url=$models[$key]; bytes=(Get-Item -LiteralPath $path).Length; sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}
               Write-Output ("SKARVIK_URBAN_DOWNLOADED " + $key + ' ' + $downloaded[$key].bytes)
             } catch {
@@ -81,10 +138,10 @@ jobs:
           lib = unreal.EditorAssetLibrary
           base = "/Game/Anomalia/Infrastructure/SkarvikUrbanV2"
           pipeline = unreal.InterchangeGenericAssetsPipeline()
-          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes",True)
+          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes_behavior",unreal.InterchangeCombineStaticMeshesBehavior.ALL)
           pipeline.get_editor_property("common_meshes_properties").set_editor_property("bake_meshes",True)
           manager = unreal.InterchangeManager.get_interchange_manager_scripted()
-          expected = {"WreckCar": (301,174,467), "WreckTruck": (225,184,566), "WreckHeavyTruck": (418,354,614)}
+          expected = {"WreckCar": (301,174,467), "WreckTruck": (225,184,566), "WreckHeavyTruck": (418,354,614), "WreckMotorcycle": (90,140,210)}
           reports = {}
           for key in expected:
               if key not in sources:
@@ -125,4 +182,4 @@ jobs:
           $report = Join-Path $work 'models.json'
           if (!(Test-Path -LiteralPath $report)) { throw 'No native model report produced' }
           $entries = (Get-Content -LiteralPath $report -Raw | ConvertFrom-Json).PSObject.Properties
-          if (@($entries | Where-Object { $_.Value.fullSize.Count -eq 1 }).Count -ne 3) { throw 'One or more full-size wrecks require verified assembly before placement' }
+          if (@($entries | Where-Object { $_.Value.fullSize.Count -eq 1 }).Count -ne 4) { throw 'One or more full-size wrecks require verified assembly before placement' }
