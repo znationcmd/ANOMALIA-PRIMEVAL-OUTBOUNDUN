@@ -1,0 +1,54 @@
+name: ANOMALIA real SKARVIK gameplay test
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/native-skarvik-gameplay-test.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: anomalia-native-skarvik-gameplay-test
+  cancel-in-progress: false
+jobs:
+  test:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Run the original map's native Play In Editor test
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'Original Unreal project unavailable' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $sources = @(Get-ChildItem -LiteralPath (Join-Path $root 'Source') -Filter '*.cpp' -File -Recurse | Where-Object Name -like '*WorldPlayTests*')
+          $names = @(foreach ($source in $sources) {
+            $match = [regex]::Match((Get-Content -LiteralPath $source.FullName -Raw -Encoding UTF8),'"([A-Za-z0-9.]+\.World\.ArchipelagoPIE)"')
+            if ($match.Success) { $match.Groups[1].Value }
+          })
+          $names = @($names | Select-Object -Unique)
+          if ($names.Count -ne 1) { throw 'The original project does not expose one exact native SKARVIK gameplay test' }
+          $test = $names[0]
+          $work = Join-Path $env:GITHUB_WORKSPACE ('skarvik-pie-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $log = Join-Path $work 'gameplay.log'
+          & $editor $project '-unattended' '-nopause' '-nosound' '-NullRHI' "-ExecCmds=Automation RunTests $test" '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$work" "-abslog=$log"
+          $exitCode = $LASTEXITCODE
+          $receipt = Join-Path $work 'index.json'
+          if (!(Test-Path -LiteralPath $receipt)) {
+            if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 65 }
+            throw "Native gameplay test report missing (exit $exitCode)"
+          }
+          $report = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
+          $result = @($report.tests | Where-Object { $_.fullTestPath -eq $test })
+          Write-Output ('NATIVE_SKARVIK_PIE_RESULT ' + (ConvertTo-Json -InputObject $result -Compress -Depth 12))
+          if ($exitCode -ne 0 -or $result.Count -ne 1 -or $result[0].state -ne 'Success') { throw 'Native SKARVIK gameplay did not pass' }
+      - name: Attach the Unreal gameplay report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anomalia-skarvik-pie-report
+          path: skarvik-pie-*/**/*
+          if-no-files-found: warn
