@@ -229,8 +229,10 @@ jobs:
                   raise RuntimeError("Unable to link "+label)
               c.set_collision_profile_name("BlockAll")
               new[label] = dict(label=label,kind=kind,asset=asset.get_path_name(),atCm=[x,y,z])
-          if not levels.save_all_dirty_levels():
-              raise RuntimeError("Could not persist the original map")
+          unapplied = unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()
+          unreal.log("SKARVIK_URBAN_DIRTY_CONTENT " + json.dumps([p.get_name() for p in unapplied]))
+          if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+              raise RuntimeError("Could not persist the original map and World Partition actor files")
           if not levels.load_level(package):
               raise RuntimeError("Could not reopen the original map")
           reopened = {str(d.label):d for d in partition.get_actor_descs() or []}
