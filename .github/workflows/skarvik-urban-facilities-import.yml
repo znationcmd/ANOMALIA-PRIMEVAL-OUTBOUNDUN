@@ -60,11 +60,7 @@ jobs:
           sources = json.loads((work/"sources.json").read_text(encoding="utf-8"))
           lib = unreal.EditorAssetLibrary
           base = "/Game/Anomalia/Infrastructure/SkarvikUrbanV2"
-          pipeline_name = base+"/CombineUrbanModel"
-          pipeline = lib.load_asset(pipeline_name) if lib.does_asset_exist(pipeline_name) else lib.duplicate_asset(
-             "/Interchange/Pipelines/DefaultAssetsPipeline",pipeline_name)
-          if not pipeline:
-              raise RuntimeError("Default Interchange pipeline unavailable")
+          pipeline = unreal.InterchangeGenericAssetsPipeline()
           pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes",True)
           pipeline.get_editor_property("common_meshes_properties").set_editor_property("bake_meshes",True)
           manager = unreal.InterchangeManager.get_interchange_manager_scripted()
