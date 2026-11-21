@@ -1,0 +1,131 @@
+name: Recover missing SKARVIK City Sample packages
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-citysample-recover.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - name: Find and verify original City Sample packages
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $source = 'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dest = 'D:\ANOMALIA\unreal'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $origin = Join-Path $source 'AnomaliaZPrigimalia.uproject'
+          $destMap = Join-Path $dest 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if (!(Test-Path -LiteralPath $origin) -or !(Test-Path -LiteralPath $destMap)) { throw 'Source project or live SKARVIK map unavailable' }
+          if ((Get-Content -LiteralPath (Join-Path $source '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555') { throw 'Unexpected source project' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $dest 'Saved\SkarvikCity\TransferFromC\44896115982-1'
+          if (!(Test-Path -LiteralPath (Join-Path $work 'manifest.json'))) { throw 'Verified export unavailable' }
+          if (Test-Path -LiteralPath (Join-Path $work 'dependencies.json')) { throw 'Dependency receipt already exists' }
+          $env:SKARVIK_TRANSFER_WORK = $work
+          $env:SKARVIK_TRANSFER_ORIGIN = $source
+          $env:SKARVIK_TRANSFER_DEST = $dest
+          $copy = @'
+          import hashlib
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+
+          work = Path(os.environ["SKARVIK_TRANSFER_WORK"])
+          source = Path(os.environ["SKARVIK_TRANSFER_ORIGIN"]) / "Content"
+          target = Path(os.environ["SKARVIK_TRANSFER_DEST"]) / "Content"
+          origin = Path(os.environ["SKARVIK_TRANSFER_ORIGIN"])
+          candidates = [
+              source,
+              Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache\CitySample_5.8\data\Content"),
+              Path(r"D:\ANOMALIA\FabImports\CitySample\Content"),
+              Path(r"D:\ANOMALIA\FabImports\CitySample\data\Content"),
+              Path(r"D:\ANOMALIA\CitySample\Content"),
+              Path(r"C:\CitySample\Content"),
+          ]
+          parents = [Path(r"C:\ProgramData\Epic\EpicGamesLauncher\VaultCache"),
+                     Path(r"D:\ANOMALIA\FabImports"), Path(r"D:\ANOMALIA"), Path("C:\\")]
+          users = Path(r"C:\Users")
+          parents.extend(folder for user in users.iterdir() if user.is_dir()
+                         for folder in [user/"Documents"/"Unreal Projects", user/"OneDrive", user/"Downloads"])
+          for parent in parents:
+              try:
+                  for item in parent.iterdir():
+                      if item.is_dir() and "city" in item.name.lower() and "sample" in item.name.lower():
+                          candidates.extend([item/"Content", item/"data"/"Content", item/"CitySample"/"Content"])
+              except OSError:
+                  pass
+          candidates = list(dict.fromkeys(root for root in candidates if root.is_dir() and root != target))
+          print("SKARVIK_CITY_SOURCE_ROOTS " + json.dumps([str(r) for r in candidates]), flush=True)
+          destination_only = []
+          alternate = []
+          nearby = {}
+          export = json.loads((work / "manifest.json").read_text(encoding="utf-8"))
+          absent = []
+          conflicts = []
+          transfers = []
+          extensions = (".uasset",".uexp",".ubulk",".uptnl",".m.ubulk")
+          def digest(p):
+              with p.open("rb") as f:
+                  return hashlib.file_digest(f,"sha256").hexdigest()
+          for package in export["packages"]:
+              rel = package.removeprefix("/Game/")
+              root = next((r for r in candidates if (r / (rel+".uasset")).is_file()), None)
+              if root is None:
+                  if (target / (rel+".uasset")).is_file():
+                      destination_only.append(package)
+                      continue
+                  absent.append(package)
+                  if len(nearby) < 12:
+                      reference = Path(rel)
+                      nearby[package] = [f.stem for f in (source/reference.parent).glob(reference.stem.rsplit("_",1)[0]+"*.uasset")][:12]
+                  continue
+              if root != source:
+                  alternate.append(package)
+              assets = [(root / (rel+ext), target / (rel+ext)) for ext in extensions]
+              for src,dst in assets:
+                  if not src.is_file():
+                      if dst.exists():
+                          conflicts.append(rel + dst.suffix)
+                      continue
+                  if dst.is_file():
+                      if src.stat().st_size != dst.stat().st_size or digest(src) != digest(dst):
+                          conflicts.append(rel + src.suffix)
+                  else:
+                      transfers.append((src,dst))
+          bytes_to_transfer = sum(src.stat().st_size for src,_ in transfers)
+          free = shutil.disk_usage(target).free
+          report = dict(actors=len(export["actors"]),packages=len(export["packages"]),
+                        villageActorsOnSource=export["villageActorDescriptors"],missingSources=absent,
+                        conflictingPackages=conflicts,requiredBytes=bytes_to_transfer,freeBytes=free,
+                        copiedFiles=0, destinationOnly=len(destination_only), alternateSources=len(alternate), nearby=nearby)
+          print("SKARVIK_CITY_DEPENDENCY_PLAN " + json.dumps({**report, "missingSources": absent[:24]}),flush=True)
+          if absent or conflicts:
+              raise RuntimeError("Resolve dependency conflicts or missing source assets before copying into the live project")
+          if free < bytes_to_transfer + 4*1024**3:
+              raise RuntimeError("Not enough disk space for the selected packages")
+          for src,dst in transfers:
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              temp = dst.with_suffix(dst.suffix + ".city-transfer")
+              if temp.exists() or dst.exists():
+                  raise RuntimeError("Destination changed while planning: " + str(dst))
+              shutil.copyfile(src,temp)
+              if digest(src) != digest(temp):
+                  raise RuntimeError("Package copy verification failed: " + str(dst))
+              temp.rename(dst)
+              report["copiedFiles"] += 1
+          (work/"dependencies.json").write_text(json.dumps(report),encoding="utf-8")
+          print("SKARVIK_CITY_ASSETS_STAGED " + json.dumps(report),flush=True)
+          '@
+          $copyScript = Join-Path $work 'recover_assets.py'
+          [IO.File]::WriteAllText($copyScript,$copy,[Text.UTF8Encoding]::new($false))
+          & $python -B $copyScript
+          if ($LASTEXITCODE -ne 0) { throw 'City Sample package recovery did not pass verification' }
