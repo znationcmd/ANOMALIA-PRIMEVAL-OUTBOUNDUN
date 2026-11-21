@@ -105,6 +105,18 @@ jobs:
           levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
           actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
           worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+
+          def load_partition_actors():
+              descriptors = partition.get_actor_descs()
+              if not descriptors:
+                  raise RuntimeError("No World Partition actor descriptors found")
+              partition.load_actors([desc.guid for desc in descriptors])
+              current = actors.get_all_level_actors()
+              if not any(isinstance(actor, unreal.StaticMeshActor) for actor in current):
+                  raise RuntimeError("World Partition actors were not loaded")
+              return current
+
           suffixes = (" floor", " roof", " rear wall", " side wall", " entrance wall",
                       " side", " entrance wing")
 
@@ -145,7 +157,7 @@ jobs:
               package = "/Game/Maps/PRIGIMALIA_" + mapid
               if not levels.load_level(package) or worlds.get_editor_world().get_path_name().split(".")[0] != package:
                   raise RuntimeError("Could not open " + package)
-              current = actors.get_all_level_actors()
+              current = load_partition_actors()
               labeled = [(a.get_actor_label(), a) for a in current if isinstance(a, unreal.StaticMeshActor)]
               cubes = [(label, a) for label, a in labeled if placeholder(a, cube)]
               result = dict(map=mapid, visiblePrimitiveCubes=len(cubes), buildings=0, trees=0, missing={})
@@ -197,14 +209,17 @@ jobs:
                   if not levels.load_level(package):
                       raise RuntimeError("Reload failed for " + package)
                   saved = sum(a.get_actor_label().startswith("Real 3D | ")
-                              for a in actors.get_all_level_actors())
+                              for a in load_partition_actors())
                   if saved < count:
                       raise RuntimeError(f"{package}: saw {saved} replacements after reload, expected at least {count}")
                   result["visibleVerifiedAfterReload"] = saved
+              result["loadedActors"] = len(current)
               results.append(result)
               unreal.log("REALISTIC_MAP_RESULT " + json.dumps(result, sort_keys=True))
           report = Path(os.environ["REALISTIC_MAP_WORK"]) / "result.json"
           report.write_text(json.dumps(results), encoding="utf-8")
+          if not any(result["buildings"] or result["trees"] for result in results):
+              raise RuntimeError("No models were replaced. Inspect the per-map results.")
           '@
           $script = Join-Path $work 'replace_assets.py'
           [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
