@@ -1,0 +1,216 @@
+name: Place verified service buildings and street furniture in SKARVIK
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-urban-facilities-place.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Fit and verify urban objects in the original map
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikUrban\Placement\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          $env:SKARVIK_URBAN_WORK = $work
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          $code = @'
+          import json
+          import math
+          import os
+          import re
+          import shutil
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_URBAN_WORK"])
+          root = Path(unreal.Paths.project_dir()).resolve()
+          package = "/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix = "SKARVIK_URBAN_V1_"
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          library = unreal.EditorAssetLibrary
+          if not levels.load_level(package):
+              raise RuntimeError("Could not open the original SKARVIK")
+          world = editor.get_editor_world()
+          descs = partition.get_actor_descs() or []
+          previous = {str(d.label) for d in descs if str(d.label).startswith(prefix)}
+          road_mask = re.compile(r"ARCHIPELAGO_V2_CITY_([0-9]+)_REAL_ROAD_([0-9]+)$")
+          road_descs = [d for d in descs if road_mask.search(str(d.label))]
+          if not road_descs:
+              raise RuntimeError("No verified existing urban roads")
+          partition.load_actors([d.guid for d in road_descs])
+          roads = sorted((a for a in actors.get_all_level_actors() if road_mask.search(a.get_actor_label())),
+                         key=lambda a:a.get_actor_label())
+          urban_dir = root/"Saved/SkarvikUrban/Imports"
+          metadata = {}
+          for receipt in sorted(urban_dir.glob("*/models.json"),key=lambda p:p.stat().st_mtime):
+              for key,item in json.loads(receipt.read_text(encoding="utf-8")).items():
+                  if len(item.get("fullSize",[]))==1:
+                      metadata[key] = item["fullSize"][0]["path"]
+
+          models = {}
+          for kind,path in metadata.items():
+              asset = library.load_asset(path)
+              if isinstance(asset,unreal.StaticMesh) and asset.get_editor_property("static_materials"):
+                  models[kind] = asset
+          if "Barrage" not in models:
+              barrier = library.load_asset("/Game/Construction_VOL1/Meshes/SM_Trafficbarrier_01.SM_Trafficbarrier_01")
+              if isinstance(barrier,unreal.StaticMesh):
+                  models["Barrage"] = barrier
+
+          def trace(x,y,ignore):
+              hit = unreal.SystemLibrary.line_trace_single_by_profile(world,unreal.Vector(x,y,900000),
+                  unreal.Vector(x,y,-500000),"BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
+              return hit.to_tuple() if hit is not None else None
+
+          def road_surface(road,x,y):
+              hit = trace(x,y,[a for a in actors.get_all_level_actors() if a!=road])
+              if hit and hit[9]==road:
+                  return hit[5].z
+              return None
+
+          planned = []
+          reserved = []
+          blocked = {}
+          # One speed bump and one passable barrier approach in each existing town.
+          for road in roads:
+              source_label = road.get_actor_label()
+              match = road_mask.search(source_label)
+              town,segment = (int(v) for v in match.groups())
+              if segment not in (3,8):
+                  continue
+              variant = "SpeedBump" if segment==3 else "Barrage"
+              label = prefix+variant+f"_{town:02d}"
+              if label in previous or variant not in models:
+                  continue
+              center,road_extent = road.get_actor_bounds(False,False)
+              asset = models[variant]
+              b = asset.get_bounds()
+              yaw = (90 if road_extent.x>=road_extent.y else 0)+(90 if b.box_extent.y>b.box_extent.x else 0)
+              axis_is_x = road_extent.x>=road_extent.y
+              half_width = road_extent.y if axis_is_x else road_extent.x
+              obj_width = max(b.box_extent.x,b.box_extent.y)*2
+              if obj_width<30 or half_width<110:
+                  blocked[label] = "Road or mesh width outside expected range"
+                  continue
+              scale_width = min(1.0,(half_width*1.85 if variant=="SpeedBump" else half_width*.85)/obj_width)
+              drift = 0 if variant=="SpeedBump" else half_width*.5
+              x,y = center.x+(0 if axis_is_x else drift),center.y+(drift if axis_is_x else 0)
+              z = road_surface(road,x,y)
+              if z is None:
+                  blocked[label] = "Road collision surface not found at placement"
+                  continue
+              sx,sy = (scale_width,1) if b.box_extent.x>=b.box_extent.y else (1,scale_width)
+              planned.append((label,variant,asset,x,y,z+1,yaw,sx,sy))
+
+          # Keep roadside entrances close to the pavement and avoid every existing occupied plot.
+          for kind in ("GasStation","Garage","Store"):
+              label = prefix+kind
+              if kind not in models or label in previous:
+                  continue
+              asset = models[kind]
+              b = asset.get_bounds().box_extent
+              found = False
+              if not (400 < b.x+b.y < 7000 and 100 < b.z < 900):
+                  blocked[label] = "Building dimensions outside plausible limits"
+                  continue
+              for road in roads:
+                  if found:
+                      break
+                  rc,rext = road.get_actor_bounds(False,False)
+                  if rext.x < rext.y:
+                      continue
+                  for side in (1,-1):
+                      x,y = rc.x,rc.y+side*(rext.y+b.y+250)
+                      box = (x-b.x-75,y-b.y-75,x+b.x+75,y+b.y+75)
+                      if any(box[0]<q[2] and box[2]>q[0] and box[1]<q[3] and box[3]>q[1] for q in reserved):
+                          continue
+                      sweep = unreal.Box(min=unreal.Vector(box[0],box[1],-500000),
+                                         max=unreal.Vector(box[2],box[3],900000))
+                      near = partition.get_intersecting_actor_descs(sweep) or []
+                      if any(str(d.native_class.get_name())=="StaticMeshActor" for d in near):
+                          continue
+                      terrain = [d.guid for d in near if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
+                      if not terrain:
+                          continue
+                      partition.load_actors(terrain)
+                      try:
+                          ignore = [a for a in actors.get_all_level_actors() if not isinstance(a,unreal.LandscapeProxy)]
+                          hits = [trace(x+dx*b.x,y+dy*b.y,ignore) for dx in (-1,0,1) for dy in (-1,0,1)]
+                          if not all(hits):
+                              continue
+                          ground = [hit[5].z for hit in hits]
+                          pavement = road_surface(road,rc.x,rc.y)
+                          if min(ground)<450 or max(ground)-min(ground)>100 or pavement is None or abs(pavement-ground[4])>130:
+                              continue
+                          reserved.append(box)
+                          planned.append((label,kind,asset,x,y,min(ground)+3,0 if side>0 else 180,1,1))
+                          found = True
+                          break
+                      finally:
+                          partition.unload_actors(terrain)
+              if not found:
+                  blocked[label] = "No unoccupied roadside lot with continuous dry ground and viable access"
+
+          def save_report(confirmed):
+              report = dict(map=package, models=sorted(models), placed=confirmed,
+                            priorLabels=sorted(previous), blocked=blocked)
+              (work/"placement.json").write_text(json.dumps(report),encoding="utf-8")
+              unreal.log("SKARVIK_URBAN_VERIFIED " + json.dumps(report))
+
+          if not planned:
+              save_report([])
+              raise RuntimeError("No new equipment passed site checks")
+          shutil.copy2(root/"Content/Maps/ANOMALIA_Archipelago_v2.umap",work/"Archipelago-before-urban.umap")
+          new = {}
+          for label,kind,asset,x,y,z,yaw,sx,sy in planned:
+              bounds = asset.get_bounds()
+              ox,oy,oz = bounds.origin.x*sx,bounds.origin.y*sy,bounds.origin.z
+              cos_yaw,sin_yaw = math.cos(math.radians(yaw)),math.sin(math.radians(yaw))
+              location = unreal.Vector(x-(ox*cos_yaw-oy*sin_yaw),y-(ox*sin_yaw+oy*cos_yaw),z-(oz-bounds.box_extent.z))
+              a = actors.spawn_actor_from_class(unreal.StaticMeshActor,location,unreal.Rotator(yaw=yaw))
+              if not a:
+                  raise RuntimeError("Unable to spawn "+label)
+              a.set_actor_label(label)
+              a.set_actor_scale3d(unreal.Vector(sx,sy,1))
+              c = a.static_mesh_component
+              if not c.set_static_mesh(asset):
+                  raise RuntimeError("Unable to link "+label)
+              c.set_collision_profile_name("BlockAll")
+              new[label] = dict(label=label,kind=kind,asset=asset.get_path_name(),atCm=[x,y,z])
+          if not levels.save_all_dirty_levels():
+              raise RuntimeError("Could not persist the original map")
+          if not levels.load_level(package):
+              raise RuntimeError("Could not reopen the original map")
+          reopened = {str(d.label):d for d in partition.get_actor_descs() or []}
+          if not set(new).issubset(reopened):
+              raise RuntimeError("The saved world is missing newly placed objects")
+          partition.load_actors([reopened[label].guid for label in new])
+          by_name = {a.get_actor_label():a for a in actors.get_all_level_actors()}
+          for label,item in new.items():
+              if label not in by_name:
+                  raise RuntimeError("Could not load saved actor "+label)
+              mesh = by_name[label].static_mesh_component.get_editor_property("static_mesh")
+              if not mesh or mesh.get_path_name()!=item["asset"]:
+                  raise RuntimeError("Saved mesh mismatch "+label)
+          save_report(list(new.values()))
+          '@
+          $script = Join-Path $work 'urban_place.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'placement.json'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $report)) { throw 'No verified urban placement receipt' }
+          Write-Output ('SKARVIK_URBAN_PLACEMENT_RECEIPT ' + (Get-Content -LiteralPath $report -Raw))
