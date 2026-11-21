@@ -1,0 +1,128 @@
+name: Convert and import realistic abandoned vehicles for SKARVIK
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-urban-wrecks.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Decode unsupported GLB formats and verify native wreck meshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikUrban\Imports\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          $env:SKARVIK_URBAN_WORK = $work
+          $ProgressPreference = 'SilentlyContinue'
+          $npm = Get-Command npx.cmd -ErrorAction SilentlyContinue
+          if (!$npm) { throw 'Node.js npx is unavailable on the runner' }
+          $ktx = Get-Command ktx.exe -ErrorAction SilentlyContinue
+          if (!$ktx) {
+            $seven = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
+            if (!(Test-Path -LiteralPath $seven)) { throw 'KTX decoder and archive extractor are unavailable on the runner' }
+            $decoder = Join-Path $work 'KTX-Software-4.4.2.exe'
+            Invoke-WebRequest -Uri 'https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe' -OutFile $decoder -UseBasicParsing -TimeoutSec 60
+            if ((Get-FileHash -LiteralPath $decoder -Algorithm SHA256).Hash -ine '1f323b0fec19794f5e6c0425a61d4b1da396872a10be862d105f4f4b2d2957fe') { throw 'Unexpected KTX release checksum' }
+            $decoderDir = Join-Path $work 'ktx-tools'
+            & $seven x $decoder "-o$decoderDir" -y | Out-Null
+            if ($LASTEXITCODE -ne 0) { throw 'Could not extract portable KTX tools' }
+            $ktxBin = Get-ChildItem -LiteralPath $decoderDir -Filter 'ktx.exe' -File -Recurse | Select-Object -First 1
+            if (!$ktxBin) { throw 'No portable KTX executable in the release' }
+            $env:Path = $ktxBin.DirectoryName + [IO.Path]::PathSeparator + $env:Path
+          }
+          $models = [ordered]@{
+            WreckCar = 'https://tevy.dev/models/wrecked-sedan/v1/lod0.glb'
+            WreckTruck = 'https://tevy.dev/models/wrecked-pickup/v1/lod0.glb'
+            WreckHeavyTruck = 'https://tevy.dev/models/burnt-truck-cab/v1/lod0.glb'
+          }
+          $downloaded = [ordered]@{}
+          foreach ($key in $models.Keys) {
+            try {
+              $path = Join-Path $work ($key + '.source.glb')
+              Invoke-WebRequest -Uri $models[$key] -OutFile $path -UseBasicParsing -TimeoutSec 60
+              $file = [IO.File]::OpenRead($path)
+              try {
+                $header = New-Object byte[] 12
+                if ($file.Read($header,0,12) -ne 12 -or [Text.Encoding]::ASCII.GetString($header,0,4) -ne 'glTF' -or [BitConverter]::ToUInt32($header,4) -ne 2 -or [BitConverter]::ToUInt32($header,8) -ne $file.Length) { throw 'Invalid GLB header' }
+              } finally { $file.Dispose() }
+              $png = Join-Path $work ($key + '.png.glb')
+              $decoded = Join-Path $work ($key + '.glb')
+              & $npm.Source --yes '@gltf-transform/cli@4.5.1' ktxdecompress $path $png
+              if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $png)) { throw 'KTX2 conversion failed' }
+              & $npm.Source --yes '@gltf-transform/cli@4.5.1' optimize $png $decoded --compress false --texture-compress false --simplify false
+              if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $decoded)) { throw 'Uncompressed glTF conversion failed' }
+              $downloaded[$key] = [ordered]@{url=$models[$key]; bytes=(Get-Item -LiteralPath $path).Length; sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}
+              Write-Output ("SKARVIK_URBAN_DOWNLOADED " + $key + ' ' + $downloaded[$key].bytes)
+            } catch {
+              Write-Warning ("SKARVIK_URBAN_DOWNLOAD_FAILED " + $key + ' ' + $_.Exception.Message)
+            }
+          }
+          if (!$downloaded.Count) { throw 'No valid model could be downloaded' }
+          [IO.File]::WriteAllText((Join-Path $work 'sources.json'),($downloaded | ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))
+          $code = @'
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_URBAN_WORK"])
+          sources = json.loads((work/"sources.json").read_text(encoding="utf-8"))
+          lib = unreal.EditorAssetLibrary
+          base = "/Game/Anomalia/Infrastructure/SkarvikUrbanV2"
+          pipeline = unreal.InterchangeGenericAssetsPipeline()
+          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes",True)
+          pipeline.get_editor_property("common_meshes_properties").set_editor_property("bake_meshes",True)
+          manager = unreal.InterchangeManager.get_interchange_manager_scripted()
+          expected = {"WreckCar": (301,174,467), "WreckTruck": (225,184,566), "WreckHeavyTruck": (418,354,614)}
+          reports = {}
+          for key in expected:
+              if key not in sources:
+                  reports[key] = {"error":"No valid download"}
+                  continue
+              destination = base + "/" + key
+              try:
+                  paths = lib.list_assets(destination,True,False) if lib.does_directory_exist(destination) else []
+                  meshes = [asset for path in paths if isinstance(asset := lib.load_asset(path),unreal.StaticMesh)]
+                  if not meshes:
+                      source_data = unreal.InterchangeManager.create_source_data(str(work/(key+".glb")))
+                      args = unreal.ImportAssetParameters(is_automated=True,replace_existing=False)
+                      args.set_editor_property("override_pipelines",[unreal.SoftObjectPath(pipeline.get_path_name())])
+                      meshes = [asset for asset in manager.import_asset(destination,source_data,args) or []
+                                if isinstance(asset,unreal.StaticMesh)]
+                  for asset in meshes:
+                      setup = asset.get_editor_property("body_setup")
+                      if setup:
+                          setup.set_editor_property("collision_trace_flag",unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+                  if not meshes or not lib.save_directory(destination,False,True):
+                      raise RuntimeError("Could not copy and save a native static mesh")
+                  sizes = []
+                  for asset in meshes:
+                      extent = asset.get_bounds().box_extent
+                      sizes.append(dict(path=asset.get_path_name(), xyzCm=[extent.x*2,extent.y*2,extent.z*2]))
+                  target = sorted(expected[key])
+                  fitted = [row for row in sizes if all(abs(a-b)<max(1,b*.18)
+                            for a,b in zip(sorted(row["xyzCm"]),target))]
+                  reports[key] = dict(assets=len(meshes), fullSize=fitted, observed=sizes[:15])
+              except Exception as exc:
+                  reports[key] = {"error":str(exc)}
+          (work/"models.json").write_text(json.dumps(reports),encoding="utf-8")
+          unreal.log("SKARVIK_URBAN_NATIVE_MODEL_REPORT " + json.dumps(reports))
+          '@
+          $script = Join-Path $work 'import_facilities.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'models.json'
+          if (!(Test-Path -LiteralPath $report)) { throw 'No native model report produced' }
+          $entries = (Get-Content -LiteralPath $report -Raw | ConvertFrom-Json).PSObject.Properties
+          if (@($entries | Where-Object { $_.Value.fullSize.Count -eq 1 }).Count -ne 3) { throw 'One or more full-size wrecks require verified assembly before placement' }
