@@ -1,0 +1,96 @@
+name: Map SKARVIK terrain for City Sample districts
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-citysample-fit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Measure real terrain without editing SKARVIK
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $receipt = Join-Path $root 'Saved\SkarvikCity\TransferFromC\44896115982-1'
+          if (!(Test-Path -LiteralPath (Join-Path $receipt 'dependencies.json'))) { throw 'Verified City Sample dependency transfer is required first' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikCity\PlacementOnD\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:SKARVIK_CITY_SOURCE = $receipt
+          $env:SKARVIK_CITY_PLACEMENT = $work
+          $code = @'
+          import json
+          import math
+          import os
+          import re
+          import shutil
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_CITY_PLACEMENT"])
+          source = Path(os.environ["SKARVIK_CITY_SOURCE"])
+          catalog = json.loads((source / "manifest.json").read_text(encoding="utf-8"))
+          package = "/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix = "SKARVIK_CITYSAMPLE_LIVE_"
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError("Unexpected target project")
+          rows = catalog["actors"]
+          if len(rows) != 720 or len({a["label"] for a in rows}) != len(rows):
+              raise RuntimeError("Four validated districts are required")
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          library = unreal.EditorAssetLibrary
+          if not levels.load_level(package):
+              raise RuntimeError("Could not reopen live SKARVIK")
+          world = worlds.get_editor_world()
+          desc = partition.get_actor_descs() or []
+          from collections import Counter
+          counts = Counter(str(d.native_class.get_name()) for d in desc)
+          unreal.log("CITY_FIT_CLASSES " + json.dumps(counts.most_common(25)))
+          region = [d for d in desc if "Landscape" in str(d.native_class.get_name())]
+          unreal.log("CITY_FIT_LANDSCAPE " + json.dumps([str(d.label) for d in region[:30]]))
+          unreal.log("CITY_FIT_SOURCE " + json.dumps(dict(
+              firstLabels=[r["label"] for r in rows[:12]],
+              extent=[[min(r["position"][i] for r in rows),max(r["position"][i] for r in rows)] for i in range(3)],
+              groupSizes=Counter(re.sub(r"_\\d+$","",r["label"]) for r in rows).most_common(12))))
+          details = []
+          for row in region[:18]:
+              try:
+                  details.append((str(row.label), str(row.bounds)))
+              except AttributeError:
+                  details.append((str(row.label),str(row)))
+          unreal.log("CITY_FIT_LAND_BOUNDS " + json.dumps(details))
+          if region:
+              partition.load_actors([r.guid for r in region[:18]])
+          land = [a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
+          samples = []
+          for a in land[:24]:
+              p = a.get_actor_location()
+              center, extent = a.get_actor_bounds(False,False)
+              hit = unreal.SystemLibrary.line_trace_single_by_profile(
+                  world,unreal.Vector(center.x,center.y,900000),unreal.Vector(center.x,center.y,-500000),
+                  "BlockAll",True,[a for a in actors.get_all_level_actors() if not isinstance(a,unreal.LandscapeProxy)],
+                  unreal.DrawDebugTrace.NONE)
+              samples.append(dict(label=a.get_actor_label(), center=[center.x,center.y,center.z],
+                                  extent=[extent.x,extent.y,extent.z], hit=repr(hit.to_tuple())[:500] if hit is not None else None))
+          unreal.log("CITY_FIT_REAL_TRACES " + json.dumps(samples))
+          (work/"fit.json").write_text(json.dumps(dict(landscapeDescriptors=len(region),samples=len(samples))),encoding="utf-8")
+          '@
+          $script = Join-Path $work 'place.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'fit.json'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $report)) { throw 'No terrain measurement receipt' }
+          Write-Output ('SKARVIK_CITY_FIT_RECEIPT ' + (Get-Content -LiteralPath $report -Raw -Encoding UTF8))
