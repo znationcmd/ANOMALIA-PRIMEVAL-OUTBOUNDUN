@@ -1,0 +1,217 @@
+name: Import new Sketchfab models into ANOMALIA
+on:
+  push:
+    branches: [ops/sketchfab-nov21-import]
+    paths: [.github/workflows/sketchfab-nov21-import.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: anomalia-sketchfab-nov21
+  cancel-in-progress: false
+jobs:
+  import-models:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 75
+    steps:
+      - name: Stage owned sources and save derived Unreal assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor) -or !(Test-Path -LiteralPath $python)) { throw 'Project or editor unavailable' }
+          if (([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 8GB) { throw 'Less than 8 GiB free on D' }
+          $work = Join-Path $root ('Saved\ImportReceipts\SketchfabNov21\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:SKETCHFAB_IMPORT_WORK = $work
+          $stageCode = @'
+          import datetime
+          import hashlib
+          import json
+          import os
+          import re
+          import shutil
+          import stat
+          import zipfile
+          from pathlib import Path, PurePosixPath
+
+          root = Path(r"D:\ANOMALIA\sketchfab")
+          work = Path(os.environ["SKETCHFAB_IMPORT_WORK"])
+          cutoff = datetime.datetime(2026, 11, 19, tzinfo=datetime.timezone.utc).timestamp()
+          direct = {".glb": 0, ".gltf": 1, ".fbx": 2, ".obj": 3}
+          extra = {".blend", ".usd", ".usdz", ".dae", ".stl", ".3ds", ".rar", ".7z"}
+          manifest = []
+          issues = []
+          scanned = 0
+          remaining = 6 * 1024**3
+
+          def token(value):
+              return re.sub(r"[^a-zA-Z0-9]+", "_", value).strip("_")[:60] or "Model"
+
+          def unpack(archive, dest, depth=0):
+              global remaining
+              dest.mkdir(parents=True, exist_ok=True)
+              with zipfile.ZipFile(archive) as zipped:
+                  names = set()
+                  for item in zipped.infolist():
+                      relative = PurePosixPath(item.filename.replace("\\", "/"))
+                      if item.is_dir():
+                          continue
+                      if not relative.parts or relative.is_absolute() or ".." in relative.parts or any(
+                          re.search(r'[:*?"<>|]|[. ]$', part) or
+                          re.fullmatch(r"(?i)(CON|PRN|AUX|NUL|COM[1-9]|LPT[1-9])(?:\..*)?", part)
+                          for part in relative.parts
+                      ) or stat.S_ISLNK(item.external_attr >> 16):
+                          raise ValueError("Unsupported archive entry path")
+                      key = str(relative).casefold()
+                      if key in names:
+                          raise ValueError("Duplicate archive entry")
+                      names.add(key)
+                      if item.file_size > remaining:
+                          raise ValueError("Extraction budget exceeded")
+                      remaining -= item.file_size
+                      target = dest.joinpath(*relative.parts)
+                      target.parent.mkdir(parents=True, exist_ok=True)
+                      with zipped.open(item) as src, target.open("xb") as dst:
+                          shutil.copyfileobj(src, dst, length=1024**2)
+                      if target.suffix.lower() == ".zip" and depth < 2:
+                          unpack(target, target.with_name(target.name + "_unpacked"), depth + 1)
+
+          for source in sorted(root.rglob("*")):
+              if not source.is_file() or source.suffix.lower() not in set(direct) | extra | {".zip"}:
+                  continue
+              info = source.stat()
+              if max(info.st_mtime, info.st_ctime) < cutoff:
+                  continue
+              scanned += 1
+              source_key = str(source.relative_to(root)).replace("\\", "/")
+              pack = token(source.stem) + "_" + hashlib.sha256(source_key.casefold().encode()).hexdigest()[:8]
+              dest = work / "Sources" / pack
+              if source.suffix.lower() == ".zip":
+                  try:
+                      unpack(source, dest)
+                  except (RuntimeError, ValueError, OSError, zipfile.BadZipFile) as exc:
+                      issues.append({"archive": source.name, "reason": str(exc)})
+                      continue
+                  files = [f for f in dest.rglob("*") if f.is_file()]
+              else:
+                  files = [source]
+              winners = {}
+              for file in sorted(files):
+                  extension = file.suffix.lower()
+                  if extension not in direct:
+                      continue
+                  # The MegaKit ships several exports per prop. Keep its best supported export.
+                  if "modular scifi megakit" in source.name.casefold():
+                      model_key = file.stem.casefold()
+                  else:
+                      model_key = str(file.with_suffix("")).casefold()
+                  if model_key not in winners or direct[extension] < direct[winners[model_key].suffix.lower()]:
+                      winners[model_key] = file
+              if not winners:
+                  contents = sorted({f.suffix.lower() for f in files if f.suffix})
+                  issues.append({"archive": source.name, "reason": "No directly supported model", "extensions": contents})
+              for key, file in sorted(winners.items()):
+                  relative = file.relative_to(dest).as_posix() if dest in file.parents else file.name
+                  identity = hashlib.sha256(relative.casefold().encode()).hexdigest()[:8]
+                  manifest.append({"source": str(file), "archive": source.name,
+                                   "destination": f"/Game/Anomalia/SketchfabNov21/{pack}/{token(file.stem)}_{identity}"})
+          payload = {"scanned": scanned, "models": manifest, "issues": issues}
+          (work / "manifest.json").write_text(json.dumps(payload), encoding="utf-8")
+          print("SKETCHFAB_STAGE " + json.dumps({"scanned": scanned, "candidates": len(manifest), "issues": issues}), flush=True)
+          if not manifest:
+              raise RuntimeError("No supported models found in the recent Sketchfab sources")
+          '@
+          $importCode = @'
+          import json
+          import os
+          import time
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKETCHFAB_IMPORT_WORK"])
+          data = json.loads((work / "manifest.json").read_text(encoding="utf-8"))
+          lib = unreal.EditorAssetLibrary
+          tools = unreal.AssetToolsHelpers.get_asset_tools()
+          assets = []
+          errors = []
+          pending = []
+          started = time.monotonic()
+
+          def mesh_paths(destination):
+              if not lib.does_directory_exist(destination):
+                  return []
+              paths = lib.list_assets(destination, recursive=True, include_folder=False)
+              return [p for p in paths if isinstance(unreal.load_asset(p), (unreal.StaticMesh, unreal.SkeletalMesh, unreal.AnimSequence))]
+
+          for index, entry in enumerate(data["models"]):
+              if time.monotonic() - started > 3300:
+                  pending = data["models"][index:]
+                  break
+              source = Path(entry["source"])
+              destination = entry["destination"]
+              try:
+                  before = mesh_paths(destination)
+                  if before:
+                      assets.append({"source": source.name, "assets": before, "existing": True})
+                      continue
+                  task = unreal.AssetImportTask()
+                  for key, value in {"filename": str(source), "destination_path": destination,
+                                     "automated": True, "replace_existing": False,
+                                     "replace_existing_settings": False, "save": True}.items():
+                      task.set_editor_property(key, value)
+                  if source.suffix.lower() == ".fbx":
+                      options = unreal.FbxImportUI()
+                      options.set_editor_property("automated_import_should_detect_type", True)
+                      options.set_editor_property("import_animations", True)
+                      options.set_editor_property("import_materials", True)
+                      options.set_editor_property("import_textures", True)
+                      task.set_editor_property("options", options)
+                      task.set_editor_property("factory", unreal.FbxFactory())
+                  tools.import_asset_tasks([task])
+                  paths = mesh_paths(destination)
+                  if not paths:
+                      raise RuntimeError("No static mesh, skeletal mesh or animation found")
+                  if not lib.save_directory(destination, only_if_is_dirty=False, recursive=True):
+                      raise RuntimeError("Could not save imported assets")
+                  if not all(lib.does_asset_exist(path) for path in paths):
+                      raise RuntimeError("Asset missing after save")
+                  assets.append({"source": source.name, "assets": paths, "existing": False})
+                  unreal.log("SKETCHFAB_IMPORTED " + json.dumps({"source": source.name, "assets": len(paths)}))
+              except Exception as exc:
+                  errors.append({"source": source.name, "archive": entry["archive"], "error": str(exc)})
+                  unreal.log_warning("SKETCHFAB_ITEM_FAILED " + json.dumps(errors[-1]))
+
+          totals = {
+              "newSources": sum(not a["existing"] for a in assets),
+              "newAssets": sum(len(a["assets"]) for a in assets if not a["existing"]),
+              "existingSources": sum(a["existing"] for a in assets),
+              "failedSources": len(errors),
+              "pendingSources": len(pending),
+              "archivesToReview": len(data["issues"]),
+          }
+          (work / "result.json").write_text(json.dumps({"counts": totals, "assets": assets, "errors": errors,
+                                                       "pending": pending, "issues": data["issues"]}), encoding="utf-8")
+          unreal.log("SKETCHFAB_IMPORT_RESULT " + json.dumps(totals))
+          '@
+          $stage = Join-Path $work 'stage_sources.py'
+          $script = Join-Path $work 'import_sources.py'
+          [IO.File]::WriteAllText($stage,$stageCode,[Text.UTF8Encoding]::new($false))
+          [IO.File]::WriteAllText($script,$importCode,[Text.UTF8Encoding]::new($false))
+          & $python -B $stage
+          if ($LASTEXITCODE -ne 0) { throw 'Sketchfab staging failed' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) {
+            throw 'Existing Unreal session preserved'
+          }
+          $memory = Get-CimInstance Win32_OperatingSystem
+          if ($memory.FreePhysicalMemory * 1KB -lt 4GB -or $memory.FreeVirtualMemory * 1KB -lt 8GB) { throw 'Insufficient measured memory' }
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $code = $LASTEXITCODE
+          $report = Join-Path $work 'result.json'
+          if (!(Test-Path -LiteralPath $report)) { throw "No completed import receipt, Unreal exit $code" }
+          $result = Get-Content -LiteralPath $report -Raw -Encoding UTF8 | ConvertFrom-Json
+          Write-Output ('SKETCHFAB_IMPORT_VERIFIED ' + ($result.counts | ConvertTo-Json -Compress))
+          if ($result.counts.newSources -eq 0 -and $result.counts.existingSources -eq 0) { throw 'No usable model imported' }
