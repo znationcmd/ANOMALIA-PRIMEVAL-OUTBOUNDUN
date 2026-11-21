@@ -66,10 +66,44 @@ jobs:
               asset = library.load_asset(path)
               if isinstance(asset,unreal.StaticMesh) and asset.get_editor_property("static_materials"):
                   models[kind] = asset
-          if "Barrage" not in models:
+          if "Barrage" in models:
+              models["ConcreteBlock"] = models["Barrage"]
+          barricade = library.load_asset("/Game/Prop/Kit_Barricade_A/Mesh/SM_Barricade_A.SM_Barricade_A")
+          if isinstance(barricade,unreal.StaticMesh):
+              models["Barrage"] = barricade
+          elif "Barrage" not in models:
               barrier = library.load_asset("/Game/Construction_VOL1/Meshes/SM_Trafficbarrier_01.SM_Trafficbarrier_01")
               if isinstance(barrier,unreal.StaticMesh):
                   models["Barrage"] = barrier
+
+          car_types = {
+              "WreckCar": r"sedan|hatchback|coupe|car(?:_|$)|automobile",
+              "WreckTruck": r"pickup|light.?truck|delivery.?truck|van(?:_|$)|praga",
+              "WreckHeavyTruck": r"semi.?truck|truck.?cab|lorry|tractor.?unit|tractor.?truck|articulat|heavy.?truck|(?:^|_)semi(?:_|$)",
+              "WreckMotorcycle": r"moto|dirt.?bike|motor.?bike",
+          }
+          damaged = re.compile(r"wreck|carcass|(?:^|_)(?:broken|rusted|rusty|wrecked|destroyed|damaged|burnt|burned|burnout|abandoned)(?:_|$)",re.I)
+          registry = unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          wrecks = {}
+          for data in registry.get_assets_by_class(unreal.TopLevelAssetPath("/Script/Engine","StaticMesh"),True):
+              name = str(data.asset_name)
+              path = str(data.package_name)
+              if not damaged.search(name+" "+path.replace("/","_")) or re.search(r"door|bumper|engine|wheel|tire|tyre|window|frame|part",name,re.I):
+                  continue
+              for kind,pattern in car_types.items():
+                  if re.search(pattern,name+" "+path.replace("/","_"),re.I):
+                      wrecks.setdefault(kind,[]).append((name,path))
+          for kind,paths in wrecks.items():
+              for name,path in sorted(set(paths)):
+                  asset = library.load_asset(path+"."+name)
+                  if isinstance(asset,unreal.StaticMesh):
+                      b = sorted([asset.get_bounds().box_extent.x*2,asset.get_bounds().box_extent.y*2])
+                      minimum = 80 if kind=="WreckMotorcycle" else 280
+                      if b[1]>=minimum and b[1]<3000 and b[0]>20:
+                          models[kind] = asset
+                          break
+          unreal.log("SKARVIK_WRECK_CANDIDATES " + json.dumps({k:v[:8] for k,v in wrecks.items()}))
 
           def trace(x,y,ignore):
               hit = unreal.SystemLibrary.line_trace_single_by_profile(world,unreal.Vector(x,y,900000),
@@ -80,6 +114,9 @@ jobs:
               hit = trace(x,y,[a for a in actors.get_all_level_actors() if a!=road])
               if hit and hit[9]==road:
                   return hit[5].z
+              center,extent = road.get_actor_bounds(False,False)
+              if 0 < extent.z <= 55 and abs(x-center.x)<extent.x and abs(y-center.y)<extent.y:
+                  return center.z+extent.z
               return None
 
           planned = []
@@ -90,9 +127,9 @@ jobs:
               source_label = road.get_actor_label()
               match = road_mask.search(source_label)
               town,segment = (int(v) for v in match.groups())
-              if segment not in (3,8):
+              variant = {3:"SpeedBump",8:"Barrage",10:"ConcreteBlock"}.get(segment)
+              if not variant:
                   continue
-              variant = "SpeedBump" if segment==3 else "Barrage"
               label = prefix+variant+f"_{town:02d}"
               if label in previous or variant not in models:
                   continue
@@ -117,14 +154,15 @@ jobs:
               planned.append((label,variant,asset,x,y,z+1,yaw,sx,sy))
 
           # Keep roadside entrances close to the pavement and avoid every existing occupied plot.
-          for kind in ("GasStation","Garage","Store"):
+          for kind in ("GasStation","Garage","Store","WreckCar","WreckTruck","WreckHeavyTruck","WreckMotorcycle"):
               label = prefix+kind
               if kind not in models or label in previous:
                   continue
               asset = models[kind]
               b = asset.get_bounds().box_extent
               found = False
-              if not (400 < b.x+b.y < 7000 and 100 < b.z < 900):
+              is_wreck = kind.startswith("Wreck")
+              if not (50 < b.x+b.y < 7000 and 10 < b.z < 900):
                   blocked[label] = "Building dimensions outside plausible limits"
                   continue
               for road in roads:
@@ -134,7 +172,7 @@ jobs:
                   if rext.x < rext.y:
                       continue
                   for side in (1,-1):
-                      x,y = rc.x,rc.y+side*(rext.y+b.y+250)
+                      x,y = rc.x,rc.y+side*(rext.y+b.y+(100 if is_wreck else 250))
                       box = (x-b.x-75,y-b.y-75,x+b.x+75,y+b.y+75)
                       if any(box[0]<q[2] and box[2]>q[0] and box[1]<q[3] and box[3]>q[1] for q in reserved):
                           continue
@@ -154,7 +192,7 @@ jobs:
                               continue
                           ground = [hit[5].z for hit in hits]
                           pavement = road_surface(road,rc.x,rc.y)
-                          if min(ground)<450 or max(ground)-min(ground)>100 or pavement is None or abs(pavement-ground[4])>130:
+                          if min(ground)<450 or max(ground)-min(ground)>(65 if is_wreck else 100) or pavement is None or abs(pavement-ground[4])>130:
                               continue
                           reserved.append(box)
                           planned.append((label,kind,asset,x,y,min(ground)+3,0 if side>0 else 180,1,1))
