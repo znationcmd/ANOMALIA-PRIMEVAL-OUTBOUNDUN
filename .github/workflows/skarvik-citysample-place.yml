@@ -75,63 +75,91 @@ jobs:
           if any(str(d.label).startswith(prefix) for d in desc):
               raise RuntimeError("Transfer actors already exist in live SKARVIK")
           coords = [row["position"] for row in rows]
-          x0, x1 = min(p[0] for p in coords), max(p[0] for p in coords)
-          y0, y1 = min(p[1] for p in coords), max(p[1] for p in coords)
-          z0 = min(p[2] for p in coords)
-          center_x, center_y = (x0+x1)/2, (y0+y1)/2
-          margin = 6000
           occupied = re.compile(r"house|building|settlement|city|village|bridge|road",re.I)
+          terrain = [d for d in desc if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
+          margin = 6000
+          used = []
 
-          def candidate(cx,cy):
-              dx,dy = cx-center_x, cy-center_y
-              box = unreal.Box(min=unreal.Vector(x0+dx-margin,y0+dy-margin,-500000),
-                               max=unreal.Vector(x1+dx+margin,y1+dy+margin,900000))
-              near = partition.get_intersecting_actor_descs(box) or []
-              if any(occupied.search(str(d.label)) and "landscape" not in str(d.label).lower() for d in near):
+          def point_z(x,y,ignore):
+              hit = unreal.SystemLibrary.line_trace_single_by_profile(
+                  world,unreal.Vector(x,y,900000),unreal.Vector(x,y,-500000),
+                  "BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
+              if hit is None:
                   return None
-              terrain = [d.guid for d in near if "Landscape" in str(d.native_class.get_name())]
-              if not terrain:
-                  return None
-              partition.load_actors(terrain)
-              try:
-                  loaded = actors.get_all_level_actors()
-                  ignore = [a for a in loaded if not isinstance(a, unreal.LandscapeProxy)]
-                  heights = []
-                  for ix in range(5):
-                      for iy in range(5):
-                          x = x0+dx+(x1-x0)*ix/4
-                          y = y0+dy+(y1-y0)*iy/4
-                          hit = unreal.SystemLibrary.line_trace_single_by_profile(
-                              world,unreal.Vector(x,y,900000),unreal.Vector(x,y,-500000),
-                              "BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
-                          if hit is None:
-                              return None
-                          impact = next((point for point in hit.to_tuple()
-                                         if isinstance(point, unreal.Vector)
-                                         and abs(point.x-x)<1 and abs(point.y-y)<1
-                                         and 450 < point.z < 900000),None)
-                          if impact is None:
-                              return None
-                          z = impact.z
-                          if not math.isfinite(z) or z < 450:
-                              return None
-                          heights.append(z)
-                  if max(heights)-min(heights)>500:
-                      return None
-                  return dx,dy,max(heights)-z0+10,heights
-              finally:
-                  partition.unload_actors(terrain)
+              impact = hit.to_tuple()[5]
+              return impact.z if impact.z > 450 else None
 
-          possible = [(center_x,center_y)]
-          possible.extend((center_x+ix*150000, center_y+iy*150000)
-                          for ix in range(-3,4) for iy in range(-3,4) if ix or iy)
-          selected = next((fit for x,y in possible if (fit := candidate(x,y)) is not None),None)
-          if selected is None:
-              raise RuntimeError("No dry and unoccupied plateau for the complete City Sample layout")
-          dx,dy,dz,heights = selected
+          def find_site(group):
+              coords = [rows[i]["position"] for i in group]
+              x0,x1 = min(p[0] for p in coords),max(p[0] for p in coords)
+              y0,y1 = min(p[1] for p in coords),max(p[1] for p in coords)
+              cx,cy = (x0+x1)/2,(y0+y1)/2
+              hx,hy = (x1-x0)/2+margin,(y1-y0)/2+margin
+              def distance(tile):
+                  bounds = tile.bounds
+                  return ((bounds.min.x+bounds.max.x)/2-cx)**2+((bounds.min.y+bounds.max.y)/2-cy)**2
+              for tile in sorted(terrain,key=distance):
+                  bounds = tile.bounds
+                  lx,rx = bounds.min.x+hx,bounds.max.x-hx
+                  ly,ry = bounds.min.y+hy,bounds.max.y-hy
+                  if rx<lx or ry<ly or bounds.max.z<450:
+                      continue
+                  partition.load_actors([tile.guid])
+                  try:
+                      ignore = [a for a in actors.get_all_level_actors() if not isinstance(a,unreal.LandscapeProxy)]
+                      xs = sorted(set([min(max(cx,lx),rx),(lx+rx)/2]+list(range(math.ceil(lx),math.floor(rx)+1,25000))))
+                      ys = sorted(set([min(max(cy,ly),ry),(ly+ry)/2]+list(range(math.ceil(ly),math.floor(ry)+1,25000))))
+                      sites = sorted(((x,y) for x in xs for y in ys),key=lambda p:(p[0]-cx)**2+(p[1]-cy)**2)
+                      for x,y in sites:
+                          box = (x-hx,y-hy,x+hx,y+hy)
+                          if any(box[0]<other[2] and box[2]>other[0] and box[1]<other[3] and box[3]>other[1] for other in used):
+                              continue
+                          center_height = point_z(x,y,ignore)
+                          if center_height is None:
+                              continue
+                          heights = [point_z(x+hx*ix/2,y+hy*iy/2,ignore) for ix in range(-2,3) for iy in range(-2,3)]
+                          if any(h is None for h in heights) or max(heights)-min(heights)>400:
+                              continue
+                          area = unreal.Box(min=unreal.Vector(box[0],box[1],-500000),max=unreal.Vector(box[2],box[3],900000))
+                          if any(occupied.search(str(d.label)) and "landscape" not in str(d.label).lower()
+                                 for d in partition.get_intersecting_actor_descs(area) or []):
+                              continue
+                          used.append(box)
+                          result = (x-cx,y-cy,max(heights)-min(p[2] for p in coords)+10)
+                          unreal.log("CITY_SITE_MATCH " + json.dumps(dict(count=len(group),center=[x,y],spread=max(heights)-min(heights),offset=result)))
+                          return result
+                  finally:
+                      partition.unload_actors([tile.guid])
+              return None
+
+          def split_districts(indices):
+              if len(indices)==180:
+                  return [indices]
+              half = len(indices)//2
+              splits = []
+              for axis in (0,1):
+                  ordered = sorted(indices,key=lambda i:coords[i][axis])
+                  gap = coords[ordered[half]][axis]-coords[ordered[half-1]][axis]
+                  splits.append((gap,ordered))
+              gap,order = max(splits,key=lambda v:v[0])
+              unreal.log("CITY_SITE_SOURCE_SPLIT " + json.dumps(dict(planningCount=len(indices),gapCm=gap)))
+              if gap < 6000:
+                  raise RuntimeError("Cannot split the source into intact districts along verified spacing")
+              return split_districts(order[:half])+split_districts(order[half:])
+
+          indices = list(range(len(rows)))
+          whole = find_site(indices)
+          groups = [indices] if whole else split_districts(indices)
+          offsets = {}
+          for group in groups:
+              fit = whole if whole else find_site(group)
+              if fit is None:
+                  raise RuntimeError("No dry and suitably level site for a complete City Sample district")
+              offsets.update((i,fit) for i in group)
           target = root/"Content/Maps/ANOMALIA_Archipelago_v2.umap"
           shutil.copy2(target,work/"archipelago-before-city.umap")
           for index,row in enumerate(rows):
+              dx,dy,dz = offsets[index]
               x,y,z = row["position"]
               actor = actors.spawn_actor_from_class(unreal.StaticMeshActor, unreal.Vector(x+dx,y+dy,z+dz))
               if not actor:
@@ -147,7 +175,7 @@ jobs:
               p,yaw,r = row["rotation"]
               actor.set_actor_rotation(unreal.Rotator(pitch=p,yaw=yaw,roll=r),False)
               actor.set_actor_scale3d(unreal.Vector(*row["scale"]))
-          if not levels.save_current_level() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,False):
+          if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
               raise RuntimeError("Could not persist the live city actor packages")
           if not levels.load_level(package):
               raise RuntimeError("Could not reopen patched live SKARVIK")
@@ -163,7 +191,7 @@ jobs:
                   raise RuntimeError(f"Reopened mesh mismatch at actor {i}")
           result = dict(map=package, actors=len(persisted), loadedReopenSamples=len(sample),
                         materials=len(materials), uniqueMeshes=len(meshes),
-                        locationCm=[center_x+dx,center_y+dy,max(heights)])
+                        districts=len(groups), districtBoundsCm=used)
           (work/"placed.json").write_text(json.dumps(result),encoding="utf-8")
           unreal.log("SKARVIK_LIVE_CITY_VERIFIED " + json.dumps(result))
           '@
