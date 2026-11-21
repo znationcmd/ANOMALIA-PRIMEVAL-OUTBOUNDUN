@@ -1,0 +1,165 @@
+name: Stage verified SKARVIK City Sample districts on D
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-citysample-transfer.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 35
+    steps:
+      - name: Export the original mesh actors and transfer missing packages
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $source = 'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          $dest = 'D:\ANOMALIA\unreal'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $python = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          $origin = Join-Path $source 'AnomaliaZPrigimalia.uproject'
+          $destMap = Join-Path $dest 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          if (!(Test-Path -LiteralPath $origin) -or !(Test-Path -LiteralPath $destMap)) { throw 'Source project or live SKARVIK map unavailable' }
+          if ((Get-Content -LiteralPath (Join-Path $source '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555') { throw 'Unexpected source project' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $dest ('Saved\SkarvikCity\TransferFromC\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:SKARVIK_TRANSFER_WORK = $work
+          $env:SKARVIK_TRANSFER_ORIGIN = $source
+          $env:SKARVIK_TRANSFER_DEST = $dest
+          $export = @'
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_TRANSFER_WORK"])
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          source = "/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"
+          prefix = "SKARVIK_FINAL_CITYSAMPLE_3D_SOURCE_"
+          if not levels.load_level(source):
+              raise RuntimeError("Could not open the validated SKARVIK source")
+          descriptors = partition.get_actor_descs() or []
+          city = sorted((d for d in descriptors if str(d.label).startswith(prefix)), key=lambda d: str(d.label))
+          villages = [d for d in descriptors if str(d.label).startswith(
+              ("SKARVIK_FINAL_NATIVE_GRADED_ORIGINAL_MESH_", "SKARVIK_FINAL_NATIVE_ISLAND_ORIGINAL_MESH_"))]
+          if len(city) != 720:
+              raise RuntimeError(f"Expected 720 source actors, found {len(city)}")
+          rows = []
+          packages = set()
+          for start in range(0,len(city),48):
+              batch = city[start:start+48]
+              keys = [d.guid for d in batch]
+              partition.load_actors(keys)
+              loaded = {a.get_actor_label(): a for a in actors.get_all_level_actors()}
+              for item in batch:
+                  label = str(item.label)
+                  actor = loaded.get(label)
+                  if not isinstance(actor, unreal.StaticMeshActor):
+                      raise RuntimeError("Source actor unavailable: " + label)
+                  component = actor.static_mesh_component
+                  mesh = component.get_editor_property("static_mesh")
+                  if not isinstance(mesh, unreal.StaticMesh):
+                      raise RuntimeError("Source mesh unavailable: " + label)
+                  pos, rot, scale = actor.get_actor_location(), actor.get_actor_rotation(), actor.get_actor_scale3d()
+                  references = [m.get_path_name() if m else None for m in component.get_editor_property("override_materials")]
+                  rows.append(dict(label=label,mesh=mesh.get_path_name(), materials=references,
+                                   position=[pos.x,pos.y,pos.z], rotation=[rot.pitch,rot.yaw,rot.roll],
+                                   scale=[scale.x,scale.y,scale.z]))
+                  packages.add(mesh.get_path_name().split(".")[0])
+                  packages.update(m.split(".")[0] for m in references if m)
+              del loaded, actor, component, mesh
+              partition.unload_actors(keys)
+          registry = unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          opts = unreal.AssetRegistryDependencyOptions(
+              include_soft_package_references=False, include_hard_package_references=True,
+              include_searchable_names=False, include_soft_management_references=False,
+              include_hard_management_references=False)
+          all_packages = set()
+          stack = list(packages)
+          while stack:
+              package = stack.pop()
+              if package in all_packages or package.startswith(("/Engine/","/Script/")):
+                  continue
+              if not package.startswith("/Game/"):
+                  raise RuntimeError("Source depends on a separate plugin package: " + package)
+              all_packages.add(package)
+              stack.extend(str(d) for d in (registry.get_dependencies(package, opts) or []))
+          payload = dict(actors=rows, packages=sorted(all_packages), villageActorDescriptors=len(villages))
+          (work / "manifest.json").write_text(json.dumps(payload),encoding="utf-8")
+          unreal.log("SKARVIK_CITY_EXPORT " + json.dumps(dict(actors=len(rows), packages=len(all_packages),
+                                                               villageActorDescriptors=len(villages))))
+          '@
+          $copy = @'
+          import hashlib
+          import json
+          import os
+          import shutil
+          from pathlib import Path
+
+          work = Path(os.environ["SKARVIK_TRANSFER_WORK"])
+          source = Path(os.environ["SKARVIK_TRANSFER_ORIGIN"]) / "Content"
+          target = Path(os.environ["SKARVIK_TRANSFER_DEST"]) / "Content"
+          export = json.loads((work / "manifest.json").read_text(encoding="utf-8"))
+          absent = []
+          conflicts = []
+          transfers = []
+          extensions = (".uasset",".uexp",".ubulk",".uptnl",".m.ubulk")
+          def digest(p):
+              with p.open("rb") as f:
+                  return hashlib.file_digest(f,"sha256").hexdigest()
+          for package in export["packages"]:
+              rel = package.removeprefix("/Game/")
+              assets = [(source / (rel+ext), target / (rel+ext)) for ext in extensions]
+              if not assets[0][0].is_file():
+                  absent.append(package)
+                  continue
+              for src,dst in assets:
+                  if not src.is_file():
+                      if dst.exists():
+                          conflicts.append(rel + dst.suffix)
+                      continue
+                  if dst.is_file():
+                      if src.stat().st_size != dst.stat().st_size or digest(src) != digest(dst):
+                          conflicts.append(rel + src.suffix)
+                  else:
+                      transfers.append((src,dst))
+          bytes_to_transfer = sum(src.stat().st_size for src,_ in transfers)
+          free = shutil.disk_usage(target).free
+          report = dict(actors=len(export["actors"]),packages=len(export["packages"]),
+                        villageActorsOnSource=export["villageActorDescriptors"],missingSources=absent,
+                        conflictingPackages=conflicts,requiredBytes=bytes_to_transfer,freeBytes=free,
+                        copiedFiles=0)
+          print("SKARVIK_CITY_DEPENDENCY_PLAN " + json.dumps(report),flush=True)
+          if absent or conflicts:
+              raise RuntimeError("Resolve dependency conflicts or missing source assets before copying into the live project")
+          if free < bytes_to_transfer + 4*1024**3:
+              raise RuntimeError("Not enough disk space for the selected packages")
+          for src,dst in transfers:
+              dst.parent.mkdir(parents=True,exist_ok=True)
+              temp = dst.with_suffix(dst.suffix + ".city-transfer")
+              if temp.exists() or dst.exists():
+                  raise RuntimeError("Destination changed while planning: " + str(dst))
+              shutil.copyfile(src,temp)
+              if digest(src) != digest(temp):
+                  raise RuntimeError("Package copy verification failed: " + str(dst))
+              temp.rename(dst)
+              report["copiedFiles"] += 1
+          (work/"dependencies.json").write_text(json.dumps(report),encoding="utf-8")
+          print("SKARVIK_CITY_ASSETS_STAGED " + json.dumps(report),flush=True)
+          '@
+          $exportScript = Join-Path $work 'export_actors.py'
+          $copyScript = Join-Path $work 'stage_assets.py'
+          [IO.File]::WriteAllText($exportScript,$export,[Text.UTF8Encoding]::new($false))
+          [IO.File]::WriteAllText($copyScript,$copy,[Text.UTF8Encoding]::new($false))
+          & $editor $origin '-run=pythonscript' "-script=$exportScript" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $work 'manifest.json'))) { throw 'Source City Sample export failed' }
+          & $python -B $copyScript
+          if ($LASTEXITCODE -ne 0) { throw 'City Sample package staging failed' }
