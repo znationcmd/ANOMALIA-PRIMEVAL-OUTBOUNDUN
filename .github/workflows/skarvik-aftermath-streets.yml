@@ -1,0 +1,226 @@
+name: Dress SKARVIK streets as abandoned districts
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-aftermath-streets.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Place abandoned vehicle clusters and layered barricades
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikUrban\Placement\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          $env:SKARVIK_URBAN_WORK = $work
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          $code = @'
+          import json
+          from collections import Counter
+          import math
+          import os
+          import re
+          import shutil
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_URBAN_WORK"])
+          root = Path(unreal.Paths.project_dir()).resolve()
+          package = "/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix = "SKARVIK_AFTERMATH_01_"
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          editor = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          library = unreal.EditorAssetLibrary
+          if not levels.load_level(package):
+              raise RuntimeError("Could not open the original SKARVIK")
+          world = editor.get_editor_world()
+          descs = partition.get_actor_descs() or []
+          previous = {str(d.label) for d in descs if str(d.label).startswith(prefix)}
+          road_mask = re.compile(r"ARCHIPELAGO_V2_CITY_([0-9]+)_REAL_ROAD_([0-9]+)$")
+          road_descs = [d for d in descs if road_mask.search(str(d.label))]
+          if not road_descs:
+              raise RuntimeError("No verified existing urban roads")
+          partition.load_actors([d.guid for d in road_descs])
+          roads = sorted((a for a in actors.get_all_level_actors() if road_mask.search(a.get_actor_label())),
+                         key=lambda a:a.get_actor_label())
+          urban_dir = root/"Saved/SkarvikUrban/Imports"
+          metadata = {}
+          for receipt in sorted(urban_dir.glob("*/models.json"),key=lambda p:p.stat().st_mtime):
+              for key,item in json.loads(receipt.read_text(encoding="utf-8")).items():
+                  if len(item.get("fullSize",[]))==1:
+                      metadata[key] = item["fullSize"][0]["path"]
+
+          models = {}
+          for kind,path in metadata.items():
+              asset = library.load_asset(path)
+              if isinstance(asset,unreal.StaticMesh) and asset.get_editor_property("static_materials"):
+                  models[kind] = asset
+          if "Barrage" in models:
+              models["ConcreteBlock"] = models["Barrage"]
+          barricade = library.load_asset("/Game/Prop/Kit_Barricade_A/Mesh/SM_Barricade_A.SM_Barricade_A")
+          if isinstance(barricade,unreal.StaticMesh):
+              models["Barrage"] = barricade
+          elif "Barrage" not in models:
+              barrier = library.load_asset("/Game/Construction_VOL1/Meshes/SM_Trafficbarrier_01.SM_Trafficbarrier_01")
+              if isinstance(barrier,unreal.StaticMesh):
+                  models["Barrage"] = barrier
+
+          registry = unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          debris_names = re.compile(r"^SM_.*(?:rubble|debris.?pile|trash.?pile|garbage.?pile|broken.?pallet|ruined.?wall)",re.I)
+          debris = []
+          for info in sorted(registry.get_assets_by_class(unreal.TopLevelAssetPath("/Script/Engine","StaticMesh"),True),
+                             key=lambda d:str(d.package_name)):
+              if len(debris)>=8:
+                  break
+              if not debris_names.search(str(info.asset_name)):
+                  continue
+              obj = info.get_asset()
+              if isinstance(obj,unreal.StaticMesh):
+                  e = obj.get_bounds().box_extent
+                  if 35 < max(e.x,e.y) < 450 and 10 < e.z < 120:
+                      debris.append(obj)
+
+          roadblocks = [models["Barrage"]]
+          for name in ("SM_Roadblock_01a","SM_Roadblock_02a","SM_Roadblock_03a","SM_Roadblock_04a"):
+              obj = library.load_asset(f"/Game/Construction_VOL1/Meshes/{name}.{name}")
+              if isinstance(obj,unreal.StaticMesh):
+                  e = obj.get_bounds().box_extent
+                  if 35 < max(e.x,e.y) < 500 and 12 < e.z < 190:
+                      roadblocks.append(obj)
+
+          def trace(x,y,ignore):
+              hit = unreal.SystemLibrary.line_trace_single_by_profile(world,unreal.Vector(x,y,900000),
+                  unreal.Vector(x,y,-500000),"BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
+              return hit.to_tuple() if hit is not None else None
+
+          def road_surface(road,x,y):
+              hit = trace(x,y,[a for a in actors.get_all_level_actors() if a!=road])
+              if hit and hit[9]==road:
+                  return hit[5].z
+              center,extent = road.get_actor_bounds(False,False)
+              if 0 < extent.z <= 55 and abs(x-center.x)<extent.x and abs(y-center.y)<extent.y:
+                  return center.z+extent.z
+              return None
+
+          planned = []
+          blocked = {}
+          occupied = [d for d in descs if str(d.native_class.get_name())=="StaticMeshActor"
+                      and not road_mask.search(str(d.label))]
+
+          def plan_at(label,kind,asset,road,along,side,angle):
+              if label in previous:
+                  return True
+              center,rext = road.get_actor_bounds(False,False)
+              east_west = rext.x >= rext.y
+              length, width = (rext.x,rext.y) if east_west else (rext.y,rext.x)
+              angle += 0 if east_west else 90
+              e = asset.get_bounds().box_extent
+              if e.y>e.x:
+                  angle += 90
+              c,s = abs(math.cos(math.radians(angle))),abs(math.sin(math.radians(angle)))
+              hx,hy = e.x*c+e.y*s,e.x*s+e.y*c
+              parallel,cross = (hx,hy) if east_west else (hy,hx)
+              inset = width-cross-16
+              if cross*2+320>width*2 or abs(along)+parallel+12>length or inset<=0:
+                  blocked[label] = "insufficient width for retained 3.2m passage or object exceeds segment"
+                  return False
+              x = center.x+(along if east_west else side*inset)
+              y = center.y+(side*inset if east_west else along)
+              z = road_surface(road,x,y)
+              if z is None:
+                  blocked[label] = "existing road elevation unavailable"
+                  return False
+              box = (x-hx-12,y-hy-12,x+hx+12,y+hy+12)
+              def overlaps(bounds):
+                  return bounds.min.x<box[2] and bounds.max.x>box[0] and bounds.min.y<box[3] and bounds.max.y>box[1] and bounds.max.z>z+10 and bounds.min.z<z+e.z*2
+              if any(overlaps(d.bounds) for d in occupied) or any(
+                      box[0]<r[2] and box[2]>r[0] and box[1]<r[3] and box[3]>r[1] for r in reservations):
+                  blocked[label] = "existing or planned object at this location"
+                  return False
+              reservations.append(box)
+              planned.append((label,kind,asset,x,y,z+1,angle,1,1))
+              return True
+
+          reservations = []
+          wreck_cycle = ("WreckCar","WreckTruck","WreckHeavyTruck","WreckMotorcycle")
+          for road in roads:
+              town,segment = (int(v) for v in road_mask.search(road.get_actor_label()).groups())
+              signature = f"{town:02d}_{segment:02d}"
+              side = 1 if segment%2 else -1
+              if segment in (0,2,5,7,11):
+                  # Repeated checkpoints close one side of the carriageway, with an open driving lane.
+                  primary = roadblocks[(town+segment)%len(roadblocks)]
+                  if not plan_at(prefix+signature+"_Barricade","Barricade",primary,road,-350,side,20):
+                      plan_at(prefix+signature+"_Barricade","Barricade",models["Barrage"],road,-320,side,0)
+                  plan_at(prefix+signature+"_Concrete","ConcreteBlock",models["ConcreteBlock"],road,240,side,-12)
+              elif segment in (1,4,6,9):
+                  kind = wreck_cycle[(town+segment)%len(wreck_cycle)]
+                  plan_at(prefix+signature+"_"+kind,kind,models[kind],road,0,side,6)
+              if debris and segment in (0,1,4,6,7,9,11):
+                  rubble = debris[(town+segment)%len(debris)]
+                  plan_at(prefix+signature+"_Debris","Debris",rubble,road,500,side,9)
+
+          def save_report(confirmed):
+              report = dict(map=package, counts=dict(Counter(p["kind"] for p in confirmed)), debrisAssets=len(debris), placed=confirmed,
+                            priorLabels=sorted(previous), blocked=blocked)
+              (work/"placement.json").write_text(json.dumps(report),encoding="utf-8")
+              unreal.log("SKARVIK_AFTERMATH_VERIFIED " + json.dumps(report))
+
+          if not planned:
+              save_report([])
+              raise RuntimeError("No new equipment passed site checks")
+          shutil.copy2(root/"Content/Maps/ANOMALIA_Archipelago_v2.umap",work/"Archipelago-before-urban.umap")
+          new = {}
+          for label,kind,asset,x,y,z,yaw,sx,sy in planned:
+              bounds = asset.get_bounds()
+              ox,oy,oz = bounds.origin.x*sx,bounds.origin.y*sy,bounds.origin.z
+              cos_yaw,sin_yaw = math.cos(math.radians(yaw)),math.sin(math.radians(yaw))
+              location = unreal.Vector(x-(ox*cos_yaw-oy*sin_yaw),y-(ox*sin_yaw+oy*cos_yaw),z-(oz-bounds.box_extent.z))
+              a = actors.spawn_actor_from_class(unreal.StaticMeshActor,location,unreal.Rotator(yaw=yaw))
+              if not a:
+                  raise RuntimeError("Unable to spawn "+label)
+              a.set_actor_label(label)
+              a.set_actor_scale3d(unreal.Vector(sx,sy,1))
+              c = a.static_mesh_component
+              if not c.set_static_mesh(asset):
+                  raise RuntimeError("Unable to link "+label)
+              c.set_collision_profile_name("BlockAll")
+              new[label] = dict(label=label,kind=kind,asset=asset.get_path_name(),atCm=[x,y,z])
+          unapplied = unreal.EditorLoadingAndSavingUtils.get_dirty_content_packages()
+          unreal.log("SKARVIK_URBAN_DIRTY_CONTENT " + json.dumps([p.get_name() for p in unapplied]))
+          if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+              raise RuntimeError("Could not persist the original map and World Partition actor files")
+          if not levels.load_level(package):
+              raise RuntimeError("Could not reopen the original map")
+          reopened = {str(d.label):d for d in partition.get_actor_descs() or []}
+          if not set(new).issubset(reopened):
+              raise RuntimeError("The saved world is missing newly placed objects")
+          partition.load_actors([reopened[label].guid for label in new])
+          by_name = {a.get_actor_label():a for a in actors.get_all_level_actors()}
+          for label,item in new.items():
+              if label not in by_name:
+                  raise RuntimeError("Could not load saved actor "+label)
+              mesh = by_name[label].static_mesh_component.get_editor_property("static_mesh")
+              if not mesh or mesh.get_path_name()!=item["asset"]:
+                  raise RuntimeError("Saved mesh mismatch "+label)
+          save_report(list(new.values()))
+          '@
+          $script = Join-Path $work 'urban_place.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'placement.json'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $report)) { throw 'No verified urban placement receipt' }
+          Write-Output ('SKARVIK_URBAN_PLACEMENT_RECEIPT ' + (Get-Content -LiteralPath $report -Raw))
