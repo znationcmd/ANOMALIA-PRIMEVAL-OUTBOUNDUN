@@ -1,0 +1,38 @@
+name: Find existing SKARVIK urban facilities
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-urban-facilities-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Locate native Unreal facilities and road furniture
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $roots = @(
+            'D:\ANOMALIA\unreal\Content',
+            'D:\ANOMALIA\FabImports\CitySample\Content',
+            'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal\Content'
+          )
+          $types = [ordered]@{
+            Facility='gas.?station|petrol.?station|filling.?station|fuel.?(station|pump)|gas.?pump|service.?station|station.?essence|garage|mechanic|workshop|storefront|grocery|supermarket|convenience.?store|retail|general.?store'
+            RoadFurniture='speed.?bum[pb]|speed.?hump|road.?block|road.?barrier|traffic.?barrier|jersey.?barrier|barricade|bollard|checkpoint'
+            Surface='(^|\\)(MI|M)_[^\\]*(asphalt|tarmac|concrete)'
+          }
+          foreach ($root in $roots) {
+            if (!(Test-Path -LiteralPath $root)) { continue }
+            $files = @(Get-ChildItem -LiteralPath $root -Recurse -Filter '*.uasset' -File -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^(SM_|MI_|M_|BP_)' })
+            foreach ($key in $types.Keys) {
+              $matches = @($files | Where-Object { $_.Name -match $types[$key] })
+              Write-Output ("SKARVIK_URBAN_ASSETS $key " + $matches.Count + ' ' + $root)
+              $matches | Select-Object -First 100 | ForEach-Object { Write-Output ($_.FullName.Substring($root.Length+1)) }
+            }
+          }
