@@ -27,8 +27,8 @@ jobs:
           $ProgressPreference = 'SilentlyContinue'
           $models = [ordered]@{
             GasStation = 'https://files.innerscene.com/library/gas-station-8c240866/91b28aa7a1086166668f/gas-station.glb'
-            Garage = 'https://tevy.dev/models/workshop-building/v2/lod0.glb'
-            Store = 'https://tevy.dev/models/supermarket-shell/v2/lod0.glb'
+            Garage = 'https://files.innerscene.com/library/small-workshop-unit-15-x-10-m-3e5df247/290344bab88f611872d4/small-workshop-unit-15-x-10-m.glb'
+            Store = 'https://files.innerscene.com/library/supermarket-building-52b858d3/19758ebf2fafdc046bc4/supermarket-building.glb'
             Barrage = 'https://files.innerscene.com/library/jersey-barrier-5dc3eefe/e0a221c115b1f7c471ee/jersey-barrier.glb'
             SpeedBump = 'https://files.innerscene.com/library/speed-bump-eb8f9af9/27619f30bc95f36f90f1/speed-bump.glb'
           }
@@ -59,25 +59,38 @@ jobs:
           work = Path(os.environ["SKARVIK_URBAN_WORK"])
           sources = json.loads((work/"sources.json").read_text(encoding="utf-8"))
           lib = unreal.EditorAssetLibrary
-          tools = unreal.AssetToolsHelpers.get_asset_tools()
-          expected = {"GasStation": (4400,4550,900), "Garage": (1695,1460,798),
-                      "Store": (3054,2193,516), "Barrage": (414,61,81), "SpeedBump": (790,35,5.2)}
+          base = "/Game/Anomalia/Infrastructure/SkarvikUrbanV2"
+          pipeline_name = base+"/CombineUrbanModel"
+          pipeline = lib.load_asset(pipeline_name) if lib.does_asset_exist(pipeline_name) else lib.duplicate_asset(
+             "/Interchange/Pipelines/DefaultAssetsPipeline",pipeline_name)
+          if not pipeline:
+              raise RuntimeError("Default Interchange pipeline unavailable")
+          pipeline.get_editor_property("mesh_pipeline").set_editor_property("combine_static_meshes",True)
+          pipeline.get_editor_property("common_meshes_properties").set_editor_property("bake_meshes",True)
+          manager = unreal.InterchangeManager.get_interchange_manager_scripted()
+          expected = {"GasStation": (4400,4550,900), "Garage": (1580,1138,618),
+                      "Store": (4520,3278,673), "Barrage": (414,61,81), "SpeedBump": (790,35,5.2)}
           reports = {}
           for key in expected:
               if key not in sources:
                   reports[key] = {"error":"No valid download"}
                   continue
-              destination = "/Game/Anomalia/Infrastructure/SkarvikUrbanV1/" + key
+              destination = base + "/" + key
               try:
-                  paths = lib.list_assets(destination, True, False) if lib.does_directory_exist(destination) else []
-                  meshes = [asset for path in paths if isinstance(asset := lib.load_asset(path), unreal.StaticMesh)]
+                  paths = lib.list_assets(destination,True,False) if lib.does_directory_exist(destination) else []
+                  meshes = [asset for path in paths if isinstance(asset := lib.load_asset(path),unreal.StaticMesh)]
                   if not meshes:
-                      task = unreal.AssetImportTask()
-                      for prop,value in {"filename":str(work/(key+".glb")), "destination_path":destination,
-                                         "automated":True, "replace_existing":False, "save":True}.items():
-                          task.set_editor_property(prop,value)
-                      tools.import_asset_tasks([task])
-                      meshes = [asset for asset in task.get_objects() if isinstance(asset,unreal.StaticMesh)]
+                      source_data = unreal.InterchangeManager.create_source_data(str(work/(key+".glb")))
+                      args = unreal.ImportAssetParameters(is_automated=True,replace_existing=False)
+                      args.set_editor_property("override_pipelines",[unreal.SoftObjectPath(pipeline.get_path_name())])
+                      meshes = [asset for asset in manager.import_asset(destination,source_data,args) or []
+                                if isinstance(asset,unreal.StaticMesh)]
+                  for asset in meshes:
+                      setup = asset.get_editor_property("body_setup")
+                      if setup:
+                          setup.set_editor_property("collision_trace_flag",unreal.CollisionTraceFlag.CTF_USE_COMPLEX_AS_SIMPLE)
+                  if not meshes or not lib.save_directory(destination,False,True):
+                      raise RuntimeError("Could not copy and save a native static mesh")
                   sizes = []
                   for asset in meshes:
                       extent = asset.get_bounds().box_extent
