@@ -1,0 +1,60 @@
+name: Inventory Sketchfab models on D
+on:
+  push:
+    branches: [ops/sketchfab-d-inventory]
+    paths: [.github/workflows/sketchfab-d-inventory.yml]
+  workflow_dispatch:
+permissions: {}
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Read model and archive metadata
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          Add-Type -AssemblyName System.IO.Compression.FileSystem
+          $roots = @('D:\ANOMALIA\sketchfab','D:\sketchfab') | Where-Object { Test-Path -LiteralPath $_ -PathType Container }
+          if (!$roots) { throw 'Sketchfab folder was not found on D' }
+          $modelExt = @('.glb','.gltf','.fbx','.obj','.blend','.usd','.usdz','.dae','.stl','.3ds')
+          $archiveExt = @('.zip','.rar','.7z')
+          $cutoff = [datetime]::UtcNow.AddDays(-7)
+          foreach ($root in $roots) {
+            $files = @(Get-ChildItem -LiteralPath $root -File -Recurse | Where-Object { $_.Extension -in $modelExt -or $_.Extension -in $archiveExt })
+            $recent = @($files | Where-Object { $_.CreationTimeUtc -ge $cutoff -or $_.LastWriteTimeUtc -ge $cutoff })
+            $selected = @($recent | Sort-Object @{Expression={if ($_.CreationTimeUtc -gt $_.LastWriteTimeUtc) {$_.CreationTimeUtc} else {$_.LastWriteTimeUtc}};Descending=$true} | Select-Object -First 60)
+            if (!$selected) { $selected = @($files | Sort-Object LastWriteTimeUtc -Descending | Select-Object -First 15) }
+            Write-Output ('SKETCHFAB_SUMMARY ' + ([ordered]@{
+              root=$root
+              models=@($files | Where-Object Extension -in $modelExt).Count
+              archives=@($files | Where-Object Extension -in $archiveExt).Count
+              recentModels=@($recent | Where-Object Extension -in $modelExt).Count
+              recentArchives=@($recent | Where-Object Extension -in $archiveExt).Count
+              listed=$selected.Count
+            } | ConvertTo-Json -Compress))
+            foreach ($file in $selected) {
+              $members = @()
+              $archiveStatus = $null
+              if ($file.Extension -ieq '.zip') {
+                try {
+                  $zip = [IO.Compression.ZipFile]::OpenRead($file.FullName)
+                  try {
+                    $modelEntries = @($zip.Entries | Where-Object { $_.Name -and [IO.Path]::GetExtension($_.Name) -in $modelExt })
+                    $members = @($modelEntries | Select-Object -First 8 | ForEach-Object Name)
+                    $archiveStatus = "$($modelEntries.Count) 3D entries"
+                  } finally { $zip.Dispose() }
+                } catch { $archiveStatus = 'ZIP metadata unavailable' }
+              }
+              Write-Output ('SKETCHFAB_ITEM ' + ([ordered]@{
+                name=$file.Name
+                extension=$file.Extension
+                bytes=$file.Length
+                created=$file.CreationTimeUtc.ToString('o')
+                modified=$file.LastWriteTimeUtc.ToString('o')
+                archive=$archiveStatus
+                models=$members
+              } | ConvertTo-Json -Compress))
+            }
+          }
