@@ -1,0 +1,27 @@
+name: Inspect original ANOMALIA menu and map test contracts
+on:
+  push:
+    branches: [ops/native-map-selector]
+    paths: [.github/workflows/native-map-selector-contract.yml]
+permissions: {}
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read relevant native source entry points
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $source='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          foreach ($file in @('AnomaliaServerBrowserLibrary.cpp','AnomaliaServerBrowserLibrary.h','AnomaliaSessionWidget.cpp','AnomaliaSessionWidget.h')) {
+            $p=Join-Path $source $file
+            Write-Output "NATIVE_SOURCE $file"
+            if (!(Test-Path -LiteralPath $p)) { continue }
+            Select-String -LiteralPath $p -Encoding UTF8 -Pattern 'GetWorldChoices|ResumeLocalSession|MapFilterSelect|Options|::Play\(|::BuildServerBrowser|JoinSelectedServer|WorldPackage|/Game/Maps/' -Context 1,3 | ForEach-Object { $_.ToString() }
+          }
+          $tests=Get-ChildItem -LiteralPath $source -Recurse -Filter '*WorldPlayTests*.cpp' -File
+          foreach ($t in $tests) {
+            Select-String -LiteralPath $t.FullName -Encoding UTF8 -Pattern 'span|furthest|deadline|crossing|timeout' -Context 0,2 | ForEach-Object { $_.ToString() }
+          }
