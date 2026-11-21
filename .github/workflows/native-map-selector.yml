@@ -1,0 +1,203 @@
+name: Activate verified ANOMALIA worlds in game and editor
+on:
+  push:
+    branches: [ops/native-map-selector]
+    paths: [.github/workflows/native-map-selector.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: anomalia-native-map-selector
+  cancel-in-progress: false
+jobs:
+  activate:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 85
+    steps:
+      - name: Install editor map menu, connect solo map selection, and compile
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $engine = 'C:\Program Files\Epic Games\UE_5.8\Engine'
+          $python = Join-Path $engine 'Binaries\ThirdParty\Python3\Win64\python.exe'
+          $build = Join-Path $engine 'Build\BatchFiles\Build.bat'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $python) -or !(Test-Path -LiteralPath $build)) { throw 'Original Unreal project or editor tools unavailable' }
+          $audit = Join-Path $root 'Saved\NativeMapAudit\44887539603-1'
+          if (!(Test-Path -LiteralPath (Join-Path $audit 'complete.txt'))) { throw 'Native catalogue audit has not completed' }
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\NativeMapSelector\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:MAP_SELECTOR_ROOT = $root
+          $env:MAP_SELECTOR_WORK = $work
+          $env:MAP_SELECTOR_AUDIT = $audit
+          $editorMenu = @'
+          import json
+          from pathlib import Path
+          import unreal
+
+          def open_map(package):
+              levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if levels.save_all_dirty_levels():
+                  levels.load_level(package)
+
+          def register():
+              menus = unreal.ToolMenus.get()
+              parent = menus.find_menu("LevelEditor.MainMenu")
+              if not parent:
+                  return
+              section = "AnomaliaCatalog"
+              menu = menus.extend_menu("LevelEditor.MainMenu")
+              submenu = menu.add_sub_menu("AnomaliaMapSelector", section, "AnomaliaMaps", "Cartes ANOMALIA")
+              catalog = Path(__file__).with_name("anomalia_native_maps.json")
+              for index, entry in enumerate(json.loads(catalog.read_text(encoding="utf-8"))):
+                  item = unreal.ToolMenuEntry(name=f"AnomaliaNativeMap{index}", type=unreal.MultiBlockType.MENU_ENTRY)
+                  item.set_label(entry["name"])
+                  item.set_tool_tip(entry["path"])
+                  item.set_string_command(unreal.ToolMenuStringCommandType.PYTHON, "",
+                      f"import anomalia_map_menu; anomalia_map_menu.open_map({entry['path']!r})")
+                  submenu.add_menu_entry("NativeMaps", item)
+              menus.refresh_all_widgets()
+              unreal.log("ANOMALIA_EDITOR_MAP_MENU_READY")
+
+          def register_at_editor_tick(_delta):
+              unreal.unregister_slate_post_tick_callback(_startup_callback)
+              register()
+
+          def startup():
+              global _startup_callback
+              _startup_callback = unreal.register_slate_post_tick_callback(register_at_editor_tick)
+          '@
+          [IO.File]::WriteAllText((Join-Path $work 'editor-menu.py'),$editorMenu,[Text.UTF8Encoding]::new($false))
+          $patch = @'
+          import json
+          import os
+          import re
+          import sys
+          from pathlib import Path
+
+          root = Path(os.environ["MAP_SELECTOR_ROOT"])
+          work = Path(os.environ["MAP_SELECTOR_WORK"])
+          journal = work / "undo.json"
+
+          if "--rollback" in sys.argv:
+              if journal.is_file():
+                  for entry in reversed(json.loads(journal.read_text(encoding="utf-8"))):
+                      path = root / entry["file"]
+                      previous = entry["backup"]
+                      if previous is None:
+                          path.unlink(missing_ok=True)
+                      else:
+                          path.write_bytes((work / previous).read_bytes())
+              raise SystemExit
+
+          def write(path, content):
+              files = json.loads(journal.read_text(encoding="utf-8")) if journal.is_file() else []
+              previous = f"backup-{len(files)}.bin" if path.is_file() else None
+              if previous is not None:
+                  (work / previous).write_bytes(path.read_bytes())
+              files.append({"file": path.relative_to(root).as_posix(), "backup": previous})
+              journal.write_text(json.dumps(files), encoding="utf-8")
+              path.parent.mkdir(parents=True, exist_ok=True)
+              tmp = path.with_name(path.name + ".mapselector-tmp")
+              tmp.write_text(content, encoding="utf-8")
+              tmp.replace(path)
+
+          audit = Path(os.environ["MAP_SELECTOR_AUDIT"])
+          report = json.loads((audit / "report.json").read_text(encoding="utf-8"))
+          maps = [row for row in report if row.get("opened") and row.get("path")]
+          if not maps or not any(m["id"] == "archipelago-v2" for m in maps):
+              raise RuntimeError("Missing verified main world in the audit")
+          for row in maps:
+              if not re.fullmatch(r"/Game/Maps/[A-Za-z0-9_]+", row["path"]):
+                  raise RuntimeError("Unexpected package name")
+              if not (root / "Content" / (row["path"][6:] + ".umap")).is_file():
+                  raise RuntimeError("A verified map is missing: " + row["path"])
+
+          project = json.loads((root / "AnomaliaPrimeval.uproject").read_text(encoding="utf-8-sig"))
+          module = next(item["Name"] for item in project["Modules"] if item["Type"] == "Runtime")
+          source = root / "Source" / module
+          library = source / (module + "ServerBrowserLibrary.cpp")
+          widget = source / (module + "SessionWidget.cpp")
+          catalog = library.read_text(encoding="utf-8-sig")
+          ui = widget.read_text(encoding="utf-8-sig")
+          def quote(value):
+              return 'TEXT("' + value.replace("\\", "\\\\").replace('"', '\\"') + '")'
+
+          package_rows = "\n" + ",\n".join(
+              "        {" + ", ".join(quote(row[k]) for k in ("id","name","path")) + "}"
+              for row in maps
+          ) + "\n    "
+          catalog, changed = re.subn(r"(static const FWorld Worlds\[\]\s*=\s*\{)[\s\S]*?(\};)",
+                                    lambda match: match[1] + package_rows + match[2], catalog, count=1)
+          if changed != 1:
+              raise RuntimeError("Native map table was not found")
+          sig = f"void U{module}SessionWidget::ResumeLocalSession()\n{{\n"
+          if ui.count(sig) != 1 or "MapFilterSelect" not in ui:
+              raise RuntimeError("Native solo callback or map selector unavailable")
+          native = f'''    if (bMainMenu && MapFilterSelect && GetWorld() && GetWorld()->GetNetMode() == NM_Standalone)
+              {{
+                  const FString Selected = MapFilterSelect->GetSelectedOption();
+                  for (const auto& Choice : U{module}ServerBrowserLibrary::GetWorldChoices())
+                  {{
+                      if (Choice.DisplayName != Selected || !Choice.bNativePackageFound)
+                      {{
+                          continue;
+                      }}
+                      if (GetWorld()->GetOutermost()->GetName() != Choice.WorldPackage)
+                      {{
+                          FinishIntro();
+                          UGameplayStatics::SetGamePaused(this, false);
+                          const FString Options = TEXT("{module}ServerId=solo-") + Choice.MapId;
+                          UGameplayStatics::OpenLevel(this, FName(*Choice.WorldPackage), true, Options);
+                          return;
+                      }}
+                      break;
+                  }}
+              }}
+          '''
+          if "const FString Selected = MapFilterSelect->GetSelectedOption();" not in ui:
+              ui = ui.replace(sig, sig + native, 1)
+          ui = ui.replace('TEXT("CONTINUER EN SOLO")','TEXT("JOUER EN SOLO")')
+
+          config_path = root / "Config" / "DefaultGame.ini"
+          config = config_path.read_text(encoding="utf-8-sig")
+          config = re.sub(r"\n; BEGIN ANOMALIA NATIVE MAPS\n[\s\S]*?\n; END ANOMALIA NATIVE MAPS\n", "\n", config)
+          section = "[/Script/UnrealEd.ProjectPackagingSettings]"
+          if section not in config:
+              config += "\n" + section + "\n"
+          section_start = config.index(section) + len(section)
+          addition = "\n; BEGIN ANOMALIA NATIVE MAPS\n" + "\n".join(
+              '+MapsToCook=(FilePath="' + row["path"] + '")' for row in maps
+          ) + "\n; END ANOMALIA NATIVE MAPS\n"
+          config = config[:section_start] + addition + config[section_start:]
+          editor = root / "Content" / "Python"
+          init = editor / "init_unreal.py"
+          init_source = init.read_text(encoding="utf-8-sig") if init.is_file() else ""
+          hook = "\n# ANOMALIA world menu\nimport anomalia_map_menu\nanomalia_map_menu.startup()\n"
+          if hook not in init_source:
+              init_source += hook
+          for path, body in ((library,catalog),(widget,ui),(config_path,config),
+                             (editor/"anomalia_map_menu.py",(work/"editor-menu.py").read_text(encoding="utf-8")),
+                             (editor/"anomalia_native_maps.json",json.dumps(maps,ensure_ascii=False)),
+                             (init,init_source)):
+              write(path, body)
+          (work/"module.txt").write_text(module,encoding="utf-8")
+          print("NATIVE_MAP_SELECTOR_STAGED " + json.dumps({"count":len(maps),"module":module}))
+          '@
+          $script = Join-Path $work 'activate.py'
+          [IO.File]::WriteAllText($script,$patch,[Text.UTF8Encoding]::new($false))
+          try {
+            & $python -B $script
+            if ($LASTEXITCODE -ne 0) { throw 'Native map selector source patch failed' }
+            $module = (Get-Content -LiteralPath (Join-Path $work 'module.txt') -Raw).Trim()
+            $target = $module + 'Editor'
+            if (!(Test-Path -LiteralPath (Join-Path $root "Source\$target.Target.cs"))) { throw "Editor target $target unavailable" }
+            & $build $target Win64 Development $project -WaitMutex -NoHotReloadFromIDE -MaxParallelActions=2
+            if ($LASTEXITCODE -ne 0) { throw "Native editor build failed ($LASTEXITCODE)" }
+            Write-Output 'NATIVE_MAP_SELECTOR_EDITOR_COMPILED'
+          } catch {
+            & $python -B $script --rollback
+            throw
+          }
