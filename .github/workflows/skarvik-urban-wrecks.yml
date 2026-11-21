@@ -25,30 +25,43 @@ jobs:
           New-Item -ItemType Directory -Path $work -Force | Out-Null
           $env:SKARVIK_URBAN_WORK = $work
           $ProgressPreference = 'SilentlyContinue'
-          $npm = Get-Command npx.cmd -ErrorAction SilentlyContinue
-          if (!$npm) { throw 'Node.js npx is unavailable on the runner' }
-          $ktx = Get-Command ktx.exe -ErrorAction SilentlyContinue
-          if (!$ktx) {
-            $seven = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
-            if (!(Test-Path -LiteralPath $seven)) {
-              $archiveMsi = Join-Path $work '7zip.msi'
-              $archiveDir = Join-Path $work '7zip-tools'
-              Invoke-WebRequest -Uri 'https://github.com/ip7z/7zip/releases/download/26.06/7z2606-x64.msi' -OutFile $archiveMsi -UseBasicParsing -TimeoutSec 60
-              $extract = Start-Process msiexec.exe -ArgumentList ('/a "' + $archiveMsi + '" /qn TARGETDIR="' + $archiveDir + '"') -PassThru -Wait
-              if ($extract.ExitCode -ne 0) { throw '7-Zip administrative extraction failed' }
-              $sevenFile = Get-ChildItem -LiteralPath $archiveDir -Filter '7z.exe' -File -Recurse | Select-Object -First 1
-              if (!$sevenFile) { throw 'Portable archive extractor could not be found' }
-              $seven = $sevenFile.FullName
+          $decoderReady = $false
+          try {
+            $npm = Get-Command npx.cmd -ErrorAction SilentlyContinue
+            if (!$npm) { throw 'Node.js npx is unavailable on the runner' }
+            $ktx = Get-Command ktx.exe -ErrorAction SilentlyContinue
+            if (!$ktx) {
+              $seven = Join-Path $env:ProgramFiles '7-Zip\7z.exe'
+              if (!(Test-Path -LiteralPath $seven)) {
+                $archiveMsi = Join-Path $work '7zip.msi'
+                $archiveDir = Join-Path $work '7zip-tools'
+                Invoke-WebRequest -Uri 'https://github.com/ip7z/7zip/releases/download/26.06/7z2606-x64.msi' -OutFile $archiveMsi -UseBasicParsing -TimeoutSec 60
+                $extractorZip = Join-Path $work 'lessmsi.zip'
+                $extractorDir = Join-Path $work 'lessmsi-tools'
+                Invoke-WebRequest -Uri 'https://github.com/activescott/lessmsi/releases/download/v2.12.9/lessmsi-v2.12.9.zip' -OutFile $extractorZip -UseBasicParsing -TimeoutSec 60
+                if ((Get-FileHash -LiteralPath $extractorZip -Algorithm SHA256).Hash -ine '5b4e187e74b184ad3a63ccf06c3d17dae2b8c4b6c298a996dbd51a9f6db29d21') { throw 'Unexpected MSI extractor checksum' }
+                Expand-Archive -LiteralPath $extractorZip -DestinationPath $extractorDir
+                $extractor = Get-ChildItem -LiteralPath $extractorDir -Filter 'lessmsi.exe' -File -Recurse | Select-Object -First 1
+                if (!$extractor) { throw 'MSI extractor executable missing' }
+                & $extractor.FullName x $archiveMsi ($archiveDir+'\')
+                if ($LASTEXITCODE -ne 0) { throw 'Portable 7-Zip extraction failed' }
+                $sevenFile = Get-ChildItem -LiteralPath $archiveDir -Filter '7z.exe' -File -Recurse | Select-Object -First 1
+                if (!$sevenFile) { throw 'Portable archive extractor could not be found' }
+                $seven = $sevenFile.FullName
+              }
+              $decoder = Join-Path $work 'KTX-Software-4.4.2.exe'
+              Invoke-WebRequest -Uri 'https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe' -OutFile $decoder -UseBasicParsing -TimeoutSec 60
+              if ((Get-FileHash -LiteralPath $decoder -Algorithm SHA256).Hash -ine '1f323b0fec19794f5e6c0425a61d4b1da396872a10be862d105f4f4b2d2957fe') { throw 'Unexpected KTX release checksum' }
+              $decoderDir = Join-Path $work 'ktx-tools'
+              & $seven x $decoder "-o$decoderDir" -y | Out-Null
+              if ($LASTEXITCODE -ne 0) { throw 'Could not extract portable KTX tools' }
+              $ktxBin = Get-ChildItem -LiteralPath $decoderDir -Filter 'ktx.exe' -File -Recurse | Select-Object -First 1
+              if (!$ktxBin) { throw 'No portable KTX executable in the release' }
+              $env:Path = $ktxBin.DirectoryName + [IO.Path]::PathSeparator + $env:Path
             }
-            $decoder = Join-Path $work 'KTX-Software-4.4.2.exe'
-            Invoke-WebRequest -Uri 'https://github.com/KhronosGroup/KTX-Software/releases/download/v4.4.2/KTX-Software-4.4.2-Windows-x64.exe' -OutFile $decoder -UseBasicParsing -TimeoutSec 60
-            if ((Get-FileHash -LiteralPath $decoder -Algorithm SHA256).Hash -ine '1f323b0fec19794f5e6c0425a61d4b1da396872a10be862d105f4f4b2d2957fe') { throw 'Unexpected KTX release checksum' }
-            $decoderDir = Join-Path $work 'ktx-tools'
-            & $seven x $decoder "-o$decoderDir" -y | Out-Null
-            if ($LASTEXITCODE -ne 0) { throw 'Could not extract portable KTX tools' }
-            $ktxBin = Get-ChildItem -LiteralPath $decoderDir -Filter 'ktx.exe' -File -Recurse | Select-Object -First 1
-            if (!$ktxBin) { throw 'No portable KTX executable in the release' }
-            $env:Path = $ktxBin.DirectoryName + [IO.Path]::PathSeparator + $env:Path
+            $decoderReady = $true
+          } catch {
+            Write-Warning ("SKARVIK_WRECK_CONVERSION_UNAVAILABLE " + $_.Exception.Message)
           }
           $models = [ordered]@{
             WreckCar = 'https://tevy.dev/models/wrecked-sedan/v1/lod0.glb'
@@ -114,6 +127,7 @@ jobs:
                 & $enginePython $bikeScript $path $decoded
                 if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $decoded)) { throw 'Motorcycle damage geometry could not be generated' }
               } else {
+                if (!$decoderReady) { throw 'Texture decoder unavailable' }
                 & $npm.Source --yes '@gltf-transform/cli@4.5.1' ktxdecompress $path $png
                 if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $png)) { throw 'KTX2 conversion failed' }
                 & $npm.Source --yes '@gltf-transform/cli@4.5.1' optimize $png $decoded --compress false --texture-compress false --simplify false
