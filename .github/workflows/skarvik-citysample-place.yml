@@ -27,6 +27,69 @@ jobs:
           New-Item -ItemType Directory -Path $work | Out-Null
           $env:SKARVIK_CITY_SOURCE = $receipt
           $env:SKARVIK_CITY_PLACEMENT = $work
+          $origin = 'C:\ANOMALIAZ_SKARVIK_STAGE_41188816555\unreal'
+          if ((Get-Content -LiteralPath (Join-Path $origin '.skarvik-ci-stage-marker') -Raw).Trim() -ne '41188816555') { throw 'Unexpected source project' }
+          $districts = Join-Path $receipt 'districts.json'
+          if (!(Test-Path -LiteralPath $districts)) {
+            $groupCode = @'
+          import json
+          import os
+          from collections import Counter, defaultdict
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_CITY_SOURCE"])
+          rows = json.loads((work/"manifest.json").read_text(encoding="utf-8"))["actors"]
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          partition = unreal.WorldPartitionBlueprintLibrary
+          prefixes = ("SKARVIK_CENTRE_REAL_CITYSAMPLE_MESH_V1_",
+                      "SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_B2_",
+                      "SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_C3_",
+                      "SKARVIK_CENTRE_REAL_CITYSAMPLE_DISTRICT_D4_")
+          if not levels.load_level("/Game/Maps/PRIGIMALIA_SKARVIK_GRADED_v2"):
+              raise RuntimeError("Cannot load original labelled City Sample districts")
+          descriptors = [(d,group) for d in partition.get_actor_descs() or []
+                         for group,prefix in enumerate(prefixes) if str(d.label).startswith(prefix)]
+          if Counter(group for _,group in descriptors) != Counter({i:180 for i in range(4)}):
+              raise RuntimeError("Expected four source districts of 180 actors")
+          def key(mesh,x,y):
+              return str(mesh),round(x,1),round(y,1)
+          source = defaultdict(list)
+          for start in range(0,len(descriptors),48):
+              batch = descriptors[start:start+48]
+              ids = [d.guid for d,_ in batch]
+              partition.load_actors(ids)
+              loaded = {a.get_actor_label():a for a in actors.get_all_level_actors()}
+              for d,group in batch:
+                  actor = loaded[str(d.label)]
+                  pos = actor.get_actor_location()
+                  mesh = actor.static_mesh_component.get_editor_property("static_mesh")
+                  source[key(mesh.get_path_name(),pos.x,pos.y)].append(group)
+              del loaded,actor
+              partition.unload_actors(ids)
+          groups = [[] for i in range(4)]
+          for index,row in enumerate(rows):
+              x,y,_ = row["position"]
+              matching = source[key(row["mesh"],x,y)]
+              if not matching or len(set(matching))!=1:
+                  raise RuntimeError("Original district identity ambiguous or absent for " + row["label"])
+              groups[matching.pop()].append(index)
+          if [len(indices) for indices in groups] != [180]*4 or any(source.values()):
+              raise RuntimeError("District actor matching did not account for 720 exact actors")
+          summary = []
+          for indices in groups:
+              positions = [rows[i]["position"] for i in indices]
+              summary.append([[min(p[axis] for p in positions),max(p[axis] for p in positions)] for axis in range(3)])
+          unreal.log("CITY_DISTRICT_PROVENANCE " + json.dumps(summary))
+          (work/"districts.json").write_text(json.dumps(groups),encoding="utf-8")
+          '@
+            $groupScript = Join-Path $work 'district_provenance.py'
+            [IO.File]::WriteAllText($groupScript,$groupCode,[Text.UTF8Encoding]::new($false))
+            $cProject = Join-Path $origin 'AnomaliaZPrigimalia.uproject'
+            & $editor $cProject '-run=pythonscript' "-script=$groupScript" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+            if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $districts)) { throw 'Original City Sample district identities could not be verified' }
+          }
           $code = @'
           import json
           import math
@@ -132,24 +195,11 @@ jobs:
                       partition.unload_actors([tile.guid])
               return None
 
-          def split_districts(indices):
-              if len(indices)==180:
-                  return [indices]
-              half = len(indices)//2
-              splits = []
-              for axis in (0,1):
-                  ordered = sorted(indices,key=lambda i:coords[i][axis])
-                  gap = coords[ordered[half]][axis]-coords[ordered[half-1]][axis]
-                  splits.append((gap,ordered))
-              gap,order = max(splits,key=lambda v:v[0])
-              unreal.log("CITY_SITE_SOURCE_SPLIT " + json.dumps(dict(planningCount=len(indices),gapCm=gap)))
-              if gap < 6000:
-                  raise RuntimeError("Cannot split the source into intact districts along verified spacing")
-              return split_districts(order[:half])+split_districts(order[half:])
-
           indices = list(range(len(rows)))
           whole = find_site(indices)
-          groups = [indices] if whole else split_districts(indices)
+          groups = [indices] if whole else json.loads((source/"districts.json").read_text(encoding="utf-8"))
+          if sorted(i for group in groups for i in group) != indices:
+              raise RuntimeError("Invalid source district index")
           offsets = {}
           for group in groups:
               fit = whole if whole else find_site(group)
