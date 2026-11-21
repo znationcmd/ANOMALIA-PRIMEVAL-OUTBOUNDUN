@@ -128,38 +128,7 @@ jobs:
                       label=entry['label']
                       if prefix and label.startswith(prefix):selected.append(entry['guid']);continue
                       if entry['nativeClass'] .endswith('SceneryCluster'):
-                          cell=re.search(r'_(-?\d+)_(-?\d+)
-          '@
-          $script = Join-Path $env:RUNNER_TEMP ('native-city-' + $env:GITHUB_RUN_ID + '.py')
-          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
-          $env:ANOMALIA_RENDER_PHASE = 'verify'
-          $failures = @()
-          foreach ($name in @('ANOMALIA_Inhabited_v2','ANOMALIA_Archipelago_v2')) {
-            $env:ANOMALIA_CAPTURE_MAP = '/Game/Maps/' + $name
-            $env:ANOMALIA_VISUAL_OUTPUT = Join-Path $work $name
-            New-Item -ItemType Directory -Path $env:ANOMALIA_VISUAL_OUTPUT | Out-Null
-            $log = Join-Path $env:ANOMALIA_VISUAL_OUTPUT 'editor-render.log'
-            & $editor $project '-d3d11' '-sm5' '-RenderOffscreen' '-unattended' '-nopause' '-nosound' '-ResX=1280' '-ResY=720' "-ExecutePythonScript=$script" "-abslog=$log"
-            $exitCode = $LASTEXITCODE
-            $receipt = Join-Path $env:ANOMALIA_VISUAL_OUTPUT 'visual-report.json'
-            if (Test-Path -LiteralPath $receipt) {
-              $result = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
-              Write-Output ('NATIVE_CITY_RENDER ' + ([ordered]@{map=$name;state=$result.state;screenshots=@($result.screenshots).Count;error=$result.error;exit=$exitCode} | ConvertTo-Json -Compress))
-              if ($exitCode -ne 0 -or $result.state -ne 'REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED') { $failures += $name }
-            } else {
-              $failures += $name
-              if (Test-Path -LiteralPath $log) { Get-Content -LiteralPath $log -Tail 40 }
-            }
-          }
-          if ($failures.Count) { throw ('Incomplete Unreal render: ' + ($failures -join ', ')) }
-      - name: Attach original Unreal screenshots and receipts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: anomalia-native-city-captures
-          path: native-city-*/**/*
-          if-no-files-found: warn
-,label)
+                          cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
                           if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry['guid'])
                   if selected and not wp.set_archipelago_actors_loaded(selected,True):raise RuntimeError('Nearby view load refused')
                   state['dynamic_guids']=selected
