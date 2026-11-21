@@ -1,0 +1,217 @@
+name: ANOMALIA - replace map blockout with imported 3D assets
+on:
+  push:
+    branches: [ops/realistic-map-assets]
+    paths: [.github/workflows/realistic-map-assets.yml]
+  workflow_dispatch:
+permissions: {}
+concurrency:
+  group: anomalia-realistic-map-assets
+  cancel-in-progress: false
+jobs:
+  replace:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Replace matching blockout groups on the five latest maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $project = 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'Project or editor unavailable' }
+          $work = Join-Path $env:RUNNER_TEMP ('realistic-maps-' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work | Out-Null
+          $env:REALISTIC_MAP_WORK = $work
+          $code = @'
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          import unreal
+
+          targets = [
+              "FOREST_BLAIR_WITCH", "ANARCHY_CESIUM_137_IODE_131", "KINGDOM_BLOOD_ELIXIR",
+              "INSULA_MORTUI", "THE_LAST_OF_QUANTUM",
+          ]
+          buildings = "/Game/Anomalia/Buildings/"
+          options = {
+              "cabin": ["/Game/Anomalia/InteractiveRealismReview_v1/wood_house_enterable/SM_wood_house_enterable"],
+              "coastal": [buildings + "Lot1/SM_coastal_house_v1"],
+              "urban": [buildings + "Expansion1/SM_townhouse", buildings + "Expansion1/SM_residence_4floors"],
+          }
+          patterns = {
+              "medieval house": r"(medieval|viking).*(house|cottage|farmhouse)",
+              "abbey": r"(abbey|monastery|cathedral|chapel)(?:_ruin|_whole|_building)?$",
+              "castle": r"(medieval_castle|fortified_keep|castle_keep|stone_keep)$",
+              "industrial": r"(reactor_hall|power_station_building|industrial_warehouse|industrial_hangar|factory_building)$",
+              "watchtower": r"(wooden_watchtower|forest_watchtower|fire_lookout_tower|wooden_lookout_tower)$",
+              "tree": r"^(?:sm_)?(?:scots_)?(?:pine|spruce|fir|conifer)(?:_tree)?(?:_[a-z]?\d+|_[a-z])?$",
+          }
+          registry = unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          query = unreal.ARFilter(
+              package_paths=["/Game"],
+              class_paths=[unreal.TopLevelAssetPath("/Script/Engine", "StaticMesh")],
+              recursive_paths=True,
+          )
+          candidates = registry.get_assets(query)
+          for role, pattern in patterns.items():
+              options[role] = sorted(str(a.package_name) for a in candidates
+                                     if re.search(pattern, str(a.asset_name), re.IGNORECASE)
+                                     and not re.search(r"blockout|placeholder|preview|test", str(a.package_name), re.IGNORECASE))
+          mesh_cache = {}
+
+          def choose(role, selector):
+              if role not in mesh_cache:
+                  meshes = []
+                  for path in options.get(role, [])[:18]:
+                      mesh = unreal.load_asset(path)
+                      if not isinstance(mesh, unreal.StaticMesh):
+                          continue
+                      box = mesh.get_bounding_box()
+                      dimensions = (box.max.x-box.min.x, box.max.y-box.min.y, box.max.z-box.min.z)
+                      if min(dimensions) > 20 and mesh.get_num_triangles(0) > 24:
+                          meshes.append((mesh, box))
+                  mesh_cache[role] = meshes
+              matches = mesh_cache[role]
+              return matches[selector % len(matches)] if matches else None
+
+          def building_role(mapid, name):
+              label = name.lower()
+              if label.startswith("abandoned logging cabin") or label == "forestry office":
+                  return "cabin"
+              if label.startswith("evacuated "):
+                  return "urban"
+              if mapid == "INSULA_MORTUI" and "village house" in label:
+                  return "coastal"
+              if mapid == "KINGDOM_BLOOD_ELIXIR" and "village house" in label:
+                  return "medieval house"
+              if label == "watchtower shelter":
+                  return "watchtower"
+              if label == "abbey nave":
+                  return "abbey"
+              if label == "citadel keep":
+                  return "castle"
+              if label in {"reactor hall", "power station", "quantum research hall",
+                           "containment and filtration"}:
+                  return "industrial"
+              if label == "survivor barracks":
+                  return "cabin"
+              return None
+
+          levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          worlds = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
+          suffixes = (" floor", " roof", " rear wall", " side wall", " entrance wall",
+                      " side", " entrance wing")
+
+          def placeholder(actor, names):
+              if not isinstance(actor, unreal.StaticMeshActor):
+                  return False
+              mesh = actor.static_mesh_component.get_editor_property("static_mesh")
+              return mesh is not None and mesh.get_path_name() in names
+
+          cube = {"/Engine/BasicShapes/Cube.Cube"}
+          trunk_mesh = {"/Engine/BasicShapes/Cylinder.Cylinder"}
+          crown_mesh = {"/Engine/BasicShapes/Cone.Cone"}
+
+          def install(label, anchor, parts, selected, ground, factor=1.0):
+              mesh, bounds = selected
+              center_x = (bounds.min.x + bounds.max.x) * 0.5
+              center_y = (bounds.min.y + bounds.max.y) * 0.5
+              point = anchor.get_actor_location()
+              location = unreal.Vector(point.x-center_x*factor, point.y-center_y*factor, ground-bounds.min.z*factor)
+              new = actors.spawn_actor_from_class(unreal.StaticMeshActor, location)
+              if not new:
+                  raise RuntimeError("Spawn failed for " + label)
+              component = new.static_mesh_component
+              if not component.set_static_mesh(mesh):
+                  actors.destroy_actor(new)
+                  raise RuntimeError("Mesh assignment failed for " + label)
+              new.set_actor_scale3d(unreal.Vector(factor,factor,factor))
+              component.set_collision_profile_name("BlockAll")
+              new.set_actor_label("Real 3D | " + label)
+              if not actors.destroy_actors(parts):
+                  raise RuntimeError("Could not remove the replaced primitives for " + label)
+
+          results = []
+          root = Path(unreal.Paths.project_dir()).resolve()
+          if root != Path(r"D:\ANOMALIA\unreal").resolve():
+              raise RuntimeError("Unexpected Unreal project")
+          for mapid in targets:
+              package = "/Game/Maps/PRIGIMALIA_" + mapid
+              if not levels.load_level(package) or worlds.get_editor_world().get_path_name().split(".")[0] != package:
+                  raise RuntimeError("Could not open " + package)
+              current = actors.get_all_level_actors()
+              labeled = [(a.get_actor_label(), a) for a in current if isinstance(a, unreal.StaticMeshActor)]
+              cubes = [(label, a) for label, a in labeled if placeholder(a, cube)]
+              result = dict(map=mapid, visiblePrimitiveCubes=len(cubes), buildings=0, trees=0, missing={})
+              for label, floor in cubes:
+                  if not label.endswith(" floor"):
+                      continue
+                  name = label[:-6]
+                  role = building_role(mapid, name)
+                  selected = choose(role, sum(map(ord, name))) if role else None
+                  if not selected:
+                      key = role or name
+                      result["missing"][key] = result["missing"].get(key, 0) + 1
+                      continue
+                  group = [a for n, a in cubes if n in {name + s for s in suffixes}]
+                  if mapid == "FOREST_BLAIR_WITCH" and role == "watchtower":
+                      group.extend(a for n,a in cubes if n in {"Watchtower timber support","Watchtower platform","Watchtower canopy"})
+                  bounds = selected[1]
+                  source_size = max(bounds.max.x-bounds.min.x, bounds.max.y-bounds.min.y)
+                  footprint = floor.get_actor_scale3d()
+                  factor = min(1.25, max(0.75, 100*max(footprint.x,footprint.y)/source_size))
+                  ground = floor.get_actor_location().z + 50*footprint.z
+                  install(name, floor, group, selected, ground, factor)
+                  result["buildings"] += 1
+
+              if mapid == "FOREST_BLAIR_WITCH":
+                  crowns = {}
+                  for label,a in labeled:
+                      if label == "Forest crown" and placeholder(a, crown_mesh):
+                          p = a.get_actor_location()
+                          crowns[(round(p.x), round(p.y))] = a
+                  trunks = [a for label,a in labeled if label == "Forest trunk" and placeholder(a, trunk_mesh)]
+                  for index, a in enumerate(trunks):
+                      p = a.get_actor_location()
+                      crown = crowns.get((round(p.x), round(p.y)))
+                      selected = choose("tree", index)
+                      if not crown or not selected:
+                          result["missing"]["tree"] = result["missing"].get("tree", 0) + 1
+                          continue
+                      bounds = selected[1]
+                      tree_height = bounds.max.z-bounds.min.z
+                      factor = min(1.6, max(0.6, 250*a.get_actor_scale3d().z/tree_height))
+                      install(f"Conifer {index + 1}", a, [a,crown], selected, p.z-50*a.get_actor_scale3d().z, factor)
+                      result["trees"] += 1
+
+              count = result["buildings"] + result["trees"]
+              if count:
+                  if not levels.save_current_level() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True, False):
+                      raise RuntimeError("Save failed for " + package)
+                  if not levels.load_level(package):
+                      raise RuntimeError("Reload failed for " + package)
+                  saved = sum(a.get_actor_label().startswith("Real 3D | ")
+                              for a in actors.get_all_level_actors())
+                  if saved < count:
+                      raise RuntimeError(f"{package}: saw {saved} replacements after reload, expected at least {count}")
+                  result["visibleVerifiedAfterReload"] = saved
+              results.append(result)
+              unreal.log("REALISTIC_MAP_RESULT " + json.dumps(result, sort_keys=True))
+          report = Path(os.environ["REALISTIC_MAP_WORK"]) / "result.json"
+          report.write_text(json.dumps(results), encoding="utf-8")
+          '@
+          $script = Join-Path $work 'replace_assets.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) {
+            throw 'Existing Unreal session preserved'
+          }
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'result.json'
+          if ($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath $report)) { throw 'No completed replacement report' }
+          Get-Content -LiteralPath $report -Raw
