@@ -191,9 +191,6 @@ jobs:
                                       and not road_mask.search(str(d.label))
                                       and d.bounds.min.x<box[2] and d.bounds.max.x>box[0]
                                       and d.bounds.min.y<box[3] and d.bounds.max.y>box[1]]
-                          if occupied:
-                              reasons["occupied"] += 1
-                              continue
                           terrain = [d.guid for d in near if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
                           if not terrain:
                               reasons["no landscape proxy"] += 1
@@ -208,6 +205,11 @@ jobs:
                               ground = [hit[5].z for hit in hits]
                               if min(ground)<450:
                                   reasons["submerged"] += 1
+                                  continue
+                              obstructing = [d for d in occupied if d.bounds.max.z>min(ground)+15
+                                             and d.bounds.min.z<max(ground)+b.z*2+100]
+                              if obstructing:
+                                  reasons["occupied by "+str(obstructing[0].label)] += 1
                                   continue
                               ground_spread = max(ground)-min(ground)
                               if ground_spread>(85 if is_wreck else 140):
