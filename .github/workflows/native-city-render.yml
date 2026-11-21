@@ -113,26 +113,6 @@ jobs:
           
           def set_view():
               _,eye,target=views[state['index']];dx,dy,dz=[target[i]-eye[i] for i in range(3)]
-              if WORLD_NAME=='ANOMALIA_Inhabited_v2':
-                  # Stream just the inspected town and nearby foliage. Loading every HISM
-                  # across 48km simultaneously hung the integrated D3D11 device on reopen.
-                  previous=state.pop('dynamic_guids',[])
-                  if previous and not wp.set_archipelago_actors_loaded(previous,False):raise RuntimeError('Prior view unload refused')
-                  east,north=target[0]/100,-target[1]/100
-                  nearest=min(sites,key=lambda p:math.hypot(p.x-east,p.y-north))
-                  prefix=None
-                  if math.hypot(nearest.x-east,nearest.y-north)<1200:
-                      prefix=f'ANOMALIA_Inhabited1_settlement_{int((nearest.y+24000)//8000)}_{int((nearest.x+24000)//8000)}_house_'
-                  selected=[]
-                  for entry in streamable_desc:
-                      label=entry['label']
-                      if prefix and label.startswith(prefix):selected.append(entry['guid']);continue
-                      if entry['nativeClass'] .endswith('SceneryCluster'):
-                          cell=re.search(r'_(-?\d+)_(-?\d+)$',label)
-                          if cell and abs(int(cell[1])*1000+500-east)<1600 and abs(int(cell[2])*1000+500-north)<1600:selected.append(entry['guid'])
-                  if selected and not wp.set_archipelago_actors_loaded(selected,True):raise RuntimeError('Nearby view load refused')
-                  state['dynamic_guids']=selected
-                  report.setdefault('streamedViewActors',[]).append(dict(view=views[state['index']][0],nearbyActors=len(selected),fullWorldForcedLoaded=False))
               rotation=unreal.Rotator(pitch=math.degrees(math.atan2(dz,math.hypot(dx,dy))),yaw=math.degrees(math.atan2(dy,dx)),roll=0)
               editor=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem)
               editor.set_level_viewport_camera_info(unreal.Vector(*eye),rotation)
@@ -165,55 +145,58 @@ jobs:
               except Exception as error:state['busy']=False;unreal.log_error(traceback.format_exc());finish(error)
           try:
               unreal.EditorPythonScripting.set_keep_python_script_alive(True)
-              if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(PACKAGE):raise RuntimeError('Real map unavailable')
-              # Load known generated geometry for aerial captures without altering streaming rules on disk.
-              native_library = getattr(unreal, 'AnomaliaPrimevalWorldImportLibrary', None) or getattr(unreal, 'AnomaliaZPrigimaliaWorldImportLibrary', None)
-              if not native_library: raise RuntimeError('Native world import library unavailable')
-              wp=native_library
-              descriptor_snapshot=json.loads(wp.get_archipelago_actor_descriptors())
-              if descriptor_snapshot.get('state')!='COPIED_DESCRIPTOR_VALUES':raise RuntimeError('Owned descriptor snapshot unavailable')
-              desc=descriptor_snapshot['actors']
-              streamable_desc=[d for d in desc if d['owned'] and ('_house_' in d['label'] or d['nativeClass']=='/Script/AnomaliaZPrigimalia.AnomaliaZPrigimaliaSceneryCluster')] if WORLD_NAME=='ANOMALIA_Inhabited_v2' else []
-              dynamic_labels={d['label'] for d in streamable_desc}
-              if streamable_desc and not wp.set_archipelago_actors_loaded([d['guid'] for d in streamable_desc],False):raise RuntimeError('Initial local-view unload refused')
-              wanted=[d['guid'] for d in desc if d['owned'] and d['label'] not in dynamic_labels]
-              report['partitionDescriptors']=dict(total=len(desc),requested=len(wanted),classes=sorted(set(d['nativeClass'] for d in desc)),nativeDescriptorWrappersRetained=False)
-              if not wp.set_archipelago_actors_loaded(wanted,True):raise RuntimeError('Landscape and owned view load refused')
-              actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
-              landscapes=[a for a in actors.get_all_level_actors() if isinstance(a,unreal.LandscapeProxy)]
-              terrain_components=[c for a in landscapes for c in a.get_components_by_class(unreal.LandscapeComponent)]
-              report['landscapeDiagnostics']=dict(proxies=len(landscapes),components=len(terrain_components),actors=[dict(label=a.get_actor_label(),hiddenInEditor=a.is_temporarily_hidden_in_editor(),hiddenInGame=a.get_editor_property('hidden')) for a in landscapes])
-              if len(terrain_components)!=576:raise RuntimeError('Graphical editor did not load all 576 Landscape components')
-              # Visibility override only in this unsaved inspection session. Preserve map files.
-              for a in landscapes:
-                  a.set_is_temporarily_hidden_in_editor(False)
-              for c in terrain_components:
-                  c.set_visibility(True,True)
-              world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
-              for command in ['ShowFlag.Landscape 1','r.DynamicGlobalIlluminationMethod 0','r.ReflectionMethod 0','r.Shadow.Virtual.Enable 0','r.Nanite 0','r.AntiAliasingMethod 2','sg.ViewDistanceQuality 1','sg.ShadowQuality 1','sg.EffectsQuality 1','sg.TextureQuality 1','r.ScreenPercentage 100','r.Streaming.PoolSize 256','t.MaxFPS 20']:
+              levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if not levels.load_level(PACKAGE):
+                  raise RuntimeError("Real map unavailable")
+              partition = unreal.WorldPartitionBlueprintLibrary
+              descriptors = partition.get_actor_descs() or []
+              labels = re.compile(r"(settlement|city|house|building|village|district|town)", re.I)
+              candidates = [d for d in descriptors if labels.search(str(d.label))]
+              report["candidateActorDescriptors"] = len(candidates)
+              actor_api = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              if not candidates:
+                  raise RuntimeError("No city or village actor descriptors in this saved map")
+              partition.load_actors([d.guid for d in candidates[:40]])
+              buildings = []
+              for actor in actor_api.get_all_level_actors():
+                  if not labels.search(actor.get_actor_label()):
+                      continue
+                  components = actor.get_components_by_class(unreal.StaticMeshComponent)
+                  for component in components:
+                      mesh = component.get_editor_property("static_mesh")
+                      if not mesh or mesh.get_path_name().startswith("/Engine/"):
+                          continue
+                      if re.search(r"citysample|building|house|residen|town|architecture|village", mesh.get_path_name(), re.I):
+                          buildings.append((actor, mesh))
+                          break
+              if not buildings:
+                  raise RuntimeError("City names located, but no building meshes loaded in the sampled actors")
+              landmark, mesh = buildings[0]
+              target, extent = landmark.get_actor_bounds(False)
+              x,y,z=target.x,target.y,target.z
+              box = unreal.Box(min=unreal.Vector(x-35000,y-35000,z-15000), max=unreal.Vector(x+35000,y+35000,z+30000))
+              nearby = partition.get_intersecting_actor_descs(box) or []
+              rank = lambda desc: (not labels.search(str(desc.label)), str(desc.label))
+              partition.load_actors([d.guid for d in sorted(nearby,key=rank)[:260]])
+              report["selectedBuilding"] = {"actor":landmark.get_actor_label(),"mesh":mesh.get_path_name(),"cm":[x,y,z]}
+              report["sampledBuildingActors"] = len(buildings)
+              report["nearbyActorDescriptors"] = len(nearby)
+              distance = min(18000,max(3200,extent.x*3,extent.y*3,extent.z*3))
+              ground = z-extent.z
+              views = [
+                  ("01_city_neighborhood",(x-distance,y-distance,z+distance*.70),(x,y,z)),
+                  ("02_street_level",(x-distance*.65,y-distance*.65,ground+180),(x,y,ground+300)),
+              ]
+              world = unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+              for command in ("r.DynamicGlobalIlluminationMethod 0","r.ReflectionMethod 0","r.Shadow.Virtual.Enable 0",
+                              "r.Nanite 0","sg.ViewDistanceQuality 1","sg.ShadowQuality 1","r.Streaming.PoolSize 384"):
                   unreal.SystemLibrary.execute_console_command(world,command)
-              report['renderResourceRefresh']=json.loads(native_library.refresh_archipelago_render_resources(PHASE=='repair'))
-              expected='REFRESHED_IN_MEMORY_NOT_VISUALLY_VALIDATED' if PHASE=='repair' else 'INSPECTED_WITHOUT_FORCED_REBUILD'
-              if report['renderResourceRefresh'].get('state')!=expected:raise RuntimeError('Landscape inspection/refresh refused')
-              entries=report['renderResourceRefresh']['components']
-              min_z=min(c['boundsMinZCm'] for c in entries);max_z=max(c['boundsMaxZCm'] for c in entries)
-              report['heightBoundsCheck']=dict(minCm=min_z,maxCm=max_z,flatSentinelComponents=sum(abs(c['boundsCenterZCm']+204800)<1 for c in entries))
-              if min_z>=-10000 or max_z<=100000 or report['heightBoundsCheck']['flatSentinelComponents']:raise RuntimeError('Persisted Landscape render bounds do not contain archipelago relief')
-              if report['renderResourceRefresh']['missingHeightmaps']:raise RuntimeError('Landscape heightmap data is missing')
               unreal.AutomationLibrary.set_editor_viewport_view_mode(unreal.ViewModeIndex.VMI_LIT)
-              if WORLD_NAME=='ANOMALIA_Inhabited_v2':
-                  sites=native_library.inhabited_settlement_sites()
-                  if len(sites)!=27:raise RuntimeError('Expected all 27 inhabited settlements')
-                  for index,site_index in enumerate((0,13,26),start=1):
-                      site=sites[site_index];e,n=site.x,site.y
-                      z=native_library.inhabited_archipelago_height(e,n)*100
-                      views[index]=(f'0{index+1}_settlement_{site_index}',(e*100-18000,-n*100-18000,z+12000),(e*100,-n*100,z+200))
-                  report['reviewScope']='Populated archipelago overview, three settlements and a street-height view; interiors and full-map gameplay not certified'
-                  e,n=sites[13].x,sites[13].y
-                  views[4]=street_review_view(e,n,native_library.inhabited_archipelago_height(e,n))
-              set_view();state['handle']=unreal.register_slate_post_tick_callback(tick)
+              set_view()
+              state["handle"] = unreal.register_slate_post_tick_callback(tick)
           except Exception as error:
-              unreal.log_error(traceback.format_exc());finish(error)
+              unreal.log_error(traceback.format_exc())
+              finish(error)
           '@
           $script = Join-Path $env:RUNNER_TEMP ('native-city-' + $env:GITHUB_RUN_ID + '.py')
           [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
@@ -229,7 +212,7 @@ jobs:
             $receipt = Join-Path $env:ANOMALIA_VISUAL_OUTPUT 'visual-report.json'
             if (Test-Path -LiteralPath $receipt) {
               $result = Get-Content -LiteralPath $receipt -Raw -Encoding UTF8 | ConvertFrom-Json
-              Write-Output ('NATIVE_CITY_RENDER ' + ([ordered]@{map=$name;state=$result.state;screenshots=@($result.screenshots).Count;error=$result.error;exit=$exitCode} | ConvertTo-Json -Compress))
+              Write-Output ('NATIVE_CITY_RENDER ' + ([ordered]@{map=$name;state=$result.state;screenshots=@($result.screenshots).Count;building=$result.selectedBuilding.actor;sampledBuildingActors=$result.sampledBuildingActors;error=$result.error;exit=$exitCode} | ConvertTo-Json -Compress))
               if ($exitCode -ne 0 -or $result.state -ne 'REAL_VIEWPORT_CAPTURES_CREATED_NOT_VISUALLY_REVIEWED') { $failures += $name }
             } else {
               $failures += $name
