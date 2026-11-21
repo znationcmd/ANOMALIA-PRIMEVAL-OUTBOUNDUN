@@ -1,0 +1,100 @@
+name: Import five real-scale SKARVIK urban models
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/skarvik-urban-facilities-import.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Download and verify usable native static meshes
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner' }
+          $root = 'D:\ANOMALIA\unreal'
+          $project = Join-Path $root 'AnomaliaPrimeval.uproject'
+          $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $work = Join-Path $root ('Saved\SkarvikUrban\Imports\' + $env:GITHUB_RUN_ID + '-' + $env:GITHUB_RUN_ATTEMPT)
+          New-Item -ItemType Directory -Path $work -Force | Out-Null
+          $env:SKARVIK_URBAN_WORK = $work
+          $ProgressPreference = 'SilentlyContinue'
+          $models = [ordered]@{
+            GasStation = 'https://files.innerscene.com/library/gas-station-8c240866/91b28aa7a1086166668f/gas-station.glb'
+            Garage = 'https://tevy.dev/models/workshop-building/v2/lod0.glb'
+            Store = 'https://tevy.dev/models/supermarket-shell/v2/lod0.glb'
+            Barrage = 'https://files.innerscene.com/library/jersey-barrier-5dc3eefe/e0a221c115b1f7c471ee/jersey-barrier.glb'
+            SpeedBump = 'https://files.innerscene.com/library/speed-bump-eb8f9af9/27619f30bc95f36f90f1/speed-bump.glb'
+          }
+          $downloaded = [ordered]@{}
+          foreach ($key in $models.Keys) {
+            try {
+              $path = Join-Path $work ($key + '.glb')
+              Invoke-WebRequest -Uri $models[$key] -OutFile $path -UseBasicParsing -TimeoutSec 60
+              $file = [IO.File]::OpenRead($path)
+              try {
+                $header = New-Object byte[] 12
+                if ($file.Read($header,0,12) -ne 12 -or [Text.Encoding]::ASCII.GetString($header,0,4) -ne 'glTF' -or [BitConverter]::ToUInt32($header,4) -ne 2 -or [BitConverter]::ToUInt32($header,8) -ne $file.Length) { throw 'Invalid GLB header' }
+              } finally { $file.Dispose() }
+              $downloaded[$key] = [ordered]@{url=$models[$key]; bytes=(Get-Item -LiteralPath $path).Length; sha256=(Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash}
+              Write-Output ("SKARVIK_URBAN_DOWNLOADED " + $key + ' ' + $downloaded[$key].bytes)
+            } catch {
+              Write-Warning ("SKARVIK_URBAN_DOWNLOAD_FAILED " + $key + ' ' + $_.Exception.Message)
+            }
+          }
+          if (!$downloaded.Count) { throw 'No valid model could be downloaded' }
+          [IO.File]::WriteAllText((Join-Path $work 'sources.json'),($downloaded | ConvertTo-Json -Depth 4),[Text.UTF8Encoding]::new($false))
+          $code = @'
+          import json
+          import os
+          from pathlib import Path
+          import unreal
+
+          work = Path(os.environ["SKARVIK_URBAN_WORK"])
+          sources = json.loads((work/"sources.json").read_text(encoding="utf-8"))
+          lib = unreal.EditorAssetLibrary
+          tools = unreal.AssetToolsHelpers.get_asset_tools()
+          expected = {"GasStation": (4400,4550,900), "Garage": (1695,1460,798),
+                      "Store": (3054,2193,516), "Barrage": (414,61,81), "SpeedBump": (790,35,5.2)}
+          reports = {}
+          for key in expected:
+              if key not in sources:
+                  reports[key] = {"error":"No valid download"}
+                  continue
+              destination = "/Game/Anomalia/Infrastructure/SkarvikUrbanV1/" + key
+              try:
+                  paths = lib.list_assets(destination, True, False) if lib.does_directory_exist(destination) else []
+                  meshes = [asset for path in paths if isinstance(asset := lib.load_asset(path), unreal.StaticMesh)]
+                  if not meshes:
+                      task = unreal.AssetImportTask()
+                      for prop,value in {"filename":str(work/(key+".glb")), "destination_path":destination,
+                                         "automated":True, "replace_existing":False, "save":True}.items():
+                          task.set_editor_property(prop,value)
+                      tools.import_asset_tasks([task])
+                      meshes = [asset for asset in task.get_objects() if isinstance(asset,unreal.StaticMesh)]
+                  sizes = []
+                  for asset in meshes:
+                      extent = asset.get_bounds().box_extent
+                      sizes.append(dict(path=asset.get_path_name(), xyzCm=[extent.x*2,extent.y*2,extent.z*2]))
+                  target = sorted(expected[key])
+                  fitted = [row for row in sizes if all(abs(a-b)<max(1,b*.18)
+                            for a,b in zip(sorted(row["xyzCm"]),target))]
+                  reports[key] = dict(assets=len(meshes), fullSize=fitted, observed=sizes[:15])
+              except Exception as exc:
+                  reports[key] = {"error":str(exc)}
+          (work/"models.json").write_text(json.dumps(reports),encoding="utf-8")
+          unreal.log("SKARVIK_URBAN_NATIVE_MODEL_REPORT " + json.dumps(reports))
+          '@
+          $script = Join-Path $work 'import_facilities.py'
+          [IO.File]::WriteAllText($script,$code,[Text.UTF8Encoding]::new($false))
+          & $editor $project '-run=pythonscript' "-script=$script" '-unattended' '-nopause' '-nosound' '-NullRHI' '-stdout' '-FullStdOutLogOutput'
+          $report = Join-Path $work 'models.json'
+          if (!(Test-Path -LiteralPath $report)) { throw 'No native model report produced' }
+          $entries = (Get-Content -LiteralPath $report -Raw | ConvertFrom-Json).PSObject.Properties
+          if (@($entries | Where-Object { $_.Value.fullSize.Count -eq 1 }).Count -ne 5) { throw 'One or more full-size models require verified assembly before placement' }
