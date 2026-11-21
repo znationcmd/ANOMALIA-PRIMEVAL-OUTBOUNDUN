@@ -39,7 +39,7 @@ jobs:
 
           def open_map(package):
               levels = unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
-              if levels.save_all_dirty_levels():
+              if unreal.EditorLoadingAndSavingUtils.save_dirty_packages_with_dialog(True, True):
                   levels.load_level(package)
 
           def register():
@@ -118,8 +118,9 @@ jobs:
           project = json.loads((root / "AnomaliaPrimeval.uproject").read_text(encoding="utf-8-sig"))
           module = next(item["Name"] for item in project["Modules"] if item["Type"] == "Runtime")
           source = root / "Source" / module
-          library = source / (module + "ServerBrowserLibrary.cpp")
-          widget = source / (module + "SessionWidget.cpp")
+          prefix = "Anomalia" if module == "AnomaliaPrimeval" else module
+          library = source / (prefix + "ServerBrowserLibrary.cpp")
+          widget = source / (prefix + "SessionWidget.cpp")
           catalog = library.read_text(encoding="utf-8-sig")
           ui = widget.read_text(encoding="utf-8-sig")
           def quote(value):
@@ -133,13 +134,13 @@ jobs:
                                     lambda match: match[1] + package_rows + match[2], catalog, count=1)
           if changed != 1:
               raise RuntimeError("Native map table was not found")
-          sig = f"void U{module}SessionWidget::ResumeLocalSession()\n{{\n"
+          sig = f"void U{prefix}SessionWidget::ResumeLocalSession()\n{{\n"
           if ui.count(sig) != 1 or "MapFilterSelect" not in ui:
               raise RuntimeError("Native solo callback or map selector unavailable")
           native = f'''    if (bMainMenu && MapFilterSelect && GetWorld() && GetWorld()->GetNetMode() == NM_Standalone)
               {{
                   const FString Selected = MapFilterSelect->GetSelectedOption();
-                  for (const auto& Choice : U{module}ServerBrowserLibrary::GetWorldChoices())
+                  for (const auto& Choice : U{prefix}ServerBrowserLibrary::GetWorldChoices())
                   {{
                       if (Choice.DisplayName != Selected || !Choice.bNativePackageFound)
                       {{
@@ -149,7 +150,7 @@ jobs:
                       {{
                           FinishIntro();
                           UGameplayStatics::SetGamePaused(this, false);
-                          const FString Options = TEXT("{module}ServerId=solo-") + Choice.MapId;
+                          const FString Options = TEXT("{prefix}ServerId=solo-") + Choice.MapId;
                           UGameplayStatics::OpenLevel(this, FName(*Choice.WorldPackage), true, Options);
                           return;
                       }}
