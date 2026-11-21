@@ -106,10 +106,13 @@ jobs:
                               "BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
                           if hit is None:
                               return None
-                          impact = hit.to_tuple()[5]
-                  if not isinstance(impact, unreal.Vector) or abs(impact.x-x)>1 or abs(impact.y-y)>1:
-                      raise RuntimeError("Unexpected Unreal terrain trace layout")
-                  z = impact.z
+                          impact = next((point for point in hit.to_tuple()
+                                         if isinstance(point, unreal.Vector)
+                                         and abs(point.x-x)<1 and abs(point.y-y)<1
+                                         and 450 < point.z < 900000),None)
+                          if impact is None:
+                              return None
+                          z = impact.z
                           if not math.isfinite(z) or z < 450:
                               return None
                           heights.append(z)
