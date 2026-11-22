@@ -1,0 +1,32 @@
+name: Inspect DayZ NBC Pack source on ANOMALIA-PC
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/dayz-nbcpack-source-check.yml]
+permissions: {}
+concurrency:
+  group: dayz-tools-readonly
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Locate official extracted NBCPack model without changing files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner; no files inspected' }
+          $model = 'P:\DZ\gear_takistan\containers\NBCPack.p3d'
+          if (Test-Path -LiteralPath $model -PathType Leaf) {
+            $item = Get-Item -LiteralPath $model
+            Write-Output "NBCPACK_FOUND=$($item.FullName)"
+            Write-Output "NBCPACK_BYTES=$($item.Length)"
+            Write-Output 'OFFICIAL_EXTRACT_PRESENT=true'
+          } else {
+            Write-Output 'OFFICIAL_EXTRACT_PRESENT=false'
+            Write-Output "P_DRIVE_PRESENT=$(Test-Path -LiteralPath 'P:\')"
+            Write-Output "DAYZ_TOOLS_LAUNCHER_PRESENT=$(Test-Path -LiteralPath 'C:\Program Files (x86)\Steam\steamapps\common\DayZ Tools\DayZToolsLauncher.exe')"
+            Write-Output "DAYZ_TAKISTAN_PBO_PRESENT=$(Test-Path -LiteralPath 'C:\Program Files (x86)\Steam\steamapps\common\DayZ\Addons\gear_takistan.pbo')"
+            Write-Output 'NO_EXTRACTION_OR_CONVERSION_PERFORMED=true'
+          }
