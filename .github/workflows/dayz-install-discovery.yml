@@ -1,0 +1,54 @@
+name: Discover DayZ installation on ANOMALIA-PC
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/dayz-install-discovery.yml]
+permissions: {}
+concurrency:
+  group: dayz-tools-readonly
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read Steam library locations and check DayZ Tools paths
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner; no files inspected' }
+          $roots = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::OrdinalIgnoreCase)
+          foreach ($p in @('C:\Program Files (x86)\Steam','C:\Program Files\Steam','D:\Steam','D:\SteamLibrary','E:\SteamLibrary')) {
+            if (Test-Path -LiteralPath $p -PathType Container) { [void]$roots.Add($p) }
+          }
+          foreach ($root in @($roots)) {
+            $vdf = Join-Path $root 'steamapps\libraryfolders.vdf'
+            if (!(Test-Path -LiteralPath $vdf -PathType Leaf)) { continue }
+            $raw = Get-Content -LiteralPath $vdf -Raw
+            foreach ($m in [regex]::Matches($raw, '"path"\s+"([^"]+)"')) {
+              [void]$roots.Add(($m.Groups[1].Value -replace '\\\\','\'))
+            }
+            foreach ($m in [regex]::Matches($raw, '(?m)^\s*"\d+"\s+"([^"]+)"')) {
+              [void]$roots.Add(($m.Groups[1].Value -replace '\\\\','\'))
+            }
+          }
+          $found = @()
+          foreach ($root in $roots) {
+            $common = Join-Path $root 'steamapps\common'
+            foreach ($name in @('DayZ Tools','DayZ')) {
+              $base = Join-Path $common $name
+              if (Test-Path -LiteralPath $base -PathType Container) {
+                $found += [pscustomobject]@{
+                  library = $root
+                  product = $name
+                  launcher = (Test-Path -LiteralPath (Join-Path $base 'DayZToolsLauncher.exe'))
+                  game = (Test-Path -LiteralPath (Join-Path $base 'DayZ_x64.exe'))
+                  takistanPbo = (Test-Path -LiteralPath (Join-Path $base 'Addons\gear_takistan.pbo'))
+                }
+              }
+            }
+          }
+          Write-Output ('STEAM_LIBRARY_ROOTS=' + (($roots | Sort-Object) -join ';'))
+          if ($found.Count) { $found | ConvertTo-Json -Depth 4 -Compress | Write-Output } else { Write-Output 'DAYZ_OR_TOOLS_FOUND=false' }
+          Write-Output ('NBCPACK_ON_P=' + (Test-Path -LiteralPath 'P:\DZ\gear_takistan\containers\NBCPack.p3d'))
+          Write-Output 'READ_ONLY_DISCOVERY=true'
