@@ -1,0 +1,33 @@
+name: Locate DayZ Tools executables on ANOMALIA-PC
+on:
+  push:
+    branches: [ops/skarvik-citysample-transfer]
+    paths: [.github/workflows/dayz-tools-path-check.yml]
+permissions: {}
+concurrency:
+  group: dayz-tools-readonly
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect installed tool filenames and DayZ data containers
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner; no files inspected' }
+          $tools = 'C:\Program Files (x86)\Steam\steamapps\common\DayZ Tools'
+          $game = 'C:\Program Files (x86)\Steam\steamapps\common\DayZ'
+          if (Test-Path -LiteralPath $tools -PathType Container) {
+            Write-Output 'TOOLS_FOLDER_PRESENT=true'
+            Get-ChildItem -LiteralPath $tools -File -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)launcher|extract|workdrive|objectbuilder|addonbuilder' -or $_.Extension -eq '.exe' } |
+              Select-Object -First 100 -ExpandProperty FullName | ForEach-Object { Write-Output ('TOOL_FILE=' + $_) }
+          } else { Write-Output 'TOOLS_FOLDER_PRESENT=false' }
+          if (Test-Path -LiteralPath (Join-Path $game 'Addons') -PathType Container) {
+            Get-ChildItem -LiteralPath (Join-Path $game 'Addons') -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)takistan|gear|character|vehicle|world' } |
+              Select-Object -First 100 -ExpandProperty FullName | ForEach-Object { Write-Output ('GAME_PBO=' + $_) }
+          } else { Write-Output 'GAME_ADDONS_FOLDER_PRESENT=false' }
+          Write-Output 'READ_ONLY_DISCOVERY=true'
