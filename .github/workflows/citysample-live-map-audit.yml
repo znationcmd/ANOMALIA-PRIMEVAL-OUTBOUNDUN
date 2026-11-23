@@ -1,0 +1,65 @@
+name: Verify City Sample building meshes in live SKARVIK map
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-live-map-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-citysample-readonly-interior-audit
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Count genuine City Sample building actors in the actual map without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'ANOMALIA target project missing'}
+          $py=Join-Path $env:RUNNER_TEMP 'audit_live_citysample_meshes.py'
+          $out=Join-Path $env:RUNNER_TEMP 'citysample-live-map-report.json'
+          $code=@'
+          import json, os, re
+          from pathlib import Path
+          import unreal
+          package="/Game/Maps/ANOMALIA_Archipelago_v2"
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          if not levels.load_level(package): raise RuntimeError("Could not load the live SKARVIK map")
+          descs=wp.get_actor_descs() or []
+          pattern=re.compile(r"citysample|city_sample|city|building|house|village|settlement|town",re.I)
+          candidates=[d for d in descs if pattern.search(str(getattr(d,"label","")))]
+          found=[]
+          for start in range(0,len(candidates),64):
+              batch=candidates[start:start+64]
+              keys=[d.guid for d in batch]
+              wp.load_actors(keys)
+              loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+              for d in batch:
+                  actor=loaded.get(str(d.label))
+                  if not actor: continue
+                  for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+                      mesh=comp.get_editor_property("static_mesh")
+                      if not mesh: continue
+                      path=mesh.get_path_name()
+                      if path.startswith("/Game/Building/") or path.startswith("/Game/City/"):
+                          found.append({"label":actor.get_actor_label(),"mesh":path,
+                                        "collision":str(mesh.get_editor_property("collision_complexity"))})
+              wp.unload_actors(keys)
+          result={"map":package,"descriptors":len(descs),"candidateLabels":len(candidates),
+                  "citySampleBuildingActors":len(found),"samples":found[:40],"readOnly":True}
+          Path(os.environ["CITYSAMPLE_MAP_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("CITYSAMPLE_LIVE_MAP_RESULT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $env:CITYSAMPLE_MAP_REPORT=$out
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound
+          if($LASTEXITCODE -ne 0){throw "Live map inspection failed: $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $out)){throw 'Live map receipt missing'}
+          Write-Host ('CITYSAMPLE_LIVE_MAP_REPORT='+ (Get-Content -LiteralPath $out -Raw -Encoding UTF8))
