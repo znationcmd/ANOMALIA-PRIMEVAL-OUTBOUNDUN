@@ -9,7 +9,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   inspect:
-    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    runs-on: [self-hosted, Windows, X64]
     timeout-minutes: 20
     steps:
       - name: Count genuine City Sample building actors in the actual map without saving
