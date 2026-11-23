@@ -65,10 +65,9 @@ jobs:
           world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
           results=[]
           def capsule_blocked(start,end,radius=35.0,half=90.0):
-              res=unreal.SystemLibrary.capsule_trace_single_by_channel(
+              res=unreal.SystemLibrary.capsule_trace_single_by_profile(
                 world,unreal.Vector(*start),unreal.Vector(*end),radius,half,
-                unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,False,[],
-                unreal.DrawDebugTrace.NONE,False)
+                "BlockAll",False,[],unreal.DrawDebugTrace.NONE,False)
               if isinstance(res,tuple): return bool(res[0]), (str(res[1]) if len(res)>1 else "")
               return bool(res), ""
           for item in indexed:
