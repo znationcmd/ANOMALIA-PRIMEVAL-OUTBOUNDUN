@@ -5,7 +5,7 @@ on:
     paths: [.github/workflows/citysample-live-map-audit.yml]
 permissions: {}
 concurrency:
-  group: anomalia-citysample-readonly-interior-audit
+  group: anomalia-citysample-live-map-audit-unblocked
   cancel-in-progress: false
 jobs:
   inspect:
