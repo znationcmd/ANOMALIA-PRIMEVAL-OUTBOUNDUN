@@ -1,0 +1,242 @@
+name: Place one real City Sample Hero building in SKARVIK
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-place-hero-building.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  place:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 45
+    steps:
+      - name: Guard ANOMALIA-PC and verify source packages and free disk
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner; no project opened'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $src='D:\ANOMALIA\FabImports\CitySample'
+          $liveMap=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $hero='Building\Library\Kit_Hero_Bldg\LevelInstance\Bldg_Hero_BlockThreeBuilding_A01_Level01.umap'
+          $heroSource=Join-Path $src ('Content\'+$hero)
+          $heroTarget=Join-Path $root ('Content\'+$hero)
+          if(!(Test-Path -LiteralPath $liveMap)){throw 'Live SKARVIK map missing'}
+          if(!(Test-Path -LiteralPath $heroSource)){throw 'Installed City Sample Hero level missing from FabImports'}
+          $free=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          Write-Host ('D_FREE_GIB_BEFORE='+[math]::Round($free/1GB,2))
+          if($free -lt 4GB){throw 'D drive below 4 GiB safety reserve'}
+          $env:SKARVIK_HERO_SOURCE=$heroSource
+          $env:SKARVIK_HERO_TARGET=$heroTarget
+          $env:SKARVIK_HERO_SOURCE_EXTERNAL=Join-Path $src ('Content\__ExternalActors__\'+[IO.Path]::ChangeExtension($hero,$null))
+          $env:SKARVIK_HERO_TARGET_EXTERNAL=Join-Path $root ('Content\__ExternalActors__\'+[IO.Path]::ChangeExtension($hero,$null))
+          Write-Host ('HERO_SOURCE_UMAP='+$heroSource)
+          Write-Host ('HERO_TARGET_UMAP_EXISTS='+(Test-Path -LiteralPath $heroTarget))
+          Write-Host ('HERO_SOURCE_EXTERNAL_EXISTS='+(Test-Path -LiteralPath $env:SKARVIK_HERO_SOURCE_EXTERNAL))
+      - name: Place the verified 96-piece original building and save a rollback backup
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $env:SKARVIK_HERO_REPORT=Join-Path $env:RUNNER_TEMP 'citysample-hero-placement.json'
+          $py=Join-Path $env:RUNNER_TEMP 'place_citysample_hero.py'
+          $code=@'
+          import json, math, os, re, shutil
+          from pathlib import Path
+          import unreal
+
+          root=Path(r"D:\ANOMALIA\unreal")
+          source_pkg="/Game/Building/Library/Kit_Hero_Bldg/LevelInstance/Bldg_Hero_BlockThreeBuilding_A01_Level01"
+          map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          source_file=Path(os.environ["SKARVIK_HERO_SOURCE"])
+          target_source_file=Path(os.environ["SKARVIK_HERO_TARGET"])
+          source_external=Path(os.environ["SKARVIK_HERO_SOURCE_EXTERNAL"])
+          target_external=Path(os.environ["SKARVIK_HERO_TARGET_EXTERNAL"])
+          report_path=Path(os.environ["SKARVIK_HERO_REPORT"])
+          prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
+          if Path(unreal.Paths.project_dir()).resolve()!=root.resolve():
+              raise RuntimeError("Unexpected ANOMALIA target project")
+          if not source_file.is_file():
+              raise RuntimeError("Installed City Sample Hero map is missing")
+          if not target_source_file.is_file():
+              target_source_file.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copy2(source_file,target_source_file)
+          if source_external.is_dir() and not target_external.exists():
+              target_external.parent.mkdir(parents=True,exist_ok=True)
+              shutil.copytree(source_external,target_external)
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          library=unreal.EditorAssetLibrary
+          if not levels.load_level(source_pkg):
+              raise RuntimeError("Could not load the original City Sample Hero building")
+          components=[]
+          for actor in actors.get_all_level_actors():
+              for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+                  mesh=comp.get_editor_property("static_mesh")
+                  if not mesh: continue
+                  p=comp.get_world_location()
+                  r=comp.get_world_rotation()
+                  sc=comp.get_world_scale()
+                  overrides=comp.get_editor_property("override_materials")
+                  mats=[m.get_path_name() if m else None for m in overrides]
+                  body=mesh.get_editor_property("body_setup")
+                  agg=body.get_editor_property("agg_geom") if body else None
+                  collisions=(len(agg.get_editor_property("box_elems"))+
+                              len(agg.get_editor_property("sphere_elems"))+
+                              len(agg.get_editor_property("sphyl_elems"))+
+                              len(agg.get_editor_property("convex_elems"))) if agg else 0
+                  components.append({"mesh":mesh.get_path_name(),"materials":mats,
+                    "position":[p.x,p.y,p.z],"rotation":[r.pitch,r.yaw,r.roll],
+                    "scale":[sc.x,sc.y,sc.z],"collisions":collisions,
+                    "entrance":"entrance" in mesh.get_name().lower()})
+          if len(components)<80:
+              raise RuntimeError("Hero level did not expose its original architectural components")
+          if not any(x["entrance"] for x in components):
+              raise RuntimeError("Hero level has no entrance meshes")
+          for row in components:
+              if not isinstance(library.load_asset(row["mesh"]),unreal.StaticMesh):
+                  raise RuntimeError("Target project is missing source mesh "+row["mesh"])
+              if row["collisions"]<1:
+                  raise RuntimeError("Source mesh has no simple collision: "+row["mesh"])
+              for m in row["materials"]:
+                  if m and not isinstance(library.load_asset(m),unreal.MaterialInterface):
+                      raise RuntimeError("Target project is missing material "+m)
+          xs=[r["position"][0] for r in components]
+          ys=[r["position"][1] for r in components]
+          zs=[r["position"][2] for r in components]
+          cx,cy=(min(xs)+max(xs))/2,(min(ys)+max(ys))/2
+          hx,hy=(max(xs)-min(xs))/2+6000,(max(ys)-min(ys))/2+6000
+          z0=min(zs)
+          if not levels.load_level(map_pkg):
+              raise RuntimeError("Could not load live SKARVIK")
+          world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+          descs=wp.get_actor_descs() or []
+          if any(str(d.label).startswith(prefix) for d in descs):
+              raise RuntimeError("This Hero building was already placed; refusing duplicate")
+          landscapes=[d for d in descs if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
+          if not landscapes:
+              raise RuntimeError("Live SKARVIK has no landscape for safe placement")
+          occ=re.compile(r"city|house|building|settlement|village|town|road|street|bridge|garage|gas|store|skarchipelago",re.I)
+          used=[]
+          desired=(1560000.0,-1360000.0)
+          def point_z(x,y,ignore):
+              hit=unreal.SystemLibrary.line_trace_single_by_profile(
+                  world,unreal.Vector(x,y,900000),unreal.Vector(x,y,-500000),
+                  "BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
+              if hit is None: return None
+              point=hit.to_tuple()[5]
+              return point.z if point.z>450 else None
+          tiles=sorted(landscapes,key=lambda d:(d.bounds.min.x+d.bounds.max.x-2*desired[0])**2+
+                                             (d.bounds.min.y+d.bounds.max.y-2*desired[1])**2)
+          site=None
+          for tile in tiles:
+              b=tile.bounds
+              lx,rx=b.min.x+hx,b.max.x-hx
+              ly,ry=b.min.y+hy,b.max.y-hy
+              if rx<lx or ry<ly or b.max.z<450: continue
+              wp.load_actors([tile.guid])
+              try:
+                  ignore=[a for a in actors.get_all_level_actors() if not isinstance(a,unreal.LandscapeProxy)]
+                  offsets=[0,-15000,15000,-30000,30000,-45000,45000,-60000,60000,-90000,90000]
+                  candidates=sorted([(desired[0]+dx,desired[1]+dy) for dx in offsets for dy in offsets
+                                     if lx<=desired[0]+dx<=rx and ly<=desired[1]+dy<=ry],
+                                    key=lambda p:(p[0]-desired[0])**2+(p[1]-desired[1])**2)
+                  for x,y in candidates:
+                      box=(x-hx,y-hy,x+hx,y+hy)
+                      if any(box[0]<q[2] and box[2]>q[0] and box[1]<q[3] and box[3]>q[1] for q in used):
+                          continue
+                      heights=[point_z(x+hx*ix/2,y+hy*iy/2,ignore) for ix,iy in
+                               [(-2,-2),(-2,0),(-2,2),(0,-2),(0,0),(0,2),(2,-2),(2,0),(2,2)]]
+                      if any(h is None for h in heights) or max(heights)-min(heights)>300:
+                          continue
+                      area=unreal.Box(min=unreal.Vector(box[0],box[1],-500000),
+                                      max=unreal.Vector(box[2],box[3],900000))
+                      blockers=[d for d in (wp.get_intersecting_actor_descs(area) or [])
+                                if "LandscapeStreamingProxy" not in str(d.native_class.get_name())
+                                and occ.search(str(d.label))]
+                      if blockers: continue
+                      used.append(box)
+                      site=(x,y,max(heights)-z0+10)
+                      break
+              finally:
+                  wp.unload_actors([tile.guid])
+              if site: break
+          if not site:
+              raise RuntimeError("No clear, dry and level site was found near the existing SKARVIK urban plateau")
+          map_file=root/"Content/Maps/ANOMALIA_Archipelago_v2.umap"
+          backup=root/"Saved/SkarvikCity/CitySampleHeroBuilding"/(os.environ["GITHUB_RUN_ID"]+"-"+os.environ["GITHUB_RUN_ATTEMPT"])
+          if backup.exists(): raise RuntimeError("Rollback folder already exists")
+          backup.mkdir(parents=True)
+          shutil.copy2(map_file,backup/"ANOMALIA_Archipelago_v2.umap.before")
+          external=root/"Content/__ExternalActors__/Maps/ANOMALIA_Archipelago_v2"
+          if external.is_dir(): shutil.copytree(external,backup/"__ExternalActors__")
+          free=shutil.disk_usage(root).free
+          backup_bytes=sum(p.stat().st_size for p in backup.rglob("*") if p.is_file())
+          if free < 2*1024**3:
+              raise RuntimeError("D drive free space dropped below 2 GiB before map save")
+          sx,sy,sz=site
+          for i,row in enumerate(components):
+              x,y,z=row["position"]
+              actor=actors.spawn_actor_from_class(unreal.StaticMeshActor,
+                  unreal.Vector(x-cx+sx,y-cy+sy,z+sz))
+              if not actor: raise RuntimeError("Could not create Hero component "+str(i))
+              actor.set_actor_label(prefix+f"{i:03d}")
+              c=actor.static_mesh_component
+              if not c.set_static_mesh(library.load_asset(row["mesh"])):
+                  raise RuntimeError("Could not assign source mesh "+row["mesh"])
+              c.set_collision_profile_name("BlockAll")
+              p,yaw,r=row["rotation"]
+              actor.set_actor_rotation(unreal.Rotator(pitch=p,yaw=yaw,roll=r),False)
+              actor.set_actor_scale3d(unreal.Vector(*row["scale"]))
+              for slot,path in enumerate(row["materials"]):
+                  if path: c.set_material(slot,library.load_asset(path))
+          if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+              raise RuntimeError("Could not persist Hero building actors")
+          if not levels.load_level(map_pkg):
+              raise RuntimeError("Could not reopen saved SKARVIK")
+          persisted=sorted([d for d in wp.get_actor_descs() or [] if str(d.label).startswith(prefix)],
+                           key=lambda d:str(d.label))
+          if len(persisted)!=len(components):
+              raise RuntimeError(f"Expected {len(components)} saved actors, found {len(persisted)}")
+          picks=list(range(0,len(persisted),max(1,len(persisted)//12)))[:12]
+          wp.load_actors([persisted[i].guid for i in picks])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          for i in picks:
+              actor=loaded.get(prefix+f"{i:03d}")
+              if not actor: raise RuntimeError("Reopen sample missing actor "+str(i))
+              mesh=actor.static_mesh_component.get_editor_property("static_mesh")
+              if not mesh or mesh.get_path_name()!=components[i]["mesh"]:
+                  raise RuntimeError("Reopen sample mesh mismatch "+str(i))
+          result={"state":"HERO_CITYSAMPLE_BUILDING_SAVED_AND_REOPENED_COLLISION_PRESENT_ENTRY_NOT_GAMEPLAY_TESTED",
+            "map":map_pkg,"sourceLevel":source_pkg,"placedActors":len(persisted),
+            "simpleCollisionComponents":sum(r["collisions"]>0 for r in components),
+            "entranceMeshComponents":sum(r["entrance"] for r in components),
+            "reopenedMeshSamples":len(picks),"siteCenterCm":[sx,sy],"backupBytes":backup_bytes,
+            "backup":str(backup),"readOnlyAssetsReused":True}
+          report_path.write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("CITYSAMPLE_HERO_PLACEMENT_RECEIPT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound
+          if($LASTEXITCODE -ne 0){throw "Unreal placement failed with exit $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $env:SKARVIK_HERO_REPORT)){throw 'Placement report missing'}
+          $r=Get-Content -LiteralPath $env:SKARVIK_HERO_REPORT -Raw|ConvertFrom-Json
+          Write-Host ('CITYSAMPLE_HERO_PLACEMENT='+$r.state)
+          Write-Host ('CITYSAMPLE_HERO_ACTORS='+$r.placedActors)
+          Write-Host ('CITYSAMPLE_HERO_COLLISION_COMPONENTS='+$r.simpleCollisionComponents)
+          Write-Host ('CITYSAMPLE_HERO_ENTRANCE_COMPONENTS='+$r.entranceMeshComponents)
+          Write-Host ('CITYSAMPLE_HERO_BACKUP='+$r.backup)
+          if($r.state -ne 'HERO_CITYSAMPLE_BUILDING_SAVED_AND_REOPENED_COLLISION_PRESENT_ENTRY_NOT_GAMEPLAY_TESTED' -or $r.placedActors -lt 80 -or $r.entranceMeshComponents -lt 1){throw 'Native City Sample building verification failed'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: skarvik-citysample-hero-building-placement
+          path: citysample-hero-placement.json
+          if-no-files-found: warn
