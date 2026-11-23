@@ -1,0 +1,78 @@
+name: Inspect City Sample Hero entrance geometry safely
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-hero-entry-inspect.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Inspect original Hero entrance meshes without saving assets or maps
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $source='D:\ANOMALIA\FabImports\CitySample\Content\Building\Library\Kit_Hero_Bldg\LevelInstance\Bldg_Hero_BlockThreeBuilding_A01_Level01.umap'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $source)){throw 'Original project or City Sample source level missing'}
+          $env:HERO_ENTRY_SOURCE=$source
+          $env:HERO_ENTRY_REPORT=Join-Path $env:RUNNER_TEMP 'hero-entry-inspection.json'
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_hero_entrances.py'
+          $code=@'
+          import json, os
+          from pathlib import Path
+          import unreal
+          src=Path(os.environ["HERO_ENTRY_SOURCE"])
+          pkg="/Game/Building/Library/Kit_Hero_Bldg/LevelInstance/Bldg_Hero_BlockThreeBuilding_A01_Level01"
+          if not src.is_file(): raise RuntimeError("Source Hero level missing")
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          library=unreal.EditorAssetLibrary
+          if not levels.load_level(pkg): raise RuntimeError("Could not load original Hero source level")
+          rows=[]
+          for actor in actors.get_all_level_actors():
+              for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+                  mesh=comp.get_editor_property("static_mesh")
+                  if not mesh: continue
+                  name=mesh.get_name()
+                  if "entrance" not in name.lower(): continue
+                  p=comp.get_world_location()
+                  r=comp.get_world_rotation()
+                  sc=comp.get_world_scale()
+                  b=mesh.get_bounds()
+                  ext=b.box_extent
+                  body=mesh.get_editor_property("body_setup")
+                  agg=body.get_editor_property("agg_geom") if body else None
+                  box_elems=list(agg.get_editor_property("box_elems")) if agg else []
+                  shapes=[]
+                  for e in box_elems:
+                      center=e.get_editor_property("center")
+                      shapes.append({"center":[center.x,center.y,center.z],
+                        "extent":[e.get_editor_property("x")/2,e.get_editor_property("y")/2,e.get_editor_property("z")/2]})
+                  rows.append({"mesh":mesh.get_path_name(),"position":[p.x,p.y,p.z],
+                    "rotation":[r.pitch,r.yaw,r.roll],"scale":[sc.x,sc.y,sc.z],
+                    "boundsExtent":[ext.x,ext.y,ext.z],"simpleBoxCollision":shapes})
+          result={"state":"READ_ONLY_HERO_ENTRANCE_GEOMETRY","sourceLevel":pkg,
+            "entranceMeshes":len(rows),"components":rows}
+          Path(os.environ["HERO_ENTRY_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("HERO_ENTRY_INSPECTION "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path -LiteralPath $editor)){throw 'UE 5.8 editor unavailable'}
+          $log=Join-Path $env:RUNNER_TEMP 'hero-entry-inspection.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 100};throw "Unreal read-only inspection failed: $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $env:HERO_ENTRY_REPORT)){if(Test-Path $log){Get-Content $log -Tail 100};throw 'Entrance geometry receipt missing'}
+          $report=Get-Content $env:HERO_ENTRY_REPORT -Raw|ConvertFrom-Json
+          Write-Output ('HERO_ENTRY_INSPECT_STATE='+$report.state)
+          Write-Output ('HERO_ENTRANCE_MESH_COUNT='+$report.entranceMeshes)
+          foreach($row in $report.components){Write-Output ('HERO_ENTRANCE_MESH='+($row|ConvertTo-Json -Compress -Depth 8))}
+          if($report.entranceMeshes -lt 1){throw 'No entrance meshes were detected'}
