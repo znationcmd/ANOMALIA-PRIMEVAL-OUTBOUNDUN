@@ -224,9 +224,17 @@ jobs:
           '@
           [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
-          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound
-          if($LASTEXITCODE -ne 0){throw "Unreal placement failed with exit $LASTEXITCODE"}
-          if(!(Test-Path -LiteralPath $env:SKARVIK_HERO_REPORT)){throw 'Placement report missing'}
+          $python=Join-Path $env:UE_ROOT 'Engine\Binaries\ThirdParty\Python3\Win64\python.exe'
+          & $python -m py_compile $py
+          if($LASTEXITCODE -ne 0){throw 'Placement Python script failed syntax validation'}
+          $unrealLog=Join-Path $env:RUNNER_TEMP 'citysample-hero-unreal.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$unrealLog"
+          $unrealExit=$LASTEXITCODE
+          if($unrealExit -ne 0){throw "Unreal placement failed with exit $unrealExit"}
+          if(!(Test-Path -LiteralPath $env:SKARVIK_HERO_REPORT)){
+            if(Test-Path -LiteralPath $unrealLog){Get-Content -LiteralPath $unrealLog -Tail 140}
+            throw 'Placement report missing; Unreal log printed above'
+          }
           $r=Get-Content -LiteralPath $env:SKARVIK_HERO_REPORT -Raw|ConvertFrom-Json
           Write-Host ('CITYSAMPLE_HERO_PLACEMENT='+$r.state)
           Write-Host ('CITYSAMPLE_HERO_ACTORS='+$r.placedActors)
