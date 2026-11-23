@@ -1,4 +1,4 @@
-name: Deep discovery of City Sample assets
+name: Inspect installed City Sample buildings
 on:
   push:
     branches: [ops/native-map-availability-audit]
@@ -10,56 +10,42 @@ concurrency:
 jobs:
   inspect:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
-      - name: Recursively locate existing City Sample installs (read only)
+      - name: Inventory installed City Sample and ANOMALIA targets (read only)
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner; no files inspected' }
-          $roots = @(
-            'D:\ANOMALIA',
-            'D:\Epic Games',
-            'D:\Unreal Projects',
-            'D:\Fab',
-            'C:\Program Files\Epic Games',
-            'C:\Program Files (x86)\Epic Games',
-            (Join-Path $env:USERPROFILE 'Documents\Unreal Projects'),
-            (Join-Path $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests')
-          )
-          $dirs = @()
-          $uprojects = @()
-          foreach ($root in $roots) {
-            if (!(Test-Path -LiteralPath $root -PathType Container)) { continue }
-            if ($root -like '*Manifests') {
-              Get-ChildItem -LiteralPath $root -Filter '*.item' -File -ErrorAction SilentlyContinue | ForEach-Object {
-                try {
-                  $m = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
-                  if ("$($m.DisplayName) $($m.AppName) $($m.InstallLocation)" -match '(?i)City[ _-]*Sample|CitySamplePCG') {
-                    Write-Output ('EPIC_MANIFEST=' + "$($m.DisplayName)|$($m.InstallLocation)")
-                  }
-                } catch {}
-              }
-              continue
-            }
-            $dirs += @(Get-ChildItem -LiteralPath $root -Directory -Recurse -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -match '(?i)City[ _-]*Sample|CitySamplePCG|CitySampleBuildings' } |
-              Select-Object -First 100 -ExpandProperty FullName)
-            $uprojects += @(Get-ChildItem -LiteralPath $root -File -Recurse -Filter '*.uproject' -ErrorAction SilentlyContinue |
-              Where-Object { $_.Name -match '(?i)City[ _-]*Sample' } |
-              Select-Object -First 100 -ExpandProperty FullName)
-          }
-          $dirs = @($dirs | Sort-Object -Unique)
-          $uprojects = @($uprojects | Sort-Object -Unique)
-          Write-Output ('CITY_SAMPLE_DIR_COUNT=' + $dirs.Count)
-          $dirs | ForEach-Object { Write-Output ('CITY_SAMPLE_DIR=' + $_) }
-          Write-Output ('CITY_SAMPLE_UPROJECT_COUNT=' + $uprojects.Count)
-          $uprojects | ForEach-Object { Write-Output ('CITY_SAMPLE_UPROJECT=' + $_) }
-          foreach ($dir in $dirs) {
-            if (Test-Path -LiteralPath $dir -PathType Container) {
-              Get-ChildItem -LiteralPath $dir -File -Filter '*.uasset' -ErrorAction SilentlyContinue |
-                Select-Object -First 8 -ExpandProperty FullName |
-                ForEach-Object { Write-Output ('SAMPLE_ASSET=' + $_) }
-            }
-          }
+          $source = 'D:\ANOMALIA\FabImports\CitySample'
+          $target = 'D:\ANOMALIA\unreal'
+          $content = Join-Path $source 'Content'
+          $projectFile = Join-Path $source 'CitySample.uproject'
+          if (!(Test-Path -LiteralPath $content -PathType Container) -or !(Test-Path -LiteralPath $projectFile -PathType Leaf)) { throw 'Previously located CitySample project is not available at the recorded path' }
+          $proj = Get-Content -LiteralPath $projectFile -Raw -Encoding UTF8 | ConvertFrom-Json
+          Write-Output ('SOURCE_ENGINE_ASSOCIATION=' + $proj.EngineAssociation)
+          Write-Output ('SOURCE_PLUGIN_NAMES=' + ((@($proj.Plugins | ForEach-Object {$_.Name})) -join ','))
+          Write-Output ('SOURCE_PLUGIN_DIRS=' + ((Get-ChildItem -LiteralPath (Join-Path $source 'Plugins') -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name) -join ','))
+          $d = Get-PSDrive -Name D
+          Write-Output ('D_FREE_GB=' + [math]::Round($d.Free / 1GB,2))
+          Write-Output ('SOURCE_CONTENT_ROOTS=' + ((Get-ChildItem -LiteralPath $content -Directory -ErrorAction SilentlyContinue | Select-Object -ExpandProperty Name) -join ','))
+          $dirs = Get-ChildItem -LiteralPath $content -Directory -Recurse -ErrorAction SilentlyContinue |
+            Where-Object {$_.FullName -match '(?i)building|architecture|house|residen|commercial|office|facade'}
+          $dirs | Select-Object -First 150 -ExpandProperty FullName | ForEach-Object {Write-Output ('BUILDING_DIR=' + $_)}
+          $assets = Get-ChildItem -LiteralPath $content -File -Recurse -Filter '*.uasset' -ErrorAction SilentlyContinue |
+            Where-Object {$_.FullName -match '(?i)building|architecture|house|residen|commercial|office|facade|floor|wall|entrance'}
+          Write-Output ('BUILDING_CANDIDATE_ASSET_COUNT=' + @($assets).Count)
+          $assets | Select-Object -First 120 -ExpandProperty FullName | ForEach-Object {Write-Output ('BUILDING_ASSET=' + $_)}
+          $maps = Get-ChildItem -LiteralPath $content -File -Recurse -Filter '*.umap' -ErrorAction SilentlyContinue |
+            Where-Object {$_.FullName -match '(?i)city|building|small|big'}
+          $maps | Select-Object -First 50 -ExpandProperty FullName | ForEach-Object {Write-Output ('SOURCE_MAP=' + $_)}
+          $targetProject = Join-Path $target 'AnomaliaPrimeval.uproject'
+          if (!(Test-Path -LiteralPath $targetProject -PathType Leaf)) { throw 'ANOMALIA project not found' }
+          $targetContent = Join-Path $target 'Content'
+          $destDirs = Get-ChildItem -LiteralPath $targetContent -Directory -ErrorAction SilentlyContinue |
+            Where-Object {$_.Name -match '(?i)CitySample|Building|City'}
+          $destDirs | ForEach-Object {Write-Output ('TARGET_RELATED_CONTENT_DIR=' + $_.FullName)}
+          Get-Content -LiteralPath $targetProject -Raw -Encoding UTF8 |
+            Select-String -Pattern 'CitySample|CitySamplePCG' -AllMatches |
+            ForEach-Object {Write-Output ('TARGET_UPROJECT_CITYSAMPLE_REFERENCE=' + $_.Line)}
           Write-Output 'READ_ONLY=true'
