@@ -1,0 +1,65 @@
+name: Deep discovery of City Sample assets
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-deep-discovery.yml]
+permissions: {}
+concurrency:
+  group: anomalia-citysample-deep-discovery
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Recursively locate existing City Sample installs (read only)
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD') { throw 'Unexpected runner; no files inspected' }
+          $roots = @(
+            'D:\ANOMALIA',
+            'D:\Epic Games',
+            'D:\Unreal Projects',
+            'D:\Fab',
+            'C:\Program Files\Epic Games',
+            'C:\Program Files (x86)\Epic Games',
+            (Join-Path $env:USERPROFILE 'Documents\Unreal Projects'),
+            (Join-Path $env:ProgramData 'Epic\EpicGamesLauncher\Data\Manifests')
+          )
+          $dirs = @()
+          $uprojects = @()
+          foreach ($root in $roots) {
+            if (!(Test-Path -LiteralPath $root -PathType Container)) { continue }
+            if ($root -like '*Manifests') {
+              Get-ChildItem -LiteralPath $root -Filter '*.item' -File -ErrorAction SilentlyContinue | ForEach-Object {
+                try {
+                  $m = Get-Content -LiteralPath $_.FullName -Raw -Encoding UTF8 | ConvertFrom-Json
+                  if ("$($m.DisplayName) $($m.AppName) $($m.InstallLocation)" -match '(?i)City[ _-]*Sample|CitySamplePCG') {
+                    Write-Output ('EPIC_MANIFEST=' + "$($m.DisplayName)|$($m.InstallLocation)")
+                  }
+                } catch {}
+              }
+              continue
+            }
+            $dirs += @(Get-ChildItem -LiteralPath $root -Directory -Recurse -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)City[ _-]*Sample|CitySamplePCG|CitySampleBuildings' } |
+              Select-Object -First 100 -ExpandProperty FullName)
+            $uprojects += @(Get-ChildItem -LiteralPath $root -File -Recurse -Filter '*.uproject' -ErrorAction SilentlyContinue |
+              Where-Object { $_.Name -match '(?i)City[ _-]*Sample' } |
+              Select-Object -First 100 -ExpandProperty FullName)
+          }
+          $dirs = @($dirs | Sort-Object -Unique)
+          $uprojects = @($uprojects | Sort-Object -Unique)
+          Write-Output ('CITY_SAMPLE_DIR_COUNT=' + $dirs.Count)
+          $dirs | ForEach-Object { Write-Output ('CITY_SAMPLE_DIR=' + $_) }
+          Write-Output ('CITY_SAMPLE_UPROJECT_COUNT=' + $uprojects.Count)
+          $uprojects | ForEach-Object { Write-Output ('CITY_SAMPLE_UPROJECT=' + $_) }
+          foreach ($dir in $dirs) {
+            if (Test-Path -LiteralPath $dir -PathType Container) {
+              Get-ChildItem -LiteralPath $dir -File -Filter '*.uasset' -ErrorAction SilentlyContinue |
+                Select-Object -First 8 -ExpandProperty FullName |
+                ForEach-Object { Write-Output ('SAMPLE_ASSET=' + $_) }
+            }
+          }
+          Write-Output 'READ_ONLY=true'
