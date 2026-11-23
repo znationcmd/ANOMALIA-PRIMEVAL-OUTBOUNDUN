@@ -1,0 +1,110 @@
+name: Check SKARVIK Hero doorway clearance with player-sized collision capsule
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-hero-door-capsule-test.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  capsule:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Sweep player-sized capsule through the saved City Sample entrance collision
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $backup=Join-Path $root 'Saved\SkarvikCity\CitySampleHeroBuilding\45213837329-1\ANOMALIA_Archipelago_v2.umap.before'
+          if(!(Test-Path $project) -or !(Test-Path $map) -or !(Test-Path $backup)){throw 'Saved SKARVIK map or rollback backup missing'}
+          $env:SKARVIK_DOOR_REPORT=Join-Path $env:RUNNER_TEMP 'hero-door-capsule-test.json'
+          $py=Join-Path $env:RUNNER_TEMP 'hero_door_capsule_test.py'
+          $code=@'
+          import json, math, os
+          from pathlib import Path
+          import unreal
+
+          root=Path(r"D:\ANOMALIA\unreal")
+          source_pkg="/Game/Building/Library/Kit_Hero_Bldg/LevelInstance/Bldg_Hero_BlockThreeBuilding_A01_Level01"
+          map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          lib=unreal.EditorAssetLibrary
+          if not levels.load_level(source_pkg): raise RuntimeError("Could not load original City Sample Hero source")
+          indexed=[]
+          idx=0
+          for actor in actors.get_all_level_actors():
+              for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+                  mesh=comp.get_editor_property("static_mesh")
+                  if not mesh: continue
+                  name=mesh.get_name()
+                  p=comp.get_world_location()
+                  rot=comp.get_world_rotation()
+                  if "entrance" in name.lower() and p.z < 100:
+                      indexed.append({"index":idx,"mesh":mesh.get_path_name(),
+                        "sourceLocation":[p.x,p.y,p.z],"yaw":rot.yaw})
+                  idx+=1
+          if not indexed: raise RuntimeError("No ground-floor entrance component found in original source")
+          if not levels.load_level(map_pkg): raise RuntimeError("Could not load saved SKARVIK map")
+          descs=wp.get_actor_descs() or []
+          selected={int(str(d.label)[len(prefix):]):d for d in descs
+                    if str(d.label).startswith(prefix) and str(d.label)[len(prefix):].isdigit()}
+          expected={x["index"] for x in indexed}
+          if not expected.issubset(selected): raise RuntimeError("Saved map is missing a ground-floor entrance actor")
+          wp.load_actors([selected[i].guid for i in sorted(expected)])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+          results=[]
+          def capsule_blocked(start,end,radius=35.0,half=90.0):
+              res=unreal.SystemLibrary.capsule_trace_single_by_channel(
+                world,unreal.Vector(*start),unreal.Vector(*end),radius,half,
+                unreal.TraceTypeQuery.TRACE_TYPE_QUERY1,False,[],
+                unreal.DrawDebugTrace.NONE,False)
+              if isinstance(res,tuple): return bool(res[0]), (str(res[1]) if len(res)>1 else "")
+              return bool(res), ""
+          for item in indexed:
+              actor=loaded.get(prefix+f"{item['index']:03d}")
+              if not actor: raise RuntimeError("Could not load saved entrance actor "+str(item["index"]))
+              loc=actor.get_actor_location()
+              yaw=actor.get_actor_rotation().yaw
+              a=math.radians(yaw)
+              nx,ny=math.cos(a),math.sin(a)
+              # Search the full opening interval reported by the source collision boxes.
+              for local_y in range(-700,-249,50):
+                  px=loc.x-math.sin(a)*local_y
+                  py=loc.y+math.cos(a)*local_y
+                  z=loc.z+120.0
+                  start=[px-nx*350,py-ny*350,z]
+                  end=[px+nx*350,py+ny*350,z]
+                  blocked,hit=capsule_blocked(start,end)
+                  results.append({"actorIndex":item["index"],"mesh":item["mesh"],
+                    "offsetAlongEntrance":local_y,"blocked":blocked,"hit":hit[:180]})
+          clear=[r for r in results if not r["blocked"]]
+          report={"state":"READ_ONLY_PLAYER_CAPSULE_DOORWAY_SWEEP",
+            "map":map_pkg,"capsuleRadiusCm":35,"capsuleHalfHeightCm":90,
+            "groundFloorEntrances":len(indexed),"sweepCandidates":len(results),
+            "clearSweeps":len(clear),"clearSweepExamples":clear[:12],"allSweeps":results}
+          Path(os.environ["SKARVIK_DOOR_REPORT"]).write_text(json.dumps(report),encoding="utf-8")
+          unreal.log("HERO_DOOR_CAPSULE_REPORT "+json.dumps(report))
+          if not clear: raise RuntimeError("No player-sized capsule path cleared an entrance")
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path $editor)){throw 'UE 5.8 editor unavailable'}
+          $log=Join-Path $env:RUNNER_TEMP 'hero-door-capsule-test.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 120};throw "Door capsule test failed: $LASTEXITCODE"}
+          if(!(Test-Path $env:SKARVIK_DOOR_REPORT)){if(Test-Path $log){Get-Content $log -Tail 120};throw 'Door capsule receipt missing'}
+          $r=Get-Content $env:SKARVIK_DOOR_REPORT -Raw|ConvertFrom-Json
+          Write-Output ('HERO_DOOR_CAPSULE_STATE='+$r.state)
+          Write-Output ('HERO_DOOR_GROUND_ENTRANCES='+$r.groundFloorEntrances)
+          Write-Output ('HERO_DOOR_CAPSULE_CLEAR_SWEEPS='+$r.clearSweeps)
+          Write-Output ('HERO_DOOR_CAPSULE_EXAMPLES='+($r.clearSweepExamples|ConvertTo-Json -Compress -Depth 8))
