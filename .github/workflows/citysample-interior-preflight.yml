@@ -1,0 +1,79 @@
+name: Inspect installed City Sample interior buildings safely
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-interior-preflight.yml]
+permissions: {}
+concurrency:
+  group: anomalia-citysample-readonly-interior-audit
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Inspect source interior candidates and target import state without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner; no project opened'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $source='D:\ANOMALIA\FabImports\CitySample'
+          $target='D:\ANOMALIA\unreal'
+          $project=Join-Path $source 'CitySample.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'Installed City Sample source project missing'}
+          if(!(Test-Path -LiteralPath (Join-Path $target 'AnomaliaPrimeval.uproject'))){throw 'ANOMALIA project missing'}
+          $levels=Get-ChildItem -LiteralPath (Join-Path $source 'Content\Building\Library\Kit_Hero_Bldg\LevelInstance') -File -Filter '*Level01.umap'
+          Write-Host ('CITYSAMPLE_INTERIOR_CANDIDATE_LEVELS='+$levels.Count)
+          $targetBuilding=Get-ChildItem -LiteralPath (Join-Path $target 'Content') -Recurse -File -Filter '*.uasset' -ErrorAction SilentlyContinue | Where-Object {$_.FullName -match '(?i)CitySample|Building\\CH\\|Kit_Hero_Bldg'}
+          Write-Host ('TARGET_CITYSAMPLE_BUILDING_ASSETS='+@($targetBuilding).Count)
+          Write-Host ('TARGET_CITYSAMPLE_BUILDING_GIB='+[math]::Round(((@($targetBuilding)|Measure-Object Length -Sum).Sum)/1GB,3))
+          Write-Host ('D_FREE_GIB='+[math]::Round(([IO.DriveInfo]::new('D')).AvailableFreeSpace/1GB,2))
+          $out=Join-Path $env:RUNNER_TEMP 'citysample-interior-report.json'
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_citysample_interiors.py'
+          $code=@'
+          import json, os, re
+          from pathlib import Path
+          import unreal
+          folder="/Game/Building/Library/Kit_Hero_Bldg/LevelInstance"
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          assets=[a for a in registry.get_assets_by_path(folder,recursive=False) if str(a.asset_name).endswith("_Level01")]
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          results=[]
+          for asset in assets:
+              package=str(asset.package_name)
+              if not levels.load_level(package):
+                  results.append({"level":package,"error":"load_failed"})
+                  continue
+              rows=[]
+              for actor in actors.get_all_level_actors():
+                  comps=actor.get_components_by_class(unreal.StaticMeshComponent)
+                  for comp in comps:
+                      mesh=comp.get_editor_property("static_mesh")
+                      if not mesh: continue
+                      body=mesh.get_editor_property("body_setup")
+                      agg=body.get_editor_property("agg_geom") if body else None
+                      collision=(len(agg.get_editor_property("box_elems"))+
+                                 len(agg.get_editor_property("sphere_elems"))+
+                                 len(agg.get_editor_property("sphyl_elems"))+
+                                 len(agg.get_editor_property("convex_elems"))) if agg else 0
+                      label=(str(actor.get_actor_label())+" "+mesh.get_name()).lower()
+                      rows.append({"mesh":mesh.get_path_name(),"collisionShapes":collision,
+                                   "doorOrInteriorName":bool(re.search(r"door|interior|floor|stair|room|hall|corridor",label))})
+              results.append({"level":package,"meshComponents":len(rows),
+                              "componentsWithSimpleCollision":sum(x["collisionShapes"]>0 for x in rows),
+                              "doorOrInteriorNamedComponents":sum(x["doorOrInteriorName"] for x in rows),
+                              "sample":rows[:8]})
+          report={"readOnly":True,"levels":results}
+          Path(os.environ["CITYSAMPLE_REPORT"]).write_text(json.dumps(report),encoding="utf-8")
+          unreal.log("CITYSAMPLE_INTERIOR_PREFLIGHT "+json.dumps(report))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $env:CITYSAMPLE_REPORT=$out
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound
+          if($LASTEXITCODE -ne 0){throw "Source Unreal inspection failed with exit $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $out)){throw 'Interior report was not generated'}
+          Write-Host ('CITYSAMPLE_INTERIOR_REPORT='+ (Get-Content -LiteralPath $out -Raw -Encoding UTF8))
