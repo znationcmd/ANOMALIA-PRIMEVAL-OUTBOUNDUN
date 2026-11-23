@@ -1,4 +1,5 @@
 name: Check SKARVIK Hero doorway clearance with player-sized collision capsule
+# No package or map save is issued by this collision sweep.
 on:
   push:
     branches: [ops/native-map-availability-audit]
