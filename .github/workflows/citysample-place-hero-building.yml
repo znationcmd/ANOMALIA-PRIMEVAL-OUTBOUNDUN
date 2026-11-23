@@ -43,6 +43,16 @@ jobs:
           $root='D:\ANOMALIA\unreal'
           $project=Join-Path $root 'AnomaliaPrimeval.uproject'
           $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $src='D:\ANOMALIA\FabImports\CitySample'
+          $hero='Building\Library\Kit_Hero_Bldg\LevelInstance\Bldg_Hero_BlockThreeBuilding_A01.umap'
+          $env:SKARVIK_HERO_SOURCE=Join-Path $src ('Content\'+$hero)
+          $env:SKARVIK_HERO_TARGET=Join-Path $root ('Content\'+$hero)
+          $env:SKARVIK_HERO_SOURCE_EXTERNAL=Join-Path $src ('Content\__ExternalActors__\'+[IO.Path]::ChangeExtension($hero,$null))
+          $env:SKARVIK_HERO_TARGET_EXTERNAL=Join-Path $root ('Content\__ExternalActors__\'+[IO.Path]::ChangeExtension($hero,$null))
+          foreach($name in 'SKARVIK_HERO_SOURCE','SKARVIK_HERO_TARGET','SKARVIK_HERO_SOURCE_EXTERNAL','SKARVIK_HERO_TARGET_EXTERNAL'){
+            if(!(Test-Path -LiteralPath (Get-Item "Env:$name").Value) -and $name -eq 'SKARVIK_HERO_SOURCE'){throw 'Hero source level missing before Unreal start'}
+            Write-Host ($name+'='+(Get-Item "Env:$name").Value)
+          }
           $env:SKARVIK_HERO_REPORT=Join-Path $env:RUNNER_TEMP 'citysample-hero-placement.json'
           $py=Join-Path $env:RUNNER_TEMP 'place_citysample_hero.py'
           $code=@'
