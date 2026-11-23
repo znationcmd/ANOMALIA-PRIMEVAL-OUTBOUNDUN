@@ -23,6 +23,11 @@ jobs:
           $editor = 'C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           if (!(Test-Path -LiteralPath $project) -or !(Test-Path -LiteralPath $editor)) { throw 'Original Unreal project unavailable' }
           if (@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count) { throw 'Existing Unreal session preserved' }
+          $map = Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $backup = Join-Path $root 'Saved\SkarvikCity\CitySampleHeroBuilding\45213837329-1\ANOMALIA_Archipelago_v2.umap.before'
+          if (!(Test-Path -LiteralPath $map) -or !(Test-Path -LiteralPath $backup)) { throw 'The saved City Sample Hero building placement or rollback backup is missing' }
+          if ((Get-Item -LiteralPath $map).LastWriteTimeUtc -le (Get-Item -LiteralPath $backup).LastWriteTimeUtc) { throw 'The live SKARVIK map does not appear newer than its pre-placement backup' }
+          Write-Output 'SKARVIK_HERO_BUILDING_SAVED_BEFORE_PIE=true'
           $sources = @(Get-ChildItem -LiteralPath (Join-Path $root 'Source') -Filter '*.cpp' -File -Recurse | Where-Object Name -like '*WorldPlayTests*')
           $names = @(foreach ($source in $sources) {
             $match = [regex]::Match((Get-Content -LiteralPath $source.FullName -Raw -Encoding UTF8),'"([A-Za-z0-9.]+\.World\.ArchipelagoPIE)"')
