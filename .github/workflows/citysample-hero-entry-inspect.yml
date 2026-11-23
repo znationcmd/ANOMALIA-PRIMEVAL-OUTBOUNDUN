@@ -1,4 +1,5 @@
 name: Inspect City Sample Hero entrance geometry safely
+# Read-only geometry preflight before any door-entry gameplay check.
 on:
   push:
     branches: [ops/native-map-availability-audit]
