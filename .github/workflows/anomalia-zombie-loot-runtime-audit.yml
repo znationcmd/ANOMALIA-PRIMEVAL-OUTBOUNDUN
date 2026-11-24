@@ -79,3 +79,19 @@ jobs:
           Write-Output ('ANOMALIA_ZOMBIE_ASSET_AUDIT_COUNTS='+($z|Select-Object assetCount,mapZombieDescriptorCount|ConvertTo-Json -Compress))
           foreach($a in $z.zombieRelatedAssets){Write-Output ('ANOMALIA_ZOMBIE_ASSET_CLASS='+($a|ConvertTo-Json -Compress -Depth 5))}
           foreach($a in $z.zombieActorDescriptorsInSkarvik){Write-Output ('ANOMALIA_ZOMBIE_MAP_ACTOR='+($a|ConvertTo-Json -Compress))}
+          $lootHeader=Join-Path $source 'AnomaliaLootSubsystem.h'
+          $lootCpp=Join-Path $source 'AnomaliaLootSubsystem.cpp'
+          foreach($file in @($lootHeader,$lootCpp)){
+            if(!(Test-Path -LiteralPath $file)){throw "Loot runtime source missing: $file"}
+            Write-Output ('ANOMALIA_LOOT_SOURCE_FILE='+$file)
+            if($file -eq $lootHeader){Get-Content -LiteralPath $file|ForEach-Object {Write-Output ('ANOMALIA_LOOT_HEADER='+$_)}}
+            else{
+              Select-String -LiteralPath $file -Pattern '::Tick\(|::SyncActors\(|::TryCollect\(' -Context 0,45 |
+                ForEach-Object {Write-Output ('ANOMALIA_LOOT_CPP='+$_.Line);foreach($x in $_.Context.PostContext){Write-Output ('ANOMALIA_LOOT_CPP='+$x)}}
+            }
+          }
+          $catalog=Join-Path $contentRoot 'Anomalia\Data\loot_items_catalog.json'
+          if(Test-Path -LiteralPath $catalog){
+            $json=Get-Content -LiteralPath $catalog -Raw|ConvertFrom-Json
+            foreach($row in ($json.items|Select-Object -First 40)){Write-Output ('ANOMALIA_LOOT_CATALOG_SAMPLE='+($row|ConvertTo-Json -Compress -Depth 5))}
+          }
