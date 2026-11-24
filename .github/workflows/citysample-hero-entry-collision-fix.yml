@@ -76,8 +76,8 @@ jobs:
                         if c.get_editor_property("static_mesh")][0]
                   actor.modify(True)
                   comp.modify(True)
-                  comp.set_editor_property("collision_profile_name","NoCollision")
-                  comp.set_editor_property("collision_enabled",unreal.CollisionEnabled.NO_COLLISION)
+                  comp.set_collision_profile_name("NoCollision",True)
+                  comp.set_collision_enabled(unreal.CollisionEnabled.NO_COLLISION)
               if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
                   raise RuntimeError("Failed to save the two doorway collision overrides")
           except Exception:
@@ -95,8 +95,8 @@ jobs:
                      if c.get_editor_property("static_mesh")]
               if len(comps)!=1: raise RuntimeError("Doorway mesh component count changed after reload")
               comp=comps[0]
-              enabled=str(comp.get_editor_property("collision_enabled"))
-              profile=str(comp.get_editor_property("collision_profile_name"))
+              enabled=str(comp.get_collision_enabled())
+              profile=str(comp.get_collision_profile_name())
               if "NO_COLLISION" not in enabled.upper() and "NO COLLISION" not in enabled.upper():
                   raise RuntimeError(f"NoCollision did not persist on {label}: {enabled}")
               verified.append({"label":label,"mesh":comps[0].get_editor_property("static_mesh").get_path_name(),
