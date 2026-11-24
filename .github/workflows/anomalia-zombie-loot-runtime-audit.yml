@@ -39,3 +39,43 @@ jobs:
           $data=@(Get-ChildItem -LiteralPath $contentRoot -Recurse -File -Filter '*loot*.json' -ErrorAction SilentlyContinue)
           Write-Output ('ANOMALIA_LOOT_JSON_FILES='+$data.Count)
           foreach($d in $data){Write-Output ('ANOMALIA_LOOT_JSON='+$d.FullName)}
+          $actorCode=@($files|Select-String -Pattern '(?i)class\s+\w+\s*:\s*public\s+A(Character|Pawn|Actor|AIController)|SpawnAIFromClass|SpawnDefaultController|OnDestroyed|SetLifeSpan')
+          foreach($m in $actorCode){$line=($m.Line.Trim() -replace '\s+',' ');Write-Output ('ANOMALIA_ACTOR_LIFECYCLE_CODE='+$m.Path+':'+$m.LineNumber+':'+$line)}
+          $env:ANOMALIA_ZOMBIE_ASSET_REPORT=Join-Path $env:RUNNER_TEMP 'anomalia-zombie-asset-audit.json'
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_anomalia_zombie_assets.py'
+          $python=@'
+          import json, os
+          from pathlib import Path
+          import unreal
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          rows=[]
+          for folder in ("/Game/ZombieFemale","/Game/Anomalia/SketchfabNov21"):
+              for a in registry.get_assets_by_path(folder,recursive=True):
+                  name=str(getattr(a,"asset_name",""))
+                  package=str(getattr(a,"package_name",""))
+                  cls=str(getattr(a,"asset_class_path",getattr(a,"asset_class","")))
+                  if folder.endswith("ZombieFemale") or "zombie" in (name+" "+package+" "+cls).lower():
+                      rows.append({"name":name,"package":package,"class":cls})
+          package="/Game/Maps/ANOMALIA_Archipelago_v2"
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          if not levels.load_level(package): raise RuntimeError("Could not inspect the saved SKARVIK map")
+          wp=unreal.WorldPartitionBlueprintLibrary
+          descs=wp.get_actor_descs() or []
+          actors=[{"label":str(d.label),"class":str(d.native_class.get_name())}
+                  for d in descs if any(k in str(d.label).lower() for k in ("zombie","infected"))]
+          result={"zombieRelatedAssets":rows,"zombieActorDescriptorsInSkarvik":actors,
+                  "assetCount":len(rows),"mapZombieDescriptorCount":len(actors),"readOnly":True}
+          Path(os.environ["ANOMALIA_ZOMBIE_ASSET_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("ANOMALIA_ZOMBIE_ASSET_AUDIT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$python,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $env:RUNNER_TEMP 'anomalia-zombie-asset-audit.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 80};throw "Zombie asset audit failed: $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $env:ANOMALIA_ZOMBIE_ASSET_REPORT)){throw 'Zombie asset audit receipt missing'}
+          $z=Get-Content -LiteralPath $env:ANOMALIA_ZOMBIE_ASSET_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Output ('ANOMALIA_ZOMBIE_ASSET_AUDIT_COUNTS='+($z|Select-Object assetCount,mapZombieDescriptorCount|ConvertTo-Json -Compress))
+          foreach($a in $z.zombieRelatedAssets){Write-Output ('ANOMALIA_ZOMBIE_ASSET_CLASS='+($a|ConvertTo-Json -Compress -Depth 5))}
+          foreach($a in $z.zombieActorDescriptorsInSkarvik){Write-Output ('ANOMALIA_ZOMBIE_MAP_ACTOR='+($a|ConvertTo-Json -Compress))}
