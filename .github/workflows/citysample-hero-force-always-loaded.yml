@@ -1,0 +1,85 @@
+name: Keep the placed Hero building available in SKARVIK runtime
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-hero-force-always-loaded.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  runtime:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - name: Back up SKARVIK and make only the pilot Hero building always loaded
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $external=Join-Path $root 'Content\__ExternalActors__\Maps\ANOMALIA_Archipelago_v2'
+          $backup=Join-Path $root ('Saved\SkarvikCity\CitySampleHeroBuilding\RuntimeLoadBackup\'+$env:GITHUB_RUN_ID)
+          if(!(Test-Path $project) -or !(Test-Path $map)){throw 'Original project or live SKARVIK map missing'}
+          $free=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          $externalBytes=0
+          if(Test-Path $external){$externalBytes=(Get-ChildItem -LiteralPath $external -File -Recurse|Measure-Object Length -Sum).Sum}
+          Write-Output ('RUNTIME_FLAG_BACKUP_BYTES='+$externalBytes)
+          Write-Output ('RUNTIME_FLAG_FREE_GIB_BEFORE='+[math]::Round($free/1GB,2))
+          if($free -lt ($externalBytes+3GB)){throw 'Not enough D: space for a complete rollback copy and 3 GiB reserve'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item -LiteralPath $map -Destination (Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before')
+          if(Test-Path $external){Copy-Item -LiteralPath $external -Destination (Join-Path $backup '__ExternalActors__') -Recurse}
+          $env:SKARVIK_RUNTIME_FLAG_REPORT=Join-Path $env:RUNNER_TEMP 'hero-runtime-flags.json'
+          $py=Join-Path $env:RUNNER_TEMP 'set_hero_always_loaded.py'
+          $code=@'
+          import json, os, shutil
+          from pathlib import Path
+          import unreal
+          root=Path(r"D:\ANOMALIA\unreal")
+          map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          if not levels.load_level(map_pkg): raise RuntimeError("Could not load saved SKARVIK map")
+          descs=wp.get_actor_descs() or []
+          selected=[d for d in descs if str(d.label).startswith(prefix)]
+          if len(selected)!=98: raise RuntimeError("Expected exactly 98 saved Hero pieces; found "+str(len(selected)))
+          if any(not bool(d.is_spatially_loaded) for d in selected):
+              raise RuntimeError("Unexpected partially configured Hero actor group; refusing mixed-state edit")
+          wp.load_actors([d.guid for d in selected])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          missing=[str(d.label) for d in selected if str(d.label) not in loaded]
+          if missing: raise RuntimeError("Cannot load all Hero actors for flag edit: "+str(missing[:5]))
+          for d in selected:
+              loaded[str(d.label)].set_editor_property("is_spatially_loaded",False)
+          if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+              raise RuntimeError("Could not save always-loaded Hero actor flags")
+          if not levels.load_level(map_pkg): raise RuntimeError("Could not reopen SKARVIK after flag save")
+          after=[d for d in (wp.get_actor_descs() or []) if str(d.label).startswith(prefix)]
+          if len(after)!=98 or any(bool(d.is_spatially_loaded) for d in after):
+              raise RuntimeError("Reopened map did not retain all 98 always-loaded flags")
+          result={"state":"HERO_PIECES_SAVED_ALWAYS_LOADED","map":map_pkg,
+            "changedActorCount":len(after),"spatiallyLoadedCount":sum(bool(d.is_spatially_loaded) for d in after),
+            "backup":os.environ["SKARVIK_RUNTIME_FLAG_BACKUP"]}
+          Path(os.environ["SKARVIK_RUNTIME_FLAG_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("HERO_RUNTIME_FLAGS_RECEIPT "+json.dumps(result))
+          '@
+          $env:SKARVIK_RUNTIME_FLAG_BACKUP=$backup
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path $editor)){throw 'UE 5.8 editor unavailable'}
+          $log=Join-Path $env:RUNNER_TEMP 'hero-runtime-flags.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 100};throw "Could not save always-loaded flags: $LASTEXITCODE"}
+          if(!(Test-Path $env:SKARVIK_RUNTIME_FLAG_REPORT)){if(Test-Path $log){Get-Content $log -Tail 100};throw 'Runtime flag receipt missing'}
+          $r=Get-Content $env:SKARVIK_RUNTIME_FLAG_REPORT -Raw|ConvertFrom-Json
+          Write-Output ('HERO_RUNTIME_FLAGS_STATE='+$r.state)
+          Write-Output ('HERO_RUNTIME_FLAGS_ACTORS='+$r.changedActorCount)
+          Write-Output ('HERO_RUNTIME_FLAGS_SPATIALLY_LOADED='+$r.spatiallyLoadedCount)
+          Write-Output ('HERO_RUNTIME_FLAGS_BACKUP='+$r.backup)
+          if($r.state -ne 'HERO_PIECES_SAVED_ALWAYS_LOADED' -or $r.changedActorCount -ne 98 -or $r.spatiallyLoadedCount -ne 0){throw 'Always-loaded runtime verification failed'}
