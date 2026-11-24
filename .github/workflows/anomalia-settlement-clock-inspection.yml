@@ -1,0 +1,32 @@
+name: Inspect ANOMALIA settlement coordinates and world clock
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-settlement-clock-inspection.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-settlement-clock:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect location labels, authored settlement points and clock source
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $src='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          $all=@(Get-ChildItem -LiteralPath $src -Recurse -File|Where-Object {$_.Extension -in '.h','.cpp'})
+          $p='(?i)Sites\s*=|struct\s+.*(Site|Settlement|Region)|Settlement|VillageNames|CityNames|TownNames|TimeOfDay|DayLength|NightLength|ClockHour|WorldClock|HourOfDay|DateTime::Now|GetTimeSeconds|GetRealTimeSeconds|GetServerWorldTimeSeconds'
+          foreach($m in ($all|Select-String -Pattern $p -Context 3,6)){
+            if($m.Path -match '(?i)(Inhabited|World|Height|City|GameMode|Clock|Time|Definition)'){
+              Write-Output ('ANOMALIA_CLOCK_LOCATION_SOURCE='+[IO.Path]::GetFileName($m.Path)+':'+$m.LineNumber+':'+$m.Line.Trim())
+              foreach($x in $m.Context.PreContext){Write-Output ('ANOMALIA_CLOCK_LOCATION_CONTEXT='+$x.Trim())}
+              foreach($x in $m.Context.PostContext){Write-Output ('ANOMALIA_CLOCK_LOCATION_CONTEXT='+$x.Trim())}
+            }
+          }
+          $data='D:\ANOMALIA\unreal\Content\Anomalia\Data'
+          if(Test-Path $data){Get-ChildItem -LiteralPath $data -Recurse -File|ForEach-Object {Write-Output ('ANOMALIA_WORLD_DATA_FILE='+$_.FullName)}}
