@@ -111,15 +111,19 @@ jobs:
           if spread>250.0:
               raise RuntimeError(f"Ground height varies {spread:.2f} cm across the doorway samples; refusing a blind building shift")
           original=[]
+          before_bounds={}
           for actor in hero:
               old=actor.get_actor_location()
               original.append((actor,old))
+              before_bounds[actor.get_actor_label()]=old.z
           changed=0
           try:
               for actor,old in original:
+                  actor.modify(True)
                   target=unreal.Vector(old.x,old.y,old.z+delta)
                   if not actor.set_actor_location(target,False,False):
                       raise RuntimeError("Could not move Hero actor "+actor.get_actor_label())
+                  actor.mark_package_dirty()
                   changed+=1
               if changed!=expected_count:
                   raise RuntimeError(f"Moved {changed} Hero actors, expected 98")
@@ -140,7 +144,11 @@ jobs:
           for suffix in ("003","004"):
               d=after.get(prefix+suffix)
               if d is None: raise RuntimeError("Post-save ground-floor doorway missing")
-              after_doors.append({"label":prefix+suffix,"bounds":str(d.bounds)})
+              expected_z=before_bounds[prefix+suffix]+delta
+              actual_z=float(d.bounds.min.z)
+              if abs(actual_z-expected_z)>2.0:
+                  raise RuntimeError(f"Post-save doorway {suffix} did not retain ground adjustment: expected minZ {expected_z:.2f}, got {actual_z:.2f}")
+              after_doors.append({"label":prefix+suffix,"boundsMinZ":actual_z,"expectedMinZ":expected_z,"bounds":str(d.bounds)})
           result={"state":"HERO_BUILDING_GROUNDED_ON_SKARVIK_LANDSCAPE","map":map_pkg,
                   "actorsMoved":changed,"groundSamples":rows,"terrainMedianZ":ground,
                   "thresholdBeforeZ":threshold,"appliedDeltaZ":delta,
