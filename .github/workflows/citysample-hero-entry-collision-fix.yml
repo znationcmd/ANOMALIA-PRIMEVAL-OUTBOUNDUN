@@ -42,7 +42,7 @@ jobs:
 
           map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
           prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
-          labels=[prefix+"003",prefix+"004"]
+          labels=[prefix+"000",prefix+"001",prefix+"003",prefix+"004",prefix+"006",prefix+"007"]
           levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
           actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
           wp=unreal.WorldPartitionBlueprintLibrary
@@ -101,8 +101,8 @@ jobs:
                   raise RuntimeError(f"NoCollision did not persist on {label}: {enabled}")
               verified.append({"label":label,"mesh":comps[0].get_editor_property("static_mesh").get_path_name(),
                                "collisionEnabled":enabled,"profile":profile})
-          result={"state":"TWO_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED",
-                  "map":map_pkg,"changedActors":2,"before":rows,"afterReload":verified}
+          result={"state":"SIX_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED",
+                  "map":map_pkg,"changedActors":6,"before":rows,"afterReload":verified}
           Path(os.environ["ENTRY_COLLISION_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
           unreal.log("HERO_ENTRY_COLLISION_FIX_RECEIPT "+json.dumps(result))
           '@
@@ -127,7 +127,7 @@ jobs:
           $result=Get-Content $env:ENTRY_COLLISION_REPORT -Raw|ConvertFrom-Json
           Write-Output ('ENTRY_COLLISION_FIX_STATE='+$result.state)
           Write-Output ('ENTRY_COLLISION_FIX_TARGETS='+($result.afterReload|ConvertTo-Json -Compress -Depth 6))
-          if($result.state -ne 'TWO_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED' -or $result.changedActors -ne 2 -or @($result.afterReload).Count -ne 2){
+          if($result.state -ne 'SIX_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED' -or $result.changedActors -ne 6 -or @($result.afterReload).Count -ne 6){
             & $restore
             throw 'Post-save collision receipt invalid; original map restored'
           }
