@@ -1,0 +1,157 @@
+name: Test actual survivor passage through saved City Sample doorway
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-hero-doorway-pie-test.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  doorway-pie:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - name: Compile and run isolated live-pawn doorway traversal test
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $source=Join-Path $root 'Source\AnomaliaPrimeval\Tests\AnomaliaWorldPlayTests.cpp'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $backupDir=Join-Path $root ('Saved\SkarvikCity\CitySampleHeroBuilding\DoorwayTest\'+$env:GITHUB_RUN_ID)
+          $backup=Join-Path $backupDir 'AnomaliaWorldPlayTests.cpp.before'
+          if(!(Test-Path $project) -or !(Test-Path $source) -or !(Test-Path $build) -or !(Test-Path $editor)){throw 'Project, test source, or UE 5.8 build tools missing'}
+          $free=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          Write-Output ('DOORWAY_TEST_D_FREE_GIB='+[math]::Round($free/1GB,2))
+          if($free -lt 6GB){throw 'D drive below 6 GiB safety reserve for editor build'}
+          New-Item -ItemType Directory -Path $backupDir -Force|Out-Null
+          Copy-Item -LiteralPath $source -Destination $backup
+          $patched=$false
+          $testPassed=$false
+          $work=Join-Path $env:GITHUB_WORKSPACE ('citysample-doorway-pie-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $work -Force|Out-Null
+          try{
+            $text=[IO.File]::ReadAllText($source)
+            if($text.Contains('Anomalia.World.CitySampleHeroDoorwayPIE')){throw 'Doorway PIE test already exists; refusing duplicate source edit'}
+            $nl=[Environment]::NewLine
+            $includeAnchor='#include "Editor.h"'
+            if(!$text.Contains($includeAnchor)){throw 'Expected editor include not found in native PIE test source'}
+            $text=$text.Replace($includeAnchor,$includeAnchor+$nl+'#include "Engine/StaticMeshActor.h"'+$nl+'#include "EngineUtils.h"')
+            $testCode=@'
+          IMPLEMENT_SIMPLE_AUTOMATION_TEST(FAnomaliaCitySampleHeroDoorwayTest,"Anomalia.World.CitySampleHeroDoorwayPIE",
+            EAutomationTestFlags::EditorContext | EAutomationTestFlags::EngineFilter)
+          bool FAnomaliaCitySampleHeroDoorwayTest::RunTest(const FString& Parameters)
+          {
+            const FString MapFile=FPaths::ProjectContentDir()/TEXT("Maps/ANOMALIA_Archipelago_v2.umap");
+            if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Saved SKARVIK map is missing"));return false;}
+            if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open saved SKARVIK"));return false;}
+            ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
+            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; double MoveStart=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
+            TSharedRef<FDoorProbe> Probe=MakeShared<FDoorProbe>();
+            ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
+            {
+              if(FPlatformTime::Seconds()>Probe->Deadline){AddError(TEXT("Timed out waiting for saved City Sample doorway traversal"));return true;}
+              UWorld* World=GEditor ? GEditor->PlayWorld : nullptr;
+              if(!World || !World->HasBegunPlay())return false;
+              APlayerController* PC=UGameplayStatics::GetPlayerController(World,0);
+              AAnomaliaSurvivor* Pawn=PC ? Cast<AAnomaliaSurvivor>(PC->GetPawn()) : nullptr;
+              if(!Pawn)return false;
+              if(!Probe->Teleported){
+                Pawn->GetCharacterMovement()->DisableMovement();
+                const FVector PreloadPoint(1472717.8,-1316930.1,7334.8);
+                Pawn->SetActorLocation(PreloadPoint,false,nullptr,ETeleportType::TeleportPhysics);
+                Probe->Teleported=true;
+                Probe->Deadline=FPlatformTime::Seconds()+90;
+                AddInfo(TEXT("PIE survivor moved to the saved Hero building entrance test area"));
+                return false;
+              }
+              AStaticMeshActor* Entrance=nullptr;
+              for(TActorIterator<AStaticMeshActor> It(World);It;++It){
+                AStaticMeshActor* Candidate=*It;
+                if(!Candidate)continue;
+                const FString Label=Candidate->GetActorLabel();
+                if(Label==TEXT("SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_003") ||
+                   Label==TEXT("SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_004")){
+                  Entrance=Candidate;break;
+                }
+              }
+              if(!Entrance)return false;
+              if(!Probe->Started){
+                UStaticMeshComponent* MeshComponent=Entrance->GetStaticMeshComponent();
+                UStaticMesh* Mesh=MeshComponent ? MeshComponent->GetStaticMesh() : nullptr;
+                if(!Mesh || !Mesh->GetName().Contains(TEXT("SM_BLDG_CHC_L01_A_Entrance_01_N1"))){
+                  AddError(TEXT("Loaded PIE doorway actor does not match the installed City Sample entrance mesh"));return true;
+                }
+                Probe->Center=Entrance->GetActorTransform().TransformPosition(FVector(0.f,-475.45f,0.f));
+                Probe->Normal=Entrance->GetActorForwardVector().GetSafeNormal2D();
+                const FVector Start=Probe->Center-Probe->Normal*350.f+FVector(0,0,100.f);
+                if(!Pawn->SetActorLocation(Start,false,nullptr,ETeleportType::TeleportPhysics)){
+                  AddError(TEXT("Could not position isolated PIE survivor at the doorway approach"));return true;
+                }
+                Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+                Probe->Started=true;
+                Probe->MoveStart=FPlatformTime::Seconds();
+                AddInfo(FString::Printf(TEXT("Actual PIE survivor approaching saved entrance %s at %s"),*Entrance->GetActorLabel(),*Probe->Center.ToString()));
+                return false;
+              }
+              const FVector Position=Pawn->GetActorLocation();
+              const double SignedDistance=FVector::DotProduct(Position-Probe->Center,Probe->Normal);
+              if(SignedDistance>=150.f){
+                TestTrue(TEXT("Native survivor crossed the saved City Sample doorway plane"),SignedDistance>=150.f);
+                TestTrue(TEXT("Native survivor remains grounded after doorway traversal"),Pawn->GetCharacterMovement()->IsMovingOnGround());
+                AddInfo(FString::Printf(TEXT("Actual PIE survivor crossed City Sample doorway; signed distance %.1f cm"),SignedDistance));
+                return true;
+              }
+              if(FPlatformTime::Seconds()-Probe->MoveStart>12.0){
+                AddError(FString::Printf(TEXT("Native survivor did not clear doorway; signed distance %.1f cm, position %s"),SignedDistance,*Position.ToString()));return true;
+              }
+              Pawn->AddMovementInput(Probe->Normal,1.f);
+              return false;
+            }));
+            ADD_LATENT_AUTOMATION_COMMAND(FEndPlayMapCommand());
+            return true;
+          }
+          '@
+            $insertAt=$text.LastIndexOf($nl+'#endif')
+            if($insertAt -lt 0){$insertAt=$text.LastIndexOf('#endif')}
+            if($insertAt -lt 0){throw 'Could not locate the native test preprocessor terminator'}
+            $text=$text.Insert($insertAt,$nl+$testCode+$nl)
+            [IO.File]::WriteAllText($source,$text,[Text.UTF8Encoding]::new($false))
+            $patched=$true
+            $buildLog=Join-Path $work 'build.log'
+            & $build 'AnomaliaPrimevalEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2' 2>&1 | Tee-Object -FilePath $buildLog
+            if($LASTEXITCODE -ne 0){throw "AnomaliaPrimevalEditor build failed: $LASTEXITCODE"}
+            $report=Join-Path $work 'report'
+            New-Item -ItemType Directory -Path $report -Force|Out-Null
+            $gameLog=Join-Path $work 'doorway-pie.log'
+            & $editor $project '-unattended' '-nopause' '-nosound' '-NullRHI' '-ExecCmds=Automation RunTests Anomalia.World.CitySampleHeroDoorwayPIE' '-TestExit=Automation Test Queue Empty' "-ReportExportPath=$report" "-abslog=$gameLog"
+            $exitCode=$LASTEXITCODE
+            $receipt=Join-Path $report 'index.json'
+            if(!(Test-Path $receipt)){if(Test-Path $gameLog){Get-Content $gameLog -Tail 100};throw "Doorway PIE report missing (exit $exitCode)"}
+            $result=Get-Content $receipt -Raw -Encoding UTF8|ConvertFrom-Json
+            $case=@($result.tests|Where-Object fullTestPath -eq 'Anomalia.World.CitySampleHeroDoorwayPIE')
+            Write-Output ('CITYSAMPLE_HERO_DOOR_PIE_RESULT='+($case|ConvertTo-Json -Compress -Depth 12))
+            if($exitCode -ne 0 -or $case.Count -ne 1 -or $case[0].state -ne 'Success'){throw 'Native survivor did not pass the actual doorway traversal test'}
+            $testPassed=$true
+          }finally{
+            if($patched -and !$testPassed){
+              Copy-Item -LiteralPath $backup -Destination $source -Force
+              $restoreLog=Join-Path $work 'restore-build.log'
+              & $build 'AnomaliaPrimevalEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2' 2>&1 | Tee-Object -FilePath $restoreLog
+              if($LASTEXITCODE -ne 0){Write-Output 'WARNING: Original test source restored but its editor module rebuild failed'}
+              else{Write-Output 'ORIGINAL_NATIVE_TEST_SOURCE_AND_EDITOR_MODULE_RESTORED=true'}
+            }
+          }
+          if(!$testPassed){throw 'Doorway PIE verification did not pass; original test source restored'}
+      - name: Upload door traversal report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: citysample-hero-doorway-pie
+          path: citysample-doorway-pie-*/
+          if-no-files-found: warn
