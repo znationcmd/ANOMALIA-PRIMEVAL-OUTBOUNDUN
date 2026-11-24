@@ -1,0 +1,179 @@
+name: Align installed City Sample Hero building with SKARVIK ground
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-align-hero-building-to-ground.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  align:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Back up the live map and align only the 98 Hero building actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner; no map opened'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\\ANOMALIA\\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\\Maps\\ANOMALIA_Archipelago_v2.umap'
+          $external=Join-Path $root 'Content\\__ExternalActors__\\Maps\\ANOMALIA_Archipelago_v2'
+          $backup=Join-Path $root ('Saved\\SkarvikCity\\CitySampleHeroBuilding\\GroundAlignment\\'+$env:GITHUB_RUN_ID+'-'+$env:GITHUB_RUN_ATTEMPT)
+          $editor=Join-Path $env:UE_ROOT 'Engine\\Binaries\\Win64\\UnrealEditor-Cmd.exe'
+          if(!(Test-Path $project) -or !(Test-Path $map) -or !(Test-Path $editor)){throw 'ANOMALIA map or UE 5.8 editor missing'}
+          if(Test-Path $backup){throw 'Ground-alignment backup path already exists'}
+          $free=([IO.DriveInfo]::new('D')).AvailableFreeSpace
+          Write-Output ('GROUND_ALIGN_D_FREE_GIB='+[math]::Round($free/1GB,2))
+          if($free -lt 3GB){throw 'D drive below 3 GiB safety reserve'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item -LiteralPath $map -Destination (Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before')
+          if(Test-Path $external){Copy-Item -LiteralPath $external -Destination (Join-Path $backup '__ExternalActors__') -Recurse}
+          $backupMap=Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before'
+          if(!(Test-Path $backupMap)){throw 'Fresh map rollback backup verification failed'}
+          Write-Output ('GROUND_ALIGN_BACKUP='+$backup)
+          $env:HERO_GROUND_ALIGN_REPORT=Join-Path $env:RUNNER_TEMP 'hero-ground-alignment.json'
+          $py=Join-Path $env:RUNNER_TEMP 'align_citysample_hero_ground.py'
+          $code=@'
+          import json, math, os, statistics
+          from pathlib import Path
+          import unreal
+
+          root=Path(r"D:\ANOMALIA\unreal")
+          map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
+          expected_count=98
+          wp=unreal.WorldPartitionBlueprintLibrary
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actor_subsystem=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          if not levels.load_level(map_pkg):
+              raise RuntimeError("Could not load saved SKARVIK")
+          descs=wp.get_actor_descs() or []
+          selected={str(d.label):d for d in descs if str(d.label).startswith(prefix)}
+          if len(selected)!=expected_count:
+              raise RuntimeError(f"Expected 98 saved Hero actors, found {len(selected)}")
+          for suffix in ("003","004"):
+              if prefix+suffix not in selected:
+                  raise RuntimeError("Ground-floor doorway actor "+suffix+" is missing")
+          area=unreal.Box(
+            min=unreal.Vector(min(d.bounds.min.x for d in selected.values())-1000,
+                              min(d.bounds.min.y for d in selected.values())-1000,-500000),
+            max=unreal.Vector(max(d.bounds.max.x for d in selected.values())+1000,
+                              max(d.bounds.max.y for d in selected.values())+1000,900000))
+          terrain_descs=[d for d in (wp.get_intersecting_actor_descs(area) or [])
+                         if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
+          if not terrain_descs:
+              raise RuntimeError("No SKARVIK landscape tile intersects the Hero building")
+          wp.load_actors([d.guid for d in terrain_descs])
+          wp.load_actors([selected[prefix+f"{i:03d}"].guid for i in range(expected_count)])
+          loaded={a.get_actor_label():a for a in actor_subsystem.get_all_level_actors()}
+          hero=[loaded.get(prefix+f"{i:03d}") for i in range(expected_count)]
+          if any(a is None for a in hero):
+              raise RuntimeError("Could not load all 98 Hero building actors")
+          world=unreal.get_editor_subsystem(unreal.UnrealEditorSubsystem).get_editor_world()
+          ignore=[a for a in actor_subsystem.get_all_level_actors() if not isinstance(a,unreal.LandscapeProxy)]
+          def terrain_z(x,y):
+              hit=unreal.SystemLibrary.line_trace_single_by_profile(
+                world,unreal.Vector(x,y,900000),unreal.Vector(x,y,-500000),
+                "BlockAll",True,ignore,unreal.DrawDebugTrace.NONE)
+              if hit is None: return None
+              point=hit.to_tuple()[5]
+              return point.z if point.z>450 else None
+          rows=[]
+          door_z=[]
+          for suffix in ("003","004"):
+              actor=loaded[prefix+suffix]
+              loc=actor.get_actor_location()
+              yaw=math.radians(actor.get_actor_rotation().yaw)
+              nx,ny=math.cos(yaw),math.sin(yaw)
+              sx,sy=-math.sin(yaw),math.cos(yaw)
+              center_x=loc.x-sy*475.45332
+              center_y=loc.y+sx*475.45332
+              door_z.append(loc.z)
+              for along in (-350.0,0.0,350.0):
+                  x=center_x+nx*along
+                  y=center_y+ny*along
+                  z=terrain_z(x,y)
+                  if z is None:
+                      raise RuntimeError(f"No landscape height at doorway {suffix}, offset {along}")
+                  rows.append({"door":suffix,"alongDoorNormal":along,"x":round(x,3),
+                               "y":round(y,3),"terrainZ":round(z,3),"thresholdZ":round(loc.z,3)})
+          ground=statistics.median([r["terrainZ"] for r in rows])
+          threshold=statistics.median(door_z)
+          delta=ground-threshold
+          spread=max(r["terrainZ"] for r in rows)-min(r["terrainZ"] for r in rows)
+          unreal.log(f"HERO_GROUND_MEASURE groundZ={ground:.3f} thresholdZ={threshold:.3f} deltaZ={delta:.3f} spread={spread:.3f} samples={json.dumps(rows)}")
+          if not (-250.0 < delta < -40.0):
+              raise RuntimeError(f"Measured vertical mismatch {delta:.2f} cm is outside safe correction range; no actors changed")
+          if spread>250.0:
+              raise RuntimeError(f"Ground height varies {spread:.2f} cm across the doorway samples; refusing a blind building shift")
+          original=[]
+          for actor in hero:
+              old=actor.get_actor_location()
+              original.append((actor,old))
+          changed=0
+          try:
+              for actor,old in original:
+                  target=unreal.Vector(old.x,old.y,old.z+delta)
+                  if not actor.set_actor_location(target,False):
+                      raise RuntimeError("Could not move Hero actor "+actor.get_actor_label())
+                  changed+=1
+              if changed!=expected_count:
+                  raise RuntimeError(f"Moved {changed} Hero actors, expected 98")
+              if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+                  raise RuntimeError("Could not save ground-aligned Hero actors")
+          except Exception:
+              for actor,old in original:
+                  actor.set_actor_location(old,False)
+              levels.save_all_dirty_levels()
+              unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True)
+              raise
+          if not levels.load_level(map_pkg):
+              raise RuntimeError("Could not reopen aligned SKARVIK")
+          after={str(d.label):d for d in (wp.get_actor_descs() or []) if str(d.label).startswith(prefix)}
+          if len(after)!=expected_count:
+              raise RuntimeError("Post-save Hero actor count changed")
+          after_doors=[]
+          for suffix in ("003","004"):
+              d=after.get(prefix+suffix)
+              if d is None: raise RuntimeError("Post-save ground-floor doorway missing")
+              after_doors.append({"label":prefix+suffix,"bounds":str(d.bounds)})
+          result={"state":"HERO_BUILDING_GROUNDED_ON_SKARVIK_LANDSCAPE","map":map_pkg,
+                  "actorsMoved":changed,"groundSamples":rows,"terrainMedianZ":ground,
+                  "thresholdBeforeZ":threshold,"appliedDeltaZ":delta,
+                  "terrainSampleSpreadCm":spread,"postSaveDoorDescriptors":after_doors}
+          Path(os.environ["HERO_GROUND_ALIGN_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("HERO_GROUND_ALIGNMENT_RECEIPT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $log=Join-Path $env:RUNNER_TEMP 'hero-ground-alignment.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          $exitCode=$LASTEXITCODE
+          $receipt=Join-Path $env:RUNNER_TEMP 'hero-ground-alignment.json'
+          $restore={
+            $savedMap=Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before'
+            Copy-Item -LiteralPath $savedMap -Destination $map -Force
+            $savedExternal=Join-Path $backup '__ExternalActors__'
+            if(Test-Path $savedExternal){
+              if(Test-Path $external){Remove-Item -LiteralPath $external -Recurse -Force}
+              Copy-Item -LiteralPath $savedExternal -Destination $external -Recurse
+            }
+            Write-Output 'GROUND_ALIGN_ROLLBACK_RESTORED=true'
+          }
+          if($exitCode -ne 0 -or !(Test-Path $receipt)){
+            if(Test-Path $log){Get-Content $log -Tail 120}
+            & $restore
+            throw "Ground alignment failed in Unreal (exit $exitCode); original map and external actors restored"
+          }
+          $result=Get-Content $receipt -Raw|ConvertFrom-Json
+          Write-Output ('HERO_GROUND_ALIGNMENT_STATE='+$result.state)
+          Write-Output ('HERO_GROUND_ALIGNMENT_ACTORS='+$result.actorsMoved)
+          Write-Output ('HERO_GROUND_ALIGNMENT_DELTA_CM='+[math]::Round($result.appliedDeltaZ,2))
+          Write-Output ('HERO_GROUND_ALIGNMENT_SAMPLES='+($result.groundSamples|ConvertTo-Json -Compress -Depth 8))
+          if($result.state -ne 'HERO_BUILDING_GROUNDED_ON_SKARVIK_LANDSCAPE' -or $result.actorsMoved -ne 98){
+            & $restore
+            throw 'Post-save ground-alignment receipt invalid; original map restored'
+          }
