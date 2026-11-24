@@ -54,7 +54,7 @@ jobs:
             if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Saved SKARVIK map is missing"));return false;}
             if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open saved SKARVIK"));return false;}
             ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
-            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; int32 LaneIndex=0; double LaneStart=0; double LastLookupInfo=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
+            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; int32 LaneIndex=0; double GroundWaitStart=0; double LaneStart=0; double LastLookupInfo=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
             TSharedRef<FDoorProbe> Probe=MakeShared<FDoorProbe>();
             ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
             {
@@ -110,11 +110,22 @@ jobs:
                 Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
                 Probe->Started=true;
                 Probe->LaneIndex=0;
-                Probe->LaneStart=FPlatformTime::Seconds();
-                AddInfo(FString::Printf(TEXT("Actual PIE survivor approaching saved entrance %s at %s; scanning walkable lanes across opening"),*Entrance->GetActorLabel(),*Probe->Center.ToString()));
+                Probe->GroundWaitStart=FPlatformTime::Seconds();
+                Probe->LaneStart=0;
+                AddInfo(FString::Printf(TEXT("Actual PIE survivor positioned at saved entrance %s at %s; waiting for ground collision before walking"),*Entrance->GetActorLabel(),*Probe->Center.ToString()));
                 return false;
               }
               const FVector Position=Pawn->GetActorLocation();
+              UCharacterMovementComponent* Movement=Pawn->GetCharacterMovement();
+              if(!Movement->IsMovingOnGround()){
+                if(FPlatformTime::Seconds()-Probe->GroundWaitStart>8.0){
+                  FHitResult FloorHit;FCollisionQueryParams FloorQuery;FloorQuery.AddIgnoredActor(Pawn);
+                  World->LineTraceSingleByChannel(FloorHit,Position+FVector(0,0,100),Position-FVector(0,0,1200),ECC_Visibility,FloorQuery);
+                  AddError(FString::Printf(TEXT("No grounded PIE survivor at City Sample threshold after 8s; position %s, floor hit actor=%s point=%s"),*Position.ToString(),*GetNameSafe(FloorHit.GetActor()),*FloorHit.ImpactPoint.ToString()));return true;
+                }
+                return false;
+              }
+              if(Probe->LaneStart==0){Probe->LaneStart=FPlatformTime::Seconds();AddInfo(FString::Printf(TEXT("PIE survivor grounded at doorway lane %d; movement test starting from %s"),Probe->LaneIndex,*Position.ToString()));}
               const double SignedDistance=FVector::DotProduct(Position-Probe->Center,Probe->Normal);
               if(SignedDistance>=150.f){
                 TestTrue(TEXT("Native survivor crossed the saved City Sample doorway plane"),SignedDistance>=150.f);
@@ -133,8 +144,9 @@ jobs:
                 if(!Pawn->SetActorLocation(NextStart,false,nullptr,ETeleportType::TeleportPhysics)){
                   AddError(FString::Printf(TEXT("Could not reposition isolated PIE survivor for doorway lane %d"),Probe->LaneIndex));return true;
                 }
-                Probe->LaneStart=FPlatformTime::Seconds();
-                AddInfo(FString::Printf(TEXT("Testing doorway lane %d at lateral offset %.0f cm"),Probe->LaneIndex,Offset));
+                Probe->GroundWaitStart=FPlatformTime::Seconds();
+                Probe->LaneStart=0;
+                AddInfo(FString::Printf(TEXT("Testing doorway lane %d at lateral offset %.0f cm; waiting for ground"),Probe->LaneIndex,Offset));
                 return false;
               }
               Pawn->AddMovementInput(Probe->Normal,1.f);
