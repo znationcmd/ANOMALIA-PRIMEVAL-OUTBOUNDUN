@@ -1,0 +1,36 @@
+name: Restore native gameplay test source after doorway PIE verification
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-restore-doorway-pie-test-source.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  restore-test-source:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Restore the pre-test source backup and rebuild the editor target
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $source=Join-Path $root 'Source\AnomaliaPrimeval\Tests\AnomaliaWorldPlayTests.cpp'
+          $backup=Join-Path $root 'Saved\SkarvikCity\CitySampleHeroBuilding\DoorwayTest\45469179627\AnomaliaWorldPlayTests.cpp.before'
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+          if(!(Test-Path $project) -or !(Test-Path $source) -or !(Test-Path $backup) -or !(Test-Path $build)){throw 'Project, temporary source, backup, or build tool missing'}
+          $original=Get-Content -LiteralPath $backup -Raw -Encoding UTF8
+          if($original.Contains('Anomalia.World.CitySampleHeroDoorwayPIE')){throw 'Source backup already contains temporary doorway test; refusing restore'}
+          Copy-Item -LiteralPath $backup -Destination $source -Force
+          $restored=Get-Content -LiteralPath $source -Raw -Encoding UTF8
+          if($restored.Contains('Anomalia.World.CitySampleHeroDoorwayPIE')){throw 'Temporary doorway test marker remains after restore'}
+          Write-Output 'ORIGINAL_NATIVE_TEST_SOURCE_RESTORED=true'
+          $buildLog=Join-Path $env:RUNNER_TEMP 'restore-doorway-test-source-build.log'
+          & $build 'AnomaliaPrimevalEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex' '-NoHotReloadFromIDE' '-MaxParallelActions=2' 2>&1 | Tee-Object -FilePath $buildLog
+          if($LASTEXITCODE -ne 0){throw "Editor module build failed after restoring original test source: $LASTEXITCODE"}
+          Write-Output 'ORIGINAL_EDITOR_MODULE_REBUILT=true'
