@@ -118,7 +118,7 @@ jobs:
           try:
               for actor,old in original:
                   target=unreal.Vector(old.x,old.y,old.z+delta)
-                  if not actor.set_actor_location(target,False):
+                  if not actor.set_actor_location(target,False,False):
                       raise RuntimeError("Could not move Hero actor "+actor.get_actor_label())
                   changed+=1
               if changed!=expected_count:
@@ -127,7 +127,7 @@ jobs:
                   raise RuntimeError("Could not save ground-aligned Hero actors")
           except Exception:
               for actor,old in original:
-                  actor.set_actor_location(old,False)
+                  actor.set_actor_location(old,False,False)
               levels.save_all_dirty_levels()
               unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True)
               raise
