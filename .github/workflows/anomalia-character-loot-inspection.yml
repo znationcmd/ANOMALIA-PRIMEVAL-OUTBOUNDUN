@@ -1,0 +1,35 @@
+name: Inspect ANOMALIA character inventory and damage interfaces
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-character-loot-inspection.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-character-loot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read native character inventory and combat interfaces
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $src='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          if(!(Test-Path $src)){throw 'Live source folder missing'}
+          $all=@(Get-ChildItem -LiteralPath $src -Recurse -File | Where-Object {$_.Extension -in '.h','.cpp'})
+          Write-Output ('ANOMALIA_SOURCE_FILE_LIST='+(($all|ForEach-Object Name)-join ','))
+          $pick=$all|Where-Object {$_.Name -match '(?i)(survivor|inventory|vendor|npc|ai|weapon|interaction|playerstate|lootpickup|lootsubsystem|gamemode)'}
+          foreach($f in $pick){
+            Write-Output ('ANOMALIA_INTERFACE_FILE='+$f.Name)
+            $lines=Get-Content -LiteralPath $f.FullName
+            if($f.Name -in @('AnomaliaSurvivor.h','AnomaliaInventoryComponent.h','AnomaliaLootPickup.h','AnomaliaLootSubsystem.h')){
+              for($i=0;$i -lt $lines.Count;$i++){Write-Output ('ANOMALIA_INTERFACE='+$f.Name+':'+($i+1)+':'+$lines[$i])}
+            } else {
+              $matches=Select-String -LiteralPath $f.FullName -Pattern '(?i)damage|health|death|inventory|equipment|weapon|condition|durability|jam|steal|cuff|handcuff|loot|interact|vendor|npc|authority|replicat' -Context 2,5
+              foreach($m in $matches){Write-Output ('ANOMALIA_INTERFACE='+$f.Name+':'+$m.LineNumber+':'+$m.Line.Trim());foreach($x in $m.Context.PreContext){Write-Output ('ANOMALIA_CONTEXT='+$x.Trim())};foreach($x in $m.Context.PostContext){Write-Output ('ANOMALIA_CONTEXT='+$x.Trim())}}
+            }
+          }
