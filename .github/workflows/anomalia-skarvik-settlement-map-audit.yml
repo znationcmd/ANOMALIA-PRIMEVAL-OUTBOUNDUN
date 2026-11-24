@@ -1,0 +1,57 @@
+name: Inspect SKARVIK settlement map contents
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-settlement-map-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-settlement-maps:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - name: Inspect candidate settlement maps without saving
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_anomalia_settlement_maps.py'
+          $report=Join-Path $env:RUNNER_TEMP 'anomalia-settlement-maps.json'
+          $env:ANOMALIA_SETTLEMENT_REPORT=$report
+          $python=@'
+          import json, os
+          from pathlib import Path
+          import unreal
+          r=unreal.AssetRegistryHelpers.get_asset_registry();r.wait_for_completion()
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          maps=[]
+          for a in r.get_assets_by_path('/Game/Maps',recursive=False):
+              n=str(a.asset_name)
+              if any(k in n.lower() for k in ('settlement','inhabited','skarvik_city','archipelago')):
+                  maps.append({'name':n,'package':str(a.package_name)})
+          results=[]
+          for m in maps:
+              name=m['name']
+              if 'HLODLayer' in name: continue
+              if not levels.load_level(m['package']):
+                  results.append({'name':name,'loaded':False});continue
+              descs=unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []
+              rows=[]
+              for d in descs:
+                  label=str(d.label);cls=str(d.native_class.get_name())
+                  if any(k in (label+' '+cls).lower() for k in ('city','village','town','settlement','poi','region')):
+                      rows.append({'label':label,'class':cls})
+              results.append({'name':name,'loaded':True,'count':len(rows),'actors':rows[:250]})
+          Path(os.environ['ANOMALIA_SETTLEMENT_REPORT']).write_text(json.dumps(results),encoding='utf-8')
+          unreal.log('ANOMALIA_SETTLEMENT_MAPS_AUDIT '+json.dumps(results))
+          '@
+          [IO.File]::WriteAllText($py,$python,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $env:RUNNER_TEMP 'anomalia-settlement-map-audit.log'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 80};throw "Settlement map audit failed: $LASTEXITCODE"}
+          if(!(Test-Path $report)){throw 'Settlement map audit report missing'}
+          Write-Output ('ANOMALIA_SETTLEMENT_MAPS_RESULT='+[IO.File]::ReadAllText($report))
