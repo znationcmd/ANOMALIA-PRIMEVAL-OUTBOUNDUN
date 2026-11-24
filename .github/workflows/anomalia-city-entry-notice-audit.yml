@@ -1,0 +1,75 @@
+name: Inspect ANOMALIA city entry notices and POI data
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-city-entry-notice-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-city-entry-notices:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read live map naming and location systems
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $src=Join-Path $root 'Source\AnomaliaPrimeval'
+          if(!(Test-Path $src)){throw 'Live ANOMALIA source folder missing'}
+          $files=@(Get-ChildItem -LiteralPath $src -Recurse -File|Where-Object {$_.Extension -in '.h','.cpp'})
+          $patterns='(?i)POI|city|village|town|settlement|region|OnActorBeginOverlap|OnComponentBeginOverlap|Trigger|entered|entered|toast|message|local.?time|game.?time|display.?time'
+          foreach($f in ($files|Where-Object {$_.Name -match '(?i)(world|poi|city|town|village|widget|game.?mode|definition)'})){
+            Write-Output ('ANOMALIA_LOCATION_SOURCE_FILE='+$f.Name)
+            Select-String -LiteralPath $f.FullName -Pattern $patterns -Context 2,4|ForEach-Object {
+              Write-Output ('ANOMALIA_LOCATION_SOURCE='+$f.Name+':'+$_.LineNumber+':'+$_.Line.Trim())
+              foreach($x in $_.Context.PreContext){Write-Output ('ANOMALIA_LOCATION_CONTEXT='+$x.Trim())}
+              foreach($x in $_.Context.PostContext){Write-Output ('ANOMALIA_LOCATION_CONTEXT='+$x.Trim())}
+            }
+          }
+          $data=Join-Path $root 'Content\Anomalia\Data'
+          if(Test-Path $data){
+            $rows=Get-ChildItem -LiteralPath $data -Recurse -File -ErrorAction SilentlyContinue|Where-Object {$_.Name -match '(?i)poi|city|village|town|region|map|world|location'}
+            foreach($f in $rows){Write-Output ('ANOMALIA_LOCATION_DATA_FILE='+$f.FullName)}
+            foreach($f in ($rows|Where-Object {$_.Extension -in '.json','.csv','.ini','.txt'}|Select-Object -First 25)){
+              Write-Output ('ANOMALIA_LOCATION_DATA_SAMPLE='+$f.Name)
+              Get-Content -LiteralPath $f.FullName -TotalCount 15|ForEach-Object {Write-Output ('ANOMALIA_LOCATION_DATA_LINE='+$_)}
+            }
+          }
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_anomalia_city_actor_names.py'
+          $report=Join-Path $env:RUNNER_TEMP 'anomalia-city-actor-audit.json'
+          $env:ANOMALIA_CITY_ACTOR_REPORT=$report
+          $python=@'
+          import json, os
+          import unreal
+          from pathlib import Path
+          registry=unreal.AssetRegistryHelpers.get_asset_registry()
+          registry.wait_for_completion()
+          maps=[]
+          for a in registry.get_assets_by_path('/Game/Maps',recursive=True):
+              cls=str(getattr(a,'asset_class_path',getattr(a,'asset_class','')))
+              if 'World' in cls or 'Level' in cls: maps.append({'name':str(a.asset_name),'package':str(a.package_name),'class':cls})
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          package='/Game/Maps/ANOMALIA_Archipelago_v2'
+          loaded=bool(levels.load_level(package))
+          actors=[]
+          if loaded:
+              for d in (unreal.WorldPartitionBlueprintLibrary.get_actor_descs() or []):
+                  label=str(d.label); cls=str(d.native_class.get_name())
+                  if any(k in (label+' '+cls).lower() for k in ('city','village','town','poi','region','settlement','trigger','volume')):
+                      actors.append({'label':label,'class':cls})
+          result={'maps':maps,'loadedTarget':loaded,'locationActors':actors,'count':len(actors)}
+          Path(os.environ['ANOMALIA_CITY_ACTOR_REPORT']).write_text(json.dumps(result),encoding='utf-8')
+          unreal.log('ANOMALIA_CITY_ACTOR_AUDIT '+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$python,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $env:RUNNER_TEMP 'anomalia-city-actor-audit.log'
+          & $editor (Join-Path $root 'AnomaliaPrimeval.uproject') "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 60};throw "City actor audit failed: $LASTEXITCODE"}
+          if(!(Test-Path $report)){throw 'City actor audit report missing'}
+          Write-Output ('ANOMALIA_CITY_ACTOR_AUDIT='+[IO.File]::ReadAllText($report))
