@@ -1,0 +1,133 @@
+name: Fix only the two blocked City Sample Hero entry pieces
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-hero-entry-collision-fix.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  fix-entry-collision:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Back up map and disable collision only on the two doorway mesh instances
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner; no map opened'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $map=Join-Path $root 'Content\Maps\ANOMALIA_Archipelago_v2.umap'
+          $external=Join-Path $root 'Content\__ExternalActors__\Maps\ANOMALIA_Archipelago_v2'
+          $backup=Join-Path $root ('Saved\SkarvikCity\CitySampleHeroBuilding\EntryCollision\'+$env:GITHUB_RUN_ID+'-'+$env:GITHUB_RUN_ATTEMPT)
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path $project) -or !(Test-Path $map) -or !(Test-Path $editor)){throw 'ANOMALIA project/map/editor missing'}
+          if(Test-Path $backup){throw 'Entry collision rollback backup path already exists'}
+          if(([IO.DriveInfo]::new('D')).AvailableFreeSpace -lt 3GB){throw 'D drive below 3 GiB safety reserve'}
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item -LiteralPath $map -Destination (Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before')
+          if(Test-Path $external){Copy-Item -LiteralPath $external -Destination (Join-Path $backup '__ExternalActors__') -Recurse}
+          $backupMap=Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before'
+          if(!(Test-Path $backupMap)){throw 'Fresh map rollback backup missing'}
+          Write-Output ('ENTRY_COLLISION_BACKUP='+$backup)
+          $env:ENTRY_COLLISION_REPORT=Join-Path $env:RUNNER_TEMP 'hero-entry-collision-fix.json'
+          $py=Join-Path $env:RUNNER_TEMP 'fix_hero_entry_collision.py'
+          $code=@'
+          import json, os
+          from pathlib import Path
+          import unreal
+
+          map_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          prefix="SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_"
+          labels=[prefix+"003",prefix+"004"]
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          if not levels.load_level(map_pkg): raise RuntimeError("Could not open saved SKARVIK map")
+          descs={str(d.label):d for d in (wp.get_actor_descs() or [])}
+          if any(label not in descs for label in labels): raise RuntimeError("One of the two reported doorway actors is missing")
+          wp.load_actors([descs[label].guid for label in labels])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          rows=[]
+          for label in labels:
+              actor=loaded.get(label)
+              if not actor: raise RuntimeError("Could not load exact blocking actor "+label)
+              comps=[c for c in actor.get_components_by_class(unreal.StaticMeshComponent)
+                     if c.get_editor_property("static_mesh")]
+              if len(comps)!=1: raise RuntimeError(f"Expected one mesh component on {label}, found {len(comps)}")
+              comp=comps[0]
+              mesh=comp.get_editor_property("static_mesh")
+              mesh_name=mesh.get_name()
+              if "entrance" not in mesh_name.lower(): raise RuntimeError(f"Refusing non-entrance mesh on {label}: {mesh_name}")
+              old_enabled=str(comp.get_editor_property("collision_enabled"))
+              old_profile=str(comp.get_editor_property("collision_profile_name"))
+              loc=actor.get_actor_location()
+              rows.append({"label":label,"mesh":mesh.get_path_name(),"component":comp.get_name(),
+                           "oldCollisionEnabled":old_enabled,"oldProfile":old_profile,
+                           "location":[loc.x,loc.y,loc.z]})
+          if len(rows)!=2: raise RuntimeError("Exact doorway target verification failed")
+          try:
+              for label in labels:
+                  actor=loaded[label]
+                  comp=[c for c in actor.get_components_by_class(unreal.StaticMeshComponent)
+                        if c.get_editor_property("static_mesh")][0]
+                  actor.modify(True)
+                  comp.modify(True)
+                  comp.set_editor_property("collision_profile_name","NoCollision")
+                  comp.set_editor_property("collision_enabled",unreal.CollisionEnabled.NO_COLLISION)
+              if not levels.save_all_dirty_levels() or not unreal.EditorLoadingAndSavingUtils.save_dirty_packages(True,True):
+                  raise RuntimeError("Failed to save the two doorway collision overrides")
+          except Exception:
+              raise
+          if not levels.load_level(map_pkg): raise RuntimeError("Could not reopen saved SKARVIK map for verification")
+          descs={str(d.label):d for d in (wp.get_actor_descs() or [])}
+          if any(label not in descs for label in labels): raise RuntimeError("Doorway actors missing after save")
+          wp.load_actors([descs[label].guid for label in labels])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          verified=[]
+          for label in labels:
+              actor=loaded.get(label)
+              if not actor: raise RuntimeError("Doorway actor missing after reload: "+label)
+              comps=[c for c in actor.get_components_by_class(unreal.StaticMeshComponent)
+                     if c.get_editor_property("static_mesh")]
+              if len(comps)!=1: raise RuntimeError("Doorway mesh component count changed after reload")
+              comp=comps[0]
+              enabled=str(comp.get_editor_property("collision_enabled"))
+              profile=str(comp.get_editor_property("collision_profile_name"))
+              if "NO_COLLISION" not in enabled.upper() and "NO COLLISION" not in enabled.upper():
+                  raise RuntimeError(f"NoCollision did not persist on {label}: {enabled}")
+              verified.append({"label":label,"mesh":comps[0].get_editor_property("static_mesh").get_path_name(),
+                               "collisionEnabled":enabled,"profile":profile})
+          result={"state":"TWO_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED",
+                  "map":map_pkg,"changedActors":2,"before":rows,"afterReload":verified}
+          Path(os.environ["ENTRY_COLLISION_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("HERO_ENTRY_COLLISION_FIX_RECEIPT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $log=Join-Path $env:RUNNER_TEMP 'hero-entry-collision-fix.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          $exitCode=$LASTEXITCODE
+          $restore={
+            Copy-Item -LiteralPath (Join-Path $backup 'ANOMALIA_Archipelago_v2.umap.before') -Destination $map -Force
+            $savedExternal=Join-Path $backup '__ExternalActors__'
+            if(Test-Path $savedExternal){
+              if(Test-Path $external){Remove-Item -LiteralPath $external -Recurse -Force}
+              Copy-Item -LiteralPath $savedExternal -Destination $external -Recurse
+            }
+            Write-Output 'ENTRY_COLLISION_ROLLBACK_RESTORED=true'
+          }
+          if($exitCode -ne 0 -or !(Test-Path $env:ENTRY_COLLISION_REPORT)){
+            if(Test-Path $log){Get-Content $log -Tail 120}
+            & $restore
+            throw "Targeted Hero entry collision update failed; original map and external actors restored (exit $exitCode)"
+          }
+          $result=Get-Content $env:ENTRY_COLLISION_REPORT -Raw|ConvertFrom-Json
+          Write-Output ('ENTRY_COLLISION_FIX_STATE='+$result.state)
+          Write-Output ('ENTRY_COLLISION_FIX_TARGETS='+($result.afterReload|ConvertTo-Json -Compress -Depth 6))
+          if($result.state -ne 'TWO_HERO_ENTRY_MESH_INSTANCES_NO_COLLISION_SAVED_AND_REOPENED' -or $result.changedActors -ne 2 -or @($result.afterReload).Count -ne 2){
+            & $restore
+            throw 'Post-save collision receipt invalid; original map restored'
+          }
