@@ -27,6 +27,11 @@ jobs:
           $groundAlignBackup=Join-Path $root 'Saved\\SkarvikCity\\CitySampleHeroBuilding\\GroundAlignment\\45461036476-1\\ANOMALIA_Archipelago_v2.umap.before'
           if(!(Test-Path -LiteralPath $groundAlignBackup)){throw 'Ground-aligned Hero actors have no fresh map rollback backup'}
           Write-Output 'HERO_GROUND_ALIGNMENT_BACKUP_PRESENT=true'
+          $entryCollisionBackup=Join-Path $root 'Saved\SkarvikCity\CitySampleHeroBuilding\EntryCollision\45468800045-1'
+          $entryCollisionMapBackup=Join-Path $entryCollisionBackup 'ANOMALIA_Archipelago_v2.umap.before'
+          $entryCollisionExternalBackup=Join-Path $entryCollisionBackup '__ExternalActors__'
+          if(!(Test-Path -LiteralPath $entryCollisionMapBackup)){throw 'Doorway collision change has no fresh rollback map backup'}
+          Write-Output 'HERO_ENTRY_COLLISION_BACKUP_PRESENT=true'
           $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $backupDir=Join-Path $root ('Saved\SkarvikCity\CitySampleHeroBuilding\DoorwayTest\'+$env:GITHUB_RUN_ID)
@@ -195,8 +200,16 @@ jobs:
               if($LASTEXITCODE -ne 0){Write-Output 'WARNING: Original test source restored but its editor module rebuild failed'}
               else{Write-Output 'ORIGINAL_NATIVE_TEST_SOURCE_AND_EDITOR_MODULE_RESTORED=true'}
             }
+            if(!$testPassed){
+              Copy-Item -LiteralPath $entryCollisionMapBackup -Destination $map -Force
+              if(Test-Path -LiteralPath $entryCollisionExternalBackup){
+                if(Test-Path -LiteralPath $external){Remove-Item -LiteralPath $external -Recurse -Force}
+                Copy-Item -LiteralPath $entryCollisionExternalBackup -Destination $external -Recurse
+              }
+              Write-Output 'ENTRY_COLLISION_TEST_FAILED_MAP_ROLLED_BACK=true'
+            }
           }
-          if(!$testPassed){throw 'Doorway PIE verification did not pass; original test source restored'}
+          if(!$testPassed){throw 'Doorway PIE verification did not pass; original test source and collision map restored'}
       - name: Upload door traversal report
         if: always()
         uses: actions/upload-artifact@v4
