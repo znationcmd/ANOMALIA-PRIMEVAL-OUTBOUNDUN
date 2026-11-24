@@ -24,6 +24,9 @@ jobs:
           $runtimeFlagBackup=Join-Path $root 'Saved\SkarvikCity\CitySampleHeroBuilding\RuntimeLoadBackup\45450481402\ANOMALIA_Archipelago_v2.umap.before'
           if(!(Test-Path -LiteralPath $runtimeFlagBackup)){throw 'Always-loaded City Sample runtime change has no rollback backup'}
           Write-Output 'HERO_ALWAYS_LOADED_BACKUP_PRESENT=true'
+          $groundAlignBackup=Join-Path $root 'Saved\\SkarvikCity\\CitySampleHeroBuilding\\GroundAlignment\\45461036476-1\\ANOMALIA_Archipelago_v2.umap.before'
+          if(!(Test-Path -LiteralPath $groundAlignBackup)){throw 'Ground-aligned Hero actors have no fresh map rollback backup'}
+          Write-Output 'HERO_GROUND_ALIGNMENT_BACKUP_PRESENT=true'
           $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
           $backupDir=Join-Path $root ('Saved\SkarvikCity\CitySampleHeroBuilding\DoorwayTest\'+$env:GITHUB_RUN_ID)
