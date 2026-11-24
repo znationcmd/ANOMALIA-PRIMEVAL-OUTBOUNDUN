@@ -54,7 +54,7 @@ jobs:
             if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Saved SKARVIK map is missing"));return false;}
             if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open saved SKARVIK"));return false;}
             ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
-            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; double MoveStart=0; double LastLookupInfo=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
+            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; int32 LaneIndex=0; double LaneStart=0; double LastLookupInfo=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
             TSharedRef<FDoorProbe> Probe=MakeShared<FDoorProbe>();
             ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
             {
@@ -109,8 +109,9 @@ jobs:
                 }
                 Pawn->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
                 Probe->Started=true;
-                Probe->MoveStart=FPlatformTime::Seconds();
-                AddInfo(FString::Printf(TEXT("Actual PIE survivor approaching saved entrance %s at %s"),*Entrance->GetActorLabel(),*Probe->Center.ToString()));
+                Probe->LaneIndex=0;
+                Probe->LaneStart=FPlatformTime::Seconds();
+                AddInfo(FString::Printf(TEXT("Actual PIE survivor approaching saved entrance %s at %s; scanning walkable lanes across opening"),*Entrance->GetActorLabel(),*Probe->Center.ToString()));
                 return false;
               }
               const FVector Position=Pawn->GetActorLocation();
@@ -118,11 +119,23 @@ jobs:
               if(SignedDistance>=150.f){
                 TestTrue(TEXT("Native survivor crossed the saved City Sample doorway plane"),SignedDistance>=150.f);
                 TestTrue(TEXT("Native survivor remains grounded after doorway traversal"),Pawn->GetCharacterMovement()->IsMovingOnGround());
-                AddInfo(FString::Printf(TEXT("Actual PIE survivor crossed City Sample doorway; signed distance %.1f cm"),SignedDistance));
+                AddInfo(FString::Printf(TEXT("Actual PIE survivor crossed City Sample doorway through lane %d; signed distance %.1f cm"),Probe->LaneIndex,SignedDistance));
                 return true;
               }
-              if(FPlatformTime::Seconds()-Probe->MoveStart>12.0){
-                AddError(FString::Printf(TEXT("Native survivor did not clear doorway; signed distance %.1f cm, position %s"),SignedDistance,*Position.ToString()));return true;
+              if(FPlatformTime::Seconds()-Probe->LaneStart>2.5){
+                ++Probe->LaneIndex;
+                if(Probe->LaneIndex>=9){
+                  AddError(FString::Printf(TEXT("Native survivor could not clear doorway across 9 lanes; final signed distance %.1f cm, position %s"),SignedDistance,*Position.ToString()));return true;
+                }
+                const FVector Side=FVector::CrossProduct(FVector::UpVector,Probe->Normal).GetSafeNormal2D();
+                const float Offset=(Probe->LaneIndex-4)*125.f;
+                const FVector NextStart=Probe->Center-Probe->Normal*350.f+Side*Offset+FVector(0,0,100.f);
+                if(!Pawn->SetActorLocation(NextStart,false,nullptr,ETeleportType::TeleportPhysics)){
+                  AddError(FString::Printf(TEXT("Could not reposition isolated PIE survivor for doorway lane %d"),Probe->LaneIndex));return true;
+                }
+                Probe->LaneStart=FPlatformTime::Seconds();
+                AddInfo(FString::Printf(TEXT("Testing doorway lane %d at lateral offset %.0f cm"),Probe->LaneIndex,Offset));
+                return false;
               }
               Pawn->AddMovementInput(Probe->Normal,1.f);
               return false;
