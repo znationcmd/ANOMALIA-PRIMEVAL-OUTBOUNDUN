@@ -79,20 +79,33 @@ jobs:
               a=math.radians(yaw)
               probe_x=loc.x-math.sin(a)*(-475.45332)
               probe_y=loc.y+math.cos(a)*(-475.45332)
-              vertical=unreal.SystemLibrary.line_trace_single_by_profile(
-                world,unreal.Vector(probe_x,probe_y,loc.z+1800.0),
-                unreal.Vector(probe_x,probe_y,loc.z-600.0),"BlockAll",False,[],
-                unreal.DrawDebugTrace.NONE,False)
-              if isinstance(vertical,tuple) and bool(vertical[0]):
-                  vh=vertical[1]
-                  va=vh.get_editor_property("actor")
-                  vp=vh.get_editor_property("impact_point")
-                  floor_probes.append({"actorIndex":item["index"],
-                    "hitActor":va.get_actor_label() if va else "None",
-                    "hitClass":va.get_class().get_name() if va else "None",
-                    "hitPoint":[vp.x,vp.y,vp.z]})
-              else:
-                  floor_probes.append({"actorIndex":item["index"],"hitActor":"NO_HIT"})
+              normal=unreal.Vector(math.cos(a),math.sin(a),0.0)
+              side=unreal.Vector(-math.sin(a),math.cos(a),0.0)
+              area=unreal.Box(min=unreal.Vector(loc.x-900,loc.y-900,-500000),
+                              max=unreal.Vector(loc.x+900,loc.y+900,900000))
+              terrain_descs=[d for d in (wp.get_intersecting_actor_descs(area) or [])
+                             if "LandscapeStreamingProxy" in str(d.native_class.get_name())]
+              if terrain_descs:
+                  wp.load_actors([d.guid for d in terrain_descs])
+              for lane in [-350.0,0.0,350.0]:
+                  qx=probe_x+normal.x*lane
+                  qy=probe_y+normal.y*lane
+                  vertical=unreal.SystemLibrary.line_trace_single_by_profile(
+                    world,unreal.Vector(qx,qy,loc.z+1800.0),
+                    unreal.Vector(qx,qy,loc.z-600.0),"BlockAll",False,[],
+                    unreal.DrawDebugTrace.NONE,False)
+                  if isinstance(vertical,tuple) and bool(vertical[0]):
+                      vh=vertical[1]
+                      va=vh.get_editor_property("actor")
+                      vp=vh.get_editor_property("impact_point")
+                      floor_probes.append({"actorIndex":item["index"],"laneFromDoor":lane,
+                        "terrainTilesLoaded":len(terrain_descs),
+                        "hitActor":va.get_actor_label() if va else "None",
+                        "hitClass":va.get_class().get_name() if va else "None",
+                        "hitPoint":[vp.x,vp.y,vp.z]})
+                  else:
+                      floor_probes.append({"actorIndex":item["index"],"laneFromDoor":lane,
+                        "terrainTilesLoaded":len(terrain_descs),"hitActor":"NO_HIT"})
               a=math.radians(yaw)
               nx,ny=math.cos(a),math.sin(a)
               # Search the full opening interval reported by the source collision boxes.
