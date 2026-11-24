@@ -70,11 +70,29 @@ jobs:
                 "BlockAll",False,[],unreal.DrawDebugTrace.NONE,False)
               if isinstance(res,tuple): return bool(res[0]), (str(res[1]) if len(res)>1 else "")
               return bool(res), ""
+          floor_probes=[]
           for item in indexed:
               actor=loaded.get(prefix+f"{item['index']:03d}")
               if not actor: raise RuntimeError("Could not load saved entrance actor "+str(item["index"]))
               loc=actor.get_actor_location()
               yaw=actor.get_actor_rotation().yaw
+              a=math.radians(yaw)
+              probe_x=loc.x-math.sin(a)*(-475.45332)
+              probe_y=loc.y+math.cos(a)*(-475.45332)
+              vertical=unreal.SystemLibrary.line_trace_single_by_profile(
+                world,unreal.Vector(probe_x,probe_y,loc.z+1800.0),
+                unreal.Vector(probe_x,probe_y,loc.z-600.0),"BlockAll",False,[],
+                unreal.DrawDebugTrace.NONE,False)
+              if isinstance(vertical,tuple) and bool(vertical[0]):
+                  vh=vertical[1]
+                  va=vh.get_editor_property("actor")
+                  vp=vh.get_editor_property("impact_point")
+                  floor_probes.append({"actorIndex":item["index"],
+                    "hitActor":va.get_actor_label() if va else "None",
+                    "hitClass":va.get_class().get_name() if va else "None",
+                    "hitPoint":[vp.x,vp.y,vp.z]})
+              else:
+                  floor_probes.append({"actorIndex":item["index"],"hitActor":"NO_HIT"})
               a=math.radians(yaw)
               nx,ny=math.cos(a),math.sin(a)
               # Search the full opening interval reported by the source collision boxes.
@@ -91,6 +109,7 @@ jobs:
           clear=[r for r in results if not r["blocked"]]
           report={"state":"READ_ONLY_PLAYER_CAPSULE_DOORWAY_SWEEP",
             "map":map_pkg,"capsuleRadiusCm":35,"capsuleHalfHeightCm":90,
+            "verticalGroundProbes":floor_probes,
             "groundFloorEntrances":len(indexed),"sweepCandidates":len(results),
             "clearSweeps":len(clear),"clearSweepExamples":clear[:12],"allSweeps":results}
           Path(os.environ["SKARVIK_DOOR_REPORT"]).write_text(json.dumps(report),encoding="utf-8")
@@ -108,4 +127,5 @@ jobs:
           Write-Output ('HERO_DOOR_CAPSULE_STATE='+$r.state)
           Write-Output ('HERO_DOOR_GROUND_ENTRANCES='+$r.groundFloorEntrances)
           Write-Output ('HERO_DOOR_CAPSULE_CLEAR_SWEEPS='+$r.clearSweeps)
+          Write-Output ('HERO_DOOR_GROUND_HEIGHT_PROBES='+($r.verticalGroundProbes|ConvertTo-Json -Compress -Depth 8))
           Write-Output ('HERO_DOOR_CAPSULE_EXAMPLES='+($r.clearSweepExamples|ConvertTo-Json -Compress -Depth 8))
