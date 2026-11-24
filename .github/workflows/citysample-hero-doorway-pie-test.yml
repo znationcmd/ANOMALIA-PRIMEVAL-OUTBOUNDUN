@@ -51,7 +51,7 @@ jobs:
             if(!IFileManager::Get().FileExists(*MapFile)){AddError(TEXT("Saved SKARVIK map is missing"));return false;}
             if(!AutomationOpenMap(TEXT("/Game/Maps/ANOMALIA_Archipelago_v2"))){AddError(TEXT("Could not open saved SKARVIK"));return false;}
             ADD_LATENT_AUTOMATION_COMMAND(FStartPIECommand(false));
-            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; double MoveStart=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
+            struct FDoorProbe { double Deadline=FPlatformTime::Seconds()+180; bool Teleported=false; bool Started=false; double MoveStart=0; double LastLookupInfo=0; FVector Center=FVector::ZeroVector; FVector Normal=FVector::ZeroVector; };
             TSharedRef<FDoorProbe> Probe=MakeShared<FDoorProbe>();
             ADD_LATENT_AUTOMATION_COMMAND(FFunctionLatentCommand([this,Probe]()
             {
@@ -71,16 +71,27 @@ jobs:
                 return false;
               }
               AStaticMeshActor* Entrance=nullptr;
+              int32 LoadedHeroEntrances=0;
+              int32 LoadedStaticMeshActors=0;
               for(TActorIterator<AStaticMeshActor> It(World);It;++It){
                 AStaticMeshActor* Candidate=*It;
                 if(!Candidate)continue;
-                const FString Label=Candidate->GetActorLabel();
-                if(Label==TEXT("SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_003") ||
-                   Label==TEXT("SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_004")){
-                  Entrance=Candidate;break;
+                ++LoadedStaticMeshActors;
+                UStaticMeshComponent* Component=Candidate->GetStaticMeshComponent();
+                UStaticMesh* CandidateMesh=Component ? Component->GetStaticMesh() : nullptr;
+                if(CandidateMesh && CandidateMesh->GetName().Contains(TEXT("SM_BLDG_CHC_L01_A_Entrance_01_N1"))){
+                  ++LoadedHeroEntrances;
+                  if(!Entrance)Entrance=Candidate;
                 }
               }
-              if(!Entrance)return false;
+              if(!Entrance){
+                const double Now=FPlatformTime::Seconds();
+                if(Now-Probe->LastLookupInfo>10.0){
+                  Probe->LastLookupInfo=Now;
+                  AddInfo(FString::Printf(TEXT("Waiting for Hero entrance streaming: staticMeshActors=%d matchingEntrances=%d pawn=%s"),LoadedStaticMeshActors,LoadedHeroEntrances,*Pawn->GetActorLocation().ToString()));
+                }
+                return false;
+              }
               if(!Probe->Started){
                 UStaticMeshComponent* MeshComponent=Entrance->GetStaticMeshComponent();
                 UStaticMesh* Mesh=MeshComponent ? MeshComponent->GetStaticMesh() : nullptr;
