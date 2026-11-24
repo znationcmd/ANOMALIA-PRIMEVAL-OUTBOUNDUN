@@ -77,3 +77,14 @@ jobs:
           Write-Output ('HERO_ENTRANCE_MESH_COUNT='+$report.entranceMeshes)
           foreach($row in $report.components){Write-Output ('HERO_ENTRANCE_MESH='+($row|ConvertTo-Json -Compress -Depth 8))}
           if($report.entranceMeshes -lt 1){throw 'No entrance meshes were detected'}
+          $testSources=@(Get-ChildItem -LiteralPath (Join-Path $root 'Source') -Filter '*WorldPlayTests*.cpp' -File -Recurse -ErrorAction Stop)
+          if(!$testSources.Count){throw 'Existing native SKARVIK gameplay test source not found'}
+          foreach($sourceFile in $testSources){
+            $sourceText=Get-Content -LiteralPath $sourceFile.FullName -Raw -Encoding UTF8
+            Write-Output ('PIE_TEST_SOURCE='+$sourceFile.FullName)
+            $marker=$sourceText.IndexOf('ArchipelagoPIE',[StringComparison]::OrdinalIgnoreCase)
+            if($marker -lt 0){Write-Output 'PIE_TEST_MARKER_NOT_IN_FILE';continue}
+            $begin=[Math]::Max(0,$marker-3500)
+            $length=[Math]::Min(22000,$sourceText.Length-$begin)
+            Write-Output ('PIE_TEST_SOURCE_EXCERPT_BEGIN'+[Environment]::NewLine+$sourceText.Substring($begin,$length)+'PIE_TEST_SOURCE_EXCERPT_END')
+          }
