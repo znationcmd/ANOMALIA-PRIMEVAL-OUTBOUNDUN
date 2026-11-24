@@ -1,0 +1,89 @@
+name: Audit placed City Sample entry and interior collision without saving
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/citysample-live-entry-collision-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-live-entry-collision:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - name: Inspect saved City Sample building entrances and interiors read-only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $project='D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'ANOMALIA project missing'}
+          $env:CITYSAMPLE_ENTRY_AUDIT_REPORT=Join-Path $env:RUNNER_TEMP 'citysample-live-entry-collision-audit.json'
+          $py=Join-Path $env:RUNNER_TEMP 'audit_citysample_live_entries.py'
+          $code=@'
+          import json, os, re
+          from pathlib import Path
+          import unreal
+
+          package="/Game/Maps/ANOMALIA_Archipelago_v2"
+          entry_pattern=re.compile(r"entrance|entry|door|stair|hall|interior|floor",re.I)
+          levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+          wp=unreal.WorldPartitionBlueprintLibrary
+          if not levels.load_level(package): raise RuntimeError("Could not load saved SKARVIK")
+          descs=wp.get_actor_descs() or []
+          candidates=[d for d in descs if "SKARVIK_CITYSAMPLE" in str(d.label).upper()]
+          records=[]
+          loaded_labels=set()
+          for start in range(0,len(candidates),48):
+              batch=candidates[start:start+48]
+              keys=[d.guid for d in batch]
+              wp.load_actors(keys)
+              loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+              for d in batch:
+                  label=str(d.label)
+                  actor=loaded.get(label)
+                  if not actor: continue
+                  for comp in actor.get_components_by_class(unreal.StaticMeshComponent):
+                      mesh=comp.get_editor_property("static_mesh")
+                      if not mesh: continue
+                      mesh_name=mesh.get_name()
+                      if not entry_pattern.search(label+" "+mesh_name): continue
+                      loc=actor.get_actor_location()
+                      body=mesh.get_editor_property("body_setup")
+                      agg=body.get_editor_property("agg_geom") if body else None
+                      counts={}
+                      for kind in ("box_elems","sphere_elems","sphyl_elems","convex_elems"):
+                          try: counts[kind]=len(agg.get_editor_property(kind)) if agg else 0
+                          except Exception: counts[kind]=-1
+                      records.append({
+                        "label":label,"actorClass":actor.get_class().get_name(),
+                        "mesh":mesh.get_path_name(),"component":comp.get_name(),
+                        "collisionEnabled":str(comp.get_collision_enabled()),
+                        "collisionProfile":str(comp.get_collision_profile_name()),
+                        "location":[round(loc.x,2),round(loc.y,2),round(loc.z,2)],
+                        "simpleCollisionShapes":counts})
+              wp.unload_actors(keys)
+          records.sort(key=lambda r:(r["label"],r["mesh"],r["component"]))
+          result={"state":"READ_ONLY_CITYSAMPLE_LIVE_ENTRY_COLLISION_AUDIT",
+                  "map":package,"descriptors":len(descs),"citySampleDescriptors":len(candidates),
+                  "entryOrInteriorComponents":len(records),
+                  "noCollisionCount":sum("NO_COLLISION" in r["collisionEnabled"].upper() for r in records),
+                  "blockingCount":sum("NO_COLLISION" not in r["collisionEnabled"].upper() for r in records),
+                  "components":records}
+          Path(os.environ["CITYSAMPLE_ENTRY_AUDIT_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
+          unreal.log("CITYSAMPLE_LIVE_ENTRY_COLLISION_AUDIT "+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path -LiteralPath $editor)){throw 'UE 5.8 editor missing'}
+          $log=Join-Path $env:RUNNER_TEMP 'citysample-live-entry-collision-audit.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 100};throw "Read-only entry audit failed: $LASTEXITCODE"}
+          if(!(Test-Path -LiteralPath $env:CITYSAMPLE_ENTRY_AUDIT_REPORT)){if(Test-Path $log){Get-Content $log -Tail 100};throw 'Entry audit report missing'}
+          $r=Get-Content -LiteralPath $env:CITYSAMPLE_ENTRY_AUDIT_REPORT -Raw -Encoding UTF8|ConvertFrom-Json
+          Write-Output ('CITYSAMPLE_LIVE_ENTRY_AUDIT_STATE='+$r.state)
+          Write-Output ('CITYSAMPLE_LIVE_ENTRY_AUDIT_COUNTS='+($r|Select-Object descriptors,citySampleDescriptors,entryOrInteriorComponents,noCollisionCount,blockingCount|ConvertTo-Json -Compress))
+          foreach($row in $r.components){Write-Output ('CITYSAMPLE_LIVE_ENTRY_COMPONENT='+($row|ConvertTo-Json -Compress -Depth 8))}
