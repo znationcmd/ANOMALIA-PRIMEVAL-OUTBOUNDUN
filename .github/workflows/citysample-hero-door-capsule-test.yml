@@ -86,6 +86,7 @@ jobs:
                   end=[px+nx*350,py+ny*350,z]
                   blocked,hit=capsule_blocked(start,end)
                   results.append({"actorIndex":item["index"],"mesh":item["mesh"],
+                    "entryLocation":[loc.x,loc.y,loc.z],"entryYaw":yaw,
                     "offsetAlongEntrance":local_y,"blocked":blocked,"hit":hit[:180]})
           clear=[r for r in results if not r["blocked"]]
           report={"state":"READ_ONLY_PLAYER_CAPSULE_DOORWAY_SWEEP",
