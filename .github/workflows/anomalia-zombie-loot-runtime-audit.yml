@@ -1,0 +1,41 @@
+name: Inspect ANOMALIA zombie and loot runtime before adding death drops
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-zombie-loot-runtime-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-zombie-loot:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read ANOMALIA gameplay sources and loot data only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $source=Join-Path $root 'Source\AnomaliaPrimeval'
+          if(!(Test-Path $project) -or !(Test-Path $source)){throw 'Live ANOMALIA project/source missing'}
+          $patterns='(?i)zombie|infected|lootpickup|lootsubsystem|droptable|ondie|ondestroy|death'
+          $files=@(Get-ChildItem -LiteralPath $source -Recurse -File | Where-Object {$_.Extension -in '.h','.hpp','.cpp','.inl'})
+          Write-Output ('ANOMALIA_LIVE_SOURCE_FILES='+$files.Count)
+          $matched=@($files|Select-String -Pattern $patterns)
+          Write-Output ('ANOMALIA_LIVE_ZOMBIE_LOOT_MATCHES='+$matched.Count)
+          foreach($m in ($matched|Select-Object -First 250)){
+            $line=($m.Line.Trim() -replace '\s+',' ')
+            Write-Output ('ANOMALIA_ZOMBIE_LOOT_SOURCE='+$m.Path+':'+$m.LineNumber+':'+$line)
+          }
+          $contentRoot=Join-Path $root 'Content'
+          $assets=@(Get-ChildItem -LiteralPath $contentRoot -Recurse -File -ErrorAction SilentlyContinue |
+             Where-Object {$_.Name -match '(?i)zombie|infected|loot|drop'})
+          Write-Output ('ANOMALIA_ZOMBIE_LOOT_ASSET_FILES='+$assets.Count)
+          foreach($a in ($assets|Select-Object -First 150)){Write-Output ('ANOMALIA_ZOMBIE_LOOT_ASSET='+$a.FullName)}
+          $data=@(Get-ChildItem -LiteralPath $contentRoot -Recurse -File -Filter '*loot*.json' -ErrorAction SilentlyContinue)
+          Write-Output ('ANOMALIA_LOOT_JSON_FILES='+$data.Count)
+          foreach($d in $data){Write-Output ('ANOMALIA_LOOT_JSON='+$d.FullName)}
