@@ -137,6 +137,10 @@ jobs:
                 return true;
               }
               if(FPlatformTime::Seconds()-Probe->LaneStart>2.5){
+                FHitResult ForwardBlocker;FCollisionQueryParams ForwardQuery;ForwardQuery.AddIgnoredActor(Pawn);
+                const bool bForwardBlocked=World->LineTraceSingleByChannel(ForwardBlocker,Position,
+                  Position+Probe->Normal*350.f,ECC_Visibility,ForwardQuery);
+                AddInfo(FString::Printf(TEXT("Doorway lane %d stalled at signed distance %.1f cm; forward line blocked=%d actor=%s component=%s point=%s"),Probe->LaneIndex,SignedDistance,bForwardBlocked?1:0,*GetNameSafe(ForwardBlocker.GetActor()),*GetNameSafe(ForwardBlocker.GetComponent()),*ForwardBlocker.ImpactPoint.ToString()));
                 ++Probe->LaneIndex;
                 if(Probe->LaneIndex>=9){
                   AddError(FString::Printf(TEXT("Native survivor could not clear doorway across 9 lanes; final signed distance %.1f cm, position %s"),SignedDistance,*Position.ToString()));return true;
