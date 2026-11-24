@@ -62,8 +62,8 @@ jobs:
               mesh=comp.get_editor_property("static_mesh")
               mesh_name=mesh.get_name()
               if "entrance" not in mesh_name.lower(): raise RuntimeError(f"Refusing non-entrance mesh on {label}: {mesh_name}")
-              old_enabled=str(comp.get_editor_property("collision_enabled"))
-              old_profile=str(comp.get_editor_property("collision_profile_name"))
+              old_enabled=str(comp.get_collision_enabled())
+              old_profile=str(comp.get_collision_profile_name())
               loc=actor.get_actor_location()
               rows.append({"label":label,"mesh":mesh.get_path_name(),"component":comp.get_name(),
                            "oldCollisionEnabled":old_enabled,"oldProfile":old_profile,
