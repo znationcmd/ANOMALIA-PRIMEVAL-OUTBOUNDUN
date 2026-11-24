@@ -1,0 +1,30 @@
+name: Inspect authored SKARVIK settlement points
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-settlement-points.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-settlement-points:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Find actual settlement coordinate and naming tables
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $src='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          foreach($f in @(Get-ChildItem -LiteralPath $src -Recurse -File|Where-Object {$_.Extension -in '.h','.cpp'})){
+            $m=Select-String -LiteralPath $f.FullName -Pattern '(?i)Sites|Village|Settlement|Town|CityName|RegionName|POIName' -Context 0,12
+            if($m){Write-Output ('ANOMALIA_SETTLEMENT_SOURCE_FILE='+$f.Name);foreach($x in $m){Write-Output ('ANOMALIA_SETTLEMENT_SOURCE='+$x.Line.Trim());foreach($p in $x.Context.PostContext){Write-Output ('ANOMALIA_SETTLEMENT_CONTEXT='+$p.Trim())}}}
+          }
+          $root='D:\ANOMALIA\unreal\Content'
+          foreach($f in @(Get-ChildItem -LiteralPath $root -Recurse -File -ErrorAction SilentlyContinue | Where-Object {$_.Name -match '(?i)settlement|village|town|poi|region|city.*(json|csv|txt|ini)|(json|csv|txt|ini).*city'})){
+            Write-Output ('ANOMALIA_SETTLEMENT_DATA_FILE='+$f.FullName)
+            if($f.Extension -in '.json','.csv','.ini','.txt'){Get-Content -LiteralPath $f.FullName -TotalCount 25|ForEach-Object {Write-Output ('ANOMALIA_SETTLEMENT_DATA='+$_)}}
+          }
