@@ -36,6 +36,7 @@ jobs:
           levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
           actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
           library=unreal.EditorAssetLibrary
+          wp=unreal.WorldPartitionBlueprintLibrary
           if not levels.load_level(pkg): raise RuntimeError("Could not load original Hero source level")
           rows=[]
           for actor in actors.get_all_level_actors():
@@ -64,6 +65,32 @@ jobs:
             "entranceMeshes":len(rows),"components":rows}
           Path(os.environ["HERO_ENTRY_REPORT"]).write_text(json.dumps(result),encoding="utf-8")
           unreal.log("HERO_ENTRY_INSPECTION "+json.dumps(result))
+
+          target_pkg="/Game/Maps/ANOMALIA_Archipelago_v2"
+          if not levels.load_level(target_pkg): raise RuntimeError("Could not load live map for read-only runtime property inspection")
+          descs=wp.get_actor_descs() or []
+          chosen=[d for d in descs if str(d.label) in
+            ("SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_003","SKARVIK_CITYSAMPLE_HERO_BLOCK_A01_004")]
+          if len(chosen)!=2: raise RuntimeError("Saved Hero entrance descriptors missing from live map")
+          wp.load_actors([d.guid for d in chosen])
+          loaded={a.get_actor_label():a for a in actors.get_all_level_actors()}
+          property_rows=[]
+          for d in chosen:
+            actor=loaded.get(str(d.label))
+            row={"label":str(d.label),"descriptorClass":d.native_class.get_name(),
+                 "descriptorAttrs":{},"actorProperties":{}}
+            for name in [n for n in dir(d) if any(k in n.lower() for k in ("spatial","runtime","grid","layer","bounds"))]:
+              try: row["descriptorAttrs"][name]=str(getattr(d,name))
+              except Exception as e: row["descriptorAttrs"][name]="ERROR:"+str(e)[:120]
+            if actor:
+              row["actorClass"]=actor.get_class().get_name()
+              for name in ["is_spatially_loaded","runtime_grid","data_layer_assets","data_layers","is_editor_only_actor","replicates"]:
+                try: row["actorProperties"][name]=str(actor.get_editor_property(name))
+                except Exception as e: row["actorProperties"][name]="UNAVAILABLE:"+str(e)[:120]
+            else:
+              row["actorProperties"]["load"]="actor_missing_after_editor_partition_load"
+            property_rows.append(row)
+          unreal.log("HERO_RUNTIME_ACTOR_PROPERTIES "+json.dumps(property_rows))
           '@
           [IO.File]::WriteAllText($py,$code,[Text.UTF8Encoding]::new($false))
           $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
