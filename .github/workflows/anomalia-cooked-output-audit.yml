@@ -1,0 +1,28 @@
+name: Inspect cooked ANOMALIA output layout
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-cooked-output-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: List cooked outputs and free space
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $cooked='D:\ANOMALIA\unreal\Saved\Cooked\Windows'
+          if(Test-Path $cooked){
+            Get-ChildItem $cooked -Force -Recurse | Select-Object -First 60 | ForEach-Object {Write-Output ('COOKED_ITEM='+$_.FullName+' TYPE='+$(if($_.PSIsContainer){'DIR'}else{'FILE'})+' SIZE='+$(if($_.PSIsContainer){0}else{$_.Length}))}
+            $files=Get-ChildItem $cooked -File -Force -Recurse
+            [int64]$bytes=($files|Measure-Object -Property Length -Sum).Sum
+            Write-Output ('COOKED_FILES='+$files.Count+' COOKED_SIZE_GB='+[math]::Round($bytes/1GB,2))
+          } else {Write-Output 'COOKED_DIR_MISSING=1'}
+          Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3'|ForEach-Object{Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
