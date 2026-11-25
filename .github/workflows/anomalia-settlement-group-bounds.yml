@@ -1,0 +1,61 @@
+name: Inspect named settlement group bounds for entry notices
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-settlement-group-bounds.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-settlement-bounds:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Read populated settlement actors and bounds only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $py=Join-Path $env:RUNNER_TEMP 'inspect_anomalia_settlement_group_bounds.py'
+          $out=Join-Path $env:RUNNER_TEMP 'anomalia-settlement-bounds.json'
+          $env:ANOMALIA_SETTLEMENT_BOUNDS=$out
+          $python=@'
+          import json, os, re, math
+          from collections import defaultdict
+          from pathlib import Path
+          import unreal
+          pkg='/Game/Maps/ANOMALIA_Inhabited_v2'
+          if not unreal.get_editor_subsystem(unreal.LevelEditorSubsystem).load_level(pkg):
+              raise RuntimeError('Could not load ANOMALIA_Inhabited_v2')
+          actors=unreal.get_editor_subsystem(unreal.EditorActorSubsystem).get_all_level_actors()
+          groups=defaultdict(list); samples=[]
+          for a in actors:
+              n=str(a.get_name())
+              m=re.search(r'(?i)settlement_(\d+)_(\d+)',n)
+              if not m: continue
+              key=f'{int(m.group(1)):02d}_{int(m.group(2)):02d}'
+              try:
+                  origin,extent=a.get_actor_bounds(True)
+                  groups[key].append((origin,extent,n))
+              except Exception:
+                  pass
+          result={'loadedActorCount':len(actors),'settlementGroupCount':len(groups),'groups':[]}
+          for key,rows in sorted(groups.items()):
+              mins=[min((o[i]-e[i]) for o,e,_ in rows) for i in range(3)]
+              maxs=[max((o[i]+e[i]) for o,e,_ in rows) for i in range(3)]
+              result['groups'].append({'id':key,'actorCount':len(rows),
+                  'center':[round((mins[i]+maxs[i])/2,1) for i in range(3)],
+                  'extent':[round((maxs[i]-mins[i])/2,1) for i in range(3)],
+                  'sampleLabels':[x[2] for x in rows[:2]]})
+          Path(os.environ['ANOMALIA_SETTLEMENT_BOUNDS']).write_text(json.dumps(result),encoding='utf-8')
+          unreal.log('ANOMALIA_SETTLEMENT_GROUP_BOUNDS '+json.dumps(result))
+          '@
+          [IO.File]::WriteAllText($py,$python,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $env:RUNNER_TEMP 'anomalia-settlement-bounds.log'
+          & $editor 'D:\ANOMALIA\unreal\AnomaliaPrimeval.uproject' "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if($LASTEXITCODE -ne 0){if(Test-Path $log){Get-Content $log -Tail 100};throw "Settlement bounds audit failed: $LASTEXITCODE"}
+          if(!(Test-Path $out)){throw 'Settlement bounds report missing'}
+          Write-Output ('ANOMALIA_SETTLEMENT_BOUNDS_RESULT='+[IO.File]::ReadAllText($out))
