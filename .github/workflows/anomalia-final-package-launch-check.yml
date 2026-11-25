@@ -1,0 +1,41 @@
+name: Verify final ANOMALIA package launch
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-final-package-launch-check.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  launch-check:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Launch final staged game and inspect runtime logs
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $stage='D:\ANOMALIA\unreal\Saved\StagedBuilds\CitySample-Final-20261125-194543'
+          $exe=Get-ChildItem $stage -Filter 'AnomaliaPrimeval.exe' -File -Recurse|Select-Object -First 1
+          if(!$exe){throw 'Final staged game executable missing'}
+          $pak=Get-ChildItem $stage -Filter 'AnomaliaPrimeval-Windows.pak' -File -Recurse|Select-Object -First 1
+          if(!$pak){throw 'Final staged PAK missing'}
+          Write-Output "FINAL_EXE=$($exe.FullName)"
+          Write-Output "FINAL_PAK=$($pak.FullName)"
+          Write-Output ('FINAL_PAK_GB='+[math]::Round($pak.Length/1GB,2))
+          $log=Join-Path $exe.DirectoryName 'ANOMALIA_final_smoke.log'; $err=Join-Path $exe.DirectoryName 'ANOMALIA_final_smoke.err'
+          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory $exe.DirectoryName -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 35; $proc.Refresh()
+          if(Test-Path $log){Write-Output 'FINAL_STDOUT_LOG_BEGIN'; Get-Content $log -Tail 120}
+          if(Test-Path $err){Write-Output 'FINAL_STDERR_LOG_BEGIN'; Get-Content $err -Tail 40}
+          $savedLogs=Join-Path $exe.DirectoryName 'AnomaliaPrimeval\Saved\Logs'
+          if(Test-Path $savedLogs){
+            $gameLog=Get-ChildItem $savedLogs -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1
+            if($gameLog){Write-Output ('FINAL_GAME_LOG='+$gameLog.FullName); Get-Content $gameLog.FullName -Tail 160|Where-Object{$_ -match 'LogLoad|LogWorld|LogTemp|LogPlayerController|T_MenuBackdrop|loot|economy|Error:|Warning|Fatal|PRIGIMALIA_SKARVIK_CITY_v1'}}
+          }
+          if($proc.HasExited){Write-Output "FINAL_EXIT_CODE=$($proc.ExitCode)"; throw 'Final package exited during launch verification'}
+          Write-Output "FINAL_PROCESS_PID=$($proc.Id)"
+          Write-Output 'FINAL_LAUNCH_ALIVE_AFTER_35_SECONDS=1'
