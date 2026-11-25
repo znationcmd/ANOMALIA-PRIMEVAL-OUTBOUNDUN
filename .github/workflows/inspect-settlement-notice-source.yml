@@ -1,0 +1,30 @@
+name: Inspect live ANOMALIA settlement notice source
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/inspect-settlement-notice-source.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect-live-source:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read headers and verify rollback
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $s='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          foreach($n in 'AnomaliaSurvivor.h','AnomaliaHomesteadStation.h','AnomaliaDogCompanion.h'){
+            $p=Join-Path $s $n
+            Write-Output ('===== '+$n+' =====')
+            $i=0
+            Get-Content $p | ForEach-Object { $i++; if($i -le 100){ Write-Output ('{0:D3}: {1}' -f $i,$_)} }
+          }
+          foreach($n in 'AnomaliaSettlementNoticeZone.h','AnomaliaSettlementNoticeZone.cpp'){
+            Write-Output ($n+' EXISTS='+(Test-Path (Join-Path $s $n)))
+          }
