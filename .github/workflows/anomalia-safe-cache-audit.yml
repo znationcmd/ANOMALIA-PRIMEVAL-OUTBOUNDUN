@@ -1,0 +1,37 @@
+name: Audit safe Unreal cache sizes on ANOMALIA-PC
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-safe-cache-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  cache-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Measure only regenerable Unreal caches
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $paths=@(
+            (Join-Path $root 'Intermediate'),
+            (Join-Path $root 'DerivedDataCache'),
+            (Join-Path $root 'Saved\DerivedDataCache'),
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\DerivedDataCache'),
+            (Join-Path $env:LOCALAPPDATA 'UnrealEngine\Common\Zen')
+          )
+          foreach($p in $paths){
+            if(Test-Path $p){
+              $files=Get-ChildItem -LiteralPath $p -File -Recurse -Force -ErrorAction SilentlyContinue
+              [int64]$bytes=($files|Measure-Object -Property Length -Sum).Sum
+              Write-Output ('CACHE_CANDIDATE='+$p+' SIZE_GB='+[math]::Round($bytes/1GB,2)+' FILES='+$files.Count)
+            } else {Write-Output ('CACHE_CANDIDATE='+$p+' MISSING')}
+          }
+          Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object {Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
+          Write-Output 'CACHE_AUDIT=complete'
