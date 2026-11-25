@@ -1,0 +1,26 @@
+name: Inspect ANOMALIA runtime data files
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-runtime-data-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Find existing runtime JSON/config files
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          foreach($p in @('Content\Anomalia\Data','Content\Anomalia\Branding','Config')){
+            $full=Join-Path $root $p; Write-Output ('PATH='+$full)
+            if(Test-Path $full){Get-ChildItem $full -File -Recurse -Force|Where-Object{$_.Extension -in '.json','.ini','.uasset','.umap'}|ForEach-Object{Write-Output ('ASSET='+$_.FullName+' SIZE='+$_.Length)}}else{Write-Output 'MISSING'}
+          }
+          Get-ChildItem $root -Filter '*.json' -File -Recurse -Force -ErrorAction SilentlyContinue|Where-Object{$_.Name -match 'loot|econom|rp_items|catalog'}|ForEach-Object{Write-Output ('MATCH='+$_.FullName+' SIZE='+$_.Length)}
