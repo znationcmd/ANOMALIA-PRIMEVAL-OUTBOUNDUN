@@ -12,15 +12,18 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 5
     steps:
-      - name: Read settlement coordinates and APIs
+      - name: Read notice tick and data API
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
-          $s='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval\World'
-          foreach($n in 'AnomaliaInhabitedHeight.h','AnomaliaWorldImportLibrary.h','AnomaliaWorldImportLibrary.cpp'){
-            $p=Join-Path $s $n
-            Write-Output ('===== '+$n+' =====')
-            if(Test-Path $p){$i=0; Get-Content $p | ForEach-Object {$i++; if($_ -match 'Settlement|Sites|FVector|Coordinate|return|^\s*\{' -or ($n -eq 'AnomaliaInhabitedHeight.h' -and $i -le 200)){Write-Output ('{0:D3}: {1}' -f $i,$_)} }}
-          }
+          $s='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          Select-String -Path (Join-Path $s 'AnomaliaSurvivor.cpp') -Pattern 'AAnomaliaSurvivor::Tick' -Context 0,55 | ForEach-Object { Write-Output '===== TICK ====='; Write-Output $_.Line; Write-Output $_.Context.PostContext }
+          Write-Output '===== HEADER TAIL ====='
+          $h=Get-Content (Join-Path $s 'AnomaliaSurvivor.h')
+          for($i=[Math]::Max(0,$h.Count-70);$i -lt $h.Count;$i++){Write-Output ('{0:D3}: {1}' -f ($i+1),$h[$i])}
+          Write-Output '===== IMPORT HEADER ====='
+          Get-Content (Join-Path $s 'World\AnomaliaWorldImportLibrary.h') | ForEach-Object { Write-Output $_ }
+          Write-Output '===== MAP CLOCK ====='
+          Select-String -Path (Join-Path $s '*.h'),(Join-Path $s '*.cpp') -Pattern 'GameTime|WorldTime|Clock|TimeOfDay|GetMapName' -Context 1,3 | ForEach-Object {Write-Output ('At '+$_.Path+':'+$_.LineNumber);Write-Output $_.Line;Write-Output $_.Context.PostContext}
