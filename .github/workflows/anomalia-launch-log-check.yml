@@ -1,0 +1,31 @@
+name: Verify ANOMALIA staged launch logs
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-launch-log-check.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read launch process and packaged logs only
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          $p=@(Get-Process AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue)
+          if($p.Count){Write-Output ('ANOMALIA_PROCESS_ACTIVE=1 PID='+($p.Id -join ','))}else{Write-Output 'ANOMALIA_PROCESS_ACTIVE=0'}
+          $root='D:\ANOMALIA\unreal\Saved\StagedBuilds\CitySample-20261125-193630\Windows'
+          if(!(Test-Path $root)){throw 'Staged game folder missing'}
+          $outLog=Join-Path $root 'ANOMALIA_launch_smoke.log'; $errLog=Join-Path $root 'ANOMALIA_launch_smoke.err'
+          foreach($f in @($outLog,$errLog)){if(Test-Path $f){Write-Output ('STDIO_LOG='+$f); Get-Content $f -Tail 60}}
+          $logs=Get-ChildItem $root -Filter '*.log' -File -Recurse -ErrorAction SilentlyContinue
+          foreach($f in $logs|Sort-Object LastWriteTime -Descending|Select-Object -First 3){
+            Write-Output ('GAME_LOG='+$f.FullName)
+            Get-Content $f.FullName -Tail 100 | Where-Object {$_ -match 'LogLoad|LoadMap|LogWorld|LogInit|Error:|Warning|Fatal|PRIGIMALIA_SKARVIK_CITY_v1|menu|Menu'}
+          }
+          Write-Output 'LAUNCH_LOG_CHECK=complete'
