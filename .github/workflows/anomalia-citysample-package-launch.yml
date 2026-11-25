@@ -1,0 +1,62 @@
+name: Cook and smoke-launch ANOMALIA City Sample build
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-citysample-package-launch.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  cook-package-launch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Cook City Sample, package, and launch game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1'
+          $mapFile=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $config=Join-Path $root 'Config\DefaultEngine.ini'
+          if(!(Test-Path $mapFile) -or !(Test-Path $project) -or !(Test-Path $config)){throw 'Project, startup map, or config missing'}
+          $cfg=Get-Content $config -Raw
+          if(!$cfg.Contains('GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1')){throw 'GameDefaultMap is not configured to launch the City Sample map'}
+          if(!$cfg.Contains('EditorStartupMap=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1')){throw 'EditorStartupMap is not configured to launch the City Sample map'}
+          $drive=Get-PSDrive D
+          $freeGB=[math]::Round($drive.Free/1GB,1)
+          Write-Output "D_DRIVE_FREE_GB=$freeGB"
+          if($drive.Free -lt 60GB){throw 'Less than 60 GB free on D:; package not started'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          if(!(Test-Path $uat)){throw "RunUAT.bat missing: $uat"}
+          $stamp=Get-Date -Format 'yyyyMMdd-HHmmss'
+          $out="D:\ANOMALIA\Builds\CitySample-$stamp"
+          New-Item -ItemType Directory -Path (Split-Path $out -Parent) -Force|Out-Null
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -build -cook "-map=$map" -stage -pak -archive "-archivedirectory=$out" -prereqs -utf8output
+          if($LASTEXITCODE -ne 0){throw "City Sample cook/package failed: $LASTEXITCODE"}
+          $exe=Get-ChildItem $out -Filter 'AnomaliaPrimeval.exe' -File -Recurse | Select-Object -First 1
+          if(!$exe){throw 'Packaged AnomaliaPrimeval.exe was not produced'}
+          $pak=Get-ChildItem $out -Filter '*.pak' -File -Recurse | Select-Object -First 1
+          if(!$pak){throw 'No cooked PAK file was produced'}
+          Write-Output "ANOMALIA_PACKAGE_EXE=$($exe.FullName)"
+          Write-Output "ANOMALIA_CITY_SAMPLE_PAK=$($pak.FullName)"
+          Write-Output "ANOMALIA_PAK_SIZE_GB=$([math]::Round($pak.Length/1GB,2))"
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'A game/editor process appeared before launch; existing session preserved'}
+          $log=Join-Path $exe.DirectoryName 'ANOMALIA_launch_smoke.log'
+          $err=Join-Path $exe.DirectoryName 'ANOMALIA_launch_smoke.err'
+          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory $exe.DirectoryName -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 25
+          $proc.Refresh()
+          if($proc.HasExited){
+            Write-Output "ANOMALIA_LAUNCH_EXIT_CODE=$($proc.ExitCode)"
+            if(Test-Path $log){Get-Content $log -Tail 120}
+            if(Test-Path $err){Get-Content $err -Tail 80}
+            throw 'Packaged game exited during 25-second launch check'
+          }
+          Write-Output "ANOMALIA_GAME_RUNNING_PID=$($proc.Id)"
+          Write-Output 'ANOMALIA_LAUNCH_SMOKE=process_alive_after_25_seconds'
+          Write-Output 'ANOMALIA_MAIN_MENU_AND_CREDITS=compiled_into_packaged_game'
