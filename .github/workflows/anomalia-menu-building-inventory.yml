@@ -12,35 +12,22 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 10
     steps:
-      - name: Read project startup and content inventory without opening Unreal
+      - name: Read startup, menu, and map asset names without opening Unreal
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved; audit skipped'}
-          $root='D:\ANOMALIA\unreal'
-          if(!(Test-Path (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Live project missing'}
-          Write-Output '===== UPROJECT ====='
-          Get-Content (Join-Path $root 'AnomaliaPrimeval.uproject')
-          foreach($p in @('Config\DefaultEngine.ini','Config\DefaultGame.ini','Config\DefaultInput.ini')){
-            $f=Join-Path $root $p
-            Write-Output ('===== '+$p+' =====')
-            if(Test-Path $f){Select-String -Path $f -Pattern 'GameDefaultMap|EditorStartupMap|GameInstance|GameMode|GameViewport|GameUserSettings|DefaultPawn|GlobalDefaultGameMode|Startup|MoviePlayer|Splash|bUseSplitscreen|Map=' | ForEach-Object {$_.Line}}
+          $root='D:\ANOMALIA\unreal'; $content=Join-Path $root 'Content'; $source=Join-Path $root 'Source\AnomaliaPrimeval'
+          Write-Output '===== STARTUP CONFIG ====='
+          Select-String -Path (Join-Path $root 'Config\DefaultEngine.ini') -Pattern 'GameDefaultMap|EditorStartupMap|GameInstance|GameMode|GameViewport' | ForEach-Object {$_.Line}
+          foreach($folder in @('Maps','UI','Cinematics','Anomalia\Branding','City','Building','Anomalia\VisualValidation_v1','Anomalia\ResidentialPhotogrammetryReview_v1')){
+            $f=Join-Path $content $folder
+            Write-Output ('===== '+$folder+' =====')
+            if(Test-Path $f){Get-ChildItem $f -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Extension -in '.umap','.uasset','.mp4','.mov','.wav','.png','.jpg'} | Select-Object -First 160 -ExpandProperty FullName}
+            else{Write-Output 'MISSING'}
           }
-          $content=Join-Path $root 'Content'
-          Write-Output ('CONTENT_EXISTS='+(Test-Path $content))
-          if(Test-Path $content){
-            foreach($folder in @('Maps','UI','Menus','Movies','Cinematics','CitySample','CitySample\Maps','CitySample\BuildingAssets','Environment')){
-              $f=Join-Path $content $folder
-              if(Test-Path $f){Write-Output ('DIR '+$folder+' files='+(Get-ChildItem $f -Recurse -File -ErrorAction SilentlyContinue).Count)}
-            }
-            $files=Get-ChildItem $content -Recurse -File -ErrorAction SilentlyContinue
-            Write-Output ('UMAP_COUNT='+@($files|Where-Object Extension -eq '.umap').Count)
-            Write-Output ('UASSET_COUNT='+@($files|Where-Object Extension -eq '.uasset').Count)
-            Write-Output '===== CANDIDATE ASSET FILENAMES ====='
-            $files | Where-Object {$_.Name -match 'CitySample|City_Sample|MainMenu|Menu|Credits|Intro|Opening|Cinematic|Title|Building|Residential|House|Town|Village'} | Select-Object -First 250 -ExpandProperty FullName
-          }
-          Write-Output '===== PROJECT OUTPUTS ====='
-          foreach($d in @('Build','Binaries\Win64','Saved\StagedBuilds','Saved\Cooked')){ $f=Join-Path $root $d; if(Test-Path $f){Write-Output ($d+' files='+(Get-ChildItem $f -Recurse -File -ErrorAction SilentlyContinue).Count);Get-ChildItem $f -Recurse -File -Filter '*.exe' -ErrorAction SilentlyContinue|Select-Object -First 10 -ExpandProperty FullName}}
-          Write-Output '===== CITY SAMPLE PLUGINS ====='
-          foreach($d in @('Plugins','D:\ANOMALIA\CitySample','D:\ANOMALIA\FabImports','D:\ANOMALIA\sketchfab')){ $f=Join-Path $root $d; if(Test-Path $f){Write-Output ($d+' EXISTS')} }
+          Write-Output '===== UI/INTRO SOURCE HOOKS ====='
+          Get-ChildItem $source -File -Include *.h,*.cpp | Select-String -Pattern 'MainMenu|Menu|Credits|Cinematic|MoviePlayer|GameInstance|Intro|Startup' -Context 0,1 | ForEach-Object {$_.Path+':'+$_.LineNumber+' '+$_.Line}
+          Write-Output '===== PACKAGED EXECUTABLE ====='
+          $exe=Join-Path $root 'Binaries\Win64\AnomaliaPrimeval.exe'; Write-Output ($exe+' EXISTS='+(Test-Path $exe))
