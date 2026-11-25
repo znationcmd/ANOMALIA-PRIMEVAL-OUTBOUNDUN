@@ -1,0 +1,52 @@
+name: Persist verified ANOMALIA menu and packaging fixes
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-persist-launch-fixes.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  persist:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Preserve verified menu focus and cook rules in project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'; $menu=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaMainMenuWidget.cpp'; $ini=Join-Path $root 'Config\DefaultGame.ini'
+          $stage=Join-Path $root 'Saved\StagedBuilds\CitySample-Final-20261125-194543\Windows'
+          foreach($p in @($menu,$ini,(Join-Path $stage 'AnomaliaPrimeval.exe'),(Join-Path $stage 'AnomaliaPrimeval\Content\Paks\AnomaliaPrimeval-Windows.pak'))){if(!(Test-Path $p)){throw "Verified package or project file missing: $p"}}
+          $menu0=[IO.File]::ReadAllText($menu); $ini0=[IO.File]::ReadAllText($ini); $eol=[Environment]::NewLine
+          $backup='D:\ANOMALIA\Backups\LaunchExperience'; New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item $menu (Join-Path $backup 'AnomaliaMainMenuWidget.cpp.pre-final-persistence.bak') -Force
+          Copy-Item $ini (Join-Path $backup 'DefaultGame.ini.pre-final-persistence.bak') -Force
+          try{
+            $menuNew=$menu0
+            if(!$menuNew.Contains('SetIsFocusable(true)')){
+              if(!$menuNew.Contains('Super::NativeConstruct();')){throw 'Menu construct anchor missing'}
+              $menuNew=$menuNew.Replace('Super::NativeConstruct();','Super::NativeConstruct();'+$eol+'    SetIsFocusable(true);')
+            }
+            $add=@()
+            if(!$ini0.Contains('+DirectoriesToAlwaysCook=(Path="/Game/Anomalia/Branding")')){$add+='+DirectoriesToAlwaysCook=(Path="/Game/Anomalia/Branding")'}
+            if(!$ini0.Contains('+DirectoriesToAlwaysStageAsUFS=(Path="Anomalia/Data")')){$add+='+DirectoriesToAlwaysStageAsUFS=(Path="Anomalia/Data")'}
+            $iniNew=$ini0
+            if($add.Count){$iniNew=$ini0.TrimEnd()+$eol+'[/Script/UnrealEd.ProjectPackagingSettings]'+$eol+($add -join $eol)+$eol}
+            [IO.File]::WriteAllText($menu,$menuNew,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($ini,$iniNew,[Text.UTF8Encoding]::new($false))
+            if(!([IO.File]::ReadAllText($menu).Contains('SetIsFocusable(true)'))){throw 'Menu focus fix verification failed'}
+            $check=[IO.File]::ReadAllText($ini)
+            if(!$check.Contains('+DirectoriesToAlwaysCook=(Path="/Game/Anomalia/Branding")') -or !$check.Contains('+DirectoriesToAlwaysStageAsUFS=(Path="Anomalia/Data")')){throw 'Packaging rule verification failed'}
+            Write-Output 'ANOMALIA_PROJECT_MENU_FOCUS=persisted'
+            Write-Output 'ANOMALIA_PROJECT_MENU_BACKDROP_COOK=persisted'
+            Write-Output 'ANOMALIA_PROJECT_RUNTIME_JSON_STAGE=persisted'
+            Write-Output 'ANOMALIA_FINAL_PACKAGE=present_and_smoke_launched'
+          }catch{
+            [IO.File]::WriteAllText($menu,$menu0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($ini,$ini0,[Text.UTF8Encoding]::new($false))
+            throw
+          }
