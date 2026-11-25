@@ -1,0 +1,77 @@
+name: Fix menu focus and stage ANOMALIA data
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-menu-data-fix-build.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  rebuild:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Fix focus, cook menu/data assets, and smoke-launch
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'; $src=Join-Path $root 'Source\AnomaliaPrimeval'
+          $menu=Join-Path $src 'AnomaliaMainMenuWidget.cpp'; $ini=Join-Path $root 'Config\DefaultGame.ini'; $engine=Join-Path $root 'Config\DefaultEngine.ini'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'; $data=Join-Path $root 'Content\Anomalia\Data'
+          $backup='D:\ANOMALIA\Backups\LaunchExperience'; New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          foreach($p in @($menu,$ini,$engine,$project,(Join-Path $root 'Content\Anomalia\Branding\T_MenuBackdrop.uasset'),(Join-Path $data 'loot_items_catalog.json'),(Join-Path $data 'rp_economy.json'),(Join-Path $data 'rp_items_catalog.json'))){if(!(Test-Path $p)){throw "Required file missing: $p"}}
+          $cfg=Get-Content $engine -Raw
+          if(!$cfg.Contains('GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1')){throw 'Startup map changed; refusing rebuild'}
+          $menu0=[IO.File]::ReadAllText($menu); $ini0=[IO.File]::ReadAllText($ini)
+          if(!$menu0.Contains('SetIsFocusable(true)')){
+            if(!$menu0.Contains('Super::NativeConstruct();')){throw 'Menu construct anchor missing'}
+            Copy-Item $menu (Join-Path $backup ('AnomaliaMainMenuWidget.cpp.'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.bak')) -Force
+            Copy-Item $ini (Join-Path $backup ('DefaultGame.ini.'+(Get-Date -Format 'yyyyMMdd-HHmmss')+'.bak')) -Force
+          }
+          $stamp=Get-Date -Format 'yyyyMMdd-HHmmss'; $stage=Join-Path $root ('Saved\StagedBuilds\CitySample-Final-'+$stamp)
+          $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'; $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          $menuNew=$menu0.Replace('Super::NativeConstruct();','Super::NativeConstruct();'+[Environment]::NewLine+'    SetIsFocusable(true);')
+          $cfgLines=@()
+          if(!$ini0.Contains('+DirectoriesToAlwaysCook=(Path="/Game/Anomalia/Branding")')){$cfgLines+= '+DirectoriesToAlwaysCook=(Path="/Game/Anomalia/Branding")'}
+          if(!$ini0.Contains('+DirectoriesToAlwaysStageAsUFS=(Path="Anomalia/Data")')){$cfgLines+= '+DirectoriesToAlwaysStageAsUFS=(Path="Anomalia/Data")'}
+          $iniNew=$ini0
+          if($cfgLines.Count){$iniNew=$ini0.TrimEnd()+[Environment]::NewLine+'[/Script/UnrealEd.ProjectPackagingSettings]'+[Environment]::NewLine+($cfgLines -join [Environment]::NewLine)+[Environment]::NewLine}
+          try{
+            [IO.File]::WriteAllText($menu,$menuNew,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($ini,$iniNew,[Text.UTF8Encoding]::new($false))
+            if(!(Test-Path $build) -or !(Test-Path $uat)){throw 'Unreal Build or Automation Tool missing'}
+            $d=Get-PSDrive D; $c=Get-PSDrive C
+            Write-Output ('PREBUILD_D_FREE_GB='+[math]::Round($d.Free/1GB,1))
+            Write-Output ('PREBUILD_C_FREE_GB='+[math]::Round($c.Free/1GB,1))
+            if($d.Free -lt 10GB -or $c.Free -lt 8GB){throw 'Insufficient safe workspace for rebuild/cook'}
+            & $build 'AnomaliaPrimeval' 'Win64' 'Development' "-Project=$project" '-WaitMutex'
+            if($LASTEXITCODE -ne 0){throw "Game target build failed: $LASTEXITCODE"}
+            New-Item -ItemType Directory -Path $stage -Force|Out-Null
+            & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -skipbuild -cook '-map=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1' -stage -pak -iostore "-stagingdirectory=$stage" -utf8output
+            if($LASTEXITCODE -ne 0){throw "City Sample recook/stage failed: $LASTEXITCODE"}
+            $exe=Get-ChildItem $stage -Filter 'AnomaliaPrimeval.exe' -File -Recurse|Select-Object -First 1
+            $container=Get-ChildItem $stage -File -Recurse -Include '*.pak','*.utoc','*.ucas'|Select-Object -First 1
+            if(!$exe -or !$container){throw 'Staged executable or content container missing'}
+            $dataNames=@('loot_items_catalog.json','rp_economy.json','rp_items_catalog.json')
+            foreach($name in $dataNames){
+              if(!(Get-ChildItem $stage -File -Recurse -Filter $name -ErrorAction SilentlyContinue)){throw "Runtime data file not staged: $name"}
+            }
+            Write-Output "ANOMALIA_FINAL_EXE=$($exe.FullName)"
+            Write-Output "ANOMALIA_FINAL_CONTAINER=$($container.FullName)"
+            [int64]$size=(Get-ChildItem $stage -File -Recurse|Measure-Object Length -Sum).Sum
+            Write-Output ('ANOMALIA_FINAL_PACKAGE_GB='+[math]::Round($size/1GB,2))
+            $log=Join-Path $exe.DirectoryName 'ANOMALIA_final_smoke.log'; $err=Join-Path $exe.DirectoryName 'ANOMALIA_final_smoke.err'
+            $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory $exe.DirectoryName -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+            Start-Sleep -Seconds 30; $proc.Refresh()
+            if($proc.HasExited){Write-Output "ANOMALIA_FINAL_EXIT_CODE=$($proc.ExitCode)"; if(Test-Path $log){Get-Content $log -Tail 120}; if(Test-Path $err){Get-Content $err -Tail 60}; throw 'Final game smoke launch exited'}
+            Write-Output "ANOMALIA_FINAL_RUNNING_PID=$($proc.Id)"
+            Write-Output 'ANOMALIA_FINAL_LAUNCH=alive_after_30_seconds'
+            Write-Output 'ANOMALIA_FINAL_MENU_DATA_BUILD=success'
+          } catch {
+            [IO.File]::WriteAllText($menu,$menu0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($ini,$ini0,[Text.UTF8Encoding]::new($false))
+            throw
+          }
