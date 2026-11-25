@@ -1,0 +1,106 @@
+name: Enable notices at all inhabited ANOMALIA sites
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-settlement-entry-notice-install-v4.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-settlement-site-notices:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 40
+    steps:
+      - name: Wire all 33 Inhabited sites and compile
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'; $source=Join-Path $root 'Source\AnomaliaPrimeval'; $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $h=Join-Path $source 'AnomaliaSurvivor.h'; $cpp=Join-Path $source 'AnomaliaSurvivor.cpp'
+          $siteHeader=Join-Path $source 'World\AnomaliaWorldImportLibrary.h'; $zoneHeader=Join-Path $source 'AnomaliaSettlementNoticeZone.h'; $zoneCpp=Join-Path $source 'AnomaliaSettlementNoticeZone.cpp'
+          foreach($p in @($h,$cpp,$siteHeader,$zoneHeader,$zoneCpp,$project)){if(!(Test-Path $p)){throw "Required file missing: $p"}}
+          $h0=[IO.File]::ReadAllText($h); $c0=[IO.File]::ReadAllText($cpp)
+          if($h0.Contains('SettlementNoticeCheckAccumulator')){throw 'Settlement site polling is already installed'}
+          if(!$h0.Contains('void ClientShowLocationNotice(') -or !$c0.Contains('ClientShowLocationNotice_Implementation')){throw 'Reusable notice RPC is not present'}
+          $backup='D:\ANOMALIA\Backups\SettlementNotice'
+          New-Item -ItemType Directory -Path $backup -Force|Out-Null
+          Copy-Item $h (Join-Path $backup 'AnomaliaSurvivor.h.pre-site-wiring.bak') -Force
+          Copy-Item $cpp (Join-Path $backup 'AnomaliaSurvivor.cpp.pre-site-wiring.bak') -Force
+          try{
+            if($c0 -notmatch '(?m)^#include "World/AnomaliaWorldImportLibrary\.h"'){
+              $eol=[Environment]::NewLine; $first=$c0.IndexOf($eol)
+              if($first -lt 0){throw 'Survivor cpp has no first include line'}
+              $c0=$c0.Insert($first+$eol.Length,'#include "World/AnomaliaWorldImportLibrary.h"'+$eol)
+            }
+            $lastClose=$h0.LastIndexOf('};')
+            if($lastClose -lt 0){throw 'Survivor header class end not found'}
+            $members="    float SettlementNoticeCheckAccumulator = 0.f;"+[Environment]::NewLine+"    int32 CurrentInhabitedSettlementIndex = INDEX_NONE;"+[Environment]::NewLine
+            $h0=$h0.Insert($lastClose,$members)
+            $tick=$c0.IndexOf('void AAnomaliaSurvivor::Tick(float DeltaSeconds)',[StringComparison]::Ordinal)
+            if($tick -lt 0){throw 'Survivor Tick not found'}
+            $gate=$c0.IndexOf('    if (!HasAuthority()) return;',$tick,[StringComparison]::Ordinal)
+            if($gate -lt 0){throw 'Tick authority guard not found'}
+            $insert=$c0.IndexOf([Environment]::NewLine,$gate,[StringComparison]::Ordinal)
+            if($insert -lt 0){throw 'Tick authority guard line end not found'}
+            $snippet=@'
+              SettlementNoticeCheckAccumulator += FMath::Max(0.f, DeltaSeconds);
+              if (SettlementNoticeCheckAccumulator >= 0.5f)
+              {
+                  SettlementNoticeCheckAccumulator = 0.f;
+                  const FString MapName = GetWorld() ? GetWorld()->GetMapName() : FString();
+                  const bool bInhabitedMap = MapName.EndsWith(TEXT("ANOMALIA_Inhabited_v1")) || MapName.EndsWith(TEXT("ANOMALIA_Inhabited_v2"));
+                  int32 NearestSite = INDEX_NONE;
+                  const TArray<FVector2D> Sites = bInhabitedMap ? UAnomaliaWorldImportLibrary::InhabitedSettlementSites() : TArray<FVector2D>();
+                  double NearestDistanceSquared = FMath::Square(580.0);
+                  const FVector PositionMeters = GetActorLocation() / 100.0;
+                  for (int32 SiteIndex = 0; SiteIndex < Sites.Num(); ++SiteIndex)
+                  {
+                      const double DistanceSquared = FVector2D::DistSquared(FVector2D(PositionMeters.X, PositionMeters.Y), Sites[SiteIndex]);
+                      if (DistanceSquared <= NearestDistanceSquared)
+                      {
+                          NearestDistanceSquared = DistanceSquared;
+                          NearestSite = SiteIndex;
+                      }
+                  }
+                  if (NearestSite != CurrentInhabitedSettlementIndex)
+                  {
+                      CurrentInhabitedSettlementIndex = NearestSite;
+                      static const TCHAR* SettlementNames[] = {
+                          TEXT("Vostograd"), TEXT("Zelenov"), TEXT("Severin"), TEXT("Kamenov"), TEXT("Belograd"),
+                          TEXT("Mirsk"), TEXT("Novy Vrak"), TEXT("Krasna"), TEXT("Drazna"), TEXT("Volny"),
+                          TEXT("Lestny"), TEXT("Bystra"), TEXT("Otrad"), TEXT("Kamysh"), TEXT("Rudo"), TEXT("Vesna"),
+                          TEXT("Stary Bor"), TEXT("Lesnoye"), TEXT("Dubrava"), TEXT("Prudy"), TEXT("Berezh"),
+                          TEXT("Vetry"), TEXT("Malinov"), TEXT("Krest"), TEXT("Tikhaya"), TEXT("Solnech"),
+                          TEXT("Yavornik"), TEXT("Karvyn"), TEXT("Sokol"), TEXT("Morava"), TEXT("Hradi"),
+                          TEXT("Veres"), TEXT("Gorka")
+                      };
+                      static_assert(UE_ARRAY_COUNT(SettlementNames) == 33, "Keep names aligned with InhabitedSettlementSites");
+                      if (NearestSite >= 0 && NearestSite < UE_ARRAY_COUNT(SettlementNames))
+                      {
+                          const FDateTime LocalTime = FDateTime::Now();
+                          ClientShowLocationNotice(SettlementNames[NearestSite], LocalTime.GetHour(), LocalTime.GetMinute(), 6.f);
+                      }
+                  }
+              }
+          '@
+            $c0=$c0.Insert($insert+$eol.Length,$snippet)
+            [IO.File]::WriteAllText($h,$h0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($cpp,$c0,[Text.UTF8Encoding]::new($false))
+            $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+            if(!(Test-Path $build)){throw 'Unreal Build.bat missing'}
+            & $build 'AnomaliaPrimevalEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex'
+            if($LASTEXITCODE -ne 0){throw "Editor target build failed: $LASTEXITCODE"}
+            Write-Output 'ANOMALIA_INHABITED_SITE_NOTICE_BUILD=success'
+            Write-Output 'ANOMALIA_INHABITED_SITE_NOTICE_COORDINATES=33'
+            Write-Output 'ANOMALIA_INHABITED_SITE_NOTICE_MAPS=ANOMALIA_Inhabited_v1,ANOMALIA_Inhabited_v2'
+            Write-Output 'ANOMALIA_INHABITED_SITE_NOTICE_TIME=server local wall clock'
+          } catch {
+            [IO.File]::WriteAllText($h,$h0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($cpp,$c0,[Text.UTF8Encoding]::new($false))
+            Copy-Item (Join-Path $backup 'AnomaliaSurvivor.h.pre-site-wiring.bak') $h -Force
+            Copy-Item (Join-Path $backup 'AnomaliaSurvivor.cpp.pre-site-wiring.bak') $cpp -Force
+            throw
+          }
