@@ -12,22 +12,21 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 10
     steps:
-      - name: Read startup, menu, and map asset names without opening Unreal
+      - name: List City Sample playable levels and title assets
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved; audit skipped'}
-          $root='D:\ANOMALIA\unreal'; $content=Join-Path $root 'Content'; $source=Join-Path $root 'Source\AnomaliaPrimeval'
-          Write-Output '===== STARTUP CONFIG ====='
-          Select-String -Path (Join-Path $root 'Config\DefaultEngine.ini') -Pattern 'GameDefaultMap|EditorStartupMap|GameInstance|GameMode|GameViewport' | ForEach-Object {$_.Line}
-          foreach($folder in @('Maps','UI','Cinematics','Anomalia\Branding','City','Building','Anomalia\VisualValidation_v1','Anomalia\ResidentialPhotogrammetryReview_v1')){
-            $f=Join-Path $content $folder
-            Write-Output ('===== '+$folder+' =====')
-            if(Test-Path $f){Get-ChildItem $f -File -Recurse -ErrorAction SilentlyContinue | Where-Object {$_.Extension -in '.umap','.uasset','.mp4','.mov','.wav','.png','.jpg'} | Select-Object -First 160 -ExpandProperty FullName}
+          $content='D:\ANOMALIA\unreal\Content'; $source='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
+          foreach($folder in @('Maps','City','City\Big_City','City\Small_City','Cinematics','UI\Blueprints','Anomalia\Branding')){
+            $path=Join-Path $content $folder; Write-Output ('===== '+$folder+' =====')
+            if(Test-Path $path){Get-ChildItem $path -Recurse -File -ErrorAction SilentlyContinue | Where-Object {
+              $_.Extension -eq '.umap' -or ($folder -in @('Cinematics','UI\Blueprints','Anomalia\Branding') -and $_.Extension -eq '.uasset' -and $_.Name -match 'Menu|Intro|Credit|Title|Sandbox|Main|WBP|Brand')
+            } | ForEach-Object {$_.FullName}}
             else{Write-Output 'MISSING'}
           }
-          Write-Output '===== UI/INTRO SOURCE HOOKS ====='
-          Get-ChildItem $source -File -Include *.h,*.cpp | Select-String -Pattern 'MainMenu|Menu|Credits|Cinematic|MoviePlayer|GameInstance|Intro|Startup' -Context 0,1 | ForEach-Object {$_.Path+':'+$_.LineNumber+' '+$_.Line}
-          Write-Output '===== PACKAGED EXECUTABLE ====='
-          $exe=Join-Path $root 'Binaries\Win64\AnomaliaPrimeval.exe'; Write-Output ($exe+' EXISTS='+(Test-Path $exe))
+          Write-Output '===== MENU SOURCE HOOKS ====='
+          Get-ChildItem $source -Recurse -File | Where-Object {$_.Extension -in '.h','.cpp'} | Select-String -Pattern 'MainMenu|MoviePlayer|LevelSequence|SandboxIntro|Credits|CreateWidget' | ForEach-Object {$_.Path+':'+$_.LineNumber+' '+$_.Line}
+          Write-Output '===== DEFAULT MAP ====='
+          Select-String -Path 'D:\ANOMALIA\unreal\Config\DefaultEngine.ini' -Pattern 'GameDefaultMap|EditorStartupMap|GlobalDefaultGameMode' | ForEach-Object {$_.Line}
