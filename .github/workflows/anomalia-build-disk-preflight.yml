@@ -1,0 +1,26 @@
+name: Check ANOMALIA build destinations
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-build-disk-preflight.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  check-destinations:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 5
+    steps:
+      - name: Read available drives and OneDrive presence
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object {Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1)+' TOTAL_GB='+[math]::Round($_.Size/1GB,1))}
+          foreach($n in @('OneDrive','OneDriveConsumer','OneDriveCommercial')){
+            $v=[Environment]::GetEnvironmentVariable($n)
+            if($v -and (Test-Path $v)){ $d=Get-PSDrive -Name ([IO.Path]::GetPathRoot($v).Substring(0,1)); Write-Output ($n+'_PRESENT=1 FREE_GB='+[math]::Round($d.Free/1GB,1)) }
+          }
+          Write-Output 'ANOMALIA_BUILD_PREFLIGHT=complete'
