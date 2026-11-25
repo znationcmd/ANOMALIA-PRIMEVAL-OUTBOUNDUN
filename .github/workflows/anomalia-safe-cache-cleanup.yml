@@ -1,0 +1,44 @@
+name: Free regenerable Unreal derived-data caches
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-safe-cache-cleanup.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  clean-cache:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Remove only inactive regenerable Unreal caches
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $zenProcesses=@(Get-Process ZenServer,zen,UnrealZenServer -ErrorAction SilentlyContinue)
+          $paths=@(
+            'D:\ANOMALIA\unreal\DerivedDataCache',
+            'C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\DerivedDataCache'
+          )
+          foreach($p in $paths){
+            if(Test-Path -LiteralPath $p){
+              $files=Get-ChildItem -LiteralPath $p -File -Recurse -Force -ErrorAction SilentlyContinue
+              [int64]$bytes=($files|Measure-Object -Property Length -Sum).Sum
+              if($bytes -gt 0){Remove-Item -LiteralPath $p -Recurse -Force}
+              Write-Output ('CLEARED_CACHE='+$p+' SIZE_GB='+[math]::Round($bytes/1GB,2))
+            } else {Write-Output ('CACHE_ALREADY_ABSENT='+$p)}
+          }
+          $zen='C:\Users\utilisateur\AppData\Local\UnrealEngine\Common\Zen'
+          if($zenProcesses.Count -eq 0 -and (Test-Path -LiteralPath $zen)){
+            $files=Get-ChildItem -LiteralPath $zen -File -Recurse -Force -ErrorAction SilentlyContinue
+            [int64]$bytes=($files|Measure-Object -Property Length -Sum).Sum
+            Remove-Item -LiteralPath $zen -Recurse -Force
+            Write-Output ('CLEARED_CACHE='+$zen+' SIZE_GB='+[math]::Round($bytes/1GB,2))
+          } elseif($zenProcesses.Count -gt 0) {
+            Write-Output 'ZEN_CACHE_KEPT=Zen service process is running'
+          }
+          Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object {Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
+          Write-Output 'CACHE_CLEANUP=complete'
