@@ -1,0 +1,46 @@
+name: Audit live ANOMALIA startup, map, menu, and building assets
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-menu-building-inventory.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inventory:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Read project startup and content inventory without opening Unreal
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved; audit skipped'}
+          $root='D:\ANOMALIA\unreal'
+          if(!(Test-Path (Join-Path $root 'AnomaliaPrimeval.uproject'))){throw 'Live project missing'}
+          Write-Output '===== UPROJECT ====='
+          Get-Content (Join-Path $root 'AnomaliaPrimeval.uproject')
+          foreach($p in @('Config\DefaultEngine.ini','Config\DefaultGame.ini','Config\DefaultInput.ini')){
+            $f=Join-Path $root $p
+            Write-Output ('===== '+$p+' =====')
+            if(Test-Path $f){Select-String -Path $f -Pattern 'GameDefaultMap|EditorStartupMap|GameInstance|GameMode|GameViewport|GameUserSettings|DefaultPawn|GlobalDefaultGameMode|Startup|MoviePlayer|Splash|bUseSplitscreen|Map=' | ForEach-Object {$_.Line}}
+          }
+          $content=Join-Path $root 'Content'
+          Write-Output ('CONTENT_EXISTS='+(Test-Path $content))
+          if(Test-Path $content){
+            foreach($folder in @('Maps','UI','Menus','Movies','Cinematics','CitySample','CitySample\Maps','CitySample\BuildingAssets','Environment')){
+              $f=Join-Path $content $folder
+              if(Test-Path $f){Write-Output ('DIR '+$folder+' files='+(Get-ChildItem $f -Recurse -File -ErrorAction SilentlyContinue).Count)}
+            }
+            $files=Get-ChildItem $content -Recurse -File -ErrorAction SilentlyContinue
+            Write-Output ('UMAP_COUNT='+@($files|Where-Object Extension -eq '.umap').Count)
+            Write-Output ('UASSET_COUNT='+@($files|Where-Object Extension -eq '.uasset').Count)
+            Write-Output '===== CANDIDATE ASSET FILENAMES ====='
+            $files | Where-Object {$_.Name -match 'CitySample|City_Sample|MainMenu|Menu|Credits|Intro|Opening|Cinematic|Title|Building|Residential|House|Town|Village'} | Select-Object -First 250 -ExpandProperty FullName
+          }
+          Write-Output '===== PROJECT OUTPUTS ====='
+          foreach($d in @('Build','Binaries\Win64','Saved\StagedBuilds','Saved\Cooked')){ $f=Join-Path $root $d; if(Test-Path $f){Write-Output ($d+' files='+(Get-ChildItem $f -Recurse -File -ErrorAction SilentlyContinue).Count);Get-ChildItem $f -Recurse -File -Filter '*.exe' -ErrorAction SilentlyContinue|Select-Object -First 10 -ExpandProperty FullName}}
+          Write-Output '===== CITY SAMPLE PLUGINS ====='
+          foreach($d in @('Plugins','D:\ANOMALIA\CitySample','D:\ANOMALIA\FabImports','D:\ANOMALIA\sketchfab')){ $f=Join-Path $root $d; if(Test-Path $f){Write-Output ($d+' EXISTS')} }
