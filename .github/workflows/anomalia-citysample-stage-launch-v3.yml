@@ -1,0 +1,60 @@
+name: Stage and launch ANOMALIA City Sample v3
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-citysample-stage-launch-v3.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  stage-launch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 60
+    steps:
+      - name: Stage in project Saved and smoke-launch the cooked game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'; $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $cooked=Join-Path $root 'Saved\Cooked\Windows\AnomaliaPrimeval'
+          if(!(Test-Path $project) -or !(Test-Path $cooked)){throw 'Project or cooked startup map store missing'}
+          foreach($f in @('AssetRegistry.bin','Metadata\CookedSettings.txt','Metadata\zenfs.manifest')){
+            if(!(Test-Path (Join-Path $cooked $f))){throw "Cook metadata missing: $f"}
+          }
+          $d=Get-PSDrive D; $c=Get-PSDrive C
+          Write-Output ('PRESTAGE_D_FREE_GB='+[math]::Round($d.Free/1GB,1))
+          Write-Output ('PRESTAGE_C_FREE_GB='+[math]::Round($c.Free/1GB,1))
+          if($d.Free -lt 12GB -or $c.Free -lt 8GB){throw 'Insufficient safe staging workspace; stopped before staging'}
+          $base=Join-Path $root 'Saved\StagedBuilds'; New-Item -ItemType Directory -Path $base -Force|Out-Null
+          $stage=Join-Path $base ('CitySample-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
+          New-Item -ItemType Directory -Path $stage -Force|Out-Null
+          $probe=Join-Path $stage '.write-check'; [IO.File]::WriteAllText($probe,'ok'); Remove-Item $probe -Force
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          if(!(Test-Path $uat)){throw 'RunUAT.bat missing'}
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -skipbuild -skipcook -stage -pak -iostore "-stagingdirectory=$stage" -utf8output
+          if($LASTEXITCODE -ne 0){throw "City Sample staging failed: $LASTEXITCODE"}
+          $exe=Get-ChildItem $stage -Filter 'AnomaliaPrimeval.exe' -File -Recurse | Select-Object -First 1
+          if(!$exe){throw 'Staged game executable missing'}
+          $containers=Get-ChildItem $stage -File -Recurse -Include '*.pak','*.utoc','*.ucas'
+          if(!$containers){throw 'Staged game content containers missing'}
+          [int64]$bytes=(Get-ChildItem $stage -File -Recurse -Force|Measure-Object -Property Length -Sum).Sum
+          Write-Output "ANOMALIA_STAGED_EXE=$($exe.FullName)"
+          Write-Output "ANOMALIA_STAGED_CONTENT_CONTAINER=$($containers[0].FullName)"
+          Write-Output ('ANOMALIA_STAGED_SIZE_GB='+[math]::Round($bytes/1GB,2))
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game process appeared; launch preserved'}
+          $log=Join-Path $exe.DirectoryName 'ANOMALIA_launch_smoke.log'; $err=Join-Path $exe.DirectoryName 'ANOMALIA_launch_smoke.err'
+          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory $exe.DirectoryName -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 25
+          $proc.Refresh()
+          if($proc.HasExited){
+            Write-Output "ANOMALIA_LAUNCH_EXIT_CODE=$($proc.ExitCode)"
+            if(Test-Path $log){Get-Content $log -Tail 100}
+            if(Test-Path $err){Get-Content $err -Tail 60}
+            throw 'Packaged game exited during 25-second launch check'
+          }
+          Write-Output "ANOMALIA_GAME_RUNNING_PID=$($proc.Id)"
+          Write-Output 'ANOMALIA_LAUNCH_SMOKE=process_alive_after_25_seconds'
+          Write-Output 'ANOMALIA_CITY_SAMPLE_PACKAGE=staged'
