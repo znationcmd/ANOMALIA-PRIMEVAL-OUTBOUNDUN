@@ -1,0 +1,209 @@
+name: Fix and build ANOMALIA launch menu
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-launch-menu-fix.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  fix-and-build:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 50
+    steps:
+      - name: Restore, fix menu, and compile game
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'; $source=Join-Path $root 'Source\AnomaliaPrimeval'; $backup='D:\ANOMALIA\Backups\LaunchExperience'
+          $h=Join-Path $source 'AnomaliaSurvivor.h'; $c=Join-Path $source 'AnomaliaSurvivor.cpp'; $cfg=Join-Path $root 'Config\DefaultEngine.ini'
+          $menuH=Join-Path $source 'AnomaliaMainMenuWidget.h'; $menuC=Join-Path $source 'AnomaliaMainMenuWidget.cpp'
+          $origH=Join-Path $backup 'AnomaliaSurvivor.h.pre-launch-menu.bak'; $origC=Join-Path $backup 'AnomaliaSurvivor.cpp.pre-launch-menu.bak'; $origCfg=Join-Path $backup 'DefaultEngine.ini.pre-launch-menu.bak'
+          foreach($p in @($h,$c,$cfg,$origH,$origC,$origCfg)){if(!(Test-Path $p)){throw "Required file missing: $p"}}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $curH=[IO.File]::ReadAllText($h); $curC=[IO.File]::ReadAllText($c)
+          if(!$curH.Contains('bStartupMenuShown') -or !$curC.Contains('AnomaliaMainMenuWidget.h')){throw 'Failed attempt state not found; refusing restore'}
+          Copy-Item $h (Join-Path $backup 'AnomaliaSurvivor.h.failed-menu-attempt') -Force
+          Copy-Item $c (Join-Path $backup 'AnomaliaSurvivor.cpp.failed-menu-attempt') -Force
+          try{
+            Copy-Item $origH $h -Force; Copy-Item $origC $c -Force; Copy-Item $origCfg $cfg -Force
+            $h0=[IO.File]::ReadAllText($h); $c0=[IO.File]::ReadAllText($c); $cfg0=[IO.File]::ReadAllText($cfg)
+            if(!$h0.Contains('CurrentInhabitedSettlementIndex')){throw 'Expected survivor base source not found'}
+            if(!$cfg0.Contains('GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1')){throw 'Unexpected default map in backup'}
+            if(!(Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'City Sample map asset missing'}
+            $menuHeader=@'
+          #pragma once
+          #include "CoreMinimal.h"
+          #include "Blueprint/UserWidget.h"
+          #include "AnomaliaMainMenuWidget.generated.h"
+          class UButton;
+          class UTextBlock;
+          class UVerticalBox;
+          UCLASS()
+          class ANOMALIAPRIMEVAL_API UAnomaliaMainMenuWidget : public UUserWidget
+          {
+              GENERATED_BODY()
+          protected:
+              virtual void NativeConstruct() override;
+          private:
+              void BuildPage(bool bCredits);
+              UTextBlock* AddText(const FText& Text, int32 Size, const FLinearColor& Color);
+              UButton* AddButton(const FText& Text);
+              UPROPERTY(Transient) TObjectPtr<UVerticalBox> MenuContent;
+              UFUNCTION() void HandlePlay();
+              UFUNCTION() void HandleCredits();
+              UFUNCTION() void HandleBack();
+              UFUNCTION() void HandleQuit();
+          };
+          '@
+            $menuSource=@'
+          #include "AnomaliaMainMenuWidget.h"
+          #include "Blueprint/WidgetTree.h"
+          #include "Components/Border.h"
+          #include "Components/Button.h"
+          #include "Components/CanvasPanel.h"
+          #include "Components/CanvasPanelSlot.h"
+          #include "Components/Image.h"
+          #include "Components/TextBlock.h"
+          #include "Components/VerticalBox.h"
+          #include "Components/VerticalBoxSlot.h"
+          #include "Engine/Texture2D.h"
+          #include "GameFramework/PlayerController.h"
+          #include "HAL/PlatformMisc.h"
+          void UAnomaliaMainMenuWidget::NativeConstruct()
+          {
+              Super::NativeConstruct();
+              if (!WidgetTree) return;
+              UCanvasPanel* Root = WidgetTree->ConstructWidget<UCanvasPanel>(UCanvasPanel::StaticClass());
+              WidgetTree->RootWidget = Root;
+              UImage* Backdrop = WidgetTree->ConstructWidget<UImage>(UImage::StaticClass());
+              if (UTexture2D* Texture = LoadObject<UTexture2D>(nullptr, TEXT("/Game/Anomalia/Branding/T_MenuBackdrop.T_MenuBackdrop")))
+                  Backdrop->SetBrushFromTexture(Texture, true);
+              Backdrop->SetColorAndOpacity(FLinearColor(1.f, 1.f, 1.f, 0.48f));
+              UCanvasPanelSlot* ImageSlot = Root->AddChildToCanvas(Backdrop);
+              ImageSlot->SetAnchors(FAnchors(0.f, 0.f, 1.f, 1.f));
+              ImageSlot->SetOffsets(FMargin(0.f));
+              UBorder* Panel = WidgetTree->ConstructWidget<UBorder>(UBorder::StaticClass());
+              Panel->SetBrushColor(FLinearColor(0.005f, 0.012f, 0.018f, 0.82f));
+              UCanvasPanelSlot* PanelSlot = Root->AddChildToCanvas(Panel);
+              PanelSlot->SetAnchors(FAnchors(0.06f, 0.14f, 0.48f, 0.86f));
+              PanelSlot->SetOffsets(FMargin(24.f));
+              MenuContent = WidgetTree->ConstructWidget<UVerticalBox>(UVerticalBox::StaticClass());
+              Panel->SetContent(MenuContent);
+              BuildPage(false);
+              if (APlayerController* PC = GetOwningPlayer())
+              {
+                  PC->SetShowMouseCursor(true);
+                  PC->SetIgnoreMoveInput(true);
+                  PC->SetIgnoreLookInput(true);
+                  FInputModeUIOnly Mode;
+                  Mode.SetWidgetToFocus(TakeWidget());
+                  Mode.SetLockMouseToViewportBehavior(EMouseLockMode::DoNotLock);
+                  PC->SetInputMode(Mode);
+              }
+          }
+          UTextBlock* UAnomaliaMainMenuWidget::AddText(const FText& Text, int32 Size, const FLinearColor& Color)
+          {
+              UTextBlock* Block = WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+              Block->SetText(Text); Block->SetColorAndOpacity(Color); Block->SetAutoWrapText(true);
+              FSlateFontInfo Font=Block->GetFont(); Font.Size=Size; Block->SetFont(Font);
+              UVerticalBoxSlot* BoxSlot=MenuContent->AddChildToVerticalBox(Block);
+              BoxSlot->SetPadding(FMargin(4.f, 8.f)); return Block;
+          }
+          UButton* UAnomaliaMainMenuWidget::AddButton(const FText& Text)
+          {
+              UButton* Button=WidgetTree->ConstructWidget<UButton>(UButton::StaticClass());
+              Button->SetBackgroundColor(FLinearColor(0.05f,0.16f,0.19f,0.94f));
+              UTextBlock* Label=WidgetTree->ConstructWidget<UTextBlock>(UTextBlock::StaticClass());
+              Label->SetText(Text); Label->SetColorAndOpacity(FLinearColor(0.96f,0.78f,0.38f,1.f));
+              FSlateFontInfo Font=Label->GetFont(); Font.Size=22; Label->SetFont(Font);
+              Button->SetContent(Label);
+              UVerticalBoxSlot* BoxSlot=MenuContent->AddChildToVerticalBox(Button);
+              BoxSlot->SetPadding(FMargin(4.f,6.f)); return Button;
+          }
+          void UAnomaliaMainMenuWidget::BuildPage(bool bCredits)
+          {
+              if(!MenuContent) return;
+              MenuContent->ClearChildren();
+              if(bCredits)
+              {
+                  AddText(FText::FromString(TEXT("GÉNÉRIQUE")),34,FLinearColor(0.96f,0.78f,0.38f,1.f));
+                  AddText(FText::FromString(TEXT("ANOMALIA'Z\nPRIMEVAL OUTBOUNDUN\n\nDirection créative : ANOMALIA'Z\nEnvironnements : City Sample et ressources intégrées au projet\nTechnologie : Unreal Engine 5\n\nÀ tous ceux qui tiennent jusqu'à l'aube.")),18,FLinearColor::White);
+                  UButton* Back=AddButton(FText::FromString(TEXT("RETOUR")));
+                  Back->OnClicked.AddDynamic(this,&UAnomaliaMainMenuWidget::HandleBack);
+              }
+              else
+              {
+                  AddText(FText::FromString(TEXT("ANOMALIA'Z")),42,FLinearColor(0.96f,0.78f,0.38f,1.f));
+                  AddText(FText::FromString(TEXT("PRIMEVAL OUTBOUNDUN  •  SURVIVE THE UNKNOWN")),17,FLinearColor(0.85f,0.9f,0.9f,1.f));
+                  AddText(FText::FromString(TEXT("Le monde est tombé. Votre histoire commence ici.")),18,FLinearColor::White);
+                  UButton* Play=AddButton(FText::FromString(TEXT("JOUER"))); Play->OnClicked.AddDynamic(this,&UAnomaliaMainMenuWidget::HandlePlay);
+                  UButton* Credits=AddButton(FText::FromString(TEXT("GÉNÉRIQUE"))); Credits->OnClicked.AddDynamic(this,&UAnomaliaMainMenuWidget::HandleCredits);
+                  UButton* Quit=AddButton(FText::FromString(TEXT("QUITTER"))); Quit->OnClicked.AddDynamic(this,&UAnomaliaMainMenuWidget::HandleQuit);
+              }
+          }
+          void UAnomaliaMainMenuWidget::HandlePlay()
+          {
+              if(APlayerController* PC=GetOwningPlayer())
+              {
+                  PC->SetIgnoreMoveInput(false); PC->SetIgnoreLookInput(false); PC->SetShowMouseCursor(false);
+                  PC->SetInputMode(FInputModeGameOnly());
+              }
+              RemoveFromParent();
+          }
+          void UAnomaliaMainMenuWidget::HandleCredits(){BuildPage(true);}
+          void UAnomaliaMainMenuWidget::HandleBack(){BuildPage(false);}
+          void UAnomaliaMainMenuWidget::HandleQuit(){FPlatformMisc::RequestExit(false);}
+          '@
+            $eol=[Environment]::NewLine
+            $classEnd=$h0.LastIndexOf('};')
+            if($classEnd -lt 0){throw 'Survivor class terminator missing'}
+            $h0=$h0.Insert($classEnd,'    bool bStartupMenuShown = false;'+$eol)
+            $first=$c0.IndexOf($eol)
+            if($first -lt 0){throw 'Survivor include block missing'}
+            $c0=$c0.Insert($first+$eol.Length,'#include "AnomaliaMainMenuWidget.h"'+$eol)
+            $tick=$c0.IndexOf('void AAnomaliaSurvivor::Tick(float DeltaSeconds)',[StringComparison]::Ordinal)
+            $auth=$c0.IndexOf('    if (!HasAuthority()) return;',$tick,[StringComparison]::Ordinal)
+            if($tick -lt 0 -or $auth -lt 0){throw 'Survivor Tick authority guard missing'}
+            $end=$c0.IndexOf($eol,$auth,[StringComparison]::Ordinal)
+            $hook=@'
+              if (!bStartupMenuShown && IsLocallyControlled() && GetWorld() &&
+                  GetWorld()->GetMapName().EndsWith(TEXT("PRIGIMALIA_SKARVIK_CITY_v1")) &&
+                  GetNetMode() != NM_DedicatedServer)
+              {
+                  if (APlayerController* PC = Cast<APlayerController>(Controller))
+                  {
+                      if (UAnomaliaMainMenuWidget* Menu = CreateWidget<UAnomaliaMainMenuWidget>(PC, UAnomaliaMainMenuWidget::StaticClass()))
+                      {
+                          Menu->AddToViewport(1000);
+                          bStartupMenuShown = true;
+                      }
+                  }
+              }
+          '@
+            $c0=$c0.Insert($end+$eol.Length,$hook)
+            [IO.File]::WriteAllText($menuH,$menuHeader.TrimStart(),[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($menuC,$menuSource.TrimStart(),[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($h,$h0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($c,$c0,[Text.UTF8Encoding]::new($false))
+            $newCfg=$cfg0.Replace('GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1','GameDefaultMap=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1').Replace('EditorStartupMap=/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1','EditorStartupMap=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1')
+            if($newCfg -eq $cfg0){throw 'Map config replacement did not apply'}
+            [IO.File]::WriteAllText($cfg,$newCfg,[Text.UTF8Encoding]::new($false))
+            $project=Join-Path $root 'AnomaliaPrimeval.uproject'; $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+            if(!(Test-Path $project) -or !(Test-Path $build)){throw 'Project or Build.bat missing'}
+            & $build 'AnomaliaPrimeval' 'Win64' 'Development' "-Project=$project" '-WaitMutex'
+            if($LASTEXITCODE -ne 0){throw "Game target build failed: $LASTEXITCODE"}
+            Write-Output 'ANOMALIA_LAUNCH_MAP=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1'
+            Write-Output 'ANOMALIA_MAIN_MENU=compiled'
+            Write-Output 'ANOMALIA_CREDITS_PAGE=compiled'
+            Write-Output 'ANOMALIA_GAME_TARGET_BUILD=success'
+          } catch {
+            [IO.File]::WriteAllText($h,$h0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($c,$c0,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($cfg,$cfg0,[Text.UTF8Encoding]::new($false))
+            Remove-Item $menuH,$menuC -Force -ErrorAction SilentlyContinue
+            throw
+          }
