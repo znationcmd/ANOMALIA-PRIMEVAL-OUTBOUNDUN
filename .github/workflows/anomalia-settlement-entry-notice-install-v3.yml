@@ -1,0 +1,127 @@
+name: Build settlement entry notice for ANOMALIA
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-settlement-entry-notice-install-v3.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  install-settlement-notice:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 30
+    steps:
+      - name: Add notice and compile with protected header repair
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'; $source=Join-Path $root 'Source\AnomaliaPrimeval'; $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path $project) -or !(Test-Path $source)){throw 'Live ANOMALIA project/source missing'}
+          $survivorHeader=Join-Path $source 'AnomaliaSurvivor.h'; $survivorCpp=Join-Path $source 'AnomaliaSurvivor.cpp'
+          $homesteadHeader=Join-Path $source 'AnomaliaHomesteadStation.h'; $dogHeader=Join-Path $source 'AnomaliaDogCompanion.h'
+          $noticeHeader=Join-Path $source 'AnomaliaSettlementNoticeZone.h'; $noticeCpp=Join-Path $source 'AnomaliaSettlementNoticeZone.cpp'
+          foreach($p in @($survivorHeader,$survivorCpp,$homesteadHeader,$dogHeader)){if(!(Test-Path $p)){throw "Required source missing: $p"}}
+          if(Test-Path $noticeHeader){throw 'Settlement notice actor already exists; refusing to overwrite'}
+          $originals=@{}
+          foreach($p in @($survivorHeader,$survivorCpp,$homesteadHeader,$dogHeader)){$originals[$p]=[IO.File]::ReadAllText($p)}
+          if($originals[$survivorHeader].Contains('ClientShowLocationNotice')){throw 'Notice RPC already exists'}
+          $backupRoot='D:\ANOMALIA\Backups\SettlementNotice'; New-Item -ItemType Directory -Path $backupRoot -Force|Out-Null
+          foreach($p in $originals.Keys){Copy-Item $p (Join-Path $backupRoot ((Split-Path $p -Leaf)+'.pre-settlement-notice-v3.bak')) -Force}
+          try{
+            $needle='    void CloseInventory();'
+            if(!$originals[$survivorHeader].Contains($needle)){throw 'Could not find survivor declaration insertion point'}
+            $rpc="    UFUNCTION(Client, Reliable)"+[Environment]::NewLine+"    void ClientShowLocationNotice(const FString& PlaceName, int32 Hour, int32 Minute, float DurationSeconds);"
+            $headerUpdated=$originals[$survivorHeader].Replace($needle,$needle+[Environment]::NewLine+$rpc)
+            $impl=@'
+          void AAnomaliaSurvivor::ClientShowLocationNotice_Implementation(const FString& PlaceName, int32 Hour, int32 Minute, float DurationSeconds)
+          {
+              if (!IsLocallyControlled() || !GEngine || PlaceName.IsEmpty()) return;
+              const FString Notice = FString::Printf(TEXT("%s  |  %02d:%02d"), *PlaceName, FMath::Clamp(Hour, 0, 23), FMath::Clamp(Minute, 0, 59));
+              GEngine->AddOnScreenDebugMessage(-1, FMath::Clamp(DurationSeconds, 2.f, 12.f), FColor::White, Notice, false, FVector2D(1.2f, 1.2f));
+          }
+
+          '@
+            $anchor='void AAnomaliaSurvivor::GetLifetimeReplicatedProps'
+            $at=$originals[$survivorCpp].IndexOf($anchor,[StringComparison]::Ordinal)
+            if($at -lt 0){throw 'Could not find survivor implementation insertion point'}
+            $cppUpdated=$originals[$survivorCpp].Insert($at,$impl)
+            if($cppUpdated -notmatch '(?m)^#include "Engine/Engine\.h"'){
+              $firstLineEnd=$cppUpdated.IndexOf([Environment]::NewLine)
+              if($firstLineEnd -lt 0){throw 'Unexpected survivor source format'}
+              $cppUpdated=$cppUpdated.Insert($firstLineEnd+[Environment]::NewLine.Length,'#include "Engine/Engine.h"'+[Environment]::NewLine)
+            }
+            $homesteadUpdated=$originals[$homesteadHeader]
+            if($homesteadUpdated -notmatch '(?m)^#include "AnomaliaSurvivor\.h"'){
+              $homesteadUpdated=$homesteadUpdated.Replace('#include "AnomaliaHomesteadStation.generated.h"','#include "AnomaliaSurvivor.h"'+[Environment]::NewLine+'#include "AnomaliaHomesteadStation.generated.h"')
+            }
+            $dogUpdated=$originals[$dogHeader]
+            if($dogUpdated -notmatch '(?m)^#include "AnomaliaSurvivor\.h"'){
+              $dogUpdated=$dogUpdated.Replace('#include "AnomaliaDogCompanion.generated.h"','#include "AnomaliaSurvivor.h"'+[Environment]::NewLine+'#include "AnomaliaDogCompanion.generated.h"')
+            }
+            $zoneHeader=@'
+          #pragma once
+          #include "CoreMinimal.h"
+          #include "Engine/TriggerBox.h"
+          #include "AnomaliaSettlementNoticeZone.generated.h"
+
+          UCLASS()
+          class ANOMALIAPRIMEVAL_API AAnomaliaSettlementNoticeZone : public ATriggerBox
+          {
+              GENERATED_BODY()
+          public:
+              AAnomaliaSettlementNoticeZone();
+              UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Location")
+              FText PlaceName;
+              UPROPERTY(EditAnywhere, BlueprintReadWrite, Category="ANOMALIA|Location", meta=(ClampMin="2", ClampMax="12"))
+              float NoticeDurationSeconds = 6.f;
+          protected:
+              virtual void BeginPlay() override;
+              UFUNCTION()
+              void HandleSettlementEntry(AActor* OverlappedActor, AActor* OtherActor);
+          };
+          '@
+            $zoneCpp=@'
+          #include "AnomaliaSettlementNoticeZone.h"
+          #include "AnomaliaSurvivor.h"
+
+          AAnomaliaSettlementNoticeZone::AAnomaliaSettlementNoticeZone()
+          {
+              bReplicates = true;
+              SetReplicateMovement(false);
+              SetActorEnableCollision(true);
+              PlaceName = FText::FromString(TEXT("Lieu sans nom"));
+          }
+          void AAnomaliaSettlementNoticeZone::BeginPlay()
+          {
+              Super::BeginPlay();
+              if (HasAuthority()) OnActorBeginOverlap.AddDynamic(this, &AAnomaliaSettlementNoticeZone::HandleSettlementEntry);
+          }
+          void AAnomaliaSettlementNoticeZone::HandleSettlementEntry(AActor* OverlappedActor, AActor* OtherActor)
+          {
+              if (!HasAuthority() || !IsValid(OtherActor)) return;
+              AAnomaliaSurvivor* Survivor = Cast<AAnomaliaSurvivor>(OtherActor);
+              if (!Survivor || PlaceName.IsEmpty()) return;
+              const FDateTime LocalTime = FDateTime::Now();
+              Survivor->ClientShowLocationNotice(PlaceName.ToString(), LocalTime.GetHour(), LocalTime.GetMinute(), NoticeDurationSeconds);
+          }
+          '@
+            [IO.File]::WriteAllText($survivorHeader,$headerUpdated,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($survivorCpp,$cppUpdated,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($homesteadHeader,$homesteadUpdated,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($dogHeader,$dogUpdated,[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($noticeHeader,$zoneHeader.TrimStart(),[Text.UTF8Encoding]::new($false))
+            [IO.File]::WriteAllText($noticeCpp,$zoneCpp.TrimStart(),[Text.UTF8Encoding]::new($false))
+            $build=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\Build.bat'
+            if(!(Test-Path $build)){throw 'Unreal Build.bat missing'}
+            & $build 'AnomaliaPrimevalEditor' 'Win64' 'Development' "-Project=$project" '-WaitMutex'
+            if($LASTEXITCODE -ne 0){throw "Editor target build failed: $LASTEXITCODE"}
+            Write-Output 'ANOMALIA_SETTLEMENT_NOTICE_BUILD=success'
+            Write-Output 'ANOMALIA_SETTLEMENT_NOTICE_ZONES=class ready, not placed in maps'
+          } catch {
+            foreach($p in $originals.Keys){[IO.File]::WriteAllText($p,$originals[$p],[Text.UTF8Encoding]::new($false))}
+            Remove-Item $noticeHeader,$noticeCpp -Force -ErrorAction SilentlyContinue
+            throw
+          }
