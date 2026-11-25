@@ -12,12 +12,15 @@ jobs:
     runs-on: [self-hosted, Windows, X64, anomalia-ue5]
     timeout-minutes: 5
     steps:
-      - name: Read settlement data and installed notice implementation
+      - name: Read settlement coordinates and APIs
         shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
         run: |
           $ErrorActionPreference='Stop'
           if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
           if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
-          $s='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval'
-          Get-ChildItem $s -Recurse -File | Where-Object {$_.Name -match 'InhabitedHeight|WorldImportLibrary|SettlementNotice'} | ForEach-Object { Write-Output ('FILE='+$_.FullName) }
-          Select-String -Path (Join-Path $s '*.h'),(Join-Path $s '*.cpp') -Pattern 'InhabitedSettlementSites|SettlementSites|SettlementNotice|ClientShowLocationNotice' -Context 2,8 | ForEach-Object { Write-Output ('===== '+$_.Path+':'+$_.LineNumber+' ====='); Write-Output $_.Context.PreContext; Write-Output $_.Line; Write-Output $_.Context.PostContext }
+          $s='D:\ANOMALIA\unreal\Source\AnomaliaPrimeval\World'
+          foreach($n in 'AnomaliaInhabitedHeight.h','AnomaliaWorldImportLibrary.h','AnomaliaWorldImportLibrary.cpp'){
+            $p=Join-Path $s $n
+            Write-Output ('===== '+$n+' =====')
+            if(Test-Path $p){$i=0; Get-Content $p | ForEach-Object {$i++; if($_ -match 'Settlement|Sites|FVector|Coordinate|return|^\s*\{' -or ($n -eq 'AnomaliaInhabitedHeight.h' -and $i -le 200)){Write-Output ('{0:D3}: {1}' -f $i,$_)} }}
+          }
