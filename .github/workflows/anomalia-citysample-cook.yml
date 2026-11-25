@@ -1,0 +1,41 @@
+name: Cook ANOMALIA City Sample map
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-citysample-cook.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  cook-map:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 90
+    steps:
+      - name: Cook startup map and its referenced assets
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'; $project=Join-Path $root 'AnomaliaPrimeval.uproject'; $map='/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1'
+          if(!(Test-Path $project) -or !(Test-Path (Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap'))){throw 'Project or City Sample startup map missing'}
+          $cfg=Get-Content (Join-Path $root 'Config\DefaultEngine.ini') -Raw
+          if(!$cfg.Contains("GameDefaultMap=$map")){throw 'Startup map config not set'}
+          $d=Get-PSDrive D; $c=Get-PSDrive C
+          Write-Output ('PRECOOK_D_FREE_GB='+[math]::Round($d.Free/1GB,1))
+          Write-Output ('PRECOOK_C_FREE_GB='+[math]::Round($c.Free/1GB,1))
+          if($d.Free -lt 10GB -or $c.Free -lt 10GB){throw 'Insufficient safe working space for cook; stopped before writing'}
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat'
+          if(!(Test-Path $uat)){throw 'RunUAT.bat missing'}
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -cook "-map=$map" -skipbuild -utf8output
+          if($LASTEXITCODE -ne 0){throw "City Sample map cook failed: $LASTEXITCODE"}
+          $cooked=Join-Path $root 'Saved\Cooked\Windows'
+          if(!(Test-Path $cooked)){throw 'Cook did not produce Saved\Cooked\Windows'}
+          $files=Get-ChildItem $cooked -File -Recurse -Force
+          [int64]$bytes=($files|Measure-Object -Property Length -Sum).Sum
+          $d=Get-PSDrive D; $c=Get-PSDrive C
+          Write-Output ('CITY_SAMPLE_COOKED_SIZE_GB='+[math]::Round($bytes/1GB,2))
+          Write-Output ('POSTCOOK_D_FREE_GB='+[math]::Round($d.Free/1GB,1))
+          Write-Output ('POSTCOOK_C_FREE_GB='+[math]::Round($c.Free/1GB,1))
+          Write-Output 'CITY_SAMPLE_MAP_COOK=success'
