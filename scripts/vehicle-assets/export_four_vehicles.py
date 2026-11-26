@@ -46,7 +46,7 @@ for name, path in models:
                 raise RuntimeError("Invalid FBX scooter vertex array")
             index = [0]
             def scale_vertex(value):
-                result = float(value) * export_scale
+                result = float(value.group(0)) * export_scale
                 index[0] += 1
                 return format(result, ".9g")
             scaled = scalar.sub(scale_vertex, match.group(2))
