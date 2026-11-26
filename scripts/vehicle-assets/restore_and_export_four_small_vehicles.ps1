@@ -34,6 +34,7 @@ if(!(Test-Path -LiteralPath $py -PathType Leaf)){throw 'Vehicle FBX export scrip
 & $editor $project '-run=pythonscript' "-script=$py" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\export-editor.log"
 if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'exports.json') -PathType Leaf)){throw "Unreal FBX export failed: $LASTEXITCODE"}
 $zip=Join-Path $out 'ANOMALIA_Cross_Moto_Scooter_Quad_FBX.zip'
+if(Test-Path -LiteralPath $zip){Remove-Item -LiteralPath $zip -Force}
 Compress-Archive -LiteralPath (Join-Path $out 'ANOMALIA_dirt_bike.fbx'),(Join-Path $out 'ANOMALIA_motorcycle.fbx'),(Join-Path $out 'ANOMALIA_scooter.fbx'),(Join-Path $out 'ANOMALIA_quad.fbx'),(Join-Path $out 'exports.json') -DestinationPath $zip -CompressionLevel Optimal
 if((Get-Item -LiteralPath $zip).Length -lt 1024){throw 'Vehicle export archive is empty'}
 Write-Output 'FOUR_VEHICLE_EXPORT_OK'
