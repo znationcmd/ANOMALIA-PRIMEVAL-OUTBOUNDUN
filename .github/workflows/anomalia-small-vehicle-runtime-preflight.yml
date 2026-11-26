@@ -33,3 +33,16 @@ jobs:
           }
           $report=Join-Path $root 'Saved\VehicleReview'
           if(Test-Path -LiteralPath $report){Get-ChildItem -LiteralPath $report -Directory|Sort-Object LastWriteTime -Descending|Select-Object -First 3|ForEach-Object{Write-Output ('VEHICLE_REVIEW='+$_.FullName)}}
+          $pakTool=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealPak.exe'
+          $pak=Get-ChildItem -LiteralPath $stageRoot -Filter '*.pak' -File -Recurse -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|Select-Object -First 1
+          if($pak -and (Test-Path -LiteralPath $pakTool)){
+            Write-Output ('STAGED_PAK='+$pak.FullName+' SIZE_GB='+[math]::Round($pak.Length/1GB,2))
+            $pakListing=& $pakTool $pak.FullName -List 2>&1
+            $vehicleAssets=@($pakListing|Select-String -Pattern '(?i)(SM_dirt_bike|SM_motorcycle|SM_scooter|SM_quad|sfx_Amb_VEH_CityMotorcycle_meta)')
+            if($vehicleAssets.Count){$vehicleAssets|Select-Object -First 30|ForEach-Object{Write-Output ('PAK_VEHICLE_ASSET='+$_.Line.Trim())}}else{Write-Output 'PAK_VEHICLE_ASSET=NONE'}
+          }else{Write-Output 'STAGED_PAK=NOT_FOUND'}
+          $config=Join-Path $root 'Config\DefaultEngine.ini'
+          if(Test-Path -LiteralPath $config){
+            Select-String -LiteralPath $config -Pattern 'DirectoriesToAlwaysCook|Anomalia\\Vehicles|Audio\\MetaSounds\\Ambient'|ForEach-Object{Write-Output ('COOK_CONFIG='+$_.Line.Trim())}
+          }
+
