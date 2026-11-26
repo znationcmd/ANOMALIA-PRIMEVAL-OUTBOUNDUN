@@ -28,7 +28,7 @@ jobs:
           if(Test-Path -LiteralPath $stageRoot){
             Get-ChildItem -LiteralPath $stageRoot -Directory|Sort-Object LastWriteTime -Descending|Select-Object -First 4|ForEach-Object{
               $exe=Get-ChildItem -LiteralPath $_.FullName -Filter '*.exe' -Recurse -File -ErrorAction SilentlyContinue|Select-Object -First 1
-              Write-Output ('STAGED_BUILD='+$_.FullName+' EXE='+(if($exe){$exe.FullName}else{'NONE'}))
+              $exePath='NONE';if($exe){$exePath=$exe.FullName};Write-Output ('STAGED_BUILD='+$_.FullName+' EXE='+$exePath)
             }
           }
           $report=Join-Path $root 'Saved\VehicleReview'
