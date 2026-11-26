@@ -42,3 +42,4 @@ jobs:
           }
           Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object {Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
           Write-Output 'CACHE_CLEANUP=complete'
+          Write-Output 'VEHICLE_TASK_CACHE_RECLAIM=authorized-cache-only'
