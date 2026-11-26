@@ -1,0 +1,52 @@
+name: ANOMALIA - place vehicle cook rules in DefaultGame
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-vehicle-cook-config-fix.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  fix-config:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Move vehicle cook inclusions into Unreal's Game config safely
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal editor/build process preserved'}
+          $root='D:\ANOMALIA\unreal';$contentRoot=Join-Path $root 'Content'
+          $paths=@('/Game/Anomalia/Vehicles','/Game/AnomaliaZPrigimalia/Vehicles','/Game/Audio/MetaSounds/Ambient')
+          foreach($p in $paths){$rel=($p -replace '^/Game/','') -replace '/', '\';if(!(Test-Path -LiteralPath (Join-Path $contentRoot $rel))){throw "Cook directory missing: $p"}}
+          $engineIni=Join-Path $root 'Config\DefaultEngine.ini';$gameIni=Join-Path $root 'Config\DefaultGame.ini';$section='[/Script/UnrealEd.ProjectPackagingSettings]'
+          $entries=@($paths|ForEach-Object{'+DirectoriesToAlwaysCook=(Path="'+$_+'")'})
+          if(Test-Path -LiteralPath $engineIni){
+            $lines=[System.Collections.Generic.List[string]]::new()
+            foreach($line in ([IO.File]::ReadAllText($engineIni) -split '\r?\n')){$lines.Add($line)}
+            $filtered=@($lines|Where-Object{$_ -notin $entries})
+            if($filtered.Count -ne $lines.Count){
+              $bak=$engineIni+'.vehicle-cook-misplaced.bak';if(!(Test-Path -LiteralPath $bak)){Copy-Item -LiteralPath $engineIni -Destination $bak}
+              [IO.File]::WriteAllText($engineIni,($filtered -join [Environment]::NewLine),[Text.UTF8Encoding]::new($true))
+              Write-Output 'REMOVED_MISPLACED_COOK_RULES_FROM_DEFAULTENGINE=true'
+            }
+          }
+          $gameLines=[System.Collections.Generic.List[string]]::new()
+          if(Test-Path -LiteralPath $gameIni){foreach($line in ([IO.File]::ReadAllText($gameIni) -split '\r?\n')){$gameLines.Add($line)}}
+          $idx=$gameLines.IndexOf($section)
+          if($idx -lt 0){if($gameLines.Count -gt 0 -and $gameLines[$gameLines.Count-1] -ne ''){$gameLines.Add('')};$gameLines.Add($section);$idx=$gameLines.Count-1}
+          $insert=$idx+1;while($insert -lt $gameLines.Count -and $gameLines[$insert] -notmatch '^\s*\['){$insert++}
+          foreach($entry in $entries){if(-not ($gameLines -contains $entry)){$gameLines.Insert($insert,$entry);$insert++;Write-Output ('GAME_COOK_RULE_ADDED='+$entry)}else{Write-Output ('GAME_COOK_RULE_PRESENT='+$entry)}}
+          if(!(Test-Path -LiteralPath $gameIni)){
+            [IO.File]::WriteAllText($gameIni,($gameLines -join [Environment]::NewLine),[Text.UTF8Encoding]::new($true))
+          }else{
+            $old=[IO.File]::ReadAllText($gameIni);$new=$gameLines -join [Environment]::NewLine
+            if($old -ne $new){$bak=$gameIni+'.pre-vehicle-cook.bak';if(!(Test-Path -LiteralPath $bak)){Copy-Item -LiteralPath $gameIni -Destination $bak};[IO.File]::WriteAllText($gameIni,$new,[Text.UTF8Encoding]::new($true))}
+          }
+          $check=[IO.File]::ReadAllText($gameIni)
+          foreach($entry in $entries){if(!$check.Contains($entry)){throw "DefaultGame cook rule verification failed: $entry"}}
+          Write-Output ('PACKAGED_GAME_PROCESS_COUNT='+(Get-Process AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Measure-Object).Count)
+          foreach($d in @('C:','D:')){$v=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'";Write-Output ('VOLUME='+$d+' FREE_GB='+[math]::Round($v.FreeSpace/1GB,2))}
+          Write-Output 'DEFAULTGAME_COOK_CONFIG=verified'
