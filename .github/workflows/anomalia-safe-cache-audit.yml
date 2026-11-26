@@ -34,4 +34,4 @@ jobs:
             } else {Write-Output ('CACHE_CANDIDATE='+$p+' MISSING')}
           }
           Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3' | ForEach-Object {Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
-          Write-Output 'CACHE_AUDIT=complete'
+          Write-Output 'CACHE_AUDIT=complete'`n          Write-Output 'CACHE_AUDIT_RERUN=20261126'
