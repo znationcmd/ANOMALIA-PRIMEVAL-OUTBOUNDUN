@@ -1,0 +1,61 @@
+name: ANOMALIA - inspect staged IoStore and launch vehicle build
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-four-vehicle-staged-test.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-launch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 10
+    steps:
+      - name: Inspect cooked registry and smoke-launch the fresh package
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          $busy=@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited})
+          if($busy.Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $stage='C:\ANOMALIA_VehicleRuntime\CitySample-Vehicles-45858853070'
+          $exe=Join-Path $stage 'Windows\AnomaliaPrimeval.exe'
+          $paks=Join-Path $stage 'Windows\AnomaliaPrimeval\Content\Paks'
+          $utoc=Join-Path $paks 'AnomaliaPrimeval-Windows.utoc'
+          $ucas=Join-Path $paks 'AnomaliaPrimeval-Windows.ucas'
+          foreach($p in @($exe,$utoc,$ucas)){if(!(Test-Path -LiteralPath $p)){throw "Expected staged package file missing: $p"}}
+          Write-Output ('STAGED_EXE='+$exe)
+          Write-Output ('STAGED_UCAS_GB='+[math]::Round((Get-Item $ucas).Length/1GB,2))
+          $registry=Join-Path $root 'Saved\Cooked\Windows\AnomaliaPrimeval\Metadata\DevelopmentAssetRegistry.bin'
+          $assetNames=@('SM_dirt_bike','SM_motorcycle','SM_scooter','SM_quad','sfx_Amb_VEH_CityMotorcycle_meta')
+          if(Test-Path -LiteralPath $registry){
+            $bytes=[IO.File]::ReadAllBytes($registry)
+            $ascii=[Text.Encoding]::ASCII.GetString($bytes)
+            $wide=[Text.Encoding]::Unicode.GetString($bytes)
+            foreach($name in $assetNames){$found=($ascii.Contains($name) -or $wide.Contains($name));Write-Output ('ASSET_REGISTRY_'+$name+'='+$found)}
+          }else{Write-Output 'ASSET_REGISTRY=NOT_FOUND'}
+          $pakTool=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealPak.exe'
+          $list=@(& $pakTool $utoc -List 2>&1)
+          $listCode=$LASTEXITCODE
+          Write-Output ('IOSTORE_LIST_EXIT='+$listCode)
+          $hits=@($list|Select-String -Pattern '(?i)(SM_dirt_bike|SM_motorcycle|SM_scooter|SM_quad|sfx_Amb_VEH_CityMotorcycle_meta)')
+          foreach($hit in $hits){Write-Output ('IOSTORE_ASSET='+$hit.Line.Trim())}
+          $cooked=Join-Path $root 'Saved\Cooked'
+          if(Test-Path -LiteralPath $cooked){
+            Get-ChildItem -LiteralPath $cooked -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$assetNames -contains $_.BaseName}|ForEach-Object{Write-Output ('COOKED_FILE='+$_.FullName)}
+          }
+          $log=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.log'
+          $err=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.err'
+          $proc=Start-Process -FilePath $exe -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory (Split-Path $exe) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 25
+          $proc.Refresh()
+          if($proc.HasExited){
+            Write-Output ('ANOMALIA_LAUNCH_EXIT_CODE='+$proc.ExitCode)
+            if(Test-Path $log){Get-Content -LiteralPath $log -Tail 100}
+            if(Test-Path $err){Get-Content -LiteralPath $err -Tail 60}
+            throw 'Fresh staged game exited during launch smoke test'
+          }
+          Write-Output ('ANOMALIA_GAME_RUNNING_PID='+$proc.Id)
+          Write-Output 'ANOMALIA_PACKAGE_LAUNCH=alive_after_25_seconds'
