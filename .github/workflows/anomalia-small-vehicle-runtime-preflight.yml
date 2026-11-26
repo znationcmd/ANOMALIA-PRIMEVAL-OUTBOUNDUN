@@ -49,6 +49,17 @@ jobs:
             Write-Output ('IOSTORE_TOOL='+$_.FullName)
             & $_.FullName -Help 2>&1|Select-Object -First 35|ForEach-Object{Write-Output ('IOSTORE_HELP='+$_)}
           }
+          $content=Join-Path $root 'Content'
+          if(Test-Path -LiteralPath $content){
+            Get-ChildItem -LiteralPath $content -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$_.Name -match '(?i)(SM_dirt_bike|SM_motorcycle|SM_scooter|SM_quad|CityMotorcycle)'}|Select-Object -First 30|ForEach-Object{Write-Output ('SOURCE_VEHICLE_ASSET='+$_.FullName)}
+          }
+          Get-ChildItem -LiteralPath $stageRoot -Directory -ErrorAction SilentlyContinue|Sort-Object LastWriteTime -Descending|ForEach-Object{
+            [int64]$size=(Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Force -ErrorAction SilentlyContinue|Measure-Object Length -Sum).Sum
+            Write-Output ('STAGE_SIZE='+$_.FullName+' GB='+[math]::Round($size/1GB,2))
+            Get-ChildItem -LiteralPath $_.FullName -Recurse -File -Include '*.utoc','*.ucas' -ErrorAction SilentlyContinue|ForEach-Object{Write-Output ('IOSTORE_CONTAINER='+$_.Name+' GB='+[math]::Round($_.Length/1GB,2))}
+          }
+          Get-ChildItem -LiteralPath (Join-Path $root 'Saved') -Directory -ErrorAction SilentlyContinue|ForEach-Object{Write-Output ('SAVED_DIR='+$_.FullName)}
+          Get-ChildItem -LiteralPath $root -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$_.Name -match '(?i)(SM_dirt_bike|SM_motorcycle|SM_scooter|SM_quad|CityMotorcycle)' -and $_.FullName -match '(?i)(Cooked|Zen|StagedBuilds)'}|Select-Object -First 40|ForEach-Object{Write-Output ('COOK_OR_STAGE_HIT='+$_.FullName)}
           $config=Join-Path $root 'Config\DefaultEngine.ini'
           if(Test-Path -LiteralPath $config){
             Select-String -LiteralPath $config -Pattern 'DirectoriesToAlwaysCook|Anomalia\\Vehicles|Audio\\MetaSounds\\Ambient'|ForEach-Object{Write-Output ('COOK_CONFIG='+$_.Line.Trim())}
