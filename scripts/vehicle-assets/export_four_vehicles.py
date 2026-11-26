@@ -25,7 +25,6 @@ for name, path in models:
     task.replace_identical = True
     task.options = unreal.FbxExportOption()
     task.options.ascii = False
-    task.options.export_materials = True
     if not unreal.Exporter.run_asset_export_task(task):
         raise RuntimeError(f"FBX export task failed: {name}")
     target = Path(task.filename)
