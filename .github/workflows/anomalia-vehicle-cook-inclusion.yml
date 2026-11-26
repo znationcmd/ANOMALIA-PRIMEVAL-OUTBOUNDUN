@@ -1,0 +1,54 @@
+name: ANOMALIA - include small vehicle assets in cook
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-vehicle-cook-inclusion.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  configure-cook:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Add vehicle and engine sound asset directories to cook settings
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          $busy=@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited})
+          if($busy.Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $contentRoot=Join-Path $root 'Content'
+          $config=Join-Path $root 'Config\DefaultEngine.ini'
+          if(!(Test-Path -LiteralPath $contentRoot)){throw 'Project Content directory missing'}
+          $paths=@('/Game/Anomalia/Vehicles','/Game/AnomaliaZPrigimalia/Vehicles','/Game/Audio/MetaSounds/Ambient')
+          foreach($p in $paths){$diskPath=Join-Path $contentRoot (($p -replace '^/Game/','') -replace '/', '\');if(!(Test-Path -LiteralPath $diskPath)){throw "Cook directory missing: $diskPath"}}
+          New-Item -ItemType Directory -Path (Split-Path $config) -Force|Out-Null
+          $text='';if(Test-Path -LiteralPath $config){$text=[IO.File]::ReadAllText($config)}
+          $section='[/Script/UnrealEd.ProjectPackagingSettings]'
+          $lines=[System.Collections.Generic.List[string]]::new()
+          if($text){foreach($line in ($text -split '\r?\n')){$lines.Add($line)}}
+          $changed=$false
+          $idx=$lines.IndexOf($section)
+          if($idx -lt 0){if($lines.Count -gt 0 -and $lines[$lines.Count-1] -ne ''){$lines.Add('')};$lines.Add($section);$idx=$lines.Count-1;$changed=$true}
+          $insert=$idx+1
+          while($insert -lt $lines.Count -and $lines[$insert] -notmatch '^\s*\['){$insert++}
+          foreach($p in $paths){
+            $entry='+DirectoriesToAlwaysCook=(Path="'+$p+'")'
+            if(-not ($lines -match [regex]::Escape($entry))){
+              $lines.Insert($insert,$entry);$insert++;$changed=$true
+              Write-Output ('COOK_DIRECTORY_ADDED='+$p)
+            }else{Write-Output ('COOK_DIRECTORY_PRESENT='+$p)}
+          }
+          if($changed){
+            $backup=$config+'.pre-vehicle-cook.bak'
+            if((Test-Path -LiteralPath $config) -and !(Test-Path -LiteralPath $backup)){Copy-Item -LiteralPath $config -Destination $backup}
+            [IO.File]::WriteAllText($config,($lines -join [Environment]::NewLine),[Text.UTF8Encoding]::new($true))
+          }
+          $check=[IO.File]::ReadAllText($config)
+          foreach($p in $paths){if($check -notmatch [regex]::Escape('+DirectoriesToAlwaysCook=(Path="'+$p+'")')){throw "Cook config verification failed: $p"}}
+          Write-Output ('COOK_CONFIG_UPDATED='+$changed)
+          foreach($d in @('C:','D:')){$v=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'";Write-Output ('VOLUME='+$d+' FREE_GB='+[math]::Round($v.FreeSpace/1GB,1))}
+          Write-Output 'COOK_ASSET_INCLUSION=verified'
