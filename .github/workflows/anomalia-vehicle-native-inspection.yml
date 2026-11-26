@@ -1,0 +1,45 @@
+name: ANOMALIA - inspect native motorcycle vehicle systems
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: ['.github/workflows/anomalia-vehicle-native-inspection.yml']
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Read only native vehicle source and asset inventory
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          $root='D:\ANOMALIA\unreal'
+          $paths=@(
+            'Source\AnomaliaPrimeval\AnomaliaVehicleCatalog.cpp',
+            'Source\AnomaliaPrimeval\AnomaliaVehicleCatalog.h',
+            'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.cpp',
+            'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.h',
+            'Source\AnomaliaPrimeval\Vehicles\AnomaliaChaosRoadVehicle.cpp',
+            'Source\AnomaliaPrimeval\Vehicles\AnomaliaChaosRoadVehicle.h',
+            'Source\AnomaliaPrimeval\Vehicles\AnomaliaM5PresentationComponent.cpp',
+            'Source\AnomaliaPrimeval\Vehicles\AnomaliaM5PresentationComponent.h'
+          )
+          foreach($rel in $paths){
+            $p=Join-Path $root $rel
+            if(Test-Path -LiteralPath $p -PathType Leaf){
+              Write-Output ('---FILE '+$rel)
+              Get-Content -LiteralPath $p | Select-Object -First 180 | ForEach-Object { Write-Output $_ }
+            }else{ Write-Output ('MISSING '+$rel) }
+          }
+          $dirs=@('Content\Anomalia\Vehicles','Content\Audio')
+          foreach($rel in $dirs){
+            $p=Join-Path $root $rel
+            Write-Output ('---ASSETDIR '+$rel)
+            Get-ChildItem -LiteralPath $p -Recurse -File -ErrorAction SilentlyContinue |
+              Where-Object { $_.Extension -in '.uasset','.wav','.ogg','.mp3' -and $_.FullName -match '(bike|motorcycle|scoot|quad|engine|motor|idle|vehicle)' } |
+              Select-Object -First 45 -ExpandProperty FullName | ForEach-Object { Write-Output $_ }
+          }
