@@ -44,11 +44,10 @@ for name, path in models:
             values = scalar.findall(match.group(2))
             if not values or len(values) % 3:
                 raise RuntimeError("Invalid FBX scooter vertex array")
-            index = 0
+            index = [0]
             def scale_vertex(value):
-                nonlocal index
-                result = float(value) * (export_scale if index % 3 == 0 else export_scale)
-                index += 1
+                result = float(value) * export_scale
+                index[0] += 1
                 return format(result, ".9g")
             scaled = scalar.sub(scale_vertex, match.group(2))
             chunks.append(match.group(1) + scaled + match.group(3))
