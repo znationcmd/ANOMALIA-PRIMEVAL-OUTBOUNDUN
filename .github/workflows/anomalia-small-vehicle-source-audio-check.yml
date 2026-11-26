@@ -1,0 +1,54 @@
+name: ANOMALIA - validate vehicle meshes, movement hooks and engine sound
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths:
+      - .github/workflows/anomalia-small-vehicle-source-audio-check.yml
+      - scripts/vehicle-assets/check_four_vehicles.py
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  vehicle-check:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Load the four vehicle meshes and City Sample engine sound in UE 5.8
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $source=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.cpp'
+          $header=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.h'
+          $catalog=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehicleCatalog.cpp'
+          foreach($f in @($project,$source,$header,$catalog)){if(!(Test-Path -LiteralPath $f -PathType Leaf)){throw "Required project source missing: $f"}}
+          $cat=Get-Content -LiteralPath $catalog -Raw
+          if(!$cat.Contains('MakeVehicle(TEXT("scooter"), TEXT("Scooter"), D::Ground, 90, 2, 8),')){throw 'Scooter is not in the native vehicle catalogue'}
+          $code=Get-Content -LiteralPath $source -Raw
+          if(!$code.Contains('EngineAudio->Play()') -or !$code.Contains('ANOMALIA_SMALL_VEHICLE_ENGINE_AUDIO')){throw 'Native engine audio hook is not compiled into source'}
+          $head=Get-Content -LiteralPath $header -Raw
+          if(!$head.Contains('TObjectPtr<UFloatingPawnMovement> Movement;') -or !$head.Contains('TObjectPtr<UAudioComponent> EngineAudio;')){throw 'Native movement or audio component missing'}
+          $bindings=@(Select-String -LiteralPath $source -Pattern 'BindAxis|BindAction|AddMovementInput|MoveForward|SetDriverControlsOnServer'|ForEach-Object{$_.Line.Trim()})
+          Write-Output ('DRIVE_HOOK_LINE_COUNT='+$bindings.Count)
+          $bindings|Select-Object -First 16|ForEach-Object{Write-Output ('DRIVE_HOOK='+$_)}
+          $out=Join-Path $root 'Saved\VehicleReview\four-vehicles-runtime-check'
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $env:ANOMALIA_VEHICLE_CHECK_OUT=$out
+          "ANOMALIA_VEHICLE_CHECK_OUT=$out"|Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          $editor='C:\Program Files\Epic Games\UE_5.8\Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\vehicle-assets\check_four_vehicles.py'
+          & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\vehicle-check.log"
+          if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'vehicle-runtime-check.json') -PathType Leaf)){throw "Unreal asset check failed: $LASTEXITCODE"}
+          Get-Content -LiteralPath (Join-Path $out 'vehicle-runtime-check.json')
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-vehicle-runtime-asset-check
+          path: D:\ANOMALIA\unreal\Saved\VehicleReview\four-vehicles-runtime-check\*
+          if-no-files-found: warn
