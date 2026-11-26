@@ -100,7 +100,7 @@ $py=@(
 '    if not target.is_file() or target.stat().st_size<1024: raise RuntimeError("Empty FBX: "+name)',
 '    report.append({"vehicle":name,"asset":path,"export":target.name,"bytes":target.stat().st_size,"dimensions_cm":[round(2*box.x,1),round(2*box.y,1),round(2*box.z,1)],"sha256":hashlib.sha256(target.read_bytes()).hexdigest()})',
 '(output/"exports.json").write_text(json.dumps(report,indent=2),encoding="utf-8")',
-'print("ANOMALIA_FOUR_VEHICLE_EXPORT_OK")',
+'print("ANOMALIA_FOUR_VEHICLE_EXPORT_OK")'
 );
 Set-Content -LiteralPath $pyPath -Value $py -Encoding utf8
 & $editor $project '-run=pythonscript' "-script=$pyPath" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\export-editor.log"
