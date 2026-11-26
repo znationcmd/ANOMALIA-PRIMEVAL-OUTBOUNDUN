@@ -1,0 +1,52 @@
+name: ANOMALIA - cook the vehicles from the corrected Game settings
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-four-vehicle-corrected-cook.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  corrected-cook-stage-test:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 120
+    steps:
+      - name: Incrementally cook required assets, stage on D, and launch smoke test
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          $busy=@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited})
+          if($busy.Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject';$mapFile=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_CITY_v1.umap';$config=Join-Path $root 'Config\DefaultGame.ini'
+          foreach($p in @($project,$mapFile,$config)){if(!(Test-Path -LiteralPath $p)){throw "Required project file missing: $p"}}
+          $cfg=[IO.File]::ReadAllText($config);$paths=@('/Game/Anomalia/Vehicles','/Game/AnomaliaZPrigimalia/Vehicles','/Game/Audio/MetaSounds/Ambient')
+          foreach($p in $paths){if($cfg -notmatch [regex]::Escape('+DirectoriesToAlwaysCook=(Path="'+$p+'")')){throw "DefaultGame cook inclusion missing: $p"}}
+          $d=Get-PSDrive D;$c=Get-PSDrive C
+          Write-Output ('PRECOOK_D_FREE_GB='+[math]::Round($d.Free/1GB,2))
+          Write-Output ('PRECOOK_C_FREE_GB='+[math]::Round($c.Free/1GB,2))
+          if($d.Free -lt 12GB -or $c.Free -lt 4GB){throw 'Not enough safe space for incremental cook and stage'}
+          $stageRoot=Join-Path $root 'Saved\StagedBuilds';$stage=Join-Path $stageRoot ('CitySample-Vehicles-Included-'+$env:GITHUB_RUN_ID)
+          $uat=Join-Path $env:UE_ROOT 'Engine\Build\BatchFiles\RunUAT.bat';if(!(Test-Path -LiteralPath $uat)){throw 'RunUAT.bat missing'}
+          & $uat BuildCookRun "-project=$project" -noP4 -platform=Win64 -clientconfig=Development -skipbuild -cook '-map=/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1' -iterativecooking -stage -pak -iostore "-stagingdirectory=$stage" -utf8output
+          $uatExit=$LASTEXITCODE;Write-Output ('ANOMALIA_UAT_EXIT='+$uatExit)
+          if($uatExit -ne 0){throw "Corrected incremental cook/package failed: $uatExit"}
+          $cooked=Join-Path $root 'Saved\Cooked';$assetNames=@('SM_dirt_bike.uasset','SM_motorcycle.uasset','SM_scooter.uasset','SM_quad.uasset','sfx_Amb_VEH_CityMotorcycle_meta.uasset')
+          $hits=@(Get-ChildItem -LiteralPath $cooked -Recurse -File -ErrorAction SilentlyContinue|Where-Object{$assetNames -contains $_.Name})
+          foreach($name in $assetNames){if($hits.Name -contains $name){Write-Output ('COOKED_VEHICLE_ASSET='+$name)}else{Write-Output ('COOKED_VEHICLE_ASSET_MISSING='+$name)}}
+          if(@($hits|Where-Object Name -in @('SM_dirt_bike.uasset','SM_motorcycle.uasset','SM_scooter.uasset','SM_quad.uasset')).Count -ne 4){throw 'The corrected cook still lacks one or more of the four mesh assets'}
+          $exe=Get-ChildItem -LiteralPath $stage -Filter 'AnomaliaPrimeval.exe' -File -Recurse|Select-Object -First 1
+          $ucas=Get-ChildItem -LiteralPath $stage -Filter '*.ucas' -File -Recurse|Where-Object Length -gt 1MB|Select-Object -First 1
+          if(!$exe -or !$ucas){throw 'Fresh packaged executable or IoStore container missing'}
+          [int64]$stageBytes=(Get-ChildItem -LiteralPath $stage -Recurse -File -Force|Measure-Object Length -Sum).Sum
+          Write-Output ('ANOMALIA_VEHICLE_STAGE='+$stage)
+          Write-Output ('ANOMALIA_STAGE_SIZE_GB='+[math]::Round($stageBytes/1GB,2))
+          Write-Output ('ANOMALIA_STAGE_UCAS_GB='+[math]::Round($ucas.Length/1GB,2))
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal/game process appeared before launch; preserved'}
+          $log=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.log';$err=Join-Path (Split-Path $exe) 'ANOMALIA_vehicle_launch.err'
+          $proc=Start-Process -FilePath $exe.FullName -ArgumentList @('-windowed','-ResX=1280','-ResY=720','-log','-stdout','-FullStdOutLogOutput') -WorkingDirectory (Split-Path $exe) -RedirectStandardOutput $log -RedirectStandardError $err -PassThru
+          Start-Sleep -Seconds 25;$proc.Refresh()
+          if($proc.HasExited){Write-Output ('ANOMALIA_LAUNCH_EXIT_CODE='+$proc.ExitCode);if(Test-Path $log){Get-Content $log -Tail 100};if(Test-Path $err){Get-Content $err -Tail 60};throw 'Fresh corrected package exited during launch smoke test'}
+          Write-Output ('ANOMALIA_GAME_RUNNING_PID='+$proc.Id)
+          Write-Output 'ANOMALIA_CORRECTED_PACKAGE_LAUNCH=alive_after_25_seconds'
