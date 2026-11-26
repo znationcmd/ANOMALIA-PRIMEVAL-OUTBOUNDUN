@@ -2,7 +2,7 @@ name: ANOMALIA - restore and export cross, motorcycle, scooter and quad
 on:
   push:
     branches: [ops/native-map-availability-audit]
-    paths: [.github/workflows/anomalia-restore-export-four-small-vehicles.yml]
+    paths: [.github/workflows/anomalia-restore-export-four-small-vehicles.yml, scripts/vehicle-assets/restore_and_export_four_small_vehicles.ps1]
 permissions:
   contents: read
 concurrency:
