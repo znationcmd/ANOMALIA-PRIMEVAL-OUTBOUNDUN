@@ -1,0 +1,31 @@
+name: Audit ANOMALIA motorcycle and quad assets
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-moto-quad-asset-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - name: Find bike quad scooter meshes and audio
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'; $content=Join-Path $root 'Content'; $source=Join-Path $root 'Source\AnomaliaPrimeval'
+          Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=3'|ForEach-Object{Write-Output ('VOLUME='+$_.DeviceID+' FREE_GB='+[math]::Round($_.FreeSpace/1GB,1))}
+          $all=Get-ChildItem $content -Recurse -File -Force -ErrorAction SilentlyContinue
+          $vehicles=$all|Where-Object{$_.Name -match '(?i)(motorcycle|motorbike|dirt.?bike|motocross|scooter|quad|atv|all.?terrain|cross.?bike)'}
+          foreach($f in $vehicles|Select-Object -First 100){Write-Output ('VEHICLE_ASSET='+$f.FullName+' SIZE='+$f.Length)}
+          $audio=$all|Where-Object{$_.Extension -in '.wav','.ogg','.mp3','.uasset' -and $_.Name -match '(?i)(engine|motor|vehicle|bike|scoot|quad|idle|accelerat|rev)'}
+          foreach($f in $audio|Select-Object -First 100){Write-Output ('AUDIO_ASSET='+$f.FullName+' SIZE='+$f.Length)}
+          Write-Output '===== VEHICLE SOURCE REFERENCES ====='
+          Get-ChildItem $source -Recurse -File -Include '*.h','*.cpp' -ErrorAction SilentlyContinue|Select-String -Pattern '(?i)VehicleCatalog|EngineSound|AudioComponent|SoundCue|EngineLoop|vehicle.?class|vehicle.?mesh'|Select-Object -First 100|ForEach-Object{Write-Output ('SOURCE='+$_.Path+':'+$_.LineNumber+' '+$_.Line.Trim())}
+          Write-Output '===== VEHICLE DATA FILES ====='
+          Get-ChildItem $root -Recurse -File -Include '*vehicle*.json','*vehicle*.csv','*vehicle*.ini' -ErrorAction SilentlyContinue|Where-Object{$_.FullName -notmatch '\\Intermediate\\|\\Saved\\StagedBuilds\\'}|Select-Object -First 80|ForEach-Object{Write-Output ('VEHICLE_DATA='+$_.FullName+' SIZE='+$_.Length)}
