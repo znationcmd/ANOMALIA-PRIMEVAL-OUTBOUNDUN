@@ -1,0 +1,35 @@
+name: ANOMALIA - preflight small vehicle runtime validation
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-small-vehicle-runtime-preflight.yml]
+permissions:
+  contents: read
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  preflight:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 8
+    steps:
+      - name: Check safe runtime validation capacity without modifying the project
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          $busy=@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited})
+          Write-Output ('ACTIVE_UNREAL_PROCESSES='+$busy.Count)
+          foreach($d in @('C:','D:')){$v=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'";Write-Output ('VOLUME='+$d+' FREE_GB='+[math]::Round($v.FreeSpace/1GB,1))}
+          $root='D:\ANOMALIA\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          Write-Output ('PROJECT_EXISTS='+(Test-Path -LiteralPath $project -PathType Leaf))
+          $stageRoot=Join-Path $root 'Saved\StagedBuilds'
+          if(Test-Path -LiteralPath $stageRoot){
+            Get-ChildItem -LiteralPath $stageRoot -Directory|Sort-Object LastWriteTime -Descending|Select-Object -First 4|ForEach-Object{
+              $exe=Get-ChildItem -LiteralPath $_.FullName -Filter '*.exe' -Recurse -File -ErrorAction SilentlyContinue|Select-Object -First 1
+              Write-Output ('STAGED_BUILD='+$_.FullName+' EXE='+(if($exe){$exe.FullName}else{'NONE'}))
+            }
+          }
+          $report=Join-Path $root 'Saved\VehicleReview'
+          if(Test-Path -LiteralPath $report){Get-ChildItem -LiteralPath $report -Directory|Sort-Object LastWriteTime -Descending|Select-Object -First 3|ForEach-Object{Write-Output ('VEHICLE_REVIEW='+$_.FullName)}}
