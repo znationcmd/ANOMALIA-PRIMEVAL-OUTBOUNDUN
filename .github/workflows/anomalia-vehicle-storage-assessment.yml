@@ -1,0 +1,31 @@
+name: ANOMALIA - identify safe vehicle build space
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-vehicle-storage-assessment.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  inspect:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 12
+    steps:
+      - name: Measure only regenerable build outputs and preserve all active sessions
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal/game session preserved'}
+          $root='D:\ANOMALIA\unreal'
+          foreach($d in @('C:','D:')){$v=Get-CimInstance Win32_LogicalDisk -Filter "DeviceID='$d'";Write-Output ('VOLUME='+$d+' FREE_GB='+[math]::Round($v.FreeSpace/1GB,1))}
+          $paths=@('Saved\Cooked','Saved\Temp','Saved\UnrealBuildTool','Saved\CitySourceCache','Saved\StagedBuilds','Intermediate','DerivedDataCache','Content')
+          foreach($rel in $paths){
+            $p=Join-Path $root $rel
+            if(Test-Path -LiteralPath $p){
+              [int64]$sum=(Get-ChildItem -LiteralPath $p -Recurse -File -Force -ErrorAction SilentlyContinue|Measure-Object -Property Length -Sum).Sum
+              Write-Output ('DIR_SIZE_GB='+$rel+' SIZE='+[math]::Round($sum/1GB,2))
+            }else{Write-Output ('DIR_MISSING='+$rel)}
+          }
+          Write-Output 'STORAGE_ASSESSMENT=complete'
