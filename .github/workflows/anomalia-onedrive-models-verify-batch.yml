@@ -1,0 +1,46 @@
+name: ANOMALIA - verify OneDrive upload state for first 3D batch
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-onedrive-models-verify-batch.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  verify-upload:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Wait for OneDrive cloud placeholders; never delete source models
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected PC runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal/game active'}
+          $one=$env:OneDriveConsumer
+          $root=Join-Path $one 'ANOMALIAZ_PRIGIMALIA\Modeles_3D\Sources\FabImports'
+          if(!(Test-Path $root)){throw 'First OneDrive batch directory missing'}
+          Add-Type -TypeDefinition 'using System; using System.Runtime.InteropServices; public static class WinAttr { [DllImport("kernel32.dll", CharSet=CharSet.Unicode, SetLastError=true)] public static extern uint GetFileAttributes(string lpFileName); }'
+          $deadline=(Get-Date).AddMinutes(12);$all=$false;$files=@()
+          do{
+            $files=@(Get-ChildItem -LiteralPath $root -File -Recurse -ErrorAction SilentlyContinue)
+            if($files.Count -lt 10){Start-Sleep -Seconds 30;continue}
+            $state=@($files|ForEach-Object{$a=[WinAttr]::GetFileAttributes($_.FullName);[pscustomobject]@{file=$_.Name;offline=(($a -band 0x1000) -ne 0);unpinned=(($a -band 0x00100000) -ne 0);reparse=(($a -band 0x400) -ne 0);bytes=$_.Length}})
+            $all=($state.Count -ge 10) -and @($state|Where-Object{-not $_.offline}).Count -eq 0
+            Write-Host ('ONEDRIVE_BATCH_STATUS files='+$state.Count+' offline='+@($state|Where-Object{$_.offline}).Count+' unpinned='+@($state|Where-Object{$_.unpinned}).Count+' freeC_GiB='+[math]::Round((Get-PSDrive C).Free/1GB,2))
+            if(!$all){Start-Sleep -Seconds 30}
+          }while(!$all -and (Get-Date) -lt $deadline)
+          $report=[ordered]@{state=if($all){'ONEDRIVE_PLACEHOLDERS_CONFIRMED'}else{'SYNC_STILL_PENDING'};files=$state.Count;offlineFiles=@($state|Where-Object{$_.offline}).Count;unpinnedFiles=@($state|Where-Object{$_.unpinned}).Count;freeC_GiB=[math]::Round((Get-PSDrive C).Free/1GB,2);sourceDeleted=0;remoteVerifiedByOnlineOnlyPlaceholder=$all}
+          Write-Host ('ONEDRIVE_FIRST_BATCH_VERIFY='+($report|ConvertTo-Json -Depth 4 -Compress))
+          if(!$all){throw 'OneDrive had not converted all first-batch files to online-only placeholders; originals remain safe'}
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-onedrive-first-batch-verification
+          path: ${{ runner.temp }}\anomalia-onedrive-first-batch-verification.json
+          if-no-files-found: warn
