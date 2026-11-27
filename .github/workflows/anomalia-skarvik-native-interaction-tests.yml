@@ -44,7 +44,7 @@ jobs:
             $text=if(Test-Path -LiteralPath $log){[IO.File]::ReadAllText($log)}else{''}
             $started=$text -match [regex]::Escape($test)
             $failed=$text -match 'Test Completed\. Result=Fail|Automation Test Failed|\bError:'
-            $passed=$started -and !$failed -and $text -match 'Test Completed\. Result=Success'
+            $passed=$started -and !$failed -and $text -match 'Test Completed\. Result=\\{Success\\}'
             $result=[ordered]@{test=$test;processExit=$exit;testNameSeen=$started;successMarker=$passed;failureMarker=$failed;log=$log}
             $results+=,$result
             Write-Output ($result|ConvertTo-Json -Compress)
