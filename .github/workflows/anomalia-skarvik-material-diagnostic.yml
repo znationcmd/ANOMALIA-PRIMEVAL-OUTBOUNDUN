@@ -40,24 +40,26 @@ jobs:
               if(Test-Path -LiteralPath $f){
                 $item=Get-Item -LiteralPath $f
                 if($item.Length -gt 250MB){throw 'Diagnostic log exceeded the 250 MiB safety cap'}
-                $lines+=@([IO.File]::ReadAllText($f) -split [Environment]::NewLine)
+                $stream=[IO.File]::Open($f,[IO.FileMode]::Open,[IO.FileAccess]::Read,[IO.FileShare]::ReadWrite)
+                try{$reader=New-Object IO.StreamReader($stream);try{$raw=$reader.ReadToEnd()}finally{$reader.Dispose()}}finally{$stream.Dispose()}
+                $lines+=@($raw -split [Environment]::NewLine)
               }
             }
             $errors=@($lines|Where-Object{$_ -match 'LogMaterial: Error|uncooked shader map|invalid ShaderMap'})
-            $matches=@()
+            $contexts=@()
             for($i=0;$i -lt $lines.Count;$i++){
               if($lines[$i] -match 'LogMaterial: Error|uncooked shader map|invalid ShaderMap'){
                 $start=[math]::Max(0,$i-4);$end=[math]::Min($lines.Count-1,$i+5)
-                for($j=$start;$j -le $end;$j++){$matches+=,$lines[$j]}
+                for($j=$start;$j -le $end;$j++){$contexts+=,$lines[$j]}
               }
             }
-            $loaded=[bool]($lines|Where-Object{$_ -match 'LogWorld: Bringing World .*PRIGIMALIA_SKARVIK_FINAL_v1.*up for play'}|Select-Object -First 1)
+            $mapLine=$lines|Where-Object{$_ -match 'LogWorld: Bringing World .*PRIGIMALIA_SKARVIK_FINAL_v1.*up for play'}|Select-Object -First 1
             Write-Output ('MATERIAL_ERROR_COUNT='+$errors.Count)
-            Write-Output ('FINAL_MAP_WORLD_STARTED='+$loaded)
+            Write-Output ('FINAL_MAP_WORLD_STARTED='+[bool]$mapLine)
             Write-Output ('GAME_ALIVE_AFTER_DIAGNOSTIC='+$alive)
-            $matches|Select-Object -Unique|ForEach-Object{Write-Output ('MATERIAL_CONTEXT='+$_.ToString())}
+            $contexts|Select-Object -Unique|ForEach-Object{Write-Output ('MATERIAL_CONTEXT='+$_.ToString())}
             $lines|Where-Object{$_ -match 'LogD3D11RHI:|LogRHI:|Feature Level|ShaderPlatform' }|Select-Object -First 20|ForEach-Object{Write-Output ('RENDERER='+$_.ToString())}
-            if(!$loaded){throw 'The diagnostic did not confirm that the final map reached play'}
+            if(!$mapLine){throw 'The diagnostic did not confirm that the final map reached play'}
           }finally{
             if($p){$p.Refresh();if(!$p.HasExited){$null=$p.CloseMainWindow();if(!$p.WaitForExit(5000)){Stop-Process -Id $p.Id -Force -ErrorAction SilentlyContinue};Write-Output 'DIAGNOSTIC_CLOSED_ONLY_ITS_OWN_GAME_PROCESS=true'}}
           }
