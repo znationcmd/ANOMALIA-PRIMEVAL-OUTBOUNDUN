@@ -1,7 +1,7 @@
 {
   "FileVersion": 3,
   "Category": "Games",
-  "Description": "ANOMALIA’Z PRIGIMALIA \u2014 Unreal Engine 5 migration (C++ foundation)",
+  "Description": "ANOMALIA’Z PRIGIMALIA — Unreal Engine 5 migration (C++ foundation)",
   "Modules": [
     {
       "Name": "AnomaliaZPrigimalia",
@@ -40,6 +40,10 @@
     },
     {
       "Name": "EditorScriptingUtilities",
+      "Enabled": true
+    },
+    {
+      "Name": "AudioModulation",
       "Enabled": true
     }
   ]
