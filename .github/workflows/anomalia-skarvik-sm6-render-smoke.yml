@@ -51,7 +51,7 @@ jobs:
             if(Test-Path $saved){$latest=Get-ChildItem -LiteralPath $saved -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1;if($latest){$logs+=@(Get-Content -LiteralPath $latest.FullName -Tail 5000 -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()})}}
             $hits=@($logs|Where-Object{$_ -match '(?i)PRIGIMALIA_SKARVIK_FINAL_v1|LogRHI:|D3D12|LogMaterial: Error|Failed to compile Material|uncooked shader map|Fatal error'})
             $hits|Select-Object -Last 50|ForEach-Object{Write-Host ('SM6_LOG '+$_.ToString())}
-            $mapObserved=[bool]($logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'|Select-Object -First 1)
+            $mapObserved=[bool]($logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1)
             $materialErrors=@($logs|Where-Object{$_ -match 'LogMaterial: Error|Failed to compile Material|uncooked shader map'}).Count
           }finally{
             if($proc){$proc.Refresh();if(!$proc.HasExited){$null=$proc.CloseMainWindow();if(!$proc.WaitForExit(8000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue}}}
