@@ -71,6 +71,76 @@ jobs:
           }
           Write-Output 'AUDIO_MODULATION_CLASS_WARNINGS=NONE'
           Get-Content -LiteralPath (Join-Path $out 'vehicle-runtime-check.json')
+      - name: Inspect the real SKARVIK play map for zombie, loot, door, elevator, and interior actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $out=Join-Path $root 'Saved\VehicleReview\four-vehicles-runtime-check'
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\vehicle-assets\audit_skarvik_runtime.py'
+          @'
+          import json, os, re, traceback
+          from pathlib import Path
+          import unreal
+          out = Path(os.environ["ANOMALIA_VEHICLE_CHECK_OUT"])
+          report = {"state":"FAILED", "map":"/Game/Maps/PRIGIMALIA_SKARVIK_CITY_v1",
+                    "interaction_tested":False, "original_map_saved":False, "actor_count":0,
+                    "categories":{}, "asset_name_candidates":{}, "errors":[]}
+          patterns = {
+              "zombie": re.compile(r"zombie|infect|undead|hostile", re.I),
+              "loot": re.compile(r"loot|pickup|item|container|chest|spawn", re.I),
+              "door": re.compile(r"door|gate|lock|keypad|entry", re.I),
+              "elevator": re.compile(r"elevator|lift|ascensor|platform", re.I),
+              "interior": re.compile(r"interior|room|building|house|floor|stair", re.I),
+          }
+          try:
+              world = unreal.EditorLoadingAndSavingUtils.load_map(report["map"])
+              if not world:
+                  raise RuntimeError("SKARVIK map could not be loaded")
+              subsystem = unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+              actors = subsystem.get_all_level_actors()
+              report["actor_count"] = len(actors)
+              records = []
+              for actor in actors:
+                  try:
+                      cls = actor.get_class().get_path_name()
+                      name = actor.get_name()
+                      label = actor.get_actor_label()
+                      tags = [str(t) for t in actor.tags]
+                      text = " ".join([cls, name, label] + tags)
+                      loc = actor.get_actor_location()
+                      record = {"class":cls, "name":name, "label":label, "tags":tags,
+                                "location_cm":[round(loc.x,1), round(loc.y,1), round(loc.z,1)]}
+                      records.append(record)
+                  except Exception as e:
+                      continue
+              for category, pattern in patterns.items():
+                  hits = [r for r in records if pattern.search(" ".join([r["class"],r["name"],r["label"]] + r["tags"]))]
+                  report["categories"][category] = {"count":len(hits), "actors":hits[:80]}
+              content = Path(r"D:\ANOMALIA\unreal\Content")
+              candidates = {k:[] for k in patterns}
+              for file in content.rglob("*"):
+                  if file.is_file() and file.suffix.lower() in {".uasset",".umap"}:
+                      for key, pattern in patterns.items():
+                          if pattern.search(file.stem):
+                              candidates[key].append(str(file.relative_to(content)).replace("\\","/"))
+              report["asset_name_candidates"] = {k:v[:250] for k,v in candidates.items()}
+              report["state"] = "SKARVIK_MAP_ACTORS_AND_ASSET_NAMES_AUDITED_NOT_INTERACTION_TESTED"
+          except Exception as e:
+              report["errors"].append(str(e))
+              report["traceback"] = traceback.format_exc()
+              (out/"skarvik-map-runtime-audit.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+              raise
+          (out/"skarvik-map-runtime-audit.json").write_text(json.dumps(report,indent=2)+"\n",encoding="utf-8")
+          print(json.dumps(report,indent=2))
+          '@ | Set-Content -LiteralPath $script -Encoding utf8
+          $env:ANOMALIA_VEHICLE_CHECK_OUT=$out
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\skarvik-map-runtime-audit.log"
+          if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'skarvik-map-runtime-audit.json'))){throw "SKARVIK runtime map audit failed: $LASTEXITCODE"}
+          Get-Content -LiteralPath (Join-Path $out 'skarvik-map-runtime-audit.json')
       - uses: actions/upload-artifact@v4
         if: always()
         with:
