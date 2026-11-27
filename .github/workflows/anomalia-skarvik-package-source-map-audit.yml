@@ -1,0 +1,102 @@
+name: ANOMALIA - audit real buildings in the installed SKARVIK package source map
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-package-source-map-audit.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  source-map-audit:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Reopen the exact project used to build the installed game and inspect saved World Partition actors
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected Windows PC runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIAZ\01_Projet_Principal\unreal'
+          $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $mapFile=Join-Path $root 'Content\Maps\PRIGIMALIA_SKARVIK_FINAL_v1.umap'
+          if(!(Test-Path $project) -or !(Test-Path $mapFile)){throw 'The exact installed-game source project or final map is missing'}
+          if((Get-PSDrive C).Free -lt 2GB -or (Get-PSDrive D).Free -lt 6GB){throw 'Insufficient safe disk reserve; read-only Unreal audit not started'}
+          $py=Join-Path $env:RUNNER_TEMP 'audit_installed_skarvik_final_map.py'
+          $report=Join-Path $env:RUNNER_TEMP 'installed-skarvik-final-source-map.json'
+          $env:ANOMALIA_SOURCE_MAP_REPORT=$report
+          $python=@'
+          import json, os, traceback
+          from collections import Counter
+          from pathlib import Path
+          import unreal
+          target="/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1"
+          doc={"state":"FAILED","map":target,"readOnly":True,"savedWorldPartitionActors":0}
+          try:
+              registry=unreal.AssetRegistryHelpers.get_asset_registry()
+              registry.wait_for_completion()
+              levels=unreal.get_editor_subsystem(unreal.LevelEditorSubsystem)
+              if not levels.load_level(target):
+                  raise RuntimeError("Final SKARVIK map did not reopen in the package source project")
+              wp=unreal.WorldPartitionBlueprintLibrary
+              descs=wp.get_actor_descs() or []
+              doc["savedWorldPartitionActors"]=len(descs)
+              classes=Counter()
+              labels=[]
+              grouped={"gradedOriginal":[],"islandOriginal":[],"buildingNamed":[],"citySampleNamed":[]}
+              for d in descs:
+                  label=str(d.label)
+                  cls=d.native_class.get_name() if getattr(d,"native_class",None) else "unknown"
+                  classes[str(cls)]+=1
+                  low=label.lower()
+                  if label.startswith("SKARVIK_FINAL_NATIVE_GRADED_ORIGINAL_MESH_"):grouped["gradedOriginal"].append(d)
+                  if label.startswith("SKARVIK_FINAL_NATIVE_ISLAND_ORIGINAL_MESH_"):grouped["islandOriginal"].append(d)
+                  if any(x in low for x in ("building","house","townhouse","residential","village","settlement","citysample")):
+                      labels.append({"label":label,"class":str(cls)})
+              doc["actorClasses"]=dict(classes)
+              doc["originalBuildingActorCounts"]={"graded":len(grouped["gradedOriginal"]),"islands":len(grouped["islandOriginal"])}
+              doc["buildingLikeLabels"]=labels[:120]
+              samples=[]
+              selected=[]
+              seen=set()
+              for kind in ("gradedOriginal","islandOriginal"):
+                  for d in grouped[kind]:
+                      if str(d.label) in seen:continue
+                      selected.append((kind,d));seen.add(str(d.label))
+                      if sum(1 for k,_ in selected if k==kind)>=4:break
+              if not selected:
+                  for d in descs:
+                      cls=d.native_class.get_name() if getattr(d,"native_class",None) else ""
+                      if cls=="StaticMeshActor":
+                          selected.append(("genericStaticMesh",d))
+                          if len(selected)>=8:break
+              if selected:
+                  wp.load_actors([d.guid for _,d in selected])
+                  actorSubsystem=unreal.get_editor_subsystem(unreal.EditorActorSubsystem)
+                  actors={a.get_actor_label():a for a in actorSubsystem.get_all_level_actors()}
+                  for kind,d in selected:
+                      actor=actors.get(str(d.label))
+                      component=actor.get_component_by_class(unreal.StaticMeshComponent) if actor else None
+                      mesh=component.get_editor_property("static_mesh") if component else None
+                      samples.append({"group":kind,"label":str(d.label),"class":actor.get_class().get_name() if actor else None,"mesh":mesh.get_path_name() if mesh else None})
+              doc["loadedRealMeshSamples"]=samples
+              doc["state"]="FINAL_MAP_REOPENED"
+          except Exception as exc:
+              doc["error"]=str(exc)
+              doc["traceback"]=traceback.format_exc()
+          Path(os.environ["ANOMALIA_SOURCE_MAP_REPORT"]).write_text(json.dumps(doc,indent=2,ensure_ascii=False),encoding="utf-8")
+          unreal.log("ANOMALIA_FINAL_SOURCE_MAP_AUDIT="+json.dumps(doc,ensure_ascii=False))
+          '@
+          [IO.File]::WriteAllText($py,$python,[Text.UTF8Encoding]::new($false))
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          $log=Join-Path $env:RUNNER_TEMP 'installed-skarvik-final-source-map-audit.log'
+          & $editor $project "-ExecutePythonScript=$py" -nullrhi -unattended -nopause -nosound -stdout -FullStdOutLogOutput "-abslog=$log"
+          if(!(Test-Path $report)){if(Test-Path $log){Get-Content $log -Tail 60};throw 'The Unreal map audit did not write its report'}
+          $r=Get-Content -LiteralPath $report -Raw|ConvertFrom-Json
+          Write-Output ('ANOMALIA_FINAL_SOURCE_MAP_AUDIT='+($r|ConvertTo-Json -Depth 5 -Compress))
+          if($r.state -ne 'FINAL_MAP_REOPENED'){throw ('The final map source audit failed: '+$r.error)}
