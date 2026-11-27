@@ -49,8 +49,10 @@ jobs:
             }
             $saved=Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Saved\Logs'
             if(Test-Path $saved){$latest=Get-ChildItem -LiteralPath $saved -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1;if($latest){$logs+=@(Get-Content -LiteralPath $latest.FullName -Tail 5000 -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()})}}
-            $hits=@($logs|Where-Object{$_ -match '(?i)PRIGIMALIA_SKARVIK_FINAL_v1|LogRHI:|D3D12|LogMaterial: Error|Failed to compile Material|uncooked shader map|Fatal error'})
-            $hits|Select-Object -Last 50|ForEach-Object{Write-Host ('SM6_LOG '+$_.ToString())}
+            $allLogPath=Join-Path $out 'combined-runtime.log'
+            $logs|Set-Content -LiteralPath $allLogPath -Encoding utf8
+            $hits=@($logs|Where-Object{$_ -match '(?i)PRIGIMALIA_SKARVIK_FINAL_v1|LogRHI:|D3D12|LogMaterial:|Shader|Error:|Warning:|Fatal|DXGI|device removed|crash|ensure'})
+            $hits|Select-Object -Last 120|ForEach-Object{Write-Host ('SM6_LOG '+$_.ToString())
             $mapObserved=[bool]($logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1)
             $materialErrors=@($logs|Where-Object{$_ -match 'LogMaterial: Error|Failed to compile Material|uncooked shader map'}).Count
           }finally{
@@ -65,5 +67,5 @@ jobs:
         if: always()
         with:
           name: installed-skarvik-sm6-render-smoke
-          path: installed-sm6-render-${{ github.run_id }}\result.json
+          path: installed-sm6-render-${{ github.run_id }}\
           if-no-files-found: warn
