@@ -1,0 +1,28 @@
+name: Remove the oversized Windows preflight artifact
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/remove-preflight-artifact.yml]
+permissions:
+  actions: write
+  contents: read
+jobs:
+  delete_artifact:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/github-script@v7
+        with:
+          script: |
+            const artifactId = 15200349585;
+            try {
+              const artifact = await github.rest.actions.getArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
+              if (!artifact.data.expired) {
+                await github.rest.actions.deleteArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
+                core.info('Removed the oversized diagnostic artifact.');
+              } else {
+                core.info('The artifact was already expired.');
+              }
+            } catch (error) {
+              if (error.status === 404) core.info('The artifact was already absent.');
+              else throw error;
+            }
