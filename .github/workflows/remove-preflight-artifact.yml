@@ -1,4 +1,4 @@
-name: Remove the oversized Windows preflight artifact
+name: Remove oversized Windows audit artifacts
 on:
   push:
     branches: [ops/native-map-availability-audit]
@@ -7,22 +7,21 @@ permissions:
   actions: write
   contents: read
 jobs:
-  delete_artifact:
+  delete_artifacts:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/github-script@v7
         with:
           script: |
-            const artifactId = 15200349585;
-            try {
-              const artifact = await github.rest.actions.getArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
-              if (!artifact.data.expired) {
-                await github.rest.actions.deleteArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
-                core.info('Removed the oversized diagnostic artifact.');
-              } else {
-                core.info('The artifact was already expired.');
+            for (const artifactId of [15200349585, 15202528997]) {
+              try {
+                const artifact = await github.rest.actions.getArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
+                if (!artifact.data.expired) {
+                  await github.rest.actions.deleteArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
+                  core.info('Removed one generated diagnostic artifact.');
+                }
+              } catch (error) {
+                if (error.status === 404) core.info('A diagnostic artifact was already absent.');
+                else throw error;
               }
-            } catch (error) {
-              if (error.status === 404) core.info('The artifact was already absent.');
-              else throw error;
             }
