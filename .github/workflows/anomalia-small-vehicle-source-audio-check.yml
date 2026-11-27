@@ -24,6 +24,23 @@ jobs:
           if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal session preserved'}
           $root='D:\ANOMALIA\unreal'
           $project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          $projectJson=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+          if(@($projectJson.Plugins|Where-Object{$_.Name -eq 'AudioModulation' -and $_.Enabled}).Count -eq 0){
+            $backup=Join-Path $root ('Saved\VehicleReview\AnomaliaPrimeval-before-AudioModulation-'+$env:GITHUB_RUN_ID+'.uproject')
+            New-Item -ItemType Directory -Path (Split-Path $backup) -Force|Out-Null
+            Copy-Item -LiteralPath $project -Destination $backup
+            $projectJson.Plugins=@($projectJson.Plugins)+@([pscustomobject]@{Name='AudioModulation';Enabled=$true})
+            $json=$projectJson|ConvertTo-Json -Depth 40
+            [IO.File]::WriteAllText($project,$json+[Environment]::NewLine,[Text.UTF8Encoding]::new($false))
+            Write-Output ('AUDIO_MODULATION_PLUGIN=ENABLED BACKUP='+$backup)
+          }else{Write-Output 'AUDIO_MODULATION_PLUGIN=ALREADY_ENABLED'}
+          $inputConfig=Join-Path $root 'Config\DefaultInput.ini'
+          if(!(Test-Path -LiteralPath $inputConfig)){throw 'Vehicle input mappings are missing'}
+          $inputText=Get-Content -LiteralPath $inputConfig -Raw
+          foreach($mapping in @('AxisName="MoveForward",Scale=1.000000,Key=W','AxisName="MoveForward",Scale=-1.000000,Key=S','AxisName="MoveRight",Scale=1.000000,Key=D','AxisName="MoveRight",Scale=-1.000000,Key=A','AxisName="MoveForward",Scale=1.000000,Key=Gamepad_LeftY','AxisName="MoveRight",Scale=1.000000,Key=Gamepad_LeftX')){
+            if($inputText -notmatch [regex]::Escape($mapping)){throw "Vehicle input mapping missing: $mapping"}
+          }
+          Write-Output 'VEHICLE_KEYBOARD_AND_GAMEPAD_MAPPINGS=OK'
           $source=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.cpp'
           $header=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehiclePawn.h'
           $catalog=Join-Path $root 'Source\AnomaliaPrimeval\AnomaliaVehicleCatalog.cpp'
@@ -35,6 +52,7 @@ jobs:
           $head=Get-Content -LiteralPath $header -Raw
           if(!$head.Contains('TObjectPtr<UFloatingPawnMovement> Movement;') -or !$head.Contains('TObjectPtr<UAudioComponent> EngineAudio;')){throw 'Native movement or audio component missing'}
           $bindings=@(Select-String -LiteralPath $source -Pattern 'BindAxis|BindAction|AddMovementInput|MoveForward|SetDriverControlsOnServer'|ForEach-Object{$_.Line.Trim()})
+          if($bindings.Count -lt 5){throw 'Vehicle input binding or movement hooks are incomplete'}
           Write-Output ('DRIVE_HOOK_LINE_COUNT='+$bindings.Count)
           $bindings|Select-Object -First 16|ForEach-Object{Write-Output ('DRIVE_HOOK='+$_)}
           $out=Join-Path $root 'Saved\VehicleReview\four-vehicles-runtime-check'
@@ -45,6 +63,13 @@ jobs:
           $script=Join-Path $env:GITHUB_WORKSPACE 'scripts\vehicle-assets\check_four_vehicles.py'
           & $editor $project '-run=pythonscript' "-script=$script" -nullrhi -unattended -NoAssetRegistryCache -SkipAssetScan "-abslog=$out\vehicle-check.log"
           if($LASTEXITCODE -ne 0 -or !(Test-Path -LiteralPath (Join-Path $out 'vehicle-runtime-check.json') -PathType Leaf)){throw "Unreal asset check failed: $LASTEXITCODE"}
+          $result=Get-Content -LiteralPath (Join-Path $out 'vehicle-runtime-check.json') -Raw|ConvertFrom-Json
+          if(!$result.engine_sound.asset_loaded){throw 'Engine sound did not load in Unreal'}
+          $logText=Get-Content -LiteralPath (Join-Path $out 'vehicle-check.log') -Raw
+          if($logText -match "Failed to find script package for import object.*AudioModulation|class \\(SoundControlBus\\) does not exist|class \\(SoundModulationPatch\\) does not exist"){
+            throw 'Audio Modulation asset-class warnings remain after enabling the plugin'
+          }
+          Write-Output 'AUDIO_MODULATION_CLASS_WARNINGS=NONE'
           Get-Content -LiteralPath (Join-Path $out 'vehicle-runtime-check.json')
       - uses: actions/upload-artifact@v4
         if: always()
