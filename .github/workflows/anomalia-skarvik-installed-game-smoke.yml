@@ -34,7 +34,7 @@ jobs:
           if(!$shortcut.Arguments.Contains($expected)){throw 'The installed shortcut does not request the final SKARVIK map'}
           $paks=Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Content\Paks'
           $containers=@()
-          if(Test-Path $paks){$containers=@(Get-ChildItem -LiteralPath $paks -File -ErrorAction SilentlyContinue|Where-Object{$_.Extension -in '.pak','.utoc','.ucas'}|Select-Object -ExpandProperty Name)}
+          if(Test-Path $paks){$containers=@(Get-ChildItem -LiteralPath $paks -File -ErrorAction SilentlyContinue|Where-Object{$_.Extension -in '.pak','.utoc','.ucas'}|ForEach-Object{$_.Name.ToString()})}
           if($containers.Count -eq 0){throw 'No cooked PAK or IoStore containers found beside the installed game'}
           $out=Join-Path $env:GITHUB_WORKSPACE ('installed-final-map-smoke-'+$env:GITHUB_RUN_ID)
           New-Item -ItemType Directory -Path $out -Force|Out-Null
@@ -47,18 +47,19 @@ jobs:
             $proc.Refresh();$alive=!$proc.HasExited
             if(!$alive -and $null -eq $exitCode){$exitCode=$proc.ExitCode}
             $logs=@()
-            if(Test-Path $stdout){$logs+=@(Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue)}
-            if(Test-Path $stderr){$logs+=@(Get-Content -LiteralPath $stderr -ErrorAction SilentlyContinue)}
+            if(Test-Path $stdout){$logs+=@(Get-Content -LiteralPath $stdout -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()})}
+            if(Test-Path $stderr){$logs+=@(Get-Content -LiteralPath $stderr -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()})}
             $savedLogs=Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Saved\Logs'
-            if(Test-Path $savedLogs){$latest=Get-ChildItem -LiteralPath $savedLogs -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1;if($latest){$logs+=@(Get-Content -LiteralPath $latest.FullName -Tail 3000 -ErrorAction SilentlyContinue)}}
-            $mapLoadLine=$logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1
-            if($logs.Count){$logs|Select-String -Pattern 'PRIGIMALIA_SKARVIK_FINAL_v1|LoadMap|Browse|Bringing World|Error:|Fatal'|Select-Object -Last 40|ForEach-Object{Write-Host ('GAME_LOG '+$_.Line)}}
+            if(Test-Path $savedLogs){$latest=Get-ChildItem -LiteralPath $savedLogs -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1;if($latest){$logs+=@(Get-Content -LiteralPath $latest.FullName -Tail 3000 -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()})}}
+            $mapMatch=$logs|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1
+            if($mapMatch){$mapLoadLine=$mapMatch.ToString()}
+            if($logs.Count){$logs|Select-String -Pattern 'PRIGIMALIA_SKARVIK_FINAL_v1|LoadMap|Browse|Bringing World|Error:|Fatal'|Select-Object -Last 40|ForEach-Object{Write-Host ('GAME_LOG '+$_.Line.ToString())}}
           }finally{
             if($proc){$proc.Refresh();if(!$proc.HasExited){$null=$proc.CloseMainWindow();if(!$proc.WaitForExit(8000)){Stop-Process -Id $proc.Id -Force -ErrorAction SilentlyContinue};Write-Host 'TEST_CLOSED_ONLY_ITS_OWN_GAME_PROCESS=true'}}
           }
           $report=[ordered]@{state='INSTALLED_FINAL_MAP_SMOKE';executableExists=$true;finalMapArgumentPresent=$true;cookedContainers=@($containers).Count;processStayedOpen50Seconds=$alive;gameExitCode=$exitCode;mapLoadObservedInRuntimeLog=[bool]$mapLoadLine;mapLoadLogLine=$mapLoadLine}
-          $report|ConvertTo-Json -Depth 4|Set-Content -LiteralPath (Join-Path $out 'result.json') -Encoding utf8
-          Write-Host ('INSTALLED_FINAL_MAP_SMOKE='+($report|ConvertTo-Json -Depth 4 -Compress))
+          $report|ConvertTo-Json -Depth 3|Set-Content -LiteralPath (Join-Path $out 'result.json') -Encoding utf8
+          Write-Host ('INSTALLED_FINAL_MAP_SMOKE='+($report|ConvertTo-Json -Depth 3 -Compress))
           if(!$alive){throw 'Installed game exited before the 50-second smoke check completed'}
           if(!$mapLoadLine){throw 'The game stayed open, but its runtime log did not confirm the final map load'}
       - uses: actions/upload-artifact@v4
