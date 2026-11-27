@@ -1,0 +1,72 @@
+name: ANOMALIA - copy first verified 3D batch to OneDrive
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-onedrive-models-first-batch.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  onedrive-model-batch:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Copy at most 1 GiB of source models; hash verify and preserve originals
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected PC runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'Unreal/game active; no source files copied'}
+          $one=$env:OneDriveConsumer
+          if(!$one -or !(Test-Path -LiteralPath $one -PathType Container)){throw 'OneDrive sync root unavailable'}
+          $minFree=4GB;$cap=1GB;$copied=[long]0;$count=0
+          $destRoot=Join-Path $one 'ANOMALIAZ_PRIGIMALIA\Modeles_3D\Sources'
+          $roots=@(@{Name='sketchfab';Path='D:\ANOMALIA\sketchfab'},@{Name='FabImports';Path='D:\ANOMALIA\FabImports'})
+          $ext=@('.glb','.gltf','.fbx','.obj','.blend','.dae','.stl','.3ds','.ply','.usd','.usdz','.abc','.p3d')
+          $exclude='\\(Intermediate|Saved|DerivedDataCache|Binaries|Windows|Linux|Mac|Android|IOS|\.git)\\'
+          $candidates=@()
+          foreach($r in $roots){
+            if(!(Test-Path -LiteralPath $r.Path -PathType Container)){continue}
+            Get-ChildItem -LiteralPath $r.Path -File -Recurse -ErrorAction SilentlyContinue|Where-Object{$ext -contains $_.Extension.ToLowerInvariant() -and $_.FullName -notmatch $exclude}|ForEach-Object{$candidates+=@([pscustomobject]@{root=$r.Name;file=$_;relative=$_.FullName.Substring($r.Path.Length).TrimStart('\')})}
+          }
+          $candidates=$candidates|Sort-Object {$_.file.Length} -Descending
+          $records=@()
+          foreach($c in $candidates){
+            $size=[long]$c.file.Length
+            if($size -le 0 -or $size -gt $cap-$copied){continue}
+            if((Get-PSDrive C).Free -lt ($minFree+$size)){break}
+            $target=Join-Path (Join-Path $destRoot $c.root) $c.relative
+            $parent=Split-Path $target -Parent
+            New-Item -ItemType Directory -Path $parent -Force|Out-Null
+            if(Test-Path -LiteralPath $target -PathType Leaf){
+              $srcHash=(Get-FileHash -LiteralPath $c.file.FullName -Algorithm SHA256).Hash
+              $dstHash=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+              if($srcHash -eq $dstHash){continue}else{throw ('Destination conflict; preserved both files: '+$target)}
+            }
+            Copy-Item -LiteralPath $c.file.FullName -Destination $target
+            $srcHash=(Get-FileHash -LiteralPath $c.file.FullName -Algorithm SHA256).Hash
+            $dstHash=(Get-FileHash -LiteralPath $target -Algorithm SHA256).Hash
+            if($srcHash -ne $dstHash){Remove-Item -LiteralPath $target -Force;throw ('Hash mismatch; destination removed, original preserved: '+$target)}
+            $attr=Start-Process -FilePath "$env:WINDIR\System32\attrib.exe" -ArgumentList @('+U','-P',$target) -Wait -PassThru -NoNewWindow
+            $count++;$copied+=$size
+            $records+=@([pscustomobject]@{source=$c.file.FullName;destination=$target;bytes=$size;sha256=$srcHash;copyHashVerified=$true;oneDriveUnpinExitCode=$attr.ExitCode;sourceDeleted=$false})
+            Write-Host ('MODEL_COPIED bytes='+$size+' sha256='+$srcHash+' path='+$c.root+'\'+$c.relative)
+            if($copied -ge $cap){break}
+          }
+          $report=[ordered]@{state='BATCH_COPIED_SYNC_PENDING';destination=$destRoot;filesCopied=$count;bytesCopied=$copied;sourceInventoryCount=$candidates.Count;sourceDeleted=0;copyHashVerified=($records|Where-Object{-not $_.copyHashVerified}).Count -eq 0;records=$records}
+          $reportPath=Join-Path $env:RUNNER_TEMP 'anomalia-onedrive-first-batch.json'
+          $report|ConvertTo-Json -Depth 5|Set-Content -LiteralPath $reportPath -Encoding utf8
+          Write-Host ('ONEDRIVE_MODEL_BATCH='+($report|ConvertTo-Json -Depth 5 -Compress))
+          Write-Host ('ONEDRIVE_LOCAL_FREE_C_GIB='+[math]::Round((Get-PSDrive C).Free/1GB,2))
+          "MODEL_BATCH_REPORT=$reportPath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-onedrive-first-model-batch
+          path: ${{ runner.temp }}\anomalia-onedrive-first-batch.json
+          if-no-files-found: warn
