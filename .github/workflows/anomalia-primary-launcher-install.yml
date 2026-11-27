@@ -1,0 +1,95 @@
+name: ANOMALIA - make the primary Play shortcut open verified standalone SKARVIK
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-primary-launcher-install.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  replace-primary-play-route:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Back up the editor launcher, point Play to the real installed game, and test it
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected Windows PC runner'}
+          if(@(Get-Process -Name UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue).Count){throw 'An Unreal/game process is already active; preserve it and do not replace or start another'}
+          $desktop=[Environment]::GetFolderPath('Desktop')
+          $playLink=Join-Path $desktop 'ANOMALIAZ - JOUER.lnk'
+          $script='D:\ANOMALIA\unreal\Launcher\Launch-Current-Anomalia.ps1'
+          $exe='D:\ANOMALIAZ\Jeu\Versions\SKARVIK-43226147989\Windows\AnomaliaPrimeval.exe'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+          foreach($p in @($playLink,$script,$exe)){if(!(Test-Path -LiteralPath $p)){throw "Required installed launcher/game file missing"}}
+          $shell=New-Object -ComObject WScript.Shell
+          $link=$shell.CreateShortcut($playLink)
+          if(!$link.Arguments.Contains('Launch-Current-Anomalia.ps1')){throw 'The Play shortcut does not target the expected launcher script'}
+          if(!(Test-Path (Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Content\Paks'))){throw 'The installed game has no cooked content directory'}
+          $backup=$script+'.before-real-skarvik-'+$env:GITHUB_RUN_ID+'.bak'
+          $originalHash=(Get-FileHash -LiteralPath $script -Algorithm SHA256).Hash
+          Copy-Item -LiteralPath $script -Destination $backup -ErrorAction Stop
+          if((Get-FileHash -LiteralPath $backup -Algorithm SHA256).Hash -ne $originalHash){throw 'Original launcher backup verification failed'}
+          $replacement=@'
+          $ErrorActionPreference='Stop'
+          $exe='D:\ANOMALIAZ\Jeu\Versions\SKARVIK-43226147989\Windows\AnomaliaPrimeval.exe'
+          $map='/Game/Maps/PRIGIMALIA_SKARVIK_FINAL_v1'
+          if(!(Test-Path -LiteralPath $exe)){throw 'Verified standalone SKARVIK game is missing'}
+          Start-Process -FilePath $exe -ArgumentList @($map,'-d3d11','-sm5') -WorkingDirectory (Split-Path $exe -Parent)
+          '@
+          $temp=$script+'.tmp-'+$env:GITHUB_RUN_ID
+          [IO.File]::WriteAllText($temp,$replacement,[Text.UTF8Encoding]::new($false))
+          $verified=[IO.File]::ReadAllText($temp)
+          if(!$verified.Contains($exe) -or !$verified.Contains($map) -or $verified.Contains('UnrealEditor.exe')){Remove-Item -LiteralPath $temp -Force;throw 'Replacement launcher content check failed'}
+          $scriptReplaced=$false;$game=$null
+          try{
+            Move-Item -LiteralPath $temp -Destination $script -Force
+            $scriptReplaced=$true
+            $after=[IO.File]::ReadAllText($script)
+            if(!$after.Contains($exe) -or !$after.Contains($map)){throw 'Installed Play launcher readback failed'}
+            $paks=Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Content\Paks'
+            $containerCount=@(Get-ChildItem -LiteralPath $paks -File|Where-Object{$_.Extension -in '.pak','.utoc','.ucas'}).Count
+            if($containerCount -lt 1){throw 'Cooked game content is missing'}
+            $launch=Start-Process -FilePath $link.TargetPath -ArgumentList $link.Arguments -PassThru
+            $gamePid=$null
+            for($i=0;$i -lt 12;$i++){
+              Start-Sleep -Seconds 1
+              $candidate=Get-CimInstance Win32_Process -Filter "Name='AnomaliaPrimeval.exe'" -ErrorAction SilentlyContinue|Where-Object{$_.CommandLine -and $_.CommandLine.Contains($map) -and $_.ExecutablePath -eq $exe}|Select-Object -First 1
+              if($candidate){$gamePid=[int]$candidate.ProcessId;break}
+            }
+            if(!$gamePid){throw 'The primary Play shortcut did not start the verified final-map executable'}
+            $alive=$false;$mapLoadLine=$null;$materialErrorCount=0
+            for($i=0;$i -lt 50;$i++){
+              Start-Sleep -Seconds 1
+              $p=Get-Process -Id $gamePid -ErrorAction SilentlyContinue
+              if(!$p){break}
+              $alive=$true
+              $logs=Join-Path (Split-Path $exe -Parent) 'AnomaliaPrimeval\Saved\Logs'
+              if(Test-Path $logs){
+                $latest=Get-ChildItem -LiteralPath $logs -Filter '*.log' -File|Sort-Object LastWriteTime -Descending|Select-Object -First 1
+                if($latest){
+                  $lines=Get-Content -LiteralPath $latest.FullName -Tail 3000 -ErrorAction SilentlyContinue|ForEach-Object{$_.ToString()}
+                  $hit=$lines|Where-Object{$_ -match '(?i)(LoadMap|Browse|Bringing World).*(PRIGIMALIA_SKARVIK_FINAL_v1)'}|Select-Object -First 1
+                  if($hit){$mapLoadLine=$hit.ToString()}
+                  $materialErrorCount=@($lines|Where-Object{$_ -match 'LogMaterial: Error'}).Count
+                }
+              }
+              if($mapLoadLine){break}
+            }
+            if(!$alive -or !$mapLoadLine){throw 'The primary Play shortcut did not load the final SKARVIK world'}
+            $report=[ordered]@{state='PRIMARY_PLAY_LAUNCHER_NOW_OPENS_VERIFIED_STANDALONE_SKARVIK';launcherBackupCreated=$true;backupHashMatches=$true;packageVersion='SKARVIK-43226147989';map=$map;processStayedOpen=$alive;mapLoadObserved=$true;cookedContainerCount=$containerCount;materialErrorCount=$materialErrorCount}
+            Write-Output ('ANOMALIA_PRIMARY_PLAY_INSTALL='+($report|ConvertTo-Json -Compress))
+          }catch{
+            if($gamePid){Stop-Process -Id $gamePid -Force -ErrorAction SilentlyContinue}
+            if($scriptReplaced -and (Test-Path -LiteralPath $backup)){Copy-Item -LiteralPath $backup -Destination $script -Force}
+            throw
+          }finally{
+            if($gamePid){$null=Wait-Process -Id $gamePid -Timeout 1 -ErrorAction SilentlyContinue;Stop-Process -Id $gamePid -Force -ErrorAction SilentlyContinue}
+          }
+          Write-Output 'PRIMARY_PLAY_ROUTE_BACKUP='+[IO.Path]::GetFileName($backup)
