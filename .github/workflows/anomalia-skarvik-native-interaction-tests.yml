@@ -1,0 +1,61 @@
+name: ANOMALIA - run isolated native door and loot interaction tests on Windows
+on:
+  push:
+    branches: [ops/native-map-availability-audit]
+    paths: [.github/workflows/anomalia-skarvik-native-interaction-tests.yml]
+permissions: {}
+concurrency:
+  group: anomalia-ue5-native-host
+  cancel-in-progress: false
+jobs:
+  native-interaction-tests:
+    runs-on: [self-hosted, Windows, X64, anomalia-ue5]
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          clean: false
+          persist-credentials: false
+      - name: Run the real project door and loot automation tests in isolated transient worlds
+        shell: powershell -NoProfile -ExecutionPolicy Bypass -File {0}
+        run: |
+          $ErrorActionPreference='Stop'
+          if($env:RUNNER_NAME -ine 'ANOMALIA-PC' -or $env:COMPUTERNAME -ine 'CMD'){throw 'Unexpected runner'}
+          if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Existing Unreal session preserved'}
+          $root='D:\ANOMALIA\unreal';$project=Join-Path $root 'AnomaliaPrimeval.uproject'
+          if(!(Test-Path -LiteralPath $project)){throw 'Live D project missing'}
+          $editor=Join-Path $env:UE_ROOT 'Engine\Binaries\Win64\UnrealEditor-Cmd.exe'
+          if(!(Test-Path -LiteralPath $editor)){throw 'UnrealEditor-Cmd missing'}
+          $c=Get-PSDrive C;$d=Get-PSDrive D
+          Write-Output ('PRETEST_C_FREE_GB='+[math]::Round($c.Free/1GB,2))
+          Write-Output ('PRETEST_D_FREE_GB='+[math]::Round($d.Free/1GB,2))
+          if($c.Free -lt 2GB -or $d.Free -lt 6GB){throw 'Insufficient reserve for isolated native tests'}
+          $out=Join-Path $root ('Saved\VehicleReview\native-interactions-'+$env:GITHUB_RUN_ID)
+          New-Item -ItemType Directory -Path $out -Force|Out-Null
+          $tests=@('Anomalia.Native.DoorLeafAuthorityAndCollision','Anomalia.Native.LootTransactions')
+          $results=@()
+          foreach($test in $tests){
+            if(@(Get-Process UnrealEditor,UnrealEditor-Cmd,UnrealBuildTool,AnomaliaPrimeval,AnomaliaZPrigimalia -ErrorAction SilentlyContinue|Where-Object{-not $_.HasExited}).Count){throw 'Unexpected existing Unreal process before test'}
+            $safe=$test.Replace('.','_')
+            $log=Join-Path $out ($safe+'.log')
+            $args=@('-unattended','-nop4','-nosplash','-nullrhi','-nosound',"-ExecCmds=Automation RunTests $test",'-testexit=Automation Test Queue Empty',"-abslog=$log")
+            & $editor $project @args
+            $exit=$LASTEXITCODE
+            $text=if(Test-Path -LiteralPath $log){[IO.File]::ReadAllText($log)}else{''}
+            $started=$text -match [regex]::Escape($test)
+            $failed=$text -match 'Test Completed\. Result=Fail|Automation Test Failed|\bError:'
+            $passed=$started -and !$failed -and $text -match 'Test Completed\. Result=Success'
+            $result=[ordered]@{test=$test;processExit=$exit;testNameSeen=$started;successMarker=$passed;failureMarker=$failed;log=$log}
+            $results+=,$result
+            Write-Output ($result|ConvertTo-Json -Compress)
+            if($exit -ne 0 -or !$passed){Get-Content -LiteralPath $log -Tail 100 -ErrorAction SilentlyContinue;throw "Native automation test did not pass: $test"}
+          }
+          $report=[ordered]@{state='ISOLATED_NATIVE_DOOR_AND_LOOT_AUTOMATION_PASSED';mapInteractionTested=$false;originalMapSaved=$false;playerSavesModified=$false;results=$results}
+          $report|ConvertTo-Json -Depth 6|Set-Content -LiteralPath (Join-Path $out 'native-interactions.json') -Encoding utf8
+          Write-Output ($report|ConvertTo-Json -Depth 6)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: anomalia-native-door-loot-test-logs
+          path: D:\ANOMALIA\unreal\Saved\VehicleReview\native-interactions-*\*
+          if-no-files-found: warn
