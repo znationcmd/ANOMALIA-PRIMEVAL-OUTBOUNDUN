@@ -24,6 +24,17 @@ jobs:
           $root='D:\ANOMALIA\unreal'
           $project=Join-Path $root 'AnomaliaPrimeval.uproject'
           Write-Output ('PROJECT_EXISTS='+(Test-Path -LiteralPath $project -PathType Leaf))
+          if(Test-Path -LiteralPath $project -PathType Leaf){
+            $projectJson=Get-Content -LiteralPath $project -Raw|ConvertFrom-Json
+            $audioPlugin=@($projectJson.Plugins|Where-Object{$_.Name -eq 'AudioModulation' -and $_.Enabled}).Count -gt 0
+            Write-Output ('PROJECT_AUDIOMODULATION_ENABLED='+$audioPlugin)
+          }
+          $inputConfig=Join-Path $root 'Config\DefaultInput.ini'
+          if(Test-Path -LiteralPath $inputConfig){
+            $inputText=Get-Content -LiteralPath $inputConfig -Raw
+            Write-Output ('KEYBOARD_DRIVE_MAPPINGS_PRESENT='+($inputText.Contains('AxisName="MoveForward"') -and $inputText.Contains('AxisName="MoveRight"')))
+            Write-Output ('GAMEPAD_DRIVE_MAPPINGS_PRESENT='+($inputText.Contains('Gamepad_LeftY') -and $inputText.Contains('Gamepad_LeftX')))
+          }
           $stageRoot=Join-Path $root 'Saved\StagedBuilds'
           if(Test-Path -LiteralPath $stageRoot){
             Get-ChildItem -LiteralPath $stageRoot -Directory|Sort-Object LastWriteTime -Descending|Select-Object -First 4|ForEach-Object{
