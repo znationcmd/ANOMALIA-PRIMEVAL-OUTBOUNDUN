@@ -13,7 +13,7 @@ jobs:
       - uses: actions/github-script@v7
         with:
           script: |
-            for (const artifactId of [15200349585, 15202528997]) {
+            for (const artifactId of [15200349585, 15202528997, 15203606083]) {
               try {
                 const artifact = await github.rest.actions.getArtifact({ owner: context.repo.owner, repo: context.repo.repo, artifact_id: artifactId });
                 if (!artifact.data.expired) {
